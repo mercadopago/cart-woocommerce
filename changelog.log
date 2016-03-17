@@ -1,0 +1,9 @@
+CHANGELOG:
+
+v1.0.0 (16/03/2016)
+-> Standard Checkout
+	- LatAm support;
+	- Title, description, category, and external reference customizations;
+	- Integrations via iframe, modal, and redirection, with configurable auto-returning;
+	- Max installments and payment method exclusion setup;
+	- Sandbox and debug options.
