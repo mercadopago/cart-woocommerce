@@ -1,0 +1,523 @@
+# WordPress Blank Pot
+# Copyright (C) 2014 ...
+# This file is distributed under the GNU General Public License v2 or later.
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: "
+"WordPress Blank Pot "
+"v1.0.0\n"
+"POT-Creation-Date: "
+"2016-03-04 17:44-0300\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Your "
+"Name <you@example.com>\n"
+"Language-Team: Your Team "
+"<translations@example."
+"com>\n"
+"Report-Msgid-Bugs-To: "
+"Translator Name "
+"<translations@example."
+"com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/"
+"plain; charset=UTF-8\n"
+"Content-Transfer-"
+"Encoding: 8bit\n"
+"Plural-Forms: "
+"nplurals=2; plural=n != "
+"1;\n"
+"X-Textdomain-Support: "
+"yesX-Generator: Poedit "
+"1.6.4\n"
+"X-Poedit-SourceCharset: "
+"UTF-8\n"
+"X-Poedit-KeywordsList: "
+"__;_e;esc_html_e;"
+"esc_html_x:1,2c;"
+"esc_html__;esc_attr_e;"
+"esc_attr_x:1,2c;"
+"esc_attr__;_ex:1,2c;"
+"_nx:4c,1,2;"
+"_nx_noop:4c,1,2;_x:1,2c;"
+"_n:1,2;_n_noop:1,2;"
+"__ngettext:1,2;"
+"__ngettext_noop:1,2;_c,"
+"_nc:4c,1,2\n"
+"X-Poedit-Basepath: ..\n"
+"Language: en_US\n"
+"X-Generator: Poedit "
+"1.8.7\n"
+"X-Poedit-"
+"SearchPath-0: .\n"
+
+#. Description of the plugin/theme
+msgid "This is the <strong>oficial</strong> module of Mercado Pago for WooCommerce plugin. This module enables WooCommerce to use Mercado Pago as a payment Gateway for purchases made in your e-commerce store."
+msgstr ""
+
+#: mercadopago-module.php:66
+#, php-format
+msgid ""
+"WooCommerce Mercado Pago "
+"Oficial depends on the "
+"last version of %s to "
+"execute!"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:63
+msgid ""
+"This module enables "
+"WooCommerce to use "
+"Mercado Pago as payment "
+"method for purchases "
+"made in your virtual "
+"store."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:133
+msgid "Argentine"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:134
+msgid "Brazil"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:135
+msgid "Chile"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:136
+msgid "Colombia"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:137
+msgid "Mexico"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:138
+msgid "or"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:139
+msgid "Venezuela"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:154
+msgid ""
+"Select the payment "
+"methods that you "
+"<strong>don't</strong> "
+"want to receive with "
+"Mercado Pago."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:157
+msgid ""
+"Your credentials are "
+"<strong>valid</strong> "
+"for"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:164
+#: mercadopago/mercadopago-gateway.php:173
+msgid ""
+"Configure your Client_id "
+"and Client_secret to "
+"have access to more "
+"options."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:167
+#: mercadopago/mercadopago-gateway.php:176
+msgid ""
+"Your credentials are "
+"<strong>not valid</"
+"strong>!"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:190
+#: mercadopago/mercadopago-gateway.php:198
+#: mercadopago/mercadopago-gateway.php:208
+msgid ""
+"This field should be an "
+"integer."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:193
+msgid ""
+"If your integration "
+"method is iFrame, please "
+"inform the payment "
+"iFrame width."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:201
+msgid ""
+"If your integration "
+"method is iFrame, please "
+"inform the payment "
+"iFrame height."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:211
+msgid ""
+"Select the max number of "
+"installments for your "
+"customers."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:217
+msgid "Enable/Disable"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:219
+msgid ""
+"Enable Mercado Pago "
+"Module"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:223
+msgid ""
+"Mercado Pago Credentials"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:225
+msgid ""
+"You can obtain your "
+"credentials for"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:228
+msgid ""
+"Mercado Pago Client_id"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:230
+msgid ""
+"Insert your Mercado Pago "
+"Client_id."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:235
+msgid ""
+"Mercado Pago "
+"Client_secret"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:237
+msgid ""
+"Insert your Mercado Pago "
+"Client_secret."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:242
+msgid ""
+"Instant Payment "
+"Notification (IPN) URL"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:244
+msgid ""
+"Your IPN URL to receive "
+"instant payment "
+"notifications is"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:247
+msgid "Checkout Options"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:252
+msgid "Title"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:254
+msgid ""
+"Title shown to the "
+"client in the checkout."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:258
+msgid "Description"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:260
+msgid ""
+"Description shown to the "
+"client in the checkout."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:261
+#: mercadopago/mercadopago-gateway.php:406
+msgid ""
+"Pay with Mercado Pago"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:264
+msgid "Store Category"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:266
+msgid ""
+"Define which type of "
+"products your store "
+"sells."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:270
+msgid "Store Identificator"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:272
+msgid ""
+"Please, inform a prefix "
+"to your store."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:272
+msgid ""
+"If you use your Mercado "
+"Pago account on multiple "
+"stores you should make "
+"sure that this prefix is "
+"unique as Mercado Pago "
+"will not allow orders "
+"with same identificators."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:276
+msgid "Integration Method"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:278
+msgid ""
+"Select how your clients "
+"should interact with "
+"Mercado Pago. Modal "
+"Window (inside your "
+"store), Redirect (Client "
+"is redirected to Mercado "
+"Pago), or iFrame (an "
+"internal window is "
+"embedded to the page "
+"layout)."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:281
+msgid "iFrame"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:282
+msgid "Modal Window"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:283
+msgid "Redirect"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:287
+msgid "iFrame Width"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:293
+msgid "iFrame Height"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:299
+msgid "Auto Return"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:301
+msgid ""
+"Automatic Return After "
+"Payment"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:303
+msgid ""
+"After the payment, "
+"client is automatically "
+"redirected."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:306
+msgid "Payment Options"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:311
+msgid "Max installments"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:317
+msgid ""
+"Exclude Payment Methods"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:324
+msgid ""
+"Test and Debug Options"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:329
+msgid ""
+"Mercado Pago Sandbox"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:331
+msgid ""
+"Enable Mercado Pago "
+"Sandbox"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:333
+msgid ""
+"This options allows you "
+"to test payments inside "
+"a sandbox environment."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:336
+msgid "Debug and Log"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:338
+msgid "Enable log"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:340
+#, php-format
+msgid ""
+"Register event logs of "
+"Mercado Pago, such as "
+"API requests, in the "
+"file"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:402
+msgid ""
+"Thank you for your "
+"order. Please, proceed "
+"with your payment "
+"clicking in the bellow "
+"button."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:410
+msgid ""
+"Cancel order &amp; Clear "
+"cart"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:420
+msgid ""
+"Thank you for your "
+"order. Proceed with your "
+"payment completing the "
+"following information."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:431
+msgid ""
+"An error occurred when "
+"proccessing your "
+"payment. Please try "
+"again or contact us for "
+"assistence."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:434
+msgid "Click to try again"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:675
+#: mercadopago/mercadopago-gateway.php:686
+msgid ""
+"Mercado Pago is Inactive"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:678
+msgid ""
+"Your Mercado Pago "
+"credentials Client_id/"
+"Client_secret appears to "
+"be misconfigured."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:679
+msgid ""
+"Click here and configure!"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:689
+msgid "The currency"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:689
+msgid ""
+"is not supported. "
+"Supported currencies "
+"are: ARS, BRL, CLP, COP, "
+"MXN, USD, VEF."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:714
+msgid ""
+"Mercado Pago Request "
+"Failure"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:791
+msgid ""
+"Mercado Pago Transaction "
+"ID"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:798
+msgid "Payer email"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:805
+msgid "Payment type"
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:810
+msgid "Payment approved."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:816
+msgid ""
+"Customer haven't paid "
+"yet."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:821
+msgid ""
+"Payment under review."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:826
+msgid ""
+"The payment was refused. "
+"The customer can try "
+"again."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:832
+msgid ""
+"The payment was refunded "
+"to the customer."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:838
+msgid ""
+"The payment was "
+"cancelled."
+msgstr ""
+
+#: mercadopago/mercadopago-gateway.php:843
+#: mercadopago/mercadopago-gateway.php:848
+msgid ""
+"The payment is under "
+"mediation or it was "
+"charged-back."
+msgstr ""
