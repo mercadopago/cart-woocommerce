@@ -1,4 +1,4 @@
-# WooCommerce - MercadoPago Module (v1.0.0 - first release)
+# WooCommerce - Mercado Pago Module (v1.0.0)
 ---
 
 * [Features](#features)
@@ -24,13 +24,13 @@ payment method exclusion setup, and sandbox/debug options.
     <tr>
       <th>Plugin Version</th>
       <th>Status</th>
-      <th>Compatible Versions</th>
+      <th>WooCommerce Compatible Versions</th>
     </tr>
   <thead>
   <tbody>
     <tr>
       <td><a href="https://github.com/marcelohama/cart-woocommerce">v1.0.0</a></td>
-      <td>First Release</td>
+      <td>Supported (First Release)</td>
       <td>WooCommerce 2.1.x - 2.5.x</td>
     </tr>
   </tbody>
@@ -41,9 +41,9 @@ payment method exclusion setup, and sandbox/debug options.
 
 1. Copy **cart-woocommerce/mercadopago** folder to **[WordPressRootDirectory]/wp-content/plugins/** folder.
 
-2. On your store administration, go to **Plugins** item in sidebar.
+2. On your store administration, go to **Plugins** option in sidebar.
 
-3. Search by **WooCommerce Mercado Pago Oficial** and click enable. <br />
+3. Search by **WooCommerce Mercado Pago** and click enable. <br />
 You will receive the following message: "Plugin enabled." as a notice in your WordPress.
 
 <a name="configuration"></a>
@@ -58,6 +58,7 @@ Set your **Client_id**, **Client_secret** accordingly to your country:
 	* Colombia: https://www.mercadopago.com/mco/herramientas/aplicaciones
 	* Mexico: https://www.mercadopago.com/mlm/herramientas/aplicaciones
 	* Venezuela: https://www.mercadopago.com/mlv/herramientas/aplicaciones
+2. Depending on the country of your account, you will have the
 
 2. General configurations. <br />
 	* **URL de Notificações Instantâneas de Pagamento (IPN)**: The highlighted URL is where you will get notified about payment updates;
