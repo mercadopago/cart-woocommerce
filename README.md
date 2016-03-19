@@ -51,9 +51,10 @@ You will receive the following message: "Plugin enabled." as a notice in your Wo
 
 1. Go to **WooCommerce > Configuration > Checkout Tab > Mercado Pago**. <br />
 Fist of all, you need to configure your client credentials. To make it, fill your **Client_id**, **Client_secret** in Mercado Pago Credentials section.
-
-You can obtain your **Client_id** and **Client_secret**, accordingly to your country, in the following links:
-![Installation Instructions](/README.img/wc_setup_credentials.png) <br />
+	
+	![Installation Instructions](/README.img/wc_setup_credentials.png) <br />
+	
+	You can obtain your **Client_id** and **Client_secret**, accordingly to your country, in the following links:
 
 	* Argentina: https://www.mercadopago.com/mla/herramientas/aplicaciones
 	* Brazil: https://www.mercadopago.com/mlb/ferramentas/aplicacoes
