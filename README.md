@@ -49,11 +49,10 @@ You will receive the following message: "Plugin enabled." as a notice in your Wo
 <a name="configuration"></a>
 ##Configuration##
 
-1. Go to **WooCommerce > Configuration > Checkout Tab > Mercado Pago**.
+1. Go to **WooCommerce > Configuration > Checkout Tab > Mercado Pago**. <br />
+In Mercado Pago Credentials section, set your **Client_id**, **Client_secret** accordingly to your country:
 
 	![Installation Instructions](/README.img/wc_setup_credentials.png) <br />
-
-Set your **Client_id**, **Client_secret** accordingly to your country:
 
 	* Argentina: https://www.mercadopago.com/mla/herramientas/aplicaciones
 	* Brazil: https://www.mercadopago.com/mlb/ferramentas/aplicacoes
@@ -62,7 +61,8 @@ Set your **Client_id**, **Client_secret** accordingly to your country:
 	* Mexico: https://www.mercadopago.com/mlm/herramientas/aplicaciones
 	* Venezuela: https://www.mercadopago.com/mlv/herramientas/aplicaciones
 
-2. General configurations. <br />
+2. Other general configurations. <br />
+	![Installation Instructions](/README.img/wc_setup_ipn.png) <br />
 	* **URL de Notificações Instantâneas de Pagamento (IPN)**: The highlighted URL is where you will get notified about payment updates;
 	* **Title**: This is the title of the payment option that will be shown to your customers;
 	* **Description**: This is the description of the payment option that will be shown to your customers;
