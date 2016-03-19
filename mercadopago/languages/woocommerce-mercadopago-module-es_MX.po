@@ -25,15 +25,15 @@ msgstr ""
 
 #. Description of the plugin/theme
 msgid "This is the <strong>oficial</strong> module of Mercado Pago for WooCommerce plugin. This module enables WooCommerce to use Mercado Pago as a payment Gateway for purchases made in your e-commerce store."
-msgstr "Este es el módulo oficial de Mercado Pago para el plugin WooCommerce. Este módulo habilita el uso de Mercado Pago en WooCommerce como método de pago para compras realizadas en su tienda virtual."
+msgstr "Este es el módulo <strong>oficial</strong> de Mercado Pago para el plugin WooCommerce. Este módulo habilita el uso de Mercado Pago en WooCommerce como método de pago para compras realizadas en su tienda virtual."
 
 #: mercadopago-module.php:66
 #, php-format
 msgid ""
-"WooCommerce Mercado Pago Oficial depends on the last version of %s to "
+"WooCommerce Mercado Pago depends on the last version of %s to "
 "execute!"
 msgstr ""
-"WooCommerce Mercado Pago Oficial depende de la última versión de %s para "
+"WooCommerce Mercado Pago depende de la última versión de %s para "
 "ejecutarse!"
 
 #: mercadopago/mercadopago-gateway.php:63
