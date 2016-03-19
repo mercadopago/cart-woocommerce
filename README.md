@@ -62,8 +62,8 @@ In Mercado Pago Credentials section, set your **Client_id**, **Client_secret** a
 	* Venezuela: https://www.mercadopago.com/mlv/herramientas/aplicaciones
 
 2. Other general configurations. <br />
-	![Installation Instructions](/README.img/wc_setup_ipn.png) <br />
 	* **URL de Notificações Instantâneas de Pagamento (IPN)**: The highlighted URL is where you will get notified about payment updates;
+	![Installation Instructions](/README.img/wc_setup_ipn.png) <br /><br />
 	* **Title**: This is the title of the payment option that will be shown to your customers;
 	* **Description**: This is the description of the payment option that will be shown to your customers;
 	* **Store Category**: Sets up the category of the store;
@@ -72,7 +72,10 @@ In Mercado Pago Credentials section, set your **Client_id**, **Client_secret** a
 	* **iFrame Width**: The width, in pixels, of the iFrame (used only with iFrame Integration Method);
 	* **iFrame Height**: The height, in pixels, of the iFrame (used only with iFrame Integration Method);
 	* **Auto Return**: If set, the platform will return to your store when the payment is approved;
+	![Installation Instructions](/README.img/wc_setup_checkout.png) <br /><br />
 	* **Max Installments**: The maximum installments allowed for your customers;
 	* **Exclude Payment Methods**: Select the payment methods that you want to not work with Mercado Pago;
+	![Installation Instructions](/README.img/wc_setup_payment.png) <br /><br />
 	* **Mercado Pago Sandboxs**: Test your payments in Mercado Pago sandbox environment;
 	* **Debug and Log**: Enables/disables system logs.
+	![Installation Instructions](/README.img/wc_setup_testdebug.png) <br />
