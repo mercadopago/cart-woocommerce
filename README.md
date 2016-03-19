@@ -53,8 +53,7 @@ You will receive the following message: "Plugin enabled." as a notice in your Wo
 Fist of all, you need to configure your client credentials. To make it, fill your **Client_id**, **Client_secret** in Mercado Pago Credentials section.
 
 You can obtain your **Client_id** and **Client_secret**, accordingly to your country, in the following links:
-
-	![Installation Instructions](/README.img/wc_setup_credentials.png) <br />
+![Installation Instructions](/README.img/wc_setup_credentials.png) <br />
 
 	* Argentina: https://www.mercadopago.com/mla/herramientas/aplicaciones
 	* Brazil: https://www.mercadopago.com/mlb/ferramentas/aplicacoes
@@ -66,23 +65,23 @@ You can obtain your **Client_id** and **Client_secret**, accordingly to your cou
 2. Other general configurations. <br />
 	* **Instant Payment Notification (IPN) URL**
 	![Installation Instructions](/README.img/wc_setup_ipn.png) <br />
-	The highlighted URL is where you will get notified about payment updates.<br />
+	The highlighted URL is where you will get notified about payment updates.<br /><br />
 	* **Checkout Options**
 	![Installation Instructions](/README.img/wc_setup_checkout.png) <br />
-	**Title**: This is the title of the payment option that will be shown to your customers;
-	**Description**: This is the description of the payment option that will be shown to your customers;
-	**Store Category**: Sets up the category of the store;
-	**Store Identificator**: A prefix to identify your store, when you have multiple stores for only one Mercado Pago account;
-	**Integration Method**: How your customers will interact with Mercado Pago to pay their orders;
-	**iFrame Width**: The width, in pixels, of the iFrame (used only with iFrame Integration Method);
-	**iFrame Height**: The height, in pixels, of the iFrame (used only with iFrame Integration Method);
-	**Auto Return**: If set, the platform will return to your store when the payment is approved.<br />
+	**Title**: This is the title of the payment option that will be shown to your customers;<br />
+	**Description**: This is the description of the payment option that will be shown to your customers;<br />
+	**Store Category**: Sets up the category of the store;<br />
+	**Store Identificator**: A prefix to identify your store, when you have multiple stores for only one Mercado Pago account;<br />
+	**Integration Method**: How your customers will interact with Mercado Pago to pay their orders;<br />
+	**iFrame Width**: The width, in pixels, of the iFrame (used only with iFrame Integration Method);<br />
+	**iFrame Height**: The height, in pixels, of the iFrame (used only with iFrame Integration Method);<br />
+	**Auto Return**: If set, the platform will return to your store when the payment is approved.<br /><br />
 	* **Payment Options**
 	![Installation Instructions](/README.img/wc_setup_payment.png) <br />
-	**Max Installments**: The maximum installments allowed for your customers;
-	**Exclude Payment Methods**: Select the payment methods that you want to not work with Mercado Pago.<br />
+	**Max Installments**: The maximum installments allowed for your customers;<br />
+	**Exclude Payment Methods**: Select the payment methods that you want to not work with Mercado Pago.<br /><br />
 	* **Test and Debug Options**
 	![Installation Instructions](/README.img/wc_setup_testdebug.png) <br />
-	**Mercado Pago Sandboxs**: Test your payments in Mercado Pago sandbox environment;
-	**Debug and Log**: Enables/disables system logs.
+	**Mercado Pago Sandboxs**: Test your payments in Mercado Pago sandbox environment;<br />
+	**Debug and Log**: Enables/disables system logs.<br />
 	
