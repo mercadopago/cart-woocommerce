@@ -2,9 +2,9 @@
 Contributors: mercadopago, mercadolivre
 Donate link: https://www.mercadopago.com.br/developers/
 Tags: ecommerce, mercadopago, woocommerce
-Requires at least: WooCommerce 2.6.x
-Tested up to: WooCommerce 2.6.6
-Stable tag: 2.1.4
+Requires at least: WooCommerce 2.1.x
+Tested up to: WooCommerce 2.5.x
+Stable tag: 2.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,7 +39,7 @@ You have two ways to install this module: from your WordPress Store, or by downl
 3. You should find the module read to be installed. Click install.
 
 = Manual Download =
-1. Get the module sources from a repository (<a href="https://github.com/mercadopago/cart-woocommerce/archive/master.zip">Github</a> or <a href="https://downloads.wordpress.org/plugin/woo-mercado-pago-module.2.1.4.zip">WordPress Plugin Directory</a>);
+1. Get the module sources from a repository (<a href="https://github.com/mercadopago/cart-woocommerce/archive/master.zip">Github</a> or <a href="https://downloads.wordpress.org/plugin/woo-mercado-pago-module.2.1.3.zip">WordPress Plugin Directory</a>);
 2. Unzip the folder and find "woo-mercado-pago-module" directory;
 3. Copy "woo-mercado-pago-module" directory to **[WordPressRootDirectory]/wp-content/plugins/** directory.
 
@@ -107,16 +107,6 @@ Please, check our FAQ at: https://www.mercadopago.com.br/ajuda/
 5. `Configuration of Basic Checkout`
 
 == Changelog ==
-
-= v2.1.4 (20/10/2016) =
-* Features
-	- Two Card Payment Configuration. Merchants can configure this feature in back-office through settings page.
-* Improvements
-	- Removed some redundant notice messages;
-	- Improved algorithm to process settings page flow and checkout;
-	- Refactored code to meet WordPress coding standards.
-* Bug fixes
-	- Fixed a SSL issue related to ticket solution (the open locker) in gateway selection.
 
 = v2.1.3 (15/09/2016) =
 * Improvements

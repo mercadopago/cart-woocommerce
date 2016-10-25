@@ -838,21 +838,3 @@ msgstr "Termos e condições"
 
 msgid "Payment converted from"
 msgstr "Pagamento convertido de"
-
-msgid "Rate Us"
-msgstr "Avalie"
-
-msgid "Report Issue"
-msgstr "Informar Problema"
-
-msgid "Two Cards Mode"
-msgstr "Modo Dois Cartões"
-
-msgid "Payments with Two Cards"
-msgstr "Pagamento com Dois Cartões"
-
-msgid "Your customer will be able to use two different cards to pay the order."
-msgstr "Seus clientes poderão utilizar dois diferentes cartões para pagar pedidos."
-
-msgid "Your Mercado Pago credentials Access Token appears to be misconfigured."
-msgstr "Sua credencial Access Token do Mercado Pago parece estar desconfigurada."

@@ -1,0 +1,14 @@
+.mp-btn, .ch-btn {
+    background-color: #009ee3;
+    border: 1px solid #009ee3;
+    border-radius: 4px;
+    color: #fff;
+    display: inline-block;
+    font-family: Arial,sans-serif;
+    font-size: 18px;
+    font-weight: normal;
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+}
