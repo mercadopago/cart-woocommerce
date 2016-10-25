@@ -763,21 +763,3 @@ msgstr ""
 
 msgid "Payment converted from"
 msgstr ""
-
-msgid "Rate Us"
-msgstr ""
-
-msgid "Report Issue"
-msgstr ""
-
-msgid "Two Cards Mode"
-msgstr ""
-
-msgid "Payments with Two Cards"
-msgstr ""
-
-msgid "Your customer will be able to use two different cards to pay the order."
-msgstr ""
-
-msgid "Your Mercado Pago credentials Access Token appears to be misconfigured."
-msgstr ""
