@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 add_action( 'add_meta_boxes', 'add_meta_boxes' );
 function add_meta_boxes() {
-	add_meta_box( 
+	add_meta_box(
 		'woocommerce-mp-order-action-refund',
 		__( 'Mercado Pago Subscription', 'woocommerce-mercadopago-module' ),
 		'mp_subscription_order_refund_cancel_box',
@@ -216,8 +216,7 @@ function mp_add_recurrent_product_type( $types ) {
 // Makes the recurrent product individually sold
 add_filter( 'woocommerce_is_sold_individually', 'default_no_quantities', 10, 2 );
 function default_no_quantities( $individually, $product ) {
-	$product_type = $product->post->product_type;
-	if ( $product_type == 'mp_recurrent_product' ) {
+	if ( $product->is_type( 'mp_recurrent_product' ) ) {
 		$individually = true;
 	}
 	return $individually;
@@ -246,7 +245,7 @@ function check_recurrent_product_singularity() {
 add_filter( 'woocommerce_is_purchasable', 'filter_woocommerce_is_purchasable', 10, 2 );
 function filter_woocommerce_is_purchasable( $purchasable, $product ) {
 	// skip this check if product is not a subscription
-	$terms = get_the_terms( $product->id, 'product_type' );
+	$terms = get_the_terms( $product->get_id(), 'product_type' );
 	$product_type = ( ! empty( $terms ) ) ? sanitize_title( current( $terms )->name ) : 'simple';
 	if ( $product_type != 'mp_recurrent_product' ) {
 		return $purchasable;
