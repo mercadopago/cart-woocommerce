@@ -754,6 +754,9 @@ msgstr ""
 msgid "Installments"
 msgstr ""
 
+msgid "Choose"
+msgstr ""
+
 msgid "Parameter cardIssuerId can not be null/empty"
 msgstr ""
 
