@@ -754,6 +754,9 @@ msgstr "Pagamento convertido de"
 msgid "Installments"
 msgstr "Parcelas"
 
+msgid "Choose"
+msgstr "Escolher"
+
 msgid "Parameter cardIssuerId can not be null/empty"
 msgstr "O campo [Emitente do cartão] não pode ser nulo/vazio"
 
