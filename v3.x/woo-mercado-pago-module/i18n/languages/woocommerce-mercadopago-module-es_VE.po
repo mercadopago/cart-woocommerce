@@ -756,7 +756,7 @@ msgstr "Cuotas"
 
 msgid "Choose"
 msgstr "Seleccione"
-
+ 
 msgid "Parameter cardIssuerId can not be null/empty"
 msgstr "Parámetro [Emisor] no puede ser nulo/vacío"
 
