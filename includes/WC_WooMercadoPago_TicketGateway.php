@@ -568,7 +568,8 @@ class WC_WooMercadoPago_TicketGateway extends WC_Payment_Gateway {
 		if ( ! isset( $_POST['mercadopago_ticket'] ) ) {
 			return;
 		}
-		$ticket_checkout = $_POST['mercadopago_ticket'];
+		
+		$ticket_checkout = apply_filters( 'wc_mercadopagoticket_ticket_checkout', $_POST['mercadopago_ticket'] );
 
 		$order = wc_get_order( $order_id );
 		if ( method_exists( $order, 'update_meta_data' ) ) {
