@@ -188,7 +188,8 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 				}
 				$label_delivery_time = '';
 				if ( $this->get_option( 'show_delivery_time' ) == 'yes' ) {
-					$days = $shipping['estimated_delivery_time']['shipping'] / 24;
+					$handling = isset($shipping['estimated_delivery_time']['handling']) ? $shipping['estimated_delivery_time']['handling']: 0;
+					$days = ($shipping['estimated_delivery_time']['shipping'] + $handling) / 24;
 					if ( $days <= 1 ) {
 						$label_delivery_time = $days . ' ' . __( 'Day', 'woocommerce-mercadopago' );
 					} else {
