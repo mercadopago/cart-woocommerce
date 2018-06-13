@@ -86,7 +86,7 @@ body{
   padding: 5px;
   border-radius: 3px;
   color: #666;
-  height: 40px;
+  height: 40px!important;
   vertical-align: middle;
 }
 
