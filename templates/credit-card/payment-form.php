@@ -310,8 +310,6 @@ if ( 'Twenty Seventeen' == $theme->name || 'Twenty Seventeen' == $theme->parent_
 
 </fieldset>
 
-<!--<script type="text/javascript" src="<?php echo $path_to_javascript; ?>"/>-->
-
 <script type="text/javascript">
 	( function() {
 

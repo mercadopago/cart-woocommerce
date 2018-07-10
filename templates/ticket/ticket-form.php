@@ -251,8 +251,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</div>
 </fieldset>
 
-<!--<script type="text/javascript" src="<?php echo $path_to_javascript; ?>"/>-->
-
 <script type="text/javascript">
 	( function() {
 
