@@ -1093,6 +1093,14 @@ class WC_WooMercadoPago_SubscriptionGateway extends WC_Payment_Gateway {
 		);
 		switch ( $status ) {
 			case 'authorized':
+				$order->add_order_note(
+					'Mercado Pago: ' . __( 'Subscription approved, waiting payment confirmation.', 'woocommerce-mercadopago' )
+				);
+					$order->payment_complete();
+					$order->update_status(
+					WC_Woo_Mercado_Pago_Module::get_wc_status_for_mp_status( 'pending' )
+				);
+				break;	
 			case 'approved':
 				$order->add_order_note(
 					'Mercado Pago: ' . __( 'Payment approved.', 'woocommerce-mercadopago' )
