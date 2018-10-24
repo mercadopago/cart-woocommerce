@@ -1031,6 +1031,11 @@ if ( ! class_exists( 'WC_Woo_Mercado_Pago_Module' ) ) :
 				wc_bantics_log("Chequea Dimensiones Productos");
 
 				global $wpdb;
+					'<img width="14" height="14" src="' . plugins_url( 'assets/images/check.png', __FILE__ ) . '"> ' .
+					__( 'Your products have theirs dimensions well defined.', 'woocommerce-mercadopago' ) :
+					'<img width="14" height="14" src="' . plugins_url( 'assets/images/warning.png', __FILE__ ) . '"> ' .
+					__( 'You have product(s) with invalid dimensions.', 'woocommerce-mercadopago' );
+				
 				wc_bantics_log("Termina chequeo dimensiones");
 
 				// Create links for internal redirections to each payment solution.
