@@ -32,7 +32,7 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 	public function __construct( $instance_id = 0 ) {
 
 		add_action( 'init', array( $this, 'load_plugin_textdomain' ) );
-		
+
 		$this->instance_id = absint( $instance_id );
 		$this->method_description = __( 'Mercado Envios is a shipping method available only for payments with Mercado Pago.', 'woocommerce-mercadopago' );
 		$this->supports = array(
@@ -40,7 +40,7 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 			'instance-settings',
 			'instance-settings-modal',
 		);
-		
+
 		// Logging and debug.
 		$_mp_debug_mode = get_option( '_mp_debug_mode', '' );
 		if ( ! empty ( $_mp_debug_mode ) ) {
@@ -52,7 +52,7 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 		}
 
 		$this->init();
-		
+
 	}
 
 	// Write log.
@@ -122,18 +122,18 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 		$me_package = new WC_MercadoEnvios_Package( $package );
 		$dimensions = $me_package->get_data();
 		$zip_code = $package['destination']['postcode'];
-		
+
 		// An empty zipcode indicates that customer haven't set it yet
 		if ( empty( $zip_code ) ) {
 			return;
 		}
-		
+
 		// Check validity of dimensions
 		if ( ! is_numeric( $dimensions['height'] ) || ! is_numeric( $dimensions['width'] ) ||
 				 ! is_numeric( $dimensions['length'] ) || ! is_numeric( $dimensions['weight'] ) ) {
 			return;
 		}
-			
+
 		$shipping_method_id = $this->get_shipping_method_id( $site_id );
 		$mp = new MP(
 			WC_Woo_Mercado_Pago_Module::get_module_version(),
@@ -181,7 +181,8 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 		}
 
 		foreach ( $response['response']['options'] as $shipping ) {
-			if ( $shipping_method_id == $shipping['shipping_method_id'] ) {
+			//if ( $shipping_method_id == $shipping['shipping_method_id'] ) {
+        if ( true ) {
 				$label_free_shipping = '';
 				if ( $this->get_option( 'free_shipping' ) == 'yes' || $shipping['cost'] == 0 ) {
 					$label_free_shipping = __( 'Free Shipping', 'woocommerce-mercadopago' );
@@ -213,14 +214,14 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 						'free_shipping' => $this->get_option( 'free_shipping' )
 					)
 				);
-				
+
 				$this->write_log( __FUNCTION__, 'optiond added: ' . json_encode( $option, JSON_PRETTY_PRINT ) );
 
 				$this->add_rate( $option );
 			}
 		}
 	}
-	
+
 	/**
 	 * Replace comma by dot.
 	 * @param  mixed $value Value to fix.
@@ -274,7 +275,7 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 				'default' => 'no',
 			)
 		);
-	
+
 	}
 	/**
 	 * Return shipping methods by zone and shipping id.
@@ -368,5 +369,5 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 		$response = $mp->analytics_save_settings( $infra_data );
 		$this->write_log( __FUNCTION__, 'analytics response: ' . json_encode( $response, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE ) );
 	}
-	
+
 }
