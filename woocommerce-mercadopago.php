@@ -21,31 +21,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-
-/**
- * Log a message via WC_Logger.
- *
- * @param string $message Message to log
- */
-function wc_bantics_log($message)
-{
-    static $wc_bantics_logger;
-    // aca deberiamos chequear opcion de log del plugin Bantics
-    if (false) {
-        return false;
-    }
-    if (!isset($wc_bantics_logger)) {
-        $wc_bantics_logger = new WC_Logger();
-    }
-    $wc_bantics_logger->add('wc_bantics_log', $message);
-    if (defined('WP_DEBUG') && WP_DEBUG) {
-        error_log($message);
-    }
-}
-
-
-
-
 /**
  * Load plugin text domain.
  *
@@ -936,14 +911,10 @@ if ( ! class_exists( 'WC_Woo_Mercado_Pago_Module' ) ) :
 		add_options_page(
 			'Mercado Pago Options', 'Mercado Pago', 'manage_options', 'mercado-pago-settings',
 			function() {
-
-				wc_bantics_log("antes de verificar");
 				// Verify permissions.
 				if ( ! current_user_can( 'manage_options' ) )  {
 					wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 				}
-
-				wc_bantics_log("Despues");
 				// Check for submits.
 				if ( isset( $_POST['submit'] ) ) {
           update_option( '_mp_client_id', isset( $_POST['client_id'] ) ? $_POST['client_id'] : '', true );
@@ -963,23 +934,18 @@ if ( ! class_exists( 'WC_Woo_Mercado_Pago_Module' ) ) :
 					update_option( '_mp_order_status_chargedback_map', isset( $_POST['order_status_chargedback_map'] ) ? $_POST['order_status_chargedback_map'] : '', true );
 					update_option( '_mp_statement_descriptor', isset( $_POST['statement_descriptor'] ) ? $_POST['statement_descriptor'] : '', true );
 
-					wc_bantics_log("Updates Options parte 1");
 
 					if ( isset( $_POST['category_id'] ) ) {
-				wc_bantics_log("Si tiene categoryid");
 
 						update_option( '_mp_category_id', $_POST['category_id'], true );
 						$categories_data = WC_Woo_Mercado_Pago_Module::$categories;
 						update_option( '_mp_category_name', $categories_data['store_categories_id'][$_POST['category_id']], true );
-				wc_bantics_log("Fin Categorias");
 
 					} else {
-				wc_bantics_log("Si NO categoryid");
 
 						update_option( '_mp_category_id', '', true );
 						update_option( '_mp_category_name', 'others', true );
 					}
-				wc_bantics_log("Options parte 2");
 
 					update_option( '_mp_store_identificator', isset( $_POST['store_identificator'] ) ? $_POST['store_identificator'] : '', true );
 					update_option( '_mp_custom_banner', isset( $_POST['custom_banner'] ) ? $_POST['custom_banner'] : '', true );
@@ -988,8 +954,6 @@ if ( ! class_exists( 'WC_Woo_Mercado_Pago_Module' ) ) :
 					update_option( '_mp_currency_conversion_v1', isset( $_POST['currency_conversion_v1'] ) ? $_POST['currency_conversion_v1'] : '', true );
 					update_option( '_mp_debug_mode', isset( $_POST['debug_mode'] ) ? $_POST['debug_mode'] : '', true );
 					update_option( '_mp_sandbox_mode', isset( $_POST['sandbox_mode'] ) ? $_POST['sandbox_mode'] : '', true );
-				wc_bantics_log("Fin Options");
-
 				}
 
 				// Mercado Pago logo.
@@ -1001,12 +965,11 @@ if ( ! class_exists( 'WC_Woo_Mercado_Pago_Module' ) ) :
 					'<img width="14" height="14" src="' . plugins_url( 'assets/images/error.png', __FILE__ ) . '"> ' .
 					__( 'You don\'t have WooCommerce installed and enabled.', 'woocommerce-mercadopago' );
 				// Creating PHP version message.
-				wc_bantics_log("Verificacion de woo instalado" . $has_woocommerce_message);
 
 				// Check for PHP version and throw notice.
 				$min_php_message = '<img width="14" height="14" src="' . plugins_url( 'assets/images/check.png', __FILE__ ) . '"> ' .
 				__( 'Your PHP version is OK.', 'woocommerce-mercadopago' );
-				
+
 				if ( version_compare( PHP_VERSION, WC_Woo_Mercado_Pago_Module::MIN_PHP, '<=' ) ) {
 					$min_php_message = '<img width="14" height="14" src="' . plugins_url( 'assets/images/warning.png', __FILE__ ) . '"> ' .
 					sprintf(
@@ -1014,7 +977,7 @@ if ( ! class_exists( 'WC_Woo_Mercado_Pago_Module' ) ) :
 						phpversion(), WC_Woo_Mercado_Pago_Module::MIN_PHP
 					);
 				}
-					
+
 				// Check cURL.
 				$curl_message = in_array( 'curl', get_loaded_extensions() ) ?
 					'<img width="14" height="14" src="' . plugins_url( 'assets/images/check.png', __FILE__ ) . '"> ' .
@@ -1027,11 +990,7 @@ if ( ! class_exists( 'WC_Woo_Mercado_Pago_Module' ) ) :
 					__( 'SSL is missing in your site.', 'woocommerce-mercadopago' ) :
 					'<img width="14" height="14" src="' . plugins_url( 'assets/images/check.png', __FILE__ ) . '"> ' .
 					__( 'Your site has SSL enabled.', 'woocommerce-mercadopago' );
-				// Check porduct dimensions.
-				wc_bantics_log("Chequea Dimensiones Productos");
-
-				global $wpdb;
-				wc_bantics_log("Termina chequeo dimensiones");
+				// Se deja de Checkear porduct dimensions para sitios con mas de 2000 productos puede compllicarse .
 
 				// Create links for internal redirections to each payment solution.
 				$gateway_buttons = '<strong>' .
