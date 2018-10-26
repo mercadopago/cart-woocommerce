@@ -254,7 +254,7 @@ abstract class WC_MercadoEnvios_Shipping extends WC_Shipping_Method {
 				'description' => sprintf( '%s', $warning_active_shipping_methods )
 			),
 			'title' => array(
-				'title' => __( 'Mercado Envios', 'woocommerce-mercadopago' ),
+				'title' => __( 'Mercado Envios (Solo pagando mediante MercadoPago)', 'woocommerce-mercadopago' ),
 				'type' => 'text',
 				'description' => __( 'This controls the title which the user sees during checkout.', 'woocommerce-mercadopago' ),
 				'default' => __( 'Mercado Envios', 'woocommerce-mercadopago' ),
