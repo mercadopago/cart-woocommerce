@@ -629,7 +629,15 @@ class WC_WooMercadoPago_BasicGateway extends WC_Payment_Gateway {
 			$order->save();
 		} else {
  			update_post_meta( $order_id, '_used_gateway', 'WC_WooMercadoPago_BasicGateway' );
- 		}
+		}
+
+		if ( $order->get_total() <= 0 ) {
+			$order->payment_complete();
+			return array(
+				'result' => 'success',
+				'redirect' => $this->get_return_url( $order )
+			);
+		}
 
 		if ( 'redirect' == $this->method ) {
 			$this->write_log( __FUNCTION__, 'customer being redirected to Mercado Pago.' );
