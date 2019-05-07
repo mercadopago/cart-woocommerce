@@ -738,7 +738,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_Payment_Gateway {
 		if ( sizeof( $order->get_items() ) > 0 ) {
 			foreach ( $order->get_items() as $item ) {
 				if ( $item['qty'] ) {
-					$product = new WC_product( $item['product_id'] );
+					$product = wc_get_product( $item['product_id'] );
 					$product_title = method_exists( $product, 'get_description' ) ?
 						$product->get_name() :
 						$product->post->post_title;
@@ -1477,7 +1477,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_Payment_Gateway {
 						$list_of_items = array();
 						$items = $order->get_items();
 						foreach ( $items as $item ) {
-							$product = new WC_product( $item['product_id'] );
+							$product = wc_get_product( $item['product_id'] );
 							if ( method_exists( $product, 'get_description' ) ) {
 								$product_title = WC_Woo_Mercado_Pago_Module::utf8_ansi(
 									$product->get_name()
