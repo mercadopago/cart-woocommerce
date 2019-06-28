@@ -757,7 +757,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_Payment_Gateway {
 
 					array_push( $order_content, $product_title . ' x ' . $item['qty'] );
 					array_push( $items, array(
-						'id' => $item['product_id'],
+						'id' => $item['variation_id'] ? $item['variation_id'] : $item['product_id'],
 						'title' => html_entity_decode( $product_title ) . ' x ' . $item['qty'],
 						'description' => sanitize_file_name( html_entity_decode(
 							strlen( $product_content ) > 230 ?
