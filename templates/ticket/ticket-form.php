@@ -153,7 +153,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<option value="RN" <?php if ($febraban['state'] == 'RN') {echo 'selected="selected"';} ?>>Rio Grande do Norte</option>
 						<option value="RS" <?php if ($febraban['state'] == 'RS') {echo 'selected="selected"';} ?>>Rio Grande do Sul</option>
 						<option value="RO" <?php if ($febraban['state'] == 'RO') {echo 'selected="selected"';} ?>>Rondônia</option>
-						<option value="RA" <?php if ($febraban['state'] == 'RA') {echo 'selected="selected"';} ?>>Roraima</option>
+						<option value="RA" <?php if ($febraban['state'] == 'RR') {echo 'selected="selected"';} ?>>Roraima</option>
 						<option value="SC" <?php if ($febraban['state'] == 'SC') {echo 'selected="selected"';} ?>>Santa Catarina</option>
 						<option value="SP" <?php if ($febraban['state'] == 'SP') {echo 'selected="selected"';} ?>>São Paulo</option>
 						<option value="SE" <?php if ($febraban['state'] == 'SE') {echo 'selected="selected"';} ?>>Sergipe</option>
