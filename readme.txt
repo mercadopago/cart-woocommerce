@@ -113,13 +113,10 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-<<<<<<< HEAD
 = v4.0.4 (03/09/2019) =
 * Bug fixes
   - Conflict between php5.6 and php7 solved
 
-=======
->>>>>>> d28b67e7ccea93db59d1bc0e3f4f91237ec85773
 = v4.0.3 (03/09/2019) =
 * Bug fixes
   - Fixed basic checkout layout when theme uses bootstrap
