@@ -1,10 +1,10 @@
 === WooCommerce Mercado Pago ===
 Contributors: mercadopago, mercadolivre, claudiosanches, marcelohama
 Tags: ecommerce, mercadopago, woocommerce
-Requires at least: 4.9.7
+Requires at least: 4.9.10
 Tested up to: 5.2.2
 Requires PHP: 5.6
-Stable tag: 4.0.4
+Stable tag: 4.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,7 +113,7 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-= v4.0.5 (03/09/2019) =
+= v4.0.5 (04/09/2019) =
 * Bug fixes
   - Problem with translations in Portuguese fixed
 
