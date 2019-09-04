@@ -46,7 +46,7 @@ window.onload = function () {
     var collapse_title = document.querySelector("#woocommerce_woo-mercado-pago-custom_checkout_advanced_settings");
     var collapse_table = collapse_title.nextElementSibling;
     collapse_table.style.display = "none";
-    collapse_title.style.cursor = "mp-pointer";
+    collapse_title.style.cursor = "pointer";
 
     collapse_title.innerHTML += "<span class='btn-collapsible' id='header_plus' style='display:block'>+</span>\
             <span class='btn-collapsible' id='header_less' style='display:none'>-</span>";
@@ -76,7 +76,7 @@ window.onload = function () {
     var collapse_description_2 = document.querySelector("#woocommerce_woo-mercado-pago-custom_checkout_payments_advanced_description");
     collapse_table_2.style.display = "none";
     collapse_description_2.style.display = "none";
-    collapse_title_2.style.cursor = "mp-pointer";
+    collapse_title_2.style.cursor = "pointer";
 
     // var text_advanced_config = document.querySelector("#woocommerce_woo-mercado-pago-custom_checkout_custom_payments_advanced_description");
     // text_advanced_config.style.display = "none";

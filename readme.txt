@@ -113,6 +113,10 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
+= v4.0.5 (03/09/2019) =
+* Bug fixes
+  - Problem with translations in Portuguese fixed
+
 = v4.0.4 (03/09/2019) =
 * Bug fixes
   - Conflict between php5.6 and php7 solved

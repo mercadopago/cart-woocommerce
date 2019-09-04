@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Mercado Pago
  * Plugin URI: https://github.com/mercadopago/cart-woocommerce
  * Description: Configura las opciones de pago a tu medida y acepta pagos con tarjetas, dinero en efectivo y dinero en cuenta de Mercado Pago.
- * Version: 4.0.4
+ * Version: 4.0.5
  * Author: Mercado Pago
  * Author URI: https://www.mercadopago.com.br/developers/
  * Text Domain: woocommerce-mercadopago
@@ -32,12 +32,11 @@ if ( ! defined( 'WC_MERCADOPAGO_BASENAME' ) ) {
  *
  * @since 3.0.1
  */
-function wc_mercado_pago_load_plugin_textdomain()
+function woocommerce_mercadopago_load_plugin_textdomain()
 {
     load_plugin_textdomain('woocommerce-mercadopago', false, dirname(plugin_basename(__FILE__)) . '/i18n/languages/');
 }
-
-add_action('init', 'wc_mercado_pago_load_plugin_textdomain');
+add_action( 'plugins_loaded', 'woocommerce_mercadopago_load_plugin_textdomain' );
 
 /**
  * Notice about unsupported PHP version.

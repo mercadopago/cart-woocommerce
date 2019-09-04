@@ -43,7 +43,7 @@ document.getElementById("woocommerce_woo-mercado-pago-ticket_checkout_payments_a
     var collapse_title = document.querySelector("#woocommerce_woo-mercado-pago-ticket_checkout_advanced_settings");
     var collapse_table = collapse_title.nextElementSibling;
     collapse_table.style.display = "none";
-    collapse_title.style.cursor = "mp-pointer";
+    collapse_title.style.cursor = "pointer";
 
     collapse_title.innerHTML += "<span class='btn-collapsible' id='header_plus' style='display:block'>+</span>\
             <span class='btn-collapsible' id='header_less' style='display:none'>-</span>";
@@ -70,7 +70,7 @@ document.getElementById("woocommerce_woo-mercado-pago-ticket_checkout_payments_a
     var collapse_description_2 = document.querySelector("#woocommerce_woo-mercado-pago-ticket_checkout_payments_advanced_description");
     collapse_table_2.style.display = "none";
     collapse_description_2.style.display = "none";
-    collapse_title_2.style.cursor = "mp-pointer";
+    collapse_title_2.style.cursor = "pointer";
 
     collapse_title_2.innerHTML += "<span class='btn-collapsible' id='header_plus_2' style='display:block'>+</span>\
             <span class='btn-collapsible' id='header_less_2' style='display:none'>-</span>";
