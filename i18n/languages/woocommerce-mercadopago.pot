@@ -1,1136 +1,1491 @@
-# WordPress Blank Pot
-# Copyright (C) 2014 ...
-# This file is distributed under the GNU General Public License v2 or later.
-#, fuzzy
+# Copyright (C) 2019 Mercado Pago
+# This file is distributed under the same license as the WooCommerce Mercado Pago plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: WordPress Blank Pot v1.0.0\n"
-"POT-Creation-Date: 2019-09-03 20:50-0300\n"
-"PO-Revision-Date: \n"
-"Language-Team: Product Development <translations@example.com>\n"
-"Report-Msgid-Bugs-To: Translator Name <translations@example.com>\n"
+"Project-Id-Version: WooCommerce Mercado Pago 4.0.5\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-mercadopago\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Textdomain-Support: yesX-Generator: Poedit 1.6.4\n"
-"X-Poedit-SourceCharset: UTF-8\n"
-"X-Poedit-KeywordsList: __;_e;esc_html_e;esc_html_x:1,2c;esc_html__;esc_attr_e;esc_attr_x:1,2c;esc_attr__;_ex:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2;_x:1,2c;_n:1,2;_n_noop:1,2;__ngettext:1,2;__ngettext_noop:1,2;_c,_nc:4c,1,2\n"
-"X-Poedit-Basepath: ../Documents/woocommerce (MAMP)/wp-content/plugins/woo-mercado-pago-module\n"
-"X-Generator: Poedit 2.2.3\n"
-"Last-Translator: \n"
-"Language: es_MX\n"
-"X-Poedit-SearchPath-0: .\n"
+"POT-Creation-Date: 2019-09-05T10:41:09-04:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.3.0\n"
+"X-Domain: woocommerce-mercadopago\n"
 
-msgid "Mercado Pago - Checkout básico"
+#. Plugin Name of the plugin
+msgid "WooCommerce Mercado Pago"
 msgstr ""
 
-msgid "Paga con el medio de pago que prefieras"
+#. Plugin URI of the plugin
+msgid "https://github.com/mercadopago/cart-woocommerce"
 msgstr ""
 
-msgid "Ofrece todos los medios de pago: tarjetas de crédito y débito, dinero en efectivo y dinero en cuenta. Tus clientes eligen si pagan como invitados o desde su cuenta de Mercado Pago."
-msgstr ""
-
-msgid "Checkout Básico. Acepta todos los medios de pago y lleva tus cobros a otro nivel %s"
-msgstr ""
-
-msgid "Convierte tu tienda online en la pasarela de pagos preferida de tus clientes. Elige si la experiencia de pago final será dentro o fuera de tu tienda."
-msgstr ""
-
-msgid "Configura WooCommerce Mercado Pago"
-msgstr ""
-
-msgid "Ve a lo básico. Coloca la información de tu negocio."
-msgstr ""
-
-msgid "Configura las preferencias de pago en tu tienda"
-msgstr ""
-
-msgid "Configuración Avanzada de la experiencia de pago"
-msgstr ""
-
-msgid "Método de integración"
-msgstr ""
-
-msgid "Define qué experiencia de pago tendrán tus clientes, si dentro o fuera de tu tienda."
-msgstr ""
-
-msgid "Redirect"
-msgstr ""
-
-msgid "Modal"
-msgstr ""
-
-msgid "Esto parece ser una URL no válida."
-msgstr ""
-
-msgid "Elige la URL que mostraremos a tus clientes cuando terminen su compra."
-msgstr ""
-
-msgid "URL de éxito"
-msgstr ""
-
-msgid "Elige la URL que mostraremos a tus clientes cuando rechacemos su compra. Asegurate de que incluya un mensaje adecuado a la situación y dales información útil para que puedan solucionarlo."
-msgstr ""
-
-msgid "URL de pago rechazado"
-msgstr ""
-
-msgid "Elige la URL que mostraremos a tus clientes cuando tengan un pago pendiente de aprobación."
-msgstr ""
-
-msgid "URL de pago pendiente"
-msgstr ""
-
-msgid "Selecciona tarjetas de crédito"
-msgstr ""
-
-msgid "Selecciona tarjetas de débito"
-msgstr ""
-
-msgid "Selecciona pagos offline"
-msgstr ""
-
-msgid "Medios de pago"
-msgstr ""
-
-msgid "Selecciona los medios de pago disponibles en tu tienda."
-msgstr ""
-
-msgid "Habilita los medios de pago disponibles para tus clientes."
-msgstr ""
-
-msgid "Volver a la tienda"
-msgstr ""
-
-msgid "Que tu cliente vuelva automáticamente a la tienda después del pago."
-msgstr ""
-
-msgid "Sí"
-msgstr ""
-
-msgid "No"
-msgstr ""
-
-msgid "Mercado Pago - Checkout personalizado"
-msgstr ""
-
-msgid "Paga con dinero en efectivo"
-msgstr ""
-
-msgid "Acepta pagos en efectivo dentro del checkout personalizado y amplía las opciones de compra de tus clientes."
-msgstr ""
-
-msgid "Checkout de pagos con dinero en efectivo<br> Acepta pagos presenciales ¡no dejes a nadie afuera! %s"
-msgstr ""
-
-msgid "Diseña y adapta la experiencia de pago final que quieras ofrecer en tu sitio web o aplicación y maximiza la conversión de tu negocio con nuestras opciones de personalización"
-msgstr ""
-
-msgid "Configurá las preferencias de pago con dinero en efectivo"
-msgstr ""
-
-msgid "Configuración avanzada de la experiencia de pago en efectivo"
-msgstr ""
-
-msgid "Reducir inventario"
-msgstr ""
-
-msgid "Activa la reducción del inventario durante la creación de un pedido, se acredite o no el pago final. Desactiva esta opción para reducirlo solo cuando los pagos estén aprobados."
-msgstr ""
-
-msgid "Vencimiento del pago"
-msgstr ""
-
-msgid "En cuántos días caducarán los pagos en efectivo."
-msgstr ""
-
-msgid "Todos los medios de pago"
-msgstr ""
-
-msgid "Se produjo un problema al procesar su pago. ¿Está seguro de que ha llenado correctamente toda la información en el formulario de pago?"
-msgstr ""
-
-msgid "El cliente no ha pagado todavía."
-msgstr ""
-
-msgid "Para imprimir nuevamente el ticket hace clic "
-msgstr ""
-
-msgid "aquí"
-msgstr ""
-
-msgid "Un problema se produjo al procesar su pago. ¿Esta seguro que ha rellenado correctamente toda la información en el formulario de checkout?"
-msgstr ""
-
-msgid "Un problema se produjo al procesar su pago. Por favor, inténtelo de nuevo."
-msgstr ""
-
-msgid "Title"
-msgstr ""
-
-msgid "Description"
-msgstr ""
-
-msgid "Sigue estos pasos para activar Mercado Pago en tu tienda:"
-msgstr ""
-
-msgid "Carga tus <b>credenciales</b> para testear la tienda y cobrar con tu cuenta de Mercado Pago <b>según el país</b> en el que estés registrado."
-msgstr ""
-
-msgid "Homologa tu cuenta para poder cobrar."
-msgstr ""
-
-msgid "Añade la información básica de tu negocio en la configuración del plugin."
-msgstr ""
-
-msgid "Configura las <b>preferencias de pago</b> para tus clientes."
-msgstr ""
-
-msgid "Ve a <b>configuraciones avanzadas</b> tanto del plugin como del checkout solo cuando quieras modificar los ajustes preestablecidos."
-msgstr ""
-
-msgid "Las credenciales son las claves que te proporcionamos para que integres de forma rápida <br>y segura. Debes tener una %s en Mercado Pago para obtenerlas y cobrar <br>en tu sitio web.  No necesitas saber diseñar o programar para hacerlo."
-msgstr ""
-
-msgid "cuenta homologada"
-msgstr ""
-
-msgid "¿En qué país opera tu cuenta de Mercado Pago?"
-msgstr ""
-
-msgid "Selecciona tu país"
-msgstr ""
-
-msgid "Selecciona el país en el que operas con Mercado Pago"
-msgstr ""
-
-msgid "Guardar cambios"
-msgstr ""
-
-msgid "Activar checkout"
-msgstr ""
-
-msgid "Activa la experiencia de Mercado Pago en el checkout de tu tienda."
-msgstr ""
-
-msgid "Ingresa tus credenciales y elige cómo operar"
-msgstr ""
-
-msgid "Modo Pruebas"
-msgstr ""
-
-msgid "Por defecto, te activamos el entorno de pruebas Sandbox para que hagas testeos antes de empezar a vender."
-msgstr ""
-
-msgid "Modo Producción"
-msgstr ""
-
-msgid "Cuando veas que todo va bien, desactivá Sandbox, prendé Producción y abrí paso a tus ventas online."
-msgstr ""
-
-msgid "Producción"
-msgstr ""
-
-msgid "Elige “SÍ” solo cuando estés listo para vender. Cambia a NO para activar el modo Pruebas."
-msgstr ""
-
-msgid "Cargar credenciales"
-msgstr ""
-
-msgid "Buscar mis credenciales"
-msgstr ""
-
-msgid "Credenciales de prueba"
-msgstr ""
-
-msgid "Con estas claves podrás <b>hacer las pruebas</b> que quieras."
-msgstr ""
-
-msgid "Public key"
-msgstr ""
-
-msgid "Access token"
-msgstr ""
-
-msgid "Credenciales para producción"
-msgstr ""
-
-msgid "Con estas claves podrás <b>recibir pagos reales</b> de tus clientes."
-msgstr ""
-
-msgid "Homologa tu cuenta, solo te llevará unos minutos"
-msgstr ""
-
-msgid "Completa este proceso para asegurar los datos de tus clientes y cumplir con las normas<br> o disposiciones legales de cada país."
-msgstr ""
-
-msgid "Homologar cuenta en Mercado Pago"
-msgstr ""
-
-msgid "Descripción de la tienda"
-msgstr ""
-
-msgid "Este nombre aparecerá en la factura de tus clientes."
-msgstr ""
-
-msgid "Mercado Pago"
-msgstr ""
-
-msgid "Categoría de la tienda"
-msgstr ""
-
-msgid "¿A qué categoría pertenecen tus productos? Elige la que mejor los caracteriza (elige <br>“otro” si tu producto es demasiado específico)."
-msgstr ""
-
-msgid "Categrorías"
-msgstr ""
-
-msgid "ID de la tienda"
-msgstr ""
-
-msgid "Usa un número o prefijo para identificar pedidos y pagos provenientes de esta tienda."
-msgstr ""
-
-msgid "WC-"
-msgstr ""
-
-msgid "Ajustes avanzados"
-msgstr ""
-
-msgid "Modo Debug y Log"
-msgstr ""
-
-msgid "Graba las acciones de tu tienda en nuestro archivo de cambios para tener más información de soporte."
-msgstr ""
-
-msgid "Depuramos la información de nuestro archivo de cambios."
-msgstr ""
-
-msgid "Configuración Básica"
-msgstr ""
-
-msgid "Habilita Mercado Pago en tu tienda online, selecciona los medios de pago disponibles para tus clientes y <br> define el máximo de cuotas en el que podrán pagarte."
-msgstr ""
-
-msgid "Máximo de cuotas"
-msgstr ""
-
-msgid "¿Cuál es el máximo de cuotas con las que un cliente puede comprar?"
-msgstr ""
-
-msgid "1x cuota"
-msgstr ""
-
-msgid "2x cuotas"
-msgstr ""
-
-msgid "3x cuotas"
-msgstr ""
-
-msgid "4x cuotas"
-msgstr ""
-
-msgid "5x cuotas"
-msgstr ""
-
-msgid "6x cuotas"
-msgstr ""
-
-msgid "10x cuotas"
-msgstr ""
-
-msgid "12x cuotas"
-msgstr ""
-
-msgid "15x cuotas"
-msgstr ""
-
-msgid "18x cuotas"
-msgstr ""
-
-msgid "24x cuotas"
-msgstr ""
-
-msgid "URL para IPN"
-msgstr ""
-
-msgid "Ingresa una URL para recibir notificaciones de pagos. En %s puedes consultar más información."
-msgstr ""
-
-msgid "IPN (Instant Payment Notification) es una notificación de eventos que se realizan en tu plataforma y que se envía de un servidor a otro mediante una llamada HTTP POST. Consulta más información en nuestras guías."
-msgstr ""
-
-msgid "Edita estos campos avanzados solo cuando quieras modificar los valores preestablecidos."
-msgstr ""
-
-msgid "Cupones de descuento"
-msgstr ""
-
-msgid "¿Ofrecerás cupones de descuento a los clientes que compren con Mercado Pago?"
-msgstr ""
-
-msgid "Parece que sus credenciales no están configuradas correctamente.<br/>Por favor, vaya a %s y configúrelo."
-msgstr ""
-
-msgid "Mercado Pago Configuración"
-msgstr ""
-
-msgid "Título mostrado al cliente en el checkout."
-msgstr ""
-
-msgid "Modo binario"
-msgstr ""
-
-msgid "Acepta y rechaza pagos de forma automática. ¿Quieres que lo activemos?"
-msgstr ""
-
-msgid "Si activas el modo binario no podrás dejar pagos pendientes. Esto puede afectar la prevención de fraude. Dejalo inactivo para estar respaldado por nuestra propia herramienta."
-msgstr ""
-
-msgid "Descuentos Gateway"
-msgstr ""
-
-msgid "Elige un valor porcentual que quieras descontar a tus clientes por pagar con Mercado Pago."
-msgstr ""
-
-msgid "Comisión por compra con Mercado Pago"
-msgstr ""
-
-msgid "Elige un valor porcentual adicional que quieras cobrar como comisión a tus clientes por pagar con Mercado Pago."
-msgstr ""
-
-msgid "¿Todo listo para el despegue de tus ventas?"
-msgstr ""
-
-msgid "¿Todo configurado? Ve a tu tienda en modo Sandbox"
-msgstr ""
-
-msgid "Visita tu tienda como si fueras uno de tus clientes y revisa que todo esté bien. Si ya saliste a Producción,<br> trae a tus clientes y aumenta tus ventas con la mejor experiencia de compra online."
-msgstr ""
-
-msgid "Visita tu tienda como si fueras uno de tus mejores clientes. Revisa que todo esté bien para impresionarlos<br> y aumentar tus ventas. Quiero testear mis ventas"
-msgstr ""
-
-msgid "Quiero testear mis ventas"
-msgstr ""
-
-msgid "Visitar mi tienda"
-msgstr ""
-
-msgid "Paga con tarjetas de crédito o débito"
-msgstr ""
-
-msgid "Acepta pagos con tarjeta en tu sitio web con la mejor financiación posible y maximiza la conversión de tu negocio. Con el checkout personalizado tus clientes pagan ¡sin salir de tu tienda!"
-msgstr ""
-
-msgid "Checkout de pagos con tarjetas de débito y crédito<br> Acepta pagos al instante y maximiza la conversión de tu negocio %s"
-msgstr ""
-
-msgid "Convierte tu tienda online en una pasarela de pagos segura y fácil de usar para tus clientes. Con el checkout personalizado tus clientes pagan ¡sin salir de tu tienda!"
-msgstr ""
-
-msgid "Configura la experiencia de pago en tu tienda"
-msgstr ""
-
-msgid "Configura la experiencia de pago personalizada en tu tienda"
-msgstr ""
-
-msgid "Configuración avanzada de la experiencia de pago personalizada"
-msgstr ""
-
-msgid "Listo, su pago ha sido aceptado!"
-msgstr ""
-
-msgid "Estamos procesando su pago. En menos de una hora le enviaremos el resultado por correo electrónico."
-msgstr ""
-
-msgid "Estamos procesando su pago. En menos de 2 días le enviaremos por correo electrónico si se ha aprobado el pago o si se necesita información adicional."
-msgstr ""
-
-msgid "Compruebe el número de tarjeta."
-msgstr ""
-
-msgid "Compruebe la fecha de expiración."
-msgstr ""
-
-msgid "Compruebe la información informada."
-msgstr ""
-
-msgid "Compruebe el código de seguridad informado."
-msgstr ""
-
-msgid "No se puede procesar su pago."
-msgstr ""
-
-msgid "Usted debe autorizar los pagos de sus órdenes."
-msgstr ""
-
-msgid "Póngase en contacto con el emisor de su tarjeta para activarla. El teléfono se encuentra en la parte posterior de su tarjeta."
-msgstr ""
-
-msgid "Usted ya realizó un pago de este importe. Si tiene que pagar de nuevo, utilizar otra tarjeta u otro medio de pago."
-msgstr ""
-
-msgid "Su pago fue rechazado. Por favor seleccione otro medio de pago. Se recomienda en efectivo."
-msgstr ""
-
-msgid "Su pago no tiene fondos suficientes."
-msgstr ""
-
-msgid "El pago no puede procesar la cuota seleccionada."
-msgstr ""
-
-msgid "Has alcanzado el límite de intentos permitidos. Elija otra tarjeta u otro medio de pago."
-msgstr ""
-
-msgid "Esta medio de pago no puede procesar su pago."
-msgstr ""
-
-msgid "Pago aprobado"
-msgstr ""
-
-msgid "Ver su hoja de pedido"
-msgstr ""
-
-msgid "Su pago fue rechazado. Puede intentarlo de nuevo."
-msgstr ""
-
-msgid "Haz clic para intentarlo de nuevo"
-msgstr ""
-
-msgid "A problem was occurred when processing your payment. Are you sure you have correctly filled all information in the checkout form?"
-msgstr ""
-
-msgid "A problem was occurred when processing your payment. Please, try again."
-msgstr ""
-
-msgid "Obrigado pela sua compra. Por favor, transfiera el dinero para tener su compra aprobada."
-msgstr ""
-
-msgid "Transferir"
-msgstr ""
-
-msgid "Descuento para el cupón %s"
-msgstr ""
-
-msgid "Descuento de"
-msgstr ""
-
-msgid "Tarifa de"
-msgstr ""
-
-msgid " y Tarifa de"
-msgstr ""
-
-msgid "Gracias por su compra. Por favor, prosiga a la página de pago haciendo click en el botón de abajo."
-msgstr ""
-
-msgid "Pagar con Mercado Pago"
-msgstr ""
-
-msgid "Cancelar & Limpiar carrito"
-msgstr ""
-
-msgid "Se ha producido un error en el procesamiento de su pago. Por favor, inténtelo de nuevo o póngase en contacto con nosotros para Asistencia."
-msgstr ""
-
-msgid "Haga clic para intentarlo de nuevo"
-msgstr ""
-
-msgid "Gracias por su orden. Por favor, realice el pago del ticket para tener su orden aprobada."
-msgstr ""
-
-msgid "Imprimir el ticket"
-msgstr ""
-
-msgid "Mercado Pago Subscription"
-msgstr ""
-
-msgid "Operation successfully completed."
-msgstr ""
-
-msgid "This operation could not be completed."
-msgstr ""
-
-msgid "Payment ID:"
-msgstr ""
-
-msgid "Amount:"
-msgstr ""
-
-msgid "Refund Payment"
-msgstr ""
-
-msgid "Cancel Payment"
-msgstr ""
-
-msgid "A recurrent product is a signature that should be bought isolated in your cart. Please, create separated orders."
-msgstr ""
-
-msgid "Recurrent Product"
-msgstr ""
-
-msgid "Make this product a subscription."
-msgstr ""
-
-msgid "Frequency"
-msgstr ""
-
-msgid "Amount of time (in days or months) for the execution of the next payment."
-msgstr ""
-
-msgid "Frequency type"
-msgstr ""
-
-msgid "Indicates the period of time."
-msgstr ""
-
-msgid "Days"
-msgstr ""
-
-msgid "Months"
-msgstr ""
-
-msgid "End date"
-msgstr ""
-
-msgid "Deadline to generate new charges. Defaults to never if blank."
-msgstr ""
-
-msgid "Mercado Pago - PSE"
-msgstr ""
-
-msgid "Customer haven't paid yet."
-msgstr ""
-
-msgid "Link to bank transfer "
-msgstr ""
-
-msgid "here"
-msgstr ""
-
-msgid "Shipping service used by store"
-msgstr ""
-
-msgid "Discount provided by store"
-msgstr ""
-
-msgid "Please, inform your email in billing address to use this feature"
-msgstr ""
-
-msgid "Mercado Pago Request Failure"
-msgstr ""
-
-msgid "Payer email"
-msgstr ""
-
-msgid "Payment type"
-msgstr ""
-
-msgid "Payment approved."
-msgstr ""
-
-msgid "Waiting for the bank transfer."
-msgstr ""
-
-msgid "Payment under review."
-msgstr ""
-
-msgid "The payment was refused. The customer can try again."
-msgstr ""
-
-msgid "The payment was refunded to the customer."
-msgstr ""
-
-msgid "The payment was cancelled."
-msgstr ""
-
-msgid "The payment is under mediation or it was charged-back."
-msgstr ""
-
-msgid "Esperando el pago del ticket."
-msgstr ""
-
-msgid "El cliente todavía no efectuó el pago."
-msgstr ""
-
-msgid "El pago está pendiente de revisión."
-msgstr ""
-
-msgid "El pago fue rechazado. El cliente puede intentar nuevamente."
-msgstr ""
-
-msgid "El pago fue devuelto al cliente."
-msgstr ""
-
-msgid "El pago fue cancelado."
-msgstr ""
-
-msgid "El pago esta en mediación o la compra fue desconocida por el cliente."
-msgstr ""
-
-msgid "Email del comprador"
-msgstr ""
-
-msgid "Envío Gratuito"
-msgstr ""
-
-msgid "Etiqueta lista para imprimir"
-msgstr ""
-
-msgid "Etiqueta impresa"
-msgstr ""
-
-msgid "Fracasado"
-msgstr ""
-
-msgid "Envío retrasado"
-msgstr ""
-
-msgid "Destinatario ausente para envío"
-msgstr ""
-
-msgid "Volviendo al remitente"
-msgstr ""
-
-msgid "El comprador ha iniciado una discusión y pide un extorno."
-msgstr ""
-
-msgid "Pedido"
-msgstr ""
-
-msgid "Hola,"
-msgstr ""
-
-msgid "Su pedido"
-msgstr ""
-
-msgid "hecho en"
-msgstr ""
-
-msgid "utilizó el Mercado Envíos como su medio de envío."
-msgstr ""
-
-msgid "Usted puedes rastrearlo con lo siguiente código de rastreamiento:"
-msgstr ""
-
-msgid "Saludos."
-msgstr ""
-
-msgid "Por favor, introduzca su email en la dirección de facturación para utilizar este servicio"
-msgstr ""
-
-msgid "La solicitud de Mercado Pago ha fallado"
-msgstr ""
-
-msgid "Medio de pago"
-msgstr ""
-
-msgid "Complete sus credenciales para habilitar el medios de pago."
-msgstr ""
-
-msgid "Descartar"
-msgstr ""
-
-msgid "¡El módulo de pago de Woo Mercado depende de la última versión de% s para ejecutar!"
-msgstr ""
-
-msgid "Configurar"
-msgstr ""
-
-msgid "Tu opnión nos ayuda a mejorar"
-msgstr ""
-
-msgid "Guías y Documentación"
-msgstr ""
-
-msgid "Informar Problema"
-msgstr ""
-
-msgid "Por Mercado Pago"
-msgstr ""
-
-msgid "¡El <strong> Sponsor ID </strong> debe ser válido!"
-msgstr ""
-
-msgid "¡El <strong>Sponsor ID</strong> debe ser del mismo país que el vendedor!"
-msgstr ""
-
-msgid "El medio de pago no es válido o no está disponible."
-msgstr ""
-
-msgid "El monto de transacción no puede ser procesado por Mercado Pago."
-msgstr ""
-
-msgid "Posibles causas: Moneda no soportada; Montos por debajo del mínimo o por encima del máximo permitido."
-msgstr ""
-
-msgid "Los usuários no son válidos."
-msgstr ""
-
-msgid "Posibles causas: Comprador y vendedor tienen la misma cuenta en Mercado Pago; La transacción involucrando usuários de producción y de prueba."
-msgstr ""
-
-msgid "Uso no autorizado de credenciales de producción."
-msgstr ""
-
-msgid "Posibles causas: Pendencia de permiso de uso en producción para la credencial del vendedor."
-msgstr ""
-
-msgid "ERROR: No fue posible convertir la moneda no soportada"
-msgstr ""
-
-msgid "para"
-msgstr ""
-
-msgid "Las conversiones de monedas deben hacerse fuera de este módulo."
-msgstr ""
-
-msgid "ATENCION: La moneda"
-msgstr ""
-
-msgid "definida en WooCommerce es diferente la utilizada por las credenciales de su país.<br>La moneda para las transacciones hechas con este método de pago será"
-msgstr ""
-
-msgid "Las conversiones de moneda deben hacerse fuera de este módulo."
-msgstr ""
-
-msgid "MONEDA CONVERTIDA: Su tienda está convirtiendo moneda de"
-msgstr ""
-
-msgid "Colombia"
-msgstr ""
-
-msgid "Argentina"
-msgstr ""
-
-msgid "Brasil"
-msgstr ""
-
-msgid "Chile"
-msgstr ""
-
-msgid "México"
-msgstr ""
-
-msgid "Uruguay"
-msgstr ""
-
-msgid "Venezuela"
-msgstr ""
-
-msgid "Peru"
-msgstr ""
-
-msgid "Actualizar la orden de WooCommerce para "
-msgstr ""
-
-msgid "Servicio de envío utilizado por la tienda."
-msgstr ""
-
-msgid "Descuento proporcionado por la tienda"
-msgstr ""
-
-msgid "Importante:"
-msgstr ""
-
-msgid "La tienda debe tener HTTPS para ver los medios de pago."
-msgstr ""
-
-msgid "Mercado Envios es un método de envío disponible solo para pagos con Mercado Pago."
-msgstr ""
-
-msgid "Envío gratis"
-msgstr ""
-
-msgid "Día"
-msgstr ""
-
-msgid "Dias"
-msgstr ""
-
-msgid "Habilite los dos métodos de envío: Mercado Envios (Express y Normal) para el correcto funcionamiento del módulo."
-msgstr ""
-
-msgid "Mercado Envios"
-msgstr ""
-
-msgid "Esto controla el título que el usuario ve durante el proceso de pago."
-msgstr ""
-
-msgid "Habilitar envío gratis para este método de envío"
-msgstr ""
-
-msgid "El tiempo de entrega"
-msgstr ""
-
-msgid "Mostrar el tiempo estimado de entrega"
-msgstr ""
-
-msgid "Mostrar el tiempo estimado de entrega en días laborables."
-msgstr ""
-
-msgid "El plugin de Mercado Pago requiere la versión de PHP 5.6 o posterior. Por favor actualice su versión de PHP."
-msgstr ""
-
-msgid "Parece que ya tienes instalado el módulo de Mercado Pago. Por favor, desinstálalo antes de usar esta versión."
-msgstr ""
-
-msgid "Cancelar orden"
-msgstr ""
-
-msgid "Paga con tarjetas de débito y crédito"
-msgstr ""
-
-msgid "Con qué Tarjetas puedo pagar"
-msgstr ""
-
-msgid "Ver promociones vigentes"
-msgstr ""
-
-msgid "Tarjetas de crédito"
-msgstr ""
-
-msgid "Tarjetas de débito"
-msgstr ""
-
-msgid "Ingresa tu cupón de descuento"
-msgstr ""
-
-msgid "Ingresa tu cupón"
-msgstr ""
-
-msgid "Aplicar"
-msgstr ""
-
-msgid "El código que ingresaste es incorrecto"
-msgstr ""
-
-msgid "Ingresa los datos de tu tarjeta"
-msgstr ""
-
-msgid "Tu tarjeta"
-msgstr ""
-
-msgid "terminó en"
-msgstr ""
-
-msgid "Otras tarjetas"
-msgstr ""
-
-msgid "Otra tarjeta"
-msgstr ""
-
-msgid "CVV"
-msgstr ""
-
-msgid "Este campo no puede estar vacío"
-msgstr ""
-
-msgid "Código de seguridad invalido"
-msgstr ""
-
-msgid "Número de Tarjeta"
-msgstr ""
-
-msgid "Numero de tarjeta invalido"
-msgstr ""
-
-msgid "Nombre y apellido del titular de la tarjeta"
-msgstr ""
-
-msgid "Nombre del titular de la tarjeta no válido"
-msgstr ""
-
-msgid "Fecha de vencimiento"
-msgstr ""
-
-msgid "Fecha de expiracion inválida"
-msgstr ""
-
-msgid "Código de seguridad"
-msgstr ""
-
-msgid "Últimos 3 números del dorso"
-msgstr ""
-
-msgid "En cuántas cuotas quieres pagar"
-msgstr ""
-
-msgid "Banco emisor"
-msgstr ""
-
-msgid "Pago convertido de"
-msgstr ""
-
-msgid "Seleccione el número de cotas"
-msgstr ""
-
-msgid "Ingresa tu número de documento"
-msgstr ""
-
-msgid "Tipo"
-msgstr ""
-
-msgid "Número de documento"
-msgstr ""
-
-msgid "Sólo números"
-msgstr ""
-
-msgid "Número de documento no válido"
-msgstr ""
-
-msgid "No guardar la tarjeta"
-msgstr ""
-
-msgid "Campo obligatorio"
-msgstr ""
-
-msgid "Retirar"
-msgstr ""
-
-msgid "Por favor, informe su código de cupón"
-msgstr ""
-
-msgid "Elegir"
-msgstr ""
-
-msgid "Otro banco"
-msgstr ""
-
-msgid "Salvarás"
-msgstr ""
-
-msgid "con descuento de"
-msgstr ""
-
-msgid "Total de su compra:"
-msgstr ""
-
-msgid "Total de su compra con descuento:"
-msgstr ""
-
-msgid "*Tras la aprobación del pago"
-msgstr ""
-
-msgid "Términos y condiciones de uso"
-msgstr ""
-
-msgid "Pagar con Mercado Pago es fácil y seguro."
-msgstr ""
-
-msgid "Persona Física"
-msgstr ""
-
-msgid "Persona Jurídica"
-msgstr ""
-
-msgid "Nome"
-msgstr ""
-
-msgid "Razão social"
-msgstr ""
-
-msgid "Debes informar tu nombre"
-msgstr ""
-
-msgid "Apellido"
-msgstr ""
-
-msgid "Debes informar tu apellido"
-msgstr ""
-
-msgid "CPF"
-msgstr ""
-
-msgid "CNPJ"
-msgstr ""
-
-msgid "Debe informar su número de documento"
-msgstr ""
-
-msgid "Dirección"
-msgstr ""
-
-msgid "Debes informar tu dirección"
-msgstr ""
-
-msgid "Numero"
-msgstr ""
-
-msgid "Debe informar su número de dirección"
-msgstr ""
-
-msgid "Ciudad"
-msgstr ""
-
-msgid "Debes informar a tu ciudad"
-msgstr ""
-
-msgid "Estado"
-msgstr ""
-
-msgid "Seleccione estado"
-msgstr ""
-
-msgid "Debes informar a tu estado"
-msgstr ""
-
-msgid "Código postal"
-msgstr ""
-
-msgid "Debes informar tu código postal"
-msgstr ""
-
-msgid "Completa todos los campos, son obligatorios."
-msgstr ""
-
-msgid "Selecciona el emisor con el que quieras procesar el pago"
-msgstr ""
-
-msgid "Usa el medio de pago que prefieras."
-msgstr ""
-
-msgid "Hasta"
-msgstr ""
-
-msgid "cuotas"
-msgstr ""
-
-msgid "Pagos en efectivo"
-msgstr ""
-
-msgid "Te llevamos a nuestro sitio para completar el pago"
-msgstr ""
-
+#. Description of the plugin
 msgid "Configura las opciones de pago a tu medida y acepta pagos con tarjetas, dinero en efectivo y dinero en cuenta de Mercado Pago."
 msgstr ""
 
+#. Author of the plugin
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:833
+msgid "Mercado Pago"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://www.mercadopago.com.br/developers/"
+msgstr ""
+
+#: includes/admin/WC_MercadoEnvios_Admin_Orders.php:57
+msgid "Tracking code:"
+msgstr ""
+
+#: includes/admin/WC_MercadoEnvios_Admin_Orders.php:65
+msgid "Tag:"
+msgstr ""
+
+#: includes/admin/WC_MercadoEnvios_Admin_Orders.php:68
+msgid "Print"
+msgstr ""
+
+#: includes/admin/WC_MercadoEnvios_Admin_Orders.php:71
+msgid "Shipping is pending"
+msgstr ""
+
+#: includes/module/preference/WC_WooMercadoPago_PreferenceAbstract.php:189
+msgid "Servicio de envío utilizado por la tienda."
+msgstr ""
+
+#: includes/module/preference/WC_WooMercadoPago_PreferenceCustom.php:78
+#: includes/module/preference/WC_WooMercadoPago_PreferenceCustom.php:79
+msgid "Discount provided by store"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Configs.php:112
+msgid "La tienda debe tener HTTPS para ver los medios de pago."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Configs.php:118
+#: includes/module/WC_WooMercadoPago_Module.php:250
+msgid "Descartar"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:244
+msgid "Complete sus credenciales para habilitar el medios de pago."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:263
+msgid "¡El módulo de pago de Woo Mercado depende de la última versión de% s para ejecutar!"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:273
+msgid "Configurar"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:274
+msgid "Tu opnión nos ayuda a mejorar"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:275
+msgid "Guías y Documentación"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:276
+msgid "Informar Problema"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:293
+msgid "Por Mercado Pago"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:318
+#: includes/module/WC_WooMercadoPago_Module.php:339
+msgid "¡El <strong> Sponsor ID </strong> debe ser válido!"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:335
+msgid "¡El <strong>Sponsor ID</strong> debe ser del mismo país que el vendedor!"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:367
+msgid "El medio de pago no es válido o no está disponible."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:370
+msgid "El monto de transacción no puede ser procesado por Mercado Pago."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:371
+msgid "Posibles causas: Moneda no soportada; Montos por debajo del mínimo o por encima del máximo permitido."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:374
+msgid "Los usuários no son válidos."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:375
+msgid "Posibles causas: Comprador y vendedor tienen la misma cuenta en Mercado Pago; La transacción involucrando usuários de producción y de prueba."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:378
+msgid "Uso no autorizado de credenciales de producción."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:379
+msgid "Posibles causas: Pendencia de permiso de uso en producción para la credencial del vendedor."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:529
+msgid "ERROR: No fue posible convertir la moneda no soportada"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:531
+msgid "a"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:532
+msgid "Las conversiones de monedas deben hacerse fuera de este módulo."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:539
+msgid "ATENCION: La moneda"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:541
+msgid "definida en WooCommerce es diferente la utilizada por las credenciales de su país.<br>La moneda para las transacciones hechas con este método de pago será"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:543
+msgid "Las conversiones de moneda deben hacerse fuera de este módulo."
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:550
+msgid "MONEDA CONVERTIDA: Su tienda está convirtiendo moneda de"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:552
+#: templates/checkout/custom_checkout.php:166
+msgid "para"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:559
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:497
+msgid "Colombia"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:561
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:494
+msgid "Argentina"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:563
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:495
+msgid "Brasil"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:565
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:496
+msgid "Chile"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:567
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:498
+msgid "México"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:569
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:500
+msgid "Uruguay"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:571
+msgid "Venezuela"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:573
+msgid "Peru"
+msgstr ""
+
+#: includes/module/WC_WooMercadoPago_Module.php:609
+msgid "Actualizar la orden de WooCommerce para "
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:136
+msgid "Payment approved."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:179
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:182
+msgid "Waiting for the ticket payment."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:188
+msgid "El cliente todavía no efectuó el pago."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:199
+msgid "El pago está pendiente de revisión."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:208
+msgid "El pago fue rechazado. El cliente puede intentar nuevamente."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:217
+msgid "El pago fue devuelto al cliente."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:227
+msgid "El pago fue cancelado."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:237
+#: includes/notification/WC_WooMercadoPago_Notification_Abstract.php:247
+msgid "El pago esta en mediación o la compra fue desconocida por el cliente."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:35
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:40
+#: includes/notification/WC_WooMercadoPago_Notification_Webhook.php:52
+msgid "La solicitud de Mercado Pago ha fallado"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:116
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:141
+#: includes/notification/WC_WooMercadoPago_Notification_Webhook.php:152
+#: includes/notification/WC_WooMercadoPago_Notification_Webhook.php:170
+msgid "Email del comprador"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:119
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:144
+#: includes/notification/WC_WooMercadoPago_Notification_Webhook.php:155
+#: includes/notification/WC_WooMercadoPago_Notification_Webhook.php:173
+msgid "Medio de pago"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:240
+msgid "Etiqueta lista para imprimir"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:243
+msgid "Etiqueta impresa"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:246
+msgid "Fracasado"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:249
+msgid "Envío retrasado"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:252
+msgid "Destinatario ausente para envío"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:255
+msgid "Volviendo al remitente"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:258
+msgid "El comprador ha iniciado una discusión y pide un extorno."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:288
+msgid "Pedido"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:288
+msgid "Mercado Envios Tracking ID"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:289
+msgid "Hola,"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:290
+msgid "Su pedido"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:291
+msgid "hecho en"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:292
+msgid "utilizó el Mercado Envíos como su medio de envío."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:293
+msgid "Usted puedes rastrearlo con lo siguiente código de rastreamiento:"
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_IPN.php:294
+msgid "Saludos."
+msgstr ""
+
+#: includes/notification/WC_WooMercadoPago_Notification_Webhook.php:38
+msgid "Por favor, introduzca su email en la dirección de facturación para utilizar este servicio"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Abstract.php:56
+msgid "Descuento para el cupón %s"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Abstract.php:126
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Abstract.php:128
+msgid "Descuento de"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Abstract.php:126
+msgid " y Tarifa de"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Abstract.php:130
+msgid "Tarifa de"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Abstract.php:355
+msgid "¡Credenciales para producción inválida!"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Abstract.php:365
+msgid "¡Credenciales de prueba inválida!"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Basic.php:74
+msgid "Gracias por su compra. Por favor, prosiga a la página de pago haciendo click en el botón de abajo."
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Basic.php:78
+msgid "Pagar con Mercado Pago"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Basic.php:80
+msgid "Cancelar &amp; Limpiar carrito"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Basic.php:86
+msgid "Se ha producido un error en el procesamiento de su pago. Por favor, inténtelo de nuevo o póngase en contacto con nosotros para Asistencia."
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Basic.php:89
+msgid "Haga clic para intentarlo de nuevo"
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Ticket.php:77
+msgid "Gracias por su orden. Por favor, realice el pago del ticket para tener su orden aprobada."
+msgstr ""
+
+#: includes/payments/hooks/WC_WooMercadoPago_Hook_Ticket.php:82
+msgid "Imprimir el ticket"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:40
+msgid "Suscripción Mercado Pago"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:79
+msgid "La operación se realizó con éxito."
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:80
+msgid "Esta operación no se puede completar."
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:82
+msgid "ID de Pago:"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:83
+msgid "Cantidad:"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:84
+msgid "Reembolso de Pago"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:85
+msgid "Cancelar Pago"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:122
+msgid "Un producto recurrente es una suscripción que debe adquirirse por separado en su carrito. Por favor, hace los pedidos por separado."
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:169
+msgid "Producto Recurrente"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:170
+msgid "Hacer deste producto una suscripción."
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:176
+msgid "Frecuencia"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:179
+msgid "Cantidad de tiempo (en días o meses) para la ejecución del próximo pago."
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:186
+msgid "Tipo de frecuencia"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:188
+msgid "Indica el período de tiempo."
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:190
+msgid "Días"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:191
+msgid "Meses"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:198
+msgid "Fecha final"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:199
+msgctxt "placeholder"
+msgid "YYYY-MM-DD"
+msgstr ""
+
+#: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:201
+msgid "Fecha límite para generar nuevos cargos. De forma predeterminada como nunca, si está en blanco."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:27
+msgid "Mercado Pago - Checkout básico"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:29
+msgid "Paga con el medio de pago que prefieras"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:229
+msgid "Checkout Básico. Acepta todos los medios de pago y lleva tus cobros a otro nivel %s"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:233
+msgid "Convierte tu tienda online en la pasarela de pagos preferida de tus clientes. Elige si la experiencia de pago final será dentro o fuera de tu tienda."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:250
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:204
+msgid "Configura WooCommerce Mercado Pago"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:263
 msgid "Habilitá la experiencia del checkout básico de Mercado Pago en tu tienda online, seleccioná los medios de pago disponibles para tus clientes y<br> definí el máximo de cuotas en el que podrán pagarte."
 msgstr ""
 
-msgid "Incluye esta opción de compra preferida por algunos clientes."
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:276
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:187
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:217
+msgid "Ve a lo básico. Coloca la información de tu negocio."
 msgstr ""
 
-msgid "Habilitá Mercado Pago para pagos en efectivo en tu tienda y <br> seleccioná las opciones disponibles para tus clientes."
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:289
+msgid "Configura las preferencias de pago en tu tienda"
 msgstr ""
 
-msgid "Actualizá tus credenciales con las claves Access Token y Public Key ¡las necesitás para seguir recibiendo pagos!"
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:302
+msgid "Configuración Avanzada de la experiencia de pago"
 msgstr ""
 
-msgid "¡Credenciales para producción inválidas!"
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:315
+msgid "Método de integración"
 msgstr ""
 
-msgid "¡Credenciales de prueba inválidas!"
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:317
+msgid "Define qué experiencia de pago tendrán tus clientes, si dentro o fuera de tu tienda."
 msgstr ""
 
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:320
+msgid "Redirect"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:321
+msgid "Modal"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:335
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:355
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:376
+msgid "Esto parece ser una URL no válida."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:337
+msgid "Elige la URL que mostraremos a tus clientes cuando terminen su compra."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:340
+msgid "URL de éxito"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:357
+msgid "Elige la URL que mostraremos a tus clientes cuando rechacemos su compra. Asegurate de que incluya un mensaje adecuado a la situación y dales información útil para que puedan solucionarlo."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:360
+msgid "URL de pago rechazado"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:378
+msgid "Elige la URL que mostraremos a tus clientes cuando tengan un pago pendiente de aprobación."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:381
+msgid "URL de pago pendiente"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:433
+msgid "Selecciona tarjetas de crédito"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:444
+msgid "Selecciona tarjetas de débito"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:455
+msgid "Selecciona pagos offline"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:464
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:321
+msgid "Medios de pago"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:468
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:325
+msgid "Habilita los medios de pago disponibles para tus clientes."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:486
+msgid "Volver a la tienda"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:489
+msgid "Que tu cliente vuelva automáticamente a la tienda después del pago."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:491
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:548
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:631
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:898
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1018
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1051
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:275
+msgid "Sí"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:492
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:547
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:630
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:897
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1017
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1052
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:274
+msgid "No"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:29
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:27
+msgid "Mercado Pago - Checkout personalizado"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:30
+msgid "Paga con tarjetas de débito y crédito"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:153
+msgid "Checkout de pagos con tarjetas de débito y crédito<br> Acepta pagos al instante y maximiza la conversión de tu negocio %s"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:157
+msgid "Convierte tu tienda online en una pasarela de pagos segura y fácil de usar para tus clientes. Con el checkout personalizado tus clientes pagan ¡sin salir de tu tienda!"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:174
+msgid "Configura la experiencia de pago en tu tienda"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:200
+msgid "Configura la experiencia de pago personalizada en tu tienda"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:213
+msgid "Configuración avanzada de la experiencia de pago personalizada"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:228
+msgid "Listo, su pago ha sido aceptado!"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:230
+msgid "Estamos procesando su pago. En menos de una hora le enviaremos el resultado por correo electrónico."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:232
+msgid "Estamos procesando su pago. En menos de 2 días le enviaremos por correo electrónico si se ha aprobado el pago o si se necesita información adicional."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:234
+msgid "Compruebe el número de tarjeta."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:236
+msgid "Compruebe la fecha de expiración."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:238
+msgid "Compruebe la información informada."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:240
+msgid "Compruebe el código de seguridad informado."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:242
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:248
+msgid "No se puede procesar su pago."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:244
+msgid "Usted debe autorizar los pagos de sus órdenes."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:246
+msgid "Póngase en contacto con el emisor de su tarjeta para activarla. El teléfono se encuentra en la parte posterior de su tarjeta."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:250
+msgid "Usted ya realizó un pago de este importe. Si tiene que pagar de nuevo, utilizar otra tarjeta u otro medio de pago."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:252
+msgid "Su pago fue rechazado. Por favor seleccione otro medio de pago. Se recomienda en efectivo."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:254
+msgid "Su pago no tiene fondos suficientes."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:256
+msgid "El pago no puede procesar la cuota seleccionada."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:258
+msgid "Has alcanzado el límite de intentos permitidos. Elija otra tarjeta u otro medio de pago."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:260
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:262
+msgid "Esta medio de pago no puede procesar su pago."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:402
+msgid "Ver su hoja de pedido"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:414
+msgid "Su pago fue rechazado. Puede intentarlo de nuevo."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:418
+msgid "Haz clic para intentarlo de nuevo"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:440
+msgid "A problem was occurred when processing your payment. Are you sure you have correctly filled all information in the checkout form?"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:449
+msgid "A problem was occurred when processing your payment. Please, try again."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:258
 msgid "%s, solo te llevará unos minutos"
 msgstr ""
 
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:258
 msgid "Homologa tu cuenta"
 msgstr ""
 
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:340
+msgid "Título"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:355
+msgid "Descripción"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:390
+msgid "<b>Sigue estos pasos para activar Mercado Pago en tu tienda:</b>"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:395
+msgid "Carga tus <b>credenciales</b> para testear la tienda y cobrar con tu cuenta de Mercado Pago <b>según el país</b> en el que estés registrado."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:402
+msgid "Homologa tu cuenta para poder cobrar."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:409
+msgid "Añade la información básica de tu negocio en la configuración del plugin."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:416
+msgid "Configura las <b>preferencias de pago</b> para tus clientes."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:423
+msgid "Ve a <b>configuraciones avanzadas</b> tanto del plugin como del checkout solo cuando quieras modificar los ajustes preestablecidos."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:442
+msgid "Las credenciales son las claves que te proporcionamos para que integres de forma rápida <br>y segura. Debes tener una %s en Mercado Pago para obtenerlas y cobrar <br>en tu sitio web.  No necesitas saber diseñar o programar para hacerlo."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:443
+msgid "cuenta homologada"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:460
+msgid "¿En qué país opera tu cuenta de Mercado Pago?"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:489
+msgid "Selecciona tu país"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:491
+msgid "Selecciona el país en el que operas con Mercado Pago"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:499
+msgid "Perú"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:526
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:815
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1148
+msgid "%s"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:527
+msgid "Guardar cambios"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:542
+msgid "Activar checkout"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:545
+msgid "Activa la experiencia de Mercado Pago en el checkout de tu tienda."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:560
+msgid "Ingresa tus credenciales y elige cómo operar"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:573
+msgid "Modo Pruebas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:586
+msgid "Por defecto, te activamos el entorno de pruebas Sandbox para que hagas testeos antes de empezar a vender."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:599
+msgid "Modo Producción"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:612
+msgid "Cuando veas que todo va bien, desactivá Sandbox, prendé Producción y abrí paso a tus ventas online."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:625
+msgid "Producción"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:627
+msgid "Elige “SÍ” solo cuando estés listo para vender. Cambia a NO para activar el modo Pruebas."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:649
+msgid "Cargar credenciales"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:653
+msgid "Buscar mis credenciales"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:672
+msgid "Credenciales de prueba"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:684
+msgid "Con estas claves podrás <b>hacer las pruebas</b> que quieras."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:697
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:754
+msgid "Public key"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:713
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:771
+msgid "Access token"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:729
+msgid "Credenciales para producción"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:741
+msgid "Con estas claves podrás <b>recibir pagos reales</b> de tus clientes."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:788
+msgid "Homologa tu cuenta, solo te llevará unos minutos"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:801
+msgid "Completa este proceso para asegurar los datos de tus clientes y cumplir con las normas<br> o disposiciones legales de cada país."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:816
+msgid "Homologar cuenta en Mercado Pago"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:830
+msgid "Descripción de la tienda"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:832
+msgid "Este nombre aparecerá en la factura de tus clientes."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:849
+msgid "Categoría de la tienda"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:851
+msgid "¿A qué categoría pertenecen tus productos? Elige la que mejor los caracteriza (elige <br>“otro” si tu producto es demasiado específico)."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:852
+msgid "Categrorías"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:864
+msgid "ID de la tienda"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:866
+msgid "Usa un número o prefijo para identificar pedidos y pagos provenientes de esta tienda."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:867
+msgid "WC-"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:878
+msgid "Ajustes avanzados"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:891
+msgid "Modo Debug y Log"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:894
+msgid "Graba las acciones de tu tienda en nuestro archivo de cambios para tener más información de soporte."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:895
+msgid "Depuramos la información de nuestro archivo de cambios."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:910
+msgid "Configuración Básica"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:923
+msgid "Habilita Mercado Pago en tu tienda online, selecciona los medios de pago disponibles para tus clientes y <br> define el máximo de cuotas en el que podrán pagarte."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:936
+msgid "Máximo de cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:938
+msgid "¿Cuál es el máximo de cuotas con las que un cliente puede comprar?"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:941
+msgid "1x cuota"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:942
+msgid "2x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:943
+msgid "3x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:944
+msgid "4x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:945
+msgid "5x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:946
+msgid "6x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:947
+msgid "10x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:948
+msgid "12x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:949
+msgid "15x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:950
+msgid "18x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:951
+msgid "24x cuotas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:980
+msgid "URL para IPN"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:983
+msgid "Ingresa una URL para recibir notificaciones de pagos. En %s puedes consultar más información."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:984
 msgid "nuestras guías"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:999
+msgid "Edita estos campos avanzados solo cuando quieras modificar los valores preestablecidos."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1012
+msgid "Cupones de descuento"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1015
+msgid "¿Ofrecerás cupones de descuento a los clientes que compren con Mercado Pago?"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1030
+msgid "It appears that your credentials are not properly configured.<br/>Please, go to %s and configure it."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1031
+msgid "Mercado Pago Configuración"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1045
+msgid "Modo binario"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1048
+msgid "Acepta y rechaza pagos de forma automática. ¿Quieres que lo activemos?"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1064
+msgid "Descuentos Gateway"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1066
+msgid "Elige un valor porcentual que quieras descontar a tus clientes por pagar con Mercado Pago."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1083
+msgid "Comisión por compra con Mercado Pago"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1085
+msgid "Elige un valor porcentual adicional que quieras cobrar como comisión a tus clientes por pagar con Mercado Pago."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1103
+msgid "¿Todo listo para el despegue de tus ventas?"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1105
+msgid "¿Todo configurado? Ve a tu tienda en modo Sandbox"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1122
+msgid "Visita tu tienda como si fueras uno de tus clientes y revisa que todo esté bien. Si ya saliste a Producción,<br> trae a tus clientes y aumenta tus ventas con la mejor experiencia de compra online."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1124
+msgid "Visita tu tienda como si fueras uno de tus mejores clientes. Revisa que todo esté bien para impresionarlos<br> y aumentar tus ventas. Quiero testear mis ventas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1141
+msgid "Visitar mi tienda"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1143
+msgid "Quiero testear mis ventas"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:28
+msgid "Paga con dinero en efectivo"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:183
+msgid "Checkout de pagos con dinero en efectivo<br> Acepta pagos presenciales ¡no dejes a nadie afuera! %s"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:187
+msgid "Incluye esta opción de compra preferida por algunos clientes."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:230
+msgid "Habilitá Mercado Pago para pagos en efectivo en tu tienda y <br> seleccioná las opciones disponibles para tus clientes."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:243
+msgid "Configurá las preferencias de pago con dinero en efectivo"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:256
+msgid "Configuración avanzada de la experiencia de pago en efectivo"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:269
+msgid "Reducir inventario"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:272
+msgid "Activa la reducción del inventario durante la creación de un pedido, se acredite o no el pago final. Desactiva esta opción para reducirlo solo cuando los pagos estén aprobados."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:286
+msgid "Vencimiento del pago"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:288
+msgid "En cuántos días caducarán los pagos en efectivo."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:314
+msgid "Todos los medios de pago"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:425
+msgid "Se produjo un problema al procesar su pago. ¿Está seguro de que ha llenado correctamente toda la información en el formulario de pago?"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:456
+msgid "El cliente no ha pagado todavía."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:460
+msgid "Para imprimir nuevamente el ticket hace clic "
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:463
+msgid "aquí"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:476
+msgid "Un problema se produjo al procesar su pago. ¿Esta seguro que ha rellenado correctamente toda la información en el formulario de checkout?"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:490
+msgid "Un problema se produjo al procesar su pago. Por favor, inténtelo de nuevo."
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:30
+msgid "Mercado Envios es un método de envío disponible solo para pagos con Mercado Pago."
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:156
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:234
+msgid "Envío gratis"
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:162
+msgid "Día"
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:164
+msgid "Dias"
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:218
+msgid "Habilite los dos métodos de envío: Mercado Envios (Express y Normal) para el correcto funcionamiento del módulo."
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:222
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:227
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:230
+msgid "Mercado Envios"
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:229
+msgid "Esto controla el título que el usuario ve durante el proceso de pago."
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:236
+msgid "Habilitar envío gratis para este método de envío"
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:240
+msgid "El tiempo de entrega"
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:242
+msgid "Mostrar tiempo estimado de entrega"
+msgstr ""
+
+#: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:243
+msgid "Mostrar el tiempo estimado de entrega en días laborables."
+msgstr ""
+
+#: templates/checkout/basic_checkout.php:12
+#: templates/checkout/custom_checkout.php:22
+msgid "Tarjetas de crédito"
+msgstr ""
+
+#: templates/checkout/basic_checkout.php:13
+msgid "Hasta"
+msgstr ""
+
+#: templates/checkout/basic_checkout.php:28
+#: templates/checkout/custom_checkout.php:29
+msgid "Tarjetas de débito"
+msgstr ""
+
+#: templates/checkout/basic_checkout.php:42
+msgid "Pagos en efectivo"
+msgstr ""
+
+#: templates/checkout/basic_checkout.php:56
+msgid "Te llevamos a nuestro sitio para completar el pago"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:10
+msgid "Con qué Tarjetas puedo pagar"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:14
+msgid "Ver promociones vigentes"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:40
+#: templates/checkout/ticket_checkout.php:12
+msgid "Ingresa tu cupón de descuento"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:44
+#: templates/checkout/ticket_checkout.php:16
+msgid "Ingresa tu cupón"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:48
+#: templates/checkout/custom_checkout.php:1496
+#: templates/checkout/ticket_checkout.php:20
+#: templates/checkout/ticket_checkout.php:187
+msgid "Aplicar"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:53
+#: templates/checkout/ticket_checkout.php:25
+msgid "El código que ingresaste es incorrecto"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:59
+msgid "Ingresa los datos de tu tarjeta"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:65
+msgid "Payment Method"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:67
+msgid "Tu tarjeta"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:76
+msgid "terminó en"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:82
+msgid "Otras tarjetas"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:83
+msgid "Otra tarjeta"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:91
+msgid "CVV"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:94
+#: templates/checkout/custom_checkout.php:111
+#: templates/checkout/custom_checkout.php:121
+#: templates/checkout/custom_checkout.php:141
+#: templates/checkout/custom_checkout.php:205
+msgid "Este campo no puede estar vacío"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:95
+#: templates/checkout/custom_checkout.php:96
+#: templates/checkout/custom_checkout.php:142
+msgid "Código de seguridad invalido"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:108
+msgid "Número de Tarjeta"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:112
+msgid "Numero de tarjeta invalido"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:118
+msgid "Nombre y apellido del titular de la tarjeta"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:122
+msgid "Nombre del titular de la tarjeta no válido"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:128
+msgid "Fecha de vencimiento"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:133
+msgid "Fecha de expiracion inválida"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:137
+msgid "Código de seguridad"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:140
+msgid "Últimos 3 números del dorso"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:148
+msgid "En cuántas cuotas quieres pagar"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:153
+msgid "Issuer"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:165
+msgid "Pago convertido de"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:174
+msgid "Seleccione el número de cotas"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:192
+msgid "Ingresa tu número de documento"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:196
+msgid "Tipo"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:201
+msgid "Número de documento"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:203
+msgid "Sólo números"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:206
+msgid "Número de documento no válido"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:217
+msgid "No guardar la tarjeta"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:219
+msgid "Campo obligatorio"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1497
+#: templates/checkout/ticket_checkout.php:188
+msgid "Retirar"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1498
+#: templates/checkout/ticket_checkout.php:189
+msgid "Por favor, informe su código de cupón"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1499
+#: templates/checkout/ticket_checkout.php:190
+msgid "Elegir"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1500
+#: templates/checkout/ticket_checkout.php:191
+msgid "Otro banco"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1501
+#: templates/checkout/ticket_checkout.php:192
+msgid "Salvarás"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1502
+#: templates/checkout/ticket_checkout.php:193
+msgid "con descuento de"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1503
+#: templates/checkout/ticket_checkout.php:194
+msgid "Total de su compra:"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1504
+#: templates/checkout/ticket_checkout.php:195
+msgid "Total de su compra con descuento:"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1505
+#: templates/checkout/ticket_checkout.php:196
+msgid "*Tras la aprobación del pago"
+msgstr ""
+
+#: templates/checkout/custom_checkout.php:1506
+#: templates/checkout/ticket_checkout.php:197
+msgid "Términos y condiciones de uso"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:38
+msgid "Persona Física"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:45
+msgid "Persona Jurídica"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:52
+msgid "Nome"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:53
+msgid "Razão social"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:55
+msgid "Debes informar tu nombre"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:59
+msgid "Apellido"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:61
+msgid "Debes informar tu apellido"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:65
+msgid "CPF"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:66
+msgid "CNPJ"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:68
+msgid "Debe informar su número de documento"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:74
+msgid "Dirección"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:76
+msgid "Debes informar tu dirección"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:80
+msgid "Número"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:82
+msgid "Debe informar su número de dirección"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:88
+msgid "Ciudad"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:90
+msgid "Debes informar a tu ciudad"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:94
+msgid "Estado"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:96
+msgid "Seleccione estado"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:125
+msgid "Debes informar a tu estado"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:129
+msgid "Código postal"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:131
+msgid "Debes informar tu código postal"
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:138
+msgid "Completa todos los campos, son obligatorios."
+msgstr ""
+
+#: templates/checkout/ticket_checkout.php:146
+msgid "Selecciona el emisor con el que quieras procesar el pago"
+msgstr ""
+
+#: woocommerce-mercadopago.php:48
+msgid "WooCommerce Mercado Pago requires PHP version 5.6 or later. Please update your PHP version."
+msgstr ""
+
+#: woocommerce-mercadopago.php:65
+msgid "Parece que ya tienes instalado el módulo de Mercado Pago. Por favor, desinstálalo antes de usar esta versión."
+msgstr ""
+
+#: woocommerce-mercadopago.php:90
+msgid "Cancelar orden"
 msgstr ""
