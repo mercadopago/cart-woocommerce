@@ -439,7 +439,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
     {
         $checkout_steps_link_homolog = array(
             'title' => sprintf(
-                __('Credentials are the keys we provide you to integrate quickly <br>and securely. You must have a %s in Mercado Pago to obtain and collect them <br>on your website. You don't need to know how to design or program to do it.', 'woocommerce-mercadopago'),
+                __('Credentials are the keys we provide you to integrate quickly <br>and securely. You must have a %s in Mercado Pago to obtain and collect them <br>on your website. You do not need to know how to design or program to do it', 'woocommerce-mercadopago'),
                 '<a href="https://www.mercadopago.com/' . $country_link . '/account/credentials/appliance?application_id=' . $appliocation_id . '" target="_blank">' . __('approved account', 'woocommerce-mercadopago') . '</a>'
             ),
             'type' => 'title',
@@ -798,7 +798,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
     public function field_checkout_homolog_subtitle()
     {
         $checkout_homolog_subtitle = array(
-            'title' => __('Complete this process to secure your customers' data and comply with the regulations<br> and legal provisions of each country.', 'woocommerce-mercadopago'),
+            'title' => __('Complete this process to secure your customers data and comply with the regulations<br> and legal provisions of each country.', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_text mt--10'
         );
@@ -829,7 +829,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
         $mp_statement_descriptor = array(
             'title' => __('Store Description', 'woocommerce-mercadopago'),
             'type' => 'text',
-            'description' => __('This name will appear on your customers' invoice.', 'woocommerce-mercadopago'),
+            'description' => __('This name will appear on your customers invoice.', 'woocommerce-mercadopago'),
             'default' => __('Mercado Pago', 'woocommerce-mercadopago')
         );
         return $mp_statement_descriptor;
@@ -891,7 +891,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
             'title' => __('Debug and Log mode', 'woocommerce-mercadopago'),
             'type' => 'select',
             'default' => 'no',
-            'description' => __('Record your store's actions in our changes file to have more support information.', 'woocommerce-mercadopago'),
+            'description' => __('Record your store actions in our changes file to have more support information.', 'woocommerce-mercadopago'),
             'desc_tip' => __('We debug the information in our change file.', 'woocommerce-mercadopago'),
             'options' => array(
                 'no' => __('No', 'woocommerce-mercadopago'),
