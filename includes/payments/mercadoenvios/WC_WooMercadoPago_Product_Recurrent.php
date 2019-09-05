@@ -187,7 +187,7 @@ class WC_WooMercadoPago_Product_Recurrent
                 'desc_tip' => 'true',
                 'description' => __('Indica el período de tiempo.', 'woocommerce-mercadopago'),
                 'options' => array(
-                    'days' => __('Días', 'woocommerce-mercadopago'),
+                    'days' => __('Days', 'woocommerce-mercadopago'),
                     'months' => __('Meses', 'woocommerce-mercadopago')
                 )
             )

@@ -120,7 +120,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
             'mp_statement_descriptor',
             '_mp_category_id',
             '_mp_store_identificator',
-            // Ajustes avanzados
+            // Advanced settings
             'checkout_advanced_settings',
             '_mp_debug_mode',
             '_mp_custom_domain',
@@ -136,7 +136,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
             'binary_mode',
             'gateway_discount',
             'commission',
-            // ¿Todo listo para el despegue de tus ventas?
+            // Everything ready for the takeoff of your sales?
             'checkout_ready_title',
             'checkout_ready_description',
             'checkout_ready_description_link'
@@ -257,9 +257,9 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
             case 'cc_rejected_max_attempts':
                 return __('Has alcanzado el límite de intentos permitidos. Elija otra tarjeta u otro medio de pago.', 'woocommerce-mercadopago');
             case 'cc_rejected_other_reason':
-                return __('Esta medio de pago no puede procesar su pago.', 'woocommerce-mercadopago');
+                return __('This payment method cannot process your payment.', 'woocommerce-mercadopago');
             default:
-                return __('Esta medio de pago no puede procesar su pago.', 'woocommerce-mercadopago');
+                return __('This payment method cannot process your payment.', 'woocommerce-mercadopago');
         }
     }
 
@@ -399,7 +399,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
                         wc_add_notice(
                             '<p>' . $this->get_order_status($response['status_detail']) . '</p>' .
                                 '<p><a class="button" href="' . esc_url($order->get_checkout_order_received_url()) . '">' .
-                                __('Ver su hoja de pedido', 'woocommerce-mercadopago') .
+                                __('See your order form', 'woocommerce-mercadopago') .
                                 '</a></p>',
                             'notice'
                         );
@@ -411,11 +411,11 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
                     case 'rejected':
                         // If rejected is received, the order will not proceed until another payment try, so we must inform this status.
                         wc_add_notice(
-                            '<p>' . __('Su pago fue rechazado. Puede intentarlo de nuevo.', 'woocommerce-mercadopago') . '<br>' .
+                            '<p>' . __('Your payment was declined. You can try again.', 'woocommerce-mercadopago') . '<br>' .
                                 $this->get_order_status($response['status_detail']) .
                                 '</p>' .
                                 '<p><a class="button" href="' . esc_url($order->get_checkout_payment_url()) . '">' .
-                                __('Haz clic para intentarlo de nuevo', 'woocommerce-mercadopago') .
+                                __('Click to try again', 'woocommerce-mercadopago') .
                                 '</a></p>',
                             'error'
                         );

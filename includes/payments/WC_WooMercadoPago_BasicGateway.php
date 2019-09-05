@@ -140,7 +140,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             'mp_statement_descriptor',
             '_mp_category_id',
             '_mp_store_identificator',
-            // Ajustes avanzados
+            // Advanced settings
             'checkout_advanced_settings',
             '_mp_debug_mode',
             '_mp_custom_domain',
@@ -161,7 +161,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             'binary_mode',
             'gateway_discount',
             'commission',
-            // ¿Todo listo para el despegue de tus ventas?
+            // Everything ready for the takeoff of your sales?
             'checkout_ready_title',
             'checkout_ready_description',
             'checkout_ready_description_link'

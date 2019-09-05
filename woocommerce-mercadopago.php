@@ -62,7 +62,7 @@ if (version_compare(PHP_VERSION, '5.6', '<=')) {
 function wc_mercado_pago_notify_deprecated_presence()
 {
     echo '<div class="error"><p>' .
-        __('Parece que ya tienes instalado el módulo de Mercado Pago. Por favor, desinstálalo antes de usar esta versión.', 'woocommerce-mercadopago') .
+        __('It seems that you already have the Mercado Pago module installed. Please uninstall it before using this version.', 'woocommerce-mercadopago') .
         '</p></div>';
 }
 
@@ -87,7 +87,7 @@ if (!class_exists('WC_WooMercadoPago_Module'))
     add_action('woocommerce_order_actions', 'add_mp_order_meta_box_actions');
     function add_mp_order_meta_box_actions($actions)
     {
-        $actions['cancel_order'] = __('Cancelar orden', 'woocommerce-mercadopago');
+        $actions['cancel_order'] = __('Cancel order', 'woocommerce-mercadopago');
         return $actions;
     }
 
