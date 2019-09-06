@@ -9,7 +9,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2019-09-05T23:48:06-04:00\n"
-"PO-Revision-Date: 2019-09-06 16:59-0300\n"
+"PO-Revision-Date: 2019-09-06 18:58-0300\n"
 "X-Generator: Poedit 2.2.3\n"
 "X-Domain: woocommerce-mercadopago\n"
 "Last-Translator: \n"
@@ -71,7 +71,7 @@ msgstr "Descartar"
 
 #: includes/module/WC_WooMercadoPago_Module.php:244
 msgid "Complete your credentials to enable the payment of method."
-msgstr "Complete sus credenciales para habilitar el medios de pago."
+msgstr "Complete sus credenciales para habilitar los medios de pago."
 
 #: includes/module/WC_WooMercadoPago_Module.php:263
 msgid "The payment module of Woo Mercado depends on the latest version of %s to run!"
@@ -83,7 +83,7 @@ msgstr "Configurar"
 
 #: includes/module/WC_WooMercadoPago_Module.php:274
 msgid "Your opinion helps us get better"
-msgstr "Tu opnión nos ayuda a mejorar"
+msgstr "Tu opinión nos ayuda a mejorar"
 
 #: includes/module/WC_WooMercadoPago_Module.php:275
 msgid "Guides and Documentation"
@@ -294,7 +294,7 @@ msgstr "utilizó el Mercado Envíos como su medio de envío."
 
 #: includes/notification/WC_WooMercadoPago_Notification_IPN.php:293
 msgid "You can track it with the following tracking code:"
-msgstr "Usted puedes rastrearlo con lo siguiente código de rastreamiento:"
+msgstr "Usted puede rastrearlo con el siguiente código de rastreamiento:"
 
 #: includes/notification/WC_WooMercadoPago_Notification_IPN.php:294
 msgid "Greetings."
@@ -362,11 +362,11 @@ msgstr "Suscripción Mercado Pago"
 
 #: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:79
 msgid "The operation was successful."
-msgstr ""
+msgstr "La operación se realizó con éxito."
 
 #: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:80
 msgid "This operation cannot be completed."
-msgstr "La operación se realizó con éxito."
+msgstr "La operación no puede ser completada."
 
 #: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:82
 msgid "Payment ID:"
@@ -394,7 +394,7 @@ msgstr "Producto Recurrente"
 
 #: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:170
 msgid "Make this product a subscription."
-msgstr "Hacer deste producto una suscripción."
+msgstr "Hacer de este producto una suscripción."
 
 #: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:176
 msgid "Frequency"
@@ -431,7 +431,7 @@ msgstr "YYYY-MM-DD"
 
 #: includes/payments/mercadoenvios/WC_WooMercadoPago_Product_Recurrent.php:201
 msgid "Deadline to generate new charges. By default as never, if it is blank."
-msgstr "Fecha límite para generar nuevos cargos. De forma predeterminada como nunca, si está en blanco."
+msgstr "Fecha límite para generar nuevos cargos. De forma predeterminada es nunca, si está en blanco."
 
 #: includes/payments/WC_WooMercadoPago_BasicGateway.php:27
 msgid "Mercado Pago - Basic Checkout"
@@ -637,7 +637,7 @@ msgstr "Su pago fue rechazado. Por favor seleccione otro medio de pago. Se recom
 
 #: includes/payments/WC_WooMercadoPago_CustomGateway.php:254
 msgid "Your payment does not have sufficient funds."
-msgstr "Su pago no tiene fondos suficientes."
+msgstr "Su metodo de pago no tiene fondos suficientes."
 
 #: includes/payments/WC_WooMercadoPago_CustomGateway.php:256
 msgid "Payment cannot process the selected fee."
@@ -661,11 +661,11 @@ msgstr "Su pago fue rechazado. Puede intentarlo de nuevo."
 
 #: includes/payments/WC_WooMercadoPago_CustomGateway.php:440
 msgid "A problem was occurred when processing your payment. Are you sure you have correctly filled all information in the checkout form?"
-msgstr "A problem was occurred when processing your payment. Are you sure you have correctly filled all information in the checkout form?"
+msgstr "El problemas ocurrió cuando se procesaba su pago. Está seguro de haber cargado la información en el formulario?"
 
 #: includes/payments/WC_WooMercadoPago_CustomGateway.php:449
 msgid "A problem was occurred when processing your payment. Please, try again."
-msgstr "A problem was occurred when processing your payment. Please, try again."
+msgstr "El problemas ocurrió cuando se procesaba su pago. Por favor, intente otra vez."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:258
 msgid "%s, it only takes a few minutes"
@@ -1117,7 +1117,7 @@ msgstr "El tiempo de entrega"
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:242
 msgid "Show estimated delivery time"
-msgstr "Show estimated delivery time"
+msgstr "Mostrar el tiempo estimado de estrega"
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:243
 msgid "Show the estimated delivery time in working days."
@@ -1173,7 +1173,7 @@ msgstr "Ingresa los datos de tu tarjeta"
 
 #: templates/checkout/custom_checkout.php:65
 msgid "Payment Method"
-msgstr "Payment Method"
+msgstr "Método de pago"
 
 #: templates/checkout/custom_checkout.php:67
 msgid "Your card"
@@ -1322,7 +1322,7 @@ msgstr "Nome"
 
 #: templates/checkout/ticket_checkout.php:53
 msgid "Social reason"
-msgstr "Razão social"
+msgstr "Razón social"
 
 #: templates/checkout/ticket_checkout.php:55
 msgid "You must inform your name"
@@ -1358,7 +1358,7 @@ msgstr "Debes informar tu dirección"
 
 #: templates/checkout/ticket_checkout.php:80
 msgid "Number"
-msgstr "Numero"
+msgstr "Número"
 
 #: templates/checkout/ticket_checkout.php:82
 msgid "You must provide your address number"
