@@ -23,11 +23,13 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             return;
         }
 
+        $this->desc = __('Ofrece todos los medios de pago: tarjetas de crédito y débito, dinero en efectivo y dinero en cuenta. Tus clientes eligen si pagan como invitados o desde su cuenta de Mercado Pago.', 'woocommerce-mercadopago');
+
         $this->form_fields = array();
         $this->method_title = __('Mercado Pago - Basic Checkout', 'woocommerce-mercadopago');
         $this->method = $this->getOption('method', 'redirect');
         $this->title = __('Pay with the payment method you prefer', 'woocommerce-mercadopago');
-        $this->method_description = $this->getMethodDescription('Ofrece todos los medios de pago: tarjetas de crédito y débito, dinero en efectivo y dinero en cuenta. Tus clientes eligen si pagan como invitados o desde su cuenta de Mercado Pago.');
+        $this->method_description = $this->getMethodDescription($this->desc);
         $this->auto_return = $this->getOption('auto_return', 'yes');
         $this->success_url = $this->getOption('success_url', '');
         $this->failure_url = $this->getOption('failure_url', '');
@@ -512,11 +514,11 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
         $efectivo = 0;
         $tarjetas = get_option('_checkout_payments_methods', '');
         $installments = $this->getOption('installments');
-        $str_cuotas = "cuotas";
+        $str_cuotas = __('cuotas', 'woocommerce-mercadopago');
         $cho_tarjetas = array();
 
         if ($installments == 1) {
-            $str_cuotas = "cuota";
+            $str_cuotas = __('cuota', 'woocommerce-mercadopago');
         }
 
         //change type account_money to ticket

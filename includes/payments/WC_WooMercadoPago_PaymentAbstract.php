@@ -226,7 +226,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
                 <img src="' . plugins_url('../assets/images/mplogo.png', plugin_dir_path(__FILE__)) . '">
             </div>
             <div class="right-header">
-                <strong>' . __($description, 'woocommerce-mercadopago') . '</strong>
+                <strong>' . $description . '</strong>
             </div>
         </div>';
     }
