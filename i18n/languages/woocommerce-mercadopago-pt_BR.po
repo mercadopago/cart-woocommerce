@@ -10,7 +10,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2019-09-05T23:48:06-04:00\n"
-"PO-Revision-Date: 2019-09-06 13:21-0300\n"
+"PO-Revision-Date: 2019-09-06 13:56-0300\n"
 "X-Generator: Poedit 2.2.3\n"
 "X-Domain: woocommerce-mercadopago\n"
 "Last-Translator: \n"
@@ -506,7 +506,7 @@ msgstr ""
 
 #: includes/payments/WC_WooMercadoPago_BasicGateway.php:27
 msgid "Mercado Pago - Basic Checkout"
-msgstr "Mercado Pago - Smart Checkout"
+msgstr "Mercado Pago - Checkout básico"
 
 #: includes/payments/WC_WooMercadoPago_BasicGateway.php:29
 msgid "Pay with the payment method you prefer"
@@ -517,7 +517,7 @@ msgid ""
 "Basic Checkout Accept all method of payment and take your charges to another "
 "level %s"
 msgstr ""
-"Smart Checkout. Aceite todos os meios de pagamento e leve suas cobranças a "
+"Checkout Básico. Aceite todos os meios de pagamento e leve suas cobranças a "
 "outro nível %s"
 
 #: includes/payments/WC_WooMercadoPago_BasicGateway.php:233
@@ -540,7 +540,7 @@ msgid ""
 "store, select the means of payment available to your customers and<br> "
 "define the maximum fees in which they can pay you."
 msgstr ""
-"Habilite a experiência do Smart Checkout do Mercado Pago na sua loja "
+"Habilite a experiência do Checkout Básico do Mercado Pago na sua loja "
 "virtual, selecione os meios de pagamento disponíveis para seus clientes "
 "e<br> defina o número máximo de vezes que podem parcelar suas compras."
 
@@ -1508,7 +1508,7 @@ msgstr "Data de vencimento inválida"
 #: templates/checkout/custom_checkout.php:137
 #: templates/checkout/custom_checkout.php:140
 msgid "Last 3 numbers on the back"
-msgstr "Últimos 3 números do verso"
+msgstr "3 números do verso"
 
 #: templates/checkout/custom_checkout.php:148
 msgid "In how many installments do you want to pay?"
