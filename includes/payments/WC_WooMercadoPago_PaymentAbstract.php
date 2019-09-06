@@ -492,10 +492,10 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
             'default' => empty($checkout_country) ? $country_default : $checkout_country,
             'options' => array(
                 'mla' => __('Argentina', 'woocommerce-mercadopago'),
-                'mlb' => __('Brasil', 'woocommerce-mercadopago'),
+                'mlb' => __('Brazil', 'woocommerce-mercadopago'),
                 'mlc' => __('Chile', 'woocommerce-mercadopago'),
                 'mco' => __('Colombia', 'woocommerce-mercadopago'),
-                'mlm' => __('México', 'woocommerce-mercadopago'),
+                'mlm' => __('Mexico', 'woocommerce-mercadopago'),
                 'mpe' => __('Peru', 'woocommerce-mercadopago'),
                 'mlu' => __('Uruguay', 'woocommerce-mercadopago'),
             )
@@ -545,7 +545,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
             'description' => __('Activate the Mercado Pago experience at the checkout of your store.', 'woocommerce-mercadopago'),
             'options' => array(
                 'no' => __('No', 'woocommerce-mercadopago'),
-                'yes' => __('Sí', 'woocommerce-mercadopago')
+                'yes' => __('Yes', 'woocommerce-mercadopago')
             )
         );
         return $enabled;
@@ -628,7 +628,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
             'default' => $this->id == 'woo-mercado-pago-basic' && $this->clientid_old_version ? 'yes' : $this->getOption('checkout_credential_production', 'no'),
             'options' => array(
                 'no' => __('No', 'woocommerce-mercadopago'),
-                'yes' => __('Sí', 'woocommerce-mercadopago')
+                'yes' => __('Yes', 'woocommerce-mercadopago')
             )
         );
         return $checkout_credential_production;
@@ -895,7 +895,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
             'desc_tip' => __('We debug the information in our change file.', 'woocommerce-mercadopago'),
             'options' => array(
                 'no' => __('No', 'woocommerce-mercadopago'),
-                'yes' => __('Sí', 'woocommerce-mercadopago')
+                'yes' => __('Yes', 'woocommerce-mercadopago')
             )
         );
         return $debug_mode;
@@ -1015,7 +1015,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
             'description' => __('Will you offer discount coupons to customers who buy with Mercado Pago?', 'woocommerce-mercadopago'),
             'options' => array(
                 'no' => __('No', 'woocommerce-mercadopago'),
-                'yes' => __('Sí', 'woocommerce-mercadopago')
+                'yes' => __('Yes', 'woocommerce-mercadopago')
             )
         );
     }
@@ -1048,7 +1048,7 @@ class WC_WooMercadoPago_PaymentAbstract extends WC_Payment_Gateway
             'description' => __('Accept and reject payments automatically. Do you want us to activate it?', 'woocommerce-mercadopago'),
             'desc_tip' => __('Si activas el modo binario no podrás dejar pagos pendientes. Esto puede afectar la prevención de fraude. Dejalo inactivo para estar respaldado por nuestra propia herramienta.', 'woocommerce-services'),
             'options' => array(
-                'yes' => __('Sí', 'woocommerce-mercadopago'),
+                'yes' => __('Yes', 'woocommerce-mercadopago'),
                 'no' => __('No', 'woocommerce-mercadopago')
             )
         );

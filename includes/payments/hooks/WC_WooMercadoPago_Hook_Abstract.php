@@ -53,7 +53,7 @@ abstract class WC_WooMercadoPago_Hook_Abstract
             $value = ($this->payment->site_data['currency'] == 'COP' || $this->payment->site_data['currency'] == 'CLP') ? floor($checkout['discount'] / $checkout['currency_ratio']) : floor($checkout['discount'] / $checkout['currency_ratio'] * 100) / 100;
             global $woocommerce;
             if (apply_filters('wc_mercadopago_custommodule_apply_discount', 0 < $value, $woocommerce->cart)) {
-                $woocommerce->cart->add_fee(sprintf(__('Descuento para el cupón %s', 'woocommerce-mercadopago'), esc_attr($checkout['campaign'])), ($value * -1), false);
+                $woocommerce->cart->add_fee(sprintf(__('Discount for coupon %s', 'woocommerce-mercadopago'), esc_attr($checkout['campaign'])), ($value * -1), false);
             }
         }
     }
@@ -123,11 +123,11 @@ abstract class WC_WooMercadoPago_Hook_Abstract
         $price_discount = $total * ($this->payment->gateway_discount / 100);
         $price_commission = $total * ($this->payment->commission / 100);
         if ($this->payment->gateway_discount > 0 && $this->payment->commission > 0) {
-            $title .= ' (' . __('Descuento de', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_discount)) . __(' y Tarifa de', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_commission)) . ')';
+            $title .= ' (' . __('Discount of', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_discount)) . __(' and Rate of', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_commission)) . ')';
         } elseif ($this->payment->gateway_discount > 0) {
-            $title .= ' (' . __('Descuento de', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_discount)) . ')';
+            $title .= ' (' . __('Discount of', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_discount)) . ')';
         } elseif ($this->payment->commission > 0) {
-            $title .= ' (' . __('Tarifa de', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_commission)) . ')';
+            $title .= ' (' . __('Fee of', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_commission)) . ')';
         }
         return $title;
     }
@@ -352,7 +352,7 @@ abstract class WC_WooMercadoPago_Hook_Abstract
     public function noticeInvalidProdCredentials()
     {
         echo '<div class="error is-dismissible">
-        <p><strong>MERCADO PAGO: </strong>'. __('¡Invalid production credentials!', 'woocommerce-mercadopago') . '</p>
+        <p><strong>MERCADO PAGO: </strong>'. __('Credentials for invalid production!', 'woocommerce-mercadopago') . '</p>
                 </div>';
     }
 

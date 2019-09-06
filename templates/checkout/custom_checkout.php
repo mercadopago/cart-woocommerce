@@ -163,8 +163,8 @@ if (!defined('ABSPATH')) {
 											<span class="mp-tooltiptext">
 												<?=
 														esc_html__('Converted payment of', 'woocommerce-mercadopago') . " " .
-															$woocommerce_currency . " " . esc_html__('para', 'woocommerce-mercadopago') . " " .
-															$account_currency;
+														$woocommerce_currency . " " . esc_html__('for', 'woocommerce-mercadopago') . " " .
+														$account_currency;
 													?>
 											</span>
 										</div>

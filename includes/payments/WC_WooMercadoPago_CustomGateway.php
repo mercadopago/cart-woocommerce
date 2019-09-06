@@ -26,8 +26,8 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
         }
 
         $this->form_fields = array();
-        $this->method_title = __('Mercado Pago - Checkout personalizado', 'woocommerce-mercadopago');
-        $this->title = __('Paga con tarjetas de débito y crédito', 'woocommerce-mercadopago');
+        $this->method_title = __('Mercado Pago - Custom Checkout', 'woocommerce-mercadopago');
+        $this->title = __('Pay with debit and credit cards', 'woocommerce-mercadopago');
         $this->method_description = $this->getMethodDescription('Acepta pagos con tarjeta en tu sitio web con la mejor financiación posible y maximiza la conversión de tu negocio. Con el checkout personalizado tus clientes pagan ¡sin salir de tu tienda!');
         $this->coupon_mode = $this->getOption('coupon_mode', 'no');
         $this->field_forms_order = $this->get_fields_sequence();
@@ -114,7 +114,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
             'checkout_homolog_title',
             'checkout_homolog_subtitle',
             'checkout_homolog_link',
-            // Configura la experiencia de pago en tu tienda
+            // Set up the payment experience in your store
             'checkout_custom_options_title',
             'checkout_custom_options_subtitle',
             'mp_statement_descriptor',
@@ -124,12 +124,12 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
             'checkout_advanced_settings',
             '_mp_debug_mode',
             '_mp_custom_domain',
-            // Configura la experiencia de pago personalizada en tu tienda
+            // Configure the personalized payment experience in your store
             'checkout_custom_payments_title',
             'checkout_payments_subtitle',
             'checkout_payments_description',
             'enabled',
-            // Configuración avanzada de la experiencia de pago personalizada
+            // Advanced configuration of the personalized payment experience"
             'checkout_custom_payments_advanced_title',
             'checkout_payments_advanced_description',
             'coupon_mode',
@@ -150,11 +150,11 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
     {
         $checkout_custom_header = array(
             'title' => sprintf(
-                __('Checkout de pagos con tarjetas de débito y crédito<br> Acepta pagos al instante y maximiza la conversión de tu negocio %s', 'woocommerce-mercadopago'),
+                __('Checkout of payments with debit and credit cards<br> Accept payments instantly and maximize the conversion of your business %s', 'woocommerce-mercadopago'),
                 '<div class="row">
               <div class="mp-col-md-12">
                 <p class="text-checkout-body mp-mb-0">
-                  ' . __('Convierte tu tienda online en una pasarela de pagos segura y fácil de usar para tus clientes. Con el checkout personalizado tus clientes pagan ¡sin salir de tu tienda!', 'woocommerce-mercadopago') . '
+                  ' . __('Turn your online store into a secure and easy-to-use payment gateway for your customers. With personalized checkout your customers pay without leaving your store!', 'woocommerce-mercadopago') . '
                 </p>
               </div>
             </div>'
@@ -171,7 +171,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_custom_options_title()
     {
         $checkout_custom_options_title = array(
-            'title' => __('Configura la experiencia de pago en tu tienda', 'woocommerce-mercadopago'),
+            'title' => __('Set up the payment experience in your store', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_title_bd'
         );
@@ -184,7 +184,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_custom_options_subtitle()
     {
         $checkout_custom_options_subtitle = array(
-            'title' => __('Ve a lo básico. Coloca la información de tu negocio.', 'woocommerce-mercadopago'),
+            'title' => __('Go to the basics. Place your business information.', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_subtitle mp-mt-5'
         );
@@ -197,7 +197,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_custom_payments_title()
     {
         $checkout_custom_payments_title = array(
-            'title' => __('Configura la experiencia de pago personalizada en tu tienda', 'woocommerce-mercadopago'),
+            'title' => __('Configure the personalized payment experience in your store', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_title_bd'
         );
@@ -210,7 +210,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_custom_payments_advanced_title()
     {
         $checkout_custom_payments_advanced_title = array(
-            'title' => __('Configuración avanzada de la experiencia de pago personalizada', 'woocommerce-mercadopago'),
+            'title' => __('Advanced configuration of the personalized payment experience"', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_subtitle_bd'
         );
@@ -225,37 +225,37 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
     {
         switch ($status_detail) {
             case 'accredited':
-                return __('Listo, su pago ha sido aceptado!', 'woocommerce-mercadopago');
+                return __('Ready, your payment has been accepted!', 'woocommerce-mercadopago');
             case 'pending_contingency':
-                return __('Estamos procesando su pago. En menos de una hora le enviaremos el resultado por correo electrónico.', 'woocommerce-mercadopago');
+                return __('We are processing your payment. In less than an hour we will send you the result by email.', 'woocommerce-mercadopago');
             case 'pending_review_manual':
-                return __('Estamos procesando su pago. En menos de 2 días le enviaremos por correo electrónico si se ha aprobado el pago o si se necesita información adicional.', 'woocommerce-mercadopago');
+                return __('We are processing your payment. In less than 2 days we will send you by email if the payment has been approved or if additional information is needed.', 'woocommerce-mercadopago');
             case 'cc_rejected_bad_filled_card_number':
-                return __('Compruebe el número de tarjeta.', 'woocommerce-mercadopago');
+                return __('Check the card number.', 'woocommerce-mercadopago');
             case 'cc_rejected_bad_filled_date':
-                return __('Compruebe la fecha de expiración.', 'woocommerce-mercadopago');
+                return __('Check the expiration date.', 'woocommerce-mercadopago');
             case 'cc_rejected_bad_filled_other':
-                return __('Compruebe la información informada.', 'woocommerce-mercadopago');
+                return __('Check the information provided.', 'woocommerce-mercadopago');
             case 'cc_rejected_bad_filled_security_code':
-                return __('Compruebe el código de seguridad informado.', 'woocommerce-mercadopago');
+                return __('Check the informed security code.', 'woocommerce-mercadopago');
             case 'cc_rejected_blacklist':
-                return __('No se puede procesar su pago.', 'woocommerce-mercadopago');
+                return __('Your payment cannot be processed.', 'woocommerce-mercadopago');
             case 'cc_rejected_call_for_authorize':
-                return __('Usted debe autorizar los pagos de sus órdenes.', 'woocommerce-mercadopago');
+                return __('You must authorize payments for your orders.', 'woocommerce-mercadopago');
             case 'cc_rejected_card_disabled':
-                return __('Póngase en contacto con el emisor de su tarjeta para activarla. El teléfono se encuentra en la parte posterior de su tarjeta.', 'woocommerce-mercadopago');
+                return __('Contact your card issuer to activate it. The phone is on the back of your card.', 'woocommerce-mercadopago');
             case 'cc_rejected_card_error':
-                return __('No se puede procesar su pago.', 'woocommerce-mercadopago');
+                return __('Your payment cannot be processed.', 'woocommerce-mercadopago');
             case 'cc_rejected_duplicated_payment':
-                return __('Usted ya realizó un pago de este importe. Si tiene que pagar de nuevo, utilizar otra tarjeta u otro medio de pago.', 'woocommerce-mercadopago');
+                return __('You have already made a payment of this amount. If you have to pay again, use another card or other method of payment.', 'woocommerce-mercadopago');
             case 'cc_rejected_high_risk':
-                return __('Su pago fue rechazado. Por favor seleccione otro medio de pago. Se recomienda en efectivo.', 'woocommerce-mercadopago');
+                return __('Your payment was declined. Please select another payment method. It is recommended in cash.', 'woocommerce-mercadopago');
             case 'cc_rejected_insufficient_amount':
-                return __('Su pago no tiene fondos suficientes.', 'woocommerce-mercadopago');
+                return __('Your payment does not have sufficient funds.', 'woocommerce-mercadopago');
             case 'cc_rejected_invalid_installments':
-                return __('El pago no puede procesar la cuota seleccionada.', 'woocommerce-mercadopago');
+                return __('Payment cannot process the selected fee.', 'woocommerce-mercadopago');
             case 'cc_rejected_max_attempts':
-                return __('Has alcanzado el límite de intentos permitidos. Elija otra tarjeta u otro medio de pago.', 'woocommerce-mercadopago');
+                return __('You have reached the limit of allowed attempts. Choose another card or other payment method.', 'woocommerce-mercadopago');
             case 'cc_rejected_other_reason':
                 return __('This payment method cannot process your payment.', 'woocommerce-mercadopago');
             default:

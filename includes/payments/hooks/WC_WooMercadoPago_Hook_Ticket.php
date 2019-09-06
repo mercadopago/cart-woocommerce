@@ -74,12 +74,12 @@ class WC_WooMercadoPago_Hook_Ticket extends WC_WooMercadoPago_Hook_Abstract
         }
 
         $html = '<p>' .
-            __('Gracias por su orden. Por favor, realice el pago del ticket para tener su orden aprobada.', 'woocommerce-mercadopago') .
+            __('Thanks for your order. Please pay the ticket to have your order approved.', 'woocommerce-mercadopago') .
             '</p>' .
             '<p><iframe src="' . $transaction_details . '" style="width:100%; height:1000px;"></iframe></p>' .
             '<a id="submit-payment" target="_blank" href="' . $transaction_details . '" class="button alt"' .
             ' style="font-size:1.25rem; width:75%; height:48px; line-height:24px; text-align:center;">' .
-            __('Imprimir el ticket', 'woocommerce-mercadopago') .
+            __('Print the ticket', 'woocommerce-mercadopago') .
             '</a> ';
         $added_text = '<p>' . $html . '</p>';
         echo $added_text;
