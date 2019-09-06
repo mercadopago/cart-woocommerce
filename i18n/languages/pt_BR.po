@@ -10,7 +10,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2019-09-05T23:48:06-04:00\n"
-"PO-Revision-Date: 2019-09-06 09:01-0300\n"
+"PO-Revision-Date: 2019-09-06 11:08-0300\n"
 "X-Generator: Poedit 2.2.3\n"
 "X-Domain: woocommerce-mercadopago\n"
 "Last-Translator: \n"
@@ -19,11 +19,11 @@ msgstr ""
 
 #. Plugin Name of the plugin
 msgid "WooCommerce Mercado Pago"
-msgstr ""
+msgstr "WooCommerce Mercado Pago"
 
 #. Plugin URI of the plugin
 msgid "https://github.com/mercadopago/cart-woocommerce"
-msgstr ""
+msgstr "https://github.com/mercadopago/cart-woocommerce"
 
 #. Description of the plugin
 msgid ""
@@ -925,66 +925,74 @@ msgid ""
 "Complete this process to secure your customers data and comply with the "
 "regulations<br> and legal provisions of each country."
 msgstr ""
+"Complete este proceso para proteger los datos de sus clientes y cumplir con "
+"las regulaciones<br> y disposiciones legales de cada país."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:816
 msgid "Homologate account in Mercado Pago"
-msgstr ""
+msgstr "Homologar minha conta"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:830
 msgid "Store Description"
-msgstr ""
+msgstr "Nome da loja"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:832
 msgid "This name will appear on your customers invoice."
-msgstr ""
+msgstr "Este nome aparecerá na fatura dos seus cliente."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:849
 msgid "Store Category"
-msgstr ""
+msgstr "Categoria da loja"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:851
 msgid ""
 "What category do your products belong to? Choose the one that best "
 "characterizes them (choose <br>\"other\" if your product is too specific)."
 msgstr ""
+"A qual categoria os seus produtos pertencem? Selecione a que melhor os "
+"caracteriza (selecione <br>“outro” se seu produto for muito específico)."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:852
 msgid "Categories"
-msgstr ""
+msgstr "Categorías"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:864
 msgid "Store ID"
-msgstr ""
+msgstr "ID da loja"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:866
 msgid "Use a number or prefix to identify orders and payments from this store."
 msgstr ""
+"Use um número ou prefixo para identificar pedidos e pagamentos provenientes "
+"desta loja."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:867
 msgid "WC-"
-msgstr ""
+msgstr "WC-"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:878
 msgid "Advanced settings"
-msgstr ""
+msgstr "Ajustes Avançados"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:891
 msgid "Debug and Log mode"
-msgstr ""
+msgstr "Modo debug e log"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:894
 msgid ""
 "Record your store actions in our changes file to have more support "
 "information."
 msgstr ""
+"Grava as ações da sua loja no nosso arquivo de alterações para ter mais "
+"informações de suporte."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:895
 msgid "We debug the information in our change file."
-msgstr ""
+msgstr "Depuramos as informações do nosso arquivo de alterações."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:910
 msgid "Basic Configuration"
-msgstr ""
+msgstr "Configuração Básica"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:923
 msgid ""
@@ -992,132 +1000,148 @@ msgid ""
 "available to your customers and <br>define the maximum fees in which they "
 "can pay you."
 msgstr ""
+"Habilite o Mercado Pago na sua loja virtual, selecione os meios de pagamento "
+"disponíveis para seus clientes e <br> defina o número máximo de vezes que "
+"podem parcelar suas compras."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:936
 msgid "Max of installments"
-msgstr ""
+msgstr "Máximo de parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:938
 msgid "What is the maximum quota with which a customer can buy?"
 msgstr ""
+"Qual é o número máximo de vezes que um cliente pode parcelar sua compra?"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:941
 msgid "1x installment"
-msgstr ""
+msgstr "1x parcela"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:942
 msgid "2x installments"
-msgstr ""
+msgstr "2x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:943
 msgid "3x installments"
-msgstr ""
+msgstr "3x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:944
 msgid "4x installments"
-msgstr ""
+msgstr "4x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:945
 msgid "5x installments"
-msgstr ""
+msgstr "5x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:946
 msgid "6x installments"
-msgstr ""
+msgstr "6x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:947
 msgid "10x installments"
-msgstr ""
+msgstr "10x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:948
 msgid "12x installments"
-msgstr ""
+msgstr "12x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:949
 msgid "15x installments"
-msgstr ""
+msgstr "15x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:950
 msgid "18x installments"
-msgstr ""
+msgstr "18x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:951
 msgid "24x installments"
-msgstr ""
+msgstr "24x parcelas"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:980
 msgid "URL for IPN"
-msgstr ""
+msgstr "URL para IPN"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:983
 msgid ""
 "Enter a URL to receive payment notifications. In %s you can check more "
 "information."
 msgstr ""
+"Insira uma URL para receber notificações de pagamento. Confira mais "
+"informações nos %s."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:984
 msgid "our guides"
-msgstr ""
+msgstr "nossos manuais"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:999
 msgid ""
 "Edit these advanced fields only when you want to modify the preset values."
 msgstr ""
+"Edite estes campos avançados da experiência de pagamento somente quando "
+"quiser alterar os valores pré-definidos."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1012
 msgid "Discount coupons"
-msgstr ""
+msgstr "Cupons de desconto"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1015
 msgid "Will you offer discount coupons to customers who buy with Mercado Pago?"
 msgstr ""
+"Você vai oferecer cupons de desconto para os clientes que comprarem com "
+"Mercado Pago?"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1030
 msgid ""
 "It appears that your credentials are not properly configured.<br/>Please, go "
 "to %s and configure it."
 msgstr ""
+"Parece que suas credenciais não estão configuradas corretamente.<br/>Por "
+"favor, vá para %s e configure-o."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1031
 msgid "Market Payment Configuration"
-msgstr ""
+msgstr "Mercado Pago Configuração"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1045
 msgid "Binary mode"
-msgstr ""
+msgstr "Modo Binário"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1048
 msgid ""
 "Accept and reject payments automatically. Do you want us to activate it?"
-msgstr ""
+msgstr "Aceita e recusa pagamentos de forma automática. Quer ativá-lo?"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1064
 msgid "Gateway Discounts"
-msgstr ""
+msgstr "Descontos Gateway"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1066
 msgid ""
 "Choose a percentage value that you want to discount your customers for "
 "paying with Mercado Pago."
 msgstr ""
+"Selecione um valor percentual que você queira descontar dos seus clientes "
+"por pagar com Mercado Pago."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1083
 msgid "Commission for purchase with Mercado Pago"
-msgstr ""
+msgstr "Comissão por compra com Mercado Pago"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1085
 msgid ""
 "Choose an additional percentage value that you want to charge as commission "
 "to your customers for paying with Mercado Pago."
 msgstr ""
+"Selecione um valor percentual adicional que você queira cobrar como comissão "
+"dos seus clientes por pagar com Mercado Pago."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1103
 msgid "Everything ready for the takeoff of your sales?"
-msgstr ""
+msgstr "Tudo pronto para o início das suas vendas?"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1105
 msgid "Everything set up? Go to your store in Sandbox mode"
-msgstr ""
+msgstr "Tudo configurado? Vá para sua loja no modo Sandbox"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1122
 msgid ""
@@ -1125,6 +1149,9 @@ msgid ""
 "everything is fine. If you already went to Production,<br> bring your "
 "customers and increase your sales with the best online shopping experience.."
 msgstr ""
+"Visite sua loja como se fosse um dos seus clientes e confira se está tudo em "
+"ordem. Se você já está no modo Produção, <br> traga os seus clientes e "
+"aumente suas vendas com a melhor experiência de compra on-line."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1124
 msgid ""
@@ -1132,46 +1159,54 @@ msgid ""
 "everything is fine. If you already went to Production,<br> bring your "
 "customers and increase your sales with the best online shopping experience."
 msgstr ""
+"Visite sua loja como se fosse um dos seus clientes e confira se está tudo em "
+"ordem. Se você já está no modo Produção, <br> traga os seus clientes e "
+"aumente suas vendas com a melhor experiência de compra on-line."
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1141
 msgid "Visit my store"
-msgstr ""
+msgstr "Visitar minha loja"
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1143
 msgid "I want to test my sales"
-msgstr ""
+msgstr "Quero testar minhas vendas"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:28
 msgid "Pay with cash"
-msgstr ""
+msgstr "Pagamentos via boleto e em lotéricas"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:183
 msgid ""
 "Checkout of payments with cash<br> Accept face-to-face payments, do not "
 "leave anyone out! %s"
 msgstr ""
+"Checkout de pagamentos via boleto ou em lotérica<br> Aceite pagamentos "
+"presenciais e amplie as opções de compra! %s"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:187
 msgid "Include this preferred purchase option by some customers."
-msgstr ""
+msgstr "Incluí esta opção de compra preferida por alguns clientes."
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:230
 msgid ""
 "Enable Mercado Pago for cash payments in your store and <br> select the "
 "options available to your customers."
 msgstr ""
+"Habilite o Mercado Pago na sua loja e selecione os meios de<br> pagamento "
+"via boleto e em lotéricas disponíveis para os seus clientes."
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:243
 msgid "Set payment preferences with cash"
-msgstr ""
+msgstr "Configure as experiências de pagamentos via boleto e em lotéricas"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:256
 msgid "Advanced configuration of the cash payment experience"
 msgstr ""
+"Configuração avançada da experiência de pagamento via boleto e em lotéricas"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:269
 msgid "Reduce inventory"
-msgstr ""
+msgstr "Reduzir inventário"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:272
 msgid ""
@@ -1179,173 +1214,187 @@ msgid ""
 "not the final payment is credited. Disable this option to reduce it only "
 "when payments are approved."
 msgstr ""
+"Ative a redução de inventário durante a criação de um pedido, seja o "
+"pagamento aprovado ou não. Desative esta opção para reduzi-lo somente quando "
+"os pagamentos estiverem aprovados."
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:286
 msgid "Payment Due"
-msgstr ""
+msgstr "Vencimento do pagamento"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:288
 msgid "In how many days will cash payments expire."
-msgstr ""
+msgstr "Em quantos dias os pagamentos via boleto e em lotéricas vencerão."
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:314
 msgid "All payment methods"
-msgstr ""
+msgstr "Todos os meios de pagamento"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:425
 msgid ""
 "There was a problem processing your payment. Are you sure you have correctly "
 "filled out all the information on the payment form?"
 msgstr ""
+"Ocorreu um problema ao processar seu pagamento. Tem certeza de que preencheu "
+"corretamente todas as informações no formulário de pagamento?"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:456
 msgid "The customer has not paid yet."
-msgstr ""
+msgstr "Cliente ainda não pagou."
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:460
 msgid "To print the ticket again click"
-msgstr ""
+msgstr "Para reimprimir o boleto clique"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:463
 msgid "here"
-msgstr ""
+msgstr "aqui"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:476
 msgid ""
 "A problem occurred when processing your payment. Are you sure you have "
 "correctly filled in all the information on the checkout form?"
 msgstr ""
+"Um problema ocorreu ao processar seu pagamento. Você tem certeza que "
+"preencheu corretamente todos os campos do formulário do checkout?"
 
 #: includes/payments/WC_WooMercadoPago_TicketGateway.php:490
 msgid "A problem occurred when processing your payment. Please try again."
 msgstr ""
+"Um problema ocorreu ao processar seu pagamento. Por favor, tente novamente."
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:30
 msgid ""
 "Mercado Envios is a shipping method available only for payments with Mercado "
 "Pago."
 msgstr ""
+"O Mercado Envios é um método de envio disponível apenas para pagamentos com "
+"o Mercado Pago."
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:156
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:234
 msgid "Free shipping"
-msgstr ""
+msgstr "Envio grátis"
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:162
 msgid "Day"
-msgstr ""
+msgstr "Dia"
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:218
 msgid ""
 "Enable the two shipping methods: Mercado Envios (Express and Normal) for the "
 "correct operation of the module."
 msgstr ""
+"Ative os dois métodos de envio: Mercado Envios (Expresso e Normal) para o "
+"funcionamento correto do módulo."
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:222
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:227
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:230
 msgid "Mercado Envios"
-msgstr ""
+msgstr "Mercado Envios"
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:229
 msgid "This controls the title that the user sees during the payment process."
 msgstr ""
+"Isso controla o título que o usuário vê durante o processo de pagamento."
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:236
 msgid "nable free shipping for this shipping method"
-msgstr ""
+msgstr "Ativar frete grátis para este método de envio"
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:240
 msgid "Delivery time"
-msgstr ""
+msgstr "Tempo de entrega"
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:242
 msgid "Show estimated delivery time"
-msgstr ""
+msgstr "Mostrar tempo estimado de entrega"
 
 #: includes/shipment/WC_MercadoEnvios_Shipping_Abstract.php:243
 msgid "Show the estimated delivery time in working days."
-msgstr ""
+msgstr "Mostrar tempo estimado de entrega em dias úteis."
 
 #: templates/checkout/basic_checkout.php:12
 #: templates/checkout/custom_checkout.php:22
 msgid "Credit cards"
-msgstr ""
+msgstr "Cartões de crédito"
 
 #: templates/checkout/basic_checkout.php:13
 msgid "Until"
-msgstr ""
+msgstr "Em até"
 
 #: templates/checkout/basic_checkout.php:28
 #: templates/checkout/custom_checkout.php:29
 msgid "Debit card"
-msgstr ""
+msgstr "Cartões de débito"
 
 #: templates/checkout/basic_checkout.php:42
 msgid "Payments in cash"
-msgstr ""
+msgstr "Transferência bancária"
 
 #: templates/checkout/basic_checkout.php:56
 msgid "We take you to our site to complete the payment"
 msgstr ""
+"Você será redirecionado para o site do Mercado Pago para concluir o pagamento"
 
 #: templates/checkout/custom_checkout.php:10
 msgid "With what cards can I pay"
-msgstr ""
+msgstr "Com quais cartões posso pagar?"
 
 #: templates/checkout/custom_checkout.php:14
 msgid "See current promotions"
-msgstr ""
+msgstr "Promoções vigentes"
 
 #: templates/checkout/custom_checkout.php:40
 #: templates/checkout/ticket_checkout.php:12
 msgid "Enter your discount coupon"
-msgstr ""
+msgstr "Insira seu cupom de desconto"
 
 #: templates/checkout/custom_checkout.php:44
 #: templates/checkout/ticket_checkout.php:16
 msgid "Enter your coupon"
-msgstr ""
+msgstr "Insira seu cupom"
 
 #: templates/checkout/custom_checkout.php:48
 #: templates/checkout/custom_checkout.php:1496
 #: templates/checkout/ticket_checkout.php:20
 #: templates/checkout/ticket_checkout.php:187
 msgid "Apply"
-msgstr ""
+msgstr "Ativar"
 
 #: templates/checkout/custom_checkout.php:53
 #: templates/checkout/ticket_checkout.php:25
 msgid "The code you entered is incorrect"
-msgstr ""
+msgstr "O código que digitou não foi encontrado"
 
 #: templates/checkout/custom_checkout.php:59
 msgid "Enter your card details"
-msgstr ""
+msgstr "Informe os dados do seu cartão"
 
 #: templates/checkout/custom_checkout.php:65
 msgid "Payment Method"
-msgstr ""
+msgstr "Meio de pagamento"
 
 #: templates/checkout/custom_checkout.php:67
 msgid "Your card"
-msgstr ""
+msgstr "Seu cartão"
 
 #: templates/checkout/custom_checkout.php:76
 msgid "finished in"
-msgstr ""
+msgstr "terminado em"
 
 #: templates/checkout/custom_checkout.php:82
 msgid "Other cards"
-msgstr ""
+msgstr "Outros cartões"
 
 #: templates/checkout/custom_checkout.php:83
 msgid "Another card"
-msgstr ""
+msgstr "Outro cartão"
 
 #: templates/checkout/custom_checkout.php:91
 msgid "CVV"
-msgstr ""
+msgstr "CVV"
 
 #: templates/checkout/custom_checkout.php:94
 #: templates/checkout/custom_checkout.php:108
@@ -1354,230 +1403,234 @@ msgstr ""
 #: templates/checkout/custom_checkout.php:141
 #: templates/checkout/custom_checkout.php:205
 msgid "Card number"
-msgstr ""
+msgstr "Número do cartão"
 
 #: templates/checkout/custom_checkout.php:95
 #: templates/checkout/custom_checkout.php:96
 #: templates/checkout/custom_checkout.php:112
 #: templates/checkout/custom_checkout.php:142
 msgid "Invalid Card Number"
-msgstr ""
+msgstr "Número de cartão inválido"
 
 #: templates/checkout/custom_checkout.php:118
 msgid "Name and surname of the cardholder"
-msgstr ""
+msgstr "Nome completo do titular do cartão"
 
 #: templates/checkout/custom_checkout.php:122
 msgid "Invalid cardholder name"
-msgstr ""
+msgstr "Nome do titular do cartão inválido"
 
 #: templates/checkout/custom_checkout.php:128
 msgid "Expiration date"
-msgstr ""
+msgstr "Data de vencimento"
 
 #: templates/checkout/custom_checkout.php:133
 msgid "Invalid Expiration Date"
-msgstr ""
+msgstr "Data de vencimento inválida"
 
 #: templates/checkout/custom_checkout.php:137
 #: templates/checkout/custom_checkout.php:140
 msgid "Last 3 numbers on the back"
-msgstr ""
+msgstr "Últimos 3 números do verso"
 
 #: templates/checkout/custom_checkout.php:148
 msgid "In how many installments do you want to pay?"
-msgstr ""
+msgstr "Em quantas parcelas você quer pagar?"
 
 #: templates/checkout/custom_checkout.php:153
 msgid "Issuer"
-msgstr ""
+msgstr "Banco emissor"
 
 #: templates/checkout/custom_checkout.php:165
 msgid "Converted payment of"
-msgstr ""
+msgstr "Pagamento convertido de"
 
 #: templates/checkout/custom_checkout.php:174
 msgid "Select the number of installment"
-msgstr ""
+msgstr "Em quantas parcelas você quer pagar"
 
 #: templates/checkout/custom_checkout.php:192
 msgid "Enter your document number"
-msgstr ""
+msgstr "Informe seu número de documento"
 
 #: templates/checkout/custom_checkout.php:196
 msgid "Type"
-msgstr ""
+msgstr "Tipo"
 
 #: templates/checkout/custom_checkout.php:201
 msgid "Document number"
-msgstr ""
+msgstr "Número de documento"
 
 #: templates/checkout/custom_checkout.php:203
 msgid "Only numbers"
-msgstr ""
+msgstr "Apenas números"
 
 #: templates/checkout/custom_checkout.php:206
 msgid "Invalid Document Number"
-msgstr ""
+msgstr "Número de documento inválido"
 
 #: templates/checkout/custom_checkout.php:217
 msgid "Do not save card"
-msgstr ""
+msgstr "Não salvar o cartão"
 
 #: templates/checkout/custom_checkout.php:219
 msgid "Obligatory field"
-msgstr ""
+msgstr "Campo obrigatório"
 
 #: templates/checkout/custom_checkout.php:1497
 #: templates/checkout/ticket_checkout.php:188
 msgid "Remove"
-msgstr ""
+msgstr "Remover"
 
 #: templates/checkout/custom_checkout.php:1498
 #: templates/checkout/ticket_checkout.php:189
 msgid "Please, inform your coupon code"
-msgstr ""
+msgstr "Por favor, informe seu cupom de desconto"
 
 #: templates/checkout/custom_checkout.php:1499
 #: templates/checkout/ticket_checkout.php:190
 msgid "To choose"
-msgstr ""
+msgstr "Escolher"
 
 #: templates/checkout/custom_checkout.php:1500
 #: templates/checkout/ticket_checkout.php:191
 msgid "Other bank"
-msgstr ""
+msgstr "Outro banco"
 
 #: templates/checkout/custom_checkout.php:1501
 #: templates/checkout/ticket_checkout.php:192
 msgid "You will save"
-msgstr ""
+msgstr "Você economizará"
 
 #: templates/checkout/custom_checkout.php:1502
 #: templates/checkout/ticket_checkout.php:193
 msgid "with discount of"
-msgstr ""
+msgstr "com desconto de"
 
 #: templates/checkout/custom_checkout.php:1503
 #: templates/checkout/ticket_checkout.php:194
 msgid "Total of your purchase:"
-msgstr ""
+msgstr "Total da compra:"
 
 #: templates/checkout/custom_checkout.php:1504
 #: templates/checkout/ticket_checkout.php:195
 msgid "Total of your purchase with discount:"
-msgstr ""
+msgstr "Total da compra com desconto:"
 
 #: templates/checkout/custom_checkout.php:1505
 #: templates/checkout/ticket_checkout.php:196
 msgid "*After payment approval"
-msgstr ""
+msgstr "*Após a aprovação do pagamento"
 
 #: templates/checkout/custom_checkout.php:1506
 #: templates/checkout/ticket_checkout.php:197
 msgid "Terms and conditions of use"
-msgstr ""
+msgstr "Termos e condições de uso"
 
 #: templates/checkout/ticket_checkout.php:38
 msgid "Physical person"
-msgstr ""
+msgstr "Pessoa física"
 
 #: templates/checkout/ticket_checkout.php:45
 msgid "Legal person"
-msgstr ""
+msgstr "Pessoa jurídica"
 
 #: templates/checkout/ticket_checkout.php:52
 msgid "Name"
-msgstr ""
+msgstr "Nome"
 
 #: templates/checkout/ticket_checkout.php:53
 msgid "Social reason"
-msgstr ""
+msgstr "Razão social"
 
 #: templates/checkout/ticket_checkout.php:55
 msgid "You must inform your name"
-msgstr ""
+msgstr "Você deve informar seu nome"
 
 #: templates/checkout/ticket_checkout.php:59
 msgid "Surname"
-msgstr ""
+msgstr "Sobrenome"
 
 #: templates/checkout/ticket_checkout.php:61
 msgid "You must inform your last name"
-msgstr ""
+msgstr "Você deve informar seu sobrenome"
 
 #: templates/checkout/ticket_checkout.php:65
 msgid "CPF"
-msgstr ""
+msgstr "CPF"
 
 #: templates/checkout/ticket_checkout.php:66
 msgid "CNPJ"
-msgstr ""
+msgstr "CNPJ"
 
 #: templates/checkout/ticket_checkout.php:68
 msgid "You must provide your document number"
-msgstr ""
+msgstr "Você deve informar seu número de documento"
 
 #: templates/checkout/ticket_checkout.php:74
 msgid "Address"
-msgstr ""
+msgstr "Endereço"
 
 #: templates/checkout/ticket_checkout.php:76
 msgid "You must inform your address"
-msgstr ""
+msgstr "Você deve informar seu endereço"
 
 #: templates/checkout/ticket_checkout.php:80
 msgid "Number"
-msgstr ""
+msgstr "Número"
 
 #: templates/checkout/ticket_checkout.php:82
 msgid "You must provide your address number"
-msgstr ""
+msgstr "Você deve informar o número do seu endereço"
 
 #: templates/checkout/ticket_checkout.php:88
 msgid "City"
-msgstr ""
+msgstr "Cidade"
 
 #: templates/checkout/ticket_checkout.php:90
 msgid "You must inform your city"
-msgstr ""
+msgstr "Você deve informar sua cidade"
 
 #: templates/checkout/ticket_checkout.php:94
 msgid "State"
-msgstr ""
+msgstr "Estado"
 
 #: templates/checkout/ticket_checkout.php:96
 msgid "Select state\""
-msgstr ""
+msgstr "Selecione o estado"
 
 #: templates/checkout/ticket_checkout.php:125
 msgid "You must inform your status"
-msgstr ""
+msgstr "Você deve informar seu estado"
 
 #: templates/checkout/ticket_checkout.php:129
 msgid "Postal Code"
-msgstr ""
+msgstr "CEP"
 
 #: templates/checkout/ticket_checkout.php:131
 msgid "You must provide your zip code"
-msgstr ""
+msgstr "Você deve informar o CEP"
 
 #: templates/checkout/ticket_checkout.php:146
 msgid "Select the issuer with whom you want to process the payment"
-msgstr ""
+msgstr "Por favor, selecione o meio de pagamento"
 
 #: woocommerce-mercadopago.php:48
 msgid ""
 "WooCommerce Mercado Pago requires PHP version 5.6 or later. Please update "
 "your PHP version."
 msgstr ""
+"O plugin do Mercado Pago para o WooCommerce requer o PHP versão 5.6 ou "
+"posterior. Por favor, atualize sua versão do PHP."
 
 #: woocommerce-mercadopago.php:65
 msgid ""
 "It seems that you already have the Mercado Pago module installed. Please "
 "uninstall it before using this version."
 msgstr ""
+"Parece que você já tem o Módulo do Mercado Pago instalado. Por favor, "
+"desinstale-o antes de usar esta versão."
 
 #: woocommerce-mercadopago.php:90
 msgid "Cancel order"
-msgstr ""
+msgstr "Cancelar ordem"
