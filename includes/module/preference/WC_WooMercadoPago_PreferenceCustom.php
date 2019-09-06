@@ -54,9 +54,9 @@ class WC_WooMercadoPago_PreferenceCustom extends WC_WooMercadoPago_PreferenceAbs
         }
         $this->add_discounts_campaign();
 
-//         $internal_metadata = parent::get_internal_metadata();
-//         $internal_metadata = $this->get_internal_metadata_custom($internal_metadata);
-//         $this->preference['internal_metadata'] = $internal_metadata;
+        $internal_metadata = parent::get_internal_metadata();
+        $internal_metadata = $this->get_internal_metadata_custom($internal_metadata);
+        $this->preference['metadata'] = $internal_metadata;
 
     }
 

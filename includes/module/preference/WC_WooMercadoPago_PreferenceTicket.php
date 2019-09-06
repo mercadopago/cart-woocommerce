@@ -43,9 +43,9 @@ class WC_WooMercadoPago_PreferenceTicket extends WC_WooMercadoPago_PreferenceAbs
         $this->preference['additional_info']['payer'] = $this->get_payer_custom();
         $this->preference['additional_info']['shipments'] = $this->shipments_receiver_address();
       
-//         $internal_metadata = parent::get_internal_metadata();
-//         $internal_metadata = $this->get_internal_metadata_ticket($internal_metadata);
-//         $this->preference['internal_metadata'] = $internal_metadata;
+        $internal_metadata = parent::get_internal_metadata();
+        $internal_metadata = $this->get_internal_metadata_ticket($internal_metadata);
+        $this->preference['metadata'] = $internal_metadata;
       
         $this->preference['additional_info']['payer'] = $this->get_payer_custom();
     }
