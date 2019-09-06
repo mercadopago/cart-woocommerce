@@ -135,7 +135,7 @@ if (!defined('ABSPATH')) {
                         <div class="mp-col-md-12 mp-pt-10">
                             <div class="frame-tarjetas">
                                 <div class="mp-row-checkout">
-                                    <p class="mp-obrigatory"><?= esc_html__('Complete all fields, they are mandatory.'); ?></p>
+                                    <p class="mp-obrigatory"><?= esc_html__('Complete all fields, they are mandatory.', 'woocommerce-mercadopago'); ?></p>
                                 </div>
                             </div>
                         </div>
