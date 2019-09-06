@@ -2,7 +2,7 @@
 </a></p>
 
 <p align="center">
-<img src="https://img.shields.io/badge/plugin-V4.0.5-blue" alt="version">
+<img src="https://img.shields.io/badge/plugin-V4.0.6-blue" alt="version">
 <img src="https://img.shields.io/wordpress/plugin/dt/woocommerce-mercadopago" alt="download">
 <img src="https://img.shields.io/github/license/mercadopago/cart-woocommerce" alt="license">
 </p>
