@@ -9,7 +9,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2019-09-05T23:48:06-04:00\n"
-"PO-Revision-Date: 2019-09-06 16:16-0300\n"
+"PO-Revision-Date: 2019-09-06 16:36-0300\n"
 "X-Generator: Poedit 2.2.3\n"
 "X-Domain: woocommerce-mercadopago\n"
 "Last-Translator: \n"
@@ -83,7 +83,7 @@ msgstr "Configurar"
 
 #: includes/module/WC_WooMercadoPago_Module.php:274
 msgid "Your opinion helps us get better"
-msgstr "Your opinion helps us get better"
+msgstr "Tu opnión nos ayuda a mejorar"
 
 #: includes/module/WC_WooMercadoPago_Module.php:275
 msgid "Guides and Documentation"
@@ -1222,7 +1222,7 @@ msgstr "Fecha de expiracion inválida"
 
 #: templates/checkout/custom_checkout.php:137 templates/checkout/custom_checkout.php:140
 msgid "Last 3 numbers on the back"
-msgstr "Últimos 3 números del dorso"
+msgstr "Código de seguridad"
 
 #: templates/checkout/custom_checkout.php:148
 msgid "In how many installments do you want to pay?"
