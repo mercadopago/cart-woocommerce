@@ -1461,3 +1461,27 @@ msgstr ""
 #: woocommerce-mercadopago.php:90
 msgid "Cancel order"
 msgstr ""
+
+#: templates/checkout/ticket_checkout.php:138
+msgid "Complete all fields, they are mandatory."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:517
+msgid "installments"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:521
+msgid "installment"
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_TicketGateway.php:26
+msgid "Accept cash payments within the custom checkout and expand your customers purchase options."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_BasicGateway.php:26
+msgid "It offers all means of payment: credit and debit cards, cash and account money. Your customers choose whether they pay as guests or from their Mercado Pago account."
+msgstr ""
+
+#: includes/payments/WC_WooMercadoPago_CustomGateway.php:28
+msgid "Accept card payments on your website with the best possible financing and maximize the conversion of your business. With personalized checkout your customers pay without leaving your store!"
+msgstr ""

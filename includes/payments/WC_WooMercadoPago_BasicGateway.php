@@ -23,7 +23,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             return;
         }
 
-        $this->desc = __('Ofrece todos los medios de pago: tarjetas de crédito y débito, dinero en efectivo y dinero en cuenta. Tus clientes eligen si pagan como invitados o desde su cuenta de Mercado Pago.', 'woocommerce-mercadopago');
+        $this->desc = __('It offers all means of payment: credit and debit cards, cash and account money. Your customers choose whether they pay as guests or from their Mercado Pago account.', 'woocommerce-mercadopago');
 
         $this->form_fields = array();
         $this->method_title = __('Mercado Pago - Basic Checkout', 'woocommerce-mercadopago');
@@ -514,11 +514,11 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
         $efectivo = 0;
         $tarjetas = get_option('_checkout_payments_methods', '');
         $installments = $this->getOption('installments');
-        $str_cuotas = __('cuotas', 'woocommerce-mercadopago');
+        $str_cuotas = __('installments', 'woocommerce-mercadopago');
         $cho_tarjetas = array();
 
         if ($installments == 1) {
-            $str_cuotas = __('cuota', 'woocommerce-mercadopago');
+            $str_cuotas = __('installment', 'woocommerce-mercadopago');
         }
 
         //change type account_money to ticket
