@@ -4,34 +4,29 @@
  * Class AbstractRestClient
  */
 class AbstractRestClient
-{
-    const PRODUCT_ID = 'BC32CPFTRPP001U8NHRG';
-
+{   
     public static $email_admin = '';
     public static $site_locale = '';
     public static $check_loop = 0;
 
     /**
      * @param $request
-     * @param $version
-     * @param $baseUrl
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function execAbs($request, $version, $baseUrl)
+    public static function execAbs($request)
     {
-        $connect = self::build_request($request, $version, $baseUrl);
-        return self::execute($request, $version, $connect);
+        $connect = self::build_request($request);
+      
+        return self::execute($request, $connect);
     }
-
+    
     /**
      * @param $request
-     * @param $version
-     * @param $apiBaseUrl
      * @return false|resource
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function build_request($request, $version, $apiBaseUrl)
+    public static function build_request($request)
     {
         if (!extension_loaded('curl')) {
             throw new WC_WooMercadoPago_Exception('cURL extension not found. You need to enable cURL in your php.ini or another configuration you have.');
@@ -47,7 +42,9 @@ class AbstractRestClient
 
         $headers = array('accept: application/json');
         if ($request['method'] == 'POST' ) {
-            $headers[] = 'x-product-id: ' . self::PRODUCT_ID;
+            $headers[] = 'x-product-id:' . WC_WooMercadoPago_Constants::PRODUCT_ID;
+            $headers[] = 'x-platform-id:' . WC_WooMercadoPago_Constants::PLATAFORM_ID;
+            $headers[] = 'x-integrator-id:' . WC_WooMercadoPago_Module::get_sponsor_id();       
         }
         $json_content = true;
         $form_content = false;
@@ -70,7 +67,7 @@ class AbstractRestClient
         }
 
         $connect = curl_init();
-        curl_setopt($connect, CURLOPT_USERAGENT, 'platform:v1-whitelabel,type:woocommerce,so:' . $version);
+        curl_setopt($connect, CURLOPT_USERAGENT, 'platform:v1-whitelabel,type:woocommerce,so:' . WC_WooMercadoPago_Constants::VERSION);
         curl_setopt($connect, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($connect, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($connect, CURLOPT_CAINFO, $GLOBALS['LIB_LOCATION'] . '/cacert.pem');
@@ -84,7 +81,7 @@ class AbstractRestClient
             }
         }
 
-        curl_setopt($connect, CURLOPT_URL, $apiBaseUrl . $request['uri']);
+        curl_setopt($connect, CURLOPT_URL, WC_WooMercadoPago_Constants::API_MP_BASE_URL . $request['uri']);
 
 
         if (isset($request['data'])) {
@@ -110,13 +107,11 @@ class AbstractRestClient
     }
 
     /**
-     * @param $request
-     * @param $version
      * @param $connect
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function execute($request, $version, $connect)
+    public static function execute($request, $connect)
     {
         $response = null;
         $api_result = curl_exec($connect);
@@ -168,7 +163,7 @@ class AbstractRestClient
                     'message' => $message,
                     'payloads' => $payloads
                 );
-                self::sendErrorLog($response['status'], $errors, $version);
+                self::sendErrorLog($response['status'], $errors, WC_WooMercadoPago_Constants::VERSION);
             } catch (Exception $e) {
                 throw new WC_WooMercadoPago_Exception('Error to call API LOGS' . $e);
             }
@@ -182,16 +177,15 @@ class AbstractRestClient
     /**
      * @param $code
      * @param $errors
-     * @param $version
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function sendErrorLog($code, $errors, $version)
+    public static function sendErrorLog($code, $errors)
     {
         $data = array(
             'code' => $code,
-            'module' => 'WooCommerce',
-            'module_version' => $version,
+            'module' => WC_WooMercadoPago_Constants::PLATAFORM_ID,
+            'module_version' => WC_WooMercadoPago_Constants::VERSION,
             'url_store' => $_SERVER['HTTP_HOST'],
             'errors' => $errors,
             'email_admin' => self::$email_admin,
@@ -201,7 +195,7 @@ class AbstractRestClient
             'uri' => '/modules/log',
             'data' => $data
         );
-        $result_response = MeLiRestClient::post($request, $version);
+        $result_response = MeLiRestClient::post($request, WC_WooMercadoPago_Constants::VERSION);
         return $result_response;
     }
 
@@ -219,7 +213,6 @@ class AbstractRestClient
             }
             return implode('&', $elements);
         }
-
     }
 
     /**

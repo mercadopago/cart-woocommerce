@@ -159,7 +159,7 @@ abstract class WC_WooMercadoPago_Hook_Abstract
                     MA.setPublicKey('<?php echo $this->publicKey; ?>');
                     MA.setPlatform('WooCommerce');
                     MA.setPlatformVersion('<?php echo $woo->version; ?>');
-                    MA.setModuleVersion('<?php echo WC_WooMercadoPago_Module::VERSION; ?>');
+                    MA.setModuleVersion('<?php echo WC_WooMercadoPago_Constants::VERSION; ?>');
                     MA.setPayerEmail('<?php echo($logged_user_email != null ? $logged_user_email : ""); ?>');
                     MA.setUserLogged( <?php echo(empty($logged_user_email) ? 0 : 1); ?> );
                     MA.setInstalledModules('<?php echo $available_payments; ?>');
