@@ -34,7 +34,18 @@ if ( ! defined( 'WC_MERCADOPAGO_BASENAME' ) ) {
  */
 function woocommerce_mercadopago_load_plugin_textdomain()
 {
-    load_plugin_textdomain('woocommerce-mercadopago', false, dirname(plugin_basename(__FILE__)) . '/i18n/languages/');
+    $text_domain = 'woocommerce-mercadopago';
+    $locale = apply_filters( 'plugin_locale', get_locale(), $text_domain );
+  
+    $original_language_file = ABSPATH . 'wp-content/plugins/woocommerce-mercadopago/i18n/languages/woocommerce-mercadopago-'. $locale .'.mo';
+    $override_language_file = ABSPATH . 'wp-content/plugins/woocommerce-mercadopago/i18n/languages/woocommerce-mercadopago-'. $locale .'.mo';
+    
+    // Unload the translation for the text domain of the plugin
+    unload_textdomain($text_domain);
+    // Load first the override file
+    load_textdomain($text_domain, $override_language_file );
+    // Then load the original translation file
+    load_textdomain($text_domain, $original_language_file );
 }
 add_action( 'plugins_loaded', 'woocommerce_mercadopago_load_plugin_textdomain' );
 
