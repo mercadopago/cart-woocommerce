@@ -142,13 +142,7 @@ class AbstractRestClient
                         $message = $response['response']['message'];
                     }
                     if (isset($response['response']['cause'])) {
-                        if (isset($response['response']['cause']['code']) && isset($response['response']['cause']['description'])) {
-                            $message .= ' - ' . $response['response']['cause']['code'] . ': ' . $response['response']['cause']['description'];
-                        } elseif (is_array($response['response']['cause'])) {
-                            foreach ($response['response']['cause'] as $cause) {
-                                $message .= ' - ' . $cause['code'] . ': ' . $cause['description'];
-                            }
-                        }
+                        $message .= json_encode($response['response']['cause']);
                     }
                 }
                 if ($request != null) {

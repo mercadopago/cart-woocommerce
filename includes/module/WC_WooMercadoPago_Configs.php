@@ -250,10 +250,12 @@ class WC_WooMercadoPago_Configs
     public function setPaymentGateway($methods = null)
     {
         global $wp;
-        $api_request = strtolower(wc_clean($wp->query_vars['wc-api']));
-        if (!empty($api_request)) {
-            $methods[] = $api_request;
-            return $methods;
+        if (!empty($wp) && isset($wp->query_vars['wc-api'])) {
+            $api_request = strtolower(wc_clean($wp->query_vars['wc-api']));
+            if (!empty($api_request)) {
+                $methods[] = $api_request;
+                return $methods;
+            }
         }
 
         $methods[] = 'WC_WooMercadoPago_BasicGateway';
