@@ -182,7 +182,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
         $checkout_ticket_header = array(
             'title' => sprintf(
                 __('Checkout of payments with cash<br> Accept face-to-face payments, do not leave anyone out! %s', 'woocommerce-mercadopago'),
-                '<div class="row">
+                '<div class="mp-row">
               <div class="mp-col-md-12">
                 <p class="text-checkout-body mp-mb-0">
                   ' . __('Include this preferred purchase option by some customers.', 'woocommerce-mercadopago') . '

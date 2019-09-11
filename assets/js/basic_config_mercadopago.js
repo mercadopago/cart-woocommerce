@@ -96,9 +96,9 @@ window.onload = function () {
 
     //payment methods
     var tablePayments = document.querySelector("#woocommerce_woo-mercado-pago-basic_checkout_payments_description").nextElementSibling.getAttribute('class');
-    var input_payments = document.querySelectorAll('.' + tablePayments + ' td.forminp label');
-    for (i = 0; i < input_payments.length; i++) {
-      input_payments[i].id = "input_payments_mt";
+    var mp_input_payments = document.querySelectorAll('.' + tablePayments + ' td.forminp label');
+    for (i = 0; i < mp_input_payments.length; i++) {
+      mp_input_payments[i].id = "mp_input_payments_mt";
     }
 
     //online payments
@@ -119,7 +119,7 @@ window.onload = function () {
     for (var ion = 0; ion < onlineInputs.length; ion++) {
       if (ion == 0) {
         var checkbox_online_prepend = "<div class='all_checkbox'>\
-          <label for='checkmeon' id='input_payments'>\
+          <label for='checkmeon' id='mp_input_payments'>\
             <input type='checkbox' name='checkmeon' id='checkmeon' "+ onlineChecked + " onclick='completeOnlineCheckbox()'>\
             "+ online_payment_translate + "\
           </label>\
@@ -147,7 +147,7 @@ window.onload = function () {
     for (var ideb = 0; ideb < debitInputs.length; ideb++) {
       if (ideb == 0) {
         var checkbox_debit_prepend = "<div class='all_checkbox'>\
-          <label for='checkmedeb' id='input_payments'>\
+          <label for='checkmedeb' id='mp_input_payments'>\
             <input type='checkbox' name='checkmedeb' id='checkmedeb' "+ debitChecked + " onclick='completeDebitCheckbox()'>\
             "+ debit_payment_translate + "\
           </label>\
@@ -175,7 +175,7 @@ window.onload = function () {
     for (ioff = 0; ioff < offlineInputs.length; ioff++) {
       if (ioff == 0) {
         var checkbox_offline_prepend = "<div class='all_checkbox'>\
-          <label for='checkmeoff' id='input_payments' style='margin-bottom: 37px !important;'>\
+          <label for='checkmeoff' id='mp_input_payments' style='margin-bottom: 37px !important;'>\
             <input type='checkbox' name='checkmeoff' id='checkmeoff' "+ offlineChecked + " onclick='completeOfflineCheckbox()'>\
             "+ offline_payment_translate + "\
           </label>\
