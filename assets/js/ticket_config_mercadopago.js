@@ -95,9 +95,9 @@ document.getElementById("woocommerce_woo-mercado-pago-ticket_checkout_payments_a
 
     //payment methods
     var tablePayments = document.querySelector("#woocommerce_woo-mercado-pago-ticket_checkout_payments_description").nextElementSibling.getAttribute('class');
-    var input_payments = document.querySelectorAll( '.'+ tablePayments + ' td.forminp label');
-    for (i = 0; i < input_payments.length; i++) {
-      input_payments[i].id = "input_payments_mt";
+    var mp_input_payments = document.querySelectorAll( '.'+ tablePayments + ' td.forminp label');
+    for (i = 0; i < mp_input_payments.length; i++) {
+      mp_input_payments[i].id = "mp_input_payments_mt";
     }
 
     //offline payments configuration form
@@ -118,7 +118,7 @@ document.getElementById("woocommerce_woo-mercado-pago-ticket_checkout_payments_a
     for (ioff = 0; ioff < offlineInputs.length; ioff++) {
       if (ioff == 0) {
         var checkbox_offline_prepend = "<div class='all_checkbox'>\
-        <label for='checkmeoff' id='input_payments' style='margin-bottom: 37px !important;'>\
+        <label for='checkmeoff' id='mp_input_payments' style='margin-bottom: 37px !important;'>\
           <input type='checkbox' name='checkmeoff' id='checkmeoff' "+ offlineChecked + " onclick='completeOfflineCheckbox()'>\
           "+ offline_payment_translate + "\
         </label>\

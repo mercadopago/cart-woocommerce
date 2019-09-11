@@ -153,7 +153,7 @@ class WC_WooMercadoPago_CustomGateway extends WC_WooMercadoPago_PaymentAbstract
         $checkout_custom_header = array(
             'title' => sprintf(
                 __('Checkout of payments with debit and credit cards<br> Accept payments instantly and maximize the conversion of your business %s', 'woocommerce-mercadopago'),
-                '<div class="row">
+                '<div class="mp-row">
               <div class="mp-col-md-12">
                 <p class="text-checkout-body mp-mb-0">
                   ' . __('Turn your online store into a secure and easy-to-use payment gateway for your customers. With personalized checkout your customers pay without leaving your store!', 'woocommerce-mercadopago') . '
