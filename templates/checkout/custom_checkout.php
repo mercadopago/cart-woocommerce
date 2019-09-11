@@ -151,7 +151,7 @@ if (!defined('ABSPATH')) {
 								<div class="mp-col-md-4 mp-pr-15">
 									<div class="mp-issuer">
 										<label for="issuer" class="mp-label-form"><?= esc_html__('Issuer', 'woocommerce-mercadopago'); ?> <em>*</em></label>
-										<select class="mp-form-control mp-pointer" id="issuer" data-checkout="issuer" name="mercadopago_custom[issuer]"></select>
+										<select class="mp-form-control mp-pointer mp-mt-5" id="issuer" data-checkout="issuer" name="mercadopago_custom[issuer]"></select>
 									</div>
 								</div>
 
@@ -247,6 +247,7 @@ if (!defined('ABSPATH')) {
 </div>
 
 <script type="text/javascript">
+  
 	//collapsible payments
 	var show_payments = document.querySelector("#button-show-payments")
 	var frame_payments = document.querySelector("#mp-frame-payments");
@@ -297,9 +298,10 @@ if (!defined('ABSPATH')) {
 	}
 
 	//mercadopago function
-	(function() {
-
-		var MPv1 = {
+(function( $ ) {
+  
+  var mercado_pago = false;
+  var MPv1 = {
 			debug: true,
 			add_truncated_card: true,
 			site_id: "",
@@ -314,16 +316,11 @@ if (!defined('ABSPATH')) {
 				default: true,
 				status: true
 			},
-			create_token_on: {
-				event: true, //if true create token on event, if false create on click and ignore others
-				keyup: false,
-				paste: true
-			},
 			inputs_to_create_discount: [
 				"couponCode",
 				"applyCoupon"
 			],
-			inputs_to_create_token: [
+		  inputs_to_create_token: [
 				"cardNumber",
 				"cardExpirationDate",
 				"cardholderName",
@@ -552,10 +549,10 @@ if (!defined('ABSPATH')) {
 
 			var cardSelector = document.querySelector(MPv1.selectors.paymentMethodSelector);
 
-			if (cardSelector && cardSelector[cardSelector.options.selectedIndex].value != "-1") {
-				return cardSelector[cardSelector.options.selectedIndex]
-					.getAttribute("first_six_digits");
-			}
+// 			if (cardSelector && cardSelector[cardSelector.options.selectedIndex].value != "-1") {
+// 				return cardSelector[cardSelector.options.selectedIndex]
+// 					.getAttribute("first_six_digits");
+// 			}
 
 			var ccNumber = document.querySelector(MPv1.selectors.cardNumber);
 			return ccNumber.value.replace(/[ .-]/g, "").slice(0, 6);
@@ -567,6 +564,7 @@ if (!defined('ABSPATH')) {
 			var bin = MPv1.getBin();
 
 			if (bin.length == 0) {
+					MPv1.resetBackgroundCard();
 
 				MPv1.hideIssuer();
 
@@ -584,7 +582,6 @@ if (!defined('ABSPATH')) {
 		}
 
 		MPv1.guessingPaymentMethod = function(event) {
-
 			var bin = MPv1.getBin();
 			var amount = MPv1.getAmount();
 
@@ -910,62 +907,7 @@ if (!defined('ABSPATH')) {
 
 		}
 
-		// === Functions related to Create Tokens
-		MPv1.createTokenByEvent = function() {
-
-			var $inputs = MPv1.getForm().querySelectorAll("[data-checkout]");
-			var $inputs_to_create_token = MPv1.getInputsToCreateToken();
-
-			for (var x = 0; x < $inputs.length; x++) {
-
-				var element = $inputs[x];
-
-				// Add events only in the required fields.
-				if ($inputs_to_create_token
-					.indexOf(element.getAttribute("data-checkout")) > -1) {
-
-					var event = "focusout";
-
-					if (element.nodeName == "SELECT") {
-						event = "change";
-					}
-
-					MPv1.addListenerEvent(element, event, MPv1.validateInputsCreateToken);
-
-					// For firefox.
-					MPv1.addListenerEvent(element, "blur", MPv1.validateInputsCreateToken);
-
-					if (MPv1.create_token_on.keyup) {
-						MPv1.addListenerEvent(element, "keyup", MPv1.validateInputsCreateToken);
-					}
-
-					if (MPv1.create_token_on.paste) {
-						MPv1.addListenerEvent(element, "paste", MPv1.validateInputsCreateToken);
-					}
-
-				}
-
-			}
-
-		}
-
-		MPv1.createTokenBySubmit = function() {
-			MPv1.addListenerEvent(document.querySelector(MPv1.selectors.form), "submit", MPv1.doPay);
-		}
-
-		var doSubmit = false;
-
-		MPv1.doPay = function(event) {
-			event.preventDefault();
-			if (!doSubmit) {
-				MPv1.createToken();
-				return false;
-			}
-		}
-
 		MPv1.validateInputsCreateToken = function() {
-
-			var valid_to_create_token = true;
 			var $inputs = MPv1.getForm().querySelectorAll("[data-checkout]");
 			var $inputs_to_create_token = MPv1.getInputsToCreateToken();
 
@@ -978,15 +920,12 @@ if (!defined('ABSPATH')) {
 					.indexOf(element.getAttribute("data-checkout")) > -1) {
 
 					if (element.value == -1 || element.value == "") {
-						valid_to_create_token = false;
-					} // end if check values
-				} // end if check data-checkout
-			} // end for
-
-			if (valid_to_create_token) {
-				MPv1.createToken();
-			}
-
+            element.focus();
+						return false;
+					} 
+				} 
+			} 
+      return true;
 		}
 
 		MPv1.createToken = function() {
@@ -1005,11 +944,11 @@ if (!defined('ABSPATH')) {
 		}
 
 		MPv1.sdkResponseHandler = function(status, response) {
-
 			// Hide loading.
 			document.querySelector(MPv1.selectors.box_loading).style.background = "";
 
 			if (status != 200 && status != 201) {
+
 				MPv1.showErrors(response);
 			} else {
 				var token = document.querySelector(MPv1.selectors.token);
@@ -1020,11 +959,8 @@ if (!defined('ABSPATH')) {
 					document.querySelector(MPv1.selectors.cardTruncated).value = card;
 				}
 
-				if (!MPv1.create_token_on.event) {
-					doSubmit = true;
-					btn = document.querySelector(MPv1.selectors.form);
-					btn.submit();
-				}
+        mercado_pago = true;
+         $( 'form.checkout, form#order_review' ).submit();
 			}
 
 		}
@@ -1051,11 +987,6 @@ if (!defined('ABSPATH')) {
 			}
 
 			Mercadopago.clearSession();
-
-			if (MPv1.create_token_on.event) {
-				MPv1.createTokenByEvent();
-				MPv1.validateInputsCreateToken();
-			}
 
 			document.querySelector(MPv1.selectors.CustomerAndCard).value =
 				MPv1.customer_and_card.status;
@@ -1147,17 +1078,12 @@ if (!defined('ABSPATH')) {
 			}
 		};
 
-		MPv1.addListenerEvent(
-			document.querySelector(MPv1.selectors.cardNumber),
-			"keyup", MPv1.guessingPaymentMethod
-		);
+    $( 'body' ).on( 'focusout', '#cardNumber', MPv1.guessingPaymentMethod);
+  
+    
 		MPv1.addListenerEvent(
 			document.querySelector(MPv1.selectors.cardNumber),
 			"keyup", MPv1.clearOptions
-		);
-		MPv1.addListenerEvent(
-			document.querySelector(MPv1.selectors.cardNumber),
-			"change", MPv1.guessingPaymentMethod
 		);
 
 		MPv1.referer = (function() {
@@ -1279,12 +1205,6 @@ if (!defined('ABSPATH')) {
 				document.querySelector(MPv1.selectors.formCustomerAndCard).style.display = "none";
 			}
 
-			if (MPv1.create_token_on.event) {
-				MPv1.createTokenByEvent();
-			} else {
-				MPv1.createTokenBySubmit()
-			}
-
 			// flow: MLM
 			if (MPv1.site_id != "MLM") {
 				Mercadopago.getIdentificationTypes();
@@ -1346,7 +1266,57 @@ if (!defined('ABSPATH')) {
 
 		this.MPv1 = MPv1;
 
-	}).call();
+  
+   
+    $( 'body' ).on( 'updated_checkout', function() {
+				var field = $( 'body #cardNumber' );
+
+				if ( 0 < field.length ) {
+					field.focusout();
+				}
+			});
+
+		// get action button submit
+		$('form.checkout').on('checkout_place_order_woo-mercado-pago-custom', function() {
+      if ( mercado_pago ) {
+				mercado_pago = false;
+
+				return true;
+			}
+      
+      if (!document.getElementById('payment_method_woo-mercado-pago-custom').checked) {
+        return true;
+      }
+
+      if(MPv1.validateInputsCreateToken()){
+				return MPv1.createToken();
+      } 
+      
+      return false;
+		});
+
+		if (document.forms['order_review'] != undefined) {
+			document.forms['order_review'].onsubmit = function() {
+       if ( mercado_pago ) {
+				mercado_pago = false;
+
+				return true;
+			}
+      
+      if (!document.getElementById('payment_method_woo-mercado-pago-custom').checked) {
+        return true;
+      }
+
+      if(MPv1.validateInputsCreateToken()){
+				return MPv1.createToken();
+      } 
+      
+      return false;
+			}
+		}
+  
+  
+	}( jQuery ));
 
 	// Overriding this function to give form padding attribute.
 	MPv1.setForm = function() {
@@ -1359,10 +1329,6 @@ if (!defined('ABSPATH')) {
 			document.querySelector(MPv1.selectors.form).style.padding = "0px 12px 0px 12px";
 		}
 		Mercadopago.clearSession();
-		if (MPv1.create_token_on.event) {
-			MPv1.createTokenByEvent();
-			MPv1.validateInputsCreateToken();
-		}
 		document.querySelector(MPv1.selectors.CustomerAndCard).value = MPv1.customer_and_card.status;
 	}
 
@@ -1384,10 +1350,12 @@ if (!defined('ABSPATH')) {
 			} else {
 				var $span = $form.querySelector("#mp-error-" + error.code);
 			}
-
-			var $input = $form.querySelector($span.getAttribute("data-main"));
-			$span.style.display = "inline-block";
-			$input.classList.add("mp-form-control-error");
+      
+      if($form.querySelector($span) != undefined) {
+			  var $input = $form.querySelector($span.getAttribute("data-main"));
+			  $span.style.display = "inline-block";
+			  $input.classList.add("mp-form-control-error");
+      }
 		}
 		return;
 	}
@@ -1407,87 +1375,7 @@ if (!defined('ABSPATH')) {
 
 		return;
 
-	}
-
-	/*
-	 * Customization due to rejected payment flow
-	 */
-
-	//disable create token by event, to create on submit form
-	MPv1.create_token_on.event = false
-
-
-	var formSubmited = false;
-	var intent = 0;
-	jQuery(function($) {
-		var checkout_form = $('form.checkout');
-
-		// get action button submit
-		checkout_form.on('checkout_place_order_woo-mercado-pago-custom', function() {
-			//check already submit
-			if (formSubmited == false) {
-				MPv1.createToken();
-				return false;
-			}
-			//check is second intent to renew token
-			if (intent == 2) {
-				intent = 0;
-				formSubmited = false;
-				Mercadopago.clearSession();
-				setTimeout(function() {
-					return MPv1.createToken();
-				}, 2000);
-				return false;
-			}
-			intent++;
-			return true;
-		});
-
-		if (document.forms['order_review'] != undefined) {
-			document.forms['order_review'].onsubmit = function() {
-				if (document.getElementById('payment_method_woo-mercado-pago-custom').checked) {
-					//check already submit
-					if (formSubmited == false) {
-						MPv1.createToken();
-						return false;
-					}
-					//check is second intent to renew token
-					if (intent == 2) {
-						intent = 0;
-						formSubmited = false;
-						Mercadopago.clearSession();
-						setTimeout(function() {
-							return MPv1.createToken();
-						}, 2000);
-						return false;
-					}
-					intent++;
-				}
-				return true;
-			}
-		}
-	});
-	MPv1.sdkResponseHandler = function(status, response) {
-		// Hide loading.
-		document.querySelector(MPv1.selectors.box_loading).style.background = "";
-		if (status != 200 && status != 201) {
-			MPv1.showErrors(response);
-		} else {
-			var token = document.querySelector(MPv1.selectors.token);
-			token.value = response.id;
-			if (MPv1.add_truncated_card) {
-				var card = MPv1.truncateCard(response);
-				document.querySelector(MPv1.selectors.cardTruncated).value = card;
-			}
-
-			//set to form submit
-			formSubmited = true;
-
-			//trigger button to submit form
-			form = document.querySelector('#place_order');
-			form.click();
-		}
-	}
+	} 
 
 	/*
 	 *  END Customization

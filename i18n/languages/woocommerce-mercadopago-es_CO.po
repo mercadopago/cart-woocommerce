@@ -1242,7 +1242,7 @@ msgstr "Seleccione el número de cotas"
 
 #: templates/checkout/custom_checkout.php:192
 msgid "Enter your document number"
-msgstr "Enter your document number"
+msgstr "Ingrese su número de documento"
 
 #: templates/checkout/custom_checkout.php:196
 msgid "Type"
