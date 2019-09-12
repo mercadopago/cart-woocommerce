@@ -56,7 +56,7 @@ if (!defined('ABSPATH')) {
                             </div>
 
                             <div class="mp-col-md-4 mp-pr-15" id="box-lastname">
-                                <label for="lastname" class="mp-label-form"><?= esc_html__('Surname', 'woocommerce-mercadopago'); ?> <em>*</em></label>
+                                <label for="lastname" class="mp-label-form title-name mp-mt-03rem"><?= esc_html__('Surname', 'woocommerce-mercadopago'); ?> <em>*</em></label>
                                 <input type="text" class="mp-form-control" value="<?= $febraban['lastname']; ?>" id="lastname" name="mercadopago_ticket[lastname]">
                                 <span class="mp-erro_febraban" data-main="#lastname" id="error_lastname"><?= esc_html__('You must inform your last name', 'woocommerce-mercadopago'); ?></span>
                             </div>
@@ -93,7 +93,7 @@ if (!defined('ABSPATH')) {
                             <div class="mp-col-md-4 mp-pr-15">
                                 <label for="state" class="mp-label-form"><?= esc_html__('State', 'woocommerce-mercadopago'); ?> <em>*</em></label>
                                 <select name="mercadopago_ticket[state]" id="state" class="mp-form-control mp-pointer">
-                                <option value="" <?php if ($febraban['state'] == '') { echo 'selected="selected"'; } ?>><?= esc_html__('Select state"', 'woocommerce-mercadopago'); ?></option>
+                                <option value="" <?php if ($febraban['state'] == '') { echo 'selected="selected"'; } ?>><?= esc_html__('Select', 'woocommerce-mercadopago'); ?></option>
                                     <option value="AC" <?php if ($febraban['state'] == 'AC') { echo 'selected="selected"'; } ?>>Acre</option>
                                     <option value="AL" <?php if ($febraban['state'] == 'AL') { echo 'selected="selected"'; } ?>>Alagoas</option>
                                     <option value="AP" <?php if ($febraban['state'] == 'AP') { echo 'selected="selected"'; } ?>>Amapá</option>

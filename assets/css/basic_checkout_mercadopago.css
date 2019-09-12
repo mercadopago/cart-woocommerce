@@ -6,7 +6,6 @@
     padding-top: 5px !important;
 }
 
-
 .mp-pt-15 {
     padding-top: 15px !important;
 }
@@ -49,6 +48,14 @@
 
 .mp-mt-5 {
     margin-top: 5px !important;
+}
+
+.mp-mt-03rem{
+    margin-top: 0.3rem !important;
+}
+
+.mp-mt-06rem{
+    margin-top: 0.6rem !important;
 }
 
 .mp-mb-0 {
@@ -257,7 +264,7 @@
 
 .mp-panel-custom-checkout {
     background-color: #fff;
-    padding: 10px 15px 0px;
+    padding: 20px 15px 0px;
 }
 
 .mp-subtitle-custom-checkout {
@@ -270,7 +277,7 @@
 }
 
 .mp-subtitle-ticket-checkout {
-    font-size: 17px !important;
+    font-size: 16px !important;
     font-family: sans-serif !important;
     color: #04204c;
     font-weight: 600;
@@ -282,12 +289,13 @@
 .mp-form-control {
     font-family: sans-serif !important;
     width: 100%;
-    height: 40px;
+    height: 40px !important;
     border-radius: 5px !important;
     font-size: 13px !important;
     padding: 0 10px !important;
     background-color: #fff !important;
     border: 1px solid #d1d1d1 !important;
+    margin-bottom: 0 !important;
 }
 
 .mp-form-control-error {
@@ -295,7 +303,7 @@
 }
 
 .mp-form-control-check {
-    margin: 5px 10px 0 0 !important;
+    margin: 0px 10px 0 0 !important;
     font-family: sans-serif !important;
     border-radius: 5px !important;
     font-size: 13px !important;
@@ -473,7 +481,7 @@
 }
 
 .mp-subtitle-ticket-checkout {
-    font-size: 17px !important;
+    font-size: 16px !important;
     font-family: sans-serif !important;
     color: #04204c;
     font-weight: 600;
