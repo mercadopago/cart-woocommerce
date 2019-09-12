@@ -8,9 +8,6 @@ if (!defined('ABSPATH')) {
  */
 class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs
 {
-    const VERSION = '4.0.7';
-    const MIN_PHP = 5.6;
-
     public static $categories = array();
     public static $country_configs = array();
     public static $site_data;
@@ -31,6 +28,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs
 
             $this->loadConfigs();
             $this->loadLog();
+            $this->loadConstants();          
             $this->loadHooks();
             $this->loadPreferences();
             $this->loadPayments();
@@ -64,11 +62,11 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs
         $credentials = new WC_WooMercadoPago_Credentials($payment);
         $validateCredentialsType = $credentials->validateCredentialsType();
         if ($validateCredentialsType == WC_WooMercadoPago_Credentials::TYPE_ACCESS_TOKEN) {
-            $mp = new MP(self::get_module_version(), $credentials->accessToken);
+            $mp = new MP($credentials->accessToken);
             $mp->setPaymentClass($payment);
         }
         if ($validateCredentialsType == WC_WooMercadoPago_Credentials::TYPE_ACCESS_CLIENT) {
-            $mp = new MP(self::get_module_version(), $credentials->clientId, $credentials->clientSecret);
+            $mp = new MP($credentials->clientId, $credentials->clientSecret);
             $mp->setPaymentClass($payment);
             if (!empty($payment)) {
                 $payment->sandbox = false;
@@ -191,6 +189,14 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs
     {
         include_once dirname(__FILE__) . '/log/WC_WooMercadoPago_Log.php';
     }
+  
+    /**
+     *
+     */
+    public function loadConstants()
+    {
+        include_once dirname(__FILE__) . '/config/WC_WooMercadoPago_Constants.php';
+    }  
 
     /**
      *  Load Shipment Types
@@ -398,7 +404,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs
                         'from=' . get_woocommerce_currency() .
                         '&to=' . $used_currency
                 ),
-                WC_WooMercadoPago_Module::get_module_version()
+                WC_WooMercadoPago_Constants::VERSION
             );
             if (isset($currency_obj['response'])) {
                 $currency_obj = $currency_obj['response'];
@@ -417,7 +423,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs
     {
         $w = WC_WooMercadoPago_Module::woocommerce_instance();
         $infra_data = array(
-            'module_version' => WC_WooMercadoPago_Module::VERSION,
+            'module_version' => WC_WooMercadoPago_Constants::VERSION,
             'platform' => 'WooCommerce',
             'platform_version' => $w->version,
             'code_version' => phpversion(),
@@ -474,16 +480,6 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs
     public static function get_templates_path()
     {
         return plugin_dir_path(__FILE__) . '../../templates/';
-    }
-
-    /**
-     * Summary: Get module's version.
-     * Description: Get module's version.
-     * @return a string with the given version.
-     */
-    public static function get_module_version()
-    {
-        return WC_WooMercadoPago_Module::VERSION;
     }
 
     /**

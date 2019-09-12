@@ -316,4 +316,37 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
             $this->preference['coupon_code'] = strtoupper($this->checkout['coupon_code']);
         }
     }
+
+    /**
+     * @return array
+     */
+    public function get_internal_metadata()
+    {
+        
+        $accessToken = get_option('_mp_access_token_prod', '');
+        if (empty($accessToken)) {
+          return;
+        }
+      
+        $test_mode = false;
+        if ($this->payment->getOption('checkout_credential_production', '') == 'no') {
+            $test_mode = true;
+        }
+      
+        $seller = explode('-', $accessToken);
+        $w = WC_WooMercadoPago_Module::woocommerce_instance();     
+        $internal_metadata = array(
+            "platform" => WC_WooMercadoPago_Constants::PLATAFORM_ID,
+            "plataform_version" => $w->version,
+            "module_version" => WC_WooMercadoPago_Constants::VERSION,
+            "site" => get_option('_site_id_v1'),
+            "sponsor_id" => $this->get_sponsor_id(),
+            "collector" => end($seller),
+            "test_mode" => $test_mode,
+            "details" => ""
+        );
+      
+        return $internal_metadata;
+    }
+  
 }

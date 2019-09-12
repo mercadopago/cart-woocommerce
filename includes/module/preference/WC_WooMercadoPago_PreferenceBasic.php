@@ -33,6 +33,11 @@ class WC_WooMercadoPago_PreferenceBasic extends WC_WooMercadoPago_PreferenceAbst
 
         $this->preference['payment_methods'] = $this->get_payment_methods($this->ex_payments, $this->installments);
         $this->preference['auto_return'] = $this->auto_return();
+
+        $internal_metadata = parent::get_internal_metadata();
+        $internal_metadata = $this->get_internal_metadata_basic($internal_metadata);
+        $this->preference['metadata'] = $internal_metadata;
+
     }
 
     /**
@@ -153,4 +158,17 @@ class WC_WooMercadoPago_PreferenceBasic extends WC_WooMercadoPago_PreferenceAbst
             }
         }
     }
+  
+    /**
+     * @return array
+     */
+    public function get_internal_metadata_basic()
+    {
+        $internal_metadata = array(
+            "checkout" => "smart",
+            "checkout_type" => "",
+        );
+      
+        return $internal_metadata;
+    }  
 }
