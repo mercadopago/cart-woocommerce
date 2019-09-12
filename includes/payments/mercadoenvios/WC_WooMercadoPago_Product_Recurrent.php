@@ -37,7 +37,7 @@ class WC_WooMercadoPago_Product_Recurrent
         if (isset($payments) && !empty($payments)) {
             add_meta_box(
                 'woocommerce-mp-order-action-refund',
-                __('Suscripción Mercado Pago', 'woocommerce-mercadopago'),
+                __('Subscription Mercado Pago', 'woocommerce-mercadopago'),
                 'mp_subscription_order_refund_cancel_box',
                 'shop_order',
                 'side',
@@ -76,13 +76,13 @@ class WC_WooMercadoPago_Product_Recurrent
         $domain .= '?wc-api=WC_WooMercadoPago_SubscriptionGateway';
         echo WC_WooMercadoPago_Module::generate_refund_cancel_subscription(
             $domain,
-            __('La operación se realizó con éxito.', 'woocommerce-mercadopago'),
-            __('Esta operación no se puede completar.', 'woocommerce-mercadopago'),
+            __('The operation was successful.', 'woocommerce-mercadopago'),
+            __('This operation cannot be completed.', 'woocommerce-mercadopago'),
             $options,
-            __('ID de Pago:', 'woocommerce-mercadopago'),
-            __('Cantidad:', 'woocommerce-mercadopago'),
-            __('Reembolso de Pago', 'woocommerce-mercadopago'),
-            __('Cancelar Pago', 'woocommerce-mercadopago')
+            __('Payment ID:', 'woocommerce-mercadopago'),
+            __('Quantity:', 'woocommerce-mercadopago'),
+            __('Payment Refund', 'woocommerce-mercadopago'),
+            __('Cancel Payment', 'woocommerce-mercadopago')
         );
     }
 
@@ -119,7 +119,7 @@ class WC_WooMercadoPago_Product_Recurrent
                 $is_recurrent = get_post_meta($cart_item['product_id'], '_mp_recurring_is_recurrent', true);
                 if ($is_recurrent == 'yes') {
                     wc_add_notice(
-                        __('Un producto recurrente es una suscripción que debe adquirirse por separado en su carrito. Por favor, hace los pedidos por separado.', 'woocommerce-mercadopago'),
+                        __('A recurring product is a subscription that must be purchased separately in your cart. Please place orders separately.', 'woocommerce-mercadopago'),
                         'error'
                     );
                 }
@@ -166,39 +166,39 @@ class WC_WooMercadoPago_Product_Recurrent
         woocommerce_wp_checkbox(
             array(
                 'id' => '_mp_recurring_is_recurrent',
-                'label' => __('Producto Recurrente', 'woocommerce-mercadopago'),
-                'description' => __('Hacer deste producto una suscripción.', 'woocommerce-mercadopago')
+                'label' => __('Recurring Product', 'woocommerce-mercadopago'),
+                'description' => __('Make this product a subscription.', 'woocommerce-mercadopago')
             )
         );
         woocommerce_wp_text_input(
             array(
                 'id' => '_mp_recurring_frequency',
-                'label' => __('Frecuencia', 'woocommerce-mercadopago'),
+                'label' => __('Frequency', 'woocommerce-mercadopago'),
                 'placeholder' => '1',
                 'desc_tip' => 'true',
-                'description' => __('Cantidad de tiempo (en días o meses) para la ejecución del próximo pago.', 'woocommerce-mercadopago'),
+                'description' => __('Amount of time (in days or months) for the execution of the next payment.', 'woocommerce-mercadopago'),
                 'type' => 'number'
             )
         );
         woocommerce_wp_select(
             array(
                 'id' => '_mp_recurring_frequency_type',
-                'label' => __('Tipo de frecuencia', 'woocommerce-mercadopago'),
+                'label' => __('Frequency type', 'woocommerce-mercadopago'),
                 'desc_tip' => 'true',
-                'description' => __('Indica el período de tiempo.', 'woocommerce-mercadopago'),
+                'description' => __('Indicates the period of time.', 'woocommerce-mercadopago'),
                 'options' => array(
-                    'days' => __('Días', 'woocommerce-mercadopago'),
-                    'months' => __('Meses', 'woocommerce-mercadopago')
+                    'days' => __('Days', 'woocommerce-mercadopago'),
+                    'months' => __('Months', 'woocommerce-mercadopago')
                 )
             )
         );
         woocommerce_wp_text_input(
             array(
                 'id' => '_mp_recurring_end_date',
-                'label' => __('Fecha final', 'woocommerce-mercadopago'),
+                'label' => __('Final date', 'woocommerce-mercadopago'),
                 'placeholder' => _x('YYYY-MM-DD', 'placeholder', 'woocommerce-mercadopago'),
                 'desc_tip' => 'true',
-                'description' => __('Fecha límite para generar nuevos cargos. De forma predeterminada como nunca, si está en blanco.', 'woocommerce-mercadopago'),
+                'description' => __('Deadline to generate new charges. By default as never, if it is blank.', 'woocommerce-mercadopago'),
                 'class' => 'date-picker',
                 'custom_attributes' => array('pattern' => "[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])")
             )

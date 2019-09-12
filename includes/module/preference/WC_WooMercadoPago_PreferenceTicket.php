@@ -57,8 +57,10 @@ class WC_WooMercadoPago_PreferenceTicket extends WC_WooMercadoPago_PreferenceAbs
      */
     public function get_date_of_expiration()
     {
-        $date_expiration = $this->get_option('date_expiration', 3);
-        return date('Y-m-d', strtotime('+' . $date_expiration . ' days')) . 'T00:00:00.000-00:00';
+        $date_expiration = $this->get_option('date_expiration', '');
+        if($date_expiration != ""){
+            return date('Y-m-d\TH:i:s.000O', strtotime('+' . $date_expiration . ' days'));
+        }
     }
 
     /**

@@ -2,8 +2,8 @@
 /**
  * Plugin Name: WooCommerce Mercado Pago
  * Plugin URI: https://github.com/mercadopago/cart-woocommerce
- * Description: Configura las opciones de pago a tu medida y acepta pagos con tarjetas, dinero en efectivo y dinero en cuenta de Mercado Pago.
- * Version: 4.0.5
+ * Description: Configure the payment options and accept payments with cards, ticket and money of Mercado Pago account.
+ * Version: 4.0.7
  * Author: Mercado Pago
  * Author URI: https://www.mercadopago.com.br/developers/
  * Text Domain: woocommerce-mercadopago
@@ -34,7 +34,18 @@ if ( ! defined( 'WC_MERCADOPAGO_BASENAME' ) ) {
  */
 function woocommerce_mercadopago_load_plugin_textdomain()
 {
-    load_plugin_textdomain('woocommerce-mercadopago', false, dirname(plugin_basename(__FILE__)) . '/i18n/languages/');
+    $text_domain = 'woocommerce-mercadopago';
+    $locale = apply_filters( 'plugin_locale', get_locale(), $text_domain );
+  
+    $original_language_file = ABSPATH . 'wp-content/plugins/woocommerce-mercadopago/i18n/languages/woocommerce-mercadopago-'. $locale .'.mo';
+    $override_language_file = ABSPATH . 'wp-content/plugins/woocommerce-mercadopago/i18n/languages/woocommerce-mercadopago-'. $locale .'.mo';
+    
+    // Unload the translation for the text domain of the plugin
+    unload_textdomain($text_domain);
+    // Load first the override file
+    load_textdomain($text_domain, $override_language_file );
+    // Then load the original translation file
+    load_textdomain($text_domain, $original_language_file );
 }
 add_action( 'plugins_loaded', 'woocommerce_mercadopago_load_plugin_textdomain' );
 
@@ -62,7 +73,7 @@ if (version_compare(PHP_VERSION, '5.6', '<=')) {
 function wc_mercado_pago_notify_deprecated_presence()
 {
     echo '<div class="error"><p>' .
-        __('Parece que ya tienes instalado el módulo de Mercado Pago. Por favor, desinstálalo antes de usar esta versión.', 'woocommerce-mercadopago') .
+        __('It seems that you already have the Mercado Pago module installed. Please uninstall it before using this version.', 'woocommerce-mercadopago') .
         '</p></div>';
 }
 
@@ -87,7 +98,7 @@ if (!class_exists('WC_WooMercadoPago_Module'))
     add_action('woocommerce_order_actions', 'add_mp_order_meta_box_actions');
     function add_mp_order_meta_box_actions($actions)
     {
-        $actions['cancel_order'] = __('Cancelar orden', 'woocommerce-mercadopago');
+        $actions['cancel_order'] = __('Cancel order', 'woocommerce-mercadopago');
         return $actions;
     }
 

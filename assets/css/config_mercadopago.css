@@ -1,4 +1,4 @@
-.px-20 {
+.mp-px-20 {
     padding-left: 20px !important;
     padding-right: 20px !important;
 }
@@ -7,7 +7,7 @@
     padding-top: 10px !important;
 }
 
-.pb-10 {
+.mp-pb-10 {
     padding-bottom: 10px !important;
 }
 
@@ -15,7 +15,7 @@
     padding-bottom: 20px !important;
 }
 
-.mt--10 {
+.mp-mt--10 {
     margin-top: -10px !important;
 }
 
@@ -27,11 +27,11 @@
     margin-bottom: 0px !important;
 }
 
-.mg-0 {
+.mp-mg-0 {
     margin: 0px !important;
 }
 
-.fw-400 {
+.mp-fw-400 {
     font-weight: 400 !important;
 }
 
@@ -39,7 +39,7 @@
     text-align: center !important;
 }
 
-.row {
+.mp-row {
     width: 100%;
     display: inline-block;
 }
@@ -60,7 +60,7 @@
     float: left;
 }
 
-.mouse_pointe {
+.mp-mouse_pointer {
     cursor: pointer;
 }
 
@@ -75,7 +75,7 @@
     color: #555555 !important;
 }
 
-#input_payments {
+#mp_input_payments {
     border: 1px solid #ccc;
     padding: 15px;
     width: 365px;
@@ -84,7 +84,7 @@
     margin-bottom: 37px !important;
 }
 
-#input_payments_mt {
+#mp_input_payments_mt {
     border: 1px solid #ccc;
     padding: 15px;
     width: 365px;

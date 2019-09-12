@@ -186,7 +186,7 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
     {
         $item = array(
             'title' => method_exists($this->order, 'get_id') ? $this->order->get_shipping_method() : $this->order->shipping_method,
-            'description' => __('Servicio de envío utilizado por la tienda.', 'woocommerce-mercadopago'),
+            'description' => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
             'category_id' => get_option('_mp_category_id', 'others'),
             'quantity' => 1,
             'unit_price' => ($this->site_data[$this->site_id]['currency'] == 'COP' || $this->site_data[$this->site_id]['currency'] == 'CLP') ?

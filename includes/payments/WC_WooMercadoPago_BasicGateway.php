@@ -23,11 +23,13 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             return;
         }
 
+        $this->desc = __('It offers all means of payment: credit and debit cards, cash and account money. Your customers choose whether they pay as guests or from their Mercado Pago account.', 'woocommerce-mercadopago');
+
         $this->form_fields = array();
-        $this->method_title = __('Mercado Pago - Checkout básico', 'woocommerce-mercadopago');
+        $this->method_title = __('Mercado Pago - Basic Checkout', 'woocommerce-mercadopago');
         $this->method = $this->getOption('method', 'redirect');
-        $this->title = __('Paga con el medio de pago que prefieras', 'woocommerce-mercadopago');
-        $this->method_description = $this->getMethodDescription('Ofrece todos los medios de pago: tarjetas de crédito y débito, dinero en efectivo y dinero en cuenta. Tus clientes eligen si pagan como invitados o desde su cuenta de Mercado Pago.');
+        $this->title = __('Pay with the payment method you prefer', 'woocommerce-mercadopago');
+        $this->method_description = $this->getMethodDescription($this->desc);
         $this->auto_return = $this->getOption('auto_return', 'yes');
         $this->success_url = $this->getOption('success_url', '');
         $this->failure_url = $this->getOption('failure_url', '');
@@ -134,23 +136,23 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             'checkout_homolog_title',
             'checkout_homolog_subtitle',
             'checkout_homolog_link',
-            // Configura WooCommerce Mercado Pago
+            // Configure WooCommerce Mercado Pago
             'checkout_options_title',
             'checkout_options_subtitle',
             'mp_statement_descriptor',
             '_mp_category_id',
             '_mp_store_identificator',
-            // Ajustes avanzados
+            // Advanced settings
             'checkout_advanced_settings',
             '_mp_debug_mode',
             '_mp_custom_domain',
-            // Configura la experiencia de pago en tu tienda
+            // Set up the payment experience in your store
             'checkout_payments_title',
             'checkout_payments_subtitle',
             'checkout_payments_description',
             'enabled',
             'installments',
-            // Configuración Avanzada de la experiencia de pago
+            // Advanced payment experience settings
             'checkout_payments_advanced_title',
             'checkout_payments_advanced_description',
             'method',
@@ -161,7 +163,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             'binary_mode',
             'gateway_discount',
             'commission',
-            // ¿Todo listo para el despegue de tus ventas?
+            // Everything ready for the takeoff of your sales?
             'checkout_ready_title',
             'checkout_ready_description',
             'checkout_ready_description_link'
@@ -226,11 +228,11 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     {
         $checkout_header = array(
             'title' => sprintf(
-                __('Checkout Básico. Acepta todos los medios de pago y lleva tus cobros a otro nivel %s', 'woocommerce-mercadopago'),
+                __('Basic Checkout Accept all method of payment and take your charges to another level %s', 'woocommerce-mercadopago'),
                 '<div class="row">
               <div class="mp-col-md-12">
                 <p class="text-checkout-body mp-mb-0">
-                  ' . __('Convierte tu tienda online en la pasarela de pagos preferida de tus clientes. Elige si la experiencia de pago final será dentro o fuera de tu tienda.', 'woocommerce-mercadopago') . '
+                  ' . __('Turn your online store into your customers preferred payment gateway. Choose if the final payment experience will be inside or outside your store.', 'woocommerce-mercadopago') . '
                 </p>
               </div>
             </div>'
@@ -247,7 +249,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_options_title()
     {
         $checkout_options_title = array(
-            'title' => __('Configura WooCommerce Mercado Pago', 'woocommerce-mercadopago'),
+            'title' => __('Configure WooCommerce Mercado Pago', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_title_bd'
         );
@@ -260,7 +262,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_options_description()
     {
         $checkout_options_description = array(
-            'title' => __('Habilitá la experiencia del checkout básico de Mercado Pago en tu tienda online, seleccioná los medios de pago disponibles para tus clientes y<br> definí el máximo de cuotas en el que podrán pagarte.', 'woocommerce-mercadopago'),
+            'title' => __('Enable the experience of the basic checkout of Mercado Pago in your online store, select the means of payment available to your customers and<br> define the maximum fees in which they can pay you.', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_small_text'
         );
@@ -273,7 +275,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_options_subtitle()
     {
         $checkout_options_subtitle = array(
-            'title' => __('Ve a lo básico. Coloca la información de tu negocio.', 'woocommerce-mercadopago'),
+            'title' => __('Go to the basics. Place your business information.', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_subtitle mp-mt-5'
         );
@@ -286,7 +288,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_payments_title()
     {
         $checkout_payments_title = array(
-            'title' => __('Configura las preferencias de pago en tu tienda', 'woocommerce-mercadopago'),
+            'title' => __('Set payment preferences in your store', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_title_bd'
         );
@@ -299,7 +301,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_payments_advanced_title()
     {
         $checkout_payments_advanced_title = array(
-            'title' => __('Configuración Avanzada de la experiencia de pago', 'woocommerce-mercadopago'),
+            'title' => __('Advanced payment experience settings', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_subtitle_bd'
         );
@@ -312,9 +314,9 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_method()
     {
         $method = array(
-            'title' => __('Método de integración', 'woocommerce-mercadopago'),
+            'title' => __('Integration method', 'woocommerce-mercadopago'),
             'type' => 'select',
-            'description' => __('Define qué experiencia de pago tendrán tus clientes, si dentro o fuera de tu tienda.', 'woocommerce-mercadopago'),
+            'description' => __('Define what payment experience your customers will have, whether inside or outside your store.', 'woocommerce-mercadopago'),
             'default' => ($this->method == 'iframe') ? 'redirect' : $this->method,
             'options' => array(
                 'redirect' => __('Redirect', 'woocommerce-mercadopago'),
@@ -332,12 +334,12 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
         // Validate back URL.
         if (!empty($this->success_url) && filter_var($this->success_url, FILTER_VALIDATE_URL) === FALSE) {
             $success_back_url_message = '<img width="14" height="14" src="' . plugins_url('assets/images/warning.png', plugin_dir_path(__FILE__)) . '"> ' .
-                __('Esto parece ser una URL no válida.', 'woocommerce-mercadopago') . ' ';
+                __('This seems to be an invalid URL.', 'woocommerce-mercadopago') . ' ';
         } else {
-            $success_back_url_message = __('Elige la URL que mostraremos a tus clientes cuando terminen su compra.', 'woocommerce-mercadopago');
+            $success_back_url_message = __('Choose the URL that we will show your customers when they finish their purchase.', 'woocommerce-mercadopago');
         }
         $success_url = array(
-            'title' => __('URL de éxito', 'woocommerce-mercadopago'),
+            'title' => __('Success URL', 'woocommerce-mercadopago'),
             'type' => 'text',
             'description' => $success_back_url_message,
             'default' => ''
@@ -352,12 +354,12 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     {
         if (!empty($this->failure_url) && filter_var($this->failure_url, FILTER_VALIDATE_URL) === FALSE) {
             $fail_back_url_message = '<img width="14" height="14" src="' . plugins_url('assets/images/warning.png', plugin_dir_path(__FILE__)) . '"> ' .
-                __('Esto parece ser una URL no válida.', 'woocommerce-mercadopago') . ' ';
+                __('This seems to be an invalid URL.', 'woocommerce-mercadopago') . ' ';
         } else {
-            $fail_back_url_message = __('Elige la URL que mostraremos a tus clientes cuando rechacemos su compra. Asegurate de que incluya un mensaje adecuado a la situación y dales información útil para que puedan solucionarlo.', 'woocommerce-mercadopago');
+            $fail_back_url_message = __('Choose the URL that we will show to your customers when we refuse their purchase. Make sure it includes a message appropriate to the situation and give them useful information so they can solve it.', 'woocommerce-mercadopago');
         }
         $failure_url = array(
-            'title' => __('URL de pago rechazado', 'woocommerce-mercadopago'),
+            'title' => __('Payment URL rejected', 'woocommerce-mercadopago'),
             'type' => 'text',
             'description' => $fail_back_url_message,
             'default' => ''
@@ -373,12 +375,12 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
         // Validate back URL.
         if (!empty($this->pending_url) && filter_var($this->pending_url, FILTER_VALIDATE_URL) === FALSE) {
             $pending_back_url_message = '<img width="14" height="14" src="' . plugins_url('assets/images/warning.png', plugin_dir_path(__FILE__)) . '"> ' .
-                __('Esto parece ser una URL no válida.', 'woocommerce-mercadopago') . ' ';
+                __('This seems to be an invalid URL.', 'woocommerce-mercadopago') . ' ';
         } else {
-            $pending_back_url_message = __('Elige la URL que mostraremos a tus clientes cuando tengan un pago pendiente de aprobación.', 'woocommerce-mercadopago');
+            $pending_back_url_message = __('Choose the URL that we will show to your customers when they have a payment pending approval.', 'woocommerce-mercadopago');
         }
         $pending_url = array(
-            'title' => __('URL de pago pendiente', 'woocommerce-mercadopago'),
+            'title' => __('Payment URL pending', 'woocommerce-mercadopago'),
             'type' => 'text',
             'description' => $pending_back_url_message,
             'default' => ''
@@ -430,7 +432,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
                         'type' => 'checkbox',
                         'class' => 'online_payment_method',
                         'custom_attributes' => array(
-                            'data-translate' => __('Selecciona tarjetas de crédito', 'woocommerce-mercadopago')
+                            'data-translate' => __('Select credit cards', 'woocommerce-mercadopago')
                         ),
                     );
                 } elseif ($payment_method['type'] == 'debit_card' || $payment_method['type'] == 'prepaid_card') {
@@ -441,7 +443,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
                         'type' => 'checkbox',
                         'class' => 'debit_payment_method',
                         'custom_attributes' => array(
-                            'data-translate' => __('Selecciona tarjetas de débito', 'woocommerce-mercadopago')
+                            'data-translate' => __('Select debit cards', 'woocommerce-mercadopago')
                         ),
                     );
                 } else {
@@ -452,7 +454,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
                         'type' => 'checkbox',
                         'class' => 'offline_payment_method',
                         'custom_attributes' => array(
-                            'data-translate' => __('Selecciona pagos offline', 'woocommerce-mercadopago')
+                            'data-translate' => __('Select offline payments', 'woocommerce-mercadopago')
                         ),
                     );
                 }
@@ -461,11 +463,11 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             $count_payment++;
 
             if ($count_payment == 1) {
-                $element['title'] = __('Medios de pago', 'woocommerce-mercadopago');
+                $element['title'] = __('Payment methods', 'woocommerce-mercadopago');
                 $element['desc_tip'] = __('Selecciona los medios de pago disponibles en tu tienda.', 'woocommerce-services');
             }
             if ($count_payment == count($get_payment_methods)) {
-                $element['description'] = __('Habilita los medios de pago disponibles para tus clientes.', 'woocommerce-mercadopago');
+                $element['description'] = __('Enable the payment methods available to your customers.', 'woocommerce-mercadopago');
             }
 
             $ex_payments["ex_payments_" . $payment_method['id']] = $element;
@@ -483,12 +485,12 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_auto_return()
     {
         $auto_return = array(
-            'title' => __('Volver a la tienda', 'woocommerce-mercadopago'),
+            'title' => __('Return to the store', 'woocommerce-mercadopago'),
             'type' => 'select',
             'default' => 'yes',
-            'description' => __('Que tu cliente vuelva automáticamente a la tienda después del pago.', 'woocommerce-mercadopago'),
+            'description' => __('Your customer automatically return to the store after payment.', 'woocommerce-mercadopago'),
             'options' => array(
-                'yes' => __('Sí', 'woocommerce-mercadopago'),
+                'yes' => __('Yes', 'woocommerce-mercadopago'),
                 'no' => __('No', 'woocommerce-mercadopago'),
             )
         );
@@ -512,11 +514,11 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
         $efectivo = 0;
         $tarjetas = get_option('_checkout_payments_methods', '');
         $installments = $this->getOption('installments');
-        $str_cuotas = "cuotas";
+        $str_cuotas = __('installments', 'woocommerce-mercadopago');
         $cho_tarjetas = array();
 
         if ($installments == 1) {
-            $str_cuotas = "cuota";
+            $str_cuotas = __('installment', 'woocommerce-mercadopago');
         }
 
         //change type account_money to ticket

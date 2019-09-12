@@ -109,13 +109,13 @@ class WC_WooMercadoPago_Configs
      */
     public function noticeHttps()
     {
-        $message = __('La tienda debe tener HTTPS para ver los medios de pago.', 'woocommerce-mercadopago');
+        $message = __('The store must have HTTPS to see the payment methods.', 'woocommerce-mercadopago');
         echo '<div class="notice notice-warning is-dismissible">  
                     <p>
                         <strong>MERCADO PAGO:</strong> ' . $message . '
                     </p>
                     <button type="button" class="notice-dismiss">
-                        <span class="screen-reader-text">' . __('Descartar', 'woocommerce-mercadopago') . '</span>
+                        <span class="screen-reader-text">' . __('Discard', 'woocommerce-mercadopago') . '</span>
                     </button>
               </div>';
     }
@@ -250,10 +250,12 @@ class WC_WooMercadoPago_Configs
     public function setPaymentGateway($methods = null)
     {
         global $wp;
-        $api_request = strtolower(wc_clean($wp->query_vars['wc-api']));
-        if (!empty($api_request)) {
-            $methods[] = $api_request;
-            return $methods;
+        if (!empty($wp) && isset($wp->query_vars['wc-api'])) {
+            $api_request = strtolower(wc_clean($wp->query_vars['wc-api']));
+            if (!empty($api_request)) {
+                $methods[] = $api_request;
+                return $methods;
+            }
         }
 
         $methods[] = 'WC_WooMercadoPago_BasicGateway';

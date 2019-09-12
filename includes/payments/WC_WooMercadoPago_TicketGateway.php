@@ -23,10 +23,11 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             return;
         }
 
+        $this->desc = __('Accept cash payments within the custom checkout and expand your customers purchase options.', 'woocommerce-mercadopago');
         $this->form_fields = array();
-        $this->method_title = __('Mercado Pago - Checkout personalizado', 'woocommerce-mercadopago');
-        $this->title = __('Paga con dinero en efectivo', 'woocommerce-mercadopago');
-        $this->method_description = $this->getMethodDescription('Acepta pagos en efectivo dentro del checkout personalizado y amplía las opciones de compra de tus clientes.');
+        $this->method_title = __('Mercado Pago - Custom Checkout', 'woocommerce-mercadopago');
+        $this->title = __('Pay with cash', 'woocommerce-mercadopago');
+        $this->method_description = $this->getMethodDescription($this->desc);
         $this->coupon_mode = $this->getOption('coupon_mode', 'no');
         $this->stock_reduce_mode = $this->getOption('stock_reduce_mode', 'no');
         $this->date_expiration = $this->getOption('date_expiration', 3);
@@ -123,30 +124,30 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             'checkout_homolog_title',
             'checkout_homolog_subtitle',
             'checkout_homolog_link',
-            // Configura la experiencia de pago en tu tienda
+            // Set up the payment experience in your store
             'checkout_ticket_options_title',
             'checkout_ticket_options_subtitle',
             'mp_statement_descriptor',
             '_mp_category_id',
             '_mp_store_identificator',
-            // Ajustes avanzados
+            // Advanced settings
             'checkout_advanced_settings',
             '_mp_debug_mode',
             '_mp_custom_domain',
-            // Configura la experiencia de pago personalizada en tu tienda
+            // Configure the personalized payment experience in your store
             'checkout_ticket_payments_title',
             'checkout_payments_subtitle',
             'checkout_payments_description',
             'enabled',
             'date_expiration',
-            // Configuración avanzada de la experiencia de pago personalizada
+            // Advanced configuration of the personalized payment experience"
             'checkout_ticket_payments_advanced_title',
             'checkout_payments_advanced_description',
             'coupon_mode',
             'stock_reduce_mode',
             'gateway_discount',
             'commission',
-            // ¿Todo listo para el despegue de tus ventas?
+            // Everything ready for the takeoff of your sales?
             'checkout_ready_title',
             'checkout_ready_description',
             'checkout_ready_description_link'
@@ -180,11 +181,11 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     {
         $checkout_ticket_header = array(
             'title' => sprintf(
-                __('Checkout de pagos con dinero en efectivo<br> Acepta pagos presenciales ¡no dejes a nadie afuera! %s', 'woocommerce-mercadopago'),
-                '<div class="row">
+                __('Checkout of payments with cash<br> Accept face-to-face payments, do not leave anyone out! %s', 'woocommerce-mercadopago'),
+                '<div class="mp-row">
               <div class="mp-col-md-12">
                 <p class="text-checkout-body mp-mb-0">
-                  ' . __('Incluye esta opción de compra preferida por algunos clientes.', 'woocommerce-mercadopago') . '
+                  ' . __('Include this preferred purchase option by some customers.', 'woocommerce-mercadopago') . '
                 </p>
               </div>
             </div>'
@@ -201,7 +202,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_ticket_options_title()
     {
         $checkout_options_title = array(
-            'title' => __('Configura WooCommerce Mercado Pago', 'woocommerce-mercadopago'),
+            'title' => __('Configure WooCommerce Mercado Pago', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_title_bd'
         );
@@ -214,7 +215,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_ticket_options_subtitle()
     {
         $checkout_options_subtitle = array(
-            'title' => __('Ve a lo básico. Coloca la información de tu negocio.', 'woocommerce-mercadopago'),
+            'title' => __('Go to the basics. Place your business information.', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_subtitle mp-mt-5'
         );
@@ -227,7 +228,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_options_description()
     {
         $checkout_options_description = array(
-            'title' => __('Habilitá Mercado Pago para pagos en efectivo en tu tienda y <br> seleccioná las opciones disponibles para tus clientes.', 'woocommerce-mercadopago'),
+            'title' => __('Enable Mercado Pago for cash payments in your store and <br> select the options available to your customers.', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_small_text'
         );
@@ -240,7 +241,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_ticket_payments_title()
     {
         $checkout_payments_title = array(
-            'title' => __('Configurá las preferencias de pago con dinero en efectivo', 'woocommerce-mercadopago'),
+            'title' => __('Set payment preferences with cash', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_title_bd'
         );
@@ -253,7 +254,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_ticket_payments_advanced_title()
     {
         $checkout_ticket_payments_advanced_title = array(
-            'title' => __('Configuración avanzada de la experiencia de pago en efectivo', 'woocommerce-mercadopago'),
+            'title' => __('Advanced configuration of the cash payment experience', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_subtitle_bd'
         );
@@ -266,13 +267,13 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_stock_reduce_mode()
     {
         return array(
-            'title' => __('Reducir inventario', 'woocommerce-mercadopago'),
+            'title' => __('Reduce inventory', 'woocommerce-mercadopago'),
             'type' => 'select',
             'default' => 'no',
-            'description' => __('Activa la reducción del inventario durante la creación de un pedido, se acredite o no el pago final. Desactiva esta opción para reducirlo solo cuando los pagos estén aprobados.', 'woocommerce-mercadopago'),
+            'description' => __('Activates inventory reduction during the creation of an order, whether or not the final payment is credited. Disable this option to reduce it only when payments are approved.', 'woocommerce-mercadopago'),
             'options' => array(
                 'no' => __('No', 'woocommerce-mercadopago'),
-                'yes' => __('Sí', 'woocommerce-mercadopago')
+                'yes' => __('Yes', 'woocommerce-mercadopago')
             )
         );
     }
@@ -283,9 +284,9 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_date_expiration()
     {
         return array(
-            'title' => __( 'Vencimiento del pago', 'woocommerce-mercadopago' ),
+            'title' => __( 'Payment Due', 'woocommerce-mercadopago' ),
             'type' => 'number',
-            'description' => __( 'En cuántos días caducarán los pagos en efectivo.', 'woocommerce-mercadopago' ),
+            'description' => __( 'In how many days will cash payments expire.', 'woocommerce-mercadopago' ),
             'default' => ''
         );
     }
@@ -311,18 +312,18 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
                 'type' => 'checkbox',
                 'class' => 'ticket_payment_method_select',
                 'custom_attributes' => array(
-                    'data-translate' => __('Todos los medios de pago', 'woocommerce-mercadopago')
+                    'data-translate' => __('All payment methods', 'woocommerce-mercadopago')
                 ),
             );
 
             $count_payment++;
 
             if ($count_payment == 1) {
-                $element['title'] = __('Medios de pago', 'woocommerce-mercadopago');
-                $element['desc_tip'] = __('Selecciona los medios de pago disponibles en tu tienda.', 'woocommerce-services');
+                $element['title'] = __('Payment methods', 'woocommerce-mercadopago');
+                $element['desc_tip'] = __('Select the payment methods available in your store.', 'woocommerce-services');
             }
             if ($count_payment == count($get_payment_methods_ticket)) {
-                $element['description'] = __('Habilita los medios de pago disponibles para tus clientes.', 'woocommerce-mercadopago');
+                $element['description'] = __('Enable the payment methods available to your customers.', 'woocommerce-mercadopago');
             }
 
             $ticket_payments["ticket_payment_" . $payment_method_ticket['id']] = $element;
@@ -422,7 +423,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
                 !isset($ticket_checkout['zipcode']) || empty($ticket_checkout['zipcode'])) {
                 wc_add_notice(
                     '<p>' .
-                    __('Se produjo un problema al procesar su pago. ¿Está seguro de que ha llenado correctamente toda la información en el formulario de pago?', 'woocommerce-mercadopago') .
+                    __('There was a problem processing your payment. Are you sure you have correctly filled out all the information on the payment form?', 'woocommerce-mercadopago') .
                     '</p>',
                     'error'
                 );
@@ -453,14 +454,14 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
                         // Shows some info in checkout page.
                         $order->add_order_note(
                             'Mercado Pago: ' .
-                            __('El cliente no ha pagado todavía.', 'woocommerce-mercadopago')
+                            __('The customer has not paid yet.', 'woocommerce-mercadopago')
                         );
                         $order->add_order_note(
                             'Mercado Pago: ' .
-                            __('Para imprimir nuevamente el ticket hace clic ', 'woocommerce-mercadopago') .
+                            __('To print the ticket again click', 'woocommerce-mercadopago') .
                             '<a target="_blank" href="' .
                             $response['transaction_details']['external_resource_url'] . '">' .
-                            __('aquí', 'woocommerce-mercadopago') .
+                            __('here', 'woocommerce-mercadopago') .
                             '</a>', 1, false
                         );
                         return array(
@@ -473,7 +474,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
                 // Process when fields are imcomplete.
                 wc_add_notice(
                     '<p>' .
-                    __('Un problema se produjo al procesar su pago. ¿Esta seguro que ha rellenado correctamente toda la información en el formulario de checkout?', 'woocommerce-mercadopago') . ' MERCADO PAGO: ' .
+                    __('A problem occurred when processing your payment. Are you sure you have correctly filled in all the information on the checkout form?', 'woocommerce-mercadopago') . ' MERCADO PAGO: ' .
                     WC_WooMercadoPago_Module::get_common_error_messages($response) .
                     '</p>',
                     'error'
@@ -487,7 +488,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             // Process when fields are imcomplete.
             wc_add_notice(
                 '<p>' .
-                __('Un problema se produjo al procesar su pago. Por favor, inténtelo de nuevo.', 'woocommerce-mercadopago') .
+                __('A problem occurred when processing your payment. Please try again.', 'woocommerce-mercadopago') .
                 '</p>',
                 'error'
             );

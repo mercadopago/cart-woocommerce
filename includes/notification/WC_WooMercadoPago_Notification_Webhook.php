@@ -35,7 +35,7 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
                 $obj = new stdClass();
                 $obj->status = 404;
                 $obj->response = array(
-                    'message' => __('Por favor, introduzca su email en la dirección de facturación para utilizar este servicio', 'woocommerce-mercadopago'),
+                    'message' => __('Please enter your email address at the billing address to use this service', 'woocommerce-mercadopago'),
                     'error' => 'payer_not_found',
                     'status' => 404,
                     'cause' => array()
@@ -49,7 +49,7 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
             $this->log->write_log(__FUNCTION__, 'data_id or type not set: ' . json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             if (!isset($data['id']) || !isset($data['topic'])) {
                 $this->log->write_log(__FUNCTION__, 'Mercado Pago Request failure: ' . json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                wp_die(__('La solicitud de Mercado Pago ha fallado', 'woocommerce-mercadopago'),'', array( 'response' => 422 ));
+                wp_die(__('The Mercado Pago request has failed', 'woocommerce-mercadopago'),'', array( 'response' => 422 ));
             } else {
                 header('HTTP/1.1 200 OK');
             }
@@ -149,10 +149,10 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
             // Updates the type of gateway.
             $order->update_meta_data('_used_gateway', get_class($this));
             if (!empty($data['payer']['email'])) {
-                $order->update_meta_data(__('Email del comprador', 'woocommerce-mercadopago'), $data['payer']['email']);
+                $order->update_meta_data(__('Buyer email', 'woocommerce-mercadopago'), $data['payer']['email']);
             }
             if (!empty($data['payment_type_id'])) {
-                $order->update_meta_data(__('Medio de pago', 'woocommerce-mercadopago'), $data['payment_type_id']);
+                $order->update_meta_data(__('Payment method', 'woocommerce-mercadopago'), $data['payment_type_id']);
             }
             $order->update_meta_data(
                 'Mercado Pago - Payment ' . $data['id'],
@@ -167,10 +167,10 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
             // Updates the type of gateway.
             update_post_meta($order->id, '_used_gateway', get_class($this));
             if (!empty($data['payer']['email'])) {
-                update_post_meta($order->id, __('Email del comprador', 'woocommerce-mercadopago'), $data['payer']['email']);
+                update_post_meta($order->id, __('Buyer email', 'woocommerce-mercadopago'), $data['payer']['email']);
             }
             if (!empty($data['payment_type_id'])) {
-                update_post_meta($order->id, __('Medio de pago', 'woocommerce-mercadopago'), $data['payment_type_id']);
+                update_post_meta($order->id, __('Payment method', 'woocommerce-mercadopago'), $data['payment_type_id']);
             }
             update_post_meta(
                 $order->id,
