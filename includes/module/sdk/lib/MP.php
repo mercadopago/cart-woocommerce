@@ -433,7 +433,7 @@ class MP
             'data' => $preapproval_payment
         );
 
-        $preapproval_payment_result = MPRestClient::put($request, $this->version);
+        $preapproval_payment_result = MPRestClient::put($request);
         return $preapproval_payment_result;
 
     }
@@ -456,7 +456,7 @@ class MP
             )
         );
 
-        $response = MPRestClient::put($request, $this->version);
+        $response = MPRestClient::put($request);
         return $response;
 
     }
@@ -478,7 +478,7 @@ class MP
             )
         );
 
-        $response = MPRestClient::post($request, $this->version);
+        $response = MPRestClient::post($request);
         return $response;
 
     }
@@ -505,7 +505,7 @@ class MP
             )
         );
 
-        $response = MPRestClient::post($request, $this->version);
+        $response = MPRestClient::post($request);
         return $response;
 
     }
@@ -526,7 +526,7 @@ class MP
             'data' => '{"status":"cancelled"}'
         );
 
-        $response = MPRestClient::put($request, $this->version);
+        $response = MPRestClient::put($request);
         return $response;
 
     }
@@ -544,7 +544,7 @@ class MP
             )
         );
 
-        $response = MPRestClient::get($request, $this->version);
+        $response = MPRestClient::get($request);
 
         return $response;
     }
@@ -577,7 +577,7 @@ class MP
             $request['params']['access_token'] = $this->get_access_token();
         }
 
-        $result = MPRestClient::get($request, $this->version);
+        $result = MPRestClient::get($request);
         return $result;
 
     }
@@ -608,7 +608,7 @@ class MP
             $request['params']['access_token'] = $this->get_access_token();
         }
 
-        $result = MPRestClient::post($request, $this->version);
+        $result = MPRestClient::post($request);
         return $result;
 
     }
@@ -639,7 +639,7 @@ class MP
             $request['params']['access_token'] = $this->get_access_token();
         }
 
-        $result = MPRestClient::put($request, $this->version);
+        $result = MPRestClient::put($request);
         return $result;
 
     }
@@ -668,7 +668,7 @@ class MP
             $request['params']['access_token'] = $this->get_access_token();
         }
 
-        $result = MPRestClient::delete($request, $this->version);
+        $result = MPRestClient::delete($request);
         return $result;
 
     }
@@ -688,7 +688,7 @@ class MP
             'data' => $module_info
         );
 
-        $result = MPRestClient::post($request, $this->version);
+        $result = MPRestClient::post($request);
         return $result;
 
     }
