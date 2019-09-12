@@ -194,7 +194,7 @@ if (!defined('ABSPATH')) {
 							<div class="mp-row-checkout mp-pt-10">
 								<div class="mp-col-md-4 mp-pr-15 mp-pt-5">
 									<label for="docType" class="mp-label-form"><?= esc_html__('Type', 'woocommerce-mercadopago'); ?></label>
-									<select id="docType" class="mp-form-control mp-pointer mp-mt-5" data-checkout="docType" name="mercadopago_custom[docType]"></select>
+									<select id="docType" class="mp-form-control mp-pointer mp-mt-06rem" data-checkout="docType" name="mercadopago_custom[docType]"></select>
 								</div>
 
 								<div class="mp-col-md-8">
@@ -939,7 +939,7 @@ if (!defined('ABSPATH')) {
 			var $form = MPv1.getForm();
 
 			Mercadopago.createToken($form, MPv1.sdkResponseHandler);
-
+      
 			return false;
 		}
 
@@ -948,9 +948,9 @@ if (!defined('ABSPATH')) {
 			document.querySelector(MPv1.selectors.box_loading).style.background = "";
 
 			if (status != 200 && status != 201) {
-
 				MPv1.showErrors(response);
-			} else {
+			} 
+      else {
 				var token = document.querySelector(MPv1.selectors.token);
 				token.value = response.id;
 
@@ -962,7 +962,6 @@ if (!defined('ABSPATH')) {
         mercado_pago = true;
          $( 'form.checkout, form#order_review' ).submit();
 			}
-
 		}
 
 		// === Useful functions
@@ -1033,22 +1032,6 @@ if (!defined('ABSPATH')) {
 
 		MPv1.getAmount = function() {
 			return document.querySelector(MPv1.selectors.amount).value;
-		}
-
-		// === Show errors
-		MPv1.showErrors = function(response) {
-			var $form = MPv1.getForm();
-
-			for (var x = 0; x < response.cause.length; x++) {
-				var error = response.cause[x];
-				var $span = $form.querySelector("#mp-error-" + error.code);
-				var $input = $form.querySelector($span.getAttribute("data-main"));
-
-				$span.style.display = "inline-block";
-				$input.classList.add("mp-error-input");
-			}
-
-			return;
 		}
 
 		MPv1.hideErrors = function() {
@@ -1351,13 +1334,13 @@ if (!defined('ABSPATH')) {
 				var $span = $form.querySelector("#mp-error-" + error.code);
 			}
       
-      if($form.querySelector($span) != undefined) {
+      if($span != undefined) {
 			  var $input = $form.querySelector($span.getAttribute("data-main"));
 			  $span.style.display = "inline-block";
 			  $input.classList.add("mp-form-control-error");
       }
 		}
-		return;
+ 		return;
 	}
 
 	MPv1.hideErrors = function() {
