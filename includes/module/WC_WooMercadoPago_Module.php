@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
  */
 class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs
 {
-    const VERSION = '4.0.6';
+    const VERSION = '4.0.7';
     const MIN_PHP = 5.6;
 
     public static $categories = array();

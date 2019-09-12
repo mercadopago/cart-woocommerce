@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the WooCommerce Mercado Pago plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: WooCommerce Mercado Pago 4.0.6\n"
+"Project-Id-Version: WooCommerce Mercado Pago 4.0.7\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-mercadopago\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1025,7 +1025,7 @@ msgid "Everything set up? Go to your store in Sandbox mode"
 msgstr ""
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1122
-msgid "Visit your store as if you were one of your customers and check that everything is fine. If you already went to Production,<br> bring your customers and increase your sales with the best online shopping experience.."
+msgid "You already went to Production. You just need your best customers <br> to arrive at your store to live the best online shopping experience with Mercado Pago."
 msgstr ""
 
 #: includes/payments/WC_WooMercadoPago_PaymentAbstract.php:1124
