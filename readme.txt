@@ -120,7 +120,7 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
   - Fixed payment due at ticket
   - Fixed spanish translation
 
-= v4.0.6 (06/09/2019) =
+= v4.0.6 (09/09/2019) =
 * Bug fixes
   - Problem with all translations fixed
 
