@@ -150,7 +150,7 @@ if (!defined('ABSPATH')) {
 							<div class="mp-row-checkout mp-pt-10">
 								<div class="mp-col-md-4 mp-pr-15">
 									<div class="mp-issuer">
-										<label for="issuer" class="mp-label-form"><?= esc_html__('Issuer', 'woocommerce-mercadopago'); ?> <em>*</em></label>
+										<label for="issuer" class="mp-label-form"><?= esc_html__('Issuer', 'woocommerce-mercadopago'); ?> </label>
 										<select class="mp-form-control mp-pointer mp-mt-5" id="issuer" data-checkout="issuer" name="mercadopago_custom[issuer]"></select>
 									</div>
 								</div>

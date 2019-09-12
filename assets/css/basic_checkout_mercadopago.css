@@ -369,13 +369,13 @@
 
 .mp-label-form {
     font-family: sans-serif !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: normal !important;
     font-style: normal;
     font-stretch: normal;
     line-height: 1;
     letter-spacing: normal;
-    color: rgba(0, 0, 0, 0.45) !important;
+    color: rgba(0, 0, 0, 0.7) !important;
 }
 
 .mp-label-form em {
