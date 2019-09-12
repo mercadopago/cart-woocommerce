@@ -151,23 +151,6 @@ abstract class WC_WooMercadoPago_Hook_Abstract
             if (wp_get_current_user()->ID != 0) {
                 $logged_user_email = wp_get_current_user()->user_email;
             }
-            ?>
-            <script src="https://secure.mlstatic.com/modules/javascript/analytics.js"></script>
-            <script type="text/javascript">
-                try {
-                    var MA = ModuleAnalytics;
-                    MA.setPublicKey('<?php echo $this->publicKey; ?>');
-                    MA.setPlatform('WooCommerce');
-                    MA.setPlatformVersion('<?php echo $woo->version; ?>');
-                    MA.setModuleVersion('<?php echo WC_WooMercadoPago_Module::VERSION; ?>');
-                    MA.setPayerEmail('<?php echo($logged_user_email != null ? $logged_user_email : ""); ?>');
-                    MA.setUserLogged( <?php echo(empty($logged_user_email) ? 0 : 1); ?> );
-                    MA.setInstalledModules('<?php echo $available_payments; ?>');
-                    MA.post();
-                } catch (err) {
-                }
-            </script>
-            <?php
         }
     }
 
@@ -178,17 +161,17 @@ abstract class WC_WooMercadoPago_Hook_Abstract
     public function update_mp_settings_script($order_id)
     {
         if (!empty($this->publicKey) && !$this->testUser) {
-            $this->payment->log->write_log(__FUNCTION__, 'updating order of ID ' . $order_id);
-            return '<script src="https://secure.mlstatic.com/modules/javascript/analytics.js"></script>
-			<script type="text/javascript">
-				try {
-					var MA = ModuleAnalytics;
-                    MA.setPublicKey(' . $this->publicKey . ');
-					MA.setPaymentType("basic");
-					MA.setCheckoutType("basic");
-					MA.put();
-				} catch(err) {}
-			</script>';
+            // $this->payment->log->write_log(__FUNCTION__, 'updating order of ID ' . $order_id);
+            // return '<script src="https://secure.mlstatic.com/modules/javascript/analytics.js"></script>
+			// <script type="text/javascript">
+			// 	try {
+			// 		var MA = ModuleAnalytics;
+            //         MA.setPublicKey(' . $this->publicKey . ');
+			// 		MA.setPaymentType("basic");
+			// 		MA.setCheckoutType("basic");
+			// 		MA.put();
+			// 	} catch(err) {}
+			// </script>';
         }
     }
 
