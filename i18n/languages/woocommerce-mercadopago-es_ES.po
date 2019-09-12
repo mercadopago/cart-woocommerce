@@ -9,7 +9,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2019-09-05T23:48:06-04:00\n"
-"PO-Revision-Date: 2019-09-06 18:51-0300\n"
+"PO-Revision-Date: 2019-09-11 21:32-0300\n"
 "X-Generator: Poedit 2.2.3\n"
 "X-Domain: woocommerce-mercadopago\n"
 "Last-Translator: \n"
@@ -1378,7 +1378,7 @@ msgstr "Estado"
 
 #: templates/checkout/ticket_checkout.php:96
 msgid "Select state\""
-msgstr "Seleccione estado"
+msgstr "Seleccione"
 
 #: templates/checkout/ticket_checkout.php:125
 msgid "You must inform your status"
