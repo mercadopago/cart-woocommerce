@@ -1,4 +1,11 @@
 CHANGELOG:
+= v4.0.8 (13/09/2019) =
+* Bug fixes
+  - Fixed mercado envios
+  - Fexed show fee in checkout
+  - Fixed translation file
+  - Fixed constant file
+
 = v4.0.7 (12/09/2019) =
 * Bug fixes
   - Fixed layout incompatibility

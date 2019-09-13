@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the WooCommerce Mercado Pago plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: WooCommerce Mercado Pago 4.0.7\n"
+"Project-Id-Version: WooCommerce Mercado Pago 4.0.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-mercadopago\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2019-09-05T23:48:06-04:00\n"
-"PO-Revision-Date: 2019-09-12 17:57-0300\n"
+"PO-Revision-Date: 2019-09-13 20:03-0300\n"
 "X-Generator: Poedit 2.2.3\n"
 "X-Domain: woocommerce-mercadopago\n"
 "Last-Translator: \n"
@@ -1226,7 +1226,7 @@ msgstr "En cuántas cuotas quieres pagar?"
 
 #: templates/checkout/custom_checkout.php:153
 msgid "Issuer"
-msgstr "Issuer"
+msgstr "Banco"
 
 #: templates/checkout/custom_checkout.php:165
 msgid "Converted payment of"

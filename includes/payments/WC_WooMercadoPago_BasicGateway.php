@@ -179,7 +179,7 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
             return true;
         }
 
-        if ($this->settings['enabled'] == 'yes') {
+        if (isset($this->settings['enabled']) && $this->settings['enabled'] == 'yes') {
             if ($this->mp instanceof MP) {
                 $accessToken = $this->mp->get_access_token();
                 if (strpos($accessToken, 'APP_USR') === false && strpos($accessToken, 'TEST') === false) {
