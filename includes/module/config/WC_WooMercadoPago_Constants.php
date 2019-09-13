@@ -11,7 +11,7 @@ class WC_WooMercadoPago_Constants
 {
     const PRODUCT_ID = 'BC32CPFTRPP001U8NHRG';
     const PLATAFORM_ID = 'WooCommerce';
-    const VERSION = '4.0.2';
+    const VERSION = '4.0.7';
     const MIN_PHP = 5.6;
     const API_MP_BASE_URL = 'https://api.mercadopago.com';
 }

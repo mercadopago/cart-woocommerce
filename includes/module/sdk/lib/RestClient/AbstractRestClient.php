@@ -14,9 +14,9 @@ class AbstractRestClient
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function execAbs($request)
+    public static function execAbs($request, $url)
     {
-        $connect = self::build_request($request);
+        $connect = self::build_request($request, $url);
       
         return self::execute($request, $connect);
     }
@@ -26,7 +26,7 @@ class AbstractRestClient
      * @return false|resource
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function build_request($request)
+    public static function build_request($request, $url)
     {
         if (!extension_loaded('curl')) {
             throw new WC_WooMercadoPago_Exception('cURL extension not found. You need to enable cURL in your php.ini or another configuration you have.');
@@ -81,7 +81,7 @@ class AbstractRestClient
             }
         }
 
-        curl_setopt($connect, CURLOPT_URL, WC_WooMercadoPago_Constants::API_MP_BASE_URL . $request['uri']);
+        curl_setopt($connect, CURLOPT_URL, $url . $request['uri']);
 
 
         if (isset($request['data'])) {
@@ -189,7 +189,7 @@ class AbstractRestClient
             'uri' => '/modules/log',
             'data' => $data
         );
-        $result_response = MeLiRestClient::post($request, WC_WooMercadoPago_Constants::VERSION);
+        $result_response = MeLiRestClient::post($request);
         return $result_response;
     }
 

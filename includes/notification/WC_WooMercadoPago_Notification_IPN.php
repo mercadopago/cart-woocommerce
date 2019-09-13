@@ -232,9 +232,11 @@ class WC_WooMercadoPago_Notification_IPN extends WC_WooMercadoPago_Notification_
                             'access_token' => $access_token
                         )
                     );
+
                     $email = (wp_get_current_user()->ID != 0) ? wp_get_current_user()->user_email : null;
                     MeliRestClient::set_email($email);
-                    $shipments_data = MeliRestClient::get($request, '');
+                    $shipments_data = MeliRestClient::get($request);
+
                     switch ($shipments_data['response']['substatus']) {
                         case 'ready_to_print':
                             $substatus_description = __('Label ready to print', 'woocommerce-mercadopago');
@@ -277,9 +279,9 @@ class WC_WooMercadoPago_Notification_IPN extends WC_WooMercadoPago_Notification_
                         foreach ($items as $item) {
                             $product = new WC_product($item['product_id']);
                             if (method_exists($product, 'get_description')) {
-                                $product_title = WC_WooMercadoPago_Module::utf8_ansi($product->get_name());
+                                $product_title = $product->get_name();
                             } else {
-                                $product_title = WC_WooMercadoPago_Module::utf8_ansi($product->post->post_title);
+                                $product_title = $product->post->post_title;
                             }
                             array_push($list_of_items, $product_title . ' x ' . $item['qty']);
                         }

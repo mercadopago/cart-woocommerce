@@ -397,6 +397,11 @@ class WC_WooMercadoPago_BasicGateway extends WC_WooMercadoPago_PaymentAbstract
         $ex_payments_sort = array();
 
         $all_payments = get_option('_checkout_payments_methods', '');
+        
+        if (empty($all_payments)) {
+            return $ex_payments;
+        }
+        
         $get_payment_methods = get_option('_all_payment_methods_v0', '');
 
         if (!empty($get_payment_methods)) {

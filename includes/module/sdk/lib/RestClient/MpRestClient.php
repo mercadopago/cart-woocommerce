@@ -13,7 +13,7 @@ class MPRestClient extends AbstractRestClient
     public static function get($request)
     {
         $request['method'] = 'GET';
-        return self::execAbs($request);
+        return self::execAbs($request, WC_WooMercadoPago_Constants::API_MP_BASE_URL);
     }
 
     /**
@@ -24,7 +24,7 @@ class MPRestClient extends AbstractRestClient
     public static function post($request)
     {
         $request['method'] = 'POST';
-        return self::execAbs($request);
+        return self::execAbs($request, WC_WooMercadoPago_Constants::API_MP_BASE_URL);
     }
 
     /**
@@ -35,7 +35,7 @@ class MPRestClient extends AbstractRestClient
     public static function put($request)
     {
         $request['method'] = 'PUT';
-        return self::execAbs($request);
+        return self::execAbs($request, WC_WooMercadoPago_Constants::API_MP_BASE_URL);
     }
 
     /**
@@ -46,7 +46,7 @@ class MPRestClient extends AbstractRestClient
     public static function delete($request)
     {
         $request['method'] = 'DELETE';
-        return self::execAbs($request);
+        return self::execAbs($request, WC_WooMercadoPago_Constants::API_MP_BASE_URL);
     }
 
 }

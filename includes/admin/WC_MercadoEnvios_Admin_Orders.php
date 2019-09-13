@@ -41,7 +41,6 @@ class WC_MercadoEnvios_Admin_Orders {
      * @throws WC_WooMercadoPago_Exception
      */
 	public function metabox_content( $post ) {
-
 		$order = wc_get_order( $post->ID );
 		$shipment_id = ( method_exists( $order, 'get_meta' ) ) ?
 			$order->get_meta( '_mercadoenvios_shipment_id' ) :

@@ -12,10 +12,10 @@ class MeliRestClient extends AbstractRestClient
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function get($request, $version)
+    public static function get($request)
     {
         $request['method'] = 'GET';
-        return self::execAbs($request, $version, self::API_MELI_BASE_URL);
+        return self::execAbs($request, self::API_MELI_BASE_URL);
     }
 
     /**
@@ -24,10 +24,10 @@ class MeliRestClient extends AbstractRestClient
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function post($request, $version)
+    public static function post($request)
     {
         $request['method'] = 'POST';
-        return self::execAbs($request, $version, self::API_MELI_BASE_URL);
+        return self::execAbs($request, self::API_MELI_BASE_URL);
     }
 
     /**
@@ -36,10 +36,10 @@ class MeliRestClient extends AbstractRestClient
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function put($request, $version)
+    public static function put($request)
     {
         $request['method'] = 'PUT';
-        return self::execAbs($request, $version, self::API_MELI_BASE_URL);
+        return self::execAbs($request, self::API_MELI_BASE_URL);
     }
 
     /**
@@ -48,9 +48,9 @@ class MeliRestClient extends AbstractRestClient
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
-    public static function delete($request, $version)
+    public static function delete($request)
     {
         $request['method'] = 'DELETE';
-        return self::execAbs($request, $version, self::API_MELI_BASE_URL);
+        return self::execAbs($request, self::API_MELI_BASE_URL);
     }
 }
