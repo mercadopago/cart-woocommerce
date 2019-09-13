@@ -110,6 +110,14 @@ abstract class WC_WooMercadoPago_Hook_Abstract
      */
     public function get_payment_method_title($title, $id)
     {
+        if (!preg_match('/woo-mercado-pago/', $id)) {
+            return $title;
+        }
+
+        if ($id != $this->payment->id) {
+            return $title;
+        }
+
         if (!is_checkout() && !(defined('DOING_AJAX') && DOING_AJAX)) {
             return $title;
         }
@@ -119,9 +127,11 @@ abstract class WC_WooMercadoPago_Hook_Abstract
         if (!is_numeric($this->payment->gateway_discount) || $this->payment->commission > 99 || $this->payment->gateway_discount > 99) {
             return $title;
         }
-        $total = (float)WC()->cart->subtotal;
+
+        $total = (float) WC()->cart->subtotal;
         $price_discount = $total * ($this->payment->gateway_discount / 100);
         $price_commission = $total * ($this->payment->commission / 100);
+
         if ($this->payment->gateway_discount > 0 && $this->payment->commission > 0) {
             $title .= ' (' . __('Discount of', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_discount)) . __(' and Rate of', 'woocommerce-mercadopago') . ' ' . strip_tags(wc_price($price_commission)) . ')';
         } elseif ($this->payment->gateway_discount > 0) {
@@ -163,15 +173,15 @@ abstract class WC_WooMercadoPago_Hook_Abstract
         if (!empty($this->publicKey) && !$this->testUser) {
             // $this->payment->log->write_log(__FUNCTION__, 'updating order of ID ' . $order_id);
             // return '<script src="https://secure.mlstatic.com/modules/javascript/analytics.js"></script>
-			// <script type="text/javascript">
-			// 	try {
-			// 		var MA = ModuleAnalytics;
+            // <script type="text/javascript">
+            // 	try {
+            // 		var MA = ModuleAnalytics;
             //         MA.setPublicKey(' . $this->publicKey . ');
-			// 		MA.setPaymentType("basic");
-			// 		MA.setCheckoutType("basic");
-			// 		MA.put();
-			// 	} catch(err) {}
-			// </script>';
+            // 		MA.setPaymentType("basic");
+            // 		MA.setCheckoutType("basic");
+            // 		MA.put();
+            // 	} catch(err) {}
+            // </script>';
         }
     }
 
@@ -301,14 +311,13 @@ abstract class WC_WooMercadoPago_Hook_Abstract
             if ($key == '_mp_access_token_prod') {
                 $homolog_validate = $this->mpInstance->homologValidate($value);
                 update_option('homolog_validate', $homolog_validate, true);
-                if($isProduction == 'yes' && $homolog_validate == 0) {
+                if ($isProduction == 'yes' && $homolog_validate == 0) {
                     add_action('admin_notices', array(get_class($this->payment), 'enablePaymentNotice'));
                 }
             }
 
             if (
-                ($key == '_mp_access_token_prod' && $isProduction == 'yes') ||
-                ($key == '_mp_access_token_test' && $isProduction == 'no')
+                ($key == '_mp_access_token_prod' && $isProduction == 'yes') || ($key == '_mp_access_token_test' && $isProduction == 'no')
             ) {
                 WC_WooMercadoPago_Credentials::updatePaymentMethods($this->mpInstance, $value);
                 WC_WooMercadoPago_Credentials::updateTicketMethod($this->mpInstance, $value);
@@ -335,7 +344,7 @@ abstract class WC_WooMercadoPago_Hook_Abstract
     public function noticeInvalidProdCredentials()
     {
         echo '<div class="error is-dismissible">
-        <p><strong>MERCADO PAGO: </strong>'. __('Credentials for invalid production!', 'woocommerce-mercadopago') . '</p>
+        <p><strong>MERCADO PAGO: </strong>' . __('Credentials for invalid production!', 'woocommerce-mercadopago') . '</p>
                 </div>';
     }
 
