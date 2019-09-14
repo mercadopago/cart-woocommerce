@@ -211,7 +211,7 @@ class WC_WooMercadoPago_Product_Recurrent
      */
     public function mp_save_recurrent_settings($post_id)
     {
-        $_mp_recurring_is_recurrent = $_POST['_mp_recurring_is_recurrent'];
+        $_mp_recurring_is_recurrent = isset($_POST['_mp_recurring_is_recurrent']) ? $_POST['_mp_recurring_is_recurrent'] : '';
         if (!empty($_mp_recurring_is_recurrent)) {
             update_post_meta($post_id, '_mp_recurring_is_recurrent', esc_attr($_mp_recurring_is_recurrent));
         } else {
