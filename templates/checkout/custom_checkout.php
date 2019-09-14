@@ -19,17 +19,17 @@ if (!defined('ABSPATH')) {
 			<div class="mp-col-md-12">
 				<div class="frame-tarjetas">
 					<?php if (count($credit_card) != 0) : ?>
-					<p class="submp-title-checkout-custom"><?= __('Credit cards', 'woocommerce-mercadopago') ?></p>
-					<?php foreach ($credit_card as $credit_image) : ?>
-					<img src="<?= $credit_image ?>" class="mp-img-fluid mp-img-tarjetas" alt="" />
-					<?php endforeach; ?>
+						<p class="submp-title-checkout-custom"><?= __('Credit cards', 'woocommerce-mercadopago') ?></p>
+						<?php foreach ($credit_card as $credit_image) : ?>
+							<img src="<?= $credit_image ?>" class="mp-img-fluid mp-img-tarjetas" alt="" />
+						<?php endforeach; ?>
 					<?php endif; ?>
 
 					<?php if (count($debit_card) != 0) : ?>
-					<p class="submp-title-checkout-custom mp-pt-10"><?= __('Debit card', 'woocommerce-mercadopago') ?></p>
-					<?php foreach ($debit_card as $debit_image) : ?>
-					<img src="<?= $debit_image ?>" class="mp-img-fluid mp-img-tarjetas" alt="" />
-					<?php endforeach; ?>
+						<p class="submp-title-checkout-custom mp-pt-10"><?= __('Debit card', 'woocommerce-mercadopago') ?></p>
+						<?php foreach ($debit_card as $debit_image) : ?>
+							<img src="<?= $debit_image ?>" class="mp-img-fluid mp-img-tarjetas" alt="" />
+						<?php endforeach; ?>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -66,16 +66,16 @@ if (!defined('ABSPATH')) {
 							<select id="paymentMethodSelector" class="mp-form-control mp-pointer" name="mercadopago_custom[paymentMethodSelector]" data-checkout="cardId">
 								<optgroup label="<?= esc_html__('Your card', 'woocommerce-mercadopago'); ?>" id="payment-methods-for-customer-and-cards">
 									<?php foreach ($customer_cards as $card) : ?>
-									<option value="<?= $card['id']; ?>
+										<option value="<?= $card['id']; ?>
 															first_six_digits=<?= $card['first_six_digits']; ?>
 															last_four_digits=<?= $card['last_four_digits']; ?>
 															security_code_length=<?= $card['security_code']['length']; ?>
 															type_checkout='customer_and_card'
 															payment_method_id=<?= $card['payment_method']['id']; ?>">
-										<?= ucfirst($card['payment_method']['name']); ?>
-										<?= esc_html__('finished in', 'woocommerce-mercadopago'); ?>
-										<?= $card['last_four_digits']; ?>
-									</option>
+											<?= ucfirst($card['payment_method']['name']); ?>
+											<?= esc_html__('finished in', 'woocommerce-mercadopago'); ?>
+											<?= $card['last_four_digits']; ?>
+										</option>
 									<?php endforeach; ?>
 								</optgroup>
 
@@ -157,21 +157,21 @@ if (!defined('ABSPATH')) {
 
 								<div id="installments-div" class="mp-col-md-8">
 									<?php if ($currency_ratio != 1) : ?>
-									<label for="installments" class="mp-label-form">
-										<div class="mp-tooltip">
-											<?= esc_html__('', 'woocommerce-mercadopago'); ?>
-											<span class="mp-tooltiptext">
-												<?=
-														esc_html__('Converted payment of', 'woocommerce-mercadopago') . " " .
-														$woocommerce_currency . " " . esc_html__('for', 'woocommerce-mercadopago') . " " .
-														$account_currency;
-													?>
-											</span>
-										</div>
-										<em>*</em>
-									</label>
+										<label for="installments" class="mp-label-form">
+											<div class="mp-tooltip">
+												<?= esc_html__('', 'woocommerce-mercadopago'); ?>
+												<span class="mp-tooltiptext">
+													<?=
+															esc_html__('Converted payment of', 'woocommerce-mercadopago') . " " .
+																$woocommerce_currency . " " . esc_html__('for', 'woocommerce-mercadopago') . " " .
+																$account_currency;
+														?>
+												</span>
+											</div>
+											<em>*</em>
+										</label>
 									<?php else : ?>
-									<label for="installments" class="mp-label-form"><?= __('Select the number of installment', 'woocommerce-mercadopago') ?></label>
+										<label for="installments" class="mp-label-form"><?= __('Select the number of installment', 'woocommerce-mercadopago') ?></label>
 									<?php endif; ?>
 
 									<select class="mp-form-control mp-pointer mp-mt-5" id="installments" data-checkout="installments" name="mercadopago_custom[installments]"></select>
@@ -247,7 +247,6 @@ if (!defined('ABSPATH')) {
 </div>
 
 <script type="text/javascript">
-  
 	//collapsible payments
 	var show_payments = document.querySelector("#button-show-payments")
 	var frame_payments = document.querySelector("#mp-frame-payments");
@@ -298,10 +297,10 @@ if (!defined('ABSPATH')) {
 	}
 
 	//mercadopago function
-(function( $ ) {
-  
-  var mercado_pago = false;
-  var MPv1 = {
+	(function($) {
+
+		var mercado_pago = false;
+		var MPv1 = {
 			debug: true,
 			add_truncated_card: true,
 			site_id: "",
@@ -320,7 +319,7 @@ if (!defined('ABSPATH')) {
 				"couponCode",
 				"applyCoupon"
 			],
-		  inputs_to_create_token: [
+			inputs_to_create_token: [
 				"cardNumber",
 				"cardExpirationDate",
 				"cardholderName",
@@ -549,10 +548,10 @@ if (!defined('ABSPATH')) {
 
 			var cardSelector = document.querySelector(MPv1.selectors.paymentMethodSelector);
 
-// 			if (cardSelector && cardSelector[cardSelector.options.selectedIndex].value != "-1") {
-// 				return cardSelector[cardSelector.options.selectedIndex]
-// 					.getAttribute("first_six_digits");
-// 			}
+			// 			if (cardSelector && cardSelector[cardSelector.options.selectedIndex].value != "-1") {
+			// 				return cardSelector[cardSelector.options.selectedIndex]
+			// 					.getAttribute("first_six_digits");
+			// 			}
 
 			var ccNumber = document.querySelector(MPv1.selectors.cardNumber);
 			return ccNumber.value.replace(/[ .-]/g, "").slice(0, 6);
@@ -564,7 +563,7 @@ if (!defined('ABSPATH')) {
 			var bin = MPv1.getBin();
 
 			if (bin.length == 0) {
-					MPv1.resetBackgroundCard();
+				MPv1.resetBackgroundCard();
 
 				MPv1.hideIssuer();
 
@@ -920,12 +919,12 @@ if (!defined('ABSPATH')) {
 					.indexOf(element.getAttribute("data-checkout")) > -1) {
 
 					if (element.value == -1 || element.value == "") {
-            element.focus();
+						element.focus();
 						return false;
-					} 
-				} 
-			} 
-      return true;
+					}
+				}
+			}
+			return true;
 		}
 
 		MPv1.createToken = function() {
@@ -939,7 +938,7 @@ if (!defined('ABSPATH')) {
 			var $form = MPv1.getForm();
 
 			Mercadopago.createToken($form, MPv1.sdkResponseHandler);
-      
+
 			return false;
 		}
 
@@ -949,8 +948,7 @@ if (!defined('ABSPATH')) {
 
 			if (status != 200 && status != 201) {
 				MPv1.showErrors(response);
-			} 
-      else {
+			} else {
 				var token = document.querySelector(MPv1.selectors.token);
 				token.value = response.id;
 
@@ -959,8 +957,8 @@ if (!defined('ABSPATH')) {
 					document.querySelector(MPv1.selectors.cardTruncated).value = card;
 				}
 
-        mercado_pago = true;
-         $( 'form.checkout, form#order_review' ).submit();
+				mercado_pago = true;
+				$('form.checkout, form#order_review').submit();
 			}
 		}
 
@@ -1061,9 +1059,9 @@ if (!defined('ABSPATH')) {
 			}
 		};
 
-    $( 'body' ).on( 'focusout', '#cardNumber', MPv1.guessingPaymentMethod);
-  
-    
+		$('body').on('focusout', '#cardNumber', MPv1.guessingPaymentMethod);
+
+
 		MPv1.addListenerEvent(
 			document.querySelector(MPv1.selectors.cardNumber),
 			"keyup", MPv1.clearOptions
@@ -1194,7 +1192,7 @@ if (!defined('ABSPATH')) {
 			}
 
 			if (MPv1.site_id == "MLM") {
-        		document.querySelector( MPv1.selectors.mpDoc ).style.display = "none";
+				document.querySelector(MPv1.selectors.mpDoc).style.display = "none";
 				document.querySelector(MPv1.selectors.formCustomerAndCard).removeAttribute("style");
 				document.querySelector(MPv1.selectors.mpSecurityCodeCustomerAndCard).style.display = "none";
 
@@ -1249,57 +1247,54 @@ if (!defined('ABSPATH')) {
 
 		this.MPv1 = MPv1;
 
-  
-   
-    $( 'body' ).on( 'updated_checkout', function() {
-				var field = $( 'body #cardNumber' );
 
-				if ( 0 < field.length ) {
-					field.focusout();
-				}
-			});
+
+		$('body').on('updated_checkout', function() {
+			var field = $('body #cardNumber');
+
+			if (0 < field.length) {
+				field.focusout();
+			}
+		});
 
 		// get action button submit
 		$('form.checkout').on('checkout_place_order_woo-mercado-pago-custom', function() {
-      if ( mercado_pago ) {
+			if (mercado_pago) {
 				mercado_pago = false;
 
 				return true;
 			}
-      
-      if (!document.getElementById('payment_method_woo-mercado-pago-custom').checked) {
-        return true;
-      }
 
-      if(MPv1.validateInputsCreateToken()){
+			if (!document.getElementById('payment_method_woo-mercado-pago-custom').checked) {
+				return true;
+			}
+
+			if (MPv1.validateInputsCreateToken()) {
 				return MPv1.createToken();
-      } 
-      
-      return false;
+			}
+
+			return false;
 		});
 
-		if (document.forms['order_review'] != undefined) {
-			document.forms['order_review'].onsubmit = function() {
-       if ( mercado_pago ) {
+		$('form#order_review').submit(function() {
+			if (mercado_pago) {
 				mercado_pago = false;
 
 				return true;
 			}
-      
-      if (!document.getElementById('payment_method_woo-mercado-pago-custom').checked) {
-        return true;
-      }
 
-      if(MPv1.validateInputsCreateToken()){
-				return MPv1.createToken();
-      } 
-      
-      return false;
+			if (!document.getElementById('payment_method_woo-mercado-pago-custom').checked) {
+				return true;
 			}
-		}
-  
-  
-	}( jQuery ));
+
+			if (MPv1.validateInputsCreateToken()) {
+				return MPv1.createToken();
+			}
+
+			return false;
+		});
+
+	}(jQuery));
 
 	// Overriding this function to give form padding attribute.
 	MPv1.setForm = function() {
@@ -1333,14 +1328,14 @@ if (!defined('ABSPATH')) {
 			} else {
 				var $span = $form.querySelector("#mp-error-" + error.code);
 			}
-      
-      if($span != undefined) {
-			  var $input = $form.querySelector($span.getAttribute("data-main"));
-			  $span.style.display = "inline-block";
-			  $input.classList.add("mp-form-control-error");
-      }
+
+			if ($span != undefined) {
+				var $input = $form.querySelector($span.getAttribute("data-main"));
+				$span.style.display = "inline-block";
+				$input.classList.add("mp-form-control-error");
+			}
 		}
- 		return;
+		return;
 	}
 
 	MPv1.hideErrors = function() {
@@ -1358,7 +1353,7 @@ if (!defined('ABSPATH')) {
 
 		return;
 
-	} 
+	}
 
 	/*
 	 *  END Customization
