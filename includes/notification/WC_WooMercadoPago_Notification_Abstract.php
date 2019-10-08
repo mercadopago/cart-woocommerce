@@ -165,7 +165,9 @@ abstract class WC_WooMercadoPago_Notification_Abstract
      */
     public function mp_rule_pending($order, $used_gateway)
     {
-        $order->update_status(self::get_wc_status_for_mp_status('pending'));
+        $status = self::get_wc_status_for_mp_status('pending');
+        $order->update_status( apply_filters( 'status_mp_rule_pending', $status , $used_gateway) );
+        
         switch ($used_gateway) {
             case 'WC_WooMercadoPago_TicketGateway':
                 $notes = $order->get_customer_order_notes();
