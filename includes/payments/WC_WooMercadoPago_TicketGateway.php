@@ -441,6 +441,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
                 if ($response['status'] == 'pending') {
                     if ($response['status_detail'] == 'pending_waiting_payment') {
                         WC()->cart->empty_cart();
+						do_action( 'ticket_after_clean_cart' , $order );
                         if ($this->stock_reduce_mode == 'yes') {
                             $order->reduce_order_stock();
                         }
