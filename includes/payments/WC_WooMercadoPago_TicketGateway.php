@@ -23,11 +23,11 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             return;
         }
 
-        $this->desc = __('Accept cash payments within the custom checkout and expand your customers purchase options.', 'woocommerce-mercadopago');
+        $this->description = __('Accept cash payments within the custom checkout and expand your customers purchase options.', 'woocommerce-mercadopago');
         $this->form_fields = array();
         $this->method_title = __('Mercado Pago - Custom Checkout', 'woocommerce-mercadopago');
         $this->title = __('Pay with cash', 'woocommerce-mercadopago');
-        $this->method_description = $this->getMethodDescription($this->desc);
+        $this->method_description = $this->getMethodDescription($this->description);
         $this->coupon_mode = $this->getOption('coupon_mode', 'no');
         $this->stock_reduce_mode = $this->getOption('stock_reduce_mode', 'no');
         $this->date_expiration = $this->getOption('date_expiration', 3);
@@ -40,7 +40,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
         $this->form_fields = $this->getFormFields('Ticket');
         $this->hook = new WC_WooMercadoPago_Hook_Ticket($this);
         $this->notification = new WC_WooMercadoPago_Notification_Webhook($this);
-
+        $this->currency_convertion = true;
     }
 
     /**
@@ -49,21 +49,27 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
      */
     public function getFormFields($label)
     {
-        if (is_admin()) {
-            wp_enqueue_script('woocommerce-mercadopago-ticket-config-script', plugins_url('../assets/js/ticket_config_mercadopago.js', plugin_dir_path(__FILE__)));
+        if (is_admin() && $this->isManageSection()) {
+            $suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+            wp_enqueue_script(
+                'woocommerce-mercadopago-ticket-config-script',
+                plugins_url('../assets/js/ticket_config_mercadopago'.$suffix.'.js', plugin_dir_path(__FILE__)),
+                array(),
+                WC_WooMercadoPago_Constants::VERSION
+            );
         }
 
         if (empty($this->checkout_country)) {
             $this->field_forms_order = array_slice($this->field_forms_order, 0, 7);
         }
 
-        if (!empty($this->checkout_country) && empty($this->mp_access_token_test) && empty($this->mp_access_token_prod)) {
+        if (!empty($this->checkout_country) && empty($this->getAccessToken()) && empty($this->getPublicKey())) {
             $this->field_forms_order = array_slice($this->field_forms_order, 0, 22);
         }
 
         $form_fields = array();
         $form_fields['checkout_ticket_header'] = $this->field_checkout_ticket_header();
-        if (!empty($this->checkout_country) && !empty($this->getAccessToken())) {
+        if (!empty($this->checkout_country) && !empty($this->getAccessToken()) && !empty($this->getPublicKey())) {
             $form_fields['checkout_ticket_options_title'] = $this->field_checkout_ticket_options_title();
             $form_fields['checkout_ticket_options_subtitle'] = $this->field_checkout_ticket_options_subtitle();
             $form_fields['checkout_ticket_payments_title'] = $this->field_checkout_ticket_payments_title();
@@ -88,7 +94,6 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
 
     /**
      * get_fields_sequence
-     *
      * @return array
      */
     public function get_fields_sequence()
@@ -97,7 +102,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             // Necessary to run
             'title',
             'description',
-            // Checkout de pagos con dinero en efectivo<br> Aceptá pagos al instante y maximizá la conversión de tu negocio 
+            // Checkout de pagos con dinero en efectivo<br> Aceptá pagos al instante y maximizá la conversión de tu negocio
             'checkout_ticket_header',
             'checkout_steps',
             // ¿En qué país vas a activar tu tienda?
@@ -110,7 +115,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             'checkout_credential_mod_test_description',
             'checkout_credential_mod_prod_title',
             'checkout_credential_mod_prod_description',
-            'checkout_credential_production',
+            'checkout_credential_prod',
             'checkout_credential_link',
             'checkout_credential_title_test',
             'checkout_credential_description_test',
@@ -130,6 +135,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             'mp_statement_descriptor',
             '_mp_category_id',
             '_mp_store_identificator',
+            '_mp_integrator_id',
             // Advanced settings
             'checkout_advanced_settings',
             '_mp_debug_mode',
@@ -139,6 +145,8 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             'checkout_payments_subtitle',
             'checkout_payments_description',
             'enabled',
+            WC_WooMercadoPago_Helpers_CurrencyConverter::CONFIG_KEY,
+            'field_ticket_payments',
             'date_expiration',
             // Advanced configuration of the personalized payment experience"
             'checkout_ticket_payments_advanced_title',
@@ -160,13 +168,17 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public static function get_activated_payment()
     {
         $activated_payment = array();
-        $get_payment_methods_ticket = json_decode(get_option('_all_payment_methods_ticket', ''), true);
+        $get_payment_methods_ticket = get_option('_all_payment_methods_ticket', '');
 
         if (!empty($get_payment_methods_ticket)) {
             $saved_optons = get_option('woocommerce_woo-mercado-pago-ticket_settings', '');
 
+            if (!is_array($get_payment_methods_ticket)) {
+                $get_payment_methods_ticket = json_decode($get_payment_methods_ticket, true);
+            }
+
             foreach ($get_payment_methods_ticket as $payment_methods_ticket) {
-                if (isset($saved_optons['ticket_payment_' . $payment_methods_ticket['id']]) && $saved_optons['ticket_payment_' . $payment_methods_ticket['id']] == 'yes') {
+                if (!isset($saved_optons['ticket_payment_' . $payment_methods_ticket['id']]) || $saved_optons['ticket_payment_' . $payment_methods_ticket['id']] == 'yes') {
                     array_push($activated_payment, $payment_methods_ticket);
                 }
             }
@@ -181,17 +193,20 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     {
         $checkout_ticket_header = array(
             'title' => sprintf(
-                __('Checkout of payments with cash<br> Accept face-to-face payments, do not leave anyone out! %s', 'woocommerce-mercadopago'),
+                __('Checkout of payments with cash %s', 'woocommerce-mercadopago'),
                 '<div class="mp-row">
+                <div class="mp-col-md-12 mp_subtitle_header">
+                ' . __('Accept face-to-face payments, do not leave anyone out!', 'woocommerce-mercadopago') . '
+                 </div>
               <div class="mp-col-md-12">
-                <p class="text-checkout-body mp-mb-0">
+                <p class="mp-text-checkout-body mp-mb-0">
                   ' . __('Include this preferred purchase option by some customers.', 'woocommerce-mercadopago') . '
                 </p>
               </div>
             </div>'
             ),
             'type' => 'title',
-            'class' => 'mp_title_checkout'
+            'class' => 'mp_title_header'
         );
         return $checkout_ticket_header;
     }
@@ -202,7 +217,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_checkout_ticket_options_title()
     {
         $checkout_options_title = array(
-            'title' => __('Configure WooCommerce Mercado Pago', 'woocommerce-mercadopago'),
+            'title' => __('Configure Mercado Pago for WooCommerce', 'woocommerce-mercadopago'),
             'type' => 'title',
             'class' => 'mp_title_bd'
         );
@@ -222,7 +237,7 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
         return $checkout_options_subtitle;
     }
 
-     /**
+    /**
      * @return array
      */
     public function field_checkout_options_description()
@@ -284,9 +299,9 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
     public function field_date_expiration()
     {
         return array(
-            'title' => __( 'Payment Due', 'woocommerce-mercadopago' ),
+            'title' => __('Payment Due', 'woocommerce-mercadopago'),
             'type' => 'number',
-            'description' => __( 'In how many days will cash payments expire.', 'woocommerce-mercadopago' ),
+            'description' => __('In how many days will cash payments expire.', 'woocommerce-mercadopago'),
             'default' => ''
         );
     }
@@ -299,12 +314,15 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
         $ticket_payments = array();
         $ticket_payments_sort = array();
 
-        $get_payment_methods_ticket = json_decode(get_option('_all_payment_methods_ticket', '[]'), true);
+        $get_payment_methods_ticket = get_option('_all_payment_methods_ticket', '[]');
 
         $count_payment = 0;
 
-        foreach ($get_payment_methods_ticket as $payment_method_ticket) {
+        if (!is_array($get_payment_methods_ticket)) {
+            $get_payment_methods_ticket = json_decode($get_payment_methods_ticket, true);
+        }
 
+        foreach ($get_payment_methods_ticket as $payment_method_ticket) {
             $element = array(
                 'label' => $payment_method_ticket['name'],
                 'id' => 'woocommerce_mercadopago_' . $payment_method_ticket['id'],
@@ -320,17 +338,25 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
 
             if ($count_payment == 1) {
                 $element['title'] = __('Payment methods', 'woocommerce-mercadopago');
-                $element['desc_tip'] = __('Select the payment methods available in your store.', 'woocommerce-services');
+                $element['desc_tip'] = __('Choose the available payment methods in your store.', 'woocommerce-mercadopago');
             }
             if ($count_payment == count($get_payment_methods_ticket)) {
-                $element['description'] = __('Enable the payment methods available to your customers.', 'woocommerce-mercadopago');
+                $element['description'] = __('Activate the available payment methods to your clients.', 'woocommerce-mercadopago');
             }
 
             $ticket_payments["ticket_payment_" . $payment_method_ticket['id']] = $element;
             $ticket_payments_sort[] = "ticket_payment_" . $payment_method_ticket['id'];
         }
 
-        array_splice($this->field_forms_order, 37, 0, $ticket_payments_sort);
+        $index = 0;
+        foreach ($this->field_forms_order as $k => $field) {
+            $index ++;
+            if ($field == 'field_ticket_payments') {
+                unset($this->field_forms_order[$k]);
+                array_splice($this->field_forms_order, $index, 0, $ticket_payments_sort);
+                break;
+            }
+        }
 
         return $ticket_payments;
     }
@@ -347,30 +373,25 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
         );
 
         $amount = $this->get_order_total();
-        $logged_user_email = (wp_get_current_user()->ID != 0) ? wp_get_current_user()->user_email : null;
-        $discount_action_url = get_site_url() . '/index.php/woocommerce-mercadopago/?wc-api=WC_WooMercadoPago_TicketGateway';
-        $address = get_user_meta(wp_get_current_user()->ID, 'shipping_address_1', true);
-        $address_2 = get_user_meta(wp_get_current_user()->ID, 'shipping_address_2', true);
-        $address .= (!empty($address_2) ? ' - ' . $address_2 : '');
-        $country = get_user_meta(wp_get_current_user()->ID, 'shipping_country', true);
-        $address .= (!empty($country) ? ' - ' . $country : '');
+        $discount = $amount * ($this->gateway_discount / 100);
+        $comission = $amount * ($this->commission / 100);
+        $amount = $amount - $discount + $comission;
 
-        $currency_ratio = 1;
-        $_mp_currency_conversion_v1 = $this->getOption('_mp_currency_conversion_v1', '');
-        if (!empty($_mp_currency_conversion_v1)) {
-            $currency_ratio = WC_WooMercadoPago_Module::get_conversion_rate($this->site_data['currency']);
-            $currency_ratio = $currency_ratio > 0 ? $currency_ratio : 1;
-        }
+        $logged_user_email = (wp_get_current_user()->ID != 0) ? wp_get_current_user()->user_email : null;
+        $address = get_user_meta(wp_get_current_user()->ID, 'billing_address_1', true);
+        $address_2 = get_user_meta(wp_get_current_user()->ID, 'billing_address_2', true);
+        $address .= (!empty($address_2) ? ' - ' . $address_2 : '');
+        $country = get_user_meta(wp_get_current_user()->ID, 'billing_country', true);
+        $address .= (!empty($country) ? ' - ' . $country : '');
 
         $parameters = array(
             'amount' => $amount,
             'payment_methods' => $this->activated_payment,
             'site_id' => $this->getOption('_site_id_v1'),
             'coupon_mode' => isset($logged_user_email) ? $this->coupon_mode : 'no',
-            'discount_action_url' => $discount_action_url,
+            'discount_action_url' => $this->discount_action_url,
             'payer_email' => $logged_user_email,
-            'images_path' => plugins_url('../assets/images/', plugin_dir_path(__FILE__)),
-            'currency_ratio' => $currency_ratio,
+            'currency_ratio' => WC_WooMercadoPago_Helpers_CurrencyConverter::getInstance()->ratio($this),
             'woocommerce_currency' => get_woocommerce_currency(),
             'account_currency' => $this->site_data['currency'],
             'febraban' => (wp_get_current_user()->ID != 0) ?
@@ -380,14 +401,21 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
                     'docNumber' => '',
                     'address' => $address,
                     'number' => '',
-                    'city' => get_user_meta(wp_get_current_user()->ID, 'shipping_city', true),
-                    'state' => get_user_meta(wp_get_current_user()->ID, 'shipping_state', true),
-                    'zipcode' => get_user_meta(wp_get_current_user()->ID, 'shipping_postcode', true)
+                    'city' => get_user_meta(wp_get_current_user()->ID, 'billing_city', true),
+                    'state' => get_user_meta(wp_get_current_user()->ID, 'billing_state', true),
+                    'zipcode' => get_user_meta(wp_get_current_user()->ID, 'billing_postcode', true)
                 ) :
                 array(
-                    'firstname' => '', 'lastname' => '', 'docNumber' => '', 'address' => '', 'number' => '', 'city' => '', 'state' => '', 'zipcode' => ''
+                    'firstname' => '',
+                    'lastname' => '',
+                    'docNumber' => '',
+                    'address' => '',
+                    'number' => '',
+                    'city' => '',
+                    'state' => '',
+                    'zipcode' => '',
                 ),
-            'path_to_javascript' => plugins_url('../assets/js/ticket.js', plugin_dir_path(__FILE__))
+            'images_path' => plugins_url('../assets/images/', plugin_dir_path(__FILE__)),
         );
 
         wc_get_template('checkout/ticket_checkout.php', $parameters, 'woo/mercado/pago/module/', WC_WooMercadoPago_Module::get_templates_path());
@@ -403,11 +431,31 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
         $this->log->write_log(__FUNCTION__, 'Ticket POST: ' . json_encode($ticket_checkout, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         $order = wc_get_order($order_id);
+        $amount = $this->get_order_total();
         if (method_exists($order, 'update_meta_data')) {
             $order->update_meta_data('_used_gateway', get_class($this));
+            if (!empty($this->gateway_discount)) {
+                $discount = $amount * ($this->gateway_discount / 100);
+                $order->update_meta_data('Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' '  . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
+            }
+
+            if (!empty($this->commission)) {
+                $comission = $amount * ($this->commission / 100);
+                $order->update_meta_data('Mercado Pago: comission', __('fee of', 'woocommerce-mercadopago') . ' ' . $this->commission . '% / ' . __('fee of', 'woocommerce-mercadopago') . ' = ' . $comission);
+            }
             $order->save();
         } else {
             update_post_meta($order_id, '_used_gateway', get_class($this));
+
+            if (!empty($this->gateway_discount)) {
+                $discount = $amount * ($this->gateway_discount / 100);
+                update_post_meta($order_id,'Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' '  . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
+            }
+
+            if (!empty($this->commission)) {
+                $comission = $amount * ($this->commission / 100);
+                update_post_meta($order_id,'Mercado Pago: comission', __('fee of', 'woocommerce-mercadopago') . ' ' . $this->commission . '% / ' . __('fee of', 'woocommerce-mercadopago') . ' = ' . $comission);
+            }
         }
 
         // Check for brazilian FEBRABAN rules.
@@ -434,12 +482,31 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
             }
         }
 
+        if ($this->getOption('_site_id_v1') == 'MLU') {
+            if (
+                !isset($ticket_checkout['docNumber']) || empty($ticket_checkout['docNumber']) ||
+                !isset($ticket_checkout['docType']) || empty($ticket_checkout['docType'])
+            ) {
+                wc_add_notice(
+                    '<p>' .
+                        __('There was a problem processing your payment. Are you sure you have correctly filled out all the information on the payment form?', 'woocommerce-mercadopago') .
+                        '</p>',
+                    'error'
+                );
+                return array(
+                    'result' => 'fail',
+                    'redirect' => '',
+                );
+            }
+        }
+
         if (isset($ticket_checkout['amount']) && !empty($ticket_checkout['amount']) &&
             isset($ticket_checkout['paymentMethodId']) && !empty($ticket_checkout['paymentMethodId'])) {
             $response = $this->create_preference($order, $ticket_checkout);
+
             if (is_array($response) && array_key_exists('status', $response)) {
                 if ($response['status'] == 'pending') {
-                    if ($response['status_detail'] == 'pending_waiting_payment') {
+                    if ($response['status_detail'] == 'pending_waiting_payment' || $response['status_detail'] == 'pending_waiting_transfer') {
                         WC()->cart->empty_cart();
 						do_action( 'ticket_after_clean_cart' , $order );
                         if ($this->stock_reduce_mode == 'yes') {
@@ -457,14 +524,17 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
                             'Mercado Pago: ' .
                             __('The customer has not paid yet.', 'woocommerce-mercadopago')
                         );
-                        $order->add_order_note(
-                            'Mercado Pago: ' .
-                            __('To print the ticket again click', 'woocommerce-mercadopago') .
-                            '<a target="_blank" href="' .
-                            $response['transaction_details']['external_resource_url'] . '">' .
-                            __('here', 'woocommerce-mercadopago') .
-                            '</a>', 1, false
-                        );
+                        if($response['payment_type_id'] != 'bank_transfer'){
+                            $order->add_order_note(
+                                'Mercado Pago: ' .
+                                __('To print the ticket again click', 'woocommerce-mercadopago') .
+                                '<a target="_blank" href="' .
+                                $response['transaction_details']['external_resource_url'] . '">' .
+                                __('here', 'woocommerce-mercadopago') .
+                                '</a>', 1, false
+                            );
+                        }
+
                         return array(
                             'result' => 'success',
                             'redirect' => $order->get_checkout_order_received_url()
@@ -545,4 +615,13 @@ class WC_WooMercadoPago_TicketGateway extends WC_WooMercadoPago_PaymentAbstract
 
         return true;
     }
+
+    /**
+     * @return string
+     */
+    public static function getId()
+    {
+        return WC_WooMercadoPago_TicketGateway::ID;
+    }
 }
+

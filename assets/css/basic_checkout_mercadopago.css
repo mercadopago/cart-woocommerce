@@ -54,6 +54,14 @@
     margin-top: 0.3rem !important;
 }
 
+.mp-mt-04rem{
+    margin-top: 0.4rem !important;
+}
+
+.mp-mt-05rem{
+    margin-top: 0.5rem !important;
+}
+
 .mp-mt-06rem{
     margin-top: 0.6rem !important;
 }
@@ -210,6 +218,7 @@
     position: relative !important;
     right: 0px !important;
     border: inherit !important;
+    display: inline-block !important;
 }
 
 .mp-img-redirect{
@@ -221,6 +230,7 @@
     position: relative !important;
     right: 0px !important;
     border: inherit !important;
+    display: inline-block !important;
 }
 
 .mp-img-ticket {
@@ -342,6 +352,7 @@
     line-height: 1.29;
     letter-spacing: normal;
     color: #f04449 !important;
+    display: none;
 }
 
 .mp-desc {
@@ -382,6 +393,8 @@
     font-size: 18px !important;
     color: #f04449 !important;
     font-family: "Merriweather, Georgia";
+    position: absolute;
+    margin: -3px 0 0 3px;
 }
 
 .mp-obrigatory {
@@ -469,7 +482,7 @@
 }
 
 /* ----- Ticket ----- */
-.mp-erro_febraban {
+.mp-erro_febraban, .mp_error_docnumber {
     font-family: sans-serif !important;
     font-size: 12px !important;
     font-weight: normal !important;
@@ -478,6 +491,8 @@
     line-height: 1.29;
     letter-spacing: normal;
     color: #f04449 !important;
+    margin-top: 5px;
+    display: none;
 }
 
 .mp-subtitle-ticket-checkout {
@@ -524,4 +539,47 @@
     line-height: 1.25;
     letter-spacing: normal;
     color: #868686;
+}
+
+#mp_socialname_label{
+    display: none;
+}
+
+#mp_cnpj_label{
+    display: none;
+}
+
+#mp-doc-div {
+    display: none;
+}
+
+#mp-doc-type-div {
+    display: none;
+}
+
+#mp-doc-number-div {
+    display: none;
+}
+
+#mp-issuer-div {
+    display: none;
+}
+
+#mp-card-holder-div {
+    display: none;
+}
+
+.mp-discount {    
+    border-style: solid;
+    border-width: thin;
+    border-color: #009EE3;
+    padding: 8px 8px 8px 8px;
+    margin-top: 20px;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #333333;
+    display: none;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    clear: both;
+    float: left;
 }

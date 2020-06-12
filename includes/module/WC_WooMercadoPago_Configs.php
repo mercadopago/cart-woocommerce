@@ -50,7 +50,7 @@ class WC_WooMercadoPago_Configs
         }
 
         $ticketMethods = get_option('_all_payment_methods_ticket', '');
-        if (empty($ticketMethods)) {
+        if (empty($ticketMethods) || !is_array($ticketMethods)) {
             $this->updateTicketMethods();
         }
 
@@ -97,11 +97,9 @@ class WC_WooMercadoPago_Configs
      */
     public function noticeUpdateAccessToken()
     {
-        echo '<div class="error is-dismissible">
-            <p><strong>MERCADO PAGO: </strong>'
-            . __('Actualizá tus credenciales con las claves Access Token y Public Key ¡las necesitás para seguir recibiendo pagos!', 'woocommerce-mercadopado') . '
-            </p>
-        </div>';
+        $type = 'error';
+        $message = __('Actualizá tus credenciales con las claves Access Token y Public Key ¡las necesitás para seguir recibiendo pagos!', 'woocommerce-mercadopado');
+        echo WC_WooMercadoPago_Notices::getAlertFrame($message, $type);
     }
 
     /**
@@ -109,15 +107,9 @@ class WC_WooMercadoPago_Configs
      */
     public function noticeHttps()
     {
-        $message = __('The store must have HTTPS to see the payment methods.', 'woocommerce-mercadopago');
-        echo '<div class="notice notice-warning is-dismissible">  
-                    <p>
-                        <strong>MERCADO PAGO:</strong> ' . $message . '
-                    </p>
-                    <button type="button" class="notice-dismiss">
-                        <span class="screen-reader-text">' . __('Discard', 'woocommerce-mercadopago') . '</span>
-                    </button>
-              </div>';
+        $type = 'notice-warning';
+        $message = __('The store should have HTTPS in order to activate both Checkout Personalizado and Ticket Checkout.', 'woocommerce-mercadopago');
+        echo WC_WooMercadoPago_Notices::getAlertFrame($message, $type);
     }
 
     /**
@@ -128,20 +120,24 @@ class WC_WooMercadoPago_Configs
         if (strpos(get_option('_mp_public_key'), 'TEST') === 0 && strpos(get_option('_mp_access_token'), 'TEST') === 0) {
             update_option('_mp_public_key_test', get_option('_mp_public_key'), true);
             update_option('_mp_access_token_test', get_option('_mp_access_token'), true);
-            update_option('checkout_credential_production', 'no', true);
+            update_option('checkout_credential_prod', 'no', true);
         }
 
         if (strpos(get_option('_mp_public_key'), 'APP_USR') === 0 && strpos(get_option('_mp_access_token'), 'APP_USR') === 0) {
             update_option('_mp_public_key_prod', get_option('_mp_public_key'), true);
             update_option('_mp_access_token_prod', get_option('_mp_access_token'), true);
-            update_option('checkout_credential_production', 'yes', true);
+            if(!empty(get_option('_mp_public_key_prod', '')) && !empty(get_option('_mp_access_token_prod', ''))) {
+                update_option('_mp_public_key', '');
+                update_option('_mp_access_token', '');
+            }
+            update_option('checkout_credential_prod', 'yes', true);
         }
     }
 
     /**
      *  Country Configs
      */
-    public function getCountryConfigs()
+    public static function getCountryConfigs()
     {
         return array(
             'MCO' => array(
@@ -149,56 +145,64 @@ class WC_WooMercadoPago_Configs
                 'sponsor_id' => 208687643,
                 'checkout_banner' => plugins_url('../../assets/images/MCO/standard_mco.jpg', __FILE__),
                 'checkout_banner_custom' => plugins_url('../../assets/images/MCO/credit_card.png', __FILE__),
-                'currency' => 'COP'
+                'currency' => 'COP',
+                'zip_code' => '110111',
             ),
             'MLA' => array(
                 'site_id' => 'MLA',
                 'sponsor_id' => 208682286,
                 'checkout_banner' => plugins_url('../../assets/images/MLA/standard_mla.jpg', __FILE__),
                 'checkout_banner_custom' => plugins_url('../../assets/images/MLA/credit_card.png', __FILE__),
-                'currency' => 'ARS'
+                'currency' => 'ARS',
+                'zip_code' => '3039',
             ),
             'MLB' => array(
                 'site_id' => 'MLB',
                 'sponsor_id' => 208686191,
                 'checkout_banner' => plugins_url('../../assets/images/MLB/standard_mlb.jpg', __FILE__),
                 'checkout_banner_custom' => plugins_url('../../assets/images/MLB/credit_card.png', __FILE__),
-                'currency' => 'BRL'
+                'currency' => 'BRL',
+                'zip_code' => '01310924',
             ),
             'MLC' => array(
                 'site_id' => 'MLC',
                 'sponsor_id' => 208690789,
                 'checkout_banner' => plugins_url('../../assets/images/MLC/standard_mlc.gif', __FILE__),
                 'checkout_banner_custom' => plugins_url('../../assets/images/MLC/credit_card.png', __FILE__),
-                'currency' => 'CLP'
+                'currency' => 'CLP',
+                'zip_code' => '7591538',
             ),
             'MLM' => array(
                 'site_id' => 'MLM',
                 'sponsor_id' => 208692380,
                 'checkout_banner' => plugins_url('../../assets/images/MLM/standard_mlm.jpg', __FILE__),
                 'checkout_banner_custom' => plugins_url('../../assets/images/MLM/credit_card.png', __FILE__),
-                'currency' => 'MXN'
+                'currency' => 'MXN',
+                'zip_code' => '11250',
             ),
             'MLU' => array(
                 'site_id' => 'MLU',
                 'sponsor_id' => 243692679,
                 'checkout_banner' => plugins_url('../../assets/images/MLU/standard_mlu.png', __FILE__),
                 'checkout_banner_custom' => plugins_url('../../assets/images/MLU/credit_card.png', __FILE__),
-                'currency' => 'UYU'
+                'currency' => 'UYU',
+                'zip_code' => '11800',
             ),
             'MLV' => array(
                 'site_id' => 'MLV',
                 'sponsor_id' => 208692735,
                 'checkout_banner' => plugins_url('../../assets/images/MLV/standard_mlv.jpg', __FILE__),
                 'checkout_banner_custom' => plugins_url('../../assets/images/MLV/credit_card.png', __FILE__),
-                'currency' => 'VEF'
+                'currency' => 'VEF',
+                'zip_code' => '1160',
             ),
             'MPE' => array(
                 'site_id' => 'MPE',
                 'sponsor_id' => 216998692,
                 'checkout_banner' => plugins_url('../../assets/images/MPE/standard_mpe.png', __FILE__),
                 'checkout_banner_custom' => plugins_url('../../assets/images/MPE/credit_card.png', __FILE__),
-                'currency' => 'PEN'
+                'currency' => 'PEN',
+                'zip_code' => '15074',
             )
         );
     }
@@ -234,17 +238,6 @@ class WC_WooMercadoPago_Configs
 
     /**
      * @param $methods
-     * @return mixed
-     */
-    public function setShipping($methods)
-    {
-        $methods['woo-mercado-pago-me-normal'] = 'WC_MercadoEnvios_Shipping_Normal';
-        $methods['woo-mercado-pago-me-express'] = 'WC_MercadoEnvios_Shipping_Express';
-        return $methods;
-    }
-
-    /**
-     * @param $methods
      * @return array
      */
     public function setPaymentGateway($methods = null)
@@ -263,6 +256,4 @@ class WC_WooMercadoPago_Configs
         $methods[] = 'WC_WooMercadoPago_TicketGateway';
         return $methods;
     }
-
-
 }
