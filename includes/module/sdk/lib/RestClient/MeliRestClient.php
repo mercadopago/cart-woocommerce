@@ -8,7 +8,6 @@ class MeliRestClient extends AbstractRestClient
 
     /**
      * @param $request
-     * @param $version
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
@@ -20,7 +19,6 @@ class MeliRestClient extends AbstractRestClient
 
     /**
      * @param $request
-     * @param $version
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
@@ -32,7 +30,6 @@ class MeliRestClient extends AbstractRestClient
 
     /**
      * @param $request
-     * @param $version
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */
@@ -44,7 +41,6 @@ class MeliRestClient extends AbstractRestClient
 
     /**
      * @param $request
-     * @param $version
      * @return array|null
      * @throws WC_WooMercadoPago_Exception
      */

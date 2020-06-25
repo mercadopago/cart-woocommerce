@@ -1,483 +1,315 @@
-(function () {
+/* jshint es3: false */
+/* globals wc_mercadopago_ticket_params */
+(function ($) {
+    'use strict';
 
-    var MPv1Ticket = {
-        site_id: "",
-        coupon_of_discounts: {
-            discount_action_url: "",
-            payer_email: "",
-            default: true,
+    $(function () {
+        var mercado_pago_submit_ticket = false;
+        var mercado_pago_docnumber = 'CPF';
+
+        var seller = {
+            site_id: wc_mercadopago_ticket_params.site_id
+        };
+
+        var coupon_of_discounts = {
+            discount_action_url: wc_mercadopago_ticket_params.discount_action_url,
+            payer_email: wc_mercadopago_ticket_params.payer_email,
+            activated: wc_mercadopago_ticket_params.coupon_mode,
             status: false
-        },
-        inputs_to_create_discount: [
-            "couponCodeTicket",
-            "applyCouponTicket"
-        ],
-        inputs_to_validate_ticket: [
-            "firstname",
-            "lastname",
-            "docNumber",
-            "address",
-            "number",
-            "city",
-            "state",
-            "zipcode"
-        ],
-        selectors: {
-            // currency
-            currency_ratio: "#currency_ratioTicket",
-            // coupom
-            couponCode: "#couponCodeTicket",
-            applyCoupon: "#applyCouponTicket",
-            mpCouponApplyed: "#mpCouponApplyedTicket",
-            mpCouponError: "#mpCouponErrorTicket",
-            campaign_id: "#campaign_idTicket",
-            campaign: "#campaignTicket",
-            discount: "#discountTicket",
-            // payment method and checkout
-            paymentMethodId: "#paymentMethodIdTicket",
-            amount: "#amountTicket",
-            // other rules
-            boxFirstName: "#box-firstname",
-            boxLastName: "#box-lastname",
-            boxDocNumber: "#box-docnumber",
-            titleFirstName: ".title-name",
-            titleFirstNameRazaoSocial: ".title-razao-social",
-            titleDocNumber: ".title-cpf",
-            titleDocNumberCNPJ: ".title-cnpj",
-            radioTypeFisica: '#MPv1Ticket-docType-fisica',
-            radioTypeJuridica: '#MPv1Ticket-docType-juridica',
-            // febraban
-            firstname: "#febrabanFirstname",
-            lastname: "#febrabanLastname",
-            cpfcnpj: "#cpfcnpj",
-            address: "#febrabanAddress",
-            number: "#febrabanNumber",
-            city: "#febrabanCity",
-            state: "#febrabanState",
-            zipcode: "#febrabanZipcode",
-            // form
-            formCoupon: "#mercadopago-form-coupon-ticket",
-            formTicket: "#form-ticket",
-            box_loading: "#mp-box-loading",
-            submit: "#btnSubmit",
-            form: "#mercadopago-form-ticket"
-        },
-        text: {
-            discount_info1: "You will save",
-            discount_info2: "with discount from",
-            discount_info3: "Total of your purchase:",
-            discount_info4: "Total of your purchase with discount:",
-            discount_info5: "*Uppon payment approval",
-            discount_info6: "Terms and Conditions of Use",
-            coupon_empty: "Please, inform your coupon code",
-            apply: "Apply",
-            remove: "Remove"
-        },
-        paths: {
-            loading: "images/loading.gif",
-            check: "images/check.png",
-            error: "images/error.png"
-        }
-    }
+        };
 
-    // === Coupon of Discounts
-
-    MPv1Ticket.currencyIdToCurrency = function (currency_id) {
-        if (currency_id == "ARS") {
-            return "$";
-        } else if (currency_id == "BRL") {
-            return "R$";
-        } else if (currency_id == "COP") {
-            return "$";
-        } else if (currency_id == "CLP") {
-            return "$";
-        } else if (currency_id == "MXN") {
-            return "$";
-        } else if (currency_id == "VEF") {
-            return "Bs";
-        } else if (currency_id == "PEN") {
-            return "S/";
-        } else if (currency_id == "UYU") {
-            return "$U";
-        } else {
-            return "$";
-        }
-    }
-
-    MPv1Ticket.checkCouponEligibility = function () {
-        if (document.querySelector(MPv1Ticket.selectors.couponCode).value == "") {
-            // Coupon code is empty.
-            document.querySelector(MPv1Ticket.selectors.mpCouponApplyed).style.display = "none";
-            document.querySelector(MPv1Ticket.selectors.mpCouponError).style.display = "block";
-            document.querySelector(MPv1Ticket.selectors.mpCouponError).innerHTML = MPv1Ticket.text.coupon_empty;
-            MPv1Ticket.coupon_of_discounts.status = false;
-            document.querySelector(MPv1Ticket.selectors.couponCode).style.background = null;
-            document.querySelector(MPv1Ticket.selectors.applyCoupon).value = MPv1Ticket.text.apply;
-            document.querySelector(MPv1Ticket.selectors.discount).value = 0;
-            // --- No cards handler ---
-        } else if (MPv1Ticket.coupon_of_discounts.status) {
-            // We already have a coupon set, so we remove it.
-            document.querySelector(MPv1Ticket.selectors.mpCouponApplyed).style.display = "none";
-            document.querySelector(MPv1Ticket.selectors.mpCouponError).style.display = "none";
-            MPv1Ticket.coupon_of_discounts.status = false;
-            document.querySelector(MPv1Ticket.selectors.applyCoupon).style.background = null;
-            document.querySelector(MPv1Ticket.selectors.applyCoupon).value = MPv1Ticket.text.apply;
-            document.querySelector(MPv1Ticket.selectors.couponCode).value = "";
-            document.querySelector(MPv1Ticket.selectors.couponCode).style.background = null;
-            document.querySelector(MPv1Ticket.selectors.discount).value = 0;
-            // --- No cards handler ---
-        } else {
-            // Set loading.
-            document.querySelector(MPv1Ticket.selectors.mpCouponApplyed).style.display = "none";
-            document.querySelector(MPv1Ticket.selectors.mpCouponError).style.display = "none";
-            document.querySelector(MPv1Ticket.selectors.couponCode).style.background = "url(" + MPv1Ticket.paths.loading + ") 98% 50% no-repeat #fff";
-            document.querySelector(MPv1Ticket.selectors.applyCoupon).disabled = true;
-
-            // Check if there are params in the url.
-            var url = MPv1Ticket.coupon_of_discounts.discount_action_url;
-            var sp = "?";
-            if (url.indexOf("?") >= 0) {
-                sp = "&";
+        if ($('form#order_review').length > 0) {
+            if (coupon_of_discounts.activated === 'yes') {
+                $('#applyCouponTicket').on('click', discountCampaignsHandler);
             }
-            url += sp + "site_id=" + MPv1Ticket.site_id;
-            url += "&coupon_id=" + document.querySelector(MPv1Ticket.selectors.couponCode).value;
-            url += "&amount=" + document.querySelector(MPv1Ticket.selectors.amount).value;
-            url += "&payer=" + MPv1Ticket.coupon_of_discounts.payer_email;
-
-            MPv1Ticket.AJAX({
-                url: url,
-                method: "GET",
-                timeout: 5000,
-                error: function () {
-                    // Request failed.
-                    document.querySelector(MPv1Ticket.selectors.mpCouponApplyed).style.display = "none";
-                    document.querySelector(MPv1Ticket.selectors.mpCouponError).style.display = "none";
-                    MPv1Ticket.coupon_of_discounts.status = false;
-                    document.querySelector(MPv1Ticket.selectors.applyCoupon).style.background = null;
-                    document.querySelector(MPv1Ticket.selectors.applyCoupon).value = MPv1Ticket.text.apply;
-                    document.querySelector(MPv1Ticket.selectors.couponCode).value = "";
-                    document.querySelector(MPv1Ticket.selectors.couponCode).style.background = null;
-                    document.querySelector(MPv1Ticket.selectors.discount).value = 0;
-                    // --- No cards handler ---
-                },
-                success: function (status, response) {
-                    if (response.status == 200) {
-                        document.querySelector(MPv1Ticket.selectors.mpCouponApplyed).style.display =
-                            "block";
-                        document.querySelector(MPv1Ticket.selectors.discount).value =
-                            response.response.coupon_amount;
-                        document.querySelector(MPv1Ticket.selectors.mpCouponApplyed).innerHTML =
-                            MPv1Ticket.text.discount_info1 + " <strong>" +
-                            MPv1Ticket.currencyIdToCurrency(response.response.currency_id) + " " +
-                            Math.round(response.response.coupon_amount * 100) / 100 +
-                            "</strong> " + MPv1Ticket.text.discount_info2 + " " +
-                            response.response.name + ".<br>" + MPv1Ticket.text.discount_info3 + " <strong>" +
-                            MPv1Ticket.currencyIdToCurrency(response.response.currency_id) + " " +
-                            Math.round(MPv1Ticket.getAmountWithoutDiscount() * 100) / 100 +
-                            "</strong><br>" + MPv1Ticket.text.discount_info4 + " <strong>" +
-                            MPv1Ticket.currencyIdToCurrency(response.response.currency_id) + " " +
-                            Math.round(MPv1Ticket.getAmount() * 100) / 100 + "*</strong><br>" +
-                            "<i>" + MPv1Ticket.text.discount_info5 + "</i><br>" +
-                            "<a href='https://api.mercadolibre.com/campaigns/" +
-                            response.response.id +
-                            "/terms_and_conditions?format_type=html' target='_blank'>" +
-                            MPv1Ticket.text.discount_info6 + "</a>";
-                        document.querySelector(MPv1Ticket.selectors.mpCouponError).style.display =
-                            "none";
-                        MPv1Ticket.coupon_of_discounts.status = true;
-                        document.querySelector(MPv1Ticket.selectors.couponCode).style.background =
-                            null;
-                        document.querySelector(MPv1Ticket.selectors.couponCode).style.background =
-                            "url(" + MPv1Ticket.paths.check + ") 98% 50% no-repeat #fff";
-                        document.querySelector(MPv1Ticket.selectors.applyCoupon).value =
-                            MPv1Ticket.text.remove;
-                        // --- No cards handler ---
-                        document.querySelector(MPv1Ticket.selectors.campaign_id).value =
-                            response.response.id;
-                        document.querySelector(MPv1Ticket.selectors.campaign).value =
-                            response.response.name;
-                    } else {
-                        document.querySelector(MPv1Ticket.selectors.mpCouponApplyed).style.display = "none";
-                        document.querySelector(MPv1Ticket.selectors.mpCouponError).style.display = "block";
-                        document.querySelector(MPv1Ticket.selectors.mpCouponError).innerHTML = response.response.message;
-                        MPv1Ticket.coupon_of_discounts.status = false;
-                        document.querySelector(MPv1Ticket.selectors.couponCode).style.background = null;
-                        document.querySelector(MPv1Ticket.selectors.couponCode).style.background = "url(" + MPv1Ticket.paths.error + ") 98% 50% no-repeat #fff";
-                        document.querySelector(MPv1Ticket.selectors.applyCoupon).value = MPv1Ticket.text.apply;
-                        document.querySelector(MPv1Ticket.selectors.discount).value = 0;
-                        // --- No cards handler ---
-                    }
-                    document.querySelector(MPv1Ticket.selectors.applyCoupon).disabled = false;
-                }
-            });
         }
-    }
 
-    // === Initialization function
-
-    MPv1Ticket.addListenerEvent = function (el, eventName, handler) {
-        if (el.addEventListener) {
-            el.addEventListener(eventName, handler);
-        } else {
-            el.attachEvent("on" + eventName, function () {
-                handler.call(el);
-            });
-        }
-    };
-
-    MPv1Ticket.referer = (function () {
-        var referer = window.location.protocol + "//" +
-            window.location.hostname + (window.location.port ? ":" + window.location.port : "");
-        return referer;
-    })();
-
-    MPv1Ticket.AJAX = function (options) {
-        var useXDomain = !!window.XDomainRequest;
-        var req = useXDomain ? new XDomainRequest() : new XMLHttpRequest()
-        var data;
-        options.url += (options.url.indexOf("?") >= 0 ? "&" : "?") + "referer=" + escape(MPv1Ticket.referer);
-        options.requestedMethod = options.method;
-        if (useXDomain && options.method == "PUT") {
-            options.method = "POST";
-            options.url += "&_method=PUT";
-        }
-        req.open(options.method, options.url, true);
-        req.timeout = options.timeout || 1000;
-        if (window.XDomainRequest) {
-            req.onload = function () {
-                data = JSON.parse(req.responseText);
-                if (typeof options.success === "function") {
-                    options.success(options.requestedMethod === "POST" ? 201 : 200, data);
-                }
-            };
-            req.onerror = req.ontimeout = function () {
-                if (typeof options.error === "function") {
-                    options.error(400, {
-                        user_agent: window.navigator.userAgent, error: "bad_request", cause: []
-                    });
-                }
-            };
-            req.onprogress = function () {
-            };
-        } else {
-            req.setRequestHeader("Accept", "application/json");
-            if (options.contentType) {
-                req.setRequestHeader("Content-Type", options.contentType);
-            } else {
-                req.setRequestHeader("Content-Type", "application/json");
+        // Load woocommerce checkout form
+        $('body').on('updated_checkout', function () {
+            if (seller.site_id === 'MLB') {
+                validateDocumentInputs();
             }
-            req.onreadystatechange = function () {
-                if (this.readyState === 4) {
-                    try {
-                        if (this.status >= 200 && this.status < 400) {
-                            // Success!
-                            data = JSON.parse(this.responseText);
-                            if (typeof options.success === "function") {
-                                options.success(this.status, data);
-                            }
-                        } else if (this.status >= 400) {
-                            data = JSON.parse(this.responseText);
-                            if (typeof options.error === "function") {
-                                options.error(this.status, data);
-                            }
-                        } else if (typeof options.error === "function") {
-                            options.error(503, {});
-                        }
-                    } catch (e) {
-                        options.error(503, {});
-                    }
-                }
-            };
-        }
-        if (options.method === "GET" || options.data == null || options.data == undefined) {
-            req.send();
-        } else {
-            req.send(JSON.stringify(options.data));
-        }
-    }
 
-    // Form validation
+            if (coupon_of_discounts.activated === 'yes') {
+                $('#applyCouponTicket').on('click', discountCampaignsHandler);
+            }
+        });
 
-    var doSubmitTicket = false;
+        /**
+         * Validate input depending on document type
+         */
+        function validateDocumentInputs() {
+            var mp_box_lastname = document.getElementById('mp_box_lastname');
+            var mp_box_firstname = document.getElementById('mp_box_firstname');
+            var mp_firstname_label = document.getElementById('mp_firstname_label');
+            var mp_socialname_label = document.getElementById('mp_socialname_label');
+            var mp_cpf_label = document.getElementById('mp_cpf_label');
+            var mp_cnpj_label = document.getElementById('mp_cnpj_label');
+            var mp_doc_number = document.getElementById('mp_doc_number');
+            var mp_doc_type = document.querySelectorAll('input[type=radio][name="mercadopago_ticket[docType]"]');
 
-    MPv1Ticket.doPay = function (febraban) {
-        if (!doSubmitTicket) {
-            doSubmitTicket = true;
-            document.querySelector(MPv1Ticket.selectors.box_loading).style.background = "url(" + MPv1Ticket.paths.loading + ") 0 50% no-repeat #fff";
-            btn = document.querySelector(MPv1Ticket.selectors.form);
-            btn.submit();
-        }
-    }
+            mp_cnpj_label.style.display = 'none';
+            mp_socialname_label.style.display = 'none';
 
-    MPv1Ticket.validateInputsTicket = function (event) {
-        event.preventDefault();
-        MPv1Ticket.hideErrors();
-        var valid_to_ticket = true;
-        var $inputs = MPv1Ticket.getForm().querySelectorAll("[data-checkout]");
-        var $inputs_to_validate_ticket = MPv1Ticket.inputs_to_validate_ticket;
-        var febraban = [];
-        var arr = [];
-        for (var x = 0; x < $inputs.length; x++) {
-            var element = $inputs[x];
-            if ($inputs_to_validate_ticket.indexOf(element.getAttribute("data-checkout")) > -1) {
-                if (element.value == -1 || element.value == "") {
-                    arr.push(element.id);
-                    valid_to_ticket = false;
+            var choose_document = function () {
+                if (this.value === 'CPF') {
+                    mp_cpf_label.style.display = 'block';
+                    mp_box_lastname.style.display = 'grid';
+                    mp_firstname_label.style.display = 'block';
+                    mp_cnpj_label.style.display = 'none';
+                    mp_socialname_label.style.display = 'none';
+                    mp_box_firstname.classList.remove('mp-col-md-8');
+                    mp_box_firstname.classList.add('mp-col-md-4');
+                    mp_doc_number.setAttribute('maxlength', '14');
+                    mp_doc_number.setAttribute('onkeyup', 'mpMaskInput(this, mpCpf)');
+                    mercado_pago_docnumber = 'CPF';
                 } else {
-                    febraban[element.id] = element.value;
+                    mp_cpf_label.style.display = 'none';
+                    mp_box_lastname.style.display = 'none';
+                    mp_firstname_label.style.display = 'none';
+                    mp_cnpj_label.style.display = 'block';
+                    mp_socialname_label.style.display = 'block';
+                    mp_box_firstname.classList.remove('mp-col-md-4');
+                    mp_box_firstname.classList.add('mp-col-md-8');
+                    mp_doc_number.setAttribute('maxlength', '18');
+                    mp_doc_number.setAttribute('onkeyup', 'mpMaskInput(this, mpCnpj)');
+                    mercado_pago_docnumber = 'CNPJ';
+                }
+            };
+
+            for (var i = 0; i < mp_doc_type.length; i++) {
+                mp_doc_type[i].addEventListener('change', choose_document);
+            }
+        }
+
+        /**
+         * Handler form submit
+         * @return {bool}
+         */
+        function mercadoPagoFormHandlerTicket() {
+
+            if (!document.getElementById('payment_method_woo-mercado-pago-ticket').checked) {
+                return true;
+            }
+
+            if (seller.site_id === 'MLB') {
+                if (validateInputs() && validateDocumentNumber()) {
+                    mercado_pago_submit_ticket = true;
+                } else {
+                    removeBlockOverlay();
+                }
+
+                return mercado_pago_submit_ticket;
+            }
+
+            if (seller.site_id === 'MLU') {
+                if (validateDocumentNumber()) {
+                    mercado_pago_submit_ticket = true;
+                } else {
+                    removeBlockOverlay();
+                }
+
+                return mercado_pago_submit_ticket;
+            }
+        }
+
+        // Process when submit the checkout form.
+        $('form.checkout').on('checkout_place_order_woo-mercado-pago-ticket', function () {
+            return mercadoPagoFormHandlerTicket();
+        });
+
+        // If payment fail, retry on next checkout page
+        $('form#order_review').submit(function () {
+            return mercadoPagoFormHandlerTicket();
+        });
+
+        /**
+         * Get form
+         */
+        function getForm() {
+            return document.querySelector('#mercadopago-form-ticket');
+        }
+
+        /**
+         * Validate if all inputs are valid
+         */
+        function validateInputs() {
+            var form = getForm();
+            var form_inputs = form.querySelectorAll('[data-checkout]');
+            var span = form.querySelectorAll('.mp-erro_febraban');
+
+            //Show or hide error message and border
+            for (var i = 0; i < form_inputs.length; i++) {
+                var element = form_inputs[i];
+                var input = form.querySelector(span[i].getAttribute('data-main'));
+
+                if (element.parentNode.style.display !== 'none' && (element.value === -1 || element.value === '')) {
+                    span[i].style.display = 'inline-block';
+                    input.classList.add('mp-form-control-error');
+                } else {
+                    span[i].style.display = 'none';
+                    input.classList.remove('mp-form-control-error');
                 }
             }
-        }
-        if (!valid_to_ticket) {
-            MPv1Ticket.showErrors(arr);
-        } else {
-            MPv1Ticket.doPay(febraban);
-        }
-    }
 
-    MPv1Ticket.getForm = function () {
-        return document.querySelector(MPv1Ticket.selectors.form);
-    }
-
-    MPv1Ticket.addListenerEvent = function (el, eventName, handler) {
-        if (el.addEventListener) {
-            el.addEventListener(eventName, handler);
-        } else {
-            el.attachEvent("on" + eventName, function () {
-                handler.call(el);
-            });
-        }
-    };
-
-    // Show/hide errors.
-
-    MPv1Ticket.showErrors = function (fields) {
-        var $form = MPv1Ticket.getForm();
-        for (var x = 0; x < fields.length; x++) {
-            var f = fields[x];
-            var $span = $form.querySelector("#error_" + f);
-            var $input = $form.querySelector($span.getAttribute("data-main"));
-            $span.style.display = "inline-block";
-            $input.classList.add("mp-error-input");
-        }
-        return;
-    }
-
-    MPv1Ticket.hideErrors = function () {
-        for (var x = 0; x < document.querySelectorAll("[data-checkout]").length; x++) {
-            var $field = document.querySelectorAll("[data-checkout]")[x];
-            $field.classList.remove("mp-error-input");
-        } //end for
-        for (var x = 0; x < document.querySelectorAll(".mp-erro_febraban").length; x++) {
-            var $span = document.querySelectorAll(".mp-erro_febraban")[x];
-            $span.style.display = "none";
-        }
-        return;
-    }
-
-    MPv1Ticket.actionsMLB = function () {
-        MPv1Ticket.initializeDocumentPessoaFisica();
-        MPv1Ticket.addListenerEvent(document.querySelector(MPv1Ticket.selectors.cpfcnpj), 'keyup', MPv1Ticket.execFormatDocument);
-        MPv1Ticket.addListenerEvent(document.querySelector(MPv1Ticket.selectors.radioTypeFisica), "change", MPv1Ticket.initializeDocumentPessoaFisica);
-        MPv1Ticket.addListenerEvent(document.querySelector(MPv1Ticket.selectors.radioTypeJuridica), "change", MPv1Ticket.initializeDocumentPessoaJuridica);
-        return;
-    }
-
-    MPv1Ticket.initializeDocumentPessoaFisica = function () {
-        // show elements
-        document.querySelector(MPv1Ticket.selectors.boxLastName).style.display = "block";
-        document.querySelector(MPv1Ticket.selectors.titleFirstName).style.display = "inline-block";
-        document.querySelector(MPv1Ticket.selectors.titleDocNumber).style.display = "inline-block";
-        // adjustment css
-        document.querySelector(MPv1Ticket.selectors.boxFirstName).classList.remove("mp-col-md-8");
-        document.querySelector(MPv1Ticket.selectors.boxFirstName).classList.add("mp-col-md-4");
-        // hide elements
-        document.querySelector(MPv1Ticket.selectors.titleFirstNameRazaoSocial).style.display = "none";
-        document.querySelector(MPv1Ticket.selectors.titleDocNumberCNPJ).style.display = "none";
-        // force max length CPF
-        document.querySelector(MPv1Ticket.selectors.cpfcnpj).maxLength = 14;
-    }
-
-    MPv1Ticket.initializeDocumentPessoaJuridica = function () {
-        // show elements
-        document.querySelector(MPv1Ticket.selectors.titleFirstNameRazaoSocial).style.display = "inline-block";
-        document.querySelector(MPv1Ticket.selectors.titleDocNumberCNPJ).style.display = "inline-block";
-        // adjustment css
-        document.querySelector(MPv1Ticket.selectors.boxFirstName).classList.remove("mp-col-md-4");
-        document.querySelector(MPv1Ticket.selectors.boxFirstName).classList.add("mp-col-md-8");
-        // Hide Elements
-        document.querySelector(MPv1Ticket.selectors.boxLastName).style.display = "none";
-        document.querySelector(MPv1Ticket.selectors.titleFirstName).style.display = "none";
-        document.querySelector(MPv1Ticket.selectors.titleDocNumber).style.display = "none";
-        // force max length CNPJ
-        document.querySelector(MPv1Ticket.selectors.cpfcnpj).maxLength = 18;
-    }
-
-    MPv1Ticket.validaCPF = function (strCPF) {
-        var Soma;
-        var Resto;
-        strCPF = strCPF.replace(/[.-\s]/g, "")
-        Soma = 0;
-        if (strCPF == "00000000000") {
-            return false;
-        }
-        for (i = 1; i <= 9; i++) {
-            Soma = Soma + parseInt(strCPF.substring(i - 1, i)) * (11 - i);
-        }
-        Resto = (Soma * 10) % 11;
-        if ((Resto == 10) || (Resto == 11)) {
-            Resto = 0;
-        }
-        if (Resto != parseInt(strCPF.substring(9, 10))) {
-            return false;
-        }
-        Soma = 0;
-        for (i = 1; i <= 10; i++) {
-            Soma = Soma + parseInt(strCPF.substring(i - 1, i)) * (12 - i);
-        }
-        Resto = (Soma * 10) % 11;
-        if ((Resto == 10) || (Resto == 11)) {
-            Resto = 0;
-        }
-        if (Resto != parseInt(strCPF.substring(10, 11))) {
-            return false;
-        }
-        return true;
-    }
-
-    MPv1Ticket.validaCNPJ = function (strCNPJ) {
-        strCNPJ = strCNPJ.replace(".", "");
-        strCNPJ = strCNPJ.replace(".", "");
-        strCNPJ = strCNPJ.replace(".", "");
-        strCNPJ = strCNPJ.replace("-", "");
-        strCNPJ = strCNPJ.replace("/", "");
-        var numeros, digitos, soma, i, resultado, pos, tamanho, digitos_iguais;
-        digitos_iguais = 1;
-        if (strCNPJ.length < 14 && strCNPJ.length < 15) {
-            return false;
-        }
-        for (i = 0; i < strCNPJ.length - 1; i++) {
-            if (strCNPJ.charAt(i) != strCNPJ.charAt(i + 1)) {
-                digitos_iguais = 0;
-                break;
+            //Focus on the element with error
+            for (var j = 0; j < form_inputs.length; j++) {
+                var elementFocus = form_inputs[j];
+                if (elementFocus.parentNode.style.display !== 'none' && (elementFocus.value === -1 || elementFocus.value === '')) {
+                    elementFocus.focus();
+                    return false;
+                }
             }
+
+            return true;
         }
-        if (!digitos_iguais) {
-            tamanho = strCNPJ.length - 2
-            numeros = strCNPJ.substring(0, tamanho);
-            digitos = strCNPJ.substring(tamanho);
-            soma = 0;
-            pos = tamanho - 7;
-            for (i = tamanho; i >= 1; i--) {
+
+        /**
+         * Validate document number
+         * @return {bool}
+         */
+        function validateDocumentNumber() {
+            var docnumber_input = document.getElementById('mp_doc_number');
+            var docnumber_error = document.getElementById('mp_error_docnumber');
+            var docnumber_validate = false;
+
+            if (seller.site_id === 'MLB') {
+                docnumber_validate = validateDocTypeMLB(docnumber_input.value);
+            }
+
+            if (seller.site_id === 'MLU') {
+                docnumber_validate = validateDocTypeMLU(docnumber_input.value);
+            }
+
+            if (!docnumber_validate) {
+                docnumber_error.style.display = 'block';
+                docnumber_input.classList.add('mp-form-control-error');
+                docnumber_input.focus();
+            } else {
+                docnumber_error.style.display = 'none';
+                docnumber_input.classList.remove('mp-form-control-error');
+                docnumber_validate = true;
+            }
+
+            return docnumber_validate;
+        }
+
+        /**
+        * Validate Document number for MLB
+        * @param {string} docnumber
+        * @return {bool}
+        */
+        function validateDocTypeMLB(docnumber) {
+            if (mercado_pago_docnumber === 'CPF') {
+                return validateCPF(docnumber);
+            }
+            return validateCNPJ(docnumber);
+        }
+
+        /**
+         * Validate Document number for MLU
+         * @param {string} docnumber
+         * @return {bool}
+         */
+        function validateDocTypeMLU(docnumber) {
+            if (docnumber !== '') {
+                return validateCI(docnumber);
+            }
+            return false;
+        }
+
+        /**
+     * Validate CPF
+     * @param {string} strCPF
+     * @return {bool}
+     */
+        function validateCPF(strCPF) {
+            var Soma;
+            var Resto;
+
+            Soma = 0;
+            strCPF = strCPF.replace(/[.-\s]/g, '');
+
+            if (strCPF === '00000000000') {
+                return false;
+            }
+
+            for (var i = 1; i <= 9; i++) {
+                Soma = Soma + parseInt(strCPF.substring(i - 1, i), 10) * (11 - i);
+            }
+
+            Resto = (Soma * 10) % 11;
+            if ((Resto === 10) || (Resto === 11)) {
+                Resto = 0;
+            }
+            if (Resto !== parseInt(strCPF.substring(9, 10), 10)) {
+                return false;
+            }
+
+            Soma = 0;
+            for (var j = 1; j <= 10; j++) {
+                Soma = Soma + parseInt(strCPF.substring(j - 1, j), 10) * (12 - j);
+            }
+
+            Resto = (Soma * 10) % 11;
+            if ((Resto === 10) || (Resto === 11)) {
+                Resto = 0;
+            }
+            if (Resto !== parseInt(strCPF.substring(10, 11), 10)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * Validate CNPJ
+         * @param {string} strCNPJ
+         * @return {bool}
+         */
+        function validateCNPJ(strCNPJ)
+        {
+            strCNPJ = strCNPJ.replace(/[^\d]+/g, '');
+
+            if (strCNPJ === '') {
+                return false;
+            }
+
+            if (strCNPJ.length !== 14) {
+                return false;
+            }
+
+            if (strCNPJ === '00000000000000' ||
+              strCNPJ === '11111111111111' ||
+              strCNPJ === '22222222222222' ||
+              strCNPJ === '33333333333333' ||
+              strCNPJ === '44444444444444' ||
+              strCNPJ === '55555555555555' ||
+              strCNPJ === '66666666666666' ||
+              strCNPJ === '77777777777777' ||
+              strCNPJ === '88888888888888' ||
+              strCNPJ === '99999999999999') {
+              return false;
+            }
+
+            var tamanho = strCNPJ.length - 2;
+            var numeros = strCNPJ.substring(0, tamanho);
+            var digitos = strCNPJ.substring(tamanho);
+            var soma = 0;
+            var pos = tamanho - 7;
+            for (var i = tamanho; i >= 1; i--) {
                 soma += numeros.charAt(tamanho - i) * pos--;
                 if (pos < 2) {
                     pos = 9;
                 }
             }
-            resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-            if (resultado != digitos.charAt(0)) {
+
+            var resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
+
+            if (resultado.toString() !== digitos[0]) {
                 return false;
             }
+
             tamanho = tamanho + 1;
             numeros = strCNPJ.substring(0, tamanho);
             soma = 0;
@@ -488,100 +320,198 @@
                     pos = 9;
                 }
             }
+
             resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-            if (resultado != digitos.charAt(1)) {
+
+            if (resultado.toString() !== digitos[1]) {
                 return false;
             }
+
             return true;
-        } else {
-            return false;
-        }
-    }
-
-    MPv1Ticket.execFormatDocument = function () {
-        v_obj = this;
-        setTimeout(function () {
-            v_obj.value = MPv1Ticket.formatDocument(v_obj.value)
-        }, 1)
-    }
-
-    MPv1Ticket.formatDocument = function (v) {
-        //Remove tudo o que não é dígito
-        v = v.replace(/\D/g, "")
-        if (document.querySelector(MPv1Ticket.selectors.radioTypeFisica).checked) { //CPF
-            //Coloca um ponto entre o terceiro e o quarto dígitos
-            v = v.replace(/(\d{3})(\d)/, "$1.$2")
-            //Coloca um ponto entre o terceiro e o quarto dígitos
-            //de novo (para o segundo bloco de números)
-            v = v.replace(/(\d{3})(\d)/, "$1.$2")
-            //Coloca um hífen entre o terceiro e o quarto dígitos
-            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2")
-        } else { //CNPJ
-            //Coloca ponto entre o segundo e o terceiro dígitos
-            v = v.replace(/^(\d{2})(\d)/, "$1.$2")
-            //Coloca ponto entre o quinto e o sexto dígitos
-            v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-            //Coloca uma barra entre o oitavo e o nono dígitos
-            v = v.replace(/\.(\d{3})(\d)/, ".$1/$2")
-            //Coloca um hífen depois do bloco de quatro dígitos
-            v = v.replace(/(\d{4})(\d)/, "$1-$2")
-        }
-        return v
-    }
-
-    // ===
-
-    MPv1Ticket.Initialize = function (site_id, coupon_mode, discount_action_url, payer_email) {
-
-        // Sets.
-        MPv1Ticket.site_id = site_id;
-        MPv1Ticket.coupon_of_discounts.default = coupon_mode;
-        MPv1Ticket.coupon_of_discounts.discount_action_url = discount_action_url;
-        MPv1Ticket.coupon_of_discounts.payer_email = payer_email;
-
-        //hide errors
-        MPv1Ticket.hideErrors();
-
-        // Flow coupon of discounts.
-        if (MPv1Ticket.coupon_of_discounts.default) {
-            MPv1Ticket.addListenerEvent(
-                document.querySelector(MPv1Ticket.selectors.applyCoupon),
-                "click",
-                MPv1Ticket.checkCouponEligibility
-            );
-            document.querySelector(MPv1Ticket.selectors.formCoupon).style.marginBottom = "20px";
-        } else {
-            document.querySelector(MPv1Ticket.selectors.formCoupon).style.display = "none";
         }
 
-        // flow: MLB
-        if (MPv1Ticket.site_id == "MLB") {
-            MPv1Ticket.actionsMLB();
-        } else {
-            document.querySelector(MPv1Ticket.selectors.formTicket).style.display = "none";
+        /**
+        * Validate CI MLU
+        * @param {string} docNumber
+        * @return {bool}
+        */
+        function validateCI(docNumber) {
+            var x = 0;
+            var y = 0;
+            var docCI = 0;
+            var dig = docNumber[docNumber.length - 1];
+
+            if (docNumber.length <= 6) {
+                for (y = docNumber.length; y < 7; y++) {
+                    docNumber = '0' + docNumber;
+                }
+            }
+            for (y = 0; y < 7; y++) {
+                x += (parseInt('2987634'[y], 10) * parseInt(docNumber[y], 10)) % 10;
+            }
+            if (x % 10 === 0) {
+                docCI = 0;
+            } else {
+                docCI = 10 - x % 10;
+            }
+            return (dig === docCI.toString());
         }
 
-        return;
-
-    }
-
-    this.MPv1Ticket = MPv1Ticket;
-
-    if (document.getElementById("payment") != undefined && document.getElementById("payment").offsetWidth <= 530) {
-        var frameTicket = document.querySelectorAll('#frameTicket');
-        for (var g = 0; g < frameTicket.length; g++) {
-            frameTicket[g].classList.remove('mp-col-md-6');
-            frameTicket[g].classList.add('mp-col-md-12');
+        /**
+        * Remove Block Overlay from Order Review page
+        */
+        function removeBlockOverlay() {
+            if ($('form#order_review').length > 0) {
+                $('.blockOverlay').css('display', 'none');
+            }
         }
-    }
 
-}).call();
+        /**
+        *  Discount Campaigns Handler
+        */
+        function discountCampaignsHandler() {
+            document.querySelector('#mpCouponApplyedTicket').style.display = 'none';
 
-MPv1Ticket.getAmount = function () {
-    return document.querySelector(MPv1Ticket.selectors.amount)
-        .value - document.querySelector(MPv1Ticket.selectors.discount).value;
-}
+            if (document.querySelector('#couponCodeTicket').value === '') {
+                coupon_of_discounts.status = false;
+                document.querySelector('#mpCouponErrorTicket').style.display = 'block';
+                document.querySelector('#mpCouponErrorTicket').innerHTML = wc_mercadopago_ticket_params.coupon_empty;
+                document.querySelector('#couponCodeTicket').style.background = null;
+                document.querySelector('#applyCouponTicket').value = wc_mercadopago_ticket_params.apply;
+                document.querySelector('#discountTicket').value = 0;
 
-MPv1Ticket.getAmountWithoutDiscount = function () {
-    return document.querySelector(MPv1Ticket.selectors.amount).value;
-}
+            } else if (coupon_of_discounts.status) {
+                coupon_of_discounts.status = false;
+                document.querySelector('#mpCouponErrorTicket').style.display = 'none';
+                document.querySelector('#applyCouponTicket').style.background = null;
+                document.querySelector('#applyCouponTicket').value = wc_mercadopago_ticket_params.apply;
+                document.querySelector('#couponCodeTicket').value = '';
+                document.querySelector('#couponCodeTicket').style.background = null;
+                document.querySelector('#discountTicket').value = 0;
+
+            } else {
+                document.querySelector('#mpCouponErrorTicket').style.display = 'none';
+                document.querySelector('#couponCodeTicket').style.background = 'url(' + wc_mercadopago_ticket_params.loading + ') 98% 50% no-repeat #fff';
+                document.querySelector('#couponCodeTicket').style.border = '1px solid #cecece';
+                document.querySelector('#applyCouponTicket').disabled = true;
+                getDiscountCampaigns();
+            }
+        }
+
+        /**
+         * Get Discount Campaigns
+         */
+        function getDiscountCampaigns() {
+            var url = coupon_of_discounts.discount_action_url;
+            var sp = '?';
+            if (url.indexOf('?') >= 0) {
+                sp = '&';
+            }
+            url += sp + 'site_id=' + wc_mercadopago_ticket_params.site_id;
+            url += '&coupon_id=' + document.querySelector('#couponCodeTicket').value;
+            url += '&amount=' + document.querySelector('#amountTicket').value;
+            url += '&payer=' + coupon_of_discounts.payer_email;
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                timeout: 5000,
+                error: function () {
+                    coupon_of_discounts.status = false;
+                    document.querySelector('#mpCouponApplyedTicket').style.display = 'none';
+                    document.querySelector('#mpCouponErrorTicket').style.display = 'none';
+                    document.querySelector('#applyCouponTicket').style.background = null;
+                    document.querySelector('#applyCouponTicket').value = wc_mercadopago_ticket_params.apply;
+                    document.querySelector('#couponCodeTicket').value = '';
+                    document.querySelector('#couponCodeTicket').style.background = null;
+                    document.querySelector('#discountTicket').value = 0;
+                },
+                success: function (response) {
+                    if (response.status === 200) {
+                        coupon_of_discounts.status = true;
+                        document.querySelector('#mpCouponApplyedTicket').style.display = 'block';
+                        document.querySelector('#discountTicket').value = response.response.coupon_amount;
+                        document.querySelector('#mpCouponApplyedTicket').innerHTML =
+                            wc_mercadopago_ticket_params.discount_info1 + ' <strong>' +
+                            currencyIdToCurrency(response.response.currency_id) + ' ' +
+                            Math.round(response.response.coupon_amount * 100) / 100 +
+                            '</strong> ' + wc_mercadopago_ticket_params.discount_info2 + ' ' +
+                            response.response.name + '.<br>' + wc_mercadopago_ticket_params.discount_info3 + ' <strong>' +
+                            currencyIdToCurrency(response.response.currency_id) + ' ' +
+                            Math.round(getAmountWithoutDiscount() * 100) / 100 +
+                            '</strong><br>' + wc_mercadopago_ticket_params.discount_info4 + ' <strong>' +
+                            currencyIdToCurrency(response.response.currency_id) + ' ' +
+                            Math.round(getAmount() * 100) / 100 + '*</strong><br>' +
+                            '<i>' + wc_mercadopago_ticket_params.discount_info5 + '</i><br>' +
+                            '<a href="https://api.mercadolibre.com/campaigns/' +
+                            response.response.id +
+                            '/terms_and_conditions?format_type=html" target="_blank">' +
+                            wc_mercadopago_ticket_params.discount_info6 + '</a>';
+                        document.querySelector('#mpCouponErrorTicket').style.display = 'none';
+                        document.querySelector('#couponCodeTicket').style.background = null;
+                        document.querySelector('#couponCodeTicket').style.background = 'url(' + wc_mercadopago_ticket_params.check + ') 94% 50% no-repeat #fff';
+                        document.querySelector('#couponCodeTicket').style.border = '1px solid #cecece';
+                        document.querySelector('#applyCouponTicket').value = wc_mercadopago_ticket_params.remove;
+                        document.querySelector('#campaign_idTicket').value = response.response.id;
+                        document.querySelector('#campaignTicket').value = response.response.name;
+                    } else {
+                        coupon_of_discounts.status = false;
+                        document.querySelector('#mpCouponApplyedTicket').style.display = 'none';
+                        document.querySelector('#mpCouponErrorTicket').style.display = 'block';
+                        document.querySelector('#mpCouponErrorTicket').innerHTML = response.response.message;
+                        document.querySelector('#couponCodeTicket').style.background = null;
+                        document.querySelector('#couponCodeTicket').style.background = 'url(' + wc_mercadopago_ticket_params.error + ') 94% 50% no-repeat #fff';
+                        document.querySelector('#applyCouponTicket').value = wc_mercadopago_ticket_params.apply;
+                        document.querySelector('#discountTicket').value = 0;
+                    }
+                    document.querySelector('#applyCouponTicket').disabled = false;
+                }
+            });
+        }
+
+        /**
+         * CurrencyId to Currency
+         *
+         * @param {string} currency_id
+         */
+        function currencyIdToCurrency(currency_id) {
+            if (currency_id === 'ARS') {
+                return '$';
+            } else if (currency_id === 'BRL') {
+                return 'R$';
+            } else if (currency_id === 'COP') {
+                return '$';
+            } else if (currency_id === 'CLP') {
+                return '$';
+            } else if (currency_id === 'MXN') {
+                return '$';
+            } else if (currency_id === 'VEF') {
+                return 'Bs';
+            } else if (currency_id === 'PEN') {
+                return 'S/';
+            } else if (currency_id === 'UYU') {
+                return '$U';
+            } else {
+                return '$';
+            }
+        }
+
+        /**
+         * Get Amount Without Discount
+         *
+         * @return {string}
+         */
+        function getAmountWithoutDiscount() {
+            return document.querySelector('#amountTicket').value;
+        }
+
+        /**
+        * Get Amount end calculate discount for hide inputs
+        */
+        function getAmount() {
+            return document.getElementById('amountTicket').value - document.getElementById('discountTicket').value;
+        }
+
+    });
+
+}(jQuery));

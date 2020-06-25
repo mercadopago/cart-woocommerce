@@ -1,6 +1,6 @@
 <?php
 
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
@@ -62,26 +62,31 @@ abstract class WC_WooMercadoPago_Notification_Abstract
 
     /**
      * @param $data
-     * @return bool|void|WC_Order|WC_Order_Refund
+     * @return bool|WC_Order|WC_Order_Refund
      */
     public function successful_request($data)
     {
-        $this->log->write_log(__FUNCTION__, 'starting to process ipn update...');
+        $this->log->write_log(__FUNCTION__, 'starting to process  update...');
         $order_key = $data['external_reference'];
+
         if (empty($order_key)) {
-            return;
+            $this->log->write_log(__FUNCTION__, 'External Reference not found');
+            $this->setResponse(422, null, "External Reference not found");
         }
         $invoice_prefix = get_option('_mp_store_identificator', 'WC-');
         $id = (int)str_replace($invoice_prefix, '', $order_key);
         $order = wc_get_order($id);
         if (!$order) {
-            return;
+            $this->log->write_log(__FUNCTION__, 'Order is invalid');
+            $this->setResponse(422, null, "Order is invalid");
         }
 
         $order_id = (method_exists($order, 'get_id') ? $order->get_id() : $order->get_id());
         if ($order_id !== $id) {
-            return;
+            $this->log->write_log(__FUNCTION__, 'Order error');
+            $this->setResponse(422, null, "Order error");
         }
+
         $this->log->write_log(__FUNCTION__, 'updating metadata and status with data: ' . json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         return $order;
@@ -118,7 +123,7 @@ abstract class WC_WooMercadoPago_Notification_Abstract
             case 'in_mediation':
                 $this->mp_rule_in_mediation($order);
                 break;
-            case 'charged-back':
+            case 'charged_back':
                 $this->mp_rule_charged_back($order);
                 break;
             default:
@@ -172,19 +177,19 @@ abstract class WC_WooMercadoPago_Notification_Abstract
             case 'WC_WooMercadoPago_TicketGateway':
                 $notes = $order->get_customer_order_notes();
                 $has_note = false;
-				if ( sizeof( $notes ) > 1 ) {
-					$has_note = true;
-					break;
-				}
-				if ( ! $has_note ) {
-					$order->add_order_note(
-						'Mercado Pago: ' . __( 'Waiting for the ticket payment.', 'woocommerce-mercadopago' )
-					);
-					$order->add_order_note(
-						'Mercado Pago: ' . __( 'Waiting for the ticket payment.', 'woocommerce-mercadopago' ),
-						1, false
-					);
-				}
+                if (sizeof($notes) > 1) {
+                    $has_note = true;
+                    break;
+                }
+                if (!$has_note) {
+                    $order->add_order_note(
+                        'Mercado Pago: ' . __('Waiting for the ticket payment.', 'woocommerce-mercadopago')
+                    );
+                    $order->add_order_note(
+                        'Mercado Pago: ' . __('Waiting for the ticket payment.', 'woocommerce-mercadopago'),
+                        1, false
+                    );
+                }
                 break;
             default:
                 $order->add_order_note('Mercado Pago: ' . __('The customer has not made the payment yet.', 'woocommerce-mercadopago'));
@@ -198,7 +203,7 @@ abstract class WC_WooMercadoPago_Notification_Abstract
      */
     public function mp_rule_in_process($order)
     {
-        $order->update_status(self::get_wc_status_for_mp_status('on-hold'), 'Mercado Pago: ' . __('Payment is pending review.', 'woocommerce-mercadopago'));
+        $order->update_status(self::get_wc_status_for_mp_status('inprocess'), 'Mercado Pago: ' . __('Payment is pending review.', 'woocommerce-mercadopago'));
         return;
     }
 
@@ -308,6 +313,17 @@ abstract class WC_WooMercadoPago_Notification_Abstract
         } catch (WC_WooMercadoPago_Exception $ex) {
             $this->log->write_log(__FUNCTION__, 'card creation failed: ' . json_encode($ex, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         }
+    }
+
+    /**
+     * @param $code
+     * @param $code_message
+     * @param $body
+     */
+    public function setResponse($code, $code_message, $body)
+    {
+        status_header($code, $code_message);
+        die($body);
     }
 
 }

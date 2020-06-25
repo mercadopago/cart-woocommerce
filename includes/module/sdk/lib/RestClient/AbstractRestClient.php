@@ -16,9 +16,12 @@ class AbstractRestClient
      */
     public static function execAbs($request, $url)
     {
-        $connect = self::build_request($request, $url);
-      
-        return self::execute($request, $connect);
+        try {
+            $connect = self::build_request($request, $url);
+            return self::execute($request, $connect);
+        } catch (Exception $e) {
+            return null;
+        }
     }
     
     /**
@@ -44,8 +47,9 @@ class AbstractRestClient
         if ($request['method'] == 'POST' ) {
             $headers[] = 'x-product-id:' . WC_WooMercadoPago_Constants::PRODUCT_ID;
             $headers[] = 'x-platform-id:' . WC_WooMercadoPago_Constants::PLATAFORM_ID;
-            $headers[] = 'x-integrator-id:' . WC_WooMercadoPago_Module::get_sponsor_id();       
+            $headers[] = 'x-integrator-id:' . get_option('_mp_integrator_id', null);       
         }
+        
         $json_content = true;
         $form_content = false;
         $default_content_type = true;
@@ -115,11 +119,10 @@ class AbstractRestClient
     {
         $response = null;
         $api_result = curl_exec($connect);
-        $api_http_code = curl_getinfo($connect, CURLINFO_HTTP_CODE);
-
-        if ($api_result === FALSE) {
+        if (curl_errno($connect)) {
             throw new WC_WooMercadoPago_Exception (curl_error($connect));
         }
+        $api_http_code = curl_getinfo($connect, CURLINFO_HTTP_CODE);
 
         if ($api_http_code != null && $api_result != null) {
             $response = array('status' => $api_http_code, 'response' => json_decode($api_result, true));
