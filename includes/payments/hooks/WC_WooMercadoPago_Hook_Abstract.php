@@ -119,8 +119,19 @@ abstract class WC_WooMercadoPago_Hook_Abstract
         if (!is_numeric($this->payment->gateway_discount) || $this->payment->commission > 99 || $this->payment->gateway_discount > 99) {
             return $title;
         }
+       
+      //Correct commision calc
+        $order_id = absint( get_query_var( 'order-pay' ) );
+            // Gets order total from "pay for order" page.
+            if ( 0 < $order_id ) {
+                $order = wc_get_order( $order_id );
+                $total = (float) $order->get_total();
+            // Gets order total from cart/checkout.
+               } elseif ( 0 < WC()->cart->total ) {
+                $total = (float) WC()->cart->total;
+            }
 
-        $total = (float) WC()->cart->total;
+        //fin de correccion calculo comisiones 
         $price_discount = $total * ($this->payment->gateway_discount / 100);
         $price_commission = $total * ($this->payment->commission / 100);
 
