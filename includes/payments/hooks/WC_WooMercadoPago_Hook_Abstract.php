@@ -130,8 +130,7 @@ abstract class WC_WooMercadoPago_Hook_Abstract
                } elseif ( 0 < WC()->cart->total ) {
                 $total = (float) WC()->cart->total;
             }
-
-        //fin de correccion calculo comisiones 
+       //End correct calc 
         $price_discount = $total * ($this->payment->gateway_discount / 100);
         $price_commission = $total * ($this->payment->commission / 100);
 
