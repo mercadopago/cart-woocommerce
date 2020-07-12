@@ -206,7 +206,7 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
      */
     public function ship_cost_item()
     {
-        $ship_cost = $this->calculate_price($this->ship_cost);
+        $ship_cost = $this->calculate_price($this->ship_cost) * (1 + ($this->commission / 100));
         $this->order_total += $this->number_format_value($ship_cost);
 
         return array(
