@@ -69,6 +69,16 @@ The configuration of sending emails must be done from the WooCommerce administra
 
 If you have already reviewed the documentation and have not found a solution, you can contact our support team through their [contact form](https://www.mercadopago.com.ar/developers/es/support/). Please note that we guarantee a response within {7 days} of your query.
 
+= How do I set up PIX as a payment method? =
+
+To enable PIX as a payment method at your store's Customized Cashier, you need to have your key registered with Mercado Pago. [Here's how to do it](https://www.mercadopago.com.br/stop/pix?url=https%3A%2F%2Fwww.mercadopago.com.br%2Fadmin-pix-keys%2Fmy-keys&authentication_mode=required).
+
+After registering the key, access the WooCommerce administrator and go to the **Payments** section.
+
+Look for the **Pay with PIX option**, make the configuration and activate the PIX.
+
+You can define how long customers can pay after receiving the code, among other settings.
+
 == Installation ==
 
 = Minimum Technical Requirements =
