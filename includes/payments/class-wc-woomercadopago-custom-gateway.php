@@ -593,4 +593,32 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	public static function get_id() {
 		return self::ID;
 	}
+
+	/**
+	 * Get the Mercado Pago registration URL.
+	 *
+	 * @return string URL.
+	 */
+	public function get_registration_url() {
+		$url = 'https://www.mercadopago.com';
+		$country_code = WC_Countries::get_base_country();
+
+		if ( in_array( $country_code, array( 'AR', 'BR', 'CL', 'CO', 'MX', 'PE', 'UY' ) ) ) {
+			$country_code = strtolower( $country_code );
+			return "${url}.${country_code}/registration-company?confirmation_url=${url}.${country_code}%2Fcomo-cobrar";
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Get help text to display during quick setup.
+	 */
+	public function get_setup_help_text() {
+		return sprintf(
+			__( 'Mercado Pago can be configured under your <a href="%s">store settings.</a> Create your Mercado Pago account <a href="%s">here.</a>', 'wc_mercado' ),
+			$this->get_registration_url(),
+			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=' . strtolower( $this->id ) )
+		);
+	}
 }
