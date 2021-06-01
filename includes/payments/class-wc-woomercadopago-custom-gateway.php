@@ -621,4 +621,13 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=' . strtolower( $this->id ) )
 		);
 	}
+
+	/**
+	 * Check if the gateway still required further setup.
+	 *
+	 * @return bool
+	 */
+	public function needs_setup() {
+		return empty( $this->get_access_token() ) || empty( $this->get_public_key() );
+	}
 }
