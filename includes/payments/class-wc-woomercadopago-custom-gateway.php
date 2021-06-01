@@ -601,7 +601,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 */
 	public function get_registration_url() {
 		$url = 'https://www.mercadopago.com';
-		$country_code = WC_Countries::get_base_country();
+		$country_code = WC()->countries->get_base_country();
 
 		if ( in_array( $country_code, array( 'AR', 'BR', 'CL', 'CO', 'MX', 'PE', 'UY' ) ) ) {
 			$country_code = strtolower( $country_code );
