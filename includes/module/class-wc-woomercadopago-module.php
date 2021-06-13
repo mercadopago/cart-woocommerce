@@ -569,7 +569,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 		$is_subscription = false;
 		if ( 1 === count( $items ) ) {
 			foreach ( $items as $cart_item_key => $cart_item ) {
-				$is_recurrent = ( method_exists( $cart_item, 'get_meta' ) ) ?
+				$is_recurrent = is_object($cart_item) && method_exists( $cart_item, 'get_meta' ) ?
 					$cart_item->get_meta( '_used_gateway' ) : get_post_meta( $cart_item['product_id'], '_mp_recurring_is_recurrent', true );
 				if ( 'yes' === $is_recurrent ) {
 					$is_subscription = true;
