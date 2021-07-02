@@ -183,21 +183,11 @@ class WC_WooMercadoPago_Notification {
 		} else {
 			$payment_id = get_post_meta( $order->get_id(), 'Mercado Pago - Payment ' . $payment_id , true );
 		}
-
-		$this->log->write_log(
-			__FUNCTION__,
-			'[$payment_id]: ' . $payment_id);
 		
 		if ( empty($payment_id) ) {
-			$this->log->write_log(
-				__FUNCTION__,
-				'Meta Data must be updated');
 			return true;
 		}
 		
-		$this->log->write_log(
-			__FUNCTION__,
-			'Meta Data should not be updated');
 		return false;
 		
 	}
@@ -205,18 +195,12 @@ class WC_WooMercadoPago_Notification {
 	public function update_mp_meta_data( $order, $payment_id) {		
 		if ( method_exists( $order, 'update_meta_data' ) ) {
 			$order->update_meta_data( 'Mercado Pago - Payment ' . $payment_id , $payment_id );
-			$this->log->write_log(
-				__FUNCTION__,
-				'meta data update with "update_meta_data"');
 		} else {
 			update_post_meta( $order->get_id(), 'Mercado Pago - Payment ' . $payment_id , $payment_id );
-			$this->log->write_log(
-				__FUNCTION__,
-				'meta data update with "update_post_meta"');
 		}
 		$this->log->write_log(
 			__FUNCTION__,
-			'Mercado Pago - Payment meta data updated. Value: ' . $payment_id );
+			'"Mercado Pago - Payment" meta data updated. Value: ' . $payment_id );
 		$order->save();
 	}
 
