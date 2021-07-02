@@ -152,13 +152,14 @@ class WC_WooMercadoPago_Notification {
 						$response['created_at'] 		= $order->get_date_created()->getTimestamp();
 						$response['total'] 				= $order->get_total();
 						$response['timestamp'] 			= time();
-
-						$hmac             = Cryptography::encrypt( $response, $secret );
-						$response['hmac'] = $hmac;
+						$response['hmac']				= '********************';
 
 						$this->log->write_log(
 							__FUNCTION__,
 							'Response: ' . wp_json_encode($response));
+
+						$hmac             = Cryptography::encrypt( $response, $secret );
+						$response['hmac'] = $hmac;
 
 						$this->set_response( 200, 'Success', $response );
 					} else {
