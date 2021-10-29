@@ -380,6 +380,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 </div>
 
 <script type="text/javascript">
+  jQuery(document).ready(function(){
+    jQuery('#mp_firstname').val(jQuery('[name="billing_first_name"]').val())
+    jQuery('#mp_lastname').val(jQuery('[name="billing_last_name"]').val())
+    jQuery('#mp_doc_number').val(jQuery('[name="billing_cpf"]').val() || jQuery('[name="billing_cnpj"]').val())
+    jQuery('#mp_address').val(jQuery('[name="billing_address_1"]').val())
+    jQuery('#mp_number').val(jQuery('[name="billing_number"]').val())
+    jQuery('#mp_city').val(jQuery('[name="billing_city"]').val())
+    jQuery('#mp_state').val(jQuery('[name="billing_state"]').val())
+    jQuery('#mp_zipcode').val(jQuery('[name="billing_postcode"]').val())
+  })
 	//Card mask date input
 	function mpMaskInput(o, f) {
 		v_obj = o
