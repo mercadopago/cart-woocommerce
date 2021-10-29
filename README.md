@@ -9,23 +9,12 @@
 
 The Mercado Pago payments for WooCommerce plugin allows you to expand the functionalities of your online store and offer a unique payment experience for your customers.
 
-## Note
+## :warning: Attention / Atención / Atenção
 
-Attention: On 7/13/21, WooCommerce notified its customers that some of its versions are vulnerable. The necessary fixes were already made in the last update. Therefore, it is **very important that your store has the latest version of WooCommerce updated** to prevent exposure of sensitive information.
-
-More information on the [WooCommerce blog.](https://woocommerce.com/pt-br/posts/critical-vulnerability-detected-july-2021/)
-
-## Nota
-
-Em 13/07/21, o WooCommerce notificou seus clientes de que algumas de suas versões estão vulneráveis. As correções necessárias já foram feitas na última atualização. Por isso, é **muito importante que sua loja esteja com a última versão do WooCommerce atualizada** para prevenir a exposição de informações sensíveis.
-
-Mais informações no [WooCommerce blog.](https://woocommerce.com/pt-br/posts/critical-vulnerability-detected-july-2021/)
-
-## Nota
-
-Aviso: El 13/07/21, WooCommerce notificó a sus clientes que algunas de sus versiones resultan vulnerables. Las correcciones necesarias ya se han realizado en la última actualización. Por lo tanto, es **muy importante que tu tienda tenga la última versión de WooCommerce actualizada** para evitar la exposición de información sensible.
-
-Más información en el [WooCommerce blog.](https://woocommerce.com/pt-br/posts/critical-vulnerability-detected-july-2021/)
+| Note (English) | Note (Español) | Nota (Português) |
+| :------------  | :------------- | :--------------- |
+| **Important security update and deactivation!** <br/> <br/> In October, 2022, versions that are incompatible with our new method of sending access tokens via header (prior to 4.3.0 - Release: 11/06/2020) will be deactivated. This measure is to ensure more security to your transactions. Therefore, it is extremely important that your store is up to date with the latest version of our Plugin. | **Important security update and deactivation!** <br/> <br/> In October, 2022, versions that are incompatible with our new method of sending access tokens via header (prior to 4.3.0 - Release: 11/06/2020) will be deactivated. This measure is to ensure more security to your transactions. Therefore, it is extremely important that your store is up to date with the latest version of our Plugin.  |**Important security update and deactivation!** <br/> <br/> In October, 2022, versions that are incompatible with our new method of sending access tokens via header (prior to 4.3.0 - Release: 11/06/2020) will be deactivated. This measure is to ensure more security to your transactions. Therefore, it is extremely important that your store is up to date with the latest version of our Plugin. | 
+| <br/>On 7/13/21, WooCommerce notified its customers that some of its versions are vulnerable. The necessary fixes were already made in the last update. Therefore, it is **very important that your store has the latest version of WooCommerce updated** to prevent exposure of sensitive information. <br/> <br/> More information on the [WooCommerce blog.](https://woocommerce.com/pt-br/posts/critical-vulnerability-detected-july-2021/) | <br/> El 13/07/21, WooCommerce notificó a sus clientes que algunas de sus versiones resultan vulnerables. Las correcciones necesarias ya se han realizado en la última actualización. Por lo tanto, es **muy importante que tu tienda tenga la última versión de WooCommerce actualizada** para evitar la exposición de información sensible. <br/> <br/> Más información en el [WooCommerce blog.](https://woocommerce.com/pt-br/posts/critical-vulnerability-detected-july-2021/) | <br/> Em 13/07/21, o WooCommerce notificou seus clientes de que algumas de suas versões estão vulneráveis. As correções necessárias já foram feitas na última atualização. Por isso, é **muito importante que sua loja esteja com a última versão do WooCommerce atualizada** para prevenir a exposição de informações sensíveis. <br/> <br/> Mais informações no [WooCommerce blog.](https://woocommerce.com/pt-br/posts/critical-vulnerability-detected-july-2021/) |                                                       
 
 ## Documentation in English
 
