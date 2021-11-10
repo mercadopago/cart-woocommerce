@@ -67,7 +67,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<?php endforeach; ?>
 					<?php endif; ?>
 
-					<?php if ( 0 !== count( $credit_card ) ) : ?>
+					<?php if ( 0 !== count( $debit_card ) ) : ?>
 						<p class="submp-title-checkout-custom mp-pt-10"><?php echo esc_html__( 'Debit card', 'woocommerce-mercadopago' ); ?></p>
 						<?php foreach ( $debit_card as $debit_image ) : ?>
 							<img src="<?php echo esc_attr( $debit_image ); ?>" class="mp-img-fluid mp-img-tarjetas" alt="" />
