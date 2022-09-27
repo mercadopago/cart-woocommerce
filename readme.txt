@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 4.9.10
 Tested up to: 6.0
 Requires PHP: 5.6
-Stable tag: 6.2.0
+Stable tag: 6.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,15 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+= v6.3.0 (27/09/2022) =
+* Features
+- Added interest information on the order confirmation screen for payments with custom checkout
+
+* Bug fixes
+- Fixed timeout and error display in custom checkout
+- Removed hyphen from zip code to display correct address for payments with ticket checkout
+- Alignment of expiration and security code fields in custom checkout
+
 = v6.2.0 (13/09/2022) =
 * Features
 - Added Mercado Credits tooltip

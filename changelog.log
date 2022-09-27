@@ -1,5 +1,14 @@
 CHANGELOG:
 == Changelog ==
+= v6.3.0 (27/09/2022) =
+* Features
+- Added interest information on the order confirmation screen for payments with custom checkout
+
+* Bug fixes
+- Fixed timeout and error display in custom checkout
+- Removed hyphen from zip code to display correct address for payments with ticket checkout
+- Alignment of expiration and security code fields in custom checkout
+
 = v6.2.0 (13/09/2022) =
 * Features
 - Added Mercado Credits tooltip
