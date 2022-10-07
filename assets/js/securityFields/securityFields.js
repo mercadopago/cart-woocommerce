@@ -10,6 +10,8 @@ var cardFormMounted = false;
 var form = document.querySelector("form[name=checkout]");
 var formId = "checkout";
 
+var cardFormTimeout = null;
+
 if (form) {
   form.id = formId;
 } else {
@@ -79,7 +81,13 @@ function createToken() {
 function initCardForm() {
   var mp = new MercadoPago(wc_mercadopago_params.public_key);
 
-  handleCardFormTimeout();
+  cardFormTimeout = setTimeout(() => {
+    if (!cardFormReady) {
+      sendError('mp_wc_cardform_timeout');
+      setCustomCheckoutError();
+    }
+  }, 60000);
+
   setCustomCheckoutOnLoad();
 
   return new Promise((resolve, reject) => {
@@ -359,11 +367,13 @@ function handleCardFormLoad() {
   initCardForm()
     .then(() => {
       setCustomCheckoutLoaded();
+      clearTimeout(cardFormTimeout);
     })
     .catch((error) => {
       const parsedError = handleCardFormErrors(error);
       sendError(parsedError);
       setCustomCheckoutError();
+      clearTimeout(cardFormTimeout);
       console.error('Mercado Pago cardForm error: ', parsedError);
     });
 }
@@ -379,15 +389,6 @@ function handleCardFormErrors(cardFormErrors) {
   }
 
   return cardFormErrors.description || cardFormErrors.message;
-}
-
-function handleCardFormTimeout() {
-  setTimeout(() => {
-    if (!cardFormReady) {
-      sendError('mp_wc_cardform_timeout');
-      setCustomCheckoutError();
-    }
-  }, 60000);
 }
 
 function sendError(error) {
