@@ -37,8 +37,7 @@ class WC_WooMercadoPago_Notification_IPN extends WC_WooMercadoPago_Notification_
 		}
 
 		if ( 'payment' === $data['topic'] || 'merchant_order' !== $data['topic'] ) {
-			$this->log->write_log( __FUNCTION__, 'Type of topic IPN invalid, need to be merchant_order' );
-			$this->set_response( 422, null, __( 'Type of topic IPN invalid, need to be merchant_order', 'woocommerce-mercadopago' ) );
+			$this->set_response( 200, null, __( 'Discarded notification. This notification is already processed as webhook-payment.', 'woocommerce-mercadopago' ) );
 		}
 
 		$access_token = $this->mp->get_access_token();
