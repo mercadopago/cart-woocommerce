@@ -47,13 +47,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		<?php endif; ?>
 
-		<div class="mp-loader-container" id="mp-custom-checkout-loader">
-			<div class="mp-loader"></div>
-		</div>
-
-		<div class="mp-checkout-error-container" id="mp-custom-checkout-error-container"></div>
-
-		<div id="mp-custom-checkout-form-container" style="display: none;">
+		<div id="mp-custom-checkout-form-container">
 			<div class='mp-checkout-custom-available-payments'>
 				<div class='mp-checkout-custom-available-payments-header'>
 					<div class="mp-checkout-custom-available-payments-title">

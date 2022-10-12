@@ -4,13 +4,10 @@ var cardForm;
 var hasToken = false;
 var mercado_pago_submit = false;
 var triggeredPaymentMethodSelectedEvent = false;
-var cardFormReady = false;
 var cardFormMounted = false;
 
 var form = document.querySelector("form[name=checkout]");
 var formId = "checkout";
-
-var cardFormTimeout = null;
 
 if (form) {
   form.id = formId;
@@ -81,15 +78,6 @@ function createToken() {
 function initCardForm() {
   var mp = new MercadoPago(wc_mercadopago_params.public_key);
 
-  cardFormTimeout = setTimeout(() => {
-    if (!cardFormReady) {
-      sendError('mp_wc_cardform_timeout');
-      setCustomCheckoutError();
-    }
-  }, 60000);
-
-  setCustomCheckoutOnLoad();
-
   return new Promise((resolve, reject) => {
     cardForm = mp.cardForm({
       amount: getAmount(),
@@ -158,7 +146,6 @@ function initCardForm() {
         onFormUnmounted: function (error) {
           cardFormMounted = false;
           CheckoutPage.clearInputs();
-          setCustomCheckoutUnloaded();
 
           if (error) {
             console.log("Callback to handle the error: unmounting the CardForm", error);
@@ -281,74 +268,6 @@ function removeBlockOverlay() {
   }
 }
 
-function removeCardFormErrorComponent(component) {
-  if (component.firstElementChild) {
-    component.removeChild(component.firstElementChild);
-  }
-}
-
-function getCustomCheckoutElements() {
-  return {
-    loader: document.getElementById('mp-custom-checkout-loader'),
-    container: document.getElementById('mp-custom-checkout-form-container'),
-    error: document.getElementById('mp-custom-checkout-error-container'),
-  }
-}
-
-function setCustomCheckoutOnLoad() {
-  cardFormReady = false;
-
-  const { loader, container, error } = getCustomCheckoutElements();
-
-  loader.style.display = 'flex';
-  container.style.display = 'none';
-  error.style.display = 'none';
-
-  removeCardFormErrorComponent(error);
-}
-
-function setCustomCheckoutLoaded() {
-  cardFormReady = true;
-
-  const { loader, container, error } = getCustomCheckoutElements();
-
-  loader.style.display = 'none';
-  container.style.display = 'block';
-  error.style.display = 'none';
-}
-
-function setCustomCheckoutUnloaded() {
-  cardFormReady = false;
-
-  const { loader, container, error } = getCustomCheckoutElements();
-
-  loader.style.display = 'flex';
-  container.style.display = 'none';
-  error.style.display = 'none';
-}
-
-function setCustomCheckoutError() {
-  cardFormReady = false;
-
-  const { loader, container, error } = getCustomCheckoutElements();
-
-  removeCardFormErrorComponent(error);
-
-  var errorWrapper = document.createElement('div');
-  var alertDetails = document.createElement('alert-details');
-
-  alertDetails.setAttribute('title', wc_mercadopago_params.custom_checkout_sdk_handler.title);
-  alertDetails.setAttribute('description', wc_mercadopago_params.custom_checkout_sdk_handler.description);
-  alertDetails.setAttribute('retryButtonText', wc_mercadopago_params.custom_checkout_sdk_handler.retry_button);
-
-  error.appendChild(errorWrapper);
-  error.firstChild.appendChild(alertDetails);
-
-  loader.style.display = 'none';
-  container.style.display = 'none';
-  error.style.display = 'block';
-}
-
 function cardFormLoad() {
   if (document.getElementById("payment_method_woo-mercado-pago-custom").checked) {
     setTimeout(() => {
@@ -366,14 +285,11 @@ function cardFormLoad() {
 function handleCardFormLoad() {
   initCardForm()
     .then(() => {
-      setCustomCheckoutLoaded();
-      clearTimeout(cardFormTimeout);
+      sendMetric('MP_CARDFORM_SUCCESS', 'Security fields loaded');
     })
     .catch((error) => {
       const parsedError = handleCardFormErrors(error);
-      sendError(parsedError);
-      setCustomCheckoutError();
-      clearTimeout(cardFormTimeout);
+      sendMetric('MP_CARDFORM_ERROR', parsedError);
       console.error('Mercado Pago cardForm error: ', parsedError);
     });
 }
@@ -391,12 +307,12 @@ function handleCardFormErrors(cardFormErrors) {
   return cardFormErrors.description || cardFormErrors.message;
 }
 
-function sendError(error) {
+function sendMetric(name, message) {
   const url = "https://api.mercadopago.com/v1/plugins/melidata/errors";
   const payload = {
-    name: 'MP_CARDFORM_ERROR',
+    name,
+    message,
     target: "mp_custom_checkout_security_fields_client",
-    message: error,
     plugin: {
       version: wc_mercadopago_params.plugin_version,
     },
