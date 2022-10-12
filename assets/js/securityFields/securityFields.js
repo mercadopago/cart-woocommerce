@@ -225,7 +225,9 @@ function initCardForm() {
           errors.forEach((error) => {
             removeBlockOverlay();
 
-            if (error.message.includes("cardNumber")) {
+            if (error.message.includes("timed out")) {
+              return reject(error);
+            } else if (error.message.includes("cardNumber")) {
               CheckoutPage.setDisplayOfError("fcCardNumberContainer", "add", "mp-error");
               return CheckoutPage.setDisplayOfInputHelper("mp-card-number", "flex");
             } else if (error.message.includes("cardholderName")) {
@@ -320,7 +322,7 @@ function sendMetric(name, message) {
       name: "woocommerce",
       uri: window.location.href,
       version: wc_mercadopago_params.platform_version,
-      location: wc_mercadopago_params.location,
+      location: `${wc_mercadopago_params.location}_${wc_mercadopago_params.theme}`,
     },
   };
 
