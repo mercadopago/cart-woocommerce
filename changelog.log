@@ -1,5 +1,10 @@
 CHANGELOG:
 == Changelog ==
+= v6.3.1 (13/10/2022) =
+* Changes
+- Improved discarded notification response
+- Removed loader and timeout on custom checkout
+
 = v6.3.0 (27/09/2022) =
 * Features
 - Added interest information on the order confirmation screen for payments with custom checkout
