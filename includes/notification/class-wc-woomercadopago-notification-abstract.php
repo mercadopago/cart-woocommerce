@@ -187,7 +187,7 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 
 		$status = $order->get_status();
 
-		if ( 'pending' === $status || 'on_hold' === $status || 'failed' === $status ) {
+		if ( 'pending' === $status || 'on-hold' === $status || 'failed' === $status ) {
 			$order->add_order_note( 'Mercado Pago: ' . __( 'Payment approved.', 'woocommerce-mercadopago' ) );
 
 			/**

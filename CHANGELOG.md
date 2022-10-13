@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved discarded notification response
 - Removed loader and timeout on custom checkout
 
+### Fixed
+- Fixed the notification rule to allow an approved payment to be updated if the order status is on hold.
+
 ## [6.3.0] - 2022-09-27
 
 ### Added
