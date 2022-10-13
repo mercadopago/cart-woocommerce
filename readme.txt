@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 4.9.10
 Tested up to: 6.0
 Requires PHP: 5.6
-Stable tag: 6.3.0
+Stable tag: 6.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,11 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+= v6.3.1 (13/10/2022) =
+* Changes
+- Improved discarded notification response
+- Removed loader and timeout on custom checkout
+
 = v6.3.0 (27/09/2022) =
 * Features
 - Added interest information on the order confirmation screen for payments with custom checkout
