@@ -181,14 +181,10 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 							'invalid_length'      => __( 'Security code incomplete', 'woocommerce-mercadopago' ),
 						)
 					),
+					'theme'                       => get_stylesheet(),
 					'location'                    => '/checkout',
 					'plugin_version'              => WC_WooMercadoPago_Constants::VERSION,
 					'platform_version'            => $woocommerce->version,
-					'custom_checkout_sdk_handler' => array(
-						'title'                   => __( 'Error loading form.', 'woocommerce-mercadopago' ),
-						'description'             => __( 'Please refresh the page to try again.', 'woocommerce-mercadopago' ),
-						'retry_button'            => __( 'Refresh page', 'woocommerce-mercadopago' ),
-					),
 				)
 			);
 		}
