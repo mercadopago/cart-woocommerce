@@ -24,9 +24,6 @@ class Autoloader
         return $autoloader_result;
     }
 
-    /**
-     * @return void
-     */
     protected static function missingAutoload()
     {
     }
