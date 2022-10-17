@@ -6,7 +6,6 @@ defined('ABSPATH') || exit;
 
 class Autoloader
 {
-
     public static function init()
     {
         $autoloader = dirname(__DIR__) . '../vendor/autoload.php';
