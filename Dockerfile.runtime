@@ -1,4 +1,0 @@
-FROM hub.furycloud.io/mercadolibre/melibuntu:latest
-
-# In runtime the /output folder produced in build will be mounted 
-CMD ["/output/command.sh"]
