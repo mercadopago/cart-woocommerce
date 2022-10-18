@@ -14,3 +14,20 @@
  *
  * @package MercadoPago
  */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+include_once dirname(__FILE__) . '/includes/Autoloader.php';
+
+use MercadoPago\CartWoocommerce\Autoloader;
+use MercadoPago\CartWoocommerce\WoocommerceMercadoPago;
+
+if (!Autoloader::init()) {
+    return false;
+}
+
+if (!class_exists('WoocommerceMercadoPago')) {
+    WoocommerceMercadoPago::get_instance();
+}

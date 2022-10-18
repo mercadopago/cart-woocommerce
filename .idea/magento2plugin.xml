@@ -2,5 +2,8 @@
 <project version="4">
   <component name="Magento2PluginSettings">
     <option name="defaultLicenseName" value="Proprietary" />
+    <option name="magentoPath" value="" />
+    <option name="magentoVersion" value="any" />
+    <option name="magentoEdition" value="Platform Version:" />
   </component>
 </project>
