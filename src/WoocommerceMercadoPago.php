@@ -110,11 +110,11 @@ class WoocommerceMercadoPago
 
     private function defineConstants()
     {
-        $this->define('PRODUCT_ID_DESKTOP', 'BT7OF5FEOO6G01NJK3QG');
-        $this->define('PRODUCT_ID_MOBILE', 'BT7OFH09QS3001K5A0H0');
-        $this->define('PLATFORM_ID', 'bo2hnr2ic4p001kbgpt0');
         $this->define('MP_VERSION', self::$mp_version);
         $this->define('MP_MIN_PHP', self::$mp_min_php);
+        $this->define('PLATFORM_ID', 'bo2hnr2ic4p001kbgpt0');
+        $this->define('PRODUCT_ID_MOBILE', 'BT7OFH09QS3001K5A0H0');
+        $this->define('PRODUCT_ID_DESKTOP', 'BT7OF5FEOO6G01NJK3QG');
         $this->define('API_MP_BASE_URL', 'https://api.mercadopago.com');
         $this->define('DATE_EXPIRATION', 3);
 
