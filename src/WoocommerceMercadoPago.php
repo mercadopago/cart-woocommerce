@@ -54,7 +54,7 @@ class WoocommerceMercadoPago
 
     public function registerHooks()
     {
-        add_action('plugins_loaded', array($this, 'init_plugin'));
+        add_action('plugins_loaded', array($this, 'initPlugin'));
     }
 
     public function initPlugin()

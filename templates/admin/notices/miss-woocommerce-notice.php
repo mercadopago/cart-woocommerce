@@ -16,22 +16,20 @@ if (!defined('ABSPATH')) {
             <p>
                 <?=
                 sprintf(
-                    /* translators: %s link to WooCommerce */
-                    __(
-                        'The Mercado Pago module needs an active version of %s in order to work!',
-                        'woocommerce-mercadopago'
-                    ),
+                    'The Mercado Pago module needs an active version of %s in order to work!',
                     '<a href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
                 );
                 ?>
             </p>
 
             <p>
-                <?php if ($miss_woocommerce_action === 'active') : ?>
-                    <a class="button button-primary" href="<?= wp_nonce_url(self_admin_url('plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=active'), 'activate-plugin_woocommerce/woocommerce.php') ?>">
+                <?php if ($missWoocommerceAction === 'active') : ?>
+                    <a
+                        class="button button-primary"
+                        href="<?= wp_nonce_url(self_admin_url('plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=all'), 'activate-plugin_woocommerce/woocommerce.php') ?>">
                         <?= __('Activate WooCommerce', 'woocommerce-mercadopago') ?>
                     </a>
-                <?php elseif ($miss_woocommerce_action === 'install') : ?>
+                <?php elseif ($missWoocommerceAction === 'install') : ?>
                     <a class="button button-primary" href="<?= wp_nonce_url(self_admin_url('update.php?action=install-plugin&plugin=woocommerce'), 'install-plugin_woocommerce') ?>">
                         <?= __('Install WooCommerce', 'woocommerce-mercadopago') ?>
                     </a>
