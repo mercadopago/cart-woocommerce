@@ -11,20 +11,20 @@
   "minimum-stability": "stable",
   "autoload": {
     "psr-4": {
-      "MercadoPago\\CartWoocommerce\\": [
-        "includes"
+      "MercadoPago\\Woocommerce\\": [
+        "src"
       ]
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "MercadoPago\\CartWoocommerce\\Tests\\": [
+      "MercadoPago\\Woocommerce\\Tests\\": [
         "tests"
       ]
     }
   },
   "scripts": {
-    "lint": "./vendor/bin/phpcs -q --report=checkstyle --standard=PSR2 includes"
+    "lint": "./vendor/bin/phpcs -q --report=checkstyle --standard=PSR12 src"
   },
   "require": {
     "php": ">=7.2"

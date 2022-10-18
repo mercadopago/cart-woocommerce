@@ -1,8 +1,10 @@
 <?php
 
-namespace MercadoPago\CartWoocommerce;
+namespace MercadoPago\Woocommerce;
 
-defined('ABSPATH') || exit;
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 class Autoloader
 {

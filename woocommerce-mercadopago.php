@@ -19,15 +19,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-include_once dirname(__FILE__) . '/includes/Autoloader.php';
+include_once dirname(__FILE__) . '/src/Autoloader.php';
 
-use MercadoPago\CartWoocommerce\Autoloader;
-use MercadoPago\CartWoocommerce\WoocommerceMercadoPago;
+use MercadoPago\Woocommerce\Autoloader;
+use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 if (!Autoloader::init()) {
     return false;
 }
 
 if (!class_exists('WoocommerceMercadoPago')) {
-    WoocommerceMercadoPago::get_instance();
+    WoocommerceMercadoPago::getInstance();
 }
