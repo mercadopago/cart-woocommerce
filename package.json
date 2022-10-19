@@ -1,0 +1,22 @@
+{
+  "name": "woocommerce-mercadopago",
+  "description": "Woocommerce MercadoPago Payment Gateway",
+  "version": "6.3.1",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mercadopago/cart-woocommerce"
+  },
+  "scripts": {
+    "build": "npm run build:js && npm run build:css",
+    "build:js": "node -e 'require(\"./main.js\").minifyFiles(\"js\")'",
+    "build:css": "node -e 'require(\"./main.js\").minifyFiles(\"css\")'",
+    "php:fix": "composer phpcbf",
+    "php:lint": "composer phpcs",
+    "pot": "node -e 'require(\"./main.js\").generatePotFiles()'"
+  },
+  "devDependencies": {
+    "minify": "^7.2.2",
+    "wp-pot": "^1.10.2"
+  }
+}

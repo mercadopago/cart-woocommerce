@@ -24,7 +24,8 @@
     }
   },
   "scripts": {
-    "lint": "./vendor/bin/phpcs -q --report=checkstyle --standard=PSR12 src"
+    "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml src",
+    "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml src"
   },
   "require": {
     "php": ">=7.2"

@@ -33,7 +33,7 @@ class WoocommerceMercadoPago
     public function __construct()
     {
         $this->notices = Notices::getInstance();
-        
+
         $this->defineConstants();
         $this->woocommerceMercadoPagoLoadPluginTextDomain();
         $this->registerHooks();

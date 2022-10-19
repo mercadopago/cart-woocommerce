@@ -12,7 +12,7 @@ class Autoloader
     {
         $autoloader = dirname(__FILE__) . '/../vendor/autoload.php';
         if (!is_readable($autoloader)) {
-            self::missing_autoload_notice();
+            self::missingAutoloadNotice();
             return false;
         }
 
@@ -24,7 +24,7 @@ class Autoloader
         return $autoloader_result;
     }
 
-    protected static function missing_autoload_notice()
+    protected static function missingAutoloadNotice()
     {
         add_action(
             'admin_notices',
