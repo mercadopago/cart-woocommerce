@@ -13,10 +13,12 @@
     "build:css": "node -e 'require(\"./main.js\").minifyFiles(\"css\")'",
     "php:fix": "composer phpcbf",
     "php:lint": "composer phpcs",
+    "js:lint": "jshint",
     "pot": "node -e 'require(\"./main.js\").generatePotFiles()'"
   },
   "devDependencies": {
     "minify": "^7.2.2",
-    "wp-pot": "^1.10.2"
+    "wp-pot": "^1.10.2",
+    "jshint": "^2.13.5"
   }
 }
