@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Part of Woo Mercado Pago Module
  * Author - Mercado Pago
