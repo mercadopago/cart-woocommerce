@@ -55,6 +55,8 @@ class WoocommerceMercadoPago
     public function registerHooks()
     {
         add_action('plugins_loaded', array($this, 'initPlugin'));
+        add_filter('plugin_action_links_' . WC_MERCADOPAGO_BASENAME, array($this, 'setPluginSettingsLink'));
+        add_filter('woocommerce_payment_gateways', array($this, 'mercadopagoAddGatewayClass'));
     }
 
     public function initPlugin()
@@ -78,11 +80,27 @@ class WoocommerceMercadoPago
         }
     }
 
+    public function mercadopagoAddGatewayClass($methods)
+    {
+        // $methods[] = 'MercadoPago\Woocommerce\Gateways\MercadopagoGateway';
+        return $methods;
+    }
+
+    public function setPluginSettingsLink($links)
+    {
+        $pluginLinks   = array();
+        $pluginLinks[] = '<a href="' . admin_url('admin.php?page=mercadopago-settings') . '">Set plugin</a>';
+        $pluginLinks[] = '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout') . '">Payment method</a>';
+        $pluginLinks[] = '<a target="_blank" href="https://developers.mercadopago.com">Plugin manual</a>';
+
+        return array_merge($pluginLinks, $links);
+    }
+
     public function verifyPhpVersionNotice()
     {
         $this->notices->adminNoticeError(
             '
-                Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. 
+                Mercado Pago payments for WooCommerce requires PHP version 7.2 or later.
                 Please update your PHP version.
             ',
             false
@@ -101,7 +119,7 @@ class WoocommerceMercadoPago
     {
         $this->notices->adminNoticeWarning(
             '
-                Mercado Pago Error: PHP Extension GD is not installed. 
+                Mercado Pago Error: PHP Extension GD is not installed.
                 Installation of GD extension is required to send QR Code Pix by email.
             ',
             false
@@ -117,20 +135,8 @@ class WoocommerceMercadoPago
         $this->define('PRODUCT_ID_DESKTOP', 'BT7OF5FEOO6G01NJK3QG');
         $this->define('API_MP_BASE_URL', 'https://api.mercadopago.com');
         $this->define('DATE_EXPIRATION', 3);
-
-        $this->define('PAYMENT_GATEWAYS', [
-            'WC_WooMercadoPago_Basic_Gateway',
-            'WC_WooMercadoPago_Custom_Gateway',
-            'WC_WooMercadoPago_Ticket_Gateway',
-            'WC_WooMercadoPago_Pix_Gateway',
-        ]);
-
-        $this->define('GATEWAYS_IDS', [
-            'woo-mercado-pago-basic',
-            'woo-mercado-pago-custom',
-            'woo-mercado-pago-ticket',
-            'woo-mercado-pago-pix',
-        ]);
+        $this->define('WC_MERCADOPAGO_BASENAME', 'woocommerce-plugins-enablers/woocommerce-mercadopago.php');
+        $this->define('PAYMENT_GATEWAYS', ['WC_Mercadopago_Gateway']);
     }
 
     private function define($name, $value)
