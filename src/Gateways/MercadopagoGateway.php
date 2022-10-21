@@ -6,11 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * @method init_settings()
- * @method get_option(string $string)
- */
-class MercadopagoGateway extends WC_Payment_Gateway
+class MercadopagoGateway extends \WC_Payment_Gateway
 {
     public function __construct()
     {
@@ -29,7 +25,9 @@ class MercadopagoGateway extends WC_Payment_Gateway
         $this->enabled = $this->get_option('enabled');
 
         add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
-        add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options'));
+        add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
+
+        add_action('woocommerce_api_' . $this->id, array($this, 'webhook'));
     }
 
     public function init_form_fields()
@@ -58,23 +56,54 @@ class MercadopagoGateway extends WC_Payment_Gateway
         );
     }
 
-    public function payment_fields()
-    {
-    }
-
     public function payment_scripts()
     {
     }
 
+    public function payment_fields()
+    {
+        wc_get_template(
+            'checkout.php',
+            array(),
+            null,
+            dirname(__FILE__) . '/../../templates/public/gateways/'
+        );
+    }
+
     public function validate_fields()
     {
+        return true;
     }
 
     public function process_payment($order_id)
     {
+        global $woocommerce;
+
+        $order = wc_get_order($order_id);
+        $order->payment_complete();
+        $order->add_order_note('Hey, your order is paid! Thank you!', true);
+
+        wc_reduce_stock_levels($order_id);
+
+        $woocommerce->cart->empty_cart();
+
+        return array(
+            'result'   => 'success',
+            'redirect' => $this->get_return_url($order)
+        );
     }
 
     public function webhook()
     {
+        $status   = 200;
+        $response = array(
+            'status'  => $status,
+            'message' => 'Webhook handled successful'
+        );
+
+        header('content-type: application/json; charset=utf-8');
+        status_header($status);
+
+        exit(wp_json_encode($response));
     }
 }
