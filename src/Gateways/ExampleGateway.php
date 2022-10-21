@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MercadopagoGateway extends \WC_Payment_Gateway
+class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
     public function __construct()
     {
@@ -30,7 +30,7 @@ class MercadopagoGateway extends \WC_Payment_Gateway
         add_action('woocommerce_api_' . $this->id, array($this, 'webhook'));
     }
 
-    public function init_form_fields()
+    public function init_form_fields(): void
     {
         $this->form_fields = array(
             'enabled' => array(
@@ -56,11 +56,11 @@ class MercadopagoGateway extends \WC_Payment_Gateway
         );
     }
 
-    public function payment_scripts()
+    public function payment_scripts(): void
     {
     }
 
-    public function payment_fields()
+    public function payment_fields(): void
     {
         wc_get_template(
             'checkout.php',
@@ -70,20 +70,20 @@ class MercadopagoGateway extends \WC_Payment_Gateway
         );
     }
 
-    public function validate_fields()
+    public function validate_fields(): bool
     {
         return true;
     }
 
-    public function process_payment($order_id)
+    public function process_payment($orderId): array
     {
         global $woocommerce;
 
-        $order = wc_get_order($order_id);
+        $order = wc_get_order($orderId);
         $order->payment_complete();
         $order->add_order_note('Hey, your order is paid! Thank you!', true);
 
-        wc_reduce_stock_levels($order_id);
+        wc_reduce_stock_levels($orderId);
 
         $woocommerce->cart->empty_cart();
 
@@ -93,7 +93,7 @@ class MercadopagoGateway extends \WC_Payment_Gateway
         );
     }
 
-    public function webhook()
+    public function webhook(): void
     {
         $status   = 200;
         $response = array(
