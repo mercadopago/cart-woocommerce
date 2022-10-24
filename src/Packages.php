@@ -12,14 +12,9 @@ class Packages
         'sdk'
     );
 
-    public static function init()
+    public static function init(): bool
     {
-        return add_action('plugins_loaded', array( __CLASS__, 'onInit' ));
-    }
-
-    public static function onInit()
-    {
-        self::loadPackages();
+        return self::loadPackages();
     }
 
     public static function packageExists($package): bool
@@ -29,7 +24,7 @@ class Packages
 
     public static function getPackage($packageName): string
     {
-        return dirname(__DIR__) . '/../packages/' . $packageName;
+        return dirname(__FILE__) . '/../packages/' . $packageName;
     }
 
     public static function loadAutoloadPackages(): bool
@@ -37,50 +32,31 @@ class Packages
         foreach (self::$packages as $packageName) {
             $package = self::getPackage($packageName);
             $autoloader = $package . '/vendor/autoload.php';
-            if (! Autoloader::loadAutoload($autoloader)) {
+            if (!Autoloader::loadAutoload($autoloader)) {
                 return false;
             }
         }
+
         return true;
     }
 
-    protected static function loadPackages()
+    protected static function loadPackages(): bool
     {
         foreach (self::$packages as $packageName) {
             $package = self::getPackage($packageName);
-            if (! self::packageExists($package)) {
+            if (!self::packageExists($package)) {
                 self::missingPackage($packageName);
-                continue;
+                return false;
             }
         }
+
+        return true;
     }
 
-    protected static function missingPackage($package)
+    protected static function missingPackage($package): void
     {
-        add_action(
-            'admin_notices',
-            function () use ($package) {
-                ?>
-                <div class="notice notice-error">
-                    <p>
-                        <strong>
-                            <?php
-                            printf(
-                                esc_html__('Missing the Mercado Pago %s package', 'woocommerce-mercadopago'),
-                                '<code>' . esc_html($package) . '</code>'
-                            );
-                            ?>
-                        </strong>
-                        <br>
-                        <?php
-                        printf(
-                            esc_html__('Your installation of Mercado Pago is incomplete.', 'woocommerce-mercadopago')
-                        );
-                        ?>
-                    </p>
-                </div>
-                <?php
-            }
-        );
+        add_action('admin_notices', function () use ($package) {
+            include dirname(__FILE__) . '/../templates/admin/notices/miss-package.php';
+        });
     }
 }

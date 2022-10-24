@@ -20,15 +20,23 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-use MercadoPago\Woocommerce\Autoloader;
+include_once dirname(__FILE__) . '/src/Autoloader.php';
+
 use MercadoPago\Woocommerce\Packages;
+use MercadoPago\Woocommerce\Autoloader;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
-if (!Autoloader::init() || !Packages::loadAutoloadPackages()) {
+if (!Autoloader::init()) {
     return false;
 }
 
-Packages::init();
+if (!Packages::loadAutoloadPackages()) {
+    return false;
+}
+
+if (!Packages::init()) {
+    return false;
+}
 
 if (!class_exists('WoocommerceMercadoPago')) {
     $GLOBALS['mercadopago'] = WoocommerceMercadoPago::getInstance();
