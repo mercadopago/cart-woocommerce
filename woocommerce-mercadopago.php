@@ -32,4 +32,4 @@ if (!class_exists('WoocommerceMercadoPago')) {
     $GLOBALS['mercadopago'] = WoocommerceMercadoPago::getInstance();
 }
 
-$mercadopago->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');
+$mercadopago->gatewayHooks->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');

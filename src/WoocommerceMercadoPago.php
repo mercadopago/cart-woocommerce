@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Admin\Notices;
+use MercadoPago\Woocommerce\Hooks\GatewayHooks;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -14,6 +15,11 @@ class WoocommerceMercadoPago
      * @var Notices
      */
     public $notices;
+
+    /**
+     * @var GatewayHooks
+     */
+    public $gatewayHooks;
 
     /**
      * @var string
@@ -33,6 +39,7 @@ class WoocommerceMercadoPago
     public function __construct()
     {
         $this->notices = Notices::getInstance();
+        $this->gatewayHooks = GatewayHooks::getInstance();
 
         $this->defineConstants();
         $this->woocommerceMercadoPagoLoadPluginTextDomain();
@@ -56,14 +63,6 @@ class WoocommerceMercadoPago
     {
         add_filter('plugin_action_links_' . WC_MERCADOPAGO_BASENAME, array($this, 'setPluginSettingsLink'));
         add_action('plugins_loaded', array($this, 'initPlugin'));
-    }
-
-    public function registerGateway($gateway): void
-    {
-        add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
-            $methods[] = $gateway;
-            return $methods;
-        });
     }
 
     public function initPlugin(): void
