@@ -17,7 +17,7 @@ class Autoloader
     public static function loadAutoload($autoloader)
     {
         if (!is_readable($autoloader)) {
-            self::missingAutoloadNotice();
+            self::missingAutoloadNotice($autoloader);
             return false;
         }
 
@@ -29,17 +29,10 @@ class Autoloader
         return $autoloader_result;
     }
 
-    protected static function missingAutoloadNotice()
+    protected static function missingAutoloadNotice($autoloader)
     {
-        add_action(
-            'admin_notices',
-            function () {
-                ?>
-                    <div class="notice notice-error">
-                        <p>Unable to find composer autoloader</p>
-                    </div>
-                <?php
-            }
-        );
+        add_action('admin_notices', function () use ($autoloader) {
+            include dirname(__FILE__) . '/../templates/admin/notices/miss-autoload.php';
+        });
     }
 }
