@@ -11,6 +11,11 @@ class Autoloader
     public static function init()
     {
         $autoloader = dirname(__FILE__) . '/../vendor/autoload.php';
+        return self::loadAutoload($autoloader);
+    }
+
+    public static function loadAutoload($autoloader)
+    {
         if (!is_readable($autoloader)) {
             self::missingAutoloadNotice();
             return false;

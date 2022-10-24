@@ -82,7 +82,7 @@ class WoocommerceMercadoPago
     {
         $this->notices->adminNoticeError(
             '
-                Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. 
+                Mercado Pago payments for WooCommerce requires PHP version 7.2 or later.
                 Please update your PHP version.
             ',
             false
@@ -101,7 +101,7 @@ class WoocommerceMercadoPago
     {
         $this->notices->adminNoticeWarning(
             '
-                Mercado Pago Error: PHP Extension GD is not installed. 
+                Mercado Pago Error: PHP Extension GD is not installed.
                 Installation of GD extension is required to send QR Code Pix by email.
             ',
             false
