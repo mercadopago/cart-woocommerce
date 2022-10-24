@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Admin\Notices;
+use MercadoPago\Woocommerce\Hooks\GatewayHooks;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -14,6 +15,11 @@ class WoocommerceMercadoPago
      * @var Notices
      */
     public $notices;
+
+    /**
+     * @var GatewayHooks
+     */
+    public $gatewayHooks;
 
     /**
      * @var string
@@ -33,13 +39,14 @@ class WoocommerceMercadoPago
     public function __construct()
     {
         $this->notices = Notices::getInstance();
+        $this->gatewayHooks = GatewayHooks::getInstance();
 
         $this->defineConstants();
         $this->woocommerceMercadoPagoLoadPluginTextDomain();
         $this->registerHooks();
     }
 
-    public static function getInstance()
+    public static function getInstance(): WoocommerceMercadoPago
     {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -47,17 +54,18 @@ class WoocommerceMercadoPago
         return self::$instance;
     }
 
-    public function woocommerceMercadoPagoLoadPluginTextDomain()
+    public function woocommerceMercadoPagoLoadPluginTextDomain(): void
     {
         // TODO: add languages
     }
 
-    public function registerHooks()
+    public function registerHooks(): void
     {
+        add_filter('plugin_action_links_' . WC_MERCADOPAGO_BASENAME, array($this, 'setPluginSettingsLink'));
         add_action('plugins_loaded', array($this, 'initPlugin'));
     }
 
-    public function initPlugin()
+    public function initPlugin(): void
     {
         if (version_compare(PHP_VERSION, self::$mp_min_php, '<')) {
             $this->verifyPhpVersionNotice();
@@ -78,7 +86,17 @@ class WoocommerceMercadoPago
         }
     }
 
-    public function verifyPhpVersionNotice()
+    public function setPluginSettingsLink($links): array
+    {
+        $pluginLinks   = array();
+        $pluginLinks[] = '<a href="' . admin_url('admin.php?page=mercadopago-settings') . '">Set plugin</a>';
+        $pluginLinks[] = '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout') . '">Payment method</a>';
+        $pluginLinks[] = '<a target="_blank" href="https://developers.mercadopago.com">Plugin manual</a>';
+
+        return array_merge($pluginLinks, $links);
+    }
+
+    public function verifyPhpVersionNotice(): void
     {
         $this->notices->adminNoticeError(
             '
@@ -89,7 +107,7 @@ class WoocommerceMercadoPago
         );
     }
 
-    public function verifyCurlNotice()
+    public function verifyCurlNotice(): void
     {
         $this->notices->adminNoticeError(
             'Mercado Pago Error: PHP Extension CURL is not installed.',
@@ -97,7 +115,7 @@ class WoocommerceMercadoPago
         );
     }
 
-    public function verifyGdNotice()
+    public function verifyGdNotice(): void
     {
         $this->notices->adminNoticeWarning(
             '
@@ -108,32 +126,14 @@ class WoocommerceMercadoPago
         );
     }
 
-    private function defineConstants()
+    private function defineConstants(): void
     {
         $this->define('MP_VERSION', self::$mp_version);
         $this->define('MP_MIN_PHP', self::$mp_min_php);
-        $this->define('PLATFORM_ID', 'bo2hnr2ic4p001kbgpt0');
-        $this->define('PRODUCT_ID_MOBILE', 'BT7OFH09QS3001K5A0H0');
-        $this->define('PRODUCT_ID_DESKTOP', 'BT7OF5FEOO6G01NJK3QG');
-        $this->define('API_MP_BASE_URL', 'https://api.mercadopago.com');
-        $this->define('DATE_EXPIRATION', 3);
-
-        $this->define('PAYMENT_GATEWAYS', [
-            'WC_WooMercadoPago_Basic_Gateway',
-            'WC_WooMercadoPago_Custom_Gateway',
-            'WC_WooMercadoPago_Ticket_Gateway',
-            'WC_WooMercadoPago_Pix_Gateway',
-        ]);
-
-        $this->define('GATEWAYS_IDS', [
-            'woo-mercado-pago-basic',
-            'woo-mercado-pago-custom',
-            'woo-mercado-pago-ticket',
-            'woo-mercado-pago-pix',
-        ]);
+        $this->define('WC_MERCADOPAGO_BASENAME', 'woocommerce-plugins-enablers/woocommerce-mercadopago.php');
     }
 
-    private function define($name, $value)
+    private function define($name, $value): void
     {
         if (!defined($name)) {
             define($name, $value);
