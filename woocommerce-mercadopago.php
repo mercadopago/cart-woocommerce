@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name: Mercado Pago payments for WooCommerce
  * Plugin URI: https://github.com/mercadopago/cart-woocommerce
@@ -19,14 +20,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-include_once dirname(__FILE__) . '/src/Autoloader.php';
-
 use MercadoPago\Woocommerce\Autoloader;
+use MercadoPago\Woocommerce\Packages;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
-if (!Autoloader::init()) {
+if (!Autoloader::init() || !Packages::loadAutoloadPackages()) {
     return false;
 }
+
+Packages::init();
 
 if (!class_exists('WoocommerceMercadoPago')) {
     WoocommerceMercadoPago::getInstance();
