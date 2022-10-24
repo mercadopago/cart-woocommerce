@@ -29,5 +29,7 @@ if (!Autoloader::init()) {
 }
 
 if (!class_exists('WoocommerceMercadoPago')) {
-    WoocommerceMercadoPago::getInstance();
+    $GLOBALS['mercadopago'] = WoocommerceMercadoPago::getInstance();
 }
+
+$mercadopago->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');

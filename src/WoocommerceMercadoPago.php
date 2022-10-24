@@ -55,8 +55,15 @@ class WoocommerceMercadoPago
     public function registerHooks(): void
     {
         add_filter('plugin_action_links_' . WC_MERCADOPAGO_BASENAME, array($this, 'setPluginSettingsLink'));
-        add_filter('woocommerce_payment_gateways', array($this, 'mercadopagoAddGatewayClass'));
         add_action('plugins_loaded', array($this, 'initPlugin'));
+    }
+
+    public function registerGateway($gateway): void
+    {
+        add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
+            $methods[] = $gateway;
+            return $methods;
+        });
     }
 
     public function initPlugin(): void
@@ -78,12 +85,6 @@ class WoocommerceMercadoPago
         if (!class_exists('WC_Payment_Gateway')) {
             $this->notices->adminNoticeMissWoocoommerce();
         }
-    }
-
-    public function mercadopagoAddGatewayClass($methods): array
-    {
-        $methods[] = 'MercadoPago\Woocommerce\Gateways\ExampleGateway';
-        return $methods;
     }
 
     public function setPluginSettingsLink($links): array
