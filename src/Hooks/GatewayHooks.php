@@ -2,14 +2,18 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 class GatewayHooks
 {
     /**
      * @var GatewayHooks
      */
-    protected static $instance = null;
+    private static $instance = null;
 
-    public function __construct()
+    private function __construct()
     {
     }
 

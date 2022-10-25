@@ -11,14 +11,14 @@ class Notices
     /**
      * @var Notices
      */
-    protected static $instance = null;
+    private static $instance = null;
 
-    public function __construct()
+    private function __construct()
     {
         add_action('admin_enqueue_scripts', array( $this, 'loadAdminNoticeCss' ));
     }
 
-    public static function getInstance()
+    public static function getInstance(): Notices
     {
         if (null === self::$instance) {
             self::$instance = new self();

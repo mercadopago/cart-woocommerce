@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Admin\Notices;
+use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Hooks\GatewayHooks;
 
 if (!defined('ABSPATH')) {
@@ -22,28 +23,39 @@ class WoocommerceMercadoPago
     public $gatewayHooks;
 
     /**
-     * @var string
+     * @var Settings
      */
-    public static $mp_version = '8.0.0';
+    public $settings;
 
     /**
      * @var string
      */
-    public static $mp_min_php = '7.2';
+    public static $mpVersion = '8.0.0';
+
+    /**
+     * @var string
+     */
+    public static $mpMinPhp = '7.2';
+
+    /**
+     * @var int
+     */
+    public static $priorityOnMenu = 90;
 
     /**
      * @var WoocommerceMercadoPago
      */
-    protected static $instance = null;
+    private static $instance = null;
 
-    public function __construct()
+    private function __construct()
     {
-        $this->notices = Notices::getInstance();
-        $this->gatewayHooks = GatewayHooks::getInstance();
-
         $this->defineConstants();
         $this->woocommerceMercadoPagoLoadPluginTextDomain();
         $this->registerHooks();
+
+        $this->notices = Notices::getInstance();
+        $this->settings = Settings::getInstance();
+        $this->gatewayHooks = GatewayHooks::getInstance();
     }
 
     public static function getInstance(): WoocommerceMercadoPago
@@ -67,7 +79,7 @@ class WoocommerceMercadoPago
 
     public function initPlugin(): void
     {
-        if (version_compare(PHP_VERSION, self::$mp_min_php, '<')) {
+        if (version_compare(PHP_VERSION, self::$mpMinPhp, '<')) {
             $this->verifyPhpVersionNotice();
             return;
         }
@@ -128,8 +140,9 @@ class WoocommerceMercadoPago
 
     private function defineConstants(): void
     {
-        $this->define('MP_VERSION', self::$mp_version);
-        $this->define('MP_MIN_PHP', self::$mp_min_php);
+        $this->define('MP_MIN_PHP', self::$mpMinPhp);
+        $this->define('MP_VERSION', self::$mpVersion);
+        $this->define('PRIORITY_ON_MENU', self::$priorityOnMenu);
         $this->define('WC_MERCADOPAGO_BASENAME', 'woocommerce-plugins-enablers/woocommerce-mercadopago.php');
     }
 
