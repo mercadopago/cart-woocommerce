@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Hooks\GatewayHooks;
 
 if (!defined('ABSPATH')) {
@@ -26,6 +27,11 @@ class WoocommerceMercadoPago
      * @var Settings
      */
     public $settings;
+
+    /**
+     * @var Translations
+     */
+    public $translations;
 
     /**
      * @var string
@@ -55,6 +61,7 @@ class WoocommerceMercadoPago
 
         $this->notices = Notices::getInstance();
         $this->settings = Settings::getInstance();
+        $this->translations = Translations::getInstance();
         $this->gatewayHooks = GatewayHooks::getInstance();
     }
 

@@ -35,7 +35,7 @@ class Settings
         add_action('admin_menu', array($this, 'registerMercadoPagoInWoocommerceMenu'), PRIORITY_ON_MENU);
     }
 
-    public function loadScriptsAndStyles()
+    public function loadScriptsAndStyles(): void
     {
         add_action('admin_enqueue_scripts', array($this, 'loadStyles'));
         add_action('admin_enqueue_scripts', array($this, 'loadScripts'));
@@ -46,7 +46,7 @@ class Settings
         return is_admin() && (Url::validatePage('mercadopago-settings') || Url::validateSection('woo-mercado-pago'));
     }
 
-    public function loadStyles()
+    public function loadStyles(): void
     {
         if ($this->canLoadScriptsAndStyles()) {
             wp_register_style(
@@ -59,7 +59,7 @@ class Settings
         }
     }
 
-    public function loadScripts()
+    public function loadScripts(): void
     {
         if ($this->canLoadScriptsAndStyles()) {
             wp_enqueue_script(
@@ -91,13 +91,14 @@ class Settings
 
     public function mercadoPagoSubmenuPageCallback(): void
     {
+        $credentialsTranslations = Translations::$credentialsSettings;
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }
 
     public function mercadopagoValidateRequirements(): void
     {
-        $hasCurl = in_array( 'curl', get_loaded_extensions(), true );
-        $hasGD   = in_array( 'gd', get_loaded_extensions(), true );
+        $hasCurl = in_array('curl', get_loaded_extensions(), true);
+        $hasGD   = in_array('gd', get_loaded_extensions(), true);
         $hasSSL  = is_ssl();
 
         wp_send_json_success([
