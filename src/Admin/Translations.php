@@ -36,22 +36,27 @@ class Translations
         return self::$instance;
     }
 
-    private function setCredentialsSettingsTranslations()
+    private function translate($text): string
+    {
+        return __($text, self::$domain);
+    }
+
+    private function setCredentialsSettingsTranslations(): void
     {
         self::$credentialsSettings = [
-            'public_key'               => __('Public key', self::$domain),
-            'access_token'             => __('Access Token', self::$domain),
-            'title_credentials'        => __('1. Integrate your store with Mercado Pago', self::$domain),
-            'title_credential_prod'    => __('Production credentials', self::$domain),
-            'title_credential_test'    => __('Test credentials ', self::$domain),
-            'subtitle_credentials_one' => __('To enable orders, you must create and activate production credentials in your Mercado Pago Account.', self::$domain),
-            'subtitle_credentials_two' => __('Copy and paste the credentials below.', self::$domain),
-            'subtitle_credential_test' => __('Enable Mercado Pago checkouts for test purchases in the store.', self::$domain),
-            'subtitle_credential_prod' => __('Enable Mercado Pago checkouts to receive real payments in the store.', self::$domain),
-            'placeholder_public_key'   => __('Paste your Public Key here', self::$domain),
-            'placeholder_access_token' => __('Paste your Access Token here', self::$domain),
-            'button_link_credentials'  => __('Check credentials', self::$domain),
-            'button_credentials'       => __('Save and continue', self::$domain),
+            'public_key'               => $this->translate('Public key'),
+            'access_token'             => $this->translate('Access Token'),
+            'title_credentials'        => $this->translate('1. Integrate your store with Mercado Pago'),
+            'title_credential_prod'    => $this->translate('Production credentials'),
+            'title_credential_test'    => $this->translate('Test credentials'),
+            'subtitle_credentials_one' => $this->translate('To enable orders, you must create and activate production credentials in your Mercado Pago Account.'),
+            'subtitle_credentials_two' => $this->translate('Copy and paste the credentials below.'),
+            'subtitle_credential_test' => $this->translate('Enable Mercado Pago checkouts for test purchases in the store.'),
+            'subtitle_credential_prod' => $this->translate('Enable Mercado Pago checkouts to receive real payments in the store.'),
+            'placeholder_public_key'   => $this->translate('Paste your Public Key here'),
+            'placeholder_access_token' => $this->translate('Paste your Access Token here'),
+            'button_link_credentials'  => $this->translate('Check credentials'),
+            'button_credentials'       => $this->translate('Save and continue'),
         ];
     }
 }
