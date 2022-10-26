@@ -55,14 +55,14 @@ class WoocommerceMercadoPago
 
     private function __construct()
     {
-        $this->defineConstants();
-        $this->woocommerceMercadoPagoLoadPluginTextDomain();
-        $this->registerHooks();
-
         $this->notices = Notices::getInstance();
         $this->settings = Settings::getInstance();
         $this->translations = Translations::getInstance();
         $this->gatewayHooks = GatewayHooks::getInstance();
+
+        $this->defineConstants();
+        $this->woocommerceMercadoPagoLoadPluginTextDomain();
+        $this->registerHooks();
     }
 
     public static function getInstance(): WoocommerceMercadoPago
