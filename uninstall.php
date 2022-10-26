@@ -4,7 +4,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     die;
 }
 
-global $wpdb;
-
-$wpdb->query("DELETE FROM wp_options WHERE option_name LIKE '_mp_public_key%' ");
-$wpdb->query("DELETE FROM wp_options WHERE option_name LIKE '_mp_access_token%' ");
+delete_option( '_mp_access_token_prod' );
+delete_option( '_mp_public_key_prod' );
+delete_option( '_mp_public_key_test' );
+delete_option( '_mp_access_token_test' );
