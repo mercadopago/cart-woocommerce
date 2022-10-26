@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @var string $minilogo
+ * @var string $missWoocommerceAction
+ *
+ * @see \MercadoPago\Woocommerce\Admin\Notices
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -34,7 +41,7 @@ if (!defined('ABSPATH')) {
                         <?= __('Install WooCommerce', 'woocommerce-mercadopago') ?>
                     </a>
                 <?php else : ?>
-                    <a class="button button-primary" href="http://wordpress.org/plugins/woocommerce/">
+                    <a class="button button-primary" href="https://wordpress.org/plugins/woocommerce/">
                         <?= __('See WooCommerce', 'woocommerce-mercadopago') ?>
                     </a>
                 <?php endif; ?>

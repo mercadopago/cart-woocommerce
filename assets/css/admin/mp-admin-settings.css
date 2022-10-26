@@ -605,12 +605,12 @@ input:checked + .mp-settings-slider:before {
   position: absolute;
   z-index: 3;
   top: 30px;
-  cursor: pointer;
   left: -550%;
   font-family: sans-serif;
   font-size: 16px;
   line-height: 20px;
   word-wrap: break-word;
+  cursor: auto;
 }
 
 .mp-settings-tooltip .mp-settings-tooltip-text p {

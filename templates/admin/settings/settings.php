@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @var array $headerTranslations
+ * @var array $credentialsTranslations;
+ *
+ * @see \MercadoPago\Woocommerce\Admin\Translations
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -17,20 +24,26 @@ if (!defined('ABSPATH')) {
         <div class="mp-settings-header-img"></div>
         <div class="mp-settings-header-logo"></div>
         <hr class="mp-settings-header-hr"/>
-        <p class="mp-settings-header-title">Accept <b>payments on the spot</b> with <br/> the security from Mercado Pago</p>
+        <p class="mp-settings-header-title"><?= $headerTranslations['title_header'] ?></p>
     </div>
 
     <div class="mp-settings-requirements">
         <div class="mp-container">
             <div class="mp-block mp-block-requirements mp-settings-margin-right">
-                <p class="mp-settings-font-color mp-settings-title-font-size">Technical requirements</p>
+                <p class="mp-settings-font-color mp-settings-title-font-size">
+                    <?= $headerTranslations['title_requirements'] ?>
+                </p>
                 <div class="mp-inner-container">
                     <div>
-                        <p class="mp-settings-font-color mp-settings-subtitle-font-size">SSL</p>
+                        <p class="mp-settings-font-color mp-settings-subtitle-font-size">
+                            <?= $headerTranslations['ssl'] ?>
+                        </p>
                         <label class="mp-settings-icon-info mp-settings-tooltip">
                             <span class="mp-settings-tooltip-text">
-                                <p class="mp-settings-subtitle-font-size"><b>SSL</b></p>
-                                Implementation responsible for transmitting data to Mercado Pago in a secure and encrypted way.
+                                <p class="mp-settings-subtitle-font-size">
+                                    <b><?= $headerTranslations['ssl'] ?></b>
+                                </p>
+                                <?= $headerTranslations['description_ssl'] ?>
                             </span>
                         </label>
                     </div>
@@ -41,11 +54,16 @@ if (!defined('ABSPATH')) {
                 <hr>
 
                 <div class="mp-inner-container">
-                    <div>GD Extensions</p>
+                    <div>
+                        <p class="mp-settings-font-color mp-settings-subtitle-font-size">
+                            <?= $headerTranslations['gd_extension'] ?>
+                        </p>
                         <label class="mp-settings-icon-info mp-settings-tooltip">
                             <span class="mp-settings-tooltip-text">
-                                <p class="mp-settings-subtitle-font-size"><b>GD Extensions</b></p>
-                                These extensions are responsible for the implementation and operation of Pix in your store.
+                                <p class="mp-settings-subtitle-font-size">
+                                    <b><?= $headerTranslations['gd_extension'] ?></b>
+                                </p>
+                                <?= $headerTranslations['description_gd_extension'] ?>
                             </span>
                         </label>
                     </div>
@@ -57,11 +75,15 @@ if (!defined('ABSPATH')) {
 
                 <div class="mp-inner-container">
                     <div>
-                        <p class="mp-settings-font-color mp-settings-subtitle-font-size">Curl</p>
+                        <p class="mp-settings-font-color mp-settings-subtitle-font-size">
+                            <?= $headerTranslations['curl'] ?>
+                        </p>
                         <label class="mp-settings-icon-info mp-settings-tooltip">
                             <span class="mp-settings-tooltip-text">
-                                <p class="mp-settings-subtitle-font-size"><b>Curl</b></p>
-                                It is an extension responsible for making payments via requests from the plugin to Mercado Pago.
+                                <p class="mp-settings-subtitle-font-size">
+                                    <b><?= $headerTranslations['curl'] ?></b>
+                                </p>
+                                <?= $headerTranslations['description_curl'] ?>
                             </span>
                         </label>
                     </div>
@@ -74,14 +96,18 @@ if (!defined('ABSPATH')) {
             <div class="mp-block mp-block-flex mp-settings-margin-left mp-settings-margin-right">
                 <div class="mp-inner-container-settings">
                     <div>
-                        <p class="mp-settings-font-color mp-settings-title-font-size">Collections and installments</p>
+                        <p class="mp-settings-font-color mp-settings-title-font-size">
+                            <?= $headerTranslations['title_installments'] ?>
+                        </p>
                         <p class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color">
-                            Choose <b>when you want to receive the money</b> from your sales and if you want to offer <b>interest-free installments</b> to your clients.
+                            <?= $headerTranslations['description_installments'] ?>
                         </p>
                     </div>
                     <div>
                         <a target="_blank" href="https://www.mercadopago.com.br/costs-section">
-                            <button class="mp-button" id="mp-set-installments-button">Set deadlines and fees</button>
+                            <button class="mp-button" id="mp-set-installments-button">
+                                <?= $headerTranslations['button_installments'] ?>
+                            </button>
                         </a>
                     </div>
                 </div>
@@ -90,14 +116,18 @@ if (!defined('ABSPATH')) {
             <div class="mp-block mp-block-flex mp-block-manual mp-settings-margin-left">
                 <div class="mp-inner-container-settings">
                     <div>
-                        <p class="mp-settings-font-color mp-settings-title-font-size">Questions?</p>
+                        <p class="mp-settings-font-color mp-settings-title-font-size">
+                            <?= $headerTranslations['title_questions'] ?>
+                        </p>
                         <p class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color">
-                            Choose <b><span>when you want to receive the money</b> from your sales and if you want to offer </span> interest-free installments.
+                            <?= $headerTranslations['description_questions'] ?>
                         </p>
                     </div>
                     <div>
                         <a target="_blank" href="https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/integration">
-                            <button id="mp-plugin-guide-button" class="mp-button mp-button-light-blue">Plugin manual</button>
+                            <button id="mp-plugin-guide-button" class="mp-button mp-button-light-blue">
+                                <?= $headerTranslations['button_questions'] ?>
+                            </button>
                         </a>
                     </div>
                 </div>
@@ -110,7 +140,9 @@ if (!defined('ABSPATH')) {
     <div class="mp-settings-credentials">
         <div id="mp-settings-step-one" class="mp-settings-title-align">
             <div class="mp-settings-title-container">
-                <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right"><?= $credentialsTranslations['title_credentials'] ?></span>
+                <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right">
+                    <?= $credentialsTranslations['title_credentials'] ?>
+                </span>
                 <img class="mp-settings-margin-left mp-settings-margin-right" id="mp-settings-icon-credentials">
             </div>
             <div class="mp-settings-title-container mp-settings-margin-left">
@@ -121,12 +153,14 @@ if (!defined('ABSPATH')) {
         <div id="mp-step-1" class="mp-settings-block-align-top" style="display: none;">
             <div>
                 <p class="mp-settings-subtitle-font-size mp-settings-title-color">
-                    To enable orders, you must create and activate production credentials in your Mercado Pago Account. <b>Copy and paste the credentials below.</b>
+                    <?= $credentialsTranslations['subtitle_credentials'] ?>
                 </p>
             </div>
             <div class="mp-message-credentials">
                 <a class="mp-heading-credentials" target="_blank" href="https://www.mercadopago.com/developers/panel/credentials">
-                    <button id="mp-get-credentials-button" class="mp-button mp-button-light-blue">Check credentials</button>
+                    <button id="mp-get-credentials-button" class="mp-button mp-button-light-blue">
+                        <?= $credentialsTranslations['button_link_credentials'] ?>
+                    </button>
                 </a>
             </div>
 
@@ -134,37 +168,77 @@ if (!defined('ABSPATH')) {
 
             <div class="mp-container">
                 <div class="mp-block mp-block-flex mp-settings-margin-right">
-                    <p class="mp-settings-title-font-size"><b>Production credentials</b></p>
-                    <p class="mp-settings-label mp-settings-title-color mp-settings-margin-bottom">Enable Mercado Pago checkouts for test purchases in the store.</p>
+                    <p class="mp-settings-title-font-size">
+                        <b><?= $credentialsTranslations['title_credentials_prod'] ?></b>
+                    </p>
+                    <p class="mp-settings-label mp-settings-title-color mp-settings-margin-bottom">
+                        <?= $credentialsTranslations['subtitle_credentials_prod'] ?>
+                    </p>
 
                     <fieldset class="mp-settings-fieldset">
-                        <label for="mp-public-key-prod" class="mp-settings-label mp-settings-font-color">Public key <span style="color: red;">&nbsp;*</span></label>
-                        <input id="mp-public-key-prod" class="mp-settings-input" type="text" value="" placeholder="Paste your Public Key here" />
+                        <label for="mp-public-key-prod" class="mp-settings-label mp-settings-font-color">
+                            <?= $credentialsTranslations['public_key'] ?> <span style="color: red;">&nbsp;*</span>
+                        </label>
+                        <input
+                            id="mp-public-key-prod"
+                            class="mp-settings-input"
+                            type="text"
+                            value=""
+                            placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>"
+                        />
                     </fieldset>
 
                     <fieldset>
-                        <label for="mp-access-token-prod" class="mp-settings-label mp-settings-font-color">Access Token <span style="color: red;">&nbsp;*</span></label>
-                        <input id="mp-access-token-prod" class="mp-settings-input" type="text" value="" placeholder="Paste your Access Token here" />
+                        <label for="mp-access-token-prod" class="mp-settings-label mp-settings-font-color">
+                            <?= $credentialsTranslations['access_token'] ?> <span style="color: red;">&nbsp;*</span>
+                        </label>
+                        <input
+                            id="mp-access-token-prod"
+                            class="mp-settings-input"
+                            type="text"
+                            value=""
+                            placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>"
+                        />
                     </fieldset>
                 </div>
 
                 <div class="mp-block mp-block-flex mp-settings-margin-left">
-                    <p class="mp-settings-title-font-size"><b>Test credentials</b></p>
-                    <p class="mp-settings-label mp-settings-title-color mp-settings-margin-bottom">Enable Mercado Pago checkouts for test purchases in the store.</p>
+                    <p class="mp-settings-title-font-size">
+                        <b><?= $credentialsTranslations['title_credentials_test'] ?></b>
+                    </p>
+                    <p class="mp-settings-label mp-settings-title-color mp-settings-margin-bottom">
+                        <?= $credentialsTranslations['subtitle_credentials_test'] ?>
+                    </p>
 
                     <fieldset class="mp-settings-fieldset">
-                        <label for="mp-public-key-test" class="mp-settings-label mp-settings-font-color">Public Key</label>
-                        <input class="mp-settings-input" id="mp-public-key-test" type="text" value="" placeholder="Paste your Test Public Key here" />
+                        <label for="mp-public-key-test" class="mp-settings-label mp-settings-font-color">
+                            <?= $credentialsTranslations['public_key'] ?>
+                        </label>
+                        <input
+                            id="mp-public-key-test"
+                            class="mp-settings-input"
+                            type="text"
+                            value=""
+                            placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>" />
                     </fieldset>
 
                     <fieldset>
-                        <label for="mp-access-token-test" class="mp-settings-label mp-settings-font-color">Access Token</label>
-                        <input class="mp-settings-input" id="mp-access-token-test" type="text" value="" placeholder="Paste your Test Access Token here" />
+                        <label for="mp-access-token-test" class="mp-settings-label mp-settings-font-color">
+                            <?= $credentialsTranslations['access_token'] ?>
+                        </label>
+                        <input
+                            id="mp-access-token-test"
+                            class="mp-settings-input"
+                            type="text"
+                            value=""
+                            placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>" />
                     </fieldset>
                 </div>
             </div>
 
-            <button class="mp-button" id="mp-btn-credentials">Save and continue</button>
+            <button class="mp-button" id="mp-btn-credentials">
+                <?= $credentialsTranslations['button_credentials'] ?>
+            </button>
         </div>
     </div>
 </div>

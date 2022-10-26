@@ -91,7 +91,9 @@ class Settings
 
     public function mercadoPagoSubmenuPageCallback(): void
     {
+        $headerTranslations      = Translations::$headerSettings;
         $credentialsTranslations = Translations::$credentialsSettings;
+
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }
 
