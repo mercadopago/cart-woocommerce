@@ -117,32 +117,17 @@ class WoocommerceMercadoPago
 
     public function verifyPhpVersionNotice(): void
     {
-        $this->notices->adminNoticeError(
-            '
-                Mercado Pago payments for WooCommerce requires PHP version 7.2 or later.
-                Please update your PHP version.
-            ',
-            false
-        );
+        $this->notices->adminNoticeError(Translations::$notices['php_wrong_version'], false);
     }
 
     public function verifyCurlNotice(): void
     {
-        $this->notices->adminNoticeError(
-            'Mercado Pago Error: PHP Extension CURL is not installed.',
-            false
-        );
+        $this->notices->adminNoticeError(Translations::$notices['missing_curl'], false);
     }
 
     public function verifyGdNotice(): void
     {
-        $this->notices->adminNoticeWarning(
-            '
-                Mercado Pago Error: PHP Extension GD is not installed.
-                Installation of GD extension is required to send QR Code Pix by email.
-            ',
-            false
-        );
+        $this->notices->adminNoticeWarning(Translations::$notices['missing_gd_extensions'], false);
     }
 
     private function defineConstants(): void

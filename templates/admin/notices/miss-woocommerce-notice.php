@@ -2,7 +2,10 @@
 
 /**
  * @var string $minilogo
+ * @var string $activateLink
+ * @var string $installLink
  * @var string $missWoocommerceAction
+ * @var array $translations
  *
  * @see \MercadoPago\Woocommerce\Admin\Notices
  */
@@ -20,29 +23,20 @@ if (!defined('ABSPATH')) {
         </div>
 
         <div class="mp-right-alert">
-            <p>
-                <?=
-                sprintf(
-                    'The Mercado Pago module needs an active version of %s in order to work!',
-                    '<a href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
-                );
-                ?>
-            </p>
+            <p><?= $translations['miss_woocommerce'] ?></p>
 
             <p>
                 <?php if ($missWoocommerceAction === 'active') : ?>
-                    <a
-                        class="button button-primary"
-                        href="<?= wp_nonce_url(self_admin_url('plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=all'), 'activate-plugin_woocommerce/woocommerce.php') ?>">
-                        <?= __('Activate WooCommerce', 'woocommerce-mercadopago') ?>
+                    <a class="button button-primary" href="<?= esc_html($activateLink) ?>">
+                        <?= $translations['activate_woocommerce'] ?>
                     </a>
                 <?php elseif ($missWoocommerceAction === 'install') : ?>
-                    <a class="button button-primary" href="<?= wp_nonce_url(self_admin_url('update.php?action=install-plugin&plugin=woocommerce'), 'install-plugin_woocommerce') ?>">
-                        <?= __('Install WooCommerce', 'woocommerce-mercadopago') ?>
+                    <a class="button button-primary" href="<?= esc_html($installLink) ?>">
+                        <?= $translations['install_woocommerce'] ?>
                     </a>
                 <?php else : ?>
                     <a class="button button-primary" href="https://wordpress.org/plugins/woocommerce/">
-                        <?= __('See WooCommerce', 'woocommerce-mercadopago') ?>
+                        <?= $translations['see_woocommerce'] ?>
                     </a>
                 <?php endif; ?>
             </p>

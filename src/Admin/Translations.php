@@ -21,6 +21,11 @@ class Translations
     /**
      * @var array
      */
+    public static $notices = [];
+
+    /**
+     * @var array
+     */
     public static $headerSettings = [];
 
     /**
@@ -30,6 +35,7 @@ class Translations
 
     public function __construct()
     {
+        $this->setNoticesTranslations();
         $this->setSettingsTranslations();
     }
 
@@ -44,6 +50,24 @@ class Translations
     private function translate($text): string
     {
         return __($text, self::$domain);
+    }
+
+    private function setNoticesTranslations(): void
+    {
+        $missWoocommerce = sprintf(
+            $this->translate('The Mercado Pago module needs an active version of %s in order to work!'),
+            '<a target="_blank" href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
+        );
+
+        self::$notices = [
+            'php_wrong_version'     => $this->translate('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.'),
+            'missing_curl'          => $this->translate('Mercado Pago Error: PHP Extension CURL is not installed.'),
+            'missing_gd_extensions' => $this->translate('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.'),
+            'activate_woocommerce'  => $this->translate('Activate WooCommerce'),
+            'install_woocommerce'   => $this->translate('Install WooCommerce'),
+            'see_woocommerce'       => $this->translate('See WooCommerce'),
+            'miss_woocommerce'      => $missWoocommerce,
+        ];
     }
 
     private function setSettingsTranslations(): void

@@ -66,6 +66,17 @@ class Notices
                 $isInstalled = false;
                 $currentUserCanInstallPlugins = current_user_can('install_plugins');
                 $minilogo = plugins_url('../assets/images/minilogo.png', plugin_dir_path(__FILE__));
+                $translations = Translations::$notices;
+
+                $activateLink = wp_nonce_url(
+                    self_admin_url('plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=all'),
+                    'activate-plugin_woocommerce/woocommerce.php'
+                );
+
+                $installLink = wp_nonce_url(
+                    self_admin_url('update.php?action=install-plugin&plugin=woocommerce'),
+                    'install-plugin_woocommerce'
+                );
 
                 if (function_exists('get_plugins')) {
                     $allPlugins  = get_plugins();
