@@ -42,4 +42,6 @@ if (!class_exists('WoocommerceMercadoPago')) {
     $GLOBALS['mercadopago'] = WoocommerceMercadoPago::getInstance();
 }
 
+// TODO: migrate to child plugins
+global $mercadopago;
 $mercadopago->gatewayHooks->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');
