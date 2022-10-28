@@ -1,25 +1,25 @@
-const fs = require('fs')
-const path = require('path')
-const minify = require('minify')
-const wpPot = require('wp-pot')
+const fs = require('fs');
+const path = require('path');
+const minify = require('minify');
+const wpPot = require('wp-pot');
 
 function minifyFiles (extension) {
   const assetsFiles = findFilesInDir(`./assets/${extension}`, `.${extension}`)
   const isNotMinifiedAndHasSelectedExtension = (filePath) => filePath.includes(`.${extension}`) && !filePath.includes('.min')
-  const filtredFiles = assetsFiles.filter((filePath) => isNotMinifiedAndHasSelectedExtension(filePath))
+  const filteredFiles = assetsFiles.filter((filePath) => isNotMinifiedAndHasSelectedExtension(filePath))
 
-  filtredFiles.forEach((file) => {
-    const filePath = path.resolve(`${file}`)
+  filteredFiles.forEach((file) => {
+    const filePath = path.resolve(`${file}`);
 
     minify(filePath, { js: { ecma: 6 }, css: { compatibility: '*' } })
       .then((minifiedContent) => {
         const newFilePathName = filePath
           .split(`.${extension}`)[0]
-          .concat(`.min.${extension}`)
-        fs.writeFileSync(newFilePathName, minifiedContent)
+          .concat(`.min.${extension}`);
+        fs.writeFileSync(newFilePathName, minifiedContent);
       })
-      .catch(console.error)
-  })
+      .catch(console.error);
+  });
 }
 
 function generatePotFiles () {
@@ -28,7 +28,7 @@ function generatePotFiles () {
     destFile: './i18n/languages/woocommerce-mercadopago.pot',
     lastTranslator: 'MPB Desenvolvimento <mpb_desenvolvimento@mercadopago.com.br>',
     src: ['includes/**/*.php', 'templates/**/*.php']
-  })
+  });
 }
 
 /**
@@ -39,27 +39,27 @@ function generatePotFiles () {
  * @returns {*[]}
  */
 function findFilesInDir (startPath, filter) {
-  let results = []
+  let results = [];
 
   if (!fs.existsSync(startPath)) {
-    console.error('no dir ', startPath)
-    return []
+    console.error('no dir ', startPath);
+    return [];
   }
 
-  const files = fs.readdirSync(startPath)
+  const files = fs.readdirSync(startPath);
 
   for (let i = 0; i < files.length; i++) {
-    const filename = path.join(startPath, files[i])
-    const stat = fs.lstatSync(filename)
+    const filename = path.join(startPath, files[i]);
+    const stat = fs.lstatSync(filename);
 
     if (stat.isDirectory()) {
-      results = results.concat(findFilesInDir(filename, filter)) // recurse
+      results = results.concat(findFilesInDir(filename, filter));
     } else if (filename.indexOf(filter) >= 0) {
-      results.push(filename)
+      results.push(filename);
     }
   }
 
-  return results
+  return results;
 }
 
-module.exports = { minifyFiles, generatePotFiles }
+module.exports = { minifyFiles, generatePotFiles };

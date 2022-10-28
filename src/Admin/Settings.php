@@ -93,6 +93,7 @@ class Settings
     {
         $headerTranslations      = Translations::$headerSettings;
         $credentialsTranslations = Translations::$credentialsSettings;
+        $storeTranslations       = Translations::$storeSettings;
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }

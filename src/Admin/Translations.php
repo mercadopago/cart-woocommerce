@@ -33,10 +33,17 @@ class Translations
      */
     public static $credentialsSettings = [];
 
+    /**
+     * @var array
+     */
+    public static $storeSettings = [];
+
     public function __construct()
     {
         $this->setNoticesTranslations();
-        $this->setSettingsTranslations();
+        $this->setHeaderSettingsTranslations();
+        $this->setCredentialsSettingsTranslations();
+        $this->setStoreSettingsTranslations();
     }
 
     public static function getInstance(): Translations
@@ -68,12 +75,6 @@ class Translations
             'see_woocommerce'       => $this->translate('See WooCommerce'),
             'miss_woocommerce'      => $missWoocommerce,
         ];
-    }
-
-    private function setSettingsTranslations(): void
-    {
-        $this->setHeaderSettingsTranslations();
-        $this->setCredentialsSettingsTranslations();
     }
 
     private function setHeaderSettingsTranslations(): void
@@ -143,6 +144,53 @@ class Translations
             'placeholder_access_token'  => $this->translate('Paste your Access Token here'),
             'button_link_credentials'   => $this->translate('Check credentials'),
             'button_credentials'        => $this->translate('Save and continue'),
+        ];
+    }
+
+    private function setStoreSettingsTranslations(): void
+    {
+        $helperUrl = sprintf(
+            '%s %s <a class="mp-settings-blue-text" target="_blank" href="%s">%s</a>.',
+            $this->translate('Add the URL to receive payments notifications.'),
+            $this->translate('Find out more information in the'),
+            '#',
+            $this->translate('guides')
+        );
+
+        $helperIntegrator = sprintf(
+            '%s %s <a class="mp-settings-blue-text" target="_blank" href="%s">%s</a>.',
+            $this->translate('If you are a Mercado Pago Certified Partner, make sure to add your integrator_id.'),
+            $this->translate('If you do not have the code, please'),
+            '#',
+            $this->translate('request it now')
+        );
+
+        self::$storeSettings = [
+            'title_store'                  => $this->translate('2. Customize your business'),
+            'title_info_store'             => $this->translate('Your store information'),
+            'title_advanced_store'         => $this->translate('Advanced integration options (optional)'),
+            'title_debug'                  => $this->translate('Debug and Log Mode'),
+            'subtitle_store'               => $this->translate('Fill out the following information to have a better experience and offer more information to your clients.'),
+            'subtitle_name_store'          => $this->translate('Name of your store in your client\'s invoice'),
+            'subtitle_activities_store'    => $this->translate('Identification in Activities of Mercado Pago'),
+            'subtitle_advanced_store'      => $this->translate('For further integration of your store with Mercado Pago (IPN, Certified Partners, Debug Mode)'),
+            'subtitle_category_store'      => $this->translate('Store category'),
+            'subtitle_url'                 => $this->translate('URL for IPN'),
+            'subtitle_integrator'          => $this->translate('Integrator ID'),
+            'subtitle_debug'               => $this->translate('We record your store\'s actions in order to provide a better assistance.'),
+            'placeholder_name_store'       => $this->translate('Ex: Mary\'s Store'),
+            'placeholder_activities_store' => $this->translate('Ex: Mary Store'),
+            'placeholder_category_store'   => $this->translate('Select'),
+            'placeholder_url'              => $this->translate('Ex: https://examples.com/my-custom-ipn-url'),
+            'placeholder_integrator'       => $this->translate('Ex: 14987126498'),
+            'accordion_advanced_store'     => $this->translate('Show advanced options'),
+            'button_store'                 => $this->translate('Save and continue'),
+            'helper_name_store'            => $this->translate('If this field is empty, the purchase will be identified as Mercado Pago.'),
+            'helper_activities_store'      => $this->translate('In Activities, you will view this term before the order number'),
+            'helper_category_store'        => $this->translate('Select "Other" if you do not find the appropriate category.'),
+            'helper_integrator_link'       => $this->translate('request it now.'),
+            'helper_url'                   => $helperUrl,
+            'helper_integrator'            => $helperIntegrator,
         ];
     }
 }

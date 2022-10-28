@@ -50,7 +50,32 @@ function mp_settings_accordion_start() {
   }
 }
 
+function mp_settings_accordion_options() {
+  const element = document.getElementById('mp-advanced-options');
+  const elementBlock = document.getElementById('block-two');
+
+  element.addEventListener('click', function () {
+    this.classList.toggle('active');
+    const panel = this.nextElementSibling;
+
+    if (panel.style.display === 'block') {
+      panel.style.display = 'none';
+    } else {
+      panel.style.display = 'block';
+    }
+
+    if (!element.classList.contains('active') && !elementBlock.classList.contains('mp-settings-flex-start')) {
+      elementBlock.classList.toggle('mp-settings-flex-start');
+      element.textContent = 'Show advanced options';
+    } else {
+      element.textContent = 'Hide advanced options';
+      elementBlock.classList.remove('mp-settings-flex-start');
+    }
+  });
+}
+
 function mp_settings_screen_load() {
   mp_get_requirements();
   mp_settings_accordion_start();
+  mp_settings_accordion_options();
 }
