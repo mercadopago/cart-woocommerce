@@ -32,7 +32,7 @@ class Settings
 
     public function loadMenu(): void
     {
-        add_action('admin_menu', array($this, 'registerMercadoPagoInWoocommerceMenu'), PRIORITY_ON_MENU);
+        add_action('admin_menu', array($this, 'registerMercadoPagoInWoocommerceMenu'), MP_PRIORITY_ON_MENU);
     }
 
     public function loadScriptsAndStyles(): void
