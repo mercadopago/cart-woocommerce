@@ -75,7 +75,14 @@ class WoocommerceMercadoPago
 
     public function woocommerceMercadoPagoLoadPluginTextDomain(): void
     {
-        // TODO: add languages
+        $textDomain = 'woocommerce-mercadopago';
+
+        $locale = apply_filters('plugin_locale', get_locale(), $textDomain);
+
+        $originalLanguageFile = dirname(__FILE__) . '/../i18n/languages/' . $locale . '.mo';
+
+        unload_textdomain($textDomain);
+        load_textdomain($textDomain, $originalLanguageFile);
     }
 
     public function registerHooks(): void
