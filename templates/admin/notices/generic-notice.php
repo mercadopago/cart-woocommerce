@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * @var string $type
+ * @var string $minilogo
+ * @var string $message
+ * @var bool $isDismissible
+ *
+ * @see \MercadoPago\Woocommerce\Admin\Notices
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }

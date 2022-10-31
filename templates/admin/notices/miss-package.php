@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @var string $package
+ * @see \MercadoPago\Woocommerce\Packages
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }

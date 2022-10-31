@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Admin\Notices;
+use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Hooks\GatewayHooks;
 
 if (!defined('ABSPATH')) {
@@ -22,23 +24,40 @@ class WoocommerceMercadoPago
     public $gatewayHooks;
 
     /**
-     * @var string
+     * @var Settings
      */
-    public static $mp_version = '8.0.0';
+    public $settings;
+
+    /**
+     * @var Translations
+     */
+    public $translations;
 
     /**
      * @var string
      */
-    public static $mp_min_php = '7.2';
+    public static $mpVersion = '8.0.0';
+
+    /**
+     * @var string
+     */
+    public static $mpMinPhp = '7.2';
+
+    /**
+     * @var int
+     */
+    public static $priorityOnMenu = 90;
 
     /**
      * @var WoocommerceMercadoPago
      */
-    protected static $instance = null;
+    private static $instance = null;
 
-    public function __construct()
+    private function __construct()
     {
         $this->notices = Notices::getInstance();
+        $this->settings = Settings::getInstance();
+        $this->translations = Translations::getInstance();
         $this->gatewayHooks = GatewayHooks::getInstance();
 
         $this->defineConstants();
@@ -67,7 +86,7 @@ class WoocommerceMercadoPago
 
     public function initPlugin(): void
     {
-        if (version_compare(PHP_VERSION, self::$mp_min_php, '<')) {
+        if (version_compare(PHP_VERSION, self::$mpMinPhp, '<')) {
             $this->verifyPhpVersionNotice();
             return;
         }
@@ -98,38 +117,24 @@ class WoocommerceMercadoPago
 
     public function verifyPhpVersionNotice(): void
     {
-        $this->notices->adminNoticeError(
-            '
-                Mercado Pago payments for WooCommerce requires PHP version 7.2 or later.
-                Please update your PHP version.
-            ',
-            false
-        );
+        $this->notices->adminNoticeError(Translations::$notices['php_wrong_version'], false);
     }
 
     public function verifyCurlNotice(): void
     {
-        $this->notices->adminNoticeError(
-            'Mercado Pago Error: PHP Extension CURL is not installed.',
-            false
-        );
+        $this->notices->adminNoticeError(Translations::$notices['missing_curl'], false);
     }
 
     public function verifyGdNotice(): void
     {
-        $this->notices->adminNoticeWarning(
-            '
-                Mercado Pago Error: PHP Extension GD is not installed.
-                Installation of GD extension is required to send QR Code Pix by email.
-            ',
-            false
-        );
+        $this->notices->adminNoticeWarning(Translations::$notices['missing_gd_extensions'], false);
     }
 
     private function defineConstants(): void
     {
-        $this->define('MP_VERSION', self::$mp_version);
-        $this->define('MP_MIN_PHP', self::$mp_min_php);
+        $this->define('MP_MIN_PHP', self::$mpMinPhp);
+        $this->define('MP_VERSION', self::$mpVersion);
+        $this->define('PRIORITY_ON_MENU', self::$priorityOnMenu);
         $this->define('WC_MERCADOPAGO_BASENAME', 'woocommerce-plugins-enablers/woocommerce-mercadopago.php');
     }
 

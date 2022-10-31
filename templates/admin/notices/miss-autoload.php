@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @var string $autoloader
+ * @see \MercadoPago\Woocommerce\Autoloader
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
