@@ -35,6 +35,7 @@ class Scripts
     public function registerScript($name, $file, $variables = []): void
     {
         wp_enqueue_script($name, $file, array(), MP_VERSION, true);
+
         if ($variables) {
             wp_localize_script($name, $name . $this->suffix, $variables);
         }
