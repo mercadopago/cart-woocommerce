@@ -2,8 +2,10 @@
 
 /**
  * @var array $headerTranslations
- * @var array $credentialsTranslations;
- * @var array $storeTranslations;
+ * @var array $credentialsTranslations
+ * @var array $storeTranslations
+ * @var array $gatewaysTranslations
+ * @var array $testModeTranslations
  *
  * @see \MercadoPago\Woocommerce\Admin\Settings
  */
@@ -19,6 +21,8 @@ if (!defined('ABSPATH')) {
         mp_settings_screen_load();
     });
 </script>
+
+<span id='reference' value='{"mp-screen-name":"admin"}'></span>
 
 <div class="mp-settings">
     <div class="mp-settings-header">
@@ -379,5 +383,169 @@ if (!defined('ABSPATH')) {
 
     <hr class="mp-settings-hr"/>
 
+    <div class="mp-settings-payment">
+        <div id="mp-settings-step-three" class="mp-settings-title-align">
+            <div class="mp-settings-title-container">
+                <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right">
+                    <?= $gatewaysTranslations['title_payments'] ?>
+                </span>
+                <img class="mp-settings-margin-left mp-settings-margin-right" id="mp-settings-icon-payment">
+            </div>
 
+            <div class="mp-settings-title-container mp-settings-margin-left">
+                <img class="mp-settings-icon-open" id="mp-payments-arrow-up" />
+            </div>
+        </div>
+        <div id="mp-step-3" class="mp-settings-block-align-top" style="display: none;">
+            <p id="mp-payment" class="mp-settings-subtitle-font-size mp-settings-title-color">
+                <?= $gatewaysTranslations['subtitle_payments'] ?>
+            </p>
+            <button id="mp-payment-method-continue" class="mp-button">
+                <?= $gatewaysTranslations['button_payment'] ?>
+            </button>
+        </div>
+    </div>
+
+    <hr class="mp-settings-hr" />
+
+    <div class="mp-settings-mode">
+        <div id="mp-settings-step-four" class="mp-settings-title-align">
+            <div class="mp-settings-title-container">
+                <div class="mp-align-items-center">
+                    <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right">
+                        <?= $testModeTranslations['title_test_mode'] ?>
+                    </span>
+                    <div id="mp-mode-badge" class="mp-settings-margin-left mp-settings-margin-right mp-settings-prod-mode-alert">
+                        <span id="mp-mode-badge-prod" style="display: block">
+                            <?= $testModeTranslations['badge_mode'] ?>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mp-settings-title-container mp-settings-margin-left">
+                <img class="mp-settings-icon-open" id="mp-modes-arrow-up" />
+            </div>
+        </div>
+
+        <div id="mp-step-4" class="mp-message-test-mode mp-settings-block-align-top" style="display: none;">
+            <p class="mp-heading-test-mode mp-settings-subtitle-font-size mp-settings-title-color">
+                <?= $testModeTranslations['subtitle_test_mode'] ?>
+            </p>
+
+            <div class="mp-container">
+                <div class="mp-block mp-settings-choose-mode">
+                    <div>
+                        <p class="mp-settings-title-font-size">
+                            <b><?= $testModeTranslations['title_mode'] ?></b>
+                        </p>
+                    </div>
+
+                    <div class="mp-settings-mode-container">
+                        <div class="mp-settings-mode-spacing">
+                            <input
+                                type="radio"
+                                id="mp-settings-testmode-test"
+                                class="mp-settings-radio-button"
+                                name="mp-test-prod"
+                                checked="checked"
+                                value="yes"
+                            />
+                        </div>
+                        <label for="mp-settings-testmode-test">
+                            <span class="mp-settings-subtitle-font-size mp-settings-font-color">
+								<?= $testModeTranslations['title_test'] ?>
+							</span>
+                            <br />
+                            <span class="mp-settings-subtitle-font-size mp-settings-title-color">
+								<?= $testModeTranslations['subtitle_test'] ?>
+							<span>
+                            <a id="mp-test-mode-rules-link" class="mp-settings-blue-text" target="_blank" href="">
+                                <?= $testModeTranslations['subtitle_test_link'] ?>
+							</a>
+                        </label>
+                    </div>
+
+                    <div class="mp-settings-mode-container">
+                        <div class="mp-settings-mode-spacing">
+                            <input
+                                type="radio"
+                                id="mp-settings-testmode-prod"
+                                class="mp-settings-radio-button"
+                                name="mp-test-prod"
+                                value="no"
+                                checked="checked"
+                            />
+                        </div>
+                        <label for="mp-settings-testmode-prod">
+                            <span class="mp-settings-subtitle-font-size mp-settings-font-color">
+                                <?= $testModeTranslations['title_prod'] ?>
+                            </span>
+                                <br />
+                                <span class="mp-settings-subtitle-font-size mp-settings-title-color">
+                                <?= $testModeTranslations['subtitle_prod'] ?>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="mp-settings-alert-payment-methods">
+                        <div id="mp-red-badge" class="mp-settings-alert-red" style="display:none;">
+                            <div class="mp-settings-alert-payment-methods-gray" style="width: 540px">
+                                <div class="mp-settings-margin-right mp-settings-mode-style">
+                                    <span id="mp-icon-badge-error" class="mp-settings-icon-warning"></span>
+                                </div>
+
+                                <div class="mp-settings-mode-warning">
+                                    <div class="mp-settings-margin-left">
+                                        <div class="mp-settings-alert-mode-title">
+                                            <span id="mp-text-badge"><?= $testModeTranslations['title_alert_test'] ?></span>
+                                        </div>
+                                        <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
+											<span id="mp-helper-test-error"><?= $testModeTranslations['test_credentials_helper'] ?></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mp-settings-alert-payment-methods">
+                        <div id="mp-orange-badge" class="mp-settings-alert-payment-methods-green"></div>
+
+                        <div class="mp-settings-alert-payment-methods-gray">
+                            <div class="mp-settings-margin-right mp-settings-mode-style">
+                                <span id="mp-icon-badge" class="mp-settings-icon-success"></span>
+                            </div>
+
+                            <div class="mp-settings-mode-warning">
+                                <div class="mp-settings-margin-left">
+                                    <div class="mp-settings-alert-mode-title">
+                                        <span id="mp-title-helper-prod">
+                                            <span id="mp-text-badge" class="mp-display-block"> <?= $testModeTranslations['title_message_prod'] ?></span>
+                                        </span>
+                                        <span id="mp-title-helper-test">
+										    <span id="mp-text-badge" class="mp-display-block"><?= $testModeTranslations['title_message_test'] ?></span>
+										</span>
+                                    </div>
+
+                                    <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
+                                        <span id="mp-helper-prod" class="mp-display-block"><?= $testModeTranslations['subtitle_message_prod'] ?></span>
+                                        <span id="mp-helper-test" class="mp-display-block">
+											<span><?= $testModeTranslations['subtitle_test_one'] ?></span><br/>
+                                            <span><?= $testModeTranslations['subtitle_test_two'] ?></span><br/>
+                                            <span><?= $testModeTranslations['subtitle_test_three'] ?></span>
+										</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="mp-button" id="mp-store-mode-save">
+                <?= $testModeTranslations['button_test_mode'] ?>
+            </button>
+        </div>
+    </div>
 </div>

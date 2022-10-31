@@ -36,7 +36,17 @@ class Translations
     /**
      * @var array
      */
+    public static $gatewaysSettings = [];
+
+    /**
+     * @var array
+     */
     public static $storeSettings = [];
+
+    /**
+     * @var array
+     */
+    public static $testModeSettings = [];
 
     public function __construct()
     {
@@ -44,6 +54,8 @@ class Translations
         $this->setHeaderSettingsTranslations();
         $this->setCredentialsSettingsTranslations();
         $this->setStoreSettingsTranslations();
+        $this->setGatewaysSettingsTranslations();
+        $this->setTestModeSettingsTranslations();
     }
 
     public static function getInstance(): Translations
@@ -191,6 +203,71 @@ class Translations
             'helper_integrator_link'       => $this->translate('request it now.'),
             'helper_url'                   => $helperUrl,
             'helper_integrator'            => $helperIntegrator,
+        ];
+    }
+
+    public function setGatewaysSettingsTranslations(): void
+    {
+        self::$gatewaysSettings = [
+            'title_payments'    => $this->translate('3. Set payment methods'),
+            'subtitle_payments' => $this->translate('To view more options, please select a payment method below'),
+            'settings_payment'  => $this->translate('Settings'),
+            'button_payment'    => $this->translate('Continue'),
+        ];
+    }
+
+    public function setTestModeSettingsTranslations(): void
+    {
+        $testCredentialsHelper = sprintf(
+            '%s, <a class="mp-settings-blue-text" id="mp-testmode-credentials-link" target="_blank" href="%s">%s</a> %s.',
+            $this->translate('To enable test mode'),
+            '#',
+            $this->translate('copy your test credentials'),
+            $this->translate('and paste them above in section 1 of this page')
+        );
+
+        $testSubtitleOne = sprintf(
+            '1. %s <a class="mp-settings-blue-text" id="mp-testmode-testuser-link" target="_blank" href="%s">%s</a>, %s.',
+            $this->translate('Create your'),
+            '#',
+            $this->translate('test user'),
+            $this->translate('(Optional. Can be used in Production Mode and Test Mode, to test payments)')
+        );
+
+        $testSubtitleTwo = sprintf(
+            '2. <a class="mp-settings-blue-text" id="mp-testmode-cardtest-link" target="_blank" href="%s">%s</a>, %s.',
+            '#',
+            $this->translate('Use our test cards'),
+            $this->translate('never use real cards')
+        );
+
+        $testSubtitleThree = sprintf(
+            '3. <a class="mp-settings-blue-text" id="mp-testmode-store-link" target="_blank" href="%s">%s</a> %s.',
+            '#',
+            $this->translate('Visit your store'),
+            $this->translate('to test purchases')
+        );
+
+        self::$testModeSettings = [
+            'title_test_mode'         => $this->translate('4. Test your store before you sell'),
+            'title_mode'              => $this->translate('Choose how you want to operate your store:'),
+            'title_test'              => $this->translate('Test Mode'),
+            'title_prod'              => $this->translate('Sale Mode (Production)'),
+            'title_message_prod'      => $this->translate('Mercado Pago payment methods in Production Mode'),
+            'title_message_test'      => $this->translate('Mercado Pago payment methods in Test Mode'),
+            'title_alert_test'        => $this->translate('Enter test credentials'),
+            'subtitle_test_mode'      => $this->translate('Test the experience in Test Mode and then enable the Sale Mode (Production) to sell.'),
+            'subtitle_test'           => $this->translate('Mercado Pago Checkouts disabled for real collections.'),
+            'subtitle_test_link'      => $this->translate('Test Mode rules.'),
+            'subtitle_prod'           => $this->translate('Mercado Pago Checkouts enabled for real collections.'),
+            'subtitle_message_prod'   => $this->translate('The clients can make real purchases in your store.'),
+            'subtitle_test_one'       => $testSubtitleOne,
+            'subtitle_test_two'       => $testSubtitleTwo,
+            'subtitle_test_three'     => $testSubtitleThree,
+            'test_credentials_helper' => $testCredentialsHelper,
+            'badge_mode'              => $this->translate('Store in sale mode (Production)'),
+            'badge_test'              => $this->translate('Store under test'),
+            'button_test_mode'        => $this->translate('Save changes'),
         ];
     }
 }

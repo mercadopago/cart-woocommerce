@@ -94,6 +94,8 @@ class Settings
         $headerTranslations      = Translations::$headerSettings;
         $credentialsTranslations = Translations::$credentialsSettings;
         $storeTranslations       = Translations::$storeSettings;
+        $gatewaysTranslations    = Translations::$gatewaysSettings;
+        $testModeTranslations    = Translations::$testModeSettings;
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }
