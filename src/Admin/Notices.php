@@ -2,6 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
+use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Hooks\Scripts;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -9,13 +12,19 @@ if (!defined('ABSPATH')) {
 class Notices
 {
     /**
+     * @var Scripts
+     */
+    protected $scripts;
+
+    /**
      * @var Notices
      */
     private static $instance = null;
 
     private function __construct()
     {
-        add_action('admin_enqueue_scripts', array( $this, 'loadAdminNoticeCss' ));
+        $this->scripts = Scripts::getInstance();
+        add_action('admin_enqueue_scripts', array($this, 'loadAdminNoticeCss'));
     }
 
     public static function getInstance(): Notices
@@ -29,11 +38,9 @@ class Notices
     public function loadAdminNoticeCss()
     {
         if (is_admin()) {
-            wp_enqueue_style(
+            $this->scripts->registerStyle(
                 'woocommerce-mercadopago-admin-notice',
-                plugins_url('../assets/css/admin/mp-admin-notice.css', plugin_dir_path(__FILE__)),
-                array(),
-                MP_VERSION
+                Url::getPluginFileUrl('assets/css/admin/mp-admin-notice', '.css')
             );
         }
     }

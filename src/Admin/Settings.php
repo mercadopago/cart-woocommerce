@@ -14,7 +14,7 @@ class Settings
     /**
      * @var Scripts
      */
-    public $scripts;
+    protected $scripts;
 
     /**
      * @var Settings

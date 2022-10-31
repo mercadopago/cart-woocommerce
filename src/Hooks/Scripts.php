@@ -11,7 +11,7 @@ class Scripts
     /**
      * @var string
      */
-    private $suffix = '_params';
+    protected $suffix = '_params';
 
     /**
      * @var Scripts
@@ -26,13 +26,13 @@ class Scripts
         return self::$instance;
     }
 
-    public function registerStyle($name, $file): void
+    public function registerStyle(string $name, string $file): void
     {
         wp_register_style($name, $file, false, MP_VERSION);
         wp_enqueue_style($name);
     }
 
-    public function registerScript($name, $file, $variables = []): void
+    public function registerScript(string $name, string $file, array $variables = []): void
     {
         wp_enqueue_script($name, $file, array(), MP_VERSION, true);
 
