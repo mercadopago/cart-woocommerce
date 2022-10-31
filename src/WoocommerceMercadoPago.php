@@ -55,14 +55,14 @@ class WoocommerceMercadoPago
 
     private function __construct()
     {
-        $this->notices = Notices::getInstance();
-        $this->settings = Settings::getInstance();
-        $this->translations = Translations::getInstance();
-        $this->gatewayHooks = GatewayHooks::getInstance();
-
         $this->defineConstants();
         $this->woocommerceMercadoPagoLoadPluginTextDomain();
         $this->registerHooks();
+
+        $this->notices      = Notices::getInstance();
+        $this->settings     = Settings::getInstance();
+        $this->translations = Translations::getInstance();
+        $this->gatewayHooks = GatewayHooks::getInstance();
     }
 
     public static function getInstance(): WoocommerceMercadoPago
@@ -134,7 +134,7 @@ class WoocommerceMercadoPago
     {
         $this->define('MP_MIN_PHP', self::$mpMinPhp);
         $this->define('MP_VERSION', self::$mpVersion);
-        $this->define('PRIORITY_ON_MENU', self::$priorityOnMenu);
+        $this->define('MP_PRIORITY_ON_MENU', self::$priorityOnMenu);
         $this->define('WC_MERCADOPAGO_BASENAME', 'woocommerce-plugins-enablers/woocommerce-mercadopago.php');
     }
 
