@@ -5,7 +5,8 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
-use MercadoPago\Woocommerce\Hooks\GatewayHooks;
+use MercadoPago\Woocommerce\Hooks\Gateway;
+use MercadoPago\Woocommerce\Hooks\Scripts;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -19,9 +20,14 @@ class WoocommerceMercadoPago
     public $notices;
 
     /**
-     * @var GatewayHooks
+     * @var Gateway
      */
-    public $gatewayHooks;
+    public $gateway;
+
+    /**
+     * @var Scripts
+     */
+    public $scripts;
 
     /**
      * @var Settings
@@ -60,9 +66,10 @@ class WoocommerceMercadoPago
         $this->registerHooks();
 
         $this->notices      = Notices::getInstance();
+        $this->gateway      = Gateway::getInstance();
+        $this->scripts      = Scripts::getInstance();
         $this->settings     = Settings::getInstance();
         $this->translations = Translations::getInstance();
-        $this->gatewayHooks = GatewayHooks::getInstance();
     }
 
     public static function getInstance(): WoocommerceMercadoPago
@@ -75,10 +82,8 @@ class WoocommerceMercadoPago
 
     public function woocommerceMercadoPagoLoadPluginTextDomain(): void
     {
-        $textDomain = 'woocommerce-mercadopago';
-
-        $locale = apply_filters('plugin_locale', get_locale(), $textDomain);
-
+        $textDomain           = 'woocommerce-mercadopago';
+        $locale               = apply_filters('plugin_locale', get_locale(), $textDomain);
         $originalLanguageFile = dirname(__FILE__) . '/../i18n/languages/' . $locale . '.mo';
 
         unload_textdomain($textDomain);

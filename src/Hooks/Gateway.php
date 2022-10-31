@@ -6,10 +6,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class GatewayHooks
+class Gateway
 {
     /**
-     * @var GatewayHooks
+     * @var Gateway
      */
     private static $instance = null;
 
@@ -17,7 +17,7 @@ class GatewayHooks
     {
     }
 
-    public static function getInstance(): GatewayHooks
+    public static function getInstance(): Gateway
     {
         if (null === self::$instance) {
             self::$instance = new self();
