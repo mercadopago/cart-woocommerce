@@ -36,12 +36,12 @@ class Translations
     /**
      * @var array
      */
-    public static $gatewaysSettings = [];
+    public static $storeSettings = [];
 
     /**
      * @var array
      */
-    public static $storeSettings = [];
+    public static $gatewaysSettings = [];
 
     /**
      * @var array
