@@ -45,33 +45,22 @@ class Settings
 
     public function loadScriptsAndStyles(): void
     {
-        add_action('admin_enqueue_scripts', array($this, 'loadStyles'));
-        add_action('admin_enqueue_scripts', array($this, 'loadScripts'));
+        if ($this->canLoadScriptsAndStyles()) {
+            $this->scripts->registerAdminStyle(
+                'mercadopago_settings_admin_css',
+                Url::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css'),
+            );
+
+            $this->scripts->registerAdminScript(
+                'mercadopago_settings_javascript',
+                Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
+            );
+        }
     }
 
     public function canLoadScriptsAndStyles(): bool
     {
         return is_admin() && (Url::validatePage('mercadopago-settings') || Url::validateSection('woo-mercado-pago'));
-    }
-
-    public function loadStyles(): void
-    {
-        if ($this->canLoadScriptsAndStyles()) {
-            $this->scripts->registerStyle(
-                'mercadopago_settings_admin_css',
-                Url::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
-            );
-        }
-    }
-
-    public function loadScripts(): void
-    {
-        if ($this->canLoadScriptsAndStyles()) {
-            $this->scripts->registerScript(
-                'mercadopago_settings_javascript',
-                Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
-            );
-        }
     }
 
     public function registerAjaxEndpoints(): void

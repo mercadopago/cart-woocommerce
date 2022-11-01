@@ -38,7 +38,7 @@ class Notices
     public function loadAdminNoticeCss()
     {
         if (is_admin()) {
-            $this->scripts->registerStyle(
+            $this->scripts->registerAdminStyle(
                 'woocommerce-mercadopago-admin-notice',
                 Url::getPluginFileUrl('assets/css/admin/mp-admin-notice', '.css')
             );

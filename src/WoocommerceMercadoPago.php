@@ -103,7 +103,7 @@ class WoocommerceMercadoPago
             return;
         }
 
-        if (in_array('curl', get_loaded_extensions(), true)) {
+        if (!in_array('curl', get_loaded_extensions(), true)) {
             $this->verifyCurlNotice();
             return;
         }
