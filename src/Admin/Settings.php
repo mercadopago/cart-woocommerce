@@ -46,10 +46,14 @@ class Settings
     public function loadScriptsAndStyles(): void
     {
         if ($this->canLoadScriptsAndStyles()) {
-            $settingStyles  = Url::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css');
-            $settingScripts = Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js');
-            $this->scripts->registerAdminStyle('mercadopago_settings_admin_css', $settingStyles);
-            $this->scripts->registerAdminScript('mercadopago_settings_javascript', $settingScripts);
+            $this->scripts->registerAdminStyle(
+                'mercadopago_settings_admin_css',
+                Url::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
+            );
+            $this->scripts->registerAdminScript(
+                'mercadopago_settings_javascript',
+                Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
+            );
         }
     }
 

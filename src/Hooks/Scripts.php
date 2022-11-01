@@ -84,7 +84,7 @@ class Scripts
             'platform_version' => $woocommerce->version,
         ];
 
-        $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
+        $this->registerScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
     }
 
     private function registerStyle(string $name, string $file): void
