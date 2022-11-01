@@ -1,0 +1,27 @@
+# Copyright (C) 2022 woocommerce-mercadopago
+# This file is distributed under the same license as the woocommerce-mercadopago package.
+msgid ""
+msgstr ""
+"Project-Id-Version: woocommerce-mercadopago\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: MPB Desenvolvimento <mpb_desenvolvimento@mercadopago.com.br>\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: *.js\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../templates/admin/notices/miss-woocommerce-notice.php:38
+msgid "See WooCommerce"
+msgstr ""
+
+#: ../../templates/admin/notices/miss-woocommerce-notice.php:34
+msgid "Install WooCommerce"
+msgstr ""
+
+#: ../../templates/admin/notices/miss-woocommerce-notice.php:30
+msgid "Activate WooCommerce"
+msgstr ""

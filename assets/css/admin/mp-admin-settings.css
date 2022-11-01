@@ -77,12 +77,21 @@
   box-shadow: unset;
 }
 
+.mp-align-items-center {
+  display: flex;
+  align-items: center;
+}
+
 .mp-block-flex {
   flex: 2;
 }
 
 .mp-block-manual {
   background: #f5f5f5;
+}
+
+.mp-display-block {
+  display: block !important;
 }
 
 .mp-settings-font-color {
@@ -208,7 +217,8 @@
 }
 
 .mp-settings-icon-warning {
-  background: url("../../images/settings/icon-warning.png") 98% 50% no-repeat transparent;
+  background: url("../../images/settings/icon-warning.png") 50% 50% no-repeat transparent;
+  background-size: 16px;
   padding-right: 16px !important;
 }
 
@@ -317,6 +327,10 @@
   cursor: pointer;
   color: rgba(0, 158, 227, 1) !important;
   text-decoration: none;
+}
+
+.mp-settings-blue-text:hover{
+  text-decoration: underline;
 }
 
 .mp-settings-switch {
@@ -554,6 +568,7 @@ input:checked + .mp-settings-slider:before {
 
 .mp-settings-mode-container {
   display: flex;
+  align-items: center;
   margin: 20px 8px 0 0;
 }
 
@@ -675,7 +690,6 @@ input:checked + .mp-settings-slider:before {
 .mp-settings-mode-style {
   width: 16px;
   height: 16px;
-  background: rgba(0, 0, 0, 0.04);
 }
 
 .mp-settings-mode-warning {
