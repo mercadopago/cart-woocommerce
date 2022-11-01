@@ -6,22 +6,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Url
+class UrlUtils
 {
-    public static function compareStrings($expected, $current, $allow_partial_match): bool
-    {
-        if ($allow_partial_match) {
-            return strpos($current, $expected) !== false;
-        }
-
-        return $expected === $current;
-    }
-
     public static function getSuffix(): string
     {
-        // TODO: uncomment
-        // return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-        return '';
+        return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
     }
 
     public static function getPluginFileUrl($path, $extension): string
@@ -56,7 +45,7 @@ class Url
             $current_page = self::getCurrentPage();
         }
 
-        return self::compareStrings($expected_page, $current_page, $allow_partial_match);
+        return StringUtils::compareStrings($expected_page, $current_page, $allow_partial_match);
     }
 
     public static function validateSection($expected_section, $current_section = null, $allow_partial_match = true): bool
@@ -65,7 +54,7 @@ class Url
             $current_section = self::getCurrentSection();
         }
 
-        return self::compareStrings($expected_section, $current_section, $allow_partial_match);
+        return StringUtils::compareStrings($expected_section, $current_section, $allow_partial_match);
     }
 
     public static function validateUrl($expected_url, $current_url = null, $allow_partial_match = true): bool
@@ -74,6 +63,6 @@ class Url
             $current_url = self::getCurrentUrl();
         }
 
-        return self::compareStrings($expected_url, $current_url, $allow_partial_match);
+        return StringUtils::compareStrings($expected_url, $current_url, $allow_partial_match);
     }
 }

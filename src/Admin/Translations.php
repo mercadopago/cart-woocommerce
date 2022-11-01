@@ -8,35 +8,14 @@ if (!defined('ABSPATH')) {
 
 class Translations
 {
-    /**
-     * @var Translations
-     */
-    private static $instance;
-
-    /**
-     * @var string
-     */
-    public static $domain = 'woocommerce-mercadopago';
-
-    /**
-     * @var array
-     */
-    public static $notices = [];
-
-    /**
-     * @var array
-     */
-    public static $headerSettings = [];
-
-    /**
-     * @var array
-     */
-    public static $credentialsSettings = [];
-
-    /**
-     * @var array
-     */
-    public static $storeSettings = [];
+    private static Translations $instance;
+    public static string $domain = 'woocommerce-mercadopago';
+    public static array $notices = [];
+    public static array $headerSettings = [];
+    public static array $credentialsSettings = [];
+    public static array $storeSettings = [];
+    public static array $orderSettings = [];
+    public static array $genericSettings = [];
 
     public function __construct()
     {
@@ -44,6 +23,8 @@ class Translations
         $this->setHeaderSettingsTranslations();
         $this->setCredentialsSettingsTranslations();
         $this->setStoreSettingsTranslations();
+        $this->setOrderSettingsTranslations();
+        $this->setGenericSettingsTranslations();
     }
 
     public static function getInstance(): Translations
@@ -191,6 +172,20 @@ class Translations
             'helper_integrator_link'       => $this->translate('request it now.'),
             'helper_url'                   => $helperUrl,
             'helper_integrator'            => $helperIntegrator,
+        ];
+    }
+
+    private function setOrderSettingsTranslations(): void
+    {
+        self::$orderSettings = [
+            'cancel_order'  => $this->translate('Cancel order'),
+        ];
+    }
+
+    private function setGenericSettingsTranslations(): void
+    {
+        self::$genericSettings = [
+            'by_mp'  => $this->translate('By Mercado Pago'),
         ];
     }
 }

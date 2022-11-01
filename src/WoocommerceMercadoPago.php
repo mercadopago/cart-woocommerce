@@ -13,45 +13,16 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    /**
-     * @var Notices
-     */
-    public $notices;
+    public Notices $notices;
+    public GatewayHooks $gatewayHooks;
+    public Settings $settings;
+    public Translations $translations;
 
-    /**
-     * @var GatewayHooks
-     */
-    public $gatewayHooks;
+    public static string $mpVersion = '8.0.0';
+    public static string $mpMinPhp = '7.2';
+    public static int $priorityOnMenu = 90;
 
-    /**
-     * @var Settings
-     */
-    public $settings;
-
-    /**
-     * @var Translations
-     */
-    public $translations;
-
-    /**
-     * @var string
-     */
-    public static $mpVersion = '8.0.0';
-
-    /**
-     * @var string
-     */
-    public static $mpMinPhp = '7.2';
-
-    /**
-     * @var int
-     */
-    public static $priorityOnMenu = 90;
-
-    /**
-     * @var WoocommerceMercadoPago
-     */
-    private static $instance = null;
+    private static ?WoocommerceMercadoPago $instance = null;
 
     private function __construct()
     {
@@ -81,10 +52,34 @@ class WoocommerceMercadoPago
     public function registerHooks(): void
     {
         add_filter('plugin_action_links_' . WC_MERCADOPAGO_BASENAME, array($this, 'setPluginSettingsLink'));
-        add_action('plugins_loaded', array($this, 'initPlugin'));
+        add_action('plugins_loaded', array($this, 'init'));
     }
 
-    public function initPlugin(): void
+    public function pluginRowMeta($links, $file): array
+    {
+        if ( WC_MERCADOPAGO_BASENAME === $file ) {
+            $new_link   = array();
+            $new_link[] = $links[0];
+            $new_link[] = Translations::$genericSettings['by_mp'];
+
+            return $new_link;
+        }
+
+        return (array) $links;
+    }
+
+    public function setPluginSettingsLink(array $links): array
+    {
+        $pluginLinks   = array(
+            '<a href="' . admin_url('admin.php?page=mercadopago-settings') . '">Set plugin</a>',
+            '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout') . '">Payment method</a>',
+            '<a target="_blank" href="https://developers.mercadopago.com">Plugin manual</a>',
+        );
+
+        return array_merge($pluginLinks, $links);
+    }
+
+    public function init(): void
     {
         if (version_compare(PHP_VERSION, self::$mpMinPhp, '<')) {
             $this->verifyPhpVersionNotice();
@@ -101,18 +96,23 @@ class WoocommerceMercadoPago
         }
 
         if (!class_exists('WC_Payment_Gateway')) {
+            self::updatePluginVersion();
+            add_filter('plugin_row_meta', array( $this, 'pluginRowMeta' ), 10, 2 );
+            add_action( 'woocommerce_order_actions', array( 'OrderDetailsHooks', 'addOrderMetaBoxActions' ) );
+        } else {
             $this->notices->adminNoticeMissWoocoommerce();
         }
     }
 
-    public function setPluginSettingsLink($links): array
+    public function updatePluginVersion(): void
     {
-        $pluginLinks   = array();
-        $pluginLinks[] = '<a href="' . admin_url('admin.php?page=mercadopago-settings') . '">Set plugin</a>';
-        $pluginLinks[] = '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout') . '">Payment method</a>';
-        $pluginLinks[] = '<a target="_blank" href="https://developers.mercadopago.com">Plugin manual</a>';
+        $oldVersion = get_option( '_mp_version', '0' );
+        if ( version_compare( self::$mpVersion, $oldVersion, '>' ) ) {
+            do_action('mercadopago_plugin_updated');
+            do_action('mercadopago_test_mode_update');
 
-        return array_merge($pluginLinks, $links);
+            update_option('_mp_version', self::$mpVersion, true);
+        }
     }
 
     public function verifyPhpVersionNotice(): void

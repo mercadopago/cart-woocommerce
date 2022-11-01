@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
-use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Helpers\UrlUtils;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -43,7 +43,7 @@ class Settings
 
     public function canLoadScriptsAndStyles(): bool
     {
-        return is_admin() && (Url::validatePage('mercadopago-settings') || Url::validateSection('woo-mercado-pago'));
+        return is_admin() && (UrlUtils::validatePage('mercadopago-settings') || UrlUtils::validateSection('woo-mercado-pago'));
     }
 
     public function loadStyles(): void
@@ -51,7 +51,7 @@ class Settings
         if ($this->canLoadScriptsAndStyles()) {
             wp_register_style(
                 'mercadopago_settings_admin_css',
-                Url::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css'),
+                UrlUtils::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css'),
                 false,
                 MP_VERSION
             );
@@ -64,7 +64,7 @@ class Settings
         if ($this->canLoadScriptsAndStyles()) {
             wp_enqueue_script(
                 'mercadopago_settings_javascript',
-                Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
+                UrlUtils::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
                 array(),
                 MP_VERSION,
                 true

@@ -27,25 +27,17 @@ class Packages
         return dirname(__FILE__) . '/../packages/' . $packageName;
     }
 
-    public static function loadAutoloadPackages(): bool
-    {
-        foreach (self::$packages as $packageName) {
-            $package = self::getPackage($packageName);
-            $autoloader = $package . '/vendor/autoload.php';
-            if (!Autoloader::loadAutoload($autoloader)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     protected static function loadPackages(): bool
     {
         foreach (self::$packages as $packageName) {
             $package = self::getPackage($packageName);
             if (!self::packageExists($package)) {
                 self::missingPackage($packageName);
+                return false;
+            }
+
+            $autoloader = $package . '/vendor/autoload.php';
+            if (!Autoloader::loadAutoload($autoloader)) {
                 return false;
             }
         }
