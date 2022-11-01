@@ -10,7 +10,9 @@ class UrlUtils
 {
     public static function getSuffix(): string
     {
-        return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+        // TODO: uncomment
+        // return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+        return '';
     }
 
     public static function getPluginFileUrl($path, $extension): string
