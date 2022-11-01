@@ -43,5 +43,7 @@ if (!class_exists('WoocommerceMercadoPago')) {
 }
 
 // TODO: migrate to child plugins
-global $mercadopago;
-$mercadopago->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');
+add_action('plugins_loaded', function () {
+    global $mercadopago;
+    $mercadopago->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');
+});

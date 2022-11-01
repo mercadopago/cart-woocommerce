@@ -30,16 +30,6 @@ class WoocommerceMercadoPago
     public $scripts;
 
     /**
-     * @var Settings
-     */
-    public $settings;
-
-    /**
-     * @var Translations
-     */
-    public $translations;
-
-    /**
      * @var string
      */
     public static $mpVersion = '8.0.0';
@@ -55,6 +45,16 @@ class WoocommerceMercadoPago
     public static $priorityOnMenu = 90;
 
     /**
+     * @var Settings
+     */
+    protected $settings;
+
+    /**
+     * @var Translations
+     */
+    protected $translations;
+
+    /**
      * @var WoocommerceMercadoPago
      */
     private static $instance = null;
@@ -64,12 +64,6 @@ class WoocommerceMercadoPago
         $this->defineConstants();
         $this->woocommerceMercadoPagoLoadPluginTextDomain();
         $this->registerHooks();
-
-        $this->notices      = Notices::getInstance();
-        $this->gateway      = Gateway::getInstance();
-        $this->scripts      = Scripts::getInstance();
-        $this->settings     = Settings::getInstance();
-        $this->translations = Translations::getInstance();
     }
 
     public static function getInstance(): WoocommerceMercadoPago
@@ -92,7 +86,7 @@ class WoocommerceMercadoPago
 
     public function registerHooks(): void
     {
-        add_filter('plugin_action_links_' . WC_MERCADOPAGO_BASENAME, array($this, 'setPluginSettingsLink'));
+        add_filter('plugin_action_links_woocommerce-plugins-enablers/woocommerce-mercadopago.php', array($this, 'setPluginSettingsLink'));
         add_action('plugins_loaded', array($this, 'initPlugin'));
     }
 
@@ -115,6 +109,17 @@ class WoocommerceMercadoPago
         if (!class_exists('WC_Payment_Gateway')) {
             $this->notices->adminNoticeMissWoocoommerce();
         }
+
+        $this->setDependencies();
+    }
+
+    public function setDependencies(): void
+    {
+        $this->notices      = Notices::getInstance();
+        $this->gateway      = Gateway::getInstance();
+        $this->scripts      = Scripts::getInstance();
+        $this->settings     = Settings::getInstance();
+        $this->translations = Translations::getInstance();
     }
 
     public function setPluginSettingsLink($links): array
@@ -147,7 +152,6 @@ class WoocommerceMercadoPago
         $this->define('MP_MIN_PHP', self::$mpMinPhp);
         $this->define('MP_VERSION', self::$mpVersion);
         $this->define('MP_PRIORITY_ON_MENU', self::$priorityOnMenu);
-        $this->define('WC_MERCADOPAGO_BASENAME', 'woocommerce-plugins-enablers/woocommerce-mercadopago.php');
     }
 
     private function define($name, $value): void

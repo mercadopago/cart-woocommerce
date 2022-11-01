@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Helpers\Url;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -9,9 +11,14 @@ if (!defined('ABSPATH')) {
 class Scripts
 {
     /**
-     * @var string
+     * @const
      */
-    protected $suffix = '_params';
+    const SUFFIX = '_params';
+
+    /**
+     * @const
+     */
+    const MELIDATA_SCRIPT_NAME = 'mercadopago_melidata';
 
     /**
      * @var Scripts
@@ -54,6 +61,32 @@ class Scripts
         });
     }
 
+    public function registerMelidataSellerScript(): void
+    {
+        $this->registerMelidataScript('seller', '/settings');
+    }
+
+    public function registerMelidataBuyerScript(string $location): void
+    {
+        $this->registerMelidataScript('buyer', $location);
+    }
+
+    private function registerMelidataScript(string $type, string $location): void
+    {
+        global $woocommerce;
+
+        $file      = Url::getPluginFileUrl('assets/js/melidata/melidata-client', '.js');
+        $variables = [
+            'type'             => $type,
+            'site_id'          => 'MLA',
+            'location'         => $location,
+            'plugin_version'   => MP_VERSION,
+            'platform_version' => $woocommerce->version,
+        ];
+
+        $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
+    }
+
     private function registerStyle(string $name, string $file): void
     {
         wp_register_style($name, $file, false, MP_VERSION);
@@ -65,7 +98,7 @@ class Scripts
         wp_enqueue_script($name, $file, array(), MP_VERSION, true);
 
         if ($variables) {
-            wp_localize_script($name, $name . $this->suffix, $variables);
+            wp_localize_script($name, $name . self::SUFFIX, $variables);
         }
     }
 }
