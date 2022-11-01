@@ -16,8 +16,7 @@ class OrderDetailsHooks
 
     private function __construct()
     {
-        $this->paymentStatusMetabox();
-        $this->paymentStatusMetaboxScript();
+        $this->statusMetabox();
     }
 
     public static function getInstance(): OrderDetailsHooks
@@ -28,15 +27,11 @@ class OrderDetailsHooks
         return self::$instance;
     }
 
-    public function paymentStatusMetaBox(): void
+    public function statusMetaBox(): void
     {
-        add_action( 'add_meta_boxes_shop_order', 'paymentStatusMetaBox' );
+        add_action('add_meta_boxes_shop_order', 'paymentStatusMetaBox');
     }
 
-    public function paymentStatusMetaBoxScript(): void
-    {
-        add_action( 'admin_enqueue_scripts', 'paymentStatusMetaBoxScript' );
-    }
 
     public function addOrderMetaBoxActions(array $actions): array
     {

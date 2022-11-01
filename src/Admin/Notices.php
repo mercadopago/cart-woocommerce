@@ -8,10 +8,7 @@ if (!defined('ABSPATH')) {
 
 class Notices
 {
-    /**
-     * @var Notices
-     */
-    private static $instance = null;
+    private static ?Notices $instance = null;
 
     private function __construct()
     {
@@ -26,7 +23,7 @@ class Notices
         return self::$instance;
     }
 
-    public function loadAdminNoticeCss()
+    public function loadAdminNoticeCss(): void
     {
         if (is_admin()) {
             wp_enqueue_style(
@@ -38,27 +35,27 @@ class Notices
         }
     }
 
-    public function adminNoticeInfo($message, $dismiss = true)
+    public function adminNoticeInfo($message, $dismiss = true): void
     {
         $this->adminNotice($message, 'notice-info', $dismiss);
     }
 
-    public function adminNoticeSuccess($message, $dismiss = true)
+    public function adminNoticeSuccess($message, $dismiss = true): void
     {
         $this->adminNotice($message, 'notice-success', $dismiss);
     }
 
-    public function adminNoticeWarning($message, $dismiss = true)
+    public function adminNoticeWarning($message, $dismiss = true): void
     {
         $this->adminNotice($message, 'notice-warning', $dismiss);
     }
 
-    public function adminNoticeError($message, $dismiss = true)
+    public function adminNoticeError($message, $dismiss = true): void
     {
         $this->adminNotice($message, 'notice-error', $dismiss);
     }
 
-    public function adminNoticeMissWoocoommerce()
+    public function adminNoticeMissWoocoommerce(): void
     {
         add_action(
             'admin_notices',
@@ -98,7 +95,7 @@ class Notices
         );
     }
 
-    private function adminNotice($message, $type, $dismiss)
+    private function adminNotice($message, $type, $dismiss): void
     {
         add_action(
             'admin_notices',

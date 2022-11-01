@@ -10,10 +10,7 @@ if (!defined('ABSPATH')) {
 
 class Settings
 {
-    /**
-     * @var Settings
-     */
-    private static $instance;
+    private static ?Settings $instance = null;
 
     private function __construct()
     {

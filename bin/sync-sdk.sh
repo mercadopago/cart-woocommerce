@@ -21,8 +21,7 @@ if [[ -f $1"/.git" || -d $1"/.git" ]]; then
 else
 
 	git submodule sync --recursive --quiet -- "$1"
-	# shellcheck disable=SC2086
-	git submodule update --init --remote --recursive -- $1 || true
+	git submodule update --init --remote --recursive -- "$1" || true
 	git submodule update --init --remote --recursive -- "$1"
 
 fi

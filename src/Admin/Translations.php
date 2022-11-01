@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) {
 
 class Translations
 {
-    private static Translations $instance;
     public static string $domain = 'woocommerce-mercadopago';
     public static array $notices = [];
     public static array $headerSettings = [];
@@ -16,16 +15,10 @@ class Translations
     public static array $storeSettings = [];
     public static array $orderSettings = [];
     public static array $genericSettings = [];
+    public static array $gatewaysSettings = [];
+    public static array $testModeSettings = [];
 
-    /**
-     * @var array
-     */
-    public static $gatewaysSettings = [];
-
-    /**
-     * @var array
-     */
-    public static $testModeSettings = [];
+    private static ?Translations $instance = null;
 
     public function __construct()
     {
@@ -198,7 +191,7 @@ class Translations
     {
         self::$genericSettings = [
             'by_mp'  => $this->translate('By Mercado Pago'),
-        ]
+        ];
     }
 
     public function setGatewaysSettingsTranslations(): void

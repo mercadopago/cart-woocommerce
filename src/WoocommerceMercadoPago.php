@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Hooks\GatewayHooks;
+use MercadoPago\Woocommerce\Hooks\OrderDetailsHooks;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -17,9 +18,10 @@ class WoocommerceMercadoPago
     public GatewayHooks $gatewayHooks;
     public Settings $settings;
     public Translations $translations;
+    public OrderDetailsHooks $orderDetailsHooks;
 
-    public static string $mpVersion = '8.0.0';
-    public static string $mpMinPhp = '7.2';
+    public static string $mpVersion   = '8.0.0';
+    public static string $mpMinPhp    = '7.2';
     public static int $priorityOnMenu = 90;
 
     private static ?WoocommerceMercadoPago $instance = null;
@@ -27,13 +29,14 @@ class WoocommerceMercadoPago
     private function __construct()
     {
         $this->defineConstants();
-        $this->woocommerceMercadoPagoLoadPluginTextDomain();
+        $this->loadPluginTextDomain();
         $this->registerHooks();
 
-        $this->notices      = Notices::getInstance();
-        $this->settings     = Settings::getInstance();
-        $this->translations = Translations::getInstance();
-        $this->gatewayHooks = GatewayHooks::getInstance();
+        $this->notices           = Notices::getInstance();
+        $this->settings          = Settings::getInstance();
+        $this->translations      = Translations::getInstance();
+        $this->gatewayHooks      = GatewayHooks::getInstance();
+        $this->orderDetailsHooks = OrderDetailsHooks::getInstance();
     }
 
     public static function getInstance(): WoocommerceMercadoPago
@@ -44,7 +47,7 @@ class WoocommerceMercadoPago
         return self::$instance;
     }
 
-    public function woocommerceMercadoPagoLoadPluginTextDomain(): void
+    public function loadPluginTextDomain(): void
     {
         $textDomain = 'woocommerce-mercadopago';
 
@@ -102,10 +105,10 @@ class WoocommerceMercadoPago
             $this->verifyGdNotice();
         }
 
-        if (!class_exists('WC_Payment_Gateway')) {
+        if (class_exists('WC_Payment_Gateway')) {
             self::updatePluginVersion();
             add_filter('plugin_row_meta', array( $this, 'pluginRowMeta' ), 10, 2 );
-            add_action( 'woocommerce_order_actions', array( 'OrderDetailsHooks', 'addOrderMetaBoxActions' ) );
+            add_action( 'woocommerce_order_actions', array( $this->orderDetailsHooks, 'addOrderMetaBoxActions' ) );
         } else {
             $this->notices->adminNoticeMissWoocoommerce();
         }
@@ -115,9 +118,6 @@ class WoocommerceMercadoPago
     {
         $oldVersion = get_option( '_mp_version', '0' );
         if ( version_compare( self::$mpVersion, $oldVersion, '>' ) ) {
-            do_action('mercadopago_plugin_updated');
-            do_action('mercadopago_test_mode_update');
-
             update_option('_mp_version', self::$mpVersion, true);
         }
     }
