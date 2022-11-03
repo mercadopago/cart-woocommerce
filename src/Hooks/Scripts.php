@@ -71,7 +71,7 @@ class Scripts
         });
     }
 
-    public function registerNoticesScript(): void
+    public function registerNoticesAdminScript(): void
     {
         global $woocommerce;
 
@@ -85,10 +85,10 @@ class Scripts
             'platform_version' => $woocommerce->version,
         ];
 
-        $this->registerScript(self::NOTICES_SCRIPT_NAME, $file, $variables);
+        $this->registerAdminScript(self::NOTICES_SCRIPT_NAME, $file, $variables);
     }
 
-    public function registerCaronteScript(): void
+    public function registerCaronteAdminScript(): void
     {
         global $woocommerce;
 
@@ -102,15 +102,15 @@ class Scripts
             'reference_element_id'  => 'reference'
         ];
 
-        $this->registerScript(self::CARONTE_SCRIPT_NAME, $file, $variables);
+        $this->registerAdminScript(self::CARONTE_SCRIPT_NAME, $file, $variables);
     }
 
-    public function registerMelidataSellerScript(): void
+    public function registerMelidataAdminScript(): void
     {
         $this->registerMelidataScript('seller', '/settings');
     }
 
-    public function registerMelidataBuyerScript(string $location): void
+    public function registerMelidataStoreScript(string $location): void
     {
         $this->registerMelidataScript('buyer', $location);
     }
@@ -128,7 +128,12 @@ class Scripts
             'platform_version' => $woocommerce->version,
         ];
 
-        $this->registerScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
+        if ($type == 'seller') {
+            $this->registerAdminScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
+            return;
+        }
+
+        $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
     }
 
     private function registerStyle(string $name, string $file): void

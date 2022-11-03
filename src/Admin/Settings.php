@@ -61,9 +61,9 @@ class Settings
                 Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
             );
 
-            $this->scripts->registerCaronteScript();
-            $this->scripts->registerNoticesScript();
-            $this->scripts->registerMelidataSellerScript();
+            $this->scripts->registerCaronteAdminScript();
+            $this->scripts->registerNoticesAdminScript();
+            $this->scripts->registerMelidataAdminScript();
         }
     }
 
