@@ -84,7 +84,7 @@ final class Url
             $current_page = self::getCurrentPage();
         }
 
-        return StringUtils::compareStrings($expected_page, $current_page, $allow_partial_match);
+        return Strings::compareStrings($expected_page, $current_page, $allow_partial_match);
     }
 
     /**
@@ -102,7 +102,7 @@ final class Url
             $current_section = self::getCurrentSection();
         }
 
-        return StringUtils::compareStrings($expected_section, $current_section, $allow_partial_match);
+        return Strings::compareStrings($expected_section, $current_section, $allow_partial_match);
     }
 
     /**
@@ -120,6 +120,6 @@ final class Url
             $current_url = self::getCurrentUrl();
         }
 
-        return StringUtils::compareStrings($expected_url, $current_url, $allow_partial_match);
+        return Strings::compareStrings($expected_url, $current_url, $allow_partial_match);
     }
 }

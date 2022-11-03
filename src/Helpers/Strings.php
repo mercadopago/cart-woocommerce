@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class StringUtils
+final class Strings
 {
     /**
      * Fix url ampersand
