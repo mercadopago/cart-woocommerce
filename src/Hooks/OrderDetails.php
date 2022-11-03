@@ -8,32 +8,19 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class OrderDetailsHooks
+class OrderDetails
 {
     /**
-     * @var Translations
+     * @var OrderDetails
      */
-    public Translations $translations;
-
-    /**
-     * @var ?OrderDetailsHooks
-     */
-    private static ?OrderDetailsHooks $instance = null;
-
-    /**
-     * OrderDetailsHooks constructor
-     */
-    private function __construct()
-    {
-        $this->translations = Translations::getInstance();
-    }
+    private static $instance = null;
 
     /**
      * Get a OrderDetailsHook instance
      *
-     * @return OrderDetailsHooks
+     * @return OrderDetails
      */
-    public static function getInstance(): OrderDetailsHooks
+    public static function getInstance(): OrderDetails
     {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -50,7 +37,7 @@ class OrderDetailsHooks
      */
     public function addOrderMetaBoxActions(array $actions): array
     {
-        $actions['cancel_order'] = $this->translations->orderSettings['cancel_order'];
+        $actions['cancel_order'] = Translations::$orderSettings['cancel_order'];
         return $actions;
     }
 }

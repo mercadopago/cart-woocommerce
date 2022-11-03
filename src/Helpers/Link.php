@@ -11,17 +11,17 @@ final class Link
     /**
      * @var string
      */
-    private static string $mpUrl = 'https://www.mercadopago.com/';
+    private static $mpUrl = 'https://www.mercadopago.com/';
 
     /**
      * @var string
      */
-    private static string $mpUrlPrefix = 'https://www.mercadopago.';
+    private static $mpUrlPrefix = 'https://www.mercadopago.';
 
     /**
      * @var string
      */
-    private static string $mpDevelopersUrl = 'https://developers.mercadopago.com/';
+    private static $mpDevelopersUrl = 'https://developers.mercadopago.com/';
 
     /**
      * Get link settings from the country configured by default in Woocommerce.

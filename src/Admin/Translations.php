@@ -9,54 +9,54 @@ if (!defined('ABSPATH')) {
 class Translations
 {
     /**
-     * @var string
+     * @const
      */
-    public string $domain = 'woocommerce-mercadopago';
+    const DOMAIN = 'woocommerce-mercadopago';
 
     /**
      * @var array
      */
-    public array $notices = [];
+    public static $notices = [];
 
     /**
      * @var array
      */
-    public array $pluginSettings = [];
+    public static $pluginSettings = [];
 
     /**
      * @var array
      */
-    public array $headerSettings = [];
+    public static $headerSettings = [];
 
     /**
      * @var array
      */
-    public array $credentialsSettings = [];
+    public static $credentialsSettings = [];
 
     /**
      * @var array
      */
-    public array $storeSettings = [];
+    public static $storeSettings = [];
 
     /**
      * @var array
      */
-    public array $orderSettings = [];
+    public static $orderSettings = [];
 
     /**
      * @var array
      */
-    public array $gatewaysSettings = [];
+    public static $gatewaysSettings = [];
 
     /**
      * @var array
      */
-    public array $testModeSettings = [];
+    public static $testModeSettings = [];
 
     /**
-     * @var ?Translations
+     * @var Translations
      */
-    private static ?Translations $instance = null;
+    private static $instance = null;
 
     /**
      * Translations constructor
@@ -94,7 +94,7 @@ class Translations
      */
     private function translate(string $text): string
     {
-        return __($text, $this->domain);
+        return __($text, self::DOMAIN);
     }
 
     /**
@@ -109,7 +109,7 @@ class Translations
             '<a target="_blank" href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
         );
 
-        $this->notices = [
+        self::$notices = [
             'php_wrong_version'     => $this->translate('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.'),
             'missing_curl'          => $this->translate('Mercado Pago Error: PHP Extension CURL is not installed.'),
             'missing_gd_extensions' => $this->translate('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.'),
@@ -127,10 +127,22 @@ class Translations
      */
     private function setPluginSettingsTranslations(): void
     {
-        $this->pluginSettings = [
+        self::$pluginSettings = [
             'set_plugin'     => $this->translate('Set plugin'),
             'payment_method' => $this->translate('Payment method'),
             'plugin_manual'  => $this->translate('Plugin manual'),
+        ];
+    }
+
+    /**
+     * Set order settings translations
+     *
+     * @return void
+     */
+    private function setOrderSettingsTranslations(): void
+    {
+        self::$orderSettings = [
+            'cancel_order'  => $this->translate('Cancel order'),
         ];
     }
 
@@ -167,7 +179,7 @@ class Translations
             $this->translate('on our website for developers.')
         );
 
-        $this->headerSettings = [
+        self::$headerSettings = [
             'ssl'                      => $this->translate('SSL'),
             'curl'                     => $this->translate('Curl'),
             'gd_extension'             => $this->translate('GD Extensions'),
@@ -198,7 +210,7 @@ class Translations
             $this->translate('Copy and paste the credentials below.')
         );
 
-        $this->credentialsSettings = [
+        self::$credentialsSettings = [
             'public_key'                => $this->translate('Public Key'),
             'access_token'              => $this->translate('Access Token'),
             'title_credentials'         => $this->translate('1. Integrate your store with Mercado Pago'),
@@ -237,7 +249,7 @@ class Translations
             $this->translate('request it now')
         );
 
-        $this->storeSettings = [
+        self::$storeSettings = [
             'title_store'                  => $this->translate('2. Customize your business'),
             'title_info_store'             => $this->translate('Your store information'),
             'title_advanced_store'         => $this->translate('Advanced integration options (optional)'),
@@ -267,25 +279,13 @@ class Translations
     }
 
     /**
-     * Set order settings translations
-     *
-     * @return void
-     */
-    private function setOrderSettingsTranslations(): void
-    {
-        $this->orderSettings = [
-            'cancel_order'  => $this->translate('Cancel order'),
-        ];
-    }
-
-    /**
      * Set gateway settings translations
      *
      * @return void
      */
     private function setGatewaysSettingsTranslations(): void
     {
-        $this->gatewaysSettings = [
+        self::$gatewaysSettings = [
             'title_payments'    => $this->translate('3. Set payment methods'),
             'subtitle_payments' => $this->translate('To view more options, please select a payment method below'),
             'settings_payment'  => $this->translate('Settings'),
@@ -330,7 +330,7 @@ class Translations
             $this->translate('to test purchases')
         );
 
-        $this->testModeSettings = [
+        self::$testModeSettings = [
             'title_test_mode'         => $this->translate('4. Test your store before you sell'),
             'title_mode'              => $this->translate('Choose how you want to operate your store:'),
             'title_test'              => $this->translate('Test Mode'),

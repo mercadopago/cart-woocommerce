@@ -24,9 +24,9 @@ class Autoloader
      *
      * @param string $autoloader
      *
-     * @return mixed
+     * @return bool
      */
-    public static function loadAutoload(string $autoloader)
+    public static function loadAutoload(string $autoloader): bool
     {
         if (!is_readable($autoloader)) {
             self::missingAutoloadNotice($autoloader);

@@ -9,23 +9,16 @@ if (!defined('ABSPATH')) {
 class Gateway
 {
     /**
-     * @var ?GatewayHooks
+     * @var Gateway
      */
-    private static ?GatewayHooks $instance = null;
+    private static $instance = null;
 
     /**
-     * GatewayHooks constructor
-     */
-    private function __construct()
-    {
-    }
-
-    /**
-     * Get a GatewayHooks instance
+     * Get a Gateway Hooks instance
      *
-     * @return GatewayHooks
+     * @return Gateway
      */
-    public static function getInstance(): GatewayHooks
+    public static function getInstance(): Gateway
     {
         if (null === self::$instance) {
             self::$instance = new self();

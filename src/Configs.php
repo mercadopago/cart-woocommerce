@@ -26,97 +26,97 @@ class Configs
     /**
      * @var string
      */
-    protected string $credentialsPublicKeyProd;
+    protected $credentialsPublicKeyProd;
 
     /**
      * @var string
      */
-    protected string $credentialsPublicKeyTest;
+    protected $credentialsPublicKeyTest;
 
     /**
      * @var string
      */
-    protected string $credentialsAccessTokenProd;
+    protected $credentialsAccessTokenProd;
 
     /**
      * @var string
      */
-    protected string $credentialsAccessTokenTest;
+    protected $credentialsAccessTokenTest;
 
     /**
      * @var string
      */
-    protected string $checkoutCountry;
+    protected $checkoutCountry;
 
     /**
      * @var string
      */
-    protected string $storeId;
+    protected $storeId;
 
     /**
      * @var string
      */
-    protected string $storeName;
+    protected $storeName;
 
     /**
      * @var string
      */
-    protected string $storeCategory;
+    protected $storeCategory;
 
     /**
      * @var string
      */
-    protected string $integratorId;
+    protected $integratorId;
 
     /**
      * @var string
      */
-    protected string $debugMode;
+    protected $debugMode;
 
     /**
      * @var string
      */
-    protected string $customDomain;
+    protected $customDomain;
 
     /**
      * @var string
      */
-    protected string $checkboxCheckoutTestMode;
+    protected $checkboxCheckoutTestMode;
 
     /**
      * @var string
      */
-    protected string $checkboxCheckoutProductionMode;
+    protected $checkboxCheckoutProductionMode;
 
     /**
      * @var string
      */
-    protected string $woocommerceCountry;
+    protected $woocommerceCountry;
 
     /**
      * @var string
      */
-    protected string $homologValidate;
+    protected $homologValidate;
 
     /**
      * @var string
      */
-    protected string $applicationId;
+    protected $applicationId;
 
     /**
      * @var string
      */
-    protected string $siteId;
+    protected $siteId;
 
     /**
      * @var string
      */
-    protected string $clientId;
+    protected $clientId;
 
     /**
-     * @var ?Configs
+     * @var Configs
      */
-    public static ?Configs $instance = null;
+    public static $instance = null;
 
     /**
      * Configs constructor

@@ -22,14 +22,9 @@ class Settings
     protected $scripts;
 
     /**
-     * @var Translations
+     * @var Settings
      */
-    public Translations $translations;
-
-    /**
-     * @var ?Settings
-     */
-    private static ?Settings $instance = null;
+    private static $instance = null;
 
     /**
      * Settings constructor
@@ -37,7 +32,6 @@ class Settings
     private function __construct()
     {
         $this->scripts = Scripts::getInstance();
-        $this->translations = Translations::getInstance();
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -130,11 +124,11 @@ class Settings
      */
     public function mercadoPagoSubmenuPageCallback(): void
     {
-        $headerTranslations      = $this->translations->headerSettings;
-        $credentialsTranslations = $this->translations->credentialsSettings;
-        $storeTranslations       = $this->translations->storeSettings;
-        $gatewaysTranslations    = $this->translations->gatewaysSettings;
-        $testModeTranslations    = $this->translations->testModeSettings;
+        $headerTranslations      = Translations::$headerSettings;
+        $credentialsTranslations = Translations::$credentialsSettings;
+        $storeTranslations       = Translations::$storeSettings;
+        $gatewaysTranslations    = Translations::$gatewaysSettings;
+        $testModeTranslations    = Translations::$testModeSettings;
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }
@@ -155,23 +149,5 @@ class Settings
             'gd_ext'   => $hasGD,
             'curl_ext' => $hasCurl
         ]);
-    }
-
-    /**
-     * Set plugin configuration links
-     *
-     * @param array $links
-     *
-     * @return array
-     */
-    public function setPluginSettingsLink(array $links): array
-    {
-        $pluginLinks   = array(
-            '<a href="' . admin_url('admin.php?page=mercadopago-settings') . '">' . $this->translations->pluginSettings['set_plugin'] . '</a>',
-            '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout') . '">' . $this->translations->pluginSettings['payment_method'] . '</a>',
-            '<a target="_blank" href="' . Link::getLinks()['link_mp_developers'] . '">' . $this->translations->pluginSettings['plugin_manual'] . '</a>',
-        );
-
-        return array_merge($pluginLinks, $links);
     }
 }
