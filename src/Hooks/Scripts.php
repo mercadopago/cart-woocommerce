@@ -21,6 +21,11 @@ class Scripts
     const MELIDATA_SCRIPT_NAME = 'mercadopago_melidata';
 
     /**
+     * @const
+     */
+    const CARONTE_SCRIPT_NAME = 'wc_mercadopago';
+
+    /**
      * @var Scripts
      */
     private static $instance = null;
@@ -69,6 +74,28 @@ class Scripts
     public function registerMelidataBuyerScript(string $location): void
     {
         $this->registerMelidataScript('buyer', $location);
+    }
+
+    public function registerCaronteSellerScript(): void
+    {
+        $this->registerCaronteScript();
+    }
+
+    private function registerCaronteScript(): void
+    {
+        global $woocommerce;
+
+        $file      = Url::getPluginFileUrl('assets/js/caronte/caronte-client', '.js');
+        $variables = [
+            'site_id'               => 'MLA',
+            'plugin_version'        => MP_VERSION,
+            'platform_id'           => MP_PLATFORM_ID,
+            'platform_version'      => $woocommerce->version,
+            'public_key_element_id' => 'mp-public-key-prod',
+            'reference_element_id'  => 'reference'
+        ];
+
+        $this->registerScript(self::CARONTE_SCRIPT_NAME, $file, $variables);
     }
 
     private function registerMelidataScript(string $type, string $location): void

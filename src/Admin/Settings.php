@@ -12,6 +12,11 @@ if (!defined('ABSPATH')) {
 class Settings
 {
     /**
+     * @const
+     */
+    const PRIORITY_ON_MENU = 90;
+
+    /**
      * @var Scripts
      */
     protected $scripts;
@@ -40,20 +45,26 @@ class Settings
 
     public function loadMenu(): void
     {
-        add_action('admin_menu', array($this, 'registerMercadoPagoInWoocommerceMenu'), MP_PRIORITY_ON_MENU);
+        add_action('admin_menu', array($this, 'registerMercadoPagoInWoocommerceMenu'), self::PRIORITY_ON_MENU);
     }
 
     public function loadScriptsAndStyles(): void
     {
         if ($this->canLoadScriptsAndStyles()) {
+            $settingsFileName = 'assets/css/admin/mp-admin-settings';
+
             $this->scripts->registerAdminStyle(
                 'mercadopago_settings_admin_css',
-                Url::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
+                Url::getPluginFileUrl($settingsFileName, '.css')
             );
+
             $this->scripts->registerAdminScript(
-                'mercadopago_settings_javascript',
-                Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
+                'mercadopago_settings_admin_js',
+                Url::getPluginFileUrl($settingsFileName, '.js')
             );
+
+            $this->scripts->registerCaronteSellerScript();
+            $this->scripts->registerMelidataSellerScript();
         }
     }
 

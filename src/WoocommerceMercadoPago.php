@@ -40,9 +40,9 @@ class WoocommerceMercadoPago
     public static $mpMinPhp = '7.2';
 
     /**
-     * @var int
+     * @var string
      */
-    public static $priorityOnMenu = 90;
+    public static $platformId = 'bo2hnr2ic4p001kbgpt0';
 
     /**
      * @var Settings
@@ -151,7 +151,7 @@ class WoocommerceMercadoPago
     {
         $this->define('MP_MIN_PHP', self::$mpMinPhp);
         $this->define('MP_VERSION', self::$mpVersion);
-        $this->define('MP_PRIORITY_ON_MENU', self::$priorityOnMenu);
+        $this->define('MP_PLATFORM_ID', self::$platformId);
     }
 
     private function define($name, $value): void
