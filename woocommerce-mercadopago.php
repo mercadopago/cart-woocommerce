@@ -30,10 +30,6 @@ if (!Autoloader::init()) {
     return false;
 }
 
-if (!Packages::loadAutoloadPackages()) {
-    return false;
-}
-
 if (!Packages::init()) {
     return false;
 }

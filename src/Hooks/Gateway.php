@@ -9,15 +9,23 @@ if (!defined('ABSPATH')) {
 class Gateway
 {
     /**
-     * @var Gateway
+     * @var ?GatewayHooks
      */
-    private static $instance = null;
+    private static ?GatewayHooks $instance = null;
 
+    /**
+     * GatewayHooks constructor
+     */
     private function __construct()
     {
     }
 
-    public static function getInstance(): Gateway
+    /**
+     * Get a GatewayHooks instance
+     *
+     * @return GatewayHooks
+     */
+    public static function getInstance(): GatewayHooks
     {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -25,7 +33,14 @@ class Gateway
         return self::$instance;
     }
 
-    public function registerGateway($gateway): void
+    /**
+     * Register hooks
+     *
+     * @param string $gateway
+     *
+     * @return void
+     */
+    public function registerGateway(string $gateway): void
     {
         add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
             $methods[] = $gateway;
