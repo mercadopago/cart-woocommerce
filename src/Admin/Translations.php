@@ -9,55 +9,75 @@ if (!defined('ABSPATH')) {
 class Translations
 {
     /**
-     * @var Translations
-     */
-    private static $instance;
-
-    /**
      * @var string
      */
-    public static $domain = 'woocommerce-mercadopago';
+    public string $domain = 'woocommerce-mercadopago';
 
     /**
      * @var array
      */
-    public static $notices = [];
+    public array $notices = [];
 
     /**
      * @var array
      */
-    public static $headerSettings = [];
+    public array $pluginSettings = [];
 
     /**
      * @var array
      */
-    public static $credentialsSettings = [];
+    public array $headerSettings = [];
 
     /**
      * @var array
      */
-    public static $storeSettings = [];
+    public array $credentialsSettings = [];
 
     /**
      * @var array
      */
-    public static $gatewaysSettings = [];
+    public array $storeSettings = [];
 
     /**
      * @var array
      */
-    public static $testModeSettings = [];
+    public array $orderSettings = [];
 
+    /**
+     * @var array
+     */
+    public array $gatewaysSettings = [];
+
+    /**
+     * @var array
+     */
+    public array $testModeSettings = [];
+
+    /**
+     * @var ?Translations
+     */
+    private static ?Translations $instance = null;
+
+    /**
+     * Translations constructor
+     */
     public function __construct()
     {
         $this->setNoticesTranslations();
+        $this->setPluginSettingsTranslations();
         $this->setHeaderSettingsTranslations();
         $this->setCredentialsSettingsTranslations();
         $this->setStoreSettingsTranslations();
+        $this->setOrderSettingsTranslations();
         $this->setGatewaysSettingsTranslations();
         $this->setTestModeSettingsTranslations();
     }
 
+    /**
+     * Get a Translations instance
+     *
+     * @return Translations
+     */
     public static function getInstance(): Translations
     {
         if (null === self::$instance) {
@@ -66,11 +86,22 @@ class Translations
         return self::$instance;
     }
 
-    private function translate($text): string
+    /**
+     * Get translation
+     *
+     * @param string $text
+     * @return string
+     */
+    private function translate(string $text): string
     {
-        return __($text, self::$domain);
+        return __($text, $this->domain);
     }
 
+    /**
+     * Set notices translations
+     *
+     * @return void
+     */
     private function setNoticesTranslations(): void
     {
         $missWoocommerce = sprintf(
@@ -78,7 +109,7 @@ class Translations
             '<a target="_blank" href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
         );
 
-        self::$notices = [
+        $this->notices = [
             'php_wrong_version'     => $this->translate('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.'),
             'missing_curl'          => $this->translate('Mercado Pago Error: PHP Extension CURL is not installed.'),
             'missing_gd_extensions' => $this->translate('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.'),
@@ -89,6 +120,25 @@ class Translations
         ];
     }
 
+    /**
+     * Set plugin settings translations
+     *
+     * @return void
+     */
+    private function setPluginSettingsTranslations(): void
+    {
+        $this->pluginSettings = [
+            'set_plugin'     => $this->translate('Set plugin'),
+            'payment_method' => $this->translate('Payment method'),
+            'plugin_manual'  => $this->translate('Plugin manual'),
+        ];
+    }
+
+    /**
+     * Set headers settings translations
+     *
+     * @return void
+     */
     private function setHeaderSettingsTranslations(): void
     {
         $titleHeader = sprintf(
@@ -117,7 +167,7 @@ class Translations
             $this->translate('on our website for developers.')
         );
 
-        self::$headerSettings = [
+        $this->headerSettings = [
             'ssl'                      => $this->translate('SSL'),
             'curl'                     => $this->translate('Curl'),
             'gd_extension'             => $this->translate('GD Extensions'),
@@ -135,6 +185,11 @@ class Translations
         ];
     }
 
+    /**
+     * Set credentials settings translations
+     *
+     * @return void
+     */
     private function setCredentialsSettingsTranslations(): void
     {
         $subtitleCredentials = sprintf(
@@ -143,7 +198,7 @@ class Translations
             $this->translate('Copy and paste the credentials below.')
         );
 
-        self::$credentialsSettings = [
+        $this->credentialsSettings = [
             'public_key'                => $this->translate('Public Key'),
             'access_token'              => $this->translate('Access Token'),
             'title_credentials'         => $this->translate('1. Integrate your store with Mercado Pago'),
@@ -159,6 +214,11 @@ class Translations
         ];
     }
 
+    /**
+     * Set store settings translations
+     *
+     * @return void
+     */
     private function setStoreSettingsTranslations(): void
     {
         $helperUrl = sprintf(
@@ -177,7 +237,7 @@ class Translations
             $this->translate('request it now')
         );
 
-        self::$storeSettings = [
+        $this->storeSettings = [
             'title_store'                  => $this->translate('2. Customize your business'),
             'title_info_store'             => $this->translate('Your store information'),
             'title_advanced_store'         => $this->translate('Advanced integration options (optional)'),
@@ -206,9 +266,26 @@ class Translations
         ];
     }
 
-    public function setGatewaysSettingsTranslations(): void
+    /**
+     * Set order settings translations
+     *
+     * @return void
+     */
+    private function setOrderSettingsTranslations(): void
     {
-        self::$gatewaysSettings = [
+        $this->orderSettings = [
+            'cancel_order'  => $this->translate('Cancel order'),
+        ];
+    }
+
+    /**
+     * Set gateway settings translations
+     *
+     * @return void
+     */
+    private function setGatewaysSettingsTranslations(): void
+    {
+        $this->gatewaysSettings = [
             'title_payments'    => $this->translate('3. Set payment methods'),
             'subtitle_payments' => $this->translate('To view more options, please select a payment method below'),
             'settings_payment'  => $this->translate('Settings'),
@@ -216,7 +293,12 @@ class Translations
         ];
     }
 
-    public function setTestModeSettingsTranslations(): void
+    /**
+     * Set test mode settings translations
+     *
+     * @return void
+     */
+    private function setTestModeSettingsTranslations(): void
     {
         $testCredentialsHelper = sprintf(
             '%s, <a class="mp-settings-blue-text" id="mp-testmode-credentials-link" target="_blank" href="%s">%s</a> %s.',
@@ -248,7 +330,7 @@ class Translations
             $this->translate('to test purchases')
         );
 
-        self::$testModeSettings = [
+        $this->testModeSettings = [
             'title_test_mode'         => $this->translate('4. Test your store before you sell'),
             'title_mode'              => $this->translate('Choose how you want to operate your store:'),
             'title_test'              => $this->translate('Test Mode'),
