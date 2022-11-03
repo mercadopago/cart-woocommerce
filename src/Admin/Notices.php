@@ -17,6 +17,11 @@ class Notices
     protected $scripts;
 
     /**
+     * @var Translations
+     */
+    protected $translations;
+
+    /**
      * @var Notices
      */
     private static $instance = null;
@@ -27,8 +32,9 @@ class Notices
     private function __construct()
     {
         $this->scripts = Scripts::getInstance();
+        $this->translations = Translations::getInstance();
 
-        add_action('admin_enqueue_scripts', array($this, 'loadAdminNoticeCss'));
+        $this->loadAdminNoticeCss();
     }
 
     /**
@@ -124,7 +130,7 @@ class Notices
                 $isInstalled = false;
                 $currentUserCanInstallPlugins = current_user_can('install_plugins');
                 $minilogo = plugins_url('../assets/images/minilogo.png', plugin_dir_path(__FILE__));
-                $translations = Translations::$notices;
+                $translations = $this->translations->notices;
 
                 $activateLink = wp_nonce_url(
                     self_admin_url('plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=all'),

@@ -22,6 +22,11 @@ class Settings
     protected $scripts;
 
     /**
+     * @var Translations
+     */
+    protected $translations;
+
+    /**
      * @var Settings
      */
     private static $instance = null;
@@ -32,6 +37,7 @@ class Settings
     private function __construct()
     {
         $this->scripts = Scripts::getInstance();
+        $this->translations = Translations::getInstance();
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -129,11 +135,11 @@ class Settings
      */
     public function mercadoPagoSubmenuPageCallback(): void
     {
-        $headerTranslations      = Translations::$headerSettings;
-        $credentialsTranslations = Translations::$credentialsSettings;
-        $storeTranslations       = Translations::$storeSettings;
-        $gatewaysTranslations    = Translations::$gatewaysSettings;
-        $testModeTranslations    = Translations::$testModeSettings;
+        $headerTranslations      = $this->translations->headerSettings;
+        $credentialsTranslations = $this->translations->credentialsSettings;
+        $storeTranslations       = $this->translations->storeSettings;
+        $gatewaysTranslations    = $this->translations->gatewaysSettings;
+        $testModeTranslations    = $this->translations->testModeSettings;
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }

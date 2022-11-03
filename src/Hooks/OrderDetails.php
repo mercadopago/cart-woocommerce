@@ -11,9 +11,22 @@ if (!defined('ABSPATH')) {
 class OrderDetails
 {
     /**
+     * @var Translations
+     */
+    protected $translations;
+
+    /**
      * @var OrderDetails
      */
     private static $instance = null;
+
+    /**
+     * OrderDetails constructor
+     */
+    public function __construct()
+    {
+        $this->translations = Translations::getInstance();
+    }
 
     /**
      * Get OrderDetailsHook instance
@@ -37,7 +50,7 @@ class OrderDetails
      */
     public function addOrderMetaBoxActions(array $actions): array
     {
-        $actions['cancel_order'] = Translations::$orderSettings['cancel_order'];
+        $actions['cancel_order'] = $this->translations->orderSettings['cancel_order'];
         return $actions;
     }
 }
