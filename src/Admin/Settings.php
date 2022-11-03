@@ -51,19 +51,18 @@ class Settings
     public function loadScriptsAndStyles(): void
     {
         if ($this->canLoadScriptsAndStyles()) {
-            $settingsFileName = 'assets/css/admin/mp-admin-settings';
-
             $this->scripts->registerAdminStyle(
                 'mercadopago_settings_admin_css',
-                Url::getPluginFileUrl($settingsFileName, '.css')
+                Url::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
             );
 
             $this->scripts->registerAdminScript(
                 'mercadopago_settings_admin_js',
-                Url::getPluginFileUrl($settingsFileName, '.js')
+                Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
             );
 
-            $this->scripts->registerCaronteSellerScript();
+            $this->scripts->registerCaronteScript();
+            $this->scripts->registerNoticesScript();
             $this->scripts->registerMelidataSellerScript();
         }
     }

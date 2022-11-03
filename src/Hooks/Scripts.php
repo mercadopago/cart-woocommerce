@@ -26,6 +26,11 @@ class Scripts
     const CARONTE_SCRIPT_NAME = 'wc_mercadopago';
 
     /**
+     * @const
+     */
+    const NOTICES_SCRIPT_NAME = 'wc_mercadopago_notices';
+
+    /**
      * @var Scripts
      */
     private static $instance = null;
@@ -66,22 +71,24 @@ class Scripts
         });
     }
 
-    public function registerMelidataSellerScript(): void
+    public function registerNoticesScript(): void
     {
-        $this->registerMelidataScript('seller', '/settings');
+        global $woocommerce;
+
+        $file      = Url::getPluginFileUrl('assets/js/notices/notices-client', '.js');
+        $variables = [
+            'site_id'          => 'MLA',
+            'container'        => '#wpbody-content',
+            'public_key'       => '',
+            'plugin_version'   => MP_VERSION,
+            'platform_id'      => MP_PLATFORM_ID,
+            'platform_version' => $woocommerce->version,
+        ];
+
+        $this->registerScript(self::NOTICES_SCRIPT_NAME, $file, $variables);
     }
 
-    public function registerMelidataBuyerScript(string $location): void
-    {
-        $this->registerMelidataScript('buyer', $location);
-    }
-
-    public function registerCaronteSellerScript(): void
-    {
-        $this->registerCaronteScript();
-    }
-
-    private function registerCaronteScript(): void
+    public function registerCaronteScript(): void
     {
         global $woocommerce;
 
@@ -96,6 +103,16 @@ class Scripts
         ];
 
         $this->registerScript(self::CARONTE_SCRIPT_NAME, $file, $variables);
+    }
+
+    public function registerMelidataSellerScript(): void
+    {
+        $this->registerMelidataScript('seller', '/settings');
+    }
+
+    public function registerMelidataBuyerScript(string $location): void
+    {
+        $this->registerMelidataScript('buyer', $location);
     }
 
     private function registerMelidataScript(string $type, string $location): void
