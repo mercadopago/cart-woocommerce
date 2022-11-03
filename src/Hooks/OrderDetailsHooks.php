@@ -10,15 +10,29 @@ if (!defined('ABSPATH')) {
 
 class OrderDetailsHooks
 {
-    public \WC_Order $order;
+    /**
+     * @var Translations
+     */
+    public Translations $translations;
 
+    /**
+     * @var ?OrderDetailsHooks
+     */
     private static ?OrderDetailsHooks $instance = null;
 
+    /**
+     * OrderDetailsHooks constructor
+     */
     private function __construct()
     {
-        $this->statusMetabox();
+        $this->translations = Translations::getInstance();
     }
 
+    /**
+     * Get a OrderDetailsHook instance
+     *
+     * @return OrderDetailsHooks
+     */
     public static function getInstance(): OrderDetailsHooks
     {
         if (null === self::$instance) {
@@ -27,15 +41,16 @@ class OrderDetailsHooks
         return self::$instance;
     }
 
-    public function statusMetaBox(): void
-    {
-        add_action('add_meta_boxes_shop_order', 'paymentStatusMetaBox');
-    }
-
-
+    /**
+     * Add actions to meta box
+     *
+     * @param array $actions
+     *
+     * @return array
+     */
     public function addOrderMetaBoxActions(array $actions): array
     {
-        $actions['cancel_order'] = Translations::$orderSettings['cancel_order'];
+        $actions['cancel_order'] = $this->translations->orderSettings['cancel_order'];
         return $actions;
     }
 }

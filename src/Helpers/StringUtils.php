@@ -5,13 +5,10 @@ namespace MercadoPago\Woocommerce\Helpers;
 if (!defined('ABSPATH')) {
     exit;
 }
-/**
- * A class of utilities for dealing with strings.
- */
+
 final class StringUtils
 {
     /**
-     *
      * Fix url ampersand
      * Fix to URL Problem: #038; replaces & and breaks the navigation
      *

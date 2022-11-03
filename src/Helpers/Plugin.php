@@ -5,13 +5,10 @@ namespace MercadoPago\Woocommerce\Helpers;
 if (!defined('ABSPATH')) {
     exit;
 }
-/**
- * A class of utilities for dealing with plugins.
- */
-final class PluginUtils
+
+final class Plugin
 {
     /**
-     *
      * Get Woocommerce default country configured
      *
      * @return string
@@ -27,7 +24,6 @@ final class PluginUtils
     }
 
     /**
-     *
      * Is Mobile function
      *
      * @return bool

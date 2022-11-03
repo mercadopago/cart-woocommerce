@@ -5,16 +5,25 @@ namespace MercadoPago\Woocommerce\Helpers;
 if (!defined('ABSPATH')) {
     exit;
 }
-/**
- * A class of utilities for dealing with links.
- */
-final class LinkUtils
+
+final class Link
 {
-    private static string $mpPrefix = 'https://www.mercadopago.';
-    private static string $mpGenericPrefix = 'https://www.mercadopago.com/';
+    /**
+     * @var string
+     */
+    private static string $mpUrl = 'https://www.mercadopago.com/';
 
     /**
-     *
+     * @var string
+     */
+    private static string $mpUrlPrefix = 'https://www.mercadopago.';
+
+    /**
+     * @var string
+     */
+    private static string $mpDevelopersUrl = 'https://developers.mercadopago.com/';
+
+    /**
      * Get link settings from the country configured by default in Woocommerce.
      *
      * @return array
@@ -59,12 +68,11 @@ final class LinkUtils
             ),
         );
 
-        $suffixCountry = strtoupper( PluginUtils::getWoocommerceDefaultCountry() );
+        $suffixCountry = strtoupper( Plugin::getWoocommerceDefaultCountry() );
         return array_key_exists( $suffixCountry, $country ) ? $country[ $suffixCountry ] : $country['AR'];
     }
 
     /**
-     *
      * Get all links
      *
      * @return array
@@ -79,7 +87,6 @@ final class LinkUtils
     }
 
     /**
-     *
      * Get documentation links on Mercado Pago Devsite page
      *
      * @param array $linkSettings
@@ -87,7 +94,7 @@ final class LinkUtils
      */
     public static function getDocumentationLinks(array $linkSettings): array
     {
-        $baseLink = self::$mpPrefix . $linkSettings['suffix_url'] . 'developers/' . $linkSettings['translate'];
+        $baseLink = self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'developers/' . $linkSettings['translate'];
         return array(
             'link_doc_integration_config' => $baseLink . '/docs/woocommerce/integration-configuration',
             'link_doc_integration_test'   => $baseLink . '/docs/woocommerce/integration-test',
@@ -99,7 +106,6 @@ final class LinkUtils
     }
 
     /**
-     *
      * Get documentation links on Mercado Pago Panel page
      *
      * @param array $linkSettings
@@ -108,9 +114,10 @@ final class LinkUtils
     public static function getMercadoPagoLinks(array $linkSettings): array
     {
         return array(
-            'link_mp_home'        => self::$mpPrefix . $linkSettings['suffix_url'] . 'home',
-            'link_mp_costs'       => self::$mpPrefix . $linkSettings['suffix_url'] . 'costs-section',
-            'link_mp_credentials' => self::$mpGenericPrefix . 'developers/panel/credentials',
+            'link_mp_home'        => self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'home',
+            'link_mp_costs'       => self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'costs-section',
+            'link_mp_credentials' => self::$mpUrl . 'developers/panel/credentials',
+            'link_mp_developers'  => self::$mpDevelopersUrl,
         );
     }
 }

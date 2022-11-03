@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Module;
 
-class Options
+class Configs
 {
     const CREDENTIALS_PUBLIC_KEY_PROD = '_mp_public_key_prod';
     const CREDENTIALS_PUBLIC_KEY_TEST = '_mp_public_key_test';
@@ -23,27 +23,104 @@ class Options
     const SITE_ID = '_site_id_v1';
     const CLIENT_ID = '_mp_client_id';
 
+    /**
+     * @var string
+     */
     protected string $credentialsPublicKeyProd;
+
+    /**
+     * @var string
+     */
     protected string $credentialsPublicKeyTest;
+
+    /**
+     * @var string
+     */
     protected string $credentialsAccessTokenProd;
+
+    /**
+     * @var string
+     */
     protected string $credentialsAccessTokenTest;
+
+    /**
+     * @var string
+     */
     protected string $checkoutCountry;
+
+    /**
+     * @var string
+     */
     protected string $storeId;
+
+    /**
+     * @var string
+     */
     protected string $storeName;
+
+    /**
+     * @var string
+     */
     protected string $storeCategory;
+
+    /**
+     * @var string
+     */
     protected string $integratorId;
+
+    /**
+     * @var string
+     */
     protected string $debugMode;
+
+    /**
+     * @var string
+     */
     protected string $customDomain;
+
+    /**
+     * @var string
+     */
     protected string $checkboxCheckoutTestMode;
+
+    /**
+     * @var string
+     */
     protected string $checkboxCheckoutProductionMode;
+
+    /**
+     * @var string
+     */
     protected string $woocommerceCountry;
+
+    /**
+     * @var string
+     */
     protected string $homologValidate;
+
+    /**
+     * @var string
+     */
     protected string $applicationId;
+
+    /**
+     * @var string
+     */
     protected string $siteId;
+
+    /**
+     * @var string
+     */
     protected string $clientId;
 
-    public static Options $instance;
+    /**
+     * @var ?Configs
+     */
+    public static ?Configs $instance = null;
 
+    /**
+     * Configs constructor
+     */
     public function __construct()
     {
         $this->credentialsPublicKeyProd = get_option(self::CREDENTIALS_PUBLIC_KEY_PROD);
@@ -66,7 +143,12 @@ class Options
         $this->clientId = get_option(self::CLIENT_ID);
     }
 
-    public static function getInstance(): Options
+    /**
+     * Get a config instance
+     *
+     * @return Configs
+     */
+    public static function getInstance(): Configs
     {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -74,7 +156,14 @@ class Options
         return self::$instance;
     }
 
-    public function __get($name)
+    /**
+     * Get attribute value
+     *
+     * @param string $name
+     *
+     * @return mixed
+     */
+    public function __get(string $name)
     {
         return $this->{$name};
     }
