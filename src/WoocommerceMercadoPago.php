@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
+use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Hooks\Gateway;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Hooks\OrderDetails;
@@ -65,6 +66,9 @@ class WoocommerceMercadoPago
      */
     private static $instance = null;
 
+    /**
+     * WoocommerceMercadoPago constructor
+     */
     private function __construct()
     {
         $this->defineConstants();
@@ -73,7 +77,7 @@ class WoocommerceMercadoPago
     }
 
     /**
-     * Get a WoocommerceMercadoPago instance
+     * Get WoocommerceMercadoPago instance
      *
      * @return WoocommerceMercadoPago
      */
@@ -101,7 +105,7 @@ class WoocommerceMercadoPago
     }
 
     /**
-     * Register hooks call
+     * Register hooks
      *
      * @return void
      */
@@ -116,7 +120,7 @@ class WoocommerceMercadoPago
      *
      * @return void
      */
-    public function init(): void
+    public function initPlugin(): void
     {
         if (version_compare(PHP_VERSION, self::$mpMinPhp, '<')) {
             $this->verifyPhpVersionNotice();
@@ -139,6 +143,11 @@ class WoocommerceMercadoPago
         $this->setDependencies();
     }
 
+    /**
+     * Set plugin dependencies
+     *
+     * @return void
+     */
     public function setDependencies(): void
     {
         $this->notices      = Notices::getInstance();
@@ -161,7 +170,7 @@ class WoocommerceMercadoPago
         $pluginLinks = array(
             '<a href="' . admin_url('admin.php?page=mercadopago-settings') . '">' . Translations::$pluginSettings['set_plugin'] . '</a>',
             '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout') . '">' . Translations::$pluginSettings['payment_method'] . '</a>',
-            '<a target="_blank" href="' . Link::getLinks()['link_mp_developers'] . '">' . Translations::$pluginSettings['plugin_manual'] . '</a>',
+            '<a target="_blank" href="' . Links::getLinks()['link_mp_developers'] . '">' . Translations::$pluginSettings['plugin_manual'] . '</a>',
         );
 
         return array_merge($pluginLinks, $links);
@@ -197,6 +206,11 @@ class WoocommerceMercadoPago
         $this->notices->adminNoticeWarning(Translations::$notices['missing_gd_extensions'], false);
     }
 
+    /**
+     * Define plugin constants
+     *
+     * @return void
+     */
     private function defineConstants(): void
     {
         $this->define('MP_MIN_PHP', self::$mpMinPhp);
@@ -204,6 +218,14 @@ class WoocommerceMercadoPago
         $this->define('MP_PLATFORM_ID', self::$platformId);
     }
 
+    /**
+     * Define constants
+     *
+     * @param $name
+     * @param $value
+     *
+     * @return void
+     */
     private function define($name, $value): void
     {
         if (!defined($name)) {

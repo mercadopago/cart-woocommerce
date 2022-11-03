@@ -18,7 +18,7 @@ final class StringUtils
      */
     public static function fixUrlAmpersand(string $link): string
     {
-        return str_replace( '\/', '/', str_replace( '&#038;', '&', $link ) );
+        return str_replace('\/', '/', str_replace('&#038;', '&', $link));
     }
 
     /**

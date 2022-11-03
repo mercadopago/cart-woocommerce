@@ -14,7 +14,7 @@ class Gateway
     private static $instance = null;
 
     /**
-     * Get a Gateway Hooks instance
+     * Get Gateway Hooks instance
      *
      * @return Gateway
      */
@@ -27,7 +27,7 @@ class Gateway
     }
 
     /**
-     * Register hooks
+     * Register gateway on Woocommerce
      *
      * @param string $gateway
      *

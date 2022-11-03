@@ -35,6 +35,11 @@ class Scripts
      */
     private static $instance = null;
 
+    /**
+     * Get Scripts instance
+     *
+     * @return Scripts
+     */
     public static function getInstance(): Scripts
     {
         if (null === self::$instance) {
@@ -43,6 +48,14 @@ class Scripts
         return self::$instance;
     }
 
+    /**
+     * Register styles on admin
+     *
+     * @param string $name
+     * @param string $file
+     *
+     * @return void
+     */
     public function registerAdminStyle(string $name, string $file): void
     {
         add_action('admin_enqueue_scripts', function () use ($name, $file) {
@@ -50,6 +63,15 @@ class Scripts
         });
     }
 
+    /**
+     * Register scripts on admin
+     *
+     * @param string $name
+     * @param string $file
+     * @param array $variables
+     *
+     * @return void
+     */
     public function registerAdminScript(string $name, string $file, array $variables = []): void
     {
         add_action('admin_enqueue_scripts', function () use ($name, $file, $variables) {
@@ -57,6 +79,14 @@ class Scripts
         });
     }
 
+    /**
+     * Register styles on store
+     *
+     * @param string $name
+     * @param string $file
+     *
+     * @return void
+     */
     public function registerStoreStyle(string $name, string $file): void
     {
         add_action('wp_enqueue_scripts', function () use ($name, $file) {
@@ -64,6 +94,15 @@ class Scripts
         });
     }
 
+    /**
+     * Register scripts on store
+     *
+     * @param string $name
+     * @param string $file
+     * @param array $variables
+     *
+     * @return void
+     */
     public function registerStoreScript(string $name, string $file, array $variables = []): void
     {
         add_action('wp_enqueue_scripts', function () use ($name, $file, $variables) {
@@ -71,6 +110,11 @@ class Scripts
         });
     }
 
+    /**
+     * Register notices script on admin
+     *
+     * @return void
+     */
     public function registerNoticesAdminScript(): void
     {
         global $woocommerce;
@@ -88,6 +132,11 @@ class Scripts
         $this->registerAdminScript(self::NOTICES_SCRIPT_NAME, $file, $variables);
     }
 
+    /**
+     * Register caronte script on admin
+     *
+     * @return void
+     */
     public function registerCaronteAdminScript(): void
     {
         global $woocommerce;
@@ -105,16 +154,36 @@ class Scripts
         $this->registerAdminScript(self::CARONTE_SCRIPT_NAME, $file, $variables);
     }
 
+    /**
+     * Register melidata scripts on admin
+     *
+     * @return void
+     */
     public function registerMelidataAdminScript(): void
     {
         $this->registerMelidataScript('seller', '/settings');
     }
 
+    /**
+     * Register melidata script on store
+     *
+     * @param string $location
+     *
+     * @return void
+     */
     public function registerMelidataStoreScript(string $location): void
     {
         $this->registerMelidataScript('buyer', $location);
     }
 
+    /**
+     * Register melidata scripts
+     *
+     * @param string $type
+     * @param string $location
+     *
+     * @return void
+     */
     private function registerMelidataScript(string $type, string $location): void
     {
         global $woocommerce;
@@ -136,12 +205,29 @@ class Scripts
         $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
     }
 
+    /**
+     * Register styles
+     *
+     * @param string $name
+     * @param string $file
+     *
+     * @return void
+     */
     private function registerStyle(string $name, string $file): void
     {
         wp_register_style($name, $file, false, MP_VERSION);
         wp_enqueue_style($name);
     }
 
+    /**
+     * Register scripts
+     *
+     * @param string $name
+     * @param string $file
+     * @param array $variables
+     *
+     * @return void
+     */
     private function registerScript(string $name, string $file, array $variables = []): void
     {
         wp_enqueue_script($name, $file, array(), MP_VERSION, true);

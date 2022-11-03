@@ -39,7 +39,7 @@ class Settings
     }
 
     /**
-     * Get a Settings instance
+     * Get Settings instance
      *
      * @return Settings
      */
@@ -86,7 +86,7 @@ class Settings
     }
 
     /**
-     * Check if scripts ans styles can be loaded
+     * Check if scripts and styles can be loaded
      *
      * @return bool
      */
@@ -95,6 +95,11 @@ class Settings
         return is_admin() && (Url::validatePage('mercadopago-settings') || Url::validateSection('woo-mercado-pago'));
     }
 
+    /**
+     * Register ajax endpoints
+     *
+     * @return void
+     */
     public function registerAjaxEndpoints(): void
     {
         add_action('wp_ajax_mp_get_requirements', array($this, 'mercadopagoValidateRequirements'));
@@ -118,7 +123,7 @@ class Settings
     }
 
     /**
-     * Show submenu page
+     * Show plugin configuration page
      *
      * @return void
      */

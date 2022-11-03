@@ -16,7 +16,7 @@ class OrderDetails
     private static $instance = null;
 
     /**
-     * Get a OrderDetailsHook instance
+     * Get OrderDetailsHook instance
      *
      * @return OrderDetails
      */

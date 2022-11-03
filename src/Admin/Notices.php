@@ -32,7 +32,7 @@ class Notices
     }
 
     /**
-     * Get a Notice instance
+     * Get Notice instance
      *
      * @return Notices
      */

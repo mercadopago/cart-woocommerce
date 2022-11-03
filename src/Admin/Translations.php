@@ -74,7 +74,7 @@ class Translations
     }
 
     /**
-     * Get a Translations instance
+     * Get Translations instance
      *
      * @return Translations
      */
