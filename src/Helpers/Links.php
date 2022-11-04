@@ -6,22 +6,22 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Link
+final class Links
 {
     /**
      * @var string
      */
-    private static string $mpUrl = 'https://www.mercadopago.com/';
+    private static $mpUrl = 'https://www.mercadopago.com/';
 
     /**
      * @var string
      */
-    private static string $mpUrlPrefix = 'https://www.mercadopago.';
+    private static $mpUrlPrefix = 'https://www.mercadopago.';
 
     /**
      * @var string
      */
-    private static string $mpDevelopersUrl = 'https://developers.mercadopago.com/';
+    private static $mpDevelopersUrl = 'https://developers.mercadopago.com/';
 
     /**
      * Get link settings from the country configured by default in Woocommerce.
@@ -68,8 +68,9 @@ final class Link
             ),
         );
 
-        $suffixCountry = strtoupper( Plugin::getWoocommerceDefaultCountry() );
-        return array_key_exists( $suffixCountry, $country ) ? $country[ $suffixCountry ] : $country['AR'];
+        $suffixCountry = strtoupper(Plugin::getWoocommerceDefaultCountry());
+
+        return array_key_exists($suffixCountry, $country) ? $country[ $suffixCountry ] : $country['AR'];
     }
 
     /**
@@ -90,11 +91,13 @@ final class Link
      * Get documentation links on Mercado Pago Devsite page
      *
      * @param array $linkSettings
+     *
      * @return array
      */
     public static function getDocumentationLinks(array $linkSettings): array
     {
         $baseLink = self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'developers/' . $linkSettings['translate'];
+
         return array(
             'link_doc_integration_config' => $baseLink . '/docs/woocommerce/integration-configuration',
             'link_doc_integration_test'   => $baseLink . '/docs/woocommerce/integration-test',
@@ -109,6 +112,7 @@ final class Link
      * Get documentation links on Mercado Pago Panel page
      *
      * @param array $linkSettings
+     *
      * @return array
      */
     public static function getMercadoPagoLinks(array $linkSettings): array

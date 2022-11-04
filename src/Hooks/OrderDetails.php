@@ -8,32 +8,32 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class OrderDetailsHooks
+class OrderDetails
 {
     /**
      * @var Translations
      */
-    public Translations $translations;
+    protected $translations;
 
     /**
-     * @var ?OrderDetailsHooks
+     * @var OrderDetails
      */
-    private static ?OrderDetailsHooks $instance = null;
+    private static $instance = null;
 
     /**
-     * OrderDetailsHooks constructor
+     * OrderDetails constructor
      */
-    private function __construct()
+    public function __construct()
     {
         $this->translations = Translations::getInstance();
     }
 
     /**
-     * Get a OrderDetailsHook instance
+     * Get OrderDetailsHook instance
      *
-     * @return OrderDetailsHooks
+     * @return OrderDetails
      */
-    public static function getInstance(): OrderDetailsHooks
+    public static function getInstance(): OrderDetails
     {
         if (null === self::$instance) {
             self::$instance = new self();

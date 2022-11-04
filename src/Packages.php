@@ -11,7 +11,7 @@ class Packages
     /**
      * @var array
      */
-    protected static array $packages = array(
+    protected static $packages = array(
         'sdk'
     );
 

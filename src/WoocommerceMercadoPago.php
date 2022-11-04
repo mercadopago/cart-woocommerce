@@ -5,8 +5,10 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
-use MercadoPago\Woocommerce\Hooks\GatewayHooks;
-use MercadoPago\Woocommerce\Hooks\OrderDetailsHooks;
+use MercadoPago\Woocommerce\Helpers\Links;
+use MercadoPago\Woocommerce\Hooks\Gateway;
+use MercadoPago\Woocommerce\Hooks\OrderDetails;
+use MercadoPago\Woocommerce\Hooks\Scripts;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -14,58 +16,68 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    const MP_MIN_PHP = '7.2';
-    const MP_VERSION = '8.0.0';
-    const MP_PRIORITY_ON_MENU = 90;
-    const WC_MERCADOPAGO_BASENAME = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
+    /**
+     * @var string
+     */
+    public static $mpVersion = '8.0.0';
+
+    /**
+     * @var string
+     */
+    public static $mpMinPhp = '7.2';
+
+    /**
+     * @var string
+     */
+    public static $platformId = 'bo2hnr2ic4p001kbgpt0';
 
     /**
      * @var Notices
      */
-    public Notices $notices;
+    public $notices;
 
     /**
-     * @var GatewayHooks
+     * @var Gateway
      */
-    public GatewayHooks $gatewayHooks;
+    public $gateway;
+
+    /**
+     * @var Scripts
+     */
+    public $scripts;
+
+    /**
+     * @var OrderDetails
+     */
+    public $orderDetails;
 
     /**
      * @var Settings
      */
-    public Settings $settings;
+    protected $settings;
 
     /**
      * @var Translations
      */
-    public Translations $translations;
+    protected $translations;
 
     /**
-     * @var OrderDetailsHooks
+     * @var WoocommerceMercadoPago
      */
-    public OrderDetailsHooks $orderDetailsHooks;
-
-    /**
-     * @var ?WoocommerceMercadoPago
-     */
-    private static ?WoocommerceMercadoPago $instance = null;
+    private static $instance = null;
 
     /**
      * WoocommerceMercadoPago constructor
      */
     private function __construct()
     {
-        $this->notices           = Notices::getInstance();
-        $this->settings          = Settings::getInstance();
-        $this->translations      = Translations::getInstance();
-        $this->gatewayHooks      = GatewayHooks::getInstance();
-        $this->orderDetailsHooks = OrderDetailsHooks::getInstance();
-
+        $this->defineConstants();
         $this->loadPluginTextDomain();
         $this->registerHooks();
     }
 
     /**
-     * Get a WoocommerceMercadoPago instance
+     * Get WoocommerceMercadoPago instance
      *
      * @return WoocommerceMercadoPago
      */
@@ -84,10 +96,8 @@ class WoocommerceMercadoPago
      */
     public function loadPluginTextDomain(): void
     {
-        $textDomain = 'woocommerce-mercadopago';
-
-        $locale = apply_filters('plugin_locale', get_locale(), $textDomain);
-
+        $textDomain           = 'woocommerce-mercadopago';
+        $locale               = apply_filters('plugin_locale', get_locale(), $textDomain);
         $originalLanguageFile = dirname(__FILE__) . '/../i18n/languages/' . $locale . '.mo';
 
         unload_textdomain($textDomain);
@@ -95,42 +105,75 @@ class WoocommerceMercadoPago
     }
 
     /**
-     * Register hooks call
+     * Register hooks
      *
      * @return void
      */
     public function registerHooks(): void
     {
-        add_filter('plugin_action_links_' . self::WC_MERCADOPAGO_BASENAME, array($this->settings, 'setPluginSettingsLink'));
+        add_filter('plugin_action_links_woocommerce-plugins-enablers/woocommerce-mercadopago.php', array($this, 'setPluginSettingsLink'));
         add_action('plugins_loaded', array($this, 'init'));
     }
 
     /**
-     * Init WoocommerceMercadoPago
+     * Init plugin
      *
      * @return void
      */
     public function init(): void
     {
-        if (version_compare(PHP_VERSION, self::MP_MIN_PHP, '<')) {
-            $this->missingPhpVersionNotice();
+        $this->setProperties();
+
+        if (version_compare(PHP_VERSION, self::$mpMinPhp, '<')) {
+            $this->verifyPhpVersionNotice();
             return;
         }
 
         if (!in_array('curl', get_loaded_extensions(), true)) {
-            $this->missingCurlNotice();
+            $this->verifyCurlNotice();
             return;
         }
 
         if (!in_array('gd', get_loaded_extensions(), true)) {
-            $this->missingGdNotice();
+            $this->verifyGdNotice();
         }
 
-        if (class_exists('WC_Payment_Gateway')) {
-            add_action( 'woocommerce_order_actions', array( $this->orderDetailsHooks, 'addOrderMetaBoxActions' ) );
-        } else {
+        if (!class_exists('WC_Payment_Gateway')) {
             $this->notices->adminNoticeMissWoocoommerce();
         }
+    }
+
+    /**
+     * Set plugin properties
+     *
+     * @return void
+     */
+    public function setProperties(): void
+    {
+        $this->translations = Translations::getInstance();
+        $this->scripts      = Scripts::getInstance();
+        $this->notices      = Notices::getInstance();
+        $this->gateway      = Gateway::getInstance();
+        $this->orderDetails = OrderDetails::getInstance();
+        $this->settings     = Settings::getInstance();
+    }
+
+    /**
+     * Set plugin configuration links
+     *
+     * @param array $links
+     *
+     * @return array
+     */
+    public function setPluginSettingsLink(array $links): array
+    {
+        $pluginLinks = array(
+            '<a href="' . admin_url('admin.php?page=mercadopago-settings') . '">' . $this->translations->pluginSettings['set_plugin'] . '</a>',
+            '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout') . '">' . $this->translations->pluginSettings['payment_method'] . '</a>',
+            '<a target="_blank" href="' . Links::getLinks()['link_mp_developers'] . '">' . $this->translations->pluginSettings['plugin_manual'] . '</a>',
+        );
+
+        return array_merge($pluginLinks, $links);
     }
 
     /**
@@ -138,7 +181,7 @@ class WoocommerceMercadoPago
      *
      * @return void
      */
-    public function missingPhpVersionNotice(): void
+    public function verifyPhpVersionNotice(): void
     {
         $this->notices->adminNoticeError($this->translations->notices['php_wrong_version'], false);
     }
@@ -148,7 +191,7 @@ class WoocommerceMercadoPago
      *
      * @return void
      */
-    public function missingCurlNotice(): void
+    public function verifyCurlNotice(): void
     {
         $this->notices->adminNoticeError($this->translations->notices['missing_curl'], false);
     }
@@ -158,8 +201,35 @@ class WoocommerceMercadoPago
      *
      * @return void
      */
-    public function missingGdNotice(): void
+    public function verifyGdNotice(): void
     {
         $this->notices->adminNoticeWarning($this->translations->notices['missing_gd_extensions'], false);
+    }
+
+    /**
+     * Define plugin constants
+     *
+     * @return void
+     */
+    private function defineConstants(): void
+    {
+        $this->define('MP_MIN_PHP', self::$mpMinPhp);
+        $this->define('MP_VERSION', self::$mpVersion);
+        $this->define('MP_PLATFORM_ID', self::$platformId);
+    }
+
+    /**
+     * Define constants
+     *
+     * @param $name
+     * @param $value
+     *
+     * @return void
+     */
+    private function define($name, $value): void
+    {
+        if (!defined($name)) {
+            define($name, $value);
+        }
     }
 }

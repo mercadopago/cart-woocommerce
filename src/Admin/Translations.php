@@ -9,54 +9,54 @@ if (!defined('ABSPATH')) {
 class Translations
 {
     /**
-     * @var string
+     * @const
      */
-    public string $domain = 'woocommerce-mercadopago';
+    const DOMAIN = 'woocommerce-mercadopago';
 
     /**
      * @var array
      */
-    public array $notices = [];
+    public $notices = [];
 
     /**
      * @var array
      */
-    public array $pluginSettings = [];
+    public $pluginSettings = [];
 
     /**
      * @var array
      */
-    public array $headerSettings = [];
+    public $headerSettings = [];
 
     /**
      * @var array
      */
-    public array $credentialsSettings = [];
+    public $credentialsSettings = [];
 
     /**
      * @var array
      */
-    public array $storeSettings = [];
+    public $storeSettings = [];
 
     /**
      * @var array
      */
-    public array $orderSettings = [];
+    public $orderSettings = [];
 
     /**
      * @var array
      */
-    public array $gatewaysSettings = [];
+    public $gatewaysSettings = [];
 
     /**
      * @var array
      */
-    public array $testModeSettings = [];
+    public $testModeSettings = [];
 
     /**
-     * @var ?Translations
+     * @var Translations
      */
-    private static ?Translations $instance = null;
+    private static $instance = null;
 
     /**
      * Translations constructor
@@ -74,7 +74,7 @@ class Translations
     }
 
     /**
-     * Get a Translations instance
+     * Get Translations instance
      *
      * @return Translations
      */
@@ -94,7 +94,7 @@ class Translations
      */
     private function translate(string $text): string
     {
-        return __($text, $this->domain);
+        return __($text, self::DOMAIN);
     }
 
     /**
@@ -131,6 +131,18 @@ class Translations
             'set_plugin'     => $this->translate('Set plugin'),
             'payment_method' => $this->translate('Payment method'),
             'plugin_manual'  => $this->translate('Plugin manual'),
+        ];
+    }
+
+    /**
+     * Set order settings translations
+     *
+     * @return void
+     */
+    private function setOrderSettingsTranslations(): void
+    {
+        $this->orderSettings = [
+            'cancel_order'  => $this->translate('Cancel order'),
         ];
     }
 
@@ -263,18 +275,6 @@ class Translations
             'helper_integrator_link'       => $this->translate('request it now.'),
             'helper_url'                   => $helperUrl,
             'helper_integrator'            => $helperIntegrator,
-        ];
-    }
-
-    /**
-     * Set order settings translations
-     *
-     * @return void
-     */
-    private function setOrderSettingsTranslations(): void
-    {
-        $this->orderSettings = [
-            'cancel_order'  => $this->translate('Cancel order'),
         ];
     }
 

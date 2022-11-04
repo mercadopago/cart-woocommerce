@@ -73,53 +73,53 @@ final class Url
      * Validate page
      *
      * @param string $expected_page
-     * @param $current_page
+     * @param string|null $current_page
      * @param bool $allow_partial_match
      *
      * @return bool
      */
-    public static function validatePage(string $expected_page, $current_page = null, bool $allow_partial_match = false): bool
+    public static function validatePage(string $expected_page, string $current_page = null, bool $allow_partial_match = false): bool
     {
         if (!$current_page) {
             $current_page = self::getCurrentPage();
         }
 
-        return StringUtils::compareStrings($expected_page, $current_page, $allow_partial_match);
+        return Strings::compareStrings($expected_page, $current_page, $allow_partial_match);
     }
 
     /**
      * Validate section
      *
      * @param string $expected_section
-     * @param $current_section
+     * @param string|null $current_section
      * @param bool $allow_partial_match
      *
      * @return bool
      */
-    public static function validateSection(string $expected_section, $current_section = null, bool $allow_partial_match = true): bool
+    public static function validateSection(string $expected_section, string $current_section = null, bool $allow_partial_match = true): bool
     {
         if (!$current_section) {
             $current_section = self::getCurrentSection();
         }
 
-        return StringUtils::compareStrings($expected_section, $current_section, $allow_partial_match);
+        return Strings::compareStrings($expected_section, $current_section, $allow_partial_match);
     }
 
     /**
      * Validate url
      *
      * @param string $expected_url
-     * @param $current_url
+     * @param string|null $current_url
      * @param bool $allow_partial_match
      *
      * @return bool
      */
-    public static function validateUrl(string $expected_url, $current_url = null, bool $allow_partial_match = true): bool
+    public static function validateUrl(string $expected_url, string $current_url = null, bool $allow_partial_match = true): bool
     {
         if (!$current_url) {
             $current_url = self::getCurrentUrl();
         }
 
-        return StringUtils::compareStrings($expected_url, $current_url, $allow_partial_match);
+        return Strings::compareStrings($expected_url, $current_url, $allow_partial_match);
     }
 }
