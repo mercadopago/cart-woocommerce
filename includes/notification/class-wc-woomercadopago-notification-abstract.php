@@ -55,7 +55,6 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 		$this->mp      = $payment->mp;
 		$this->log     = $payment->log;
 		$this->sandbox = $payment->sandbox;
-		$this->payment = $payment;
 
 		add_action( 'woocommerce_api_' . strtolower( get_class( $payment ) ), array( $this, 'check_ipn_response' ) );
 		// @todo remove when 5 is the most used.
@@ -499,5 +498,14 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 		// @todo need to implements better
 		// @codingStandardsIgnoreLine
 		die( $body );
+	}
+
+	public function update_meta( $order, $key, $value ) {
+		// WooCommerce 3.0 or later.
+		if ( method_exists( $order, 'update_meta_data' ) ) {
+			$order->update_meta_data( $key, $value );
+		} else {
+			update_post_meta( $order->id, $key, $value );
+		}
 	}
 }

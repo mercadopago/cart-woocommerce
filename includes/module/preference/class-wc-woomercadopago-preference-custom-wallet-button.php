@@ -26,7 +26,7 @@ class WC_WooMercadoPago_Preference_Custom_Wallet_Button extends WC_WooMercadoPag
 	 */
 	public function __construct( $payment, $order ) {
 		parent::__construct( $payment, $order );
-		$this->preference['purpose'] = 'wallet_purchase';
+		$this->transaction->purpose = 'wallet_purchase';
 	}
 
 	/**
@@ -34,11 +34,11 @@ class WC_WooMercadoPago_Preference_Custom_Wallet_Button extends WC_WooMercadoPag
 	 *
 	 * @return string[]
 	 */
-	public function get_internal_metadata_basic() {
-		return array(
-			'checkout'      => 'pro',
-			'checkout_type' => 'wallet_button',
-		);
+	public function get_internal_metadata() {
+		$metadata                  = parent::get_internal_metadata();
+		$metadata['checkout']      = 'pro';
+		$metadata['checkout_type'] = 'wallet_button';
+		return $metadata;
 	}
 
 }

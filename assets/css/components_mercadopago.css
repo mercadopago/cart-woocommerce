@@ -159,13 +159,11 @@
 	display: flex;
 	margin: 32px 0px 32px 0px;
 }
-
 .mp-alert-color-sucess {
 	width: 6px;
 	background: #009ee3;
 	border-radius: 6px 0 0 6px;
 }
-
 .mp-alert-color-alert {
 	width: 6px;
 	background: #ff7733;
@@ -202,7 +200,6 @@
 	height: 20px;
 	padding-left: 10px;
 }
-
 .mp-text-title {
 	font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica,
 		"Roboto", Arial, sans-serif;
@@ -214,7 +211,6 @@
 	margin: 4px 0px;
 	font-weight: bold;
 }
-
 .mp-text-subtitle {
 	font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica,
 		"Roboto", Arial, sans-serif;
@@ -251,14 +247,12 @@
 	-webkit-transition: background-color 0.2s ease-in;
 	transition: background-color 0.2s ease-in;
 }
-
 .mp-button-payments:focus {
 	outline: 0;
 	box-shadow: 0 0 0 0.1875em rgb(27 135 201 / 30%);
 	-webkit-transition: box-shadow 0.25s ease-in;
 	transition: box-shadow 0.25s ease-in;
 }
-
 .mp-button-payments:active {
 	border-color: transparent;
 	background-color: #005e88;

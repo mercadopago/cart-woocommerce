@@ -51,7 +51,7 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 		$this->update_pix_method();
 		$this->form_fields         = $this->get_form_mp_fields();
 		$this->hook                = new WC_WooMercadoPago_Hook_Pix( $this );
-		$this->notification        = new WC_WooMercadoPago_Notification_Webhook( $this );
+		$this->notification        = new WC_WooMercadoPago_Notification_Core( $this );
 		$this->currency_convertion = true;
 		$this->icon                = $this->get_checkout_icon();
 
@@ -428,7 +428,7 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 		}
 
 		if ( filter_var( $order->get_billing_email(), FILTER_VALIDATE_EMAIL ) ) {
-			$response = $this->create_preference( $order, $pix_checkout );
+			$response = $this->create_payment( $order, $pix_checkout );
 
 			if ( is_array( $response ) && array_key_exists( 'status', $response ) ) {
 				if ( 'pending' === $response['status'] ) {
@@ -499,31 +499,23 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 	}
 
 	/**
-	 * Create preference
+	 * Create payment
 	 *
 	 * @param object $order Order.
 	 * @param array  $pix_checkout Picket checkout.
 	 * @return string|array
 	 */
-	public function create_preference( $order, $pix_checkout ) {
-		$preferences_pix = new WC_WooMercadoPago_Preference_pix( $this, $order, $pix_checkout );
-		$preferences     = $preferences_pix->get_preference();
+	public function create_payment( $order, $pix_checkout ) {
+		$preferences_pix = new WC_WooMercadoPago_Preference_Pix( $this, $order, $pix_checkout );
+		$payment         = $preferences_pix->get_transaction( 'Payment' );
+
 		try {
-			$checkout_info = $this->mp->post( '/v1/payments', wp_json_encode( $preferences ) );
-			$this->log->write_log( __FUNCTION__, 'Created Preference: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-			if ( $checkout_info['status'] < 200 || $checkout_info['status'] >= 300 ) {
-				$this->log->write_log( __FUNCTION__, 'mercado pago gave error, payment creation failed with error: ' . $checkout_info['response']['message'] );
-				return $checkout_info['response']['message'];
-			} elseif ( is_wp_error( $checkout_info ) ) {
-				$this->log->write_log( __FUNCTION__, 'WordPress gave error, payment creation failed with error: ' . $checkout_info['response']['message'] );
-				return $checkout_info['response']['message'];
-			} else {
-				$this->log->write_log( __FUNCTION__, 'payment link generated with success from mercado pago, with structure as follow: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-				return $checkout_info['response'];
-			}
-		} catch ( WC_WooMercadoPago_Exception $ex ) {
-			$this->log->write_log( __FUNCTION__, 'payment creation failed with exception: ' . wp_json_encode( $ex, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-			return $ex->getMessage();
+			$checkout_info = $payment->save();
+			$this->log->write_log( __FUNCTION__, 'Created Payment: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+			return $checkout_info;
+		} catch ( Exception $e ) {
+			$this->log->write_log( __FUNCTION__, 'payment creation failed with error: ' . $e->getMessage() );
+			return $e->getMessage();
 		}
 	}
 
@@ -586,7 +578,7 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 	/**
 	 * Get pix template
 	 *
-	 * @param WC_Order $order Order.
+	 * @param object $order Order.
 	 * @return string
 	 */
 	public static function get_pix_template( $order ) {

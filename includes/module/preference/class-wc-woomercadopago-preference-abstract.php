@@ -19,6 +19,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway {
 
 	/**
+	 * Sdk
+	 */
+	protected $sdk;
+
+	/**
+	 * Transaction
+	 *
+	 * @var Payment|Preference
+	 */
+	protected $transaction;
+
+	/**
 	 * Order
 	 *
 	 * @var object
@@ -206,6 +218,8 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 		if ( 0 < count( $this->order->get_fees() ) ) {
 			$this->items = array_merge( $this->items, $this->fees_cost_item() );
 		}
+
+		$this->sdk = $payment->get_sdk_instance();
 	}
 
 	/**
@@ -234,23 +248,18 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	}
 
 	/**
-	 * Make commum preference
-	 *
-	 * @return array
+	 * Make commum transaction
 	 */
-	public function make_commum_preference() {
-		$preference = array(
-			'binary_mode'          => $this->get_binary_mode( $this->payment ),
-			'external_reference'   => $this->get_external_reference( $this->payment ),
-			'notification_url'     => $this->get_notification_url(),
-			'statement_descriptor' => get_option( 'mp_statement_descriptor', 'Mercado Pago' ),
-		);
+	public function make_comum_transaction() {
+		$this->transaction->binary_mode          = $this->get_binary_mode( $this->payment );
+		$this->transaction->external_reference   = $this->get_external_reference( $this->payment );
+		$this->transaction->notification_url     = $this->get_notification_url();
+		$this->transaction->statement_descriptor = get_option( 'mp_statement_descriptor', 'Mercado Pago' );
+		$this->transaction->metadata             = $this->get_internal_metadata();
 
 		if ( ! $this->test_user_v1 && ! $this->sandbox ) {
-			$preference['sponsor_id'] = $this->get_sponsor_id();
+			$this->transaction->sponsor_id = $this->get_sponsor_id();
 		}
-
-		return $preference;
 	}
 
 	/**
@@ -516,18 +525,21 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	}
 
 	/**
-	 * Get preference
+	 * Get transaction
 	 *
-	 * @return array
+	 * @param string $transactionType.
+	 *
+	 * @return Payment|Preference
 	 */
-	public function get_preference() {
-		$preference_log = $this->preference;
+	public function get_transaction( $transactionType = 'Preference' ) {
+		$transaction_log = clone $this->transaction;
 
-		if ( isset($preference_log['token']) ) {
-			unset($preference_log['token']);
+		if ( isset( $transaction_log->token ) ) {
+			unset( $transaction_log->token );
 		}
-		$this->log->write_log( 'Created preference: ', 'Preference: ' . wp_json_encode( $preference_log, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-		return $this->preference;
+
+		$this->log->write_log( __FUNCTION__, $transactionType . ': ' . wp_json_encode( $transaction_log, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+		return $this->transaction;
 	}
 
 	/**

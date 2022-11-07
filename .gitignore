@@ -3,4 +3,5 @@ node_modules
 .vscode
 .idea
 .idea/
-vendor/
+/vendor/
+woocommerce-mercadopago.zip

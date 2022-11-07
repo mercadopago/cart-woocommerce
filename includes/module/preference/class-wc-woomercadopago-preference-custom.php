@@ -27,40 +27,46 @@ class WC_WooMercadoPago_Preference_Custom extends WC_WooMercadoPago_Preference_A
 	 */
 	public function __construct( $payment, $order, $custom_checkout ) {
 		parent::__construct( $payment, $order, $custom_checkout );
-		$this->preference                       = $this->make_commum_preference();
-		$this->preference['transaction_amount'] = $this->get_transaction_amount();
-		$this->preference['token']              = $this->checkout['token'];
-		$this->preference['description']        = implode( ', ', $this->list_of_items );
-		$this->preference['installments']       = (int) $this->checkout['installments'];
-		$this->preference['payment_method_id']  = $this->checkout['paymentMethodId'];
-		$this->preference['payer']['email']     = $this->get_email();
+
+		$this->transaction = $this->sdk->getPaymentInstance();
+		$this->make_comum_transaction();
+
+		$this->transaction->transaction_amount = $this->get_transaction_amount();
+		$this->transaction->token              = $this->checkout['token'];
+		$this->transaction->description        = implode( ', ', $this->list_of_items );
+		$this->transaction->installments       = (int) $this->checkout['installments'];
+		$this->transaction->payment_method_id  = $this->checkout['paymentMethodId'];
+		$this->transaction->payer->email       = $this->get_email();
+
 		if ( array_key_exists( 'token', $this->checkout ) ) {
-			$this->preference['metadata']['token'] = $this->checkout['token'];
+			$this->transaction->metadata['token'] = $this->checkout['token'];
 			if ( ! empty( $this->checkout['CustomerId'] ) ) {
-				$this->preference['payer']['id'] = $this->checkout['CustomerId'];
+				$this->transaction->payer->id = $this->checkout['CustomerId'];
 			}
 			if ( ! empty( $this->checkout['issuer'] ) ) {
-				$this->preference['issuer_id'] = (int) $this->checkout['issuer'];
+				$this->transaction->issuer_id = (int) $this->checkout['issuer'];
 			}
 		}
 
-		$this->preference['additional_info']['items']     = $this->items;
-		$this->preference['additional_info']['payer']     = $this->get_payer_custom();
-		$this->preference['additional_info']['shipments'] = $this->shipments_receiver_address();
+		$this->transaction->additional_info->items     = $this->items;
+		$this->transaction->additional_info->payer     = $this->get_payer_custom();
+		$this->transaction->additional_info->shipments = $this->shipments_receiver_address();
 
 		if (
 			isset( $this->checkout['discount'] ) && ! empty( $this->checkout['discount'] ) &&
 			isset( $this->checkout['coupon_code'] ) && ! empty( $this->checkout['coupon_code'] ) &&
 			$this->checkout['discount'] > 0 && 'woo-mercado-pago-custom' === WC()->session->chosen_payment_method
 		) {
-			$this->preference['additional_info']['items'][] = $this->add_discounts();
-			$this->preference                               = array_merge( $this->preference, $this->add_discounts_campaign() );
+			$this->transaction->additional_info->items[] = $this->add_discounts();
+			$this->transaction                           = array_merge( $this->preference, $this->add_discounts_campaign() );
 		}
+	}
 
-		$internal_metadata            = parent::get_internal_metadata();
-		$merge_array                  = array_merge( $internal_metadata, $this->get_internal_metadata_custom() );
-		$this->preference['metadata'] = $merge_array;
-
+	public function get_internal_metadata() {
+		$metadata                  = parent::get_internal_metadata();
+		$metadata['checkout']      = 'custom';
+		$metadata['checkout_type'] = 'credit_card';
+		return $metadata;
 	}
 
 	/**
@@ -92,15 +98,4 @@ class WC_WooMercadoPago_Preference_Custom extends WC_WooMercadoPago_Preference_A
 		return $items;
 	}
 
-	/**
-	 * Get internal metadata custom
-	 *
-	 * @return array
-	 */
-	public function get_internal_metadata_custom() {
-		return array(
-			'checkout'      => 'custom',
-			'checkout_type' => 'credit_card',
-		);
-	}
 }

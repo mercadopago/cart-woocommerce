@@ -13,6 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use MercadoPago\PP\Sdk\Sdk;
+
 /**
  * Class WC_WooMercadoPago_Payment_Abstract
  */
@@ -427,6 +429,25 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		$this->logged_user_email    = ( 0 !== wp_get_current_user()->ID ) ? wp_get_current_user()->user_email : null;
 		$this->discount_action_url  = get_site_url() . '/index.php/woocommerce-mercadopago/?wc-api=' . get_class( $this );
 		add_action( 'woocommerce_after_settings_checkout', array($this, 'mercadopago_after_form') );
+	}
+
+	/**
+	 * Get SDK instance
+	 *
+	 * @return SDK
+	 */
+	public function get_sdk_instance() {
+		$is_production_mode = $this->is_production_mode();
+
+		$access_token = 'no' === $is_production_mode || ! $is_production_mode
+			? get_option( '_mp_access_token_test' )
+			: get_option( '_mp_access_token_prod' );
+
+		$platform_id   = WC_WooMercadoPago_Constants::PLATAFORM_ID;
+		$product_id    = WC_WooMercadoPago_Module::is_mobile() ? WC_WooMercadoPago_Constants::PRODUCT_ID_MOBILE : WC_WooMercadoPago_Constants::PRODUCT_ID_DESKTOP;
+		$integrator_id = $this->integrator_id;
+
+		return new Sdk($access_token, $platform_id, $product_id, $integrator_id);
 	}
 
 	public function mercadopago_after_form() {
@@ -1228,13 +1249,13 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	 */
 	public function get_mp_devsite_link( $country ) {
 		$country_links = [
-			'mla' => 'https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/testing',
-			'mlb' => 'https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/testing',
-			'mlc' => 'https://www.mercadopago.cl/developers/es/guides/plugins/woocommerce/testing',
-			'mco' => 'https://www.mercadopago.com.co/developers/es/guides/plugins/woocommerce/testing',
-			'mlm' => 'https://www.mercadopago.com.mx/developers/es/guides/plugins/woocommerce/testing',
-			'mpe' => 'https://www.mercadopago.com.pe/developers/es/guides/plugins/woocommerce/testing',
-			'mlu' => 'https://www.mercadopago.com.uy/developers/es/guides/plugins/woocommerce/testing',
+			'mla' => 'https://www.mercadopago.com.ar/developers/es/docs/woocommerce/integration-test',
+			'mlb' => 'https://www.mercadopago.com.br/developers/pt/docs/woocommerce/integration-test',
+			'mlc' => 'https://www.mercadopago.cl/developers/es/docs/woocommerce/integration-test',
+			'mco' => 'https://www.mercadopago.com.co/developers/es/docs/woocommerce/integration-test',
+			'mlm' => 'https://www.mercadopago.com.mx/developers/es/docs/woocommerce/integration-test',
+			'mpe' => 'https://www.mercadopago.com.pe/developers/es/docs/woocommerce/integration-test',
+			'mlu' => 'https://www.mercadopago.com.uy/developers/es/docs/woocommerce/integration-test',
 		];
 		$link          = array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
 

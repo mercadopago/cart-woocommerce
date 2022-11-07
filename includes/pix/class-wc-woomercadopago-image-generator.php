@@ -24,7 +24,7 @@ class WC_WooMercadoPago_Image_Generator {
 	public static $instance = null;
 
 	/**
-	 * WC_WooMercadoPago_Notification_Abstrac constructor.
+	 * WC_WooMercadoPago_Image_Generator constructor.
 	 */
 	public function __construct() {
 

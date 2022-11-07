@@ -116,7 +116,6 @@ class WC_WooMercadoPago_Init {
 
 		$notices_array = WC_WooMercadoPago_Module::$notices;
 		$notices       = array_unique( $notices_array, SORT_STRING );
-
 		foreach ( $notices as $notice ) {
 			// @todo All output should be run through an escaping function
 		    // @codingStandardsIgnoreLine
@@ -129,7 +128,6 @@ class WC_WooMercadoPago_Init {
 	 */
 	public static function mercadopago_plugin_activation() {
 		$dismissed_review = (int) get_option( '_mp_dismiss_review' );
-
 		if ( ! isset( $dismissed_review ) || 1 === $dismissed_review ) {
 			update_option( '_mp_dismiss_review', 0, true );
 		}
@@ -140,7 +138,6 @@ class WC_WooMercadoPago_Init {
 	*/
 	public static function mercadopago_handle_saved_cards_notice() {
 		$must_not_show_review = (int) get_option( '_mp_dismiss_saved_cards_notice' );
-
 		if ( ! isset( $must_not_show_review ) || $must_not_show_review ) {
 			/**
 			 * Update if option was changed.
@@ -156,7 +153,6 @@ class WC_WooMercadoPago_Init {
 	 */
 	public static function update_plugin_version() {
 		$old_version = get_option( '_mp_version', '0' );
-
 		if ( version_compare( WC_WooMercadoPago_Constants::VERSION, $old_version, '>' ) ) {
 			/**
 			 * Do action mercadopago_plugin_updated.
@@ -177,10 +173,34 @@ class WC_WooMercadoPago_Init {
 	}
 
 	/**
+	 * Sdk validation
+	 */
+	public static function wc_mercado_pago_notify_sdk_package_error() {
+		$type    = 'error';
+		$message = __( 'The Mercado Pago module needs the SDK package to work!', 'woocommerce-mercadopago' );
+		// @todo using escaping function
+		// @codingStandardsIgnoreLine
+		echo WC_WooMercadoPago_Notices::get_alert_frame( $message, $type );
+	}
+
+	/**
+	 * Load sdk package
+	 */
+	public static function woocommerce_mercadopago_load_sdk() {
+		$sdk_autoload_file = dirname( __FILE__ ) . '/../../packages/sdk/vendor/autoload.php';
+		if ( file_exists( $sdk_autoload_file ) ) {
+			require_once $sdk_autoload_file;
+		} else {
+			add_action('admin_notices', array( __CLASS__, 'wc_mercado_pago_notify_sdk_package_error' ));
+		}
+	}
+
+	/**
 	 * Init the plugin
 	 */
 	public static function woocommerce_mercadopago_init() {
 		self::woocommerce_mercadopago_load_plugin_textdomain();
+		self::woocommerce_mercadopago_load_sdk();
 
 		require_once dirname( __FILE__ ) . '/sdk/lib/rest-client/class-mp-rest-client-abstract.php';
 		require_once dirname( __FILE__ ) . '/sdk/lib/rest-client/class-mp-rest-client.php';
@@ -247,7 +267,6 @@ class WC_WooMercadoPago_Init {
 		} else {
 			add_action( 'admin_notices', array( __CLASS__, 'notify_woocommerce_miss' ) );
 		}
-
 		add_action( 'woocommerce_settings_checkout', array( __CLASS__, 'mp_show_admin_notices' ) );
 		add_action( 'wp_ajax_mercadopago_validate_credentials', array('WC_WooMercadoPago_Credentials', 'ajax_validate_credentials'));
 		add_filter('query_vars', function ( $vars ) {
