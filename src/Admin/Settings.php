@@ -16,7 +16,7 @@ class Settings
     /**
      * @const
      */
-    const PRIORITY_ON_MENU = 90;
+    private const PRIORITY_ON_MENU = 90;
 
     /**
      * @var Scripts

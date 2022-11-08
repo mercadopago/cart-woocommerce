@@ -11,57 +11,57 @@ class Store
     /**
      * @const
      */
-    const SITE_ID = '_site_id_v1';
+    private const SITE_ID = '_site_id_v1';
 
     /**
      * @const
      */
-    const STORE_ID = '_mp_store_identificator';
+    private const STORE_ID = '_mp_store_identificator';
 
     /**
      * @const
      */
-    const STORE_NAME = 'mp_statement_descriptor';
+    private const STORE_NAME = 'mp_statement_descriptor';
 
     /**
      * @const
      */
-    const STORE_CATEGORY = '_mp_category_id';
+    private const STORE_CATEGORY = '_mp_category_id';
 
     /**
      * @const
      */
-    const CHECKOUT_COUNTRY = 'checkout_country';
+    private const CHECKOUT_COUNTRY = 'checkout_country';
 
     /**
      * @const
      */
-    const WOOCOMMERCE_COUNTRY = 'woocommerce_default_country';
+    private const WOOCOMMERCE_COUNTRY = 'woocommerce_default_country';
 
     /**
      * @const
      */
-    const INTEGRATOR_ID = '_mp_integrator_id';
+    private const INTEGRATOR_ID = '_mp_integrator_id';
 
     /**
      * @const
      */
-    const CUSTOM_DOMAIN = '_mp_custom_domain';
+    private const CUSTOM_DOMAIN = '_mp_custom_domain';
 
     /**
      * @const
      */
-    const DEBUG_MODE = '_mp_debug_mode';
+    private const DEBUG_MODE = '_mp_debug_mode';
 
     /**
      * @const
      */
-    const CHECKBOX_CHECKOUT_PRODUCTION_MODE = 'checkbox_checkout_production_mode';
+    private const CHECKBOX_CHECKOUT_PRODUCTION_MODE = 'checkbox_checkout_production_mode';
 
     /**
      * @const
      */
-    const CHECKBOX_CHECKOUT_TEST_MODE = 'checkbox_checkout_test_mode';
+    private const CHECKBOX_CHECKOUT_TEST_MODE = 'checkbox_checkout_test_mode';
 
     /**
      * @var Store

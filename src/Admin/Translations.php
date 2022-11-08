@@ -11,7 +11,7 @@ class Translations
     /**
      * @const
      */
-    const DOMAIN = 'woocommerce-mercadopago';
+    private const DOMAIN = 'woocommerce-mercadopago';
 
     /**
      * @var array

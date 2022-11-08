@@ -11,32 +11,37 @@ class Credentials
     /**
      * @const
      */
-    const CLIENT_ID = '_mp_client_id';
-    /**
-     * @const
-     */
-    const CREDENTIALS_PUBLIC_KEY_PROD = '_mp_public_key_prod';
-    /**
-     * @const
-     */
-    const CREDENTIALS_PUBLIC_KEY_TEST = '_mp_public_key_test';
-    /**
-     * @const
-     */
-    const CREDENTIALS_ACCESS_TOKEN_PROD = '_mp_access_token_prod';
-    /**
-     * @const
-     */
-    const CREDENTIALS_ACCESS_TOKEN_TEST = '_mp_access_token_test';
+    private const CLIENT_ID = '_mp_client_id';
 
     /**
      * @const
      */
-    const APPLICATION_ID = 'mp_application_id';
+    private const CREDENTIALS_PUBLIC_KEY_PROD = '_mp_public_key_prod';
+
     /**
      * @const
      */
-    const HOMOLOG_VALIDATE = 'homolog_validate';
+    private const CREDENTIALS_PUBLIC_KEY_TEST = '_mp_public_key_test';
+
+    /**
+     * @const
+     */
+    private const CREDENTIALS_ACCESS_TOKEN_PROD = '_mp_access_token_prod';
+
+    /**
+     * @const
+     */
+    private const CREDENTIALS_ACCESS_TOKEN_TEST = '_mp_access_token_test';
+
+    /**
+     * @const
+     */
+    private const APPLICATION_ID = 'mp_application_id';
+
+    /**
+     * @const
+     */
+    private const HOMOLOG_VALIDATE = 'homolog_validate';
 
     /**
      * @var Credentials
@@ -77,7 +82,7 @@ class Credentials
      */
     public function getCredentialsPublicKeyProd(): string
     {
-        return get_option(self::CREDENTIALS_PUBLIC_KEY_PROD , '');
+        return get_option(self::CREDENTIALS_PUBLIC_KEY_PROD, '');
     }
 
     /**
