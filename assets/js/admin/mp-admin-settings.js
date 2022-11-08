@@ -1,4 +1,4 @@
-/* globals ajaxurl */
+/* globals jQuery, ajaxurl */
 
 function mp_get_requirements() {
   jQuery.post(ajaxurl, {action: 'mp_get_requirements'}, function (response) {
@@ -74,8 +74,137 @@ function mp_settings_accordion_options() {
   });
 }
 
+function mp_validate_credentials() {
+  document
+    .getElementById('mp-access-token-prod')
+    .addEventListener('change', function() {
+      const self = this;
+      jQuery
+        .post(
+          ajaxurl,
+          {
+            is_test: false,
+            access_token: this.value,
+            action: 'mp_validate_credentials',
+          },
+          function() {}
+        )
+        .done(function(response) {
+          if (response.success) {
+            self.classList.add('mp-credential-feedback-positive');
+            self.classList.remove('mp-credential-feedback-negative');
+          } else {
+            self.classList.remove('mp-credential-feedback-positive');
+            self.classList.add('mp-credential-feedback-negative');
+          }
+        })
+        .fail(function() {
+          self.classList.remove('mp-credential-feedback-positive');
+          self.classList.add('mp-credential-feedback-negative');
+        });
+    });
+
+  document
+    .getElementById('mp-access-token-test')
+    .addEventListener('change', function() {
+      const self = this;
+      if (this.value === '') {
+        self.classList.remove('mp-credential-feedback-positive');
+        self.classList.remove('mp-credential-feedback-negative');
+      } else {
+        jQuery
+          .post(
+            ajaxurl,
+            {
+              is_test: true,
+              access_token: this.value,
+              action: 'mp_validate_credentials',
+            },
+            function() {}
+          )
+          .done(function(response) {
+            if (response.success) {
+              self.classList.add('mp-credential-feedback-positive');
+              self.classList.remove('mp-credential-feedback-negative');
+            } else {
+              self.classList.remove('mp-credential-feedback-positive');
+              self.classList.add('mp-credential-feedback-negative');
+            }
+          })
+          .fail(function() {
+            self.classList.remove('mp-credential-feedback-positive');
+            self.classList.add('mp-credential-feedback-negative');
+          });
+      }
+    });
+
+  document
+    .getElementById('mp-public-key-prod')
+    .addEventListener('change', function() {
+      const self = this;
+      jQuery
+        .post(
+          ajaxurl,
+          {
+            is_test: false,
+            public_key: this.value,
+            action: 'mp_validate_credentials',
+          },
+          function() {}
+        )
+        .done(function(response) {
+          if (response.success) {
+            self.classList.add('mp-credential-feedback-positive');
+            self.classList.remove('mp-credential-feedback-negative');
+          } else {
+            self.classList.remove('mp-credential-feedback-positive');
+            self.classList.add('mp-credential-feedback-negative');
+          }
+        })
+        .fail(function() {
+          self.classList.remove('mp-credential-feedback-positive');
+          self.classList.add('mp-credential-feedback-negative');
+        });
+    });
+
+  document
+    .getElementById('mp-public-key-test')
+    .addEventListener('change', function() {
+      const self = this;
+      if (this.value === '') {
+        self.classList.remove('mp-credential-feedback-positive');
+        self.classList.remove('mp-credential-feedback-negative');
+      } else {
+        jQuery
+          .post(
+            ajaxurl,
+            {
+              is_test: true,
+              public_key: this.value,
+              action: 'mp_validate_credentials',
+            },
+            function() {}
+          )
+          .done(function(response) {
+            if (response.success) {
+              self.classList.add('mp-credential-feedback-positive');
+              self.classList.remove('mp-credential-feedback-negative');
+            } else {
+              self.classList.remove('mp-credential-feedback-positive');
+              self.classList.add('mp-credential-feedback-negative');
+            }
+          })
+          .fail(function() {
+            self.classList.remove('mp-credential-feedback-positive');
+            self.classList.add('mp-credential-feedback-negative');
+          });
+      }
+    });
+}
+
 function mp_settings_screen_load() {
   mp_get_requirements();
   mp_settings_accordion_start();
   mp_settings_accordion_options();
+  mp_validate_credentials();
 }

@@ -4,8 +4,10 @@ namespace MercadoPago\Woocommerce\Admin;
 
 use MercadoPago\Woocommerce\Configs\Credentials;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use PHPUnit\Exception;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -123,6 +125,7 @@ class Settings
     public function registerAjaxEndpoints(): void
     {
         add_action('wp_ajax_mp_get_requirements', array($this, 'mercadopagoValidateRequirements'));
+        add_action( 'wp_ajax_mp_validate_credentials', array($this, 'mercadopagoValidateCredentials'));
     }
 
     /**
@@ -189,5 +192,37 @@ class Settings
             'gd_ext'   => $hasGD,
             'curl_ext' => $hasCurl
         ]);
+    }
+
+    /**
+     * Validate plugin credentials
+     *
+     * @return void
+     */
+    public function mercadopagoValidateCredentials(): void
+    {
+        $isTest      = Form::getSanitizeTextFromPost('is_test');
+        $publicKey   = Form::getSanitizeTextFromPost('public_key');
+        $accessToken = Form::getSanitizeTextFromPost('access_token');
+
+        if ($publicKey) {
+            // TODO: implement credentials wrapper API
+            $validatePublicKey = true;
+            if (!$validatePublicKey || $validatePublicKey['is_test'] !== $isTest) {
+                wp_send_json_error('Invalid Public Key');
+            } else {
+                wp_send_json_success('Valid Public Key');
+            }
+        }
+
+        if ($accessToken) {
+            // TODO: implement credentials wrapper API
+            $validateAccessToken = true;
+            if (!$validateAccessToken || $validateAccessToken['is_test'] !== $isTest) {
+                wp_send_json_error('Invalid Access Token');
+            } else {
+                wp_send_json_success('Valid Access Token');
+            }
+        }
     }
 }
