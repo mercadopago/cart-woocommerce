@@ -125,7 +125,7 @@ class Settings
     public function registerAjaxEndpoints(): void
     {
         add_action('wp_ajax_mp_get_requirements', array($this, 'mercadopagoValidateRequirements'));
-        add_action( 'wp_ajax_mp_validate_credentials', array($this, 'mercadopagoValidateCredentials'));
+        add_action('wp_ajax_mp_validate_credentials', array($this, 'mercadopagoValidateCredentials'));
     }
 
     /**
