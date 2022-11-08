@@ -301,7 +301,7 @@ function mp_validate_credentials() {
           {
             is_test: false,
             access_token: this.value,
-            action: 'mp_validate_credentials',
+            action: 'mp_update_access_token',
           },
           function() {}
         )
@@ -334,7 +334,7 @@ function mp_validate_credentials() {
             {
               is_test: true,
               access_token: this.value,
-              action: 'mp_validate_credentials',
+              action: 'mp_update_access_token',
             },
             function() {}
           )
@@ -364,7 +364,7 @@ function mp_validate_credentials() {
           {
             is_test: false,
             public_key: this.value,
-            action: 'mp_validate_credentials',
+            action: 'mp_update_public_key',
           },
           function() {}
         )
@@ -397,7 +397,7 @@ function mp_validate_credentials() {
             {
               is_test: true,
               public_key: this.value,
-              action: 'mp_validate_credentials',
+              action: 'mp_update_public_key',
             },
             function() {}
           )

@@ -125,7 +125,8 @@ class Settings
     {
         add_action('wp_ajax_mp_get_requirements', array($this, 'mercadopagoValidateRequirements'));
         add_action('wp_ajax_mp_validate_credentials', array($this, 'mercadopagoValidateCredentials'));
-        add_action('wp_ajax_mp_update_option_credentials', array($this, 'mercadopagoUpdateOptionCredentials'));
+        add_action('wp_ajax_mp_update_public_key', array($this, 'mercadopagoValidatePublicKey'));
+        add_action('wp_ajax_mp_update_access_token', array($this, 'mercadopagoValidateAccessToken'));
     }
 
     /**
@@ -195,41 +196,47 @@ class Settings
     }
 
     /**
-     * Validate plugin credentials
+     * Validate public key credentials
      *
      * @return void
      */
-    public function mercadopagoValidateCredentials(): void
+    public function mercadopagoValidatePublicKey(): void
     {
         $isTest      = Form::getSanitizeTextFromPost('is_test');
         $publicKey   = Form::getSanitizeTextFromPost('public_key');
+
+        $validateCredentialsResponse = $this->credentials->validateCredentials(null, $publicKey);
+
+        $data   = $validateCredentialsResponse['data'];
+        $status = $validateCredentialsResponse['status'];
+
+        if ($status === 200 && json_encode($data['is_test']) === $isTest) {
+            wp_send_json_success('Valid Public Key');
+        }
+
+        wp_send_json_error('Invalid Public Key');
+    }
+
+    /**
+     * Validate access token credentials
+     *
+     * @return void
+     */
+    public function mercadopagoValidateAccessToken(): void
+    {
+        $isTest      = Form::getSanitizeTextFromPost('is_test');
         $accessToken = Form::getSanitizeTextFromPost('access_token');
 
-        if ($publicKey) {
-            $validateCredentialsResponse = $this->credentials->validateCredentials(null, $publicKey);
+        $validateCredentialsResponse = $this->credentials->validateCredentials($accessToken);
 
-            $data   = $validateCredentialsResponse['data'];
-            $status = $validateCredentialsResponse['status'];
+        $data   = $validateCredentialsResponse['data'];
+        $status = $validateCredentialsResponse['status'];
 
-            if ($status === 200 && json_encode($data['is_test']) === $isTest) {
-                wp_send_json_success('Valid Public Key');
-            }
-
-            wp_send_json_error('Invalid Public Key');
+        if ($status === 200 && json_encode($data['is_test']) === $isTest) {
+            wp_send_json_success('Valid Access Token');
         }
 
-        if ($accessToken) {
-            $validateCredentialsResponse = $this->credentials->validateCredentials($accessToken);
-
-            $data   = $validateCredentialsResponse['data'];
-            $status = $validateCredentialsResponse['status'];
-
-            if ($status === 200 && json_encode($data['is_test']) === $isTest) {
-                wp_send_json_success('Valid Access Token');
-            }
-
-            wp_send_json_error('Invalid Access Token');
-        }
+        wp_send_json_error('Invalid Access Token');
     }
 
     public function mercadopagoUpdateOptionCredentials(): void
@@ -238,5 +245,7 @@ class Settings
         $accessTokenProd = Form::getSanitizeTextFromPost('access_token_prod');
         $publicKeyTest   = Form::getSanitizeTextFromPost('public_key_test');
         $accessTokenTest = Form::getSanitizeTextFromPost('access_token_test');
+
+
     }
 }
