@@ -2,7 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
-use MercadoPago\PP\Sdk\HttpClient\Response;
 use MercadoPago\Woocommerce\Helpers\Requester;
 
 if (!defined('ABSPATH')) {
@@ -210,7 +209,7 @@ class Credentials
     }
 
     /**
-     * Validate seller credentials with credentials wrapper API
+     * Validate credentials with plugins wrapper credentials API
      *
      * @param string|null $accessToken
      * @param string|null $publicKey

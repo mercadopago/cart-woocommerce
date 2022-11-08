@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Admin;
 
 use MercadoPago\Woocommerce\Configs\Credentials;
+use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Url;
@@ -35,6 +36,11 @@ class Settings
     protected $credentials;
 
     /**
+     * @var Seller
+     */
+    protected $seller;
+
+    /**
      * @var Store
      */
     protected $store;
@@ -52,6 +58,7 @@ class Settings
         $this->scripts      = Scripts::getInstance();
         $this->translations = Translations::getInstance();
         $this->credentials  = Credentials::getInstance();
+        $this->seller       = Seller::getInstance();
         $this->store        = Store::getInstance();
 
         $this->loadMenu();
@@ -127,6 +134,7 @@ class Settings
         add_action('wp_ajax_mp_validate_credentials', array($this, 'mercadopagoValidateCredentials'));
         add_action('wp_ajax_mp_update_public_key', array($this, 'mercadopagoValidatePublicKey'));
         add_action('wp_ajax_mp_update_access_token', array($this, 'mercadopagoValidateAccessToken'));
+        add_action('wp_ajax_mp_update_option_credentials', array($this, 'mercadopagoUpdateOptionCredentials'));
     }
 
     /**
@@ -196,14 +204,14 @@ class Settings
     }
 
     /**
-     * Validate public key credentials
+     * Validate public key
      *
      * @return void
      */
     public function mercadopagoValidatePublicKey(): void
     {
-        $isTest      = Form::getSanitizeTextFromPost('is_test');
-        $publicKey   = Form::getSanitizeTextFromPost('public_key');
+        $isTest    = Form::getSanitizeTextFromPost('is_test');
+        $publicKey = Form::getSanitizeTextFromPost('public_key');
 
         $validateCredentialsResponse = $this->credentials->validatePublicKey($publicKey);
 
@@ -218,7 +226,7 @@ class Settings
     }
 
     /**
-     * Validate access token credentials
+     * Validate access token
      *
      * @return void
      */
@@ -239,13 +247,76 @@ class Settings
         wp_send_json_error('Invalid Access Token');
     }
 
+    /**
+     * Save credentials, seller and store options
+     *
+     * @return void
+     */
     public function mercadopagoUpdateOptionCredentials(): void
     {
+        // TODO: update payment methods
+        // TODO: add wp cache
+        // TODO: add translations
+
         $publicKeyProd   = Form::getSanitizeTextFromPost('public_key_prod');
         $accessTokenProd = Form::getSanitizeTextFromPost('access_token_prod');
         $publicKeyTest   = Form::getSanitizeTextFromPost('public_key_test');
         $accessTokenTest = Form::getSanitizeTextFromPost('access_token_test');
 
+        $validatePublicKeyProd   = $this->credentials->validatePublicKey($publicKeyProd);
+        $validateAccessTokenProd = $this->credentials->validateAccessToken($accessTokenProd);
+        $validatePublicKeyTest   = $this->credentials->validatePublicKey($publicKeyTest);
+        $validateAccessTokenTest = $this->credentials->validateAccessToken($accessTokenTest);
 
+        if (
+            $validatePublicKeyProd['status'] === 200 &&
+            $validateAccessTokenProd['status'] === 200 &&
+            $validatePublicKeyProd['data']['is_test'] === false &&
+            $validateAccessTokenProd['data']['is_test'] === false
+        ) {
+            $this->credentials->setCredentialsPublicKeyProd($publicKeyProd);
+            $this->credentials->setCredentialsAccessTokenProd($accessTokenProd);
+
+            $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
+            if ($sellerInfo['status'] === 200) {
+                $this->seller->setSiteId($sellerInfo['data']['site_id']);
+                $this->store->setCheckoutCountry($sellerInfo['data']['site_id']);
+            }
+
+            if (
+                (empty($publicKeyTest) && empty($accessTokenTest)) ||
+                ($validatePublicKeyTest['status'] === 200 &&
+                $validateAccessTokenTest['status'] === 200 &&
+                $validatePublicKeyTest['data']['is_test'] === true &&
+                $validateAccessTokenTest['data']['is_test'] === true)
+            ) {
+                $this->credentials->setCredentialsPublicKeyTest($publicKeyTest);
+                $this->credentials->setCredentialsAccessTokenTest($publicKeyTest);
+
+                if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
+                    $this->store->setCheckboxCheckoutTestMode('no');
+                    $response = [
+                        'type'      => 'alert',
+                        'message'   => 'Your store has exited Test Mode and is making real sales in Production Mode.',
+                        'subtitle'  => 'To test the store, re-enter both test credentials.',
+                        'test_mode' => 'no',
+                    ];
+                    wp_send_json_error($response);
+                }
+            }
+
+            wp_send_json_success('Credentials were updated');
+        }
+
+        $response = [
+            'type'      => 'error',
+            'link'      => '#',
+            'linkMsg'   => 'how to enter the credentials the right way.',
+            'message'   => 'Invalid credentials',
+            'subtitle'  => 'See our manual to learn ',
+            'test_mode' => $this->store->getCheckboxCheckoutTestMode()
+        ];
+
+        wp_send_json_error($response);
     }
 }

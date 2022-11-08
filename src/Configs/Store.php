@@ -11,11 +11,6 @@ class Store
     /**
      * @const
      */
-    private const SITE_ID = '_site_id_v1';
-
-    /**
-     * @const
-     */
     private const STORE_ID = '_mp_store_identificator';
 
     /**
@@ -79,22 +74,6 @@ class Store
             self::$instance = new self();
         }
         return self::$instance;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSiteId(): string
-    {
-        return get_option(self::SITE_ID, '');
-    }
-
-    /**
-     * @param string $siteId
-     */
-    public function setSiteId(string $siteId): void
-    {
-        update_option(self::SITE_ID, $siteId);
     }
 
     /**
