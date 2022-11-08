@@ -2,6 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
+use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Helpers\Requester;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -44,9 +47,22 @@ class Credentials
     private const HOMOLOG_VALIDATE = 'homolog_validate';
 
     /**
+     * @var Requester
+     */
+    private $requester;
+
+    /**
      * @var Credentials
      */
     private static $instance = '';
+
+    /**
+     * Credentials constructor
+     */
+    private function __construct()
+    {
+        $this->requester = Requester::getInstance();
+    }
 
     /**
      * Get Store Configs instance
@@ -171,5 +187,41 @@ class Credentials
     public function setHomologValidate(string $homologValidate): void
     {
         update_option(self::HOMOLOG_VALIDATE, $homologValidate);
+    }
+
+    /**
+     * Validate seller credentials with credentials wrapper API
+     *
+     * @param string|null $accessToken
+     * @param string|null $publicKey
+     *
+     * @return array
+     */
+    public function validateCredentials(string $accessToken = null, string $publicKey = null): array
+    {
+        try {
+            $headers = [];
+            $uri     = '/plugins-credentials-wrapper/credentials';
+
+            if ($accessToken && !$publicKey) {
+                $headers[] = 'Authorization: Bearer ' . $accessToken;
+            }
+
+            if ($publicKey && !$accessToken) {
+                $uri = $uri . '?public_key=' . $publicKey;
+            }
+
+            $response = $this->requester->get($uri, $headers);
+
+            return [
+                'data'   => $response->getData(),
+                'status' => $response->getStatus(),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'data'   => null,
+                'status' => 500,
+            ];
+        }
     }
 }

@@ -7,7 +7,6 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Scripts;
-use PHPUnit\Exception;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -33,12 +32,12 @@ class Settings
     /**
      * @var Credentials
      */
-    protected $credentialsConfigs;
+    protected $credentials;
 
     /**
      * @var Store
      */
-    protected $storeConfigs;
+    protected $store;
 
     /**
      * @var Settings
@@ -50,10 +49,10 @@ class Settings
      */
     private function __construct()
     {
-        $this->scripts = Scripts::getInstance();
+        $this->scripts      = Scripts::getInstance();
         $this->translations = Translations::getInstance();
-        $this->credentialsConfigs = Credentials::getInstance();
-        $this->storeConfigs = Store::getInstance();
+        $this->credentials  = Credentials::getInstance();
+        $this->store        = Store::getInstance();
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -126,6 +125,7 @@ class Settings
     {
         add_action('wp_ajax_mp_get_requirements', array($this, 'mercadopagoValidateRequirements'));
         add_action('wp_ajax_mp_validate_credentials', array($this, 'mercadopagoValidateCredentials'));
+        add_action('wp_ajax_mp_update_option_credentials', array($this, 'mercadopagoUpdateOptionCredentials'));
     }
 
     /**
@@ -158,20 +158,20 @@ class Settings
         $gatewaysTranslations    = $this->translations->gatewaysSettings;
         $testModeTranslations    = $this->translations->testModeSettings;
 
-        $publicKeyProd   = $this->credentialsConfigs->getCredentialsPublicKeyProd();
-        $accessTokenProd = $this->credentialsConfigs->getCredentialsAccessTokenProd();
-        $publicKeyTest   = $this->credentialsConfigs->getCredentialsPublicKeyTest();
-        $accessTokenTest = $this->credentialsConfigs->getCredentialsAccessTokenTest();
+        $publicKeyProd   = $this->credentials->getCredentialsPublicKeyProd();
+        $accessTokenProd = $this->credentials->getCredentialsAccessTokenProd();
+        $publicKeyTest   = $this->credentials->getCredentialsPublicKeyTest();
+        $accessTokenTest = $this->credentials->getCredentialsAccessTokenTest();
 
-        $storeId       = $this->storeConfigs->getStoreId();
-        $storeName     = $this->storeConfigs->getStoreName();
-        $storeCategory = $this->storeConfigs->getStoreCategory();
-        $customDomain  = $this->storeConfigs->getCustomDomain();
-        $integratorId  = $this->storeConfigs->getIntegratorId();
-        $debugMode     = $this->storeConfigs->getDebugMode();
+        $storeId       = $this->store->getStoreId();
+        $storeName     = $this->store->getStoreName();
+        $storeCategory = $this->store->getStoreCategory();
+        $customDomain  = $this->store->getCustomDomain();
+        $integratorId  = $this->store->getIntegratorId();
+        $debugMode     = $this->store->getDebugMode();
 
-        $checkboxCheckoutTestMode       = $this->storeConfigs->getCheckboxCheckoutTestMode();
-        $checkboxCheckoutProductionMode = $this->storeConfigs->getCheckboxCheckoutProductionMode();
+        $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
+        $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }
@@ -206,23 +206,37 @@ class Settings
         $accessToken = Form::getSanitizeTextFromPost('access_token');
 
         if ($publicKey) {
-            // TODO: implement credentials wrapper API
-            $validatePublicKey = true;
-            if (!$validatePublicKey || $validatePublicKey['is_test'] !== $isTest) {
-                wp_send_json_error('Invalid Public Key');
-            } else {
+            $validateCredentialsResponse = $this->credentials->validateCredentials(null, $publicKey);
+
+            $data   = $validateCredentialsResponse['data'];
+            $status = $validateCredentialsResponse['status'];
+
+            if ($status === 200 && json_encode($data['is_test']) === $isTest) {
                 wp_send_json_success('Valid Public Key');
             }
+
+            wp_send_json_error('Invalid Public Key');
         }
 
         if ($accessToken) {
-            // TODO: implement credentials wrapper API
-            $validateAccessToken = true;
-            if (!$validateAccessToken || $validateAccessToken['is_test'] !== $isTest) {
-                wp_send_json_error('Invalid Access Token');
-            } else {
+            $validateCredentialsResponse = $this->credentials->validateCredentials($accessToken);
+
+            $data   = $validateCredentialsResponse['data'];
+            $status = $validateCredentialsResponse['status'];
+
+            if ($status === 200 && json_encode($data['is_test']) === $isTest) {
                 wp_send_json_success('Valid Access Token');
             }
+
+            wp_send_json_error('Invalid Access Token');
         }
+    }
+
+    public function mercadopagoUpdateOptionCredentials(): void
+    {
+        $publicKeyProd   = Form::getSanitizeTextFromPost('public_key_prod');
+        $accessTokenProd = Form::getSanitizeTextFromPost('access_token_prod');
+        $publicKeyTest   = Form::getSanitizeTextFromPost('public_key_test');
+        $accessTokenTest = Form::getSanitizeTextFromPost('access_token_test');
     }
 }
