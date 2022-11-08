@@ -205,7 +205,7 @@ class Settings
         $isTest      = Form::getSanitizeTextFromPost('is_test');
         $publicKey   = Form::getSanitizeTextFromPost('public_key');
 
-        $validateCredentialsResponse = $this->credentials->validateCredentials(null, $publicKey);
+        $validateCredentialsResponse = $this->credentials->validatePublicKey($publicKey);
 
         $data   = $validateCredentialsResponse['data'];
         $status = $validateCredentialsResponse['status'];
@@ -227,7 +227,7 @@ class Settings
         $isTest      = Form::getSanitizeTextFromPost('is_test');
         $accessToken = Form::getSanitizeTextFromPost('access_token');
 
-        $validateCredentialsResponse = $this->credentials->validateCredentials($accessToken);
+        $validateCredentialsResponse = $this->credentials->validateAccessToken($accessToken);
 
         $data   = $validateCredentialsResponse['data'];
         $status = $validateCredentialsResponse['status'];

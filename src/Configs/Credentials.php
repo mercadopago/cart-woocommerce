@@ -190,6 +190,26 @@ class Credentials
     }
 
     /**
+     * @param string $publicKey
+     *
+     * @return array
+     */
+    public function validatePublicKey(string $publicKey): array
+    {
+        return $this->validateCredentials(null, $publicKey);
+    }
+
+    /**
+     * @param string $accessToken
+     *
+     * @return array
+     */
+    public function validateAccessToken(string $accessToken): array
+    {
+        return $this->validateCredentials($accessToken);
+    }
+
+    /**
      * Validate seller credentials with credentials wrapper API
      *
      * @param string|null $accessToken
@@ -197,7 +217,7 @@ class Credentials
      *
      * @return array
      */
-    public function validateCredentials(string $accessToken = null, string $publicKey = null): array
+    private function validateCredentials(string $accessToken = null, string $publicKey = null): array
     {
         try {
             $headers = [];
