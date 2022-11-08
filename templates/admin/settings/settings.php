@@ -7,6 +7,19 @@
  * @var array $gatewaysTranslations
  * @var array $testModeTranslations
  *
+ * @var string $publicKeyProd
+ * @var string $accessTokenProd
+ * @var string $publicKeyTest
+ * @var string $accessTokenTest
+ * @var string $storeId
+ * @var string $storeName
+ * @var string $storeCategory
+ * @var string $customDomain
+ * @var string $integratorId
+ * @var string $debugMode
+ * @var string $checkboxCheckoutTestMode
+ * @var string $checkboxCheckoutProductionMode
+ *
  * @see \MercadoPago\Woocommerce\Admin\Settings
  */
 
@@ -188,7 +201,7 @@ if (!defined('ABSPATH')) {
                             type="text"
                             id="mp-public-key-prod"
                             class="mp-settings-input"
-                            value=""
+                            value="<?= $publicKeyProd ?>"
                             placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>"
                         />
                     </fieldset>
@@ -201,7 +214,7 @@ if (!defined('ABSPATH')) {
                             type="text"
                             id="mp-access-token-prod"
                             class="mp-settings-input"
-                            value=""
+                            value="<?= $accessTokenProd ?>"
                             placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>"
                         />
                     </fieldset>
@@ -223,7 +236,7 @@ if (!defined('ABSPATH')) {
                             type="text"
                             id="mp-public-key-test"
                             class="mp-settings-input"
-                            value=""
+                            value="<?= $publicKeyTest ?>"
                             placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>"
                         />
                     </fieldset>
@@ -236,7 +249,7 @@ if (!defined('ABSPATH')) {
                             type="text"
                             id="mp-access-token-test"
                             class="mp-settings-input"
-                            value=""
+                            value="<?= $accessTokenTest ?>"
                             placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>"
                         />
                     </fieldset>
@@ -282,7 +295,7 @@ if (!defined('ABSPATH')) {
                                 type="text"
                                 id="mp-store-identification"
                                 class="mp-settings-input"
-                                value=""
+                                value="<?= $storeName ?>"
                                 placeholder= "<?= $storeTranslations['placeholder_name_store'] ?>"
                             />
                         </fieldset>
@@ -298,7 +311,7 @@ if (!defined('ABSPATH')) {
                                 type="text"
                                 id="mp-store-category-id"
                                 class="mp-settings-input"
-                                value=""
+                                value="<?= $storeId ?>"
                                 placeholder="<?= $storeTranslations['placeholder_activities_store'] ?>"
                             />
                         </fieldset>
@@ -335,7 +348,7 @@ if (!defined('ABSPATH')) {
                                         type="text"
                                         id="mp-store-url-ipn"
                                         class="mp-settings-input"
-                                        value=""
+                                        value="<?= $customDomain ?>"
                                         placeholder="<?= $storeTranslations['placeholder_url'] ?>"
                                     />
                                     <span class="mp-settings-helper"><?= $storeTranslations['helper_url'] ?></span>
@@ -349,7 +362,7 @@ if (!defined('ABSPATH')) {
                                         type="text"
                                         id="mp-store-integrator-id"
                                         class="mp-settings-input"
-                                        value=""
+                                        value="<?= $integratorId ?>"
                                         placeholder="<?= $storeTranslations['placeholder_integrator'] ?>"
                                     />
                                     <span class="mp-settings-helper"><?= $storeTranslations['helper_integrator'] ?></span>
@@ -359,7 +372,12 @@ if (!defined('ABSPATH')) {
                             <div class="mp-container">
                                 <div>
                                     <label class="mp-settings-switch">
-                                        <input type="checkbox" value="yes" id="mp-store-debug-mode" />
+                                        <input
+                                            id="mp-store-debug-mode"
+                                            type="checkbox"
+                                            value="yes"
+                                            <?= ($debugMode === 'yes') ? 'checked' : '' ?>
+                                        />
                                         <span class="mp-settings-slider mp-settings-round"></span>
                                     </label>
                                 </div>
@@ -448,8 +466,8 @@ if (!defined('ABSPATH')) {
                                 id="mp-settings-testmode-test"
                                 class="mp-settings-radio-button"
                                 name="mp-test-prod"
-                                checked="checked"
                                 value="yes"
+                                <?= ($checkboxCheckoutTestMode === 'yes') ? 'checked' : '' ?>
                             />
                         </div>
                         <label for="mp-settings-testmode-test">
@@ -474,7 +492,7 @@ if (!defined('ABSPATH')) {
                                 class="mp-settings-radio-button"
                                 name="mp-test-prod"
                                 value="no"
-                                checked="checked"
+                                <?= ($checkboxCheckoutTestMode === 'no') ? 'checked' : '' ?>
                             />
                         </div>
                         <label for="mp-settings-testmode-prod">

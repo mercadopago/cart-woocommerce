@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
+use MercadoPago\Woocommerce\Configs\Credentials;
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 
@@ -27,6 +29,16 @@ class Settings
     protected $translations;
 
     /**
+     * @var Credentials
+     */
+    protected $credentialsConfigs;
+
+    /**
+     * @var Store
+     */
+    protected $storeConfigs;
+
+    /**
      * @var Settings
      */
     private static $instance = null;
@@ -38,6 +50,8 @@ class Settings
     {
         $this->scripts = Scripts::getInstance();
         $this->translations = Translations::getInstance();
+        $this->credentialsConfigs = Credentials::getInstance();
+        $this->storeConfigs = Store::getInstance();
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -140,6 +154,21 @@ class Settings
         $storeTranslations       = $this->translations->storeSettings;
         $gatewaysTranslations    = $this->translations->gatewaysSettings;
         $testModeTranslations    = $this->translations->testModeSettings;
+
+        $publicKeyProd   = $this->credentialsConfigs->getCredentialsPublicKeyProd();
+        $accessTokenProd = $this->credentialsConfigs->getCredentialsAccessTokenProd();
+        $publicKeyTest   = $this->credentialsConfigs->getCredentialsPublicKeyTest();
+        $accessTokenTest = $this->credentialsConfigs->getCredentialsAccessTokenTest();
+
+        $storeId       = $this->storeConfigs->getStoreId();
+        $storeName     = $this->storeConfigs->getStoreName();
+        $storeCategory = $this->storeConfigs->getStoreCategory();
+        $customDomain  = $this->storeConfigs->getCustomDomain();
+        $integratorId  = $this->storeConfigs->getIntegratorId();
+        $debugMode     = $this->storeConfigs->getDebugMode();
+
+        $checkboxCheckoutTestMode       = $this->storeConfigs->getCheckboxCheckoutTestMode();
+        $checkboxCheckoutProductionMode = $this->storeConfigs->getCheckboxCheckoutProductionMode();
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }
