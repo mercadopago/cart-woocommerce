@@ -212,21 +212,24 @@
 }
 
 .mp-settings-icon-success {
-  background: url("../../images/settings/icon-success.png") 98% 50% no-repeat transparent;
+  background: url("../../images/icons/icon-success.png") 100% 50% no-repeat transparent;
+  background-size: 16px;
   padding-right: 16px !important;
 }
 
 .mp-settings-icon-warning {
-  background: url("../../images/settings/icon-warning.png") 50% 50% no-repeat transparent;
+  background: url("../../images/icons/icon-warning.png") 100% 50% no-repeat transparent;
   background-size: 16px;
   padding-right: 16px !important;
 }
 
 .mp-settings-icon-open {
-  background: url("../../images/settings/icon-open.png") 98% 50% no-repeat transparent;
+  background: url("../../images/icons/icon-open.png") 100% 50% no-repeat transparent;
+  background-size: 16px;
   padding-right: 16px !important;
   transition: 300ms;
 }
+
 .mp-settings-icon-open.mp-arrow-up {
   transform: rotate(180deg);
   transition: 300ms;
@@ -238,28 +241,28 @@
 }
 
 .mp-settings-icon-info {
-  background: url("../../images/settings/icon-info.png") 98% 50% no-repeat transparent;
+  background: url("../../images/icons/icon-info.png") 98% 50% no-repeat transparent;
   padding-right: 16px !important;
 }
 
 .mp-settings-icon-mp {
-  background: url("../../images/settings/icon-mp.png") center center no-repeat transparent;
+  background: url("../../images/icons/icon-mp.png") center center no-repeat transparent;
 }
 
 .mp-settings-icon-card {
-  background: url("../../images/settings/icon-card.png") center center no-repeat transparent;
+  background: url("../../images/icons/icon-card.png") center center no-repeat transparent;
 }
 
 .mp-settings-icon-code {
-  background: url("../../images/settings/icon-code.png") center center no-repeat transparent;
+  background: url("../../images/icons/icon-code.png") center center no-repeat transparent;
 }
 
 .mp-settings-icon-pix {
-  background: url("../../images/settings/icon-pix.png") center center no-repeat transparent;
+  background: url("../../images/icons/icon-pix.png") center center no-repeat transparent;
 }
 
 .mp-settings-icon-config {
-  background: url("../../images/settings/icon-config.png") center center no-repeat transparent;
+  background: url("../../images/icons/icon-config.png") center center no-repeat transparent;
   padding-right: 16px !important;
 }
 
@@ -518,7 +521,7 @@ input:checked + .mp-settings-slider:before {
 .mp-settings-alert-payment-methods {
   display: flex;
   align-items: flex-start;
-  margin-top: 22px;
+  margin-top: 12px;
 }
 
 .mp-settings-alert-payment-methods-orange {
@@ -538,16 +541,16 @@ input:checked + .mp-settings-slider:before {
 .mp-settings-alert-payment-methods-green {
   width: 6px;
   background-color: #00a650;
-  height: 72px;
+  height: 75px;
   border-radius: 6px 0 0 6px;
 }
 
 .mp-settings-alert-payment-methods-gray {
   border-radius: 0 6px 6px 0;
-  width: 533px;
+  width: 550px;
   background: rgba(0, 0, 0, 0.04);
   display: flex;
-  padding: 16px 16px 14px;
+  padding: 16px 20px 14px;
   align-items: flex-start;
 }
 
@@ -712,7 +715,7 @@ input:checked + .mp-settings-slider:before {
   height: 48px !important;
   left: calc(50% - 544px / 2) !important;
   top: 22px !important;
-  background: url("../../images/settings/icon-shape.png") no-repeat center right #fff !important;
+  background: url("../../images/icons/icon-shape.png") no-repeat center right #fff !important;
   background-origin: content-box !important;
   border: 1px solid rgba(0, 0, 0, 0.25) !important;
   border-radius: 6px !important;
@@ -795,18 +798,19 @@ input:checked + .mp-settings-slider:before {
 }
 
 .mp-icon-badge-info {
-  background: url(../../images/icons/tip.png) 98% 50% no-repeat transparent;
-  margin: 4px 12px 0 0;
-  width: 22px;
-  height: 20px;
+  background: url("../../images/icons/icon-tip.png") 100% 50% no-repeat transparent;
+  background-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin: 6px 12px 6px 16px;
 }
 
 .mp-icon-badge-warning {
-  background: url(../../images/icons/warning.png) 98% 50% no-repeat transparent;
-  margin: 4px 12px 0 0;
-  width: 22px;
-  height: 20px;
-  padding-left: 10px;
+  background: url("../../images/icons/icon-warning.png") 100% 50% no-repeat transparent;
+  background-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin: 6px 12px 6px 16px;
 }
 
 .mp-text-title {

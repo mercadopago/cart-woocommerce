@@ -135,6 +135,7 @@ class Settings
         add_action('wp_ajax_mp_update_access_token', array($this, 'mercadopagoValidateAccessToken'));
         add_action('wp_ajax_mp_update_option_credentials', array($this, 'mercadopagoUpdateOptionCredentials'));
         add_action('wp_ajax_mp_update_store_information', array($this, 'mercadopagoUpdateStoreInfo'));
+        add_action('wp_ajax_mp_update_test_mode', array( $this, 'mercadopagoUpdateTestMode'));
     }
 
     /**
@@ -182,6 +183,7 @@ class Settings
         $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
         $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
 
+        $testMode   = ($checkboxCheckoutTestMode === 'yes');
         $categories = Categories::getCategories();
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
@@ -356,6 +358,11 @@ class Settings
         wp_send_json_error($response);
     }
 
+    /**
+     * Save store info options
+     *
+     * @return void
+     */
     public function mercadopagoUpdateStoreInfo(): void
     {
         $storeId       = Form::getSanitizeTextFromPost('store_category_id');
@@ -373,5 +380,34 @@ class Settings
         $this->store->setDebugMode($debugMode);
 
         wp_send_json_success($this->translations->updateStore['valid_configuration']);
+    }
+
+    /**
+     * Save test mode options
+     *
+     * @return void
+     */
+    public function mercadopagoUpdateTestMode(): void
+    {
+        $checkoutTestMode    = Form::getSanitizeTextFromPost('input_mode_value');
+        $verifyAlertTestMode = Form::getSanitizeTextFromPost('input_verify_alert_test_mode');
+
+        $validateCheckoutTestMode = ($checkoutTestMode === 'yes');
+        $withoutTestCredentials = (
+            $this->seller->getCredentialsPublicKeyTest() === '' ||
+            $this->seller->getCredentialsAccessTokenTest() === ''
+        );
+
+        if ($verifyAlertTestMode === 'yes' || ($validateCheckoutTestMode && $withoutTestCredentials)) {
+            wp_send_json_error('Invalid credentials for test mode');
+        }
+
+        $this->store->setCheckboxCheckoutTestMode($checkoutTestMode);
+
+        if ($validateCheckoutTestMode) {
+            wp_send_json_success('Mercado Pago\'s Payment Methods in Test Mode');
+        }
+
+        wp_send_json_success('Mercado Pago\'s Payment Methods in Production Mode');
     }
 }

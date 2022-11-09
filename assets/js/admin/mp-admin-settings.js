@@ -239,6 +239,14 @@ function mp_go_to_next_step(actualStep, nextStep, actualArrowId, nextArrowId) {
   }
 }
 
+function mp_continue_to_next_step() {
+  document
+    .getElementById('mp-payment-method-continue')
+    .addEventListener('click', function() {
+      mp_go_to_next_step('mp-step-3', 'mp-step-4', 'mp-payments-arrow-up', 'mp-modes-arrow-up');
+  });
+}
+
 function mp_get_requirements() {
   jQuery.post(ajaxurl, {action: 'mp_get_requirements'}, function (response) {
     const requirements = {
@@ -527,6 +535,50 @@ function mp_update_store_information() {
     });
 }
 
+function mp_update_test_mode() {
+  const rad = document.querySelectorAll('input[name="mp-test-prod"]');
+
+  rad[0].addEventListener('change', function() {
+    if (rad[0].checked) {
+      select_test_mode(true);
+    }
+  });
+
+  rad[1].addEventListener('change', function() {
+    if (rad[1].checked) {
+      select_test_mode(false);
+    }
+  });
+
+  document
+    .getElementById('mp-store-mode-save')
+    .addEventListener('click', function () {
+      jQuery
+        .post(
+          ajaxurl,
+          {
+            input_mode_value: document.querySelector('input[name="mp-test-prod"]:checked').value,
+            input_verify_alert_test_mode: mp_verify_alert_test_mode() ? 'yes' : 'no',
+            action: 'mp_update_test_mode'
+          },
+          function() {}
+        )
+        .done(function(response) {
+          if( response.success ){
+            mp_show_message(response.data, 'success', 'test_mode');
+          } else{
+            if (rad[0].checked) {
+              document.getElementById('mp-red-badge').style.display = 'block';
+            }
+            mp_show_message(response.data, 'error', 'test_mode');
+          }
+        })
+        .fail(function(error) {
+          mp_show_message(error.data, 'error', 'test_mode');
+        });
+    });
+}
+
 function mp_settings_screen_load() {
   mp_get_requirements();
   mp_settings_accordion_start();
@@ -537,4 +589,6 @@ function mp_settings_screen_load() {
   mp_verify_alert_test_mode();
   mp_update_option_credentials();
   mp_update_store_information();
+  mp_continue_to_next_step();
+  mp_update_test_mode();
 }

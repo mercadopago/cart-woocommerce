@@ -20,6 +20,7 @@
  * @var string $checkboxCheckoutTestMode
  * @var string $checkboxCheckoutProductionMode
  *
+ * @var bool  $testMode
  * @var array $categories
  *
  * @see \MercadoPago\Woocommerce\Admin\Settings
@@ -447,11 +448,11 @@ if (!defined('ABSPATH')) {
                     <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right">
                         <?= $testModeTranslations['title_test_mode'] ?>
                     </span>
-                    <div id="mp-mode-badge" class="mp-settings-margin-left mp-settings-margin-right mp-settings-prod-mode-alert">
-                        <span id="mp-mode-badge-test" style="display: none">
+                    <div id="mp-mode-badge" class="mp-settings-margin-left mp-settings-margin-right <?= $testMode ? 'mp-settings-test-mode-alert' : 'mp-settings-prod-mode-alert' ?>">
+                        <span id="mp-mode-badge-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
                             <?= $testModeTranslations['badge_test'] ?>
                         </span>
-                        <span id="mp-mode-badge-prod" style="display: block">
+                        <span id="mp-mode-badge-prod" style="display: <?= $testMode ? 'none' : 'block' ?>">
                             <?= $testModeTranslations['badge_mode'] ?>
                         </span>
                     </div>
@@ -484,7 +485,7 @@ if (!defined('ABSPATH')) {
                                 class="mp-settings-radio-button"
                                 name="mp-test-prod"
                                 value="yes"
-                                <?= ($checkboxCheckoutTestMode === 'yes') ? 'checked' : '' ?>
+                                <?= $testMode ? 'checked' : '' ?>
                             />
                         </div>
                         <label for="mp-settings-testmode-test">
@@ -509,7 +510,7 @@ if (!defined('ABSPATH')) {
                                 class="mp-settings-radio-button"
                                 name="mp-test-prod"
                                 value="no"
-                                <?= ($checkboxCheckoutTestMode === 'no') ? 'checked' : '' ?>
+                                <?= $testMode ? '' : 'checked' ?>
                             />
                         </div>
                         <label for="mp-settings-testmode-prod">
@@ -525,7 +526,7 @@ if (!defined('ABSPATH')) {
 
                     <div class="mp-settings-alert-payment-methods">
                         <div id="mp-red-badge" class="mp-settings-alert-red" style="display:none;">
-                            <div class="mp-settings-alert-payment-methods-gray" style="width: 540px">
+                            <div class="mp-settings-alert-payment-methods-gray">
                                 <div class="mp-settings-margin-right mp-settings-mode-style">
                                     <span id="mp-icon-badge-error" class="mp-settings-icon-warning"></span>
                                 </div>
@@ -545,31 +546,31 @@ if (!defined('ABSPATH')) {
                     </div>
 
                     <div class="mp-settings-alert-payment-methods">
-                        <div id="mp-orange-badge" class="mp-settings-alert-payment-methods-green"></div>
+                        <div id="mp-orange-badge" class="<?= $testMode ? 'mp-settings-alert-payment-methods-orange' : 'mp-settings-alert-payment-methods-green' ?>">
+                            <div class="mp-settings-alert-payment-methods-gray">
+                                <div class="mp-settings-margin-right mp-settings-mode-style">
+                                    <span id="mp-icon-badge" class="<?= $testMode ? 'mp-settings-icon-warning' : 'mp-settings-icon-success' ?>"></span>
+                                </div>
 
-                        <div class="mp-settings-alert-payment-methods-gray">
-                            <div class="mp-settings-margin-right mp-settings-mode-style">
-                                <span id="mp-icon-badge" class="mp-settings-icon-success"></span>
-                            </div>
+                                <div class="mp-settings-mode-warning">
+                                    <div class="mp-settings-margin-left">
+                                        <div class="mp-settings-alert-mode-title">
+                                            <span id="mp-title-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>">
+                                                <span id="mp-text-badge" class="mp-display-block"> <?= $testModeTranslations['title_message_prod'] ?></span>
+                                            </span>
+                                            <span id="mp-title-helper-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
+                                                <span id="mp-text-badge" class="mp-display-block"><?= $testModeTranslations['title_message_test'] ?></span>
+                                            </span>
+                                        </div>
 
-                            <div class="mp-settings-mode-warning">
-                                <div class="mp-settings-margin-left">
-                                    <div class="mp-settings-alert-mode-title">
-                                        <span id="mp-title-helper-prod">
-                                            <span id="mp-text-badge" class="mp-display-block"> <?= $testModeTranslations['title_message_prod'] ?></span>
-                                        </span>
-                                        <span id="mp-title-helper-test">
-										    <span id="mp-text-badge" class="mp-display-block"><?= $testModeTranslations['title_message_test'] ?></span>
-										</span>
-                                    </div>
-
-                                    <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
-                                        <span id="mp-helper-prod" class="mp-display-block"><?= $testModeTranslations['subtitle_message_prod'] ?></span>
-                                        <span id="mp-helper-test" class="mp-display-block">
-											<span><?= $testModeTranslations['subtitle_test_one'] ?></span><br/>
-                                            <span><?= $testModeTranslations['subtitle_test_two'] ?></span><br/>
-                                            <span><?= $testModeTranslations['subtitle_test_three'] ?></span>
-										</span>
+                                        <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
+                                            <span id="mp-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>"><?= $testModeTranslations['subtitle_message_prod'] ?></span>
+                                            <span id="mp-helper-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
+                                                <span><?= $testModeTranslations['subtitle_test_one'] ?></span><br/>
+                                                <span><?= $testModeTranslations['subtitle_test_two'] ?></span><br/>
+                                                <span><?= $testModeTranslations['subtitle_test_three'] ?></span>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
