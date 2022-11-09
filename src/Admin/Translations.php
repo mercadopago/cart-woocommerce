@@ -64,6 +64,11 @@ class Translations
     public $updateCredentials = [];
 
     /**
+     * @var array
+     */
+    public $updateStore = [];
+
+    /**
      * @var Translations
      */
     private static $instance = null;
@@ -83,6 +88,7 @@ class Translations
         $this->setTestModeSettingsTranslations();
         $this->setUpdateCredentialsTranslations();
         $this->setValidateCredentialsTranslations();
+        $this->setUpdateStoreTranslations();
     }
 
     /**
@@ -394,6 +400,18 @@ class Translations
             'invalid_credentials_title'        => $this->translate('Invalid credentials'),
             'invalid_credentials_subtitle'     => $this->translate('See our manual to learn '),
             'invalid_credentials_link_message' => $this->translate('how to enter the credentials the right way.'),
+        ];
+    }
+
+    /**
+     * Set update store translations
+     *
+     * @return void
+     */
+    public function setUpdateStoreTranslations(): void
+    {
+        $this->updateStore = [
+            'valid_configuration' => $this->translate('Store information is valid'),
         ];
     }
 }

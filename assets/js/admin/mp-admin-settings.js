@@ -92,7 +92,7 @@ function select_test_mode(test){
     badge.classList.remove('mp-settings-test-mode-alert');
     badge.classList.add('mp-settings-prod-mode-alert');
 
-    red_badge.style.display ='none';
+    red_badge.style.display = 'none';
 
     color_badge.classList.remove('mp-settings-alert-payment-methods-orange');
     color_badge.classList.add('mp-settings-alert-payment-methods-green');
@@ -116,10 +116,10 @@ function mp_verify_alert_test_mode() {
       document.getElementById('mp-public-key-test').value === '' ||
       document.getElementById('mp-access-token-test').value === ''
   )) {
-    document.getElementById('mp-red-badge').style.display ='block';
+    document.getElementById('mp-red-badge').style.display = 'block';
     return true;
   } else {
-    document.getElementById('mp-red-badge').style.display ='none';
+    document.getElementById('mp-red-badge').style.display = 'none';
     return false;
   }
 }
@@ -182,6 +182,29 @@ function mp_validate_credentials_tips() {
     })
     .fail(function() {
       icon_credentials.classList.remove('mp-settings-icon-success');
+    });
+}
+
+function mp_validate_store_tips() {
+  const icon_store = document.getElementById('mp-settings-icon-store');
+  jQuery
+    .post(
+      ajaxurl,
+      {
+        action: 'mp_validate_store_tips',
+      },
+      function() {}
+    )
+    .done(function(response) {
+      if (response.success) {
+        icon_store.classList.remove('mp-settings-icon-store');
+        icon_store.classList.add('mp-settings-icon-success');
+      } else {
+        icon_store.classList.remove('mp-settings-icon-success');
+      }
+    })
+    .fail(function() {
+      icon_store.classList.remove('mp-settings-icon-success');
     });
 }
 
@@ -469,12 +492,48 @@ function mp_update_option_credentials() {
     });
 }
 
+function mp_update_store_information() {
+  document
+    .getElementById('mp-store-info-save')
+    .addEventListener('click', function() {
+      jQuery
+        .post(
+          ajaxurl,
+          {
+            store_url_ipn: document.querySelector('#mp-store-url-ipn').value,
+            store_categories: document.getElementById('mp-store-categories').value,
+            store_category_id: document.getElementById('mp-store-category-id').value,
+            store_integrator_id: document.getElementById('mp-store-integrator-id').value,
+            store_identificator: document.getElementById('mp-store-identification').value,
+            store_debug_mode: document.querySelector('#mp-store-debug-mode:checked')?.value,
+            action: 'mp_update_store_information',
+          },
+          function() {}
+        )
+        .done(function(response) {
+          if (response.success) {
+            mp_validate_store_tips();
+            mp_show_message(response.data, 'success', 'store');
+            setTimeout(() => {
+              mp_go_to_next_step('mp-step-2', 'mp-step-3', 'mp-store-info-arrow-up', 'mp-payments-arrow-up');
+            }, 3000);
+          } else {
+            mp_show_message(response.data, 'error', 'store');
+          }
+        })
+        .fail(function(error) {
+          mp_show_message(error?.data, 'error', 'store');
+        });
+    });
+}
+
 function mp_settings_screen_load() {
   mp_get_requirements();
   mp_settings_accordion_start();
   mp_settings_accordion_options();
   mp_validate_credentials();
-  mp_update_option_credentials();
   mp_validate_credentials_tips();
   mp_verify_alert_test_mode();
+  mp_update_option_credentials();
+  mp_update_store_information();
 }

@@ -128,6 +128,7 @@ class Settings
         add_action('wp_ajax_mp_update_public_key', array($this, 'mercadopagoValidatePublicKey'));
         add_action('wp_ajax_mp_update_access_token', array($this, 'mercadopagoValidateAccessToken'));
         add_action('wp_ajax_mp_update_option_credentials', array($this, 'mercadopagoUpdateOptionCredentials'));
+        add_action('wp_ajax_mp_update_store_information', array($this, 'mercadopagoUpdateStoreInfo'));
     }
 
     /**
@@ -310,5 +311,24 @@ class Settings
         ];
 
         wp_send_json_error($response);
+    }
+
+    public function mercadopagoUpdateStoreInfo(): void
+    {
+        $storeId       = Form::getSanitizeTextFromPost('store_category_id');
+        $storeName     = Form::getSanitizeTextFromPost('store_identificator');
+        $storeCategory = Form::getSanitizeTextFromPost('store_categories');
+        $customDomain  = Form::getSanitizeTextFromPost('store_url_ipn');
+        $integratorId  = Form::getSanitizeTextFromPost('store_integrator_id');
+        $debugMode     = Form::getSanitizeTextFromPost('store_debug_mode');
+
+        $this->store->setStoreId($storeId);
+        $this->store->setStoreName($storeName);
+        $this->store->setStoreCategory($storeCategory);
+        $this->store->setCustomDomain($customDomain);
+        $this->store->setIntegratorId($integratorId);
+        $this->store->setDebugMode($debugMode);
+
+        wp_send_json_success($this->translations->updateStore['valid_configuration']);
     }
 }
