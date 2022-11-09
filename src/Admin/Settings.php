@@ -321,6 +321,8 @@ class Settings
         ) {
             $this->seller->setCredentialsPublicKeyProd($publicKeyProd);
             $this->seller->setCredentialsAccessTokenProd($accessTokenProd);
+            $this->seller->setHomologValidate($validateAccessTokenProd['data']['homologated']);
+            $this->seller->setClientId($validateAccessTokenProd['data']['client_id']);
 
             $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
             if ($sellerInfo['status'] === 200) {
@@ -336,7 +338,7 @@ class Settings
                 $validateAccessTokenTest['data']['is_test'] === true)
             ) {
                 $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
-                $this->seller->setCredentialsAccessTokenTest($publicKeyTest);
+                $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
 
                 if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
                     $this->store->setCheckboxCheckoutTestMode('no');

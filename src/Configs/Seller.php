@@ -43,11 +43,6 @@ class Seller
     /**
      * @const
      */
-    private const APPLICATION_ID = 'mp_application_id';
-
-    /**
-     * @const
-     */
     private const HOMOLOG_VALIDATE = 'homolog_validate';
 
     /**
@@ -178,33 +173,17 @@ class Seller
     }
 
     /**
-     * @return string
+     * @return bool
      */
-    public function getApplicationId(): string
+    public function getHomologValidate(): bool
     {
-        return get_option(self::APPLICATION_ID, '');
+        return get_option(self::HOMOLOG_VALIDATE, false);
     }
 
     /**
-     * @param string $applicationId
+     * @param bool $homologValidate
      */
-    public function setApplicationId(string $applicationId): void
-    {
-        update_option(self::APPLICATION_ID, $applicationId);
-    }
-
-    /**
-     * @return string
-     */
-    public function getHomologValidate(): string
-    {
-        return get_option(self::HOMOLOG_VALIDATE, '');
-    }
-
-    /**
-     * @param string $homologValidate
-     */
-    public function setHomologValidate(string $homologValidate): void
+    public function setHomologValidate(bool $homologValidate): void
     {
         update_option(self::HOMOLOG_VALIDATE, $homologValidate);
     }
