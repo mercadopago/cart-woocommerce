@@ -2,7 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
-use MercadoPago\Woocommerce\Configs\Credentials;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Form;
@@ -31,11 +30,6 @@ class Settings
     protected $translations;
 
     /**
-     * @var Credentials
-     */
-    protected $credentials;
-
-    /**
      * @var Seller
      */
     protected $seller;
@@ -57,7 +51,6 @@ class Settings
     {
         $this->scripts      = Scripts::getInstance();
         $this->translations = Translations::getInstance();
-        $this->credentials  = Credentials::getInstance();
         $this->seller       = Seller::getInstance();
         $this->store        = Store::getInstance();
 
@@ -167,10 +160,10 @@ class Settings
         $gatewaysTranslations    = $this->translations->gatewaysSettings;
         $testModeTranslations    = $this->translations->testModeSettings;
 
-        $publicKeyProd   = $this->credentials->getCredentialsPublicKeyProd();
-        $accessTokenProd = $this->credentials->getCredentialsAccessTokenProd();
-        $publicKeyTest   = $this->credentials->getCredentialsPublicKeyTest();
-        $accessTokenTest = $this->credentials->getCredentialsAccessTokenTest();
+        $publicKeyProd   = $this->seller->getCredentialsPublicKeyProd();
+        $accessTokenProd = $this->seller->getCredentialsAccessTokenProd();
+        $publicKeyTest   = $this->seller->getCredentialsPublicKeyTest();
+        $accessTokenTest = $this->seller->getCredentialsAccessTokenTest();
 
         $storeId       = $this->store->getStoreId();
         $storeName     = $this->store->getStoreName();
@@ -213,7 +206,7 @@ class Settings
         $isTest    = Form::getSanitizeTextFromPost('is_test');
         $publicKey = Form::getSanitizeTextFromPost('public_key');
 
-        $validateCredentialsResponse = $this->credentials->validatePublicKey($publicKey);
+        $validateCredentialsResponse = $this->seller->validatePublicKey($publicKey);
 
         $data   = $validateCredentialsResponse['data'];
         $status = $validateCredentialsResponse['status'];
@@ -235,7 +228,7 @@ class Settings
         $isTest      = Form::getSanitizeTextFromPost('is_test');
         $accessToken = Form::getSanitizeTextFromPost('access_token');
 
-        $validateCredentialsResponse = $this->credentials->validateAccessToken($accessToken);
+        $validateCredentialsResponse = $this->seller->validateAccessToken($accessToken);
 
         $data   = $validateCredentialsResponse['data'];
         $status = $validateCredentialsResponse['status'];
@@ -263,10 +256,10 @@ class Settings
         $publicKeyTest   = Form::getSanitizeTextFromPost('public_key_test');
         $accessTokenTest = Form::getSanitizeTextFromPost('access_token_test');
 
-        $validatePublicKeyProd   = $this->credentials->validatePublicKey($publicKeyProd);
-        $validateAccessTokenProd = $this->credentials->validateAccessToken($accessTokenProd);
-        $validatePublicKeyTest   = $this->credentials->validatePublicKey($publicKeyTest);
-        $validateAccessTokenTest = $this->credentials->validateAccessToken($accessTokenTest);
+        $validatePublicKeyProd   = $this->seller->validatePublicKey($publicKeyProd);
+        $validateAccessTokenProd = $this->seller->validateAccessToken($accessTokenProd);
+        $validatePublicKeyTest   = $this->seller->validatePublicKey($publicKeyTest);
+        $validateAccessTokenTest = $this->seller->validateAccessToken($accessTokenTest);
 
         if (
             $validatePublicKeyProd['status'] === 200 &&
@@ -274,8 +267,8 @@ class Settings
             $validatePublicKeyProd['data']['is_test'] === false &&
             $validateAccessTokenProd['data']['is_test'] === false
         ) {
-            $this->credentials->setCredentialsPublicKeyProd($publicKeyProd);
-            $this->credentials->setCredentialsAccessTokenProd($accessTokenProd);
+            $this->seller->setCredentialsPublicKeyProd($publicKeyProd);
+            $this->seller->setCredentialsAccessTokenProd($accessTokenProd);
 
             $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
             if ($sellerInfo['status'] === 200) {
@@ -290,8 +283,8 @@ class Settings
                 $validatePublicKeyTest['data']['is_test'] === true &&
                 $validateAccessTokenTest['data']['is_test'] === true)
             ) {
-                $this->credentials->setCredentialsPublicKeyTest($publicKeyTest);
-                $this->credentials->setCredentialsAccessTokenTest($publicKeyTest);
+                $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
+                $this->seller->setCredentialsAccessTokenTest($publicKeyTest);
 
                 if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
                     $this->store->setCheckboxCheckoutTestMode('no');
@@ -310,10 +303,10 @@ class Settings
 
         $response = [
             'type'      => 'error',
-            'link'      => '#',
-            'linkMsg'   => 'how to enter the credentials the right way.',
             'message'   => 'Invalid credentials',
             'subtitle'  => 'See our manual to learn ',
+            'linkMsg'   => 'how to enter the credentials the right way.',
+            'link'      => '#',
             'test_mode' => $this->store->getCheckboxCheckoutTestMode()
         ];
 

@@ -434,6 +434,9 @@ if (!defined('ABSPATH')) {
                         <?= $testModeTranslations['title_test_mode'] ?>
                     </span>
                     <div id="mp-mode-badge" class="mp-settings-margin-left mp-settings-margin-right mp-settings-prod-mode-alert">
+                        <span id="mp-mode-badge-test" style="display: none">
+                            <?= $testModeTranslations['badge_test'] ?>
+                        </span>
                         <span id="mp-mode-badge-prod" style="display: block">
                             <?= $testModeTranslations['badge_mode'] ?>
                         </span>

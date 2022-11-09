@@ -759,6 +759,77 @@ input:checked + .mp-settings-slider:before {
   padding: 1rem 1rem;
 }
 
+.mp-card-info {
+  display: flex;
+  margin: 8px 0 24px;
+}
+
+.mp-alert-color-success {
+  width: 6px;
+  background: #009ee3;
+  border-radius: 6px 0 0 6px;
+}
+
+.mp-alert-color-alert {
+  width: 6px;
+  background: #ff7733;
+  border-radius: 6px 0 0 6px;
+}
+
+.mp-alert-color-error {
+  width: 6px;
+  background: #ff3333;
+  border-radius: 6px 0 0 6px;
+}
+
+.mp-card-body-payments {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 24px 20px 0;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 0 6px 6px 0;
+}
+
+.mp-card-body-size-homolog {
+  width: 700px;
+}
+
+.mp-icon-badge-info {
+  background: url(../../images/icons/tip.png) 98% 50% no-repeat transparent;
+  margin: 4px 12px 0 0;
+  width: 22px;
+  height: 20px;
+}
+
+.mp-icon-badge-warning {
+  background: url(../../images/icons/warning.png) 98% 50% no-repeat transparent;
+  margin: 4px 12px 0 0;
+  width: 22px;
+  height: 20px;
+  padding-left: 10px;
+}
+
+.mp-text-title {
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.9);
+  margin: 4px 0;
+  font-weight: bold;
+}
+
+.mp-text-subtitle {
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 18px;
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.9);
+  margin: 4px 0;
+}
+
 @media screen and (max-width: 780px) {
   .mp-settings {
     margin: 0 0 0 -10px;

@@ -423,7 +423,7 @@ function mp_update_option_credentials() {
     .getElementById('mp-btn-credentials')
     .addEventListener('click', function() {
       const msgAlert = document.getElementById('msg-info-credentials');
-      if(msgAlert.childNodes.length>1){
+      if (msgAlert.childNodes.length >= 1) {
         document.querySelector('.mp-card-info').remove();
       }
 
