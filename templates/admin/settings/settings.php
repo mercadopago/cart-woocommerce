@@ -20,6 +20,8 @@
  * @var string $checkboxCheckoutTestMode
  * @var string $checkboxCheckoutProductionMode
  *
+ * @var array $categories
+ *
  * @see \MercadoPago\Woocommerce\Admin\Settings
  */
 
@@ -319,8 +321,20 @@ if (!defined('ABSPATH')) {
                     </div>
 
                     <div class="mp-settings-standard-margin">
-                        <label for="mp-store-categories" class="mp-settings-label mp-container mp-settings-font-color"><?= $storeTranslations['subtitle_category_store'] ?></label>
-                        <select name="<?= $storeTranslations['placeholder_category_store'] ?>" class="mp-settings-select" id="mp-store-categories"></select>
+                        <label for="mp-store-categories" class="mp-settings-label mp-container mp-settings-font-color">
+                            <?= $storeTranslations['subtitle_category_store'] ?>
+                        </label>
+                        <select name="<?= $storeTranslations['placeholder_category_store'] ?>" class="mp-settings-select" id="mp-store-categories">
+                            <?php
+                                foreach ($categories as $category) {
+                                    echo '
+                                        <option value="' . $category['id'] . '"' . ($storeCategory === $category['id'] ? 'selected' : '') . '>
+                                            ' . $category['description'] . '
+                                        </option>
+                                    ';
+                                }
+                            ?>
+                        </select>
                         <span class="mp-settings-helper"><?= $storeTranslations['helper_category_store'] ?></span>
                     </div>
                 </div>

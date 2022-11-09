@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Admin;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Categories;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Scripts;
@@ -180,6 +181,8 @@ class Settings
 
         $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
         $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
+
+        $categories = Categories::getCategories();
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }

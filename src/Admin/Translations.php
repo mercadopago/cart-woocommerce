@@ -295,7 +295,7 @@ class Translations
             'button_store'                 => $this->translate('Save and continue'),
             'helper_name_store'            => $this->translate('If this field is empty, the purchase will be identified as Mercado Pago.'),
             'helper_activities_store'      => $this->translate('In Activities, you will view this term before the order number'),
-            'helper_category_store'        => $this->translate('Select "Other" if you do not find the appropriate category.'),
+            'helper_category_store'        => $this->translate('Select "Other categories" if you do not find the appropriate category.'),
             'helper_integrator_link'       => $this->translate('request it now.'),
             'helper_url'                   => $helperUrl,
             'helper_integrator'            => $helperIntegrator,
