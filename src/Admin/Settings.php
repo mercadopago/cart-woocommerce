@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Categories;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 
@@ -20,6 +21,11 @@ class Settings
      * @const
      */
     private const PRIORITY_ON_MENU = 90;
+
+    /**
+     * @var Admin
+     */
+    protected $admin;
 
     /**
      * @var Scripts
@@ -56,6 +62,7 @@ class Settings
      */
     private function __construct()
     {
+        $this->admin        = Admin::getInstance();
         $this->scripts      = Scripts::getInstance();
         $this->endpoints    = Endpoints::getInstance();
         $this->translations = Translations::getInstance();
@@ -87,7 +94,7 @@ class Settings
      */
     public function loadMenu(): void
     {
-        add_action('admin_menu', array($this, 'registerMercadoPagoInWoocommerceMenu'), self::PRIORITY_ON_MENU);
+        $this->admin->registerOnMenu(self::PRIORITY_ON_MENU, [$this, 'registerMercadoPagoInWoocommerceMenu']);
     }
 
     /**
@@ -152,13 +159,13 @@ class Settings
      */
     public function registerMercadoPagoInWoocommerceMenu(): void
     {
-        add_submenu_page(
+        $this->admin->registerSubmenuPage(
             'woocommerce',
             'Mercado Pago Settings',
             'Mercado Pago',
             'manage_options',
             'mercadopago-settings',
-            array($this, 'mercadoPagoSubmenuPageCallback')
+            [$this, 'mercadoPagoSubmenuPageCallback']
         );
     }
 

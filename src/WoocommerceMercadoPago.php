@@ -6,8 +6,10 @@ use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Helpers\Links;
+use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Gateway;
 use MercadoPago\Woocommerce\Hooks\OrderDetails;
+use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 
 if (!defined('ABSPATH')) {
@@ -30,6 +32,21 @@ class WoocommerceMercadoPago
      * @var string
      */
     public static $platformId = 'bo2hnr2ic4p001kbgpt0';
+
+    /**
+     * @var string
+     */
+    public static $pluginName = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
+
+    /**
+     * @var Admin
+     */
+    public $admin;
+
+    /**
+     * @var Plugin
+     */
+    public $plugin;
 
     /**
      * @var Notices
@@ -111,8 +128,7 @@ class WoocommerceMercadoPago
      */
     public function registerHooks(): void
     {
-        add_filter('plugin_action_links_woocommerce-plugins-enablers/woocommerce-mercadopago.php', array($this, 'setPluginSettingsLink'));
-        add_action('plugins_loaded', array($this, 'init'));
+        add_action('plugins_loaded', [$this, 'init']);
     }
 
     /**
@@ -123,6 +139,7 @@ class WoocommerceMercadoPago
     public function init(): void
     {
         $this->setProperties();
+        $this->setPluginSettingsLink();
 
         if (version_compare(PHP_VERSION, self::$mpMinPhp, '<')) {
             $this->verifyPhpVersionNotice();
@@ -151,6 +168,8 @@ class WoocommerceMercadoPago
     public function setProperties(): void
     {
         $this->translations = Translations::getInstance();
+        $this->admin        = Admin::getInstance();
+        $this->plugin       = Plugin::getInstance();
         $this->scripts      = Scripts::getInstance();
         $this->notices      = Notices::getInstance();
         $this->gateway      = Gateway::getInstance();
@@ -161,19 +180,17 @@ class WoocommerceMercadoPago
     /**
      * Set plugin configuration links
      *
-     * @param array $links
-     *
-     * @return array
+     * @return void
      */
-    public function setPluginSettingsLink(array $links): array
+    public function setPluginSettingsLink()
     {
-        $pluginLinks = array(
-            '<a href="' . admin_url('admin.php?page=mercadopago-settings') . '">' . $this->translations->pluginSettings['set_plugin'] . '</a>',
-            '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout') . '">' . $this->translations->pluginSettings['payment_method'] . '</a>',
-            '<a target="_blank" href="' . Links::getLinks()['link_mp_developers'] . '">' . $this->translations->pluginSettings['plugin_manual'] . '</a>',
-        );
+        $pluginLinks = [
+            $this->translations->plugin['set_plugin']     => admin_url('admin.php?page=mercadopago-settings'),
+            $this->translations->plugin['payment_method'] => admin_url('admin.php?page=wc-settings&tab=checkout'),
+            $this->translations->plugin['plugin_manual']  => Links::getLinks()['link_mp_developers'],
+        ];
 
-        return array_merge($pluginLinks, $links);
+        $this->plugin->registerPluginActionLinks(self::$pluginName, $pluginLinks);
     }
 
     /**

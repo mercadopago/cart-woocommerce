@@ -36,7 +36,7 @@ class Scripts
     private static $instance = null;
 
     /**
-     * Get Scripts instance
+     * Get Scripts Hooks instance
      *
      * @return Scripts
      */

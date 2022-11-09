@@ -21,7 +21,12 @@ class Translations
     /**
      * @var array
      */
-    public $pluginSettings = [];
+    public $plugin = [];
+
+    /**
+     * @var array
+     */
+    public $order = [];
 
     /**
      * @var array
@@ -37,11 +42,6 @@ class Translations
      * @var array
      */
     public $storeSettings = [];
-
-    /**
-     * @var array
-     */
-    public $orderSettings = [];
 
     /**
      * @var array
@@ -151,7 +151,7 @@ class Translations
      */
     private function setPluginSettingsTranslations(): void
     {
-        $this->pluginSettings = [
+        $this->plugin = [
             'set_plugin'     => $this->translate('Set plugin'),
             'payment_method' => $this->translate('Payment method'),
             'plugin_manual'  => $this->translate('Plugin manual'),
@@ -165,8 +165,8 @@ class Translations
      */
     private function setOrderSettingsTranslations(): void
     {
-        $this->orderSettings = [
-            'cancel_order'  => $this->translate('Cancel order'),
+        $this->order = [
+            'cancel_order' => $this->translate('Cancel order'),
         ];
     }
 
