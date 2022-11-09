@@ -54,6 +54,16 @@ class Translations
     public $testModeSettings = [];
 
     /**
+     * @var array
+     */
+    public $validateCredentials = [];
+
+    /**
+     * @var array
+     */
+    public $updateCredentials = [];
+
+    /**
      * @var Translations
      */
     private static $instance = null;
@@ -71,6 +81,8 @@ class Translations
         $this->setOrderSettingsTranslations();
         $this->setGatewaysSettingsTranslations();
         $this->setTestModeSettingsTranslations();
+        $this->setUpdateCredentialsTranslations();
+        $this->setValidateCredentialsTranslations();
     }
 
     /**
@@ -350,6 +362,38 @@ class Translations
             'badge_mode'              => $this->translate('Store in sale mode (Production)'),
             'badge_test'              => $this->translate('Store under test'),
             'button_test_mode'        => $this->translate('Save changes'),
+        ];
+    }
+
+    /**
+     * Set validate credentials translations
+     *
+     * @return void
+     */
+    public function setValidateCredentialsTranslations(): void
+    {
+        $this->validateCredentials = [
+            'valid_public_key'     => $this->translate('Valid Public Key'),
+            'invalid_public_key'   => $this->translate('Invalid Public Key'),
+            'valid_access_token'   => $this->translate('Valid Access Token'),
+            'invalid_access_token' => $this->translate('Invalid Access Token'),
+        ];
+    }
+
+    /**
+     * Set update credentials translations
+     *
+     * @return void
+     */
+    public function setUpdateCredentialsTranslations(): void
+    {
+        $this->updateCredentials = [
+            'credentials_updated'              => $this->translate('Credentials were updated'),
+            'no_test_mode_title'               => $this->translate('Your store has exited Test Mode and is making real sales in Production Mode.'),
+            'no_test_mode_subtitle'            => $this->translate('To test the store, re-enter both test credentials.'),
+            'invalid_credentials_title'        => $this->translate('Invalid credentials'),
+            'invalid_credentials_subtitle'     => $this->translate('See our manual to learn '),
+            'invalid_credentials_link_message' => $this->translate('how to enter the credentials the right way.'),
         ];
     }
 }

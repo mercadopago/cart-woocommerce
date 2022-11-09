@@ -212,10 +212,10 @@ class Settings
         $status = $validateCredentialsResponse['status'];
 
         if ($status === 200 && json_encode($data['is_test']) === $isTest) {
-            wp_send_json_success('Valid Public Key');
+            wp_send_json_success($this->translations->validateCredentials['valid_public_key']);
         }
 
-        wp_send_json_error('Invalid Public Key');
+        wp_send_json_error($this->translations->validateCredentials['invalid_public_key']);
     }
 
     /**
@@ -234,10 +234,10 @@ class Settings
         $status = $validateCredentialsResponse['status'];
 
         if ($status === 200 && json_encode($data['is_test']) === $isTest) {
-            wp_send_json_success('Valid Access Token');
+            wp_send_json_success($this->translations->validateCredentials['valid_access_token']);
         }
 
-        wp_send_json_error('Invalid Access Token');
+        wp_send_json_error($this->translations->validateCredentials['invalid_access_token']);
     }
 
     /**
@@ -290,22 +290,22 @@ class Settings
                     $this->store->setCheckboxCheckoutTestMode('no');
                     $response = [
                         'type'      => 'alert',
-                        'message'   => 'Your store has exited Test Mode and is making real sales in Production Mode.',
-                        'subtitle'  => 'To test the store, re-enter both test credentials.',
+                        'message'   => $this->translations->updateCredentials['no_test_mode_title'],
+                        'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
                         'test_mode' => 'no',
                     ];
                     wp_send_json_error($response);
                 }
             }
 
-            wp_send_json_success('Credentials were updated');
+            wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
         }
 
         $response = [
             'type'      => 'error',
-            'message'   => 'Invalid credentials',
-            'subtitle'  => 'See our manual to learn ',
-            'linkMsg'   => 'how to enter the credentials the right way.',
+            'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
+            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'],
+            'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
             'link'      => '#',
             'test_mode' => $this->store->getCheckboxCheckoutTestMode()
         ];
