@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Configs;
 
 use MercadoPago\Woocommerce\Helpers\Requester;
+use MercadoPago\Woocommerce\Hooks\Options;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -46,6 +47,11 @@ class Seller
     private const HOMOLOG_VALIDATE = 'homolog_validate';
 
     /**
+     * @var Options
+     */
+    private $options;
+
+    /**
      * @var Requester
      */
     private $requester;
@@ -60,6 +66,7 @@ class Seller
      */
     private function __construct()
     {
+        $this->options   = Options::getInstance();
         $this->requester = Requester::getInstance();
     }
 
@@ -81,7 +88,7 @@ class Seller
      */
     public function getSiteId(): string
     {
-        return get_option(self::SITE_ID, '');
+        return $this->options->get(self::SITE_ID, '');
     }
 
     /**
@@ -89,7 +96,7 @@ class Seller
      */
     public function setSiteId(string $siteId): void
     {
-        update_option(self::SITE_ID, $siteId);
+        $this->options->set(self::SITE_ID, $siteId);
     }
 
     /**
@@ -97,7 +104,7 @@ class Seller
      */
     public function getClientId(): string
     {
-        return get_option(self::CLIENT_ID, '');
+        return $this->options->get(self::CLIENT_ID, '');
     }
 
     /**
@@ -105,7 +112,7 @@ class Seller
      */
     public function setClientId(string $clientId): void
     {
-        update_option(self::CLIENT_ID, $clientId);
+        $this->options->set(self::CLIENT_ID, $clientId);
     }
 
     /**
@@ -113,7 +120,7 @@ class Seller
      */
     public function getCredentialsPublicKeyProd(): string
     {
-        return get_option(self::CREDENTIALS_PUBLIC_KEY_PROD, '');
+        return $this->options->get(self::CREDENTIALS_PUBLIC_KEY_PROD, '');
     }
 
     /**
@@ -121,7 +128,7 @@ class Seller
      */
     public function setCredentialsPublicKeyProd(string $credentialsPublicKeyProd): void
     {
-        update_option(self::CREDENTIALS_PUBLIC_KEY_PROD, $credentialsPublicKeyProd);
+        $this->options->set(self::CREDENTIALS_PUBLIC_KEY_PROD, $credentialsPublicKeyProd);
     }
 
     /**
@@ -129,7 +136,7 @@ class Seller
      */
     public function getCredentialsPublicKeyTest(): string
     {
-        return get_option(self::CREDENTIALS_PUBLIC_KEY_TEST, '');
+        return $this->options->get(self::CREDENTIALS_PUBLIC_KEY_TEST, '');
     }
 
     /**
@@ -137,7 +144,7 @@ class Seller
      */
     public function setCredentialsPublicKeyTest(string $credentialsPublicKeyTest): void
     {
-        update_option(self::CREDENTIALS_PUBLIC_KEY_TEST, $credentialsPublicKeyTest);
+        $this->options->set(self::CREDENTIALS_PUBLIC_KEY_TEST, $credentialsPublicKeyTest);
     }
 
     /**
@@ -145,7 +152,7 @@ class Seller
      */
     public function getCredentialsAccessTokenProd(): string
     {
-        return get_option(self::CREDENTIALS_ACCESS_TOKEN_PROD, '');
+        return $this->options->get(self::CREDENTIALS_ACCESS_TOKEN_PROD, '');
     }
 
     /**
@@ -153,7 +160,7 @@ class Seller
      */
     public function setCredentialsAccessTokenProd(string $credentialsAccessTokenProd): void
     {
-        update_option(self::CREDENTIALS_ACCESS_TOKEN_PROD, $credentialsAccessTokenProd);
+        $this->options->set(self::CREDENTIALS_ACCESS_TOKEN_PROD, $credentialsAccessTokenProd);
     }
 
     /**
@@ -161,7 +168,7 @@ class Seller
      */
     public function getCredentialsAccessTokenTest(): string
     {
-        return get_option(self::CREDENTIALS_ACCESS_TOKEN_TEST, '');
+        return $this->options->get(self::CREDENTIALS_ACCESS_TOKEN_TEST, '');
     }
 
     /**
@@ -169,7 +176,7 @@ class Seller
      */
     public function setCredentialsAccessTokenTest(string $credentialsAccessTokenTest): void
     {
-        update_option(self::CREDENTIALS_ACCESS_TOKEN_TEST, $credentialsAccessTokenTest);
+        $this->options->set(self::CREDENTIALS_ACCESS_TOKEN_TEST, $credentialsAccessTokenTest);
     }
 
     /**
@@ -177,7 +184,7 @@ class Seller
      */
     public function getHomologValidate(): bool
     {
-        return get_option(self::HOMOLOG_VALIDATE, false);
+        return $this->options->get(self::HOMOLOG_VALIDATE, false);
     }
 
     /**
@@ -185,7 +192,7 @@ class Seller
      */
     public function setHomologValidate(bool $homologValidate): void
     {
-        update_option(self::HOMOLOG_VALIDATE, $homologValidate);
+        $this->options->set(self::HOMOLOG_VALIDATE, $homologValidate);
     }
 
     /**

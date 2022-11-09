@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
+use MercadoPago\Woocommerce\Hooks\Options;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -59,9 +61,22 @@ class Store
     private const CHECKBOX_CHECKOUT_TEST_MODE = 'checkbox_checkout_test_mode';
 
     /**
+     * @var Options
+     */
+    private $options;
+
+    /**
      * @var Store
      */
     private static $instance = '';
+
+    /**
+     * Store constructor
+     */
+    public function __construct()
+    {
+        $this->options = Options::getInstance();
+    }
 
     /**
      * Get Store Configs instance
@@ -81,7 +96,7 @@ class Store
      */
     public function getStoreId(): string
     {
-        return get_option(self::STORE_ID, '');
+        return $this->options->get(self::STORE_ID, '');
     }
 
     /**
@@ -89,7 +104,7 @@ class Store
      */
     public function setStoreId(string $storeId): void
     {
-        update_option(self::STORE_ID, $storeId);
+        $this->options->set(self::STORE_ID, $storeId);
     }
 
     /**
@@ -97,7 +112,7 @@ class Store
      */
     public function getStoreName(): string
     {
-        return get_option(self::STORE_NAME, '');
+        return $this->options->get(self::STORE_NAME, '');
     }
 
     /**
@@ -105,7 +120,7 @@ class Store
      */
     public function setStoreName(string $storeName): void
     {
-        update_option(self::STORE_NAME, $storeName);
+        $this->options->set(self::STORE_NAME, $storeName);
     }
 
     /**
@@ -113,7 +128,7 @@ class Store
      */
     public function getStoreCategory(): string
     {
-        return get_option(self::STORE_CATEGORY, '');
+        return $this->options->get(self::STORE_CATEGORY, '');
     }
 
     /**
@@ -121,7 +136,7 @@ class Store
      */
     public function setStoreCategory(string $storeCategory): void
     {
-        update_option(self::STORE_CATEGORY, $storeCategory);
+        $this->options->set(self::STORE_CATEGORY, $storeCategory);
     }
 
     /**
@@ -129,7 +144,7 @@ class Store
      */
     public function getCheckoutCountry(): string
     {
-        return get_option(self::CHECKOUT_COUNTRY, '');
+        return $this->options->get(self::CHECKOUT_COUNTRY, '');
     }
 
     /**
@@ -137,7 +152,7 @@ class Store
      */
     public function setCheckoutCountry(string $checkoutCountry): void
     {
-        update_option(self::CHECKOUT_COUNTRY, $checkoutCountry);
+        $this->options->set(self::CHECKOUT_COUNTRY, $checkoutCountry);
     }
 
     /**
@@ -145,7 +160,7 @@ class Store
      */
     public function getWoocommerceCountry(): string
     {
-        return get_option(self::WOOCOMMERCE_COUNTRY, '');
+        return $this->options->get(self::WOOCOMMERCE_COUNTRY, '');
     }
 
     /**
@@ -153,7 +168,7 @@ class Store
      */
     public function setWoocommerceCountry(string $woocommerceCountry): void
     {
-        update_option(self::WOOCOMMERCE_COUNTRY, $woocommerceCountry);
+        $this->options->set(self::WOOCOMMERCE_COUNTRY, $woocommerceCountry);
     }
 
     /**
@@ -161,7 +176,7 @@ class Store
      */
     public function getIntegratorId(): string
     {
-        return get_option(self::INTEGRATOR_ID, '');
+        return $this->options->get(self::INTEGRATOR_ID, '');
     }
 
     /**
@@ -169,7 +184,7 @@ class Store
      */
     public function setIntegratorId(string $integratorId): void
     {
-        update_option(self::INTEGRATOR_ID, $integratorId);
+        $this->options->set(self::INTEGRATOR_ID, $integratorId);
     }
 
     /**
@@ -177,7 +192,7 @@ class Store
      */
     public function getCustomDomain(): string
     {
-        return get_option(self::CUSTOM_DOMAIN, '');
+        return $this->options->get(self::CUSTOM_DOMAIN, '');
     }
 
     /**
@@ -185,7 +200,7 @@ class Store
      */
     public function setCustomDomain(string $customDomain): void
     {
-        update_option(self::CUSTOM_DOMAIN, $customDomain);
+        $this->options->set(self::CUSTOM_DOMAIN, $customDomain);
     }
 
     /**
@@ -193,7 +208,7 @@ class Store
      */
     public function getDebugMode(): string
     {
-        return get_option(self::DEBUG_MODE, 'no');
+        return $this->options->get(self::DEBUG_MODE, 'no');
     }
 
     /**
@@ -201,7 +216,7 @@ class Store
      */
     public function setDebugMode(string $debugMode): void
     {
-        update_option(self::DEBUG_MODE, $debugMode);
+        $this->options->set(self::DEBUG_MODE, $debugMode);
     }
 
     /**
@@ -209,7 +224,7 @@ class Store
      */
     public function getCheckboxCheckoutProductionMode(): string
     {
-        return get_option(self::CHECKBOX_CHECKOUT_PRODUCTION_MODE, '');
+        return $this->options->get(self::CHECKBOX_CHECKOUT_PRODUCTION_MODE, '');
     }
 
     /**
@@ -217,7 +232,7 @@ class Store
      */
     public function setCheckboxCheckoutProductionMode(string $checkboxCheckoutProductionMode): void
     {
-        update_option(self::CHECKBOX_CHECKOUT_PRODUCTION_MODE, $checkboxCheckoutProductionMode);
+        $this->options->set(self::CHECKBOX_CHECKOUT_PRODUCTION_MODE, $checkboxCheckoutProductionMode);
     }
 
     /**
@@ -225,7 +240,7 @@ class Store
      */
     public function getCheckboxCheckoutTestMode(): string
     {
-        return get_option(self::CHECKBOX_CHECKOUT_TEST_MODE, '');
+        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, '');
     }
 
     /**
@@ -233,6 +248,6 @@ class Store
      */
     public function setCheckboxCheckoutTestMode(string $checkboxCheckoutTestMode): void
     {
-        update_option(self::CHECKBOX_CHECKOUT_TEST_MODE, $checkboxCheckoutTestMode);
+        $this->options->set(self::CHECKBOX_CHECKOUT_TEST_MODE, $checkboxCheckoutTestMode);
     }
 }
