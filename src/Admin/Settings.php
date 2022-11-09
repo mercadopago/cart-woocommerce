@@ -249,7 +249,6 @@ class Settings
     {
         // TODO: update payment methods
         // TODO: add wp cache
-        // TODO: add translations
 
         $publicKeyProd   = Form::getSanitizeTextFromPost('public_key_prod');
         $accessTokenProd = Form::getSanitizeTextFromPost('access_token_prod');
