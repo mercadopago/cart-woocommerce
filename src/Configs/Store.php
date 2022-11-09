@@ -63,7 +63,7 @@ class Store
     /**
      * @var Options
      */
-    private $options;
+    protected $options;
 
     /**
      * @var Store

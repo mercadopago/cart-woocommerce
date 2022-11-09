@@ -49,12 +49,12 @@ class Seller
     /**
      * @var Options
      */
-    private $options;
+    protected $options;
 
     /**
      * @var Requester
      */
-    private $requester;
+    protected $requester;
 
     /**
      * @var Seller
