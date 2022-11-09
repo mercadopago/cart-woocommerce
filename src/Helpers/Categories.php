@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Categories
+final class Categories
 {
     public static function getCategories(): array
     {

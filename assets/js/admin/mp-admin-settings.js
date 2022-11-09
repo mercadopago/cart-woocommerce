@@ -589,6 +589,6 @@ function mp_settings_screen_load() {
   mp_verify_alert_test_mode();
   mp_update_option_credentials();
   mp_update_store_information();
-  mp_continue_to_next_step();
   mp_update_test_mode();
+  mp_continue_to_next_step();
 }

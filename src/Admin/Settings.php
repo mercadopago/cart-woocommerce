@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Categories;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 
 if (!defined('ABSPATH')) {
@@ -24,6 +25,11 @@ class Settings
      * @var Scripts
      */
     protected $scripts;
+
+    /**
+     * @var Endpoints
+     */
+    protected $endpoints;
 
     /**
      * @var Translations
@@ -51,6 +57,7 @@ class Settings
     private function __construct()
     {
         $this->scripts      = Scripts::getInstance();
+        $this->endpoints    = Endpoints::getInstance();
         $this->translations = Translations::getInstance();
         $this->seller       = Seller::getInstance();
         $this->store        = Store::getInstance();
@@ -127,15 +134,15 @@ class Settings
      */
     public function registerAjaxEndpoints(): void
     {
-        add_action('wp_ajax_mp_get_requirements', array($this, 'mercadopagoValidateRequirements'));
-        add_action('wp_ajax_mp_validate_store_tips', array($this, 'mercadopagoValidateStoreTips'));
-        add_action('wp_ajax_mp_validate_credentials_tips', array($this, 'mercadopagoValidateCredentialsTips'));
-        add_action('wp_ajax_mp_validate_credentials', array($this, 'mercadopagoValidateCredentials'));
-        add_action('wp_ajax_mp_update_public_key', array($this, 'mercadopagoValidatePublicKey'));
-        add_action('wp_ajax_mp_update_access_token', array($this, 'mercadopagoValidateAccessToken'));
-        add_action('wp_ajax_mp_update_option_credentials', array($this, 'mercadopagoUpdateOptionCredentials'));
-        add_action('wp_ajax_mp_update_store_information', array($this, 'mercadopagoUpdateStoreInfo'));
-        add_action('wp_ajax_mp_update_test_mode', array( $this, 'mercadopagoUpdateTestMode'));
+        $this->endpoints->registerAjaxEndpoint('mp_update_test_mode', [$this, 'mercadopagoUpdateTestMode']);
+        $this->endpoints->registerAjaxEndpoint('mp_update_public_key', [$this, 'mercadopagoValidatePublicKey']);
+        $this->endpoints->registerAjaxEndpoint('mp_get_requirements', [$this, 'mercadopagoValidateRequirements']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
+        $this->endpoints->registerAjaxEndpoint('mp_update_access_token', [$this, 'mercadopagoValidateAccessToken']);
+        $this->endpoints->registerAjaxEndpoint('mp_update_store_information', [$this, 'mercadopagoUpdateStoreInfo']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_credentials', [$this, 'mercadopagoValidateCredentials']);
+        $this->endpoints->registerAjaxEndpoint('mp_update_option_credentials', [$this, 'mercadopagoUpdateOptionCredentials']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
     }
 
     /**
