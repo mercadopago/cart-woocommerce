@@ -56,6 +56,11 @@ class Translations
     /**
      * @var array
      */
+    public $configurationTips = [];
+
+    /**
+     * @var array
+     */
     public $validateCredentials = [];
 
     /**
@@ -86,6 +91,7 @@ class Translations
         $this->setOrderSettingsTranslations();
         $this->setGatewaysSettingsTranslations();
         $this->setTestModeSettingsTranslations();
+        $this->setConfigurationTipsTranslations();
         $this->setUpdateCredentialsTranslations();
         $this->setValidateCredentialsTranslations();
         $this->setUpdateStoreTranslations();
@@ -368,6 +374,16 @@ class Translations
             'badge_mode'              => $this->translate('Store in sale mode (Production)'),
             'badge_test'              => $this->translate('Store under test'),
             'button_test_mode'        => $this->translate('Save changes'),
+        ];
+    }
+
+    public function setConfigurationTipsTranslations(): void
+    {
+        $this->configurationTips = [
+            'valid_store_tips'         => $this->translate('Store business fields are valid'),
+            'invalid_store_tips'       => $this->translate('Store business fields could not be validated'),
+            'valid_credentials_tips'   => $this->translate('Credentials fields are valid'),
+            'invalid_credentials_tips' => $this->translate('Credentials fields could not be validated'),
         ];
     }
 

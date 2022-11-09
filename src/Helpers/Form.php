@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Form
+final class Form
 {
     /**
      * Get data from $_POST method with sanitize for text field

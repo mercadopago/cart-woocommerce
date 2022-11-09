@@ -113,7 +113,10 @@ class Settings
      */
     public function canLoadScriptsAndStyles(): bool
     {
-        return is_admin() && (Url::validatePage('mercadopago-settings') || Url::validateSection('woo-mercado-pago'));
+        return is_admin() && (
+            Url::validatePage('mercadopago-settings') ||
+            Url::validateSection('woo-mercado-pago')
+        );
     }
 
     /**
@@ -124,6 +127,8 @@ class Settings
     public function registerAjaxEndpoints(): void
     {
         add_action('wp_ajax_mp_get_requirements', array($this, 'mercadopagoValidateRequirements'));
+        add_action('wp_ajax_mp_validate_store_tips', array($this, 'mercadopagoValidateStoreTips'));
+        add_action('wp_ajax_mp_validate_credentials_tips', array($this, 'mercadopagoValidateCredentialsTips'));
         add_action('wp_ajax_mp_validate_credentials', array($this, 'mercadopagoValidateCredentials'));
         add_action('wp_ajax_mp_update_public_key', array($this, 'mercadopagoValidatePublicKey'));
         add_action('wp_ajax_mp_update_access_token', array($this, 'mercadopagoValidateAccessToken'));
@@ -195,6 +200,41 @@ class Settings
             'gd_ext'   => $hasGD,
             'curl_ext' => $hasCurl
         ]);
+    }
+
+    /**
+     * Validate store tips
+     *
+     * @return void
+     */
+    public function mercadopagoValidateStoreTips(): void
+    {
+        $storeId       = $this->store->getStoreId();
+        $storeName     = $this->store->getStoreName();
+        $storeCategory = $this->store->getStoreCategory();
+
+        if ($storeId && $storeName && $storeCategory) {
+            wp_send_json_success($this->translations->configurationTips['valid_store_tips']);
+        }
+
+        wp_send_json_error($this->translations->configurationTips['invalid_store_tips']);
+    }
+
+    /**
+     * Validate credentials tips
+     *
+     * @return void
+     */
+    public function mercadopagoValidateCredentialsTips(): void
+    {
+        $publicKeyProd   = $this->seller->getCredentialsPublicKeyProd();
+        $accessTokenProd = $this->seller->getCredentialsAccessTokenProd();
+
+        if ($publicKeyProd && $accessTokenProd) {
+            wp_send_json_success($this->translations->configurationTips['valid_credentials_tips']);
+        }
+
+        wp_send_json_error($this->translations->configurationTips['invalid_credentials_tips']);
     }
 
     /**

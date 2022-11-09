@@ -533,6 +533,7 @@ function mp_settings_screen_load() {
   mp_settings_accordion_options();
   mp_validate_credentials();
   mp_validate_credentials_tips();
+  mp_validate_store_tips();
   mp_verify_alert_test_mode();
   mp_update_option_credentials();
   mp_update_store_information();
