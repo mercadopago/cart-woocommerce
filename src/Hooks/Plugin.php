@@ -34,8 +34,8 @@ class Plugin
         add_filter('plugin_action_links_' . $pluginName, function (array $links) use ($pluginLinks) {
             $newLinks = [];
 
-            foreach ($pluginLinks as $text => $link) {
-                $newLinks[] = '<a href="' . $link . '">' . $text . '</a>';
+            foreach ($pluginLinks as $link) {
+                $newLinks[] = '<a href="'. $link['href'] .'" target="'. $link['target'] .'">' . $link['text'] . '</a>';
             }
 
             return array_merge($newLinks, $links);
