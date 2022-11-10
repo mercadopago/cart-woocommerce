@@ -137,7 +137,7 @@ class Remote implements LogInterface
 
             $this->requester->post($uri, $headers, $body);
         } catch (\Exception $e) {
-            error_log($e);
+            error_log($e->getMessage());
         }
     }
 }
