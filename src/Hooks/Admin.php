@@ -90,7 +90,7 @@ class Admin
             $newLinks = [];
 
             foreach ($pluginLinks as $link) {
-                $newLinks[] = '<a href="'. $link['href'] .'" target="'. $link['target'] .'">' . $link['text'] . '</a>';
+                $newLinks[] = '<a href="' . $link['href'] . '" target="' . $link['target'] . '">' . $link['text'] . '</a>';
             }
 
             return array_merge($newLinks, $links);

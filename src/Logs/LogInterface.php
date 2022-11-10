@@ -9,64 +9,57 @@ if (!defined('ABSPATH')) {
 interface LogInterface
 {
     /**
-     * Get LogInterface Singleton instance
-     *
-     * @return LogInterface
-     */
-    public static function getInstance(): LogInterface;
-
-    /**
      * Errors that do not require immediate action
      *
-     * @param string $context
-     * @param string $message
-     * @param array  $info
+     * @param string               $message
+     * @param string               $source
+     * @param array<string, mixed> $context
      *
      * @return void
      */
-    public function error(string $context, string $message, array $info = []): void;
+    public function error(string $message, string $source, array $context = []): void;
 
     /**
      * Exceptional occurrences that are not errors
      *
-     * @param string $context
-     * @param string $message
-     * @param array  $info
+     * @param string               $message
+     * @param string               $source
+     * @param array<string, mixed> $context
      *
      * @return void
      */
-    public function warning(string $context, string $message, array $info = []): void;
+    public function warning(string $message, string $source, array $context = []): void;
 
     /**
      * Normal but significant events
      *
-     * @param string $context
-     * @param string $message
-     * @param array  $info
+     * @param string               $message
+     * @param string               $source
+     * @param array<string, mixed> $context
      *
      * @return void
      */
-    public function notice(string $context, string $message, array $info = []): void;
+    public function notice(string $message, string $source, array $context = []): void;
 
     /**
      * Interesting events
      *
-     * @param string $context
-     * @param string $message
-     * @param array  $info
+     * @param string               $message
+     * @param string               $source
+     * @param array<string, mixed> $context
      *
      * @return void
      */
-    public function info(string $context, string $message, array $info = []): void;
+    public function info(string $message, string $source, array $context = []): void;
 
     /**
      * Detailed debug information
      *
-     * @param string $context
-     * @param string $message
-     * @param array  $info
+     * @param string               $message
+     * @param string               $source
+     * @param array<string, mixed> $context
      *
      * @return void
      */
-    public function debug(string $context, string $message, array $info = []): void;
+    public function debug(string $message, string $source, array $context = []): void;
 }

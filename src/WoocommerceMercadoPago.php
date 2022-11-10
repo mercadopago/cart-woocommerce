@@ -10,6 +10,7 @@ use MercadoPago\Woocommerce\Hooks\Gateway;
 use MercadoPago\Woocommerce\Hooks\OrderDetails;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Logs\Logs;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -20,7 +21,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '8.0.0';
+    private const PLUGIN_VERSION = '7.0.0';
 
     /**
      * @const
@@ -36,6 +37,11 @@ class WoocommerceMercadoPago
      * @const
      */
     private const PLUGIN_NAME = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
+
+    /**
+     * @var Logs
+     */
+    public $logs;
 
     /**
      * @var Admin
@@ -166,6 +172,7 @@ class WoocommerceMercadoPago
      */
     public function setProperties(): void
     {
+        $this->logs         = Logs::getInstance();
         $this->translations = Translations::getInstance();
         $this->admin        = Admin::getInstance();
         $this->plugin       = Plugin::getInstance();

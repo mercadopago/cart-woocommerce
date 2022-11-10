@@ -11,6 +11,7 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Logs\Logs;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -22,6 +23,11 @@ class Settings
      * @const
      */
     private const PRIORITY_ON_MENU = 90;
+
+    /**
+     * @var Logs
+     */
+    protected $logs;
 
     /**
      * @var Admin
@@ -63,6 +69,7 @@ class Settings
      */
     private function __construct()
     {
+        $this->logs         = Logs::getInstance();
         $this->admin        = Admin::getInstance();
         $this->scripts      = Scripts::getInstance();
         $this->endpoints    = Endpoints::getInstance();

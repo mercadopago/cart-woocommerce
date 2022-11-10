@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Logs;
 
+use MercadoPago\Woocommerce\Configs\Store;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -11,12 +13,17 @@ class Logs
     /**
      * @var File
      */
-    protected $file;
+    public $file;
 
     /**
      * @var Remote
      */
-    protected $remote;
+    public $remote;
+
+    /**
+     * @var Store
+     */
+    protected $store;
 
     /**
      * @var Logs
@@ -28,8 +35,11 @@ class Logs
      */
     private function __construct()
     {
-        $this->file   = File::getInstance();
-        $this->remote = Remote::getInstance();
+        $this->store = Store::getInstance();
+        $debugMode   = $this->store->getDebugMode() === 'yes';
+
+        $this->file   = new File($debugMode);
+        $this->remote = new Remote($debugMode);
     }
 
     /**
