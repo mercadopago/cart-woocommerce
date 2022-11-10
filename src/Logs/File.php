@@ -111,8 +111,10 @@ class File implements LogInterface
      */
     private function save(string $level, string $message, string $source, array $context = []): void
     {
-        if ($this->debugMode) {
-            $this->logger->{$level}($message . ' - Context: ' . json_encode($context), ['source' => $source]);
+        if (!$this->debugMode) {
+            return;
         }
+
+        $this->logger->{$level}($message . ' - Context: ' . json_encode($context), ['source' => $source]);
     }
 }

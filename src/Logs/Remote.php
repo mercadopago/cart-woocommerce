@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Logs;
 
+use MercadoPago\Woocommerce\Helpers\Requester;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -14,11 +16,17 @@ class Remote implements LogInterface
     private $debugMode;
 
     /**
+     * @var Requester
+     */
+    private $requester;
+
+    /**
      * Remote Logs constructor
      */
     public function __construct($debugMode)
     {
         $this->debugMode = $debugMode;
+        $this->requester = Requester::getInstance();
     }
 
     /**
@@ -105,5 +113,31 @@ class Remote implements LogInterface
      */
     private function save(string $level, string $message, string $source, array $context = []): void
     {
+        if (!$this->debugMode) {
+            return;
+        }
+
+        try {
+            $headers = ['Content-Type: application/json'];
+            $uri     = '/v1/plugins/melidata/errors';
+            $body    = [
+                'name'         => '',
+                'message'      => '',
+                'target'       => '',
+                'plugin'       => [
+                    'version'  => '',
+                ],
+                'platform'     => [
+                    'name'     => '',
+                    'uri'      => '',
+                    'version'  => '',
+                    'location' => '',
+                ],
+            ];
+
+            $this->requester->post($uri, $headers, $body);
+        } catch (\Exception $e) {
+            error_log($e);
+        }
     }
 }
