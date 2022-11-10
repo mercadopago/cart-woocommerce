@@ -163,9 +163,6 @@ class WoocommerceMercadoPago
         if (!class_exists('WC_Payment_Gateway')) {
             $this->notices->adminNoticeMissWoocoommerce();
         }
-
-        $this->logs->file->info('Test file log on init', self::class);
-        $this->logs->remote->info('Test remote log on init', self::class);
     }
 
     /**
