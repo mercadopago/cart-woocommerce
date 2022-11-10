@@ -11,7 +11,7 @@ class Translations
     /**
      * @const
      */
-    const DOMAIN = 'woocommerce-mercadopago';
+    private const DOMAIN = 'woocommerce-mercadopago';
 
     /**
      * @var array
@@ -54,6 +54,26 @@ class Translations
     public $testModeSettings = [];
 
     /**
+     * @var array
+     */
+    public $configurationTips = [];
+
+    /**
+     * @var array
+     */
+    public $validateCredentials = [];
+
+    /**
+     * @var array
+     */
+    public $updateCredentials = [];
+
+    /**
+     * @var array
+     */
+    public $updateStore = [];
+
+    /**
      * @var Translations
      */
     private static $instance = null;
@@ -71,6 +91,10 @@ class Translations
         $this->setOrderSettingsTranslations();
         $this->setGatewaysSettingsTranslations();
         $this->setTestModeSettingsTranslations();
+        $this->setConfigurationTipsTranslations();
+        $this->setUpdateCredentialsTranslations();
+        $this->setValidateCredentialsTranslations();
+        $this->setUpdateStoreTranslations();
     }
 
     /**
@@ -271,7 +295,7 @@ class Translations
             'button_store'                 => $this->translate('Save and continue'),
             'helper_name_store'            => $this->translate('If this field is empty, the purchase will be identified as Mercado Pago.'),
             'helper_activities_store'      => $this->translate('In Activities, you will view this term before the order number'),
-            'helper_category_store'        => $this->translate('Select "Other" if you do not find the appropriate category.'),
+            'helper_category_store'        => $this->translate('Select "Other categories" if you do not find the appropriate category.'),
             'helper_integrator_link'       => $this->translate('request it now.'),
             'helper_url'                   => $helperUrl,
             'helper_integrator'            => $helperIntegrator,
@@ -350,6 +374,60 @@ class Translations
             'badge_mode'              => $this->translate('Store in sale mode (Production)'),
             'badge_test'              => $this->translate('Store under test'),
             'button_test_mode'        => $this->translate('Save changes'),
+        ];
+    }
+
+    public function setConfigurationTipsTranslations(): void
+    {
+        $this->configurationTips = [
+            'valid_store_tips'         => $this->translate('Store business fields are valid'),
+            'invalid_store_tips'       => $this->translate('Store business fields could not be validated'),
+            'valid_credentials_tips'   => $this->translate('Credentials fields are valid'),
+            'invalid_credentials_tips' => $this->translate('Credentials fields could not be validated'),
+        ];
+    }
+
+    /**
+     * Set validate credentials translations
+     *
+     * @return void
+     */
+    public function setValidateCredentialsTranslations(): void
+    {
+        $this->validateCredentials = [
+            'valid_public_key'     => $this->translate('Valid Public Key'),
+            'invalid_public_key'   => $this->translate('Invalid Public Key'),
+            'valid_access_token'   => $this->translate('Valid Access Token'),
+            'invalid_access_token' => $this->translate('Invalid Access Token'),
+        ];
+    }
+
+    /**
+     * Set update credentials translations
+     *
+     * @return void
+     */
+    public function setUpdateCredentialsTranslations(): void
+    {
+        $this->updateCredentials = [
+            'credentials_updated'              => $this->translate('Credentials were updated'),
+            'no_test_mode_title'               => $this->translate('Your store has exited Test Mode and is making real sales in Production Mode.'),
+            'no_test_mode_subtitle'            => $this->translate('To test the store, re-enter both test credentials.'),
+            'invalid_credentials_title'        => $this->translate('Invalid credentials'),
+            'invalid_credentials_subtitle'     => $this->translate('See our manual to learn '),
+            'invalid_credentials_link_message' => $this->translate('how to enter the credentials the right way.'),
+        ];
+    }
+
+    /**
+     * Set update store translations
+     *
+     * @return void
+     */
+    public function setUpdateStoreTranslations(): void
+    {
+        $this->updateStore = [
+            'valid_configuration' => $this->translate('Store information is valid'),
         ];
     }
 }

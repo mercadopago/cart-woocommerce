@@ -2,14 +2,26 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Hooks\Endpoints;
+
 if (!defined('ABSPATH')) {
     exit;
 }
 
 class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
+    /**
+     * @var Endpoints
+     */
+    protected $endpoints;
+
+    /**
+     * ExampleGateway constructor
+     */
     public function __construct()
     {
+        $this->endpoints = Endpoints::getInstance();
+
         $this->id = 'mercadopago';
         $this->icon = null;
         $this->has_fields = true;
@@ -27,9 +39,14 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
         add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 
-        add_action('woocommerce_api_' . $this->id, array($this, 'webhook'));
+        $this->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
 
+    /**
+     * Init form fields for checkout configuration
+     *
+     * @return void
+     */
     public function init_form_fields(): void
     {
         $this->form_fields = array(
@@ -56,10 +73,20 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
         );
     }
 
+    /**
+     * Added gateway scripts
+     *
+     * @return void
+     */
     public function payment_scripts(): void
     {
     }
 
+    /**
+     * Render gateway checkout template
+     *
+     * @return void
+     */
     public function payment_fields(): void
     {
         wc_get_template(
@@ -70,11 +97,23 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
         );
     }
 
+    /**
+     * Validate gateway checkout form fields
+     *
+     * @return bool
+     */
     public function validate_fields(): bool
     {
         return true;
     }
 
+    /**
+     * Process payment and create woocommerce order
+     *
+     * @param $orderId
+     *
+     * @return array
+     */
     public function process_payment($orderId): array
     {
         global $woocommerce;
@@ -93,6 +132,11 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
         );
     }
 
+    /**
+     * Receive gateway webhook notifications
+     *
+     * @return void
+     */
     public function webhook(): void
     {
         $status   = 200;

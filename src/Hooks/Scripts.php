@@ -13,22 +13,22 @@ class Scripts
     /**
      * @const
      */
-    const SUFFIX = '_params';
+    private const SUFFIX = '_params';
 
     /**
      * @const
      */
-    const MELIDATA_SCRIPT_NAME = 'mercadopago_melidata';
+    private const MELIDATA_SCRIPT_NAME = 'mercadopago_melidata';
 
     /**
      * @const
      */
-    const CARONTE_SCRIPT_NAME = 'wc_mercadopago';
+    private const CARONTE_SCRIPT_NAME = 'wc_mercadopago';
 
     /**
      * @const
      */
-    const NOTICES_SCRIPT_NAME = 'wc_mercadopago_notices';
+    private const NOTICES_SCRIPT_NAME = 'wc_mercadopago_notices';
 
     /**
      * @var Scripts
