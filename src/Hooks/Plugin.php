@@ -5,6 +5,16 @@ namespace MercadoPago\Woocommerce\Hooks;
 class Plugin
 {
     /**
+     * @const
+     */
+    public const TARGET_DEFAULT = '_self';
+
+    /**
+     * @const
+     */
+    public const TARGET_BLANK = '_blank';
+
+    /**
      * @var Plugin
      */
     private static $instance = null;
@@ -27,6 +37,7 @@ class Plugin
      *
      * @param string $pluginName
      * @param array  $pluginLinks
+     *
      * @return void
      */
     public function registerPluginActionLinks(string $pluginName, array $pluginLinks): void

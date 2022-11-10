@@ -5,7 +5,6 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
-use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Gateway;
 use MercadoPago\Woocommerce\Hooks\OrderDetails;
@@ -19,24 +18,24 @@ if (!defined('ABSPATH')) {
 class WoocommerceMercadoPago
 {
     /**
-     * @var string
+     * @const
      */
-    public static $mpVersion = '8.0.0';
+    private const PLUGIN_VERSION = '8.0.0';
 
     /**
-     * @var string
+     * @const
      */
-    public static $mpMinPhp = '7.2';
+    private const PLUGIN_MIN_PHP = '7.2';
 
     /**
-     * @var string
+     * @const
      */
-    public static $platformId = 'bo2hnr2ic4p001kbgpt0';
+    private const PLATFORM_ID = 'bo2hnr2ic4p001kbgpt0';
 
     /**
-     * @var string
+     * @const
      */
-    public static $pluginName = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
+    private const PLUGIN_NAME = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
 
     /**
      * @var Admin
@@ -141,7 +140,7 @@ class WoocommerceMercadoPago
         $this->setProperties();
         $this->setPluginSettingsLink();
 
-        if (version_compare(PHP_VERSION, self::$mpMinPhp, '<')) {
+        if (version_compare(PHP_VERSION, self::PLUGIN_MIN_PHP, '<')) {
             $this->verifyPhpVersionNotice();
             return;
         }
@@ -188,21 +187,21 @@ class WoocommerceMercadoPago
             [
                 'text'   => $this->translations->plugin['set_plugin'],
                 'href'   => admin_url('admin.php?page=mercadopago-settings'),
-                'target' => '_self',
+                'target' => Plugin::TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['payment_method'],
                 'href'   => admin_url('admin.php?page=wc-settings&tab=checkout'),
-                'target' => '_self',
+                'target' => Plugin::TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['plugin_manual'],
-                'href'   => Links::getLinks()['link_mp_developers'],
-                'target' => '_blank',
+                'href'   => '#',
+                'target' => Plugin::TARGET_BLANK,
             ],
         ];
 
-        $this->plugin->registerPluginActionLinks(self::$pluginName, $pluginLinks);
+        $this->plugin->registerPluginActionLinks(self::PLUGIN_NAME, $pluginLinks);
     }
 
     /**
@@ -242,9 +241,9 @@ class WoocommerceMercadoPago
      */
     private function defineConstants(): void
     {
-        $this->define('MP_MIN_PHP', self::$mpMinPhp);
-        $this->define('MP_VERSION', self::$mpVersion);
-        $this->define('MP_PLATFORM_ID', self::$platformId);
+        $this->define('MP_MIN_PHP', self::PLUGIN_MIN_PHP);
+        $this->define('MP_VERSION', self::PLUGIN_VERSION);
+        $this->define('MP_PLATFORM_ID', self::PLATFORM_ID);
     }
 
     /**
