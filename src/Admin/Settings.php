@@ -128,7 +128,7 @@ class Settings
      */
     public function canLoadScriptsAndStyles(): bool
     {
-        return is_admin() && (
+        return $this->admin->isAdmin() && (
             Url::validatePage('mercadopago-settings') ||
             Url::validateSection('woo-mercado-pago')
         );

@@ -27,6 +27,16 @@ class Admin
     }
 
     /**
+     * Validate if the actual page belongs to the admin section
+     *
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return is_admin();
+    }
+
+    /**
      * Register on WordPress or Plugins menu
      *
      * @param int   $priority
