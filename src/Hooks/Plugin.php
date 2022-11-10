@@ -7,12 +7,17 @@ class Plugin
     /**
      * @const
      */
-    public const TARGET_DEFAULT = '_self';
+    public const UPDATE_CREDENTIALS_ACTION = 'mercadopago_plugin_credentials_updated';
 
     /**
      * @const
      */
-    public const TARGET_BLANK = '_blank';
+    public const UPDATE_STORE_INFO_ACTION = 'mercadopago_plugin_store_info_updated';
+
+    /**
+     * @const
+     */
+    public const UPDATE_TEST_MODE_ACTION = 'mercadopago_plugin_test_mode_updated';
 
     /**
      * @var Plugin
@@ -33,23 +38,38 @@ class Plugin
     }
 
     /**
-     * Register more links on WordPress plugins page
+     * Register to plugin update event
      *
-     * @param string $pluginName
-     * @param array  $pluginLinks
+     * @param mixed $callback
      *
      * @return void
      */
-    public function registerPluginActionLinks(string $pluginName, array $pluginLinks): void
+    public function registerOnPluginCredentialsUpdate($callback): void
     {
-        add_filter('plugin_action_links_' . $pluginName, function (array $links) use ($pluginLinks) {
-            $newLinks = [];
+        add_action(self::UPDATE_CREDENTIALS_ACTION, $callback);
+    }
 
-            foreach ($pluginLinks as $link) {
-                $newLinks[] = '<a href="'. $link['href'] .'" target="'. $link['target'] .'">' . $link['text'] . '</a>';
-            }
+    /**
+     * Register to plugin store info update event
+     *
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function registerOnPluginStoreInfoUpdate($callback): void
+    {
+        add_action(self::UPDATE_STORE_INFO_ACTION, $callback);
+    }
 
-            return array_merge($newLinks, $links);
-        });
+    /**
+     * Register to plugin test mode update event
+     *
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function registerOnPluginTestModeUpdate($callback): void
+    {
+        add_action(self::UPDATE_TEST_MODE_ACTION, $callback);
     }
 }

@@ -9,6 +9,16 @@ if (!defined('ABSPATH')) {
 class Admin
 {
     /**
+     * @const
+     */
+    public const TARGET_DEFAULT = '_self';
+
+    /**
+     * @const
+     */
+    public const TARGET_BLANK = '_blank';
+
+    /**
      * @var Admin
      */
     private static $instance = null;
@@ -64,5 +74,26 @@ class Admin
     public function registerSubmenuPage(string $parentSlug, string $pageTitle, string $menuTitle, string $capability, string $menuSlug, $callback): void
     {
         add_submenu_page($parentSlug, $pageTitle, $menuTitle, $capability, $menuSlug, $callback);
+    }
+
+    /**
+     * Register more links on WordPress plugins page
+     *
+     * @param string $pluginName
+     * @param array  $pluginLinks
+     *
+     * @return void
+     */
+    public function registerPluginActionLinks(string $pluginName, array $pluginLinks): void
+    {
+        add_filter('plugin_action_links_' . $pluginName, function (array $links) use ($pluginLinks) {
+            $newLinks = [];
+
+            foreach ($pluginLinks as $link) {
+                $newLinks[] = '<a href="'. $link['href'] .'" target="'. $link['target'] .'">' . $link['text'] . '</a>';
+            }
+
+            return array_merge($newLinks, $links);
+        });
     }
 }
