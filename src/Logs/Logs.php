@@ -36,7 +36,7 @@ class Logs
     private function __construct()
     {
         $this->store = Store::getInstance();
-        $debugMode   = $this->store->getDebugMode() === 'yes';
+        $debugMode   = $this->getDebugMode();
 
         $this->file   = new File($debugMode);
         $this->remote = new Remote($debugMode);
@@ -53,5 +53,15 @@ class Logs
             self::$instance = new self();
         }
         return self::$instance;
+    }
+
+    /**
+     * Get plugin debug mode option
+     *
+     * @return bool
+     */
+    private function getDebugMode(): bool
+    {
+        return $this->store->getDebugMode() === 'yes';
     }
 }
