@@ -60,6 +60,7 @@ class Remote implements LogInterface
      */
     public function notice(string $message, string $source, array $context = []): void
     {
+        $this->save('notice', $message, $source, $context);
     }
 
     /**
