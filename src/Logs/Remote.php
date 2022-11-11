@@ -137,7 +137,7 @@ class Remote implements LogInterface
                 ],
                 'platform'     => [
                     'name'     => MP_PLATFORM_NAME,
-                    'uri'      => "$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
+                    'uri'      => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
                     'version'  => $woocommerce->version,
                     'location' => '/backend',
                 ],
