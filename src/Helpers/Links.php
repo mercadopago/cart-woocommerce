@@ -26,9 +26,10 @@ final class Links
     /**
      * Get link settings from the country configured by default in Woocommerce.
      *
+     * @param $suffixCountry
      * @return array
      */
-    public static function getLinkSettings(): array
+    public static function getLinkSettings($suffixCountry): array
     {
         $country = array(
             'AR' => array(
@@ -68,35 +69,19 @@ final class Links
             ),
         );
 
-        $suffixCountry = strtoupper(Plugin::getWoocommerceDefaultCountry());
-
-        return array_key_exists($suffixCountry, $country) ? $country[ $suffixCountry ] : $country['AR'];
-    }
-
-    /**
-     * Get all links
-     *
-     * @return array
-     */
-    public static function getLinks(): array
-    {
-        $linkSettings       = self::getLinkSettings();
-        $panelLinks         = self::getMercadoPagoLinks($linkSettings);
-        $documentationLinks = self::getDocumentationLinks($linkSettings);
-
-        return array_merge($panelLinks, $documentationLinks);
+        return array_key_exists($suffixCountry, $country) ? $country[$suffixCountry] : $country['AR'];
     }
 
     /**
      * Get documentation links on Mercado Pago Devsite page
      *
-     * @param array $linkSettings
-     *
+     * @param string $country
      * @return array
      */
-    public static function getDocumentationLinks(array $linkSettings): array
+    public static function getDocumentationLinks(string $country): array
     {
-        $baseLink = self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'developers/' . $linkSettings['translate'];
+        $linkSettings = self::getLinkSettings($country);
+        $baseLink     = self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'developers/' . $linkSettings['translate'];
 
         return array(
             'link_doc_integration_config' => $baseLink . '/docs/woocommerce/integration-configuration',
@@ -111,12 +96,13 @@ final class Links
     /**
      * Get documentation links on Mercado Pago Panel page
      *
-     * @param array $linkSettings
-     *
+     * @param string $country
      * @return array
      */
-    public static function getMercadoPagoLinks(array $linkSettings): array
+    public static function getMercadoPagoLinks(string $country): array
     {
+        $linkSettings = self::getLinkSettings($country);
+
         return array(
             'link_mp_home'        => self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'home',
             'link_mp_costs'       => self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'costs-section',
