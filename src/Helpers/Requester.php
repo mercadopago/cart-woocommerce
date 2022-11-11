@@ -64,24 +64,24 @@ final class Requester
     /**
      * @param string $uri
      * @param array  $headers
-     * @param mixed  $body
+     * @param array  $body
      *
      * @return Response
      */
-    public function post(string $uri, array $headers = [], $body = null): Response
+    public function post(string $uri, array $headers = [], array $body = []): Response
     {
-        return $this->httpClient->post($uri, $headers, $body);
+        return $this->httpClient->post($uri, $headers, json_encode($body));
     }
 
     /**
      * @param string $uri
      * @param array  $headers
-     * @param mixed  $body
+     * @param array  $body
      *
      * @return Response
      */
-    public function put(string $uri, array $headers = [], $body = null): Response
+    public function put(string $uri, array $headers = [], array $body = []): Response
     {
-        return $this->httpClient->put($uri, $headers, $body);
+        return $this->httpClient->put($uri, $headers, json_encode($body));
     }
 }

@@ -11,12 +11,12 @@ class Admin
     /**
      * @const
      */
-    public const TARGET_DEFAULT = '_self';
+    public const HREF_TARGET_DEFAULT = '_self';
 
     /**
      * @const
      */
-    public const TARGET_BLANK = '_blank';
+    public const HREF_TARGET_BLANK = '_blank';
 
     /**
      * @var Admin
@@ -90,7 +90,7 @@ class Admin
             $newLinks = [];
 
             foreach ($pluginLinks as $link) {
-                $newLinks[] = '<a href="'. $link['href'] .'" target="'. $link['target'] .'">' . $link['text'] . '</a>';
+                $newLinks[] = '<a href="' . $link['href'] . '" target="' . $link['target'] . '">' . $link['text'] . '</a>';
             }
 
             return array_merge($newLinks, $links);
