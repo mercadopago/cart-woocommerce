@@ -33,4 +33,16 @@ final class Cache
     {
         set_transient(sha1($key), $value, $ttl);
     }
+
+    /**
+     * Delete cache from database
+     *
+     * @param string $key
+     *
+     * @return void
+     */
+    public static function deleteCache(string $key)
+    {
+        delete_transient(sha1($key));
+    }
 }
