@@ -266,6 +266,7 @@ class Seller
         try {
             $key   = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
             $cache = Cache::getCache($key);
+
             if ($cache) {
                 return $cache;
             }
