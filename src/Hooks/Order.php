@@ -2,38 +2,44 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use MercadoPago\Woocommerce\Admin\Translations;
+use MercadoPago\Woocommerce\Admin\MetaBoxes;
+use WC_Order;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class OrderDetails
+class Order
 {
     /**
-     * @var Translations
+     * @var WC_Order
      */
-    protected $translations;
+    private $order;
 
     /**
-     * @var OrderDetails
+     * @var MetaBoxes
+     */
+    private $metaBoxes;
+
+    /**
+     * @var Order
      */
     private static $instance = null;
 
     /**
-     * OrderDetails constructor
+     * Order constructor
      */
-    public function __construct()
+    private function __construct()
     {
-        $this->translations = Translations::getInstance();
+        $this->metaBoxes = MetaBoxes::getInstance();
     }
 
     /**
-     * Get OrderDetails Hooks instance
+     * Get Order instance
      *
-     * @return OrderDetails
+     * @return Order
      */
-    public static function getInstance(): OrderDetails
+    public static function getInstance(): Order
     {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -42,15 +48,84 @@ class OrderDetails
     }
 
     /**
-     * Add actions to meta box
+     * Register meta box addition on order page
      *
-     * @param array $actions
+     * @param $id
+     * @param $title
+     * @param string $name
+     * @param array $args
+     * @param string $path
      *
-     * @return array
+     * @return void
      */
-    public function addOrderMetaBoxActions(array $actions): array
+    public function registerMetaBox($id, $title, string $name, array $args, string $path): void
     {
-        $actions['cancel_order'] = $this->translations->order['cancel_order'];
-        return $actions;
+        add_action('add_meta_boxes_shop_order', function () use ($id, $title, $name, $args, $path) {
+            $this->metaBoxes->addMetaBox($id, $title, $name, $args, $path);
+        });
+    }
+
+    /**
+     * Register order actions
+     *
+     * @param $callback
+     *
+     * @return void
+     */
+    public function registerOrderActions($callback): void
+    {
+        add_action('woocommerce_order_actions', $callback);
+    }
+
+    /**
+     * Register order status transition
+     *
+     * @param string $toStatus
+     * @param $callback
+     *
+     * @return void
+     */
+    public function registerOrderStatusTransitionTo(string $toStatus, $callback): void
+    {
+        add_action('woocommerce_order_status_' . $toStatus , $callback);
+    }
+
+    /**
+     * Register order status transition
+     *
+     * @param string $fromStatus
+     * @param string $toStatus
+     * @param $callback
+     *
+     * @return void
+     */
+    public function registerOrderStatusTransitionFromTo(string $fromStatus, string $toStatus, $callback): void
+    {
+        add_action('woocommerce_order_status_' . $fromStatus . '_to_' . $toStatus, $callback);
+    }
+
+    /**
+     * Register order details after order table
+     *
+     * @param $callback
+     *
+     * @return void
+     */
+    public function registerOrderDetailsAfterOrderTable($callback): void
+    {
+        add_action('woocommerce_order_details_after_order_table', $callback);
+    }
+
+    /**
+     * Register email before order table
+     *
+     * @param $callback
+     *
+     * @return void
+     */
+    public function registerEmailBeforeOrderTable($callback): void
+    {
+        add_action('woocommerce_email_before_order_table', $callback);
     }
 }
+
