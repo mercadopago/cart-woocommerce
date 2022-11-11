@@ -9,64 +9,64 @@ if (!defined('ABSPATH')) {
 final class Links
 {
     /**
-     * @var string
+     * @const
      */
-    private static $mpUrl = 'https://www.mercadopago.com/';
+    private const MP_URL = 'https://www.mercadopago.com';
 
     /**
-     * @var string
+     * @const
      */
-    private static $mpUrlPrefix = 'https://www.mercadopago.';
+    private const MP_URL_PREFIX = 'https://www.mercadopago';
 
     /**
-     * @var string
+     * @const
      */
-    private static $mpDevelopersUrl = 'https://developers.mercadopago.com/';
+    private const MP_DEVELOPERS_URL = 'https://developers.mercadopago.com';
 
     /**
-     * Get link settings from the country configured by default in Woocommerce.
+     * Get link settings from the country configured by default in Woocommerce
      *
      * @return array
      */
     public static function getLinkSettings(): array
     {
-        $country = array(
-            'AR' => array(
-                'suffix_url' => 'com.ar/',
+        $country = [
+            'AR' => [
                 'translate'  => 'es',
                 'site_id_mp' => 'mla',
-            ),
-            'BR' => array(
-                'suffix_url' => 'com.br/',
+                'suffix_url' => '.com.ar',
+            ],
+            'BR' => [
                 'translate'  => 'pt',
                 'site_id_mp' => 'mlb',
-            ),
-            'CL' => array(
-                'suffix_url' => 'cl/',
+                'suffix_url' => '.com.br',
+            ],
+            'CL' => [
                 'translate'  => 'es',
                 'site_id_mp' => 'mlc',
-            ),
-            'CO' => array(
-                'suffix_url' => 'com.co/',
+                'suffix_url' => '.cl',
+            ],
+            'CO' => [
                 'translate'  => 'es',
                 'site_id_mp' => 'mco',
-            ),
-            'MX' => array(
-                'suffix_url' => 'com.mx/',
+                'suffix_url' => '.com.co',
+            ],
+            'MX' => [
                 'translate'  => 'es',
                 'site_id_mp' => 'mlm',
-            ),
-            'PE' => array(
-                'suffix_url' => 'com.pe/',
+                'suffix_url' => '.com.mx',
+            ],
+            'PE' => [
                 'translate'  => 'es',
                 'site_id_mp' => 'mpe',
-            ),
-            'UY' => array(
-                'suffix_url' => 'com.uy/',
+                'suffix_url' => '.com.pe',
+            ],
+            'UY' => [
                 'translate'  => 'es',
                 'site_id_mp' => 'mlu',
-            ),
-        );
+                'suffix_url' => '.com.uy',
+            ],
+        ];
 
         $suffixCountry = strtoupper(Plugin::getWoocommerceDefaultCountry());
 
@@ -81,10 +81,9 @@ final class Links
     public static function getLinks(): array
     {
         $linkSettings       = self::getLinkSettings();
-        $panelLinks         = self::getMercadoPagoLinks($linkSettings);
         $documentationLinks = self::getDocumentationLinks($linkSettings);
 
-        return array_merge($panelLinks, $documentationLinks);
+        return [];
     }
 
     /**
@@ -96,32 +95,47 @@ final class Links
      */
     public static function getDocumentationLinks(array $linkSettings): array
     {
-        $baseLink = self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'developers/' . $linkSettings['translate'];
+        $baseLink = self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/developers/' . $linkSettings['translate'];
 
         return array(
             'link_doc_integration_config' => $baseLink . '/docs/woocommerce/integration-configuration',
             'link_doc_integration_test'   => $baseLink . '/docs/woocommerce/integration-test',
-            'link_doc_dev_program'        => $baseLink . '/developer-program',
             'link_doc_notifications_ipn'  => $baseLink . '/docs/woocommerce/additional-content/notifications/ipn',
             'link_doc_test_cards'         => $baseLink . '/docs/checkout-api/integration-test/test-cards',
             'link_doc_reasons_refusals'   => $baseLink . '/docs/woocommerce/reasons-refusals',
+            'link_doc_dev_program'        => $baseLink . '/developer-program',
         );
     }
 
     /**
-     * Get documentation links on Mercado Pago Panel page
-     *
-     * @param array $linkSettings
-     *
-     * @return array
+     * @return string
      */
-    public static function getMercadoPagoLinks(array $linkSettings): array
+    public static function getMercadoPagoHomeLink(): string
     {
-        return array(
-            'link_mp_home'        => self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'home',
-            'link_mp_costs'       => self::$mpUrlPrefix . $linkSettings['suffix_url'] . 'costs-section',
-            'link_mp_credentials' => self::$mpUrl . 'developers/panel/credentials',
-            'link_mp_developers'  => self::$mpDevelopersUrl,
-        );
+        return self::MP_URL_PREFIX . self::getLinkSettings()['suffix_url'] . '/home';
+    }
+
+    /**
+     * @return string
+     */
+    public static function getMercadoPagoCostsLink(): string
+    {
+        return self::MP_URL_PREFIX . self::getLinkSettings()['suffix_url'] . '/costs-section';
+    }
+
+    /**
+     * @return string
+     */
+    public static function getMercadoPagoDevsiteCredentialsLink(): string
+    {
+        return self::MP_URL_PREFIX . self::getLinkSettings()['suffix_url'] . '/developers/panel/credentials';
+    }
+
+    /**
+     * @return string
+     */
+    public static function getMercadoPagoDevsiteLink(): string
+    {
+        return self::MP_DEVELOPERS_URL;
     }
 }
