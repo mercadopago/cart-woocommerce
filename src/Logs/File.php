@@ -38,7 +38,7 @@ class File implements LogInterface
      */
     public function error(string $message, string $source, array $context = []): void
     {
-        $this->save('error', $message, $source, $context);
+        $this->save(LogLevels::ERROR, $message, $source, $context);
     }
 
     /**
@@ -52,7 +52,7 @@ class File implements LogInterface
      */
     public function warning(string $message, string $source, array $context = []): void
     {
-        $this->save('warning', $message, $source, $context);
+        $this->save(LogLevels::WARNING, $message, $source, $context);
     }
 
     /**
@@ -66,7 +66,7 @@ class File implements LogInterface
      */
     public function notice(string $message, string $source, array $context = []): void
     {
-        $this->save('notice', $message, $source, $context);
+        $this->save(LogLevels::NOTICE, $message, $source, $context);
     }
 
     /**
@@ -80,7 +80,7 @@ class File implements LogInterface
      */
     public function info(string $message, string $source, array $context = []): void
     {
-        $this->save('info', $message, $source, $context);
+        $this->save(LogLevels::INFO, $message, $source, $context);
     }
 
     /**
@@ -95,7 +95,7 @@ class File implements LogInterface
     public function debug(string $message, string $source, array $context = []): void
     {
         if (WP_DEBUG) {
-            $this->save('debug', $message, $source, $context);
+            $this->save(LogLevels::DEBUG, $message, $source, $context);
         }
     }
 

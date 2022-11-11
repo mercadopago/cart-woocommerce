@@ -36,6 +36,11 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
+    private const PLATFORM_NAME = 'woocommerce';
+
+    /**
+     * @const
+     */
     private const PLUGIN_NAME = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
 
     /**
@@ -251,6 +256,7 @@ class WoocommerceMercadoPago
         $this->define('MP_MIN_PHP', self::PLUGIN_MIN_PHP);
         $this->define('MP_VERSION', self::PLUGIN_VERSION);
         $this->define('MP_PLATFORM_ID', self::PLATFORM_ID);
+        $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
     }
 
     /**
