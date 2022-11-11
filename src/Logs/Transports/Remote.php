@@ -1,17 +1,21 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Logs;
+namespace MercadoPago\Woocommerce\Logs\Transports;
+
+use MercadoPago\Woocommerce\Helpers\Requester;
+use MercadoPago\Woocommerce\Logs\LogInterface;
+use MercadoPago\Woocommerce\Logs\LogLevels;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class File implements LogInterface
+class Remote implements LogInterface
 {
     /**
-     * @var \WC_Logger
+     * @const
      */
-    private $logger;
+    private const METRIC_NAME_PREFIX = 'MP_WOO_PE_LOG_';
 
     /**
      * @var bool
@@ -19,12 +23,17 @@ class File implements LogInterface
     private $debugMode;
 
     /**
-     * File Logs constructor
+     * @var Requester
+     */
+    private $requester;
+
+    /**
+     * Remote Logs constructor
      */
     public function __construct($debugMode)
     {
-        $this->logger    = wc_get_logger();
         $this->debugMode = $debugMode;
+        $this->requester = Requester::getInstance();
     }
 
     /**
@@ -100,7 +109,7 @@ class File implements LogInterface
     }
 
     /**
-     * Save logs with Woocommerce logger
+     * Save logs by sending to API
      *
      * @param string               $level
      * @param string               $message
@@ -115,6 +124,30 @@ class File implements LogInterface
             return;
         }
 
-        $this->logger->{$level}($message . ' - Context: ' . json_encode($context), ['source' => $source]);
+        try {
+            global $woocommerce;
+
+            $level   = strtoupper($level);
+            $headers = ['Content-Type: application/json'];
+            $uri     = '/v1/plugins/melidata/errors';
+            $body    = [
+                'name'         => self::METRIC_NAME_PREFIX . $level,
+                'message'      => '['. $level .'] '. $message .' - Context: '. json_encode($context),
+                'target'       => $source,
+                'plugin'       => [
+                    'version'  => MP_VERSION,
+                ],
+                'platform'     => [
+                    'name'     => MP_PLATFORM_NAME,
+                    'uri'      => $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+                    'version'  => $woocommerce->version,
+                    'location' => '/backend',
+                ],
+            ];
+
+            $this->requester->post($uri, $headers, $body);
+        } catch (\Exception $e) {
+            return;
+        }
     }
 }

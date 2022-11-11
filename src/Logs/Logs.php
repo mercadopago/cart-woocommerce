@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Logs;
 
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Logs\Transports\File;
+use MercadoPago\Woocommerce\Logs\Transports\Remote;
 
 if (!defined('ABSPATH')) {
     exit;
