@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Categories;
 use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -198,6 +199,7 @@ class Settings
         $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
         $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
 
+        $links      = Links::getLinks();
         $testMode   = ($checkboxCheckoutTestMode === 'yes');
         $categories = Categories::getCategories();
 
@@ -308,9 +310,6 @@ class Settings
      */
     public function mercadopagoUpdateOptionCredentials(): void
     {
-        // TODO: update payment methods
-        // TODO: add wp cache
-
         $publicKeyProd   = Form::getSanitizeTextFromPost('public_key_prod');
         $accessTokenProd = Form::getSanitizeTextFromPost('access_token_prod');
         $publicKeyTest   = Form::getSanitizeTextFromPost('public_key_test');

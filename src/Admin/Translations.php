@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
+use MercadoPago\Woocommerce\Helpers\Links;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -74,6 +76,11 @@ class Translations
     public $updateStore = [];
 
     /**
+     * @var array
+     */
+    protected $links = [];
+
+    /**
      * @var Translations
      */
     private static $instance = null;
@@ -83,6 +90,8 @@ class Translations
      */
     public function __construct()
     {
+        $this->links = Links::getLinks();
+
         $this->setNoticesTranslations();
         $this->setPluginSettingsTranslations();
         $this->setHeaderSettingsTranslations();
@@ -261,7 +270,7 @@ class Translations
             '%s %s <a class="mp-settings-blue-text" target="_blank" href="%s">%s</a>.',
             $this->translate('Add the URL to receive payments notifications.'),
             $this->translate('Find out more information in the'),
-            '#',
+            $this->links['docs_ipn_notification'],
             $this->translate('guides')
         );
 
@@ -269,7 +278,7 @@ class Translations
             '%s %s <a class="mp-settings-blue-text" target="_blank" href="%s">%s</a>.',
             $this->translate('If you are a Mercado Pago Certified Partner, make sure to add your integrator_id.'),
             $this->translate('If you do not have the code, please'),
-            '#',
+            $this->links['docs_developers_program'],
             $this->translate('request it now')
         );
 
@@ -327,7 +336,7 @@ class Translations
         $testCredentialsHelper = sprintf(
             '%s, <a class="mp-settings-blue-text" id="mp-testmode-credentials-link" target="_blank" href="%s">%s</a> %s.',
             $this->translate('To enable test mode'),
-            '#',
+            $this->links['mercadopago_credentials'],
             $this->translate('copy your test credentials'),
             $this->translate('and paste them above in section 1 of this page')
         );
@@ -335,21 +344,21 @@ class Translations
         $testSubtitleOne = sprintf(
             '1. %s <a class="mp-settings-blue-text" id="mp-testmode-testuser-link" target="_blank" href="%s">%s</a>, %s.',
             $this->translate('Create your'),
-            '#',
+            $this->links['mercadopago_test_user'],
             $this->translate('test user'),
             $this->translate('(Optional. Can be used in Production Mode and Test Mode, to test payments)')
         );
 
         $testSubtitleTwo = sprintf(
             '2. <a class="mp-settings-blue-text" id="mp-testmode-cardtest-link" target="_blank" href="%s">%s</a>, %s.',
-            '#',
+            $this->links['docs_test_cards'],
             $this->translate('Use our test cards'),
             $this->translate('never use real cards')
         );
 
         $testSubtitleThree = sprintf(
             '3. <a class="mp-settings-blue-text" id="mp-testmode-store-link" target="_blank" href="%s">%s</a> %s.',
-            '#',
+            $this->links['store_visit'],
             $this->translate('Visit your store'),
             $this->translate('to test purchases')
         );

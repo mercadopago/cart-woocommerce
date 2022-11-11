@@ -5,6 +5,9 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
+use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Gateway;
 use MercadoPago\Woocommerce\Hooks\OrderDetails;
@@ -77,6 +80,16 @@ class WoocommerceMercadoPago
      * @var OrderDetails
      */
     public $orderDetails;
+
+    /**
+     * @var Store
+     */
+    public $store;
+
+    /**
+     * @var Seller
+     */
+    public $seller;
 
     /**
      * @var Settings
@@ -185,6 +198,8 @@ class WoocommerceMercadoPago
         $this->notices      = Notices::getInstance();
         $this->gateway      = Gateway::getInstance();
         $this->orderDetails = OrderDetails::getInstance();
+        $this->store        = Store::getInstance();
+        $this->seller       = Seller::getInstance();
         $this->settings     = Settings::getInstance();
     }
 
@@ -208,7 +223,7 @@ class WoocommerceMercadoPago
             ],
             [
                 'text'   => $this->translations->plugin['plugin_manual'],
-                'href'   => '#',
+                'href'   => Links::getLinks()['docs_integration_introduction'],
                 'target' => Admin::HREF_TARGET_BLANK,
             ],
         ];

@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use MercadoPago\Woocommerce\Configs\Seller;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -24,11 +26,26 @@ final class Links
     private const MP_DEVELOPERS_URL = 'https://developers.mercadopago.com';
 
     /**
-     * Get link settings from the country configured by default in Woocommerce
+     * Get all links
      *
      * @return array
      */
-    public static function getLinkSettings(): array
+    public static function getLinks(): array
+    {
+        $linksSettings      = self::getLinksSettings();
+        $mercadoPagoLinks   = self::getMercadoPagoLinks($linksSettings);
+        $documentationLinks = self::getDocumentationLinks($linksSettings);
+        $storeLinks         = self::getStoreLinks();
+
+        return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $storeLinks);
+    }
+
+    /**
+     * Get links settings from the country configured by default in Woocommerce
+     *
+     * @return array
+     */
+    private static function getLinksSettings(): array
     {
         $country = [
             'AR' => [
@@ -68,22 +85,14 @@ final class Links
             ],
         ];
 
-        $suffixCountry = strtoupper(Plugin::getWoocommerceDefaultCountry());
+        $siteId        = (Seller::getInstance())->getSiteId();
+        $suffixCountry = self::siteIdToCountry($siteId);
 
-        return array_key_exists($suffixCountry, $country) ? $country[ $suffixCountry ] : $country['AR'];
-    }
+        if ((Seller::getInstance())->getSiteId()) {
+            $suffixCountry = self::siteIdToCountry($siteId);
+        }
 
-    /**
-     * Get all links
-     *
-     * @return array
-     */
-    public static function getLinks(): array
-    {
-        $linkSettings       = self::getLinkSettings();
-        $documentationLinks = self::getDocumentationLinks($linkSettings);
-
-        return [];
+        return array_key_exists($suffixCountry, $country) ? $country[$suffixCountry] : $country['AR'];
     }
 
     /**
@@ -93,49 +102,63 @@ final class Links
      *
      * @return array
      */
-    public static function getDocumentationLinks(array $linkSettings): array
+    private static function getDocumentationLinks(array $linkSettings): array
     {
         $baseLink = self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/developers/' . $linkSettings['translate'];
 
-        return array(
-            'link_doc_integration_config' => $baseLink . '/docs/woocommerce/integration-configuration',
-            'link_doc_integration_test'   => $baseLink . '/docs/woocommerce/integration-test',
-            'link_doc_notifications_ipn'  => $baseLink . '/docs/woocommerce/additional-content/notifications/ipn',
-            'link_doc_test_cards'         => $baseLink . '/docs/checkout-api/integration-test/test-cards',
-            'link_doc_reasons_refusals'   => $baseLink . '/docs/woocommerce/reasons-refusals',
-            'link_doc_dev_program'        => $baseLink . '/developer-program',
-        );
+        return [
+            'docs_developers_program'       => $baseLink . '/developer-program',
+            'docs_test_cards'               => $baseLink . '/docs/checkout-api/integration-test/test-cards',
+            'docs_reasons_refusals'         => $baseLink . '/docs/woocommerce/reasons-refusals',
+            'docs_ipn_notification'         => $baseLink . '/docs/woocommerce/additional-content/notifications/ipn',
+            'docs_integration_test'         => $baseLink . '/docs/woocommerce/integration-test',
+            'docs_integration_config'       => $baseLink . '/docs/woocommerce/integration-configuration',
+            'docs_integration_introduction' => $baseLink . '/docs/woocommerce/introduction',
+        ];
     }
 
     /**
-     * @return string
+     * Get documentation links on Mercado Pago Panel page
+     *
+     * @param array $linkSettings
+     *
+     * @return array
      */
-    public static function getMercadoPagoHomeLink(): string
+    private static function getMercadoPagoLinks(array $linkSettings): array
     {
-        return self::MP_URL_PREFIX . self::getLinkSettings()['suffix_url'] . '/home';
+        return [
+            'mercadopago_home'        => self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/home',
+            'mercadopago_costs'       => self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/costs-section',
+            'mercadopago_test_user'   => self::MP_URL . '/developers/panel/test-users',
+            'mercadopago_credentials' => self::MP_URL . '/developers/panel/credentials',
+            'mercadopago_developers'  => self::MP_DEVELOPERS_URL,
+        ];
+    }
+
+    private static function getStoreLinks(): array
+    {
+        return [
+            'store_visit' => get_permalink(wc_get_page_id('shop')),
+        ];
     }
 
     /**
+     * @param $siteId
+     *
      * @return string
      */
-    public static function getMercadoPagoCostsLink(): string
+    private static function siteIdToCountry($siteId): string
     {
-        return self::MP_URL_PREFIX . self::getLinkSettings()['suffix_url'] . '/costs-section';
-    }
+        $siteIdToCountry = [
+            'MLA' => 'AR',
+            'MLB' => 'BR',
+            'MLM' => 'MX',
+            'MLC' => 'CL',
+            'MLU' => 'UY',
+            'MCO' => 'CO',
+            'MPE' => 'PE',
+        ];
 
-    /**
-     * @return string
-     */
-    public static function getMercadoPagoDevsiteCredentialsLink(): string
-    {
-        return self::MP_URL_PREFIX . self::getLinkSettings()['suffix_url'] . '/developers/panel/credentials';
-    }
-
-    /**
-     * @return string
-     */
-    public static function getMercadoPagoDevsiteLink(): string
-    {
-        return self::MP_DEVELOPERS_URL;
+        return array_key_exists($siteId, $siteIdToCountry) ? $siteIdToCountry[$siteId] : 'AR';
     }
 }
