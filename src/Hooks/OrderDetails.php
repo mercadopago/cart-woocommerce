@@ -29,7 +29,7 @@ class OrderDetails
     }
 
     /**
-     * Get OrderDetailsHook instance
+     * Get OrderDetails Hooks instance
      *
      * @return OrderDetails
      */
@@ -50,7 +50,7 @@ class OrderDetails
      */
     public function addOrderMetaBoxActions(array $actions): array
     {
-        $actions['cancel_order'] = $this->translations->orderSettings['cancel_order'];
+        $actions['cancel_order'] = $this->translations->order['cancel_order'];
         return $actions;
     }
 }

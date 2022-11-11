@@ -7,7 +7,9 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Categories;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
+use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 
 if (!defined('ABSPATH')) {
@@ -20,6 +22,11 @@ class Settings
      * @const
      */
     private const PRIORITY_ON_MENU = 90;
+
+    /**
+     * @var Admin
+     */
+    protected $admin;
 
     /**
      * @var Scripts
@@ -56,6 +63,7 @@ class Settings
      */
     private function __construct()
     {
+        $this->admin        = Admin::getInstance();
         $this->scripts      = Scripts::getInstance();
         $this->endpoints    = Endpoints::getInstance();
         $this->translations = Translations::getInstance();
@@ -87,7 +95,7 @@ class Settings
      */
     public function loadMenu(): void
     {
-        add_action('admin_menu', array($this, 'registerMercadoPagoInWoocommerceMenu'), self::PRIORITY_ON_MENU);
+        $this->admin->registerOnMenu(self::PRIORITY_ON_MENU, [$this, 'registerMercadoPagoInWoocommerceMenu']);
     }
 
     /**
@@ -121,7 +129,7 @@ class Settings
      */
     public function canLoadScriptsAndStyles(): bool
     {
-        return is_admin() && (
+        return $this->admin->isAdmin() && (
             Url::validatePage('mercadopago-settings') ||
             Url::validateSection('woo-mercado-pago')
         );
@@ -152,13 +160,13 @@ class Settings
      */
     public function registerMercadoPagoInWoocommerceMenu(): void
     {
-        add_submenu_page(
+        $this->admin->registerSubmenuPage(
             'woocommerce',
             'Mercado Pago Settings',
             'Mercado Pago',
             'manage_options',
             'mercadopago-settings',
-            array($this, 'mercadoPagoSubmenuPageCallback')
+            [$this, 'mercadoPagoSubmenuPageCallback']
         );
     }
 
@@ -352,6 +360,8 @@ class Settings
                 }
             }
 
+            do_action(Plugin::UPDATE_CREDENTIALS_ACTION);
+
             wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
         }
 
@@ -388,6 +398,8 @@ class Settings
         $this->store->setIntegratorId($integratorId);
         $this->store->setDebugMode($debugMode);
 
+        do_action(Plugin::UPDATE_STORE_INFO_ACTION);
+
         wp_send_json_success($this->translations->updateStore['valid_configuration']);
     }
 
@@ -412,6 +424,8 @@ class Settings
         }
 
         $this->store->setCheckboxCheckoutTestMode($checkoutTestMode);
+
+        do_action(Plugin::UPDATE_TEST_MODE_ACTION);
 
         if ($validateCheckoutTestMode) {
             wp_send_json_success('Mercado Pago\'s Payment Methods in Test Mode');
