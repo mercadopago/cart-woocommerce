@@ -145,9 +145,6 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
             'message' => 'Webhook handled successful'
         );
 
-        header('content-type: application/json; charset=utf-8');
-        status_header($status);
-
-        exit(wp_json_encode($response));
+        wp_send_json_success($response, $status);
     }
 }
