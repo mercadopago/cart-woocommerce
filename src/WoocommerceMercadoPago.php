@@ -199,17 +199,17 @@ class WoocommerceMercadoPago
             [
                 'text'   => $this->translations->plugin['set_plugin'],
                 'href'   => admin_url('admin.php?page=mercadopago-settings'),
-                'target' => Admin::TARGET_DEFAULT,
+                'target' => Admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['payment_method'],
                 'href'   => admin_url('admin.php?page=wc-settings&tab=checkout'),
-                'target' => Admin::TARGET_DEFAULT,
+                'target' => Admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['plugin_manual'],
                 'href'   => '#',
-                'target' => Admin::TARGET_BLANK,
+                'target' => Admin::HREF_TARGET_BLANK,
             ],
         ];
 

@@ -11,12 +11,12 @@ class Admin
     /**
      * @const
      */
-    public const TARGET_DEFAULT = '_self';
+    public const HREF_TARGET_DEFAULT = '_self';
 
     /**
      * @const
      */
-    public const TARGET_BLANK = '_blank';
+    public const HREF_TARGET_BLANK = '_blank';
 
     /**
      * @var Admin
