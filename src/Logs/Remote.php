@@ -143,11 +143,9 @@ class Remote implements LogInterface
                 ],
             ];
 
-            error_log(json_encode($body));
-
             $this->requester->post($uri, $headers, $body);
         } catch (\Exception $e) {
-            error_log($e->getMessage());
+            return;
         }
     }
 }
