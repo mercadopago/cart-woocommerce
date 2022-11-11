@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
+use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
 
@@ -205,15 +206,25 @@ class Seller
     public function getSellerInfo(string $accessToken): array
     {
         try {
+            $key   = sprintf('%sat%s', __FUNCTION__, $accessToken);
+            $cache = Cache::getCache($key);
+
+            if ($cache) {
+                return $cache;
+            }
+
             $uri     = '/users/me';
             $headers = ['Authorization: Bearer ' . $accessToken];
 
-            $response = $this->requester->get($uri, $headers);
-
-            return [
+            $response           = $this->requester->get($uri, $headers);
+            $serializedResponse = [
                 'data'   => $response->getData(),
                 'status' => $response->getStatus(),
             ];
+
+            Cache::setCache($key, $serializedResponse);
+
+            return $serializedResponse;
         } catch (\Exception $e) {
             return [
                 'data'   => null,
@@ -253,6 +264,13 @@ class Seller
     private function validateCredentials(string $accessToken = null, string $publicKey = null): array
     {
         try {
+            $key   = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
+            $cache = Cache::getCache($key);
+
+            if ($cache) {
+                return $cache;
+            }
+
             $headers = [];
             $uri     = '/plugins-credentials-wrapper/credentials';
 
@@ -264,12 +282,15 @@ class Seller
                 $uri = $uri . '?public_key=' . $publicKey;
             }
 
-            $response = $this->requester->get($uri, $headers);
-
-            return [
+            $response           = $this->requester->get($uri, $headers);
+            $serializedResponse = [
                 'data'   => $response->getData(),
                 'status' => $response->getStatus(),
             ];
+
+            Cache::setCache($key, $serializedResponse);
+
+            return $serializedResponse;
         } catch (\Exception $e) {
             return [
                 'data'   => null,
