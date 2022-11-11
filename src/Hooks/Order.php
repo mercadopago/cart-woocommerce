@@ -2,7 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use MercadoPago\Woocommerce\Admin\MetaBoxes;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -17,11 +16,6 @@ class Order
     private $order;
 
     /**
-     * @var MetaBoxes
-     */
-    private $metaBoxes;
-
-    /**
      * @var Order
      */
     private static $instance = null;
@@ -31,7 +25,6 @@ class Order
      */
     private function __construct()
     {
-        $this->metaBoxes = MetaBoxes::getInstance();
     }
 
     /**
@@ -61,8 +54,42 @@ class Order
     public function registerMetaBox($id, $title, string $name, array $args, string $path): void
     {
         add_action('add_meta_boxes_shop_order', function () use ($id, $title, $name, $args, $path) {
-            $this->metaBoxes->addMetaBox($id, $title, $name, $args, $path);
+            $this->addMetaBox($id, $title, $name, $args, $path);
         });
+    }
+
+    /**
+     * Add a meta box to screen
+     *
+     * @param string $id
+     * @param string $title
+     * @param string $name
+     * @param array $args
+     * @param string $path
+     *
+     * @return void
+     */
+    public function addMetaBox(string $id, string $title, string $name, array $args, string $path) {
+        add_meta_box($id, $title, function () use ($name, $args, $path) {
+            $this->registerTemplate($name, $args, $path);
+        });
+    }
+
+    /**
+     * Register template
+     *
+     * @param string $name
+     * @param array $args
+     * @param string $path
+     *
+     * @return void
+     */
+    public function registerTemplate(string $name, array $args, string $path) {
+        wc_get_template(
+            $name,
+            $args,
+            $path
+        );
     }
 
     /**
