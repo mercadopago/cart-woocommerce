@@ -9,6 +9,11 @@ if (!defined('ABSPATH')) {
 class Checkout
 {
     /**
+     * @var Scripts
+     */
+    private $scripts;
+
+    /**
      * @var Checkout
      */
     private static $instance = null;
@@ -18,6 +23,7 @@ class Checkout
      */
     public function __construct()
     {
+        $this->scripts = Scripts::getInstance();
     }
 
     /**
@@ -49,12 +55,13 @@ class Checkout
      * Register before checkout form hook
      *
      * @param mixed $callback
+     * @param string $location
      *
      * @return void
      */
-    public function registerBeforeCheckoutForm($callback)
+    public function registerBeforeCheckoutForm($callback, string $location)
     {
-        add_action('woocommerce_before_checkout_form', $callback);
+        $this->registerHooks('woocommerce_before_checkout_form', $callback, $location);
     }
 
     /**
@@ -86,23 +93,44 @@ class Checkout
      * Register before woocommerce pay
      *
      * @param mixed $callback
+     * @param string $location
      *
      * @return void
      */
-    public function registerBeforePay($callback)
+    public function registerBeforePay($callback, string $location)
     {
-        add_action('before_woocommerce_pay', $callback);
+        $this->registerHooks('before_woocommerce_pay', $callback, $location);
     }
 
     /**
      * Register pay order before submit hook
      *
      * @param mixed $callback
+     * @param string $location
      *
      * @return void
      */
-    public function registerPayOrderBeforeSubmit($callback)
+    public function registerPayOrderBeforeSubmit($callback, string $location)
     {
-        add_action('woocommerce_pay_order_before_submit', $callback);
+        $this->registerHooks('woocommerce_pay_order_before_submit', $callback, $location);
+    }
+
+    /**
+     * Unify hooks registration with callback or melidata buyer script registration
+     *
+     * @param string $hook
+     * @param mixed $callback
+     * @param string $location
+     *
+     * @return void
+     */
+    public function registerHooks(string $hook, $callback, string $location) {
+        if ($callback) {
+            add_action($hook, $callback);
+            return;
+        }
+        add_action($hook, function () use ($location) {
+            $this->scripts->registerMelidataStoreScript($location);
+        });
     }
 }
