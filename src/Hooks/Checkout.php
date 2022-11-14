@@ -55,7 +55,7 @@ class Checkout
      * Register before checkout form hook
      *
      * @param mixed $callback
-     * @param string $location
+     * @param string|null $location
      *
      * @return void
      */
@@ -93,7 +93,7 @@ class Checkout
      * Register before woocommerce pay
      *
      * @param mixed $callback
-     * @param string $location
+     * @param string|null $location
      *
      * @return void
      */
@@ -106,7 +106,7 @@ class Checkout
      * Register pay order before submit hook
      *
      * @param mixed $callback
-     * @param string $location
+     * @param string|null $location
      *
      * @return void
      */
@@ -116,11 +116,11 @@ class Checkout
     }
 
     /**
-     * Unify hooks registration with callback or melidata buyer script registration
+     * Unify hooks registration with callback or melidata script method call
      *
      * @param string $hook
      * @param mixed $callback
-     * @param string $location
+     * @param string|null $location
      *
      * @return void
      */
