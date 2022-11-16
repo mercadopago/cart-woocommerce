@@ -54,14 +54,14 @@ class Checkout
     /**
      * Register before checkout form hook
      *
-     * @param mixed $callback
      * @param string|null $location
+     * @param mixed $callback
      *
      * @return void
      */
-    public function registerBeforeCheckoutForm($callback, string $location)
+    public function registerBeforeCheckoutForm(string $location, $callback)
     {
-        $this->registerHooks('woocommerce_before_checkout_form', $callback, $location);
+        $this->registerHooks('woocommerce_before_checkout_form', $location, $callback);
     }
 
     /**
@@ -79,8 +79,8 @@ class Checkout
     /**
      * Register receipt hook
      *
-     * @param mixed $callback
      * @param string $id
+     * @param mixed $callback
      *
      * @return void
      */
@@ -92,39 +92,39 @@ class Checkout
     /**
      * Register before woocommerce pay
      *
-     * @param mixed $callback
      * @param string|null $location
+     * @param mixed $callback
      *
      * @return void
      */
-    public function registerBeforePay($callback, string $location)
+    public function registerBeforePay(string $location, $callback)
     {
-        $this->registerHooks('before_woocommerce_pay', $callback, $location);
+        $this->registerHooks('before_woocommerce_pay', $location, $callback);
     }
 
     /**
      * Register pay order before submit hook
      *
-     * @param mixed $callback
      * @param string|null $location
+     * @param mixed $callback
      *
      * @return void
      */
-    public function registerPayOrderBeforeSubmit($callback, string $location)
+    public function registerPayOrderBeforeSubmit(string $location, $callback)
     {
-        $this->registerHooks('woocommerce_pay_order_before_submit', $callback, $location);
+        $this->registerHooks('woocommerce_pay_order_before_submit', $location, $callback);
     }
 
     /**
      * Unify hooks registration with callback or melidata script method call
      *
      * @param string $hook
-     * @param mixed $callback
      * @param string|null $location
+     * @param mixed $callback
      *
      * @return void
      */
-    public function registerHooks(string $hook, $callback, string $location) {
+    public function registerHooks(string $hook, string $location, $callback) {
         if ($callback) {
             add_action($hook, $callback);
             return;
