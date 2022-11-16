@@ -29,14 +29,14 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
         $this->method_description = 'The best woocommerce gateway';
         $this->supports = array('products');
 
-        $this->init_form_fields();
+        $this->initFormFields();
 
         $this->init_settings();
         $this->title = $this->get_option('title');
         $this->description = $this->get_option('description');
         $this->enabled = $this->get_option('enabled');
 
-        add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
+        add_action('wp_enqueue_scripts', array($this, 'paymentScripts'));
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 
         $this->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
@@ -47,7 +47,7 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
      *
      * @return void
      */
-    public function init_form_fields(): void
+    public function initFormFields(): void
     {
         $this->form_fields = array(
             'enabled' => array(
@@ -78,7 +78,7 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
      *
      * @return void
      */
-    public function payment_scripts(): void
+    public function paymentScripts(): void
     {
     }
 
@@ -87,7 +87,7 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
      *
      * @return void
      */
-    public function payment_fields(): void
+    public function paymentFields(): void
     {
         wc_get_template(
             'checkout.php',
@@ -102,7 +102,7 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
      *
      * @return bool
      */
-    public function validate_fields(): bool
+    public function validateFields(): bool
     {
         return true;
     }
@@ -114,7 +114,7 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
      *
      * @return array
      */
-    public function process_payment($orderId): array
+    public function processPayment($orderId): array
     {
         global $woocommerce;
 
