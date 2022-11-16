@@ -11,28 +11,28 @@ interface MercadoPagoGatewayInterface
     /**
      * @return void
      */
-    public function initFormFields(): void;
+    public function init_form_fields(): void;
 
     /**
      * @return void
      */
-    public function paymentScripts(): void;
+    public function payment_scripts(): void;
 
     /**
      * @return void
      */
-    public function paymentFields(): void;
+    public function payment_fields(): void;
 
     /**
      * @return bool
      */
-    public function validateFields(): bool;
+    public function validate_fields(): bool;
 
     /**
      * @param $orderId
      * @return array
      */
-    public function processPayment($orderId): array;
+    public function process_payment($orderId): array;
 
     /**
      * @return void
