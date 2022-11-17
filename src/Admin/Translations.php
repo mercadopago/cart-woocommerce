@@ -11,11 +11,6 @@ if (!defined('ABSPATH')) {
 class Translations
 {
     /**
-     * @const
-     */
-    private const DOMAIN = 'woocommerce-mercadopago';
-
-    /**
      * @var array
      */
     public $notices = [];
@@ -127,17 +122,17 @@ class Translations
     private function setNoticesTranslations(): void
     {
         $missWoocommerce = sprintf(
-            __('The Mercado Pago module needs an active version of %s in order to work!', self::DOMAIN),
+            __('The Mercado Pago module needs an active version of %s in order to work!', 'woocommerce-mercadopago'),
             '<a target="_blank" href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
         );
 
         $this->notices = [
-            'php_wrong_version'     => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', self::DOMAIN),
-            'missing_curl'          => __('Mercado Pago Error: PHP Extension CURL is not installed.', self::DOMAIN),
-            'missing_gd_extensions' => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', self::DOMAIN),
-            'activate_woocommerce'  => __('Activate WooCommerce', self::DOMAIN),
-            'install_woocommerce'   => __('Install WooCommerce', self::DOMAIN),
-            'see_woocommerce'       => __('See WooCommerce', self::DOMAIN),
+            'php_wrong_version'     => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
+            'missing_curl'          => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
+            'missing_gd_extensions' => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago'),
+            'activate_woocommerce'  => __('Activate WooCommerce', 'woocommerce-mercadopago'),
+            'install_woocommerce'   => __('Install WooCommerce', 'woocommerce-mercadopago'),
+            'see_woocommerce'       => __('See WooCommerce', 'woocommerce-mercadopago'),
             'miss_woocommerce'      => $missWoocommerce,
         ];
     }
@@ -150,9 +145,9 @@ class Translations
     private function setPluginSettingsTranslations(): void
     {
         $this->plugin = [
-            'set_plugin'     => __('Set plugin', self::DOMAIN),
-            'payment_method' => __('Payment method', self::DOMAIN),
-            'plugin_manual'  => __('Plugin manual', self::DOMAIN),
+            'set_plugin'     => __('Set plugin', 'woocommerce-mercadopago'),
+            'payment_method' => __('Payment method', 'woocommerce-mercadopago'),
+            'plugin_manual'  => __('Plugin manual', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -164,7 +159,7 @@ class Translations
     private function setOrderSettingsTranslations(): void
     {
         $this->order = [
-            'cancel_order' => __('Cancel order', self::DOMAIN),
+            'cancel_order' => __('Cancel order', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -177,45 +172,45 @@ class Translations
     {
         $titleHeader = sprintf(
             '%s <b>%s</b> %s <br/> %s <b>%s</b> %s',
-            __('Accept', self::DOMAIN),
-            __('payments on the spot', self::DOMAIN),
-            __('with', self::DOMAIN),
-            __('the', self::DOMAIN),
-            __('security', self::DOMAIN),
-            __('from Mercado Pago', self::DOMAIN)
+            __('Accept', 'woocommerce-mercadopago'),
+            __('payments on the spot', 'woocommerce-mercadopago'),
+            __('with', 'woocommerce-mercadopago'),
+            __('the', 'woocommerce-mercadopago'),
+            __('security', 'woocommerce-mercadopago'),
+            __('from Mercado Pago', 'woocommerce-mercadopago')
         );
 
         $installmentsDescription = sprintf(
             '%s <b>%s</b> %s <b>%s</b> %s',
-            __('Choose', self::DOMAIN),
-            __('when you want to receive the money', self::DOMAIN),
-            __('from your sales and if you want to offer', self::DOMAIN),
-            __('interest-free installments', self::DOMAIN),
-            __('to your clients.', self::DOMAIN)
+            __('Choose', 'woocommerce-mercadopago'),
+            __('when you want to receive the money', 'woocommerce-mercadopago'),
+            __('from your sales and if you want to offer', 'woocommerce-mercadopago'),
+            __('interest-free installments', 'woocommerce-mercadopago'),
+            __('to your clients.', 'woocommerce-mercadopago')
         );
 
         $questionsDescription = sprintf(
             '%s <b>%s</b> %s',
-            __('Review the step-by-step of', self::DOMAIN),
-            __('how to integrate the Mercado Pago Plugin', self::DOMAIN),
-            __('on our website for developers.', self::DOMAIN)
+            __('Review the step-by-step of', 'woocommerce-mercadopago'),
+            __('how to integrate the Mercado Pago Plugin', 'woocommerce-mercadopago'),
+            __('on our website for developers.', 'woocommerce-mercadopago')
         );
 
         $this->headerSettings = [
-            'ssl'                      => __('SSL', self::DOMAIN),
-            'curl'                     => __('Curl', self::DOMAIN),
-            'gd_extension'             => __('GD Extensions', self::DOMAIN),
+            'ssl'                      => __('SSL', 'woocommerce-mercadopago'),
+            'curl'                     => __('Curl', 'woocommerce-mercadopago'),
+            'gd_extension'             => __('GD Extensions', 'woocommerce-mercadopago'),
             'title_header'             => $titleHeader,
-            'title_requirements'       => __('Technical requirements', self::DOMAIN),
-            'title_installments'       => __('Collections and installments', self::DOMAIN),
-            'title_questions'          => __('Questions?', self::DOMAIN),
-            'description_ssl'          => __('Implementation responsible for transmitting data to Mercado Pago in a secure and encrypted way.', self::DOMAIN),
-            'description_curl'         => __('It is an extension responsible for making payments via requests from the plugin to Mercado Pago.', self::DOMAIN),
-            'description_gd_extension' => __('These extensions are responsible for the implementation and operation of Pix in your store.', self::DOMAIN),
+            'title_requirements'       => __('Technical requirements', 'woocommerce-mercadopago'),
+            'title_installments'       => __('Collections and installments', 'woocommerce-mercadopago'),
+            'title_questions'          => __('Questions?', 'woocommerce-mercadopago'),
+            'description_ssl'          => __('Implementation responsible for transmitting data to Mercado Pago in a secure and encrypted way.', 'woocommerce-mercadopago'),
+            'description_curl'         => __('It is an extension responsible for making payments via requests from the plugin to Mercado Pago.', 'woocommerce-mercadopago'),
+            'description_gd_extension' => __('These extensions are responsible for the implementation and operation of Pix in your store.', 'woocommerce-mercadopago'),
             'description_installments' => $installmentsDescription,
             'description_questions'    => $questionsDescription,
-            'button_installments'      => __('Set deadlines and fees', self::DOMAIN),
-            'button_questions'         => __('Plugin manual', self::DOMAIN),
+            'button_installments'      => __('Set deadlines and fees', 'woocommerce-mercadopago'),
+            'button_questions'         => __('Plugin manual', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -228,23 +223,23 @@ class Translations
     {
         $subtitleCredentials = sprintf(
             '%s <b>%s</b>',
-            __('To enable orders, you must create and activate production credentials in your Mercado Pago Account.', self::DOMAIN),
-            __('Copy and paste the credentials below.', self::DOMAIN)
+            __('To enable orders, you must create and activate production credentials in your Mercado Pago Account.', 'woocommerce-mercadopago'),
+            __('Copy and paste the credentials below.', 'woocommerce-mercadopago')
         );
 
         $this->credentialsSettings = [
-            'public_key'                => __('Public Key', self::DOMAIN),
-            'access_token'              => __('Access Token', self::DOMAIN),
-            'title_credentials'         => __('1. Integrate your store with Mercado Pago', self::DOMAIN),
-            'title_credentials_prod'    => __('Production credentials', self::DOMAIN),
-            'title_credentials_test'    => __('Test credentials', self::DOMAIN),
+            'public_key'                => __('Public Key', 'woocommerce-mercadopago'),
+            'access_token'              => __('Access Token', 'woocommerce-mercadopago'),
+            'title_credentials'         => __('1. Integrate your store with Mercado Pago', 'woocommerce-mercadopago'),
+            'title_credentials_prod'    => __('Production credentials', 'woocommerce-mercadopago'),
+            'title_credentials_test'    => __('Test credentials', 'woocommerce-mercadopago'),
             'subtitle_credentials'      => $subtitleCredentials,
-            'subtitle_credentials_test' => __('Enable Mercado Pago checkouts for test purchases in the store.', self::DOMAIN),
-            'subtitle_credentials_prod' => __('Enable Mercado Pago checkouts to receive real payments in the store.', self::DOMAIN),
-            'placeholder_public_key'    => __('Paste your Public Key here', self::DOMAIN),
-            'placeholder_access_token'  => __('Paste your Access Token here', self::DOMAIN),
-            'button_link_credentials'   => __('Check credentials', self::DOMAIN),
-            'button_credentials'        => __('Save and continue', self::DOMAIN),
+            'subtitle_credentials_test' => __('Enable Mercado Pago checkouts for test purchases in the store.', 'woocommerce-mercadopago'),
+            'subtitle_credentials_prod' => __('Enable Mercado Pago checkouts to receive real payments in the store.', 'woocommerce-mercadopago'),
+            'placeholder_public_key'    => __('Paste your Public Key here', 'woocommerce-mercadopago'),
+            'placeholder_access_token'  => __('Paste your Access Token here', 'woocommerce-mercadopago'),
+            'button_link_credentials'   => __('Check credentials', 'woocommerce-mercadopago'),
+            'button_credentials'        => __('Save and continue', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -257,44 +252,44 @@ class Translations
     {
         $helperUrl = sprintf(
             '%s %s <a class="mp-settings-blue-text" target="_blank" href="%s">%s</a>.',
-            __('Add the URL to receive payments notifications.', self::DOMAIN),
-            __('Find out more information in the', self::DOMAIN),
+            __('Add the URL to receive payments notifications.', 'woocommerce-mercadopago'),
+            __('Find out more information in the', 'woocommerce-mercadopago'),
             $this->links['docs_ipn_notification'],
-            __('guides', self::DOMAIN)
+            __('guides', 'woocommerce-mercadopago')
         );
 
         $helperIntegrator = sprintf(
             '%s %s <a class="mp-settings-blue-text" target="_blank" href="%s">%s</a>.',
-            __('If you are a Mercado Pago Certified Partner, make sure to add your integrator_id.', self::DOMAIN),
-            __('If you do not have the code, please', self::DOMAIN),
+            __('If you are a Mercado Pago Certified Partner, make sure to add your integrator_id.', 'woocommerce-mercadopago'),
+            __('If you do not have the code, please', 'woocommerce-mercadopago'),
             $this->links['docs_developers_program'],
-            __('request it now', self::DOMAIN)
+            __('request it now', 'woocommerce-mercadopago')
         );
 
         $this->storeSettings = [
-            'title_store'                  => __('2. Customize your business', self::DOMAIN),
-            'title_info_store'             => __('Your store information', self::DOMAIN),
-            'title_advanced_store'         => __('Advanced integration options (optional)', self::DOMAIN),
-            'title_debug'                  => __('Debug and Log Mode', self::DOMAIN),
-            'subtitle_store'               => __('Fill out the following information to have a better experience and offer more information to your clients.', self::DOMAIN),
-            'subtitle_name_store'          => __('Name of your store in your client\'s invoice', self::DOMAIN),
-            'subtitle_activities_store'    => __('Identification in Activities of Mercado Pago', self::DOMAIN),
-            'subtitle_advanced_store'      => __('For further integration of your store with Mercado Pago (IPN, Certified Partners, Debug Mode)', self::DOMAIN),
-            'subtitle_category_store'      => __('Store category', self::DOMAIN),
-            'subtitle_url'                 => __('URL for IPN', self::DOMAIN),
-            'subtitle_integrator'          => __('Integrator ID', self::DOMAIN),
-            'subtitle_debug'               => __('We record your store\'s actions in order to provide a better assistance.', self::DOMAIN),
-            'placeholder_name_store'       => __('Ex: Mary\'s Store', self::DOMAIN),
-            'placeholder_activities_store' => __('Ex: Mary Store', self::DOMAIN),
-            'placeholder_category_store'   => __('Select', self::DOMAIN),
-            'placeholder_url'              => __('Ex: https://examples.com/my-custom-ipn-url', self::DOMAIN),
-            'placeholder_integrator'       => __('Ex: 14987126498', self::DOMAIN),
-            'accordion_advanced_store'     => __('Show advanced options', self::DOMAIN),
-            'button_store'                 => __('Save and continue', self::DOMAIN),
-            'helper_name_store'            => __('If this field is empty, the purchase will be identified as Mercado Pago.', self::DOMAIN),
-            'helper_activities_store'      => __('In Activities, you will view this term before the order number', self::DOMAIN),
-            'helper_category_store'        => __('Select "Other categories" if you do not find the appropriate category.', self::DOMAIN),
-            'helper_integrator_link'       => __('request it now.', self::DOMAIN),
+            'title_store'                  => __('2. Customize your business', 'woocommerce-mercadopago'),
+            'title_info_store'             => __('Your store information', 'woocommerce-mercadopago'),
+            'title_advanced_store'         => __('Advanced integration options (optional)', 'woocommerce-mercadopago'),
+            'title_debug'                  => __('Debug and Log Mode', 'woocommerce-mercadopago'),
+            'subtitle_store'               => __('Fill out the following information to have a better experience and offer more information to your clients.', 'woocommerce-mercadopago'),
+            'subtitle_name_store'          => __('Name of your store in your client\'s invoice', 'woocommerce-mercadopago'),
+            'subtitle_activities_store'    => __('Identification in Activities of Mercado Pago', 'woocommerce-mercadopago'),
+            'subtitle_advanced_store'      => __('For further integration of your store with Mercado Pago (IPN, Certified Partners, Debug Mode)', 'woocommerce-mercadopago'),
+            'subtitle_category_store'      => __('Store category', 'woocommerce-mercadopago'),
+            'subtitle_url'                 => __('URL for IPN', 'woocommerce-mercadopago'),
+            'subtitle_integrator'          => __('Integrator ID', 'woocommerce-mercadopago'),
+            'subtitle_debug'               => __('We record your store\'s actions in order to provide a better assistance.', 'woocommerce-mercadopago'),
+            'placeholder_name_store'       => __('Ex: Mary\'s Store', 'woocommerce-mercadopago'),
+            'placeholder_activities_store' => __('Ex: Mary Store', 'woocommerce-mercadopago'),
+            'placeholder_category_store'   => __('Select', 'woocommerce-mercadopago'),
+            'placeholder_url'              => __('Ex: https://examples.com/my-custom-ipn-url', 'woocommerce-mercadopago'),
+            'placeholder_integrator'       => __('Ex: 14987126498', 'woocommerce-mercadopago'),
+            'accordion_advanced_store'     => __('Show advanced options', 'woocommerce-mercadopago'),
+            'button_store'                 => __('Save and continue', 'woocommerce-mercadopago'),
+            'helper_name_store'            => __('If this field is empty, the purchase will be identified as Mercado Pago.', 'woocommerce-mercadopago'),
+            'helper_activities_store'      => __('In Activities, you will view this term before the order number', 'woocommerce-mercadopago'),
+            'helper_category_store'        => __('Select "Other categories" if you do not find the appropriate category.', 'woocommerce-mercadopago'),
+            'helper_integrator_link'       => __('request it now.', 'woocommerce-mercadopago'),
             'helper_url'                   => $helperUrl,
             'helper_integrator'            => $helperIntegrator,
         ];
@@ -308,10 +303,10 @@ class Translations
     private function setGatewaysSettingsTranslations(): void
     {
         $this->gatewaysSettings = [
-            'title_payments'    => __('3. Set payment methods', self::DOMAIN),
-            'subtitle_payments' => __('To view more options, please select a payment method below', self::DOMAIN),
-            'settings_payment'  => __('Settings', self::DOMAIN),
-            'button_payment'    => __('Continue', self::DOMAIN),
+            'title_payments'    => __('3. Set payment methods', 'woocommerce-mercadopago'),
+            'subtitle_payments' => __('To view more options, please select a payment method below', 'woocommerce-mercadopago'),
+            'settings_payment'  => __('Settings', 'woocommerce-mercadopago'),
+            'button_payment'    => __('Continue', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -324,64 +319,64 @@ class Translations
     {
         $testCredentialsHelper = sprintf(
             '%s, <a class="mp-settings-blue-text" id="mp-testmode-credentials-link" target="_blank" href="%s">%s</a> %s.',
-            __('To enable test mode', self::DOMAIN),
+            __('To enable test mode', 'woocommerce-mercadopago'),
             $this->links['mercadopago_credentials'],
-            __('copy your test credentials', self::DOMAIN),
-            __('and paste them above in section 1 of this page', self::DOMAIN)
+            __('copy your test credentials', 'woocommerce-mercadopago'),
+            __('and paste them above in section 1 of this page', 'woocommerce-mercadopago')
         );
 
         $testSubtitleOne = sprintf(
             '1. %s <a class="mp-settings-blue-text" id="mp-testmode-testuser-link" target="_blank" href="%s">%s</a>, %s.',
-            __('Create your', self::DOMAIN),
+            __('Create your', 'woocommerce-mercadopago'),
             $this->links['mercadopago_test_user'],
-            __('test user', self::DOMAIN),
-            __('(Optional. Can be used in Production Mode and Test Mode, to test payments)', self::DOMAIN)
+            __('test user', 'woocommerce-mercadopago'),
+            __('(Optional. Can be used in Production Mode and Test Mode, to test payments)', 'woocommerce-mercadopago')
         );
 
         $testSubtitleTwo = sprintf(
             '2. <a class="mp-settings-blue-text" id="mp-testmode-cardtest-link" target="_blank" href="%s">%s</a>, %s.',
             $this->links['docs_test_cards'],
-            __('Use our test cards', self::DOMAIN),
-            __('never use real cards', self::DOMAIN)
+            __('Use our test cards', 'woocommerce-mercadopago'),
+            __('never use real cards', 'woocommerce-mercadopago')
         );
 
         $testSubtitleThree = sprintf(
             '3. <a class="mp-settings-blue-text" id="mp-testmode-store-link" target="_blank" href="%s">%s</a> %s.',
             $this->links['store_visit'],
-            __('Visit your store', self::DOMAIN),
-            __('to test purchases', self::DOMAIN)
+            __('Visit your store', 'woocommerce-mercadopago'),
+            __('to test purchases', 'woocommerce-mercadopago')
         );
 
         $this->testModeSettings = [
-            'title_test_mode'         => __('4. Test your store before you sell', self::DOMAIN),
-            'title_mode'              => __('Choose how you want to operate your store:', self::DOMAIN),
-            'title_test'              => __('Test Mode', self::DOMAIN),
-            'title_prod'              => __('Sale Mode (Production)', self::DOMAIN),
-            'title_message_prod'      => __('Mercado Pago payment methods in Production Mode', self::DOMAIN),
-            'title_message_test'      => __('Mercado Pago payment methods in Test Mode', self::DOMAIN),
-            'title_alert_test'        => __('Enter test credentials', self::DOMAIN),
-            'subtitle_test_mode'      => __('Test the experience in Test Mode and then enable the Sale Mode (Production) to sell.', self::DOMAIN),
-            'subtitle_test'           => __('Mercado Pago Checkouts disabled for real collections.', self::DOMAIN),
-            'subtitle_test_link'      => __('Test Mode rules.', self::DOMAIN),
-            'subtitle_prod'           => __('Mercado Pago Checkouts enabled for real collections.', self::DOMAIN),
-            'subtitle_message_prod'   => __('The clients can make real purchases in your store.', self::DOMAIN),
+            'title_test_mode'         => __('4. Test your store before you sell', 'woocommerce-mercadopago'),
+            'title_mode'              => __('Choose how you want to operate your store:', 'woocommerce-mercadopago'),
+            'title_test'              => __('Test Mode', 'woocommerce-mercadopago'),
+            'title_prod'              => __('Sale Mode (Production)', 'woocommerce-mercadopago'),
+            'title_message_prod'      => __('Mercado Pago payment methods in Production Mode', 'woocommerce-mercadopago'),
+            'title_message_test'      => __('Mercado Pago payment methods in Test Mode', 'woocommerce-mercadopago'),
+            'title_alert_test'        => __('Enter test credentials', 'woocommerce-mercadopago'),
+            'subtitle_test_mode'      => __('Test the experience in Test Mode and then enable the Sale Mode (Production) to sell.', 'woocommerce-mercadopago'),
+            'subtitle_test'           => __('Mercado Pago Checkouts disabled for real collections.', 'woocommerce-mercadopago'),
+            'subtitle_test_link'      => __('Test Mode rules.', 'woocommerce-mercadopago'),
+            'subtitle_prod'           => __('Mercado Pago Checkouts enabled for real collections.', 'woocommerce-mercadopago'),
+            'subtitle_message_prod'   => __('The clients can make real purchases in your store.', 'woocommerce-mercadopago'),
             'subtitle_test_one'       => $testSubtitleOne,
             'subtitle_test_two'       => $testSubtitleTwo,
             'subtitle_test_three'     => $testSubtitleThree,
             'test_credentials_helper' => $testCredentialsHelper,
-            'badge_mode'              => __('Store in sale mode (Production)', self::DOMAIN),
-            'badge_test'              => __('Store under test', self::DOMAIN),
-            'button_test_mode'        => __('Save changes', self::DOMAIN),
+            'badge_mode'              => __('Store in sale mode (Production)', 'woocommerce-mercadopago'),
+            'badge_test'              => __('Store under test', 'woocommerce-mercadopago'),
+            'button_test_mode'        => __('Save changes', 'woocommerce-mercadopago'),
         ];
     }
 
     public function setConfigurationTipsTranslations(): void
     {
         $this->configurationTips = [
-            'valid_store_tips'         => __('Store business fields are valid', self::DOMAIN),
-            'invalid_store_tips'       => __('Store business fields could not be validated', self::DOMAIN),
-            'valid_credentials_tips'   => __('Credentials fields are valid', self::DOMAIN),
-            'invalid_credentials_tips' => __('Credentials fields could not be validated', self::DOMAIN),
+            'valid_store_tips'         => __('Store business fields are valid', 'woocommerce-mercadopago'),
+            'invalid_store_tips'       => __('Store business fields could not be validated', 'woocommerce-mercadopago'),
+            'valid_credentials_tips'   => __('Credentials fields are valid', 'woocommerce-mercadopago'),
+            'invalid_credentials_tips' => __('Credentials fields could not be validated', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -393,10 +388,10 @@ class Translations
     public function setValidateCredentialsTranslations(): void
     {
         $this->validateCredentials = [
-            'valid_public_key'     => __('Valid Public Key', self::DOMAIN),
-            'invalid_public_key'   => __('Invalid Public Key', self::DOMAIN),
-            'valid_access_token'   => __('Valid Access Token', self::DOMAIN),
-            'invalid_access_token' => __('Invalid Access Token', self::DOMAIN),
+            'valid_public_key'     => __('Valid Public Key', 'woocommerce-mercadopago'),
+            'invalid_public_key'   => __('Invalid Public Key', 'woocommerce-mercadopago'),
+            'valid_access_token'   => __('Valid Access Token', 'woocommerce-mercadopago'),
+            'invalid_access_token' => __('Invalid Access Token', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -408,12 +403,12 @@ class Translations
     public function setUpdateCredentialsTranslations(): void
     {
         $this->updateCredentials = [
-            'credentials_updated'              => __('Credentials were updated', self::DOMAIN),
-            'no_test_mode_title'               => __('Your store has exited Test Mode and is making real sales in Production Mode.', self::DOMAIN),
-            'no_test_mode_subtitle'            => __('To test the store, re-enter both test credentials.', self::DOMAIN),
-            'invalid_credentials_title'        => __('Invalid credentials', self::DOMAIN),
-            'invalid_credentials_subtitle'     => __('See our manual to learn ', self::DOMAIN),
-            'invalid_credentials_link_message' => __('how to enter the credentials the right way.', self::DOMAIN),
+            'credentials_updated'              => __('Credentials were updated', 'woocommerce-mercadopago'),
+            'no_test_mode_title'               => __('Your store has exited Test Mode and is making real sales in Production Mode.', 'woocommerce-mercadopago'),
+            'no_test_mode_subtitle'            => __('To test the store, re-enter both test credentials.', 'woocommerce-mercadopago'),
+            'invalid_credentials_title'        => __('Invalid credentials', 'woocommerce-mercadopago'),
+            'invalid_credentials_subtitle'     => __('See our manual to learn ', 'woocommerce-mercadopago'),
+            'invalid_credentials_link_message' => __('how to enter the credentials the right way.', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -425,7 +420,7 @@ class Translations
     public function setUpdateStoreTranslations(): void
     {
         $this->updateStore = [
-            'valid_configuration' => __('Store information is valid', self::DOMAIN),
+            'valid_configuration' => __('Store information is valid', 'woocommerce-mercadopago'),
         ];
     }
 }
