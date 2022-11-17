@@ -15,9 +15,7 @@ final class Url
      */
     public static function getSuffix(): string
     {
-        // TODO: uncomment
-        // return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-        return '';
+        return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
     }
 
     /**
