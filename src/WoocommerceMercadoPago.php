@@ -150,7 +150,7 @@ class WoocommerceMercadoPago
     {
         $textDomain           = 'woocommerce-mercadopago';
         $locale               = apply_filters('plugin_locale', get_locale(), $textDomain);
-        $originalLanguageFile = dirname(__FILE__) . '/../i18n/languages/' . $locale . '.mo';
+        $originalLanguageFile = dirname(__FILE__) . '/../i18n/languages/woocommerce-mercadopago-' . $locale . '.mo';
 
         unload_textdomain($textDomain);
         load_textdomain($textDomain, $originalLanguageFile);

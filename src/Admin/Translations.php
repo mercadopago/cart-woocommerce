@@ -407,7 +407,7 @@ class Translations
             'no_test_mode_title'               => __('Your store has exited Test Mode and is making real sales in Production Mode.', 'woocommerce-mercadopago'),
             'no_test_mode_subtitle'            => __('To test the store, re-enter both test credentials.', 'woocommerce-mercadopago'),
             'invalid_credentials_title'        => __('Invalid credentials', 'woocommerce-mercadopago'),
-            'invalid_credentials_subtitle'     => __('See our manual to learn ', 'woocommerce-mercadopago'),
+            'invalid_credentials_subtitle'     => __('See our manual to learn', 'woocommerce-mercadopago'),
             'invalid_credentials_link_message' => __('how to enter the credentials the right way.', 'woocommerce-mercadopago'),
         ];
     }
