@@ -54,14 +54,15 @@ class Checkout
     /**
      * Register before checkout form hook
      *
-     * @param string|null $location
-     * @param mixed $callback
+     * @param string $location
      *
      * @return void
      */
-    public function registerBeforeCheckoutForm(string $location, $callback)
+    public function registerBeforeCheckoutForm(string $location)
     {
-        $this->registerHooks('woocommerce_before_checkout_form', $location, $callback);
+        add_action('woocommerce_before_checkout_form', function () use ($location) {
+            $this->scripts->registerMelidataStoreScript($location);
+        });
     }
 
     /**
@@ -92,44 +93,27 @@ class Checkout
     /**
      * Register before woocommerce pay
      *
-     * @param string|null $location
-     * @param mixed $callback
+     * @param string $location
      *
      * @return void
      */
-    public function registerBeforePay(string $location, $callback)
+    public function registerBeforePay(string $location)
     {
-        $this->registerHooks('before_woocommerce_pay', $location, $callback);
+        add_action('before_woocommerce_pay', function () use ($location) {
+            $this->scripts->registerMelidataStoreScript($location);
+        });
     }
 
     /**
      * Register pay order before submit hook
      *
-     * @param string|null $location
-     * @param mixed $callback
+     * @param string $location
      *
      * @return void
      */
-    public function registerPayOrderBeforeSubmit(string $location, $callback)
+    public function registerPayOrderBeforeSubmit(string $location)
     {
-        $this->registerHooks('woocommerce_pay_order_before_submit', $location, $callback);
-    }
-
-    /**
-     * Unify hooks registration with callback or melidata script method call
-     *
-     * @param string $hook
-     * @param string|null $location
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerHooks(string $hook, string $location, $callback) {
-        if ($callback) {
-            add_action($hook, $callback);
-            return;
-        }
-        add_action($hook, function () use ($location) {
+        add_action('woocommerce_pay_order_before_submit', function () use ($location) {
             $this->scripts->registerMelidataStoreScript($location);
         });
     }
