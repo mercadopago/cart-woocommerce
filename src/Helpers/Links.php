@@ -2,8 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
-use MercadoPago\Woocommerce\Configs\Seller;
-
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -33,11 +31,13 @@ final class Links
     public static function getLinks(): array
     {
         $linksSettings      = self::getLinksSettings();
+
         $mercadoPagoLinks   = self::getMercadoPagoLinks($linksSettings);
         $documentationLinks = self::getDocumentationLinks($linksSettings);
+        $adminLinks         = self::getAdminLinks();
         $storeLinks         = self::getStoreLinks();
 
-        return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $storeLinks);
+        return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $adminLinks, $storeLinks);
     }
 
     /**
@@ -47,52 +47,40 @@ final class Links
      */
     private static function getLinksSettings(): array
     {
-        $country = [
+        $country = Country::getPluginDefaultCountry();
+
+        $settings = [
             'AR' => [
                 'translate'  => 'es',
-                'site_id_mp' => 'mla',
                 'suffix_url' => '.com.ar',
             ],
             'BR' => [
                 'translate'  => 'pt',
-                'site_id_mp' => 'mlb',
                 'suffix_url' => '.com.br',
             ],
             'CL' => [
                 'translate'  => 'es',
-                'site_id_mp' => 'mlc',
                 'suffix_url' => '.cl',
             ],
             'CO' => [
                 'translate'  => 'es',
-                'site_id_mp' => 'mco',
                 'suffix_url' => '.com.co',
             ],
             'MX' => [
                 'translate'  => 'es',
-                'site_id_mp' => 'mlm',
                 'suffix_url' => '.com.mx',
             ],
             'PE' => [
                 'translate'  => 'es',
-                'site_id_mp' => 'mpe',
                 'suffix_url' => '.com.pe',
             ],
             'UY' => [
                 'translate'  => 'es',
-                'site_id_mp' => 'mlu',
                 'suffix_url' => '.com.uy',
             ],
         ];
 
-        $siteId        = (Seller::getInstance())->getSiteId();
-        $suffixCountry = self::siteIdToCountry($siteId);
-
-        if ((Seller::getInstance())->getSiteId()) {
-            $suffixCountry = self::siteIdToCountry($siteId);
-        }
-
-        return array_key_exists($suffixCountry, $country) ? $country[$suffixCountry] : $country['AR'];
+        return array_key_exists($country, $settings) ? $settings[$country] : $settings['AR'];
     }
 
     /**
@@ -135,30 +123,28 @@ final class Links
         ];
     }
 
+    /**
+     * Get admin links
+     *
+     * @return array
+     */
+    private static function getAdminLinks(): array
+    {
+        return [
+            'admin_settings_page' => admin_url('admin.php?page=mercadopago-settings'),
+            'admin_gateways_list' => admin_url('admin.php?page=wc-settings&tab=checkout'),
+        ];
+    }
+
+    /**
+     * Get store links
+     *
+     * @return array
+     */
     private static function getStoreLinks(): array
     {
         return [
             'store_visit' => get_permalink(wc_get_page_id('shop')),
         ];
-    }
-
-    /**
-     * @param $siteId
-     *
-     * @return string
-     */
-    private static function siteIdToCountry($siteId): string
-    {
-        $siteIdToCountry = [
-            'MLA' => 'AR',
-            'MLB' => 'BR',
-            'MLM' => 'MX',
-            'MLC' => 'CL',
-            'MLU' => 'UY',
-            'MCO' => 'CO',
-            'MPE' => 'PE',
-        ];
-
-        return array_key_exists($siteId, $siteIdToCountry) ? $siteIdToCountry[$siteId] : 'AR';
     }
 }

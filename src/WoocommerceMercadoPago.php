@@ -210,20 +210,22 @@ class WoocommerceMercadoPago
      */
     public function setPluginSettingsLink()
     {
+        $links = Links::getLinks();
+
         $pluginLinks = [
             [
                 'text'   => $this->translations->plugin['set_plugin'],
-                'href'   => admin_url('admin.php?page=mercadopago-settings'),
+                'href'   => $links['admin_settings_page'],
                 'target' => Admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['payment_method'],
-                'href'   => admin_url('admin.php?page=wc-settings&tab=checkout'),
+                'href'   => $links['admin_gateways_list'],
                 'target' => Admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['plugin_manual'],
-                'href'   => Links::getLinks()['docs_integration_introduction'],
+                'href'   => $links['docs_integration_introduction'],
                 'target' => Admin::HREF_TARGET_BLANK,
             ],
         ];
