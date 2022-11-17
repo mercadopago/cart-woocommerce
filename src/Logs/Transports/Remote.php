@@ -132,7 +132,7 @@ class Remote implements LogInterface
             $uri     = '/v1/plugins/melidata/errors';
             $body    = [
                 'name'         => self::METRIC_NAME_PREFIX . $level,
-                'message'      => '['. $level .'] '. $message .' - Context: '. json_encode($context),
+                'message'      => '[' . $level . '] ' . $message . ' - Context: ' . json_encode($context),
                 'target'       => $source,
                 'plugin'       => [
                     'version'  => MP_VERSION,
