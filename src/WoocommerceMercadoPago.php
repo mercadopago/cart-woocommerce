@@ -11,7 +11,7 @@ use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Gateway;
-use MercadoPago\Woocommerce\Hooks\OrderDetails;
+use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
@@ -89,9 +89,9 @@ class WoocommerceMercadoPago
     public $scripts;
 
     /**
-     * @var OrderDetails
+     * @var Order
      */
-    public $orderDetails;
+    public $order;
 
     /**
      * @var Store
@@ -210,8 +210,8 @@ class WoocommerceMercadoPago
         $this->scripts      = Scripts::getInstance();
         $this->notices      = Notices::getInstance();
         $this->gateway      = Gateway::getInstance();
+        $this->order        = Order::getInstance();
         $this->product      = Product::getInstance();
-        $this->orderDetails = OrderDetails::getInstance();
         $this->store        = Store::getInstance();
         $this->seller       = Seller::getInstance();
         $this->settings     = Settings::getInstance();
