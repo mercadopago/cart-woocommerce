@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Hooks\Admin;
+use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Gateway;
 use MercadoPago\Woocommerce\Hooks\OrderDetails;
 use MercadoPago\Woocommerce\Hooks\Plugin;
@@ -53,6 +54,11 @@ class WoocommerceMercadoPago
      * @var Admin
      */
     public $admin;
+
+    /**
+     * @var Checkout
+     */
+    public $checkout;
 
     /**
      * @var Plugin
@@ -186,6 +192,7 @@ class WoocommerceMercadoPago
         $this->logs         = Logs::getInstance();
         $this->translations = Translations::getInstance();
         $this->admin        = Admin::getInstance();
+        $this->checkout     = Checkout::getInstance();
         $this->plugin       = Plugin::getInstance();
         $this->scripts      = Scripts::getInstance();
         $this->notices      = Notices::getInstance();
