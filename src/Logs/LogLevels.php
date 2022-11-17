@@ -11,25 +11,25 @@ class LogLevels
     /**
      * @const
      */
-    const ERROR = 'error';
+    public const ERROR = 'error';
 
     /**
      * @const
      */
-    const WARNING = 'warning';
+    public const WARNING = 'warning';
 
     /**
      * @const
      */
-    const NOTICE = 'notice';
+    public const NOTICE = 'notice';
 
     /**
      * @const
      */
-    const INFO = 'info';
+    public const INFO = 'info';
 
     /**
      * @const
      */
-    const DEBUG = 'debug';
+    public const DEBUG = 'debug';
 }
