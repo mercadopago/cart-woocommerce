@@ -66,30 +66,15 @@ class Order
      * @param string $name
      * @param array $args
      * @param string $path
+     * @param string $defaultPath
      *
      * @return void
      */
-    public function addMetaBox(string $id, string $title, string $name, array $args, string $path) {
-        add_meta_box($id, $title, function () use ($name, $args, $path) {
-            $this->registerTemplate($name, $args, $path);
+    public function addMetaBox(string $id, string $title, string $name, array $args, string $path, string $defaultPath = '')
+    {
+        add_meta_box($id, $title, function () use ($name, $args, $path, $defaultPath) {
+            wc_get_template($name, $args, $path, $defaultPath);
         });
-    }
-
-    /**
-     * Register template
-     *
-     * @param string $name
-     * @param array $args
-     * @param string $path
-     *
-     * @return void
-     */
-    public function registerTemplate(string $name, array $args, string $path) {
-        wc_get_template(
-            $name,
-            $args,
-            $path
-        );
     }
 
     /**
@@ -114,7 +99,7 @@ class Order
      */
     public function registerOrderStatusTransitionTo(string $toStatus, $callback): void
     {
-        add_action('woocommerce_order_status_' . $toStatus , $callback);
+        add_action('woocommerce_order_status_' . $toStatus, $callback);
     }
 
     /**
@@ -155,4 +140,3 @@ class Order
         add_action('woocommerce_email_before_order_table', $callback);
     }
 }
-
