@@ -5,6 +5,9 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
+use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Gateway;
@@ -91,6 +94,16 @@ class WoocommerceMercadoPago
     public $order;
 
     /**
+     * @var Store
+     */
+    public $store;
+
+    /**
+     * @var Seller
+     */
+    public $seller;
+
+    /**
      * @var Settings
      */
     protected $settings;
@@ -137,7 +150,7 @@ class WoocommerceMercadoPago
     {
         $textDomain           = 'woocommerce-mercadopago';
         $locale               = apply_filters('plugin_locale', get_locale(), $textDomain);
-        $originalLanguageFile = dirname(__FILE__) . '/../i18n/languages/' . $locale . '.mo';
+        $originalLanguageFile = dirname(__FILE__) . '/../i18n/languages/woocommerce-mercadopago-' . $locale . '.mo';
 
         unload_textdomain($textDomain);
         load_textdomain($textDomain, $originalLanguageFile);
@@ -199,6 +212,8 @@ class WoocommerceMercadoPago
         $this->gateway      = Gateway::getInstance();
         $this->order        = Order::getInstance();
         $this->product      = Product::getInstance();
+        $this->store        = Store::getInstance();
+        $this->seller       = Seller::getInstance();
         $this->settings     = Settings::getInstance();
     }
 
@@ -209,20 +224,22 @@ class WoocommerceMercadoPago
      */
     public function setPluginSettingsLink()
     {
+        $links = Links::getLinks();
+
         $pluginLinks = [
             [
                 'text'   => $this->translations->plugin['set_plugin'],
-                'href'   => admin_url('admin.php?page=mercadopago-settings'),
+                'href'   => $links['admin_settings_page'],
                 'target' => Admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['payment_method'],
-                'href'   => admin_url('admin.php?page=wc-settings&tab=checkout'),
+                'href'   => $links['admin_gateways_list'],
                 'target' => Admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['plugin_manual'],
-                'href'   => '#',
+                'href'   => $links['docs_integration_introduction'],
                 'target' => Admin::HREF_TARGET_BLANK,
             ],
         ];

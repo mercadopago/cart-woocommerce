@@ -3,10 +3,15 @@ const path = require('path');
 const minify = require('minify');
 const wpPot = require('wp-pot');
 
+/**
+ * Minify JS and CSS files
+ *
+ * @param extension
+ */
 function minifyFiles (extension) {
-  const assetsFiles = findFilesInDir(`./assets/${extension}`, `.${extension}`)
-  const isNotMinifiedAndHasSelectedExtension = (filePath) => filePath.includes(`.${extension}`) && !filePath.includes('.min')
-  const filteredFiles = assetsFiles.filter((filePath) => isNotMinifiedAndHasSelectedExtension(filePath))
+  const assetsFiles = findFilesInDir(`./assets/${extension}`, `.${extension}`);
+  const isNotMinifiedAndHasSelectedExtension = (filePath) => filePath.includes(`.${extension}`) && !filePath.includes('.min');
+  const filteredFiles = assetsFiles.filter((filePath) => isNotMinifiedAndHasSelectedExtension(filePath));
 
   filteredFiles.forEach((file) => {
     const filePath = path.resolve(`${file}`);
@@ -22,12 +27,15 @@ function minifyFiles (extension) {
   });
 }
 
+/**
+ * Generate .pot files
+ */
 function generatePotFiles () {
   wpPot({
     domain: 'woocommerce-mercadopago',
     destFile: './i18n/languages/woocommerce-mercadopago.pot',
-    lastTranslator: 'MPB Desenvolvimento <mpb_desenvolvimento@mercadopago.com.br>',
-    src: ['includes/**/*.php', 'templates/**/*.php']
+    lastTranslator: 'Mercado Pago Developers <woocommerce.dev@mercadopago.com>',
+    src: ['src/**/*.php', 'templates/**/*.php']
   });
 }
 
@@ -36,6 +44,7 @@ function generatePotFiles () {
  *
  * @param startPath
  * @param filter
+ *
  * @returns {*[]}
  */
 function findFilesInDir (startPath, filter) {

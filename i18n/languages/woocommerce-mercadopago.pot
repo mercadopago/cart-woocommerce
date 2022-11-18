@@ -6,7 +6,9 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: MPB Desenvolvimento <mpb_desenvolvimento@mercadopago.com.br>\n"
+"Last-Translator: Mercado Pago Developers <woocommerce.dev@mercadopago.com>\n"
+"POT-Creation-Date: 2022-11-17 20:10+0000\n"
+"Project-Id-Version: undefined\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
 "X-Poedit-SearchPath-0: .\n"
@@ -14,14 +16,482 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../templates/admin/notices/miss-woocommerce-notice.php:38
-msgid "See WooCommerce"
+#: ../../src/Admin/Translations.php:125
+msgid "The Mercado Pago module needs an active version of %s in order to work!"
 msgstr ""
 
-#: ../../templates/admin/notices/miss-woocommerce-notice.php:34
+#: ../../src/Admin/Translations.php:130
+msgid "Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:131
+msgid "Mercado Pago Error: PHP Extension CURL is not installed."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:132
+msgid "Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:133
+msgid "Activate WooCommerce"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:134
 msgid "Install WooCommerce"
 msgstr ""
 
-#: ../../templates/admin/notices/miss-woocommerce-notice.php:30
-msgid "Activate WooCommerce"
+#: ../../src/Admin/Translations.php:135
+msgid "See WooCommerce"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:148
+msgid "Set plugin"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:149
+msgid "Payment method"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:150, ../../src/Admin/Translations.php:213
+msgid "Plugin manual"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:162
+msgid "Cancel order"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:175
+msgid "Accept"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:176
+msgid "payments on the spot"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:177
+msgid "with"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:178
+msgid "the"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:179
+msgid "security"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:180
+msgid "from Mercado Pago"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:185
+msgid "Choose"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:186
+msgid "when you want to receive the money"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:187
+msgid "from your sales and if you want to offer"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:188
+msgid "interest-free installments"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:189
+msgid "to your clients."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:194
+msgid "Review the step-by-step of"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:195
+msgid "how to integrate the Mercado Pago Plugin"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:196
+msgid "on our website for developers."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:200
+msgid "SSL"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:201
+msgid "Curl"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:202
+msgid "GD Extensions"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:204
+msgid "Technical requirements"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:205
+msgid "Collections and installments"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:206
+msgid "Questions?"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:207
+msgid "Implementation responsible for transmitting data to Mercado Pago in a secure and encrypted way."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:208
+msgid "It is an extension responsible for making payments via requests from the plugin to Mercado Pago."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:209
+msgid "These extensions are responsible for the implementation and operation of Pix in your store."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:212
+msgid "Set deadlines and fees"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:226
+msgid "To enable orders, you must create and activate production credentials in your Mercado Pago Account."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:227
+msgid "Copy and paste the credentials below."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:231
+msgid "Public Key"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:232
+msgid "Access Token"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:233
+msgid "1. Integrate your store with Mercado Pago"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:234
+msgid "Production credentials"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:235
+msgid "Test credentials"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:237
+msgid "Enable Mercado Pago checkouts for test purchases in the store."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:238
+msgid "Enable Mercado Pago checkouts to receive real payments in the store."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:239
+msgid "Paste your Public Key here"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:240
+msgid "Paste your Access Token here"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:241
+msgid "Check credentials"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:242, ../../src/Admin/Translations.php:288
+msgid "Save and continue"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:255
+msgid "Add the URL to receive payments notifications."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:256
+msgid "Find out more information in the"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:258
+msgid "guides"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:263
+msgid "If you are a Mercado Pago Certified Partner, make sure to add your integrator_id."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:264
+msgid "If you do not have the code, please"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:266
+msgid "request it now"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:270
+msgid "2. Customize your business"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:271
+msgid "Your store information"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:272
+msgid "Advanced integration options (optional)"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:273
+msgid "Debug and Log Mode"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:274
+msgid "Fill out the following information to have a better experience and offer more information to your clients."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:275
+msgid "Name of your store in your client's invoice"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:276
+msgid "Identification in Activities of Mercado Pago"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:277
+msgid "For further integration of your store with Mercado Pago (IPN, Certified Partners, Debug Mode)"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:278
+msgid "Store category"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:279
+msgid "URL for IPN"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:280
+msgid "Integrator ID"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:281
+msgid "We record your store's actions in order to provide a better assistance."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:282
+msgid "Ex: Mary's Store"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:283
+msgid "Ex: Mary Store"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:284
+msgid "Select"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:285
+msgid "Ex: https://examples.com/my-custom-ipn-url"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:286
+msgid "Ex: 14987126498"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:287
+msgid "Show advanced options"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:289
+msgid "If this field is empty, the purchase will be identified as Mercado Pago."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:290
+msgid "In Activities, you will view this term before the order number"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:291
+msgid "Select \"Other categories\" if you do not find the appropriate category."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:292
+msgid "request it now."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:306
+msgid "3. Set payment methods"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:307
+msgid "To view more options, please select a payment method below"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:308
+msgid "Settings"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:309
+msgid "Continue"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:322
+msgid "To enable test mode"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:324
+msgid "copy your test credentials"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:325
+msgid "and paste them above in section 1 of this page"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:330
+msgid "Create your"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:332
+msgid "test user"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:333
+msgid "(Optional. Can be used in Production Mode and Test Mode, to test payments)"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:339
+msgid "Use our test cards"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:340
+msgid "never use real cards"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:346
+msgid "Visit your store"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:347
+msgid "to test purchases"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:351
+msgid "4. Test your store before you sell"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:352
+msgid "Choose how you want to operate your store:"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:353
+msgid "Test Mode"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:354
+msgid "Sale Mode (Production)"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:355
+msgid "Mercado Pago payment methods in Production Mode"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:356
+msgid "Mercado Pago payment methods in Test Mode"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:357
+msgid "Enter test credentials"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:358
+msgid "Test the experience in Test Mode and then enable the Sale Mode (Production) to sell."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:359
+msgid "Mercado Pago Checkouts disabled for real collections."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:360
+msgid "Test Mode rules."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:361
+msgid "Mercado Pago Checkouts enabled for real collections."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:362
+msgid "The clients can make real purchases in your store."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:367
+msgid "Store in sale mode (Production)"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:368
+msgid "Store under test"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:369
+msgid "Save changes"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:376
+msgid "Store business fields are valid"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:377
+msgid "Store business fields could not be validated"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:378
+msgid "Credentials fields are valid"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:379
+msgid "Credentials fields could not be validated"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:391
+msgid "Valid Public Key"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:392
+msgid "Invalid Public Key"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:393
+msgid "Valid Access Token"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:394
+msgid "Invalid Access Token"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:406
+msgid "Credentials were updated"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:407
+msgid "Your store has exited Test Mode and is making real sales in Production Mode."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:408
+msgid "To test the store, re-enter both test credentials."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:409
+msgid "Invalid credentials"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:410
+msgid "See our manual to learn"
+msgstr ""
+
+#: ../../src/Admin/Translations.php:411
+msgid "how to enter the credentials the right way."
+msgstr ""
+
+#: ../../src/Admin/Translations.php:423
+msgid "Store information is valid"
 msgstr ""
