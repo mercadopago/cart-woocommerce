@@ -15,9 +15,7 @@ final class Url
      */
     public static function getSuffix(): string
     {
-        // TODO: uncomment
-        // return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-        return '';
+        return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
     }
 
     /**
@@ -72,54 +70,54 @@ final class Url
     /**
      * Validate page
      *
-     * @param string $expected_page
-     * @param string|null $current_page
-     * @param bool $allow_partial_match
+     * @param string      $expectedPage
+     * @param string|null $currentPage
+     * @param bool        $allowPartialMatch
      *
      * @return bool
      */
-    public static function validatePage(string $expected_page, string $current_page = null, bool $allow_partial_match = false): bool
+    public static function validatePage(string $expectedPage, string $currentPage = null, bool $allowPartialMatch = false): bool
     {
-        if (!$current_page) {
-            $current_page = self::getCurrentPage();
+        if (!$currentPage) {
+            $currentPage = self::getCurrentPage();
         }
 
-        return Strings::compareStrings($expected_page, $current_page, $allow_partial_match);
+        return Strings::compareStrings($expectedPage, $currentPage, $allowPartialMatch);
     }
 
     /**
      * Validate section
      *
-     * @param string $expected_section
-     * @param string|null $current_section
-     * @param bool $allow_partial_match
+     * @param string      $expectedSection
+     * @param string|null $currentSection
+     * @param bool        $allowPartialMatch
      *
      * @return bool
      */
-    public static function validateSection(string $expected_section, string $current_section = null, bool $allow_partial_match = true): bool
+    public static function validateSection(string $expectedSection, string $currentSection = null, bool $allowPartialMatch = true): bool
     {
-        if (!$current_section) {
-            $current_section = self::getCurrentSection();
+        if (!$currentSection) {
+            $currentSection = self::getCurrentSection();
         }
 
-        return Strings::compareStrings($expected_section, $current_section, $allow_partial_match);
+        return Strings::compareStrings($expectedSection, $currentSection, $allowPartialMatch);
     }
 
     /**
      * Validate url
      *
-     * @param string $expected_url
-     * @param string|null $current_url
-     * @param bool $allow_partial_match
+     * @param string      $expectedUrl
+     * @param string|null $currentUrl
+     * @param bool        $allowPartialMatch
      *
      * @return bool
      */
-    public static function validateUrl(string $expected_url, string $current_url = null, bool $allow_partial_match = true): bool
+    public static function validateUrl(string $expectedUrl, string $currentUrl = null, bool $allowPartialMatch = true): bool
     {
-        if (!$current_url) {
-            $current_url = self::getCurrentUrl();
+        if (!$currentUrl) {
+            $currentUrl = self::getCurrentUrl();
         }
 
-        return Strings::compareStrings($expected_url, $current_url, $allow_partial_match);
+        return Strings::compareStrings($expectedUrl, $currentUrl, $allowPartialMatch);
     }
 }
