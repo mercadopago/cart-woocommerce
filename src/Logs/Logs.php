@@ -15,55 +15,25 @@ class Logs
     /**
      * @var File
      */
-    public $file;
+    private $file;
 
     /**
      * @var Remote
      */
-    public $remote;
+    private $remote;
 
     /**
      * @var Store
      */
-    protected $store;
-
-    /**
-     * @var Logs
-     */
-    private static $instance = null;
+    private $store;
 
     /**
      * Logs constructor
      */
-    private function __construct()
+    public function __construct(File $file, Remote $remote, Store $store)
     {
-        $this->store = Store::getInstance();
-        $debugMode   = $this->getDebugMode();
-
-        $this->file   = new File($debugMode);
-        $this->remote = new Remote($debugMode);
-    }
-
-    /**
-     * Get Logs instance
-     *
-     * @return Logs
-     */
-    public static function getInstance(): Logs
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
-     * Get plugin debug mode option
-     *
-     * @return bool
-     */
-    private function getDebugMode(): bool
-    {
-        return $this->store->getDebugMode() === 'yes';
+        $this->file   = $file;
+        $this->remote = $remote;
+        $this->store  = $store;
     }
 }

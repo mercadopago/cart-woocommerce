@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Country
+final class Country
 {
     /**
      * @const
@@ -81,13 +81,26 @@ class Country
     public const COUNTRY_SUFFIX_MPE = 'PE';
 
     /**
+     * @var Seller
+     */
+    private $seller;
+
+    /**
+     * Country constructor
+     */
+    public function __construct(Seller $seller)
+    {
+        $this->seller = $seller;
+    }
+
+    /**
      * Convert Mercado Pago site_id to Woocommerce country
      *
      * @param $siteId
      *
      * @return string
      */
-    private static function siteIdToCountry($siteId): string
+    private function siteIdToCountry($siteId): string
     {
         $siteIdToCountry = [
             self::SITE_ID_MLA => self::COUNTRY_SUFFIX_MLA,
@@ -107,7 +120,7 @@ class Country
      *
      * @return string
      */
-    public static function getWoocommerceDefaultCountry(): string
+    public function getWoocommerceDefaultCountry(): string
     {
         $wcCountry = get_option('woocommerce_default_country', '');
 
@@ -123,9 +136,9 @@ class Country
      *
      * @return string
      */
-    public static function getPluginDefaultCountry(): string
+    public function getPluginDefaultCountry(): string
     {
-        $siteId  = (Seller::getInstance())->getSiteId();
+        $siteId  = $this->seller->getSiteId();
         $country = self::getWoocommerceDefaultCountry();
 
         if ($siteId) {

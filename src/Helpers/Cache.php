@@ -15,7 +15,7 @@ final class Cache
      *
      * @return mixed
      */
-    public static function getCache(string $key)
+    public function getCache(string $key)
     {
         return get_transient(sha1($key));
     }
@@ -29,7 +29,7 @@ final class Cache
      *
      * @return void
      */
-    public static function setCache(string $key, $value, int $ttl = MINUTE_IN_SECONDS)
+    public function setCache(string $key, $value, int $ttl = MINUTE_IN_SECONDS)
     {
         set_transient(sha1($key), $value, $ttl);
     }
@@ -41,7 +41,7 @@ final class Cache
      *
      * @return void
      */
-    public static function deleteCache(string $key)
+    public function deleteCache(string $key)
     {
         delete_transient(sha1($key));
     }

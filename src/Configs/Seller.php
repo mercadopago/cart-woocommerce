@@ -48,40 +48,28 @@ class Seller
     private const HOMOLOG_VALIDATE = 'homolog_validate';
 
     /**
+     * @var Cache
+     */
+    private $cache;
+
+    /**
      * @var Options
      */
-    protected $options;
+    private $options;
 
     /**
      * @var Requester
      */
-    protected $requester;
-
-    /**
-     * @var Seller
-     */
-    private static $instance = '';
+    private $requester;
 
     /**
      * Credentials constructor
      */
-    private function __construct()
+    public function __construct(Cache $cache, Options $options, Requester $requester)
     {
-        $this->options   = Options::getInstance();
-        $this->requester = Requester::getInstance();
-    }
-
-    /**
-     * Get Store Configs instance
-     *
-     * @return Seller
-     */
-    public static function getInstance(): Seller
-    {
-        if ('' === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        $this->cache     = $cache;
+        $this->options   = $options;
+        $this->requester = $requester;
     }
 
     /**
@@ -207,7 +195,7 @@ class Seller
     {
         try {
             $key   = sprintf('%sat%s', __FUNCTION__, $accessToken);
-            $cache = Cache::getCache($key);
+            $cache = $this->cache->getCache($key);
 
             if ($cache) {
                 return $cache;
@@ -222,7 +210,7 @@ class Seller
                 'status' => $response->getStatus(),
             ];
 
-            Cache::setCache($key, $serializedResponse);
+            $this->cache->setCache($key, $serializedResponse);
 
             return $serializedResponse;
         } catch (\Exception $e) {
@@ -265,7 +253,7 @@ class Seller
     {
         try {
             $key   = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
-            $cache = Cache::getCache($key);
+            $cache = $this->cache->getCache($key);
 
             if ($cache) {
                 return $cache;
@@ -288,7 +276,7 @@ class Seller
                 'status' => $response->getStatus(),
             ];
 
-            Cache::setCache($key, $serializedResponse);
+            $this->cache->setCache($key, $serializedResponse);
 
             return $serializedResponse;
         } catch (\Exception $e) {

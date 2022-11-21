@@ -14,29 +14,11 @@ class Gateway
     private $options;
 
     /**
-     * @var Gateway
-     */
-    private static $instance = null;
-
-    /**
      * Gateway constructor
      */
-    public function __construct()
+    public function __construct(Options $options)
     {
-        $this->options = Options::getInstance();
-    }
-
-    /**
-     * Get Gateway Hooks instance
-     *
-     * @return Gateway
-     */
-    public static function getInstance(): Gateway
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        $this->options = $options;
     }
 
     /**

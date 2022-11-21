@@ -20,24 +20,6 @@ class Plugin
     public const UPDATE_TEST_MODE_ACTION = 'mercadopago_plugin_test_mode_updated';
 
     /**
-     * @var Plugin
-     */
-    private static $instance = null;
-
-    /**
-     * Get Plugin Hooks instance
-     *
-     * @return Plugin
-     */
-    public static function getInstance(): Plugin
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
      * Register to plugin update event
      *
      * @param mixed $callback

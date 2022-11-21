@@ -22,11 +22,17 @@ class File implements LogInterface
     private $debugMode;
 
     /**
+     * @var $logLevels
+     */
+    private $logLevels;
+
+    /**
      * File Logs constructor
      */
-    public function __construct($debugMode)
+    public function __construct(bool $debugMode, LogLevels $logLevels)
     {
         $this->logger    = wc_get_logger();
+        $this->logLevels = $logLevels;
         $this->debugMode = $debugMode;
     }
 
@@ -41,7 +47,7 @@ class File implements LogInterface
      */
     public function error(string $message, string $source, array $context = []): void
     {
-        $this->save(LogLevels::ERROR, $message, $source, $context);
+        $this->save($this->logLevels::ERROR, $message, $source, $context);
     }
 
     /**
@@ -55,7 +61,7 @@ class File implements LogInterface
      */
     public function warning(string $message, string $source, array $context = []): void
     {
-        $this->save(LogLevels::WARNING, $message, $source, $context);
+        $this->save($this->logLevels::WARNING, $message, $source, $context);
     }
 
     /**
@@ -69,7 +75,7 @@ class File implements LogInterface
      */
     public function notice(string $message, string $source, array $context = []): void
     {
-        $this->save(LogLevels::NOTICE, $message, $source, $context);
+        $this->save($this->logLevels::NOTICE, $message, $source, $context);
     }
 
     /**
@@ -83,7 +89,7 @@ class File implements LogInterface
      */
     public function info(string $message, string $source, array $context = []): void
     {
-        $this->save(LogLevels::INFO, $message, $source, $context);
+        $this->save($this->logLevels::INFO, $message, $source, $context);
     }
 
     /**
@@ -98,7 +104,7 @@ class File implements LogInterface
     public function debug(string $message, string $source, array $context = []): void
     {
         if (WP_DEBUG) {
-            $this->save(LogLevels::DEBUG, $message, $source, $context);
+            $this->save($this->logLevels::DEBUG, $message, $source, $context);
         }
     }
 

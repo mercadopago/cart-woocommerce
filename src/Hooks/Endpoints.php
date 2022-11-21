@@ -9,24 +9,6 @@ if (!defined('ABSPATH')) {
 class Endpoints
 {
     /**
-     * @var Endpoints
-     */
-    private static $instance = null;
-
-    /**
-     * Get Endpoints Hooks instance
-     *
-     * @return Endpoints
-     */
-    public static function getInstance(): Endpoints
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
      * Register AJAX endpoints
      *
      * @param string $endpoint

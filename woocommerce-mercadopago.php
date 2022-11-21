@@ -35,7 +35,7 @@ if (!Packages::init()) {
 }
 
 if (!class_exists('WoocommerceMercadoPago')) {
-    $GLOBALS['mercadopago'] = WoocommerceMercadoPago::getInstance();
+    $GLOBALS['mercadopago'] = new WoocommerceMercadoPago();
 }
 
 // TODO: migrate to child plugins

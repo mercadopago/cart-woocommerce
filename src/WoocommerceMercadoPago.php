@@ -2,20 +2,32 @@
 
 namespace MercadoPago\Woocommerce;
 
+use MercadoPago\PP\Sdk\HttpClient\HttpClient;
+use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Cache;
+use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Links;
+use MercadoPago\Woocommerce\Helpers\Requester;
+use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
+use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
+use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Logs\LogLevels;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Logs\Transports\File;
+use MercadoPago\Woocommerce\Logs\Transports\Remote;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -114,31 +126,73 @@ class WoocommerceMercadoPago
     protected $translations;
 
     /**
-     * @var WoocommerceMercadoPago
+     * @var Options
      */
-    private static $instance = null;
+    public $options;
+
+    /**
+     * @var Requester
+     */
+    public $requester;
+
+    /**
+     * @var Links
+     */
+    public $links;
+
+    /**
+     * @var Country
+     */
+    public $country;
+
+    /**
+     * @var Endpoints
+     */
+    public $endpoints;
+
+    /**
+     * @var Url
+     */
+    public $url;
+
+    /**
+     * @var Strings
+     */
+    public $strings;
+
+    /**
+     * @var CurlRequester
+     */
+    private $curlRequester;
+    /**
+     * @var Cache
+     */
+    private $cache;
+    /**
+     * @var File
+     */
+    private $file;
+    /**
+     * @var LogLevels
+     */
+    private $logLevels;
+    /**
+     * @var Remote
+     */
+    private $remote;
+    /**
+     * @var HttpClient
+     */
+    private $httpClient;
 
     /**
      * WoocommerceMercadoPago constructor
      */
-    private function __construct()
+    public function __construct()
     {
         $this->defineConstants();
         $this->loadPluginTextDomain();
         $this->registerHooks();
-    }
-
-    /**
-     * Get WoocommerceMercadoPago instance
-     *
-     * @return WoocommerceMercadoPago
-     */
-    public static function getInstance(): WoocommerceMercadoPago
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
     }
 
     /**
@@ -202,19 +256,33 @@ class WoocommerceMercadoPago
      */
     public function setProperties(): void
     {
-        $this->logs         = Logs::getInstance();
-        $this->translations = Translations::getInstance();
-        $this->admin        = Admin::getInstance();
-        $this->checkout     = Checkout::getInstance();
-        $this->plugin       = Plugin::getInstance();
-        $this->scripts      = Scripts::getInstance();
-        $this->notices      = Notices::getInstance();
-        $this->gateway      = Gateway::getInstance();
-        $this->order        = Order::getInstance();
-        $this->product      = Product::getInstance();
-        $this->store        = Store::getInstance();
-        $this->seller       = Seller::getInstance();
-        $this->settings     = Settings::getInstance();
+        $this->options       = new Options();
+        $this->store         = new Store($this->options);
+        $this->curlRequester = new CurlRequester();
+        $this->httpClient    = new HttpClient('https://api.mercadopago.com', $this->curlRequester);
+        $this->requester     = new Requester($this->httpClient);
+        $this->logLevels     = new LogLevels();
+        $this->file          = new File($this->store->getDebugMode() === 'yes', $this->logLevels);
+        $this->remote        = new Remote($this->store->getDebugMode() === 'yes', $this->logLevels, $this->requester);
+        $this->logs          = new Logs($this->file, $this->remote, $this->store);
+        $this->cache         = new Cache();
+        $this->seller        = new Seller($this->cache, $this->options, $this->requester);
+        $this->country       = new Country($this->seller);
+        $this->links         = new Links($this->country);
+        $this->translations  = new Translations($this->links);
+        $this->admin         = new Admin();
+        $this->checkout      = new Checkout($this->scripts);
+        $this->plugin        = new Plugin();
+        $this->strings       = new Strings();
+        $this->url           = new Url($this->strings);
+        $this->scripts       = new Scripts($this->url);
+        $this->notices       = new Notices($this->scripts, $this->translations, $this->url);
+        $this->gateway       = new Gateway($this->options);
+        $this->order         = new Order();
+        $this->product       = new Product();
+        $this->endpoints     = new Endpoints();
+
+        $this->settings     = new Settings($this->admin, $this->endpoints, $this->links, $this->plugin, $this->scripts, $this->seller, $this->store, $this->translations, $this->url);
     }
 
     /**
@@ -224,23 +292,23 @@ class WoocommerceMercadoPago
      */
     public function setPluginSettingsLink()
     {
-        $links = Links::getLinks();
+        $links = $this->links->getLinks();
 
         $pluginLinks = [
             [
                 'text'   => $this->translations->plugin['set_plugin'],
                 'href'   => $links['admin_settings_page'],
-                'target' => Admin::HREF_TARGET_DEFAULT,
+                'target' => $this->admin->HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['payment_method'],
                 'href'   => $links['admin_gateways_list'],
-                'target' => Admin::HREF_TARGET_DEFAULT,
+                'target' => $this->admin->HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['plugin_manual'],
                 'href'   => $links['docs_integration_introduction'],
-                'target' => Admin::HREF_TARGET_BLANK,
+                'target' => $this->admin->HREF_TARGET_BLANK,
             ],
         ];
 

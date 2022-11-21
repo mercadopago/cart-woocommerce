@@ -14,29 +14,11 @@ class Checkout
     private $scripts;
 
     /**
-     * @var Checkout
-     */
-    private static $instance = null;
-
-    /**
      * Checkout constructor
      */
-    public function __construct()
+    public function __construct(Scripts $scripts)
     {
-        $this->scripts = Scripts::getInstance();
-    }
-
-    /**
-     * Get Checkout Hooks instance
-     *
-     * @return Checkout
-     */
-    public static function getInstance(): Checkout
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        $this->scripts = $scripts;
     }
 
     /**

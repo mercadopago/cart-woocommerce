@@ -76,16 +76,11 @@ class Translations
     protected $links = [];
 
     /**
-     * @var Translations
-     */
-    private static $instance = null;
-
-    /**
      * Translations constructor
      */
-    public function __construct()
+    public function __construct(Links $links)
     {
-        $this->links = Links::getLinks();
+        $this->links = $links->getLinks();
 
         $this->setNoticesTranslations();
         $this->setPluginSettingsTranslations();
@@ -99,19 +94,6 @@ class Translations
         $this->setUpdateCredentialsTranslations();
         $this->setValidateCredentialsTranslations();
         $this->setUpdateStoreTranslations();
-    }
-
-    /**
-     * Get Translations instance
-     *
-     * @return Translations
-     */
-    public static function getInstance(): Translations
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
     }
 
     /**

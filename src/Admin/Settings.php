@@ -27,66 +27,75 @@ class Settings
     /**
      * @var Admin
      */
-    protected $admin;
-
-    /**
-     * @var Scripts
-     */
-    protected $scripts;
+    private $admin;
 
     /**
      * @var Endpoints
      */
-    protected $endpoints;
+    private $endpoints;
 
     /**
-     * @var Translations
+     * @var Links
      */
-    protected $translations;
+    private $links;
+
+    /**
+     * @var Plugin
+     */
+    private $plugin;
+
+    /**
+     * @var Scripts
+     */
+    private $scripts;
 
     /**
      * @var Seller
      */
-    protected $seller;
+    private $seller;
 
     /**
      * @var Store
      */
-    protected $store;
+    private $store;
 
     /**
-     * @var Settings
+     * @var Translations
      */
-    private static $instance = null;
+    private $translations;
+
+    /**
+     * @var Url
+     */
+    private $url;
 
     /**
      * Settings constructor
      */
-    private function __construct()
-    {
-        $this->admin        = Admin::getInstance();
-        $this->scripts      = Scripts::getInstance();
-        $this->endpoints    = Endpoints::getInstance();
-        $this->translations = Translations::getInstance();
-        $this->seller       = Seller::getInstance();
-        $this->store        = Store::getInstance();
+    public function __construct(
+        Admin $admin,
+        Endpoints $endpoints,
+        Links $links,
+        Plugin $plugin,
+        Scripts $scripts,
+        Seller $seller,
+        Store $store,
+        Translations $translations,
+        Url $url
+    ) {
+        $this->admin        = $admin;
+        $this->endpoints    = $endpoints;
+        $this->links        = $links;
+        $this->plugin       = $plugin;
+        $this->scripts      = $scripts;
+        $this->seller       = $seller;
+        $this->store        = $store;
+        $this->translations = $translations;
+        $this->url          = $url;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
         $this->registerAjaxEndpoints();
-    }
-
-    /**
-     * Get Settings instance
-     *
-     * @return Settings
-     */
-    public static function getInstance(): Settings
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
     }
 
     /**
@@ -109,12 +118,12 @@ class Settings
         if ($this->canLoadScriptsAndStyles()) {
             $this->scripts->registerAdminStyle(
                 'mercadopago_settings_admin_css',
-                Url::getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
+                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
             );
 
             $this->scripts->registerAdminScript(
                 'mercadopago_settings_admin_js',
-                Url::getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
+                $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
             );
 
             $this->scripts->registerCaronteAdminScript();
@@ -131,8 +140,8 @@ class Settings
     public function canLoadScriptsAndStyles(): bool
     {
         return $this->admin->isAdmin() && (
-            Url::validatePage('mercadopago-settings') ||
-            Url::validateSection('woo-mercado-pago')
+            $this->url->validatePage('mercadopago-settings') ||
+            $this->url->validateSection('woo-mercado-pago')
         );
     }
 
@@ -199,7 +208,7 @@ class Settings
         $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
         $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
 
-        $links      = Links::getLinks();
+        $links      = $this->links->getLinks();
         $testMode   = ($checkboxCheckoutTestMode === 'yes');
         $categories = Categories::getCategories();
 
@@ -359,7 +368,7 @@ class Settings
                 }
             }
 
-            do_action(Plugin::UPDATE_CREDENTIALS_ACTION);
+            do_action($this->plugin->UPDATE_CREDENTIALS_ACTION);
 
             wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
         }
@@ -397,7 +406,7 @@ class Settings
         $this->store->setIntegratorId($integratorId);
         $this->store->setDebugMode($debugMode);
 
-        do_action(Plugin::UPDATE_STORE_INFO_ACTION);
+        do_action($this->plugin->UPDATE_STORE_INFO_ACTION);
 
         wp_send_json_success($this->translations->updateStore['valid_configuration']);
     }
@@ -424,7 +433,7 @@ class Settings
 
         $this->store->setCheckboxCheckoutTestMode($checkoutTestMode);
 
-        do_action(Plugin::UPDATE_TEST_MODE_ACTION);
+        do_action($this->plugin->UPDATE_TEST_MODE_ACTION);
 
         if ($validateCheckoutTestMode) {
             wp_send_json_success('Mercado Pago\'s Payment Methods in Test Mode');
