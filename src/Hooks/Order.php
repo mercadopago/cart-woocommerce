@@ -59,40 +59,30 @@ class Order
      * @param string $name
      * @param array  $args
      * @param string $path
+     * @param string $defaultPath
      *
      * @return void
      */
-    public function addMetaBox(string $id, string $title, string $name, array $args, string $path):void
+    public function addMetaBox(string $id, string $title, string $name, array $args, string $path, string $defaultPath = ''): void
     {
-        add_meta_box($id, $title, function () use ($name, $args, $path) {
-            $this->registerTemplate($name, $args, $path);
+        add_meta_box($id, $title, function () use ($name, $args, $path, $defaultPath) {
+            wc_get_template($name, $args, $path, $defaultPath);
         });
-    }
-
-    /**
-     * Register template
-     *
-     * @param string $name
-     * @param array  $args
-     * @param string $path
-     *
-     * @return void
-     */
-    public function registerTemplate(string $name, array $args, string $path): void
-    {
-        wc_get_template($name, $args, $path);
     }
 
     /**
      * Register order actions
      *
-     * @param mixed $callback
+     * @param array $action
      *
      * @return void
      */
-    public function registerOrderActions($callback): void
+    public function registerOrderActions(array $action): void
     {
-        add_action('woocommerce_order_actions', $callback);
+        add_action('woocommerce_order_actions', function ($actions) use ($action) {
+            $actions[] = $action;
+            return $actions;
+        });
     }
 
     /**
@@ -105,7 +95,7 @@ class Order
      */
     public function registerOrderStatusTransitionTo(string $toStatus, $callback): void
     {
-        add_action('woocommerce_order_status_' . $toStatus , $callback);
+        add_action('woocommerce_order_status_' . $toStatus, $callback);
     }
 
     /**
@@ -146,4 +136,3 @@ class Order
         add_action('woocommerce_email_before_order_table', $callback);
     }
 }
-
