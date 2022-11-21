@@ -2,8 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use MercadoPago\Woocommerce\Helpers\Currency;
-
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -109,8 +107,9 @@ class Gateway
                 }
             }
 
-            $optionKey = $gateway->get_option_key();
+            $optionKey       = $gateway->get_option_key();
             $sanitizedFields = apply_filters('woocommerce_settings_api_sanitized_fields_' . $gateway->id, $gateway->settings);
+
             return $this->options->set($optionKey, $sanitizedFields);
         });
     }
