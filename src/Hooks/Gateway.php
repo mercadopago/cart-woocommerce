@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Helpers\Currency;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -9,9 +11,22 @@ if (!defined('ABSPATH')) {
 class Gateway
 {
     /**
+     * @var Options
+     */
+    private $options;
+
+    /**
      * @var Gateway
      */
     private static $instance = null;
+
+    /**
+     * Gateway constructor
+     */
+    public function __construct()
+    {
+        $this->options = Options::getInstance();
+    }
 
     /**
      * Get Gateway Hooks instance
@@ -42,17 +57,15 @@ class Gateway
     }
 
     /**
-     * Register gateway on Woocommerce
-     *
-     * @param int $priority
-     * @param int $acceptedArgs
-     * @param $callback
+     * Register wp head
      *
      * @return void
      */
-    public function registerGatewayTitle(int $priority, int $acceptedArgs, $callback): void
+    public function registerGatewayTitle(): void
     {
-        add_filter('woocommerce_gateway_title', $callback, $priority, $acceptedArgs);
+        add_filter('woocommerce_gateway_title', function ($title) {
+            return $title;
+        });
     }
 
     /**
@@ -67,17 +80,101 @@ class Gateway
         });
     }
 
+
     /**
-     * Register update options payment gateway
+     * Register available payment gateways
      *
      * @param string $id
-     * @param $callback
+     * @param $gateway
      *
      * @return void
      */
-    public function registerUpdateOptions(string $id, $callback): void
+    public function registerUpdateOptions(string $id, $gateway): void
     {
-        add_action('woocommerce_update_options_payment_gateways_' . $id, $callback);
+        add_action('woocommerce_update_options_payment_gateways_' . $id, function () use ($gateway) {
+            $gateway->init_settings();
+            $postData   = $gateway->get_post_data();
+            $formFields = $this->getCustomFormFields($gateway);
+
+            foreach ($formFields as $key => $field) {
+                if ('title' !== $gateway->get_field_type($field)) {
+                    $value = $gateway->get_field_value($key, $field, $postData);
+                    $common_configs = $gateway->get_common_configs();
+
+                    if (in_array($key, $common_configs, true)) {
+                        $this->options->set($key, $value);
+                    }
+
+                    $gateway->settings[ $key ] = $value;
+                }
+            }
+
+            $field = apply_filters('woocommerce_settings_api_sanitized_fields_' . $gateway->id, $gateway->settings);
+            return $this->options->set($gateway->get_option_key(), $field);
+        });
+    }
+
+    /**
+     * Handles custom components for better integration with native hooks
+     *
+     * @param $gateway
+     *
+     * @return array
+     */
+    public function getCustomFormFields($gateway): array
+    {
+        $formFields = $gateway->get_form_fields();
+
+        foreach ($formFields as $key => $field) {
+            if ('mp_checkbox_list' === $field['type']) {
+                $formFields += $this->separateCheckBoxes($formFields[$key]);
+                unset($formFields[$key]);
+            }
+
+            if ('mp_activable_input' === $field['type'] && !isset($formFields[$key . '_checkbox'])) {
+                $formFields[$key . '_checkbox'] = array(
+                    'type' => 'checkbox',
+                );
+            }
+
+            if ('mp_toggle_switch' === $field['type']) {
+                $formFields[$key]['type'] = 'checkbox';
+            }
+        }
+
+        return $formFields;
+    }
+
+    /**
+     * Separates multiple ex_payments checkbox into an array
+     *
+     * @param array $exPayments ex_payments form field
+     *
+     * @return array
+     */
+    public function separateCheckBoxes(array $exPayments): array
+    {
+        $paymentMethods = array();
+        foreach ($exPayments['payment_method_types'] as $paymentMethodsType) {
+            $paymentMethods += $this->separateCheckBoxesList($paymentMethodsType['list']);
+        }
+        return $paymentMethods;
+    }
+
+    /**
+     * Separates multiple ex_payments checkbox into an array
+     *
+     * @param array $exPaymentsList list of payment_methods
+     *
+     * @return array
+     */
+    public function separateCheckBoxesList(array $exPaymentsList): array
+    {
+        $paymentMethods = array();
+        foreach ($exPaymentsList as $payment) {
+            $paymentMethods[$payment['id']] = $payment;
+        }
+        return $paymentMethods;
     }
 
     /**

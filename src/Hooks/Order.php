@@ -80,13 +80,16 @@ class Order
     /**
      * Register order actions
      *
-     * @param $callback
+     * @param array $action
      *
      * @return void
      */
-    public function registerOrderActions($callback): void
+    public function registerOrderActions(array $action): void
     {
-        add_action('woocommerce_order_actions', $callback);
+        add_action('woocommerce_order_actions', function ($actions) use ($action) {
+            $actions[] = $action;
+            return $actions;
+        });
     }
 
     /**
