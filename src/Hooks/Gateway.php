@@ -82,7 +82,7 @@ class Gateway
 
 
     /**
-     * Register available payment gateways
+     * Register update options
      *
      * @param string $id
      * @param $gateway
@@ -99,18 +99,19 @@ class Gateway
             foreach ($formFields as $key => $field) {
                 if ('title' !== $gateway->get_field_type($field)) {
                     $value = $gateway->get_field_value($key, $field, $postData);
-                    $common_configs = $gateway->get_common_configs();
+                    $commonConfigs = $gateway->get_common_configs();
 
-                    if (in_array($key, $common_configs, true)) {
+                    if (in_array($key, $commonConfigs, true)) {
                         $this->options->set($key, $value);
                     }
 
-                    $gateway->settings[ $key ] = $value;
+                    $gateway->settings[$key] = $value;
                 }
             }
 
-            $field = apply_filters('woocommerce_settings_api_sanitized_fields_' . $gateway->id, $gateway->settings);
-            return $this->options->set($gateway->get_option_key(), $field);
+            $optionKey = $gateway->get_option_key();
+            $sanitizedFields = apply_filters('woocommerce_settings_api_sanitized_fields_' . $gateway->id, $gateway->settings);
+            return $this->options->set($optionKey, $sanitizedFields);
         });
     }
 
@@ -146,9 +147,9 @@ class Gateway
     }
 
     /**
-     * Separates multiple ex_payments checkbox into an array
+     * Separates multiple exPayments checkbox into an array
      *
-     * @param array $exPayments ex_payments form field
+     * @param array $exPayments exPayments form field
      *
      * @return array
      */
@@ -162,7 +163,7 @@ class Gateway
     }
 
     /**
-     * Separates multiple ex_payments checkbox into an array
+     * Separates multiple exPayments checkbox into an array
      *
      * @param array $exPaymentsList list of payment_methods
      *
