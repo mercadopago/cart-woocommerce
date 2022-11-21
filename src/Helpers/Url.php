@@ -15,9 +15,7 @@ final class Url
      */
     public static function getSuffix(): string
     {
-        // TODO: uncomment
-        // return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-        return '';
+        return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
     }
 
     /**
@@ -72,9 +70,9 @@ final class Url
     /**
      * Validate page
      *
-     * @param string $expectedPage
+     * @param string      $expectedPage
      * @param string|null $currentPage
-     * @param bool $allowPartialMatch
+     * @param bool        $allowPartialMatch
      *
      * @return bool
      */
@@ -90,9 +88,9 @@ final class Url
     /**
      * Validate section
      *
-     * @param string $expectedSection
+     * @param string      $expectedSection
      * @param string|null $currentSection
-     * @param bool $allowPartialMatch
+     * @param bool        $allowPartialMatch
      *
      * @return bool
      */
@@ -108,9 +106,9 @@ final class Url
     /**
      * Validate url
      *
-     * @param string $expectedUrl
+     * @param string      $expectedUrl
      * @param string|null $currentUrl
-     * @param bool $allowPartialMatch
+     * @param bool        $allowPartialMatch
      *
      * @return bool
      */

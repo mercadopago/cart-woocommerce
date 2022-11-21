@@ -2,8 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use WC_Order;
-
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -11,17 +9,12 @@ if (!defined('ABSPATH')) {
 class Order
 {
     /**
-     * @var WC_Order
-     */
-    private $order;
-
-    /**
      * @var Order
      */
     private static $instance = null;
 
     /**
-     * Order constructor
+     * Order Hooks constructor
      */
     private function __construct()
     {
@@ -64,7 +57,7 @@ class Order
      * @param string $id
      * @param string $title
      * @param string $name
-     * @param array $args
+     * @param array  $args
      * @param string $path
      * @param string $defaultPath
      *
@@ -96,7 +89,7 @@ class Order
      * Register order status transition
      *
      * @param string $toStatus
-     * @param $callback
+     * @param mixed  $callback
      *
      * @return void
      */
@@ -110,7 +103,7 @@ class Order
      *
      * @param string $fromStatus
      * @param string $toStatus
-     * @param $callback
+     * @param mixed  $callback
      *
      * @return void
      */
@@ -122,7 +115,7 @@ class Order
     /**
      * Register order details after order table
      *
-     * @param $callback
+     * @param mixed $callback
      *
      * @return void
      */
@@ -134,7 +127,7 @@ class Order
     /**
      * Register email before order table
      *
-     * @param $callback
+     * @param mixed $callback
      *
      * @return void
      */

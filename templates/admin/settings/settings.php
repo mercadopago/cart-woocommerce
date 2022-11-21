@@ -20,6 +20,7 @@
  * @var string $checkboxCheckoutTestMode
  * @var string $checkboxCheckoutProductionMode
  *
+ * @var array $links
  * @var bool  $testMode
  * @var array $categories
  *
@@ -125,7 +126,7 @@ if (!defined('ABSPATH')) {
                         </p>
                     </div>
                     <div>
-                        <a target="_blank" href="https://www.mercadopago.com.br/costs-section">
+                        <a target="_blank" href="<?= $links['mercadopago_costs'] ?>">
                             <button class="mp-button" id="mp-set-installments-button">
                                 <?= $headerTranslations['button_installments'] ?>
                             </button>
@@ -145,7 +146,7 @@ if (!defined('ABSPATH')) {
                         </p>
                     </div>
                     <div>
-                        <a target="_blank" href="https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/integration">
+                        <a target="_blank" href="<?= $links['docs_integration_introduction'] ?>">
                             <button id="mp-plugin-guide-button" class="mp-button mp-button-light-blue">
                                 <?= $headerTranslations['button_questions'] ?>
                             </button>
@@ -178,7 +179,7 @@ if (!defined('ABSPATH')) {
                 </p>
             </div>
             <div class="mp-message-credentials">
-                <a class="mp-heading-credentials" target="_blank" href="https://www.mercadopago.com/developers/panel/credentials">
+                <a class="mp-heading-credentials" target="_blank" href="<?= $links['mercadopago_credentials'] ?>">
                     <button id="mp-get-credentials-button" class="mp-button mp-button-light-blue">
                         <?= $credentialsTranslations['button_link_credentials'] ?>
                     </button>
@@ -358,7 +359,9 @@ if (!defined('ABSPATH')) {
                         <div class="mp-settings-advanced-options" style="display:none">
                             <div class="mp-settings-standard-margin">
                                 <fieldset>
-                                    <label for="mp-store-url-ipn" class="mp-settings-label mp-settings-font-color"><?= $storeTranslations['subtitle_url'] ?></label>
+                                    <label for="mp-store-url-ipn" class="mp-settings-label mp-settings-font-color">
+                                        <?= $storeTranslations['subtitle_url'] ?>
+                                    </label>
                                     <input
                                         type="text"
                                         id="mp-store-url-ipn"
@@ -372,7 +375,9 @@ if (!defined('ABSPATH')) {
 
                             <div class="mp-settings-standard-margin">
                                 <fieldset>
-                                    <label for="mp-store-integrator-id" class="mp-settings-label mp-settings-font-color"><?= $storeTranslations['subtitle_integrator'] ?></label>
+                                    <label for="mp-store-integrator-id" class="mp-settings-label mp-settings-font-color">
+                                        <?= $storeTranslations['subtitle_integrator'] ?>
+                                    </label>
                                     <input
                                         type="text"
                                         id="mp-store-integrator-id"
@@ -410,11 +415,11 @@ if (!defined('ABSPATH')) {
                     </div>
                 </div>
             </div>
-            <button class="mp-button" id="mp-store-info-save"> <?= $storeTranslations['button_store'] ?> </button>
+            <button class="mp-button" id="mp-store-info-save"><?= $storeTranslations['button_store'] ?></button>
         </div>
     </div>
 
-    <hr class="mp-settings-hr"/>
+    <hr class="mp-settings-hr" />
 
     <div class="mp-settings-payment">
         <div id="mp-settings-step-three" class="mp-settings-title-align">
@@ -496,7 +501,7 @@ if (!defined('ABSPATH')) {
                             <span class="mp-settings-subtitle-font-size mp-settings-title-color">
 								<?= $testModeTranslations['subtitle_test'] ?>
 							<span>
-                            <a id="mp-test-mode-rules-link" class="mp-settings-blue-text" target="_blank" href="">
+                            <a id="mp-test-mode-rules-link" class="mp-settings-blue-text" target="_blank" href="<?= $links['docs_integration_test'] ?>">
                                 <?= $testModeTranslations['subtitle_test_link'] ?>
 							</a>
                         </label>
