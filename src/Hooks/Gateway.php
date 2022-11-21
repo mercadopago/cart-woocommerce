@@ -55,7 +55,7 @@ class Gateway
     }
 
     /**
-     * Register wp head
+     * Register gateway title
      *
      * @return void
      */

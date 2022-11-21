@@ -63,7 +63,7 @@ class Order
      *
      * @return void
      */
-    public function addMetaBox(string $id, string $title, string $name, array $args, string $path, string $defaultPath = '')
+    public function addMetaBox(string $id, string $title, string $name, array $args, string $path, string $defaultPath = ''): void
     {
         add_meta_box($id, $title, function () use ($name, $args, $path, $defaultPath) {
             wc_get_template($name, $args, $path, $defaultPath);
