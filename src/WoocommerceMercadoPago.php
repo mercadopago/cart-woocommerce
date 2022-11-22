@@ -161,29 +161,24 @@ class WoocommerceMercadoPago
     public $strings;
 
     /**
-     * @var CurlRequester
-     */
-    private $curlRequester;
-    /**
      * @var Cache
      */
-    private $cache;
+    public $cache;
+
     /**
      * @var File
      */
-    private $file;
+    public $file;
+
     /**
      * @var LogLevels
      */
-    private $logLevels;
+    public $logLevels;
+
     /**
      * @var Remote
      */
-    private $remote;
-    /**
-     * @var HttpClient
-     */
-    private $httpClient;
+    public $remote;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -256,33 +251,32 @@ class WoocommerceMercadoPago
      */
     public function setProperties(): void
     {
-        $this->options       = new Options();
-        $this->store         = new Store($this->options);
-        $this->curlRequester = new CurlRequester();
-        $this->httpClient    = new HttpClient('https://api.mercadopago.com', $this->curlRequester);
-        $this->requester     = new Requester($this->httpClient);
-        $this->logLevels     = new LogLevels();
-        $this->file          = new File($this->store->getDebugMode() === 'yes', $this->logLevels);
-        $this->remote        = new Remote($this->store->getDebugMode() === 'yes', $this->logLevels, $this->requester);
-        $this->logs          = new Logs($this->file, $this->remote, $this->store);
+        $curlRequester       = new CurlRequester();
+        $httpClient          = new HttpClient(Requester::BASEURL_MP, $curlRequester);
+        $this->requester     = new Requester($httpClient);
         $this->cache         = new Cache();
+        $this->options       = new Options();
         $this->seller        = new Seller($this->cache, $this->options, $this->requester);
         $this->country       = new Country($this->seller);
         $this->links         = new Links($this->country);
-        $this->translations  = new Translations($this->links);
-        $this->admin         = new Admin();
-        $this->checkout      = new Checkout($this->scripts);
-        $this->plugin        = new Plugin();
         $this->strings       = new Strings();
         $this->url           = new Url($this->strings);
+        $this->store         = new Store($this->options);
+        $this->logLevels     = new LogLevels();
+        $this->file          = new File($this->logLevels, $this->store);
+        $this->remote        = new Remote($this->logLevels, $this->store);
+        $this->logs          = new Logs($this->file, $this->remote, $this->store);
         $this->scripts       = new Scripts($this->url);
+        $this->translations  = new Translations($this->links);
         $this->notices       = new Notices($this->scripts, $this->translations, $this->url);
+        $this->admin         = new Admin();
+        $this->checkout      = new Checkout($this->scripts);
+        $this->endpoints     = new Endpoints();
         $this->gateway       = new Gateway($this->options);
         $this->order         = new Order();
+        $this->plugin        = new Plugin();
         $this->product       = new Product();
-        $this->endpoints     = new Endpoints();
-
-        $this->settings     = new Settings($this->admin, $this->endpoints, $this->links, $this->plugin, $this->scripts, $this->seller, $this->store, $this->translations, $this->url);
+        $this->settings      = new Settings($this->admin, $this->endpoints, $this->links, $this->plugin, $this->scripts, $this->seller, $this->store, $this->translations, $this->url);
     }
 
     /**
@@ -298,17 +292,17 @@ class WoocommerceMercadoPago
             [
                 'text'   => $this->translations->plugin['set_plugin'],
                 'href'   => $links['admin_settings_page'],
-                'target' => $this->admin->HREF_TARGET_DEFAULT,
+                'target' => $this->admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['payment_method'],
                 'href'   => $links['admin_gateways_list'],
-                'target' => $this->admin->HREF_TARGET_DEFAULT,
+                'target' => $this->admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['plugin_manual'],
                 'href'   => $links['docs_integration_introduction'],
-                'target' => $this->admin->HREF_TARGET_BLANK,
+                'target' => $this->admin::HREF_TARGET_BLANK,
             ],
         ];
 

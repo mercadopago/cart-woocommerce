@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Logs\Transports;
 
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Logs\LogInterface;
 use MercadoPago\Woocommerce\Logs\LogLevels;
@@ -28,18 +29,18 @@ class Remote implements LogInterface
     private $logLevels;
 
     /**
-     * @var Requester
+     * @var Store
      */
-    private $requester;
+    private $store;
 
     /**
      * Remote Logs constructor
      */
-    public function __construct($debugMode, LogLevels $logLevels, Requester $requester)
+    public function __construct(LogLevels $logLevels, Store $store)
     {
-        $this->debugMode = $debugMode;
         $this->logLevels = $logLevels;
-        $this->requester = $requester;
+        $this->store     = $store;
+        $this->debugMode = $this->store->getDebugMode() === 'yes';
     }
 
     /**

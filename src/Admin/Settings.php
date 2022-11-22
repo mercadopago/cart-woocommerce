@@ -368,7 +368,7 @@ class Settings
                 }
             }
 
-            do_action($this->plugin->UPDATE_CREDENTIALS_ACTION);
+            do_action($this->plugin::UPDATE_CREDENTIALS_ACTION);
 
             wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
         }
@@ -406,7 +406,7 @@ class Settings
         $this->store->setIntegratorId($integratorId);
         $this->store->setDebugMode($debugMode);
 
-        do_action($this->plugin->UPDATE_STORE_INFO_ACTION);
+        do_action($this->plugin::UPDATE_STORE_INFO_ACTION);
 
         wp_send_json_success($this->translations->updateStore['valid_configuration']);
     }
@@ -433,7 +433,7 @@ class Settings
 
         $this->store->setCheckboxCheckoutTestMode($checkoutTestMode);
 
-        do_action($this->plugin->UPDATE_TEST_MODE_ACTION);
+        do_action($this->plugin::UPDATE_TEST_MODE_ACTION);
 
         if ($validateCheckoutTestMode) {
             wp_send_json_success('Mercado Pago\'s Payment Methods in Test Mode');

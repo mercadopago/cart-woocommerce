@@ -73,7 +73,7 @@ class Translations
     /**
      * @var array
      */
-    protected $links = [];
+    private $links = [];
 
     /**
      * Translations constructor

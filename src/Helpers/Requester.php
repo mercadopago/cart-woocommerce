@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 
 final class Requester
 {
-    private const BASEURL_MP = 'https://api.mercadopago.com';
+    public const BASEURL_MP = 'https://api.mercadopago.com';
 
     /**
      * @var HttpClientInterface
