@@ -137,6 +137,11 @@ class Dependencies
         $this->admin        = $this->setAdmin();
     }
 
+    /**
+     * Set requester
+     *
+     * @return Requester
+     */
     public function setRequester(): Requester
     {
         $curlRequester = new CurlRequester();
@@ -144,16 +149,36 @@ class Dependencies
         return new Requester($httpClient);
     }
 
+    /**
+     * Set options
+     *
+     * @return Options
+     */
     public function setOptions(): Options
     {
         return new Options();
     }
 
+    /**
+     * Set store
+     *
+     * @param Options $options
+     *
+     * @return Store
+     */
     public function setStore(Options $options): Store
     {
         return new Store($options);
     }
 
+    /**
+     * Set logs
+     *
+     * @param Store $store
+     * @param Requester $requester
+     *
+     * @return Logs
+     */
     public function setLogs(Store $store, Requester $requester): Logs
     {
         $file   = new File($store);
@@ -161,34 +186,79 @@ class Dependencies
         return new Logs($file, $remote);
     }
 
+    /**
+     * Set seller
+     *
+     * @param Options $options
+     * @param Requester $requester
+     *
+     * @return Seller
+     */
     public function setSeller(Options $options, Requester $requester): Seller
     {
         $cache = new Cache();
         return new Seller($cache, $options, $requester);
     }
 
+    /**
+     * Set links
+     *
+     * @param Seller $seller
+     *
+     * @return Links
+     */
     public function setLinks(Seller $seller): Links
     {
         $country = new Country($seller);
         return new Links($country);
     }
 
+    /**
+     * Set translations
+     *
+     * @param Links $links
+     * @return Translations
+     */
     public function setTranslations(Links $links): Translations
     {
         return new Translations($links);
     }
 
+    /**
+     * Set url
+     *
+     * @return Url
+     */
     public function setUrl(): Url
     {
         $strings = new Strings();
         return new Url($strings);
     }
 
+    /**
+     * Set scripts
+     *
+     * @param Url $url
+     *
+     * @return Scripts
+     */
     public function setScripts(Url $url): Scripts
     {
         return new Scripts($url);
     }
 
+    /**
+     * Set settings
+     *
+     * @param Links $links
+     * @param Scripts $scripts
+     * @param Seller $seller
+     * @param Store $store
+     * @param Translations $translations
+     * @param Url $url
+     *
+     * @return Settings
+     */
     public function setSettings(Links $links, Scripts $scripts, Seller $seller, Store $store, Translations $translations, Url $url): Settings
     {
         $admin     = new Admin();
@@ -198,31 +268,69 @@ class Dependencies
         return new Settings($admin, $endpoints, $links, $plugin, $scripts, $seller, $store, $translations, $url);
     }
 
+    /**
+     * Set notices
+     *
+     * @param Scripts $scripts
+     * @param Translations $translations
+     * @param Url $url
+     *
+     * @return Notices
+     */
     public function setNotices(Scripts $scripts, Translations $translations, Url $url): Notices
     {
         return new Notices($scripts, $translations, $url);
     }
 
+    /**
+     * Set checkout
+     *
+     * @param Scripts $scripts
+     *
+     * @return Checkout
+     */
     public function setCheckout(Scripts $scripts): Checkout
     {
         return new Checkout($scripts);
     }
 
+    /**
+     * Set gateway
+     *
+     * @param Options $options
+     *
+     * @return Gateway
+     */
     public function setGateway(Options $options): Gateway
     {
         return new Gateway($options);
     }
 
+    /**
+     * Set order
+     *
+     * @return Order
+     */
     public function setOrder(): Order
     {
         return new Order();
     }
 
+    /**
+     * Set product
+     *
+     * @return Product
+     */
     public function setProduct(): Product
     {
         return new Product();
     }
 
+    /**
+     * Set admin
+     *
+     * @return Admin
+     */
     public function setAdmin(): Admin
     {
         return new Admin();
