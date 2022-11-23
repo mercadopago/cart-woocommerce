@@ -36,7 +36,7 @@ class WoocommerceMercadoPago
     /**
      * @var Dependencies
      */
-    private $dependencies;
+    public $dependencies;
 
     /**
      * WoocommerceMercadoPago constructor
