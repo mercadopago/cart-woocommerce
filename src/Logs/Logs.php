@@ -2,7 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Logs;
 
-use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
 
@@ -23,17 +22,11 @@ class Logs
     private $remote;
 
     /**
-     * @var Store
-     */
-    private $store;
-
-    /**
      * Logs constructor
      */
-    public function __construct(File $file, Remote $remote, Store $store)
+    public function __construct(File $file, Remote $remote)
     {
         $this->file   = $file;
         $this->remote = $remote;
-        $this->store  = $store;
     }
 }

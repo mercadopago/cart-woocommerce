@@ -23,11 +23,6 @@ class File implements LogInterface
     private $debugMode;
 
     /**
-     * @var LogLevels
-     */
-    private $logLevels;
-
-    /**
      * @var Store
      */
     private $store;
@@ -35,12 +30,10 @@ class File implements LogInterface
     /**
      * File Logs constructor
      */
-    public function __construct(LogLevels $logLevels, Store $store)
+    public function __construct(Store $store)
     {
-        $this->logLevels = $logLevels;
-        $this->store     = $store;
-
         $this->logger    = wc_get_logger();
+        $this->store     = $store;
         $this->debugMode = $this->store->getDebugMode() === 'yes';
     }
 
@@ -55,7 +48,7 @@ class File implements LogInterface
      */
     public function error(string $message, string $source, array $context = []): void
     {
-        $this->save($this->logLevels::ERROR, $message, $source, $context);
+        $this->save(LogLevels::ERROR, $message, $source, $context);
     }
 
     /**
@@ -69,7 +62,7 @@ class File implements LogInterface
      */
     public function warning(string $message, string $source, array $context = []): void
     {
-        $this->save($this->logLevels::WARNING, $message, $source, $context);
+        $this->save(LogLevels::WARNING, $message, $source, $context);
     }
 
     /**
@@ -83,7 +76,7 @@ class File implements LogInterface
      */
     public function notice(string $message, string $source, array $context = []): void
     {
-        $this->save($this->logLevels::NOTICE, $message, $source, $context);
+        $this->save(LogLevels::NOTICE, $message, $source, $context);
     }
 
     /**
@@ -97,7 +90,7 @@ class File implements LogInterface
      */
     public function info(string $message, string $source, array $context = []): void
     {
-        $this->save($this->logLevels::INFO, $message, $source, $context);
+        $this->save(LogLevels::INFO, $message, $source, $context);
     }
 
     /**
@@ -112,7 +105,7 @@ class File implements LogInterface
     public function debug(string $message, string $source, array $context = []): void
     {
         if (WP_DEBUG) {
-            $this->save($this->logLevels::DEBUG, $message, $source, $context);
+            $this->save(LogLevels::DEBUG, $message, $source, $context);
         }
     }
 

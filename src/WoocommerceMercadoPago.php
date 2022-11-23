@@ -2,33 +2,6 @@
 
 namespace MercadoPago\Woocommerce;
 
-use MercadoPago\PP\Sdk\HttpClient\HttpClient;
-use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
-use MercadoPago\Woocommerce\Admin\Notices;
-use MercadoPago\Woocommerce\Admin\Settings;
-use MercadoPago\Woocommerce\Admin\Translations;
-use MercadoPago\Woocommerce\Configs\Seller;
-use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Helpers\Cache;
-use MercadoPago\Woocommerce\Helpers\Country;
-use MercadoPago\Woocommerce\Helpers\Links;
-use MercadoPago\Woocommerce\Helpers\Requester;
-use MercadoPago\Woocommerce\Helpers\Url;
-use MercadoPago\Woocommerce\Helpers\Strings;
-use MercadoPago\Woocommerce\Hooks\Admin;
-use MercadoPago\Woocommerce\Hooks\Checkout;
-use MercadoPago\Woocommerce\Hooks\Endpoints;
-use MercadoPago\Woocommerce\Hooks\Gateway;
-use MercadoPago\Woocommerce\Hooks\Options;
-use MercadoPago\Woocommerce\Hooks\Order;
-use MercadoPago\Woocommerce\Hooks\Plugin;
-use MercadoPago\Woocommerce\Hooks\Product;
-use MercadoPago\Woocommerce\Hooks\Scripts;
-use MercadoPago\Woocommerce\Logs\LogLevels;
-use MercadoPago\Woocommerce\Logs\Logs;
-use MercadoPago\Woocommerce\Logs\Transports\File;
-use MercadoPago\Woocommerce\Logs\Transports\Remote;
-
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -61,124 +34,9 @@ class WoocommerceMercadoPago
     private const PLUGIN_NAME = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
 
     /**
-     * @var Logs
+     * @var Dependencies
      */
-    public $logs;
-
-    /**
-     * @var Admin
-     */
-    public $admin;
-
-    /**
-     * @var Checkout
-     */
-    public $checkout;
-
-    /**
-     * @var Plugin
-     */
-    public $plugin;
-
-    /**
-     * @var Notices
-     */
-    public $notices;
-
-    /**
-     * @var Gateway
-     */
-    public $gateway;
-
-    /**
-     * @var Product
-     */
-    public $product;
-
-    /**
-     * @var Scripts
-     */
-    public $scripts;
-
-    /**
-     * @var Order
-     */
-    public $order;
-
-    /**
-     * @var Store
-     */
-    public $store;
-
-    /**
-     * @var Seller
-     */
-    public $seller;
-
-    /**
-     * @var Settings
-     */
-    protected $settings;
-
-    /**
-     * @var Translations
-     */
-    protected $translations;
-
-    /**
-     * @var Options
-     */
-    public $options;
-
-    /**
-     * @var Requester
-     */
-    public $requester;
-
-    /**
-     * @var Links
-     */
-    public $links;
-
-    /**
-     * @var Country
-     */
-    public $country;
-
-    /**
-     * @var Endpoints
-     */
-    public $endpoints;
-
-    /**
-     * @var Url
-     */
-    public $url;
-
-    /**
-     * @var Strings
-     */
-    public $strings;
-
-    /**
-     * @var Cache
-     */
-    public $cache;
-
-    /**
-     * @var File
-     */
-    public $file;
-
-    /**
-     * @var LogLevels
-     */
-    public $logLevels;
-
-    /**
-     * @var Remote
-     */
-    public $remote;
+    private $dependencies;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -240,7 +98,7 @@ class WoocommerceMercadoPago
         }
 
         if (!class_exists('WC_Payment_Gateway')) {
-            $this->notices->adminNoticeMissWoocoommerce();
+            $this->dependencies->notices->adminNoticeMissWoocoommerce();
         }
     }
 
@@ -251,32 +109,7 @@ class WoocommerceMercadoPago
      */
     public function setProperties(): void
     {
-        $curlRequester       = new CurlRequester();
-        $httpClient          = new HttpClient(Requester::BASEURL_MP, $curlRequester);
-        $this->requester     = new Requester($httpClient);
-        $this->cache         = new Cache();
-        $this->options       = new Options();
-        $this->seller        = new Seller($this->cache, $this->options, $this->requester);
-        $this->country       = new Country($this->seller);
-        $this->links         = new Links($this->country);
-        $this->strings       = new Strings();
-        $this->url           = new Url($this->strings);
-        $this->store         = new Store($this->options);
-        $this->logLevels     = new LogLevels();
-        $this->file          = new File($this->logLevels, $this->store);
-        $this->remote        = new Remote($this->logLevels, $this->store);
-        $this->logs          = new Logs($this->file, $this->remote, $this->store);
-        $this->scripts       = new Scripts($this->url);
-        $this->translations  = new Translations($this->links);
-        $this->notices       = new Notices($this->scripts, $this->translations, $this->url);
-        $this->admin         = new Admin();
-        $this->checkout      = new Checkout($this->scripts);
-        $this->endpoints     = new Endpoints();
-        $this->gateway       = new Gateway($this->options);
-        $this->order         = new Order();
-        $this->plugin        = new Plugin();
-        $this->product       = new Product();
-        $this->settings      = new Settings($this->admin, $this->endpoints, $this->links, $this->plugin, $this->scripts, $this->seller, $this->store, $this->translations, $this->url);
+        $this->dependencies = new Dependencies();
     }
 
     /**
@@ -286,27 +119,27 @@ class WoocommerceMercadoPago
      */
     public function setPluginSettingsLink()
     {
-        $links = $this->links->getLinks();
+        $links = $this->dependencies->links->getLinks();
 
         $pluginLinks = [
             [
-                'text'   => $this->translations->plugin['set_plugin'],
+                'text'   => $this->dependencies->translations->plugin['set_plugin'],
                 'href'   => $links['admin_settings_page'],
-                'target' => $this->admin::HREF_TARGET_DEFAULT,
+                'target' => $this->dependencies->admin::HREF_TARGET_DEFAULT,
             ],
             [
-                'text'   => $this->translations->plugin['payment_method'],
+                'text'   => $this->dependencies->translations->plugin['payment_method'],
                 'href'   => $links['admin_gateways_list'],
-                'target' => $this->admin::HREF_TARGET_DEFAULT,
+                'target' => $this->dependencies->admin::HREF_TARGET_DEFAULT,
             ],
             [
-                'text'   => $this->translations->plugin['plugin_manual'],
+                'text'   => $this->dependencies->translations->plugin['plugin_manual'],
                 'href'   => $links['docs_integration_introduction'],
-                'target' => $this->admin::HREF_TARGET_BLANK,
+                'target' => $this->dependencies->admin::HREF_TARGET_BLANK,
             ],
         ];
 
-        $this->admin->registerPluginActionLinks(self::PLUGIN_NAME, $pluginLinks);
+        $this->dependencies->admin->registerPluginActionLinks(self::PLUGIN_NAME, $pluginLinks);
     }
 
     /**
@@ -316,7 +149,7 @@ class WoocommerceMercadoPago
      */
     public function verifyPhpVersionNotice(): void
     {
-        $this->notices->adminNoticeError($this->translations->notices['php_wrong_version'], false);
+        $this->dependencies->notices->adminNoticeError($this->dependencies->translations->notices['php_wrong_version'], false);
     }
 
     /**
@@ -326,7 +159,7 @@ class WoocommerceMercadoPago
      */
     public function verifyCurlNotice(): void
     {
-        $this->notices->adminNoticeError($this->translations->notices['missing_curl'], false);
+        $this->dependencies->notices->adminNoticeError($this->dependencies->translations->notices['missing_curl'], false);
     }
 
     /**
@@ -336,7 +169,7 @@ class WoocommerceMercadoPago
      */
     public function verifyGdNotice(): void
     {
-        $this->notices->adminNoticeWarning($this->translations->notices['missing_gd_extensions'], false);
+        $this->dependencies->notices->adminNoticeWarning($this->dependencies->translations->notices['missing_gd_extensions'], false);
     }
 
     /**
