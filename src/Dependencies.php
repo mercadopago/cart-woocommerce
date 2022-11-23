@@ -37,47 +37,47 @@ class Dependencies
     /**
      * @var Requester
      */
-    public $requester;
+    private $requester;
 
     /**
      * @var Options
      */
-    public $options;
+    private $options;
 
     /**
      * @var Store
      */
-    public $store;
+    private $store;
 
     /**
      * @var Logs
      */
-    public $logs;
+    private $logs;
 
     /**
      * @var Seller
      */
-    public $seller;
+    private $seller;
 
     /**
      * @var Links
      */
-    public $links;
+    private $links;
 
     /**
      * @var Translations
      */
-    public $translations;
+    private $translations;
 
     /**
      * @var Url
      */
-    public $url;
+    private $url;
 
     /**
      * @var Scripts
      */
-    public $scripts;
+    private $scripts;
 
     /**
      * @var Plugin
@@ -87,37 +87,37 @@ class Dependencies
     /**
      * @var Settings
      */
-    public $settings;
+    private $settings;
 
     /**
      * @var Notices
      */
-    public $notices;
+    private $notices;
 
     /**
      * @var Checkout
      */
-    public $checkout;
+    private $checkout;
 
     /**
      * @var Gateway
      */
-    public $gateway;
+    private $gateway;
 
     /**
      * @var Order
      */
-    public $order;
+    private $order;
 
     /**
      * @var Product
      */
-    public $product;
+    private $product;
 
     /**
      * @var Admin
      */
-    public $admin;
+    private $admin;
 
     /**
      * Dependencies constructor
