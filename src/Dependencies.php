@@ -80,6 +80,11 @@ class Dependencies
     public $scripts;
 
     /**
+     * @var Plugin
+     */
+    private $plugin;
+
+    /**
      * @var Settings
      */
     public $settings;
@@ -128,13 +133,24 @@ class Dependencies
         $this->translations = $this->setTranslations($this->links);
         $this->url          = $this->setUrl();
         $this->scripts      = $this->setScripts($this->url);
-        $this->settings     = $this->setSettings($this->links, $this->scripts, $this->seller, $this->store, $this->translations, $this->url);
+        $this->plugin       = $this->setPlugin();
+        $this->settings     = $this->setSettings($this->links, $this->plugin, $this->scripts, $this->seller, $this->store, $this->translations, $this->url);
         $this->notices      = $this->setNotices($this->scripts, $this->translations, $this->url);
         $this->checkout     = $this->setCheckout($this->scripts);
         $this->gateway      = $this->setGateway($this->options);
         $this->order        = $this->setOrder();
         $this->product      = $this->setProduct();
         $this->admin        = $this->setAdmin();
+    }
+
+    /**
+     * Get Requester
+     *
+     * @return Requester
+     */
+    public function getRequester(): Requester
+    {
+        return $this->requester;
     }
 
     /**
@@ -150,6 +166,16 @@ class Dependencies
     }
 
     /**
+     * Get Options
+     *
+     * @return Options
+     */
+    public function getOptions(): Options
+    {
+        return $this->options;
+    }
+
+    /**
      * Set options
      *
      * @return Options
@@ -157,6 +183,16 @@ class Dependencies
     public function setOptions(): Options
     {
         return new Options();
+    }
+
+    /**
+     * Get Store
+     *
+     * @return Store
+     */
+    public function getStore(): Store
+    {
+        return $this->store;
     }
 
     /**
@@ -169,6 +205,16 @@ class Dependencies
     public function setStore(Options $options): Store
     {
         return new Store($options);
+    }
+
+    /**
+     * Get logs
+     *
+     * @return Logs
+     */
+    public function getLogs(): Logs
+    {
+        return $this->logs;
     }
 
     /**
@@ -187,6 +233,16 @@ class Dependencies
     }
 
     /**
+     * Get Seller
+     *
+     * @return Seller
+     */
+    public function getSeller(): Seller
+    {
+        return $this->seller;
+    }
+
+    /**
      * Set seller
      *
      * @param Options $options
@@ -198,6 +254,16 @@ class Dependencies
     {
         $cache = new Cache();
         return new Seller($cache, $options, $requester);
+    }
+
+    /**
+     * Get Links
+     *
+     * @return Links
+     */
+    public function getLinks(): Links
+    {
+        return $this->links;
     }
 
     /**
@@ -214,6 +280,16 @@ class Dependencies
     }
 
     /**
+     * Get Translations
+     *
+     * @return Translations
+     */
+    public function getTranslations(): Translations
+    {
+        return $this->translations;
+    }
+
+    /**
      * Set translations
      *
      * @param Links $links
@@ -225,6 +301,16 @@ class Dependencies
     }
 
     /**
+     * Get Url
+     *
+     * @return Url
+     */
+    public function getUrl(): Url
+    {
+        return $this->url;
+    }
+
+    /**
      * Set url
      *
      * @return Url
@@ -233,6 +319,16 @@ class Dependencies
     {
         $strings = new Strings();
         return new Url($strings);
+    }
+
+    /**
+     * Get Scripts
+     *
+     * @return Scripts
+     */
+    public function getScripts(): Scripts
+    {
+        return $this->scripts;
     }
 
     /**
@@ -248,9 +344,40 @@ class Dependencies
     }
 
     /**
+     * Get Plugin
+     *
+     * @return Plugin
+     */
+    public function getPlugin(): Plugin
+    {
+        return $this->plugin;
+    }
+
+    /**
+     * Set Plugin
+     *
+     * @return Plugin
+     */
+    public function setPlugin(): Plugin
+    {
+        return new Plugin();
+    }
+
+    /**
+     * Get Settings
+     *
+     * @return Settings
+     */
+    public function getSettings(): Settings
+    {
+        return $this->settings;
+    }
+
+    /**
      * Set settings
      *
      * @param Links $links
+     * @param Plugin $plugin
      * @param Scripts $scripts
      * @param Seller $seller
      * @param Store $store
@@ -259,13 +386,22 @@ class Dependencies
      *
      * @return Settings
      */
-    public function setSettings(Links $links, Scripts $scripts, Seller $seller, Store $store, Translations $translations, Url $url): Settings
+    public function setSettings(Links $links, Plugin $plugin, Scripts $scripts, Seller $seller, Store $store, Translations $translations, Url $url): Settings
     {
         $admin     = new Admin();
         $endpoints = new Endpoints();
-        $plugin    = new Plugin();
 
         return new Settings($admin, $endpoints, $links, $plugin, $scripts, $seller, $store, $translations, $url);
+    }
+
+    /**
+     * Get Notices
+     *
+     * @return Notices
+     */
+    public function getNotices(): Notices
+    {
+        return $this->notices;
     }
 
     /**
@@ -283,6 +419,16 @@ class Dependencies
     }
 
     /**
+     * Get Checkout
+     *
+     * @return Checkout
+     */
+    public function getCheckout(): Checkout
+    {
+        return $this->checkout;
+    }
+
+    /**
      * Set checkout
      *
      * @param Scripts $scripts
@@ -292,6 +438,16 @@ class Dependencies
     public function setCheckout(Scripts $scripts): Checkout
     {
         return new Checkout($scripts);
+    }
+
+    /**
+     * Get Gateway
+     *
+     * @return Gateway
+     */
+    public function getGateway(): Gateway
+    {
+        return $this->gateway;
     }
 
     /**
@@ -307,6 +463,16 @@ class Dependencies
     }
 
     /**
+     * Get Order
+     *
+     * @return Order
+     */
+    public function getOrder(): Order
+    {
+        return $this->order;
+    }
+
+    /**
      * Set order
      *
      * @return Order
@@ -317,6 +483,16 @@ class Dependencies
     }
 
     /**
+     * Get Product
+     *
+     * @return Product
+     */
+    public function getProduct(): Product
+    {
+        return $this->product;
+    }
+
+    /**
      * Set product
      *
      * @return Product
@@ -324,6 +500,16 @@ class Dependencies
     public function setProduct(): Product
     {
         return new Product();
+    }
+
+    /**
+     * Get Admin
+     *
+     * @return Admin
+     */
+    public function getAdmin(): Admin
+    {
+        return $this->admin;
     }
 
     /**

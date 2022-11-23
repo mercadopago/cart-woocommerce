@@ -43,12 +43,12 @@ final class Links
      */
     public function getLinks(): array
     {
-        $linksSettings      = self::getLinksSettings();
+        $linksSettings      = $this->getLinksSettings();
 
-        $mercadoPagoLinks   = self::getMercadoPagoLinks($linksSettings);
-        $documentationLinks = self::getDocumentationLinks($linksSettings);
-        $adminLinks         = self::getAdminLinks();
-        $storeLinks         = self::getStoreLinks();
+        $mercadoPagoLinks   = $this->getMercadoPagoLinks($linksSettings);
+        $documentationLinks = $this->getDocumentationLinks($linksSettings);
+        $adminLinks         = $this->getAdminLinks();
+        $storeLinks         = $this->getStoreLinks();
 
         return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $adminLinks, $storeLinks);
     }

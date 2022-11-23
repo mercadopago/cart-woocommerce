@@ -45,7 +45,7 @@ final class Url
             '%s%s%s%s',
             plugin_dir_url(__FILE__),
             '/../../../' . $path,
-            self::getSuffix(),
+            $this->getSuffix(),
             $extension
         );
     }
@@ -92,7 +92,7 @@ final class Url
     public function validatePage(string $expectedPage, string $currentPage = null, bool $allowPartialMatch = false): bool
     {
         if (!$currentPage) {
-            $currentPage = self::getCurrentPage();
+            $currentPage = $this->getCurrentPage();
         }
 
         return $this->strings->compareStrings($expectedPage, $currentPage, $allowPartialMatch);
@@ -110,7 +110,7 @@ final class Url
     public function validateSection(string $expectedSection, string $currentSection = null, bool $allowPartialMatch = true): bool
     {
         if (!$currentSection) {
-            $currentSection = self::getCurrentSection();
+            $currentSection = $this->getCurrentSection();
         }
 
         return $this->strings->compareStrings($expectedSection, $currentSection, $allowPartialMatch);
@@ -128,7 +128,7 @@ final class Url
     public function validateUrl(string $expectedUrl, string $currentUrl = null, bool $allowPartialMatch = true): bool
     {
         if (!$currentUrl) {
-            $currentUrl = self::getCurrentUrl();
+            $currentUrl = $this->getCurrentUrl();
         }
 
         return $this->strings->compareStrings($expectedUrl, $currentUrl, $allowPartialMatch);

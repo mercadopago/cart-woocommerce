@@ -2,6 +2,21 @@
 
 namespace MercadoPago\Woocommerce;
 
+use MercadoPago\Woocommerce\Admin\Notices;
+use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Admin\Translations;
+use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Links;
+use MercadoPago\Woocommerce\Hooks\Admin;
+use MercadoPago\Woocommerce\Hooks\Checkout;
+use MercadoPago\Woocommerce\Hooks\Gateway;
+use MercadoPago\Woocommerce\Hooks\Order;
+use MercadoPago\Woocommerce\Hooks\Plugin;
+use MercadoPago\Woocommerce\Hooks\Product;
+use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Logs\Logs;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -37,6 +52,76 @@ class WoocommerceMercadoPago
      * @var Dependencies
      */
     public $dependencies;
+
+    /**
+     * @var Logs
+     */
+    public $logs;
+
+    /**
+     * @var Translations
+     */
+    public $translations;
+
+    /**
+     * @var Admin
+     */
+    public $admin;
+
+    /**
+     * @var Checkout
+     */
+    public $checkout;
+
+    /**
+     * @var Plugin
+     */
+    public $plugin;
+
+    /**
+     * @var Scripts
+     */
+    public $scripts;
+
+    /**
+     * @var Notices
+     */
+    public $notices;
+
+    /**
+     * @var Gateway
+     */
+    public $gateway;
+
+    /**
+     * @var Order
+     */
+    public $order;
+
+    /**
+     * @var Product
+     */
+    public $product;
+
+    /**
+     * @var Store
+     */
+    public $store;
+
+    /**
+     * @var Seller
+     */
+    public $seller;
+
+    /**
+     * @var Settings
+     */
+    public $settings;
+
+    /**
+     * @var Links
+     */
+    public $links;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -110,6 +195,21 @@ class WoocommerceMercadoPago
     public function setProperties(): void
     {
         $this->dependencies = new Dependencies();
+
+        $this->logs         = $this->dependencies->getLogs();
+        $this->translations = $this->dependencies->getTranslations();
+        $this->admin        = $this->dependencies->getAdmin();
+        $this->checkout     = $this->dependencies->getCheckout();
+        $this->plugin       = $this->dependencies->getPlugin();
+        $this->scripts      = $this->dependencies->getScripts();
+        $this->notices      = $this->dependencies->getNotices();
+        $this->gateway      = $this->dependencies->getGateway();
+        $this->order        = $this->dependencies->getOrder();
+        $this->product      = $this->dependencies->getProduct();
+        $this->store        = $this->dependencies->getStore();
+        $this->seller       = $this->dependencies->getSeller();
+        $this->settings     = $this->dependencies->getSettings();
+        $this->links        = $this->dependencies->getLinks();
     }
 
     /**
@@ -119,27 +219,27 @@ class WoocommerceMercadoPago
      */
     public function setPluginSettingsLink()
     {
-        $links = $this->dependencies->links->getLinks();
+        $links = $this->links->getLinks();
 
         $pluginLinks = [
             [
-                'text'   => $this->dependencies->translations->plugin['set_plugin'],
+                'text'   => $this->translations->plugin['set_plugin'],
                 'href'   => $links['admin_settings_page'],
-                'target' => $this->dependencies->admin::HREF_TARGET_DEFAULT,
+                'target' => $this->admin::HREF_TARGET_DEFAULT,
             ],
             [
-                'text'   => $this->dependencies->translations->plugin['payment_method'],
+                'text'   => $this->translations->plugin['payment_method'],
                 'href'   => $links['admin_gateways_list'],
-                'target' => $this->dependencies->admin::HREF_TARGET_DEFAULT,
+                'target' => $this->admin::HREF_TARGET_DEFAULT,
             ],
             [
-                'text'   => $this->dependencies->translations->plugin['plugin_manual'],
+                'text'   => $this->translations->plugin['plugin_manual'],
                 'href'   => $links['docs_integration_introduction'],
-                'target' => $this->dependencies->admin::HREF_TARGET_BLANK,
+                'target' => $this->admin::HREF_TARGET_BLANK,
             ],
         ];
 
-        $this->dependencies->admin->registerPluginActionLinks(self::PLUGIN_NAME, $pluginLinks);
+        $this->admin->registerPluginActionLinks(self::PLUGIN_NAME, $pluginLinks);
     }
 
     /**
@@ -149,7 +249,7 @@ class WoocommerceMercadoPago
      */
     public function verifyPhpVersionNotice(): void
     {
-        $this->dependencies->notices->adminNoticeError($this->dependencies->translations->notices['php_wrong_version'], false);
+        $this->notices->adminNoticeError($this->translations->notices['php_wrong_version'], false);
     }
 
     /**
@@ -159,7 +259,7 @@ class WoocommerceMercadoPago
      */
     public function verifyCurlNotice(): void
     {
-        $this->dependencies->notices->adminNoticeError($this->dependencies->translations->notices['missing_curl'], false);
+        $this->notices->adminNoticeError($this->translations->notices['missing_curl'], false);
     }
 
     /**
@@ -169,7 +269,7 @@ class WoocommerceMercadoPago
      */
     public function verifyGdNotice(): void
     {
-        $this->dependencies->notices->adminNoticeWarning($this->dependencies->translations->notices['missing_gd_extensions'], false);
+        $this->notices->adminNoticeWarning($this->translations->notices['missing_gd_extensions'], false);
     }
 
     /**

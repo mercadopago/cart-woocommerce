@@ -139,10 +139,10 @@ final class Country
     public function getPluginDefaultCountry(): string
     {
         $siteId  = $this->seller->getSiteId();
-        $country = self::getWoocommerceDefaultCountry();
+        $country = $this->getWoocommerceDefaultCountry();
 
         if ($siteId) {
-            $country = self::siteIdToCountry($siteId);
+            $country = $this->siteIdToCountry($siteId);
         }
 
         return $country;
