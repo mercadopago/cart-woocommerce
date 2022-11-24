@@ -24,18 +24,31 @@ final class Links
     private const MP_DEVELOPERS_URL = 'https://developers.mercadopago.com';
 
     /**
+     * @var Country
+     */
+    private $country;
+
+    /**
+     * Links constructor
+     */
+    public function __construct(Country $country)
+    {
+        $this->country = $country;
+    }
+
+    /**
      * Get all links
      *
      * @return array
      */
-    public static function getLinks(): array
+    public function getLinks(): array
     {
-        $linksSettings      = self::getLinksSettings();
+        $linksSettings      = $this->getLinksSettings();
 
-        $mercadoPagoLinks   = self::getMercadoPagoLinks($linksSettings);
-        $documentationLinks = self::getDocumentationLinks($linksSettings);
-        $adminLinks         = self::getAdminLinks();
-        $storeLinks         = self::getStoreLinks();
+        $mercadoPagoLinks   = $this->getMercadoPagoLinks($linksSettings);
+        $documentationLinks = $this->getDocumentationLinks($linksSettings);
+        $adminLinks         = $this->getAdminLinks();
+        $storeLinks         = $this->getStoreLinks();
 
         return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $adminLinks, $storeLinks);
     }
@@ -45,9 +58,9 @@ final class Links
      *
      * @return array
      */
-    private static function getLinksSettings(): array
+    private function getLinksSettings(): array
     {
-        $country = Country::getPluginDefaultCountry();
+        $country = $this->country->getPluginDefaultCountry();
 
         $settings = [
             'AR' => [
@@ -90,7 +103,7 @@ final class Links
      *
      * @return array
      */
-    private static function getDocumentationLinks(array $linkSettings): array
+    private function getDocumentationLinks(array $linkSettings): array
     {
         $baseLink = self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/developers/' . $linkSettings['translate'];
 
@@ -112,7 +125,7 @@ final class Links
      *
      * @return array
      */
-    private static function getMercadoPagoLinks(array $linkSettings): array
+    private function getMercadoPagoLinks(array $linkSettings): array
     {
         return [
             'mercadopago_home'        => self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/home',
@@ -128,7 +141,7 @@ final class Links
      *
      * @return array
      */
-    private static function getAdminLinks(): array
+    private function getAdminLinks(): array
     {
         return [
             'admin_settings_page' => admin_url('admin.php?page=mercadopago-settings'),
@@ -141,7 +154,7 @@ final class Links
      *
      * @return array
      */
-    private static function getStoreLinks(): array
+    private function getStoreLinks(): array
     {
         return [
             'store_visit' => get_permalink(wc_get_page_id('shop')),

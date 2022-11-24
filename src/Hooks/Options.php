@@ -9,24 +9,6 @@ if (!defined('ABSPATH')) {
 class Options
 {
     /**
-     * @var Options
-     */
-    private static $instance = null;
-
-    /**
-     * Get Options Hooks instance
-     *
-     * @return Options
-     */
-    public static function getInstance(): Options
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
      * Get option
      *
      * @param string       $optionName

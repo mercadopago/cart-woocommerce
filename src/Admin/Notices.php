@@ -14,40 +14,28 @@ class Notices
     /**
      * @var Scripts
      */
-    protected $scripts;
+    private $scripts;
 
     /**
      * @var Translations
      */
-    protected $translations;
+    private $translations;
 
     /**
-     * @var Notices
+     * @var Url
      */
-    private static $instance = null;
+    private $url;
 
     /**
      * Notices constructor
      */
-    private function __construct()
+    public function __construct(Scripts $scripts, Translations $translations, Url $url)
     {
-        $this->scripts = Scripts::getInstance();
-        $this->translations = Translations::getInstance();
+        $this->scripts      = $scripts;
+        $this->translations = $translations;
+        $this->url          = $url;
 
         $this->loadAdminNoticeCss();
-    }
-
-    /**
-     * Get Notice instance
-     *
-     * @return Notices
-     */
-    public static function getInstance(): Notices
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
     }
 
     /**
@@ -60,7 +48,7 @@ class Notices
         if (is_admin()) {
             $this->scripts->registerAdminStyle(
                 'woocommerce-mercadopago-admin-notice',
-                Url::getPluginFileUrl('assets/css/admin/mp-admin-notice', '.css')
+                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-notice', '.css')
             );
         }
     }

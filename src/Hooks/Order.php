@@ -9,31 +9,6 @@ if (!defined('ABSPATH')) {
 class Order
 {
     /**
-     * @var Order
-     */
-    private static $instance = null;
-
-    /**
-     * Order Hooks constructor
-     */
-    private function __construct()
-    {
-    }
-
-    /**
-     * Get Order instance
-     *
-     * @return Order
-     */
-    public static function getInstance(): Order
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
      * Register meta box addition on order page
      *
      * @param $id

@@ -31,21 +31,16 @@ class Scripts
     private const NOTICES_SCRIPT_NAME = 'wc_mercadopago_notices';
 
     /**
-     * @var Scripts
+     * @var Url
      */
-    private static $instance = null;
+    private $url;
 
     /**
-     * Get Scripts Hooks instance
-     *
-     * @return Scripts
+     * Scripts constructor
      */
-    public static function getInstance(): Scripts
+    public function __construct(Url $url)
     {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        $this->url = $url;
     }
 
     /**
@@ -119,7 +114,7 @@ class Scripts
     {
         global $woocommerce;
 
-        $file      = Url::getPluginFileUrl('assets/js/notices/notices-client', '.js');
+        $file      = $this->url->getPluginFileUrl('assets/js/notices/notices-client', '.js');
         $variables = [
             'site_id'          => 'MLA',
             'container'        => '#wpbody-content',
@@ -141,7 +136,7 @@ class Scripts
     {
         global $woocommerce;
 
-        $file      = Url::getPluginFileUrl('assets/js/caronte/caronte-client', '.js');
+        $file      = $this->url->getPluginFileUrl('assets/js/caronte/caronte-client', '.js');
         $variables = [
             'site_id'               => 'MLA',
             'plugin_version'        => MP_VERSION,
@@ -188,7 +183,7 @@ class Scripts
     {
         global $woocommerce;
 
-        $file      = Url::getPluginFileUrl('assets/js/melidata/melidata-client', '.js');
+        $file      = $this->url->getPluginFileUrl('assets/js/melidata/melidata-client', '.js');
         $variables = [
             'type'             => $type,
             'site_id'          => 'MLA',
