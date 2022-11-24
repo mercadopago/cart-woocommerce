@@ -63,32 +63,14 @@ class Store
     /**
      * @var Options
      */
-    protected $options;
-
-    /**
-     * @var Store
-     */
-    private static $instance = '';
+    private $options;
 
     /**
      * Store constructor
      */
-    public function __construct()
+    public function __construct(Options $options)
     {
-        $this->options = Options::getInstance();
-    }
-
-    /**
-     * Get Store Configs instance
-     *
-     * @return Store
-     */
-    public static function getInstance(): Store
-    {
-        if ('' === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        $this->options = $options;
     }
 
     /**

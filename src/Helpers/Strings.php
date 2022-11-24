@@ -16,7 +16,7 @@ final class Strings
      *
      * @return string
      */
-    public static function fixUrlAmpersand(string $link): string
+    public function fixUrlAmpersand(string $link): string
     {
         return str_replace('\/', '/', str_replace('&#038;', '&', $link));
     }
@@ -30,7 +30,7 @@ final class Strings
      *
      * @return bool
      */
-    public static function compareStrings(string $expected, string $current, bool $allowPartialMatch): bool
+    public function compareStrings(string $expected, string $current, bool $allowPartialMatch): bool
     {
         if ($allowPartialMatch) {
             return str_contains($current, $expected);

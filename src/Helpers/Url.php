@@ -9,11 +9,24 @@ if (!defined('ABSPATH')) {
 final class Url
 {
     /**
+     * @var Strings
+     */
+    private $strings;
+
+    /**
+     * Url constructor
+     */
+    public function __construct(Strings $strings)
+    {
+        $this->strings = $strings;
+    }
+
+    /**
      * Get suffix
      *
      * @return string
      */
-    public static function getSuffix(): string
+    public function getSuffix(): string
     {
         return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
     }
@@ -26,13 +39,13 @@ final class Url
      *
      * @return string
      */
-    public static function getPluginFileUrl(string $path, string $extension): string
+    public function getPluginFileUrl(string $path, string $extension): string
     {
         return sprintf(
             '%s%s%s%s',
             plugin_dir_url(__FILE__),
             '/../../../' . $path,
-            self::getSuffix(),
+            $this->getSuffix(),
             $extension
         );
     }
@@ -42,7 +55,7 @@ final class Url
      *
      * @return string
      */
-    public static function getCurrentPage(): string
+    public function getCurrentPage(): string
     {
         return isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
     }
@@ -52,7 +65,7 @@ final class Url
      *
      * @return string
      */
-    public static function getCurrentSection(): string
+    public function getCurrentSection(): string
     {
         return isset($_GET['section']) ? sanitize_text_field($_GET['section']) : '';
     }
@@ -62,7 +75,7 @@ final class Url
      *
      * @return string
      */
-    public static function getCurrentUrl(): string
+    public function getCurrentUrl(): string
     {
         return isset($_SERVER['REQUEST_URI']) ? sanitize_text_field($_SERVER['REQUEST_URI']) : '';
     }
@@ -76,13 +89,13 @@ final class Url
      *
      * @return bool
      */
-    public static function validatePage(string $expectedPage, string $currentPage = null, bool $allowPartialMatch = false): bool
+    public function validatePage(string $expectedPage, string $currentPage = null, bool $allowPartialMatch = false): bool
     {
         if (!$currentPage) {
-            $currentPage = self::getCurrentPage();
+            $currentPage = $this->getCurrentPage();
         }
 
-        return Strings::compareStrings($expectedPage, $currentPage, $allowPartialMatch);
+        return $this->strings->compareStrings($expectedPage, $currentPage, $allowPartialMatch);
     }
 
     /**
@@ -94,13 +107,13 @@ final class Url
      *
      * @return bool
      */
-    public static function validateSection(string $expectedSection, string $currentSection = null, bool $allowPartialMatch = true): bool
+    public function validateSection(string $expectedSection, string $currentSection = null, bool $allowPartialMatch = true): bool
     {
         if (!$currentSection) {
-            $currentSection = self::getCurrentSection();
+            $currentSection = $this->getCurrentSection();
         }
 
-        return Strings::compareStrings($expectedSection, $currentSection, $allowPartialMatch);
+        return $this->strings->compareStrings($expectedSection, $currentSection, $allowPartialMatch);
     }
 
     /**
@@ -112,12 +125,12 @@ final class Url
      *
      * @return bool
      */
-    public static function validateUrl(string $expectedUrl, string $currentUrl = null, bool $allowPartialMatch = true): bool
+    public function validateUrl(string $expectedUrl, string $currentUrl = null, bool $allowPartialMatch = true): bool
     {
         if (!$currentUrl) {
-            $currentUrl = self::getCurrentUrl();
+            $currentUrl = $this->getCurrentUrl();
         }
 
-        return Strings::compareStrings($expectedUrl, $currentUrl, $allowPartialMatch);
+        return $this->strings->compareStrings($expectedUrl, $currentUrl, $allowPartialMatch);
     }
 }

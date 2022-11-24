@@ -19,24 +19,6 @@ class Admin
     public const HREF_TARGET_BLANK = '_blank';
 
     /**
-     * @var Admin
-     */
-    private static $instance = null;
-
-    /**
-     * Get Admin Hooks instance
-     *
-     * @return Admin
-     */
-    public static function getInstance(): Admin
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-    /**
      * Validate if the actual page belongs to the admin section
      *
      * @return bool

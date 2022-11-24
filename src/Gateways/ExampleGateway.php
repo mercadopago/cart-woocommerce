@@ -20,7 +20,7 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
      */
     public function __construct()
     {
-        $this->endpoints = Endpoints::getInstance();
+        $this->endpoints = new Endpoints();
 
         $this->id = 'mercadopago';
         $this->icon = null;

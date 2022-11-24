@@ -49,9 +49,19 @@ class WoocommerceMercadoPago
     private const PLUGIN_NAME = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
 
     /**
+     * @var Dependencies
+     */
+    public $dependencies;
+
+    /**
      * @var Logs
      */
     public $logs;
+
+    /**
+     * @var Translations
+     */
+    public $translations;
 
     /**
      * @var Admin
@@ -69,6 +79,11 @@ class WoocommerceMercadoPago
     public $plugin;
 
     /**
+     * @var Scripts
+     */
+    public $scripts;
+
+    /**
      * @var Notices
      */
     public $notices;
@@ -79,19 +94,14 @@ class WoocommerceMercadoPago
     public $gateway;
 
     /**
-     * @var Product
-     */
-    public $product;
-
-    /**
-     * @var Scripts
-     */
-    public $scripts;
-
-    /**
      * @var Order
      */
     public $order;
+
+    /**
+     * @var Product
+     */
+    public $product;
 
     /**
      * @var Store
@@ -106,39 +116,21 @@ class WoocommerceMercadoPago
     /**
      * @var Settings
      */
-    protected $settings;
+    public $settings;
 
     /**
-     * @var Translations
+     * @var Links
      */
-    protected $translations;
-
-    /**
-     * @var WoocommerceMercadoPago
-     */
-    private static $instance = null;
+    public $links;
 
     /**
      * WoocommerceMercadoPago constructor
      */
-    private function __construct()
+    public function __construct()
     {
         $this->defineConstants();
         $this->loadPluginTextDomain();
         $this->registerHooks();
-    }
-
-    /**
-     * Get WoocommerceMercadoPago instance
-     *
-     * @return WoocommerceMercadoPago
-     */
-    public static function getInstance(): WoocommerceMercadoPago
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
     }
 
     /**
@@ -163,7 +155,7 @@ class WoocommerceMercadoPago
      */
     public function registerHooks(): void
     {
-        add_action('plugins_loaded', [$this, 'init']);
+        add_action('wp_loaded', [$this, 'init']);
     }
 
     /**
@@ -202,19 +194,22 @@ class WoocommerceMercadoPago
      */
     public function setProperties(): void
     {
-        $this->logs         = Logs::getInstance();
-        $this->translations = Translations::getInstance();
-        $this->admin        = Admin::getInstance();
-        $this->checkout     = Checkout::getInstance();
-        $this->plugin       = Plugin::getInstance();
-        $this->scripts      = Scripts::getInstance();
-        $this->notices      = Notices::getInstance();
-        $this->gateway      = Gateway::getInstance();
-        $this->order        = Order::getInstance();
-        $this->product      = Product::getInstance();
-        $this->store        = Store::getInstance();
-        $this->seller       = Seller::getInstance();
-        $this->settings     = Settings::getInstance();
+        $this->dependencies = new Dependencies();
+
+        $this->logs         = $this->dependencies->getLogs();
+        $this->translations = $this->dependencies->getTranslations();
+        $this->admin        = $this->dependencies->getAdmin();
+        $this->checkout     = $this->dependencies->getCheckout();
+        $this->plugin       = $this->dependencies->getPlugin();
+        $this->scripts      = $this->dependencies->getScripts();
+        $this->notices      = $this->dependencies->getNotices();
+        $this->gateway      = $this->dependencies->getGateway();
+        $this->order        = $this->dependencies->getOrder();
+        $this->product      = $this->dependencies->getProduct();
+        $this->store        = $this->dependencies->getStore();
+        $this->seller       = $this->dependencies->getSeller();
+        $this->settings     = $this->dependencies->getSettings();
+        $this->links        = $this->dependencies->getLinks();
     }
 
     /**
@@ -224,23 +219,23 @@ class WoocommerceMercadoPago
      */
     public function setPluginSettingsLink()
     {
-        $links = Links::getLinks();
+        $links = $this->links->getLinks();
 
         $pluginLinks = [
             [
                 'text'   => $this->translations->plugin['set_plugin'],
                 'href'   => $links['admin_settings_page'],
-                'target' => Admin::HREF_TARGET_DEFAULT,
+                'target' => $this->admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['payment_method'],
                 'href'   => $links['admin_gateways_list'],
-                'target' => Admin::HREF_TARGET_DEFAULT,
+                'target' => $this->admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->translations->plugin['plugin_manual'],
                 'href'   => $links['docs_integration_introduction'],
-                'target' => Admin::HREF_TARGET_BLANK,
+                'target' => $this->admin::HREF_TARGET_BLANK,
             ],
         ];
 

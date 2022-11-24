@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Logs\Transports;
 
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Logs\LogInterface;
 use MercadoPago\Woocommerce\Logs\LogLevels;
 
@@ -22,12 +23,18 @@ class File implements LogInterface
     private $debugMode;
 
     /**
+     * @var Store
+     */
+    private $store;
+
+    /**
      * File Logs constructor
      */
-    public function __construct($debugMode)
+    public function __construct(Store $store)
     {
         $this->logger    = wc_get_logger();
-        $this->debugMode = $debugMode;
+        $this->store     = $store;
+        $this->debugMode = $this->store->getDebugMode() === 'yes';
     }
 
     /**
