@@ -14,12 +14,12 @@ class Logs
     /**
      * @var File
      */
-    private $file;
+    public $file;
 
     /**
      * @var Remote
      */
-    private $remote;
+    public $remote;
 
     /**
      * Logs constructor

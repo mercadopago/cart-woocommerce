@@ -63,7 +63,7 @@ class Scripts
      *
      * @param string $name
      * @param string $file
-     * @param array $variables
+     * @param array  $variables
      *
      * @return void
      */
@@ -94,7 +94,7 @@ class Scripts
      *
      * @param string $name
      * @param string $file
-     * @param array $variables
+     * @param array  $variables
      *
      * @return void
      */
@@ -219,7 +219,7 @@ class Scripts
      *
      * @param string $name
      * @param string $file
-     * @param array $variables
+     * @param array  $variables
      *
      * @return void
      */

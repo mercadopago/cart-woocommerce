@@ -7,10 +7,17 @@ use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Cache;
+use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Links;
+use MercadoPago\Woocommerce\Helpers\Requester;
+use MercadoPago\Woocommerce\Helpers\Strings;
+use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
+use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
+use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
@@ -54,14 +61,44 @@ class WoocommerceMercadoPago
     public $dependencies;
 
     /**
-     * @var Logs
+     * @var Cache
      */
-    public $logs;
+    public $cache;
 
     /**
-     * @var Translations
+     * @var Country
      */
-    public $translations;
+    public $country;
+
+    /**
+     * @var Links
+     */
+    public $links;
+
+    /**
+     * @var Requester
+     */
+    public $requester;
+
+    /**
+     * @var Strings
+     */
+    public $strings;
+
+    /**
+     * @var Url
+     */
+    public $url;
+
+    /**
+     * @var Seller
+     */
+    public $seller;
+
+    /**
+     * @var Store
+     */
+    public $store;
 
     /**
      * @var Admin
@@ -74,19 +111,9 @@ class WoocommerceMercadoPago
     public $checkout;
 
     /**
-     * @var Plugin
+     * @var Endpoints
      */
-    public $plugin;
-
-    /**
-     * @var Scripts
-     */
-    public $scripts;
-
-    /**
-     * @var Notices
-     */
-    public $notices;
+    public $endpoints;
 
     /**
      * @var Gateway
@@ -94,9 +121,19 @@ class WoocommerceMercadoPago
     public $gateway;
 
     /**
+     * @var Options
+     */
+    public $options;
+
+    /**
      * @var Order
      */
     public $order;
+
+    /**
+     * @var Plugin
+     */
+    public $plugin;
 
     /**
      * @var Product
@@ -104,14 +141,19 @@ class WoocommerceMercadoPago
     public $product;
 
     /**
-     * @var Store
+     * @var Scripts
      */
-    public $store;
+    public $scripts;
 
     /**
-     * @var Seller
+     * @var Logs
      */
-    public $seller;
+    public $logs;
+
+    /**
+     * @var Notices
+     */
+    public $notices;
 
     /**
      * @var Settings
@@ -119,9 +161,9 @@ class WoocommerceMercadoPago
     public $settings;
 
     /**
-     * @var Links
+     * @var Translations
      */
-    public $links;
+    public $translations;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -196,20 +238,36 @@ class WoocommerceMercadoPago
     {
         $this->dependencies = new Dependencies();
 
-        $this->logs         = $this->dependencies->getLogs();
-        $this->translations = $this->dependencies->getTranslations();
-        $this->admin        = $this->dependencies->getAdmin();
-        $this->checkout     = $this->dependencies->getCheckout();
-        $this->plugin       = $this->dependencies->getPlugin();
-        $this->scripts      = $this->dependencies->getScripts();
-        $this->notices      = $this->dependencies->getNotices();
-        $this->gateway      = $this->dependencies->getGateway();
-        $this->order        = $this->dependencies->getOrder();
-        $this->product      = $this->dependencies->getProduct();
-        $this->store        = $this->dependencies->getStore();
-        $this->seller       = $this->dependencies->getSeller();
-        $this->settings     = $this->dependencies->getSettings();
-        $this->links        = $this->dependencies->getLinks();
+        // Configs
+        $this->seller       = $this->dependencies->seller;
+        $this->store        = $this->dependencies->store;
+
+        // Helpers
+        $this->cache        = $this->dependencies->cache;
+        $this->country      = $this->dependencies->country;
+        $this->links        = $this->dependencies->links;
+        $this->requester    = $this->dependencies->requester;
+        $this->strings      = $this->dependencies->strings;
+        $this->url          = $this->dependencies->url;
+
+        // Hooks
+        $this->admin        = $this->dependencies->admin;
+        $this->checkout     = $this->dependencies->checkout;
+        $this->endpoints    = $this->dependencies->endpoints;
+        $this->gateway      = $this->dependencies->gateway;
+        $this->options      = $this->dependencies->options;
+        $this->order        = $this->dependencies->order;
+        $this->plugin       = $this->dependencies->plugin;
+        $this->product      = $this->dependencies->product;
+        $this->scripts      = $this->dependencies->scripts;
+
+        // General
+        $this->logs         = $this->dependencies->logs;
+        $this->notices      = $this->dependencies->notices;
+
+        // Exclusive
+        $this->settings     = $this->dependencies->settings;
+        $this->translations = $this->dependencies->translations;
     }
 
     /**

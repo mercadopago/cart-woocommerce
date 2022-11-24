@@ -8,6 +8,9 @@ if (!defined('ABSPATH')) {
 
 final class Categories
 {
+    /**
+     * @return array
+     */
     public static function getCategories(): array
     {
         return [

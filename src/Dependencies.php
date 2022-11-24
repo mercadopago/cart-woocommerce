@@ -35,490 +35,256 @@ if (!defined('ABSPATH')) {
 class Dependencies
 {
     /**
-     * @var Requester
+     * @var Cache
      */
-    private $requester;
+    public $cache;
 
     /**
-     * @var Options
+     * @var Country
      */
-    private $options;
-
-    /**
-     * @var Store
-     */
-    private $store;
-
-    /**
-     * @var Logs
-     */
-    private $logs;
-
-    /**
-     * @var Seller
-     */
-    private $seller;
+    public $country;
 
     /**
      * @var Links
      */
-    private $links;
+    public $links;
 
     /**
-     * @var Translations
+     * @var Requester
      */
-    private $translations;
+    public $requester;
+
+    /**
+     * @var Strings
+     */
+    public $strings;
 
     /**
      * @var Url
      */
-    private $url;
+    public $url;
 
     /**
-     * @var Scripts
+     * @var Seller
      */
-    private $scripts;
+    public $seller;
 
     /**
-     * @var Plugin
+     * @var Store
      */
-    private $plugin;
-
-    /**
-     * @var Settings
-     */
-    private $settings;
-
-    /**
-     * @var Notices
-     */
-    private $notices;
-
-    /**
-     * @var Checkout
-     */
-    private $checkout;
-
-    /**
-     * @var Gateway
-     */
-    private $gateway;
-
-    /**
-     * @var Order
-     */
-    private $order;
-
-    /**
-     * @var Product
-     */
-    private $product;
+    public $store;
 
     /**
      * @var Admin
      */
-    private $admin;
+    public $admin;
+
+    /**
+     * @var Checkout
+     */
+    public $checkout;
+
+    /**
+     * @var Endpoints
+     */
+    public $endpoints;
+
+    /**
+     * @var Gateway
+     */
+    public $gateway;
+
+    /**
+     * @var Options
+     */
+    public $options;
+
+    /**
+     * @var Order
+     */
+    public $order;
+
+    /**
+     * @var Plugin
+     */
+    public $plugin;
+
+    /**
+     * @var Product
+     */
+    public $product;
+
+    /**
+     * @var Scripts
+     */
+    public $scripts;
+
+    /**
+     * @var Logs
+     */
+    public $logs;
+
+    /**
+     * @var Notices
+     */
+    public $notices;
+
+    /**
+     * @var Settings
+     */
+    public $settings;
+
+    /**
+     * @var Translations
+     */
+    public $translations;
 
     /**
      * Dependencies constructor
      */
     public function __construct()
     {
+        $this->cache        = new Cache();
+        $this->strings      = new Strings();
+        $this->admin        = new Admin();
+        $this->endpoints    = new Endpoints();
+        $this->options      = new Options();
+        $this->order        = new Order();
+        $this->plugin       = new Plugin();
+        $this->product      = new Product();
         $this->requester    = $this->setRequester();
-        $this->options      = $this->setOptions();
-        $this->store        = $this->setStore($this->options);
-        $this->logs         = $this->setLogs($this->store, $this->requester);
-        $this->seller       = $this->setSeller($this->options, $this->requester);
-        $this->links        = $this->setLinks($this->seller);
-        $this->translations = $this->setTranslations($this->links);
+        $this->seller       = $this->setSeller();
+        $this->country      = $this->setCountry();
+        $this->links        = $this->setLinks();
         $this->url          = $this->setUrl();
-        $this->scripts      = $this->setScripts($this->url);
-        $this->plugin       = $this->setPlugin();
-        $this->settings     = $this->setSettings($this->links, $this->plugin, $this->scripts, $this->seller, $this->store, $this->translations, $this->url);
-        $this->notices      = $this->setNotices($this->scripts, $this->translations, $this->url);
-        $this->checkout     = $this->setCheckout($this->scripts);
-        $this->gateway      = $this->setGateway($this->options);
-        $this->order        = $this->setOrder();
-        $this->product      = $this->setProduct();
-        $this->admin        = $this->setAdmin();
+        $this->store        = $this->setStore();
+        $this->scripts      = $this->setScripts();
+        $this->checkout     = $this->setCheckout();
+        $this->gateway      = $this->setGateway();
+        $this->logs         = $this->setLogs();
+        $this->translations = $this->setTranslations();
+        $this->notices      = $this->setNotices();
+        $this->settings     = $this->setSettings();
+
     }
 
     /**
-     * Get Requester
-     *
      * @return Requester
      */
-    public function getRequester(): Requester
-    {
-        return $this->requester;
-    }
-
-    /**
-     * Set requester
-     *
-     * @return Requester
-     */
-    public function setRequester(): Requester
+    private function setRequester(): Requester
     {
         $curlRequester = new CurlRequester();
         $httpClient    = new HttpClient(Requester::BASEURL_MP, $curlRequester);
+
         return new Requester($httpClient);
     }
 
     /**
-     * Get Options
-     *
-     * @return Options
+     * @return Seller
      */
-    public function getOptions(): Options
+    private function setSeller(): Seller
     {
-        return $this->options;
+        return new Seller($this->cache, $this->options, $this->requester);
     }
 
     /**
-     * Set options
-     *
-     * @return Options
+     * @return Country
      */
-    public function setOptions(): Options
+    private function setCountry(): Country
     {
-        return new Options();
+        return new Country($this->seller);
     }
 
     /**
-     * Get Store
-     *
+     * @return Links
+     */
+    private function setLinks(): Links
+    {
+        return new Links($this->country);
+    }
+
+    /**
+     * @return Url
+     */
+    private function setUrl(): Url
+    {
+        return new Url($this->strings);
+    }
+
+    /**
      * @return Store
      */
-    public function getStore(): Store
+    private function setStore(): Store
     {
-        return $this->store;
+        return new Store($this->options);
     }
 
     /**
-     * Set store
-     *
-     * @param Options $options
-     *
-     * @return Store
+     * @return Scripts
      */
-    public function setStore(Options $options): Store
+    private function setScripts(): Scripts
     {
-        return new Store($options);
+        return new Scripts($this->url);
     }
 
     /**
-     * Get logs
-     *
+     * @return Checkout
+     */
+    private function setCheckout(): Checkout
+    {
+        return new Checkout($this->scripts);
+    }
+
+    /**
+     * @return Gateway
+     */
+    private function setGateway(): Gateway
+    {
+        return new Gateway($this->options);
+    }
+
+    /**
      * @return Logs
      */
-    public function getLogs(): Logs
+    private function setLogs(): Logs
     {
-        return $this->logs;
-    }
+        $file   = new File($this->store);
+        $remote = new Remote($this->store, $this->requester);
 
-    /**
-     * Set logs
-     *
-     * @param Store $store
-     * @param Requester $requester
-     *
-     * @return Logs
-     */
-    public function setLogs(Store $store, Requester $requester): Logs
-    {
-        $file   = new File($store);
-        $remote = new Remote($store, $requester);
         return new Logs($file, $remote);
     }
 
     /**
-     * Get Seller
-     *
-     * @return Seller
-     */
-    public function getSeller(): Seller
-    {
-        return $this->seller;
-    }
-
-    /**
-     * Set seller
-     *
-     * @param Options $options
-     * @param Requester $requester
-     *
-     * @return Seller
-     */
-    public function setSeller(Options $options, Requester $requester): Seller
-    {
-        $cache = new Cache();
-        return new Seller($cache, $options, $requester);
-    }
-
-    /**
-     * Get Links
-     *
-     * @return Links
-     */
-    public function getLinks(): Links
-    {
-        return $this->links;
-    }
-
-    /**
-     * Set links
-     *
-     * @param Seller $seller
-     *
-     * @return Links
-     */
-    public function setLinks(Seller $seller): Links
-    {
-        $country = new Country($seller);
-        return new Links($country);
-    }
-
-    /**
-     * Get Translations
-     *
      * @return Translations
      */
-    public function getTranslations(): Translations
+    private function setTranslations(): Translations
     {
-        return $this->translations;
+        return new Translations($this->links);
     }
 
     /**
-     * Set translations
-     *
-     * @param Links $links
-     * @return Translations
-     */
-    public function setTranslations(Links $links): Translations
-    {
-        return new Translations($links);
-    }
-
-    /**
-     * Get Url
-     *
-     * @return Url
-     */
-    public function getUrl(): Url
-    {
-        return $this->url;
-    }
-
-    /**
-     * Set url
-     *
-     * @return Url
-     */
-    public function setUrl(): Url
-    {
-        $strings = new Strings();
-        return new Url($strings);
-    }
-
-    /**
-     * Get Scripts
-     *
-     * @return Scripts
-     */
-    public function getScripts(): Scripts
-    {
-        return $this->scripts;
-    }
-
-    /**
-     * Set scripts
-     *
-     * @param Url $url
-     *
-     * @return Scripts
-     */
-    public function setScripts(Url $url): Scripts
-    {
-        return new Scripts($url);
-    }
-
-    /**
-     * Get Plugin
-     *
-     * @return Plugin
-     */
-    public function getPlugin(): Plugin
-    {
-        return $this->plugin;
-    }
-
-    /**
-     * Set Plugin
-     *
-     * @return Plugin
-     */
-    public function setPlugin(): Plugin
-    {
-        return new Plugin();
-    }
-
-    /**
-     * Get Settings
-     *
-     * @return Settings
-     */
-    public function getSettings(): Settings
-    {
-        return $this->settings;
-    }
-
-    /**
-     * Set settings
-     *
-     * @param Links $links
-     * @param Plugin $plugin
-     * @param Scripts $scripts
-     * @param Seller $seller
-     * @param Store $store
-     * @param Translations $translations
-     * @param Url $url
-     *
-     * @return Settings
-     */
-    public function setSettings(Links $links, Plugin $plugin, Scripts $scripts, Seller $seller, Store $store, Translations $translations, Url $url): Settings
-    {
-        $admin     = new Admin();
-        $endpoints = new Endpoints();
-
-        return new Settings($admin, $endpoints, $links, $plugin, $scripts, $seller, $store, $translations, $url);
-    }
-
-    /**
-     * Get Notices
-     *
      * @return Notices
      */
-    public function getNotices(): Notices
+    private function setNotices(): Notices
     {
-        return $this->notices;
+        return new Notices($this->scripts, $this->translations, $this->url);
     }
 
     /**
-     * Set notices
-     *
-     * @param Scripts $scripts
-     * @param Translations $translations
-     * @param Url $url
-     *
-     * @return Notices
+     * @return Settings
      */
-    public function setNotices(Scripts $scripts, Translations $translations, Url $url): Notices
+    private function setSettings(): Settings
     {
-        return new Notices($scripts, $translations, $url);
-    }
-
-    /**
-     * Get Checkout
-     *
-     * @return Checkout
-     */
-    public function getCheckout(): Checkout
-    {
-        return $this->checkout;
-    }
-
-    /**
-     * Set checkout
-     *
-     * @param Scripts $scripts
-     *
-     * @return Checkout
-     */
-    public function setCheckout(Scripts $scripts): Checkout
-    {
-        return new Checkout($scripts);
-    }
-
-    /**
-     * Get Gateway
-     *
-     * @return Gateway
-     */
-    public function getGateway(): Gateway
-    {
-        return $this->gateway;
-    }
-
-    /**
-     * Set gateway
-     *
-     * @param Options $options
-     *
-     * @return Gateway
-     */
-    public function setGateway(Options $options): Gateway
-    {
-        return new Gateway($options);
-    }
-
-    /**
-     * Get Order
-     *
-     * @return Order
-     */
-    public function getOrder(): Order
-    {
-        return $this->order;
-    }
-
-    /**
-     * Set order
-     *
-     * @return Order
-     */
-    public function setOrder(): Order
-    {
-        return new Order();
-    }
-
-    /**
-     * Get Product
-     *
-     * @return Product
-     */
-    public function getProduct(): Product
-    {
-        return $this->product;
-    }
-
-    /**
-     * Set product
-     *
-     * @return Product
-     */
-    public function setProduct(): Product
-    {
-        return new Product();
-    }
-
-    /**
-     * Get Admin
-     *
-     * @return Admin
-     */
-    public function getAdmin(): Admin
-    {
-        return $this->admin;
-    }
-
-    /**
-     * Set admin
-     *
-     * @return Admin
-     */
-    public function setAdmin(): Admin
-    {
-        return new Admin();
+        return new Settings(
+            $this->admin,
+            $this->endpoints,
+            $this->links,
+            $this->plugin,
+            $this->scripts,
+            $this->seller,
+            $this->store,
+            $this->translations,
+            $this->url
+        );
     }
 }

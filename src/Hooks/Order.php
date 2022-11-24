@@ -11,15 +11,15 @@ class Order
     /**
      * Register meta box addition on order page
      *
-     * @param $id
-     * @param $title
+     * @param string $id
+     * @param string $title
      * @param string $name
-     * @param array $args
+     * @param array  $args
      * @param string $path
      *
      * @return void
      */
-    public function registerMetaBox($id, $title, string $name, array $args, string $path): void
+    public function registerMetaBox(string $id, string $title, string $name, array $args, string $path): void
     {
         add_action('add_meta_boxes_shop_order', function () use ($id, $title, $name, $args, $path) {
             $this->addMetaBox($id, $title, $name, $args, $path);

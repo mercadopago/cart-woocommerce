@@ -71,9 +71,9 @@ class Translations
     public $updateStore = [];
 
     /**
-     * @var array
+     * @var Links
      */
-    private $links = [];
+    private $links;
 
     /**
      * Translations constructor

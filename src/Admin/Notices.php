@@ -57,7 +57,7 @@ class Notices
      * Set a notice info
      *
      * @param string $message
-     * @param bool $dismiss
+     * @param bool   $dismiss
      *
      * @return void
      */
@@ -70,7 +70,7 @@ class Notices
      * Set a notice success
      *
      * @param string $message
-     * @param bool $dismiss
+     * @param bool   $dismiss
      *
      * @return void
      */
@@ -83,7 +83,7 @@ class Notices
      * Set a notice warning
      *
      * @param string $message
-     * @param bool $dismiss
+     * @param bool   $dismiss
      *
      * @return void
      */
@@ -96,7 +96,7 @@ class Notices
      * Set a notice error
      *
      * @param string $message
-     * @param bool $dismiss
+     * @param bool   $dismiss
      *
      * @return void
      */
@@ -155,7 +155,7 @@ class Notices
      *
      * @param string $message
      * @param string $type
-     * @param bool $dismiss
+     * @param bool   $dismiss
      *
      * @return void
      */

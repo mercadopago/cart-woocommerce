@@ -26,7 +26,7 @@ final class Strings
      *
      * @param string $expected
      * @param string $current
-     * @param bool $allowPartialMatch
+     * @param bool   $allowPartialMatch
      *
      * @return bool
      */
