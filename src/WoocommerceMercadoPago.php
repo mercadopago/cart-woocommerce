@@ -155,7 +155,7 @@ class WoocommerceMercadoPago
      */
     public function registerHooks(): void
     {
-        add_action('plugins_loaded', [$this, 'init']);
+        add_action('wp_loaded', [$this, 'init']);
     }
 
     /**
@@ -183,7 +183,7 @@ class WoocommerceMercadoPago
         }
 
         if (!class_exists('WC_Payment_Gateway')) {
-            $this->dependencies->notices->adminNoticeMissWoocoommerce();
+            $this->notices->adminNoticeMissWoocoommerce();
         }
     }
 
