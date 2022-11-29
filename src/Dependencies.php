@@ -12,6 +12,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Links;
+use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
@@ -63,6 +64,11 @@ class Dependencies
      * @var Url
      */
     public $url;
+
+    /**
+     * @var Nonce
+     */
+    public $nonce;
 
     /**
      * @var Seller
@@ -152,6 +158,7 @@ class Dependencies
         $this->order        = new Order();
         $this->plugin       = new Plugin();
         $this->product      = new Product();
+        $this->nonce        = new Nonce();
         $this->requester    = $this->setRequester();
         $this->seller       = $this->setSeller();
         $this->country      = $this->setCountry();
@@ -165,7 +172,6 @@ class Dependencies
         $this->translations = $this->setTranslations();
         $this->notices      = $this->setNotices();
         $this->settings     = $this->setSettings();
-
     }
 
     /**
@@ -284,7 +290,8 @@ class Dependencies
             $this->seller,
             $this->store,
             $this->translations,
-            $this->url
+            $this->url,
+            $this->nonce
         );
     }
 }
