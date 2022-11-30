@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Categories;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Links;
+use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -23,6 +24,11 @@ class Settings
      * @const
      */
     private const PRIORITY_ON_MENU = 90;
+
+    /**
+     * @const
+     */
+    private const SETTINGS_NONCE_ID = 'mp_settings_nonce';
 
     /**
      * @var Admin
@@ -70,6 +76,11 @@ class Settings
     private $url;
 
     /**
+     * @var Nonce
+     */
+    private $nonce;
+
+    /**
      * Settings constructor
      */
     public function __construct(
@@ -81,7 +92,8 @@ class Settings
         Seller $seller,
         Store $store,
         Translations $translations,
-        Url $url
+        Url $url,
+        Nonce $nonce
     ) {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
@@ -92,6 +104,7 @@ class Settings
         $this->store        = $store;
         $this->translations = $translations;
         $this->url          = $url;
+        $this->nonce        = $nonce;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -123,7 +136,10 @@ class Settings
 
             $this->scripts->registerAdminScript(
                 'mercadopago_settings_admin_js',
-                $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js')
+                $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
+                [
+                    'nonce' => $this->nonce->generateNonce(self::SETTINGS_NONCE_ID)
+                ]
             );
 
             $this->scripts->registerCaronteAdminScript();
@@ -153,13 +169,12 @@ class Settings
     public function registerAjaxEndpoints(): void
     {
         $this->endpoints->registerAjaxEndpoint('mp_update_test_mode', [$this, 'mercadopagoUpdateTestMode']);
+        $this->endpoints->registerAjaxEndpoint('mp_update_store_information', [$this, 'mercadopagoUpdateStoreInfo']);
+        $this->endpoints->registerAjaxEndpoint('mp_update_option_credentials', [$this, 'mercadopagoUpdateOptionCredentials']);
         $this->endpoints->registerAjaxEndpoint('mp_update_public_key', [$this, 'mercadopagoValidatePublicKey']);
+        $this->endpoints->registerAjaxEndpoint('mp_update_access_token', [$this, 'mercadopagoValidateAccessToken']);
         $this->endpoints->registerAjaxEndpoint('mp_get_requirements', [$this, 'mercadopagoValidateRequirements']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
-        $this->endpoints->registerAjaxEndpoint('mp_update_access_token', [$this, 'mercadopagoValidateAccessToken']);
-        $this->endpoints->registerAjaxEndpoint('mp_update_store_information', [$this, 'mercadopagoUpdateStoreInfo']);
-        $this->endpoints->registerAjaxEndpoint('mp_validate_credentials', [$this, 'mercadopagoValidateCredentials']);
-        $this->endpoints->registerAjaxEndpoint('mp_update_option_credentials', [$this, 'mercadopagoUpdateOptionCredentials']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
     }
 
@@ -222,6 +237,8 @@ class Settings
      */
     public function mercadopagoValidateRequirements(): void
     {
+        $this->validateAjaxNonce();
+
         $hasCurl = in_array('curl', get_loaded_extensions(), true);
         $hasGD   = in_array('gd', get_loaded_extensions(), true);
         $hasSSL  = is_ssl();
@@ -240,6 +257,8 @@ class Settings
      */
     public function mercadopagoValidateStoreTips(): void
     {
+        $this->validateAjaxNonce();
+
         $storeId       = $this->store->getStoreId();
         $storeName     = $this->store->getStoreName();
         $storeCategory = $this->store->getStoreCategory();
@@ -258,6 +277,8 @@ class Settings
      */
     public function mercadopagoValidateCredentialsTips(): void
     {
+        $this->validateAjaxNonce();
+
         $publicKeyProd   = $this->seller->getCredentialsPublicKeyProd();
         $accessTokenProd = $this->seller->getCredentialsAccessTokenProd();
 
@@ -275,6 +296,8 @@ class Settings
      */
     public function mercadopagoValidatePublicKey(): void
     {
+        $this->validateAjaxNonce();
+
         $isTest    = Form::getSanitizeTextFromPost('is_test');
         $publicKey = Form::getSanitizeTextFromPost('public_key');
 
@@ -297,6 +320,8 @@ class Settings
      */
     public function mercadopagoValidateAccessToken(): void
     {
+        $this->validateAjaxNonce();
+
         $isTest      = Form::getSanitizeTextFromPost('is_test');
         $accessToken = Form::getSanitizeTextFromPost('access_token');
 
@@ -319,6 +344,8 @@ class Settings
      */
     public function mercadopagoUpdateOptionCredentials(): void
     {
+        $this->validateAjaxNonce();
+
         $publicKeyProd   = Form::getSanitizeTextFromPost('public_key_prod');
         $accessTokenProd = Form::getSanitizeTextFromPost('access_token_prod');
         $publicKeyTest   = Form::getSanitizeTextFromPost('public_key_test');
@@ -392,6 +419,8 @@ class Settings
      */
     public function mercadopagoUpdateStoreInfo(): void
     {
+        $this->validateAjaxNonce();
+
         $storeId       = Form::getSanitizeTextFromPost('store_category_id');
         $storeName     = Form::getSanitizeTextFromPost('store_identificator');
         $storeCategory = Form::getSanitizeTextFromPost('store_categories');
@@ -418,6 +447,8 @@ class Settings
      */
     public function mercadopagoUpdateTestMode(): void
     {
+        $this->validateAjaxNonce();
+
         $checkoutTestMode    = Form::getSanitizeTextFromPost('input_mode_value');
         $verifyAlertTestMode = Form::getSanitizeTextFromPost('input_verify_alert_test_mode');
 
@@ -440,5 +471,15 @@ class Settings
         }
 
         wp_send_json_success('Mercado Pago\'s Payment Methods in Production Mode');
+    }
+
+    /**
+     * Validate ajax nonce
+     *
+     * @return void
+     */
+    private function validateAjaxNonce(): void
+    {
+        $this->nonce->validateNonce(self::SETTINGS_NONCE_ID, Form::getSanitizeTextFromPost('nonce'));
     }
 }

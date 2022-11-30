@@ -1,4 +1,4 @@
-/* globals jQuery, ajaxurl */
+/* globals jQuery, ajaxurl, mercadopago_settings_admin_js_params */
 
 function clear_message() {
   document.querySelector('.mp-alert').remove();
@@ -168,7 +168,8 @@ function mp_validate_credentials_tips() {
     .post(
       ajaxurl,
       {
-        action: 'mp_validate_credentials_tips'
+        action: 'mp_validate_credentials_tips',
+        nonce: mercadopago_settings_admin_js_params.nonce,
       },
       function() {}
     )
@@ -192,6 +193,7 @@ function mp_validate_store_tips() {
       ajaxurl,
       {
         action: 'mp_validate_store_tips',
+        nonce: mercadopago_settings_admin_js_params.nonce,
       },
       function() {}
     )
@@ -248,22 +250,28 @@ function mp_continue_to_next_step() {
 }
 
 function mp_get_requirements() {
-  jQuery.post(ajaxurl, {action: 'mp_get_requirements'}, function (response) {
-    const requirements = {
-      ssl: document.getElementById('mp-req-ssl'),
-      gd_ext: document.getElementById('mp-req-gd'),
-      curl_ext: document.getElementById('mp-req-curl'),
-    };
+  jQuery.post(
+    ajaxurl,
+    {
+      action: 'mp_get_requirements',
+      nonce: mercadopago_settings_admin_js_params.nonce,
+    },
+    function (response) {
+      const requirements = {
+        ssl: document.getElementById('mp-req-ssl'),
+        gd_ext: document.getElementById('mp-req-gd'),
+        curl_ext: document.getElementById('mp-req-curl'),
+      };
 
-    for (let i in requirements) {
-      const requirement = requirements[i];
-      requirement.style = '';
-      if (!response.data[i]) {
-        requirement.classList.remove('mp-settings-icon-success');
-        requirement.classList.add('mp-settings-icon-warning');
+      for (let i in requirements) {
+        const requirement = requirements[i];
+        requirement.style = '';
+        if (!response.data[i]) {
+          requirement.classList.remove('mp-settings-icon-success');
+          requirement.classList.add('mp-settings-icon-warning');
+        }
       }
-    }
-  });
+    });
 }
 
 function mp_settings_accordion_start() {
@@ -333,6 +341,7 @@ function mp_validate_credentials() {
             is_test: false,
             access_token: this.value,
             action: 'mp_update_access_token',
+            nonce: mercadopago_settings_admin_js_params.nonce,
           },
           function() {}
         )
@@ -366,6 +375,7 @@ function mp_validate_credentials() {
               is_test: true,
               access_token: this.value,
               action: 'mp_update_access_token',
+              nonce: mercadopago_settings_admin_js_params.nonce,
             },
             function() {}
           )
@@ -396,6 +406,7 @@ function mp_validate_credentials() {
             is_test: false,
             public_key: this.value,
             action: 'mp_update_public_key',
+            nonce: mercadopago_settings_admin_js_params.nonce,
           },
           function() {}
         )
@@ -429,6 +440,7 @@ function mp_validate_credentials() {
               is_test: true,
               public_key: this.value,
               action: 'mp_update_public_key',
+              nonce: mercadopago_settings_admin_js_params.nonce,
             },
             function() {}
           )
@@ -467,6 +479,7 @@ function mp_update_option_credentials() {
             access_token_prod: document.getElementById('mp-access-token-prod').value,
             access_token_test: document.getElementById('mp-access-token-test').value,
             action: 'mp_update_option_credentials',
+            nonce: mercadopago_settings_admin_js_params.nonce,
           },
           function() {}
         )
@@ -515,6 +528,7 @@ function mp_update_store_information() {
             store_identificator: document.getElementById('mp-store-identification').value,
             store_debug_mode: document.querySelector('#mp-store-debug-mode:checked')?.value,
             action: 'mp_update_store_information',
+            nonce: mercadopago_settings_admin_js_params.nonce,
           },
           function() {}
         )
@@ -559,7 +573,8 @@ function mp_update_test_mode() {
           {
             input_mode_value: document.querySelector('input[name="mp-test-prod"]:checked').value,
             input_verify_alert_test_mode: mp_verify_alert_test_mode() ? 'yes' : 'no',
-            action: 'mp_update_test_mode'
+            action: 'mp_update_test_mode',
+            nonce: mercadopago_settings_admin_js_params.nonce,
           },
           function() {}
         )
