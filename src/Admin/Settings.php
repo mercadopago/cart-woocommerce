@@ -28,7 +28,7 @@ class Settings
     /**
      * @const
      */
-    private const SETTINGS_NONCE_ID = 'mp_settings_nonce';
+    private const NONCE_ID = 'mp_settings_nonce';
 
     /**
      * @var Admin
@@ -138,7 +138,7 @@ class Settings
                 'mercadopago_settings_admin_js',
                 $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
                 [
-                    'nonce' => $this->nonce->generateNonce(self::SETTINGS_NONCE_ID)
+                    'nonce' => $this->nonce->generateNonce(self::NONCE_ID)
                 ]
             );
 
@@ -480,6 +480,6 @@ class Settings
      */
     private function validateAjaxNonce(): void
     {
-        $this->nonce->validateNonce(self::SETTINGS_NONCE_ID, Form::getSanitizeTextFromPost('nonce'));
+        $this->nonce->validateNonce(self::NONCE_ID, Form::getSanitizeTextFromPost('nonce'));
     }
 }
