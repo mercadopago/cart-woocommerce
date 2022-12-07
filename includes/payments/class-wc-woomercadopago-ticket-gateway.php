@@ -18,7 +18,26 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 
+	/**
+	 * ID
+	 *
+	 * @const
+	 */
 	const ID = 'woo-mercado-pago-ticket';
+
+	/**
+	 * Nonce field id
+	 *
+	 * @const
+	 */
+	const NONCE_FIELD_ID = 'mercado_pago_ticket';
+
+	/**
+	 * Nonce field name
+	 *
+	 * @const
+	 */
+	const NONCE_FIELD_NAME = 'mercado_pago_ticket_nonce';
 
 	/**
 	 * WC_WooMercadoPago_TicketGateway constructor.
@@ -51,7 +70,7 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		parent::__construct();
 		$this->form_fields         = $this->get_form_mp_fields();
 		$this->hook                = new WC_WooMercadoPago_Hook_Ticket( $this );
-		$this->notification        = new WC_WooMercadoPago_Notification_Webhook( $this );
+		$this->notification        = new WC_WooMercadoPago_Notification_Core( $this );
 		$this->currency_convertion = true;
 		$this->icon                = $this->get_checkout_icon();
 	}
@@ -350,6 +369,7 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		}
 
 		$parameters = array(
+			'nonce_field'          => $this->mp_nonce->generate_nonce_field( self::NONCE_FIELD_ID, self::NONCE_FIELD_NAME ),
 			'test_mode'            => ! $this->is_production_mode(),
 			'test_mode_link'       => $test_mode_link,
 			'amount'               => $amount,
@@ -396,7 +416,11 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @return array|string[]
 	 */
 	public function process_payment( $order_id ) {
-		// @todo need fix Processing form data without nonce verification
+		$this->mp_nonce->validate_nonce(
+			self::NONCE_FIELD_ID,
+			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( self::NONCE_FIELD_NAME )
+		);
+
 		// @codingStandardsIgnoreLine
 		$ticket_checkout = $_POST['mercadopago_ticket'];
 		$this->log->write_log( __FUNCTION__, 'Ticket POST: ' . wp_json_encode( $ticket_checkout, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
@@ -486,7 +510,7 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 
 		if ( isset( $ticket_checkout['amount'] ) && ! empty( $ticket_checkout['amount'] ) &&
 			isset( $ticket_checkout['paymentMethodId'] ) && ! empty( $ticket_checkout['paymentMethodId'] ) ) {
-			$response = $this->create_preference( $order, $ticket_checkout );
+			$response = $this->create_payment( $order, $ticket_checkout );
 
 			if ( is_array( $response ) && array_key_exists( 'status', $response ) ) {
 				if ( 'pending' === $response['status'] ) {
@@ -556,31 +580,23 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	}
 
 	/**
-	 * Create preference
+	 * Create payment
 	 *
 	 * @param object $order Order.
 	 * @param array  $ticket_checkout Ticket checkout.
 	 * @return string|array
 	 */
-	public function create_preference( $order, $ticket_checkout ) {
+	public function create_payment( $order, $ticket_checkout ) {
 		$preferences_ticket = new WC_WooMercadoPago_Preference_Ticket( $this, $order, $ticket_checkout );
-		$preferences        = $preferences_ticket->get_preference();
+		$payment            = $preferences_ticket->get_transaction( 'Payment' );
+
 		try {
-			$checkout_info = $this->mp->post( '/v1/payments', wp_json_encode( $preferences ) );
-			$this->log->write_log( __FUNCTION__, 'Created Preference: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-			if ( $checkout_info['status'] < 200 || $checkout_info['status'] >= 300 ) {
-				$this->log->write_log( __FUNCTION__, 'mercado pago gave error, payment creation failed with error: ' . $checkout_info['response']['message'] );
-				return $checkout_info['response']['message'];
-			} elseif ( is_wp_error( $checkout_info ) ) {
-				$this->log->write_log( __FUNCTION__, 'WordPress gave error, payment creation failed with error: ' . $checkout_info['response']['message'] );
-				return $checkout_info['response']['message'];
-			} else {
-				$this->log->write_log( __FUNCTION__, 'payment link generated with success from mercado pago, with structure as follow: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-				return $checkout_info['response'];
-			}
-		} catch ( WC_WooMercadoPago_Exception $ex ) {
-			$this->log->write_log( __FUNCTION__, 'payment creation failed with exception: ' . wp_json_encode( $ex, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-			return $ex->getMessage();
+			$checkout_info = $payment->save();
+			$this->log->write_log( __FUNCTION__, 'Created Payment: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+			return $checkout_info;
+		} catch ( Exception $e ) {
+			$this->log->write_log( __FUNCTION__, 'payment creation failed with error: ' . $e->getMessage() );
+			return $e->getMessage();
 		}
 	}
 

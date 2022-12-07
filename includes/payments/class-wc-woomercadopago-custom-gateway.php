@@ -18,7 +18,26 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 
+	/**
+	 * ID
+	 *
+	 * @const
+	 */
 	const ID = 'woo-mercado-pago-custom';
+
+	/**
+	 * Nonce field id
+	 *
+	 * @const
+	 */
+	const NONCE_FIELD_ID = 'mercado_pago_custom';
+
+	/**
+	 * Nonce field name
+	 *
+	 * @const
+	 */
+	const NONCE_FIELD_NAME = 'mercado_pago_custom_nonce';
 
 	/**
 	 * Is enable Wallet Button?
@@ -53,7 +72,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		parent::__construct();
 		$this->form_fields         = $this->get_form_mp_fields();
 		$this->hook                = new WC_WooMercadoPago_Hook_Custom( $this );
-		$this->notification        = new WC_WooMercadoPago_Notification_Webhook( $this );
+		$this->notification        = new WC_WooMercadoPago_Notification_Core( $this );
 		$this->currency_convertion = true;
 		$this->icon                = $this->get_checkout_icon();
 	}
@@ -418,6 +437,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		}
 
 		$parameters = array(
+			'nonce_field'          => $this->mp_nonce->generate_nonce_field( self::NONCE_FIELD_ID, self::NONCE_FIELD_NAME ),
 			'test_mode'            => ! $this->is_production_mode(),
 			'test_mode_link'       => $test_mode_link,
 			'amount'               => $amount,
@@ -445,13 +465,14 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @return array|void
 	 */
 	public function process_payment( $order_id ) {
-		// @todo need fix Processing form data without nonce verification
+		$this->mp_nonce->validate_nonce(
+			self::NONCE_FIELD_ID,
+			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( self::NONCE_FIELD_NAME )
+		);
+
 		// @codingStandardsIgnoreLine
 		$custom_checkout = $_POST['mercadopago_custom'];
-
-		// @todo need fix Processing form data without nonce verification
-		// @codingStandardsIgnoreLine
-		if ( ! isset( $_POST['mercadopago_custom'] ) ) {
+		if ( ! isset( $custom_checkout ) ) {
 			return $this->process_result_fail(
 				__FUNCTION__,
 				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' ),
@@ -525,7 +546,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 			isset( $custom_checkout['installments'] ) && ! empty( $custom_checkout['installments'] ) &&
 			-1 !== $custom_checkout['installments']
 		) {
-			$response = $this->create_preference( $order, $custom_checkout );
+			$response = $this->create_payment( $order, $custom_checkout );
 
 			$installments       = (float) $response['installments'];
 			$installment_amount = (float) $response['transaction_details']['installment_amount'];
@@ -675,31 +696,23 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	}
 
 	/**
-	 * Create Preference
+	 * Create Payment
 	 *
 	 * @param object $order Order.
 	 * @param mixed  $custom_checkout Checkout info.
 	 * @return string|array
 	 */
-	protected function create_preference( $order, $custom_checkout ) {
+	protected function create_payment( $order, $custom_checkout ) {
 		$preferences_custom = new WC_WooMercadoPago_Preference_Custom( $this, $order, $custom_checkout );
-		$preferences        = $preferences_custom->get_preference();
+		$payment            = $preferences_custom->get_transaction( 'Payment' );
+
 		try {
-			$checkout_info = $this->mp->post( '/v1/payments', wp_json_encode( $preferences ) );
-			$this->log->write_log( __FUNCTION__, 'Preference created: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-			if ( $checkout_info['status'] < 200 || $checkout_info['status'] >= 300 ) {
-				$this->log->write_log( __FUNCTION__, 'mercado pago gave error, payment creation failed with error: ' . $checkout_info['response']['message'] );
-				return $checkout_info['response']['message'];
-			} elseif ( is_wp_error( $checkout_info ) ) {
-				$this->log->write_log( __FUNCTION__, 'WordPress gave error, payment creation failed with error: ' . $checkout_info['response']['message'] );
-				return $checkout_info['response']['message'];
-			} else {
-				$this->log->write_log( __FUNCTION__, 'payment link generated with success from mercado pago, with structure as follow: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-				return $checkout_info['response'];
-			}
-		} catch ( WC_WooMercadoPago_Exception $ex ) {
-			$this->log->write_log( __FUNCTION__, 'payment creation failed with exception: ' . wp_json_encode( $ex, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-			return $ex->getMessage();
+			$checkout_info = $payment->save();
+			$this->log->write_log( __FUNCTION__, 'Payment created: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+			return $checkout_info;
+		} catch ( Exception $e ) {
+			$this->log->write_log( __FUNCTION__, 'payment creation failed with error: ' . $e->getMessage() );
+			return $e->getMessage();
 		}
 	}
 
@@ -713,23 +726,14 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	public function create_preference_wallet_button( $order ) {
 		$this->installments       = 12;
 		$preference_wallet_button = new WC_WooMercadoPago_Preference_Custom_Wallet_Button( $this, $order );
-		$preference               = $preference_wallet_button->get_preference();
+		$preference               = $preference_wallet_button->get_transaction( 'Preference' );
 
 		try {
-			$checkout_info = $this->mp->create_preference( wp_json_encode( $preference ) );
+			$checkout_info = $preference->save();
 			$this->log->write_log( __FUNCTION__, 'Created Preference: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-			if ( $checkout_info['status'] < 200 || $checkout_info['status'] >= 300 ) {
-				$this->log->write_log( __FUNCTION__, 'mercado pago gave error, payment creation failed with error: ' . $checkout_info['response']['message'] );
-				return false;
-			} elseif ( is_wp_error( $checkout_info ) ) {
-				$this->log->write_log( __FUNCTION__, 'WordPress gave error, payment creation failed with error: ' . $checkout_info['response']['message'] );
-				return false;
-			} else {
-				$this->log->write_log( __FUNCTION__, 'payment link generated with success from mercado pago, with structure as follow: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-				return $checkout_info['response'];
-			}
-		} catch ( WC_WooMercadoPago_Exception $ex ) {
-			$this->log->write_log( __FUNCTION__, 'payment creation failed with exception: ' . wp_json_encode( $ex, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+			return $checkout_info;
+		} catch ( Exception $e ) {
+			$this->log->write_log( __FUNCTION__, 'preference creation failed with error: ' . $e->getMessage() );
 			return false;
 		}
 	}

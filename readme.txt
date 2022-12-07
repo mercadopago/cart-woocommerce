@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 4.9.10
 Tested up to: 6.0
 Requires PHP: 5.6
-Stable tag: 6.3.1
+Stable tag: 6.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,20 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+= v6.4.0 (07/12/2022) =
+* Features
+- Added Mercado Pago PHP SDK
+- Added min width for checkout select inputs
+- Added nonce validation to avoid CSRF Vulnerabilities
+
+* Changes
+- Changed notification flow to use PHP SDK
+- Changed payments and preferences flow to use PHP SDK
+
+* Bug fixes
+- Fixed plugin translations
+- Fixed plugin configuration page links
+
 = v6.3.1 (13/10/2022) =
 * Changes
 - Improved discarded notification response

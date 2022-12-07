@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.4.0] - 2022-12-07
+
+### Added
+- Added Mercado Pago PHP SDK
+- Added min width for checkout select inputs
+- Added nonce validation to avoid CSRF Vulnerabilities
+
+### Changed
+- Changed notification flow to use PHP SDK
+- Changed payments and preferences flow to use PHP SDK
+
+### Fixed
+- Fixed plugin translations
+- Fixed plugin configuration page links
+
 ## [6.3.1] - 2022-10-13
 
 ### Changed

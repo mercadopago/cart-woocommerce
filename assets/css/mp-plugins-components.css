@@ -735,7 +735,8 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-text {
     margin: 0 8px !important;
     min-height: 20px !important;
     outline: none !important;
-    padding: 0 !important
+    padding: 0 !important;
+	min-width: 10px !important
 }
 
 .mp-input-document .mp-input .mp-vertical-line {

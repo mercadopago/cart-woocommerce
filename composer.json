@@ -21,7 +21,8 @@
         ]
     },
     "require": {
-        "ext-curl": "*"
+        "ext-curl": "*",
+        "ext-json": "*"
     },
     "config": {
         "allow-plugins": {

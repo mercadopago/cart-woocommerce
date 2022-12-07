@@ -26,7 +26,7 @@ class WC_WooMercadoPago_Helper_Links {
 		$link_prefix_mp_link = 'https://www.mercadopago.com/';
 		$link_costs_mp       = 'costs-section';
 		$link_developers     = 'developers/';
-		$link_guides         = '/guides/plugins/woocommerce/integration';
+		$link_guides         = '/docs/woocommerce/integration-configuration';
 		$link_credentials    = 'panel/credentials';
 
 		return array (
@@ -43,7 +43,7 @@ class WC_WooMercadoPago_Helper_Links {
 		$devsite_links = array(
 			'dev_program'       => $base_link . '/developer-program',
 			'notifications_ipn' => $base_link . '/guides/notifications/ipn',
-			'shopping_testing'  => $base_link . '/guides/plugins/woocommerce/testing',
+			'shopping_testing'  => $base_link . '/docs/woocommerce/integration-test',
 			'test_cards'        => $base_link . '/docs/checkout-api/integration-test/test-cards'
 		);
 

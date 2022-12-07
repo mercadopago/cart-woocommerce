@@ -18,12 +18,22 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WC_WooMercadoPago_Saved_Cards {
 
+	const SAVED_CARDS_NONCE_ID = 'mp_saved_cards_nonce';
+
 	/**
-	 * Static instance
+	 * WP_Nonce
+	 *
+	 * @var WC_WooMercadoPago_Helper_Nonce
+	 */
+	protected $nonce;
+
+	/**
+	 * File Suffix
 	 *
 	 * @var string
 	*/
-	private $file_suffix = null;
+	private $file_suffix;
+
 	/**
 	 * Static instance
 	 *
@@ -36,6 +46,7 @@ class WC_WooMercadoPago_Saved_Cards {
 	 */
 	public function __construct() {
 		$this->file_suffix = $this->get_suffix();
+		$this->nonce       = WC_WooMercadoPago_Helper_Nonce::get_instance();
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_saved_cards_notice_css' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_saved_cards_notice_js' ) );
@@ -85,30 +96,34 @@ class WC_WooMercadoPago_Saved_Cards {
 	 */
 	public function load_saved_cards_notice_js() {
 		if ( is_admin() ) {
+			$script_name = 'woocommerce_mercadopago_admin_saved_cards';
+
 			wp_enqueue_script(
-				'woocommerce-mercadopago-admin-saved-cards',
+				$script_name,
 				plugins_url( '../../assets/js/saved_cards_notice_mercadopago' . $this->file_suffix . '.js', plugin_dir_path( __FILE__ ) ),
 				array(),
 				WC_WooMercadoPago_Constants::VERSION,
 				false
 			);
+
+			wp_localize_script($script_name, $script_name . '_vars', [
+				'nonce' => $this->nonce->generate_nonce(self::SAVED_CARDS_NONCE_ID),
+			]);
 		}
 	}
 
 	/**
 	 * Should Be Inline Style
 	 *
-	 * @return string
-	*/
+	 * @return bool
+	 */
 	public static function should_be_inline_style() {
 		return class_exists( 'WC_WooMercadoPago_Module' )
 			&& WC_WooMercadoPago_Module::is_wc_new_version()
-			// @todo need fix Processing form data without nonce verification
 			// @codingStandardsIgnoreLine
 			&& isset( $_GET['page'] )
-			// @todo need fix Processing form data without nonce verification
-		       	// @codingStandardsIgnoreLine
-		       	&& 'wc-settings' === sanitize_key( $_GET['page'] );
+			// @codingStandardsIgnoreLine
+			&& 'wc-settings' === sanitize_key( $_GET['page'] );
 	}
 
 	/**
@@ -155,8 +170,13 @@ class WC_WooMercadoPago_Saved_Cards {
 	 * Dismiss the review admin notice
 	 */
 	public function saved_cards_notice_dismiss() {
-		$must_show_notice = (int) get_option( '_mp_dismiss_saved_cards_notice', 0 );
+		$this->nonce->validate_nonce(
+			self::SAVED_CARDS_NONCE_ID,
+			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'nonce' )
+		);
+
 		$hide             = 1;
+		$must_show_notice = (int) get_option( '_mp_dismiss_saved_cards_notice', 0 );
 
 		if ( ! $must_show_notice ) {
 			update_option( '_mp_dismiss_saved_cards_notice', $hide, true );
