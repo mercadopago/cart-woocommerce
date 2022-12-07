@@ -24,7 +24,7 @@ class WC_WooMercadoPago_Image_Generator {
 	public static $instance = null;
 
 	/**
-	 * WC_WooMercadoPago_Notification_Abstrac constructor.
+	 * WC_WooMercadoPago_Image_Generator constructor.
 	 */
 	public function __construct() {
 
@@ -85,7 +85,6 @@ class WC_WooMercadoPago_Image_Generator {
 	 * @return array
 	 */
 	public static function get_access_data() {
-		// @todo need fix Processing form data without nonce verification
 		// @codingStandardsIgnoreLine
 		$id_payment = $_GET['id'];
 

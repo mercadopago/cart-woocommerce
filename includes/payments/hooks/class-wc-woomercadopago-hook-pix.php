@@ -34,7 +34,6 @@ class WC_WooMercadoPago_Hook_Pix extends WC_WooMercadoPago_Hook_Abstract {
 	 *  Add Discount
 	 */
 	public function add_discount() {
-		// @todo need fix Processing form data without nonce verification
 		// @codingStandardsIgnoreLine
 		if ( ! isset( $_POST['mercadopago_pix'] ) ) {
 			return;
@@ -44,7 +43,6 @@ class WC_WooMercadoPago_Hook_Pix extends WC_WooMercadoPago_Hook_Abstract {
 			return;
 		}
 
-		// @todo need fix Processing form data without nonce verification
 		// @codingStandardsIgnoreLine
 		$pix_checkout = $_POST['mercadopago_pix'];
 		parent::add_discount_abst( $pix_checkout );

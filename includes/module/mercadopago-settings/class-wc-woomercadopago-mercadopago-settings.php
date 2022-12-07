@@ -2,13 +2,23 @@
 
 class WC_WooMercadoPago_MercadoPago_Settings {
 
-
 	const PRIORITY_ON_MENU = 90;
+
+	const SETTINGS_NONCE_ID = 'mp_settings_nonce';
 
 	protected $options;
 
-	public function __construct( WC_WooMercadoPago_Options $options ) {
+	protected $nonce;
+
+	/**
+	 * WC_WooMercadoPago_MercadoPago_Settings constructor
+	 *
+	 * @param WC_WooMercadoPago_Options $options
+	 * @param WC_WooMercadoPago_Helper_Nonce $nonce
+	 */
+	public function __construct( WC_WooMercadoPago_Options $options, WC_WooMercadoPago_Helper_Nonce $nonce ) {
 		$this->options = $options;
+		$this->nonce   = $nonce;
 	}
 
 	/**
@@ -36,7 +46,6 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_admin_scripts' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_admin_style' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_research_script' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'load_notices_scripts' ) );
 	}
 
 	/**
@@ -58,22 +67,38 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 * Load JavaScripts
 	 */
 	public function load_admin_scripts() {
-		if ( is_admin() && ( WC_WooMercadoPago_Helper_Current_Url::validate_page( 'mercadopago-settings' ) || WC_WooMercadoPago_Helper_Current_Url::validate_section( 'woo-mercado-pago' ) ) ) {
+		if (
+			is_admin() && (
+				WC_WooMercadoPago_Helper_Current_Url::validate_page( 'mercadopago-settings' ) ||
+				WC_WooMercadoPago_Helper_Current_Url::validate_section( 'woo-mercado-pago' )
+			)
+		) {
+			$script_name = 'mercadopago_settings_javascript';
+
 			wp_enqueue_script(
-				'mercadopago_settings_javascript',
+				$script_name,
 				$this->get_url( '../../../assets/js/mercadopago-settings/mercadopago_settings', '.js' ),
 				array(),
 				WC_WooMercadoPago_Constants::VERSION,
 				true
 			);
+
+			wp_localize_script($script_name, $script_name . '_vars', [
+				'nonce' => $this->nonce->generate_nonce(self::SETTINGS_NONCE_ID),
+			]);
 		}
 	}
 
 	/**
-	 * Load Research Scripts
+	 * Load Caronte Research Scripts
 	 */
 	public function load_research_script() {
-		if ( is_admin() && ( WC_WooMercadoPago_Helper_Current_Url::validate_page( 'mercadopago-settings' ) || WC_WooMercadoPago_Helper_Current_Url::validate_section( 'woo-mercado-pago' ) ) ) {
+		if (
+			is_admin() && (
+				WC_WooMercadoPago_Helper_Current_Url::validate_page( 'mercadopago-settings' ) ||
+				WC_WooMercadoPago_Helper_Current_Url::validate_section( 'woo-mercado-pago' )
+			)
+		) {
 			global $woocommerce;
 
 			wp_enqueue_script(
@@ -94,40 +119,6 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 					'plugin_version'        => WC_WooMercadoPago_Constants::VERSION,
 					'public_key_element_id' => 'mp-public-key-prod',
 					'reference_element_id'  => 'reference'
-				)
-			);
-		}
-	}
-
-	/**
-	 * Load Notices Scripts
-	 */
-	public function load_notices_scripts() {
-		if ( is_admin() && WC_WooMercadoPago_Helper_Current_Url::validate_page( 'mercadopago-settings' ) ) {
-			global $woocommerce;
-
-			$site_id     = get_option( '_site_id_v1' );
-			$credentials = $this->options->get_access_token_and_public_key();
-			$public_key  = $credentials['credentials_public_key_prod'];
-
-			wp_enqueue_script(
-				'mercadopago_notices',
-				plugins_url( '../../assets/js/notices/notices-client' . $this->get_suffix() . '.js', plugin_dir_path( __FILE__ ) ),
-				array(),
-				WC_WooMercadoPago_Constants::VERSION,
-				true
-			);
-
-			wp_localize_script(
-				'mercadopago_notices',
-				'wc_mercadopago_notices_params',
-				array(
-					'site_id'          => $site_id ? strtoupper( $site_id ) : 'MLA',
-					'container'        => '#wpbody-content',
-					'public_key'       => $public_key,
-					'plugin_version'   => WC_WooMercadoPago_Constants::VERSION,
-					'platform_id'      => WC_WooMercadoPago_Constants::PLATAFORM_ID,
-					'platform_version' => $woocommerce->version,
 				)
 			);
 		}
@@ -228,9 +219,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 * @return array
 	 */
 	public function mp_translation_admin_credential() {
-
-		$translation_credential = array(
-
+		return array(
 			'title_credentials'        => __( '1. Integrate your store with Mercado Pago  ', 'woocommerce-mercadopago' ),
 			'subtitle_credentials_one' => __( 'To enable orders, you must create and activate production credentials in your Mercado Pago Account. ', 'woocommerce-mercadopago' ),
 			'subtitle_credentials_two' => __( 'Copy and paste the credentials below.', 'woocommerce-mercadopago' ),
@@ -244,10 +233,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			'placeholder_public_key'   => __( 'Paste your Public Key here', 'woocommerce-mercadopago' ),
 			'placeholder_access_token' => __( 'Paste your Access Token here', 'woocommerce-mercadopago' ),
 			'button_credentials'       => __( 'Save and continue', 'woocommerce-mercadopago' ),
-
 		);
-
-		return $translation_credential;
 	}
 
 	/**
@@ -256,8 +242,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 * @return array
 	 */
 	public function mp_translation_admin_store() {
-
-		$translation_store = array(
+		return array(
 
 			'title_store'                  => __( '2. Customize your business', 'woocommerce-mercadopago' ),
 			'subtitle_store'               => __( 'Fill out the following information to have a better experience and offer more information to your clients', 'woocommerce-mercadopago' ),
@@ -286,9 +271,6 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			'subtitle_debug'               => __( "We record your store's actions in order to provide a better assistance.", 'woocommerce-mercadopago' ),
 			'button_store'                 => __( 'Save and continue', 'woocommerce-mercadopago' ),
 		);
-
-		return $translation_store;
-
 	}
 
 	/**
@@ -297,15 +279,12 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 * @return array
 	 */
 	public function mp_translation_admin_payment() {
-		$translation_payment = array(
+		return array(
 			'title_payments'    => __( '3. Set payment methods', 'woocommerce-mercadopago' ),
 			'subtitle_payments' => __( 'To view more options, please select a payment method below', 'woocommerce-mercadopago' ),
 			'settings_payment'  => __( 'Settings', 'woocommerce-mercadopago' ),
 			'button_payment'    => __( 'Continue', 'woocommerce-mercadopago' ),
 		);
-
-		return $translation_payment;
-
 	}
 
 	/**
@@ -314,7 +293,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 * @return array
 	 */
 	public function mp_translation_admin_test_mode() {
-		$translation_test_mode = array(
+		return array(
 			'title_test_mode'        => __( '4. Test your store before you sell', 'woocommerce-mercadopago' ),
 			'subtitle_test_mode'     => __( 'Test the experience in Test Mode and then enable the Sale Mode (Production) to sell.', 'woocommerce-mercadopago' ),
 			'title_mode'             => __( 'Choose how you want to operate your store:', 'woocommerce-mercadopago' ),
@@ -341,24 +320,23 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			'title_alert_test_link'  => __( 'copy your test credentials ', 'woocommerce-mercadopago' ),
 			'title_alert_tes_one'    => __( 'and paste them above in section 1 of this page.', 'woocommerce-mercadopago' )
 		);
-
-		return $translation_test_mode;
 	}
-
 
 	/**
 	 * Requirements
 	 */
 	public function mercadopago_get_requirements() {
+		$this->validate_ajax_nonce();
+
 		$hasCurl = in_array( 'curl', get_loaded_extensions(), true );
 		$hasGD   = in_array( 'gd', get_loaded_extensions(), true );
 		$hasSSL  = is_ssl();
 
-		wp_send_json_success( [
+		wp_send_json_success([
 			'ssl'      => $hasSSL,
 			'gd_ext'   => $hasGD,
 			'curl_ext' => $hasCurl
-		] );
+		]);
 	}
 
 	/**
@@ -366,9 +344,11 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_validate_credentials() {
 		try {
-			$access_token = WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'access_token' );
-			$public_key   = WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'public_key' );
-			$is_test      = ( WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'is_test' ) === 'true' );
+			$this->validate_ajax_nonce();
+
+			$access_token = WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'access_token' );
+			$public_key   = WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'public_key' );
+			$is_test      = ( WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'is_test' ) === 'true' );
 
 			$mp = WC_WooMercadoPago_Module::get_mp_instance_singleton();
 
@@ -403,11 +383,12 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_update_option_credentials() {
 		try {
+			$this->validate_ajax_nonce();
 
-			$public_key_test   = WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'public_key_test' );
-			$access_token_test = WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'access_token_test' );
-			$public_key_prod   = WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'public_key_prod' );
-			$access_token_prod = WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'access_token_prod' );
+			$public_key_test   = WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'public_key_test' );
+			$access_token_test = WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'access_token_test' );
+			$public_key_prod   = WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'public_key_prod' );
+			$access_token_prod = WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'access_token_prod' );
 
 			$mp = WC_WooMercadoPago_Module::get_mp_instance_singleton();
 
@@ -489,13 +470,15 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_update_store_info() {
 		try {
+			$this->validate_ajax_nonce();
+
 			$store_info = array(
-				'mp_statement_descriptor' => WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'store_identificator' ),
-				'_mp_category_id'         => WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'store_categories' ),
-				'_mp_store_identificator' => WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'store_category_id' ),
-				'_mp_custom_domain'       => WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'store_url_ipn' ),
-				'_mp_integrator_id'       => WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'store_integrator_id' ),
-				'_mp_debug_mode'          => WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'store_debug_mode' ),
+				'mp_statement_descriptor' => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_identificator' ),
+				'_mp_category_id'         => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_categories' ),
+				'_mp_store_identificator' => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_category_id' ),
+				'_mp_custom_domain'       => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_url_ipn' ),
+				'_mp_integrator_id'       => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_integrator_id' ),
+				'_mp_debug_mode'          => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_debug_mode' ),
 			);
 
 			foreach ( $store_info as $key => $value ) {
@@ -518,9 +501,11 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_set_mode() {
 		try {
-			$checkout_test_mode = WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'input_mode_value' );
+			$this->validate_ajax_nonce();
 
-			$verify_alert_test_mode   = WC_WooMercadoPago_Credentials::get_sanitize_text_from_post( 'input_verify_alert_test_mode' );
+			$checkout_test_mode = WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'input_mode_value' );
+
+			$verify_alert_test_mode   = WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'input_verify_alert_test_mode' );
 			$without_test_credentials = ( ( '' === get_option( WC_WooMercadoPago_Options::CREDENTIALS_PUBLIC_KEY_TEST, '' ) || '' === get_option( WC_WooMercadoPago_Options::CREDENTIALS_ACCESS_TOKEN_TEST, '' ) ) );
 
 			if ( 'yes' === $verify_alert_test_mode || ( 'yes' === $checkout_test_mode && $without_test_credentials ) ) {
@@ -548,6 +533,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 * Update Credentials for production
 	 */
 	public function update_credential_production() {
+		$this->validate_ajax_nonce();
 
 		foreach ( WC_WooMercadoPago_Constants::PAYMENT_GATEWAYS as $gateway ) {
 			$key     = 'woocommerce_' . $gateway::get_id() . '_settings';
@@ -575,6 +561,8 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_get_payment_class_properties() {
 		try {
+			$this->validate_ajax_nonce();
+
 			$payments_gateways          = WC_WooMercadoPago_Constants::PAYMENT_GATEWAYS;
 			$payment_gateway_properties = array();
 			$payment_methods            = ( new WC_WooMercadoPago_Configs() )->get_available_payment_methods();
@@ -621,6 +609,8 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_validate_credentials_tips() {
 		try {
+			$this->validate_ajax_nonce();
+
 			$public_key_test   = $this->options->get_public_key_test();
 			$access_token_test = $this->options->get_access_token_test();
 			$public_key_prod   = $this->options->get_public_key_prod();
@@ -631,7 +621,6 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			}
 
 			throw new Exception( __( 'Credentials couldn\'t be validated', 'woocommerce-mercadopago' ) );
-
 		} catch ( Exception $e ) {
 			$response = [
 				'message' => $e->getMessage()
@@ -647,6 +636,8 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_validate_store_tips() {
 		try {
+			$this->validate_ajax_nonce();
+
 			$statement_descriptor = $this->options->get_store_name_on_invoice();
 			$category_id          = $this->options->get_store_category();
 			$identificator        = $this->options->get_store_id();
@@ -656,7 +647,6 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			}
 
 			throw new Exception( __( 'Store business fields couldn\'t be validated', 'woocommerce-mercadopago' ) );
-
 		} catch ( Exception $e ) {
 			$response = [
 				'message' => $e->getMessage()
@@ -671,6 +661,8 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_validate_payment_tips() {
 		try {
+			$this->validate_ajax_nonce();
+
 			$payments_gateways = WC_WooMercadoPago_Constants::PAYMENT_GATEWAYS;
 
 			foreach ( $payments_gateways as $payment_gateway ) {
@@ -689,4 +681,17 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			wp_send_json_error( $response );
 		}
 	}
+
+	/**
+	 * Validate ajax nonce
+	 *
+	 * @return void
+	 */
+	private function validate_ajax_nonce() {
+		$this->nonce->validate_nonce(
+			self::SETTINGS_NONCE_ID,
+			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'nonce' )
+		);
+	}
+
 }

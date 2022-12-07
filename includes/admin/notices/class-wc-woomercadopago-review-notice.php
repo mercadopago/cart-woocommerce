@@ -18,6 +18,15 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WC_WooMercadoPago_Review_Notice {
 
+	const REVIEW_NOTICE_NONCE_ID = 'mp_review_notice_nonce';
+
+	/**
+	 * WP_Nonce
+	 *
+	 * @var WC_WooMercadoPago_Helper_Nonce
+	 */
+	protected $nonce;
+
 	/**
 	 * Static instance
 	 *
@@ -29,6 +38,8 @@ class WC_WooMercadoPago_Review_Notice {
 	 * WC_WooMercadoPago_ReviewNotice constructor.
 	 */
 	private function __construct() {
+		$this->nonce = WC_WooMercadoPago_Helper_Nonce::get_instance();
+
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_admin_notice_css' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_admin_notice_js' ) );
 		add_action( 'wp_ajax_mercadopago_review_dismiss', array( $this, 'review_dismiss' ) );
@@ -74,15 +85,20 @@ class WC_WooMercadoPago_Review_Notice {
 	 */
 	public function load_admin_notice_js() {
 		if ( is_admin() ) {
-			$suffix = $this->get_suffix();
+			$suffix      = $this->get_suffix();
+			$script_name = 'woocommerce_mercadopago_admin_notice_review';
 
 			wp_enqueue_script(
-				'woocommerce-mercadopago-admin-notice-review',
+				$script_name,
 				plugins_url( '../../assets/js/review' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
 				array(),
 				WC_WooMercadoPago_Constants::VERSION,
 				false
 			);
+
+			wp_localize_script($script_name, $script_name . '_vars', [
+				'nonce' => $this->nonce->generate_nonce(self::REVIEW_NOTICE_NONCE_ID),
+			]);
 		}
 	}
 
@@ -95,7 +111,6 @@ class WC_WooMercadoPago_Review_Notice {
 		$inline = null;
 		if (
 			( class_exists( 'WC_WooMercadoPago_Module' ) && WC_WooMercadoPago_Module::is_wc_new_version() ) &&
-			// @todo need fix Processing form data without nonce verification
 			// @codingStandardsIgnoreLine
 			( isset( $_GET['page'] ) && 'wc-settings' === sanitize_key( $_GET['page'] ) )
 		) {
@@ -140,6 +155,11 @@ class WC_WooMercadoPago_Review_Notice {
 	 * Dismiss the review admin notice
 	 */
 	public function review_dismiss() {
+		$this->nonce->validate_nonce(
+			self::REVIEW_NOTICE_NONCE_ID,
+			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'nonce' )
+		);
+
 		$dismissed_review = (int) get_option( '_mp_dismiss_review', 0 );
 
 		if ( 0 === $dismissed_review ) {
@@ -148,4 +168,5 @@ class WC_WooMercadoPago_Review_Notice {
 
 		wp_send_json_success();
 	}
+
 }

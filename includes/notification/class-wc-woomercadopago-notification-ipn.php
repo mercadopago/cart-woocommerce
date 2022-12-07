@@ -23,7 +23,7 @@ class WC_WooMercadoPago_Notification_IPN extends WC_WooMercadoPago_Notification_
 	 */
 	public function check_ipn_response() {
 		parent::check_ipn_response();
-		// @todo need fix Processing form data without nonce verification
+
 		// @codingStandardsIgnoreLine
 		$data = $_GET;
 

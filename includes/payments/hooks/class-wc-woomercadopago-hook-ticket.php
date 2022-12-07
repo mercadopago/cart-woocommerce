@@ -35,7 +35,6 @@ class WC_WooMercadoPago_Hook_Ticket extends WC_WooMercadoPago_Hook_Abstract {
 	 *  Add Discount
 	 */
 	public function add_discount() {
-		// @todo need fix Processing form data without nonce verification
 		// @codingStandardsIgnoreLine
 		if ( ! isset( $_POST['mercadopago_ticket'] ) ) {
 			return;
@@ -43,7 +42,7 @@ class WC_WooMercadoPago_Hook_Ticket extends WC_WooMercadoPago_Hook_Abstract {
 		if ( is_admin() && ! defined( 'DOING_AJAX' ) || is_cart() ) {
 			return;
 		}
-		// @todo need fix Processing form data without nonce verification
+
 		// @codingStandardsIgnoreLine
 		$ticket_checkout = $_POST['mercadopago_ticket'];
 		parent::add_discount_abst( $ticket_checkout );
