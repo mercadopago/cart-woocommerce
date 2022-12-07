@@ -442,6 +442,7 @@ class WC_WooMercadoPago_Credentials {
 	public static function basic_is_enabled() {
 		$basic_is_enabled = 'no';
 		$basic_settings   = get_option( 'woocommerce_woo-mercado-pago-basic_settings', '' );
+
 		if ( isset( $basic_settings['enabled'] ) ) {
 			$basic_is_enabled = $basic_settings['enabled'];
 		}
@@ -453,10 +454,12 @@ class WC_WooMercadoPago_Credentials {
 	 *
 	 * Validate Credentials Test function
 	 *
-	 * @param MP          $mp_instance Mp instance.
+	 * @param MP $mp_instance Mp instance.
 	 * @param string|null $access_token Access token.
 	 * @param string|null $public_key Payment response.
+	 *
 	 * @return bool
+	 * @throws WC_WooMercadoPago_Exception
 	 */
 	public static function validate_credentials_test( $mp_instance, $access_token = null, $public_key = null ) {
 		$is_test = $mp_instance->get_credentials_wrapper( $access_token, $public_key );
@@ -470,10 +473,12 @@ class WC_WooMercadoPago_Credentials {
 	 *
 	 * Validate Credentials Prod function
 	 *
-	 * @param MP          $mp_instance Mp instance.
+	 * @param MP $mp_instance Mp instance.
 	 * @param string|null $access_token Access token.
 	 * @param string|null $public_key Payment response.
+	 *
 	 * @return bool
+	 * @throws WC_WooMercadoPago_Exception
 	 */
 	public static function validate_credentials_prod( $mp_instance, $access_token = null, $public_key = null ) {
 		$log = WC_WooMercadoPago_Log::init_mercado_pago_log( 'mercadopago_requests' );
@@ -486,47 +491,5 @@ class WC_WooMercadoPago_Credentials {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * Ajax endpoint to consult the credentials
-	 */
-	public static function ajax_validate_credentials() {
-		try {
-			$access_token = self::get_sanitize_text_from_post('access_token');
-			$public_key   = self::get_sanitize_text_from_post('public_key');
-
-			$mp                    = WC_WooMercadoPago_Module::get_mp_instance_singleton();
-			$validate_access_token = $mp->get_credentials_wrapper( $access_token );
-			$validate_public_key   = $mp->get_credentials_wrapper( null, $public_key );
-
-			if ( ! $validate_public_key || ! $validate_access_token ) {
-				throw new Exception( __( 'Invalid credentials', 'woocommerce-mercadopago' ) );
-			}
-
-			$response = [
-				'access_token' => $validate_access_token,
-				'public_key'   => $validate_public_key,
-			];
-
-			wp_send_json_success( $response );
-		} catch ( Exception $e ) {
-			$response = [
-				'message' => $e->getMessage()
-			];
-
-			wp_send_json_error( $response );
-		}
-	}
-
-	/**
-	 * Get data from $_POST method with sanitize for text field
-	 *
-	 * @param $key
-	 *
-	 * @return string
-	 */
-	public static function get_sanitize_text_from_post( $key ) {
-		return sanitize_text_field( isset( $_POST[ $key ] ) ? $_POST[ $key ] : '' ); //phpcs:ignore
 	}
 }

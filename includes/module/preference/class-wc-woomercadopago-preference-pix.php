@@ -28,30 +28,39 @@ class WC_WooMercadoPago_Preference_Pix extends WC_WooMercadoPago_Preference_Abst
 	 */
 	public function __construct( $payment, $order, $pix_checkout ) {
 		parent::__construct( $payment, $order, $pix_checkout );
-		$pix_date_expiration                                   = $this->adjust_pix_date_expiration();
-		$this->preference                                      = $this->make_commum_preference();
-		$this->preference['date_of_expiration']                = $this->get_date_of_expiration( $pix_date_expiration );
-		$this->preference['transaction_amount']                = $this->get_transaction_amount();
-		$this->preference['description']                       = implode( ', ', $this->list_of_items );
-		$this->preference['payment_method_id']                 = 'pix';
-		$this->preference['payer']['email']                    = $this->get_email();
-		$this->preference['payer']['first_name']               = ( method_exists( $this->order, 'get_id' ) ? html_entity_decode( $this->order->get_billing_first_name() ) : html_entity_decode( $this->order->billing_first_name ) );
-		$this->preference['payer']['last_name']                = ( method_exists( $this->order, 'get_id' ) ? html_entity_decode( $this->order->get_billing_last_name() ) : html_entity_decode( $this->order->billing_last_name ) );
-		$this->preference['payer']['address']['zip_code']      = html_entity_decode( method_exists( $this->order, 'get_id' ) ? $this->order->get_billing_postcode() : $this->order->billing_postcode );
-		$this->preference['payer']['address']['street_name']   = html_entity_decode( method_exists( $this->order, 'get_id' ) ? $this->order->get_billing_address_1() : $this->order->billing_address_1 );
-		$this->preference['payer']['address']['street_number'] = '';
-		$this->preference['payer']['address']['neighborhood']  = '';
-		$this->preference['payer']['address']['city']          = html_entity_decode( method_exists( $this->order, 'get_id' ) ? $this->order->get_billing_city() : $this->order->billing_city );
-		$this->preference['payer']['address']['federal_unit']  = html_entity_decode( method_exists( $this->order, 'get_id' ) ? $this->order->get_billing_state() : $this->order->billing_state );
-		$this->preference['external_reference']                = $this->get_external_reference();
-		$this->preference['additional_info']['items']          = $this->items;
-		$this->preference['additional_info']['payer']          = $this->get_payer_custom();
-		$this->preference['additional_info']['shipments']      = $this->shipments_receiver_address();
-		$this->preference['additional_info']['payer']          = $this->get_payer_custom();
+		$pix_date_expiration = $this->adjust_pix_date_expiration();
 
-		$internal_metadata            = parent::get_internal_metadata();
-		$merge_array                  = array_merge( $internal_metadata, $this->get_internal_metadata_pix() );
-		$this->preference['metadata'] = $merge_array;
+		$this->transaction = $this->sdk->getPaymentInstance();
+		$this->make_common_transaction();
+
+		$this->transaction->__set('date_of_expiration', $this->get_date_of_expiration( $pix_date_expiration ));
+		$this->transaction->__set('transaction_amount', $this->get_transaction_amount());
+		$this->transaction->__set('description', implode( ', ', $this->list_of_items ));
+		$this->transaction->__set('payment_method_id', 'pix');
+		$this->transaction->__set('external_reference', $this->get_external_reference());
+		$this->transaction->__get('point_of_interaction')->type = 'CHECKOUT';
+
+		$this->transaction->__get('payer')->email      = $this->get_email();
+		$this->transaction->__get('payer')->first_name = ( method_exists( $this->order, 'get_id' ) ? html_entity_decode( $this->order->get_billing_first_name() ) : html_entity_decode( $this->order->billing_first_name ) );
+		$this->transaction->__get('payer')->last_name  = ( method_exists( $this->order, 'get_id' ) ? html_entity_decode( $this->order->get_billing_last_name() ) : html_entity_decode( $this->order->billing_last_name ) );
+
+		$this->transaction->__get('payer')->address->zip_code      = html_entity_decode( method_exists( $this->order, 'get_id' ) ? $this->order->get_billing_postcode() : $this->order->billing_postcode );
+		$this->transaction->__get('payer')->address->street_name   = html_entity_decode( method_exists( $this->order, 'get_id' ) ? $this->order->get_billing_address_1() : $this->order->billing_address_1 );
+		$this->transaction->__get('payer')->address->street_number = '';
+		$this->transaction->__get('payer')->address->neighborhood  = '';
+		$this->transaction->__get('payer')->address->city          = html_entity_decode( method_exists( $this->order, 'get_id' ) ? $this->order->get_billing_city() : $this->order->billing_city );
+		$this->transaction->__get('payer')->address->federal_unit  = html_entity_decode( method_exists( $this->order, 'get_id' ) ? $this->order->get_billing_state() : $this->order->billing_state );
+
+		$this->transaction->__get('additional_info')->items     = $this->items;
+		$this->transaction->__get('additional_info')->payer     = $this->get_payer_custom();
+		$this->transaction->__get('additional_info')->shipments = $this->shipments_receiver_address();
+	}
+
+	public function get_internal_metadata() {
+		$metadata                  = parent::get_internal_metadata();
+		$metadata['checkout']      = 'custom';
+		$metadata['checkout_type'] = 'pix';
+		return $metadata;
 	}
 
 	/**
@@ -68,18 +77,6 @@ class WC_WooMercadoPago_Preference_Pix extends WC_WooMercadoPago_Preference_Abst
 		}
 
 		return $items;
-	}
-
-	/**
-	 * Get internal metadata pix
-	 *
-	 * @return array
-	 */
-	public function get_internal_metadata_pix() {
-		return array(
-			'checkout'      => 'custom',
-			'checkout_type' => 'pix',
-		);
 	}
 
 	/**

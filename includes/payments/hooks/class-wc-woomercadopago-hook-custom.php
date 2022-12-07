@@ -59,7 +59,6 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 	 *  Add Discount
 	 */
 	public function add_discount() {
-		// @todo needs processing form data without nonce verification.
 		// @codingStandardsIgnoreLine
 		if ( ! isset( $_POST['mercadopago_custom'] ) ) {
 			return;
@@ -67,7 +66,7 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 		if ( ( is_admin() && ! defined( 'DOING_AJAX' ) ) || is_cart() ) {
 			return;
 		}
-		// @todo needs processing form data without nonce verification.
+
 		// @codingStandardsIgnoreLine
 		$custom_checkout = $_POST['mercadopago_custom'];
 		parent::add_discount_abst( $custom_checkout );

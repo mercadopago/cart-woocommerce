@@ -34,8 +34,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				title="<?php echo esc_html_e('Pay faster with Mercado Pago', 'woocommerce-mercadopago'); ?>"
 				items='[
 					"<?php echo esc_html_e('If you already have a Mercado Libre account, use the same email and password', 'woocommerce-mercadopago'); ?>",
-					"<?php echo esc_html_e('Buy with your balance or saved cards', 'woocommerce-mercadopago'); ?>",
-					"<?php echo esc_html_e('Earn more points and have exclusive benefits in Mercado Puntos', 'woocommerce-mercadopago'); ?>"
+					"<?php echo esc_html_e('Buy with your balance or saved cards', 'woocommerce-mercadopago'); ?>"
 				]'
 				list-style-type-src="<?php echo esc_html($list_style_type_src); ?>"
 				list-style-type-alt="<?php echo esc_html_e('List style type blue check', 'woocommerce-mercadopago'); ?>"

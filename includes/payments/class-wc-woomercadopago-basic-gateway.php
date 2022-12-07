@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Part of Woo Mercado Pago Module
  * Author - Mercado Pago
@@ -10,7 +9,7 @@
  * @package MercadoPago
  */
 
-if ( ! defined('ABSPATH') ) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
@@ -19,9 +18,26 @@ if ( ! defined('ABSPATH') ) {
  */
 class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 
-
-
+	/**
+	 * ID
+	 *
+	 * @const
+	 */
 	const ID = 'woo-mercado-pago-basic';
+
+	/**
+	 * Nonce field id
+	 *
+	 * @const
+	 */
+	const NONCE_FIELD_ID = 'mercado_pago_basic';
+
+	/**
+	 * Nonce field name
+	 *
+	 * @const
+	 */
+	const NONCE_FIELD_NAME = 'mercado_pago_basic_nonce';
 
 	/**
 	 * Credits Helper Class
@@ -65,7 +81,7 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 		$this->credits_helper      = new WC_WooMercadoPago_Helper_Credits();
 		$this->form_fields         = $this->get_form_mp_fields();
 		$this->hook                = new WC_WooMercadoPago_Hook_Basic($this);
-		$this->notification        = new WC_WooMercadoPago_Notification_IPN($this);
+		$this->notification        = new WC_WooMercadoPago_Notification_Core($this);
 		$this->currency_convertion = true;
 		$this->icon                = $this->get_checkout_icon();
 	}
@@ -77,34 +93,34 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 	 */
 	public function get_form_mp_fields() {
 		if ( is_admin() && $this->is_manage_section() && ( WC_WooMercadoPago_Helper_Current_Url::validate_page('mercadopago-settings') || WC_WooMercadoPago_Helper_Current_Url::validate_section('woo-mercado-pago') ) ) {
-			$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+			$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 			wp_enqueue_script(
 				'woocommerce-mercadopago-basic-config-script',
-				plugins_url('../assets/js/basic_config_mercadopago' . $suffix . '.js', plugin_dir_path(__FILE__)),
+				plugins_url( '../assets/js/basic_config_mercadopago' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
 				array(),
 				WC_WooMercadoPago_Constants::VERSION,
 				true
 			);
 			wp_enqueue_script(
-			'woocommerce-mercadopago-credentials',
-			plugins_url('../assets/js/validate-credentials' . $suffix . '.js', plugin_dir_path(__FILE__)),
-			array(),
-			WC_WooMercadoPago_Constants::VERSION,
-			true
+				'woocommerce-mercadopago-credentials',
+				plugins_url( '../assets/js/validate-credentials' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
+				array(),
+				WC_WooMercadoPago_Constants::VERSION,
+				true
 			);
 		}
 
-		if ( empty($this->checkout_country) ) {
-			$this->field_forms_order = array_slice($this->field_forms_order, 0, 7);
+		if ( empty( $this->checkout_country ) ) {
+			$this->field_forms_order = array_slice( $this->field_forms_order, 0, 7 );
 		}
 
-		if ( ! empty($this->checkout_country) && empty($this->get_access_token()) && empty($this->get_public_key()) ) {
-			$this->field_forms_order = array_slice($this->field_forms_order, 0, 22);
+		if ( ! empty( $this->checkout_country ) && empty( $this->get_access_token() ) && empty( $this->get_public_key() ) ) {
+			$this->field_forms_order = array_slice( $this->field_forms_order, 0, 22 );
 		}
 
 		$form_fields = array();
 
-		if ( ! empty($this->checkout_country) && ! empty($this->get_access_token()) && ! empty($this->get_public_key()) ) {
+		if ( ! empty( $this->checkout_country ) && ! empty( $this->get_access_token() ) && ! empty( $this->get_public_key() ) ) {
 			$form_fields['checkout_header']                  = $this->field_checkout_header();
 			$form_fields['binary_mode']                      = $this->field_binary_mode();
 			$form_fields['installments']                     = $this->field_installments();
@@ -567,6 +583,7 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 		};
 
 		$parameters = [
+			'nonce_field'         => $this->mp_nonce->generate_nonce_field( self::NONCE_FIELD_ID, self::NONCE_FIELD_NAME ),
 			'method'              => $method,
 			'test_mode'           => ! $this->is_production_mode(),
 			'test_mode_link'      => $test_mode_link,
@@ -685,6 +702,11 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
+		$this->mp_nonce->validate_nonce(
+			self::NONCE_FIELD_ID,
+			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( self::NONCE_FIELD_NAME )
+		);
+
 		$order  = wc_get_order($order_id);
 		$amount = $this->get_order_total();
 
@@ -738,26 +760,15 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 	 * @return bool
 	 */
 	public function create_preference( $order ) {
-		$preferences_basic = new WC_WooMercadoPago_Preference_Basic($this, $order);
-		$preferences       = $preferences_basic->get_preference();
+		$preference_basic = new WC_WooMercadoPago_Preference_Basic( $this, $order );
+		$preference       = $preference_basic->get_transaction( 'Preference' );
+
 		try {
-			$checkout_info = $this->mp->create_preference(wp_json_encode($preferences));
-			$this->log->write_log(__FUNCTION__, 'Created Preference: ' . wp_json_encode($checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-			if ( $checkout_info['status'] < 200 || $checkout_info['status'] >= 300 ) {
-				$this->log->write_log(__FUNCTION__, 'mercado pago gave error, payment creation failed with error: ' . $checkout_info['response']['message']);
-				return false;
-			} elseif ( is_wp_error($checkout_info) ) {
-				$this->log->write_log(__FUNCTION__, 'WordPress gave error, payment creation failed with error: ' . $checkout_info['response']['message']);
-				return false;
-			} else {
-				$this->log->write_log(__FUNCTION__, 'payment link generated with success from mercado pago, with structure as follow: ' . wp_json_encode($checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-				if ( $this->sandbox ) {
-					return $checkout_info['response']['sandbox_init_point'];
-				}
-				return $checkout_info['response']['init_point'];
-			}
-		} catch ( WC_WooMercadoPago_Exception $ex ) {
-			$this->log->write_log(__FUNCTION__, 'payment creation failed with exception: ' . wp_json_encode($ex, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+			$checkout_info = $preference->save();
+			$this->log->write_log( __FUNCTION__, 'Created Preference: ' . wp_json_encode( $checkout_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+			return ( $this->sandbox ) ? $checkout_info['sandbox_init_point'] : $checkout_info['init_point'];
+		} catch ( Exception $e ) {
+			$this->log->write_log( __FUNCTION__, 'preference creation failed with error: ' . $e->getMessage() );
 			return false;
 		}
 	}

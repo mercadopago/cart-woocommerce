@@ -1,3 +1,5 @@
+/* globals jQuery, ajaxurl, mercadopago_settings_javascript_vars */
+
 function mp_settings_accordion_start() {
   var i;
   var acc = document.getElementsByClassName("mp-settings-title-align");
@@ -31,22 +33,28 @@ function mp_settings_accordion_start() {
 }
 
 function mp_get_requirements() {
-  jQuery.post(ajaxurl, { action: "mp_get_requirements" }, function (response) {
-    const requirements = {
-      ssl: document.getElementById("mp-req-ssl"),
-      gd_ext: document.getElementById("mp-req-gd"),
-      curl_ext: document.getElementById("mp-req-curl"),
-    };
+  jQuery.post(
+    ajaxurl,
+    {
+      action: "mp_get_requirements",
+      nonce: mercadopago_settings_javascript_vars.nonce,
+    },
+    function (response) {
+      const requirements = {
+        ssl: document.getElementById("mp-req-ssl"),
+        gd_ext: document.getElementById("mp-req-gd"),
+        curl_ext: document.getElementById("mp-req-curl"),
+      };
 
-    for (let i in requirements) {
-      let requirement = requirements[i];
-      requirement.style = "";
-      if (!response.data[i]) {
-        requirement.classList.remove("mp-settings-icon-success");
-        requirement.classList.add("mp-settings-icon-warning");
+      for (let i in requirements) {
+        let requirement = requirements[i];
+        requirement.style = "";
+        if (!response.data[i]) {
+          requirement.classList.remove("mp-settings-icon-success");
+          requirement.classList.add("mp-settings-icon-warning");
+        }
       }
-    }
-  });
+    });
 }
 
 function mp_verify_alert_test_mode() {
@@ -74,6 +82,7 @@ function mp_validate_credentials() {
             access_token: this.value,
             is_test: false,
             action: "mp_validate_credentials",
+            nonce: mercadopago_settings_javascript_vars.nonce,
           },
           function (data) {}
         )
@@ -106,6 +115,7 @@ function mp_validate_credentials() {
             access_token: this.value,
             is_test: true,
             action: "mp_validate_credentials",
+            nonce: mercadopago_settings_javascript_vars.nonce,
           },
           function (data) {}
         )
@@ -140,6 +150,7 @@ function mp_validate_credentials() {
               public_key: this.value,
               is_test: true,
               action: "mp_validate_credentials",
+              nonce: mercadopago_settings_javascript_vars.nonce,
             },
             function (data) {}
           )
@@ -170,6 +181,7 @@ function mp_validate_credentials() {
               public_key: this.value,
               is_test: false,
               action: "mp_validate_credentials",
+              nonce: mercadopago_settings_javascript_vars.nonce,
             },
             function (data) {}
           )
@@ -207,6 +219,7 @@ function mp_update_option_credentials() {
           public_key_prod: document.getElementById("mp-public-key-prod").value,
           public_key_test: document.getElementById("mp-public-key-test").value,
           action: "mp_update_option_credentials",
+          nonce: mercadopago_settings_javascript_vars.nonce,
         },
         function (data) {}
       )
@@ -263,6 +276,7 @@ function mp_update_store_information() {
           store_integrator_id: document.getElementById("mp-store-integrator-id").value,
           store_debug_mode: document.querySelector("#mp-store-debug-mode:checked")?.value,
           action: "mp_update_store_information",
+          nonce: mercadopago_settings_javascript_vars.nonce,
         },
         function (data) {}
       )
@@ -398,9 +412,12 @@ button.addEventListener("click", function () {
   jQuery
     .post(
       ajaxurl,
-      { input_mode_value: mode_value,
+      {
+        input_mode_value: mode_value,
         input_verify_alert_test_mode: alert_validate,
-        action: "mp_store_mode" },
+        action: "mp_store_mode",
+        nonce: mercadopago_settings_javascript_vars.nonce,
+      },
       function (data) {}
     )
     .done(function (response) {
@@ -422,7 +439,14 @@ button.addEventListener("click", function () {
 
 function mp_get_payment_properties() {
   jQuery
-    .post(ajaxurl, { action: "mp_get_payment_properties" }, function (data) {})
+    .post(
+      ajaxurl,
+      {
+        action: "mp_get_payment_properties",
+        nonce: mercadopago_settings_javascript_vars.nonce,
+      },
+      function (data) {}
+    )
     .done(function (response) {
       const payment = document.getElementById("mp-payment");
 
@@ -483,7 +507,10 @@ function mp_validate_credentials_tips() {
   jQuery
     .post(
       ajaxurl,
-      { action: "mp_validate_credentials_tips" },
+      {
+        action: "mp_validate_credentials_tips",
+        nonce: mercadopago_settings_javascript_vars.nonce,
+      },
       function (data) {}
     )
     .done(function (response) {
@@ -502,7 +529,14 @@ function mp_validate_credentials_tips() {
 function mp_validate_store_tips() {
   var icon_store = document.getElementById("mp-settings-icon-store");
   jQuery
-    .post(ajaxurl, { action: "mp_validate_store_tips" }, function (data) {})
+    .post(
+      ajaxurl,
+      {
+        action: "mp_validate_store_tips",
+        nonce: mercadopago_settings_javascript_vars.nonce,
+      },
+      function (data) {}
+    )
     .done(function (response) {
       if (response.success) {
         icon_store.classList.remove("mp-settings-icon-store");
@@ -519,7 +553,14 @@ function mp_validate_store_tips() {
 function mp_validate_payment_tips() {
   var icon_payment = document.getElementById("mp-settings-icon-payment");
   jQuery
-    .post(ajaxurl, { action: "mp_validate_payment_tips" }, function (data) {})
+    .post(
+      ajaxurl,
+      {
+        action: "mp_validate_payment_tips",
+        nonce: mercadopago_settings_javascript_vars.nonce,
+      },
+      function (data) {}
+    )
     .done(function (response) {
       if (response.success) {
         icon_payment.classList.remove("mp-settings-icon-payment");

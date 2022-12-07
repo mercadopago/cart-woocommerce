@@ -9,6 +9,9 @@
  * @package MercadoPago
  */
 
+use MercadoPago\PP\Sdk\Entity\Payment\Payment;
+use MercadoPago\PP\Sdk\Entity\Preference\Preference;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -17,6 +20,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Class WC_WooMercadoPago_Preference_Abstract
  */
 abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway {
+
+	/**
+	 * Sdk
+	 */
+	protected $sdk;
+
+	/**
+	 * Transaction
+	 *
+	 * @var Payment|Preference
+	 */
+	protected $transaction;
 
 	/**
 	 * Order
@@ -54,7 +69,7 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	protected $gateway_discount;
 
 	/**
-	 * Comission
+	 * Commission
 	 *
 	 * @var mixed|string
 	 */
@@ -124,7 +139,7 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	protected $site_data;
 
 	/**
-	 * Teste user v1
+	 * Test user v1
 	 *
 	 * @var false|mixed|void
 	 */
@@ -152,7 +167,7 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	protected $ex_payments;
 
 	/**
-	 * Installmentes
+	 * Installments
 	 *
 	 * @var string
 	 */
@@ -206,6 +221,8 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 		if ( 0 < count( $this->order->get_fees() ) ) {
 			$this->items = array_merge( $this->items, $this->fees_cost_item() );
 		}
+
+		$this->sdk = $payment->get_sdk_instance();
 	}
 
 	/**
@@ -234,23 +251,18 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	}
 
 	/**
-	 * Make commum preference
-	 *
-	 * @return array
+	 * Make common transaction
 	 */
-	public function make_commum_preference() {
-		$preference = array(
-			'binary_mode'          => $this->get_binary_mode( $this->payment ),
-			'external_reference'   => $this->get_external_reference( $this->payment ),
-			'notification_url'     => $this->get_notification_url(),
-			'statement_descriptor' => get_option( 'mp_statement_descriptor', 'Mercado Pago' ),
-		);
+	public function make_common_transaction() {
+		$this->transaction->__set('binary_mode', $this->get_binary_mode( $this->payment ));
+		$this->transaction->__set('external_reference', $this->get_external_reference( $this->payment ));
+		$this->transaction->__set('notification_url', $this->get_notification_url());
+		$this->transaction->__set('statement_descriptor', get_option( 'mp_statement_descriptor', 'Mercado Pago' ));
+		$this->transaction->__set('metadata', $this->get_internal_metadata());
 
 		if ( ! $this->test_user_v1 && ! $this->sandbox ) {
-			$preference['sponsor_id'] = $this->get_sponsor_id();
+			$this->transaction->__set('sponsor_id', $this->get_sponsor_id());
 		}
-
-		return $preference;
 	}
 
 	/**
@@ -516,18 +528,21 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	}
 
 	/**
-	 * Get preference
+	 * Get transaction
 	 *
-	 * @return array
+	 * @param string $transactionType.
+	 *
+	 * @return Payment|Preference
 	 */
-	public function get_preference() {
-		$preference_log = $this->preference;
+	public function get_transaction( $transactionType = 'Preference' ) {
+		$transaction_log = clone $this->transaction;
 
-		if ( isset($preference_log['token']) ) {
-			unset($preference_log['token']);
+		if ( isset( $transaction_log->token ) ) {
+			unset( $transaction_log->token );
 		}
-		$this->log->write_log( 'Created preference: ', 'Preference: ' . wp_json_encode( $preference_log, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-		return $this->preference;
+
+		$this->log->write_log( __FUNCTION__, $transactionType . ': ' . wp_json_encode( $transaction_log, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+		return $this->transaction;
 	}
 
 	/**
@@ -589,13 +604,15 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 
 		$analytics = new WC_WooMercadoPago_PreferenceAnalytics();
 
-		$seller  = get_option( '_collector_id_v1', '' );
 		$w       = WC_WooMercadoPago_Module::woocommerce_instance();
+		$seller  = get_option( '_collector_id_v1', '' );
 		$user_id = get_current_user_id();
+
 		return array(
 			'platform'         => WC_WooMercadoPago_Constants::PLATAFORM_ID,
 			'platform_version' => $w->version,
 			'module_version'   => WC_WooMercadoPago_Constants::VERSION,
+			'php_version'      => PHP_VERSION,
 			'site_id'          => strtolower(get_option( '_site_id_v1' )),
 			'sponsor_id'       => $this->get_sponsor_id(),
 			'collector'        => $seller,
@@ -608,8 +625,9 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 			'seller_website'   => get_option('siteurl'),
 			'billing_address' => array(
 				'zip_code'    => html_entity_decode(str_replace('-', '', ( is_object($this->order) &&
-					method_exists( $this->order, 'get_billing_postcode' ) ?
-						$this->order->get_billing_postcode() : $this->order->billing_postcode ))),
+				method_exists( $this->order, 'get_billing_postcode' ) ?
+					$this->order->get_billing_postcode() : $this->order->billing_postcode ))
+				),
 				'street_name' => html_entity_decode(
 				method_exists( $this->order, 'get_billing_address_1' ) ?
 					$this->order->get_billing_address_1() : $this->order->billing_address_1

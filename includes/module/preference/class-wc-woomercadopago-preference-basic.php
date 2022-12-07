@@ -26,18 +26,22 @@ class WC_WooMercadoPago_Preference_Basic extends WC_WooMercadoPago_Preference_Ab
 	 */
 	public function __construct( $payment, $order ) {
 		parent::__construct( $payment, $order );
-		$this->preference              = $this->make_commum_preference();
-		$this->preference['items']     = $this->items;
-		$this->preference['payer']     = $this->get_payer_basic();
-		$this->preference['back_urls'] = $this->get_back_urls();
-		$this->preference['shipments'] = $this->shipments_receiver_address();
+		$this->transaction = $this->sdk->getPreferenceInstance();
 
-		$this->preference['payment_methods'] = $this->get_payment_methods( $this->ex_payments, $this->installments );
-		$this->preference['auto_return']     = $this->auto_return();
+		$this->make_common_transaction();
+		$this->transaction->__get('items')->setEntity( $this->items );
+		$this->transaction->__get('payer')->setEntity( $this->get_payer_basic() );
+		$this->transaction->__get('back_urls')->setEntity( $this->get_back_urls() );
+		$this->transaction->__get('shipments')->setEntity( $this->shipments_receiver_address() );
+		$this->transaction->__get('payment_methods')->setEntity( $this->get_payment_methods( $this->ex_payments, $this->installments ) );
+		$this->transaction->__set('auto_return', $this->auto_return());
+	}
 
-		$internal_metadata            = parent::get_internal_metadata();
-		$merge_array                  = array_merge( $internal_metadata, $this->get_internal_metadata_basic() );
-		$this->preference['metadata'] = $merge_array;
+	public function get_internal_metadata() {
+		$metadata                  = parent::get_internal_metadata();
+		$metadata['checkout']      = 'smart';
+		$metadata['checkout_type'] = $this->payment->get_option_mp( 'method', 'redirect' );
+		return $metadata;
 	}
 
 	/**
@@ -131,17 +135,5 @@ class WC_WooMercadoPago_Preference_Basic extends WC_WooMercadoPago_Preference_Ab
 		if ( 'yes' === $auto_return ) {
 			return 'approved';
 		}
-	}
-
-	/**
-	 * Get internal metadata basic
-	 *
-	 * @return array
-	 */
-	public function get_internal_metadata_basic() {
-		return array(
-			'checkout'      => 'smart',
-			'checkout_type' => $this->payment->get_option_mp( 'method', 'redirect' ),
-		);
 	}
 }
