@@ -158,7 +158,6 @@ class Dependencies
         $this->order        = new Order();
         $this->plugin       = new Plugin();
         $this->product      = new Product();
-        $this->nonce        = new Nonce();
         $this->requester    = $this->setRequester();
         $this->seller       = $this->setSeller();
         $this->country      = $this->setCountry();
@@ -169,6 +168,7 @@ class Dependencies
         $this->checkout     = $this->setCheckout();
         $this->gateway      = $this->setGateway();
         $this->logs         = $this->setLogs();
+        $this->nonce        = $this->setNonce();
         $this->translations = $this->setTranslations();
         $this->notices      = $this->setNotices();
         $this->settings     = $this->setSettings();
@@ -258,6 +258,14 @@ class Dependencies
         $remote = new Remote($this->store, $this->requester);
 
         return new Logs($file, $remote);
+    }
+
+    /**
+     * @return Nonce
+     */
+    private function setNonce(): Nonce
+    {
+        return new Nonce($this->logs);
     }
 
     /**
