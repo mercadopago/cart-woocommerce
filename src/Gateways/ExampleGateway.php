@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\Hooks\Endpoints;
+use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -11,16 +11,18 @@ if (!defined('ABSPATH')) {
 class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
     /**
-     * @var Endpoints
+     * @var WoocommerceMercadoPago
      */
-    protected $endpoints;
+    protected $mercadopago;
 
     /**
      * ExampleGateway constructor
      */
     public function __construct()
     {
-        $this->endpoints = new Endpoints();
+        global $mercadopago;
+
+        $this->mercadopago = $mercadopago;
 
         $this->id = 'mercadopago';
         $this->icon = null;
@@ -36,10 +38,11 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
         $this->description = $this->get_option('description');
         $this->enabled = $this->get_option('enabled');
 
-        add_action('wp_enqueue_scripts', array($this, 'payment_scripts'));
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 
-        $this->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+        $this->payment_scripts();
+
+        $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
 
     /**
