@@ -42,13 +42,14 @@ class WC_WooMercadoPago_Notification_Core extends WC_WooMercadoPago_Notification
 		if ( gettype($notification_id) === 'object' ) {
 			$class                = get_class( $this->payment );
 			$notification_handler = null;
+
 			if ( 'WC_WooMercadoPago_Basic_Gateway' === $class ) {
 				$notification_handler = new WC_WooMercadoPago_Notification_IPN( $this->payment );
 			} else {
 				$notification_handler = new WC_WooMercadoPago_Notification_Webhook( $this->payment );
 			}
-			$notification_handler->check_ipn_response();
 
+			$notification_handler->check_ipn_response();
 			return;
 		}
 
@@ -66,7 +67,7 @@ class WC_WooMercadoPago_Notification_Core extends WC_WooMercadoPago_Notification
 			 */
 			do_action( 'valid_mercadopago_ipn_request', $notificationEntity->toArray() );
 
-			$this->set_response( 200, 'OK', 'Successfull Notification by Core' );
+			$this->set_response( 200, 'OK', 'Successfully Notification by Core' );
 		} catch ( Exception $e ) {
 			$this->log->write_log( __FUNCTION__, 'receive notification failed: ' . $e->getMessage() );
 			$this->set_response(500, 'Internal Server Error', $e->getMessage());
@@ -78,7 +79,7 @@ class WC_WooMercadoPago_Notification_Core extends WC_WooMercadoPago_Notification
 	 *
 	 * @param array $data Payment data.
 	 *
-	 * @return bool|void|WC_Order|WC_Order_Refund
+	 * @return void
 	 */
 	public function successful_request( $data ) {
 		try {
@@ -104,13 +105,17 @@ class WC_WooMercadoPago_Notification_Core extends WC_WooMercadoPago_Notification
 
 		// Updates the type of gateway.
 		$this->update_meta( $order, '_used_gateway', get_class( $this ) );
+
 		if ( ! empty( $data['payer']['email'] ) ) {
 			$this->update_meta( $order, __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
 		}
+
 		if ( ! empty( $data['payments_details'] ) ) {
 			$payment_ids = array();
+
 			foreach ( $data['payments_details'] as $payment ) {
 				$payment_ids[] = $payment['id'];
+
 				$this->update_meta(
 					$order,
 					'Mercado Pago - Payment ' . $payment['id'],
@@ -123,11 +128,14 @@ class WC_WooMercadoPago_Notification_Core extends WC_WooMercadoPago_Notification
 						']/[Refund ' . $data['total_refunded'] . ']'
 				);
 			}
+
 			if ( count( $payment_ids ) > 0 ) {
 				$this->update_meta( $order, '_Mercado_Pago_Payment_IDs', implode( ', ', $payment_ids ) );
 			}
 		}
+
 		$order->save();
+
 		return $status;
 	}
 }

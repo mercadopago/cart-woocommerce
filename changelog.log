@@ -1,5 +1,12 @@
 CHANGELOG:
 == Changelog ==
+= v6.4.1 (14/12/2022) =
+* Features
+- Added bank interest disclaimer
+
+* Changes
+- Removed CURLOPT_SSL_VERIFYPEER flag to get server default value
+
 = v6.4.0 (07/12/2022) =
 * Features
 - Added Mercado Pago PHP SDK

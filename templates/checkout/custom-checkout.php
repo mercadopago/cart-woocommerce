@@ -124,9 +124,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</div>
 
 				<div id="mp-checkout-custom-installments-container" class="mp-checkout-custom-installments-container"></div>
-				<input-helper isVisible=false message="<?php echo esc_html_e('Select the number of installments', 'woocommerce-mercadopago'); ?>" input-id="mp-installments-helper"></input-helper>
-				<select style="display: none;" data-checkout="installments" name="installments" id="form-checkout__installments" class="mp-input-select-select">
-				</select>
+
+				<input-helper
+					isVisible=false
+					message="<?php echo esc_html_e('Select the number of installments', 'woocommerce-mercadopago'); ?>"
+					input-id="mp-installments-helper"
+				></input-helper>
+
+				<select
+					style="display: none;"
+					data-checkout="installments"
+					name="installments"
+					id="form-checkout__installments"
+					class="mp-input-select-select"
+				></select>
 
 				<div id="mp-checkout-custom-box-input-tax-cft">
 					<div id="mp-checkout-custom-box-input-tax-tea">
@@ -135,13 +146,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<div id="mp-checkout-custom-tax-cft-text"></div>
 				</div>
 			</div>
+
 			<div class="mp-checkout-custom-terms-and-conditions">
-				<terms-and-conditions description="<?php echo esc_html_e('By continuing, you agree with our', 'woocommerce-mercadopago'); ?>" link-text="<?php echo esc_html_e('Terms and conditions', 'woocommerce-mercadopago'); ?>" link-src="<?php echo esc_html($link_terms_and_conditions); ?>">
-				</terms-and-conditions>
+				<terms-and-conditions
+					description="<?php echo esc_html_e('By continuing, you agree with our', 'woocommerce-mercadopago'); ?>"
+					link-text="<?php echo esc_html_e('Terms and conditions', 'woocommerce-mercadopago'); ?>"
+					link-src="<?php echo esc_html($link_terms_and_conditions); ?>"
+				></terms-and-conditions>
 			</div>
 		</div>
 	</div>
 </div>
+
 <div id="mercadopago-utilities">
 	<input type="hidden" id="mp-amount" value='<?php echo esc_textarea($amount); ?>' name="mercadopago_custom[amount]" />
 	<input type="hidden" id="currency_ratio" value='<?php echo esc_textarea($currency_ratio); ?>' name="mercadopago_custom[currency_ratio]" />

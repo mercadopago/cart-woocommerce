@@ -58,9 +58,11 @@ class CurlRequester implements RequesterInterface
         $connect = $this->curlInit();
         $this->setOption($connect, CURLOPT_USERAGENT, 'platform:v1-whitelabel,type:mp_sdk');
         $this->setOption($connect, CURLOPT_RETURNTRANSFER, true);
-        $this->setOption($connect, CURLOPT_SSL_VERIFYPEER, true);
+
         // @TODO define CAINFO when implementing SDK
+        // $this->setOption($connect, CURLOPT_SSL_VERIFYPEER, true);
         // $this->setOption( $connect, CURLOPT_CAINFO, $GLOBALS['LIB_LOCATION'] . '/cacert.pem' );
+
         $this->setOption($connect, CURLOPT_CUSTOMREQUEST, $method);
         $this->setOption($connect, CURLOPT_HTTPHEADER, $headers);
         $this->setOption($connect, CURLOPT_URL, $uri);
