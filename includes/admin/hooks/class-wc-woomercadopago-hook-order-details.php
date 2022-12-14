@@ -19,9 +19,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WC_WooMercadoPago_Hook_Order_Details {
 
 	/**
-	 * The Order
+	 * WC_Order
 	 *
-	 * @param WC_Order
+	 * @var WC_Order
 	 */
 	protected $order;
 
@@ -49,7 +49,7 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	}
 
 	/**
-	 * Get sufix to static files
+	 * Get suffix to static files
 	 */
 	public function get_suffix() {
 		return defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
@@ -58,9 +58,10 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	/**
 	 * Get Alert Description
 	 *
-	 * @param String $payment_status_detail Come from MP API
+	 * @param $payment_status_detail
+	 * @param $is_credit_card
 	 *
-	 * @return String
+	 * @return array
 	 */
 	public function get_alert_description( $payment_status_detail, $is_credit_card ) {
 		$all_status_detail = [
@@ -286,42 +287,41 @@ class WC_WooMercadoPago_Hook_Order_Details {
 			),
 		];
 
-		$description = array_key_exists($payment_status_detail, $all_status_detail) ? $all_status_detail[$payment_status_detail] : $all_status_detail['generic'];
-
-		return $description;
+		return array_key_exists($payment_status_detail, $all_status_detail)
+			? $all_status_detail[$payment_status_detail]
+			: $all_status_detail['generic'];
 	}
 
 	/**
 	 * Get Alert Status
 	 *
-	 * @param String $payment_status Come from MP API
+	 * @param $payment_status
 	 *
-	 * @return String 'success' | 'pending' | 'rejected' | 'refunded' | 'charged_back'
+	 * @return string 'success' | 'pending' | 'rejected' | 'refunded' | 'charged_back'
 	 */
 	public function get_alert_status( $payment_status ) {
 		$all_payment_status = [
-			'approved' => 'success',
-			'authorized' => 'success',
-			'pending' => 'pending',
-			'in_process' => 'pending',
+			'approved'     => 'success',
+			'authorized'   => 'success',
+			'pending'      => 'pending',
+			'in_process'   => 'pending',
 			'in_mediation' => 'pending',
-			'rejected' => 'rejected',
-			'canceled' => 'rejected',
-			'refunded' => 'refunded',
+			'rejected'     => 'rejected',
+			'canceled'     => 'rejected',
+			'refunded'     => 'refunded',
 			'charged_back' => 'charged_back',
-			'generic' => 'rejected'
+			'generic'      => 'rejected'
 		];
-		$status             = array_key_exists($payment_status, $all_payment_status) ? $all_payment_status[$payment_status] : $all_payment_status['generic'];
 
-		return $status;
+		return array_key_exists($payment_status, $all_payment_status) ? $all_payment_status[$payment_status] : $all_payment_status['generic'];
 	}
 
 	/**
 	 * Get Order from Post
 	 *
-	 * @param WP_Post $post
+	 * @param $post
 	 *
-	 * return WC_Order | false
+	 * @return bool|WC_Order|WC_Order_Refund
 	 */
 	private function get_order( $post ) {
 		if ( $this->order instanceof WC_Order ) {
@@ -334,7 +334,7 @@ class WC_WooMercadoPago_Hook_Order_Details {
 
 		$this->order = wc_get_order($post->ID);
 
-		if ( ! $this->order || is_null($this->order) ) {
+		if ( ! $this->order ) {
 			return false;
 		}
 
@@ -394,6 +394,7 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 * @param WP_Post $post
 	 *
 	 * @return void
+	 * @throws WC_WooMercadoPago_Exception
 	 */
 	public function payment_status_metabox_content( $post ) {
 		$order = $this->get_order( $post );
@@ -413,20 +414,21 @@ class WC_WooMercadoPago_Hook_Order_Details {
 		$access_token       = 'no' === $is_production_mode || ! $is_production_mode
 			? get_option( '_mp_access_token_test' )
 			: get_option( '_mp_access_token_prod' );
-		$mp                 = new MP($access_token);
-		$payment            = $mp->search_payment_v1(trim($last_payment_id), $access_token);
 
-		if ( ! $payment || ! $payment['status'] || 200 !== $payment['status'] ) {
+		$mp      = new MP($access_token);
+		$payment = $mp->search_payment_v1(trim($last_payment_id), $access_token);
+
+		if ( ! $payment || 200 !== $payment['status'] ) {
 			return;
 		}
 
 		$payment_status         = $payment['response']['status'];
 		$payment_status_details = $payment['response']['status_detail'];
 
-		if (
-			( 'cc_rejected_insufficient_amount' === $payment_status_details || 'cc_rejected_bad_filled_other' === $payment_status_details )
-			&& ! $payment['response']['payment_type_id']
-		) {
+		if ( ! $payment['response']['payment_type_id'] && (
+			'cc_rejected_bad_filled_other' === $payment_status_details ||
+			'cc_rejected_insufficient_amount' === $payment_status_details
+		) ) {
 			return;
 		}
 
@@ -444,15 +446,13 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	}
 
 	/**
-	 * Metabox Data
+	 * Metabolic Data
 	 *
-	 * @param String $alert_status Alert Status (success|pending|rejected)
-	 * @param String $alert_description
-	 *
+	 * @param $alert_status
+	 * @param $alert
 	 * @return Array
 	 */
 	public function get_metabox_data( $alert_status, $alert ) {
-
 		$country = strtolower(get_option( 'checkout_country', '' ));
 
 		if ( 'success' === $alert_status ) {
@@ -506,9 +506,8 @@ class WC_WooMercadoPago_Hook_Order_Details {
 			'mpe' => 'https://www.mercadopago.com.pe/home',
 			'mlu' => 'https://www.mercadopago.com.uy/home',
 		];
-		$link          = array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
 
-		return $link;
+		return array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
 	}
 
 	/**
@@ -528,8 +527,7 @@ class WC_WooMercadoPago_Hook_Order_Details {
 			'mpe' => 'https://www.mercadopago.com.pe/developers/es/guides/plugins/woocommerce/sales-processing#bookmark_motivos_de_las_recusas',
 			'mlu' => 'https://www.mercadopago.com.uy/developers/es/guides/plugins/woocommerce/sales-processing#bookmark_motivos_de_las_recusas',
 		];
-		$link          = array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
 
-		return $link;
+		return array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
 	}
 }

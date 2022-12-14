@@ -161,6 +161,8 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 					'cvvText'                     => __( 'digits', 'woocommerce-mercadopago' ),
 					'installmentObsFee'           => __( 'No fee', 'woocommerce-mercadopago' ),
 					'installmentButton'           => __( 'More options', 'woocommerce-mercadopago' ),
+					'bankInterestText'            => __( 'If interest is applicable, it will be charged by your bank.', 'woocommerce-mercadopago' ),
+					'interestText'                => __( 'Interest', 'woocommerce-mercadopago' ),
 					'input_helper_message'        => array(
 						'cardNumber'              => array(
 							'invalid_type'        => __( 'Card number is required', 'woocommerce-mercadopago' ),

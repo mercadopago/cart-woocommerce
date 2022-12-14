@@ -14,8 +14,7 @@ const CheckoutPage = {
   },
 
   setBackground(element, background) {
-    document.querySelector(CheckoutElements[element]).style
-    .setProperty("background", background, "important");
+    document.querySelector(CheckoutElements[element]).style.setProperty("background", background, "important");
   },
 
   setImageCard(secureThumbnail) {
@@ -347,7 +346,11 @@ const CheckoutPage = {
     }
   },
 
-  getInstallments(response) {
+  getBankInterestDisclaimerCountries(siteId) {
+    return siteId === "mlc" || siteId === "mco" || siteId === "mpe";
+  },
+
+  getInstallments(response, bankInterestDisclaimer) {
     let payerCosts = [];
     const installments = [];
 
@@ -360,14 +363,20 @@ const CheckoutPage = {
     for (let j = 0; j < payerCosts.length; j++) {
       const installment = payerCosts[j].installments;
       const installmentRate = payerCosts[j].installment_rate === 0;
+      const installmentRateCollector = payerCosts[j].installment_rate_collector.includes("MERCADOPAGO");
+      const installmentTotalAmount = this.formatCurrency(payerCosts[j].total_amount);
+
+      const backInterestText = bankInterestDisclaimer
+        ? `${installmentTotalAmount} + ${wc_mercadopago_params.interestText}`
+        : installmentTotalAmount
 
       installments.push({
         id: `installment-${installment}`,
         value: installment,
-        rowText: payerCosts[j].recommended_message.split('(')[0],
-        rowObs: installmentRate ? wc_mercadopago_params.installmentObsFee : this.formatCurrency(payerCosts[j].total_amount),
-        highlight: installmentRate ? "true" : "",
+        highlight: installmentRate && installmentRateCollector ? "true" : "",
         dataRate: this.argentinaResolution(payerCosts[j].labels),
+        rowText: payerCosts[j].recommended_message.split('(')[0],
+        rowObs: installmentRate && installmentRateCollector ? wc_mercadopago_params.installmentObsFee : backInterestText,
       });
     }
 
@@ -375,18 +384,22 @@ const CheckoutPage = {
   },
 
   setChangeEventOnInstallments(siteId, response) {
-    var installments = this.getInstallments(response);
+    const bankInterestDisclaimer = this.getBankInterestDisclaimerCountries(siteId);
+    const installments = this.getInstallments(response, bankInterestDisclaimer);
 
     const inputTable = document.createElement("input-table");
     inputTable.setAttribute("name", "mp-installments");
-    inputTable.setAttribute(
-      "button-name",
-      wc_mercadopago_params.installmentButton
-    );
+    inputTable.setAttribute("button-name", wc_mercadopago_params.installmentButton);
     inputTable.setAttribute("columns", JSON.stringify(installments));
+
+    if (bankInterestDisclaimer) {
+      inputTable.setAttribute("bank-interest-text", wc_mercadopago_params.bankInterestText);
+    }
+
     this.setElementDisplay("mpInstallments", "block");
     this.showInstallmentsComponent(inputTable);
     this.setupTaxEvents();
+
     document.getElementById("more-options").addEventListener("click", () => {
       setTimeout(() => {
         this.setupTaxEvents();

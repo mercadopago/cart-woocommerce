@@ -462,11 +462,12 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	/**
 	 * Get notification url
 	 *
-	 * @return mixed
+	 * @return string|void
 	 */
 	public function get_notification_url() {
 		if ( ! strrpos( get_site_url(), 'localhost' ) ) {
 			$notification_url = $this->payment->custom_domain;
+
 			// Check if we have a custom URL.
 			if ( empty( $notification_url ) || filter_var( $notification_url, FILTER_VALIDATE_URL ) === false ) {
 				return $this->get_notification_type(
@@ -475,13 +476,11 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 				);
 			} else {
 				return $this->get_notification_type(
-							WC_WooMercadoPago_Module::fix_url_ampersand(
-								esc_url(
-										$notification_url . '/wc-api/' . $this->notification_class . '/'
-										)
-							),
-							$this->notification_class
-						);
+					WC_WooMercadoPago_Module::fix_url_ampersand(
+						esc_url($notification_url . '/wc-api/' . $this->notification_class . '/')
+					),
+					$this->notification_class
+				);
 			}
 		}
 	}
