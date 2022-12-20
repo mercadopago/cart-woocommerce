@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Requester;
@@ -70,6 +71,11 @@ class WoocommerceMercadoPago
      * @var Country
      */
     public $country;
+
+    /**
+     * @var CurrentUser
+     */
+    public $currentUser;
 
     /**
      * @var Links
@@ -251,6 +257,7 @@ class WoocommerceMercadoPago
         // Helpers
         $this->cache        = $this->dependencies->cache;
         $this->country      = $this->dependencies->country;
+        $this->currentUser  = $this->dependencies->currentUser;
         $this->links        = $this->dependencies->links;
         $this->requester    = $this->dependencies->requester;
         $this->strings      = $this->dependencies->strings;

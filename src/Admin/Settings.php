@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Admin;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Categories;
+use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
@@ -81,6 +82,11 @@ class Settings
     private $nonce;
 
     /**
+     * @var CurrentUser
+     */
+    private $currentUser;
+
+    /**
      * Settings constructor
      */
     public function __construct(
@@ -93,7 +99,8 @@ class Settings
         Store $store,
         Translations $translations,
         Url $url,
-        Nonce $nonce
+        Nonce $nonce,
+        CurrentUser $currentUser
     ) {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
@@ -105,6 +112,7 @@ class Settings
         $this->translations = $translations;
         $this->url          = $url;
         $this->nonce        = $nonce;
+        $this->currentUser  = $currentUser;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -480,6 +488,7 @@ class Settings
      */
     private function validateAjaxNonce(): void
     {
+        $this->currentUser->validateUserNeededPermissions();
         $this->nonce->validateNonce(self::NONCE_ID, Form::getSanitizeTextFromPost('nonce'));
     }
 }
