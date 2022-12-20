@@ -35,7 +35,7 @@ final class Nonce
         $nonce = wp_create_nonce($id);
 
         if (!$nonce) {
-            $this->logs->file->error('Security nonce ' . $id . ' creation failed.', __FUNCTION__);
+            $this->logs->file->error('Security nonce ' . $id . ' creation failed.', __CLASS__);
             return '';
         }
 
