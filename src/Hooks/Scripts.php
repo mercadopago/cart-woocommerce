@@ -138,6 +138,7 @@ class Scripts
 
         $file      = $this->url->getPluginFileUrl('assets/js/caronte/caronte-client', '.js');
         $variables = [
+            'locale'                => get_locale(),
             'site_id'               => 'MLA',
             'plugin_version'        => MP_VERSION,
             'platform_id'           => MP_PLATFORM_ID,
