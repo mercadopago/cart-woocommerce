@@ -52,7 +52,7 @@ class CurrentUser
      *
      * @return bool
      */
-    public function userHasRoles( array $roles ): bool
+    public function userHasRoles(array $roles): bool
     {
         return !empty(array_intersect($roles, $this->getCurrentUserRoles()));
     }
