@@ -11,6 +11,7 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Requester;
@@ -44,6 +45,11 @@ class Dependencies
      * @var Country
      */
     public $country;
+
+    /**
+     * @var CurrentUser
+     */
+    public $currentUser;
 
     /**
      * @var Links
@@ -169,6 +175,7 @@ class Dependencies
         $this->gateway      = $this->setGateway();
         $this->logs         = $this->setLogs();
         $this->nonce        = $this->setNonce();
+        $this->currentUser  = $this->setCurrentUser();
         $this->translations = $this->setTranslations();
         $this->notices      = $this->setNotices();
         $this->settings     = $this->setSettings();
@@ -268,6 +275,11 @@ class Dependencies
         return new Nonce($this->logs);
     }
 
+    private function setCurrentUser(): CurrentUser
+    {
+        return new CurrentUser($this->logs);
+    }
+
     /**
      * @return Translations
      */
@@ -299,7 +311,8 @@ class Dependencies
             $this->store,
             $this->translations,
             $this->url,
-            $this->nonce
+            $this->nonce,
+            $this->currentUser
         );
     }
 }
