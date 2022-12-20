@@ -30,7 +30,7 @@ class CurrentUser
      *
      * @return \WP_User
      */
-    public function getCurrentUser()
+    public function getCurrentUser(): \WP_User
     {
         return wp_get_current_user();
     }
