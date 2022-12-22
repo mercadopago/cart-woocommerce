@@ -1,7 +1,6 @@
 <?php
 
 class WC_WooMercadoPago_MercadoPago_Settings {
-
 	const PRIORITY_ON_MENU = 90;
 
 	const SETTINGS_NONCE_ID = 'mp_settings_nonce';
@@ -10,15 +9,23 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 
 	protected $nonce;
 
+	protected $current_user;
+
 	/**
 	 * WC_WooMercadoPago_MercadoPago_Settings constructor
 	 *
 	 * @param WC_WooMercadoPago_Options $options
 	 * @param WC_WooMercadoPago_Helper_Nonce $nonce
+	 * @param WC_WooMercadoPago_Helper_Current_User $current_user
 	 */
-	public function __construct( WC_WooMercadoPago_Options $options, WC_WooMercadoPago_Helper_Nonce $nonce ) {
-		$this->options = $options;
-		$this->nonce   = $nonce;
+	public function __construct(
+		WC_WooMercadoPago_Options $options,
+		WC_WooMercadoPago_Helper_Nonce $nonce,
+		WC_WooMercadoPago_Helper_Current_User $current_user
+	) {
+		$this->options      = $options;
+		$this->nonce        = $nonce;
+		$this->current_user = $current_user;
 	}
 
 	/**
@@ -113,6 +120,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 				'mercadopago_research_javascript',
 				'wc_mercadopago_params',
 				array(
+					'locale'                => get_locale(),
 					'site_id'               => $this->options->get_site_id() ? strtoupper( $this->options->get_site_id() ) : 'MLA',
 					'platform_id'           => WC_WooMercadoPago_Constants::PLATAFORM_ID,
 					'platform_version'      => $woocommerce->version,
@@ -182,7 +190,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 * @return array
 	 */
 	public function mp_translation_admin_header() {
-		$translation_header = array(
+		return array(
 			'title_head_part_one'             => __( 'Accept ', 'woocommerce-mercadopago' ),
 			'title_head_part_two'             => __( 'payments on the spot ', 'woocommerce-mercadopago' ),
 			'title_head_part_three'           => __( 'with', 'woocommerce-mercadopago' ),
@@ -209,8 +217,6 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			'descripition_questions_three'    => __( 'on our webiste for developers.', 'woocommerce-mercadopago' ),
 			'button_questions'                => __( 'Plugin manual', 'woocommerce-mercadopago' ),
 		);
-
-		return $translation_header;
 	}
 
 	/**
@@ -243,7 +249,6 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 */
 	public function mp_translation_admin_store() {
 		return array(
-
 			'title_store'                  => __( '2. Customize your business', 'woocommerce-mercadopago' ),
 			'subtitle_store'               => __( 'Fill out the following information to have a better experience and offer more information to your clients', 'woocommerce-mercadopago' ),
 			'title_info_store'             => __( 'Your store information', 'woocommerce-mercadopago' ),
@@ -571,17 +576,18 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 				if ( ! in_array( $payment_gateway, $payment_methods, true ) ) {
 					continue;
 				}
+
 				$gateway = new $payment_gateway();
 
 				$additional_info = [
-					'woo-mercado-pago-basic'  => [ 'icon' => 'mp-settings-icon-mp' ],
-					'woo-mercado-pago-custom' => [ 'icon' => 'mp-settings-icon-card' ],
-					'woo-mercado-pago-ticket' => [ 'icon' => 'mp-settings-icon-code' ],
-					'woo-mercado-pago-pix'    => [ 'icon' => 'mp-settings-icon-pix' ]
+					'woo-mercado-pago-basic'   => [ 'icon' => 'mp-settings-icon-mp' ],
+					'woo-mercado-pago-credits' => [ 'icon' => 'mp-settings-icon-mp' ],
+					'woo-mercado-pago-custom'  => [ 'icon' => 'mp-settings-icon-card' ],
+					'woo-mercado-pago-ticket'  => [ 'icon' => 'mp-settings-icon-code' ],
+					'woo-mercado-pago-pix'     => [ 'icon' => 'mp-settings-icon-pix' ],
 				];
 
 				$payment_gateway_properties[] = array(
-
 					'id'               => $gateway->id,
 					'description'      => $gateway->description,
 					'title'            => $gateway->title,
@@ -594,6 +600,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 					],
 				);
 			}
+
 			wp_send_json_success( $payment_gateway_properties );
 		} catch ( Exception $e ) {
 			$response = [
@@ -688,10 +695,10 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 	 * @return void
 	 */
 	private function validate_ajax_nonce() {
+		$this->current_user->validate_user_needed_permissions();
 		$this->nonce->validate_nonce(
 			self::SETTINGS_NONCE_ID,
 			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'nonce' )
 		);
 	}
-
 }

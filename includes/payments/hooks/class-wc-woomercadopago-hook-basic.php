@@ -50,7 +50,7 @@ class WC_WooMercadoPago_Hook_Basic extends WC_WooMercadoPago_Hook_Abstract {
 					$page_id = woocommerce_get_page_id( 'checkout' );
 				}
 				if ( is_page( $page_id ) ) {
-					echo '<style type="text/css">#MP-Checkout-dialog { z-index: 9999 !important; }</style>' . PHP_EOL;
+					echo '<style>#MP-Checkout-dialog { z-index: 9999 !important; }</style>' . PHP_EOL;
 				}
 			}
 		);
@@ -74,6 +74,8 @@ class WC_WooMercadoPago_Hook_Basic extends WC_WooMercadoPago_Hook_Abstract {
 			$html  = '<style type="text/css">
             #MP-Checkout-dialog #MP-Checkout-IFrame { bottom: 0px !important; top:50%!important; margin-top: -280px !important; height: 590px !important; }
             </style>';
+			// mlstatic is a domain for the Mercado Pago CDN.
+			// This script is used to render the checkout pro in the modal function, avoiding redirection from the store to Mercado Pago.
 			// @todo use wp_enqueue_script
 			// @codingStandardsIgnoreLine
 			$html .= '<script type="text/javascript" src="https://secure.mlstatic.com/mptools/render.js"></script>

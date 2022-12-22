@@ -1,5 +1,17 @@
 CHANGELOG:
 == Changelog ==
+= v6.5.0 (22/12/2022) =
+* Features
+- Added Mercado Credits payment method
+- Added user permissions needed (administrator or editor) for security
+
+* Changes
+- Documented use of a 3rd Party or external service
+- Improved Checkout Pro layout
+
+* Bug fixes
+- Removed nonce validation from checkouts to use WC nonce validation
+
 = v6.4.1 (14/12/2022) =
 * Features
 - Added bank interest disclaimer

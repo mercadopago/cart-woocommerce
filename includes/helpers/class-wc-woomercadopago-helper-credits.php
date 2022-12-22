@@ -42,10 +42,8 @@ class WC_WooMercadoPago_Helper_Credits {
 	}
 
 	/**
-	 *
 	 * Get Payment Response function
 	 *
-	 * @param array $payments_response Payment Method Response.
 	 * @return bool
 	 */
 	public function is_credits() {

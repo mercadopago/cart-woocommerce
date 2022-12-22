@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
 Tested up to: 6.1
 Requires PHP: 7.0
-Stable tag: 6.4.1
+Stable tag: 6.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,18 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+= v6.5.0 (22/12/2022) =
+* Features
+- Added Mercado Credits payment method
+- Added user permissions needed (administrator or editor) for security
+
+* Changes
+- Documented use of a 3rd Party or external service
+- Improved Checkout Pro layout
+
+* Bug fixes
+- Removed nonce validation from checkouts to use WC nonce validation
+
 = v6.4.1 (14/12/2022) =
 * Features
 - Added bank interest disclaimer

@@ -15,6 +15,8 @@ class WC_WooMercadoPago_ConfigsTest extends WP_UnitTestCase {
 		require_once dirname( dirname( __FILE__ ) ) . '/../../includes/module/class-wc-woomercadopago-configs.php';
 		require_once dirname( dirname( __FILE__ ) ) . '/../../includes/module/class-wc-woomercadopago-credentials.php';
 		require_once dirname( dirname( __FILE__ ) ) . '/../../includes/module/class-wc-woomercadopago-module.php';
+		require_once dirname( dirname( __FILE__ ) ) . '/../../includes/module/class-wc-woomercadopago-options.php';
+		require_once dirname( dirname( __FILE__ ) ) . '/../../includes/helpers/class-wc-woomercadopago-helper-credits.php';
 
 		update_option( 'woocommerce_default_country', 'BR:SP', true  );
 	}
@@ -205,13 +207,27 @@ class WC_WooMercadoPago_ConfigsTest extends WP_UnitTestCase {
 	 * Set payment for Brazil
 	 */
 	public function test_set_payment_gateway() {
-		$woomercadoPago_configs = new WC_WooMercadoPago_Configs;
+		$credits_helper_mock = $this->getMockBuilder(WC_WooMercadoPago_Helper_Credits::class)
+			->setMethods(['is_credits'])
+			->getMock();
+		$credits_helper_mock->expects($this->any())
+			->method('is_credits')
+			->willReturn(1);
+			
+		$woomercadoPago_configs = $this->getMockBuilder(WC_WooMercadoPago_Configs::class)
+			->setMethods(['get_credits_helper_instance'])
+			->getMock();
+		$woomercadoPago_configs->expects($this->any())
+			->method('get_credits_helper_instance')
+			->willReturn($credits_helper_mock);
+
 		$payment_gateway = $woomercadoPago_configs->set_payment_gateway( [] );
 		$methods_returned = array (
 			'WC_WooMercadoPago_Basic_Gateway',
 			'WC_WooMercadoPago_Custom_Gateway',
 			'WC_WooMercadoPago_Ticket_Gateway',
 			'WC_WooMercadoPago_Pix_Gateway',
+			'WC_WooMercadoPago_Credits_Gateway',
 		);
 
 		$this->assertEqualSets( $methods_returned , $payment_gateway );
@@ -221,13 +237,27 @@ class WC_WooMercadoPago_ConfigsTest extends WP_UnitTestCase {
 	 * Get available payment methods for Brazil
 	 */
 	public function test_get_available_payment_methods() {
-		$woomercadoPago_configs = new WC_WooMercadoPago_Configs;
+		$credits_helper_mock = $this->getMockBuilder(WC_WooMercadoPago_Helper_Credits::class)
+			->setMethods(['is_credits'])
+			->getMock();
+		$credits_helper_mock->expects($this->any())
+			->method('is_credits')
+			->willReturn(1);
+			
+		$woomercadoPago_configs = $this->getMockBuilder(WC_WooMercadoPago_Configs::class)
+			->setMethods(['get_credits_helper_instance'])
+			->getMock();
+		$woomercadoPago_configs->expects($this->any())
+			->method('get_credits_helper_instance')
+			->willReturn($credits_helper_mock);
+
 		$payment_gateway = $woomercadoPago_configs->get_available_payment_methods( [] );
 		$methods_returned = array (
 			'WC_WooMercadoPago_Basic_Gateway',
 			'WC_WooMercadoPago_Custom_Gateway',
 			'WC_WooMercadoPago_Ticket_Gateway',
 			'WC_WooMercadoPago_Pix_Gateway',
+			'WC_WooMercadoPago_Credits_Gateway',
 		);
 
 		$this->assertEqualSets( $methods_returned , $payment_gateway );

@@ -61,7 +61,7 @@ class WC_WooMercadoPago_Log {
 	 * @return void
 	 */
 	public function get_debug_mode( $payment, $debug_mode ) {
-		if ( ! empty( $payment ) ) {
+		if ( ! empty( $payment ) && property_exists( $payment, $debug_mode ) ) {
 			$debug_mode = $payment->debug_mode;
 			if ( 'no' === $debug_mode ) {
 				$debug_mode = false;

@@ -380,6 +380,7 @@ class WC_WooMercadoPago_Configs {
 						'wc_woomercadopago_custom_gateway',
 						'wc_woomercadopago_ticket_gateway',
 						'wc_woomercadopago_pix_gateway',
+						'wc_woomercadopago_credits_gateway',
 						'wc_woomercadopago_basicgateway',
 						'wc_woomercadopago_customgateway',
 						'wc_woomercadopago_ticketgateway',
@@ -410,6 +411,12 @@ class WC_WooMercadoPago_Configs {
 		$site_id    = strtolower( get_option( '_site_id_v1', '' ) );
 
 		$methods[] = 'WC_WooMercadoPago_Basic_Gateway';
+
+		$credits_helper = $this->get_credits_helper_instance();
+		if ( $credits_helper->is_credits() ) {
+			$methods[] = 'WC_WooMercadoPago_Credits_Gateway';
+		}
+
 		$methods[] = 'WC_WooMercadoPago_Custom_Gateway';
 		$methods[] = 'WC_WooMercadoPago_Ticket_Gateway';
 
@@ -418,6 +425,10 @@ class WC_WooMercadoPago_Configs {
 		}
 
 		return $methods;
+	}
+
+	public function get_credits_helper_instance() {
+		return new WC_WooMercadoPago_Helper_Credits();
 	}
 
 }

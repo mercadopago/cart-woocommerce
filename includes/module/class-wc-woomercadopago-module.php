@@ -188,6 +188,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 		include_once dirname( __FILE__ ) . '/../payments/hooks/class-wc-woomercadopago-hook-custom.php';
 		include_once dirname( __FILE__ ) . '/../payments/hooks/class-wc-woomercadopago-hook-ticket.php';
 		include_once dirname( __FILE__ ) . '/../payments/hooks/class-wc-woomercadopago-hook-pix.php';
+		include_once dirname( __FILE__ ) . '/../payments/hooks/class-wc-woomercadopago-hook-credits.php';
 		include_once dirname( __FILE__ ) . '/../products/hooks/class-wc-woomercadopago-products-hook-credits.php';
 	}
 
@@ -202,6 +203,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 		include_once dirname( __FILE__ ) . '/preference/class-wc-woomercadopago-preference-custom.php';
 		include_once dirname( __FILE__ ) . '/preference/class-wc-woomercadopago-preference-ticket.php';
 		include_once dirname( __FILE__ ) . '/preference/class-wc-woomercadopago-preference-pix.php';
+		include_once dirname( __FILE__ ) . '/preference/class-wc-woomercadopago-preference-credits.php';
 		include_once dirname( __FILE__ ) . '/preference/analytics/class-wc-woomercadopago-preferenceanalytics.php';
 		include_once dirname( __FILE__ ) . '/preference/class-wc-woomercadopago-preference-custom-wallet-button.php';
 	}
@@ -217,6 +219,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 		include_once dirname( __FILE__ ) . '/../payments/class-wc-woomercadopago-custom-gateway.php';
 		include_once dirname( __FILE__ ) . '/../payments/class-wc-woomercadopago-ticket-gateway.php';
 		include_once dirname( __FILE__ ) . '/../payments/class-wc-woomercadopago-pix-gateway.php';
+		include_once dirname( __FILE__ ) . '/../payments/class-wc-woomercadopago-credits-gateway.php';
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'set_payment_gateway' ) );
 	}
 
@@ -587,10 +590,11 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 	 * @return string
 	 */
 	public static function get_notification_type( $notification_type ) {
-		$types['WC_WooMercadoPago_Basic_Gateway']  = 'ipn';
-		$types['WC_WooMercadoPago_Custom_Gateway'] = 'webhooks';
-		$types['WC_WooMercadoPago_Pix_Gateway']    = 'webhooks';
-		$types['WC_WooMercadoPago_Ticket_Gateway'] = 'webhooks';
+		$types['WC_WooMercadoPago_Basic_Gateway']   = 'ipn';
+		$types['WC_WooMercadoPago_Credits_Gateway'] = 'ipn';
+		$types['WC_WooMercadoPago_Custom_Gateway']  = 'webhooks';
+		$types['WC_WooMercadoPago_Pix_Gateway']     = 'webhooks';
+		$types['WC_WooMercadoPago_Ticket_Gateway']  = 'webhooks';
 
 		return $types[ $notification_type ];
 	}
