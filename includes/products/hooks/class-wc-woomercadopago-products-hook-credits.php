@@ -25,14 +25,14 @@ class WC_WooMercadoPago_Products_Hook_Credits {
 	public $site_id;
 
 	/**
-	 * Checkout Pro Enabled
+	 * Checkout Credits Enabled
 	 *
 	 * @var boolean
 	 */
-	public $checkout_pro_enabled;
+	public $credits_enabled;
 
 	/**
-	 * Checkout Pro Credits Banner Enabled
+	 * Credits Banner Enabled
 	 *
 	 * @var boolean
 	 */
@@ -61,17 +61,17 @@ class WC_WooMercadoPago_Products_Hook_Credits {
 		$this->mp_options     = WC_WooMercadoPago_Options::get_instance();
 
 		if ( ! is_admin() ) {
-			$checkout_pro_configs       = get_option( 'woocommerce_woo-mercado-pago-basic_settings', '' );
-			$this->checkout_pro_enabled = 'no';
-			$this->site_id              = strtolower(get_option( '_site_id_v1' ));
-			$is_credits                 = $this->credits_helper->is_credits();
+			$credits_configs       = get_option( 'woocommerce_woo-mercado-pago-credits_settings', '' );
+			$this->credits_enabled = 'no';
+			$this->site_id         = strtolower(get_option( '_site_id_v1' ));
+			$is_credits            = $this->credits_helper->is_credits();
 
-			if ( isset( $checkout_pro_configs['enabled'] ) && isset( $checkout_pro_configs['credits_banner'] ) ) {
-				$this->checkout_pro_enabled = $checkout_pro_configs['enabled'];
-				$this->credits_banner       = $checkout_pro_configs['credits_banner'];
+			if ( isset( $credits_configs['enabled'] ) && isset( $credits_configs['credits_banner'] ) ) {
+				$this->credits_enabled = $credits_configs['enabled'];
+				$this->credits_banner  = $credits_configs['credits_banner'];
 			}
 
-			if ( 'yes' === $this->checkout_pro_enabled && 'yes' === $this->credits_banner ) {
+			if ( 'yes' === $this->credits_enabled && 'yes' === $this->credits_banner ) {
 				if ( $is_credits ) {
 					$this->load_hooks();
 				}

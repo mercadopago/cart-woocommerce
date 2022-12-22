@@ -30,33 +30,37 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</div>
 			<?php endif; ?>
 
-			<checkout-benefits
-				title="<?php echo esc_html_e('Pay faster with Mercado Pago', 'woocommerce-mercadopago'); ?>"
-				items='[
-					"<?php echo esc_html_e('If you already have a Mercado Libre account, use the same email and password', 'woocommerce-mercadopago'); ?>",
-					"<?php echo esc_html_e('Buy with your balance or saved cards', 'woocommerce-mercadopago'); ?>"
-				]'
-				list-style-type-src="<?php echo esc_html($list_style_type_src); ?>"
-				list-style-type-alt="<?php echo esc_html_e('List style type blue check', 'woocommerce-mercadopago'); ?>"
-			>
-			</checkout-benefits>
+			<div class="mp-checkout-pro-checkout-benefits">
+				<checkout-benefits
+					title="<?php echo esc_html_e('Log in to Mercado Pago and earn benefits', 'woocommerce-mercadopago'); ?>"
+					title-align="center"
+					items="<?php echo esc_html($checkout_benefits_items); ?>"
+					list-mode="image"
+				>
+				</checkout-benefits>
+			</div>
 
 			<div class="mp-checkout-pro-payment-methods">
-				<payment-methods methods="<?php echo esc_html($payment_methods); ?>"></payment-methods>
-			</div>
-		</div>
-
-		<?php if ( 'redirect' === $method ) : ?>
-			<div class="mp-checkout-pro-redirect">
-				<checkout-redirect
-					text="<?php echo esc_html_e('When you confirm your purchase, we will redirect you to your Mercado Pago account', 'woocommerce-mercadopago'); ?>"
-					alt="<?php echo esc_html_e('Checkout Pro redirect info image', 'woocommerce-mercadopago'); ?>"
-					src="<?php echo esc_html($redirect_image); ?>"
+				<payment-methods-v2
+					title="<?php echo esc_html($payment_methods_title); ?>"
+					methods="<?php echo esc_html($payment_methods); ?>"
 				>
-				</checkout-redirect>
+				</payment-methods-v2>
 			</div>
-		<?php endif; ?>
+
+			<?php if ( 'redirect' === $method ) : ?>
+				<div class="mp-checkout-pro-redirect">
+					<checkout-redirect-v2
+						text="<?php echo esc_html_e('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'); ?>"
+						src="<?php echo esc_html($checkout_redirect_src); ?>"
+						alt="<?php echo esc_html_e('Checkout Pro redirect info image', 'woocommerce-mercadopago'); ?>"
+					>
+					</checkout-redirect-v2>
+				</div>
+			<?php endif; ?>
+		</div>
 	</div>
+
 	<div class="mp-checkout-pro-terms-and-conditions">
 		<terms-and-conditions
 			description="<?php echo esc_html_e('By continuing, you agree with our', 'woocommerce-mercadopago'); ?>"

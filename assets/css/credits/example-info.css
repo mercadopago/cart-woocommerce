@@ -11,7 +11,21 @@
     border-radius: 8px;
     font-family: Proxima Nova, Helvetica Neue, Helvetica, Arial, sans-serif;
 	color: #646970;
+}
 
+.credits-info-preview-container {
+    display: flex;
+    justify-content: flex-start;
+    padding: 24px;
+    flex-direction: row;
+    align-items: flex-start;
+    max-width: 512px;
+    max-height: 742px;
+    background: #FFFFFF;
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-family: Proxima Nova, Helvetica Neue, Helvetica, Arial, sans-serif;
+	color: #646970;
 }
 
 .credits-info-example-buttons-container {
@@ -53,6 +67,28 @@
     width: 20px;
 }
 
+.credits-info-example-image-container {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.credits-info-example-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    background: #F5F5F5;
+    border-radius: 6px;
+    flex-direction: column;
+    flex: auto;
+    max-height: 480px;
+	padding: 30px;
+    margin: 0 60px;
+}
+
 .credits-info-example-gif-container {
     width: 100%;
     height: auto;
@@ -75,6 +111,7 @@
 	padding: 30px;
 }
 
+.credits-info-example-image>img,
 .credits-info-example-gif>img {
     display: flex;
     flex-direction: row;
@@ -136,11 +173,31 @@
 	padding: 20px 0 30px;
 }
 
+.credits-info-example-preview-pill  {
+    padding: 3px 8px 2px;
+    background-color: rgba(71, 154, 209, 0.1);
+    border: none;
+    color: rgba(0, 158, 227, 1);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 4px 2px;
+    border-radius: 46px;
+    width: fit-content;
+    align-self: flex-end;
+    margin: 0 0 24px 0 !important;
+}
+
+.credits-info-example-preview-footer {
+    padding: 20px 0 0 0;
+}
+
 @media screen and (max-width: 768px) {
     .credits-info-example-container {
         max-height: 720px;
     }
 
+    .credits-info-example-image-container,
     .credits-info-example-gif-container {
         margin: 0;
 		padding: 0;
@@ -157,6 +214,7 @@
         margin-bottom: 16px;
     }
 
+    .credits-info-preview-container,
     .credits-info-example-container {
         display: flex;
         padding: 24px;

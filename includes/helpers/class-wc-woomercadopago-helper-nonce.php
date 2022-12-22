@@ -17,7 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Class WC_WooMercadoPago_Helper_Nonce
  */
 class WC_WooMercadoPago_Helper_Nonce {
-
 	/**
 	 * Log
 	 *
@@ -36,7 +35,7 @@ class WC_WooMercadoPago_Helper_Nonce {
 	 * Nonce constructor
 	 */
 	private function __construct() {
-		$this->log = new WC_WooMercadoPago_Log();
+		$this->log = new WC_WooMercadoPago_Log($this);
 	}
 
 	/**
@@ -89,7 +88,7 @@ class WC_WooMercadoPago_Helper_Nonce {
 	 */
 	public function validate_nonce( $id, $nonce ) {
 		if ( ! wp_verify_nonce( $nonce, $id ) ) {
-			$this->log->write_log( __FUNCTION__, 'Security nonce ' . $id . ' check failed.' );
+			$this->log->write_log(__FUNCTION__, 'Security nonce ' . $id . ' check failed. Nonce: ' . $nonce);
 			wp_send_json_error( 'Forbidden', 403 );
 		}
 	}

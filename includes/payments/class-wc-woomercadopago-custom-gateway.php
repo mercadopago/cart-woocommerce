@@ -17,27 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Class WC_WooMercadoPago_Custom_Gateway
  */
 class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstract {
-
 	/**
 	 * ID
 	 *
 	 * @const
 	 */
 	const ID = 'woo-mercado-pago-custom';
-
-	/**
-	 * Nonce field id
-	 *
-	 * @const
-	 */
-	const NONCE_FIELD_ID = 'mercado_pago_custom';
-
-	/**
-	 * Nonce field name
-	 *
-	 * @const
-	 */
-	const NONCE_FIELD_NAME = 'mercado_pago_custom_nonce';
 
 	/**
 	 * Is enable Wallet Button?
@@ -91,13 +76,6 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 				array(),
 				WC_WooMercadoPago_Constants::VERSION,
 				false
-			);
-			wp_enqueue_script(
-				'woocommerce-mercadopago-credentials',
-				plugins_url( '../assets/js/validate-credentials' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
-				array(),
-				WC_WooMercadoPago_Constants::VERSION,
-				true
 			);
 		}
 
@@ -437,7 +415,6 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		}
 
 		$parameters = array(
-			'nonce_field'          => $this->mp_nonce->generate_nonce_field( self::NONCE_FIELD_ID, self::NONCE_FIELD_NAME ),
 			'test_mode'            => ! $this->is_production_mode(),
 			'test_mode_link'       => $test_mode_link,
 			'amount'               => $amount,
@@ -465,11 +442,6 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @return array|void
 	 */
 	public function process_payment( $order_id ) {
-		$this->mp_nonce->validate_nonce(
-			self::NONCE_FIELD_ID,
-			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( self::NONCE_FIELD_NAME )
-		);
-
 		// @codingStandardsIgnoreLine
 		$custom_checkout = $_POST['mercadopago_custom'];
 		if ( ! isset( $custom_checkout ) ) {

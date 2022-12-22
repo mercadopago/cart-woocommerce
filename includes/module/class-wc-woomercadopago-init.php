@@ -240,6 +240,7 @@ class WC_WooMercadoPago_Init {
 			require_once dirname( __FILE__ ) . '/class-wc-woomercadopago-options.php';
 			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-nonce.php';
 			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-filter.php';
+			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-current-user.php';
 
 			if ( is_admin() ) {
 				require_once dirname( __FILE__ ) . '../../admin/notices/class-wc-woomercadopago-review-notice.php';
@@ -251,12 +252,15 @@ class WC_WooMercadoPago_Init {
 				// Init Nonce Helper
 				$nonce = WC_WooMercadoPago_Helper_Nonce::get_instance();
 
+				// Init Current User Helper
+				$current_user = WC_WooMercadoPago_Helper_Current_User::get_instance();
+
 				WC_WooMercadoPago_Review_Notice::init_mercadopago_review_notice();
 				WC_WooMercadoPago_Saved_Cards::init_singleton();
 				new WC_WooMercadoPago_Hook_Order_Details();
 
 				// Load Mercado Pago Settings Screen
-				( new WC_WooMercadoPago_MercadoPago_Settings($option, $nonce) )->init();
+				( new WC_WooMercadoPago_MercadoPago_Settings( $option, $nonce, $current_user ) )->init();
 			}
 
 			require_once dirname( __FILE__ ) . '../../pix/class-wc-woomercadopago-image-generator.php';

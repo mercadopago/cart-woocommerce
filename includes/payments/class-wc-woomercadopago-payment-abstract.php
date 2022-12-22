@@ -19,7 +19,11 @@ use MercadoPago\PP\Sdk\Sdk;
  * Class WC_WooMercadoPago_Payment_Abstract
  */
 class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
-
+	/**
+	 * Common configs for payments
+	 *
+	 * @const
+	 */
 	const COMMON_CONFIGS = array(
 		'_mp_public_key_test',
 		'_mp_access_token_test',
@@ -35,13 +39,11 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		'auto_return',
 	);
 
-	const CREDENTIAL_FIELDS = array(
-		'_mp_public_key_test',
-		'_mp_access_token_test',
-		'_mp_public_key_prod',
-		'_mp_access_token_prod',
-	);
-
+	/**
+	 * Allowed classes in plugin
+	 *
+	 * @const
+	 */
 	const ALLOWED_CLASSES = array(
 		'WC_WooMercadoPago_Basic_Gateway',
 		'WC_WooMercadoPago_Custom_Gateway',
@@ -473,7 +475,8 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 			'woo-mercado-pago-basic'  => 'checkout-pro',
 			'woo-mercado-pago-custom' => 'checkout-custom',
 			'woo-mercado-pago-ticket' => 'checkout-ticket',
-			'woo-mercado-pago-pix'    => 'checkout-pix'
+			'woo-mercado-pago-pix'    => 'checkout-pix',
+			'woo-mercado-pago-credits' => 'checkout-credits'
 		];
 
 		wc_get_template(
@@ -711,6 +714,10 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 				$form_fields['checkout_payments_advanced_description'] = $this->field_checkout_payments_advanced_description();
 				$form_fields[ WC_WooMercadoPago_Helpers_CurrencyConverter::CONFIG_KEY ] = $this->field_currency_conversion( $this );
 			}
+		}
+
+		if ( is_admin() && $this->is_manage_section() && ( WC_WooMercadoPago_Helper_Current_Url::validate_page('mercadopago-settings') || WC_WooMercadoPago_Helper_Current_Url::validate_section('woo-mercado-pago') ) ) {
+			$this->load_custom_credentials_js();
 		}
 
 		if ( is_admin() && ( WC_WooMercadoPago_Helper_Current_Url::validate_page('mercadopago-settings') || WC_WooMercadoPago_Helper_Current_Url::validate_section('woo-mercado-pago') ) ) {
@@ -954,6 +961,23 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		wp_enqueue_script(
 			'woocommerce-mercadopago-components',
 			plugins_url( '../assets/js/components_mercadopago' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
+			array(),
+			WC_WooMercadoPago_Constants::VERSION,
+			true
+		);
+	}
+
+	/**
+	 * Load Custom JS For Checkbox
+	 *
+	 * @return void
+	 */
+	private function load_custom_credentials_js() {
+		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+
+		wp_enqueue_script(
+			'woocommerce-mercadopago-credentials',
+			plugins_url( '../assets/js/validate-credentials' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
 			array(),
 			WC_WooMercadoPago_Constants::VERSION,
 			true

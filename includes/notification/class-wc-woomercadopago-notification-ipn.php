@@ -86,7 +86,7 @@ class WC_WooMercadoPago_Notification_IPN extends WC_WooMercadoPago_Notification_
 			$order            = parent::successful_request( $data );
 			$processed_status = $this->process_status_mp_business( $data, $order );
 			$this->log->write_log( __FUNCTION__, 'Changing order status to: ' . parent::get_wc_status_for_mp_status( str_replace( '_', '', $processed_status ) ) );
-			$this->proccess_status( $processed_status, $data, $order );
+			$this->process_status( $processed_status, $data, $order );
 		} catch ( Exception $e ) {
 			$this->set_response( 422, null, $e->getMessage() );
 			$this->log->write_log( __FUNCTION__, $e->getMessage() );

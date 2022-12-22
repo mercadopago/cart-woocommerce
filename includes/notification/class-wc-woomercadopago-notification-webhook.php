@@ -107,7 +107,7 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
 				'Changing order status to: ' .
 				parent::get_wc_status_for_mp_status( str_replace( '_', '', $status ) )
 			);
-			$this->proccess_status( $status, $data, $order );
+			$this->process_status( $status, $data, $order );
 		} catch ( Exception $e ) {
 			$this->log->write_log( __FUNCTION__, $e->getMessage() );
 		}

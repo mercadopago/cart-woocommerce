@@ -17,27 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Class WC_WooMercadoPago_Basic_Gateway
  */
 class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract {
-
 	/**
 	 * ID
 	 *
 	 * @const
 	 */
 	const ID = 'woo-mercado-pago-basic';
-
-	/**
-	 * Nonce field id
-	 *
-	 * @const
-	 */
-	const NONCE_FIELD_ID = 'mercado_pago_basic';
-
-	/**
-	 * Nonce field name
-	 *
-	 * @const
-	 */
-	const NONCE_FIELD_NAME = 'mercado_pago_basic_nonce';
 
 	/**
 	 * Credits Helper Class
@@ -66,7 +51,6 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 		$this->method               = $this->get_option_mp( 'method', 'redirect' );
 		$this->title                = $this->get_option_mp( 'title', __( 'Your saved cards or money in Mercado Pago', 'woocommerce-mercadopago' ) );
 		$this->method_description   = $this->description;
-		$this->credits_banner       = $this->get_option('credits_banner', 'no');
 		$this->auto_return          = $this->get_option('auto_return', 'yes');
 		$this->success_url          = $this->get_option('success_url', '');
 		$this->failure_url          = $this->get_option('failure_url', '');
@@ -101,13 +85,6 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 				WC_WooMercadoPago_Constants::VERSION,
 				true
 			);
-			wp_enqueue_script(
-				'woocommerce-mercadopago-credentials',
-				plugins_url( '../assets/js/validate-credentials' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
-				array(),
-				WC_WooMercadoPago_Constants::VERSION,
-				true
-			);
 		}
 
 		if ( empty( $this->checkout_country ) ) {
@@ -125,17 +102,12 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 			$form_fields['binary_mode']                      = $this->field_binary_mode();
 			$form_fields['installments']                     = $this->field_installments();
 			$form_fields['checkout_payments_advanced_title'] = $this->field_checkout_payments_advanced_title();
-
-			if ( $this->credits_helper->is_credits() ) {
-				$form_fields['credits_banner'] = $this->field_credits_banner_mode();
-			}
-
-			$form_fields['method']      = $this->field_method();
-			$form_fields['success_url'] = $this->field_success_url();
-			$form_fields['failure_url'] = $this->field_failure_url();
-			$form_fields['pending_url'] = $this->field_pending_url();
-			$form_fields['auto_return'] = $this->field_auto_return();
-			$form_fields['ex_payments'] = $this->field_ex_payments();
+			$form_fields['method']                           = $this->field_method();
+			$form_fields['success_url']                      = $this->field_success_url();
+			$form_fields['failure_url']                      = $this->field_failure_url();
+			$form_fields['pending_url']                      = $this->field_pending_url();
+			$form_fields['auto_return']                      = $this->field_auto_return();
+			$form_fields['ex_payments']                      = $this->field_ex_payments();
 		}
 
 		$form_fields_abs = parent::get_form_mp_fields();
@@ -166,7 +138,6 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 			WC_WooMercadoPago_Helpers_CurrencyConverter::CONFIG_KEY,
 			'ex_payments',
 			'installments',
-			'credits_banner',
 
 			// Advanced settings.
 			'checkout_payments_advanced_title',
@@ -505,194 +476,28 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 		);
 
 		// validate active payments methods.
-		$credit          = [];
-		$debit           = [];
-		$ticket          = [];
-		$method          = $this->get_option_mp( 'method', 'redirect' );
-		$payment_methods = get_option( '_checkout_payments_methods', '' );
-		$test_mode_link  = $this->get_mp_devsite_link( $this->checkout_country );
-		$installments    = $this->get_valid_installments( $this->get_option_mp( 'installments' ) );
+		$method         = $this->get_option_mp( 'method', 'redirect' );
+		$test_mode_link = $this->get_mp_devsite_link( $this->checkout_country );
+		$site           = strtoupper( $this->mp_options->get_site_id() );
 
-		foreach ( $payment_methods as $payment_method ) {
-			if ( 'yes' === $this->get_option_mp( $payment_method['config'], '' ) ) {
-				if ( 'credit_card' === $payment_method['type'] ) {
-					$credit[] = [
-						'src' => $payment_method['image'],
-						'alt' => $payment_method['id']
-					];
-				} elseif ( 'debit_card' === $payment_method['type'] || 'prepaid_card' === $payment_method['type'] ) {
-					$debit[] = [
-						'src' => $payment_method['image'],
-						'alt' => $payment_method['id']
-					];
-				} elseif ( 'bank_transfer' === $payment_method['type'] ) {
-					$bank_transfer[] = [
-						'src' => $payment_method['image'],
-						'alt' => $payment_method['id']
-					];
-				} else {
-					$ticket[] = [
-						'src' => $payment_method['image'],
-						'alt' => $payment_method['id']
-					];
-				}
-			}
-		}
+		$payment_methods       = $this->get_payment_methods();
+		$payment_methods_title = count($payment_methods) !== 0 ? __('Available payment methods', 'woocommerce-mercadopago') : '';
 
-		$cho_pro_display_payments = [];
-
-		$site              = strtoupper($this->mp_options->get_site_id());
-		$payments_response = $this->mp->get_payment_response_by_sites($site);
-
-		if ( $this->is_credits($payments_response) ) {
-			$credits[] = [
-				'src' => plugins_url( '../assets/images/mercado-credito.png', plugin_dir_path( __FILE__ ) ),
-				'alt' => 'mercado_creditos'
-			];
-			array_push($cho_pro_display_payments, [
-				'title' => __( 'Installments without card' , 'woocommerce-mercadopago' ),
-				'label' => __( 'Up to ' , 'woocommerce-mercadopago' ) . 12 . __( ' installments' , 'woocommerce-mercadopago' ),
-				'payment_methods' => $credits
-			]);
-		}
-
-		if ( isset($credit) ) {
-			array_push($cho_pro_display_payments, [
-				'title' => __( 'Credit cards' , 'woocommerce-mercadopago' ),
-				'label' => __( 'Up to ' , 'woocommerce-mercadopago' ) . $installments . __( ' installments' , 'woocommerce-mercadopago' ),
-				'payment_methods' => $credit,
-			]);
-		};
-		if ( isset($debit) ) {
-			array_push($cho_pro_display_payments, [
-				'title' => __( 'Debit cards' , 'woocommerce-mercadopago' ),
-				'payment_methods' => $debit,
-			]);
-		};
-		if ( isset($bank_transfer) ) {
-			array_push($cho_pro_display_payments, [
-				'title' => __( 'Bank Transfer' , 'woocommerce-mercadopago' ),
-				'payment_methods' => $bank_transfer,
-			]);
-		};
-		if ( isset($ticket) ) {
-			array_push($cho_pro_display_payments, [
-				'title' => __( 'Payment by cash' , 'woocommerce-mercadopago' ),
-				'payment_methods' => $ticket,
-			]);
-		};
+		$checkout_benefits_items = $this->get_benefits( $site );
 
 		$parameters = [
-			'nonce_field'         => $this->mp_nonce->generate_nonce_field( self::NONCE_FIELD_ID, self::NONCE_FIELD_NAME ),
-			'method'              => $method,
-			'test_mode'           => ! $this->is_production_mode(),
-			'test_mode_link'      => $test_mode_link,
-			'plugin_version'      => WC_WooMercadoPago_Constants::VERSION,
-			'redirect_image'      => plugins_url( '../assets/images/cho-pro-redirect.png', plugin_dir_path( __FILE__ ) ),
-			'list_style_type_src' => plugins_url( '../assets/images/blue-check.png', plugin_dir_path( __FILE__ ) ),
-			'payment_methods'     => wp_json_encode($cho_pro_display_payments),
+			'method'                  => $method,
+			'test_mode'               => ! $this->is_production_mode(),
+			'test_mode_link'          => $test_mode_link,
+			'plugin_version'          => WC_WooMercadoPago_Constants::VERSION,
+			'checkout_redirect_src'   => plugins_url( '../assets/images/cho-pro-redirect-v2.png', plugin_dir_path( __FILE__ ) ),
+			'payment_methods'         => wp_json_encode( $payment_methods ),
+			'payment_methods_title'   => $payment_methods_title,
+			'checkout_benefits_items' => wp_json_encode( $checkout_benefits_items )
 		];
 
-		$parameters = array_merge($parameters, WC_WooMercadoPago_Helper_Links::mp_define_terms_and_conditions());
-		wc_get_template('checkout/basic-checkout.php', $parameters, 'woo/mercado/pago/module/', WC_WooMercadoPago_Module::get_templates_path());
-	}
-
-	/**
-	 * Field Banner Credits
-	 *
-	 * @return array
-	 */
-	public function field_credits_banner_mode() {
-		$site = strtolower($this->mp_options->get_site_id());
-		$link = WC_WooMercadoPago_Helper_Links::get_mc_blog_link($site);
-
-		return array(
-			'title'       => __('Payment with Mercado Credito', 'woocommerce-mercadopago'),
-			'title_badge' => __('New!', 'woocommerce-mercadopago'),
-			'type'        => 'mp_toggle_switch',
-			'default'     => 'no',
-			'subtitle' => sprintf (
-				/* translators: %s link to Mercado Credits blog */
-				__('With <a href="%s" target="blank">Mercado Credito</a>, clients can pay <b>in installments with no card, by transfers, invoice or money available in their Mercado Pago account.</b><br/><b>By activating the no-card installments banner</b>, you will increase your chances of selling.', 'woocommerce-mercadopago'),
-				$link['blog_link']
-			),
-			'descriptions' => array(
-				'enabled' => __('The no-card installments banner is <b>active</b>.', 'woocommerce-mercadopago'),
-				'disabled' => __('The no-card installments banner is <b>disabled</b>.', 'woocommerce-mercadopago'),
-			),
-			'after_toggle' => $this->get_credits_info_template($site)
-		);
-	}
-
-	/**
-	 * Example Banner Credits Admin
-	 *
-	 * @param $siteId
-	 *
-	 * @return string
-	 */
-	public function get_credits_info_template( $siteId ) {
-		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-		wp_enqueue_script(
-			'woocommerce-mercadopago-info-admin-credits-script',
-			plugins_url('../assets/js/credits/example-info' . $suffix . '.js', plugin_dir_path(__FILE__)),
-			array(),
-			WC_WooMercadoPago_Constants::VERSION,
-			true
-		);
-		wp_enqueue_style(
-			'woocommerce-mercadopago-info-admin-credits-style',
-			plugins_url('../assets/css/credits/example-info' . $suffix . '.css', plugin_dir_path(__FILE__)),
-			array(),
-			WC_WooMercadoPago_Constants::VERSION
-		);
-		wp_localize_script(
-			'woocommerce-mercadopago-info-admin-credits-script',
-			'wc_mp_icon_images',
-			array(
-				'computerBlueIcon' => plugins_url('../assets/images/credits/desktop-blue-icon.png', plugin_dir_path(__FILE__)),
-				'computerGrayIcon' => plugins_url('../assets/images/credits/desktop-gray-icon.png', plugin_dir_path(__FILE__)),
-				'cellphoneBlueIcon' => plugins_url('../assets/images/credits/cellphone-blue-icon.png', plugin_dir_path(__FILE__)),
-				'cellphoneGrayIcon' => plugins_url('../assets/images/credits/cellphone-gray-icon.png', plugin_dir_path(__FILE__)),
-				'viewMobile' => plugins_url($this->get_mercado_credits_gif_path($siteId, 'mobile'), plugin_dir_path(__FILE__)),
-				'viewDesktop' => plugins_url($this->get_mercado_credits_gif_path($siteId, 'desktop'), plugin_dir_path(__FILE__)),
-				'footerDesktop' => __('Banner on the product page | Computer version', 'woocommerce-mercadopago'),
-				'footerCellphone' => __('Banner on the product page | Cellphone version', 'woocommerce-mercadopago'),
-			)
-		);
-
-		return wc_get_template_html(
-			'components/credits-info-example.php',
-			array(
-				'desktop'          => __('Computer', 'woocommerce-mercadopago'),
-				'cellphone'          => __('Mobile', 'woocommerce-mercadopago'),
-				'footer'              => __('Banner on the product page | Computer version', 'woocommerce-mercadopago'),
-				'title'            => __('Banner visualization', 'woocommerce-mercadopago'),
-				'subtitle'          => __('Check the example of how it will appear in the store:', 'woocommerce-mercadopago'),
-			),
-			'',
-			WC_WooMercadoPago_Module::get_templates_path()
-		);
-	}
-
-	/**
-	 * Get git image path for mercado credits demonstration
-	 *
-	 * @param $siteId
-	 * @param $view
-	 *
-	 * @return string
-	 */
-	protected function get_mercado_credits_gif_path( $siteId, $view ) {
-		$siteIds = [
-			'mla' => 'MLA_',
-			'mlb' => 'MLB_',
-			'mlm' => 'MLM_',
-		];
-
-		$prefix = isset($siteIds[$siteId]) ? $siteIds[$siteId] : '';
-
-		return sprintf('../assets/images/credits/%sview_%s.gif', $prefix, $view);
+		$parameters = array_merge( $parameters, WC_WooMercadoPago_Helper_Links::mp_define_terms_and_conditions() );
+		wc_get_template( 'checkout/basic-checkout.php', $parameters, 'woo/mercado/pago/module/', WC_WooMercadoPago_Module::get_templates_path() );
 	}
 
 	/**
@@ -702,11 +507,6 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$this->mp_nonce->validate_nonce(
-			self::NONCE_FIELD_ID,
-			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( self::NONCE_FIELD_NAME )
-		);
-
 		$order  = wc_get_order($order_id);
 		$amount = $this->get_order_total();
 
@@ -797,20 +597,147 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 	}
 
 	/**
+	 * Get payment methods
 	 *
-	 * Get Payment Response function
-	 *
-	 * @param array $payments_response Payment Method Response.
-	 * @return bool
+	 * @return array
 	 */
-	public function is_credits( $payments_response ) {
-		if ( is_array($payments_response) ) {
-			foreach ( $payments_response as $payment ) {
-				if ( isset( $payment['id'] ) && 'consumer_credits' === $payment['id'] ) {
-					return true;
-				}
+	public function get_payment_methods() {
+		$payment_methods_options = get_option( '_checkout_payments_methods', '' );
+		$payment_methods         = [];
+
+		if ( $this->credits_helper->is_credits() ) {
+			$payment_methods[] = [
+				'src' => plugins_url( '../assets/images/mercado-credito.png', plugin_dir_path(__FILE__) ),
+				'alt' => 'Credits image'
+			];
+		}
+
+		foreach ( $payment_methods_options as $payment_method_option ) {
+			if ( 'yes' === $this->get_option_mp( $payment_method_option[ 'config' ], '' ) ) {
+				$payment_methods[] = [
+					'src' => $payment_method_option[ 'image' ],
+					'alt' => $payment_method_option[ 'id' ]
+				];
 			}
 		}
-		return false;
+
+		return $payment_methods;
+	}
+
+	/**
+	 * Get benefits items
+	 *
+	 * @param string $site
+	 * @return array
+	 */
+	public function get_benefits( $site ) {
+		$benefits = array(
+			'MLB' => array(
+				array(
+					'title'    => __('Easy login', 'woocommerce-mercadopago'),
+					'subtitle' => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-phone.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone image'
+					)
+				),
+				array(
+					'title'    => __('Quick payments', 'woocommerce-mercadopago'),
+					'subtitle' => __('Use your saved cards, Pix or available balance.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-wallet.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue wallet image'
+					)
+				),
+				array(
+					'title'    => __('Protected purchases', 'woocommerce-mercadopago'),
+					'subtitle' => __('Get your money back in case you don\'t receive your product.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-protection.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue protection image'
+					)
+				)
+			),
+			'MLM' => array(
+				array(
+					'title'    => __('Easy login', 'woocommerce-mercadopago'),
+					'subtitle' => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-phone.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone image'
+					)
+				),
+				array(
+					'title'    => __('Quick payments', 'woocommerce-mercadopago'),
+					'subtitle' => __('Use your available Mercado Pago Wallet balance or saved cards.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-wallet.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue wallet image'
+					)
+				),
+				array(
+					'title'    => __('Protected purchases', 'woocommerce-mercadopago'),
+					'subtitle' => __('Get your money back in case you don\'t receive your product.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-protection.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue protection image'
+					)
+				)
+			),
+			'MLA' => array(
+				array(
+					'title'    => __('Quick payments', 'woocommerce-mercadopago'),
+					'subtitle' => __('Use your available money or saved cards.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-wallet.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue wallet image'
+					)
+				),
+				array(
+					'title'    => __('Installments option', 'woocommerce-mercadopago'),
+					'subtitle' => __('Pay with or without a credit card.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-phone-installments.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone installments image'
+					)
+				),
+				array(
+					'title'    => __('Reliable purchases', 'woocommerce-mercadopago'),
+					'subtitle' => __('Get help if you have a problem with your purchase.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-protection.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue protection image'
+					)
+				)
+			),
+			'ROLA' => array(
+				array(
+					'title'    => __('Easy login', 'woocommerce-mercadopago'),
+					'subtitle' => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-phone.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone image'
+					)
+				),
+				array(
+					'title'    => __('Quick payments', 'woocommerce-mercadopago'),
+					'subtitle' => __('Use your available money or saved cards.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-wallet.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue wallet image'
+					)
+				),
+				array(
+					'title'    => __('Installments option', 'woocommerce-mercadopago'),
+					'subtitle' => __('Interest-free installments with selected banks.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/blue-phone-installments.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone installments image'
+					)
+				)
+			),
+		);
+
+		return array_key_exists( $site, $benefits ) ? $benefits[ $site ] : $benefits[ 'ROLA' ];
 	}
 }

@@ -139,7 +139,7 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 	 *
 	 * @throws WC_WooMercadoPago_Exception Invalid status response.
 	 */
-	public function proccess_status( $processed_status, $data, $order ) {
+	public function process_status( $processed_status, $data, $order ) {
 		$used_gateway = get_class( $this->payment );
 
 		switch ( $processed_status ) {
@@ -203,14 +203,6 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 
 			if ( method_exists( $order, 'get_status' ) && $order->get_status() !== 'completed' ) {
 				switch ( $used_gateway ) {
-					case 'WC_WooMercadoPago_Basic_Gateway':
-					case 'WC_WooMercadoPago_Custom_Gateway':
-						$order->payment_complete();
-						if ( 'completed' !== $payment_completed_status ) {
-							$order->update_status( self::get_wc_status_for_mp_status( 'approved' ) );
-						}
-						break;
-
 					case 'WC_WooMercadoPago_Ticket_Gateway':
 						if ( 'no' === get_option( 'stock_reduce_mode', 'no' ) ) {
 							$order->payment_complete();
@@ -220,12 +212,10 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 						}
 						break;
 
-					case 'WC_WooMercadoPago_Pix_Gateway':
-						if ( 'no' === get_option( 'stock_reduce_mode', 'no' ) ) {
-							$order->payment_complete();
-							if ( 'completed' !== $payment_completed_status ) {
-								$order->update_status( self::get_wc_status_for_mp_status( 'approved' ) );
-							}
+					default:
+						$order->payment_complete();
+						if ( 'completed' !== $payment_completed_status ) {
+							$order->update_status( self::get_wc_status_for_mp_status( 'approved' ) );
 						}
 						break;
 				}
@@ -247,6 +237,7 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 				case 'WC_WooMercadoPago_Pix_Gateway':
 					$notes    = $order->get_customer_order_notes();
 					$has_note = false;
+
 					if ( count( $notes ) > 1 ) {
 						$has_note = true;
 						break;
@@ -266,6 +257,7 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 				case 'WC_WooMercadoPago_Ticket_Gateway':
 					$notes    = $order->get_customer_order_notes();
 					$has_note = false;
+
 					if ( count( $notes ) > 1 ) {
 						$has_note = true;
 						break;

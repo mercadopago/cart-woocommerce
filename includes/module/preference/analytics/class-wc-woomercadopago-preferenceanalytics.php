@@ -16,15 +16,23 @@ if ( ! defined( 'ABSPATH' ) ) {
  * WC_WooMercadoPago_PreferenceAnalytics
  */
 class WC_WooMercadoPago_PreferenceAnalytics {
+
 	/**
 	 * Ignore_fields variable
 	 *
 	 * @var array $ignore_fields
 	 */
-	public static $ignore_fields = array( '_mp_public_key_prod', '_mp_public_key_test', 'title', 'description', '_mp_access_token_prod', '_mp_access_token_test' );
+	public static $ignore_fields = [
+		'title',
+		'description',
+		'_mp_public_key_prod',
+		'_mp_public_key_test',
+		'_mp_access_token_prod',
+		'_mp_access_token_test'
+	];
 
 	/**
-	 * Get_basic_settings function
+	 * Get basic settings function
 	 *
 	 * @return array get_basic_settings
 	 */
@@ -33,7 +41,7 @@ class WC_WooMercadoPago_PreferenceAnalytics {
 	}
 
 	/**
-	 * Get_custom_settings function
+	 * Get custom settings function
 	 *
 	 * @return array get_custom_settings
 	 */
@@ -42,7 +50,7 @@ class WC_WooMercadoPago_PreferenceAnalytics {
 	}
 
 	/**
-	 * Get_ticket_settings function
+	 * Get ticket settings function
 	 *
 	 * @return array get_ticket_settings
 	 */
@@ -51,7 +59,7 @@ class WC_WooMercadoPago_PreferenceAnalytics {
 	}
 
 	/**
-	 * Get_pix_settings function
+	 * Get pix settings function
 	 *
 	 * @return array get_pix_settings
 	 */
@@ -60,21 +68,31 @@ class WC_WooMercadoPago_PreferenceAnalytics {
 	}
 
 	/**
-	 * Get_settings function
+	 * Get credits settings function
 	 *
-	 * @param [type] $option .
-	 * @return array $valid_values
+	 * @return array get_credits_settings
+	 */
+	public function get_credits_settings() {
+		return $this->get_settings( 'woocommerce_woo-mercado-pago-credits_settings' );
+	}
+
+	/**
+	 * Get settings function
+	 *
+	 * @param string $option
+	 * @return array
 	 */
 	public function get_settings( $option ) {
-
-		$db_options = get_option( $option, array() );
-
+		$db_options   = get_option( $option, array() );
 		$valid_values = array();
+
 		foreach ( $db_options as $key => $value ) {
 			if ( ! empty( $value ) && ! in_array( $key, self::$ignore_fields, true ) ) {
 				$valid_values[ $key ] = $value;
 			}
 		}
+
 		return $valid_values;
 	}
+
 }

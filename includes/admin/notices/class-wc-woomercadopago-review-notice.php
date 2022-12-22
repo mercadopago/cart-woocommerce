@@ -28,6 +28,13 @@ class WC_WooMercadoPago_Review_Notice {
 	protected $nonce;
 
 	/**
+	 * WP_Current_user
+	 *
+	 * @var WC_WooMercadoPago_Helper_Current_User
+	 */
+	protected $current_user;
+
+	/**
 	 * Static instance
 	 *
 	 * @var WC_WooMercadoPago_Review_Notice
@@ -38,7 +45,8 @@ class WC_WooMercadoPago_Review_Notice {
 	 * WC_WooMercadoPago_ReviewNotice constructor.
 	 */
 	private function __construct() {
-		$this->nonce = WC_WooMercadoPago_Helper_Nonce::get_instance();
+		$this->nonce        = WC_WooMercadoPago_Helper_Nonce::get_instance();
+		$this->current_user = WC_WooMercadoPago_Helper_Current_User::get_instance();
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_admin_notice_css' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_admin_notice_js' ) );
@@ -155,6 +163,7 @@ class WC_WooMercadoPago_Review_Notice {
 	 * Dismiss the review admin notice
 	 */
 	public function review_dismiss() {
+		$this->current_user->validate_user_needed_permissions();
 		$this->nonce->validate_nonce(
 			self::REVIEW_NOTICE_NONCE_ID,
 			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'nonce' )

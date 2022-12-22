@@ -28,6 +28,13 @@ class WC_WooMercadoPago_Saved_Cards {
 	protected $nonce;
 
 	/**
+	 * WP_Current_user
+	 *
+	 * @var WC_WooMercadoPago_Helper_Current_User
+	 */
+	protected $current_user;
+
+	/**
 	 * File Suffix
 	 *
 	 * @var string
@@ -45,8 +52,9 @@ class WC_WooMercadoPago_Saved_Cards {
 	 * WC_WooMercadoPago_Saved_Cards constructor.
 	 */
 	public function __construct() {
-		$this->file_suffix = $this->get_suffix();
-		$this->nonce       = WC_WooMercadoPago_Helper_Nonce::get_instance();
+		$this->file_suffix  = $this->get_suffix();
+		$this->nonce        = WC_WooMercadoPago_Helper_Nonce::get_instance();
+		$this->current_user = WC_WooMercadoPago_Helper_Current_User::get_instance();
 
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_saved_cards_notice_css' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'load_saved_cards_notice_js' ) );
@@ -170,6 +178,7 @@ class WC_WooMercadoPago_Saved_Cards {
 	 * Dismiss the review admin notice
 	 */
 	public function saved_cards_notice_dismiss() {
+		$this->current_user->validate_user_needed_permissions();
 		$this->nonce->validate_nonce(
 			self::SAVED_CARDS_NONCE_ID,
 			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'nonce' )

@@ -336,24 +336,21 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 				$this->order_total    += $this->number_format_value( $item_amount );
 
 				// Add the item.
-				array_push( $this->list_of_items, $product_title . ' x ' . $item['qty'] );
-				array_push(
-					$items,
-					array(
-						'id'          => $item['product_id'],
-						'title'       => html_entity_decode( $product_title ) . ' x ' . $item['qty'],
-						'description' => sanitize_file_name(
-							html_entity_decode(
-								strlen( $product_content ) > 230 ?
-								substr( $product_content, 0, 230 ) . '...' : $product_content
-							)
-						),
-						'picture_url' => $product_image,
-						'category_id' => get_option( '_mp_category_id', 'others' ),
-						'quantity'    => 1,
-						'unit_price'  => $this->number_format_value( $item_amount ),
-						'currency_id' => $this->site_data[ $this->site_id ]['currency'],
-					)
+				$this->list_of_items[] = $product_title . ' x ' . $item['qty'];
+				$items[]               = array(
+					'id'          => $item['product_id'],
+					'title'       => html_entity_decode($product_title) . ' x ' . $item['qty'],
+					'description' => sanitize_file_name(
+						html_entity_decode(
+							strlen($product_content) > 230 ?
+								substr($product_content, 0, 230) . '...' : $product_content
+						)
+					),
+					'picture_url' => $product_image,
+					'category_id' => get_option('_mp_category_id', 'others'),
+					'quantity'    => 1,
+					'unit_price'  => $this->number_format_value($item_amount),
+					'currency_id' => $this->site_data[$this->site_id]['currency'],
 				);
 			}
 		}
@@ -389,25 +386,22 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 			$final = ( $fee['total'] + $fee['total_tax'] ) * $this->currency_ratio;
 
 			$this->order_total += $this->number_format_value( $final );
-			array_push(
-				$items,
-				array(
-					'title'       => sanitize_file_name(
-						html_entity_decode(
-							strlen( $fee['name'] ) > 230 ?
-							substr( $fee['name'], 0, 230 ) . '...' : $fee['name']
-						)
-					),
-					'description' => sanitize_file_name(
-						html_entity_decode(
-							strlen( $fee['name'] ) > 230 ?
-							substr( $fee['name'], 0, 230 ) . '...' : $fee['name']
-						)
-					),
-					'category_id' => get_option( '_mp_category_id', 'others' ),
-					'quantity'    => 1,
-					'unit_price'  => $this->number_format_value( $final ),
-				)
+			$items[]            = array(
+				'title'       => sanitize_file_name(
+					html_entity_decode(
+						strlen($fee['name']) > 230 ?
+							substr($fee['name'], 0, 230) . '...' : $fee['name']
+					)
+				),
+				'description' => sanitize_file_name(
+					html_entity_decode(
+						strlen($fee['name']) > 230 ?
+							substr($fee['name'], 0, 230) . '...' : $fee['name']
+					)
+				),
+				'category_id' => get_option('_mp_category_id', 'others'),
+				'quantity'    => 1,
+				'unit_price'  => $this->number_format_value($final),
 			);
 		}
 		return $items;
@@ -529,7 +523,7 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	/**
 	 * Get transaction
 	 *
-	 * @param string $transactionType.
+	 * @param string $transactionType
 	 *
 	 * @return Payment|Preference
 	 */
@@ -547,7 +541,7 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	/**
 	 * Get transaction amount
 	 *
-	 * @return float|int
+	 * @return float
 	 */
 	public function get_transaction_amount() {
 		return $this->number_format_value( $this->order_total );
@@ -577,9 +571,10 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	public function add_discounts_campaign() {
 		return array(
 			'campaign_id'   => (int) $this->checkout['campaign_id'],
-			'coupon_amount' => ( 'COP' === $this->site_data[ $this->site_id ]['currency'] || 'CLP' === $this->site_data[ $this->site_id ]['currency'] ) ?
-				round( $this->checkout['discount'] * $this->currency_ratio ) : round( $this->checkout['discount'] * $this->currency_ratio * 100 ) / 100,
 			'coupon_code'   => strtoupper( $this->checkout['coupon_code'] ),
+			'coupon_amount' => ( 'COP' === $this->site_data[ $this->site_id ]['currency'] || 'CLP' === $this->site_data[ $this->site_id ]['currency'] )
+				? round( $this->checkout['discount'] * $this->currency_ratio )
+				: round( $this->checkout['discount'] * $this->currency_ratio * 100 ) / 100,
 		);
 	}
 
@@ -621,6 +616,7 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 			'custom_settings'  => $analytics->get_custom_settings(),
 			'ticket_settings'  => $analytics->get_ticket_settings(),
 			'pix_settings'     => $analytics->get_pix_settings(),
+			'credits_settings' => $analytics->get_credits_settings(),
 			'seller_website'   => get_option('siteurl'),
 			'billing_address' => array(
 				'zip_code'    => html_entity_decode(str_replace('-', '', ( is_object($this->order) &&
@@ -645,8 +641,8 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 				),
 			),
 			'user' => array(
-				'registered_user' => ( null !== $user_id && '' !== $user_id && 0 !== $user_id ) ? 'yes' : 'no',
-				'user_email' => ( null !== $user_id && '' !== $user_id && 0 !== $user_id ) ? get_userdata( $user_id )->user_email : null,
+				'registered_user'        => ( null !== $user_id && '' !== $user_id && 0 !== $user_id ) ? 'yes' : 'no',
+				'user_email'             => ( null !== $user_id && '' !== $user_id && 0 !== $user_id ) ? get_userdata( $user_id )->user_email : null,
 				'user_registration_date' => ( null !== $user_id && ' ' !== $user_id && 0 !== $user_id ) ? gmdate('Y-m-d\TH:i:s.vP', strtotime(get_userdata($user_id)->user_registered) ) : null,
 			),
 		);
@@ -655,7 +651,8 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	/**
 	 * Calculate price
 	 *
-	 * @param mixed $amount Amount.
+	 * @param mixed $amount
+	 *
 	 * @return float
 	 */
 	private function calculate_price( $amount ) {
@@ -668,7 +665,8 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	/**
 	 * Get date of expiration
 	 *
-	 * @param string $date_expiration Date expiration.
+	 * @param string $date_expiration
+	 *
 	 * @return string date
 	 */
 	public function get_date_of_expiration( $date_expiration ) {

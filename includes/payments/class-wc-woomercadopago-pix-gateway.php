@@ -17,27 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Class WC_WooMercadoPago_Pix_Gateway
  */
 class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
-
 	/**
 	 * ID
 	 *
 	 * @const
 	 */
 	const ID = 'woo-mercado-pago-pix';
-
-	/**
-	 * Nonce field id
-	 *
-	 * @const
-	 */
-	const NONCE_FIELD_ID = 'mercado_pago_pix';
-
-	/**
-	 * Nonce field name
-	 *
-	 * @const
-	 */
-	const NONCE_FIELD_NAME = 'mercado_pago_pix_nonce';
 
 	/**
 	 * WC_WooMercadoPago_PixGateway constructor.
@@ -93,13 +78,6 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 				array(),
 				WC_WooMercadoPago_Constants::VERSION,
 				false
-			);
-			wp_enqueue_script(
-				'woocommerce-mercadopago-credentials',
-				plugins_url( '../assets/js/validate-credentials' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
-				array(),
-				WC_WooMercadoPago_Constants::VERSION,
-				true
 			);
 		}
 
@@ -384,8 +362,6 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 	 * Payment fields
 	 */
 	public function payment_fields() {
-		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-
 		// add css.
 		wp_enqueue_style(
 			'woocommerce-mercadopago-narciso-styles',
@@ -395,9 +371,8 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 		);
 
 		$parameters = [
-			'nonce_field' => $this->mp_nonce->generate_nonce_field( self::NONCE_FIELD_ID, self::NONCE_FIELD_NAME ),
-			'test_mode'   => ! $this->is_production_mode(),
-			'pix_image'   => plugins_url( '../assets/images/pix.png', plugin_dir_path( __FILE__ ) ),
+			'test_mode' => ! $this->is_production_mode(),
+			'pix_image' => plugins_url( '../assets/images/pix.png', plugin_dir_path( __FILE__ ) ),
 		];
 
 		$parameters = array_merge($parameters, WC_WooMercadoPago_Helper_Links::mp_define_terms_and_conditions());
@@ -411,11 +386,6 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 	 * @return array|string[]
 	 */
 	public function process_payment( $order_id ) {
-		$this->mp_nonce->validate_nonce(
-			self::NONCE_FIELD_ID,
-			WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( self::NONCE_FIELD_NAME )
-		);
-
 		// @codingStandardsIgnoreLine
 		$pix_checkout = $_POST;
 		$this->log->write_log( __FUNCTION__, 'Payment via Pix POST: ' );
