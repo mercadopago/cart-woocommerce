@@ -29,10 +29,11 @@ interface MercadoPagoGatewayInterface
     public function validate_fields(): bool;
 
     /**
-     * @param $orderId
+     * @param int $order_id
+     *
      * @return array
      */
-    public function process_payment($orderId): array;
+    public function process_payment(int $order_id): array;
 
     /**
      * @return void

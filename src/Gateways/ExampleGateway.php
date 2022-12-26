@@ -113,19 +113,19 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
     /**
      * Process payment and create woocommerce order
      *
-     * @param $orderId
+     * @param int $order_id
      *
      * @return array
      */
-    public function process_payment($orderId): array
+    public function process_payment($order_id): array
     {
         global $woocommerce;
 
-        $order = wc_get_order($orderId);
+        $order = wc_get_order($order_id);
         $order->payment_complete();
         $order->add_order_note('Hey, your order is paid! Thank you!', true);
 
-        wc_reduce_stock_levels($orderId);
+        wc_reduce_stock_levels($order_id);
 
         $woocommerce->cart->empty_cart();
 
