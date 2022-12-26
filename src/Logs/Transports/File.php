@@ -3,7 +3,7 @@
 namespace MercadoPago\Woocommerce\Logs\Transports;
 
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Logs\LogInterface;
+use MercadoPago\Woocommerce\Interfaces\LogInterface;
 use MercadoPago\Woocommerce\Logs\LogLevels;
 
 if (!defined('ABSPATH')) {

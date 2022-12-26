@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 
 if (!defined('ABSPATH')) {
     exit;

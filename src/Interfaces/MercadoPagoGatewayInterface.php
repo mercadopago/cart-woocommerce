@@ -1,6 +1,6 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Gateways;
+namespace MercadoPago\Woocommerce\Interfaces;
 
 if (!defined('ABSPATH')) {
     exit;
