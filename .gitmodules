@@ -1,0 +1,7 @@
+[submodule "packages/sdk"]
+	path = packages/sdk
+	url = git@github.com:mercadolibre/fury_pp-php-sdk.git
+	branch = master
+[submodule "packages/gateways"]
+	path = packages/gateways
+	url = git@github.com:mercadolibre/fury_woocommerce-gateway-template.git

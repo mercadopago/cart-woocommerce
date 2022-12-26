@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<ruleset name="Woocommerce Coding Standards">
+    <description>PHP_CodeSniffer ruleset for Woocommerce MercadoPago.</description>
+
+    <!-- Rules-->
+    <rule ref="PSR12">
+        <exclude name="PSR1.Files.SideEffects" />
+    </rule>
+
+    <!-- Exclude paths -->
+    <exclude-pattern>**/*.js</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+</ruleset>

@@ -1,0 +1,547 @@
+# Copyright (C) 2022 woocommerce-mercadopago
+# This file is distributed under the same license as the woocommerce-mercadopago package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Mercado Pago payments for WooCommerce\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-"
+"mercadopago\n"
+"POT-Creation-Date: 2022-11-17 20:10+0000\n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.2\n"
+
+#: ../../src/Admin/Translations.php:125
+msgid "The Mercado Pago module needs an active version of %s in order to work!"
+msgstr ""
+"O módulo do Mercado Pago necessita de uma versão ativa de %s para funcionar!"
+
+#: ../../src/Admin/Translations.php:130
+msgid ""
+"Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. "
+"Please update your PHP version."
+msgstr ""
+"O plugin do Mercado Pago para o WooCommerce requer o PHP versão 7.2 ou "
+"posterior. Por favor, atualize sua versão do PHP."
+
+#: ../../src/Admin/Translations.php:131
+msgid "Mercado Pago Error: PHP Extension CURL is not installed."
+msgstr "Erro no Mercado Pago: a extensão PHP CURL não está instalada."
+
+#: ../../src/Admin/Translations.php:132
+msgid ""
+"Mercado Pago Error: PHP Extension GD is not installed. Installation of GD "
+"extension is required to send QR Code Pix by email."
+msgstr ""
+"Erro no Mercado Pago: A extensão PHP GD não está instalada. Instalação da "
+"extensão GD é necessária para envio de QR Code Pix por e-mail."
+
+#: ../../src/Admin/Translations.php:133
+msgid "Activate WooCommerce"
+msgstr "Ativar WooCommerce"
+
+#: ../../src/Admin/Translations.php:134
+msgid "Install WooCommerce"
+msgstr "Instalar WooCommerce"
+
+#: ../../src/Admin/Translations.php:135
+msgid "See WooCommerce"
+msgstr "Veja WooCommerce"
+
+#: ../../src/Admin/Translations.php:148
+msgid "Set plugin"
+msgstr "Configurar plugin"
+
+#: ../../src/Admin/Translations.php:149
+msgid "Payment method"
+msgstr "Meios de pagamento"
+
+#: ../../src/Admin/Translations.php:150, ../../src/Admin/Translations.php:213
+msgid "Plugin manual"
+msgstr "Manual do plugin"
+
+#: ../../src/Admin/Translations.php:162
+msgid "Cancel order"
+msgstr "Cancelar ordem"
+
+#: ../../src/Admin/Translations.php:175
+msgid "Accept"
+msgstr "Aceite"
+
+#: ../../src/Admin/Translations.php:176
+msgid "payments on the spot"
+msgstr "pagamentos no ato"
+
+#: ../../src/Admin/Translations.php:177
+msgid "with"
+msgstr "com"
+
+#: ../../src/Admin/Translations.php:178
+msgid "the"
+msgstr "toda a"
+
+#: ../../src/Admin/Translations.php:179
+msgid "security"
+msgstr "segurança"
+
+#: ../../src/Admin/Translations.php:180
+msgid "from Mercado Pago"
+msgstr "do Mercado Pago"
+
+#: ../../src/Admin/Translations.php:185
+msgid "Choose"
+msgstr "Escolha"
+
+#: ../../src/Admin/Translations.php:186
+msgid "when you want to receive the money"
+msgstr "quando quer receber o dinheiro"
+
+#: ../../src/Admin/Translations.php:187
+msgid "from your sales and if you want to offer"
+msgstr "das vendas e se quer oferecer"
+
+#: ../../src/Admin/Translations.php:188
+msgid "interest-free installments"
+msgstr "parcelamento sem juros"
+
+#: ../../src/Admin/Translations.php:189
+msgid "to your clients."
+msgstr "aos clientes."
+
+#: ../../src/Admin/Translations.php:194
+msgid "Review the step-by-step of"
+msgstr "Revise o passo a passo de"
+
+#: ../../src/Admin/Translations.php:195
+msgid "how to integrate the Mercado Pago Plugin"
+msgstr "como integrar o Plugin do Mercado Pago"
+
+#: ../../src/Admin/Translations.php:196
+msgid "on our website for developers."
+msgstr "no nosso site de desenvolvedores."
+
+#: ../../src/Admin/Translations.php:200
+msgid "SSL"
+msgstr "SSL"
+
+#: ../../src/Admin/Translations.php:201
+msgid "Curl"
+msgstr "Curl"
+
+#: ../../src/Admin/Translations.php:202
+msgid "GD Extensions"
+msgstr "Extensões GD"
+
+#: ../../src/Admin/Translations.php:204
+msgid "Technical requirements"
+msgstr "Requisitos técnicos"
+
+#: ../../src/Admin/Translations.php:205
+msgid "Collections and installments"
+msgstr "Recebimentos e parcelamento"
+
+#: ../../src/Admin/Translations.php:206
+msgid "Questions?"
+msgstr "Dúvidas?"
+
+#: ../../src/Admin/Translations.php:207
+msgid ""
+"Implementation responsible for transmitting data to Mercado Pago in a secure "
+"and encrypted way."
+msgstr ""
+"Implementação responsável pela transmissão de dados para o Mercado Pago de "
+"maneira segura e criptografada."
+
+#: ../../src/Admin/Translations.php:208
+msgid ""
+"It is an extension responsible for making payments via requests from the "
+"plugin to Mercado Pago."
+msgstr ""
+"É uma extensão responsável pela realização de pagamentos via solicitações do "
+"plugin ao Mercado Pago."
+
+#: ../../src/Admin/Translations.php:209
+msgid ""
+"These extensions are responsible for the implementation and operation of Pix "
+"in your store."
+msgstr ""
+"São extensões responsáveis pela implementação e funcionamento do Pix na sua "
+"loja."
+
+#: ../../src/Admin/Translations.php:212
+msgid "Set deadlines and fees"
+msgstr "Ajustar prazos e taxas"
+
+#: ../../src/Admin/Translations.php:226
+msgid ""
+"To enable orders, you must create and activate production credentials in "
+"your Mercado Pago Account."
+msgstr ""
+"Para poder vender, você deve criar e ativar credenciais de produção na sua "
+"conta Mercado Pago."
+
+#: ../../src/Admin/Translations.php:227
+msgid "Copy and paste the credentials below."
+msgstr "Copie e cole as credenciais abaixo."
+
+#: ../../src/Admin/Translations.php:231
+msgid "Public Key"
+msgstr "Public key"
+
+#: ../../src/Admin/Translations.php:232
+msgid "Access Token"
+msgstr "Access Token"
+
+#: ../../src/Admin/Translations.php:233
+msgid "1. Integrate your store with Mercado Pago"
+msgstr "1. Integre a loja com o Mercado Pago"
+
+#: ../../src/Admin/Translations.php:234
+msgid "Production credentials"
+msgstr "Credenciais de produção"
+
+#: ../../src/Admin/Translations.php:235
+msgid "Test credentials"
+msgstr "Credenciais de teste"
+
+#: ../../src/Admin/Translations.php:237
+msgid "Enable Mercado Pago checkouts for test purchases in the store."
+msgstr "Habilite os checkouts Mercado Pago para testes de compras na loja."
+
+#: ../../src/Admin/Translations.php:238
+msgid "Enable Mercado Pago checkouts to receive real payments in the store."
+msgstr ""
+"Habilite os checkouts Mercado Pago para receber pagamentos reais na loja."
+
+#: ../../src/Admin/Translations.php:239
+msgid "Paste your Public Key here"
+msgstr "Cole aqui sua Public Key"
+
+#: ../../src/Admin/Translations.php:240
+msgid "Paste your Access Token here"
+msgstr "Cole aqui seu Access Token"
+
+#: ../../src/Admin/Translations.php:241
+msgid "Check credentials"
+msgstr "Consultar credenciais"
+
+#: ../../src/Admin/Translations.php:242, ../../src/Admin/Translations.php:288
+msgid "Save and continue"
+msgstr "Salvar e continuar"
+
+#: ../../src/Admin/Translations.php:255
+msgid "Add the URL to receive payments notifications."
+msgstr "Insira a URL para receber notificações de pagamento."
+
+#: ../../src/Admin/Translations.php:256
+msgid "Find out more information in the"
+msgstr "Confira mais informações nos"
+
+#: ../../src/Admin/Translations.php:258
+msgid "guides"
+msgstr "manuais"
+
+#: ../../src/Admin/Translations.php:263
+msgid ""
+"If you are a Mercado Pago Certified Partner, make sure to add your "
+"integrator_id."
+msgstr ""
+"Se você é Parceiro certificado do Mercado Pago, não esqueça de inserir seu "
+"integrator_id."
+
+#: ../../src/Admin/Translations.php:264
+msgid "If you do not have the code, please"
+msgstr "Se você não possui o código, por favor"
+
+#: ../../src/Admin/Translations.php:266
+msgid "request it now"
+msgstr "solicite agora"
+
+#: ../../src/Admin/Translations.php:270
+msgid "2. Customize your business"
+msgstr "2. Personalize seu negócio"
+
+#: ../../src/Admin/Translations.php:271
+msgid "Your store information"
+msgstr "Informações sobre sua loja"
+
+#: ../../src/Admin/Translations.php:272
+msgid "Advanced integration options (optional)"
+msgstr "Opções avançadas de integração (opcional)"
+
+#: ../../src/Admin/Translations.php:273
+msgid "Debug and Log Mode"
+msgstr "Modo debug e log"
+
+#: ../../src/Admin/Translations.php:274
+msgid ""
+"Fill out the following information to have a better experience and offer "
+"more information to your clients."
+msgstr ""
+"Preencha as informações a seguir para ter uma melhor experiência e oferecer "
+"mais informações aos clientes."
+
+#: ../../src/Admin/Translations.php:275
+msgid "Name of your store in your client's invoice"
+msgstr "Nome da sua loja na fatura dos clientes"
+
+#: ../../src/Admin/Translations.php:276
+msgid "Identification in Activities of Mercado Pago"
+msgstr "Identificação em Atividades do Mercado Pago"
+
+#: ../../src/Admin/Translations.php:277
+msgid ""
+"For further integration of your store with Mercado Pago (IPN, Certified "
+"Partners, Debug Mode)"
+msgstr ""
+"Para mais integração da sua loja com o Mercado Pago (IPN, Parceiros "
+"Certificados, Modo Debug)"
+
+#: ../../src/Admin/Translations.php:278
+msgid "Store category"
+msgstr "Categoria da loja"
+
+#: ../../src/Admin/Translations.php:279
+msgid "URL for IPN"
+msgstr "URL para IPN"
+
+#: ../../src/Admin/Translations.php:280
+msgid "Integrator ID"
+msgstr "Integrator ID"
+
+#: ../../src/Admin/Translations.php:281
+msgid "We record your store's actions in order to provide a better assistance."
+msgstr "Gravamos ações da sua loja para proporcionar melhor suporte."
+
+#: ../../src/Admin/Translations.php:282
+msgid "Ex: Mary's Store"
+msgstr "Ex.: Loja da Maria"
+
+#: ../../src/Admin/Translations.php:283
+msgid "Ex: Mary Store"
+msgstr "Ex.: LojaMaria"
+
+#: ../../src/Admin/Translations.php:284
+msgid "Select"
+msgstr "Selecionar"
+
+#: ../../src/Admin/Translations.php:285
+msgid "Ex: https://examples.com/my-custom-ipn-url"
+msgstr "Ex.: https://examples.com/my-custom-ipn-url"
+
+#: ../../src/Admin/Translations.php:286
+msgid "Ex: 14987126498"
+msgstr "Ex.: 14987126498"
+
+#: ../../src/Admin/Translations.php:287
+msgid "Show advanced options"
+msgstr "Ver opções avançadas"
+
+#: ../../src/Admin/Translations.php:289
+msgid ""
+"If this field is empty, the purchase will be identified as Mercado Pago."
+msgstr ""
+"Se o campo estiver vazio, a compra do cliente será identificada como Mercado "
+"Pago."
+
+#: ../../src/Admin/Translations.php:290
+msgid "In Activities, you will view this term before the order number"
+msgstr "Nas Ativades você verá o termo inserido antes do número do pedido"
+
+#: ../../src/Admin/Translations.php:291
+msgid ""
+"Select \"Other categories\" if you do not find the appropriate category."
+msgstr "Selecione ”Other categories” caso não encontre uma categoria adequada."
+
+#: ../../src/Admin/Translations.php:292
+msgid "request it now."
+msgstr "solicite agora."
+
+#: ../../src/Admin/Translations.php:306
+msgid "3. Set payment methods"
+msgstr "3. Configure os meios de pagamento"
+
+#: ../../src/Admin/Translations.php:307
+msgid "To view more options, please select a payment method below"
+msgstr "Selecione um meio de pagamento a seguir para ver mais opções"
+
+#: ../../src/Admin/Translations.php:308
+msgid "Settings"
+msgstr "Configurar"
+
+#: ../../src/Admin/Translations.php:309
+msgid "Continue"
+msgstr "Continuar"
+
+#: ../../src/Admin/Translations.php:322
+msgid "To enable test mode"
+msgstr "Para habilitar o modo teste"
+
+#: ../../src/Admin/Translations.php:324
+msgid "copy your test credentials"
+msgstr "copie suas credenciais de teste"
+
+#: ../../src/Admin/Translations.php:325
+msgid "and paste them above in section 1 of this page"
+msgstr "e cole acima na seção 1 desta página"
+
+#: ../../src/Admin/Translations.php:330
+msgid "Create your"
+msgstr "Crie seu"
+
+#: ../../src/Admin/Translations.php:332
+msgid "test user"
+msgstr "usuário de teste"
+
+#: ../../src/Admin/Translations.php:333
+msgid ""
+"(Optional. Can be used in Production Mode and Test Mode, to test payments)"
+msgstr ""
+"(Opcional. Pode ser usado no Modo Produção e Modo teste, para testar "
+"pagamentos)"
+
+#: ../../src/Admin/Translations.php:339
+msgid "Use our test cards"
+msgstr "Use nossos cartões de teste"
+
+#: ../../src/Admin/Translations.php:340
+msgid "never use real cards"
+msgstr "nunca use cartões reais"
+
+#: ../../src/Admin/Translations.php:346
+msgid "Visit your store"
+msgstr "Visite sua loja"
+
+#: ../../src/Admin/Translations.php:347
+msgid "to test purchases"
+msgstr "para testar compras"
+
+#: ../../src/Admin/Translations.php:351
+msgid "4. Test your store before you sell"
+msgstr "4. Teste sua loja antes de vender"
+
+#: ../../src/Admin/Translations.php:352
+msgid "Choose how you want to operate your store:"
+msgstr "Escolha como você quer operar sua loja:"
+
+#: ../../src/Admin/Translations.php:353
+msgid "Test Mode"
+msgstr "Modo Teste"
+
+#: ../../src/Admin/Translations.php:354
+msgid "Sale Mode (Production)"
+msgstr "Modo Vendas (Produção)"
+
+#: ../../src/Admin/Translations.php:355
+msgid "Mercado Pago payment methods in Production Mode"
+msgstr "Meios de pagamento Mercado Pago em Modo Produção"
+
+#: ../../src/Admin/Translations.php:356
+msgid "Mercado Pago payment methods in Test Mode"
+msgstr "Meios de pagamento Mercado Pago em Modo Teste"
+
+#: ../../src/Admin/Translations.php:357
+msgid "Enter test credentials"
+msgstr "Insira as credenciais de teste"
+
+#: ../../src/Admin/Translations.php:358
+msgid ""
+"Test the experience in Test Mode and then enable the Sale Mode (Production) "
+"to sell."
+msgstr ""
+"Teste a experiência no Modo Teste. Depois ative o Modo Vendas (Produção) "
+"para fazer vendas."
+
+#: ../../src/Admin/Translations.php:359
+msgid "Mercado Pago Checkouts disabled for real collections."
+msgstr "Checkouts Mercado Pago inativos para cobranças reais."
+
+#: ../../src/Admin/Translations.php:360
+msgid "Test Mode rules."
+msgstr "Consulte as regras do modo teste."
+
+#: ../../src/Admin/Translations.php:361
+msgid "Mercado Pago Checkouts enabled for real collections."
+msgstr "Checkouts Mercado Pago ativos para cobranças reais."
+
+#: ../../src/Admin/Translations.php:362
+msgid "The clients can make real purchases in your store."
+msgstr "Clientes podem fazer compras reais na sua loja."
+
+#: ../../src/Admin/Translations.php:367
+msgid "Store in sale mode (Production)"
+msgstr "Loja em Modo Vendas (Produção)"
+
+#: ../../src/Admin/Translations.php:368
+msgid "Store under test"
+msgstr "Loja em Modo Teste"
+
+#: ../../src/Admin/Translations.php:369
+msgid "Save changes"
+msgstr "Salvar mudanças"
+
+#: ../../src/Admin/Translations.php:376
+msgid "Store business fields are valid"
+msgstr "Os campos de negócio são válidos"
+
+#: ../../src/Admin/Translations.php:377
+msgid "Store business fields could not be validated"
+msgstr "Os campos de negócio não puderam ser validados"
+
+#: ../../src/Admin/Translations.php:378
+msgid "Credentials fields are valid"
+msgstr "Os campos de credenciais são válidos"
+
+#: ../../src/Admin/Translations.php:379
+msgid "Credentials fields could not be validated"
+msgstr "Os campos de credenciais não puderam ser validados"
+
+#: ../../src/Admin/Translations.php:391
+msgid "Valid Public Key"
+msgstr "Public key válida"
+
+#: ../../src/Admin/Translations.php:392
+msgid "Invalid Public Key"
+msgstr "Public key inválida"
+
+#: ../../src/Admin/Translations.php:393
+msgid "Valid Access Token"
+msgstr "Access token válido"
+
+#: ../../src/Admin/Translations.php:394
+msgid "Invalid Access Token"
+msgstr "Access token inválido"
+
+#: ../../src/Admin/Translations.php:406
+msgid "Credentials were updated"
+msgstr "As credenciais foram atualizadas"
+
+#: ../../src/Admin/Translations.php:407
+msgid ""
+"Your store has exited Test Mode and is making real sales in Production Mode."
+msgstr ""
+"Sua loja saiu do Modo Teste e está fazendo vendas reais no Modo Produção."
+
+#: ../../src/Admin/Translations.php:408
+msgid "To test the store, re-enter both test credentials."
+msgstr "Para testar a loja, insira novamente as duas credenciais de teste."
+
+#: ../../src/Admin/Translations.php:409
+msgid "Invalid credentials"
+msgstr "Credenciais inválidas"
+
+#: ../../src/Admin/Translations.php:410
+msgid "See our manual to learn"
+msgstr "Consulte nosso manual para saber"
+
+#: ../../src/Admin/Translations.php:411
+msgid "how to enter the credentials the right way."
+msgstr "como inserir as credenciais da maneira correta."
+
+#: ../../src/Admin/Translations.php:423
+msgid "Store information is valid"
+msgstr "As informações sobre a loja são válidas"

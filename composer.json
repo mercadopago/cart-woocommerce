@@ -1,0 +1,36 @@
+{
+  "name": "mp-plugins/woocommerce-plugins-enablers",
+  "description": "Repository that contains the base project for the Plugins Enablers initiative",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Mercado Pago SMB",
+      "email": "pp_smb@mercadolivre.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {
+      "MercadoPago\\Woocommerce\\": [
+        "src"
+      ]
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "MercadoPago\\Woocommerce\\Tests\\": [
+        "tests"
+      ]
+    }
+  },
+  "scripts": {
+    "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml src",
+    "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml src"
+  },
+  "require": {
+    "php": ">=7.2"
+  },
+  "require-dev": {
+    "squizlabs/php_codesniffer": "^3.7"
+  }
+}

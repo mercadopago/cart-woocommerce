@@ -1,0 +1,10 @@
+.DS_Store
+.phpunit.result.cache
+
+clover.xml
+coverage
+
+/.idea/
+/.vscode/
+/vendor/
+/node_modules/
