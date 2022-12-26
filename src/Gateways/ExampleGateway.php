@@ -30,7 +30,7 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
         $this->has_fields = true;
         $this->method_title = 'Mercado Pago Gateway';
         $this->method_description = 'The best woocommerce gateway';
-        $this->supports = array('products');
+        $this->supports = ['products', 'refunds'];
 
         $this->init_form_fields();
 
