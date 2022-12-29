@@ -91,16 +91,16 @@ class Settings
      * Settings constructor
      */
     public function __construct(
-        Admin       $admin,
-        Endpoints   $endpoints,
-        Links       $links,
-        Plugin      $plugin,
-        Scripts     $scripts,
-        Seller      $seller,
-        Store       $store,
+        Admin $admin,
+        Endpoints $endpoints,
+        Links $links,
+        Plugin $plugin,
+        Scripts $scripts,
+        Seller $seller,
+        Store $store,
         AdminTranslations $translations,
-        Url         $url,
-        Nonce       $nonce,
+        Url $url,
+        Nonce $nonce,
         CurrentUser $currentUser
     ) {
         $this->admin        = $admin;
