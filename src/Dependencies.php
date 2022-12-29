@@ -37,6 +37,11 @@ if (!defined('ABSPATH')) {
 class Dependencies
 {
     /**
+     * @var \WooCommerce
+     */
+    public $woocommerce;
+
+    /**
      * @var Cache
      */
     public $cache;
@@ -156,6 +161,9 @@ class Dependencies
      */
     public function __construct()
     {
+        global $woocommerce;
+
+        $this->woocommerce  = $woocommerce;
         $this->cache        = new Cache();
         $this->strings      = new Strings();
         $this->admin        = new Admin();

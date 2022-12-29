@@ -58,9 +58,9 @@ class WoocommerceMercadoPago
     private const PLUGIN_NAME = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
 
     /**
-     * @var Dependencies
+     * @var \WooCommerce
      */
-    public $dependencies;
+    public $woocommerce;
 
     /**
      * @var Cache
@@ -213,6 +213,16 @@ class WoocommerceMercadoPago
     }
 
     /**
+     * Register gateways
+     *
+     * @return void
+     */
+    public function registerGateways(): void
+    {
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');
+    }
+
+    /**
      * Init plugin
      *
      * @return void
@@ -239,6 +249,8 @@ class WoocommerceMercadoPago
         if (!class_exists('WC_Payment_Gateway')) {
             $this->notices->adminNoticeMissWoocoommerce();
         }
+
+        $this->registerGateways();
     }
 
     /**
@@ -248,40 +260,43 @@ class WoocommerceMercadoPago
      */
     public function setProperties(): void
     {
-        $this->dependencies = new Dependencies();
+        $dependencies = new Dependencies();
+
+        // Globals
+        $this->woocommerce = $dependencies->woocommerce;
 
         // Configs
-        $this->seller       = $this->dependencies->seller;
-        $this->store        = $this->dependencies->store;
+        $this->seller       = $dependencies->seller;
+        $this->store        = $dependencies->store;
 
         // Helpers
-        $this->cache        = $this->dependencies->cache;
-        $this->country      = $this->dependencies->country;
-        $this->currentUser  = $this->dependencies->currentUser;
-        $this->links        = $this->dependencies->links;
-        $this->requester    = $this->dependencies->requester;
-        $this->strings      = $this->dependencies->strings;
-        $this->url          = $this->dependencies->url;
-        $this->nonce        = $this->dependencies->nonce;
+        $this->cache        = $dependencies->cache;
+        $this->country      = $dependencies->country;
+        $this->currentUser  = $dependencies->currentUser;
+        $this->links        = $dependencies->links;
+        $this->requester    = $dependencies->requester;
+        $this->strings      = $dependencies->strings;
+        $this->url          = $dependencies->url;
+        $this->nonce        = $dependencies->nonce;
 
         // Hooks
-        $this->admin        = $this->dependencies->admin;
-        $this->checkout     = $this->dependencies->checkout;
-        $this->endpoints    = $this->dependencies->endpoints;
-        $this->gateway      = $this->dependencies->gateway;
-        $this->options      = $this->dependencies->options;
-        $this->order        = $this->dependencies->order;
-        $this->plugin       = $this->dependencies->plugin;
-        $this->product      = $this->dependencies->product;
-        $this->scripts      = $this->dependencies->scripts;
+        $this->admin        = $dependencies->admin;
+        $this->checkout     = $dependencies->checkout;
+        $this->endpoints    = $dependencies->endpoints;
+        $this->gateway      = $dependencies->gateway;
+        $this->options      = $dependencies->options;
+        $this->order        = $dependencies->order;
+        $this->plugin       = $dependencies->plugin;
+        $this->product      = $dependencies->product;
+        $this->scripts      = $dependencies->scripts;
 
         // General
-        $this->logs         = $this->dependencies->logs;
-        $this->notices      = $this->dependencies->notices;
+        $this->logs         = $dependencies->logs;
+        $this->notices      = $dependencies->notices;
 
         // Exclusive
-        $this->settings     = $this->dependencies->settings;
-        $this->translations = $this->dependencies->translations;
+        $this->settings     = $dependencies->settings;
+        $this->translations = $dependencies->translations;
     }
 
     /**

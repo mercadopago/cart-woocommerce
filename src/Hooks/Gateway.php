@@ -60,12 +60,11 @@ class Gateway
         });
     }
 
-
     /**
      * Register update options
      *
      * @param string $id
-     * @param $gateway
+     * @param mixed  $gateway
      *
      * @return void
      */
@@ -109,7 +108,7 @@ class Gateway
 
         foreach ($formFields as $key => $field) {
             if ('mp_checkbox_list' === $field['type']) {
-                $formFields += $this->separateCheckBoxes($formFields[$key]);
+                $formFields += $this->separateCheckboxes($formFields[$key]);
                 unset($formFields[$key]);
             }
 
@@ -130,32 +129,36 @@ class Gateway
     /**
      * Separates multiple exPayments checkbox into an array
      *
-     * @param array $exPayments exPayments form field
+     * @param array $exPayments
      *
      * @return array
      */
-    public function separateCheckBoxes(array $exPayments): array
+    public function separateCheckboxes(array $exPayments): array
     {
         $paymentMethods = array();
+
         foreach ($exPayments['payment_method_types'] as $paymentMethodsType) {
-            $paymentMethods += $this->separateCheckBoxesList($paymentMethodsType['list']);
+            $paymentMethods += $this->separateCheckboxesList($paymentMethodsType['list']);
         }
+
         return $paymentMethods;
     }
 
     /**
      * Separates multiple exPayments checkbox into an array
      *
-     * @param array $exPaymentsList list of payment_methods
+     * @param array $exPaymentsList
      *
      * @return array
      */
-    public function separateCheckBoxesList(array $exPaymentsList): array
+    public function separateCheckboxesList(array $exPaymentsList): array
     {
         $paymentMethods = array();
+
         foreach ($exPaymentsList as $payment) {
             $paymentMethods[$payment['id']] = $payment;
         }
+
         return $paymentMethods;
     }
 
@@ -163,7 +166,7 @@ class Gateway
      * Register thank you page
      *
      * @param string $id
-     * @param $callback
+     * @param mixed  $callback
      *
      * @return void
      */
@@ -175,7 +178,7 @@ class Gateway
     /**
      * Register before thank you page
      *
-     * @param $callback
+     * @param mixed $callback
      *
      * @return void
      */
@@ -188,7 +191,7 @@ class Gateway
      * Register after settings checkout
      *
      * @param string $name
-     * @param array $args
+     * @param array  $args
      * @param string $path
      * @param string $defaultPath
      *
@@ -206,27 +209,12 @@ class Gateway
     /**
      * Register wp head
      *
-     * @param $callback
+     * @param mixed $callback
      *
      * @return void
      */
     public function registerWpHead($callback): void
     {
         add_action('wp_head', $callback);
-    }
-
-    /**
-     * Register query vars
-     *
-     * @param string $var
-     *
-     * @return void
-     */
-    public function registerQueryVars(string $var): void
-    {
-        add_filter('query_vars', function ($vars) use ($var) {
-            $vars [] = $var;
-            return $vars;
-        });
     }
 }

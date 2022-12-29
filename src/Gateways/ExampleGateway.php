@@ -3,41 +3,33 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
-use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
+class ExampleGateway extends AbstractGateway implements MercadoPagoGatewayInterface
 {
-    /**
-     * @var WoocommerceMercadoPago
-     */
-    protected $mercadopago;
-
     /**
      * ExampleGateway constructor
      */
     public function __construct()
     {
-        global $mercadopago;
+        parent::__construct();
 
-        $this->mercadopago = $mercadopago;
-
-        $this->id = 'mercadopago';
-        $this->icon = null;
-        $this->has_fields = true;
-        $this->method_title = 'Mercado Pago Gateway';
+        $this->id                 = 'mercadopago';
+        $this->icon               = null;
+        $this->has_fields         = true;
+        $this->method_title       = 'Mercado Pago Gateway';
         $this->method_description = 'The best woocommerce gateway';
-        $this->supports = ['products', 'refunds'];
+        $this->supports           = ['products', 'refunds'];
 
         $this->init_form_fields();
 
         $this->init_settings();
-        $this->title = $this->get_option('title');
+        $this->title       = $this->get_option('title');
+        $this->enabled     = $this->get_option('enabled');
         $this->description = $this->get_option('description');
-        $this->enabled = $this->get_option('enabled');
 
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 
@@ -53,37 +45,38 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
      */
     public function init_form_fields(): void
     {
-        $this->form_fields = array(
-            'enabled' => array(
-                'title'       => 'Enable/Disable',
-                'label'       => 'Enable Misha Gateway',
-                'type'        => 'checkbox',
-                'description' => '',
-                'default'     => 'no'
-            ),
-            'title' => array(
-                'title'       => 'Title',
+        $this->form_fields = [
+            'config_header' => [
+                'type'        => 'mp_config_header',
+                'title'       => 'Checkout Pro',
+                'description' => 'With Checkout Pro you sell with all the safety inside Mercado Pago environment.',
+            ],
+            'enabled'     => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => 'Enable the checkout',
+                'subtitle'     => 'By disabling it, you will disable all payment methods of this checkout.',
+                'default'      => 'no',
+                'descriptions' => [
+                    'enabled'  => 'The checkout is <b>enabled</b>.',
+                    'disabled' => 'The checkout is <b>disabled</b>.',
+                ],
+            ],
+            'title'       => [
                 'type'        => 'text',
-                'description' => 'This controls the title which the user sees during checkout.',
+                'title'       => 'Title in the store Checkout',
+                'description' => 'Change the display text in Checkout, maximum characters: 85',
                 'default'     => 'Credit Card',
-                'desc_tip'    => true,
-            ),
-            'description' => array(
+                'desc_tip'    => 'The text inserted here will not be translated to other languages',
+                'class'       => 'limit-title-max-length',
+            ],
+            'description' => [
+                'type'        => 'text',
                 'title'       => 'Description',
-                'type'        => 'textarea',
-                'description' => 'This controls the description which the user sees during checkout.',
-                'default'     => 'Pay with your credit card via our super-cool payment gateway.',
-            )
-        );
-    }
-
-    /**
-     * Added gateway scripts
-     *
-     * @return void
-     */
-    public function payment_scripts(): void
-    {
+                'description' => '',
+                'default'     => 'Debit, Credit and Invoice in Mercado Pago environment.',
+                'class'       => 'mp-hidden-field-description'
+            ],
+        ];
     }
 
     /**
@@ -120,20 +113,18 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
      */
     public function process_payment($order_id): array
     {
-        global $woocommerce;
-
         $order = wc_get_order($order_id);
         $order->payment_complete();
         $order->add_order_note('Hey, your order is paid! Thank you!', true);
 
         wc_reduce_stock_levels($order_id);
 
-        $woocommerce->cart->empty_cart();
+        $this->woocommerce->cart->empty_cart();
 
-        return array(
+        return [
             'result'   => 'success',
             'redirect' => $this->get_return_url($order)
-        );
+        ];
     }
 
     /**
@@ -144,10 +135,10 @@ class ExampleGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayIn
     public function webhook(): void
     {
         $status   = 200;
-        $response = array(
+        $response = [
             'status'  => $status,
             'message' => 'Webhook handled successful'
-        );
+        ];
 
         wp_send_json_success($response, $status);
     }
