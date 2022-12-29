@@ -51,7 +51,7 @@ class ExampleGateway extends AbstractGateway implements MercadoPagoGatewayInterf
                 'title'       => 'Checkout Pro',
                 'description' => 'With Checkout Pro you sell with all the safety inside Mercado Pago environment.',
             ],
-            'enabled'     => [
+            'enabled'       => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => 'Enable the checkout',
                 'subtitle'     => 'By disabling it, you will disable all payment methods of this checkout.',
@@ -61,7 +61,7 @@ class ExampleGateway extends AbstractGateway implements MercadoPagoGatewayInterf
                     'disabled' => 'The checkout is <b>disabled</b>.',
                 ],
             ],
-            'title'       => [
+            'title'         => [
                 'type'        => 'text',
                 'title'       => 'Title in the store Checkout',
                 'description' => 'Change the display text in Checkout, maximum characters: 85',
@@ -69,7 +69,7 @@ class ExampleGateway extends AbstractGateway implements MercadoPagoGatewayInterf
                 'desc_tip'    => 'The text inserted here will not be translated to other languages',
                 'class'       => 'limit-title-max-length',
             ],
-            'description' => [
+            'description'   => [
                 'type'        => 'text',
                 'title'       => 'Description',
                 'description' => '',
