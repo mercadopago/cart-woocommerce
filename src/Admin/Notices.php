@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Admin;
 
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -17,7 +18,7 @@ class Notices
     private $scripts;
 
     /**
-     * @var Translations
+     * @var AdminTranslations
      */
     private $translations;
 
@@ -29,7 +30,7 @@ class Notices
     /**
      * Notices constructor
      */
-    public function __construct(Scripts $scripts, Translations $translations, Url $url)
+    public function __construct(Scripts $scripts, AdminTranslations $translations, Url $url)
     {
         $this->scripts      = $scripts;
         $this->translations = $translations;

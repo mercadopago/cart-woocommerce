@@ -6,7 +6,6 @@ use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
-use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -26,9 +25,11 @@ use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -36,6 +37,11 @@ if (!defined('ABSPATH')) {
 
 class Dependencies
 {
+    /**
+     * @var \WooCommerce
+     */
+    public $woocommerce;
+
     /**
      * @var Cache
      */
@@ -87,7 +93,7 @@ class Dependencies
     public $store;
 
     /**
-     * @var Admin
+     * @var AdminTranslations
      */
     public $admin;
 
@@ -132,6 +138,11 @@ class Dependencies
     public $scripts;
 
     /**
+     * @var Template
+     */
+    public $template;
+
+    /**
      * @var Logs
      */
     public $logs;
@@ -147,7 +158,7 @@ class Dependencies
     public $settings;
 
     /**
-     * @var Translations
+     * @var AdminTranslations
      */
     public $translations;
 
@@ -156,14 +167,18 @@ class Dependencies
      */
     public function __construct()
     {
+        global $woocommerce;
+
+        $this->woocommerce  = $woocommerce;
         $this->cache        = new Cache();
         $this->strings      = new Strings();
         $this->admin        = new Admin();
         $this->endpoints    = new Endpoints();
         $this->options      = new Options();
-        $this->order        = new Order();
         $this->plugin       = new Plugin();
         $this->product      = new Product();
+        $this->template     = new Template();
+        $this->order        = $this->setOrder();
         $this->requester    = $this->setRequester();
         $this->seller       = $this->setSeller();
         $this->country      = $this->setCountry();
@@ -190,6 +205,14 @@ class Dependencies
         $httpClient    = new HttpClient(Requester::BASEURL_MP, $curlRequester);
 
         return new Requester($httpClient);
+    }
+
+    /**
+     * @return Order
+     */
+    private function setOrder(): Order
+    {
+        return new Order($this->template);
     }
 
     /**
@@ -253,7 +276,7 @@ class Dependencies
      */
     private function setGateway(): Gateway
     {
-        return new Gateway($this->options);
+        return new Gateway($this->options, $this->template);
     }
 
     /**
@@ -281,11 +304,11 @@ class Dependencies
     }
 
     /**
-     * @return Translations
+     * @return AdminTranslations
      */
-    private function setTranslations(): Translations
+    private function setTranslations(): AdminTranslations
     {
-        return new Translations($this->links);
+        return new AdminTranslations($this->links);
     }
 
     /**

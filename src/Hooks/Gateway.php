@@ -14,11 +14,17 @@ class Gateway
     private $options;
 
     /**
+     * @var Template
+     */
+    private $template;
+
+    /**
      * Gateway constructor
      */
-    public function __construct(Options $options)
+    public function __construct(Options $options, Template $template)
     {
-        $this->options = $options;
+        $this->options  = $options;
+        $this->template = $template;
     }
 
     /**
@@ -60,32 +66,24 @@ class Gateway
         });
     }
 
-
     /**
      * Register update options
      *
-     * @param string $id
-     * @param $gateway
+     * @param \WC_Payment_Gateway $gateway
      *
      * @return void
      */
-    public function registerUpdateOptions(string $id, $gateway): void
+    public function registerUpdateOptions(\WC_Payment_Gateway $gateway): void
     {
-        add_action('woocommerce_update_options_payment_gateways_' . $id, function () use ($gateway) {
+        add_action('woocommerce_update_options_payment_gateways_' . $gateway->id, function () use ($gateway) {
             $gateway->init_settings();
+
             $postData   = $gateway->get_post_data();
             $formFields = $this->getCustomFormFields($gateway);
 
             foreach ($formFields as $key => $field) {
-                if ('title' !== $gateway->get_field_type($field)) {
-                    $value = $gateway->get_field_value($key, $field, $postData);
-                    $commonConfigs = $gateway->get_common_configs();
-
-                    if (in_array($key, $commonConfigs, true)) {
-                        $this->options->set($key, $value);
-                    }
-
-                    $gateway->settings[$key] = $value;
+                if ($gateway->get_field_type($field) !== 'config_title') {
+                    $gateway->settings[$key] = $gateway->get_field_value($key, $field, $postData);
                 }
             }
 
@@ -109,14 +107,12 @@ class Gateway
 
         foreach ($formFields as $key => $field) {
             if ('mp_checkbox_list' === $field['type']) {
-                $formFields += $this->separateCheckBoxes($formFields[$key]);
+                $formFields += $this->separateCheckboxes($formFields[$key]);
                 unset($formFields[$key]);
             }
 
             if ('mp_activable_input' === $field['type'] && !isset($formFields[$key . '_checkbox'])) {
-                $formFields[$key . '_checkbox'] = array(
-                    'type' => 'checkbox',
-                );
+                $formFields[$key . '_checkbox'] = ['type' => 'checkbox'];
             }
 
             if ('mp_toggle_switch' === $field['type']) {
@@ -130,32 +126,36 @@ class Gateway
     /**
      * Separates multiple exPayments checkbox into an array
      *
-     * @param array $exPayments exPayments form field
+     * @param array $exPayments
      *
      * @return array
      */
-    public function separateCheckBoxes(array $exPayments): array
+    public function separateCheckboxes(array $exPayments): array
     {
         $paymentMethods = array();
+
         foreach ($exPayments['payment_method_types'] as $paymentMethodsType) {
-            $paymentMethods += $this->separateCheckBoxesList($paymentMethodsType['list']);
+            $paymentMethods += $this->separateCheckboxesList($paymentMethodsType['list']);
         }
+
         return $paymentMethods;
     }
 
     /**
      * Separates multiple exPayments checkbox into an array
      *
-     * @param array $exPaymentsList list of payment_methods
+     * @param array $exPaymentsList
      *
      * @return array
      */
-    public function separateCheckBoxesList(array $exPaymentsList): array
+    public function separateCheckboxesList(array $exPaymentsList): array
     {
         $paymentMethods = array();
+
         foreach ($exPaymentsList as $payment) {
             $paymentMethods[$payment['id']] = $payment;
         }
+
         return $paymentMethods;
     }
 
@@ -163,7 +163,7 @@ class Gateway
      * Register thank you page
      *
      * @param string $id
-     * @param $callback
+     * @param mixed  $callback
      *
      * @return void
      */
@@ -175,7 +175,7 @@ class Gateway
     /**
      * Register before thank you page
      *
-     * @param $callback
+     * @param mixed $callback
      *
      * @return void
      */
@@ -188,17 +188,15 @@ class Gateway
      * Register after settings checkout
      *
      * @param string $name
-     * @param array $args
      * @param string $path
-     * @param string $defaultPath
-     *
+     * @param array  $args
      * @return void
      */
-    public function registerAfterSettingsCheckout(string $name, array $args, string $path, string $defaultPath = ''): void
+    public function registerAfterSettingsCheckout(string $name, string $path, array $args): void
     {
-        add_action('woocommerce_after_settings_checkout', function () use ($name, $args, $path, $defaultPath) {
+        add_action('woocommerce_after_settings_checkout', function () use ($name, $path, $args) {
             foreach ($args as $arg) {
-                wc_get_template($name, $arg, $path, $defaultPath);
+                $this->template->getWoocommerceTemplate($name, $path, $arg);
             }
         });
     }
@@ -206,27 +204,12 @@ class Gateway
     /**
      * Register wp head
      *
-     * @param $callback
+     * @param mixed $callback
      *
      * @return void
      */
     public function registerWpHead($callback): void
     {
         add_action('wp_head', $callback);
-    }
-
-    /**
-     * Register query vars
-     *
-     * @param string $var
-     *
-     * @return void
-     */
-    public function registerQueryVars(string $var): void
-    {
-        add_filter('query_vars', function ($vars) use ($var) {
-            $vars [] = $var;
-            return $vars;
-        });
     }
 }

@@ -9,6 +9,19 @@ if (!defined('ABSPATH')) {
 class Order
 {
     /**
+     * @var Template
+     */
+    private $template;
+
+    /**
+     * Order constructor
+     */
+    public function __construct(Template $template)
+    {
+        $this->template = $template;
+    }
+
+    /**
      * Register meta box addition on order page
      *
      * @param string $id
@@ -34,14 +47,13 @@ class Order
      * @param string $name
      * @param array  $args
      * @param string $path
-     * @param string $defaultPath
      *
      * @return void
      */
-    public function addMetaBox(string $id, string $title, string $name, array $args, string $path, string $defaultPath = ''): void
+    public function addMetaBox(string $id, string $title, string $name, array $args, string $path): void
     {
-        add_meta_box($id, $title, function () use ($name, $args, $path, $defaultPath) {
-            wc_get_template($name, $args, $path, $defaultPath);
+        add_meta_box($id, $title, function () use ($name, $path, $args) {
+            $this->template->getWoocommerceTemplate($name, $path, $args);
         });
     }
 

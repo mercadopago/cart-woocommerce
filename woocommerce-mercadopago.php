@@ -37,9 +37,3 @@ if (!Packages::init()) {
 if (!class_exists('WoocommerceMercadoPago')) {
     $GLOBALS['mercadopago'] = new WoocommerceMercadoPago();
 }
-
-// TODO: migrate to child plugins
-add_action('wp_loaded', function () {
-    global $mercadopago;
-    $mercadopago->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');
-});

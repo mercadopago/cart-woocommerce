@@ -14,6 +14,7 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -67,7 +68,7 @@ class Settings
     private $store;
 
     /**
-     * @var Translations
+     * @var AdminTranslations
      */
     private $translations;
 
@@ -97,7 +98,7 @@ class Settings
         Scripts $scripts,
         Seller $seller,
         Store $store,
-        Translations $translations,
+        AdminTranslations $translations,
         Url $url,
         Nonce $nonce,
         CurrentUser $currentUser

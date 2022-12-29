@@ -1,14 +1,14 @@
 /* globals jQuery, ajaxurl, mercadopago_settings_admin_js_params */
 
-function clear_message() {
+function clearMessage() {
   document.querySelector('.mp-alert').remove();
 }
 
-function clear_element(element) {
+function clearElement(element) {
   document.getElementById(element).remove();
 }
 
-function mp_msg_element(element, title, subTitle, link, msgLink, type) {
+function mpMsgElement(element, title, subTitle, link, msgLink, type) {
   const cardInfo = document.getElementById(element);
 
   const classCardInfo = document.createElement('div');
@@ -52,41 +52,41 @@ function mp_msg_element(element, title, subTitle, link, msgLink, type) {
   classCardInfo.appendChild(cardBodyStyle);
 
   if ('alert' === type) {
-    setTimeout(clear_element, 10000, classCardInfo.id);
+    setTimeout(clearElement, 10000, classCardInfo.id);
   }
 }
 
-function select_test_mode(test){
+function selectTestMode(test){
   const badge = document.getElementById('mp-mode-badge');
-  const color_badge = document.getElementById('mp-orange-badge');
-  const icon_badge = document.getElementById('mp-icon-badge');
-  const helper_test = document.getElementById('mp-helper-test');
-  const helper_prod = document.getElementById('mp-helper-prod');
-  const title_helper_prod = document.getElementById('mp-title-helper-prod');
-  const title_helper_test = document.getElementById('mp-title-helper-test');
-  const badge_test = document.getElementById('mp-mode-badge-test');
-  const badge_prod = document.getElementById('mp-mode-badge-prod');
+  const colorBadge = document.getElementById('mp-orange-badge');
+  const iconBadge = document.getElementById('mp-icon-badge');
+  const helperTest = document.getElementById('mp-helper-test');
+  const helperProd = document.getElementById('mp-helper-prod');
+  const titleHelperProd = document.getElementById('mp-title-helper-prod');
+  const titleHelperTest = document.getElementById('mp-title-helper-test');
+  const badgeTest = document.getElementById('mp-mode-badge-test');
+  const badgeProd = document.getElementById('mp-mode-badge-prod');
 
   if (test) {
     badge.classList.remove('mp-settings-prod-mode-alert');
     badge.classList.add('mp-settings-test-mode-alert');
 
-    color_badge.classList.remove('mp-settings-alert-payment-methods-green');
-    color_badge.classList.add('mp-settings-alert-payment-methods-orange');
+    colorBadge.classList.remove('mp-settings-alert-payment-methods-green');
+    colorBadge.classList.add('mp-settings-alert-payment-methods-orange');
 
-    icon_badge.classList.remove('mp-settings-icon-success');
-    icon_badge.classList.add('mp-settings-icon-warning');
+    iconBadge.classList.remove('mp-settings-icon-success');
+    iconBadge.classList.add('mp-settings-icon-warning');
 
-    mp_verify_alert_test_mode();
+    mpVerifyAlertTestMode();
 
-    helper_test.style.display = 'block';
-    helper_prod.style.display = 'none';
+    helperTest.style.display = 'block';
+    helperProd.style.display = 'none';
 
-    title_helper_test.style.display = 'block';
-    title_helper_prod.style.display = 'none';
+    titleHelperTest.style.display = 'block';
+    titleHelperProd.style.display = 'none';
 
-    badge_test.style.display = 'block';
-    badge_prod.style.display = 'none';
+    badgeTest.style.display = 'block';
+    badgeProd.style.display = 'none';
   } else {
     const red_badge = document.getElementById('mp-red-badge');
     badge.classList.remove('mp-settings-test-mode-alert');
@@ -94,24 +94,24 @@ function select_test_mode(test){
 
     red_badge.style.display = 'none';
 
-    color_badge.classList.remove('mp-settings-alert-payment-methods-orange');
-    color_badge.classList.add('mp-settings-alert-payment-methods-green');
+    colorBadge.classList.remove('mp-settings-alert-payment-methods-orange');
+    colorBadge.classList.add('mp-settings-alert-payment-methods-green');
 
-    icon_badge.classList.remove('mp-settings-icon-warning');
-    icon_badge.classList.add('mp-settings-icon-success');
+    iconBadge.classList.remove('mp-settings-icon-warning');
+    iconBadge.classList.add('mp-settings-icon-success');
 
-    helper_test.style.display = 'none';
-    helper_prod.style.display = 'block';
+    helperTest.style.display = 'none';
+    helperProd.style.display = 'block';
 
-    title_helper_test.style.display = 'none';
-    title_helper_prod.style.display = 'block';
+    titleHelperTest.style.display = 'none';
+    titleHelperProd.style.display = 'block';
 
-    badge_test.style.display = 'none';
-    badge_prod.style.display = 'block';
+    badgeTest.style.display = 'none';
+    badgeProd.style.display = 'block';
   }
 }
 
-function mp_verify_alert_test_mode() {
+function mpVerifyAlertTestMode() {
   if ((document.querySelector('input[name="mp-test-prod"]').checked) && (
       document.getElementById('mp-public-key-test').value === '' ||
       document.getElementById('mp-access-token-test').value === ''
@@ -124,7 +124,7 @@ function mp_verify_alert_test_mode() {
   }
 }
 
-function mp_show_message(message, type, block) {
+function mpShowMessage(message, type, block) {
   const messageDiv = document.createElement('div');
 
   let card = '';
@@ -159,11 +159,11 @@ function mp_show_message(message, type, block) {
   messageDiv.appendChild(document.createTextNode(message));
   card.insertBefore(messageDiv, heading);
 
-  setTimeout(clear_message, 3000);
+  setTimeout(clearMessage, 3000);
 }
 
-function mp_validate_credentials_tips() {
-  const icon_credentials = document.getElementById('mp-settings-icon-credentials');
+function mpValidateCredentialsTips() {
+  const iconCredentials = document.getElementById('mp-settings-icon-credentials');
   jQuery
     .post(
       ajaxurl,
@@ -175,19 +175,19 @@ function mp_validate_credentials_tips() {
     )
     .done(function(response) {
       if (response.success) {
-        icon_credentials.classList.remove('mp-settings-icon-credentials');
-        icon_credentials.classList.add('mp-settings-icon-success');
+        iconCredentials.classList.remove('mp-settings-icon-credentials');
+        iconCredentials.classList.add('mp-settings-icon-success');
       } else {
-        icon_credentials.classList.remove('mp-settings-icon-success');
+        iconCredentials.classList.remove('mp-settings-icon-success');
       }
     })
     .fail(function() {
-      icon_credentials.classList.remove('mp-settings-icon-success');
+      iconCredentials.classList.remove('mp-settings-icon-success');
     });
 }
 
-function mp_validate_store_tips() {
-  const icon_store = document.getElementById('mp-settings-icon-store');
+function mpValidateStoreTips() {
+  const iconStore = document.getElementById('mp-settings-icon-store');
   jQuery
     .post(
       ajaxurl,
@@ -199,18 +199,18 @@ function mp_validate_store_tips() {
     )
     .done(function(response) {
       if (response.success) {
-        icon_store.classList.remove('mp-settings-icon-store');
-        icon_store.classList.add('mp-settings-icon-success');
+        iconStore.classList.remove('mp-settings-icon-store');
+        iconStore.classList.add('mp-settings-icon-success');
       } else {
-        icon_store.classList.remove('mp-settings-icon-success');
+        iconStore.classList.remove('mp-settings-icon-success');
       }
     })
     .fail(function() {
-      icon_store.classList.remove('mp-settings-icon-success');
+      iconStore.classList.remove('mp-settings-icon-success');
     });
 }
 
-function mp_go_to_next_step(actualStep, nextStep, actualArrowId, nextArrowId) {
+function mpGoToNextStep(actualStep, nextStep, actualArrowId, nextArrowId) {
   const actual = document.getElementById(actualStep);
   const actualArrow = document.getElementById(actualArrowId);
   const next = document.getElementById(nextStep);
@@ -241,15 +241,15 @@ function mp_go_to_next_step(actualStep, nextStep, actualArrowId, nextArrowId) {
   }
 }
 
-function mp_continue_to_next_step() {
+function mpContinueToNextStep() {
   document
     .getElementById('mp-payment-method-continue')
     .addEventListener('click', function() {
-      mp_go_to_next_step('mp-step-3', 'mp-step-4', 'mp-payments-arrow-up', 'mp-modes-arrow-up');
+      mpGoToNextStep('mp-step-3', 'mp-step-4', 'mp-payments-arrow-up', 'mp-modes-arrow-up');
   });
 }
 
-function mp_get_requirements() {
+function mpGetRequirements() {
   jQuery.post(
     ajaxurl,
     {
@@ -274,7 +274,7 @@ function mp_get_requirements() {
     });
 }
 
-function mp_settings_accordion_start() {
+function mpSettingsAccordionStart() {
   let i;
   const acc = document.getElementsByClassName('mp-settings-title-align');
 
@@ -305,7 +305,7 @@ function mp_settings_accordion_start() {
   }
 }
 
-function mp_settings_accordion_options() {
+function mpSettingsAccordionOptions() {
   const element = document.getElementById('mp-advanced-options');
   const elementBlock = document.getElementById('block-two');
 
@@ -329,7 +329,7 @@ function mp_settings_accordion_options() {
   });
 }
 
-function mp_validate_credentials() {
+function mpValidateCredentials() {
   document
     .getElementById('mp-access-token-prod')
     .addEventListener('change', function() {
@@ -461,7 +461,7 @@ function mp_validate_credentials() {
     });
 }
 
-function mp_update_option_credentials() {
+function mpUpdateOptionCredentials() {
   document
     .getElementById('mp-btn-credentials')
     .addEventListener('click', function() {
@@ -485,35 +485,35 @@ function mp_update_option_credentials() {
         )
         .done(function(response) {
           if (response.success) {
-            mp_verify_alert_test_mode();
-            mp_show_message(response.data, 'success', 'credentials');
-            mp_validate_credentials_tips();
+            mpVerifyAlertTestMode();
+            mpShowMessage(response.data, 'success', 'credentials');
+            mpValidateCredentialsTips();
 
             setTimeout(() => {
-              mp_go_to_next_step('mp-step-1', 'mp-step-2', 'mp-credentials-arrow-up', 'mp-store-info-arrow-up');
+              mpGoToNextStep('mp-step-1', 'mp-step-2', 'mp-credentials-arrow-up', 'mp-store-info-arrow-up');
             }, 3000);
           } else {
             const rad = document.querySelectorAll('input[name="mp-test-prod"]');
             const { message, subtitle, link, linkMsg, type, test_mode } = response?.data;
 
-            mp_msg_element('msg-info-credentials', message, subtitle, link, linkMsg, type);
+            mpMsgElement('msg-info-credentials', message, subtitle, link, linkMsg, type);
 
             if (test_mode === 'no') {
               rad[1].checked = true;
-              select_test_mode(false);
+              selectTestMode(false);
             } else {
               rad[0].checked = true;
-              select_test_mode(true);
+              selectTestMode(true);
             }
           }
         })
         .fail(function(error) {
-          mp_show_message(error?.data, 'error', 'credentials');
+          mpShowMessage(error?.data, 'error', 'credentials');
         });
     });
 }
 
-function mp_update_store_information() {
+function mpUpdateStoreInformation() {
   document
     .getElementById('mp-store-info-save')
     .addEventListener('click', function() {
@@ -534,33 +534,33 @@ function mp_update_store_information() {
         )
         .done(function(response) {
           if (response.success) {
-            mp_validate_store_tips();
-            mp_show_message(response.data, 'success', 'store');
+            mpValidateStoreTips();
+            mpShowMessage(response.data, 'success', 'store');
             setTimeout(() => {
-              mp_go_to_next_step('mp-step-2', 'mp-step-3', 'mp-store-info-arrow-up', 'mp-payments-arrow-up');
+              mpGoToNextStep('mp-step-2', 'mp-step-3', 'mp-store-info-arrow-up', 'mp-payments-arrow-up');
             }, 3000);
           } else {
-            mp_show_message(response.data, 'error', 'store');
+            mpShowMessage(response.data, 'error', 'store');
           }
         })
         .fail(function(error) {
-          mp_show_message(error?.data, 'error', 'store');
+          mpShowMessage(error?.data, 'error', 'store');
         });
     });
 }
 
-function mp_update_test_mode() {
+function mpUpdateTestMode() {
   const rad = document.querySelectorAll('input[name="mp-test-prod"]');
 
   rad[0].addEventListener('change', function() {
     if (rad[0].checked) {
-      select_test_mode(true);
+      selectTestMode(true);
     }
   });
 
   rad[1].addEventListener('change', function() {
     if (rad[1].checked) {
-      select_test_mode(false);
+      selectTestMode(false);
     }
   });
 
@@ -572,38 +572,38 @@ function mp_update_test_mode() {
           ajaxurl,
           {
             input_mode_value: document.querySelector('input[name="mp-test-prod"]:checked').value,
-            input_verify_alert_test_mode: mp_verify_alert_test_mode() ? 'yes' : 'no',
+            input_verify_alert_test_mode: mpVerifyAlertTestMode() ? 'yes' : 'no',
             action: 'mp_update_test_mode',
             nonce: mercadopago_settings_admin_js_params.nonce,
           },
           function() {}
         )
         .done(function(response) {
-          if( response.success ){
-            mp_show_message(response.data, 'success', 'test_mode');
+          if(response.success){
+            mpShowMessage(response.data, 'success', 'test_mode');
           } else{
             if (rad[0].checked) {
               document.getElementById('mp-red-badge').style.display = 'block';
             }
-            mp_show_message(response.data, 'error', 'test_mode');
+            mpShowMessage(response.data, 'error', 'test_mode');
           }
         })
         .fail(function(error) {
-          mp_show_message(error.data, 'error', 'test_mode');
+          mpShowMessage(error.data, 'error', 'test_mode');
         });
     });
 }
 
 function mp_settings_screen_load() {
-  mp_get_requirements();
-  mp_settings_accordion_start();
-  mp_settings_accordion_options();
-  mp_validate_credentials();
-  mp_validate_credentials_tips();
-  mp_validate_store_tips();
-  mp_verify_alert_test_mode();
-  mp_update_option_credentials();
-  mp_update_store_information();
-  mp_update_test_mode();
-  mp_continue_to_next_step();
+  mpGetRequirements();
+  mpSettingsAccordionStart();
+  mpSettingsAccordionOptions();
+  mpValidateCredentials();
+  mpValidateCredentialsTips();
+  mpValidateStoreTips();
+  mpVerifyAlertTestMode();
+  mpUpdateOptionCredentials();
+  mpUpdateStoreInformation();
+  mpUpdateTestMode();
+  mpContinueToNextStep();
 }

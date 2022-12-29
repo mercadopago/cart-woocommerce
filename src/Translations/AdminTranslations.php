@@ -1,6 +1,6 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Admin;
+namespace MercadoPago\Woocommerce\Translations;
 
 use MercadoPago\Woocommerce\Helpers\Links;
 
@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Translations
+class AdminTranslations
 {
     /**
      * @var array

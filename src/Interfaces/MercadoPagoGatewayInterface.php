@@ -14,9 +14,10 @@ interface MercadoPagoGatewayInterface
     public function init_form_fields(): void;
 
     /**
+     * @param string $gatewaySection
      * @return void
      */
-    public function payment_scripts(): void;
+    public function payment_scripts(string $gatewaySection): void;
 
     /**
      * @return void
