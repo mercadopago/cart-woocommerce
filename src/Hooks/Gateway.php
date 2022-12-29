@@ -63,15 +63,15 @@ class Gateway
     /**
      * Register update options
      *
-     * @param string $id
-     * @param mixed  $gateway
+     * @param \WC_Payment_Gateway $gateway
      *
      * @return void
      */
-    public function registerUpdateOptions(string $id, $gateway): void
+    public function registerUpdateOptions(\WC_Payment_Gateway $gateway): void
     {
-        add_action('woocommerce_update_options_payment_gateways_' . $id, function () use ($gateway) {
+        add_action('woocommerce_update_options_payment_gateways_' . $gateway->id, function () use ($gateway) {
             $gateway->init_settings();
+
             $postData   = $gateway->get_post_data();
             $formFields = $this->getCustomFormFields($gateway);
 

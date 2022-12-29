@@ -23,11 +23,13 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     /**
      * Added gateway scripts
      *
+     * @param string $gatewaySection
+     *
      * @return void
      */
-    public function payment_scripts(): void
+    public function payment_scripts(string $gatewaySection): void
     {
-        if ($this->mercadopago->admin->isAdmin()) {
+        if ($this->canLoadScriptsAndStyles($gatewaySection)) {
             $this->mercadopago->scripts->registerAdminScript(
                 'woocommerce-mercadopago-admin-components',
                 $this->mercadopago->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
@@ -38,6 +40,21 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
                 $this->mercadopago->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
             );
         }
+    }
+
+    /**
+     * Check if scripts and styles can be loaded
+     *
+     * @param string $gatewaySection
+     *
+     * @return bool
+     */
+    public function canLoadScriptsAndStyles(string $gatewaySection): bool
+    {
+        return $this->mercadopago->admin->isAdmin() && (
+            $this->mercadopago->url->validatePage('wc-settings') &&
+            $this->mercadopago->url->validateSection($gatewaySection)
+        );
     }
 
     /**
