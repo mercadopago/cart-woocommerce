@@ -48,7 +48,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      *
      * @return string
      */
-    public function generate_mp_toggle_switch_html(string $key, array $settings): string {
+    public function generate_mp_toggle_switch_html(string $key, array $settings): string
+    {
         return wc_get_template_html(
             'toggle-switch.php',
             [
@@ -69,7 +70,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      *
      * @return string
      */
-    public function generate_mp_config_header_html(string $key, array $settings): string {
+    public function generate_mp_config_header_html(string $key, array $settings): string
+    {
         return wc_get_template_html(
             'config-header.php',
             [

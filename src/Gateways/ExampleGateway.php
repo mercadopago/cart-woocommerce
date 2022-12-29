@@ -119,7 +119,7 @@ class ExampleGateway extends AbstractGateway implements MercadoPagoGatewayInterf
 
         wc_reduce_stock_levels($order_id);
 
-        $this->woocommerce->cart->empty_cart();
+        $this->mercadopago->woocommerce->cart->empty_cart();
 
         return [
             'result'   => 'success',
