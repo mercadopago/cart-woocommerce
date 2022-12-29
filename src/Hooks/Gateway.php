@@ -76,15 +76,8 @@ class Gateway
             $formFields = $this->getCustomFormFields($gateway);
 
             foreach ($formFields as $key => $field) {
-                if ('title' !== $gateway->get_field_type($field)) {
-                    $value = $gateway->get_field_value($key, $field, $postData);
-                    $commonConfigs = $gateway->get_common_configs();
-
-                    if (in_array($key, $commonConfigs, true)) {
-                        $this->options->set($key, $value);
-                    }
-
-                    $gateway->settings[$key] = $value;
+                if ($gateway->get_field_type($field) !== 'config_title') {
+                    $gateway->settings[$key] = $gateway->get_field_value($key, $field, $postData);
                 }
             }
 
@@ -113,9 +106,7 @@ class Gateway
             }
 
             if ('mp_activable_input' === $field['type'] && !isset($formFields[$key . '_checkbox'])) {
-                $formFields[$key . '_checkbox'] = array(
-                    'type' => 'checkbox',
-                );
+                $formFields[$key . '_checkbox'] = ['type' => 'checkbox'];
             }
 
             if ('mp_toggle_switch' === $field['type']) {

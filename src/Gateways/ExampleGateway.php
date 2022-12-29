@@ -26,11 +26,13 @@ class ExampleGateway extends AbstractGateway implements MercadoPagoGatewayInterf
 
         $this->init_form_fields();
         $this->init_settings();
+
         $this->title       = $this->get_option('title');
         $this->enabled     = $this->get_option('enabled');
         $this->description = $this->get_option('description');
 
         $this->payment_scripts($this->id);
+
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
@@ -44,7 +46,7 @@ class ExampleGateway extends AbstractGateway implements MercadoPagoGatewayInterf
     {
         $this->form_fields = [
             'config_header' => [
-                'type'        => 'mp_config_header',
+                'type'        => 'mp_config_title',
                 'title'       => 'Checkout Pro',
                 'description' => 'With Checkout Pro you sell with all the safety inside Mercado Pago environment.',
             ],

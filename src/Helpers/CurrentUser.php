@@ -54,7 +54,7 @@ class CurrentUser
      */
     public function userHasRoles(array $roles): bool
     {
-        return !empty(array_intersect($roles, $this->getCurrentUserRoles()));
+        return is_super_admin($this->getCurrentUser()) || !empty(array_intersect($roles, $this->getCurrentUserRoles()));
     }
 
     /**

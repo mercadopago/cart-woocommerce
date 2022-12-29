@@ -87,10 +87,10 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      *
      * @return string
      */
-    public function generate_mp_config_header_html(string $key, array $settings): string
+    public function generate_mp_config_title_html(string $key, array $settings): string
     {
         return wc_get_template_html(
-            'config-header.php',
+            'config-title.php',
             [
                 'field_key'   => $this->get_field_key($key),
                 'field_value' => null,
