@@ -4,7 +4,6 @@ namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
-use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -25,6 +24,7 @@ use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -173,7 +173,7 @@ class WoocommerceMercadoPago
     public $settings;
 
     /**
-     * @var Translations
+     * @var AdminTranslations
      */
     public $translations;
 

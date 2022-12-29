@@ -6,7 +6,6 @@ use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
-use MercadoPago\Woocommerce\Admin\Translations;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -29,6 +28,7 @@ use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -92,7 +92,7 @@ class Dependencies
     public $store;
 
     /**
-     * @var Admin
+     * @var AdminTranslations
      */
     public $admin;
 
@@ -152,7 +152,7 @@ class Dependencies
     public $settings;
 
     /**
-     * @var Translations
+     * @var AdminTranslations
      */
     public $translations;
 
@@ -289,11 +289,11 @@ class Dependencies
     }
 
     /**
-     * @return Translations
+     * @return AdminTranslations
      */
-    private function setTranslations(): Translations
+    private function setTranslations(): AdminTranslations
     {
-        return new Translations($this->links);
+        return new AdminTranslations($this->links);
     }
 
     /**
