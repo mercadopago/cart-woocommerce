@@ -14,11 +14,17 @@ class Gateway
     private $options;
 
     /**
+     * @var Template
+     */
+    private $template;
+
+    /**
      * Gateway constructor
      */
-    public function __construct(Options $options)
+    public function __construct(Options $options, Template $template)
     {
-        $this->options = $options;
+        $this->options  = $options;
+        $this->template = $template;
     }
 
     /**
@@ -182,17 +188,15 @@ class Gateway
      * Register after settings checkout
      *
      * @param string $name
-     * @param array  $args
      * @param string $path
-     * @param string $defaultPath
-     *
+     * @param array  $args
      * @return void
      */
-    public function registerAfterSettingsCheckout(string $name, array $args, string $path, string $defaultPath = ''): void
+    public function registerAfterSettingsCheckout(string $name, string $path, array $args): void
     {
-        add_action('woocommerce_after_settings_checkout', function () use ($name, $args, $path, $defaultPath) {
+        add_action('woocommerce_after_settings_checkout', function () use ($name, $path, $args) {
             foreach ($args as $arg) {
-                wc_get_template($name, $arg, $path, $defaultPath);
+                $this->template->getWoocommerceTemplate($name, $path, $arg);
             }
         });
     }

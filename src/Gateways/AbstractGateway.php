@@ -67,15 +67,14 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      */
     public function generate_mp_toggle_switch_html(string $key, array $settings): string
     {
-        return wc_get_template_html(
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
             'toggle-switch.php',
+            dirname(__FILE__) . '/../../templates/admin/components/',
             [
                 'field_key'   => $this->get_field_key($key),
                 'field_value' => $this->get_option($key, $settings['default']),
                 'settings'    => $settings,
-            ],
-            null,
-            dirname(__FILE__) . '/../../templates/admin/components/'
+            ]
         );
     }
 
@@ -89,15 +88,14 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      */
     public function generate_mp_config_title_html(string $key, array $settings): string
     {
-        return wc_get_template_html(
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
             'config-title.php',
+            dirname(__FILE__) . '/../../templates/admin/components/',
             [
                 'field_key'   => $this->get_field_key($key),
                 'field_value' => null,
                 'settings'    => $settings,
-            ],
-            null,
-            dirname(__FILE__) . '/../../templates/admin/components/'
+            ]
         );
     }
 }

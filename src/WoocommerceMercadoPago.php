@@ -23,6 +23,7 @@ use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
@@ -158,6 +159,11 @@ class WoocommerceMercadoPago
     public $scripts;
 
     /**
+     * @var Template
+     */
+    public $template;
+
+    /**
      * @var Logs
      */
     public $logs;
@@ -289,6 +295,7 @@ class WoocommerceMercadoPago
         $this->plugin       = $dependencies->plugin;
         $this->product      = $dependencies->product;
         $this->scripts      = $dependencies->scripts;
+        $this->template     = $dependencies->template;
 
         // General
         $this->logs         = $dependencies->logs;

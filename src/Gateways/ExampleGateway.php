@@ -97,10 +97,8 @@ class ExampleGateway extends AbstractGateway implements MercadoPagoGatewayInterf
      */
     public function payment_fields(): void
     {
-        wc_get_template(
+        $this->mercadopago->template->getWoocommerceTemplate(
             'checkout.php',
-            array(),
-            null,
             dirname(__FILE__) . '/../../templates/public/gateways/'
         );
     }
