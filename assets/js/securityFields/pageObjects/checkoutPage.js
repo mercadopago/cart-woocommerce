@@ -31,16 +31,22 @@ const CheckoutPage = {
     return Object.keys(CheckoutElements).find(key => CheckoutElements[key] === id);
   },
 
-  setDisplayOfError(element, operator, className) {
-    if (operator == "add") {
-      document.querySelector(CheckoutElements[element]).classList.add(`${className}`);
-      return;
+  setDisplayOfError(elementName, operator, className, checkoutSelector = "customContent") {
+    let checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
+    let element = checkoutContent.querySelector(CheckoutElements[elementName]);
+
+    if (element) {
+      if (operator == "add") {
+        element.classList.add(`${className}`);
+      } else {
+       element.classList.remove(`${className}`);
+      }
     }
-    document.querySelector(CheckoutElements[element]).classList.remove(`${className}`);
   },
 
-  setDisplayOfInputHelper(name, operator) {
-    let divInputHelper = document.querySelector(`input-helper[input-id=${name}-helper]`);
+  setDisplayOfInputHelper(elementName, operator, checkoutSelector = "customContent") {
+    let checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
+    let divInputHelper = checkoutContent.querySelector(`input-helper[input-id=${elementName}-helper]`);
 
     if (divInputHelper) {
       let inputHelper = divInputHelper.querySelector("div");
@@ -272,12 +278,12 @@ const CheckoutPage = {
 
   verifyInstallments() {
     if (document.querySelector(CheckoutElements.cardInstallments).value == "") {
-      CheckoutPage.setDisplayOfError('fcInputTableContainer', 'add', 'mp-error');
+      CheckoutPage.setDisplayOfError("fcInputTableContainer", "add", "mp-error");
       this.setDisplayOfInputHelper("mp-installments", "flex");
       return false;
     }
 
-    CheckoutPage.setDisplayOfError('fcInputTableContainer', 'remove', 'mp-error');
+    CheckoutPage.setDisplayOfError("fcInputTableContainer", "remove", "mp-error");
     this.setDisplayOfInputHelper("mp-installments", "none");
 
     return true;
@@ -326,8 +332,7 @@ const CheckoutPage = {
   },
 
   setupTaxEvents() {
-    let choCustomContent = document.querySelector(".mp-checkout-custom-container");
-
+    const choCustomContent = document.querySelector(CheckoutElements.customContent);
     const taxesElements = choCustomContent.getElementsByClassName("mp-input-table-label");
 
     for (var i = 0; i < taxesElements.length; i++) {
@@ -400,7 +405,8 @@ const CheckoutPage = {
     this.showInstallmentsComponent(inputTable);
     this.setupTaxEvents();
 
-    document.getElementById("more-options").addEventListener("click", () => {
+    let customContent = document.querySelector(".mp-checkout-custom-container");
+    customContent.querySelector("#more-options").addEventListener("click", () => {
       setTimeout(() => {
         this.setupTaxEvents();
       }, 300);

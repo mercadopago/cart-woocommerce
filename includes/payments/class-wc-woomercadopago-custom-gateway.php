@@ -319,14 +319,13 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 				return __( 'Check the information provided.', 'woocommerce-mercadopago' );
 			case 'cc_rejected_bad_filled_security_code':
 				return __( 'Check the informed security code.', 'woocommerce-mercadopago' );
+			case 'cc_rejected_card_error':
 			case 'cc_rejected_blacklist':
 				return __( 'Your payment cannot be processed.', 'woocommerce-mercadopago' );
 			case 'cc_rejected_call_for_authorize':
 				return __( 'You must authorize payments for your orders.', 'woocommerce-mercadopago' );
 			case 'cc_rejected_card_disabled':
 				return __( 'Contact your card issuer to activate it. The phone is on the back of your card.', 'woocommerce-mercadopago' );
-			case 'cc_rejected_card_error':
-				return __( 'Your payment cannot be processed.', 'woocommerce-mercadopago' );
 			case 'cc_rejected_duplicated_payment':
 				return __( 'You have already made a payment of this amount. If you have to pay again, use another card or other method of payment.', 'woocommerce-mercadopago' );
 			case 'cc_rejected_high_risk':
@@ -337,8 +336,6 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 				return __( 'Payment cannot process the selected fee.', 'woocommerce-mercadopago' );
 			case 'cc_rejected_max_attempts':
 				return __( 'You have reached the limit of allowed attempts. Choose another card or other payment method.', 'woocommerce-mercadopago' );
-			case 'cc_rejected_other_reason':
-				return __( 'This payment method cannot process your payment.', 'woocommerce-mercadopago' );
 			default:
 				return __( 'This payment method cannot process your payment.', 'woocommerce-mercadopago' );
 		}
@@ -520,6 +517,13 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		) {
 			$response = $this->create_payment( $order, $custom_checkout );
 
+			if ( ! is_array( $response ) ) {
+				return array(
+					'result'   => 'fail',
+					'redirect' => '',
+				);
+			}
+
 			$installments       = (float) $response['installments'];
 			$installment_amount = (float) $response['transaction_details']['installment_amount'];
 			$transaction_amount = (float) $response['transaction_amount'];
@@ -529,15 +533,10 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 			$order->add_meta_data('mp_transaction_details', $installment_amount);
 			$order->add_meta_data('mp_transaction_amount', $transaction_amount);
 			$order->add_meta_data('mp_total_paid_amount', $total_paid_amount);
-
 			$order->save();
 
-			if ( ! is_array( $response ) ) {
-				return array(
-					'result'   => 'fail',
-					'redirect' => '',
-				);
-			}
+			$this->hook->update_mp_order_payments_metadata( $order->get_id(), [ $response['id'] ] );
+
 			// Switch on response.
 			if ( array_key_exists( 'status', $response ) ) {
 				switch ( $response['status'] ) {
@@ -615,14 +614,16 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @param $order
 	 */
 	protected function process_discount_and_commission( $order_id, $order ) {
-		$amount = (float) WC()->cart->subtotal;
+		$amount         = (float) WC()->cart->subtotal;
+		$shipping_taxes = floatval($order->get_shipping_total());
+
 		if ( method_exists( $order, 'update_meta_data' ) ) {
 			$order->update_meta_data( 'is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no' );
 			$order->update_meta_data( '_used_gateway', get_class( $this ) );
 
 			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = $amount * ( $this->gateway_discount / 100 );
-				$order->update_meta_data( 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
+				$discount = ( $amount * $this->gateway_discount / 100 );
+				$order->set_total($amount - $discount + $shipping_taxes);
 			}
 
 			if ( ! empty( $this->commission ) ) {
@@ -633,8 +634,9 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		} else {
 			update_post_meta( $order_id, '_used_gateway', get_class( $this ) );
 			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = $amount * ( $this->gateway_discount / 100 );
-				update_post_meta( $order_id, 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
+				$discount = ( $amount * $this->gateway_discount / 100 );
+				$order->update_meta_data( 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
+				$order->set_total($amount - $discount + $shipping_taxes);
 			}
 
 			if ( ! empty( $this->commission ) ) {

@@ -389,16 +389,19 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 		// @codingStandardsIgnoreLine
 		$pix_checkout = $_POST;
 		$this->log->write_log( __FUNCTION__, 'Payment via Pix POST: ' );
-		$order = wc_get_order( $order_id );
+		$order          = wc_get_order( $order_id );
+		$shipping_taxes = floatval($order->get_shipping_total());
 
 		$amount = $this->get_order_total();
+
 		if ( method_exists( $order, 'update_meta_data' ) ) {
 			$order->update_meta_data( 'is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no' );
 			$order->update_meta_data( '_used_gateway', get_class( $this ) );
 
 			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = $amount * ( $this->gateway_discount / 100 );
+				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
 				$order->update_meta_data( 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
+				$order->set_total($amount - $discount);
 			}
 
 			if ( ! empty( $this->commission ) ) {
@@ -410,8 +413,9 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 			update_post_meta( $order_id, '_used_gateway', get_class( $this ) );
 
 			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = $amount * ( $this->gateway_discount / 100 );
+				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
 				update_post_meta( $order_id, 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
+				$order->set_total($amount - $discount);
 			}
 
 			if ( ! empty( $this->commission ) ) {
@@ -424,6 +428,8 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 			$response = $this->create_payment( $order, $pix_checkout );
 
 			if ( is_array( $response ) && array_key_exists( 'status', $response ) ) {
+				$this->hook->update_mp_order_payments_metadata( $order->get_id(), [ $response['id'] ] );
+
 				if ( 'pending' === $response['status'] ) {
 					if ( 'pending_waiting_payment' === $response['status_detail'] || 'pending_waiting_transfer' === $response['status_detail'] ) {
 						WC()->cart->empty_cart();
@@ -442,11 +448,13 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 							update_post_meta( $order->get_id(), 'checkout_pix_date_expiration', __( $this->get_option( 'checkout_pix_date_expiration', '30 minutes' ), 'woocommerce-mercadopago' ) );
 							update_post_meta( $order->get_id(), 'pix_on', 1 );
 						}
+
 						// Shows some info in checkout page.
 						$order->add_order_note(
 							'Mercado Pago: ' .
 							__( 'The customer has not paid yet.', 'woocommerce-mercadopago' )
 						);
+
 						if ( 'pix' === $response['payment_method_id'] ) {
 							$order->add_order_note(
 								'<div style="text-align: justify;"><p>Mercado Pago: ' . __( 'Now you just need to pay with Pix to finalize your purchase.', 'woocommerce-mercadopago' ) . ' ' .
@@ -471,6 +479,7 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 					'</p>',
 					'error'
 				);
+
 				return array(
 					'result'   => 'fail',
 					'redirect' => '',
@@ -484,6 +493,7 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 				'</p>',
 				'error'
 			);
+
 			return array(
 				'result'   => 'fail',
 				'redirect' => '',

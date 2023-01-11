@@ -402,16 +402,18 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$order  = wc_get_order($order_id);
-		$amount = $this->get_order_total();
+		$order          = wc_get_order($order_id);
+		$amount         = $this->get_order_total();
+		$shipping_taxes = floatval($order->get_shipping_total());
 
 		if ( method_exists($order, 'update_meta_data') ) {
 			$order->update_meta_data('is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no');
 			$order->update_meta_data('_used_gateway', get_class($this));
 
 			if ( ! empty($this->gateway_discount) ) {
-				$discount = $amount * ( $this->gateway_discount / 100 );
+				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
 				$order->update_meta_data('Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' ' . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
+				$order->set_total($amount - $discount);
 			}
 
 			if ( ! empty($this->commission) ) {
@@ -424,8 +426,9 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 			update_post_meta($order_id, '_used_gateway', get_class($this));
 
 			if ( ! empty($this->gateway_discount) ) {
-				$discount = $amount * ( $this->gateway_discount / 100 );
+				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
 				update_post_meta($order_id, 'Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' ' . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
+				$order->set_total($amount - $discount);
 			}
 
 			if ( ! empty($this->commission) ) {

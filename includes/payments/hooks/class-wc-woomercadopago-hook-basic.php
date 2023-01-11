@@ -132,6 +132,18 @@ class WC_WooMercadoPago_Hook_Basic extends WC_WooMercadoPago_Hook_Abstract {
 	 */
 	public function update_mp_settings_script_basic( $order_id ) {
 		parent::update_mp_settings_script( $order_id );
+
+		$payments_id   = [];
+		$collection_id = sanitize_text_field($_GET['collection_id'] ?? ''); // phpcs:ignore
+
+		if ( ! empty( $collection_id ) ) {
+			$collection_id = explode( ',', $collection_id );
+			foreach ( $collection_id as $payment_id ) {
+				$payments_id[] = preg_replace( '/\D/', '', $payment_id );
+			}
+		}
+
+		$this->update_mp_order_payments_metadata( $order_id, $payments_id );
 	}
 
 	/**

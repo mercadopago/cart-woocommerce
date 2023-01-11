@@ -18,13 +18,13 @@
         return true;
       }
 
-      let ticketContent = document.querySelector(".mp-checkout-ticket-content");
+      let ticketContent = document.querySelector(CheckoutElements.ticketContent);
       let ticketHelpers = ticketContent.querySelectorAll("input-helper");
 
-      if( wc_mercadopago_params.site_id === "mlb" || wc_mercadopago_params.site_id === "mlu" ){
+      if (wc_mercadopago_params.site_id === "mlb" || wc_mercadopago_params.site_id === "mlu") {
         verifyDocument(ticketContent, ticketHelpers);
       }
-      verifyInstallments();
+      verifyPaymentMethods(ticketContent);
 
       if (checkForErrors(ticketHelpers)) {
         removeBlockOverlay();
@@ -45,38 +45,45 @@
     }
 
     function verifyDocument(ticketContent, ticketHelpers) {
-      let documentElement = ticketContent.querySelectorAll(".mp-document");
+      let documentElement = ticketContent.querySelector(".mp-document");
 
-      if (documentElement[0].value == "") {
-        document.getElementsByClassName("mp-input")[1].classList.add("mp-error");
+      if (documentElement.value == "") {
+        ticketContent.querySelector(".mp-input").classList.add("mp-error");
         let child = ticketHelpers[0].querySelector("div");
         child.style.display = "flex";
       }
     }
 
-    function verifyInstallments() {
+    function verifyPaymentMethods(ticketContent) {
+      ticketContent.querySelector("#more-options").addEventListener("click", () => {
+        setTimeout(() => {
+          removeErrorFromInputTableContainer(ticketContent);
+        }, 300);
+      });
+
       let paymentOptionSelected = false;
-      document.querySelectorAll(".mp-input-radio-radio").forEach((item) => {
+      ticketContent.querySelectorAll(".mp-input-radio-radio").forEach((item) => {
         if (item.checked) paymentOptionSelected = true;
       });
 
       if (paymentOptionSelected == false) {
-        CheckoutPage.setDisplayOfError('fcInputTableContainer', 'add', 'mp-error');
-        CheckoutPage.setDisplayOfInputHelper("mp-payment-method", "flex");
+        CheckoutPage.setDisplayOfError("fcInputTableContainer", "add", "mp-error", "ticketContent");
+        CheckoutPage.setDisplayOfInputHelper("mp-payment-method", "flex", "ticketContent");
       }
 
-      const radioElements = document.getElementsByClassName(
-        "mp-input-table-label"
-      );
-      for (var i = 0; i < radioElements.length; i++) {
-        radioElements[i].addEventListener("click", () => {
-          CheckoutPage.setDisplayOfError('fcInputTableContainer', 'remove', 'mp-error');
-          CheckoutPage.setDisplayOfInputHelper("mp-payment-method", "none");
-        });
-      }
+      removeErrorFromInputTableContainer(ticketContent);
     }
 
-    // Process when submit the checkout form.
+    function removeErrorFromInputTableContainer(ticketContent) {
+      ticketContent.querySelectorAll(".mp-input-table-label").forEach((item) => {
+        item.addEventListener("click", () => {
+          CheckoutPage.setDisplayOfError("fcInputTableContainer", "remove", "mp-error", "ticketContent");
+          CheckoutPage.setDisplayOfInputHelper("mp-payment-method", "none", "ticketContent");
+        });
+      });
+    }
+
+    // Process when submit the checkout form
     $("form.checkout").on(
       "checkout_place_order_woo-mercado-pago-ticket",
       function () {

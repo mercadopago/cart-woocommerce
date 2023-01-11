@@ -22,7 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<test-mode
 					title="<?php echo esc_html_e('Checkout Custom in Test Mode', 'woocommerce-mercadopago'); ?>"
 					description="<?php echo esc_html_e('Use Mercado Pago means without real charges.', 'woocommerce-mercadopago'); ?>"
-					link-text="<?php echo esc_html_e('See test mode rules.', 'woocommerce-mercadopago'); ?>" link-src="<?php echo esc_html($test_mode_link); ?>"
+					link-text="<?php echo esc_html_e('See test mode rules.', 'woocommerce-mercadopago'); ?>"
+					link-src="<?php echo esc_html($test_mode_link); ?>"
 				>
 				</test-mode>
 			</div>
@@ -30,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		<?php if ( 'yes' === $wallet_button ) : ?>
 			<div class='mp-wallet-button-container'>
-			<img src="<?php echo esc_url(plugins_url('../assets/images/ml_mp_logo.png', plugin_dir_path(__FILE__))); ?>">
+				<img src="<?php echo esc_url(plugins_url('../assets/images/ml_mp_logo.png', plugin_dir_path(__FILE__))); ?>">
 				<div class='mp-wallet-button-title'>
 					<span><?php echo esc_html_e('Pay with saved cards', 'woocommerce-mercadopago'); ?></span>
 				</div>
@@ -52,7 +53,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<div class='mp-checkout-custom-available-payments-header'>
 					<div class="mp-checkout-custom-available-payments-title">
 						<img src="<?php echo esc_url(plugins_url('../assets/images/purple_card.png', plugin_dir_path(__FILE__))); ?>" class='mp-icon'>
-						<p class="mp-checkout-custom-available-payments-text"><?php echo esc_html_e('With which card can you pay?', 'woocommerce-mercadopago'); ?></p>
+						<p class="mp-checkout-custom-available-payments-text">
+							<?php echo esc_html_e('With which card can you pay?', 'woocommerce-mercadopago'); ?>
+						</p>
 					</div>
 
 					<img src="<?php echo esc_url(plugins_url('../assets/images/chefron-down.png', plugin_dir_path(__FILE__))); ?>" class='mp-checkout-custom-available-payments-collapsible' />
@@ -106,13 +109,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</div>
 
 				<div id="mp-doc-div" class="mp-checkout-custom-input-document" style="display: none;">
-					<input-document label-message="<?php echo esc_html_e('Holder document', 'woocommerce-mercadopago'); ?>" helper-message="<?php echo esc_html_e('Invalid document', 'woocommerce-mercadopago'); ?>" input-name="identificationNumber" hidden-id="form-checkout__identificationNumber" input-data-checkout="docNumber" select-name="identificationType" select-id="form-checkout__identificationType" select-data-checkout="docType" flag-error="docNumberError">
+					<input-document
+						label-message="<?php echo esc_html_e('Holder document', 'woocommerce-mercadopago'); ?>"
+						helper-message="<?php echo esc_html_e('Invalid document', 'woocommerce-mercadopago'); ?>"
+						input-name="identificationNumber"
+						hidden-id="form-checkout__identificationNumber"
+						input-data-checkout="docNumber"
+						select-id="form-checkout__identificationType"
+						select-name="identificationType"
+						select-data-checkout="docType"
+						flag-error="docNumberError"
+					>
 					</input-document>
 				</div>
 			</div>
 
 			<div id="mp-checkout-custom-installments" class="mp-checkout-custom-installments-display-none">
-				<p class='mp-checkout-custom-card-form-title'><?php echo esc_html_e('Select the number of installments', 'woocommerce-mercadopago'); ?></p>
+				<p class='mp-checkout-custom-card-form-title'>
+					<?php echo esc_html_e('Select the number of installments', 'woocommerce-mercadopago'); ?>
+				</p>
 
 				<div id="mp-checkout-custom-issuers-container" class="mp-checkout-custom-issuers-container">
 					<div class='mp-checkout-custom-card-row'>
@@ -129,7 +144,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 					isVisible=false
 					message="<?php echo esc_html_e('Select the number of installments', 'woocommerce-mercadopago'); ?>"
 					input-id="mp-installments-helper"
-				></input-helper>
+				>
+				</input-helper>
 
 				<select
 					style="display: none;"
@@ -137,7 +153,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 					name="installments"
 					id="form-checkout__installments"
 					class="mp-input-select-select"
-				></select>
+				>
+				</select>
 
 				<div id="mp-checkout-custom-box-input-tax-cft">
 					<div id="mp-checkout-custom-box-input-tax-tea">
@@ -152,7 +169,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 					description="<?php echo esc_html_e('By continuing, you agree with our', 'woocommerce-mercadopago'); ?>"
 					link-text="<?php echo esc_html_e('Terms and conditions', 'woocommerce-mercadopago'); ?>"
 					link-src="<?php echo esc_html($link_terms_and_conditions); ?>"
-				></terms-and-conditions>
+				>
+				</terms-and-conditions>
 			</div>
 		</div>
 	</div>
@@ -163,10 +181,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<input type="hidden" id="currency_ratio" value='<?php echo esc_textarea($currency_ratio); ?>' name="mercadopago_custom[currency_ratio]" />
 	<input type="hidden" id="paymentMethodId" name="mercadopago_custom[paymentMethodId]" />
 	<input type="hidden" id="mp_checkout_type" name="mercadopago_custom[checkout_type]" value="custom" />
-	<input type="hidden" id="cardExpirationMonth" data-checkout="cardExpirationMonth">
-	<input type="hidden" id="cardExpirationYear" data-checkout="cardExpirationYear">
+	<input type="hidden" id="cardExpirationMonth" data-checkout="cardExpirationMonth" />
+	<input type="hidden" id="cardExpirationYear" data-checkout="cardExpirationYear" />
 	<input type="hidden" id="cardTokenId" name="mercadopago_custom[token]" />
-	<input type="hidden" id="cardInstallments" name="mercadopago_custom[installments]">
+	<input type="hidden" id="cardInstallments" name="mercadopago_custom[installments]" />
 </div>
 
 <script type="text/javascript">
@@ -183,7 +201,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		var icon = collapsible.getElementsByClassName('mp-checkout-custom-available-payments-collapsible')[0];
 		var content = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-content')[0];
 
-		if ( content.style.maxHeight ) {
+		if (content.style.maxHeight) {
 			content.style.maxHeight = null;
 			content.style.padding = "0px";
 			icon.src = "<?php echo esc_url(plugins_url('../assets/images/chefron-down.png', plugin_dir_path(__FILE__))); ?>";

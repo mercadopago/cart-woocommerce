@@ -23,6 +23,20 @@ class WC_WooMercadoPago_Helper_Current_User {
 	private $log;
 
 	/**
+	 * Options
+	 *
+	 * @var WC_WooMercadoPago_Options
+	 */
+	private $options;
+
+	/**
+	 * Is debug mode
+	 *
+	 * @var mixed|string
+	 */
+	public $debug_mode;
+
+	/**
 	 * Instance variable
 	 *
 	 * @var WC_WooMercadoPago_Helper_Nonce
@@ -33,7 +47,9 @@ class WC_WooMercadoPago_Helper_Current_User {
 	 * Current User constructor
 	 */
 	private function __construct() {
-		$this->log = new WC_WooMercadoPago_Log($this);
+		$this->log        = new WC_WooMercadoPago_Log($this);
+		$this->options    = WC_WooMercadoPago_Options::get_instance();
+		$this->debug_mode = false === $this->options->get_debug_mode() ? 'no' : $this->options->get_instance()->get_debug_mode();
 	}
 
 	/**
@@ -65,7 +81,8 @@ class WC_WooMercadoPago_Helper_Current_User {
 	 * @return bool
 	 */
 	public function user_has_roles( $roles ) {
-		return ! empty ( array_intersect( $roles, $this->get_current_user()->roles) );
+		$current_user = $this->get_current_user();
+		return is_super_admin( $current_user ) || ! empty ( array_intersect( $roles, $current_user->roles ) );
 	}
 
 	/**
@@ -74,7 +91,7 @@ class WC_WooMercadoPago_Helper_Current_User {
 	 * @return void
 	 */
 	public function validate_user_needed_permissions() {
-		$needed_roles = ['administrator', 'editor'];
+		$needed_roles = ['administrator', 'editor', 'author', 'contributor', 'subscriber'];
 
 		if ( ! $this->user_has_roles( $needed_roles ) ) {
 			$this->log->write_log(__FUNCTION__, 'User does not have permission (need admin or editor).');

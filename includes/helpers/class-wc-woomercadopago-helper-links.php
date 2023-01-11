@@ -30,7 +30,6 @@ class WC_WooMercadoPago_Helper_Links {
 		$link_credentials    = 'panel/credentials';
 
 		return array (
-
 			'link_costs' => $link_prefix_mp . $link_settings ['sufix_url'] . $link_costs_mp,
 			'link_guides_plugin' => $link_prefix_mp . $link_settings ['sufix_url'] . $link_developers . $link_settings ['translate'] . $link_guides,
 			'link_credentials' => $link_prefix_mp_link . $link_developers . $link_credentials,
@@ -38,16 +37,15 @@ class WC_WooMercadoPago_Helper_Links {
 	}
 
 	public static function get_mp_devsite_links() {
-		$link          = WC_WooMercadoPago_Module::define_link_country();
-		$base_link     = 'https://www.mercadopago.com/developers/' . $link['translate'];
-		$devsite_links = array(
+		$link      = WC_WooMercadoPago_Module::define_link_country();
+		$base_link = 'https://www.mercadopago.com/developers/' . $link['translate'];
+
+		return array(
 			'dev_program'       => $base_link . '/developer-program',
 			'notifications_ipn' => $base_link . '/guides/notifications/ipn',
 			'shopping_testing'  => $base_link . '/docs/woocommerce/integration-test',
 			'test_cards'        => $base_link . '/docs/checkout-api/integration-test/test-cards'
 		);
-
-		return $devsite_links;
 	}
 
 	/**
@@ -68,9 +66,7 @@ class WC_WooMercadoPago_Helper_Links {
 			'mlu' => 'https://www.mercadopago.com.uy/developers/es/guides/plugins/woocommerce/testing',
 		];
 
-		$link = array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
-
-		return $link;
+		return array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
 	}
 
 	/**
