@@ -1,5 +1,19 @@
 CHANGELOG:
 == Changelog ==
+= v6.6.0 (11/01/2023) =
+* Features
+- Added manual notification sync
+- Added payment ids to order metadata on callback
+- Added select-id and hidden-id attributes to document
+
+* Changes
+- Changed user permissions needed for security
+
+* Bug fixes
+- Fixed order amount with gateway discount
+- Fixed css class assignment to nonexistent element
+- Fixed selection of installments when there is an inversion of checkouts
+
 = v6.5.0 (22/12/2022) =
 * Features
 - Added Mercado Credits payment method

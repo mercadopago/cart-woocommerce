@@ -202,12 +202,44 @@ abstract class WC_WooMercadoPago_Hook_Abstract {
 	/**
 	 * Settings script
 	 *
-	 * @param int $order_id Order id.
+	 * @param int $order_id
 	 *
-	 * @return string|void
+	 * @return void
 	 */
 	public function update_mp_settings_script( $order_id ) {
-		// Do nothing.
+		// Do nothing
+	}
+
+	/**
+	 * Update order payments metadata
+	 *
+	 * @param string $order_id
+	 * @param array $payments_id
+	 *
+	 * @return void
+	 */
+	public function update_mp_order_payments_metadata( $order_id, $payments_id ) {
+		$payments_id_meta_key = '_Mercado_Pago_Payment_IDs';
+		$payments_id_metadata = count( get_post_meta( $order_id, $payments_id_meta_key ) );
+
+		if ( count( $payments_id ) > 0 ) {
+			if ( 0 === $payments_id_metadata ) {
+				update_post_meta( $order_id, $payments_id_meta_key, implode( ', ', $payments_id ) );
+			}
+
+			foreach ( $payments_id as $payment_id ) {
+				$payment_detail_meta_key = 'Mercado Pago - Payment ' . $payment_id;
+				$payment_detail_metadata = count ( get_post_meta( $order_id, $payment_detail_meta_key ) );
+
+				if ( 0 === $payment_detail_metadata ) {
+					update_post_meta(
+						$order_id,
+						$payment_detail_meta_key,
+						'[Date ' . gmdate('Y-m-d H:i:s') . ']'
+					);
+				}
+			}
+		}
 	}
 
 	/**
@@ -215,11 +247,8 @@ abstract class WC_WooMercadoPago_Hook_Abstract {
 	 *
 	 * @param array $form_fields Form fields
 	 *
-	 * @param array $sort_order Sort order
-	 *
 	 * @return array $sorted_array Sorted array
 	 */
-
 	public function sort_by_checkout_mode_first( $form_fields ) {
 		$sort_credentials_first = array(
 			'checkout_subtitle_checkout_mode',
@@ -237,36 +266,40 @@ abstract class WC_WooMercadoPago_Hook_Abstract {
 	/**
 	 * Custom process admin options
 	 *
-	 * @return mixed
+	 * @return bool
 	 * @throws WC_WooMercadoPago_Exception Admin Options Exception.
 	 */
 	public function custom_process_admin_options() {
-		$old_data = array();
-
+		$old_data                    = array();
 		$value_credential_production = null;
+
 		$this->payment->init_settings();
+
 		$post_data   = $this->payment->get_post_data();
 		$form_fields = $this->payment->get_form_fields();
 
-		$form_fields = $this->handle_mp_components($form_fields);
-
+		$form_fields        = $this->handle_mp_components($form_fields);
 		$sorted_form_fields = $this->sort_by_checkout_mode_first( $form_fields );
 
 		foreach ( $sorted_form_fields as $key => $field ) {
 			if ( 'title' !== $this->payment->get_field_type( $field ) ) {
 				$value            = $this->payment->get_field_value( $key, $field, $post_data );
 				$old_data[ $key ] = isset( $this->payment->settings[ $key ] ) ? $this->payment->settings[ $key ] : null;
+
 				if ( 'checkbox_checkout_test_mode' === $key ) {
 					$value_credential_production = 'yes' === $value ? 'no' : 'yes';
 				}
-				$common_configs = $this->payment->get_common_configs();
-				if ( in_array( $key, $common_configs, true ) ) {
 
+				$common_configs = $this->payment->get_common_configs();
+
+				if ( in_array( $key, $common_configs, true ) ) {
 					if ( $this->validate_credentials( $key, $value, $value_credential_production ) ) {
 						continue;
 					}
+
 					update_option( $key, $value, true );
 				}
+
 				$value                           = $this->payment->get_field_value( $key, $field, $post_data );
 				$this->payment->settings[ $key ] = $value;
 			}

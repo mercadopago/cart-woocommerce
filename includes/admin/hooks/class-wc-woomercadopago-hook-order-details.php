@@ -18,6 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WC_WooMercadoPago_Hook_Order_Details {
 
+	const NONCE_ID = 'mp_hook_order_details_nonce';
+
 	/**
 	 * WC_Order
 	 *
@@ -25,9 +27,32 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 */
 	protected $order;
 
+	/**
+	 * Nonce
+	 *
+	 * @var WC_WooMercadoPago_Helper_Nonce
+	 */
+	protected $nonce;
+
+	/**
+	 * Current User
+	 *
+	 * @var WC_WooMercadoPago_Helper_Current_User
+	 */
+	protected $current_user;
+
+	/**
+	 * Gateway
+	 *
+	 * @var string
+	 */
+	protected $gateway;
+
 	public function __construct() {
+		$this->nonce        = WC_WooMercadoPago_Helper_Nonce::get_instance();
+		$this->current_user = WC_WooMercadoPago_Helper_Current_User::get_instance();
+
 		$this->load_hooks();
-		$this->load_scripts();
 	}
 
 	/**
@@ -36,7 +61,8 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 * @return void
 	 */
 	public function load_hooks() {
-		add_action( 'add_meta_boxes_shop_order', array( $this, 'payment_status_metabox' ));
+		add_action( 'add_meta_boxes_shop_order', array( $this, 'payment_status_metabox' ) );
+		add_action( 'wp_ajax_mp_sync_payment_status', array( $this, 'mercadopago_sync_payment_status' ) );
 	}
 
 	/**
@@ -44,8 +70,26 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 *
 	 * @return void
 	 */
-	public function load_scripts() {
-		add_action( 'admin_enqueue_scripts', array( $this, 'payment_status_metabox_script' ) );
+	public function load_scripts( $post ) {
+		add_action( 'admin_enqueue_scripts', function () use ( $post ) {
+			$suffix      = $this->get_suffix();
+			$script_name = 'mp_payment_status_metabox';
+
+			if ( is_admin() ) {
+				wp_enqueue_script(
+					$script_name,
+					plugins_url( '../../assets/js/payment_status_metabox' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
+					array(),
+					WC_WooMercadoPago_Constants::VERSION,
+					false
+				);
+
+				wp_localize_script($script_name, $script_name . '_vars', [
+					'post_id' => $post->ID,
+					'nonce'   => $this->nonce->generate_nonce(self::NONCE_ID),
+				]);
+			}
+		} );
 	}
 
 	/**
@@ -349,6 +393,8 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 * @return void
 	 */
 	public function payment_status_metabox( $post ) {
+		$this->load_scripts($post);
+
 		$order = $this->get_order( $post );
 
 		if ( ! $order ) {
@@ -370,25 +416,6 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	}
 
 	/**
-	 * Payment Status Metabox Script
-	 *
-	 * @return void
-	 */
-	public function payment_status_metabox_script() {
-		$suffix = $this->get_suffix();
-
-		if ( is_admin() ) {
-			wp_enqueue_script(
-				'mp_payment_status_metabox',
-				plugins_url( '../../assets/js/payment_status_metabox' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
-				array(),
-				WC_WooMercadoPago_Constants::VERSION,
-				false
-			);
-		}
-	}
-
-	/**
 	 * Payment Status Metabox Content
 	 *
 	 * @param WP_Post $post
@@ -397,28 +424,9 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 * @throws WC_WooMercadoPago_Exception
 	 */
 	public function payment_status_metabox_content( $post ) {
-		$order = $this->get_order( $post );
+		$payment = $this->get_payment($post);
 
-		if ( ! $order ) {
-			return;
-		}
-
-		$payment_ids = explode(',', $order->get_meta( '_Mercado_Pago_Payment_IDs' ));
-
-		if ( empty($payment_ids) ) {
-			return;
-		}
-
-		$last_payment_id    = end($payment_ids);
-		$is_production_mode = $order->get_meta( 'is_production_mode' );
-		$access_token       = 'no' === $is_production_mode || ! $is_production_mode
-			? get_option( '_mp_access_token_test' )
-			: get_option( '_mp_access_token_prod' );
-
-		$mp      = new MP($access_token);
-		$payment = $mp->search_payment_v1(trim($last_payment_id), $access_token);
-
-		if ( ! $payment || 200 !== $payment['status'] ) {
+		if ( ! $payment ) {
 			return;
 		}
 
@@ -457,34 +465,37 @@ class WC_WooMercadoPago_Hook_Order_Details {
 
 		if ( 'success' === $alert_status ) {
 			return [
-				'img_src' => esc_url( plugins_url( '../../assets/images/generics/circle-green-check.png', plugin_dir_path( __FILE__ ) ) ),
-				'alert_title' => $alert['alert_title'],
-				'alert_description' => $alert['description'],
-				'link' => $this->get_mp_home_link($country),
-				'border_left_color' => '#00A650',
-				'link_description' => __( 'View purchase details at Mercado Pago', 'woocommerce-mercadopago' )
+				'img_src'            => esc_url( plugins_url( '../../assets/images/generics/circle-green-check.png', plugin_dir_path( __FILE__ ) ) ),
+				'alert_title'        => $alert['alert_title'],
+				'alert_description'  => $alert['description'],
+				'link'               => $this->get_mp_home_link($country),
+				'border_left_color'  => '#00A650',
+				'link_description'   => __( 'View purchase details at Mercado Pago', 'woocommerce-mercadopago' ),
+				'sync_button_text'   => __( 'Sync order status', 'woocommerce-mercadopago' ),
 			];
 		}
 
 		if ( 'pending' === $alert_status ) {
 			return [
-				'img_src' => esc_url( plugins_url( '../../assets/images/generics/circle-alert.png', plugin_dir_path( __FILE__ ) ) ),
-				'alert_title' => $alert['alert_title'],
-				'alert_description' => $alert['description'],
-				'link' => $this->get_mp_home_link($country),
-				'border_left_color' => '#f73',
-				'link_description' => __( 'View purchase details at Mercado Pago', 'woocommerce-mercadopago' )
+				'img_src'            => esc_url( plugins_url( '../../assets/images/generics/circle-alert.png', plugin_dir_path( __FILE__ ) ) ),
+				'alert_title'        => $alert['alert_title'],
+				'alert_description'  => $alert['description'],
+				'link'               => $this->get_mp_home_link($country),
+				'border_left_color'  => '#f73',
+				'link_description'   => __( 'View purchase details at Mercado Pago', 'woocommerce-mercadopago' ),
+				'sync_button_text'   => __( 'Sync order status', 'woocommerce-mercadopago' ),
 			];
 		}
 
 		if ( 'rejected' === $alert_status || 'refunded' === $alert_status || 'charged_back' === $alert_status ) {
 			return [
-				'img_src' => esc_url( plugins_url( '../../assets/images/generics/circle-red-alert.png', plugin_dir_path( __FILE__ ) ) ),
-				'alert_title' => $alert['alert_title'],
-				'alert_description' => $alert['description'],
-				'link' => $this->get_mp_devsite_link($country),
-				'border_left_color' => '#F23D4F',
-				'link_description' => __( 'Check the reasons why the purchase was declined.', 'woocommerce-mercadopago' )
+				'img_src'            => esc_url( plugins_url( '../../assets/images/generics/circle-red-alert.png', plugin_dir_path( __FILE__ ) ) ),
+				'alert_title'        => $alert['alert_title'],
+				'alert_description'  => $alert['description'],
+				'link'               => $this->get_mp_devsite_link($country),
+				'border_left_color'  => '#F23D4F',
+				'link_description'   => __( 'Check the reasons why the purchase was declined.', 'woocommerce-mercadopago' ),
+				'sync_button_text'   => __( 'Sync order status', 'woocommerce-mercadopago' ),
 			];
 		}
 	}
@@ -529,5 +540,95 @@ class WC_WooMercadoPago_Hook_Order_Details {
 		];
 
 		return array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
+	}
+
+	/**
+	 * Get payment
+	 *
+	 * @param WP_Post $post
+	 *
+	 * @return array|null
+	 * @throws WC_WooMercadoPago_Exception
+	 */
+	public function get_payment( $post ) {
+		$order = $this->get_order( $post );
+
+		if ( ! $order ) {
+			return null;
+		}
+
+		$payment_ids = explode(',', $order->get_meta( '_Mercado_Pago_Payment_IDs' ));
+
+		if ( empty( $payment_ids ) ) {
+			return null;
+		}
+
+		$last_payment_id    = end($payment_ids);
+		$is_production_mode = $order->get_meta( 'is_production_mode' );
+		$access_token       = 'no' === $is_production_mode || ! $is_production_mode
+			? get_option( '_mp_access_token_test' )
+			: get_option( '_mp_access_token_prod' );
+
+		$mp      = new MP($access_token);
+		$payment = $mp->search_payment_v1(trim($last_payment_id), $access_token);
+
+		if ( ! $payment || 200 !== $payment['status'] ) {
+			return null;
+		}
+
+		return $payment;
+	}
+
+	/**
+	 * Sync order status
+	 *
+	 * @return void
+	 */
+	public function mercadopago_sync_payment_status() {
+		try {
+			$this->current_user->validate_user_needed_permissions();
+			$this->nonce->validate_nonce(
+				self::NONCE_ID,
+				WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'nonce' )
+			);
+
+			$post    = get_post( (int) WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'post_id' ) );
+			$order   = $this->get_order( $post );
+			$payment = $this->get_payment( $post );
+			$status  = $payment['response']['status'];
+
+			$gateway      = $order->get_payment_method();
+			$used_gateway = $this->get_wc_gateway_name_for_class_name($gateway);
+
+			( new WC_WooMercadoPago_Order() )->process_status($status, $payment, $order, $used_gateway);
+
+			wp_send_json_success(
+				__( 'Order update successfully. This page will be reloaded...', 'woocommerce-mercadopago' )
+			);
+		} catch ( Exception $e ) {
+			wp_send_json_error(
+				__( 'Unable to update order: ', 'woocommerce-mercadopago' ) . $e->getMessage(),
+				500
+			);
+		}
+	}
+
+	/**
+	 * Convert mercadopago gateway name for class name
+	 *
+	 * @param $gateway
+	 *
+	 * @return string|null
+	 */
+	public function get_wc_gateway_name_for_class_name( $gateway ) {
+		$classes_name = [
+			'woo-mercado-pago-pix'     => 'WC_WooMercadoPago_Pix_Gateway',
+			'woo-mercado-pago-basic'   => 'WC_WooMercadoPago_Basic_Gateway',
+			'woo-mercado-pago-ticket'  => 'WC_WooMercadoPago_Ticket_Gateway',
+			'woo-mercado-pago-custom'  => 'WC_WooMercadoPago_Custom_Gateway',
+			'woo-mercado-pago-credits' => 'WC_WooMercadoPago_Credits_Gateway',
+		];
+
+		return array_key_exists ( $gateway, $classes_name ) ? $classes_name[ $gateway ] : null;
 	}
 }

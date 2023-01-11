@@ -24,4 +24,6 @@ const CheckoutElements = {
   mpIdentificationNumber: "mp-doc-number",
   mpSecurityCodeInfo: "#mp-security-code-info",
   paymentMethodId: "#paymentMethodId",
+  customContent: ".mp-checkout-custom-container",
+  ticketContent: ".mp-checkout-ticket-content",
 };

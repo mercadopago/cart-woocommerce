@@ -3,8 +3,8 @@
 	<description>PHP_CodeSniffer ruleset for WooCommerce Mercado Pago.</description>
 
 	<!-- Configs -->
-	<config name="minimum_supported_wp_version" value="4.9.10" />
-	<config name="testVersion" value="5.6-" />
+	<config name="minimum_supported_wp_version" value="5.6" />
+	<config name="testVersion" value="7.0-" />
 
 	<!-- Rules -->
 	<rule ref="WordPress-Extra">

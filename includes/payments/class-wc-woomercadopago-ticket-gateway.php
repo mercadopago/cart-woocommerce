@@ -397,28 +397,33 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		$ticket_checkout = $_POST['mercadopago_ticket'];
 		$this->log->write_log( __FUNCTION__, 'Ticket POST: ' . wp_json_encode( $ticket_checkout, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
 
-		$order  = wc_get_order( $order_id );
-		$amount = $this->get_order_total();
+		$order          = wc_get_order( $order_id );
+		$amount         = $this->get_order_total();
+		$shipping_taxes = floatval($order->get_shipping_total());
+
 		if ( method_exists( $order, 'update_meta_data' ) ) {
 			$order->update_meta_data( 'is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no' );
 			$order->update_meta_data( '_used_gateway', get_class( $this ) );
 
 			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = $amount * ( $this->gateway_discount / 100 );
+				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
 				$order->update_meta_data( 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
+				$order->set_total($amount - $discount);
 			}
 
 			if ( ! empty( $this->commission ) ) {
 				$comission = $amount * ( $this->commission / 100 );
 				$order->update_meta_data( 'Mercado Pago: comission', __( 'fee of', 'woocommerce-mercadopago' ) . ' ' . $this->commission . '% / ' . __( 'fee of', 'woocommerce-mercadopago' ) . ' = ' . $comission );
 			}
+
 			$order->save();
 		} else {
 			update_post_meta( $order_id, '_used_gateway', get_class( $this ) );
 
 			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = $amount * ( $this->gateway_discount / 100 );
+				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
 				update_post_meta( $order_id, 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
+				$order->set_total($amount - $discount);
 			}
 
 			if ( ! empty( $this->commission ) ) {
@@ -446,6 +451,7 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 						'error'
 					);
 				}
+
 				return array(
 					'result'   => 'fail',
 					'redirect' => '',
@@ -473,6 +479,7 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 						'error'
 					);
 				}
+
 				return array(
 					'result'   => 'fail',
 					'redirect' => '',
@@ -485,6 +492,8 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 			$response = $this->create_payment( $order, $ticket_checkout );
 
 			if ( is_array( $response ) && array_key_exists( 'status', $response ) ) {
+				$this->hook->update_mp_order_payments_metadata( $order->get_id(), [ $response['id'] ] );
+
 				if ( 'pending' === $response['status'] ) {
 					if ( 'pending_waiting_payment' === $response['status_detail'] || 'pending_waiting_transfer' === $response['status_detail'] ) {
 						WC()->cart->empty_cart();
@@ -531,6 +540,7 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 					'</p>',
 					'error'
 				);
+
 				return array(
 					'result'   => 'fail',
 					'redirect' => '',
@@ -544,6 +554,7 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 				'</p>',
 				'error'
 			);
+
 			return array(
 				'result'   => 'fail',
 				'redirect' => '',

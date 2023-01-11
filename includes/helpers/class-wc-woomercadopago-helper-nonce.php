@@ -25,6 +25,20 @@ class WC_WooMercadoPago_Helper_Nonce {
 	private $log;
 
 	/**
+	 * Options
+	 *
+	 * @var WC_WooMercadoPago_Options
+	 */
+	private $options;
+
+	/**
+	 * Is debug mode
+	 *
+	 * @var mixed|string
+	 */
+	public $debug_mode;
+
+	/**
 	 * Instance variable
 	 *
 	 * @var WC_WooMercadoPago_Helper_Nonce
@@ -35,7 +49,9 @@ class WC_WooMercadoPago_Helper_Nonce {
 	 * Nonce constructor
 	 */
 	private function __construct() {
-		$this->log = new WC_WooMercadoPago_Log($this);
+		$this->log        = new WC_WooMercadoPago_Log($this);
+		$this->options    = WC_WooMercadoPago_Options::get_instance();
+		$this->debug_mode = false === $this->options->get_debug_mode() ? 'no' : $this->options->get_instance()->get_debug_mode();
 	}
 
 	/**

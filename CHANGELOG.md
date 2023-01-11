@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.6.0] - 2023-01-11
+
+### Added
+- Added manual notification sync
+- Added payment ids to order metadata on callback
+- Added select-id and hidden-id attributes to document
+
+### Changed
+- Changed user permissions needed for security
+
+### Fixed
+- Fixed order amount with gateway discount
+- Fixed css class assignment to nonexistent element
+- Fixed selection of installments when there is an inversion of checkouts
+
 ## [6.5.0] - 2022-12-22
 
 ### Added

@@ -84,6 +84,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 			$this->load_helpers();
 			$this->load_configs();
 			$this->load_log();
+			$this->load_order();
 			$this->load_hooks();
 			$this->load_preferences();
 			$this->load_payments();
@@ -174,6 +175,10 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 	 */
 	public function load_log() {
 		include_once dirname( __FILE__ ) . '/log/class-wc-woomercadopago-log.php';
+	}
+
+	public function load_order() {
+		include_once dirname( __FILE__ ) . '/order/class-wc-woomercadopago-order.php';
 	}
 
 	/**
