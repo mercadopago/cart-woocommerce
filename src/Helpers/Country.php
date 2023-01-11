@@ -112,7 +112,7 @@ final class Country
             self::SITE_ID_MPE => self::COUNTRY_SUFFIX_MPE,
         ];
 
-        return array_key_exists($siteId, $siteIdToCountry) ? $siteIdToCountry[$siteId] : 'AR';
+        return array_key_exists($siteId, $siteIdToCountry) ? $siteIdToCountry[$siteId] : $siteIdToCountry[self::SITE_ID_MLA];
     }
 
     /**

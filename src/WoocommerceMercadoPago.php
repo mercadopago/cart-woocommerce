@@ -160,11 +160,6 @@ class WoocommerceMercadoPago
     public $logs;
 
     /**
-     * @var Currency
-     */
-    public $currency;
-
-    /**
      * @var Nonce
      */
     public $nonce;
@@ -183,6 +178,11 @@ class WoocommerceMercadoPago
      * @var Notices
      */
     public $notices;
+
+    /**
+     * @var Currency
+     */
+    public $currency;
 
     /**
      * @var Settings
@@ -284,6 +284,7 @@ class WoocommerceMercadoPago
         // Helpers
         $this->cache             = $dependencies->cache;
         $this->country           = $dependencies->country;
+        $this->currency          = $dependencies->currency;
         $this->currentUser       = $dependencies->currentUser;
         $this->links             = $dependencies->links;
         $this->requester         = $dependencies->requester;

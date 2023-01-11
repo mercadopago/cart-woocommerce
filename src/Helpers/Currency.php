@@ -102,7 +102,7 @@ final class Currency
      */
     public function init($method)
     {
-        if (!$this->ratios[$method->id]) {
+        if (!isset($this->ratios[$method->id])) {
             $accountCurrency = $this->getAccountCurrency();
             $storeCurrency   = get_woocommerce_currency();
 
@@ -136,12 +136,11 @@ final class Currency
      */
     public function getAccountCurrency(): string
     {
-
         $siteId  = $this->seller->getSiteId();
         $country = $this->country->siteIdToCountry($siteId);
         $configs = $this->country->getCountryConfigs($country);
 
-        return $configs[$country]['currency'];
+        return $configs['currency'];
     }
 
     /**
