@@ -2,8 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
-use MercadoPago\Woocommerce\Hooks\Options;
+use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Admin\Notices;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -14,22 +17,22 @@ final class Currency
     /**
      * @const
      */
-    const CURRENCY_CONVERSION = 'currency_conversion';
+    private const CURRENCY_CONVERSION = 'currency_conversion';
 
     /**
      * @const
      */
-    const DEFAULT_RATIO = 1;
+    private const DEFAULT_RATIO = 1;
 
     /**
      * @var array
      */
-    private $ratios = array();
+    private $ratios = [];
 
     /**
-     * @var array
+     * @var AdminTranslations
      */
-    private $currencyAche = array();
+    private $adminTranslations;
 
     /**
      * @var Cache
@@ -42,14 +45,14 @@ final class Currency
     private $country;
 
     /**
-     * @var Options
-     */
-    private $options;
-
-    /**
      * @var Logs
      */
     private $logs;
+
+    /**
+     * @var Notices
+     */
+    private $notice;
 
     /**
      * @var Requester
@@ -57,85 +60,143 @@ final class Currency
     private $requester;
 
     /**
+     * @var Seller
+     */
+    private $seller;
+
+    /**
+     * @var Store
+     */
+    private $store;
+
+    /**
      * Currency constructor
      *
+     * @param AdminTranslations $adminTranslations
      * @param Cache $cache
      * @param Country $country
-     * @param Options $options
      * @param Logs $logs
+     * @param Notices $notice
      * @param Requester $requester
+     * @param Seller $seller
+     * @param Store $store
      */
-    public function __construct(Cache $cache, Country $country, Options $options, Logs $logs, Requester $requester)
+    public function __construct(AdminTranslations $adminTranslations, Cache $cache, Country $country, Logs $logs, Notices $notice, Requester $requester, Seller $seller, Store $store)
     {
-        $this->cache     = $cache;
-        $this->country   = $country;
-        $this->options   = $options;
-        $this->logs      = $logs;
-        $this->requester = $requester;
+        $this->adminTranslations = $adminTranslations;
+        $this->cache             = $cache;
+        $this->country           = $country;
+        $this->logs              = $logs;
+        $this->notice            = $notice;
+        $this->requester         = $requester;
+        $this->seller            = $seller;
+        $this->store             = $store;
     }
 
-    public function init(object $method, string $siteId, string $accessToken): Currency
+    /**
+     * Init incrementing the ratios array by method
+     *
+     * @param $method
+     *
+     * @return void
+     */
+    public function init($method)
     {
-        $methodId = $method->id;
+        if (!$this->ratios[$method->id]) {
+            $accountCurrency = $this->getAccountCurrency();
+            $storeCurrency   = get_woocommerce_currency();
 
-        if (!isset($this->ratios[$methodId])) {
-
-            if (!$this->isEnabled($method)) {
-                $this->setRatio($methodId);
-
-                return $this;
+            if ($this->isEnabled($method) && $this->isAValidConversion($storeCurrency, $accountCurrency)) {
+                $ratio = $this->loadRatio($storeCurrency, $accountCurrency);
+                $this->setRatio($method->id, $ratio);
+            } else {
+                $this->setRatio($method->id);
             }
-
-            $accountCurrency = $this->getAccountCurrency($methodId, $siteId);
-            $localCurrency   = get_woocommerce_currency();
-
-            if (!$accountCurrency || $accountCurrency === $localCurrency) {
-                $this->setRatio($methodId);
-
-                return $this;
-            }
-
-            $ratio = $this->loadRatio($localCurrency, $accountCurrency, $accessToken);
-
-            $this->setRatio($methodId, $ratio);
         }
-
-        return $this;
-
     }
 
-    public function getRatio($methodId): int
+    /**
+     * Get ratio
+     *
+     * @param $method
+     *
+     * @return float
+     */
+    public function getRatio($method): float
     {
-        return $this->ratios[$methodId] || self::DEFAULT_RATIO;
+        $this->init($method);
+        return $this->ratios[$method->id] ?: self::DEFAULT_RATIO;
     }
 
+
+    /**
+     * Get Account currency
+     *
+     * @return string
+     */
+    public function getAccountCurrency(): string
+    {
+
+        $siteId  = $this->seller->getSiteId();
+        $country = $this->country->siteIdToCountry($siteId);
+        $configs = $this->country->getCountryConfigs($country);
+
+        return $configs[$country]['currency'];
+    }
+
+    /**
+     * Set ratio
+     *
+     * @param $methodId
+     * @param float $value
+     *
+     * @return void
+     */
     public function setRatio($methodId, $value = self::DEFAULT_RATIO)
     {
         $this->ratios[$methodId] = $value;
     }
 
-    public function isEnabled(object $method): bool
+    /**
+     * Is the option enabled?
+     *
+     * @param $method
+     *
+     * @return bool
+     */
+    public function isEnabled($method): bool
     {
         return $method->get_option(self::CURRENCY_CONVERSION, '');
     }
 
-    private function getAccountCurrency(string $methodId, string $siteId) {
-        if ($this->currencyAche[$methodId]) {
-            return $this->currencyAche[$methodId];
+    /**
+     * Is it a valid conversion?
+     *
+     * @param string $storeCurrency
+     * @param string $accountCurrency
+     *
+     * @return bool
+     */
+    private function isAValidConversion(string $storeCurrency, string $accountCurrency): bool
+    {
+        if (!$accountCurrency || !$storeCurrency || $storeCurrency === $accountCurrency) {
+            return false;
         }
 
-        $country = $this->country->siteIdToCountry($siteId);
-        $configs = $this->country->getCountryConfigs($country);
-
-        return $configs[$country] ? $configs[$country]['currency'] : false;
+        return true;
     }
 
-    private function loadRatio(string $fromCurrency, string $toCurrency, string $accessToken) {
-        if($fromCurrency === $toCurrency) {
-            return self::DEFAULT_RATIO;
-        }
-
-        $currencyConversionResponse = $this->getCurrencyConversion($fromCurrency, $toCurrency, $accessToken);
+    /**
+     * Load ratio
+     *
+     * @param string $fromCurrency
+     * @param string $toCurrency
+     *
+     * @return float
+     */
+    private function loadRatio(string $fromCurrency, string $toCurrency): float
+    {
+        $currencyConversionResponse = $this->getCurrencyConversion($fromCurrency, $toCurrency);
 
         try {
             if (200 !== $currencyConversionResponse['status']) {
@@ -145,16 +206,26 @@ final class Currency
             if (isset($currencyConversionResponse['data'], $currencyConversionResponse['data']['ratio']) && $currencyConversionResponse['data']['ratio'] > 0) {
                 return $currencyConversionResponse['data']['ratio'];
             }
-
         } catch (\Exception $e) {
-            $this->logs->file->error('Mercado pago gave error to get currency value, payment creation failed with error: '. $e->getMessage(), __FUNCTION__);
+            $this->logs->file->error('Mercado pago gave error to get currency value, payment creation failed with error: ' . $e->getMessage(), __FUNCTION__);
         }
 
         return self::DEFAULT_RATIO;
     }
 
-    private function getCurrencyConversion(string $fromCurrency, string $toCurrency, string $accessToken)
+    /**
+     * Get currency conversion
+     *
+     * @param string $fromCurrency
+     * @param string $toCurrency
+     *
+     * @return array
+     */
+    private function getCurrencyConversion(string $fromCurrency, string $toCurrency): array
     {
+        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
+        $accessToken = ($checkboxCheckoutTestMode === 'yes') ? $this->seller->getCredentialsAccessTokenTest() : $this->seller->getCredentialsAccessTokenProd();
+
         try {
             $key   = sprintf('%sat%s-%sto%s', __FUNCTION__, $accessToken, $fromCurrency, $toCurrency);
             $cache = $this->cache->getCache($key);
@@ -174,13 +245,38 @@ final class Currency
 
             $this->cache->setCache($key, $serializedResponse);
 
-           return $serializedResponse;
-
+            return $serializedResponse;
         } catch (\Exception $e) {
             return [
                 'data'   => null,
                 'status' => 500,
             ];
+        }
+    }
+
+    /**
+     * Handle currency conversion notices
+     *
+     * @param $method
+     *
+     * @return void
+     */
+    public function handleCurrencyNotices($method)
+    {
+        $dataSession = $_SESSION[self::CURRENCY_CONVERSION] ?: [];
+
+        if ($dataSession['notice']) {
+            unset($_SESSION[self::CURRENCY_CONVERSION]['notice']);
+
+            if ('enabled' === $dataSession['notice']['type']) {
+                $this->notice->adminNoticeInfo($this->adminTranslations->notices['currency_enabled'], false);
+            } elseif ('disabled' === $dataSession['notice']['type']) {
+                $this->notice->adminNoticeInfo($this->adminTranslations->notices['currency_disabled'], false);
+            }
+        }
+
+        if (!$this->isEnabled($method) && $method->isCurrencyConvertable()) {
+            $this->notice->adminNoticeWarning($this->adminTranslations->notices['currency_conversion'], false);
         }
     }
 }

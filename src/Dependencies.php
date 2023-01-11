@@ -139,11 +139,6 @@ class Dependencies
     public $logs;
 
     /**
-     * @var Currency
-     */
-    public $currency;
-
-    /**
      * @var Nonce
      */
     public $nonce;
@@ -162,6 +157,11 @@ class Dependencies
      * @var Notices
      */
     public $notices;
+
+    /**
+     * @var Currency
+     */
+    public $currency;
 
     /**
      * @var Settings
@@ -195,11 +195,11 @@ class Dependencies
         $this->checkout          = $this->setCheckout();
         $this->gateway           = $this->setGateway();
         $this->logs              = $this->setLogs();
-        $this->currency          = $this->setCurrency();
         $this->nonce             = $this->setNonce();
         $this->currentUser       = $this->setCurrentUser();
         $this->adminTranslations = $this->setTranslations();
         $this->notices           = $this->setNotices();
+        $this->currency          = $this->setCurrency();
         $this->settings          = $this->setSettings();
     }
 
@@ -298,20 +298,6 @@ class Dependencies
     }
 
     /**
-     * @return Currency
-     */
-    private function setCurrency(): Currency
-    {
-        return new Currency(
-            $this->cache,
-            $this->country,
-            $this->options,
-            $this->logs,
-            $this->requester
-        );
-    }
-
-    /**
      * @return Nonce
      */
     private function setNonce(): Nonce
@@ -341,6 +327,23 @@ class Dependencies
     private function setNotices(): Notices
     {
         return new Notices($this->scripts, $this->adminTranslations, $this->url);
+    }
+
+    /**
+     * @return Currency
+     */
+    private function setCurrency(): Currency
+    {
+        return new Currency(
+            $this->adminTranslations,
+            $this->cache,
+            $this->country,
+            $this->logs,
+            $this->notices,
+            $this->requester,
+            $this->seller,
+            $this->store
+        );
     }
 
     /**
