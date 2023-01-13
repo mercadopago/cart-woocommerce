@@ -142,17 +142,17 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
             'success_url'   => [
                 'type'        => 'text',
                 'title'       => 'Payment URL success',
-                'description' => $this->validateBackUrl($this->success_url, 'Choose the URL that we will show your customers when they finish their purchase.'),
+                'description' => $this->validateBackUrl($this->settings['success_url'], 'Choose the URL that we will show your customers when they finish their purchase.'),
             ],
             'failure_url'   => [
                 'type'        => 'text',
                 'title'       => 'Payment URL rejected',
-                'description' => $this->validateBackUrl($this->failure_url, 'Choose the URL that we will show to your customers when we refuse their purchase. Make sure it includes a message appropriate to the situation and give them useful information so they can solve it.'),
+                'description' => $this->validateBackUrl($this->settings['failure_url'], 'Choose the URL that we will show to your customers when we refuse their purchase. Make sure it includes a message appropriate to the situation and give them useful information so they can solve it.'),
             ],
             'pending_url'   => [
                 'type'        => 'text',
                 'title'       => 'Payment URL pending',
-                'description' => $this->validateBackUrl($this->pending_url, 'Choose the URL that we will show to your customers when they have a payment pending approval.'),
+                'description' => $this->validateBackUrl($this->settings['pending_url'], 'Choose the URL that we will show to your customers when they have a payment pending approval.'),
             ],
             'binary_mode'   => [
                 'type'         => 'mp_toggle_switch',
@@ -174,7 +174,7 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
 	 */
     private function validateBackUrl($url, $default) {
         if ( ! empty($url) && filter_var($url, FILTER_VALIDATE_URL) === false ) {
-			return '<img width="14" height="14" src="' . plugins_url('assets/images/warning.png', plugin_dir_path(__FILE__)) . '"> ' .
+			return '<img width="14" height="14" src="' . plugins_url('../assets/images/icons/icon-warning.png', plugin_dir_path(__FILE__)) . '"> ' .
 				'This seems to be an invalid URL.';
 		}
         return $default;
