@@ -2,6 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Dependencies;
+use MercadoPago\Woocommerce\Helpers\Links;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 abstract class AbstractGateway extends \WC_Payment_Gateway
@@ -12,12 +15,26 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     protected $mercadopago;
 
     /**
+     * @var AdminTranslations
+     */
+    protected $adminTranslations;
+
+    /**
+     * @var Links
+     */
+    protected $links;
+
+    /**
      * Abstract Gateway constructor
      */
     public function __construct()
     {
         global $mercadopago;
-        $this->mercadopago = $mercadopago;
+        $this->mercadopago       = $mercadopago;
+
+        $dependencies            = new Dependencies();
+        $this->adminTranslations = $dependencies->translations;
+        $this->links             = $dependencies->links;
     }
 
     /**

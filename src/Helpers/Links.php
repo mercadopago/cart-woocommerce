@@ -133,6 +133,7 @@ final class Links
             'mercadopago_test_user'   => self::MP_URL . '/developers/panel/test-users',
             'mercadopago_credentials' => self::MP_URL . '/developers/panel/credentials',
             'mercadopago_developers'  => self::MP_DEVELOPERS_URL,
+            'mercadopago_pix'         => self::MP_URL_PREFIX . '.com.br' . '/pix'
         ];
     }
 
