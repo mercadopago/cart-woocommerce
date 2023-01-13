@@ -1,3 +1,32 @@
+/* Advanced Configs Style */
+
+.mp_subtitle_bd {
+	border-top: 1px solid #bbb;
+	padding-top: 20px;
+	font-size: 20px !important;
+	margin-top: 0 !important;
+	margin-bottom: 20px !important;
+}
+
+.mp_small_text {
+	font-family: sans-serif;
+	font-size: 15px !important;
+	font-weight: normal;
+	font-style: normal !important;
+	font-stretch: normal;
+	line-height: 16px !important;
+	letter-spacing: normal;
+	color: #555555;
+  margin-top: -12px !important;
+  margin-bottom: 18px !important;
+}
+
+.mp-btn-collapsible {
+	float: right;
+	font-size: 25px;
+	padding-right: 5px;
+}
+
 /* Shared Component Styles */
 
 .form-table tbody {
@@ -185,4 +214,59 @@
   font-weight: bold;
 }
 
-/* End Checkbox List Component */
+/* Checkbox List Component */
+
+.mp-checkbox-list-description {
+	margin: 10px;
+}
+
+.mp-list-group {
+	list-style: none;
+	padding: 10px;
+	width: fit-content;
+	min-width: 30%;
+	display: -moz-inline-grid;
+	display: -ms-inline-grid;
+	display: inline-grid;
+}
+
+.mp-list-group-item {
+	border: 1.5px solid rgba(0, 0, 0, 0.1);
+	height: 40px;
+	margin: 0px;
+}
+
+.mp-list-group-item:first-child {
+	border-radius: 6px 6px 0 0;
+}
+
+.mp-list-group-item:last-child {
+	border-radius: 0 0 6px 6px;
+}
+
+.mp-custom-checkbox {
+	margin: 10px;
+}
+
+.mp-custom-checkbox-input {
+	vertical-align: middle;
+}
+
+.mp-custom-checkbox-label {
+	vertical-align: middle;
+	cursor: pointer;
+	font-size: 14px;
+}
+
+@media screen and (max-width: 1200px) {
+	.mp-list-group {
+		display: block;
+		min-width: 50%;
+	}
+}
+
+@media screen and (max-width: 680px) {
+	.mp-list-group {
+		width: 100%;
+	}
+}

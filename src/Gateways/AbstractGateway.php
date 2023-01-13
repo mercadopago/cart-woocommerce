@@ -79,6 +79,25 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     }
 
     /**
+     * Generate custom toggle switch component
+     *
+     * @param string $key
+     * @param array  $settings
+     *
+     * @return string
+     */
+    public function generate_mp_checkbox_list_html(string $key, array $settings): string
+    {
+		return $this->mercadopago->template->getWoocommerceTemplateHtml(
+			'checkbox-list.php',
+            dirname(__FILE__) . '/../../templates/admin/components/',
+            [
+                'settings'    => $settings,
+            ]
+        );
+	}
+
+    /**
      * Generate custom header component
      *
      * @param string $key

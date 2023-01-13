@@ -225,7 +225,7 @@ class WoocommerceMercadoPago
      */
     public function registerGateways(): void
     {
-        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
     }
 
     /**
