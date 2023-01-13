@@ -100,7 +100,7 @@ final class Country
      *
      * @return string
      */
-    private function siteIdToCountry($siteId): string
+    public function siteIdToCountry($siteId): string
     {
         $siteIdToCountry = [
             self::SITE_ID_MLA => self::COUNTRY_SUFFIX_MLA,
@@ -112,7 +112,7 @@ final class Country
             self::SITE_ID_MPE => self::COUNTRY_SUFFIX_MPE,
         ];
 
-        return array_key_exists($siteId, $siteIdToCountry) ? $siteIdToCountry[$siteId] : 'AR';
+        return array_key_exists($siteId, $siteIdToCountry) ? $siteIdToCountry[$siteId] : $siteIdToCountry[self::SITE_ID_MLA];
     }
 
     /**
@@ -146,5 +146,90 @@ final class Country
         }
 
         return $country;
+    }
+
+    /**
+     *  Country Configs
+     *
+     * @param $countrySuffix
+     *
+     * @return array
+     */
+    public function getCountryConfigs($countrySuffix): array
+    {
+        $configs = [
+            self::COUNTRY_SUFFIX_MLA => [
+                'site_id'         => self::SITE_ID_MLA,
+                'sponsor_id'      => 208682286,
+                'currency'        => 'ARS',
+                'zip_code'        => '3039',
+                'currency_symbol' => '$',
+                'intl'            => 'es-AR',
+                'translate'       => 'es',
+                'suffix_url'      => '.com.ar',
+            ],
+            self::COUNTRY_SUFFIX_MLB => [
+                'site_id'         => self::SITE_ID_MLB,
+                'sponsor_id'      => 208686191,
+                'currency'        => 'BRL',
+                'zip_code'        => '01310924',
+                'currency_symbol' => 'R$',
+                'intl'            => 'pt-BR',
+                'translate'       => 'pt',
+                'suffix_url'      => '.com.br',
+            ],
+            self::COUNTRY_SUFFIX_MLC => [
+                'site_id'         => self::SITE_ID_MLC,
+                'sponsor_id'      => 208690789,
+                'currency'        => 'CLP',
+                'zip_code'        => '7591538',
+                'currency_symbol' => '$',
+                'intl'            => 'es-CL',
+                'translate'       => 'es',
+                'suffix_url'      => '.cl',
+            ],
+            self::COUNTRY_SUFFIX_MCO => [
+                'site_id'         => self::SITE_ID_MCO,
+                'sponsor_id'      => 208687643,
+                'currency'        => 'COP',
+                'zip_code'        => '110111',
+                'currency_symbol' => '$',
+                'intl'            => 'es-CO',
+                'translate'       => 'es',
+                'suffix_url'      => '.com.co',
+            ],
+            self::COUNTRY_SUFFIX_MLM => [
+                'site_id'         => self::SITE_ID_MLM,
+                'sponsor_id'      => 208692380,
+                'currency'        => 'MXN',
+                'zip_code'        => '11250',
+                'currency_symbol' => '$',
+                'intl'            => 'es-MX',
+                'translate'       => 'es',
+                'suffix_url'      => '.com.mx',
+            ],
+            self::COUNTRY_SUFFIX_MPE => [
+                'site_id'         => self::SITE_ID_MPE,
+                'sponsor_id'      => 216998692,
+                'currency'        => 'PEN',
+                'zip_code'        => '15074',
+                'currency_symbol' => '$',
+                'intl'            => 'es-PE',
+                'translate'       => 'es',
+                'suffix_url'      => '.com.pe',
+            ],
+            self::COUNTRY_SUFFIX_MLU => [
+                'site_id'         => self::SITE_ID_MLU,
+                'sponsor_id'      => 243692679,
+                'currency'        => 'UYU',
+                'zip_code'        => '11800',
+                'currency_symbol' => '$',
+                'intl'            => 'es-UY',
+                'translate'       => 'es',
+                'suffix_url'      => '.com.uy',
+            ]
+        ];
+
+        return array_key_exists($countrySuffix, $configs) ? $configs[$countrySuffix] : $configs[self::COUNTRY_SUFFIX_MLA];
     }
 }
