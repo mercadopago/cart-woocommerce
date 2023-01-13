@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Translations;
 
+use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\Links;
 
 if (!defined('ABSPATH')) {
@@ -85,7 +86,7 @@ class AdminTranslations
      */
     public function __construct(Links $links)
     {
-        $this->links = $links->getLinks();
+        $this->links    = $links->getLinks();
 
         $this->setNoticesTranslations();
         $this->setPluginSettingsTranslations();
@@ -114,6 +115,12 @@ class AdminTranslations
             '<a target="_blank" href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
         );
 
+        $currencyConversion = sprintf(
+            '<b>%s</b> %s',
+            __('Attention:', 'woocommerce-mercadopago'),
+            __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.t', 'woocommerce-mercadopago')
+        );
+
         $this->notices = [
             'php_wrong_version'     => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
             'missing_curl'          => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
@@ -122,6 +129,9 @@ class AdminTranslations
             'install_woocommerce'   => __('Install WooCommerce', 'woocommerce-mercadopago'),
             'see_woocommerce'       => __('See WooCommerce', 'woocommerce-mercadopago'),
             'miss_woocommerce'      => $missWoocommerce,
+            'currency_enabled'      => __('Now we convert your currency', 'woocommerce-mercadopago'),
+            'currency_disabled'     => __('We no longer convert your currency', 'woocommerce-mercadopago'),
+            'currency_conversion'   => $currencyConversion
         ];
     }
 
