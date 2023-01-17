@@ -180,11 +180,11 @@ class Dependencies
         $this->template     = new Template();
         $this->order        = $this->setOrder();
         $this->requester    = $this->setRequester();
+        $this->store        = $this->setStore();
         $this->seller       = $this->setSeller();
         $this->country      = $this->setCountry();
         $this->links        = $this->setLinks();
         $this->url          = $this->setUrl();
-        $this->store        = $this->setStore();
         $this->scripts      = $this->setScripts();
         $this->checkout     = $this->setCheckout();
         $this->gateway      = $this->setGateway();
@@ -220,7 +220,7 @@ class Dependencies
      */
     private function setSeller(): Seller
     {
-        return new Seller($this->cache, $this->options, $this->requester);
+        return new Seller($this->cache, $this->options, $this->requester, $this->store);
     }
 
     /**
