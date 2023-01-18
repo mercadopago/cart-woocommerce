@@ -459,9 +459,13 @@ class AdminTranslations
         );
 
         $this->pixSettings = [
+            'gateway_title'                             => __('Pix', 'woocommerce-mercadopago'),
+            'gateway_description'                       => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
+            'gateway_method_title'                      => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
+            'gateway_method_description'                => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
             'header_title'                              => __('Transparent Checkout | Pix', 'woocommerce-mercadopago'),
             'header_description'                        => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
-            'card_settings_title'                       => __('Mercado Pago Plugin general settings', 'woocommerce-mercadopago'),
+            'card_settings_title'                       => __('Mercado Pago plugin general settings', 'woocommerce-mercadopago'),
             'card_settings_subtitle'                    => __('Set the deadlines and fees, test your store or access the Plugin manual.', 'woocommerce-mercadopago'),
             'card_settings_button_text'                 => __('Go to Settings', 'woocommerce-mercadopago'),
             'enabled_title'                             => __('Enable the checkout', 'woocommerce-mercadopago'),
@@ -470,7 +474,8 @@ class AdminTranslations
             'enabled_descriptions_disabled'             => $enabledDescriptionsDisabled,
             'title_title'                               => __('Title in the store Checkout', 'woocommerce-mercadopago'),
             'title_description'                         => __('Change the display text in Checkout, maximum characters: 85', 'woocommerce-mercadopago'),
-            'title_description_tip'                     => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
+            'title_default'                             => __('Pix', 'woocommerce-mercadopago'),
+            'title_desc_tip'                            => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
             'expiration_date_title'                     => __('Expiration for payments via Pix', 'woocommerce-mercadopago'),
             'expiration_date_description'               => __('Set the limit in minutes for your clients to pay via Pix.', 'woocommerce-mercadopago'),
             'expiration_date_options_fifteen_minutes'   => __('15 minutes', 'woocommerce-mercadopago'),

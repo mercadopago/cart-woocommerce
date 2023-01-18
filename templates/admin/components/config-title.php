@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
 
 ?>
 
-<div class="row">
+<div class="row mp-pt-20">
     <div class="mp-col-md-12 mp-subtitle-header">
         <?= $settings['title'] ?>
     </div>

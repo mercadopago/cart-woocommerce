@@ -13,6 +13,7 @@
     setHide();
     setTitleInputMaxLength();
     setTitleDescriptionStyle();
+    makeCollapsibleAdvancedConfig('pix');
   }
 
   function hasConfigurations() {
@@ -64,6 +65,44 @@
     document.querySelectorAll('.mp-hidden-field-description').forEach((element) => {
       element.closest('tr').style.display = 'none';
     });
+  }
+
+  function makeCollapsibleAdvancedConfig(gateway) {
+    var collapseTitle = document.querySelector(
+      `#woocommerce_woo-mercado-pago-${gateway}_advanced_configuration_title`
+    );
+    collapseTitle.style.cursor = "pointer";
+
+    var collapseDescription = document.querySelector(
+      `#woocommerce_woo-mercado-pago-${gateway}_advanced_configuration_description`
+    );
+    collapseDescription.style.display = "none";
+
+    var collapseContent = document.querySelector(
+      `#woocommerce_woo-mercado-pago-${gateway}_advanced_configuration_description`
+    ).nextElementSibling;
+    collapseContent.style.display = "none";
+
+    collapseTitle.innerHTML +=
+      '<span class="mp-btn-collapsible" id="header_plus_2" style="display:block">+</span>\
+      <span class="mp-btn-collapsible" id="header_less_2" style="display:none">-</span>';
+
+    var plusHeaderSelector = document.querySelector("#header_plus_2");
+    var lessHeaderSelector = document.querySelector("#header_less_2");
+
+    collapseTitle.onclick = function () {
+      if (collapseContent.style.display === "none") {
+        collapseContent.style.display = "block";
+        collapseDescription.style.display = "block";
+        lessHeaderSelector.style.display = "block";
+        plusHeaderSelector.style.display = "none";
+      } else {
+        collapseContent.style.display = "none";
+        collapseDescription.style.display = "none";
+        lessHeaderSelector.style.display = "none";
+        plusHeaderSelector.style.display = "block";
+      }
+    };
   }
 
 })();

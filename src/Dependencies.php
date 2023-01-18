@@ -267,7 +267,7 @@ class Dependencies
      */
     private function setScripts(): Scripts
     {
-        return new Scripts($this->url);
+        return new Scripts($this->url, $this->seller);
     }
 
     /**

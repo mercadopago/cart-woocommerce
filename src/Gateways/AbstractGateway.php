@@ -2,9 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\Dependencies;
-use MercadoPago\Woocommerce\Helpers\Links;
-use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 abstract class AbstractGateway extends \WC_Payment_Gateway
@@ -15,26 +12,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     protected $mercadopago;
 
     /**
-     * @var AdminTranslations
-     */
-    protected $adminTranslations;
-
-    /**
-     * @var Links
-     */
-    protected $links;
-
-    /**
      * Abstract Gateway constructor
      */
     public function __construct()
     {
         global $mercadopago;
         $this->mercadopago       = $mercadopago;
-
-        $dependencies            = new Dependencies();
-        $this->adminTranslations = $dependencies->translations;
-        $this->links             = $dependencies->links;
     }
 
     /**
@@ -107,6 +90,51 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     {
         return $this->mercadopago->template->getWoocommerceTemplateHtml(
             'config-title.php',
+            dirname(__FILE__) . '/../../templates/admin/components/',
+            [
+                'field_key'   => $this->get_field_key($key),
+                'field_value' => null,
+                'settings'    => $settings,
+            ]
+        );
+    }
+
+    /**
+     * Generating custom actionable input component
+     *
+     * @param string $key
+     * @param array $settings
+     *
+     * @return string
+     */
+    public function generate_mp_actionable_input_html(string $key, array $settings): string
+    {
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'actionable-input.php',
+            dirname(__FILE__) . '/../../templates/admin/components/',
+            [
+                'field_key'          => $this->get_field_key($key),
+                'field_key_checkbox' => $this->get_field_key($key . '_checkbox'),
+                'field_value'        => $this->mercadopago->options->get($this->get_option($key)),
+                'enabled'            => $this->mercadopago->options->get($key . '_checkbox'),
+                'custom_attributes'  => $this->get_custom_attribute_html($settings),
+                'settings'           => $settings,
+            ]
+        );
+    }
+
+    /**
+     * Generating custom card info component
+     *
+     * @param string $key
+     * @param array $settings
+     *
+     * @return string
+     */
+    public function generate_mp_card_info_html(string $key, array $settings): string
+    {
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'card-info.php',
             dirname(__FILE__) . '/../../templates/admin/components/',
             [
                 'field_key'   => $this->get_field_key($key),

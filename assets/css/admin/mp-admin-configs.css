@@ -30,6 +30,14 @@
   margin-bottom: 0px !important;
 }
 
+.mp-pb-0 {
+	padding-bottom: 0px !important;
+}
+
+.mp-pt-20 {
+  padding-top: 20px !important;
+}
+
 .mp-component-card {
   max-width: 50%;
   padding: 24px;
@@ -50,7 +58,7 @@
 }
 
 .mp-subtitle-header {
-  font-family: sans-serif;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
   font-size: 28px !important;
   font-weight: 600 !important;
   line-height: 35px;
@@ -75,6 +83,33 @@
   color: rgba(0, 0, 0, 0.8);
 }
 
+.mp-subtitle-body {
+	border-top: 1px solid #bbb;
+	padding-top: 20px;
+	font-size: 20px !important;
+	margin-top: 0 !important;
+	margin-bottom: 20px !important;
+}
+
+.mp-small-text {
+	font-family: sans-serif;
+	font-size: 15px !important;
+	font-weight: normal;
+	font-style: normal !important;
+	font-stretch: normal;
+	line-height: 16px !important;
+	letter-spacing: normal;
+	color: #555555;
+  margin-top: -10px !important;
+  margin-bottom: 18px !important;
+}
+
+.mp-btn-collapsible {
+	float: right;
+	font-size: 25px;
+	padding-right: 5px;
+}
+
 @media screen and (max-width: 900px) {
   .mp-component-card {
     max-width: 100%;
@@ -84,8 +119,6 @@
     transform: translate(0%, 0%);
   }
 }
-
-/* End Shared Components Styles */
 
 /* Toggle Switch Button */
 
@@ -128,11 +161,11 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
 
-.mp-toggle-checkbox:checked+.mp-toggle-switch {
+.mp-toggle-checkbox:checked + .mp-toggle-switch {
   background: #009ee3;
 }
 
-.mp-toggle-checkbox:checked+.mp-toggle-switch:before {
+.mp-toggle-checkbox:checked + .mp-toggle-switch:before {
   left: 30px;
 }
 
@@ -152,11 +185,11 @@
   display: none;
 }
 
-.mp-toggle-checkbox:checked+.mp-toggle-switch+.mp-toggle-label>span.mp-toggle-label-disabled {
+.mp-toggle-checkbox:checked + .mp-toggle-switch + .mp-toggle-label > span.mp-toggle-label-disabled {
   display: none;
 }
 
-.mp-toggle-checkbox:checked+.mp-toggle-switch+.mp-toggle-label>span.mp-toggle-label-enabled {
+.mp-toggle-checkbox:checked + .mp-toggle-switch + .mp-toggle-label > span.mp-toggle-label-enabled {
   display: inline;
 }
 
@@ -185,4 +218,130 @@
   font-weight: bold;
 }
 
-/* End Checkbox List Component */
+/* Card Info Component*/
+.mp-card-body {
+  flex: 1 1 auto;
+  padding: 1rem 1rem;
+}
+
+.mp-card-info {
+  display: flex;
+  margin: 32px 0px 32px 0px;
+}
+
+.mp-alert-color-success {
+  width: 6px;
+  background: #009ee3;
+  border-radius: 6px 0 0 6px;
+}
+
+.mp-alert-color-alert {
+  width: 6px;
+  background: #ff7733;
+  border-radius: 6px 0 0 6px;
+}
+
+.mp-alert-color-error {
+  width: 6px;
+  background: #ff3333;
+  border-radius: 6px 0 0 6px;
+}
+
+.mp-card-body-payments {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 24px 20px 0;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 0 6px 6px 0;
+}
+
+.mp-card-body-size {
+  width: 500px;
+}
+
+.mp-card-body-size-homolog {
+  width: 700px;
+}
+
+.mp-icon-badge-info {
+  background: url("../../images/icons/icon-tip.png") 100% 50% no-repeat transparent;
+  background-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin: 6px 12px 6px 16px;
+}
+
+.mp-icon-badge-warning {
+  background: url("../../images/icons/icon-warning.png") 100% 50% no-repeat transparent;
+  background-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin: 6px 12px 6px 16px;
+}
+
+.mp-text-title {
+	font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+	font-size: 16px;
+	line-height: 20px;
+	display: flex;
+	align-items: center;
+	color: rgba(0, 0, 0, 0.9);
+	margin: 4px 0px;
+	font-weight: bold;
+}
+
+.mp-text-subtitle {
+	font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+	font-size: 14px;
+	line-height: 18px;
+	display: flex;
+	align-items: center;
+	color: rgba(0, 0, 0, 0.9);
+	margin: 4px 0px;
+}
+
+.mp-button-payments {
+  font-size: 14px;
+  line-height: 16px;
+  color: #ffffff;
+  border: none;
+  padding: 9px 12px 7px;
+  background: #009ee3;
+  border-radius: 5px;
+  margin: 15px 0px 5px 0px;
+  cursor: pointer;
+  transition: box-shadow 0.25s ease-out, background-color 0.2s ease-out;
+  box-shadow: 0 0 0 0 #fff;
+}
+
+.mp-button-payments-a {
+  text-decoration: none;
+}
+
+.mp-button-payments:hover {
+  border-color: transparent;
+  background-color: #007eb5;
+  color: #fff;
+  -webkit-transition: background-color 0.2s ease-in;
+  transition: background-color 0.2s ease-in;
+}
+.mp-button-payments:focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.1875em rgb(27 135 201 / 30%);
+  -webkit-transition: box-shadow 0.25s ease-in;
+  transition: box-shadow 0.25s ease-in;
+}
+.mp-button-payments:active {
+  border-color: transparent;
+  background-color: #005e88;
+  color: #fff;
+}
+
+/* Activable Input */
+
+.mp-activable-input-subtitle {
+	font-weight: normal !important;
+	font-size: 14px !important;
+	margin-bottom: 0px;
+}
+

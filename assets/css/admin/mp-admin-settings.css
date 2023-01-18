@@ -1,8 +1,16 @@
+body {
+  background: #f0f0f1;
+  color: #3c434a;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4em;
+  min-width: 600px;
+}
+
 .mp-settings {
   margin: 0 48px 0 24px;
   font-size: 16px;
   min-width: 550px;
-  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
 }
 
 .mp-settings-header {
@@ -755,83 +763,6 @@ input:checked + .mp-settings-slider:before {
 
 .mp-text-center {
   text-align: center !important;
-}
-
-.mp-card-body {
-  flex: 1 1 auto;
-  padding: 1rem 1rem;
-}
-
-.mp-card-info {
-  display: flex;
-  margin: 8px 0 24px;
-}
-
-.mp-alert-color-success {
-  width: 6px;
-  background: #009ee3;
-  border-radius: 6px 0 0 6px;
-}
-
-.mp-alert-color-alert {
-  width: 6px;
-  background: #ff7733;
-  border-radius: 6px 0 0 6px;
-}
-
-.mp-alert-color-error {
-  width: 6px;
-  background: #ff3333;
-  border-radius: 6px 0 0 6px;
-}
-
-.mp-card-body-payments {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px 24px 20px 0;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 0 6px 6px 0;
-}
-
-.mp-card-body-size-homolog {
-  width: 700px;
-}
-
-.mp-icon-badge-info {
-  background: url("../../images/icons/icon-tip.png") 100% 50% no-repeat transparent;
-  background-size: 18px;
-  width: 18px;
-  height: 18px;
-  margin: 6px 12px 6px 16px;
-}
-
-.mp-icon-badge-warning {
-  background: url("../../images/icons/icon-warning.png") 100% 50% no-repeat transparent;
-  background-size: 18px;
-  width: 18px;
-  height: 18px;
-  margin: 6px 12px 6px 16px;
-}
-
-.mp-text-title {
-  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
-  font-size: 16px;
-  line-height: 20px;
-  display: flex;
-  align-items: center;
-  color: rgba(0, 0, 0, 0.9);
-  margin: 4px 0;
-  font-weight: bold;
-}
-
-.mp-text-subtitle {
-  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
-  font-size: 14px;
-  line-height: 18px;
-  display: flex;
-  align-items: center;
-  color: rgba(0, 0, 0, 0.9);
-  margin: 4px 0;
 }
 
 @media screen and (max-width: 780px) {
