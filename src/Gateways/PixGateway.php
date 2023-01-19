@@ -15,18 +15,25 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
      */
     public const ID = 'woo-mercado-pago-pix';
 
+    /**
+     * @const
+     */
+    public const CHECKOUT_NAME = 'checkout-pix';
+
     public function __construct()
     {
         parent::__construct();
 
         $this->id                 = self::ID;
-        $this->icon               = $this->getIcon();
+        $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-pix');
         $this->title              = $this->mercadopago->adminTranslations->pixSettings['gateway_title'];
         $this->description        = $this->mercadopago->adminTranslations->pixSettings['gateway_description'];
         $this->method_title       = $this->mercadopago->adminTranslations->pixSettings['gateway_method_title'];
         $this->method_description = $this->mercadopago->adminTranslations->pixSettings['gateway_method_description'];
         $this->has_fields         = true;
         $this->supports           = ['products', 'refunds'];
+
+        $this->activatedGateway   = $this->mercadopago->seller->getCheckoutPaymentMethodPix();
 
         $this->init_form_fields();
         $this->init_settings();
@@ -37,13 +44,33 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
     }
 
     /**
+     * Get Id
+     *
+     * @return string
+     */
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    /**
+     * Get checkout name
+     *
+     * @return string
+     */
+    public function getCheckoutName(): string
+    {
+        return self::CHECKOUT_NAME;
+    }
+
+    /**
      * Init form fields for checkout configuration
      *
      * @return void
      */
     public function init_form_fields(): void
     {
-        $this->form_fields = [
+        $form_fields = $this->form_fields = [
             'header'                             => [
                 'type'        => 'mp_config_title',
                 'title'       => $this->mercadopago->adminTranslations->pixSettings['header_title'],
@@ -159,6 +186,37 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                 ],
             ]
         ];
+
+
+        $stepsContent = $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'admin/settings/steps.php',
+            [
+                'title'                       => $this->mercadopago->adminTranslations->pixSettings['steps_title'],
+                'step_one_text'               => $this->mercadopago->adminTranslations->pixSettings['steps_step_one_text' ],
+                'step_two_text'               => $this->mercadopago->adminTranslations->pixSettings['steps_step_two_text'],
+                'step_three_text'             => $this->mercadopago->adminTranslations->pixSettings['steps_step_three_text'],
+                'observation_one'             => $this->mercadopago->adminTranslations->pixSettings['steps_observation_one'],
+                'observation_two'             => $this->mercadopago->adminTranslations->pixSettings['steps_observation_two'],
+                'button_about_pix'            => $this->mercadopago->adminTranslations->pixSettings['steps_button_about_pix'],
+                'observation_three'           => $this->mercadopago->adminTranslations->pixSettings['steps_observation_three'],
+                'link_title_one'              => $this->mercadopago->adminTranslations->pixSettings['steps_link_title_one'],
+                'link_url_one'                => $this->mercadopago->links->getLinks()['mercadopago_pix'],
+                'link_url_two'                => $this->mercadopago->links->getLinks()['mercadopago_support'],
+            ]
+        );
+
+        $this->form_fields = [
+            'header'        => [
+                'type'        => 'mp_config_title',
+                'title'       => $this->mercadopago->adminTranslations->pixSettings['header_title'],
+                'description' => $this->mercadopago->adminTranslations->pixSettings['header_description'],
+            ],
+            'steps_content' => [
+                'title' => $stepsContent,
+                'type'  => 'title',
+                'class' => 'mp_title_checkout',
+            ],
+        ];
     }
 
     /**
@@ -180,9 +238,22 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
      */
     public function payment_fields(): void
     {
+        $parameters = [
+            'test_mode'                        => $this->mercadopago->seller->isTestMode(),
+            'test_mode_title'                  => $this->mercadopago->checkoutTranslations->pixCheckout['test_mode_title'],
+            'test_mode_description'            => $this->mercadopago->checkoutTranslations->pixCheckout['test_mode_description'],
+            'pix_template_title'               => $this->mercadopago->checkoutTranslations->pixCheckout['pix_template_title'],
+            'pix_template_subtitle'            => $this->mercadopago->checkoutTranslations->pixCheckout['pix_template_subtitle'],
+            'pix_template_alt'                 => $this->mercadopago->checkoutTranslations->pixCheckout['pix_template_alt'],
+            'pix_template_src'                 => plugins_url('../assets/images/pix.png', plugin_dir_path(__FILE__)),
+            'terms_and_conditions_description' => $this->mercadopago->checkoutTranslations->pixCheckout['terms_and_conditions_description'],
+            'terms_and_conditions_link_text'   => $this->mercadopago->checkoutTranslations->pixCheckout['terms_and_conditions_link_text'],
+            'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopado_terms_and_conditions'],
+        ];
+
         $this->mercadopago->template->getWoocommerceTemplate(
-            'checkout.php',
-            dirname(__FILE__) . '/../../templates/public/gateways/'
+            'checkout/pix-checkout.php',
+            $parameters
         );
     }
 
@@ -233,10 +304,5 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
         ];
 
         wp_send_json_success($response, $status);
-    }
-
-    private function getIcon()
-    {
-        return apply_filters('woo_mercado_pago_icon', plugins_url('../assets/images/icons/icon-pix.png', plugin_dir_path(__FILE__)));
     }
 }

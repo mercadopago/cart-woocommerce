@@ -86,12 +86,14 @@ final class Links
     private function getMercadoPagoLinks(array $countryConfig): array
     {
         return [
-            'mercadopago_home'        => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/home',
-            'mercadopago_costs'       => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/costs-section',
-            'mercadopago_test_user'   => self::MP_URL . '/developers/panel/test-users',
-            'mercadopago_credentials' => self::MP_URL . '/developers/panel/credentials',
-            'mercadopago_developers'  => self::MP_DEVELOPERS_URL,
-            'mercadopago_pix'         => self::MP_URL_PREFIX . '.com.br' . '/pix'
+            'mercadopago_home'                 => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/home',
+            'mercadopago_costs'                => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/costs-section',
+            'mercadopago_test_user'            => self::MP_URL . '/developers/panel/test-users',
+            'mercadopago_credentials'          => self::MP_URL . '/developers/panel/credentials',
+            'mercadopago_developers'           => self::MP_DEVELOPERS_URL,
+            'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br' . '/pix',
+            'mercadopago_support'              => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/developers/' . $countryConfig['translate'] . '/support/contact',
+            'mercadopado_terms_and_conditions' => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . $countryConfig['help'] . $countryConfig['terms_and_conditions'],
         ];
     }
 

@@ -48,6 +48,16 @@ class Seller
     private const HOMOLOG_VALIDATE = 'homolog_validate';
 
     /**
+     * @const
+     */
+    private const CHECKOUT_PAYMENT_METHODS = '_checkout_payments_methods';
+
+    /**
+     * @const
+     */
+    private const CHECKOUT_PAYMENT_METHOD_PIX = '_mp_payment_methods_pix';
+
+    /**
      * @var Cache
      */
     private $cache;
@@ -63,13 +73,19 @@ class Seller
     private $requester;
 
     /**
+     * @var Store
+     */
+    private $store;
+
+    /**
      * Credentials constructor
      */
-    public function __construct(Cache $cache, Options $options, Requester $requester)
+    public function __construct(Cache $cache, Options $options, Requester $requester, Store $store)
     {
         $this->cache     = $cache;
         $this->options   = $options;
         $this->requester = $requester;
+        $this->store     = $store;
     }
 
     /**
@@ -185,6 +201,127 @@ class Seller
     }
 
     /**
+     * @return bool
+     */
+    public function isTestMode(): bool
+    {
+        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
+        return ($checkboxCheckoutTestMode === 'yes');
+    }
+
+    /**
+     * @return string
+     */
+    public function getCredentialsPublicKey(): string
+    {
+        if ($this->isTestMode()) {
+            return $this->getCredentialsPublicKeyTest();
+        }
+        return $this->getCredentialsPublicKeyProd();
+    }
+
+    /**
+     * @return string
+     */
+    public function getCredentialsAccessToken(): string
+    {
+        if ($this->isTestMode()) {
+            return $this->getCredentialsAccessTokenTest();
+        }
+        return $this->getCredentialsAccessTokenProd();
+    }
+
+    /**
+     * @return array
+     */
+    public function getCheckoutPaymentMethods(): array
+    {
+        return $this->options->get(self::CHECKOUT_PAYMENT_METHODS, '');
+    }
+
+    /**
+     * @param array $checkoutPaymentMethods
+     */
+    public function setCheckoutPaymentMethods(array $checkoutPaymentMethods): void
+    {
+        $this->options->set(self::CHECKOUT_PAYMENT_METHODS, $checkoutPaymentMethods);
+    }
+
+    /**
+     * @return bool
+     */
+    public function getCheckoutPaymentMethodPix(): array
+    {
+        return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, '');
+    }
+
+    /**
+     * @param array $checkoutPaymentMethodsPix
+     */
+    public function setCheckoutPaymentMethodPix(array $checkoutPaymentMethodsPix): void
+    {
+        $this->options->set(self::CHECKOUT_PAYMENT_METHOD_PIX, $checkoutPaymentMethodsPix);
+    }
+
+    /**
+     * Update Payment Methods
+     *
+     * @param string|null $publicKey
+     * @param string|null $accessToken
+     *
+     */
+    public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
+    {
+        if (null === $publicKey) {
+            $publicKey = $this->getCredentialsPublicKey();
+        }
+
+        if (null === $accessToken) {
+            $accessToken = $this->getCredentialsAccessToken();
+        }
+
+        $excludedPaymentMethods = [
+            'consumer_credits',
+            'paypal',
+            'account_money',
+        ];
+
+        $acceptedPaymentMethods = [
+            'pix' => 'setCheckoutPaymentMethodPix',
+        ];
+
+        $paymentMethodsResponse = $this->getPaymentMethods($publicKey, $accessToken);
+
+        if (empty($paymentMethodsResponse) || 200 !== $paymentMethodsResponse['status']) {
+            $this->setCheckoutPaymentMethods([]);
+            return;
+        }
+
+        $serializedPaymentMethods   = [];
+        $serializedPaymentMethodPix = [];
+        foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
+            if (in_array($paymentMethod['id'], $excludedPaymentMethods, true)) {
+                continue;
+            }
+
+            $serializedPaymentMethods[] = [
+                'id'     => $paymentMethod['id'],
+                'name'   => $paymentMethod['name'],
+                'type'   => $paymentMethod['payment_type_id'],
+                'image'  => $paymentMethod['secure_thumbnail'],
+                'config' => 'ex_payments_' . $paymentMethod['id'],
+            ];
+
+            if (in_array($paymentMethod['id'], $acceptedPaymentMethods, true)) {
+                $serializedPaymentMethodPix[$paymentMethod['id']] = $serializedPaymentMethods;
+            }
+        }
+
+        $this->setCheckoutPaymentMethods($serializedPaymentMethods);
+        $this->{$acceptedPaymentMethods[$paymentMethod['id']]}($serializedPaymentMethodPix, true);
+    }
+
+    /**
      * Get seller info with users credentials
      *
      * @param string $accessToken
@@ -268,6 +405,53 @@ class Seller
 
             if ($publicKey && !$accessToken) {
                 $uri = $uri . '?public_key=' . $publicKey;
+            }
+
+            $response           = $this->requester->get($uri, $headers);
+            $serializedResponse = [
+                'data'   => $response->getData(),
+                'status' => $response->getStatus(),
+            ];
+
+            $this->cache->setCache($key, $serializedResponse);
+
+            return $serializedResponse;
+        } catch (\Exception $e) {
+            return [
+                'data'   => null,
+                'status' => 500,
+            ];
+        }
+    }
+
+
+    /**
+     * Get Payment Methods
+     *
+     * @param string|null $publicKey
+     * @param string|null $accessToken
+     *
+     * @return array
+     */
+    private function getPaymentMethods(string $publicKey = null, string $accessToken = null): array
+    {
+        try {
+            $key   = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
+            $cache = $this->cache->getCache($key);
+
+            if ($cache) {
+                return $cache;
+            }
+
+            $headers = [];
+            $uri     = '/v1/payment_methods';
+
+            if ($accessToken) {
+                $headers[] = 'Authorization: Bearer ' . $accessToken;
+            }
+
+            if ($publicKey) {
+                $uri = $uri . '?pubßlic_key=' . $publicKey;
             }
 
             $response           = $this->requester->get($uri, $headers);

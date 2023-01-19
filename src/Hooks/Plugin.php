@@ -20,6 +20,11 @@ class Plugin
     public const UPDATE_TEST_MODE_ACTION = 'mercadopago_plugin_test_mode_updated';
 
     /**
+     * @const
+     */
+    public const GATEWAY_ICON_FILTER = 'woo_mercado_pago_icon';
+
+    /**
      * Register to plugin update event
      *
      * @param mixed $callback
@@ -53,5 +58,19 @@ class Plugin
     public function registerOnPluginTestModeUpdate($callback): void
     {
         add_action(self::UPDATE_TEST_MODE_ACTION, $callback);
+    }
+
+    /**
+     * Get gateway icon
+     *
+     * @param string $fileName
+     *
+     * @return string
+     */
+    public function getGatewayIcon(string $fileName): string
+    {
+        $path = plugins_url("../assets/images/icons/{$fileName}.png", plugin_dir_path(__FILE__));
+
+        return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 }

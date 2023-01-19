@@ -222,8 +222,7 @@ final class Currency
      */
     private function getCurrencyConversion(string $fromCurrency, string $toCurrency): array
     {
-        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
-        $accessToken = ($checkboxCheckoutTestMode === 'yes') ? $this->seller->getCredentialsAccessTokenTest() : $this->seller->getCredentialsAccessTokenProd();
+        $accessToken = $this->seller->getCredentialsAccessToken();
 
         try {
             $key   = sprintf('%sat%s-%sto%s', __FUNCTION__, $accessToken, $fromCurrency, $toCurrency);

@@ -46,14 +46,13 @@ class Order
      * @param string $title
      * @param string $name
      * @param array  $args
-     * @param string $path
      *
      * @return void
      */
-    public function addMetaBox(string $id, string $title, string $name, array $args, string $path): void
+    public function addMetaBox(string $id, string $title, string $name, array $args): void
     {
-        add_meta_box($id, $title, function () use ($name, $path, $args) {
-            $this->template->getWoocommerceTemplate($name, $path, $args);
+        add_meta_box($id, $title, function () use ($name, $args) {
+            $this->template->getWoocommerceTemplate($name, $args);
         });
     }
 

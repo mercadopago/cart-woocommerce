@@ -118,7 +118,7 @@ class AdminTranslations
         $currencyConversion = sprintf(
             '<b>%s</b> %s',
             __('Attention:', 'woocommerce-mercadopago'),
-            __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.t', 'woocommerce-mercadopago')
+            __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.', 'woocommerce-mercadopago')
         );
 
         $this->notices = [
@@ -436,26 +436,34 @@ class AdminTranslations
     {
         $enabledDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
-            'The transparent checkout for Pix payment is',
-            'enabled'
+            __('The transparent checkout for Pix payment is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
         );
 
         $enabledDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
-            'The transparent checkout for Pix payment is',
-            'disabled'
+            __('The transparent checkout for Pix payment is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
-            'Currency conversion is',
-            'enabled'
+            __('Currency conversion is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
-            'Currency conversion is',
-            'disabled'
+            __('Currency conversion is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
+        );
+
+        $stepsStepTwoText = sprintf(
+            '%s <b>%s</b> %s <b>%s</b>.',
+            __('Go to the', 'woocommerce-mercadopago'),
+            __('Your Profile', 'woocommerce-mercadopago'),
+            __('area and choose the', 'woocommerce-mercadopago'),
+            __('Your Pix Keys section', 'woocommerce-mercadopago')
         );
 
         $this->pixSettings = [
@@ -504,6 +512,15 @@ class AdminTranslations
             'commission_title'                          => __('Commission in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
             'commission_description'                    => __('Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
             'commission_checkbox_label'                 => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+            'steps_title'                               => __('To activate Pix, you must have a key registered in Mercado Pago.', 'woocommerce-mercadopago'),
+            'steps_step_one_text'                       => __('Download the Mercado Pago app on your cell phone.', 'woocommerce-mercadopago'),
+            'steps_step_two_text'                       => $stepsStepTwoText,
+            'steps_step_three_text'                     => __('Choose which data to register as Pix keys. After registering, you can set up Pix in your checkout.', 'woocommerce-mercadopago'),
+            'steps_observation_one'                     => __('Remember that, for the time being, the Central Bank of Brazil is open Monday through Friday, from 9am to 6pm.', 'woocommerce-mercadopago'),
+            'steps_observation_two'                     => __('If you requested your registration outside these hours, we will confirm it within the next business day.', 'woocommerce-mercadopago'),
+            'steps_button_about_pix'                    => __('Learn more about Pix', 'woocommerce-mercadopago'),
+            'steps_observation_three'                   => __('If you have already registered a Pix key at Mercado Pago and cannot activate Pix in the checkout, ', 'woocommerce-mercadopago'),
+            'steps_link_title_one'                      => __('click here.', 'woocommerce-mercadopago'),
         ];
     }
 }

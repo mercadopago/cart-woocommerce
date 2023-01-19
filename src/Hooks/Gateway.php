@@ -188,15 +188,15 @@ class Gateway
      * Register after settings checkout
      *
      * @param string $name
-     * @param string $path
      * @param array  $args
+     *
      * @return void
      */
-    public function registerAfterSettingsCheckout(string $name, string $path, array $args): void
+    public function registerAfterSettingsCheckout(string $name, array $args): void
     {
-        add_action('woocommerce_after_settings_checkout', function () use ($name, $path, $args) {
+        add_action('woocommerce_after_settings_checkout', function () use ($name, $args) {
             foreach ($args as $arg) {
-                $this->template->getWoocommerceTemplate($name, $path, $arg);
+                $this->template->getWoocommerceTemplate($name, $arg);
             }
         });
     }

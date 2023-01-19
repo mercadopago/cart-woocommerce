@@ -1,3 +1,221 @@
+.mp-px-20 {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+
+.mp-pt-10 {
+  padding-top: 10px !important;
+}
+
+.mp-pb-0 {
+  padding-bottom: 0px !important;
+}
+
+.mp-pb-10 {
+  padding-bottom: 10px !important;
+}
+
+.mp-pb-20 {
+  padding-bottom: 20px !important;
+}
+
+.mp-mt--10 {
+  margin-top: -10px !important;
+}
+
+.mp-mt--15 {
+  margin-top: -15px !important;
+}
+
+.mp-mt--12 {
+  margin-top: -12px !important;
+}
+
+.mp-mt--5 {
+  margin-top: -5px !important;
+}
+
+.mp-mt-5 {
+  margin-top: 5px !important;
+}
+
+.mp-mt-0 {
+  margin-top: 0px !important;
+}
+
+.mp-mb-0 {
+  margin-bottom: 0px !important;
+}
+
+.mp-mb-20 {
+  margin-bottom: 20px !important;
+}
+
+.mp-mb-18 {
+  margin-bottom: 18px !important;
+}
+
+.mp-mg-0 {
+  margin: 0px !important;
+}
+
+
+.mp-fw-400 {
+  font-weight: 400 !important;
+}
+
+.mp-text-center {
+  text-align: center !important;
+}
+
+.mp-row {
+  width: 100%;
+  display: inline-block;
+}
+
+.mp-row-flex {
+  width: 100%;
+  display: flex;
+  margin: 0px;
+}
+
+.mp-col-md-2 {
+  width: 20%;
+  float: left;
+}
+
+.mp-col-md-3 {
+  width: 25%;
+  float: left;
+}
+
+.mp-col-md-5 {
+  width: 50%;
+  float: left;
+}
+
+.mp-col-md-12 {
+  width: 100%;
+  display: inline-block;
+  text-align: justify !important;
+}
+
+.mp-row-flex ul,
+.mp-row-flex ol,
+.mp-row-flex li {
+  list-style: none;
+}
+
+.mp-row-flex li {
+  border-left: 1px solid #e5e5e5;
+}
+
+.mp-row-flex li:first-child {
+  border-left: none;
+}
+
+.mp-division-line-steps {
+  border-top: 1px solid #e5e5e5;
+  margin-top: 17px;
+}
+
+.mp-mouse_pointer {
+  cursor: pointer !important;
+}
+
+.mp-gray-text {
+  color: #8c8c8c;
+  font-weight: 400;
+}
+
+.mp_subtitle_body {
+  border-top: 1px solid #bbb;
+  padding-top: 20px;
+  font-size: 20px !important;
+  margin-top: 0 !important;
+  margin-bottom: 20px !important;
+}
+
+.mp-number-checkout-body {
+  border-radius: 100%;
+  border: solid 2px #039fe3;
+  display: block;
+  width: 32px;
+  height: 30px;
+  padding-top: 2px;
+  margin: 0px 18px !important;
+  font-size: 18px;
+  font-weight: bold;
+  color: #039fe3;
+  text-align: center;
+}
+
+
+.mp-text-steps {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.5;
+  margin-top: 13px;
+  letter-spacing: normal;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.mp-number-checkout-body {
+  border-radius: 100%;
+  border: solid 2px #039fe3;
+  display: block;
+  width: 32px;
+  height: 30px;
+  padding-top: 2px;
+  margin: 0px 18px !important;
+  font-size: 18px;
+  font-weight: bold;
+  color: #039fe3;
+  text-align: center;
+}
+
+.mp_store_link {
+  display: inline-block;
+}
+
+.mp_store_link a {
+  display: inline-block;
+  margin-bottom: 0;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.42857;
+  border-radius: 2px !important;
+  border: solid 1px #c2c2c2 !important;
+  padding: 12px 50px !important;
+  font-size: 13px !important;
+  background-color: #fafafa !important;
+  text-decoration: none;
+  color: #555;
+}
+
+.mp_store_link:hover a {
+  color: #fff !important;
+  background-color: #00aff0 !important;
+  border-color: #008abd !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none;
+}
+
+.mp-text-support .mp-text-observation {
+  font-size: 12px !important;
+  font-weight: normal;
+  font-style: normal !important;
+  font-stretch: normal;
+  line-height: 16px !important;
+  letter-spacing: normal;
+  color: #555555;
+}
+
 /* Shared Component Styles */
 
 .form-table tbody {
@@ -20,22 +238,6 @@
   margin-bottom: 30px;
   display: block;
   padding: 0;
-}
-
-.mp-mw-100 {
-  max-width: 100% !important;
-}
-
-.mp-mb-0 {
-  margin-bottom: 0px !important;
-}
-
-.mp-pb-0 {
-	padding-bottom: 0px !important;
-}
-
-.mp-pt-20 {
-  padding-top: 20px !important;
 }
 
 .mp-component-card {
@@ -92,7 +294,6 @@
 }
 
 .mp-small-text {
-	font-family: sans-serif;
 	font-size: 15px !important;
 	font-weight: normal;
 	font-style: normal !important;

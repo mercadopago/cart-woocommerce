@@ -12,12 +12,29 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     protected $mercadopago;
 
     /**
+     * Active gateway
+     *
+     * @var bool
+     */
+    public $activatedGateway;
+
+    /**
+     * Checkout country
+     *
+     * @var string
+     */
+    public $checkoutCountry;
+
+    /**
      * Abstract Gateway constructor
      */
     public function __construct()
     {
         global $mercadopago;
-        $this->mercadopago       = $mercadopago;
+        $this->mercadopago = $mercadopago;
+        $this->checkoutCountry = $this->mercadopago->store->getCheckoutCountry();
+
+        $this->loadResearchComponent();
     }
 
     /**
@@ -40,6 +57,16 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
                 $this->mercadopago->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
             );
         }
+
+        $this->mercadopago->scripts->registerStoreScript(
+            'woocommerce-mercadopago-checkout-components',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkout/mp-checkout-components', '.js')
+        );
+
+        $this->mercadopago->scripts->registerStoreStyle(
+            'woocommerce-mercadopago-checkout-components',
+            $this->mercadopago->url->getPluginFileUrl('assets/css/checkout/mp-checkout-components', '.css')
+        );
     }
 
     /**
@@ -61,15 +88,14 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      * Generate custom toggle switch component
      *
      * @param string $key
-     * @param array  $settings
+     * @param array $settings
      *
      * @return string
      */
     public function generate_mp_toggle_switch_html(string $key, array $settings): string
     {
         return $this->mercadopago->template->getWoocommerceTemplateHtml(
-            'toggle-switch.php',
-            dirname(__FILE__) . '/../../templates/admin/components/',
+            'admin/components/toggle-switch.php',
             [
                 'field_key'   => $this->get_field_key($key),
                 'field_value' => $this->get_option($key, $settings['default']),
@@ -82,15 +108,14 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      * Generate custom header component
      *
      * @param string $key
-     * @param array  $settings
+     * @param array $settings
      *
      * @return string
      */
     public function generate_mp_config_title_html(string $key, array $settings): string
     {
         return $this->mercadopago->template->getWoocommerceTemplateHtml(
-            'config-title.php',
-            dirname(__FILE__) . '/../../templates/admin/components/',
+            'admin/components/config-title.php',
             [
                 'field_key'   => $this->get_field_key($key),
                 'field_value' => null,
@@ -110,8 +135,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     public function generate_mp_actionable_input_html(string $key, array $settings): string
     {
         return $this->mercadopago->template->getWoocommerceTemplateHtml(
-            'actionable-input.php',
-            dirname(__FILE__) . '/../../templates/admin/components/',
+            'admin/components/actionable-input.php',
             [
                 'field_key'          => $this->get_field_key($key),
                 'field_key_checkbox' => $this->get_field_key($key . '_checkbox'),
@@ -134,13 +158,33 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     public function generate_mp_card_info_html(string $key, array $settings): string
     {
         return $this->mercadopago->template->getWoocommerceTemplateHtml(
-            'card-info.php',
-            dirname(__FILE__) . '/../../templates/admin/components/',
+            'admin/components/card-info.php',
             [
                 'field_key'   => $this->get_field_key($key),
                 'field_value' => null,
                 'settings'    => $settings,
             ]
         );
+    }
+
+    /**
+     * Load research component
+     *
+     * @return void
+     */
+    public function loadResearchComponent(): void
+    {
+        $parameters = [
+            [
+                'field_key'   => 'mp-public-key-prod',
+                'field_value' => $this->mercadopago->seller->getCredentialsPublicKey(),
+            ],
+            [
+                'field_key'   => 'reference',
+                'field_value' => '{"mp-screen-name":"' . $this->getCheckoutName() . '"}',
+            ]
+        ];
+
+        $this->mercadopago->gateway->registerAfterSettingsCheckout('admin/components/research-fields.php', $parameters);
     }
 }
