@@ -333,7 +333,7 @@ class Dependencies
      */
     private function setNotices(): Notices
     {
-        return new Notices($this->scripts, $this->adminTranslations, $this->url);
+        return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links);
     }
 
     /**

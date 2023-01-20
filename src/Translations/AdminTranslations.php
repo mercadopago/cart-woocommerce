@@ -131,7 +131,9 @@ class AdminTranslations
             'miss_woocommerce'      => $missWoocommerce,
             'currency_enabled'      => __('Now we convert your currency', 'woocommerce-mercadopago'),
             'currency_disabled'     => __('We no longer convert your currency', 'woocommerce-mercadopago'),
-            'currency_conversion'   => $currencyConversion
+            'currency_conversion'   => $currencyConversion,
+            'miss_pix_text'         => __('Please note that to receive payments via Pix at our checkout, you must have a Pix key registered in your Mercado Pago account.', 'woocommerce-mercadopago'),
+            'miss_pix_link'         => __('Register your Pix key at Mercado Pago.', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -225,6 +227,12 @@ class AdminTranslations
             __('Copy and paste the credentials below.', 'woocommerce-mercadopago')
         );
 
+        $cardInfoSubtitle = sprintf(
+            '%s&nbsp;<b>%s</b>.',
+            __('You must enter', 'woocommerce-mercadopago'),
+            __('production credentials', 'woocommerce-mercadopago')
+        );
+
         $this->credentialsSettings = [
             'public_key'                => __('Public Key', 'woocommerce-mercadopago'),
             'access_token'              => __('Access Token', 'woocommerce-mercadopago'),
@@ -238,6 +246,9 @@ class AdminTranslations
             'placeholder_access_token'  => __('Paste your Access Token here', 'woocommerce-mercadopago'),
             'button_link_credentials'   => __('Check credentials', 'woocommerce-mercadopago'),
             'button_credentials'        => __('Save and continue', 'woocommerce-mercadopago'),
+            'card_info_title'           => __('Important! To sell you must enter your credentials.', 'woocommerce-mercadopago'),
+            'card_info_subtitle'        => $cardInfoSubtitle,
+            'card_info_button_text'     => __('Enter credentials', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -432,7 +443,7 @@ class AdminTranslations
      *
      * @return void
      */
-    public function setPixSettingsTranslations(): void
+    private function setPixSettingsTranslations(): void
     {
         $enabledDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',

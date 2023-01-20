@@ -27,50 +27,50 @@ if (!defined('ABSPATH')) {
 
 <div>
 	<h3 class="mp_subtitle_body">
-        <?= $title ?>
+        <?= esc_html($title) ?>
     </h3>
 
 	<ul class="mp-row-flex">
 		<li class="mp-col-md-3 mp-pb-10">
 			<p class="mp-number-checkout-body">1</p>
 			<p class="mp-text-steps mp-px-20">
-				<?= $step_one_text ?>
+				<?= esc_html($step_one_text) ?>
 			</p>
 		</li>
 
 		<li class="mp-col-md-3 mp-pb-10">
 			<p class="mp-number-checkout-body">2</p>
 			<p class="mp-text-steps mp-px-20">
-				<?= $step_two_text?>
+				<?= esc_html($step_two_text) ?>
 			</p>
 		</li>
 
 		<li class="mp-col-md-3 mp-pb-10">
 			<p class="mp-number-checkout-body">3</p>
 			<p class="mp-text-steps mp-px-20">
-				<?= $step_three_text ?>
+				<?= esc_html($step_three_text) ?>
 			</p>
 		</li>
 	</ul>
 
 	<div class="mp-col-md-12 mp-division-line-steps">
 		<p class="mp-text-observation mp-gray-text">
-			<?= $observation_one ?>
-            </br>
-			<?= $observation_two ?>
+			<?= esc_html($observation_one) ?>
+            <br/>
+			<?= esc_html($observation_two) ?>
 		</p>
 	</div>
 
 	<div class="mp-col-md-12 mp_store_link">
 		<p class="">
-			<a href=<?= $link_url_one ?> target="_blank"><?= $button_about_pix ?></a>
+			<a href=<?= esc_html($link_url_one) ?> target="_blank"><?= esc_html($button_about_pix) ?></a>
 		</p>
 	</div>
 
 	<div class="mp-col-md-12 mp-pb-10">
 		<p class="mp-text-observation mp-gray-text">
-			<?= $observation_three ?>
-			<a href=<?= $link_url_two ?> target="_blank"><?= $link_title_one ?></a>
+			<?= esc_html($observation_three) ?>
+			<a href=<?= esc_html($link_url_two) ?> target="_blank"><?= esc_html($link_title_one) ?></a>
 		</p>
 	</div>
 

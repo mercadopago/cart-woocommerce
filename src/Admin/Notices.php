@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
+use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
@@ -28,13 +29,19 @@ class Notices
     private $url;
 
     /**
+     * @var Links
+     */
+    private $links;
+
+    /**
      * Notices constructor
      */
-    public function __construct(Scripts $scripts, AdminTranslations $translations, Url $url)
+    public function __construct(Scripts $scripts, AdminTranslations $translations, Url $url, Links $links)
     {
         $this->scripts      = $scripts;
         $this->translations = $translations;
         $this->url          = $url;
+        $this->links        = $links;
 
         $this->loadAdminNoticeCss();
     }
@@ -147,6 +154,27 @@ class Notices
                 }
 
                 include dirname(__FILE__) . '/../../templates/admin/notices/miss-woocommerce-notice.php';
+            }
+        );
+    }
+
+
+    /**
+     * Show pix missing notice
+
+     * @return void
+     */
+    public function adminNoticeMissPix(): void
+    {
+        add_action(
+            'admin_notices',
+            function () {
+                $miniLogo = plugins_url('../assets/images/minilogo.png', plugin_dir_path(__FILE__));
+                $message  = $this->translations->notices['miss_pix_text'];
+                $textLink  = $this->translations->notices['miss_pix_link'];
+                $urlLink = $this->links->getLinks()['mercadopago_pix_config'];
+
+                include dirname(__FILE__) . '/../../templates/admin/notices/miss-pix-notice.php';
             }
         );
     }

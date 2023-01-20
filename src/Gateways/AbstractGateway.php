@@ -38,6 +38,30 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     }
 
     /**
+     * Init form fields for checkout configuration
+     *
+     * @return void
+     */
+    public function init_form_fields(): void
+    {
+        $this->form_fields = [
+            'card_info_validate' => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
+                    'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
+                    'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
+                    'button_url'  => $this->mercadopago->links->getLinks()['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-warning',
+                    'color_card'  => 'mp-alert-color-error',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
+                ]
+            ]
+        ];
+    }
+
+    /**
      * Added gateway scripts
      *
      * @param string $gatewaySection
@@ -98,7 +122,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
             'admin/components/toggle-switch.php',
             [
                 'field_key'   => $this->get_field_key($key),
-                'field_value' => $this->get_option($key, $settings['default']),
+                'field_value' => $this->mercadopago->options->get($key, $settings['default']),
                 'settings'    => $settings,
             ]
         );
@@ -139,7 +163,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
             [
                 'field_key'          => $this->get_field_key($key),
                 'field_key_checkbox' => $this->get_field_key($key . '_checkbox'),
-                'field_value'        => $this->mercadopago->options->get($this->get_option($key)),
+                'field_value'        => $this->mercadopago->options->get($key),
                 'enabled'            => $this->mercadopago->options->get($key . '_checkbox'),
                 'custom_attributes'  => $this->get_custom_attribute_html($settings),
                 'settings'           => $settings,

@@ -15,6 +15,11 @@ class Seller
     /**
      * @const
      */
+    private const GATEWAY_TITLE = 'title';
+
+    /**
+     * @const
+     */
     private const SITE_ID = '_site_id_v1';
 
     /**
@@ -86,6 +91,24 @@ class Seller
         $this->options   = $options;
         $this->requester = $requester;
         $this->store     = $store;
+    }
+
+    /**
+     * @param string $default
+     *
+     * @return string
+     */
+    public function getGatewayTitle(string $default): string
+    {
+        return strtoupper($this->options->get(self::GATEWAY_TITLE, $default));
+    }
+
+    /**
+     * @param string $title
+     */
+    public function setGatewayTitle(string $title): void
+    {
+        $this->options->set(self::GATEWAY_TITLE, $title);
     }
 
     /**
@@ -248,7 +271,7 @@ class Seller
     }
 
     /**
-     * @return bool
+     * @return array
      */
     public function getCheckoutPaymentMethodPix(): array
     {
@@ -268,7 +291,6 @@ class Seller
      *
      * @param string|null $publicKey
      * @param string|null $accessToken
-     *
      */
     public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
     {

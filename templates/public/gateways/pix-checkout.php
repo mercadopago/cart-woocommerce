@@ -26,26 +26,26 @@ if (!defined('ABSPATH')) {
         <?php if (true === $test_mode) : ?>
             <div class="mp-checkout-pix-test-mode">
                 <test-mode
-                    title="<?= $test_mode_title ?>"
-                    description="<?= $test_mode_description ?>"
+                    title="<?= esc_html($test_mode_title) ?>"
+                    description="<?= esc_html($test_mode_description) ?>"
                 >
                 </test-mode>
             </div>
         <?php endif; ?>
 
         <pix-template
-            title="<?= $pix_template_title ?>"
-            subtitle="<?= $pix_template_subtitle ?>"
-            alt="<?= $pix_template_alt ?>"
-            src="<?= $pix_template_src ?>"
+            title="<?= esc_html($pix_template_title) ?>"
+            subtitle="<?= esc_html($pix_template_subtitle) ?>"
+            alt="<?= esc_html($pix_template_alt) ?>"
+            src="<?= esc_html($pix_template_src) ?>"
         >
         </pix-template>
 
         <div class="mp-checkout-pix-terms-and-conditions">
             <terms-and-conditions
-                description="<?= $terms_and_conditions_description ?>"
-                link-text="<?= $terms_and_conditions_link_text ?>"
-                link-src="<?= $terms_and_conditions_link_src ?>"
+                description="<?= esc_html($terms_and_conditions_description) ?>"
+                link-text="<?= esc_html($terms_and_conditions_link_text) ?>"
+                link-src="<?= esc_html($terms_and_conditions_link_src) ?>"
             >
             </terms-and-conditions>
         </div>
