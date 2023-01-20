@@ -290,29 +290,29 @@
 }
 
 .mp-subtitle-body {
-	border-top: 1px solid #bbb;
-	padding-top: 20px;
-	font-size: 20px !important;
-	margin-top: 0 !important;
-	margin-bottom: 20px !important;
+  border-top: 1px solid #bbb;
+  padding-top: 20px;
+  font-size: 20px !important;
+  margin-top: 0 !important;
+  margin-bottom: 20px !important;
 }
 
 .mp-small-text {
-	font-size: 15px !important;
-	font-weight: normal;
-	font-style: normal !important;
-	font-stretch: normal;
-	line-height: 16px !important;
-	letter-spacing: normal;
-	color: #555555;
+  font-size: 15px !important;
+  font-weight: normal;
+  font-style: normal !important;
+  font-stretch: normal;
+  line-height: 16px !important;
+  letter-spacing: normal;
+  color: #555555;
   margin-top: -10px !important;
   margin-bottom: 18px !important;
 }
 
 .mp-btn-collapsible {
-	float: right;
-	font-size: 25px;
-	padding-right: 5px;
+  float: right;
+  font-size: 25px;
+  padding-right: 5px;
 }
 
 @media screen and (max-width: 900px) {
@@ -485,24 +485,24 @@
 }
 
 .mp-text-title {
-	font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
-	font-size: 16px;
-	line-height: 20px;
-	display: flex;
-	align-items: center;
-	color: rgba(0, 0, 0, 0.9);
-	margin: 4px 0px;
-	font-weight: bold;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.9);
+  margin: 4px 0px;
+  font-weight: bold;
 }
 
 .mp-text-subtitle {
-	font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
-	font-size: 14px;
-	line-height: 18px;
-	display: flex;
-	align-items: center;
-	color: rgba(0, 0, 0, 0.9);
-	margin: 4px 0px;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 18px;
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.9);
+  margin: 4px 0px;
 }
 
 .mp-button-payments {
@@ -530,12 +530,14 @@
   -webkit-transition: background-color 0.2s ease-in;
   transition: background-color 0.2s ease-in;
 }
+
 .mp-button-payments:focus {
   outline: 0;
   box-shadow: 0 0 0 0.1875em rgb(27 135 201 / 30%);
   -webkit-transition: box-shadow 0.25s ease-in;
   transition: box-shadow 0.25s ease-in;
 }
+
 .mp-button-payments:active {
   border-color: transparent;
   background-color: #005e88;
@@ -545,8 +547,8 @@
 /* Activable Input */
 
 .mp-activable-input-subtitle {
-	font-weight: normal !important;
-	font-size: 14px !important;
-	margin-bottom: 0px;
+  font-weight: normal !important;
+  font-size: 14px !important;
+  margin-bottom: 0px;
 }
 

@@ -84,12 +84,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
 
         $this->mercadopago->scripts->registerStoreScript(
             'woocommerce-mercadopago-checkout-components',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/checkout/mp-checkout-components', '.js')
+            $this->mercadopago->url->getPluginFileUrl('assets/js/public/mp-checkout-components', '.js')
         );
 
         $this->mercadopago->scripts->registerStoreStyle(
             'woocommerce-mercadopago-checkout-components',
-            $this->mercadopago->url->getPluginFileUrl('assets/css/checkout/mp-checkout-components', '.css')
+            $this->mercadopago->url->getPluginFileUrl('assets/css/public/mp-checkout-components', '.css')
         );
     }
 

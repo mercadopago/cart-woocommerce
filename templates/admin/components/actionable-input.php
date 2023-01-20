@@ -41,7 +41,7 @@ if (!defined('ABSPATH')) {
                     style="<?= esc_attr(isset($settings['css'])); ?>"
                     value="<?= esc_attr($field_value); ?>"
                     placeholder="<?= esc_attr(isset($settings['placeholder'])); ?>"
-                    <?php echo($custom_attributes);?>
+                    <?= $custom_attributes ?>
                 />
                 <br/>
                 <label for="<?= esc_attr($field_key_checkbox); ?>">

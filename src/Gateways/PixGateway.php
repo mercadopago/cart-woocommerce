@@ -167,6 +167,10 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                             'disabled' => $this->mercadopago->adminTranslations->pixSettings['currency_conversion_descriptions_disabled'],
                         ],
                     ],
+                    'card_info_helper'                   => [
+                        'type'  => 'title',
+                        'value' => '',
+                    ],
                     'card_info'                          => [
                         'type'        => 'mp_card_info',
                         'value'       => [

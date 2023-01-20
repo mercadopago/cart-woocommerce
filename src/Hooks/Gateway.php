@@ -163,7 +163,7 @@ class Gateway
      * Register thank you page
      *
      * @param string $id
-     * @param mixed  $callback
+     * @param mixed $callback
      *
      * @return void
      */
@@ -188,7 +188,7 @@ class Gateway
      * Register after settings checkout
      *
      * @param string $name
-     * @param array  $args
+     * @param array $args
      *
      * @return void
      */

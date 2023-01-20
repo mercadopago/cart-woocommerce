@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 <div id="message" class="notice notice-warning is-dismissible">
     <div class="mp-alert-frame">
         <div class="mp-left-alert">
-            <img src="<?= esc_url($miniLogo) ?>" alt="Mercado Pago mini logo" />
+            <img src="<?= esc_url($miniLogo) ?>" alt="Mercado Pago mini logo"/>
         </div>
 
         <div class="mp-right-alert">

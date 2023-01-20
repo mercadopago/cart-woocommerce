@@ -65,7 +65,7 @@ class Notices
      * Set a notice info
      *
      * @param string $message
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */
@@ -78,7 +78,7 @@ class Notices
      * Set a notice success
      *
      * @param string $message
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */
@@ -91,7 +91,7 @@ class Notices
      * Set a notice warning
      *
      * @param string $message
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */
@@ -104,7 +104,7 @@ class Notices
      * Set a notice error
      *
      * @param string $message
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */
@@ -161,7 +161,6 @@ class Notices
 
     /**
      * Show pix missing notice
-
      * @return void
      */
     public function adminNoticeMissPix(): void
@@ -171,8 +170,8 @@ class Notices
             function () {
                 $miniLogo = plugins_url('../assets/images/minilogo.png', plugin_dir_path(__FILE__));
                 $message  = $this->translations->notices['miss_pix_text'];
-                $textLink  = $this->translations->notices['miss_pix_link'];
-                $urlLink = $this->links->getLinks()['mercadopago_pix_config'];
+                $textLink = $this->translations->notices['miss_pix_link'];
+                $urlLink  = $this->links->getLinks()['mercadopago_pix_config'];
 
                 include dirname(__FILE__) . '/../../templates/admin/notices/miss-pix-notice.php';
             }
@@ -184,7 +183,7 @@ class Notices
      *
      * @param string $message
      * @param string $type
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */

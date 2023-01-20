@@ -25,7 +25,7 @@ class Template
      * Get woocommerce template
      *
      * @param string $name
-     * @param array  $variables
+     * @param array $variables
      *
      * @return void
      */
@@ -38,7 +38,7 @@ class Template
      * Get woocommerce template html
      *
      * @param string $name
-     * @param array  $variables
+     * @param array $variables
      *
      * @return string
      */

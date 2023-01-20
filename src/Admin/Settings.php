@@ -91,18 +91,19 @@ class Settings
      * Settings constructor
      */
     public function __construct(
-        Admin $admin,
-        Endpoints $endpoints,
-        Links $links,
-        Plugin $plugin,
-        Scripts $scripts,
-        Seller $seller,
-        Store $store,
+        Admin             $admin,
+        Endpoints         $endpoints,
+        Links             $links,
+        Plugin            $plugin,
+        Scripts           $scripts,
+        Seller            $seller,
+        Store             $store,
         AdminTranslations $translations,
-        Url $url,
-        Nonce $nonce,
-        CurrentUser $currentUser
-    ) {
+        Url               $url,
+        Nonce             $nonce,
+        CurrentUser       $currentUser
+    )
+    {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
         $this->links        = $links;
@@ -171,9 +172,9 @@ class Settings
     public function canLoadScriptsAndStyles(): bool
     {
         return $this->admin->isAdmin() && (
-            $this->url->validatePage('mercadopago-settings') ||
-            $this->url->validateSection('woo-mercado-pago')
-        );
+                $this->url->validatePage('mercadopago-settings') ||
+                $this->url->validateSection('woo-mercado-pago')
+            );
     }
 
     /**
@@ -391,9 +392,9 @@ class Settings
             if (
                 (empty($publicKeyTest) && empty($accessTokenTest)) ||
                 ($validatePublicKeyTest['status'] === 200 &&
-                $validateAccessTokenTest['status'] === 200 &&
-                $validatePublicKeyTest['data']['is_test'] === true &&
-                $validateAccessTokenTest['data']['is_test'] === true)
+                    $validateAccessTokenTest['status'] === 200 &&
+                    $validatePublicKeyTest['data']['is_test'] === true &&
+                    $validateAccessTokenTest['data']['is_test'] === true)
             ) {
                 $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
                 $this->seller->setCredentialsAccessTokenTest($accessTokenTest);

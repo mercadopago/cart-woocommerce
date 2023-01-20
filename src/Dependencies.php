@@ -348,8 +348,7 @@ class Dependencies
             $this->logs,
             $this->notices,
             $this->requester,
-            $this->seller,
-            $this->store
+            $this->seller
         );
     }
 

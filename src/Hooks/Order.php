@@ -27,7 +27,7 @@ class Order
      * @param string $id
      * @param string $title
      * @param string $name
-     * @param array  $args
+     * @param array $args
      * @param string $path
      *
      * @return void
@@ -45,7 +45,7 @@ class Order
      * @param string $id
      * @param string $title
      * @param string $name
-     * @param array  $args
+     * @param array $args
      *
      * @return void
      */
@@ -75,7 +75,7 @@ class Order
      * Register order status transition
      *
      * @param string $toStatus
-     * @param mixed  $callback
+     * @param mixed $callback
      *
      * @return void
      */
@@ -89,7 +89,7 @@ class Order
      *
      * @param string $fromStatus
      * @param string $toStatus
-     * @param mixed  $callback
+     * @param mixed $callback
      *
      * @return void
      */
