@@ -393,8 +393,16 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @return array|string[]
 	 */
 	public function process_payment( $order_id ) {
-		// @codingStandardsIgnoreLine
-		$ticket_checkout = $_POST['mercadopago_ticket'];
+		// phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! isset( $_POST['mercadopago_ticket'] ) || ! $this->validate_nonce_process() ) {
+			return $this->process_result_fail(
+				__FUNCTION__,
+				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' ),
+				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' )
+			);
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$ticket_checkout = map_deep($_POST['mercadopago_ticket'], 'sanitize_text_field');
 		$this->log->write_log( __FUNCTION__, 'Ticket POST: ' . wp_json_encode( $ticket_checkout, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
 
 		$order          = wc_get_order( $order_id );
@@ -548,18 +556,35 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 			}
 		} else {
 			// Process when fields are incomplete.
-			wc_add_notice(
-				'<p>' .
-				__( 'A problem occurred when processing your payment. Please try again.', 'woocommerce-mercadopago' ) .
-				'</p>',
-				'error'
-			);
-
-			return array(
-				'result'   => 'fail',
-				'redirect' => '',
+			return $this->process_result_fail(
+				__FUNCTION__,
+				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' ),
+				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' )
 			);
 		}
+	}
+
+		/**
+	 * Process if result is fail
+	 *
+	 * @param $function
+	 * @param $log_message
+	 * @param $notice_message
+	 *
+	 * @return string[]
+	 */
+	protected function process_result_fail( $function, $log_message, $notice_message ) {
+		$this->log->write_log( $function, $log_message );
+
+		wc_add_notice(
+			'<p>' . $notice_message . '</p>',
+			'error'
+		);
+
+		return array(
+			'result'   => 'fail',
+			'redirect' => '',
+		);
 	}
 
 	/**
@@ -656,5 +681,19 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		 * @since 3.0.1
 		 */
 		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/icons/ticket_mlb.png', plugin_dir_path( __FILE__ ) ) );
+	}
+
+			/**
+	 * Is available?
+	 *
+	 * @return bool
+	 */
+	public function validate_nonce_process() {
+		if ( ( ! isset($_POST['woocommerce-process-checkout-nonce']) && ! isset($_POST['woocommerce-pay-nonce']) )
+		|| ( ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-process-checkout-nonce'] ), 'woocommerce-process_checkout' ) && ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-pay-nonce'] ), 'woocommerce-pay' ) ) ) {
+			$this->log->write_log(__FUNCTION__, 'Security nonce check failed.');
+			return false;
+		}
+		return true;
 	}
 }

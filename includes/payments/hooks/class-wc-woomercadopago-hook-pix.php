@@ -43,8 +43,8 @@ class WC_WooMercadoPago_Hook_Pix extends WC_WooMercadoPago_Hook_Abstract {
 			return;
 		}
 
-		// @codingStandardsIgnoreLine
-		$pix_checkout = $_POST['mercadopago_pix'];
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$pix_checkout = map_deep( $_POST['mercadopago_pix'], 'sanitize_text_field' );
 		parent::add_discount_abst( $pix_checkout );
 	}
 

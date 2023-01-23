@@ -1,5 +1,10 @@
 CHANGELOG:
 == Changelog ==
+
+= v6.7.0 (23/01/2023) =
+* Changes
+- Added security improvements
+
 = v6.6.0 (11/01/2023) =
 * Features
 - Added manual notification sync

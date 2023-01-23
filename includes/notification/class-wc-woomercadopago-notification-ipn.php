@@ -24,8 +24,7 @@ class WC_WooMercadoPago_Notification_IPN extends WC_WooMercadoPago_Notification_
 	public function check_ipn_response() {
 		parent::check_ipn_response();
 
-		// @codingStandardsIgnoreLine
-		$data = $_GET;
+		$data = $_GET; // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( isset( $data['data_id'] ) && isset( $data['type'] ) ) {
 			status_header( 200, 'OK' );

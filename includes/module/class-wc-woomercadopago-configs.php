@@ -122,10 +122,8 @@ class WC_WooMercadoPago_Configs {
 	 */
 	public function notice_update_access_token() {
 		$type    = 'error';
-		$message = __( 'Update your credentials with the Access Token and Public Key, you need them to continue receiving payments!', 'woocommerce-mercadopago' );
-		// @todo need fix HTML escaping to template
-		// @codingStandardsIgnoreLine
-		WC_WooMercadoPago_Notices::get_alert_frame( $message, $type );
+		$message = __( 'Update your credentials with the Access Token and Public Key, you need them to continue receiving payments!', 'woocommerce-mercadopago');
+		echo wp_kses_post( WC_WooMercadoPago_Notices::get_alert_frame($message, $type ));
 	}
 
 	/**
@@ -133,10 +131,8 @@ class WC_WooMercadoPago_Configs {
 	 */
 	public function notice_https() {
 		$type    = 'notice-warning';
-		$message = __( 'The store should have HTTPS in order to activate both Checkout Personalizado and Ticket Checkout.', 'woocommerce-mercadopago' );
-		// @todo need fix HTML escaping to template
-		// @codingStandardsIgnoreLine
-		WC_WooMercadoPago_Notices::get_alert_frame( $message, $type );
+		$message = __( 'The store should have HTTPS in order to activate both Checkout Personalizado and Ticket Checkout.', 'woocommerce-mercadopago');
+		echo wp_kses_post(WC_WooMercadoPago_Notices::get_alert_frame($message, $type ));
 	}
 
 	private function must_not_show_notice() {
@@ -162,9 +158,7 @@ class WC_WooMercadoPago_Configs {
 		if ( $this->must_not_show_notice() ) {
 			return false;
 		}
-		// @todo need fix HTML escaping to template
-		// @codingStandardsIgnoreLine
-		echo WC_WooMercadoPago_Review_Notice::get_plugin_review_banner();
+		echo wp_kses_post( WC_WooMercadoPago_Review_Notice::get_plugin_review_banner());
 	}
 
 	/**
@@ -176,9 +170,7 @@ class WC_WooMercadoPago_Configs {
 		if ( $this->must_not_show_saved_cards_notice() ) {
 			return false;
 		}
-		// @todo need fix HTML escaping to template
-		// @codingStandardsIgnoreLine
-		echo WC_WooMercadoPago_Saved_Cards::get_plugin_review_banner();
+		echo wp_kses_post( WC_WooMercadoPago_Saved_Cards::get_plugin_review_banner());
 	}
 
 	/**

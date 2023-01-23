@@ -95,8 +95,8 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 			if ( empty( $this->activated_payment ) || ! is_array( $this->activated_payment ) || ! in_array( 'pix', $this->activated_payment['pix'], true ) ) {
 				$form_fields['checkout_steps_pix'] = $this->field_checkout_steps_pix();
 
-			  // @codingStandardsIgnoreLine
-			  if ( isset( $_GET['section'] ) && $_GET['section'] == $this->id ) {
+				// phpcs:ignore WordPress.Security.NonceVerification
+				if ( isset( $_GET['section'] ) && $_GET['section'] === $this->id ) {
 					add_action( 'admin_notices', array( $this, 'enable_pix_payment_notice' ) );
 				}
 			}
@@ -386,8 +386,22 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 	 * @return array|string[]
 	 */
 	public function process_payment( $order_id ) {
-		// @codingStandardsIgnoreLine
-		$pix_checkout = $_POST;
+		// phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! isset( $_POST, $_POST['woocommerce-process-checkout-nonce'] ) || ! $this->validate_nonce_process() ) {
+
+			wc_add_notice(
+				'<p>' .
+				__( 'A problem occurred when processing your payment. Please try again.', 'woocommerce-mercadopago' ) .
+				'</p>',
+				'error'
+			);
+			return array(
+				'result'   => 'fail',
+				'redirect' => '',
+			);
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$pix_checkout = map_deep($_POST, 'sanitize_text_field');
 		$this->log->write_log( __FUNCTION__, 'Payment via Pix POST: ' );
 		$order          = wc_get_order( $order_id );
 		$shipping_taxes = floatval($order->get_shipping_total());
@@ -660,5 +674,19 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 		 * @since 3.0.1
 		 */
 		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/icons/pix.png', plugin_dir_path( __FILE__ ) ) );
+	}
+
+			/**
+	 * Is available?
+	 *
+	 * @return bool
+	 */
+	public function validate_nonce_process() {
+		if ( ( ! isset($_POST['woocommerce-process-checkout-nonce']) && ! isset($_POST['woocommerce-pay-nonce']) )
+		|| ( ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-process-checkout-nonce'] ), 'woocommerce-process_checkout' ) && ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-pay-nonce'] ), 'woocommerce-pay' ) ) ) {
+			$this->log->write_log(__FUNCTION__, 'Security nonce check failed.');
+			return false;
+		}
+		return true;
 	}
 }

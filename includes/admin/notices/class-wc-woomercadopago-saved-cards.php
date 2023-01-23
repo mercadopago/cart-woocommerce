@@ -128,10 +128,8 @@ class WC_WooMercadoPago_Saved_Cards {
 	public static function should_be_inline_style() {
 		return class_exists( 'WC_WooMercadoPago_Module' )
 			&& WC_WooMercadoPago_Module::is_wc_new_version()
-			// @codingStandardsIgnoreLine
-			&& isset( $_GET['page'] )
-			// @codingStandardsIgnoreLine
-			&& 'wc-settings' === sanitize_key( $_GET['page'] );
+			&& isset( $_GET['page']) // phpcs:ignore WordPress.Security.NonceVerification
+			&& 'wc-settings' === sanitize_key( $_GET['page'] ); // phpcs:ignore WordPress.Security.NonceVerification
 	}
 
 	/**

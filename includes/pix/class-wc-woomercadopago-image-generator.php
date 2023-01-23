@@ -65,6 +65,7 @@ class WC_WooMercadoPago_Image_Generator {
 		$pix_base64 = $payment_data['response']['point_of_interaction']['transaction_data']['qr_code_base64'];
 
 		header('Content-type: image/png');
+
 		// @codingStandardsIgnoreLine
 		$pix_qr_image = base64_decode($pix_base64);
 		$pix_qr_image = imagecreatefromstring($pix_qr_image);
@@ -85,8 +86,8 @@ class WC_WooMercadoPago_Image_Generator {
 	 * @return array
 	 */
 	public static function get_access_data() {
-		// @codingStandardsIgnoreLine
-		$id_payment = $_GET['id'];
+
+		$id_payment = sanitize_key( isset($_GET['id'])); // phpcs:disable WordPress.Security.NonceVerification
 
 		if ( is_null($id_payment) || empty($id_payment) || ! is_numeric($id_payment) ) {
 			self::get_error_image();
