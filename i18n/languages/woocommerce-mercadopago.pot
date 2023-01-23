@@ -7,7 +7,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Mercado Pago Developers <woocommerce.dev@mercadopago.com>\n"
-"POT-Creation-Date: 2023-01-20 12:58+0000\n"
+"POT-Creation-Date: 2023-01-23 13:40+0000\n"
 "Project-Id-Version: undefined\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -752,30 +752,74 @@ msgstr ""
 msgid "click here."
 msgstr ""
 
-#: ../../src/Translations/CheckoutTranslations.php:32
+#: ../../src/Translations/PublicTranslations.php:32
 msgid "Pix in Test Mode"
 msgstr ""
 
-#: ../../src/Translations/CheckoutTranslations.php:33
+#: ../../src/Translations/PublicTranslations.php:33
 msgid "You can test the flow to generate a code, but you cannot finalize the payment."
 msgstr ""
 
-#: ../../src/Translations/CheckoutTranslations.php:34
+#: ../../src/Translations/PublicTranslations.php:34
 msgid "Pay instantly"
 msgstr ""
 
-#: ../../src/Translations/CheckoutTranslations.php:35
+#: ../../src/Translations/PublicTranslations.php:35
 msgid "By confirming your purchase, we will show you a code to make the payment."
 msgstr ""
 
-#: ../../src/Translations/CheckoutTranslations.php:36
+#: ../../src/Translations/PublicTranslations.php:36
 msgid "Pix logo"
 msgstr ""
 
-#: ../../src/Translations/CheckoutTranslations.php:37
+#: ../../src/Translations/PublicTranslations.php:37
 msgid "By continuing, you agree with our"
 msgstr ""
 
-#: ../../src/Translations/CheckoutTranslations.php:38
+#: ../../src/Translations/PublicTranslations.php:38
 msgid "Terms and conditions"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:39, ../../src/Translations/PublicTranslations.php:48
+msgid "Code valid for "
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:40
+msgid "Now you just need to pay with Pix to finalize your purchase"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:41
+msgid "How to pay with Pix:"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:42
+msgid "Go to your bank's app or website"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:43
+msgid "Search for the option to pay with Pix"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:44
+msgid "Scan the QR code or Pix code"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:45
+msgid "Done! You will see the payment confirmation"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:46
+msgid "Value: "
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:47
+msgid "Scan the QR code:"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:49
+msgid "If you prefer, you can pay by copying and pasting the following code"
+msgstr ""
+
+#: ../../src/Translations/PublicTranslations.php:50
+msgid "Copy code"
 msgstr ""

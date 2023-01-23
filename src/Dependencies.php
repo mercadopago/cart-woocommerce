@@ -31,7 +31,7 @@ use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
-use MercadoPago\Woocommerce\Translations\CheckoutTranslations;
+use MercadoPago\Woocommerce\Translations\PublicTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -85,9 +85,9 @@ class Dependencies
     public $template;
 
     /**
-     * @var CheckoutTranslations
+     * @var PublicTranslations
      */
-    public $checkoutTranslations;
+    public $publicTranslations;
 
     /**
      * @var Order
@@ -181,33 +181,33 @@ class Dependencies
     {
         global $woocommerce;
 
-        $this->woocommerce          = $woocommerce;
-        $this->cache                = new Cache();
-        $this->strings              = new Strings();
-        $this->admin                = new Admin();
-        $this->endpoints            = new Endpoints();
-        $this->options              = new Options();
-        $this->plugin               = new Plugin();
-        $this->product              = new Product();
-        $this->template             = new Template();
-        $this->checkoutTranslations = new CheckoutTranslations();
-        $this->order                = $this->setOrder();
-        $this->requester            = $this->setRequester();
-        $this->store                = $this->setStore();
-        $this->seller               = $this->setSeller();
-        $this->country              = $this->setCountry();
-        $this->links                = $this->setLinks();
-        $this->url                  = $this->setUrl();
-        $this->scripts              = $this->setScripts();
-        $this->checkout             = $this->setCheckout();
-        $this->gateway              = $this->setGateway();
-        $this->logs                 = $this->setLogs();
-        $this->nonce                = $this->setNonce();
-        $this->currentUser          = $this->setCurrentUser();
-        $this->adminTranslations    = $this->setTranslations();
-        $this->notices              = $this->setNotices();
-        $this->currency             = $this->setCurrency();
-        $this->settings             = $this->setSettings();
+        $this->woocommerce        = $woocommerce;
+        $this->cache              = new Cache();
+        $this->strings            = new Strings();
+        $this->admin              = new Admin();
+        $this->endpoints          = new Endpoints();
+        $this->options            = new Options();
+        $this->plugin             = new Plugin();
+        $this->product            = new Product();
+        $this->template           = new Template();
+        $this->publicTranslations = new PublicTranslations();
+        $this->order              = $this->setOrder();
+        $this->requester          = $this->setRequester();
+        $this->store              = $this->setStore();
+        $this->seller             = $this->setSeller();
+        $this->country            = $this->setCountry();
+        $this->links              = $this->setLinks();
+        $this->url                = $this->setUrl();
+        $this->scripts            = $this->setScripts();
+        $this->checkout           = $this->setCheckout();
+        $this->gateway            = $this->setGateway();
+        $this->logs               = $this->setLogs();
+        $this->nonce              = $this->setNonce();
+        $this->currentUser        = $this->setCurrentUser();
+        $this->adminTranslations  = $this->setTranslations();
+        $this->notices            = $this->setNotices();
+        $this->currency           = $this->setCurrency();
+        $this->settings           = $this->setSettings();
     }
 
     /**

@@ -336,11 +336,11 @@ class Seller
 
             if (in_array($paymentMethod['id'], $acceptedPaymentMethods, true)) {
                 $serializedPaymentMethodPix[$paymentMethod['id']] = $serializedPaymentMethods;
+                $this->{$acceptedPaymentMethods[$paymentMethod['id']]}($serializedPaymentMethodPix, true);
             }
         }
 
         $this->setCheckoutPaymentMethods($serializedPaymentMethods);
-        $this->{$acceptedPaymentMethods[$paymentMethod['id']]}($serializedPaymentMethodPix, true);
     }
 
     /**
@@ -446,7 +446,6 @@ class Seller
         }
     }
 
-
     /**
      * Get Payment Methods
      *
@@ -473,7 +472,7 @@ class Seller
             }
 
             if ($publicKey) {
-                $uri = $uri . '?pubßlic_key=' . $publicKey;
+                $uri = $uri . '?public_key=' . $publicKey;
             }
 
             $response           = $this->requester->get($uri, $headers);

@@ -27,7 +27,7 @@ use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
-use MercadoPago\Woocommerce\Translations\CheckoutTranslations;
+use MercadoPago\Woocommerce\Translations\PublicTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -106,10 +106,9 @@ class WoocommerceMercadoPago
     public $template;
 
     /**
-     * @var CheckoutTranslations
+     * @var PublicTranslations
      */
-    public $checkoutTranslations;
-
+    public $publicTranslations;
     /**
      * @var Order
      */
@@ -281,43 +280,43 @@ class WoocommerceMercadoPago
         $dependencies = new Dependencies();
 
         // Globals
-        $this->woocommerce         = $dependencies->woocommerce;
+        $this->woocommerce       = $dependencies->woocommerce;
 
         // Configs
-        $this->seller               = $dependencies->seller;
-        $this->store                = $dependencies->store;
+        $this->seller             = $dependencies->seller;
+        $this->store              = $dependencies->store;
 
         // Helpers
-        $this->cache                = $dependencies->cache;
-        $this->country              = $dependencies->country;
-        $this->currency             = $dependencies->currency;
-        $this->currentUser          = $dependencies->currentUser;
-        $this->links                = $dependencies->links;
-        $this->requester            = $dependencies->requester;
-        $this->strings              = $dependencies->strings;
-        $this->url                  = $dependencies->url;
-        $this->nonce                = $dependencies->nonce;
+        $this->cache              = $dependencies->cache;
+        $this->country            = $dependencies->country;
+        $this->currency           = $dependencies->currency;
+        $this->currentUser        = $dependencies->currentUser;
+        $this->links              = $dependencies->links;
+        $this->requester          = $dependencies->requester;
+        $this->strings            = $dependencies->strings;
+        $this->url                = $dependencies->url;
+        $this->nonce              = $dependencies->nonce;
 
         // Hooks
-        $this->admin                = $dependencies->admin;
-        $this->checkout             = $dependencies->checkout;
-        $this->endpoints            = $dependencies->endpoints;
-        $this->gateway              = $dependencies->gateway;
-        $this->options              = $dependencies->options;
-        $this->order                = $dependencies->order;
-        $this->plugin               = $dependencies->plugin;
-        $this->product              = $dependencies->product;
-        $this->scripts              = $dependencies->scripts;
-        $this->template             = $dependencies->template;
+        $this->admin              = $dependencies->admin;
+        $this->checkout           = $dependencies->checkout;
+        $this->endpoints          = $dependencies->endpoints;
+        $this->gateway            = $dependencies->gateway;
+        $this->options            = $dependencies->options;
+        $this->order              = $dependencies->order;
+        $this->plugin             = $dependencies->plugin;
+        $this->product            = $dependencies->product;
+        $this->scripts            = $dependencies->scripts;
+        $this->template           = $dependencies->template;
 
         // General
-        $this->logs                 = $dependencies->logs;
-        $this->notices              = $dependencies->notices;
+        $this->logs               = $dependencies->logs;
+        $this->notices            = $dependencies->notices;
 
         // Exclusive
-        $this->settings             = $dependencies->settings;
-        $this->checkoutTranslations = $dependencies->checkoutTranslations;
-        $this->adminTranslations    = $dependencies->adminTranslations;
+        $this->settings           = $dependencies->settings;
+        $this->publicTranslations = $dependencies->publicTranslations;
+        $this->adminTranslations  = $dependencies->adminTranslations;
     }
 
     /**

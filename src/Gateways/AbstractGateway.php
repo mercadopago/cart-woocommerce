@@ -84,12 +84,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
 
         $this->mercadopago->scripts->registerStoreScript(
             'woocommerce-mercadopago-checkout-components',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/public/mp-checkout-components', '.js')
+            $this->mercadopago->url->getPluginFileUrl('assets/js/public/mp-public-components', '.js')
         );
 
         $this->mercadopago->scripts->registerStoreStyle(
             'woocommerce-mercadopago-checkout-components',
-            $this->mercadopago->url->getPluginFileUrl('assets/css/public/mp-checkout-components', '.css')
+            $this->mercadopago->url->getPluginFileUrl('assets/css/public/mp-public-components', '.css')
         );
     }
 
@@ -198,17 +198,18 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      */
     public function loadResearchComponent(): void
     {
-        $parameters = [
+        $this->mercadopago->gateway->registerAfterSettingsCheckout(
+            'admin/components/research-fields.php',
             [
-                'field_key'   => 'mp-public-key-prod',
-                'field_value' => $this->mercadopago->seller->getCredentialsPublicKey(),
-            ],
-            [
-                'field_key'   => 'reference',
-                'field_value' => '{"mp-screen-name":"' . $this->getCheckoutName() . '"}',
+                [
+                    'field_key'   => 'mp-public-key-prod',
+                    'field_value' => $this->mercadopago->seller->getCredentialsPublicKey(),
+                ],
+                [
+                    'field_key'   => 'reference',
+                    'field_value' => '{"mp-screen-name":"' . $this->getCheckoutName() . '"}',
+                ]
             ]
-        ];
-
-        $this->mercadopago->gateway->registerAfterSettingsCheckout('admin/components/research-fields.php', $parameters);
+        );
     }
 }
