@@ -49,10 +49,8 @@ class WC_WooMercadoPago_Init {
 	 */
 	public static function wc_mercado_pago_unsupported_php_version_notice() {
 		$type    = 'error';
-		$message = esc_html__( 'Mercado Pago payments for WooCommerce requires PHP version 5.6 or later. Please update your PHP version.', 'woocommerce-mercadopago' );
-		// @todo using escaping function
-		// @codingStandardsIgnoreLine
-		echo WC_WooMercadoPago_Notices::get_alert_frame( $message, $type );
+		$message = __( 'Mercado Pago payments for WooCommerce requires PHP version 5.6 or later. Please update your PHP version.', 'woocommerce-mercadopago' );
+		echo wp_kses_post( WC_WooMercadoPago_Notices::get_alert_frame( $message, $type ));
 	}
 
 	/**
@@ -61,9 +59,7 @@ class WC_WooMercadoPago_Init {
 	public static function wc_mercado_pago_notify_curl_error() {
 		$type    = 'error';
 		$message = __( 'Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago' );
-		// @todo using escaping function
-		// @codingStandardsIgnoreLine
-		echo WC_WooMercadoPago_Notices::get_alert_frame( $message, $type );
+		echo wp_kses_post( WC_WooMercadoPago_Notices::get_alert_frame( $message, $type ));
 	}
 
 	/**
@@ -72,9 +68,7 @@ class WC_WooMercadoPago_Init {
 	public static function wc_mercado_pago_notify_gd_error() {
 		$type    = 'error';
 		$message = __( 'Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago' );
-		// @todo using escaping function
-		// @codingStandardsIgnoreLine
-		echo WC_WooMercadoPago_Notices::get_alert_frame( $message, $type );
+		echo wp_kses_post( WC_WooMercadoPago_Notices::get_alert_frame( $message, $type ));
 	}
 
 	/**
@@ -108,17 +102,21 @@ class WC_WooMercadoPago_Init {
 	 * @return void
 	 */
 	public static function mp_show_admin_notices() {
-		// @codingStandardsIgnoreLine
-		if ( ! WC_WooMercadoPago_Module::is_wc_new_version() || ( isset( $_GET['page'] ) && 'wc-settings' === $_GET['page'] ) && is_plugin_active( 'woocommerce-admin/woocommerce-admin.php' ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! isset( $_GET['page']) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$page = sanitize_text_field( wp_unslash( $_GET['page'] ) );
+
+		if ( ! WC_WooMercadoPago_Module::is_wc_new_version() || 'wc-settings' === $page && is_plugin_active( 'woocommerce-admin/woocommerce-admin.php' ) ) {
 			return;
 		}
 
 		$notices_array = WC_WooMercadoPago_Module::$notices;
 		$notices       = array_unique( $notices_array, SORT_STRING );
 		foreach ( $notices as $notice ) {
-			// @todo All output should be run through an escaping function
-		    // @codingStandardsIgnoreLine
-			echo $notice;
+			echo wp_kses_post($notice);
 		}
 	}
 
@@ -177,9 +175,7 @@ class WC_WooMercadoPago_Init {
 	public static function wc_mercado_pago_notify_sdk_package_error() {
 		$type    = 'error';
 		$message = __( 'The Mercado Pago module needs the SDK package to work!', 'woocommerce-mercadopago' );
-		// @todo using escaping function
-		// @codingStandardsIgnoreLine
-		echo WC_WooMercadoPago_Notices::get_alert_frame( $message, $type );
+		echo wp_kses_post( WC_WooMercadoPago_Notices::get_alert_frame( $message, $type ));
 	}
 
 	/**

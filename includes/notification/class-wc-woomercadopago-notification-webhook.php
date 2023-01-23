@@ -24,8 +24,7 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
 	public function check_ipn_response() {
 		parent::check_ipn_response();
 
-		// @codingStandardsIgnoreLine
-		$data = $_GET;
+		$data = $_GET; // phpcs:ignore WordPress.Security.NonceVerification
 		header( 'HTTP/1.1 200 OK' );
 
 		if ( isset( $data['coupon_id'] ) && ! empty( $data['coupon_id'] ) ) {

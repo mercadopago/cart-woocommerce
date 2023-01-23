@@ -35,16 +35,16 @@ class WC_WooMercadoPago_Hook_Ticket extends WC_WooMercadoPago_Hook_Abstract {
 	 *  Add Discount
 	 */
 	public function add_discount() {
-		// @codingStandardsIgnoreLine
+
+		// phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['mercadopago_ticket'] ) ) {
 			return;
 		}
 		if ( is_admin() && ! defined( 'DOING_AJAX' ) || is_cart() ) {
 			return;
 		}
-
-		// @codingStandardsIgnoreLine
-		$ticket_checkout = $_POST['mercadopago_ticket'];
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$ticket_checkout = map_deep($_POST['mercadopago_ticket'], 'sanitize_text_field');
 		parent::add_discount_abst( $ticket_checkout );
 	}
 

@@ -439,16 +439,16 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @return array|void
 	 */
 	public function process_payment( $order_id ) {
-		// @codingStandardsIgnoreLine
-		$custom_checkout = $_POST['mercadopago_custom'];
-		if ( ! isset( $custom_checkout ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! isset( $_POST['mercadopago_custom']) || ! $this->validate_nonce_process() ) {
 			return $this->process_result_fail(
 				__FUNCTION__,
 				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' ),
 				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' )
 			);
 		}
-
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$custom_checkout     = map_deep($_POST['mercadopago_custom'], 'sanitize_text_field');
 		$custom_checkout_log = $custom_checkout;
 
 		if ( isset($custom_checkout_log['token']) ) {
@@ -754,5 +754,19 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		 * @since 3.0.1
 		 */
 		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/icons/card.png', plugin_dir_path( __FILE__ ) ) );
+	}
+
+		/**
+	 * Is available?
+	 *
+	 * @return bool
+	 */
+	public function validate_nonce_process() {
+		if ( ( ! isset($_POST['woocommerce-process-checkout-nonce']) && ! isset($_POST['woocommerce-pay-nonce']) )
+		|| ( ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-process-checkout-nonce'] ), 'woocommerce-process_checkout' ) && ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-pay-nonce'] ), 'woocommerce-pay' ) ) ) {
+			$this->log->write_log(__FUNCTION__, 'Security nonce check failed.');
+			return false;
+		}
+		return true;
 	}
 }

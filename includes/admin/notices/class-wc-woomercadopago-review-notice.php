@@ -117,10 +117,10 @@ class WC_WooMercadoPago_Review_Notice {
 	 */
 	public static function get_plugin_review_banner() {
 		$inline = null;
+
 		if (
-			( class_exists( 'WC_WooMercadoPago_Module' ) && WC_WooMercadoPago_Module::is_wc_new_version() ) &&
-			// @codingStandardsIgnoreLine
-			( isset( $_GET['page'] ) && 'wc-settings' === sanitize_key( $_GET['page'] ) )
+			class_exists( 'WC_WooMercadoPago_Module' ) && WC_WooMercadoPago_Module::is_wc_new_version() &&
+				isset( $_GET['page']) && 'wc-settings' === sanitize_key( $_GET['page'] ) // phpcs:ignore WordPress.Security.NonceVerification
 		) {
 			$inline = 'inline';
 		}

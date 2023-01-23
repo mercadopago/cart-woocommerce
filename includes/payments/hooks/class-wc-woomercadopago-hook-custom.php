@@ -34,8 +34,6 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 		add_action(
 			'woocommerce_receipt_' . $this->payment->id,
 			function ( $order ) {
-				// @todo using escaping function
-				// @codingStandardsIgnoreLine
 				$this->render_order_form( $order );
 			}
 		);
@@ -59,7 +57,7 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 	 *  Add Discount
 	 */
 	public function add_discount() {
-		// @codingStandardsIgnoreLine
+		// phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! isset( $_POST['mercadopago_custom'] ) ) {
 			return;
 		}
@@ -67,8 +65,8 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 			return;
 		}
 
-		// @codingStandardsIgnoreLine
-		$custom_checkout = $_POST['mercadopago_custom'];
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$custom_checkout = map_deep($_POST['mercadopago_custom'], 'sanitize_text_field');
 		parent::add_discount_abst( $custom_checkout );
 	}
 

@@ -111,9 +111,9 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 			add_action( 'mercadopago_test_mode_update', array( $this, 'update_credential_production' ) );
 
 			if ( is_admin() ) {
-				// validate credentials.
+					// validate credentials.
 				if ( isset( $_REQUEST['section'] ) ) { // phpcs:disable WordPress.Security.NonceVerification
-					$credentials = new WC_WooMercadoPago_Credentials();
+						$credentials = new WC_WooMercadoPago_Credentials();
 					if ( ! $credentials->token_is_valid() ) {
 						add_action( 'admin_notices', array( $this, 'enable_payment_notice' ) );
 					}
@@ -826,7 +826,7 @@ class WC_WooMercadoPago_Module extends WC_WooMercadoPago_Configs {
 	public function enable_payment_notice() {
 		$type    = 'notice-warning';
 		$message = __( 'Fill in your credentials to enable payment methods.', 'woocommerce-mercadopago' );
-		WC_WooMercadoPago_Notices::get_alert_frame( $message, $type );
+		echo wp_kses_post( WC_WooMercadoPago_Notices::get_alert_frame( $message, $type ));
 	}
 
 	/**

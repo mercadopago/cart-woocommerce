@@ -91,10 +91,10 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 		// @todo need to be analyzed better
 		// @codingStandardsIgnoreLine
 		@ob_clean();
-		// @todo check nonce
-		// @codingStandardsIgnoreLine
+		// phpcs:ignore WordPress.Security.NonceVerification
 		$this->log->write_log( __FUNCTION__, 'received _get content: ' . wp_json_encode( $_GET, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
 	}
+
 
 	/**
 	 * Process successful request
@@ -223,9 +223,7 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 	 */
 	public function set_response( $code, $code_message, $body ) {
 		status_header( $code, $code_message );
-		// @todo need to implements better
-		// @codingStandardsIgnoreLine
-		die( $body );
+		die ( wp_kses_post ($body ));
 	}
 
 	public function update_meta( $order, $key, $value ) {

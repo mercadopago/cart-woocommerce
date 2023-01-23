@@ -76,13 +76,11 @@ class WC_WooMercadoPago_Notices {
 	 * @param string $type type.
 	 */
 	public static function get_alert_frame( $message, $type ) {
+
 		$inline = '';
 		if (
 			( class_exists( 'WC_WooMercadoPago_Module' ) && WC_WooMercadoPago_Module::is_wc_new_version() )
-			&&
-			// @codingStandardsIgnoreLine
-			( isset( $_GET['page'] ) &&	'wc-settings' === sanitize_key( $_GET['page'] )
-			)
+			&& 'wc-settings' === sanitize_key( isset($_GET['page']) ) // phpcs:disable WordPress.Security.NonceVerification
 		) {
 			$inline = 'inline';
 		}
@@ -132,10 +130,8 @@ class WC_WooMercadoPago_Notices {
 		$inline = '';
 		if (
 			( class_exists( 'WC_WooMercadoPago_Module' ) && WC_WooMercadoPago_Module::is_wc_new_version() )
-			&&
-			// @codingStandardsIgnoreLine
-			( isset( $_GET['page'] ) && 'wc-settings' === sanitize_key( $_GET['page'] )
-			)
+			// phpcs:disable WordPress.Security.NonceVerification
+			&& 'wc-settings' === sanitize_key( isset($_GET['page']) )
 		) {
 			$inline = 'inline';
 		}

@@ -624,13 +624,14 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	 * @return bool
 	 */
 	public function validate_section() {
+
 		if (
-				// @codingStandardsIgnoreLine
+				// phpcs:ignore WordPress.Security.NonceVerification
 				isset( $_GET['section'] ) && ! empty( $_GET['section']
 				)
 			&& (
-				// @codingStandardsIgnoreLine
-				$this->id !== $_GET['section'] ) && ! in_array( $_GET['section'], self::ALLOWED_CLASSES )
+				// phpcs:ignore WordPress.Security.NonceVerification
+				$this->id !== $_GET['section'] ) && ! in_array( $_GET['section'], self::ALLOWED_CLASSES, true )
 			) {
 			return false;
 		}
@@ -644,8 +645,8 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	 * @return bool
 	 */
 	public function is_manage_section() {
-		// @codingStandardsIgnoreLine
-		if ( ! isset( $_GET['section'] ) || ( $this->id !== $_GET['section'] ) && ! in_array( $_GET['section'], self::ALLOWED_CLASSES )
+		// phpcs:ignore WordPress.Security.NonceVerification
+		if ( ! isset( $_GET['section'] ) || ( $this->id !== $_GET['section'] ) && ! in_array( $_GET['section'], self::ALLOWED_CLASSES, true )
 		) {
 			return false;
 		}

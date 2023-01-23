@@ -19,20 +19,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WC_WooMercadoPago_Helper_Current_Url {
 
 	public static function get_current_page() {
-		// @codingStandardsIgnoreLine
-		$current_page = isset( $_GET['page'] ) ? sanitize_text_field( $_GET['page'] ) : '';
+		$current_page = isset( $_GET['page'] ) ? sanitize_text_field( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		return $current_page;
 	}
 
 	public static function get_current_section() {
-		// @codingStandardsIgnoreLine
-		$current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['section'] ) : '';
+		$current_section = isset( $_GET['section'] ) ? sanitize_text_field( $_GET['section'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		return $current_section;
 	}
 
 	public static function get_current_url() {
-		// @codingStandardsIgnoreLine
-		$current_url = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( $_SERVER['REQUEST_URI'] ) : '';
+		$current_url = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( $_SERVER['REQUEST_URI'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		return $current_url;
 	}
 

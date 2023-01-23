@@ -35,8 +35,7 @@ class WC_WooMercadoPago_Hook_Basic extends WC_WooMercadoPago_Hook_Abstract {
 		add_action(
 			'woocommerce_receipt_' . $this->payment->id,
 			function ( $order ) {
-				// @todo using escaping function
-				// @codingStandardsIgnoreLine
+				// phpcs:ignore WordPress.Security.EscapeOutput
 				echo $this->render_order_form( $order );
 			}
 		);
@@ -69,17 +68,16 @@ class WC_WooMercadoPago_Hook_Basic extends WC_WooMercadoPago_Hook_Abstract {
 
 		if ( 'modal' === $this->payment->method && $url ) {
 			$this->payment->log->write_log( __FUNCTION__, 'rendering Mercado Pago lightbox (modal window).' );
-			// @todo use wp_enqueue_css
-			// @codingStandardsIgnoreLine
-			$html  = '<style type="text/css">
+
+			$html = '<style type="text/css">
             #MP-Checkout-dialog #MP-Checkout-IFrame { bottom: 0px !important; top:50%!important; margin-top: -280px !important; height: 590px !important; }
             </style>';
 			// mlstatic is a domain for the Mercado Pago CDN.
 			// This script is used to render the checkout pro in the modal function, avoiding redirection from the store to Mercado Pago.
 			// @todo use wp_enqueue_script
-			// @codingStandardsIgnoreLine
-			$html .= '<script type="text/javascript" src="https://secure.mlstatic.com/mptools/render.js"></script>
-					<script type="text/javascript">
+			// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
+			$html .= '<script type="text/javascript" src="https://secure.mlstatic.com/mptools/render.js"></script>';
+			$html .= '<script type="text/javascript">
 						(function() { $MPC.openCheckout({ url: "' . esc_url( $url ) . '", mode: "modal" }); })();
 					</script>';
 			$html .= '<a id="submit-payment" href="' . esc_url( $url ) . '" name="MP-Checkout" class="button alt" mp-mode="modal">' .
