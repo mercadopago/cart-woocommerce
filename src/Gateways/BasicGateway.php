@@ -23,15 +23,17 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
     public function __construct()
     {
         parent::__construct();
+        $this->translations = $this->mercadopago->storeTranslations->checkoutBasic;
 
         $this->id                 = self::ID;
         $this->icon               = null;
-        $this->title              = 'Checkout Pro';
-        $this->description        = 'Debit, Credit and invoice in Mercado Pago environment';
-        $this->method_title       = 'Mercado Pago - Checkout Pro';
+        $this->title              = $this->translations['gateway_title'];
+        $this->description        = $this->translations['gateway_dscription'];
+        $this->method_title       = $this->translations['method_title'];
         $this->method_description = $this->description;
         $this->has_fields         = true;
         $this->supports           = ['products', 'refunds'];
+        $this->icon               = $this->get_checkout_icon();
 
         $this->init_form_fields();
         $this->init_settings();
@@ -40,6 +42,20 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
+
+	/**
+	 * Get Mercado Pago Icon
+	 *
+	 * @return mixed
+	 */
+	private function get_checkout_icon() {
+		/**
+		 * Add Mercado Pago icon.
+		 *
+		 * @since 3.0.1
+		 */
+		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/checkouts/basic/mercadopago.png', plugin_dir_path( __FILE__ ) ) );
+	}
 
     /**
      * Init form fields for checkout configuration
@@ -51,17 +67,17 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
         $this->form_fields = [
             'config_header' => [
                 'type'        => 'mp_config_title',
-                'title'       => 'Checkout Pro',
-                'description' => 'With Checkout Pro you sell with all the safety inside Mercado Pago environment.',
+                'title'       => $this->translations['config_header_title'],
+                'description' => $this->translations['config_header_desc'],
             ],
             'enabled'       => [
                 'type'         => 'mp_toggle_switch',
-                'title'        => 'Enable the checkout',
-                'subtitle'     => 'By disabling it, you will disable all payment methods of this checkout.',
+                'title'        => $this->translations['config_enabled_title'],
+                'subtitle'     => $this->translations['config_enabled_subtitle'],
                 'default'      => 'no',
                 'descriptions' => [
-                    'enabled'  => 'The checkout is <b>enabled</b>.',
-                    'disabled' => 'The checkout is <b>disabled</b>.',
+                    'enabled'  => $this->translations['config_enabled_enabled'],
+                    'disabled' => $this->translations['config_enabled_disabled'],
                 ],
             ],
             'title'         => [
@@ -180,6 +196,7 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
         return $default;
     }
 
+    //@TODO change getOption
     /**
 	 * Field payments
 	 *
@@ -255,6 +272,7 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
         parent::payment_scripts($gatewaySection);
     }
 
+    //@TODO remove plugins_url, change plugin_version and fix link_terms_and_conditions
     /**
      * Render gateway checkout template
      *
@@ -262,9 +280,42 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
      */
     public function payment_fields(): void
     {
+        $this->mercadopago->scripts->registerStoreStyle(
+            'woocommerce-mercadopago-narciso-styles',
+            plugins_url('../assets/css/checkout/mp-plugins-components.css', plugin_dir_path( __FILE__ ))
+        );
+        $this->mercadopago->scripts->registerStoreScript(
+            'woocommerce-mercadopago-narciso-scripts',
+            plugins_url('../assets/js/checkout/mp-plugins-components.js', plugin_dir_path( __FILE__ ))
+        );
+
+		$method         = $this->settings['method'];
+		$siteId         = strtoupper( $this->mercadopago->seller->getSiteId() );
+		$test_mode_link = $this->get_mp_devsite_link( $siteId );
+
+		$payment_methods       = $this->get_payment_methods();
+		$payment_methods_title = count($payment_methods) !== 0 ? 'Available payment methods' : '';
+
+		$checkout_benefits_items = $this->get_benefits( $siteId );
+
+		$parameters = [
+			'method'                    => $method,
+			'test_mode'                 => ! $this->mercadopago->store->getCheckboxCheckoutProductionMode(),
+			'test_mode_link'            => $test_mode_link,
+			'plugin_version'            => '1.0.0',
+			'checkout_redirect_src'     => plugins_url( '../assets/images/checkouts/basic/cho-pro-redirect-v2.png', plugin_dir_path( __FILE__ ) ),
+			'payment_methods'           => wp_json_encode( $payment_methods ),
+			'payment_methods_title'     => $payment_methods_title,
+			'checkout_benefits_items'   => wp_json_encode( $checkout_benefits_items ),
+			'text_prefix'               => 'By continuing, you agree to our ',
+			'link_terms_and_conditions' => 'https://www.google.com.br',
+            'text_suffix'               => 'Terms and Conditions',
+		];
+
         $this->mercadopago->template->getWoocommerceTemplate(
-            'checkout.php',
-            dirname(__FILE__) . '/../../templates/public/gateways/'
+            'basic-checkout.php',
+            dirname(__FILE__) . '/../../templates/public/gateways/',
+            $parameters
         );
     }
 
@@ -316,4 +367,177 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
 
         wp_send_json_success($response, $status);
     }
+
+	/**
+	 * Get benefits items
+	 *
+	 * @param string $site
+	 * @return array
+	 */
+	private function get_benefits( $site ) {
+		$benefits = array(
+			'MLB' => array(
+				array(
+					'title'    => __('Easy login', 'woocommerce-mercadopago'),
+					'subtitle' => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-phone.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone image'
+					)
+				),
+				array(
+					'title'    => __('Quick payments', 'woocommerce-mercadopago'),
+					'subtitle' => __('Use your saved cards, Pix or available balance.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-wallet.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue wallet image'
+					)
+				),
+				array(
+					'title'    => __('Protected purchases', 'woocommerce-mercadopago'),
+					'subtitle' => __('Get your money back in case you don\'t receive your product.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-protection.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue protection image'
+					)
+				)
+			),
+			'MLM' => array(
+				array(
+					'title'    => __('Easy login', 'woocommerce-mercadopago'),
+					'subtitle' => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-phone.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone image'
+					)
+				),
+				array(
+					'title'    => __('Quick payments', 'woocommerce-mercadopago'),
+					'subtitle' => __('Use your available Mercado Pago Wallet balance or saved cards.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-wallet.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue wallet image'
+					)
+				),
+				array(
+					'title'    => __('Protected purchases', 'woocommerce-mercadopago'),
+					'subtitle' => __('Get your money back in case you don\'t receive your product.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-protection.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue protection image'
+					)
+				)
+			),
+			'MLA' => array(
+				array(
+					'title'    => __('Quick payments', 'woocommerce-mercadopago'),
+					'subtitle' => __('Use your available money or saved cards.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-wallet.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue wallet image'
+					)
+				),
+				array(
+					'title'    => __('Installments option', 'woocommerce-mercadopago'),
+					'subtitle' => __('Pay with or without a credit card.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-phone-installments.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone installments image'
+					)
+				),
+				array(
+					'title'    => __('Reliable purchases', 'woocommerce-mercadopago'),
+					'subtitle' => __('Get help if you have a problem with your purchase.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-protection.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue protection image'
+					)
+				)
+			),
+			'ROLA' => array(
+				array(
+					'title'    => __('Easy login', 'woocommerce-mercadopago'),
+					'subtitle' => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-phone.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone image'
+					)
+				),
+				array(
+					'title'    => __('Quick payments', 'woocommerce-mercadopago'),
+					'subtitle' => __('Use your available money or saved cards.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-wallet.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue wallet image'
+					)
+				),
+				array(
+					'title'    => __('Installments option', 'woocommerce-mercadopago'),
+					'subtitle' => __('Interest-free installments with selected banks.', 'woocommerce-mercadopago'),
+					'image'    => array(
+						'src' => plugins_url( '../assets/images/checkouts/basic/blue-phone-installments.png', plugin_dir_path(__FILE__) ),
+						'alt' => 'Blue phone installments image'
+					)
+				)
+			),
+		);
+
+		return array_key_exists( $site, $benefits ) ? $benefits[ $site ] : $benefits[ 'ROLA' ];
+	}
+
+	/**
+	 * Get Mercado Pago Devsite Page Link
+	 *
+	 * @param String $country Country Acronym
+	 *
+	 * @return String
+	 */
+	private static function get_mp_devsite_link( $country ) {
+		$country_links = [
+			'mla' => 'https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/testing',
+			'mlb' => 'https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/testing',
+			'mlc' => 'https://www.mercadopago.cl/developers/es/guides/plugins/woocommerce/testing',
+			'mco' => 'https://www.mercadopago.com.co/developers/es/guides/plugins/woocommerce/testing',
+			'mlm' => 'https://www.mercadopago.com.mx/developers/es/guides/plugins/woocommerce/testing',
+			'mpe' => 'https://www.mercadopago.com.pe/developers/es/guides/plugins/woocommerce/testing',
+			'mlu' => 'https://www.mercadopago.com.uy/developers/es/guides/plugins/woocommerce/testing',
+		];
+
+		$link = array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
+
+		return $link;
+	}
+
+	/**
+	 * Get payment methods
+	 *
+	 * @return array
+	 */
+	private function get_payment_methods() {
+        //@TODO change getOption
+		$payment_methods_options = get_option( '_checkout_payments_methods', '' );
+		$payment_methods         = [];
+
+        //@TODO add credits helper
+        /*
+		if ( $this->credits_helper->is_credits() ) {
+			$payment_methods[] = [
+				'src' => plugins_url( '../assets/images/mercado-credito.png', plugin_dir_path(__FILE__) ),
+				'alt' => 'Credits image'
+			];
+		}
+        */
+
+		foreach ( $payment_methods_options as $payment_method_option ) {
+            //@TODO change getOption
+			if ( 'yes' === $this->get_option( $payment_method_option[ 'config' ], '' ) ) {
+				$payment_methods[] = [
+					'src' => $payment_method_option[ 'image' ],
+					'alt' => $payment_method_option[ 'id' ]
+				];
+			}
+		}
+
+		return $payment_methods;
+	}
 }

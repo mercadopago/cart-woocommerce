@@ -181,7 +181,12 @@ class WoocommerceMercadoPago
     /**
      * @var AdminTranslations
      */
-    public $translations;
+    public $adminTranslations;
+
+    /**
+     * @var storeTranslations
+     */
+    public $storeTranslations;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -303,7 +308,9 @@ class WoocommerceMercadoPago
 
         // Exclusive
         $this->settings     = $dependencies->settings;
-        $this->translations = $dependencies->translations;
+
+        $this->adminTranslations = $dependencies->adminTranslations;
+        $this->storeTranslations = $dependencies->storeTranslations;
     }
 
     /**
@@ -317,17 +324,17 @@ class WoocommerceMercadoPago
 
         $pluginLinks = [
             [
-                'text'   => $this->translations->plugin['set_plugin'],
+                'text'   => $this->adminTranslations->plugin['set_plugin'],
                 'href'   => $links['admin_settings_page'],
                 'target' => $this->admin::HREF_TARGET_DEFAULT,
             ],
             [
-                'text'   => $this->translations->plugin['payment_method'],
+                'text'   => $this->adminTranslations->plugin['payment_method'],
                 'href'   => $links['admin_gateways_list'],
                 'target' => $this->admin::HREF_TARGET_DEFAULT,
             ],
             [
-                'text'   => $this->translations->plugin['plugin_manual'],
+                'text'   => $this->adminTranslations->plugin['plugin_manual'],
                 'href'   => $links['docs_integration_introduction'],
                 'target' => $this->admin::HREF_TARGET_BLANK,
             ],
@@ -343,7 +350,7 @@ class WoocommerceMercadoPago
      */
     public function verifyPhpVersionNotice(): void
     {
-        $this->notices->adminNoticeError($this->translations->notices['php_wrong_version'], false);
+        $this->notices->adminNoticeError($this->adminTranslations->notices['php_wrong_version'], false);
     }
 
     /**
@@ -353,7 +360,7 @@ class WoocommerceMercadoPago
      */
     public function verifyCurlNotice(): void
     {
-        $this->notices->adminNoticeError($this->translations->notices['missing_curl'], false);
+        $this->notices->adminNoticeError($this->adminTranslations->notices['missing_curl'], false);
     }
 
     /**
@@ -363,7 +370,7 @@ class WoocommerceMercadoPago
      */
     public function verifyGdNotice(): void
     {
-        $this->notices->adminNoticeWarning($this->translations->notices['missing_gd_extensions'], false);
+        $this->notices->adminNoticeWarning($this->adminTranslations->notices['missing_gd_extensions'], false);
     }
 
     /**

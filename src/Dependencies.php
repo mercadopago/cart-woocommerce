@@ -30,6 +30,7 @@ use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -93,7 +94,7 @@ class Dependencies
     public $store;
 
     /**
-     * @var AdminTranslations
+     * @var Admin
      */
     public $admin;
 
@@ -160,7 +161,12 @@ class Dependencies
     /**
      * @var AdminTranslations
      */
-    public $translations;
+    public $adminTranslations;
+
+    /**
+     * @var StoreTranslations
+     */
+    public $storeTranslations;
 
     /**
      * Dependencies constructor
@@ -186,12 +192,15 @@ class Dependencies
         $this->links        = $this->setLinks();
         $this->url          = $this->setUrl();
         $this->scripts      = $this->setScripts();
+
+        $this->adminTranslations = $this->setAdminTranslations();
+        $this->storeTranslations = $this->setStoreTranslations();
+
         $this->checkout     = $this->setCheckout();
         $this->gateway      = $this->setGateway();
         $this->logs         = $this->setLogs();
         $this->nonce        = $this->setNonce();
         $this->currentUser  = $this->setCurrentUser();
-        $this->translations = $this->setTranslations();
         $this->notices      = $this->setNotices();
         $this->settings     = $this->setSettings();
     }
@@ -306,9 +315,17 @@ class Dependencies
     /**
      * @return AdminTranslations
      */
-    private function setTranslations(): AdminTranslations
+    private function setAdminTranslations(): AdminTranslations
     {
         return new AdminTranslations($this->links);
+    }
+
+    /**
+     * @return StoreTranslations
+     */
+    private function setStoreTranslations(): StoreTranslations
+    {
+        return new StoreTranslations($this->links);
     }
 
     /**
@@ -316,7 +333,7 @@ class Dependencies
      */
     private function setNotices(): Notices
     {
-        return new Notices($this->scripts, $this->translations, $this->url);
+        return new Notices($this->scripts, $this->adminTranslations, $this->url);
     }
 
     /**
@@ -332,7 +349,7 @@ class Dependencies
             $this->scripts,
             $this->seller,
             $this->store,
-            $this->translations,
+            $this->adminTranslations,
             $this->url,
             $this->nonce,
             $this->currentUser
