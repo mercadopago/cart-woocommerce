@@ -88,7 +88,7 @@ class Seller
      */
     public function getSiteId(): string
     {
-        return $this->options->get(self::SITE_ID, '');
+        return strtoupper($this->options->get(self::SITE_ID, ''));
     }
 
     /**

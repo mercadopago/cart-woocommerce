@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
@@ -69,49 +70,9 @@ class WoocommerceMercadoPago
     public $cache;
 
     /**
-     * @var Country
-     */
-    public $country;
-
-    /**
-     * @var CurrentUser
-     */
-    public $currentUser;
-
-    /**
-     * @var Links
-     */
-    public $links;
-
-    /**
-     * @var Requester
-     */
-    public $requester;
-
-    /**
      * @var Strings
      */
     public $strings;
-
-    /**
-     * @var Url
-     */
-    public $url;
-
-    /**
-     * @var Nonce
-     */
-    public $nonce;
-
-    /**
-     * @var Seller
-     */
-    public $seller;
-
-    /**
-     * @var Store
-     */
-    public $store;
 
     /**
      * @var Admin
@@ -119,29 +80,14 @@ class WoocommerceMercadoPago
     public $admin;
 
     /**
-     * @var Checkout
-     */
-    public $checkout;
-
-    /**
      * @var Endpoints
      */
     public $endpoints;
 
     /**
-     * @var Gateway
-     */
-    public $gateway;
-
-    /**
      * @var Options
      */
     public $options;
-
-    /**
-     * @var Order
-     */
-    public $order;
 
     /**
      * @var Plugin
@@ -154,14 +100,59 @@ class WoocommerceMercadoPago
     public $product;
 
     /**
+     * @var Template
+     */
+    public $template;
+
+    /**
+     * @var Order
+     */
+    public $order;
+
+    /**
+     * @var Requester
+     */
+    public $requester;
+
+    /**
+     * @var Seller
+     */
+    public $seller;
+
+    /**
+     * @var Country
+     */
+    public $country;
+
+    /**
+     * @var Links
+     */
+    public $links;
+
+    /**
+     * @var Url
+     */
+    public $url;
+
+    /**
+     * @var Store
+     */
+    public $store;
+
+    /**
      * @var Scripts
      */
     public $scripts;
 
     /**
-     * @var Template
+     * @var Checkout
      */
-    public $template;
+    public $checkout;
+
+    /**
+     * @var Gateway
+     */
+    public $gateway;
 
     /**
      * @var Logs
@@ -169,9 +160,24 @@ class WoocommerceMercadoPago
     public $logs;
 
     /**
+     * @var Nonce
+     */
+    public $nonce;
+
+    /**
+     * @var CurrentUser
+     */
+    public $currentUser;
+
+    /**
      * @var Notices
      */
     public $notices;
+
+    /**
+     * @var Currency
+     */
+    public $currency;
 
     /**
      * @var Settings
@@ -275,40 +281,41 @@ class WoocommerceMercadoPago
         $dependencies = new Dependencies();
 
         // Globals
-        $this->woocommerce = $dependencies->woocommerce;
+        $this->woocommerce      = $dependencies->woocommerce;
 
         // Configs
-        $this->seller       = $dependencies->seller;
-        $this->store        = $dependencies->store;
+        $this->seller            = $dependencies->seller;
+        $this->store             = $dependencies->store;
 
         // Helpers
-        $this->cache        = $dependencies->cache;
-        $this->country      = $dependencies->country;
-        $this->currentUser  = $dependencies->currentUser;
-        $this->links        = $dependencies->links;
-        $this->requester    = $dependencies->requester;
-        $this->strings      = $dependencies->strings;
-        $this->url          = $dependencies->url;
-        $this->nonce        = $dependencies->nonce;
+        $this->cache             = $dependencies->cache;
+        $this->country           = $dependencies->country;
+        $this->currency          = $dependencies->currency;
+        $this->currentUser       = $dependencies->currentUser;
+        $this->links             = $dependencies->links;
+        $this->requester         = $dependencies->requester;
+        $this->strings           = $dependencies->strings;
+        $this->url               = $dependencies->url;
+        $this->nonce             = $dependencies->nonce;
 
         // Hooks
-        $this->admin        = $dependencies->admin;
-        $this->checkout     = $dependencies->checkout;
-        $this->endpoints    = $dependencies->endpoints;
-        $this->gateway      = $dependencies->gateway;
-        $this->options      = $dependencies->options;
-        $this->order        = $dependencies->order;
-        $this->plugin       = $dependencies->plugin;
-        $this->product      = $dependencies->product;
-        $this->scripts      = $dependencies->scripts;
-        $this->template     = $dependencies->template;
+        $this->admin             = $dependencies->admin;
+        $this->checkout          = $dependencies->checkout;
+        $this->endpoints         = $dependencies->endpoints;
+        $this->gateway           = $dependencies->gateway;
+        $this->options           = $dependencies->options;
+        $this->order             = $dependencies->order;
+        $this->plugin            = $dependencies->plugin;
+        $this->product           = $dependencies->product;
+        $this->scripts           = $dependencies->scripts;
+        $this->template          = $dependencies->template;
 
         // General
-        $this->logs         = $dependencies->logs;
-        $this->notices      = $dependencies->notices;
+        $this->logs              = $dependencies->logs;
+        $this->notices           = $dependencies->notices;
 
         // Exclusive
-        $this->settings     = $dependencies->settings;
+        $this->settings = $dependencies->settings;
 
         $this->adminTranslations = $dependencies->adminTranslations;
         $this->storeTranslations = $dependencies->storeTranslations;

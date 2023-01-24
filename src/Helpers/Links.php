@@ -43,7 +43,8 @@ final class Links
      */
     public function getLinks(): array
     {
-        $linksSettings      = $this->getLinksSettings();
+        $country            = $this->country->getPluginDefaultCountry();
+        $linksSettings      = $this->country->getCountryConfigs($country);
 
         $mercadoPagoLinks   = $this->getMercadoPagoLinks($linksSettings);
         $documentationLinks = $this->getDocumentationLinks($linksSettings);
@@ -51,49 +52,6 @@ final class Links
         $storeLinks         = $this->getStoreLinks();
 
         return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $adminLinks, $storeLinks);
-    }
-
-    /**
-     * Get links settings from the country configured by default in Woocommerce
-     *
-     * @return array
-     */
-    private function getLinksSettings(): array
-    {
-        $country = $this->country->getPluginDefaultCountry();
-
-        $settings = [
-            'AR' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.ar',
-            ],
-            'BR' => [
-                'translate'  => 'pt',
-                'suffix_url' => '.com.br',
-            ],
-            'CL' => [
-                'translate'  => 'es',
-                'suffix_url' => '.cl',
-            ],
-            'CO' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.co',
-            ],
-            'MX' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.mx',
-            ],
-            'PE' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.pe',
-            ],
-            'UY' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.uy',
-            ],
-        ];
-
-        return array_key_exists($country, $settings) ? $settings[$country] : $settings['AR'];
     }
 
     /**

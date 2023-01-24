@@ -10,6 +10,7 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
@@ -49,49 +50,9 @@ class Dependencies
     public $cache;
 
     /**
-     * @var Country
-     */
-    public $country;
-
-    /**
-     * @var CurrentUser
-     */
-    public $currentUser;
-
-    /**
-     * @var Links
-     */
-    public $links;
-
-    /**
-     * @var Requester
-     */
-    public $requester;
-
-    /**
      * @var Strings
      */
     public $strings;
-
-    /**
-     * @var Url
-     */
-    public $url;
-
-    /**
-     * @var Nonce
-     */
-    public $nonce;
-
-    /**
-     * @var Seller
-     */
-    public $seller;
-
-    /**
-     * @var Store
-     */
-    public $store;
 
     /**
      * @var Admin
@@ -99,29 +60,14 @@ class Dependencies
     public $admin;
 
     /**
-     * @var Checkout
-     */
-    public $checkout;
-
-    /**
      * @var Endpoints
      */
     public $endpoints;
 
     /**
-     * @var Gateway
-     */
-    public $gateway;
-
-    /**
      * @var Options
      */
     public $options;
-
-    /**
-     * @var Order
-     */
-    public $order;
 
     /**
      * @var Plugin
@@ -134,14 +80,59 @@ class Dependencies
     public $product;
 
     /**
+     * @var Template
+     */
+    public $template;
+
+    /**
+     * @var Order
+     */
+    public $order;
+
+    /**
+     * @var Requester
+     */
+    public $requester;
+
+    /**
+     * @var Seller
+     */
+    public $seller;
+
+    /**
+     * @var Country
+     */
+    public $country;
+
+    /**
+     * @var Links
+     */
+    public $links;
+
+    /**
+     * @var Url
+     */
+    public $url;
+
+    /**
+     * @var Store
+     */
+    public $store;
+
+    /**
      * @var Scripts
      */
     public $scripts;
 
     /**
-     * @var Template
+     * @var Checkout
      */
-    public $template;
+    public $checkout;
+
+    /**
+     * @var Gateway
+     */
+    public $gateway;
 
     /**
      * @var Logs
@@ -149,9 +140,24 @@ class Dependencies
     public $logs;
 
     /**
+     * @var Nonce
+     */
+    public $nonce;
+
+    /**
+     * @var CurrentUser
+     */
+    public $currentUser;
+
+    /**
      * @var Notices
      */
     public $notices;
+
+    /**
+     * @var Currency
+     */
+    public $currency;
 
     /**
      * @var Settings
@@ -175,34 +181,43 @@ class Dependencies
     {
         global $woocommerce;
 
-        $this->woocommerce  = $woocommerce;
-        $this->cache        = new Cache();
-        $this->strings      = new Strings();
-        $this->admin        = new Admin();
-        $this->endpoints    = new Endpoints();
-        $this->options      = new Options();
-        $this->plugin       = new Plugin();
-        $this->product      = new Product();
-        $this->template     = new Template();
-        $this->order        = $this->setOrder();
-        $this->requester    = $this->setRequester();
-        $this->store        = $this->setStore();
-        $this->seller       = $this->setSeller();
-        $this->country      = $this->setCountry();
-        $this->links        = $this->setLinks();
-        $this->url          = $this->setUrl();
-        $this->scripts      = $this->setScripts();
+        $this->woocommerce = $woocommerce;
+        $this->cache       = new Cache();
+        $this->strings     = new Strings();
+        $this->admin       = new Admin();
+        $this->endpoints   = new Endpoints();
+        $this->options     = new Options();
+        $this->plugin      = new Plugin();
+        $this->product     = new Product();
+        $this->template    = new Template();
+        $this->order       = $this->setOrder();
+        $this->requester   = $this->setRequester();
+        $this->store       = $this->setStore();
+        $this->seller      = $this->setSeller();
+        $this->country     = $this->setCountry();
+        $this->links       = $this->setLinks();
+        $this->url         = $this->setUrl();
+        $this->scripts     = $this->setScripts();
 
         $this->adminTranslations = $this->setAdminTranslations();
         $this->storeTranslations = $this->setStoreTranslations();
 
-        $this->checkout     = $this->setCheckout();
-        $this->gateway      = $this->setGateway();
-        $this->logs         = $this->setLogs();
-        $this->nonce        = $this->setNonce();
-        $this->currentUser  = $this->setCurrentUser();
-        $this->notices      = $this->setNotices();
-        $this->settings     = $this->setSettings();
+        $this->checkout    = $this->setCheckout();
+        $this->gateway     = $this->setGateway();
+        $this->logs        = $this->setLogs();
+        $this->nonce       = $this->setNonce();
+        $this->currentUser = $this->setCurrentUser();
+        $this->notices     = $this->setNotices();
+        $this->currency    = $this->setCurrency();
+        $this->settings    = $this->setSettings();
+    }
+
+    /**
+     * @return Order
+     */
+    private function setOrder(): Order
+    {
+        return new Order($this->template);
     }
 
     /**
@@ -214,14 +229,6 @@ class Dependencies
         $httpClient    = new HttpClient(Requester::BASEURL_MP, $curlRequester);
 
         return new Requester($httpClient);
-    }
-
-    /**
-     * @return Order
-     */
-    private function setOrder(): Order
-    {
-        return new Order($this->template);
     }
 
     /**
@@ -304,12 +311,15 @@ class Dependencies
      */
     private function setNonce(): Nonce
     {
-        return new Nonce($this->logs);
+        return new Nonce($this->logs, $this->store);
     }
 
+    /**
+     * @return CurrentUser
+     */
     private function setCurrentUser(): CurrentUser
     {
-        return new CurrentUser($this->logs);
+        return new CurrentUser($this->logs, $this->store);
     }
 
     /**
@@ -334,6 +344,23 @@ class Dependencies
     private function setNotices(): Notices
     {
         return new Notices($this->scripts, $this->adminTranslations, $this->url);
+    }
+
+    /**
+     * @return Currency
+     */
+    private function setCurrency(): Currency
+    {
+        return new Currency(
+            $this->adminTranslations,
+            $this->cache,
+            $this->country,
+            $this->logs,
+            $this->notices,
+            $this->requester,
+            $this->seller,
+            $this->store
+        );
     }
 
     /**
