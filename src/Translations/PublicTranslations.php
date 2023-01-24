@@ -11,6 +11,11 @@ class PublicTranslations
     /**
      * @var array
      */
+    public $common = [];
+
+    /**
+     * @var array
+     */
     public $pix = [];
 
     /**
@@ -19,6 +24,19 @@ class PublicTranslations
     public function __construct()
     {
         $this->setPixPublicTranslations();
+    }
+
+    /**
+     * Set common checkout translations
+     *
+     * @return void
+     */
+    private function setCommonTranslations(): void
+    {
+        $this->common = [
+            'discount_title' => __('discount of', 'woocommerce-mercadopago'),
+            'fee_title'      => __('fee of', 'woocommerce-mercadopago'),
+        ];
     }
 
     /**

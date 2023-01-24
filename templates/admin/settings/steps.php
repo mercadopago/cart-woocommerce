@@ -41,7 +41,7 @@ if (!defined('ABSPATH')) {
         <li class="mp-col-md-3 mp-pb-10">
             <p class="mp-number-checkout-body">2</p>
             <p class="mp-text-steps mp-px-20">
-                <?= esc_html($step_two_text) ?>
+                <?= wp_kses_post($step_two_text) ?>
             </p>
         </li>
 

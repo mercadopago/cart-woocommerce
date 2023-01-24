@@ -15,11 +15,6 @@ class Seller
     /**
      * @const
      */
-    private const GATEWAY_TITLE = 'title';
-
-    /**
-     * @const
-     */
     private const SITE_ID = '_site_id_v1';
 
     /**
@@ -63,6 +58,11 @@ class Seller
     private const CHECKOUT_PAYMENT_METHOD_PIX = '_mp_payment_methods_pix';
 
     /**
+     * @const
+     */
+    private const CHECKOUT_EXPIRATION_DATE_PIX = 'checkout_pix_date_expiration';
+
+    /**
      * @var Cache
      */
     private $cache;
@@ -91,24 +91,6 @@ class Seller
         $this->options   = $options;
         $this->requester = $requester;
         $this->store     = $store;
-    }
-
-    /**
-     * @param string $default
-     *
-     * @return string
-     */
-    public function getGatewayTitle(string $default): string
-    {
-        return strtoupper($this->options->get(self::GATEWAY_TITLE, $default));
-    }
-
-    /**
-     * @param string $title
-     */
-    public function setGatewayTitle(string $title): void
-    {
-        $this->options->set(self::GATEWAY_TITLE, $title);
     }
 
     /**
@@ -286,6 +268,23 @@ class Seller
         $this->options->set(self::CHECKOUT_PAYMENT_METHOD_PIX, $checkoutPaymentMethodsPix);
     }
 
+    /**
+     * @param string $default
+     *
+     * @return string
+     */
+    public function getCheckoutDateExpirationPix(string $default): string
+    {
+        return $this->options->get(self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
+    }
+
+    /**
+     * @param array $checkoutExpirationDatePix
+     */
+    public function setCheckoutDateExpirationPix(array $checkoutExpirationDatePix): void
+    {
+        $this->options->set(self::CHECKOUT_EXPIRATION_DATE_PIX, $checkoutExpirationDatePix);
+    }
     /**
      * Update Payment Methods
      *

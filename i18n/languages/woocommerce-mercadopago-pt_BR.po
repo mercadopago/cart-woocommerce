@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Mercado Pago payments for WooCommerce\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-"
 "mercadopago\n"
-"POT-Creation-Date: 2023-01-23 13:40+0000\n"
+"POT-Creation-Date: 2023-01-24 12:51+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -864,11 +864,19 @@ msgstr ""
 msgid "click here."
 msgstr "clique aqui."
 
-#: ../../src/Translations/PublicTranslations.php:32
+#: ../../src/Translations/PublicTranslations.php:37
+msgid "discount of"
+msgstr "desconto de"
+
+#: ../../src/Translations/PublicTranslations.php:38
+msgid "fee of"
+msgstr "taxa de"
+
+#: ../../src/Translations/PublicTranslations.php:50
 msgid "Pix in Test Mode"
 msgstr "Pix em Modo Teste"
 
-#: ../../src/Translations/PublicTranslations.php:33
+#: ../../src/Translations/PublicTranslations.php:51
 msgid ""
 "You can test the flow to generate a code, but you cannot finalize the "
 "payment."
@@ -876,69 +884,69 @@ msgstr ""
 "É possível testar o fluxo para gerar uma fatura, mas não é possível "
 "finalizar o pagamento."
 
-#: ../../src/Translations/PublicTranslations.php:34
+#: ../../src/Translations/PublicTranslations.php:52
 msgid "Pay instantly"
 msgstr "Pague de forma segura e instantânea"
 
-#: ../../src/Translations/PublicTranslations.php:35
+#: ../../src/Translations/PublicTranslations.php:53
 msgid ""
 "By confirming your purchase, we will show you a code to make the payment."
 msgstr ""
 "Ao confirmar a compra, nós vamos te mostrar o código para fazer o pagamento."
 
-#: ../../src/Translations/PublicTranslations.php:36
+#: ../../src/Translations/PublicTranslations.php:54
 msgid "Pix logo"
 msgstr "Logo Pix"
 
-#: ../../src/Translations/PublicTranslations.php:37
+#: ../../src/Translations/PublicTranslations.php:55
 msgid "By continuing, you agree with our"
 msgstr "Ao continuar, você concorda com nossos"
 
-#: ../../src/Translations/PublicTranslations.php:38
+#: ../../src/Translations/PublicTranslations.php:56
 msgid "Terms and conditions"
 msgstr "Termos e condições"
 
-#: ../../src/Translations/PublicTranslations.php:39,
-#: ../../src/Translations/PublicTranslations.php:48
+#: ../../src/Translations/PublicTranslations.php:57,
+#: ../../src/Translations/PublicTranslations.php:66
 msgid "Code valid for "
 msgstr "Código válido por "
 
-#: ../../src/Translations/PublicTranslations.php:40
+#: ../../src/Translations/PublicTranslations.php:58
 msgid "Now you just need to pay with Pix to finalize your purchase"
 msgstr "Agora é só pagar com o Pix para finalizar sua compra"
 
-#: ../../src/Translations/PublicTranslations.php:41
+#: ../../src/Translations/PublicTranslations.php:59
 msgid "How to pay with Pix:"
 msgstr "Como pagar com Pix:"
 
-#: ../../src/Translations/PublicTranslations.php:42
+#: ../../src/Translations/PublicTranslations.php:60
 msgid "Go to your bank's app or website"
 msgstr "Acesse o app ou site do seu banco"
 
-#: ../../src/Translations/PublicTranslations.php:43
+#: ../../src/Translations/PublicTranslations.php:61
 msgid "Search for the option to pay with Pix"
 msgstr "Busque a opção de pagar com Pix"
 
-#: ../../src/Translations/PublicTranslations.php:44
+#: ../../src/Translations/PublicTranslations.php:62
 msgid "Scan the QR code or Pix code"
 msgstr "Leia o QR code ou código Pix"
 
-#: ../../src/Translations/PublicTranslations.php:45
+#: ../../src/Translations/PublicTranslations.php:63
 msgid "Done! You will see the payment confirmation"
 msgstr "Pronto! Você verá a confirmação do pagamento"
 
-#: ../../src/Translations/PublicTranslations.php:46
+#: ../../src/Translations/PublicTranslations.php:64
 msgid "Value: "
 msgstr "Valor a pagar: "
 
-#: ../../src/Translations/PublicTranslations.php:47
+#: ../../src/Translations/PublicTranslations.php:65
 msgid "Scan the QR code:"
 msgstr "Escaneie o QR code:"
 
-#: ../../src/Translations/PublicTranslations.php:49
+#: ../../src/Translations/PublicTranslations.php:67
 msgid "If you prefer, you can pay by copying and pasting the following code"
 msgstr "Se preferir, você pode pagar copiando e colando o seguinte código"
 
-#: ../../src/Translations/PublicTranslations.php:50
+#: ../../src/Translations/PublicTranslations.php:68
 msgid "Copy code"
 msgstr "Copiar código"

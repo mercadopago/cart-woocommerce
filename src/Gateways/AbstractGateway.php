@@ -12,6 +12,27 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     protected $mercadopago;
 
     /**
+     * Comission
+     *
+     * @var int
+     */
+    public $commission;
+
+    /**
+     * Discount
+     *
+     * @var int
+     */
+    public $discount;
+
+    /**
+     * Expiration date
+     *
+     * @var int
+     */
+    public $expirationDate;
+
+    /**
      * Active gateway
      *
      * @var bool
@@ -31,7 +52,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     public function __construct()
     {
         global $mercadopago;
-        $this->mercadopago = $mercadopago;
+        $this->mercadopago     = $mercadopago;
+
+        $this->has_fields      = true;
+        $this->supports        = ['products', 'refunds'];
+        $this->discount        = $this->geActionableValue('discount', 0);
+        $this->commission      = $this->geActionableValue('commission', 0);
         $this->checkoutCountry = $this->mercadopago->store->getCheckoutCountry();
 
         $this->loadResearchComponent();
@@ -211,5 +237,17 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
                 ]
             ]
         );
+    }
+
+    /**
+     * Get actionable component value
+     *
+     * @return mixed|string
+     */
+    public function geActionableValue($optionName, $default)
+    {
+        $active = $this->mercadopago->options->get("${optionName}_checkbox", false);
+
+        return $active ? $this->mercadopago->options->get($optionName, $default) : $default;
     }
 }

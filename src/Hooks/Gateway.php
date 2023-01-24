@@ -2,6 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Translations\PublicTranslations;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -19,12 +22,18 @@ class Gateway
     private $template;
 
     /**
+     * @var PublicTranslations
+     */
+    private $translations;
+
+    /**
      * Gateway constructor
      */
-    public function __construct(Options $options, Template $template)
+    public function __construct(Options $options, Template $template, PublicTranslations $translations)
     {
-        $this->options  = $options;
-        $this->template = $template;
+        $this->options            = $options;
+        $this->template           = $template;
+        $this->translations       = $translations;
     }
 
     /**
@@ -45,13 +54,48 @@ class Gateway
     /**
      * Register gateway title
      *
+     * @param AbstractGateway $gateway
+     *
      * @return void
      */
-    public function registerGatewayTitle(): void
+    public function registerGatewayTitle(AbstractGateway $gateway): void
     {
-        add_filter('woocommerce_gateway_title', function ($title) {
+        add_filter('woocommerce_gateway_title', function ($title, $id) use ($gateway) {
+            if (!preg_match('/woo-mercado-pago/', $id)) {
+                return $title;
+            }
+
+            if ($id !== $gateway->id) {
+                return $title;
+            }
+
+            if (!is_checkout() && !(defined('DOING_AJAX') && DOING_AJAX)) {
+                return $title;
+            }
+
+            if ($title !== $gateway->title && (0 === $gateway->commission && 0 === $gateway->discount)) {
+                return $title;
+            }
+
+            if (!is_numeric($gateway->discount) || $gateway->commission > 99 || $gateway->discount > 99) {
+                return $title;
+            }
+
+            $total      = (float) WC()->cart->subtotal;
+            $discount   = $total * ($gateway->discount / 100);
+            $commission = $total * ($gateway->commission / 100);
+
+
+            if ($gateway->discount > 0 && $gateway->commission > 0) {
+                $title .= ' (' . $this->translations->common['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . $this->translations->common['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
+            } elseif ($gateway->discount > 0) {
+                $title .= ' (' . $this->translations->common['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . ')';
+            } elseif ($gateway->commission > 0) {
+                $title .= ' (' . $this->translations->common['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
+            }
+
             return $title;
-        });
+        }, 10, 2);
     }
 
     /**
