@@ -65,11 +65,6 @@ final class Currency
     private $seller;
 
     /**
-     * @var Store
-     */
-    private $store;
-
-    /**
      * Currency constructor
      *
      * @param AdminTranslations $adminTranslations
@@ -79,9 +74,8 @@ final class Currency
      * @param Notices $notice
      * @param Requester $requester
      * @param Seller $seller
-     * @param Store $store
      */
-    public function __construct(AdminTranslations $adminTranslations, Cache $cache, Country $country, Logs $logs, Notices $notice, Requester $requester, Seller $seller, Store $store)
+    public function __construct(AdminTranslations $adminTranslations, Cache $cache, Country $country, Logs $logs, Notices $notice, Requester $requester, Seller $seller)
     {
         $this->adminTranslations = $adminTranslations;
         $this->cache             = $cache;
@@ -90,7 +84,6 @@ final class Currency
         $this->notice            = $notice;
         $this->requester         = $requester;
         $this->seller            = $seller;
-        $this->store             = $store;
     }
 
     /**
@@ -222,8 +215,7 @@ final class Currency
      */
     private function getCurrencyConversion(string $fromCurrency, string $toCurrency): array
     {
-        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
-        $accessToken = ($checkboxCheckoutTestMode === 'yes') ? $this->seller->getCredentialsAccessTokenTest() : $this->seller->getCredentialsAccessTokenProd();
+        $accessToken = $this->seller->getCredentialsAccessToken();
 
         try {
             $key   = sprintf('%sat%s-%sto%s', __FUNCTION__, $accessToken, $fromCurrency, $toCurrency);
@@ -233,7 +225,7 @@ final class Currency
                 return $cache;
             }
 
-            $uri =  sprintf('/currency_conversions/search?from=%s&to=%s', $fromCurrency, $toCurrency);
+            $uri     = sprintf('/currency_conversions/search?from=%s&to=%s', $fromCurrency, $toCurrency);
             $headers = ['Authorization: Bearer ' . $accessToken];
 
             $response           = $this->requester->get($uri, $headers);

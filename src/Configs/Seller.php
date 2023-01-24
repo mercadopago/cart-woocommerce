@@ -53,6 +53,16 @@ class Seller
     private const CHECKOUT_PAYMENT_METHODS = '_checkout_payments_methods';
 
     /**
+     * @const
+     */
+    private const CHECKOUT_PAYMENT_METHOD_PIX = '_mp_payment_methods_pix';
+
+    /**
+     * @const
+     */
+    private const CHECKOUT_EXPIRATION_DATE_PIX = 'checkout_pix_date_expiration';
+
+    /**
      * @var Cache
      */
     private $cache;
@@ -196,14 +206,20 @@ class Seller
     }
 
     /**
+     * @return bool
+     */
+    public function isTestMode(): bool
+    {
+        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
+        return ($checkboxCheckoutTestMode === 'yes');
+    }
+
+    /**
      * @return string
      */
     public function getCredentialsPublicKey(): string
     {
-        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
-        $testMode   = ($checkboxCheckoutTestMode === 'yes');
-
-        if ($testMode) {
+        if ($this->isTestMode()) {
             return $this->getCredentialsPublicKeyTest();
         }
         return $this->getCredentialsPublicKeyProd();
@@ -214,10 +230,7 @@ class Seller
      */
     public function getCredentialsAccessToken(): string
     {
-        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
-        $testMode   = ($checkboxCheckoutTestMode === 'yes');
-
-        if ($testMode) {
+        if ($this->isTestMode()) {
             return $this->getCredentialsAccessTokenTest();
         }
         return $this->getCredentialsAccessTokenProd();
@@ -240,6 +253,39 @@ class Seller
     }
 
     /**
+     * @return array
+     */
+    public function getCheckoutPaymentMethodPix(): array
+    {
+        return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, '');
+    }
+
+    /**
+     * @param array $checkoutPaymentMethodsPix
+     */
+    public function setCheckoutPaymentMethodPix(array $checkoutPaymentMethodsPix): void
+    {
+        $this->options->set(self::CHECKOUT_PAYMENT_METHOD_PIX, $checkoutPaymentMethodsPix);
+    }
+
+    /**
+     * @param string $default
+     *
+     * @return string
+     */
+    public function getCheckoutDateExpirationPix(string $default): string
+    {
+        return $this->options->get(self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
+    }
+
+    /**
+     * @param array $checkoutExpirationDatePix
+     */
+    public function setCheckoutDateExpirationPix(array $checkoutExpirationDatePix): void
+    {
+        $this->options->set(self::CHECKOUT_EXPIRATION_DATE_PIX, $checkoutExpirationDatePix);
+    }
+    /**
      * Update Payment Methods
      *
      * @param string|null $publicKey
@@ -247,12 +293,12 @@ class Seller
      *
      */
     public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
-    {        
+    {
         if (null === $publicKey) {
             //@TODO: validate if prod or test
             $publicKey = $this->getCredentialsPublicKey();
         }
-        
+
         if (null === $accessToken) {
             //@TODO: validate if prod or test
             $accessToken = $this->getCredentialsAccessToken();
@@ -264,6 +310,10 @@ class Seller
             'account_money',
         ];
 
+        $acceptedPaymentMethods = [
+            'pix' => 'setCheckoutPaymentMethodPix',
+        ];
+
         $paymentMethodsResponse = $this->getPaymentMethods($publicKey, $accessToken);
 
         if (empty($paymentMethodsResponse) || 200 !== $paymentMethodsResponse['status']) {
@@ -271,19 +321,25 @@ class Seller
             return;
         }
 
-        $serializedPaymentMethods = [];
+        $serializedPaymentMethods   = [];
+        $serializedPaymentMethodPix = [];
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
             if (in_array($paymentMethod['id'], $excludedPaymentMethods, true)) {
                 continue;
             }
 
             $serializedPaymentMethods[] = [
-				'id'     => $paymentMethod['id'],
-				'name'   => $paymentMethod['name'],
-				'type'   => $paymentMethod['payment_type_id'],
-				'image'  => $paymentMethod['secure_thumbnail'],
-				'config' => 'ex_payments_' . $paymentMethod['id'],
+                'id'     => $paymentMethod['id'],
+                'name'   => $paymentMethod['name'],
+                'type'   => $paymentMethod['payment_type_id'],
+                'image'  => $paymentMethod['secure_thumbnail'],
+                'config' => 'ex_payments_' . $paymentMethod['id'],
             ];
+
+            if (in_array($paymentMethod['id'], $acceptedPaymentMethods, true)) {
+                $serializedPaymentMethodPix[$paymentMethod['id']] = $serializedPaymentMethods;
+                $this->{$acceptedPaymentMethods[$paymentMethod['id']]}($serializedPaymentMethodPix, true);
+            }
         }
 
         $this->setCheckoutPaymentMethods($serializedPaymentMethods);
@@ -428,7 +484,7 @@ class Seller
             ];
 
             $this->cache->setCache($key, $serializedResponse);
-            
+
             return $serializedResponse;
         } catch (\Exception $e) {
             return [

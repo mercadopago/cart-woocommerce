@@ -171,9 +171,9 @@ class Settings
     public function canLoadScriptsAndStyles(): bool
     {
         return $this->admin->isAdmin() && (
-            $this->url->validatePage('mercadopago-settings') ||
-            $this->url->validateSection('woo-mercado-pago')
-        );
+                $this->url->validatePage('mercadopago-settings') ||
+                $this->url->validateSection('woo-mercado-pago')
+            );
     }
 
     /**
@@ -391,9 +391,9 @@ class Settings
             if (
                 (empty($publicKeyTest) && empty($accessTokenTest)) ||
                 ($validatePublicKeyTest['status'] === 200 &&
-                $validateAccessTokenTest['status'] === 200 &&
-                $validatePublicKeyTest['data']['is_test'] === true &&
-                $validateAccessTokenTest['data']['is_test'] === true)
+                    $validateAccessTokenTest['status'] === 200 &&
+                    $validatePublicKeyTest['data']['is_test'] === true &&
+                    $validateAccessTokenTest['data']['is_test'] === true)
             ) {
                 $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
                 $this->seller->setCredentialsAccessTokenTest($accessTokenTest);

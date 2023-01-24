@@ -44,10 +44,10 @@ final class Links
     public function getLinks(): array
     {
         $country            = $this->country->getPluginDefaultCountry();
-        $linksSettings      = $this->country->getCountryConfigs($country);
+        $countryConfig      = $this->country->getCountryConfigs($country);
 
-        $mercadoPagoLinks   = $this->getMercadoPagoLinks($linksSettings);
-        $documentationLinks = $this->getDocumentationLinks($linksSettings);
+        $mercadoPagoLinks   = $this->getMercadoPagoLinks($countryConfig);
+        $documentationLinks = $this->getDocumentationLinks($countryConfig);
         $adminLinks         = $this->getAdminLinks();
         $storeLinks         = $this->getStoreLinks();
 
@@ -57,13 +57,13 @@ final class Links
     /**
      * Get documentation links on Mercado Pago Devsite page
      *
-     * @param array $linkSettings
+     * @param array $countryConfig
      *
      * @return array
      */
-    private function getDocumentationLinks(array $linkSettings): array
+    private function getDocumentationLinks(array $countryConfig): array
     {
-        $baseLink = self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/developers/' . $linkSettings['translate'];
+        $baseLink = self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/developers/' . $countryConfig['translate'];
 
         return [
             'docs_developers_program'       => $baseLink . '/developer-program',
@@ -79,18 +79,22 @@ final class Links
     /**
      * Get documentation links on Mercado Pago Panel page
      *
-     * @param array $linkSettings
+     * @param array $countryConfig
      *
      * @return array
      */
-    private function getMercadoPagoLinks(array $linkSettings): array
+    private function getMercadoPagoLinks(array $countryConfig): array
     {
         return [
-            'mercadopago_home'        => self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/home',
-            'mercadopago_costs'       => self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/costs-section',
-            'mercadopago_test_user'   => self::MP_URL . '/developers/panel/test-users',
-            'mercadopago_credentials' => self::MP_URL . '/developers/panel/credentials',
-            'mercadopago_developers'  => self::MP_DEVELOPERS_URL,
+            'mercadopago_home'                 => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/home',
+            'mercadopago_costs'                => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/costs-section',
+            'mercadopago_test_user'            => self::MP_URL . '/developers/panel/test-users',
+            'mercadopago_credentials'          => self::MP_URL . '/developers/panel/credentials',
+            'mercadopago_developers'           => self::MP_DEVELOPERS_URL,
+            'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br' . '/pix',
+            'mercadopago_support'              => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/developers/' . $countryConfig['translate'] . '/support/contact',
+            'mercadopago_terms_and_conditions' => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . $countryConfig['help'] . $countryConfig['terms_and_conditions'],
+            'mercadopago_pix_config'            => self::MP_URL_PREFIX . '.com.br' . '/stop/pix?url=https%3A%2F%2Fwww.mercadopago.com.br%2Fadmin-pix-keys%2Fmy-keys&authentication_mode=required',
         ];
     }
 

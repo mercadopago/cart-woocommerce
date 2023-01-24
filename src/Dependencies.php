@@ -181,35 +181,33 @@ class Dependencies
     {
         global $woocommerce;
 
-        $this->woocommerce = $woocommerce;
-        $this->cache       = new Cache();
-        $this->strings     = new Strings();
-        $this->admin       = new Admin();
-        $this->endpoints   = new Endpoints();
-        $this->options     = new Options();
-        $this->plugin      = new Plugin();
-        $this->product     = new Product();
-        $this->template    = new Template();
-        $this->order       = $this->setOrder();
-        $this->requester   = $this->setRequester();
-        $this->store       = $this->setStore();
-        $this->seller      = $this->setSeller();
-        $this->country     = $this->setCountry();
-        $this->links       = $this->setLinks();
-        $this->url         = $this->setUrl();
-        $this->scripts     = $this->setScripts();
-
-        $this->adminTranslations = $this->setAdminTranslations();
-        $this->storeTranslations = $this->setStoreTranslations();
-
-        $this->checkout    = $this->setCheckout();
-        $this->gateway     = $this->setGateway();
-        $this->logs        = $this->setLogs();
-        $this->nonce       = $this->setNonce();
-        $this->currentUser = $this->setCurrentUser();
-        $this->notices     = $this->setNotices();
-        $this->currency    = $this->setCurrency();
-        $this->settings    = $this->setSettings();
+        $this->woocommerce        = $woocommerce;
+        $this->cache              = new Cache();
+        $this->strings            = new Strings();
+        $this->admin              = new Admin();
+        $this->endpoints          = new Endpoints();
+        $this->options            = new Options();
+        $this->plugin             = new Plugin();
+        $this->product            = new Product();
+        $this->template           = new Template();
+        $this->order              = $this->setOrder();
+        $this->requester          = $this->setRequester();
+        $this->store              = $this->setStore();
+        $this->seller             = $this->setSeller();
+        $this->country            = $this->setCountry();
+        $this->links              = $this->setLinks();
+        $this->url                = $this->setUrl();
+        $this->scripts            = $this->setScripts();
+        $this->checkout           = $this->setCheckout();
+        $this->adminTranslations  = $this->setAdminTranslations();
+        $this->storeTranslations  = $this->setStoreTranslations();
+        $this->gateway            = $this->setGateway();
+        $this->logs               = $this->setLogs();
+        $this->nonce              = $this->setNonce();
+        $this->currentUser        = $this->setCurrentUser();
+        $this->notices            = $this->setNotices();
+        $this->currency           = $this->setCurrency();
+        $this->settings           = $this->setSettings();
     }
 
     /**
@@ -276,7 +274,7 @@ class Dependencies
      */
     private function setScripts(): Scripts
     {
-        return new Scripts($this->url);
+        return new Scripts($this->url, $this->seller);
     }
 
     /**
@@ -292,7 +290,7 @@ class Dependencies
      */
     private function setGateway(): Gateway
     {
-        return new Gateway($this->options, $this->template);
+        return new Gateway($this->options, $this->template, $this->storeTranslations);
     }
 
     /**
@@ -343,7 +341,7 @@ class Dependencies
      */
     private function setNotices(): Notices
     {
-        return new Notices($this->scripts, $this->adminTranslations, $this->url);
+        return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links);
     }
 
     /**
@@ -358,8 +356,7 @@ class Dependencies
             $this->logs,
             $this->notices,
             $this->requester,
-            $this->seller,
-            $this->store
+            $this->seller
         );
     }
 

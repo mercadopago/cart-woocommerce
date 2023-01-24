@@ -49,6 +49,11 @@ class AdminTranslations
     /**
      * @var array
      */
+    public $pixSettings = [];
+
+    /**
+     * @var array
+     */
     public $testModeSettings = [];
 
     /**
@@ -90,6 +95,7 @@ class AdminTranslations
         $this->setStoreSettingsTranslations();
         $this->setOrderSettingsTranslations();
         $this->setGatewaysSettingsTranslations();
+        $this->setPixSettingsTranslations();
         $this->setTestModeSettingsTranslations();
         $this->setConfigurationTipsTranslations();
         $this->setUpdateCredentialsTranslations();
@@ -112,7 +118,7 @@ class AdminTranslations
         $currencyConversion = sprintf(
             '<b>%s</b> %s',
             __('Attention:', 'woocommerce-mercadopago'),
-            __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.t', 'woocommerce-mercadopago')
+            __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.', 'woocommerce-mercadopago')
         );
 
         $this->notices = [
@@ -125,7 +131,9 @@ class AdminTranslations
             'miss_woocommerce'      => $missWoocommerce,
             'currency_enabled'      => __('Now we convert your currency', 'woocommerce-mercadopago'),
             'currency_disabled'     => __('We no longer convert your currency', 'woocommerce-mercadopago'),
-            'currency_conversion'   => $currencyConversion
+            'currency_conversion'   => $currencyConversion,
+            'miss_pix_text'         => __('Please note that to receive payments via Pix at our checkout, you must have a Pix key registered in your Mercado Pago account.', 'woocommerce-mercadopago'),
+            'miss_pix_link'         => __('Register your Pix key at Mercado Pago.', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -219,6 +227,12 @@ class AdminTranslations
             __('Copy and paste the credentials below.', 'woocommerce-mercadopago')
         );
 
+        $cardInfoSubtitle = sprintf(
+            '%s&nbsp;<b>%s</b>.',
+            __('You must enter', 'woocommerce-mercadopago'),
+            __('production credentials', 'woocommerce-mercadopago')
+        );
+
         $this->credentialsSettings = [
             'public_key'                => __('Public Key', 'woocommerce-mercadopago'),
             'access_token'              => __('Access Token', 'woocommerce-mercadopago'),
@@ -232,6 +246,9 @@ class AdminTranslations
             'placeholder_access_token'  => __('Paste your Access Token here', 'woocommerce-mercadopago'),
             'button_link_credentials'   => __('Check credentials', 'woocommerce-mercadopago'),
             'button_credentials'        => __('Save and continue', 'woocommerce-mercadopago'),
+            'card_info_title'           => __('Important! To sell you must enter your credentials.', 'woocommerce-mercadopago'),
+            'card_info_subtitle'        => $cardInfoSubtitle,
+            'card_info_button_text'     => __('Enter credentials', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -362,7 +379,12 @@ class AdminTranslations
         ];
     }
 
-    public function setConfigurationTipsTranslations(): void
+    /**
+     * Set configuration tips translations
+     *
+     * @return void
+     */
+    private function setConfigurationTipsTranslations(): void
     {
         $this->configurationTips = [
             'valid_store_tips'         => __('Store business fields are valid', 'woocommerce-mercadopago'),
@@ -377,7 +399,7 @@ class AdminTranslations
      *
      * @return void
      */
-    public function setValidateCredentialsTranslations(): void
+    private function setValidateCredentialsTranslations(): void
     {
         $this->validateCredentials = [
             'valid_public_key'     => __('Valid Public Key', 'woocommerce-mercadopago'),
@@ -392,7 +414,7 @@ class AdminTranslations
      *
      * @return void
      */
-    public function setUpdateCredentialsTranslations(): void
+    private function setUpdateCredentialsTranslations(): void
     {
         $this->updateCredentials = [
             'credentials_updated'              => __('Credentials were updated', 'woocommerce-mercadopago'),
@@ -409,10 +431,107 @@ class AdminTranslations
      *
      * @return void
      */
-    public function setUpdateStoreTranslations(): void
+    private function setUpdateStoreTranslations(): void
     {
         $this->updateStore = [
             'valid_configuration' => __('Store information is valid', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Set pix settings translations
+     *
+     * @return void
+     */
+    private function setPixSettingsTranslations(): void
+    {
+        $enabledDescriptionsEnabled = sprintf(
+            '%s <b>%s</b>.',
+            __('The transparent checkout for Pix payment is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
+        );
+
+        $enabledDescriptionsDisabled = sprintf(
+            '%s <b>%s</b>.',
+            __('The transparent checkout for Pix payment is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
+        );
+
+        $currencyConversionDescriptionsEnabled = sprintf(
+            '%s <b>%s</b>.',
+            __('Currency conversion is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
+        );
+
+        $currencyConversionDescriptionsDisabled = sprintf(
+            '%s <b>%s</b>.',
+            __('Currency conversion is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
+        );
+
+        $stepsStepTwoText = sprintf(
+            '%s <b>%s</b> %s <b>%s</b>.',
+            __('Go to the', 'woocommerce-mercadopago'),
+            __('Your Profile', 'woocommerce-mercadopago'),
+            __('area and choose the', 'woocommerce-mercadopago'),
+            __('Your Pix Keys section', 'woocommerce-mercadopago')
+        );
+
+        $this->pixSettings = [
+            'gateway_title'                             => __('Pix', 'woocommerce-mercadopago'),
+            'gateway_description'                       => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
+            'gateway_method_title'                      => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
+            'gateway_method_description'                => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
+            'header_title'                              => __('Transparent Checkout | Pix', 'woocommerce-mercadopago'),
+            'header_description'                        => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
+            'card_settings_title'                       => __('Mercado Pago plugin general settings', 'woocommerce-mercadopago'),
+            'card_settings_subtitle'                    => __('Set the deadlines and fees, test your store or access the Plugin manual.', 'woocommerce-mercadopago'),
+            'card_settings_button_text'                 => __('Go to Settings', 'woocommerce-mercadopago'),
+            'enabled_title'                             => __('Enable the checkout', 'woocommerce-mercadopago'),
+            'enabled_subtitle'                          => __('By disabling it, you will disable all Pix payments from Mercado Pago Transparent Checkout.', 'woocommerce-mercadopago'),
+            'enabled_descriptions_enabled'              => $enabledDescriptionsEnabled,
+            'enabled_descriptions_disabled'             => $enabledDescriptionsDisabled,
+            'title_title'                               => __('Title in the store Checkout', 'woocommerce-mercadopago'),
+            'title_description'                         => __('Change the display text in Checkout, maximum characters: 85', 'woocommerce-mercadopago'),
+            'title_default'                             => __('Pix', 'woocommerce-mercadopago'),
+            'title_desc_tip'                            => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
+            'expiration_date_title'                     => __('Expiration for payments via Pix', 'woocommerce-mercadopago'),
+            'expiration_date_description'               => __('Set the limit in minutes for your clients to pay via Pix.', 'woocommerce-mercadopago'),
+            'expiration_date_options_fifteen_minutes'   => __('15 minutes', 'woocommerce-mercadopago'),
+            'expiration_date_options_thirty_minutes'    => __('30 minutes (recommended)', 'woocommerce-mercadopago'),
+            'expiration_date_options_sixty_minutes'     => __('60 minutes', 'woocommerce-mercadopago'),
+            'expiration_date_options_twelve_hours'      => __('12 hours', 'woocommerce-mercadopago'),
+            'expiration_date_options_twenty_four_hours' => __('24 hours', 'woocommerce-mercadopago'),
+            'expiration_date_options_two_days'          => __('2 days', 'woocommerce-mercadopago'),
+            'expiration_date_options_three_days'        => __('3 days', 'woocommerce-mercadopago'),
+            'expiration_date_options_four_days'         => __('4 days', 'woocommerce-mercadopago'),
+            'expiration_date_options_five_days'         => __('5 days', 'woocommerce-mercadopago'),
+            'expiration_date_options_six_days'          => __('6 days', 'woocommerce-mercadopago'),
+            'expiration_date_options_seven_days'        => __('7 days', 'woocommerce-mercadopago'),
+            'currency_conversion_title'                 => __('Convert Currency', 'woocommerce-mercadopago'),
+            'currency_conversion_subtitle'              => __('Activate this option so that the value of the currency set in WooCommerce is compatible with the value of the currency you use in Mercado Pago.', 'woocommerce-mercadopago'),
+            'currency_conversion_descriptions_enabled'  => $currencyConversionDescriptionsEnabled,
+            'currency_conversion_descriptions_disabled' => $currencyConversionDescriptionsDisabled,
+            'card_info_title'                           => __('Would you like to know how Pix works?', 'woocommerce-mercadopago'),
+            'card_info_subtitle'                        => __('We have a dedicated page where we explain how it works and its advantages.', 'woocommerce-mercadopago'),
+            'card_info_button_text'                     => __('Find out more about Pix', 'woocommerce-mercadopago'),
+            'advanced_configuration_title'              => __('Advanced configuration of the Pix experience', 'woocommerce-mercadopago'),
+            'advanced_configuration_subtitle'           => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'discount_title'                            => __('Discount in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
+            'discount_description'                      => __('Choose a percentage value that you want to discount your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
+            'discount_checkbox_label'                   => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+            'commission_title'                          => __('Commission in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
+            'commission_description'                    => __('Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
+            'commission_checkbox_label'                 => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+            'steps_title'                               => __('To activate Pix, you must have a key registered in Mercado Pago.', 'woocommerce-mercadopago'),
+            'steps_step_one_text'                       => __('Download the Mercado Pago app on your cell phone.', 'woocommerce-mercadopago'),
+            'steps_step_two_text'                       => $stepsStepTwoText,
+            'steps_step_three_text'                     => __('Choose which data to register as Pix keys. After registering, you can set up Pix in your checkout.', 'woocommerce-mercadopago'),
+            'steps_observation_one'                     => __('Remember that, for the time being, the Central Bank of Brazil is open Monday through Friday, from 9am to 6pm.', 'woocommerce-mercadopago'),
+            'steps_observation_two'                     => __('If you requested your registration outside these hours, we will confirm it within the next business day.', 'woocommerce-mercadopago'),
+            'steps_button_about_pix'                    => __('Learn more about Pix', 'woocommerce-mercadopago'),
+            'steps_observation_three'                   => __('If you have already registered a Pix key at Mercado Pago and cannot activate Pix in the checkout, ', 'woocommerce-mercadopago'),
+            'steps_link_title_one'                      => __('click here.', 'woocommerce-mercadopago'),
         ];
     }
 }
