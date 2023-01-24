@@ -56,7 +56,7 @@ if (!defined('ABSPATH')) {
 
         <?php
             if (isset($settings['after_toggle']) && $settings['after_toggle']) {
-                echo esc_html($settings['after_toggle']);
+                echo $settings['after_toggle']; //@TODO escape backend var
             }
         ?>
     </td>

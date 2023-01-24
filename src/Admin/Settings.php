@@ -118,6 +118,12 @@ class Settings
         $this->loadMenu();
         $this->loadScriptsAndStyles();
         $this->registerAjaxEndpoints();
+        $this->plugin->registerOnPluginCredentialsUpdate(function () {
+            $this->seller->updatePaymentMethods();
+        });
+        $this->plugin->registerOnPluginTestModeUpdate(function () {
+            $this->seller->updatePaymentMethods();
+        });
     }
 
     /**

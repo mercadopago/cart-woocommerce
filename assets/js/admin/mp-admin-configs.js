@@ -1,6 +1,6 @@
 (function () {
 
-  window.addEventListener('load', function() {
+  window.addEventListener('load', function () {
     initConfigScreen();
   });
 
@@ -13,6 +13,8 @@
     setHide();
     setTitleInputMaxLength();
     setTitleDescriptionStyle();
+    handleMultipleCheckboxes();
+    makeCollapsibleAdvancedConfig();
   }
 
   function hasConfigurations() {
@@ -54,7 +56,7 @@
     if (document.querySelector('.mp-header-logo')) {
       document.querySelector('.mp-header-logo').style.display = 'none';
     } else {
-      const pElement = document.querySelectorAll('#mainform > p');
+      const pElement = document.querySelectorAll('#mainform > p:not(.submit)');
       pElement[0] ? (pElement[0].style.display = 'none') : null;
     }
 
@@ -64,6 +66,76 @@
     document.querySelectorAll('.mp-hidden-field-description').forEach((element) => {
       element.closest('tr').style.display = 'none';
     });
+  }
+
+  function handleMultipleCheckboxes() {
+    (function ($) {
+      $('.mp-child').change(function () {
+        // create var for parent .checkall and group
+        const group = $(this).data('group');
+        const checkall = $('.mp-selectall[data-group="' + group + '"]');
+
+        // mark selectall as checked if some children are checked
+        const someChecked = $('.mp-child[data-group="' + group + '"]:checked').length > 0;
+        checkall.prop("checked", someChecked);
+      }).change();
+
+      // clicking .checkall will check or uncheck all children in the same group
+      $('.mp-selectall').click(function () {
+        const group = $(this).data('group');
+        $('.mp-child[data-group="' + group + '"]').prop('checked', this.checked).change();
+      });
+    }(window.jQuery));
+  }
+
+  function makeCollapsibleAdvancedConfig() {
+    //collpase Configuración Avanzada
+    console.log(this);
+    const collapseTitle = document.querySelector(
+      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_title"]'
+    );
+    const collapseTable = document.querySelector(
+      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_description"]'
+    ).nextElementSibling;
+    const collapseDescription = document.querySelector(
+      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_description"]'
+    );
+    collapseTable.style.display = "none";
+    collapseDescription.style.display = "none";
+    collapseTitle.style.cursor = "pointer";
+
+    collapseTitle.innerHTML += makeCollapsibleOptions(
+      "header_plus",
+      "header_less"
+    );
+
+    const headerPlus = document.querySelector("#header_plus");
+    const headerLess = document.querySelector("#header_less");
+
+    collapseTitle.onclick = function () {
+      if (collapseTable.style.display === "none") {
+        collapseTable.style.display = "block";
+        collapseDescription.style.display = "block";
+        headerLess.style.display = "block";
+        headerPlus.style.display = "none";
+      } else {
+        collapseTable.style.display = "none";
+        collapseDescription.style.display = "none";
+        headerLess.style.display = "none";
+        headerPlus.style.display = "block";
+      }
+    };
+  }
+
+  function makeCollapsibleOptions(idPlus, idLess) {
+    return (
+      '<span class="mp-btn-collapsible" id="' +
+      idPlus +
+      '" style="display:block">+</span>\
+      <span class="mp-btn-collapsible" id="' +
+      idLess +
+      '" style="display:none">-</span>'
+    );
   }
 
 })();

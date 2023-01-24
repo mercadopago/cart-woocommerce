@@ -170,11 +170,6 @@ class WoocommerceMercadoPago
     public $currentUser;
 
     /**
-     * @var AdminTranslations
-     */
-    public $adminTranslations;
-
-    /**
      * @var Notices
      */
     public $notices;
@@ -188,6 +183,16 @@ class WoocommerceMercadoPago
      * @var Settings
      */
     public $settings;
+
+    /**
+     * @var AdminTranslations
+     */
+    public $adminTranslations;
+
+    /**
+     * @var storeTranslations
+     */
+    public $storeTranslations;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -231,7 +236,8 @@ class WoocommerceMercadoPago
      */
     public function registerGateways(): void
     {
-        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\ExampleGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
     }
 
     /**
@@ -309,8 +315,10 @@ class WoocommerceMercadoPago
         $this->notices           = $dependencies->notices;
 
         // Exclusive
-        $this->settings          = $dependencies->settings;
+        $this->settings = $dependencies->settings;
+
         $this->adminTranslations = $dependencies->adminTranslations;
+        $this->storeTranslations = $dependencies->storeTranslations;
     }
 
     /**
