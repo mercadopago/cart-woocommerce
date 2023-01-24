@@ -90,15 +90,15 @@
 
   function makeCollapsibleAdvancedConfig() {
     const collapseTitle = document.querySelector(
-      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_title"]'
+      '[id^="woocommerce_woo-mercado-pago"][id$="advanced_configuration_title"]'
     );
 
     const collapseDescription = document.querySelector(
-      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_description"]'
+      '[id^="woocommerce_woo-mercado-pago"][id$="advanced_configuration_description"]'
     );
 
     const collapseTable = document.querySelector(
-      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_description"]'
+      '[id^="woocommerce_woo-mercado-pago"][id$="advanced_configuration_description"]'
     ).nextElementSibling;
 
     collapseTitle.style.cursor        = "pointer";

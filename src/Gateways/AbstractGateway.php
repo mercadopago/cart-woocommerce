@@ -165,7 +165,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     public function generate_mp_checkbox_list_html(string $key, array $settings): string
     {
         return $this->mercadopago->template->getWoocommerceTemplateHtml(
-            'admin/components/config-title.php',
+            'admin/components/checkbox-list.php',
             [
                 'settings'    => $settings,
             ]

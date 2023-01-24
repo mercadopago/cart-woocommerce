@@ -121,15 +121,15 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
                 ),
                 'after_toggle' => $this->get_credits_info_template()
             ],
-            'checkout_payments_advanced_title'   => [
+            'advanced_configuration_title'   => [
                 'type'        => 'title',
                 'title'       => 'Advanced settings',
-                'class'       => 'mp_subtitle_body',
+                'class'       => 'mp-subtitle-body',
             ],
-            'checkout_payments_advanced_description'   => [
+            'advanced_configuration_description'   => [
                 'type'        => 'title',
                 'title'       => 'Edit these advanced fields only when you want to modify the preset values.',
-                'class'       => 'mp_small_text',
+                'class'       => 'mp-small-text',
             ],
         ];
     }
