@@ -13,7 +13,8 @@
     setHide();
     setTitleInputMaxLength();
     setTitleDescriptionStyle();
-    makeCollapsibleAdvancedConfig('pix');
+    handleMultipleCheckboxes();
+    makeCollapsibleAdvancedConfig();
   }
 
   function hasConfigurations() {
@@ -55,7 +56,7 @@
     if (document.querySelector('.mp-header-logo')) {
       document.querySelector('.mp-header-logo').style.display = 'none';
     } else {
-      const pElement = document.querySelectorAll('#mainform > p');
+      const pElement = document.querySelectorAll('#mainform > p:not(.submit)');
       pElement[0] ? (pElement[0].style.display = 'none') : null;
     }
 
@@ -67,42 +68,75 @@
     });
   }
 
-  function makeCollapsibleAdvancedConfig(gateway) {
-    var collapseTitle = document.querySelector(
-      `#woocommerce_woo-mercado-pago-${gateway}_advanced_configuration_title`
-    );
-    collapseTitle.style.cursor = "pointer";
+  function handleMultipleCheckboxes() {
+    (function ($) {
+      $('.mp-child').change(function () {
+        // create var for parent .checkall and group
+        const group = $(this).data('group');
+        const checkall = $('.mp-selectall[data-group="' + group + '"]');
 
-    var collapseDescription = document.querySelector(
-      `#woocommerce_woo-mercado-pago-${gateway}_advanced_configuration_description`
-    );
-    collapseDescription.style.display = "none";
+        // mark selectall as checked if some children are checked
+        const someChecked = $('.mp-child[data-group="' + group + '"]:checked').length > 0;
+        checkall.prop("checked", someChecked);
+      }).change();
 
-    var collapseContent = document.querySelector(
-      `#woocommerce_woo-mercado-pago-${gateway}_advanced_configuration_description`
+      // clicking .checkall will check or uncheck all children in the same group
+      $('.mp-selectall').click(function () {
+        const group = $(this).data('group');
+        $('.mp-child[data-group="' + group + '"]').prop('checked', this.checked).change();
+      });
+    }(window.jQuery));
+  }
+
+  function makeCollapsibleAdvancedConfig() {
+    const collapseTitle = document.querySelector(
+      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_title"]'
+    );
+
+    const collapseDescription = document.querySelector(
+      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_description"]'
+    );
+
+    const collapseTable = document.querySelector(
+      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_description"]'
     ).nextElementSibling;
-    collapseContent.style.display = "none";
 
-    collapseTitle.innerHTML +=
-      '<span class="mp-btn-collapsible" id="header_plus_2" style="display:block">+</span>\
-      <span class="mp-btn-collapsible" id="header_less_2" style="display:none">-</span>';
+    collapseTitle.style.cursor        = "pointer";
+    collapseDescription.style.display = "none";
+    collapseTable.style.display       = "none";
 
-    var plusHeaderSelector = document.querySelector("#header_plus_2");
-    var lessHeaderSelector = document.querySelector("#header_less_2");
+    collapseTitle.innerHTML += makeCollapsibleOptions(
+      "header_plus",
+      "header_less"
+    );
+
+    const headerPlus = document.querySelector("#header_plus");
+    const headerLess = document.querySelector("#header_less");
 
     collapseTitle.onclick = function () {
-      if (collapseContent.style.display === "none") {
-        collapseContent.style.display = "block";
+      if (collapseTable.style.display === "none") {
+        collapseTable.style.display       = "block";
         collapseDescription.style.display = "block";
-        lessHeaderSelector.style.display = "block";
-        plusHeaderSelector.style.display = "none";
+        headerLess.style.display          = "block";
+        headerPlus.style.display          = "none";
       } else {
-        collapseContent.style.display = "none";
+        collapseTable.style.display       = "none";
         collapseDescription.style.display = "none";
-        lessHeaderSelector.style.display = "none";
-        plusHeaderSelector.style.display = "block";
+        headerLess.style.display          = "none";
+        headerPlus.style.display          = "block";
       }
     };
+  }
+
+  function makeCollapsibleOptions(idPlus, idLess) {
+    return (
+      '<span class="mp-btn-collapsible" id="' +
+      idPlus +
+      '" style="display:block">+</span>\
+      <span class="mp-btn-collapsible" id="' +
+      idLess +
+      '" style="display:none">-</span>'
+    );
   }
 
 })();

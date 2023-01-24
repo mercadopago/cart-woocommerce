@@ -254,17 +254,17 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
     public function payment_fields(): void
     {
         $this->mercadopago->template->getWoocommerceTemplate(
-            'public/checkout/pix-checkout.php',
+            'public/checkouts/pix-checkout.php',
             [
                 'test_mode'                        => $this->mercadopago->seller->isTestMode(),
-                'test_mode_title'                  => $this->mercadopago->publicTranslations->pix['test_mode_title'],
-                'test_mode_description'            => $this->mercadopago->publicTranslations->pix['test_mode_description'],
-                'pix_template_title'               => $this->mercadopago->publicTranslations->pix['pix_template_title'],
-                'pix_template_subtitle'            => $this->mercadopago->publicTranslations->pix['pix_template_subtitle'],
-                'pix_template_alt'                 => $this->mercadopago->publicTranslations->pix['pix_template_alt'],
+                'test_mode_title'                  => $this->mercadopago->storeTranslations->checkoutPix['test_mode_title'],
+                'test_mode_description'            => $this->mercadopago->storeTranslations->checkoutPix['test_mode_description'],
+                'pix_template_title'               => $this->mercadopago->storeTranslations->checkoutPix['pix_template_title'],
+                'pix_template_subtitle'            => $this->mercadopago->storeTranslations->checkoutPix['pix_template_subtitle'],
+                'pix_template_alt'                 => $this->mercadopago->storeTranslations->checkoutPix['pix_template_alt'],
                 'pix_template_src'                 => plugins_url('../assets/images/pix.png', plugin_dir_path(__FILE__)),
-                'terms_and_conditions_description' => $this->mercadopago->publicTranslations->pix['terms_and_conditions_description'],
-                'terms_and_conditions_link_text'   => $this->mercadopago->publicTranslations->pix['terms_and_conditions_link_text'],
+                'terms_and_conditions_description' => $this->mercadopago->storeTranslations->checkoutPix['terms_and_conditions_description'],
+                'terms_and_conditions_link_text'   => $this->mercadopago->storeTranslations->checkoutPix['terms_and_conditions_link_text'],
                 'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
             ]
         );
@@ -351,7 +351,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                 [
                     'qr_code'              => $qrCode,
                     'expiration_date'      => $expirationDate,
-                    'expiration_date_text' => $this->mercadopago->publicTranslations->pix['expiration_date_text'],
+                    'expiration_date_text' => $this->mercadopago->storeTranslations->checkoutPix['expiration_date_text'],
                     'qr_code_image'        => $qrCodeImage,
                 ]
             );
@@ -391,20 +391,20 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                 'img_pix'             => plugins_url('../assets/images/pix.png', plugin_dir_path(__FILE__)),
                 'amount'              => $transactionAmount,
                 'qr_base64'           => $qrCodeBase64,
-                'title_purchase_pix'  => $this->mercadopago->publicTranslations->pix['title_purchase_pix'],
-                'title_how_to_pay'    => $this->mercadopago->publicTranslations->pix['title_how_to_pay'],
-                'step_one'            => $this->mercadopago->publicTranslations->pix['step_one'],
-                'step_two'            => $this->mercadopago->publicTranslations->pix['step_two'],
-                'step_three'          => $this->mercadopago->publicTranslations->pix['step_three'],
-                'step_four'           => $this->mercadopago->publicTranslations->pix['step_four'],
-                'text_amount'         => $this->mercadopago->publicTranslations->pix['text_amount'],
+                'title_purchase_pix'  => $this->mercadopago->storeTranslations->checkoutPix['title_purchase_pix'],
+                'title_how_to_pay'    => $this->mercadopago->storeTranslations->checkoutPix['title_how_to_pay'],
+                'step_one'            => $this->mercadopago->storeTranslations->checkoutPix['step_one'],
+                'step_two'            => $this->mercadopago->storeTranslations->checkoutPix['step_two'],
+                'step_three'          => $this->mercadopago->storeTranslations->checkoutPix['step_three'],
+                'step_four'           => $this->mercadopago->storeTranslations->checkoutPix['step_four'],
+                'text_amount'         => $this->mercadopago->storeTranslations->checkoutPix['text_amount'],
                 'currency'            => $currencySymbol,
-                'text_scan_qr'        => $this->mercadopago->publicTranslations->pix['text_scan_qr'],
-                'text_time_qr_one'    => $this->mercadopago->publicTranslations->pix['qr_date_expiration'],
+                'text_scan_qr'        => $this->mercadopago->storeTranslations->checkoutPix['text_scan_qr'],
+                'text_time_qr_one'    => $this->mercadopago->storeTranslations->checkoutPix['qr_date_expiration'],
                 'qr_date_expiration'  => $expirationOption,
-                'text_description_qr' => $this->mercadopago->publicTranslations->pix['text_description_qr'],
+                'text_description_qr' => $this->mercadopago->storeTranslations->checkoutPix['text_description_qr'],
                 'qr_code'             => $qrCode,
-                'text_button'         => $this->mercadopago->publicTranslations->pix['text_button'],
+                'text_button'         => $this->mercadopago->storeTranslations->checkoutPix['text_button'],
             ]
         );
     }

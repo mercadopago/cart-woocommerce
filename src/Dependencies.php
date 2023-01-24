@@ -31,7 +31,7 @@ use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
-use MercadoPago\Woocommerce\Translations\PublicTranslations;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -83,11 +83,6 @@ class Dependencies
      * @var Template
      */
     public $template;
-
-    /**
-     * @var PublicTranslations
-     */
-    public $publicTranslations;
 
     /**
      * @var Order
@@ -155,11 +150,6 @@ class Dependencies
     public $currentUser;
 
     /**
-     * @var AdminTranslations
-     */
-    public $adminTranslations;
-
-    /**
      * @var Notices
      */
     public $notices;
@@ -173,6 +163,16 @@ class Dependencies
      * @var Settings
      */
     public $settings;
+
+    /**
+     * @var AdminTranslations
+     */
+    public $adminTranslations;
+
+    /**
+     * @var StoreTranslations
+     */
+    public $storeTranslations;
 
     /**
      * Dependencies constructor
@@ -190,7 +190,6 @@ class Dependencies
         $this->plugin             = new Plugin();
         $this->product            = new Product();
         $this->template           = new Template();
-        $this->publicTranslations = new PublicTranslations();
         $this->order              = $this->setOrder();
         $this->requester          = $this->setRequester();
         $this->store              = $this->setStore();
@@ -200,11 +199,12 @@ class Dependencies
         $this->url                = $this->setUrl();
         $this->scripts            = $this->setScripts();
         $this->checkout           = $this->setCheckout();
+        $this->adminTranslations  = $this->setAdminTranslations();
+        $this->storeTranslations  = $this->setStoreTranslations();
         $this->gateway            = $this->setGateway();
         $this->logs               = $this->setLogs();
         $this->nonce              = $this->setNonce();
         $this->currentUser        = $this->setCurrentUser();
-        $this->adminTranslations  = $this->setTranslations();
         $this->notices            = $this->setNotices();
         $this->currency           = $this->setCurrency();
         $this->settings           = $this->setSettings();
@@ -290,7 +290,7 @@ class Dependencies
      */
     private function setGateway(): Gateway
     {
-        return new Gateway($this->options, $this->template, $this->publicTranslations);
+        return new Gateway($this->options, $this->template, $this->storeTranslations);
     }
 
     /**
@@ -323,9 +323,17 @@ class Dependencies
     /**
      * @return AdminTranslations
      */
-    private function setTranslations(): AdminTranslations
+    private function setAdminTranslations(): AdminTranslations
     {
         return new AdminTranslations($this->links);
+    }
+
+    /**
+     * @return StoreTranslations
+     */
+    private function setStoreTranslations(): StoreTranslations
+    {
+        return new StoreTranslations($this->links);
     }
 
     /**

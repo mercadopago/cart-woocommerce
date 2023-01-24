@@ -3,7 +3,7 @@
 namespace MercadoPago\Woocommerce\Hooks;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
-use MercadoPago\Woocommerce\Translations\PublicTranslations;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -22,14 +22,14 @@ class Gateway
     private $template;
 
     /**
-     * @var PublicTranslations
+     * @var StoreTranslations
      */
     private $translations;
 
     /**
      * Gateway constructor
      */
-    public function __construct(Options $options, Template $template, PublicTranslations $translations)
+    public function __construct(Options $options, Template $template, StoreTranslations $translations)
     {
         $this->options            = $options;
         $this->template           = $template;
@@ -87,11 +87,11 @@ class Gateway
 
 
             if ($gateway->discount > 0 && $gateway->commission > 0) {
-                $title .= ' (' . $this->translations->common['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . $this->translations->common['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
+                $title .= ' (' . $this->translations->commonCheckout['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . $this->translations->commonCheckout['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
             } elseif ($gateway->discount > 0) {
-                $title .= ' (' . $this->translations->common['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . ')';
+                $title .= ' (' . $this->translations->commonCheckout['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . ')';
             } elseif ($gateway->commission > 0) {
-                $title .= ' (' . $this->translations->common['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
+                $title .= ' (' . $this->translations->commonCheckout['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
             }
 
             return $title;

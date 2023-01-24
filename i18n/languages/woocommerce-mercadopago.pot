@@ -7,7 +7,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Mercado Pago Developers <woocommerce.dev@mercadopago.com>\n"
-"POT-Creation-Date: 2023-01-24 12:51+0000\n"
+"POT-Creation-Date: 2023-01-24 18:35+0000\n"
 "Project-Id-Version: undefined\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -16,7 +16,95 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../src/Translations/AdminTranslations.php:114
+#: ../../src/Gateways/BasicGateway.php:145
+msgid "Redirect"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:146
+msgid "Modal"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:155
+msgid "The buyer <b>will be automatically redirected to the store</b>."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:156
+msgid "The buyer <b>will not be automatically redirected to the store</b>."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:210
+msgid "Enable the payment methods available to your clients."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:211
+msgid "Choose the payment methods you accept in your store"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:215
+msgid "Credit Cards"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:219
+msgid "Debit Cards"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:223
+msgid "Other Payment Methods"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:384, ../../src/Gateways/BasicGateway.php:410, ../../src/Gateways/BasicGateway.php:462
+msgid "Easy login"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:385, ../../src/Gateways/BasicGateway.php:411, ../../src/Gateways/BasicGateway.php:463
+msgid "Log in with the same email and password you use in Mercado Libre."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:392, ../../src/Gateways/BasicGateway.php:418, ../../src/Gateways/BasicGateway.php:436, ../../src/Gateways/BasicGateway.php:470
+msgid "Quick payments"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:393
+msgid "Use your saved cards, Pix or available balance."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:400, ../../src/Gateways/BasicGateway.php:426
+msgid "Protected purchases"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:401, ../../src/Gateways/BasicGateway.php:427
+msgid "Get your money back in case you don't receive your product."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:419
+msgid "Use your available Mercado Pago Wallet balance or saved cards."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:437, ../../src/Gateways/BasicGateway.php:471
+msgid "Use your available money or saved cards."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:444, ../../src/Gateways/BasicGateway.php:478
+msgid "Installments option"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:445
+msgid "Pay with or without a credit card."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:452
+msgid "Reliable purchases"
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:453
+msgid "Get help if you have a problem with your purchase."
+msgstr ""
+
+#: ../../src/Gateways/BasicGateway.php:479
+msgid "Interest-free installments with selected banks."
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:114, ../../src/Translations/StoreTranslations.php:72
 msgid "The Mercado Pago module needs an active version of %s in order to work!"
 msgstr ""
 
@@ -600,7 +688,7 @@ msgstr ""
 msgid "Go to Settings"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:490
+#: ../../src/Translations/AdminTranslations.php:490, ../../src/Translations/StoreTranslations.php:82
 msgid "Enable the checkout"
 msgstr ""
 
@@ -752,82 +840,194 @@ msgstr ""
 msgid "click here."
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:37
+#: ../../src/Translations/StoreTranslations.php:59
 msgid "discount of"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:38
+#: ../../src/Translations/StoreTranslations.php:60
 msgid "fee of"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:50
+#: ../../src/Translations/StoreTranslations.php:77
+msgid "Your saved cards or money in Mercado Pago"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:78
+msgid "Debit, Credit and invoice in Mercado Pago environment"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:79
+msgid "Mercado Pago - Checkout Pro"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:80
+msgid "Checkout Pro"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:81
+msgid "With Checkout Pro you sell with all the safety inside Mercado Pago environment."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:83
+msgid "By disabling it, you will disable all payment methods of this checkout."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:84
+msgid "The checkout is <b>enabled</b>."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:85
+msgid "The checkout is <b>disabled</b>."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:97, ../../src/Translations/StoreTranslations.php:100
+msgid "Installments without card"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:98
+msgid "Customers who buy on spot and pay later in up to 12 installments"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:99
+msgid "Mercado Pago - Installments without card"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:101
+msgid "Reach millions of buyers by offering Mercado Credito as a payment method. Our flexible payment options give your customers the possibility to buy today whatever they want in up to 12 installments without the need to use a credit card. For your business, the approval of the purchase is immediate and guaranteed."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:102
+msgid "Activate installments without card in your store checkout"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:103
+msgid "Offer the option to pay in installments without card directly from your store's checkout."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:104
+msgid "Payment in installments without card in the store checkout is <b>active</b>"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:105
+msgid "Payment in installments without card in the store checkout is <b>inactive</b>"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:118
 msgid "Pix in Test Mode"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:51
+#: ../../src/Translations/StoreTranslations.php:119
 msgid "You can test the flow to generate a code, but you cannot finalize the payment."
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:52
+#: ../../src/Translations/StoreTranslations.php:120
 msgid "Pay instantly"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:53
+#: ../../src/Translations/StoreTranslations.php:121
 msgid "By confirming your purchase, we will show you a code to make the payment."
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:54
+#: ../../src/Translations/StoreTranslations.php:122
 msgid "Pix logo"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:55
+#: ../../src/Translations/StoreTranslations.php:123, ../../templates/public/gateways/basic-checkout.php:66, ../../templates/public/gateways/credits-checkout.php:56
 msgid "By continuing, you agree with our"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:56
+#: ../../src/Translations/StoreTranslations.php:124, ../../templates/public/gateways/basic-checkout.php:67, ../../templates/public/gateways/credits-checkout.php:57
 msgid "Terms and conditions"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:57, ../../src/Translations/PublicTranslations.php:66
+#: ../../src/Translations/StoreTranslations.php:125, ../../src/Translations/StoreTranslations.php:134
 msgid "Code valid for "
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:58
+#: ../../src/Translations/StoreTranslations.php:126
 msgid "Now you just need to pay with Pix to finalize your purchase"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:59
+#: ../../src/Translations/StoreTranslations.php:127
 msgid "How to pay with Pix:"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:60
+#: ../../src/Translations/StoreTranslations.php:128
 msgid "Go to your bank's app or website"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:61
+#: ../../src/Translations/StoreTranslations.php:129
 msgid "Search for the option to pay with Pix"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:62
+#: ../../src/Translations/StoreTranslations.php:130
 msgid "Scan the QR code or Pix code"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:63
+#: ../../src/Translations/StoreTranslations.php:131
 msgid "Done! You will see the payment confirmation"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:64
+#: ../../src/Translations/StoreTranslations.php:132
 msgid "Value: "
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:65
+#: ../../src/Translations/StoreTranslations.php:133
 msgid "Scan the QR code:"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:67
+#: ../../src/Translations/StoreTranslations.php:135
 msgid "If you prefer, you can pay by copying and pasting the following code"
 msgstr ""
 
-#: ../../src/Translations/PublicTranslations.php:68
+#: ../../src/Translations/StoreTranslations.php:136
 msgid "Copy code"
+msgstr ""
+
+#: ../../templates/public/gateways/basic-checkout.php:24
+msgid "Checkout Pro in Test Mode"
+msgstr ""
+
+#: ../../templates/public/gateways/basic-checkout.php:25, ../../templates/public/gateways/credits-checkout.php:25
+msgid "Use Mercado Pago's payment methods without real charges. "
+msgstr ""
+
+#: ../../templates/public/gateways/basic-checkout.php:26, ../../templates/public/gateways/credits-checkout.php:26
+msgid "See the rules for the test mode."
+msgstr ""
+
+#: ../../templates/public/gateways/basic-checkout.php:35
+msgid "Log in to Mercado Pago and earn benefits"
+msgstr ""
+
+#: ../../templates/public/gateways/basic-checkout.php:54
+msgid "By continuing, you will be taken to Mercado Pago to safely complete your purchase."
+msgstr ""
+
+#: ../../templates/public/gateways/basic-checkout.php:56, ../../templates/public/gateways/credits-checkout.php:47
+msgid "Checkout Pro redirect info image"
+msgstr ""
+
+#: ../../templates/public/gateways/credits-checkout.php:24
+msgid "No card installments in Test Mode"
+msgstr ""
+
+#: ../../templates/public/gateways/credits-checkout.php:34
+msgid "How to use it?"
+msgstr ""
+
+#: ../../templates/public/gateways/credits-checkout.php:37
+msgid "<b>Log in</b> or create an account in Mercado Pago. If you use Mercado Libre, you already have one!"
+msgstr ""
+
+#: ../../templates/public/gateways/credits-checkout.php:38
+msgid "Know your available limit in Mercado Crédito and <b>choose how many installments</b> you want to pay."
+msgstr ""
+
+#: ../../templates/public/gateways/credits-checkout.php:39
+msgid "Pay the installments as you prefer: <b>with money in your account, card of from the Mercado Pago app.</b>"
+msgstr ""
+
+#: ../../templates/public/gateways/credits-checkout.php:46
+msgid "By confirming your purchase, you will be redirected to your Mercado Pago account."
 msgstr ""

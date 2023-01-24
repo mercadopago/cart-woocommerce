@@ -290,14 +290,17 @@ class Seller
      *
      * @param string|null $publicKey
      * @param string|null $accessToken
+     *
      */
     public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
     {
         if (null === $publicKey) {
+            //@TODO: validate if prod or test
             $publicKey = $this->getCredentialsPublicKey();
         }
 
         if (null === $accessToken) {
+            //@TODO: validate if prod or test
             $accessToken = $this->getCredentialsAccessToken();
         }
 

@@ -552,3 +552,59 @@
   margin-bottom: 0px;
 }
 
+/* Checkbox List Component */
+
+.mp-checkbox-list-description {
+	margin: 10px;
+}
+
+.mp-list-group {
+	list-style: none;
+	padding: 10px;
+	width: fit-content;
+	min-width: 30%;
+	display: -moz-inline-grid;
+	display: -ms-inline-grid;
+	display: inline-grid;
+}
+
+.mp-list-group-item {
+	border: 1.5px solid rgba(0, 0, 0, 0.1);
+	height: 40px;
+	margin: 0px;
+}
+
+.mp-list-group-item:first-child {
+	border-radius: 6px 6px 0 0;
+}
+
+.mp-list-group-item:last-child {
+	border-radius: 0 0 6px 6px;
+}
+
+.mp-custom-checkbox {
+	margin: 10px;
+}
+
+.mp-custom-checkbox-input {
+	vertical-align: middle;
+}
+
+.mp-custom-checkbox-label {
+	vertical-align: middle;
+	cursor: pointer;
+	font-size: 14px;
+}
+
+@media screen and (max-width: 1200px) {
+	.mp-list-group {
+		display: block;
+		min-width: 50%;
+	}
+}
+
+@media screen and (max-width: 680px) {
+	.mp-list-group {
+		width: 100%;
+	}
+}

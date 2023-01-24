@@ -27,7 +27,7 @@ use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
-use MercadoPago\Woocommerce\Translations\PublicTranslations;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -106,10 +106,6 @@ class WoocommerceMercadoPago
     public $template;
 
     /**
-     * @var PublicTranslations
-     */
-    public $publicTranslations;
-    /**
      * @var Order
      */
     public $order;
@@ -175,11 +171,6 @@ class WoocommerceMercadoPago
     public $currentUser;
 
     /**
-     * @var AdminTranslations
-     */
-    public $adminTranslations;
-
-    /**
      * @var Notices
      */
     public $notices;
@@ -193,6 +184,16 @@ class WoocommerceMercadoPago
      * @var Settings
      */
     public $settings;
+
+    /**
+     * @var AdminTranslations
+     */
+    public $adminTranslations;
+
+    /**
+     * @var StoreTranslations
+     */
+    public $storeTranslations;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -237,6 +238,8 @@ class WoocommerceMercadoPago
     public function registerGateways(): void
     {
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PixGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
     }
 
     /**
@@ -315,8 +318,10 @@ class WoocommerceMercadoPago
 
         // Exclusive
         $this->settings           = $dependencies->settings;
-        $this->publicTranslations = $dependencies->publicTranslations;
+
+        // Translations
         $this->adminTranslations  = $dependencies->adminTranslations;
+        $this->storeTranslations  = $dependencies->storeTranslations;
     }
 
     /**
