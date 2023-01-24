@@ -302,7 +302,6 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
 			'method'                    => $method,
 			'test_mode'                 => ! $this->mercadopago->store->getCheckboxCheckoutProductionMode(),
 			'test_mode_link'            => $test_mode_link,
-			'plugin_version'            => '1.0.0',
 			'checkout_redirect_src'     => plugins_url( '../assets/images/checkouts/basic/cho-pro-redirect-v2.png', plugin_dir_path( __FILE__ ) ),
 			'payment_methods'           => wp_json_encode( $payment_methods ),
 			'payment_methods_title'     => $payment_methods_title,
