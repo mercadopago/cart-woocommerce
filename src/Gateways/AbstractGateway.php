@@ -12,7 +12,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     protected $mercadopago;
 
     /**
-     * Comission
+     * Commission
      *
      * @var int
      */
@@ -47,18 +47,32 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     public $checkoutCountry;
 
     /**
+     * Translations
+     *
+     * @var array
+     */
+    protected $adminTranslations;
+
+    /**
+     * Translations
+     *
+     * @var array
+     */
+    protected $storeTranslations;
+
+    /**
      * Abstract Gateway constructor
      */
     public function __construct()
     {
         global $mercadopago;
-        $this->mercadopago     = $mercadopago;
+        $this->mercadopago       = $mercadopago;
 
-        $this->has_fields      = true;
-        $this->supports        = ['products', 'refunds'];
-        $this->discount        = $this->geActionableValue('discount', 0);
-        $this->commission      = $this->geActionableValue('commission', 0);
-        $this->checkoutCountry = $this->mercadopago->store->getCheckoutCountry();
+        $this->discount          = $this->geActionableValue('discount', 0);
+        $this->commission        = $this->geActionableValue('commission', 0);
+        $this->checkoutCountry   = $this->mercadopago->store->getCheckoutCountry();
+        $this->has_fields        = true;
+        $this->supports          = ['products', 'refunds'];
 
         $this->loadResearchComponent();
     }
@@ -110,12 +124,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
 
         $this->mercadopago->scripts->registerStoreScript(
             'woocommerce-mercadopago-checkout-components',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/public/mp-public-components', '.js')
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
         );
 
         $this->mercadopago->scripts->registerStoreStyle(
             'woocommerce-mercadopago-checkout-components',
-            $this->mercadopago->url->getPluginFileUrl('assets/css/public/mp-public-components', '.css')
+            $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
         );
     }
 
@@ -236,6 +250,25 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     }
 
     /**
+     * Generating custom preview component
+     *
+     * @param string $key
+     * @param array $settings
+     *
+     * @return string
+     */
+    public function generate_mp_preview_html(string $key, array $settings): string
+    {
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'admin/components/preview.php',
+            [
+                'field_key'   => $this->get_field_key($key),
+                'field_value' => null,
+                'settings'    => $settings,
+            ]
+        );
+    }
+    /**
      * Load research component
      *
      * @return void
@@ -264,7 +297,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      */
     public function geActionableValue($optionName, $default)
     {
-        $active = $this->mercadopago->options->get("${optionName}_checkbox", false);
+        $active = $this->mercadopago->options->get("{$optionName}_checkbox", false);
 
         return $active ? $this->mercadopago->options->get($optionName, $default) : $default;
     }
