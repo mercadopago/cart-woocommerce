@@ -3,7 +3,6 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Configs\Seller;
-use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;

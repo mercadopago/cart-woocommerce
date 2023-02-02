@@ -403,23 +403,23 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
                     ]
                 ],
-				[
-					'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
-					'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_3'],
+                [
+                    'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
+                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_3'],
                     'image'    => [
                         'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-wallet', '.png'),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ]
-				],
-				[
-					'title'    => $this->storeTranslations['checkout_benefits_title_phone_installments'],
-					'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone_installments_2'],
-					'image'    => [
-						'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-phone-installments', '.png'),
-						'alt' => $this->storeTranslations['checkout_benefits_alt_phone_installments'],
-					]
-				]
-			],
+                ],
+                [
+                    'title'    => $this->storeTranslations['checkout_benefits_title_phone_installments'],
+                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone_installments_2'],
+                    'image'    => [
+                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-phone-installments', '.png'),
+                        'alt' => $this->storeTranslations['checkout_benefits_alt_phone_installments'],
+                    ]
+                ]
+            ],
         ];
 
         $site = $this->mercadopago->seller->getSiteId();

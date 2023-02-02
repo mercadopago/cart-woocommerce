@@ -7,7 +7,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Mercado Pago Developers <woocommerce.dev@mercadopago.com>\n"
-"POT-Creation-Date: 2023-02-01 16:34+0000\n"
+"POT-Creation-Date: 2023-02-01 23:51+0000\n"
 "Project-Id-Version: undefined\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -1164,11 +1164,11 @@ msgstr ""
 msgid "Checkout Pro redirect info image"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:102, ../../src/Translations/StoreTranslations.php:143, ../../src/Translations/StoreTranslations.php:182, ../../src/Translations/StoreTranslations.php:200
+#: ../../src/Translations/StoreTranslations.php:102, ../../src/Translations/StoreTranslations.php:143, ../../src/Translations/StoreTranslations.php:182, ../../src/Translations/StoreTranslations.php:219
 msgid "By continuing, you agree with our"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:103, ../../src/Translations/StoreTranslations.php:144, ../../src/Translations/StoreTranslations.php:183, ../../src/Translations/StoreTranslations.php:201
+#: ../../src/Translations/StoreTranslations.php:103, ../../src/Translations/StoreTranslations.php:144, ../../src/Translations/StoreTranslations.php:183, ../../src/Translations/StoreTranslations.php:220
 msgid "Terms and conditions"
 msgstr ""
 
@@ -1276,70 +1276,138 @@ msgstr ""
 msgid "Select the number of installments"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:180
+#: ../../src/Translations/StoreTranslations.php:180, ../../src/Translations/StoreTranslations.php:185
 msgid "Issuer"
 msgstr ""
 
+#: ../../src/Translations/StoreTranslations.php:184
+msgid "mm/yy"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:186
+msgid "Installments"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:187
+msgid "on the back"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:188
+msgid "on the front"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:189
+msgid "digits"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:190
+msgid "No fee"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:191
+msgid "More options"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:192
+msgid "If interest is applicable, it will be charged by your bank."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:193
+msgid "Interest"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:194
+msgid "Card number is required"
+msgstr ""
+
 #: ../../src/Translations/StoreTranslations.php:195
-msgid "Pix in Test Mode"
+msgid "Card number invalid"
 msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:196
-msgid "You can test the flow to generate a code, but you cannot finalize the payment."
+msgid "Holder name is required"
 msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:197
-msgid "Pay instantly"
+msgid "Holder name invalid"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:198
-msgid "By confirming your purchase, we will show you a code to make the payment."
+#: ../../src/Translations/StoreTranslations.php:198, ../../src/Translations/StoreTranslations.php:200
+msgid "Expiration date invalid"
 msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:199
+msgid "Expiration date incomplete"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:201
+msgid "Security code is required"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:202
+msgid "Security code incomplete"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:214
+msgid "Pix in Test Mode"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:215
+msgid "You can test the flow to generate a code, but you cannot finalize the payment."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:216
+msgid "Pay instantly"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:217
+msgid "By confirming your purchase, we will show you a code to make the payment."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:218
 msgid "Pix logo"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:202, ../../src/Translations/StoreTranslations.php:211
+#: ../../src/Translations/StoreTranslations.php:221, ../../src/Translations/StoreTranslations.php:230
 msgid "Code valid for "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:203
+#: ../../src/Translations/StoreTranslations.php:222
 msgid "Now you just need to pay with Pix to finalize your purchase"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:204
+#: ../../src/Translations/StoreTranslations.php:223
 msgid "How to pay with Pix:"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:205
+#: ../../src/Translations/StoreTranslations.php:224
 msgid "Go to your bank's app or website"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:206
+#: ../../src/Translations/StoreTranslations.php:225
 msgid "Search for the option to pay with Pix"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:207
+#: ../../src/Translations/StoreTranslations.php:226
 msgid "Scan the QR code or Pix code"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:208
+#: ../../src/Translations/StoreTranslations.php:227
 msgid "Done! You will see the payment confirmation"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:209
+#: ../../src/Translations/StoreTranslations.php:228
 msgid "Value: "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:210
+#: ../../src/Translations/StoreTranslations.php:229
 msgid "Scan the QR code:"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:212
+#: ../../src/Translations/StoreTranslations.php:231
 msgid "If you prefer, you can pay by copying and pasting the following code"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:213
+#: ../../src/Translations/StoreTranslations.php:232
 msgid "Copy code"
 msgstr ""

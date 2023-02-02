@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Mercado Pago payments for WooCommerce\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-"
 "mercadopago\n"
-"POT-Creation-Date: 2023-02-01 16:34+0000\n"
+"POT-Creation-Date: 2023-02-01 23:51+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -1435,14 +1435,14 @@ msgstr "Imagen de redirección de Checkout Pro"
 #: ../../src/Translations/StoreTranslations.php:102,
 #: ../../src/Translations/StoreTranslations.php:143,
 #: ../../src/Translations/StoreTranslations.php:182,
-#: ../../src/Translations/StoreTranslations.php:200
+#: ../../src/Translations/StoreTranslations.php:219
 msgid "By continuing, you agree with our"
 msgstr "Al continuar, aceptas nuestros"
 
 #: ../../src/Translations/StoreTranslations.php:103,
 #: ../../src/Translations/StoreTranslations.php:144,
 #: ../../src/Translations/StoreTranslations.php:183,
-#: ../../src/Translations/StoreTranslations.php:201
+#: ../../src/Translations/StoreTranslations.php:220
 msgid "Terms and conditions"
 msgstr "Términos y condiciones"
 
@@ -1563,15 +1563,85 @@ msgstr "Número de documento no válido"
 msgid "Select the number of installments"
 msgstr "Selecciona la cantidad de cuotas"
 
-#: ../../src/Translations/StoreTranslations.php:180
+#: ../../src/Translations/StoreTranslations.php:180,
+#: ../../src/Translations/StoreTranslations.php:185
 msgid "Issuer"
 msgstr "Banco"
 
+#: ../../src/Translations/StoreTranslations.php:184
+msgid "mm/yy"
+msgstr "mm/aa"
+
+#: ../../src/Translations/StoreTranslations.php:186
+msgid "Installments"
+msgstr "Cuotas"
+
+#: ../../src/Translations/StoreTranslations.php:187
+msgid "on the back"
+msgstr "del dorso"
+
+#: ../../src/Translations/StoreTranslations.php:188
+msgid "on the front"
+msgstr "del frente"
+
+#: ../../src/Translations/StoreTranslations.php:189
+msgid "digits"
+msgstr "dígitos"
+
+#: ../../src/Translations/StoreTranslations.php:190
+msgid "No fee"
+msgstr "Sin interés"
+
+#: ../../src/Translations/StoreTranslations.php:191
+msgid "More options"
+msgstr "Más opciones"
+
+#: ../../src/Translations/StoreTranslations.php:192
+msgid "If interest is applicable, it will be charged by your bank."
+msgstr "Si corresponden intereses, serán aplicados por tu banco."
+
+#: ../../src/Translations/StoreTranslations.php:193
+msgid "Interest"
+msgstr "Intereses"
+
+#: ../../src/Translations/StoreTranslations.php:194
+msgid "Card number is required"
+msgstr "Número de tarjeta obligatorio"
+
 #: ../../src/Translations/StoreTranslations.php:195
+msgid "Card number invalid"
+msgstr "Número de tarjeta inválido"
+
+#: ../../src/Translations/StoreTranslations.php:196
+msgid "Holder name is required"
+msgstr "Nombre del titular obligatorio"
+
+#: ../../src/Translations/StoreTranslations.php:197
+msgid "Holder name invalid"
+msgstr "Nombre del titular inválido"
+
+#: ../../src/Translations/StoreTranslations.php:198,
+#: ../../src/Translations/StoreTranslations.php:200
+msgid "Expiration date invalid"
+msgstr "Fecha de vencimiento inválido"
+
+#: ../../src/Translations/StoreTranslations.php:199
+msgid "Expiration date incomplete"
+msgstr "Fecha de vencimiento obligatorio"
+
+#: ../../src/Translations/StoreTranslations.php:201
+msgid "Security code is required"
+msgstr "Código de seguridad obligatorio"
+
+#: ../../src/Translations/StoreTranslations.php:202
+msgid "Security code incomplete"
+msgstr "Código de seguridad incompleto"
+
+#: ../../src/Translations/StoreTranslations.php:214
 msgid "Pix in Test Mode"
 msgstr "Pix en Modo Test"
 
-#: ../../src/Translations/StoreTranslations.php:196
+#: ../../src/Translations/StoreTranslations.php:215
 msgid ""
 "You can test the flow to generate a code, but you cannot finalize the "
 "payment."
@@ -1579,62 +1649,62 @@ msgstr ""
 "Es posible probar el flujo para generar una factura, pero no es posible "
 "finalizar el pago."
 
-#: ../../src/Translations/StoreTranslations.php:197
+#: ../../src/Translations/StoreTranslations.php:216
 msgid "Pay instantly"
 msgstr "Pago instantáneo"
 
-#: ../../src/Translations/StoreTranslations.php:198
+#: ../../src/Translations/StoreTranslations.php:217
 msgid ""
 "By confirming your purchase, we will show you a code to make the payment."
 msgstr ""
 "Al confirmar tu compra, te mostraremos un código para realizar el pago."
 
-#: ../../src/Translations/StoreTranslations.php:199
+#: ../../src/Translations/StoreTranslations.php:218
 msgid "Pix logo"
 msgstr "Pix logo"
 
-#: ../../src/Translations/StoreTranslations.php:202,
-#: ../../src/Translations/StoreTranslations.php:211
+#: ../../src/Translations/StoreTranslations.php:221,
+#: ../../src/Translations/StoreTranslations.php:230
 msgid "Code valid for "
 msgstr "Código válido por "
 
-#: ../../src/Translations/StoreTranslations.php:203
+#: ../../src/Translations/StoreTranslations.php:222
 msgid "Now you just need to pay with Pix to finalize your purchase"
 msgstr "Ahora sólo tiene que pagar con Pix para finalizar su compra"
 
-#: ../../src/Translations/StoreTranslations.php:204
+#: ../../src/Translations/StoreTranslations.php:223
 msgid "How to pay with Pix:"
 msgstr "Cómo pagar con Pix:"
 
-#: ../../src/Translations/StoreTranslations.php:205
+#: ../../src/Translations/StoreTranslations.php:224
 msgid "Go to your bank's app or website"
 msgstr "Entra en la app o en la página web de tu banco"
 
-#: ../../src/Translations/StoreTranslations.php:206
+#: ../../src/Translations/StoreTranslations.php:225
 msgid "Search for the option to pay with Pix"
 msgstr "Busca la opción de pagar con Pix"
 
-#: ../../src/Translations/StoreTranslations.php:207
+#: ../../src/Translations/StoreTranslations.php:226
 msgid "Scan the QR code or Pix code"
 msgstr "Escanea el código QR o el código Pix"
 
-#: ../../src/Translations/StoreTranslations.php:208
+#: ../../src/Translations/StoreTranslations.php:227
 msgid "Done! You will see the payment confirmation"
 msgstr "Listo. Verás la confirmación del pago"
 
-#: ../../src/Translations/StoreTranslations.php:209
+#: ../../src/Translations/StoreTranslations.php:228
 msgid "Value: "
 msgstr "Valor: "
 
-#: ../../src/Translations/StoreTranslations.php:210
+#: ../../src/Translations/StoreTranslations.php:229
 msgid "Scan the QR code:"
 msgstr "Escanea el código QR:"
 
-#: ../../src/Translations/StoreTranslations.php:212
+#: ../../src/Translations/StoreTranslations.php:231
 msgid "If you prefer, you can pay by copying and pasting the following code"
 msgstr "Si lo prefieres, puedes pagar copiando y pegando el siguiente código"
 
-#: ../../src/Translations/StoreTranslations.php:213
+#: ../../src/Translations/StoreTranslations.php:232
 msgid "Copy code"
 msgstr "Copiar código"
 
