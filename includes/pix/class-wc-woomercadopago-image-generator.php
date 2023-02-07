@@ -87,7 +87,7 @@ class WC_WooMercadoPago_Image_Generator {
 	 */
 	public static function get_access_data() {
 
-		$id_payment = sanitize_key( isset($_GET['id'])); // phpcs:disable WordPress.Security.NonceVerification
+		$id_payment = sanitize_key( isset($_GET['id']) ? $_GET['id'] : null); // phpcs:disable WordPress.Security.NonceVerification
 
 		if ( is_null($id_payment) || empty($id_payment) || ! is_numeric($id_payment) ) {
 			self::get_error_image();
