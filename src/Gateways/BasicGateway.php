@@ -196,7 +196,6 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
         return $default;
     }
 
-    //@TODO change getOption
     /**
 	 * Field payments
 	 *
@@ -223,7 +222,7 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
 			),
 		);
 
-		$all_payments = get_option('_checkout_payments_methods', '');
+		$all_payments = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
 
 		if ( empty($all_payments) ) {
 			return $payment_list;
@@ -513,8 +512,7 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
 	 * @return array
 	 */
 	private function get_payment_methods() {
-        //@TODO change getOption
-		$payment_methods_options = get_option( '_checkout_payments_methods', '' );
+		$payment_methods_options = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
 		$payment_methods         = [];
 
         //@TODO add credits helper

@@ -50,7 +50,12 @@ class Seller
     /**
      * @const
      */
-    private const CHECKOUT_PAYMENT_METHODS = '_checkout_payments_methods';
+    private const CHECKOUT_BASIC_PAYMENT_METHODS = '_checkout_payments_methods';
+
+    /**
+     * @const
+     */
+    private const CHECKOUT_TICKET_PAYMENT_METHODS = '_all_payment_methods_ticket';
 
     /**
      * @var Cache
@@ -226,17 +231,33 @@ class Seller
     /**
      * @return array
      */
-    public function getCheckoutPaymentMethods(): array
+    public function getCheckoutBasicPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_PAYMENT_METHODS, '');
+        return $this->options->get(self::CHECKOUT_BASIC_PAYMENT_METHODS, '');
     }
 
     /**
-     * @param array $checkoutPaymentMethods
+     * @param array $checkoutBasicPaymentMethods
      */
-    public function setCheckoutPaymentMethods(array $checkoutPaymentMethods): void
+    public function setCheckoutBasicPaymentMethods(array $checkoutBasicPaymentMethods): void
     {
-        $this->options->set(self::CHECKOUT_PAYMENT_METHODS, $checkoutPaymentMethods);
+        $this->options->set(self::CHECKOUT_BASIC_PAYMENT_METHODS, $checkoutBasicPaymentMethods);
+    }
+
+    /**
+     * @return array
+     */
+    public function getCheckoutTicketPaymentMethods(): array
+    {
+        return $this->options->get(self::CHECKOUT_TICKET_PAYMENT_METHODS, '');
+    }
+
+    /**
+     * @param array $checkoutTicketPaymentMethods
+     */
+    public function setCheckoutTicketPaymentMethods(array $checkoutTicketPaymentMethods): void
+    {
+        $this->options->set(self::CHECKOUT_TICKET_PAYMENT_METHODS, $checkoutTicketPaymentMethods);
     }
 
     /**
@@ -258,18 +279,31 @@ class Seller
             $accessToken = $this->getCredentialsAccessToken();
         }
 
+        $paymentMethodsResponse = $this->getPaymentMethods($publicKey, $accessToken);
+
+        if (empty($paymentMethodsResponse) || 200 !== $paymentMethodsResponse['status']) {
+            $this->setCheckoutBasicPaymentMethods([]);
+            $this->setCheckoutTicketPaymentMethods([]);
+            return;
+        }
+
+        $this->setupBasicPaymentMethods($paymentMethodsResponse);
+        $this->setupTicketPaymentMethods($paymentMethodsResponse);
+    }
+
+    /**
+     * Setup Basic Payment Methods
+     *
+     * @param array $paymentMethodsResponse
+     *
+     */
+    private function setupBasicPaymentMethods(array $paymentMethodsResponse): void
+    {
         $excludedPaymentMethods = [
             'consumer_credits',
             'paypal',
             'account_money',
         ];
-
-        $paymentMethodsResponse = $this->getPaymentMethods($publicKey, $accessToken);
-
-        if (empty($paymentMethodsResponse) || 200 !== $paymentMethodsResponse['status']) {
-            $this->setCheckoutPaymentMethods([]);
-            return;
-        }
 
         $serializedPaymentMethods = [];
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
@@ -286,7 +320,37 @@ class Seller
             ];
         }
 
-        $this->setCheckoutPaymentMethods($serializedPaymentMethods);
+        $this->setCheckoutBasicPaymentMethods($serializedPaymentMethods);
+    }
+
+    /**
+     * Setup Ticket Payment Methods
+     *
+     * @param array $paymentMethodsResponse
+     *
+     */
+    private function setupTicketPaymentMethods(array $paymentMethodsResponse): void
+    {
+        $excludedPaymentMethods = [
+            'paypal',
+            'pse',
+            'pix',
+        ];
+
+        $serializedPaymentMethods = [];
+        foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
+            if (in_array($paymentMethod['id'], $excludedPaymentMethods, true) ||
+                'account_money' === $paymentMethod['payment_type_id'] ||
+                'credit_card'   === $paymentMethod['payment_type_id'] ||
+                'debit_card'    === $paymentMethod['payment_type_id'] ||
+                'prepaid_card'  === $paymentMethod['payment_type_id']
+            ) {
+                continue;
+            }
+            $serializedPaymentMethods[] = $paymentMethod;
+        }
+
+        $this->setCheckoutTicketPaymentMethods($serializedPaymentMethods);
     }
 
     /**

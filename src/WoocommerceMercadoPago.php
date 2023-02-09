@@ -27,6 +27,7 @@ use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -53,6 +54,11 @@ class WoocommerceMercadoPago
      * @const
      */
     private const PLATFORM_NAME = 'woocommerce';
+
+    /**
+     * @const
+     */
+    private const TICKET_TIME_EXPIRATION = 3;
 
     /**
      * @const
@@ -190,7 +196,7 @@ class WoocommerceMercadoPago
     public $adminTranslations;
 
     /**
-     * @var storeTranslations
+     * @var StoreTranslations
      */
     public $storeTranslations;
 
@@ -227,6 +233,8 @@ class WoocommerceMercadoPago
     public function registerHooks(): void
     {
         add_action('wp_loaded', [$this, 'init']);
+        //@TODO register ticket hoook
+        //add_action('woocommerce_thankyou_' . $this->payment->id, array( $this, 'update_mp_settings_script_ticket'));
     }
 
     /**
@@ -238,6 +246,7 @@ class WoocommerceMercadoPago
     {
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
     }
 
     /**
@@ -392,6 +401,7 @@ class WoocommerceMercadoPago
         $this->define('MP_VERSION', self::PLUGIN_VERSION);
         $this->define('MP_PLATFORM_ID', self::PLATFORM_ID);
         $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
+        $this->define('MP_TICKET_DATE_EXPIRATION', self::TICKET_TIME_EXPIRATION);
     }
 
     /**

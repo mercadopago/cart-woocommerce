@@ -26,6 +26,11 @@ class StoreTranslations
     public $checkoutCredits = [];
 
     /**
+     * @var array
+     */
+    public $checkoutTicket = [];
+
+    /**
      * Translations constructor
      */
     public function __construct(Links $links)
@@ -34,6 +39,7 @@ class StoreTranslations
 
         $this->setCheckoutBasicTranslations();
         $this->setCheckoutCreditsTranslations();
+        $this->setCheckoutTicketTranslations();
     }
 
     /**
@@ -74,6 +80,26 @@ class StoreTranslations
             'method_title'            => __('Mercado Pago - Installments without card', 'woocommerce-mercadopago'),
             'config_header_title'     => __('Installments without card', 'woocommerce-mercadopago'),
             'config_header_desc'      => __('Reach millions of buyers by offering Mercado Credito as a payment method. Our flexible payment options give your customers the possibility to buy today whatever they want in up to 12 installments without the need to use a credit card. For your business, the approval of the purchase is immediate and guaranteed.', 'woocommerce-mercadopago'),
+            'config_enabled_title'    => __('Activate installments without card in your store checkout', 'woocommerce-mercadopago'),
+            'config_enabled_subtitle' => __('Offer the option to pay in installments without card directly from your store\'s checkout.', 'woocommerce-mercadopago'),
+            'config_enabled_enabled'  => __('Payment in installments without card in the store checkout is <b>active</b>', 'woocommerce-mercadopago'),
+            'config_enabled_disabled' => __('Payment in installments without card in the store checkout is <b>inactive</b>', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Set checkout ticket translations
+     *
+     * @return void
+     */
+    private function setCheckoutTicketTranslations(): void
+    {
+        $this->checkoutTicket = [
+            'gateway_title'           => __('Invoice', 'woocommerce-mercadopago'),
+            'gateway_description'     => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
+            'method_title'            => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
+            'config_header_title'     => __('Transparent Checkout | Invoice or Loterica.', 'woocommerce-mercadopago'),
+            'config_header_desc'      => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
             'config_enabled_title'    => __('Activate installments without card in your store checkout', 'woocommerce-mercadopago'),
             'config_enabled_subtitle' => __('Offer the option to pay in installments without card directly from your store\'s checkout.', 'woocommerce-mercadopago'),
             'config_enabled_enabled'  => __('Payment in installments without card in the store checkout is <b>active</b>', 'woocommerce-mercadopago'),
