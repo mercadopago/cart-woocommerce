@@ -253,9 +253,9 @@ class Seller
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getCheckoutPaymentMethodPix(): string
+    public function getCheckoutPaymentMethodPix(): array
     {
         return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, '');
     }
@@ -285,6 +285,7 @@ class Seller
     {
         $this->options->set(self::CHECKOUT_EXPIRATION_DATE_PIX, $checkoutExpirationDatePix);
     }
+
     /**
      * Update Payment Methods
      *
@@ -295,12 +296,10 @@ class Seller
     public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
     {
         if (null === $publicKey) {
-            //@TODO: validate if prod or test
             $publicKey = $this->getCredentialsPublicKey();
         }
 
         if (null === $accessToken) {
-            //@TODO: validate if prod or test
             $accessToken = $this->getCredentialsAccessToken();
         }
 
@@ -318,11 +317,11 @@ class Seller
 
         if (empty($paymentMethodsResponse) || 200 !== $paymentMethodsResponse['status']) {
             $this->setCheckoutPaymentMethods([]);
+            $this->setCheckoutPaymentMethodPix([]);
             return;
         }
 
         $serializedPaymentMethods   = [];
-        $serializedPaymentMethodPix = [];
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
             if (in_array($paymentMethod['id'], $excludedPaymentMethods, true)) {
                 continue;
@@ -337,8 +336,8 @@ class Seller
             ];
 
             if (in_array($paymentMethod['id'], $acceptedPaymentMethods, true)) {
-                $serializedPaymentMethodPix[$paymentMethod['id']] = $serializedPaymentMethods;
-                $this->{$acceptedPaymentMethods[$paymentMethod['id']]}($serializedPaymentMethodPix, true);
+                $serializedPaymentMethods[$paymentMethod['id']] = $serializedPaymentMethods;
+                $this->{$acceptedPaymentMethods[$paymentMethod['id']]}($serializedPaymentMethods[paymentMethod['id']]);
             }
         }
 

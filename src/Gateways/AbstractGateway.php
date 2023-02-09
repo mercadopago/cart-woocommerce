@@ -33,13 +33,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     public $expirationDate;
 
     /**
-     * Active gateway
-     *
-     * @var bool
-     */
-    public $activatedGateway;
-
-    /**
      * Checkout country
      *
      * @var string

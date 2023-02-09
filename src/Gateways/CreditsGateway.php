@@ -314,8 +314,8 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
                 'computerGrayIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-gray-icon', '.png'),
                 'cellphoneBlueIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-blue-icon', '.png'),
                 'cellphoneGrayIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-gray-icon', '.png'),
-                'viewMobile'        => plugins_url($this->getCreditsGifPath($siteId, 'mobile')),
-                'viewDesktop'       => plugins_url($this->getCreditsGifPath($siteId, 'desktop')),
+                'viewMobile'        => plugins_url($this->getCreditsGifPath($siteId, 'mobile'), plugin_dir_path(__FILE__)),
+                'viewDesktop'       => plugins_url($this->getCreditsGifPath($siteId, 'desktop'), plugin_dir_path(__FILE__)),
                 'footerDesktop'     => $this->adminTranslations['credits_banner_desktop'],
                 'footerCellphone'   => $this->adminTranslations['credits_banner_cellphone'],
             ]

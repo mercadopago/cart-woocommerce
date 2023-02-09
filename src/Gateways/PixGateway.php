@@ -36,7 +36,6 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->activatedGateway   = $this->mercadopago->seller->getCheckoutPaymentMethodPix();
         $this->expirationDate     = (int) $this->mercadopago->seller->getCheckoutDateExpirationPix('1');
 
         $this->init_form_fields();
