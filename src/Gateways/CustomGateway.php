@@ -43,8 +43,10 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->gateway->registerGatewayTitle($this);
+        // @todo: call admin_notice hook to display currency notice
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
-        //$this->mercadopago->checkout->registerReviewOrderBeforePayment([$this, '']); // @todo
+        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'loadThankYouPage']);
+        $this->mercadopago->checkout->registerReceipt(self::ID, [$this, 'renderOrderForm']);
     }
 
     /**
@@ -226,19 +228,15 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         $countryConfigs = $this->mercadopago->country->getCountryConfigs($countrySuffix);
 
         $this->mercadopago->scripts->registerStoreScript(
-            'woocommerce-mercadopago-sdk',
+            'wc_mercadopago_sdk',
             'https://sdk.mercadopago.com/js/v2'
         );
 
-        wp_enqueue_scripts(
-            'woocommerce-mercadopago-custom-checkout',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js')
-        );
-
-        wp_localize_script(
-            'woocommerce-mercadopago-checkout',
-            'wc_mercadopago_params',
+        $this->mercadopago->scripts->registerStoreScript(
+            'wc_mercadopago_custom_checkout',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js'),
             [
+                'public_key'           => $this->mercadopago->seller->getCredentialsPublicKey(),
                 'site_id'              => $countryConfigs['site_id'],
                 'currency'             => $countryConfigs['currency'],
                 'intl'                 => $countryConfigs['intl'],
@@ -283,14 +281,21 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         );
 
         $this->mercadopago->scripts->registerStoreScript(
-            'woocommerce-mercadopago-custom-page',
+            'wc_mercadopago_custom_page',
             $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-page', '.js')
         );
 
         $this->mercadopago->scripts->registerStoreScript(
-            'woocommerce-mercadopago-custom-elements',
+            'wc_mercadopago_custom_elements',
             $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-elements', '.js')
         );
+
+        $this->mercadopago->checkout->registerReviewOrderBeforePayment(function () {
+            $this->mercadopago->scripts->registerStoreScript(
+                'wc_mercadopago_custom_update_checkout',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-update-checkout', '.js'),
+            );
+        });
     }
 
     /**
@@ -470,5 +475,74 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         $amount     = $subtotal - $discount + $commission;
 
         return $amount + $tax;
+    }
+
+    /**
+     * Render order form
+     *
+     * @param $orderId
+     *
+     * @return void
+     */
+    public function renderOrderForm($orderId): void
+    {
+        $isWallet = get_query_var('wallet_button', false);
+
+        if ($isWallet) {
+            $order      = wc_get_order($orderId);
+            // @todo get wallet button preference
+            $preference = '';
+
+            $this->mercadopago->template->getWoocommerceTemplate(
+                'public/receipt/custom-checkout.php',
+                [
+                    'public_key'          => $this->mercadopago->seller->getCredentialsPublicKey(),
+                    // @todo change to preference['id']
+                    'preference_id'       => $preference,
+                    'wallet_button_title' => $this->storeTranslations['wallet_button_title'],
+                    'cancel_url'          => $order->get_cancel_order_url(),
+                    'cancel_url_text'     => $this->storeTranslations['cancel_url_text'],
+                ]
+            );
+        }
+    }
+
+    /**
+     * Load thank you page
+     *
+     * @param $orderId
+     *
+     * @return void
+     */
+    public function loadThankYouPage($orderId): void
+    {
+        $order             = wc_get_order($orderId);
+        $installments      = $order->get_meta('mp_installments');
+        $installmentAmount = $order->get_meta('mp_transaction_details');
+        $transactionAmount = $order->get_meta('mp_transaction_amount');
+        $totalPaidAmount   = $order->get_meta('mp_total_paid_amount');
+        $totalDiffCost     = (float) $totalPaidAmount - (float) $transactionAmount;
+
+        $country           = $this->mercadopago->country->getPluginDefaultCountry();
+        $countryConfigs     = $this->mercadopago->country->getCountryConfigs($country);
+        $currencySymbol    = $countryConfigs['currency_symbol'];
+
+        if ($totalDiffCost > 0) {
+            $this->mercadopago->gateway->registerOrderDetailsAfterOrderTable([$this, 'loadThankYouPage']);
+            $this->mercadopago->template->getWoocommerceTemplate(
+                'public/order/custom-order-received.php',
+                [
+                    'title_installment_cost'  => $this->storeTranslations['title_installment_cost'],
+                    'title_installment_total' => $this->storeTranslations['title_installment_total'],
+                    'text_installments'       => $this->storeTranslations['text_installments'],
+                    'currency'                => $currencySymbol,
+                    'total_paid_amount'       => number_format(floatval($totalPaidAmount), 2, ',', '.'),
+                    'transaction_amount'      => number_format(floatval($transactionAmount), 2, ',', '.'),
+                    'total_diff_cost'         => number_format(floatval($totalDiffCost), 2, ',', '.'),
+                    'installment_amount'      => number_format(floatval($installmentAmount), 2, ',', '.'),
+                    'installments'            => number_format(floatval($installments)),
+                ]
+            );
+        }
     }
 }

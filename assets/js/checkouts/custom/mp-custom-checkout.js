@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_params */
+/* globals wc_mercadopago_custom_checkout_params */
 
 var cardForm;
 var hasToken = false;
@@ -76,7 +76,7 @@ function createToken() {
  * Init cardForm
  */
 function initCardForm() {
-  var mp = new MercadoPago(wc_mercadopago_params.public_key);
+  var mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key);
 
   return new Promise((resolve, reject) => {
     cardForm = mp.cardForm({
@@ -99,7 +99,7 @@ function initCardForm() {
         },
         cardExpirationDate: {
           id: "form-checkout__expirationDate-container",
-          placeholder: wc_mercadopago_params.placeholders["cardExpirationDate"],
+          placeholder: wc_mercadopago_custom_checkout_params.placeholders["cardExpirationDate"],
           mode: "short",
           style: {
             "font-size": "16px",
@@ -124,11 +124,11 @@ function initCardForm() {
         },
         issuer: {
           id: "form-checkout__issuer",
-          placeholder: wc_mercadopago_params.placeholders["issuer"],
+          placeholder: wc_mercadopago_custom_checkout_params.placeholders["issuer"],
         },
         installments: {
           id: "form-checkout__installments",
-          placeholder: wc_mercadopago_params.placeholders["installments"],
+          placeholder: wc_mercadopago_custom_checkout_params.placeholders["installments"],
         },
       },
       callbacks: {
@@ -194,12 +194,12 @@ function initCardForm() {
         onValidityChange: function (error, field) {
           if (error) {
             let helper_message = CheckoutPage.getHelperMessage(field);
-            let message = wc_mercadopago_params.input_helper_message[field][error[0].code];
+            let message = wc_mercadopago_custom_checkout_params.input_helper_message[field][error[0].code];
 
             if (message) {
               helper_message.innerHTML = message;
             } else {
-              helper_message.innerHTML = wc_mercadopago_params.input_helper_message[field]["invalid_length"];
+              helper_message.innerHTML = wc_mercadopago_custom_checkout_params.input_helper_message[field]["invalid_length"];
             }
 
             if (field == "cardNumber") {
@@ -316,13 +316,13 @@ function sendMetric(name, message) {
     message,
     target: "mp_custom_checkout_security_fields_client",
     plugin: {
-      version: wc_mercadopago_params.plugin_version,
+      version: wc_mercadopago_custom_checkout_params.plugin_version,
     },
     platform: {
       name: "woocommerce",
       uri: window.location.href,
-      version: wc_mercadopago_params.platform_version,
-      location: `${wc_mercadopago_params.location}_${wc_mercadopago_params.theme}`,
+      version: wc_mercadopago_custom_checkout_params.platform_version,
+      location: `${wc_mercadopago_custom_checkout_params.location}_${wc_mercadopago_custom_checkout_params.theme}`,
     },
   };
 

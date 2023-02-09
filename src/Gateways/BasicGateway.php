@@ -162,17 +162,17 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
             'success_url'                        => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['success_url_title'],
-                'description' => $this->validateBackUrl($this->settings['success_url'], 'Choose the URL that we will show your customers when they finish their purchase.'),
+                'description' => $this->validateBackUrl($this->settings['success_url'], $this->adminTranslations['success_url_description']),
             ],
             'failure_url'                        => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['failure_url_title'],
-                'description' => $this->validateBackUrl($this->settings['failure_url'], 'Choose the URL that we will show to your customers when we refuse their purchase. Make sure it includes a message appropriate to the situation and give them useful information so they can solve it.'),
+                'description' => $this->validateBackUrl($this->settings['failure_url'], $this->adminTranslations['failure_url_description']),
             ],
             'pending_url'                        => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['pending_url_title'],
-                'description' => $this->validateBackUrl($this->settings['pending_url'], 'Choose the URL that we will show to your customers when they have a payment pending approval.'),
+                'description' => $this->validateBackUrl($this->settings['pending_url'], $this->adminTranslations['pending_url_description']),
             ],
             'binary_mode'                        => [
                 'type'         => 'mp_toggle_switch',
@@ -478,7 +478,6 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
     }
 
     //@TODO change getOption
-
     /**
      * Field payments
      *

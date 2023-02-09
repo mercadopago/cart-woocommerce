@@ -112,23 +112,23 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     {
         if ($this->canLoadScriptsAndStyles($gatewaySection)) {
             $this->mercadopago->scripts->registerAdminScript(
-                'woocommerce-mercadopago-admin-components',
+                'wc_mercadopago_admin_components',
                 $this->mercadopago->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
             );
 
             $this->mercadopago->scripts->registerAdminStyle(
-                'woocommerce-mercadopago-admin-components',
+                'wc_mercadopago_admin_components',
                 $this->mercadopago->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
             );
         }
 
         $this->mercadopago->scripts->registerStoreScript(
-            'woocommerce-mercadopago-checkout-components',
+            'wc_mercadopago_checkout_components',
             $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
         );
 
         $this->mercadopago->scripts->registerStoreStyle(
-            'woocommerce-mercadopago-checkout-components',
+            'wc_mercadopago_checkout_components',
             $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
         );
     }

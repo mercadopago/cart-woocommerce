@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_params */
+/* globals wc_mercadopago_custom_checkout_params */
 
 const CheckoutPage = {
   setElementDisplay(element, operator) {
@@ -55,15 +55,15 @@ const CheckoutPage = {
   },
 
   setCvvHint(securityCode) {
-    var cvvText = wc_mercadopago_params.cvvText;
+    var cvvText = wc_mercadopago_custom_checkout_params.cvvText;
     cvvText = `${securityCode.length} ${cvvText} `;
     cvvText += this.cvvLocationTranslate(securityCode.card_location);
     this.setText("mpSecurityCodeInfo", cvvText);
   },
 
   cvvLocationTranslate(location) {
-    $cvvFront = wc_mercadopago_params.cvvHint["front"];
-    $cvvBack = wc_mercadopago_params.cvvHint["back"];
+    $cvvFront = wc_mercadopago_custom_checkout_params.cvvHint["front"];
+    $cvvBack = wc_mercadopago_custom_checkout_params.cvvHint["back"];
     return location === "back" ? $cvvBack : $cvvFront;
   },
 
@@ -91,7 +91,7 @@ const CheckoutPage = {
   },
 
   getCountry() {
-    return wc_mercadopago_params.site_id;
+    return wc_mercadopago_custom_checkout_params.site_id;
   },
 
   changeCvvPlaceHolder(cvvLength) {
@@ -121,8 +121,8 @@ const CheckoutPage = {
   },
 
   formatCurrency(value) {
-    const formatter = new Intl.NumberFormat(wc_mercadopago_params.intl, {
-      currency: wc_mercadopago_params.currency,
+    const formatter = new Intl.NumberFormat(wc_mercadopago_custom_checkout_params.intl, {
+      currency: wc_mercadopago_custom_checkout_params.currency,
       style: "currency",
       currencyDisplay: "narrowSymbol",
     });
@@ -338,7 +338,7 @@ const CheckoutPage = {
     for (var i = 0; i < taxesElements.length; i++) {
       let installmentValue = taxesElements[i].getElementsByTagName("input")[0].value;
 
-      if(wc_mercadopago_params.site_id === "mla") {
+      if(wc_mercadopago_custom_checkout_params.site_id === "mla") {
         taxesElements[i].addEventListener("click", this.showTaxes);
       }
 
@@ -372,7 +372,7 @@ const CheckoutPage = {
       const installmentTotalAmount = this.formatCurrency(payerCosts[j].total_amount);
 
       const backInterestText = bankInterestDisclaimer
-        ? `${installmentTotalAmount} + ${wc_mercadopago_params.interestText}`
+        ? `${installmentTotalAmount} + ${wc_mercadopago_custom_checkout_params.interestText}`
         : installmentTotalAmount
 
       installments.push({
@@ -381,7 +381,7 @@ const CheckoutPage = {
         highlight: installmentRate && installmentRateCollector ? "true" : "",
         dataRate: this.argentinaResolution(payerCosts[j].labels),
         rowText: payerCosts[j].recommended_message.split('(')[0],
-        rowObs: installmentRate && installmentRateCollector ? wc_mercadopago_params.installmentObsFee : backInterestText,
+        rowObs: installmentRate && installmentRateCollector ? wc_mercadopago_custom_checkout_params.installmentObsFee : backInterestText,
       });
     }
 
@@ -394,11 +394,11 @@ const CheckoutPage = {
 
     const inputTable = document.createElement("input-table");
     inputTable.setAttribute("name", "mp-installments");
-    inputTable.setAttribute("button-name", wc_mercadopago_params.installmentButton);
+    inputTable.setAttribute("button-name", wc_mercadopago_custom_checkout_params.installmentButton);
     inputTable.setAttribute("columns", JSON.stringify(installments));
 
     if (bankInterestDisclaimer) {
-      inputTable.setAttribute("bank-interest-text", wc_mercadopago_params.bankInterestText);
+      inputTable.setAttribute("bank-interest-text", wc_mercadopago_custom_checkout_params.bankInterestText);
     }
 
     this.setElementDisplay("mpInstallments", "block");

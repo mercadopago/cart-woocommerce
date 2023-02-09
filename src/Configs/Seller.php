@@ -253,9 +253,9 @@ class Seller
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function getCheckoutPaymentMethodPix(): array
+    public function getCheckoutPaymentMethodPix(): string
     {
         return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, '');
     }

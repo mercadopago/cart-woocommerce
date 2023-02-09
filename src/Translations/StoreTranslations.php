@@ -200,6 +200,11 @@ class StoreTranslations
             'input_helper_message_expiration_date_invalid_value'  => __('Expiration date invalid', 'woocommerce-mercadopago'),
             'input_helper_message_security_code_invalid_type'     => __('Security code is required', 'woocommerce-mercadopago'),
             'input_helper_message_security_code_invalid_length'   => __('Security code incomplete', 'woocommerce-mercadopago'),
+            'title_installment_cost'                              => __('Cost of installments', 'woocommerce-mercadopago'),
+            'title_installment_total'                             => __('Total with installments', 'woocommerce-mercadopago'),
+            'text_installments'                                   => __('installments of', 'woocommerce-mercadopago'),
+            'wallet_button_title'                                 => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
+            'cancel_url_text'                                     => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
         ];
     }
 
