@@ -233,8 +233,6 @@ class WoocommerceMercadoPago
     public function registerHooks(): void
     {
         add_action('wp_loaded', [$this, 'init']);
-        //@TODO register ticket hoook
-        //add_action('woocommerce_thankyou_' . $this->payment->id, array( $this, 'update_mp_settings_script_ticket'));
     }
 
     /**
