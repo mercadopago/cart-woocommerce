@@ -1,3 +1,5 @@
+/* globals mp_info_admin_credits_script_params */
+
 (function () {
     let blueBadgeArr = document.querySelectorAll('.credits-info-example-buttons-child')
     let iconImg = document.querySelectorAll('.icon-image')

@@ -91,10 +91,11 @@ final class Links
             'mercadopago_test_user'            => self::MP_URL . '/developers/panel/test-users',
             'mercadopago_credentials'          => self::MP_URL . '/developers/panel/credentials',
             'mercadopago_developers'           => self::MP_DEVELOPERS_URL,
-            'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br' . '/pix',
+            'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br/pix',
             'mercadopago_support'              => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/developers/' . $countryConfig['translate'] . '/support/contact',
+            'mercadopago_debts'                => self::MP_URL_PREFIX . '.com.ar/cuotas',
             'mercadopago_terms_and_conditions' => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . $countryConfig['help'] . $countryConfig['terms_and_conditions'],
-            'mercadopago_pix_config'            => self::MP_URL_PREFIX . '.com.br' . '/stop/pix?url=https%3A%2F%2Fwww.mercadopago.com.br%2Fadmin-pix-keys%2Fmy-keys&authentication_mode=required',
+            'mercadopago_pix_config'           => self::MP_URL_PREFIX . '.com.br/stop/pix?url=https%3A%2F%2Fwww.mercadopago.com.br%2Fadmin-pix-keys%2Fmy-keys&authentication_mode=required',
         ];
     }
 

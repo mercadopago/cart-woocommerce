@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Helpers\Url;
+
 class Plugin
 {
     /**
@@ -23,6 +25,19 @@ class Plugin
      * @const
      */
     public const GATEWAY_ICON_FILTER = 'woo_mercado_pago_icon';
+
+    /**
+     * @var Url
+     */
+    private $url;
+
+    /**
+     * Plugin constructor
+     */
+    public function __construct(Url $url)
+    {
+        $this->url = $url;
+    }
 
     /**
      * Register to plugin update event
@@ -63,13 +78,13 @@ class Plugin
     /**
      * Get gateway icon
      *
-     * @param string $fileName
+     * @param string $iconName
      *
      * @return string
      */
-    public function getGatewayIcon(string $fileName): string
+    public function getGatewayIcon(string $iconName): string
     {
-        $path = plugins_url("../assets/images/icons/{$fileName}.png", plugin_dir_path(__FILE__));
+        $path = $this->url->getPluginFileUrl("/assets/images/icons/{$iconName}", '.png');
 
         return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }

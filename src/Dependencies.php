@@ -187,7 +187,6 @@ class Dependencies
         $this->admin              = new Admin();
         $this->endpoints          = new Endpoints();
         $this->options            = new Options();
-        $this->plugin             = new Plugin();
         $this->product            = new Product();
         $this->template           = new Template();
         $this->order              = $this->setOrder();
@@ -197,6 +196,7 @@ class Dependencies
         $this->country            = $this->setCountry();
         $this->links              = $this->setLinks();
         $this->url                = $this->setUrl();
+        $this->plugin             = $this->setPlugin();
         $this->scripts            = $this->setScripts();
         $this->checkout           = $this->setCheckout();
         $this->adminTranslations  = $this->setAdminTranslations();
@@ -259,6 +259,14 @@ class Dependencies
     private function setUrl(): Url
     {
         return new Url($this->strings);
+    }
+
+    /**
+     * @return Plugin
+     */
+    private function setPlugin(): Plugin
+    {
+        return new Plugin($this->url);
     }
 
     /**

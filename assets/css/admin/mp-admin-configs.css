@@ -244,6 +244,10 @@
   padding: 0;
 }
 
+.mp-mw-100 {
+	max-width: 100% !important;
+}
+
 .mp-component-card {
   max-width: 50%;
   padding: 24px;

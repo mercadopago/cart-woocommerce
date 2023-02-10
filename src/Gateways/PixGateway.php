@@ -27,13 +27,15 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
     {
         parent::__construct();
 
+        $this->adminTranslations = $this->mercadopago->adminTranslations->pixGatewaySettings;
+        $this->storeTranslations = $this->mercadopago->storeTranslations->pixCheckout;
+
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-pix');
-        $this->title              = $this->mercadopago->options->get('title', $this->mercadopago->adminTranslations->pixSettings['gateway_title']);
-        $this->description        = $this->mercadopago->adminTranslations->pixSettings['gateway_description'];
-        $this->method_title       = $this->mercadopago->adminTranslations->pixSettings['gateway_method_title'];
-        $this->method_description = $this->mercadopago->adminTranslations->pixSettings['gateway_method_description'];
-        $this->activatedGateway   = $this->mercadopago->seller->getCheckoutPaymentMethodPix();
+        $this->title              = $this->mercadopago->options->get('title', $this->adminTranslations['gateway_title']);
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['gateway_method_title'];
+        $this->method_description = $this->adminTranslations['gateway_method_description'];
         $this->expirationDate     = (int) $this->mercadopago->seller->getCheckoutDateExpirationPix('1');
 
         $this->init_form_fields();
@@ -83,25 +85,25 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                 $stepsContent = $this->mercadopago->template->getWoocommerceTemplateHtml(
                     'admin/settings/steps.php',
                     [
-                        'title'                       => $this->mercadopago->adminTranslations->pixSettings['steps_title'],
-                        'step_one_text'               => $this->mercadopago->adminTranslations->pixSettings['steps_step_one_text' ],
-                        'step_two_text'               => $this->mercadopago->adminTranslations->pixSettings['steps_step_two_text'],
-                        'step_three_text'             => $this->mercadopago->adminTranslations->pixSettings['steps_step_three_text'],
-                        'observation_one'             => $this->mercadopago->adminTranslations->pixSettings['steps_observation_one'],
-                        'observation_two'             => $this->mercadopago->adminTranslations->pixSettings['steps_observation_two'],
-                        'button_about_pix'            => $this->mercadopago->adminTranslations->pixSettings['steps_button_about_pix'],
-                        'observation_three'           => $this->mercadopago->adminTranslations->pixSettings['steps_observation_three'],
-                        'link_title_one'              => $this->mercadopago->adminTranslations->pixSettings['steps_link_title_one'],
-                        'link_url_one'                => $this->mercadopago->links->getLinks()['mercadopago_pix'],
-                        'link_url_two'                => $this->mercadopago->links->getLinks()['mercadopago_support'],
+                        'title'             => $this->adminTranslations['steps_title'],
+                        'step_one_text'     => $this->adminTranslations['steps_step_one_text' ],
+                        'step_two_text'     => $this->adminTranslations['steps_step_two_text'],
+                        'step_three_text'   => $this->adminTranslations['steps_step_three_text'],
+                        'observation_one'   => $this->adminTranslations['steps_observation_one'],
+                        'observation_two'   => $this->adminTranslations['steps_observation_two'],
+                        'button_about_pix'  => $this->adminTranslations['steps_button_about_pix'],
+                        'observation_three' => $this->adminTranslations['steps_observation_three'],
+                        'link_title_one'    => $this->adminTranslations['steps_link_title_one'],
+                        'link_url_one'      => $this->mercadopago->links->getLinks()['mercadopago_pix'],
+                        'link_url_two'      => $this->mercadopago->links->getLinks()['mercadopago_support'],
                     ]
                 );
 
                 $this->form_fields = [
                     'header'        => [
                         'type'        => 'mp_config_title',
-                        'title'       => $this->mercadopago->adminTranslations->pixSettings['header_title'],
-                        'description' => $this->mercadopago->adminTranslations->pixSettings['header_description'],
+                        'title'       => $this->adminTranslations['header_title'],
+                        'description' => $this->adminTranslations['header_description'],
                     ],
                     'steps_content' => [
                         'title' => $stepsContent,
@@ -113,15 +115,15 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                 $this->form_fields = [
                     'header'                             => [
                         'type'        => 'mp_config_title',
-                        'title'       => $this->mercadopago->adminTranslations->pixSettings['header_title'],
-                        'description' => $this->mercadopago->adminTranslations->pixSettings['header_description'],
+                        'title'       => $this->adminTranslations['header_title'],
+                        'description' => $this->adminTranslations['header_description'],
                     ],
                     'card_settings'                      => [
                         'type'        => 'mp_card_info',
                         'value'       => [
-                            'title'       => $this->mercadopago->adminTranslations->pixSettings['card_settings_title'],
-                            'subtitle'    => $this->mercadopago->adminTranslations->pixSettings['card_settings_subtitle'],
-                            'button_text' => $this->mercadopago->adminTranslations->pixSettings['card_settings_button_text'],
+                            'title'       => $this->adminTranslations['card_settings_title'],
+                            'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
+                            'button_text' => $this->adminTranslations['card_settings_button_text'],
                             'button_url'  => $this->mercadopago->links->getLinks()['admin_settings_page'],
                             'icon'        => 'mp-icon-badge-info',
                             'color_card'  => 'mp-alert-color-success',
@@ -131,49 +133,49 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                     ],
                     'enabled'                            => [
                         'type'         => 'mp_toggle_switch',
-                        'title'        => $this->mercadopago->adminTranslations->pixSettings['enabled_title'],
-                        'subtitle'     => $this->mercadopago->adminTranslations->pixSettings['enabled_subtitle'],
+                        'title'        => $this->adminTranslations['enabled_title'],
+                        'subtitle'     => $this->adminTranslations['enabled_subtitle'],
                         'default'      => 'no',
                         'descriptions' => [
-                            'enabled'  => $this->mercadopago->adminTranslations->pixSettings['enabled_descriptions_enabled'],
-                            'disabled' => $this->mercadopago->adminTranslations->pixSettings['enabled_descriptions_disabled'],
+                            'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
+                            'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
                         ],
                     ],
                     'title'                              => [
                         'type'            => 'text',
-                        'title'           => $this->mercadopago->adminTranslations->pixSettings['title_title'],
-                        'description'     => $this->mercadopago->adminTranslations->pixSettings['title_description'],
-                        'default'         => $this->mercadopago->adminTranslations->pixSettings['title_default'],
-                        'desc_tip'        => $this->mercadopago->adminTranslations->pixSettings['title_desc_tip'],
+                        'title'           => $this->adminTranslations['title_title'],
+                        'description'     => $this->adminTranslations['title_description'],
+                        'default'         => $this->adminTranslations['title_default'],
+                        'desc_tip'        => $this->adminTranslations['title_desc_tip'],
                         'class'           => 'limit-title-max-length',
                     ],
                     'expiration_date'                    => [
                         'type'        => 'select',
-                        'title'       => $this->mercadopago->adminTranslations->pixSettings['expiration_date_title'],
-                        'description' => $this->mercadopago->adminTranslations->pixSettings['expiration_date_description'],
+                        'title'       => $this->adminTranslations['expiration_date_title'],
+                        'description' => $this->adminTranslations['expiration_date_description'],
                         'default'     => '30 minutes',
                         'options'     => [
-                            '15 minutes' => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_fifteen_minutes'],
-                            '30 minutes' => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_thirty_minutes'],
-                            '60 minutes' => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_sixty_minutes'],
-                            '12 hours'   => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_twelve_hours'],
-                            '24 hours'   => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_twenty_four_hours'],
-                            '2 days'     => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_two_days'],
-                            '3 days'     => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_three_days'],
-                            '4 days'     => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_four_days'],
-                            '5 days'     => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_five_days'],
-                            '6 days'     => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_six_days'],
-                            '7 days'     => $this->mercadopago->adminTranslations->pixSettings['expiration_date_options_seven_days'],
+                            '15 minutes' => $this->adminTranslations['expiration_date_options_15_minutes'],
+                            '30 minutes' => $this->adminTranslations['expiration_date_options_30_minutes'],
+                            '60 minutes' => $this->adminTranslations['expiration_date_options_60_minutes'],
+                            '12 hours'   => $this->adminTranslations['expiration_date_options_12_hours'],
+                            '24 hours'   => $this->adminTranslations['expiration_date_options_24_hours'],
+                            '2 days'     => $this->adminTranslations['expiration_date_options_2_days'],
+                            '3 days'     => $this->adminTranslations['expiration_date_options_3_days'],
+                            '4 days'     => $this->adminTranslations['expiration_date_options_4_days'],
+                            '5 days'     => $this->adminTranslations['expiration_date_options_5_days'],
+                            '6 days'     => $this->adminTranslations['expiration_date_options_6_days'],
+                            '7 days'     => $this->adminTranslations['expiration_date_options_7_days'],
                         ]
                     ],
                     'currency_conversion'                => [
                         'type'         => 'mp_toggle_switch',
-                        'title'        => $this->mercadopago->adminTranslations->pixSettings['currency_conversion_title'],
-                        'subtitle'     => $this->mercadopago->adminTranslations->pixSettings['currency_conversion_subtitle'],
+                        'title'        => $this->adminTranslations['currency_conversion_title'],
+                        'subtitle'     => $this->adminTranslations['currency_conversion_subtitle'],
                         'default'      => 'no',
                         'descriptions' => [
-                            'enabled'  => $this->mercadopago->adminTranslations->pixSettings['currency_conversion_descriptions_enabled'],
-                            'disabled' => $this->mercadopago->adminTranslations->pixSettings['currency_conversion_descriptions_disabled'],
+                            'enabled'  => $this->adminTranslations['currency_conversion_descriptions_enabled'],
+                            'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
                         ],
                     ],
                     'card_info_helper'                   => [
@@ -183,9 +185,9 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                     'card_info'                          => [
                         'type'        => 'mp_card_info',
                         'value'       => [
-                            'title'       => $this->mercadopago->adminTranslations->pixSettings['card_info_title'],
-                            'subtitle'    => $this->mercadopago->adminTranslations->pixSettings['card_info_subtitle'],
-                            'button_text' => $this->mercadopago->adminTranslations->pixSettings['card_info_button_text'],
+                            'title'       => $this->adminTranslations['card_info_title'],
+                            'subtitle'    => $this->adminTranslations['card_info_subtitle'],
+                            'button_text' => $this->adminTranslations['card_info_button_text'],
                             'button_url'  => $this->mercadopago->links->getLinks()['mercadopago_pix'],
                             'icon'        => 'mp-icon-badge-info',
                             'color_card'  => 'mp-alert-color-success',
@@ -195,20 +197,20 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                     ],
                     'advanced_configuration_title'       => [
                         'type'  => 'title',
-                        'title' => $this->mercadopago->adminTranslations->pixSettings['advanced_configuration_title'],
+                        'title' => $this->adminTranslations['advanced_configuration_title'],
                         'class' => 'mp-subtitle-body',
                     ],
                     'advanced_configuration_description' => [
                         'type'  => 'title',
-                        'title' => $this->mercadopago->adminTranslations->pixSettings['advanced_configuration_subtitle'],
+                        'title' => $this->adminTranslations['advanced_configuration_subtitle'],
                         'class' => 'mp-small-text',
                     ],
                     'discount'               => [
                         'type'              => 'mp_actionable_input',
-                        'title'             => $this->mercadopago->adminTranslations->pixSettings['discount_title'],
+                        'title'             => $this->adminTranslations['discount_title'],
                         'input_type'        => 'number',
-                        'description'       => $this->mercadopago->adminTranslations->pixSettings['discount_description'],
-                        'checkbox_label'    => $this->mercadopago->adminTranslations->pixSettings['discount_checkbox_label'],
+                        'description'       => $this->adminTranslations['discount_description'],
+                        'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
                         'default'           => '0',
                         'custom_attributes' => [
                             'step' => '0.01',
@@ -218,10 +220,10 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                     ],
                     'commission'             => [
                         'type'              => 'mp_actionable_input',
-                        'title'             => $this->mercadopago->adminTranslations->pixSettings['commission_title'],
+                        'title'             => $this->adminTranslations['commission_title'],
                         'input_type'        => 'number',
-                        'description'       => $this->mercadopago->adminTranslations->pixSettings['commission_description'],
-                        'checkbox_label'    => $this->mercadopago->adminTranslations->pixSettings['commission_checkbox_label'],
+                        'description'       => $this->adminTranslations['commission_description'],
+                        'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
                         'default'           => '0',
                         'custom_attributes' => [
                             'step' => '0.01',
@@ -257,14 +259,14 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
             'public/checkouts/pix-checkout.php',
             [
                 'test_mode'                        => $this->mercadopago->seller->isTestMode(),
-                'test_mode_title'                  => $this->mercadopago->storeTranslations->checkoutPix['test_mode_title'],
-                'test_mode_description'            => $this->mercadopago->storeTranslations->checkoutPix['test_mode_description'],
-                'pix_template_title'               => $this->mercadopago->storeTranslations->checkoutPix['pix_template_title'],
-                'pix_template_subtitle'            => $this->mercadopago->storeTranslations->checkoutPix['pix_template_subtitle'],
-                'pix_template_alt'                 => $this->mercadopago->storeTranslations->checkoutPix['pix_template_alt'],
-                'pix_template_src'                 => plugins_url('../assets/images/pix.png', plugin_dir_path(__FILE__)),
-                'terms_and_conditions_description' => $this->mercadopago->storeTranslations->checkoutPix['terms_and_conditions_description'],
-                'terms_and_conditions_link_text'   => $this->mercadopago->storeTranslations->checkoutPix['terms_and_conditions_link_text'],
+                'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
+                'test_mode_description'            => $this->storeTranslations['test_mode_description'],
+                'pix_template_title'               => $this->storeTranslations['pix_template_title'],
+                'pix_template_subtitle'            => $this->storeTranslations['pix_template_subtitle'],
+                'pix_template_alt'                 => $this->storeTranslations['pix_template_alt'],
+                'pix_template_src'                 => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix/pix', '.png'),
+                'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
+                'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
                 'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
             ]
         );
@@ -298,7 +300,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
         $this->mercadopago->woocommerce->cart->empty_cart();
 
         return [
-            'result' => 'success',
+            'result'   => 'success',
             'redirect' => $this->get_return_url($order)
         ];
     }
@@ -312,7 +314,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
     {
         $status = 200;
         $response = [
-            'status' => $status,
+            'status'  => $status,
             'message' => 'Webhook handled successful'
         ];
 
@@ -351,7 +353,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                 [
                     'qr_code'              => $qrCode,
                     'expiration_date'      => $expirationDate,
-                    'expiration_date_text' => $this->mercadopago->storeTranslations->checkoutPix['expiration_date_text'],
+                    'expiration_date_text' => $this->storeTranslations['expiration_date_text'],
                     'qr_code_image'        => $qrCodeImage,
                 ]
             );
@@ -369,14 +371,14 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
      */
     public function loadThankYouPage($orderId): void
     {
-        $order              = wc_get_order($orderId);
-        $methodExists       = method_exists($order, 'get_meta');
-        $qrCodeBase64       = $methodExists ? $order->get_meta('mp_pix_qr_base64') : get_post_meta($order->get_id(), 'mp_pix_qr_base64', true);
-        $qrCode             = $methodExists ? $order->get_meta('mp_pix_qr_code') : get_post_meta($order->get_id(), 'mp_pix_qr_code', true);
-        $transactionAmount  = $methodExists ? $order->get_meta('mp_transaction_amount') : get_post_meta($order->get_id(), 'mp_transaction_amount', true);
-        $transactionAmount  = number_format($transactionAmount, 2, ',', '.');
-        $expirationOption   = $this->mercadopago->options->get('checkout_pix_date_expiration', '30 minutes');
+        $order             = wc_get_order($orderId);
+        $methodExists      = method_exists($order, 'get_meta');
+        $qrCodeBase64      = $methodExists ? $order->get_meta('mp_pix_qr_base64') : get_post_meta($order->get_id(), 'mp_pix_qr_base64', true);
+        $qrCode            = $methodExists ? $order->get_meta('mp_pix_qr_code') : get_post_meta($order->get_id(), 'mp_pix_qr_code', true);
+        $transactionAmount = $methodExists ? $order->get_meta('mp_transaction_amount') : get_post_meta($order->get_id(), 'mp_transaction_amount', true);
+        $transactionAmount = number_format($transactionAmount, 2, ',', '.');
 
+        $expirationOption  = $this->mercadopago->options->get('checkout_pix_date_expiration', '30 minutes');
         $country           = $this->mercadopago->country->getPluginDefaultCountry();
         $countryConfigs    = $this->mercadopago->country->getCountryConfigs($country);
         $currencySymbol    = $countryConfigs['currency_symbol'];
@@ -388,23 +390,23 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/order/pix-order-received.php',
             [
-                'img_pix'             => plugins_url('../assets/images/pix.png', plugin_dir_path(__FILE__)),
+                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix', '.png'),
                 'amount'              => $transactionAmount,
                 'qr_base64'           => $qrCodeBase64,
-                'title_purchase_pix'  => $this->mercadopago->storeTranslations->checkoutPix['title_purchase_pix'],
-                'title_how_to_pay'    => $this->mercadopago->storeTranslations->checkoutPix['title_how_to_pay'],
-                'step_one'            => $this->mercadopago->storeTranslations->checkoutPix['step_one'],
-                'step_two'            => $this->mercadopago->storeTranslations->checkoutPix['step_two'],
-                'step_three'          => $this->mercadopago->storeTranslations->checkoutPix['step_three'],
-                'step_four'           => $this->mercadopago->storeTranslations->checkoutPix['step_four'],
-                'text_amount'         => $this->mercadopago->storeTranslations->checkoutPix['text_amount'],
+                'title_purchase_pix'  => $this->storeTranslations['title_purchase_pix'],
+                'title_how_to_pay'    => $this->storeTranslations['title_how_to_pay'],
+                'step_one'            => $this->storeTranslations['step_one'],
+                'step_two'            => $this->storeTranslations['step_two'],
+                'step_three'          => $this->storeTranslations['step_three'],
+                'step_four'           => $this->storeTranslations['step_four'],
+                'text_amount'         => $this->storeTranslations['text_amount'],
                 'currency'            => $currencySymbol,
-                'text_scan_qr'        => $this->mercadopago->storeTranslations->checkoutPix['text_scan_qr'],
-                'text_time_qr_one'    => $this->mercadopago->storeTranslations->checkoutPix['qr_date_expiration'],
+                'text_scan_qr'        => $this->storeTranslations['text_scan_qr'],
+                'text_time_qr_one'    => $this->storeTranslations['qr_date_expiration'],
                 'qr_date_expiration'  => $expirationOption,
-                'text_description_qr' => $this->mercadopago->storeTranslations->checkoutPix['text_description_qr'],
+                'text_description_qr' => $this->storeTranslations['text_description_qr'],
                 'qr_code'             => $qrCode,
-                'text_button'         => $this->mercadopago->storeTranslations->checkoutPix['text_button'],
+                'text_button'         => $this->storeTranslations['text_button'],
             ]
         );
     }
