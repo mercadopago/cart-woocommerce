@@ -58,6 +58,11 @@ class Seller
     private const CHECKOUT_TICKET_PAYMENT_METHODS = '_all_payment_methods_ticket';
 
     /**
+     * @const
+     */
+    private const SITE_ID_PAYMENT_METHODS = '_site_id_payment_methods';
+
+    /**
      * @var Cache
      */
     private $cache;
@@ -261,21 +266,40 @@ class Seller
     }
 
     /**
+     * @return array
+     */
+    public function getSiteIdPaymentMethods(): array
+    {
+        $siteIdPaymentMethods = $this->options->get(self::SITE_ID_PAYMENT_METHODS, []);
+        if (empty($siteIdPaymentMethods)) {
+            $this->updatePaymentMethods();
+            $siteIdPaymentMethods = $this->options->get(self::SITE_ID_PAYMENT_METHODS, []);
+        }
+        return $siteIdPaymentMethods;
+    }
+
+    /**
+     * @param array $checkoutTicketPaymentMethods
+     */
+    public function setSiteIdPaymentMethods(array $checkoutTicketPaymentMethods): void
+    {
+        $this->options->set(self::SITE_ID_PAYMENT_METHODS, $checkoutTicketPaymentMethods);
+    }
+
+    /**
      * Update Payment Methods
      *
      * @param string|null $publicKey
      * @param string|null $accessToken
      *
      */
-    public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
-    {        
+    public function updatePaymentMethods(string $publicKey = null, string $accessToken = null, $siteId = null): void
+    {
         if (null === $publicKey) {
-            //@TODO: validate if prod or test
             $publicKey = $this->getCredentialsPublicKey();
         }
         
         if (null === $accessToken) {
-            //@TODO: validate if prod or test
             $accessToken = $this->getCredentialsAccessToken();
         }
 
@@ -289,6 +313,18 @@ class Seller
 
         $this->setupBasicPaymentMethods($paymentMethodsResponse);
         $this->setupTicketPaymentMethods($paymentMethodsResponse);
+
+        if (null === $siteId) {
+            $siteId = $this->getSiteId();
+        }
+
+        $paymentMethodsResponseBySiteId = $this->getPaymentMethodsBySiteId($siteId);
+
+        if (empty($paymentMethodsResponseBySiteId) || 200 !== $paymentMethodsResponseBySiteId['status']) {
+            $this->setSiteIdPaymentMethods([]);
+            return;
+        }
+        $this->setSiteIdPaymentMethods($paymentMethodsResponseBySiteId['data']);
     }
 
     /**
@@ -486,6 +522,42 @@ class Seller
             }
 
             $response           = $this->requester->get($uri, $headers);
+            $serializedResponse = [
+                'data'   => $response->getData(),
+                'status' => $response->getStatus(),
+            ];
+
+            $this->cache->setCache($key, $serializedResponse);
+            
+            return $serializedResponse;
+        } catch (\Exception $e) {
+            return [
+                'data'   => null,
+                'status' => 500,
+            ];
+        }
+    }
+
+    /**
+     * Get Payment Methods by SiteId
+     *
+     * @param string|null $siteId
+     *
+     * @return array
+     */
+    private function getPaymentMethodsBySiteId(string $siteId): array
+    {
+        try {
+            $key   = sprintf('%ssi%s', __FUNCTION__, $siteId);
+            $cache = $this->cache->getCache($key);
+
+            if ($cache) {
+                return $cache;
+            }
+
+            $uri     = '/sites/' . $siteId . '/payment_methods';
+
+            $response           = $this->requester->get($uri);
             $serializedResponse = [
                 'data'   => $response->getData(),
                 'status' => $response->getStatus(),

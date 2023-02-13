@@ -27,6 +27,18 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     }
 
     /**
+     * Check if checkout method is available
+     *
+     * @param string $gatewaySection
+     *
+     * @return bool
+     */
+    public function isAvailable(): bool
+    {
+        return true;
+    }
+
+    /**
      * Added gateway scripts
      *
      * @param string $gatewaySection

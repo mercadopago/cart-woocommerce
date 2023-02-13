@@ -43,6 +43,19 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
 
+    public function isAvailable(): bool
+    {
+        $siteIdPaymentMethods = $this->mercadopago->seller->getSiteIdPaymentMethods();
+
+        foreach ($siteIdPaymentMethods as $paymentMethod) {
+            if ('consumer_credits' === $paymentMethod['id']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 	/**
 	 * Get Mercado Pago Icon
 	 *

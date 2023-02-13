@@ -36,10 +36,13 @@ class Gateway
      */
     public function registerGateway(string $gateway): void
     {
-        add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
-            $methods[] = $gateway;
-            return $methods;
-        });
+        $gatewayInstance = new $gateway();
+        if ($gatewayInstance->isAvailable()) {
+            add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
+                $methods[] = $gateway;
+                return $methods;
+            });
+        }
     }
 
     /**
