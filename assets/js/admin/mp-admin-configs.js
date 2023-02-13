@@ -89,20 +89,21 @@
   }
 
   function makeCollapsibleAdvancedConfig() {
-    //collpase Configuración Avanzada
-    console.log(this);
     const collapseTitle = document.querySelector(
-      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_title"]'
+      '[id^="woocommerce_woo-mercado-pago"][id$="advanced_configuration_title"]'
     );
-    const collapseTable = document.querySelector(
-      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_description"]'
-    ).nextElementSibling;
+
     const collapseDescription = document.querySelector(
-      '[id^="woocommerce_woo-mercado-pago"][id$="checkout_payments_advanced_description"]'
+      '[id^="woocommerce_woo-mercado-pago"][id$="advanced_configuration_description"]'
     );
-    collapseTable.style.display = "none";
+
+    const collapseTable = document.querySelector(
+      '[id^="woocommerce_woo-mercado-pago"][id$="advanced_configuration_description"]'
+    ).nextElementSibling;
+
+    collapseTitle.style.cursor        = "pointer";
     collapseDescription.style.display = "none";
-    collapseTitle.style.cursor = "pointer";
+    collapseTable.style.display       = "none";
 
     collapseTitle.innerHTML += makeCollapsibleOptions(
       "header_plus",
@@ -114,15 +115,15 @@
 
     collapseTitle.onclick = function () {
       if (collapseTable.style.display === "none") {
-        collapseTable.style.display = "block";
+        collapseTable.style.display       = "block";
         collapseDescription.style.display = "block";
-        headerLess.style.display = "block";
-        headerPlus.style.display = "none";
+        headerLess.style.display          = "block";
+        headerPlus.style.display          = "none";
       } else {
-        collapseTable.style.display = "none";
+        collapseTable.style.display       = "none";
         collapseDescription.style.display = "none";
-        headerLess.style.display = "none";
-        headerPlus.style.display = "block";
+        headerLess.style.display          = "none";
+        headerPlus.style.display          = "block";
       }
     };
   }

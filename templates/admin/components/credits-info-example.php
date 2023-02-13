@@ -49,7 +49,7 @@ if ( ! defined('ABSPATH') ) {
 	</div>
 	<div class="credits-info-example-gif-container">
 		<div class="credits-info-example-gif">
-			<img id="gif-image" alt='example' src="<?php echo esc_html(plugins_url('../../assets/images/checkouts/credits/view_desktop.gif', plugin_dir_path(__FILE__))); ?>">
+			<img id="gif-image" alt="example" src="<?php echo esc_html(plugins_url('../../assets/images/checkouts/credits/view_desktop.gif', plugin_dir_path(__FILE__))); ?>">
 		</div>
 		<p id="credits-info-example-gif-footer">
 		<?php echo esc_html( $footer ); ?>

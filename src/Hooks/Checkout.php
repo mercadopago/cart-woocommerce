@@ -22,18 +22,6 @@ class Checkout
     }
 
     /**
-     * Register after checkout form hook
-     *
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerAfterCheckoutForm($callback)
-    {
-        add_action('woocommerce_after_checkout_form', $callback);
-    }
-
-    /**
      * Register before checkout form hook
      *
      * @param string $location

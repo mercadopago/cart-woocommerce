@@ -2,7 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Configs\Seller;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -36,11 +38,17 @@ class Scripts
     private $url;
 
     /**
+     * @var Seller
+     */
+    private $seller;
+
+    /**
      * Scripts constructor
      */
-    public function __construct(Url $url)
+    public function __construct(Url $url, Seller $seller)
     {
         $this->url = $url;
+        $this->seller = $seller;
     }
 
     /**
@@ -63,7 +71,7 @@ class Scripts
      *
      * @param string $name
      * @param string $file
-     * @param array  $variables
+     * @param array $variables
      *
      * @return void
      */
@@ -94,7 +102,7 @@ class Scripts
      *
      * @param string $name
      * @param string $file
-     * @param array  $variables
+     * @param array $variables
      *
      * @return void
      */
@@ -116,7 +124,7 @@ class Scripts
 
         $file      = $this->url->getPluginFileUrl('assets/js/notices/notices-client', '.js');
         $variables = [
-            'site_id'          => 'MLA',
+            'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
             'container'        => '#wpbody-content',
             'public_key'       => '',
             'plugin_version'   => MP_VERSION,
@@ -139,7 +147,7 @@ class Scripts
         $file      = $this->url->getPluginFileUrl('assets/js/caronte/caronte-client', '.js');
         $variables = [
             'locale'                => get_locale(),
-            'site_id'               => 'MLA',
+            'site_id'               => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
             'plugin_version'        => MP_VERSION,
             'platform_id'           => MP_PLATFORM_ID,
             'platform_version'      => $woocommerce->version,
@@ -187,7 +195,7 @@ class Scripts
         $file      = $this->url->getPluginFileUrl('assets/js/melidata/melidata-client', '.js');
         $variables = [
             'type'             => $type,
-            'site_id'          => 'MLA',
+            'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
             'location'         => $location,
             'plugin_version'   => MP_VERSION,
             'platform_version' => $woocommerce->version,
@@ -220,7 +228,7 @@ class Scripts
      *
      * @param string $name
      * @param string $file
-     * @param array  $variables
+     * @param array $variables
      *
      * @return void
      */

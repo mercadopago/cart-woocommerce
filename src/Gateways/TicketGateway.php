@@ -18,6 +18,11 @@ class TicketGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
     const ID = 'woo-mercado-pago-ticket';
 
     /**
+     * @const
+     */
+    public const CHECKOUT_NAME = 'checkout-ticket';
+
+    /**
      * TicketGateway constructor
      */
     public function __construct()
@@ -33,7 +38,7 @@ class TicketGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         $this->method_description = $this->description;
         $this->has_fields         = true;
         $this->supports           = ['products', 'refunds'];
-        $this->icon               = $this->get_checkout_icon();
+        $this->icon               = $this->getCheckoutIcon();
 
         $this->init_form_fields();
         $this->init_settings();
@@ -50,20 +55,11 @@ class TicketGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
      *
      * @return mixed
      */
-    private function get_checkout_icon()
+    private function getCheckoutIcon()
     {
         $siteId = strtoupper($this->mercadopago->seller->getSiteId());
-
-        $path = 'MLB' === $siteId
-            ? plugins_url('../assets/images/checkouts/ticket/ticket_mlb.png', plugin_dir_path(__FILE__))
-            : plugins_url('../assets/images/checkouts/ticket/ticket.png', plugin_dir_path(__FILE__));
-
-        /**
-         * Add Mercado Pago icon.
-         *
-         * @since 3.0.1
-         */
-        return apply_filters('woocommerce_mercadopago_icon', $path);
+        $iconName = 'MLB' === $siteId ? 'icon-ticket-mlb' : 'icon-ticket';
+        return $this->mercadopago->plugin->getGatewayIcon($iconName);
     }
 
     /**

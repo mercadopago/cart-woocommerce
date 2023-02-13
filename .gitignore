@@ -8,3 +8,5 @@ coverage
 /.vscode/
 /vendor/
 /node_modules/
+
+woocommerce-mercadopago.zip

@@ -56,7 +56,7 @@ function mpMsgElement(element, title, subTitle, link, msgLink, type) {
   }
 }
 
-function selectTestMode(test){
+function selectTestMode(test) {
   const badge = document.getElementById('mp-mode-badge');
   const colorBadge = document.getElementById('mp-orange-badge');
   const iconBadge = document.getElementById('mp-icon-badge');
@@ -113,8 +113,8 @@ function selectTestMode(test){
 
 function mpVerifyAlertTestMode() {
   if ((document.querySelector('input[name="mp-test-prod"]').checked) && (
-      document.getElementById('mp-public-key-test').value === '' ||
-      document.getElementById('mp-access-token-test').value === ''
+    document.getElementById('mp-public-key-test').value === '' ||
+    document.getElementById('mp-access-token-test').value === ''
   )) {
     document.getElementById('mp-red-badge').style.display = 'block';
     return true;
@@ -171,9 +171,10 @@ function mpValidateCredentialsTips() {
         action: 'mp_validate_credentials_tips',
         nonce: mercadopago_settings_admin_js_params.nonce,
       },
-      function() {}
+      function () {
+      }
     )
-    .done(function(response) {
+    .done(function (response) {
       if (response.success) {
         iconCredentials.classList.remove('mp-settings-icon-credentials');
         iconCredentials.classList.add('mp-settings-icon-success');
@@ -181,7 +182,7 @@ function mpValidateCredentialsTips() {
         iconCredentials.classList.remove('mp-settings-icon-success');
       }
     })
-    .fail(function() {
+    .fail(function () {
       iconCredentials.classList.remove('mp-settings-icon-success');
     });
 }
@@ -195,9 +196,10 @@ function mpValidateStoreTips() {
         action: 'mp_validate_store_tips',
         nonce: mercadopago_settings_admin_js_params.nonce,
       },
-      function() {}
+      function () {
+      }
     )
-    .done(function(response) {
+    .done(function (response) {
       if (response.success) {
         iconStore.classList.remove('mp-settings-icon-store');
         iconStore.classList.add('mp-settings-icon-success');
@@ -205,7 +207,7 @@ function mpValidateStoreTips() {
         iconStore.classList.remove('mp-settings-icon-success');
       }
     })
-    .fail(function() {
+    .fail(function () {
       iconStore.classList.remove('mp-settings-icon-success');
     });
 }
@@ -224,15 +226,15 @@ function mpGoToNextStep(actualStep, nextStep, actualArrowId, nextArrowId) {
   if (window.melidata && window.melidata.client && window.melidata.client.addStoreConfigurationsStepTimer) {
     switch (nextStep) {
       case 'mp-step-2':
-        window.melidata.client.addStoreConfigurationsStepTimer({ step: 'business' });
+        window.melidata.client.addStoreConfigurationsStepTimer({step: 'business'});
         break;
 
       case 'mp-step-3':
-        window.melidata.client.addStoreConfigurationsStepTimer({ step: 'payment_methods', sendOnClose: true });
+        window.melidata.client.addStoreConfigurationsStepTimer({step: 'payment_methods', sendOnClose: true});
         break;
 
       case 'mp-step-4':
-        window.melidata.client.addStoreConfigurationsStepTimer({ step: 'mode' });
+        window.melidata.client.addStoreConfigurationsStepTimer({step: 'mode'});
         break;
 
       default:
@@ -244,9 +246,9 @@ function mpGoToNextStep(actualStep, nextStep, actualArrowId, nextArrowId) {
 function mpContinueToNextStep() {
   document
     .getElementById('mp-payment-method-continue')
-    .addEventListener('click', function() {
+    .addEventListener('click', function () {
       mpGoToNextStep('mp-step-3', 'mp-step-4', 'mp-payments-arrow-up', 'mp-modes-arrow-up');
-  });
+    });
 }
 
 function mpGetRequirements() {
@@ -332,7 +334,7 @@ function mpSettingsAccordionOptions() {
 function mpValidateCredentials() {
   document
     .getElementById('mp-access-token-prod')
-    .addEventListener('change', function() {
+    .addEventListener('change', function () {
       const self = this;
       jQuery
         .post(
@@ -343,9 +345,10 @@ function mpValidateCredentials() {
             action: 'mp_update_access_token',
             nonce: mercadopago_settings_admin_js_params.nonce,
           },
-          function() {}
+          function () {
+          }
         )
-        .done(function(response) {
+        .done(function (response) {
           if (response.success) {
             self.classList.add('mp-credential-feedback-positive');
             self.classList.remove('mp-credential-feedback-negative');
@@ -354,7 +357,7 @@ function mpValidateCredentials() {
             self.classList.add('mp-credential-feedback-negative');
           }
         })
-        .fail(function() {
+        .fail(function () {
           self.classList.remove('mp-credential-feedback-positive');
           self.classList.add('mp-credential-feedback-negative');
         });
@@ -362,7 +365,7 @@ function mpValidateCredentials() {
 
   document
     .getElementById('mp-access-token-test')
-    .addEventListener('change', function() {
+    .addEventListener('change', function () {
       const self = this;
       if (this.value === '') {
         self.classList.remove('mp-credential-feedback-positive');
@@ -377,9 +380,10 @@ function mpValidateCredentials() {
               action: 'mp_update_access_token',
               nonce: mercadopago_settings_admin_js_params.nonce,
             },
-            function() {}
+            function () {
+            }
           )
-          .done(function(response) {
+          .done(function (response) {
             if (response.success) {
               self.classList.add('mp-credential-feedback-positive');
               self.classList.remove('mp-credential-feedback-negative');
@@ -388,7 +392,7 @@ function mpValidateCredentials() {
               self.classList.add('mp-credential-feedback-negative');
             }
           })
-          .fail(function() {
+          .fail(function () {
             self.classList.remove('mp-credential-feedback-positive');
             self.classList.add('mp-credential-feedback-negative');
           });
@@ -397,7 +401,7 @@ function mpValidateCredentials() {
 
   document
     .getElementById('mp-public-key-prod')
-    .addEventListener('change', function() {
+    .addEventListener('change', function () {
       const self = this;
       jQuery
         .post(
@@ -408,9 +412,10 @@ function mpValidateCredentials() {
             action: 'mp_update_public_key',
             nonce: mercadopago_settings_admin_js_params.nonce,
           },
-          function() {}
+          function () {
+          }
         )
-        .done(function(response) {
+        .done(function (response) {
           if (response.success) {
             self.classList.add('mp-credential-feedback-positive');
             self.classList.remove('mp-credential-feedback-negative');
@@ -419,7 +424,7 @@ function mpValidateCredentials() {
             self.classList.add('mp-credential-feedback-negative');
           }
         })
-        .fail(function() {
+        .fail(function () {
           self.classList.remove('mp-credential-feedback-positive');
           self.classList.add('mp-credential-feedback-negative');
         });
@@ -427,7 +432,7 @@ function mpValidateCredentials() {
 
   document
     .getElementById('mp-public-key-test')
-    .addEventListener('change', function() {
+    .addEventListener('change', function () {
       const self = this;
       if (this.value === '') {
         self.classList.remove('mp-credential-feedback-positive');
@@ -442,9 +447,10 @@ function mpValidateCredentials() {
               action: 'mp_update_public_key',
               nonce: mercadopago_settings_admin_js_params.nonce,
             },
-            function() {}
+            function () {
+            }
           )
-          .done(function(response) {
+          .done(function (response) {
             if (response.success) {
               self.classList.add('mp-credential-feedback-positive');
               self.classList.remove('mp-credential-feedback-negative');
@@ -453,7 +459,7 @@ function mpValidateCredentials() {
               self.classList.add('mp-credential-feedback-negative');
             }
           })
-          .fail(function() {
+          .fail(function () {
             self.classList.remove('mp-credential-feedback-positive');
             self.classList.add('mp-credential-feedback-negative');
           });
@@ -464,7 +470,7 @@ function mpValidateCredentials() {
 function mpUpdateOptionCredentials() {
   document
     .getElementById('mp-btn-credentials')
-    .addEventListener('click', function() {
+    .addEventListener('click', function () {
       const msgAlert = document.getElementById('msg-info-credentials');
       if (msgAlert.childNodes.length >= 1) {
         document.querySelector('.mp-card-info').remove();
@@ -481,9 +487,10 @@ function mpUpdateOptionCredentials() {
             action: 'mp_update_option_credentials',
             nonce: mercadopago_settings_admin_js_params.nonce,
           },
-          function() {}
+          function () {
+          }
         )
-        .done(function(response) {
+        .done(function (response) {
           if (response.success) {
             mpVerifyAlertTestMode();
             mpShowMessage(response.data, 'success', 'credentials');
@@ -494,7 +501,7 @@ function mpUpdateOptionCredentials() {
             }, 3000);
           } else {
             const rad = document.querySelectorAll('input[name="mp-test-prod"]');
-            const { message, subtitle, link, linkMsg, type, test_mode } = response?.data;
+            const {message, subtitle, link, linkMsg, type, test_mode} = response?.data;
 
             mpMsgElement('msg-info-credentials', message, subtitle, link, linkMsg, type);
 
@@ -507,7 +514,7 @@ function mpUpdateOptionCredentials() {
             }
           }
         })
-        .fail(function(error) {
+        .fail(function (error) {
           mpShowMessage(error?.data, 'error', 'credentials');
         });
     });
@@ -516,7 +523,7 @@ function mpUpdateOptionCredentials() {
 function mpUpdateStoreInformation() {
   document
     .getElementById('mp-store-info-save')
-    .addEventListener('click', function() {
+    .addEventListener('click', function () {
       jQuery
         .post(
           ajaxurl,
@@ -530,9 +537,10 @@ function mpUpdateStoreInformation() {
             action: 'mp_update_store_information',
             nonce: mercadopago_settings_admin_js_params.nonce,
           },
-          function() {}
+          function () {
+          }
         )
-        .done(function(response) {
+        .done(function (response) {
           if (response.success) {
             mpValidateStoreTips();
             mpShowMessage(response.data, 'success', 'store');
@@ -543,7 +551,7 @@ function mpUpdateStoreInformation() {
             mpShowMessage(response.data, 'error', 'store');
           }
         })
-        .fail(function(error) {
+        .fail(function (error) {
           mpShowMessage(error?.data, 'error', 'store');
         });
     });
@@ -552,13 +560,13 @@ function mpUpdateStoreInformation() {
 function mpUpdateTestMode() {
   const rad = document.querySelectorAll('input[name="mp-test-prod"]');
 
-  rad[0].addEventListener('change', function() {
+  rad[0].addEventListener('change', function () {
     if (rad[0].checked) {
       selectTestMode(true);
     }
   });
 
-  rad[1].addEventListener('change', function() {
+  rad[1].addEventListener('change', function () {
     if (rad[1].checked) {
       selectTestMode(false);
     }
@@ -576,19 +584,20 @@ function mpUpdateTestMode() {
             action: 'mp_update_test_mode',
             nonce: mercadopago_settings_admin_js_params.nonce,
           },
-          function() {}
+          function () {
+          }
         )
-        .done(function(response) {
-          if(response.success){
+        .done(function (response) {
+          if (response.success) {
             mpShowMessage(response.data, 'success', 'test_mode');
-          } else{
+          } else {
             if (rad[0].checked) {
               document.getElementById('mp-red-badge').style.display = 'block';
             }
             mpShowMessage(response.data, 'error', 'test_mode');
           }
         })
-        .fail(function(error) {
+        .fail(function (error) {
           mpShowMessage(error.data, 'error', 'test_mode');
         });
     });

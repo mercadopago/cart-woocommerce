@@ -10,12 +10,15 @@ if (!defined('ABSPATH')) {
 
 class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterface
 {
-	/**
-	 * ID
-	 *
-	 * @const
-	 */
-	const ID = 'woo-mercado-pago-credits';
+    /**
+     * @const
+     */
+    public const ID = 'woo-mercado-pago-credits';
+
+    /**
+     * @const
+     */
+    public const CHECKOUT_NAME = 'checkout-credits';
 
     /**
      * CreditsGateway constructor
@@ -23,17 +26,16 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
     public function __construct()
     {
         parent::__construct();
-        $this->translations = $this->mercadopago->storeTranslations->checkoutCredits;
+
+        $this->adminTranslations = $this->mercadopago->adminTranslations->creditsGatewaySettings;
+        $this->storeTranslations = $this->mercadopago->storeTranslations->creditsCheckout;
 
         $this->id                 = self::ID;
-        $this->icon               = null;
-        $this->title              = $this->translations['gateway_title'];
-        $this->description        = $this->translations['gateway_dscription'];
-        $this->method_title       = $this->translations['method_title'];
-        $this->method_description = $this->description;
-        $this->has_fields         = true;
-        $this->supports           = ['products', 'refunds'];
-        $this->icon               = $this->get_checkout_icon();
+        $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-mp');
+        $this->title              = $this->adminTranslations['gateway_title'];
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['gateway_method_title'];
+        $this->method_description = $this->adminTranslations['gateway_method_description'];
 
         $this->init_form_fields();
         $this->init_settings();
@@ -56,20 +58,6 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
         return false;
     }
 
-	/**
-	 * Get Mercado Pago Icon
-	 *
-	 * @return mixed
-	 */
-	private function get_checkout_icon() {
-		/**
-		 * Add Mercado Pago icon.
-		 *
-		 * @since 3.0.1
-		 */
-		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/checkouts/basic/mercadopago.png', plugin_dir_path( __FILE__ ) ) );
-	}
-
     /**
      * Init form fields for checkout configuration
      *
@@ -78,177 +66,102 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
     public function init_form_fields(): void
     {
         $this->form_fields = [
-            'config_header' => [
+            'header'                             => [
                 'type'        => 'mp_config_title',
-                'title'       => $this->translations['config_header_title'],
-                'description' => $this->translations['config_header_desc'],
+                'title'       => $this->adminTranslations['header_title'],
+                'description' => $this->adminTranslations['header_description'],
             ],
-            'enabled'       => [
+            'card_settings'                      => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_settings_title'],
+                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
+                    'button_text' => $this->adminTranslations['card_settings_button_text'],
+                    'button_url'  => $this->mercadopago->links->getLinks()['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
+                ],
+            ],
+            'enabled'                            => [
                 'type'         => 'mp_toggle_switch',
-                'title'        => $this->translations['config_enabled_title'],
-                'subtitle'     => $this->translations['config_enabled_subtitle'],
+                'title'        => $this->adminTranslations['enabled_title'],
+                'subtitle'     => $this->adminTranslations['enabled_subtitle'],
                 'default'      => 'no',
                 'descriptions' => [
-                    'enabled'  => $this->translations['config_enabled_enabled'],
-                    'disabled' => $this->translations['config_enabled_disabled'],
+                    'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
                 ],
-				'after_toggle' => $this->get_ckeckout_visualization(),
+                'after_toggle' => $this->getCheckoutVisualization(),
             ],
-            'title'         => [
+            'title'                              => [
                 'type'        => 'text',
-                'title'       => 'Title in the store Checkout',
-                'description' => 'Change the display text in Checkout, maximum characters: 85',
-                'default'     => $this->title,
-                'desc_tip'    => 'The text inserted here will not be translated to other languages',
+                'title'       => $this->adminTranslations['title_title'],
+                'description' => $this->adminTranslations['title_description'],
+                'default'     => $this->adminTranslations['title_default'],
+                'desc_tip'    => $this->adminTranslations['title_desc_tip'],
                 'class'       => 'limit-title-max-length',
             ],
-            'description'   => [
-                'type'        => 'text',
-                'title'       => 'Description',
-                'description' => '',
-                'default'     => $this->method_description,
-                'class'       => 'mp-hidden-field-description',
-            ],
-            'currency_conversion'   => [
+            'currency_conversion'                => [
                 'type'         => 'mp_toggle_switch',
-                'title'        => 'Convert Currency',
-                'subtitle'     => 'Activate this option so that the value of the currency set in WooCommerce is compatible with the value of the currency you use in Mercado Pago.',
+                'title'        => $this->adminTranslations['currency_conversion_title'],
+                'subtitle'     => $this->adminTranslations['currency_conversion_subtitle'],
                 'default'      => 'no',
                 'descriptions' => [
-                    'enabled'  => 'Currency convertion is <b>enabled</b>.',
-                    'disabled' => 'Currency convertion is <b>disabled</b>.',
+                    'enabled'  => $this->adminTranslations['currency_conversion_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
                 ],
             ],
-            'credits_banner'   => [
-				'type'     => 'mp_toggle_switch',
-				'title'    => 'Inform your customers about the option of paying in installments without card',
-				'subtitle' => sprintf (
-					/* translators: %s link to Mercado Credits blog */
-					'<b>By activating the installments without card component</b>, you increase your chances of selling. To learn more, please check the <a href="%s" target="blank">technical guideline</a>.',
-					'https://vendedores.mercadolibre.com.ar/nota/impulsa-tus-ventas-y-alcanza-mas-publico-con-mercado-credito'
-				),
-				'default'  => 'no',
-				'descriptions' => array(
-					'enabled'  => 'The installments without card component is <b>active</b>.',
-					'disabled' => 'The installments without card component is <b>inactive</b>.',
-				),
-				'after_toggle' => $this->get_credits_info_template()
+            'credits_banner'                     => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['credits_banner_title'],
+                'subtitle'     => $this->adminTranslations['credits_banner_subtitle'],
+                'default'      => 'no',
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['credits_banner_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['credits_banner_descriptions_disabled'],
+                ],
+                'after_toggle' => $this->getCreditsInfoTemplate()
             ],
-            'checkout_payments_advanced_title'   => [
-                'type'        => 'title',
-                'title'       => 'Advanced settings',
-                'class'       => 'mp_subtitle_bd',
+            'advanced_configuration_title'       => [
+                'type'  => 'title',
+                'title' => $this->adminTranslations['advanced_configuration_title'],
+                'class' => 'mp-subtitle-body',
             ],
-            'checkout_payments_advanced_description'   => [
-                'type'        => 'title',
-                'title'       => 'Edit these advanced fields only when you want to modify the preset values.',
-                'class'       => 'mp_small_text',
+            'advanced_configuration_description' => [
+                'type'  => 'title',
+                'title' => $this->adminTranslations['advanced_configuration_description'],
+                'class' => 'mp-small-text',
             ],
+            'discount'                           => [
+                'type'              => 'mp_actionable_input',
+                'title'             => $this->adminTranslations['discount_title'],
+                'input_type'        => 'number',
+                'description'       => $this->adminTranslations['discount_description'],
+                'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
+                'default'           => '0',
+                'custom_attributes' => [
+                    'step' => '0.01',
+                    'min'  => '0',
+                    'max'  => '99',
+                ],
+            ],
+            'commission'                         => [
+                'type'              => 'mp_actionable_input',
+                'title'             => $this->adminTranslations['commission_title'],
+                'input_type'        => 'number',
+                'description'       => $this->adminTranslations['commission_description'],
+                'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
+                'default'           => '0',
+                'custom_attributes' => [
+                    'step' => '0.01',
+                    'min'  => '0',
+                    'max'  => '99',
+                ],
+            ]
         ];
     }
-
-	/**
-	 * Example Banner Credits Admin
-	 *
-	 * @param $siteId
-	 *
-	 * @return string
-	 */
-	private function get_ckeckout_visualization() {
-		$siteId = strtoupper( $this->mercadopago->seller->getSiteId() );
-		return $this->mercadopago->template->getWoocommerceTemplateHtml(
-            'credits-checkout-example.php',
-            dirname(__FILE__) . '/../../templates/admin/components/',
-			array(
-				'title'     => 'Checkout visualization',
-				'subtitle'  => 'Check below how this feature will be displayed to your customers:',
-				'footer'    => 'Checkout Preview',
-				'pill_text' => 'PREVIEW',
-				'image'     => plugins_url($this->get_mercado_credits_preview_image($siteId), plugin_dir_path(__FILE__)),
-			),
-        );	
-	}
-
-	/**
-	 * Get image path for mercado credits checkout preview
-	 *
-	 * @param $siteId
-	 *
-	 * @return string
-	 */
-	private function get_mercado_credits_preview_image( $siteId ) {
-		$siteIds = [
-			'mla' => 'MLA_',
-			'mlb' => 'MLB_',
-			'mlm' => 'MLM_',
-		];
-
-		$prefix = isset($siteIds[$siteId]) ? $siteIds[$siteId] : '';
-
-		return sprintf('../assets/images/checkouts/credits/%scheckout_preview.jpg', $prefix);
-	}
-
-	/**
-	 * Example Banner Credits Admin
-	 *
-	 * @return string
-	 */
-	private function get_credits_info_template() {
-		$siteId = strtoupper( $this->mercadopago->seller->getSiteId() );
-		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-
-        $this->mercadopago->scripts->registerAdminStyle(
-            'mp_info_admin_credits_style',
-            plugins_url('../assets/css/admin/credits/example-info' . $suffix . '.css', plugin_dir_path(__FILE__)),
-        );
-
-        $this->mercadopago->scripts->registerAdminScript(
-            'mp_info_admin_credits_script',
-            plugins_url('../assets/js/admin/credits/example-info' . $suffix . '.js', plugin_dir_path(__FILE__)),
-			array(
-				'computerBlueIcon'  => plugins_url('../assets/images/checkouts/credits/desktop-blue-icon.png', plugin_dir_path(__FILE__)),
-				'computerGrayIcon'  => plugins_url('../assets/images/checkouts/credits/desktop-gray-icon.png', plugin_dir_path(__FILE__)),
-				'cellphoneBlueIcon' => plugins_url('../assets/images/checkouts/credits/cellphone-blue-icon.png', plugin_dir_path(__FILE__)),
-				'cellphoneGrayIcon' => plugins_url('../assets/images/checkouts/credits/cellphone-gray-icon.png', plugin_dir_path(__FILE__)),
-				'viewMobile'        => plugins_url($this->get_mercado_credits_gif_path($siteId, 'mobile'), plugin_dir_path(__FILE__)),
-				'viewDesktop'       => plugins_url($this->get_mercado_credits_gif_path($siteId, 'desktop'), plugin_dir_path(__FILE__)),
-				'footerDesktop'     => 'Banner on the product page | Computer version',
-				'footerCellphone'   => 'Banner on the product page | Cellphone version',
-			),
-        );
-
-		return $this->mercadopago->template->getWoocommerceTemplateHtml(
-            'credits-info-example.php',
-            dirname(__FILE__) . '/../../templates/admin/components/',
-			array(
-				'desktop'   => 'Computer',
-				'cellphone' => 'Mobile',
-				'footer'    => 'Banner on the product page | Computer version',
-				'title'     => 'Component visualization',
-				'subtitle'  => 'Check below how this feature will be displayed to your customers:',
-			),
-        );
-	}
-
-	/**
-	 * Get git image path for mercado credits demonstration
-	 *
-	 * @param $siteId
-	 * @param $view
-	 *
-	 * @return string
-	 */
-	private function get_mercado_credits_gif_path( $siteId, $view ) {
-		$siteIds = [
-			'mla' => 'MLA_',
-			'mlb' => 'MLB_',
-			'mlm' => 'MLM_',
-		];
-
-		$prefix = isset($siteIds[$siteId]) ? $siteIds[$siteId] : '';
-
-		return sprintf('../assets/images/checkouts/credits/%sview_%s.gif', $prefix, $view);
-	}
 
     /**
      * Added gateway scripts
@@ -269,28 +182,25 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
      */
     public function payment_fields(): void
     {
-        $this->mercadopago->scripts->registerStoreStyle(
-            'woocommerce-mercadopago-narciso-styles',
-            plugins_url('../assets/css/checkout/mp-plugins-components.css', plugin_dir_path( __FILE__ ))
-        );
-        $this->mercadopago->scripts->registerStoreScript(
-            'woocommerce-mercadopago-narciso-scripts',
-            plugins_url('../assets/js/checkout/mp-plugins-components.js', plugin_dir_path( __FILE__ ))
-        );
+        $checkoutBenefitsItems = $this->getBenefits();
 
-		$siteId         = strtoupper( $this->mercadopago->seller->getSiteId() );
-		$test_mode_link = $this->get_mp_devsite_link( $siteId );
-
-		$parameters = [
-			'test_mode'      => ! $this->mercadopago->store->getCheckboxCheckoutProductionMode(),
-			'test_mode_link' => $test_mode_link,
-			'redirect_image' => plugins_url( '../assets/images/checkouts/credits/cho-pro-redirect-v2.png', plugin_dir_path( __FILE__ ) ),
-		];
-
-		$this->mercadopago->template->getWoocommerceTemplate(
-            'credits-checkout.php',
-            dirname(__FILE__) . '/../../templates/public/gateways/',
-            $parameters
+        $this->mercadopago->template->getWoocommerceTemplate(
+            'public/checkouts/credits-checkout.php',
+            [
+                'test_mode'                        => $this->mercadopago->seller->isTestMode(),
+                'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
+                'test_mode_description'            => $this->storeTranslations['test_mode_description'],
+                'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
+                'test_mode_link_src'               => $this->mercadopago->links->getLinks()['docs_integration_test'],
+                'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
+                'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
+                'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
+                'checkout_redirect_src'            => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/cho-pro-redirect-v2', '.png'),
+                'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
+                'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
+                'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
+                'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
+            ]
         );
     }
 
@@ -343,26 +253,120 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
         wp_send_json_success($response, $status);
     }
 
-	/**
-	 * Get Mercado Pago Devsite Page Link
-	 *
-	 * @param String $country Country Acronym
-	 *
-	 * @return String
-	 */
-	private static function get_mp_devsite_link( $country ) {
-		$country_links = [
-			'mla' => 'https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/testing',
-			'mlb' => 'https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/testing',
-			'mlc' => 'https://www.mercadopago.cl/developers/es/guides/plugins/woocommerce/testing',
-			'mco' => 'https://www.mercadopago.com.co/developers/es/guides/plugins/woocommerce/testing',
-			'mlm' => 'https://www.mercadopago.com.mx/developers/es/guides/plugins/woocommerce/testing',
-			'mpe' => 'https://www.mercadopago.com.pe/developers/es/guides/plugins/woocommerce/testing',
-			'mlu' => 'https://www.mercadopago.com.uy/developers/es/guides/plugins/woocommerce/testing',
-		];
 
-		$link = array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
+    /**
+     * Example Banner Credits Admin
+     *
+     * @return string
+     */
+    private function getCheckoutVisualization(): string
+    {
+        $siteId = strtoupper($this->mercadopago->seller->getSiteId());
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'admin/components/credits-checkout-example.php',
+            [
+                'title'     => $this->adminTranslations['enabled_toggle_title'],
+                'subtitle'  => $this->adminTranslations['enabled_toggle_subtitle'],
+                'footer'    => $this->adminTranslations['enabled_toggle_footer'],
+                'pill_text' => $this->adminTranslations['enabled_toggle_pill_text'],
+                'image'     => plugins_url($this->getCreditsPreviewImage($siteId), plugin_dir_path(__FILE__)),
+            ]
+        );
+    }
 
-		return $link;
-	}
+    /**
+     * Get image path for mercado credits checkout preview
+     *
+     * @param $siteId
+     *
+     * @return string
+     */
+    private function getCreditsPreviewImage($siteId): string
+    {
+        $siteIds = [
+            'mla' => 'MLA_',
+            'mlb' => 'MLB_',
+            'mlm' => 'MLM_',
+        ];
+
+        $prefix = $siteIds[$siteId] ?? '';
+
+        return sprintf('../assets/images/checkouts/credits/%scheckout_preview.jpg', $prefix);
+    }
+
+    /**
+     * Example Banner Credits Admin
+     *
+     * @return string
+     */
+    private function getCreditsInfoTemplate(): string
+    {
+        $siteId = strtoupper($this->mercadopago->seller->getSiteId());
+
+        $this->mercadopago->scripts->registerAdminStyle(
+            'mp_info_admin_credits_style',
+            $this->mercadopago->url->getPluginFileUrl('/assets/css/admin/credits/example-info', '.css')
+        );
+
+        $this->mercadopago->scripts->registerAdminScript(
+            'mp_info_admin_credits_script',
+            $this->mercadopago->url->getPluginFileUrl('/assets/js/admin/credits/example-info', '.js'),
+            [
+                'computerBlueIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-blue-icon', '.png'),
+                'computerGrayIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-gray-icon', '.png'),
+                'cellphoneBlueIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-blue-icon', '.png'),
+                'cellphoneGrayIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-gray-icon', '.png'),
+                'viewMobile'        => plugins_url($this->getCreditsGifPath($siteId, 'mobile'), plugin_dir_path(__FILE__)),
+                'viewDesktop'       => plugins_url($this->getCreditsGifPath($siteId, 'desktop'), plugin_dir_path(__FILE__)),
+                'footerDesktop'     => $this->adminTranslations['credits_banner_desktop'],
+                'footerCellphone'   => $this->adminTranslations['credits_banner_cellphone'],
+            ]
+        );
+
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'admin/components/credits-info-example.php',
+            [
+                'desktop'   => $this->adminTranslations['credits_banner_toggle_computer'],
+                'cellphone' => $this->adminTranslations['credits_banner_toggle_mobile'],
+                'footer'    => $this->adminTranslations['credits_banner_desktop'],
+                'title'     => $this->adminTranslations['credits_banner_toggle_title'],
+                'subtitle'  => $this->adminTranslations['credits_banner_toggle_subtitle'],
+            ]
+        );
+    }
+
+    /**
+     * Get git image path for mercado credits demonstration
+     *
+     * @param $siteId
+     * @param $view
+     *
+     * @return string
+     */
+    private function getCreditsGifPath($siteId, $view): string
+    {
+        $siteIds = [
+            'mla' => 'MLA_',
+            'mlb' => 'MLB_',
+            'mlm' => 'MLM_',
+        ];
+
+        $prefix = $siteIds[$siteId] ?? '';
+
+        return sprintf('../assets/images/checkouts/credits/%sview_%s.gif', $prefix, $view);
+    }
+
+    /**
+     * Get benefits items
+     *
+     * @return array
+     */
+    private function getBenefits(): array
+    {
+        return [
+            $this->storeTranslations['checkout_benefits_1'],
+            $this->storeTranslations['checkout_benefits_2'],
+            $this->storeTranslations['checkout_benefits_3'],
+        ];
+    }
 }

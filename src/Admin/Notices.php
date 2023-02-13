@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
+use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
@@ -28,13 +29,19 @@ class Notices
     private $url;
 
     /**
+     * @var Links
+     */
+    private $links;
+
+    /**
      * Notices constructor
      */
-    public function __construct(Scripts $scripts, AdminTranslations $translations, Url $url)
+    public function __construct(Scripts $scripts, AdminTranslations $translations, Url $url, Links $links)
     {
         $this->scripts      = $scripts;
         $this->translations = $translations;
         $this->url          = $url;
+        $this->links        = $links;
 
         $this->loadAdminNoticeCss();
     }
@@ -58,7 +65,7 @@ class Notices
      * Set a notice info
      *
      * @param string $message
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */
@@ -71,7 +78,7 @@ class Notices
      * Set a notice success
      *
      * @param string $message
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */
@@ -84,7 +91,7 @@ class Notices
      * Set a notice warning
      *
      * @param string $message
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */
@@ -97,7 +104,7 @@ class Notices
      * Set a notice error
      *
      * @param string $message
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */
@@ -151,12 +158,32 @@ class Notices
         );
     }
 
+
+    /**
+     * Show pix missing notice
+     * @return void
+     */
+    public function adminNoticeMissPix(): void
+    {
+        add_action(
+            'admin_notices',
+            function () {
+                $miniLogo = plugins_url('../assets/images/minilogo.png', plugin_dir_path(__FILE__));
+                $message  = $this->translations->notices['miss_pix_text'];
+                $textLink = $this->translations->notices['miss_pix_link'];
+                $urlLink  = $this->links->getLinks()['mercadopago_pix_config'];
+
+                include dirname(__FILE__) . '/../../templates/admin/notices/miss-pix-notice.php';
+            }
+        );
+    }
+
     /**
      * Show admin notice
      *
      * @param string $message
      * @param string $type
-     * @param bool   $dismiss
+     * @param bool $dismiss
      *
      * @return void
      */

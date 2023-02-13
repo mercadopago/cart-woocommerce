@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Helpers\Url;
+
 class Plugin
 {
     /**
@@ -18,6 +20,24 @@ class Plugin
      * @const
      */
     public const UPDATE_TEST_MODE_ACTION = 'mercadopago_plugin_test_mode_updated';
+
+    /**
+     * @const
+     */
+    public const GATEWAY_ICON_FILTER = 'woo_mercado_pago_icon';
+
+    /**
+     * @var Url
+     */
+    private $url;
+
+    /**
+     * Plugin constructor
+     */
+    public function __construct(Url $url)
+    {
+        $this->url = $url;
+    }
 
     /**
      * Register to plugin update event
@@ -53,5 +73,19 @@ class Plugin
     public function registerOnPluginTestModeUpdate($callback): void
     {
         add_action(self::UPDATE_TEST_MODE_ACTION, $callback);
+    }
+
+    /**
+     * Get gateway icon
+     *
+     * @param string $iconName
+     *
+     * @return string
+     */
+    public function getGatewayIcon(string $iconName): string
+    {
+        $path = $this->url->getPluginFileUrl("/assets/images/icons/{$iconName}", '.png');
+
+        return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 }
