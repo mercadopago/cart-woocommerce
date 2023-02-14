@@ -17,6 +17,7 @@ use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Helpers\GatewayValidator;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;

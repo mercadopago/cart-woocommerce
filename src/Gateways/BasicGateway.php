@@ -2,13 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
-
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterface
+class BasicGateway extends AbstractGateway
 {
     /**
      * @const

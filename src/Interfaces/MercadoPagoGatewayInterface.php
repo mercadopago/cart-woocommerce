@@ -34,10 +34,15 @@ interface MercadoPagoGatewayInterface
      *
      * @return array
      */
-    public function process_payment(int $order_id): array;
+    public function process_payment($order_id): array;
 
     /**
      * @return void
      */
     public function webhook(): void;
+
+    /**
+     * @return bool
+     */
+    public static function isAvailable(): bool;
 }

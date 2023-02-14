@@ -3,8 +3,9 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 
-abstract class AbstractGateway extends \WC_Payment_Gateway
+abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
 
     /**
@@ -77,6 +78,48 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
     }
 
     /**
+     * Render gateway checkout template
+     * 
+     * @return void
+     */
+    public function payment_fields(): void
+    {
+        return;
+    }
+
+    /**
+     * Validate gateway checkout form fields
+     * 
+     * @return bool
+     */
+    public function validate_fields(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Process payment and create woocommerce order
+     *
+     * @param int $order_id
+     *
+     * @return array
+     */
+    public function process_payment($order_id): array
+    {
+        return [];
+    }
+
+    /**
+     * Verify if the gateway is available
+     *
+     * @return bool
+     */
+    public static function isAvailable(): bool
+    {
+        return true;
+    }
+
+    /**
      * Init form fields for checkout configuration
      *
      * @return void
@@ -98,18 +141,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
                 ]
             ]
         ];
-    }
-
-    /**
-     * Check if checkout method is available
-     *
-     * @param string $gatewaySection
-     *
-     * @return bool
-     */
-    public function isAvailable(): bool
-    {
-        return true;
     }
 
     /**

@@ -2,13 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
-
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterface
+class CreditsGateway extends AbstractGateway
 {
     /**
      * @const
@@ -42,20 +40,60 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
         $this->payment_scripts($this->id);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
+        $this->mercadopago->product->registerBeforeAddToCartForm([$this, 'creditsBanner']);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
 
-    public function isAvailable(): bool
+    /**
+     * Verify if the gateway is available
+     *
+     * @return bool
+     */
+    public static function isAvailable(): bool
     {
-        $siteIdPaymentMethods = $this->mercadopago->seller->getSiteIdPaymentMethods();
+        global $mercadopago;
+        $paymentMethodsBySite = $mercadopago->seller->getSiteIdPaymentMethods();
 
-        foreach ($siteIdPaymentMethods as $paymentMethod) {
+        foreach ($paymentMethodsBySite as $paymentMethod) {
             if ('consumer_credits' === $paymentMethod['id']) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    public function creditsBanner(): void
+    {
+        $this->mercadopago->scripts->registerStoreStyle('mp-credits-modal-style', plugins_url('../assets/css/products/credits-modal' . $suffix . '.css', plugin_dir_path( __FILE__ )));
+
+        $this->mercadopago->template->getWoocommerceTemplate(
+            'public/products/credits-modal.php',
+            [
+                'banner_title'           => __('Pay in', 'woocommerce-mercadopago'),
+				'banner_title_bold'      => __('installments', 'woocommerce-mercadopago'),
+				'banner_title_end'       => __('with Mercado Pago', 'woocommerce-mercadopago'),
+				'banner_link'            => __('Read more', 'woocommerce-mercadopago'),
+				'modal_title'            => __('Buy now and pay in installments with no card later!', 'woocommerce-mercadopago'),
+				'modal_subtitle'         => __('100% online, without paperwork or monthly fees', 'woocommerce-mercadopago'),
+				'modal_how_to'           => __('How does it work?', 'woocommerce-mercadopago'),
+				'modal_step_1'           => __('When paying, choose', 'woocommerce-mercadopago'),
+				'modal_step_1_bold'      => __('Mercado Pago', 'woocommerce-mercadopago'),
+				'modal_step_1_end'       => __('. Login to your account or create one in a few steps.', 'woocommerce-mercadopago'),
+				'modal_step_2'           => __('Search for', 'woocommerce-mercadopago'),
+				'modal_step_2_bold'      => __('Mercado Credito', 'woocommerce-mercadopago'),
+				'modal_step_2_end'       => __('among the options, select it and choose in how many installments you would like to pay.', 'woocommerce-mercadopago'),
+				'modal_step_3'           => __('Pay your installments monthly as you wish, in the Mercado Pago app.', 'woocommerce-mercadopago'),
+				'modal_footer'           => __('Questions? ', 'woocommerce-mercadopago'),
+				'modal_footer_help_link' => $this->mercadopago->links->getLinks()['credits_faq_link'],
+				'modal_footer_link'      => __('Check our FAQ', 'woocommerce-mercadopago'),
+				'modal_footer_end'       => __('. Credit subject to approval.', 'woocommerce-mercadopago')
+            ]
+        );
+
+		$this->mercadopago->scripts->registerStoreScript('mp-credits-modal-js', plugins_url('../assets/js/products/credits-modal' . $suffix . '.js', plugin_dir_path( __FILE__ )));
+
+		$this->mercadopago->scripts->registerMelidataStoreScript('/products');
     }
 
     /**
@@ -312,10 +350,10 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
             'mp_info_admin_credits_script',
             $this->mercadopago->url->getPluginFileUrl('/assets/js/admin/credits/example-info', '.js'),
             [
-                'computerBlueIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-blue-icon', '.png'),
-                'computerGrayIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-gray-icon', '.png'),
-                'cellphoneBlueIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-blue-icon', '.png'),
-                'cellphoneGrayIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-gray-icon', '.png'),
+                'computerBlueIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-blue-icon', '.png', true),
+                'computerGrayIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-gray-icon', '.png', true),
+                'cellphoneBlueIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-blue-icon', '.png', true),
+                'cellphoneGrayIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-gray-icon', '.png', true),
                 'viewMobile'        => plugins_url($this->getCreditsGifPath($siteId, 'mobile'), plugin_dir_path(__FILE__)),
                 'viewDesktop'       => plugins_url($this->getCreditsGifPath($siteId, 'desktop'), plugin_dir_path(__FILE__)),
                 'footerDesktop'     => $this->adminTranslations['credits_banner_desktop'],

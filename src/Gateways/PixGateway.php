@@ -2,13 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
-
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
+class PixGateway extends AbstractGateway
 {
     /**
      * @const
@@ -49,6 +47,24 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
         $this->mercadopago->order->registerEmailBeforeOrderTable([$this, 'getTemplate']);
         $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'getTemplate']);
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'loadThankYouPage']);
+    }
+
+    /**
+     * Verify if the gateway is available
+     *
+     * @return bool
+     */
+    public static function isAvailable(): bool
+    {
+        global $mercadopago;
+        $siteId  = $mercadopago->seller->getSiteId();
+        $country = $mercadopago->country->getWoocommerceDefaultCountry();
+
+        if ('MLB' === $siteId || ('' === $siteId && 'BR' === $country)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

@@ -2,13 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
-
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterface
+class CustomGateway extends AbstractGateway
 {
     /**
      * @const
@@ -30,11 +28,11 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         $this->adminTranslations = $this->mercadopago->adminTranslations->customGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->customCheckout;
 
-        $this->id = self::ID;
-        $this->icon = $this->mercadopago->plugin->getGatewayIcon('icon-gray-card');
-        $this->title = $this->mercadopago->options->get('title', $this->adminTranslations['gateway_title']);
-        $this->description = $this->adminTranslations['gateway_description'];
-        $this->method_title = $this->adminTranslations['gateway_method_title'];
+        $this->id                 = self::ID;
+        $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-gray-card');
+        $this->title              = $this->mercadopago->options->get('title', $this->adminTranslations['gateway_title']);
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
 
         $this->init_form_fields();
@@ -46,7 +44,7 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         // @todo: call admin_notice hook to display currency notice
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'loadThankYouPage']);
-        $this->mercadopago->checkout->registerReceipt(self::ID, [$this, 'renderOrderForm']);
+        $this->mercadopago->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
     }
 
     /**
