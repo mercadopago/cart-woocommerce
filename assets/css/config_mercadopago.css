@@ -321,6 +321,7 @@
 }
 
 .mp-text-checkout-body {
+	max-width: 1000px;
 	font-size: 14px !important;
 	font-weight: 400 !important;
 	margin-top: 10px !important;

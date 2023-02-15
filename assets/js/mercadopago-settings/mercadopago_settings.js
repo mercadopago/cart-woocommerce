@@ -482,7 +482,7 @@ function mp_payment_properties(gateway) {
     gateway.icon +
     '"></div>\
         <span class="mp-settings-subtitle-font-size mp-settings-margin-title-payment"> <b>' +
-    gateway.title +
+    gateway.title_gateway +
     "</b> - " +
     gateway.description +
     ' </span>\

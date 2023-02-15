@@ -1,10 +1,10 @@
 .mp-credits-banner-info {
     font-family: Proxima Nova, Helvetica Neue, Helvetica, Arial, sans-serif;
-    width: 314px;
+    width: 329px;
     height: 64px;
     background: #E6F5FC;
     border-radius: 32px;
-    text-align: center;
+    text-align: initial;
     padding-right: 12px;
     margin: 0px 0px 15px 0px;
     display: flex;
@@ -39,8 +39,8 @@
 }
 
 .mp-credits-banner-text {
-    max-width: 160px;
-    padding-left: 6px;
+    max-width: 163px;
+    margin: 0px 8px;
     font-size: 12px;
     line-height: 15px;
     color: #464545;
@@ -51,7 +51,7 @@
 }
 
 .mp-credits-banner-link {
-    max-width: 64px;
+    max-width: 72px;
     text-align: center;
     justify-content: center;
     padding-left: 8px;
@@ -91,9 +91,9 @@
 }
 
 .mp-credits-modal-blue-circle {
-    width: 16px;
-    height: 16px;
-    background-color: #009EE3;
+    width: 18px;
+    height: 18px;
+    background: rgba(71, 154, 209, 0.1);
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -112,7 +112,7 @@
     font-style: normal;
     font-size: 14px;
     line-height: 20px;
-    padding-left: 7px;
+    padding-left: 12px;
 }
 
 .mp-credits-modal-blue-circle~span>span {
@@ -124,16 +124,14 @@
     font-size: 12px;
 }
 
-.mp-credits-modal-how-to-use>div~div~div>span{
-    font-weight: 600;
-}
 .mp-credits-modal-how-to-use {
     display: flex;
     flex-direction: column;
-    padding-top: 24px;
+    align-items: center;
+    padding-top: 22px;
 }
 
-.mp-credits-modal-how-to-use>div {
+.mp-credits-modal-how-to-use>div>div {
     display: flex;
     flex-direction: row;
     padding-bottom: 16px;
@@ -155,7 +153,7 @@
 }
 
 .mp-credits-modal-content {
-    padding: 30px 35px 50px 35px;
+    padding: 24px 35px 50px 35px;
 }
 
 .mp-credits-modal-container-content img {
@@ -218,7 +216,7 @@
 
 .mp-credits-modal-FAQ {
     font-weight: 400;
-    padding-top: 16px;
+    padding-top: 22px;
     display: flex;
     justify-content: center;
     font-style: normal;

@@ -26,10 +26,11 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 	 * @throws WC_WooMercadoPago_Exception On load payment exception.
 	 */
 	public function __construct() {
-		$this->id          = self::ID;
-		$this->description = __('Customers who buy on spot and pay later in up to 12 installments', 'woocommerce-mercadopago');
-		$this->title       = __('Installments without card', 'woocommerce-mercadopago');
-		$this->mp_options  = $this->get_mp_options();
+		$this->id            = self::ID;
+		$this->title         = __('Installments without card', 'woocommerce-mercadopago');
+		$this->title_gateway = __('Installments without card', 'woocommerce-mercadopago');
+		$this->description   = __('Customers who buy on spot and pay later in up to 12 installments', 'woocommerce-mercadopago');
+		$this->mp_options    = $this->get_mp_options();
 
 		if ( ! $this->validate_section() ) {
 			return;
@@ -221,9 +222,9 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 	 */
 	protected function get_mercado_credits_preview_image( $siteId ) {
 		$siteIds = [
-			'mla' => 'MLA_',
+			'mla' => 'HISPANO_',
 			'mlb' => 'MLB_',
-			'mlm' => 'MLM_',
+			'mlm' => 'HISPANO_',
 		];
 
 		$prefix = isset($siteIds[$siteId]) ? $siteIds[$siteId] : '';
@@ -245,7 +246,7 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 								 </div>
 							<div class="mp-col-md-12">
 								<p class="mp-text-checkout-body mp-mb-0">
-									' . __('Reach millions of buyers by offering Mercado Credito as a payment method. Our flexible payment options give your customers the possibility to buy today whatever they want in up to 12 installments without the need to use a credit card.', 'woocommerce-mercadopago') . '
+									' . __('Reach millions of buyers by offering Mercado Credito as a payment method. Our flexible payment options <b>give your customers the possibility to buy today whatever they want in up to 12 installments without the need to use a credit card.</b>', 'woocommerce-mercadopago') . '
 								</p>
 								<p class="mp-text-checkout-body mp-mb-0">
 									' . __('For your business, the approval of the purchase is immediate and guaranteed.', 'woocommerce-mercadopago') . '
@@ -305,17 +306,12 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 	 */
 	public function field_credits_banner_mode() {
 		$site = strtolower($this->mp_options->get_site_id());
-		$link = WC_WooMercadoPago_Helper_Links::get_mc_blog_link($site);
 
 		return array(
 			'title'    => __('Inform your customers about the option of paying in installments without card', 'woocommerce-mercadopago'),
 			'type'     => 'mp_toggle_switch',
 			'default'  => 'no',
-			'subtitle' => sprintf (
-				/* translators: %s link to Mercado Credits blog */
-				__('<b>By activating the installments without card component</b>, you increase your chances of selling. To learn more, please check the <a href="%s" target="blank">technical guideline</a>.', 'woocommerce-mercadopago'),
-				$link['blog_link']
-			),
+			'subtitle' => __('<b>By activating the installments without card component</b>, you increase your chances of selling.', 'woocommerce-mercadopago'),
 			'descriptions' => array(
 				'enabled'  => __('The installments without card component is <b>active</b>.', 'woocommerce-mercadopago'),
 				'disabled' => __('The installments without card component is <b>inactive</b>.', 'woocommerce-mercadopago'),
@@ -385,9 +381,9 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 	 */
 	protected function get_mercado_credits_gif_path( $siteId, $view ) {
 		$siteIds = [
-			'mla' => 'MLA_',
+			'mla' => 'HISPANO_',
 			'mlb' => 'MLB_',
-			'mlm' => 'MLM_',
+			'mlm' => 'HISPANO_',
 		];
 
 		$prefix = isset($siteIds[$siteId]) ? $siteIds[$siteId] : '';

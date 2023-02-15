@@ -22,7 +22,7 @@ if ( ! defined('ABSPATH') ) {
 </div>
 <div class="credits-info-example-container">
 	<div class="credits-info-example-buttons-container">
-		<div class="credits-info-example-buttons-child selected">
+		<div class="credits-info-example-buttons-child credits-info-button-selected">
 			<div id="btn-first" class="credits-info-example-blue-badge"></div>
 			<div class="credits-info-example-buttons-content">
 				<div>
