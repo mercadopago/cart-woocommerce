@@ -1,4 +1,5 @@
 {
+    "version": "6.7.1",
     "name": "cart-woocommerce",
     "description": "Gateway de pagamento Mercado Pago para WooCommerce",
     "scripts": {
@@ -11,7 +12,6 @@
         "lint": "jshint",
         "husky": "husky install && rm -rf .husky/_/.gitignore"
     },
-    "version": "6.7.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/mercadopago/cart-woocommerce"

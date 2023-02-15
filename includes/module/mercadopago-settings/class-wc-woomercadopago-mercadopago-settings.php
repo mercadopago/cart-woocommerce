@@ -589,6 +589,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 
 				$payment_gateway_properties[] = array(
 					'id'               => $gateway->id,
+					'title_gateway'    => $gateway->title_gateway,
 					'description'      => $gateway->description,
 					'title'            => $gateway->title,
 					'enabled'          => $gateway->settings['enabled'],

@@ -408,6 +408,13 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	public $mp_nonce;
 
 	/**
+	 * Gateway title
+	 *
+	 * @var string
+	 */
+	public $title_gateway;
+
+	/**
 	 * WC_WooMercadoPago_PaymentAbstract constructor.
 	 *
 	 * @throws WC_WooMercadoPago_Exception Load payment exception.

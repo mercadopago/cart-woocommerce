@@ -30,10 +30,11 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @throws WC_WooMercadoPago_Exception Load payment exception.
 	 */
 	public function __construct() {
-		$this->id          = self::ID;
-		$this->description = __( 'Transparent Checkout in your store environment', 'woocommerce-mercadopago' );
-		$this->title       = __( 'Invoice', 'woocommerce-mercadopago' );
-		$this->mp_options  = $this->get_mp_options();
+		$this->id            = self::ID;
+		$this->title         = __( 'Invoice', 'woocommerce-mercadopago' );
+		$this->title_gateway = __( 'Invoice', 'woocommerce-mercadopago' );
+		$this->description   = __( 'Transparent Checkout in your store environment', 'woocommerce-mercadopago' );
+		$this->mp_options    = $this->get_mp_options();
 
 		if ( ! $this->validate_section() ) {
 			return;

@@ -1,6 +1,14 @@
 CHANGELOG:
 == Changelog ==
 
+= v6.7.1 (15/02/2023) =
+* Changes
+- Changed Credits Tooltips experience
+- Changed generic css classes name
+
+* Bug fixes
+- Fixed PIX QR Code generation
+
 = v6.7.0 (23/01/2023) =
 * Changes
 - Added security improvements

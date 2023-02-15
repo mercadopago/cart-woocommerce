@@ -3,6 +3,7 @@
   let modalContent = document.querySelector('.mp-credits-modal-container-content');
   let modalCentralize = document.querySelector('#mp-credits-centralize');
   let resizeControl;
+  let footerHeight = 40;
 
   const setupElements = () => {
     modal || (modal = document.querySelector('#mp-credits-modal'));
@@ -24,7 +25,7 @@
         modalCentralize.classList.remove('mp-credits-modal-content-centralize');
         const modalHeight = modal.clientHeight;
         const modalContentHeight = modalContent.clientHeight;
-        modalContent.style.top = `${modalHeight - modalContentHeight}.px`;
+        modalContent.style.top = `${(modalHeight - modalContentHeight) - footerHeight}.px`;
         modalContent.classList.add('mp-mobile');
       }
     }

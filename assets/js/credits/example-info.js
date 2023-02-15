@@ -12,7 +12,7 @@
 
         function verify() {
 
-            if (blueBadgeArr[0].classList.contains('selected')) {
+            if (blueBadgeArr[0].classList.contains('credits-info-button-selected')) {
                 btnFirst.classList.add('credits-info-blue-color')
                 btnSecond.classList.remove('credits-info-blue-color')
                 iconImg[0].setAttribute('src', wc_mp_icon_images.computerBlueIcon)
@@ -21,7 +21,7 @@
                 exampleFooter.innerHTML = wc_mp_icon_images.footerDesktop
                 return
             }
-            if (blueBadgeArr[1].classList.contains('selected')) {
+            if (blueBadgeArr[1].classList.contains('credits-info-button-selected')) {
                 btnSecond.classList.add('credits-info-blue-color')
                 btnFirst.classList.remove('credits-info-blue-color')
                 iconImg[1].setAttribute('src', wc_mp_icon_images.cellphoneBlueIcon)
@@ -35,22 +35,22 @@
 
 
         blueBadgeArr[0].addEventListener('click', () => {
-            if (blueBadgeArr[0].classList.contains('selected')) {
+            if (blueBadgeArr[0].classList.contains('credits-info-button-selected')) {
                 return
             } else {
-                blueBadgeArr[0].classList.add('selected')
-                blueBadgeArr[1].classList.remove('selected')
+                blueBadgeArr[0].classList.add('credits-info-button-selected')
+                blueBadgeArr[1].classList.remove('credits-info-button-selected')
 
             }
             verify()
         })
 
         blueBadgeArr[1].addEventListener('click', () => {
-            if (blueBadgeArr[1].classList.contains('selected')) {
+            if (blueBadgeArr[1].classList.contains('credits-info-button-selected')) {
                 return
             } else {
-                blueBadgeArr[1].classList.add('selected')
-                blueBadgeArr[0].classList.remove('selected')
+                blueBadgeArr[1].classList.add('credits-info-button-selected')
+                blueBadgeArr[0].classList.remove('credits-info-button-selected')
             }
             verify()
         })

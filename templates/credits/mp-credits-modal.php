@@ -40,22 +40,37 @@ if ( ! defined('ABSPATH') ) {
 							<div class="mp-credits-modal-titles">
 								<div>
 									<span><?php echo esc_html($modal_title); ?></span>
-									<p><?php echo esc_html($modal_subtitle); ?>
+									<p>
+										<?php echo esc_html($modal_subtitle); ?> <b><?php echo esc_html($modal_subtitle_2); ?></b>
+									</p>
 								</div>
 								<div>
-									<span><?php echo esc_html($modal_how_to); ?></span>
 									<div class="mp-credits-modal-how-to-use">
 										<div>
-											<div class="mp-credits-modal-blue-circle"><span>1</span></div>
-											<span><?php echo esc_html($modal_step_1); ?><span> <?php echo esc_html($modal_step_1_bold); ?></span><?php echo esc_html($modal_step_1_end); ?></span>
-										</div>
-										<div>
-											<div class="mp-credits-modal-blue-circle"><span>2</span></div>
-											<span><?php echo esc_html($modal_step_2); ?> <span><?php echo esc_html($modal_step_2_bold); ?></span> <?php echo esc_html($modal_step_2_end); ?></span>
-										</div>
-										<div>
-											<div class="mp-credits-modal-blue-circle"><span>3</span></div>
-											<span><?php echo esc_html($modal_step_3); ?></span>
+											<div>
+												<div class="mp-credits-modal-blue-circle">
+													<span>
+														<img alt="mp-logo-hand-shake" src="<?php echo esc_html(plugins_url('../assets/images/credits/check-blue.png', plugin_dir_path(__FILE__))); ?>">
+													</span>
+												</div>	
+												<span><?php echo esc_html($modal_step_1); ?> <?php echo esc_html($modal_step_1_end); ?></span>
+											</div>
+											<div>
+												<div class="mp-credits-modal-blue-circle">
+													<span>
+														<img alt="mp-logo-hand-shake" src="<?php echo esc_html(plugins_url('../assets/images/credits/check-blue.png', plugin_dir_path(__FILE__))); ?>">
+													</span>
+												</div>
+												<span><?php echo esc_html($modal_step_2); ?> <?php echo esc_html($modal_step_2_end); ?></span>
+											</div>
+											<div>
+												<div class="mp-credits-modal-blue-circle">
+													<span>
+														<img alt="mp-logo-hand-shake" src="<?php echo esc_html(plugins_url('../assets/images/credits/check-blue.png', plugin_dir_path(__FILE__))); ?>">
+													</span>
+												</div>
+												<span><?php echo esc_html($modal_step_3); ?></span>
+											</div>
 										</div>
 									</div>
 								</div>

@@ -30,10 +30,11 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 	 * @throws WC_WooMercadoPago_Exception Load payment exception.
 	 */
 	public function __construct() {
-		$this->id          = self::ID;
-		$this->description = __( 'Transparent Checkout in your store environment', 'woocommerce-mercadopago' );
-		$this->title       = __( 'Pix', 'woocommerce-mercadopago' );
-		$this->mp_options  = $this->get_mp_options();
+		$this->id            = self::ID;
+		$this->title         = __( 'Pix', 'woocommerce-mercadopago' );
+		$this->title_gateway = __( 'Pix', 'woocommerce-mercadopago' );
+		$this->description   = __( 'Transparent Checkout in your store environment', 'woocommerce-mercadopago' );
+		$this->mp_options    = $this->get_mp_options();
 
 		if ( ! $this->validate_section() ) {
 			return;

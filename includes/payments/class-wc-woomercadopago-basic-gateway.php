@@ -37,10 +37,11 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 	 * @throws WC_WooMercadoPago_Exception On load payment exception.
 	 */
 	public function __construct() {
-		$this->id          = self::ID;
-		$this->description = __('Debit, Credit and invoice in Mercado Pago environment', 'woocommerce-mercadopago');
-		$this->title       = __('Checkout Pro', 'woocommerce-mercadopago');
-		$this->mp_options  = $this->get_mp_options();
+		$this->id            = self::ID;
+		$this->title         = __('Checkout Pro', 'woocommerce-mercadopago');
+		$this->title_gateway = __('Checkout Pro', 'woocommerce-mercadopago');
+		$this->description   = __('Debit, Credit and invoice in Mercado Pago environment', 'woocommerce-mercadopago');
+		$this->mp_options    = $this->get_mp_options();
 
 		if ( ! $this->validate_section() ) {
 			return;
