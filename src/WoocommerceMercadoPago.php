@@ -1,12 +1,15 @@
 <?php
 
-namespace MercadoPago\Woocommerce;
+namespace templates;
 
+use MercadoPago\Woocommerce\Admin\Analytics;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Dependencies;
 use MercadoPago\Woocommerce\Helpers\Cache;
+use MercadoPago\Woocommerce\Helpers\CompositeId;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
@@ -28,6 +31,10 @@ use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+use function MercadoPago\Woocommerce\add_action;
+use function MercadoPago\Woocommerce\apply_filters;
+use function MercadoPago\Woocommerce\load_textdomain;
+use function MercadoPago\Woocommerce\unload_textdomain;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -49,6 +56,16 @@ class WoocommerceMercadoPago
      * @const
      */
     private const PLATFORM_ID = 'bo2hnr2ic4p001kbgpt0';
+
+    /**
+     * @const
+     */
+    private const PRODUCT_ID_DESKTOP = 'BT7OF5FEOO6G01NJK3QG';
+
+    /**
+     * @const
+     */
+    private const PRODUCT_ID_MOBILE  = 'BT7OFH09QS3001K5A0H0';
 
     /**
      * @const
@@ -104,6 +121,11 @@ class WoocommerceMercadoPago
      * @var Template
      */
     public $template;
+
+    /**
+     * @var CompositeId
+     */
+    public $compositeId;
 
     /**
      * @var Order
@@ -184,6 +206,11 @@ class WoocommerceMercadoPago
      * @var Settings
      */
     public $settings;
+
+    /**
+     * @var Analytics
+     */
+    public $analytics;
 
     /**
      * @var AdminTranslations
@@ -289,6 +316,7 @@ class WoocommerceMercadoPago
         // Configs
         $this->seller             = $dependencies->seller;
         $this->store              = $dependencies->store;
+        $this->analytics          = $dependencies->analytics;
 
         // Helpers
         $this->cache              = $dependencies->cache;
@@ -300,6 +328,7 @@ class WoocommerceMercadoPago
         $this->strings            = $dependencies->strings;
         $this->url                = $dependencies->url;
         $this->nonce              = $dependencies->nonce;
+        $this->compositeId        = $dependencies->compositeId;
 
         // Hooks
         $this->admin              = $dependencies->admin;
@@ -396,6 +425,8 @@ class WoocommerceMercadoPago
         $this->define('MP_VERSION', self::PLUGIN_VERSION);
         $this->define('MP_PLATFORM_ID', self::PLATFORM_ID);
         $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
+        $this->define('MP_PRODUCT_ID_DESKTOP', self::PRODUCT_ID_DESKTOP);
+        $this->define('MP_PRODUCT_ID_MOBILE', self::PRODUCT_ID_MOBILE);
     }
 
     /**
