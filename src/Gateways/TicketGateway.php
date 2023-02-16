@@ -262,7 +262,7 @@ class TicketGateway extends AbstractGateway
                 'id'        => $paymentMethod['id'],
                 'field_key' => $this->get_field_key($paymentMethod['id']),
                 'label'     => array_key_exists('payment_places', $paymentMethod) ? $paymentMethod['name'] . ' (' . $this->buildPaycashPaymentsString() . ')' : $paymentMethod['name'],
-                'value'     => $this->$this->mercadopago->options->get($paymentMethod['id'], 'yes'),
+                'value'     => $this->mercadopago->options->get($paymentMethod['id'], 'yes'),
                 'type'      => 'checkbox',
             );
         }
