@@ -43,7 +43,7 @@ class StoreTranslations
     /**
      * @var array
      */
-    public $checkoutTicket = [];
+    public $ticketCheckout = [];
 
     /**
      * Translations constructor
@@ -56,7 +56,7 @@ class StoreTranslations
         $this->setBasicCheckoutTranslations();
         $this->setCreditsCheckoutTranslations();
         $this->setCustomCheckoutTranslations();
-        $this->setCheckoutTicketTranslations();
+        $this->setTicketCheckoutTranslations();
         $this->setPixCheckoutTranslations();
     }
 
@@ -148,6 +148,23 @@ class StoreTranslations
             'checkout_redirect_alt'            => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
             'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
             'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'banner_title'                     => __('Pay in', 'woocommerce-mercadopago'),
+            'banner_title_bold'                => __('installments', 'woocommerce-mercadopago'),
+            'banner_title_end'                 => __('with Mercado Pago', 'woocommerce-mercadopago'),
+            'banner_link'                      => __('Read more', 'woocommerce-mercadopago'),
+            'modal_title'                      => __('Buy now and pay in installments with no card later!', 'woocommerce-mercadopago'),
+            'modal_subtitle'                   => __('100% online, without paperwork or monthly fees', 'woocommerce-mercadopago'),
+            'modal_how_to'                     => __('How does it work?', 'woocommerce-mercadopago'),
+            'modal_step_1'                     => __('When paying, choose', 'woocommerce-mercadopago'),
+            'modal_step_1_bold'                => __('Mercado Pago', 'woocommerce-mercadopago'),
+            'modal_step_1_end'                 => __('. Login to your account or create one in a few steps.', 'woocommerce-mercadopago'),
+            'modal_step_2'                     => __('Search for', 'woocommerce-mercadopago'),
+            'modal_step_2_bold'                => __('Mercado Credito', 'woocommerce-mercadopago'),
+            'modal_step_2_end'                 => __('among the options, select it and choose in how many installments you would like to pay.', 'woocommerce-mercadopago'),
+            'modal_step_3'                     => __('Pay your installments monthly as you wish, in the Mercado Pago app.', 'woocommerce-mercadopago'),
+            'modal_footer'                     => __('Questions? ', 'woocommerce-mercadopago'),
+            'modal_footer_link'                => __('Check our FAQ', 'woocommerce-mercadopago'),
+            'modal_footer_end'                 => __('. Credit subject to approval.', 'woocommerce-mercadopago')
         ];
     }
 
@@ -249,18 +266,22 @@ class StoreTranslations
      *
      * @return void
      */
-    private function setCheckoutTicketTranslations(): void
+    private function setTicketCheckoutTranslations(): void
     {
-        $this->checkoutTicket = [
-            'gateway_title'           => __('Invoice', 'woocommerce-mercadopago'),
-            'gateway_description'     => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
-            'method_title'            => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
-            'config_header_title'     => __('Transparent Checkout | Invoice or Loterica.', 'woocommerce-mercadopago'),
-            'config_header_desc'      => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
-            'config_enabled_title'    => __('Activate installments without card in your store checkout', 'woocommerce-mercadopago'),
-            'config_enabled_subtitle' => __('Offer the option to pay in installments without card directly from your store\'s checkout.', 'woocommerce-mercadopago'),
-            'config_enabled_enabled'  => __('Payment in installments without card in the store checkout is <b>active</b>', 'woocommerce-mercadopago'),
-            'config_enabled_disabled' => __('Payment in installments without card in the store checkout is <b>inactive</b>', 'woocommerce-mercadopago'),
+        $this->ticketCheckout = [
+            'test_mode_title'                  => __('Offline Methods in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_description'            => __('You can test the flow to generate an invoice, but you cannot finalize the payment.', 'woocommerce-mercadopago'),
+            'test_mode_link_text'              => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'input_document_label'             => __('Holder document', 'woocommerce-mercadopago'),
+            'input_document_helper'            => __('Invalid document', 'woocommerce-mercadopago'),
+            'ticket_text_label'                => __('Select where you want to pay', 'woocommerce-mercadopago'),
+            'input_table_button'               => __('more options', 'woocommerce-mercadopago'),
+            'input_helper_label'               => __('Select a payment method', 'woocommerce-mercadopago'),
+            'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
+            'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'print_ticket_label'               => __('Great, we processed your purchase order. Complete the payment with ticket so that we finish approving it.', 'woocommerce-mercadopago'),
+            'print_ticket_link'                => __('Print ticket', 'woocommerce-mercadopago'),
+            'paycash_concatenator'                => __(' and ', 'woocommerce-mercadopago'),
         ];
     }
 }

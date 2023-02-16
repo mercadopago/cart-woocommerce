@@ -46,13 +46,13 @@ final class Links
         $country            = $this->country->getPluginDefaultCountry();
         $countryConfig      = $this->country->getCountryConfigs($country);
 
-        $mercadoPagoLinks   = $this->getMercadoPagoLinks($countryConfig);
-        $documentationLinks = $this->getDocumentationLinks($countryConfig);
-        $adminLinks         = $this->getAdminLinks();
-        $storeLinks         = $this->getStoreLinks();
-        $creditsLinks       = $this->getCreditsLinks($countryConfig);
-
-        return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $adminLinks, $storeLinks, $creditsLinks);
+        return array_merge_recursive(
+            $this->getDocumentationLinks($countryConfig),
+            $this->getMercadoPagoLinks($countryConfig),
+            $this->getCreditsLinks($countryConfig),
+            $this->getAdminLinks(),
+            $this->getStoreLinks(),
+        );
     }
 
     /**
@@ -76,7 +76,7 @@ final class Links
             'docs_integration_introduction' => $baseLink . '/docs/woocommerce/introduction',
         ];
     }
-
+    
     /**
      * Get documentation links on Mercado Pago Panel page
      *

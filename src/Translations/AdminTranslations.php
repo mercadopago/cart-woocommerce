@@ -63,6 +63,11 @@ class AdminTranslations
     /**
      * @var array
      */
+    public $ticketGatewaySettings = [];
+
+    /**
+     * @var array
+     */
     public $pixGatewaySettings = [];
 
     /**
@@ -112,6 +117,7 @@ class AdminTranslations
         $this->setBasicGatewaySettingsTranslations();
         $this->setCreditsGatewaySettingsTranslations();
         $this->setCustomGatewaySettingsTranslations();
+        $this->setTicketGatewaySettingsTranslations();
         $this->setPixGatewaySettingsTranslations();
         $this->setTestModeSettingsTranslations();
         $this->setConfigurationTipsTranslations();
@@ -665,6 +671,74 @@ class AdminTranslations
             'commission_title'                          => __('Commission in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
             'commission_description'                    => __('Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
             'commission_checkbox_label'                 => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Set ticket settings translations
+     *
+     * @return void
+     */
+    private function setTicketGatewaySettingsTranslations(): void
+    {
+        $couponModeDescriptionsEnabled = sprintf(
+            '%s <b>%s</b>.',
+            __('Discount coupons is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
+        );
+
+        $couponModeDescriptionsDisabled = sprintf(
+            '%s <b>%s</b>.',
+            __('Discount coupons is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
+        );
+
+        $currencyConversionDescriptionsEnabled = sprintf(
+            '%s <b>%s</b>.',
+            __('Currency conversion is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
+        );
+
+        $currencyConversionDescriptionsDisabled = sprintf(
+            '%s <b>%s</b>.',
+            __('Currency conversion is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
+        );
+
+        $this->ticketGatewaySettings = [
+            'gateway_title'                => __('Invoice', 'woocommerce-mercadopago'),
+            'gateway_description'          => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
+            'method_title'                 => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
+            'header_title'                 => __('Transparent Checkout | Invoice or Loterica.', 'woocommerce-mercadopago'),
+            'header_description'           => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
+            'enabled_title'                => __('Activate installments without card in your store checkout', 'woocommerce-mercadopago'),
+            'enabled_subtitle'             => __('Offer the option to pay in installments without card directly from your store\'s checkout.', 'woocommerce-mercadopago'),
+            'enabled_enabled'              => __('The transparent checkout for tickets is <b>enabled</b>.', 'woocommerce-mercadopago'),
+            'enabled_disabled'             => __('The transparent checkout for tickets is <b>disabled</b>.', 'woocommerce-mercadopago'),
+            'title_title'                  => __('Title in the store Checkout', 'woocommerce-mercadopago'),
+            'title_description'            => __('Change the display text in Checkout, maximum characters: 85', 'woocommerce-mercadopago'),
+            'title_default'                => __('Invoice', 'woocommerce-mercadopago'),
+            'title_desc_tip'               => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
+            'currency_conversion_title'    => __('Convert Currency', 'woocommerce-mercadopago'),
+            'currency_conversion_subtitle' => __('Activate this option so that the value of the currency set in WooCommerce is compatible with the value of the currency you use in Mercado Pago.', 'woocommerce-mercadopago'),
+            'currency_conversion_enabled'  => $currencyConversionDescriptionsEnabled,
+            'currency_conversion_disabled' => $currencyConversionDescriptionsDisabled,
+            'date_expiration_title'        => __('Payment Due', 'woocommerce-mercadopago'),
+            'date_expiration_description'  => __('In how many days will cash payments expire.', 'woocommerce-mercadopago'),
+            'advanced_title_title'         => __('Advanced settings', 'woocommerce-mercadopago'),
+            'advanced_description_title'   => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'coupon_mode_title'            => __('Discount coupons', 'woocommerce-mercadopago'),
+            'coupon_mode_subtitle'         => __('Will you offer discount coupons to customers who buy with Mercado Pago?', 'woocommerce-mercadopago'),
+            'coupon_mode_enabled'          => $couponModeDescriptionsEnabled,
+            'coupon_mode_disabled'         => $couponModeDescriptionsDisabled,
+            'stock_reduce_title'           => __('Reduce inventory', 'woocommerce-mercadopago'),
+            'stock_reduce_subtitle'        => __('Activates inventory reduction during the creation of an order, whether or not the final payment is credited. Disable this option to reduce it only when payments are approved.', 'woocommerce-mercadopago'),
+            'stock_reduce_enabled'         => __('Reduce inventory is <b>enabled</b>.', 'woocommerce-mercadopago'),
+            'stock_reduce_disabled'        => __('Reduce inventory is <b>disabled</b>.', 'woocommerce-mercadopago'),
+            'type_payments_title'          => __('Payment methods', 'woocommerce-mercadopago'),
+            'type_payments_description'    => __('Enable the available payment methods', 'woocommerce-mercadopago'),
+            'type_payments_desctip'        => __('Choose the available payment methods in your store.', 'woocommerce-mercadopago'),
+            'type_payments_label'          => __('All payment methods', 'woocommerce-mercadopago'),
         ];
     }
 

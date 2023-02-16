@@ -909,6 +909,74 @@ msgstr "Visualização do componente"
 msgid "Check below how this feature will be displayed to your customers:"
 msgstr "Confira como aparecerá este recurso para seus clientes:"
 
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:112
+msgid "Pay in"
+msgstr "Pague"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:113
+msgid "installments"
+msgstr "parcelado sem cartão"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:114
+msgid "with Mercado Pago"
+msgstr "com Mercado Pago"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:115
+msgid "Read more"
+msgstr "Ler mais"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:116
+msgid "Buy now and pay in installments with no card later!"
+msgstr "Compre agora e pague parcelado sem cartão depois!"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:117
+msgid "100% online, without paperwork or monthly fees"
+msgstr ""
+"Pague as parcelas com Pix, boleto ou saldo da conta Mercado Pago, 100% on-"
+"line e sem custos extras"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:118
+msgid "How does it work?"
+msgstr "Como funciona?"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:119
+msgid "When paying, choose"
+msgstr "No pagamento, escolha"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:120
+msgid "Mercado Pago"
+msgstr "Mercado Pago"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:121
+msgid ". Login to your account or create one in a few steps."
+msgstr ". Entre na sua conta ou crie uma em poucos passos."
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:122
+msgid "Search for"
+msgstr "Procure por"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:123
+msgid "Mercado Credito"
+msgstr "Mercado Crédito"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:124
+msgid ""
+"among the options, select it and choose in how many installments you would "
+"like to pay."
+msgstr "entre as opções, selecione e defina em quantas vezes quer pagar."
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:125
+msgid "Pay your installments monthly as you wish, in the Mercado Pago app."
+msgstr "Pague as parcelas todo mês como preferir, no app do Mercado Pago."
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:128
+msgid "Check our FAQ"
+msgstr "Consulte nossa FAQ"
+
+#: ../../includes/products/hooks/class-wc-woomercadopago-products-hook-credits.php:129
+msgid ". Credit subject to approval."
+msgstr ". Crédito sujeito a aprovação."
+
 #: ../../src/Translations/AdminTranslations.php:564,
 #: ../../src/Translations/AdminTranslations.php:570
 msgid "Transparent Checkout for credit cards is"
@@ -1712,6 +1780,148 @@ msgstr "Logo Pix"
 #: ../../src/Translations/StoreTranslations.php:235
 msgid "Code valid for "
 msgstr "Código válido por "
+
+#: ../../templates/checkout/ticket-checkout.php:23
+msgid "Offline Methods in Test Mode"
+msgstr "Meios offline em Modo Teste"
+
+#: ../../templates/checkout/ticket-checkout.php:23
+msgid ""
+"You can test the flow to generate an invoice, but you cannot finalize the "
+"payment. "
+msgstr ""
+"É possível testar o fluxo para gerar uma fatura, mas não é possível "
+"finalizar o pagamento. "
+
+#: ../../templates/checkout/ticket-checkout.php:39
+msgid "Select where you want to pay"
+msgstr "Selecione onde você quer pagar"
+
+#: ../../templates/checkout/ticket-checkout.php:41
+msgid "more options"
+msgstr "mais opções"
+
+#: ../../templates/checkout/ticket-checkout.php:43
+msgid "Select a payment method"
+msgstr "Selecione uma opção de pagamento"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:35,
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:44
+msgid "Invoice"
+msgstr "Boleto e lotérica"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:197
+msgid ""
+"By disabling it, you will disable all invoice payments from Mercado Pago "
+"Transparent Checkout."
+msgstr ""
+"Ao desativar, você desabilita pagamentos por boleto e lotérica no Checkout "
+"Transparente Mercado Pago."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:201
+msgid "The transparent checkout for tickets is <b>enabled</b>."
+msgstr "O checkout transparente para boletos está <b>ativo</b>."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:202
+msgid "The transparent checkout for tickets is <b>disabled</b>."
+msgstr "O checkout transparente para boletos está <b>inativo</b>."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:217
+msgid "Transparent Checkout | Invoice or Loterica"
+msgstr "Checkout Transparente | Boleto ou lotérica"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:221
+msgid ""
+"With the Transparent Checkout, you can sell inside your store environment, "
+"without redirection and all the safety from Mercado Pago."
+msgstr ""
+"Com o Checkout Transparente, você consegue vender dentro do ambiente da sua "
+"loja, sem redirecionamento, com toda a segurança do Mercado Pago."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:238
+msgid "Advanced configuration of the cash payment experience"
+msgstr ""
+"Configuração avançada da experiência de pagamento via boleto e em lotéricas"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:251
+msgid "Reduce inventory"
+msgstr "Reduzir inventário"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:254
+msgid ""
+"Activates inventory reduction during the creation of an order, whether or "
+"not the final payment is credited. Disable this option to reduce it only "
+"when payments are approved."
+msgstr ""
+"Ative a redução de inventário durante a criação de um pedido, seja o "
+"pagamento aprovado ou não. Desative esta opção para reduzi-lo somente quando "
+"os pagamentos estiverem aprovados."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:256
+msgid "Reduce inventory is <b>enabled</b>."
+msgstr "Reduzir inventário está <b>ativo</b>."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:257
+msgid "Reduce inventory is <b>disabled</b>."
+msgstr "Reduzir inventário está <b>inativo</b>."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:269
+msgid "Payment Due"
+msgstr "Vencimento do pagamento"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:271
+msgid "In how many days will cash payments expire."
+msgstr "Em quantos dias os pagamentos via boleto e em lotéricas vencerão."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:291
+msgid "Enable the available payment methods"
+msgstr "Habilite os meios de pagamento disponíveis"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:293
+msgid "Choose the available payment methods in your store."
+msgstr "Habilite os meios de pagamento disponíveis para seus clientes."
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:297
+msgid "All payment methods"
+msgstr "Todos os meios de pagamento"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:446,
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:474
+msgid ""
+"There was a problem processing your payment. Are you sure you have correctly "
+"filled out all the information on the payment form?"
+msgstr ""
+"Ocorreu um problema ao processar seu pagamento. Tem certeza de que preencheu "
+"corretamente todas as informações no formulário de pagamento?"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:439,
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:467
+msgid "Your document data is invalid"
+msgstr "Número de documento inválido"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:515
+msgid "To print the ticket again click"
+msgstr "Para reimprimir o boleto clique"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:518
+msgid "here"
+msgstr "aqui"
+
+#: ../../includes/payments/class-wc-woomercadopago-ticket-gateway.php:630
+msgid " and "
+msgstr " e "
+
+#: ../../templates/order-received/show-ticket.php:19
+msgid ""
+"Great, we processed your purchase order. Complete the payment with ticket so "
+"that we finish approving it."
+msgstr ""
+"Ótimo, processamos seu pedido. Complete o pagamento com ticket para que "
+"possamos aprovar o pedido."
+
+#: ../../templates/order-received/show-ticket.php:23
+msgid "Print ticket"
+msgstr "Imprimir boleto"
 
 #: ../../src/Translations/StoreTranslations.php:227
 msgid "Now you just need to pay with Pix to finalize your purchase"
