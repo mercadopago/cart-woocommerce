@@ -709,7 +709,7 @@ class AdminTranslations
             'gateway_title'                => __('Invoice', 'woocommerce-mercadopago'),
             'gateway_description'          => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
             'method_title'                 => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
-            'header_title'                 => __('Transparent Checkout | Invoice or Loterica.', 'woocommerce-mercadopago'),
+            'header_title'                 => __('Transparent Checkout | Invoice or Loterica', 'woocommerce-mercadopago'),
             'header_description'           => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
             'enabled_title'                => __('Activate installments without card in your store checkout', 'woocommerce-mercadopago'),
             'enabled_subtitle'             => __('Offer the option to pay in installments without card directly from your store\'s checkout.', 'woocommerce-mercadopago'),
