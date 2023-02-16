@@ -250,8 +250,8 @@ class WoocommerceMercadoPago
     {
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
-        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CustomGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PixGateway');
     }
 
