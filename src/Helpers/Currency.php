@@ -129,8 +129,7 @@ final class Currency
     public function getAccountCurrency(): string
     {
         $siteId  = $this->seller->getSiteId();
-        $country = $this->country->siteIdToCountry($siteId);
-        $configs = $this->country->getCountryConfigs($country);
+        $configs = $this->country->getCountryConfigs();
 
         return $configs['currency'];
     }

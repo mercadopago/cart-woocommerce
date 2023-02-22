@@ -224,8 +224,7 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         parent::payment_scripts($gatewaySection);
 
         global $woocommerce;
-        $countrySuffix  = $this->mercadopago->country->getPluginDefaultCountry();
-        $countryConfigs = $this->mercadopago->country->getCountryConfigs($countrySuffix);
+        $countryConfigs = $this->mercadopago->country->getCountryConfigs();
 
         $this->mercadopago->scripts->registerStoreScript(
             'wc_mercadopago_sdk',
@@ -293,7 +292,7 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         $this->mercadopago->checkout->registerReviewOrderBeforePayment(function () {
             $this->mercadopago->scripts->registerStoreScript(
                 'wc_mercadopago_custom_update_checkout',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-update-checkout', '.js'),
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-update-checkout', '.js')
             );
         });
     }
@@ -523,8 +522,7 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         $totalPaidAmount   = $order->get_meta('mp_total_paid_amount');
         $totalDiffCost     = (float) $totalPaidAmount - (float) $transactionAmount;
 
-        $country           = $this->mercadopago->country->getPluginDefaultCountry();
-        $countryConfigs     = $this->mercadopago->country->getCountryConfigs($country);
+        $countryConfigs     = $this->mercadopago->country->getCountryConfigs();
         $currencySymbol    = $countryConfigs['currency_symbol'];
 
         if ($totalDiffCost > 0) {

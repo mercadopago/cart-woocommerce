@@ -379,8 +379,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
         $transactionAmount = number_format($transactionAmount, 2, ',', '.');
 
         $expirationOption  = $this->mercadopago->options->get('checkout_pix_date_expiration', '30 minutes');
-        $country           = $this->mercadopago->country->getPluginDefaultCountry();
-        $countryConfigs    = $this->mercadopago->country->getCountryConfigs($country);
+        $countryConfigs    = $this->mercadopago->country->getCountryConfigs();
         $currencySymbol    = $countryConfigs['currency_symbol'];
 
         if (empty($qr_base64) && empty($qr_code)) {

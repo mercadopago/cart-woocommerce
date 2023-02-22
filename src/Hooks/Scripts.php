@@ -126,7 +126,7 @@ class Scripts
         $variables = [
             'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
             'container'        => '#wpbody-content',
-            'public_key'       => '',
+            'public_key'       => $this->seller->getCredentialsPublicKey(),
             'plugin_version'   => MP_VERSION,
             'platform_id'      => MP_PLATFORM_ID,
             'platform_version' => $woocommerce->version,

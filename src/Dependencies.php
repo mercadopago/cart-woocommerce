@@ -4,11 +4,13 @@ namespace MercadoPago\Woocommerce;
 
 use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
+use MercadoPago\Woocommerce\Admin\Analytics;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
+use MercadoPago\Woocommerce\Helpers\CompositeId;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
@@ -83,6 +85,11 @@ class Dependencies
      * @var Template
      */
     public $template;
+
+    /**
+     * @var CompositeId
+     */
+    public $compositeId;
 
     /**
      * @var Order
@@ -165,6 +172,11 @@ class Dependencies
     public $settings;
 
     /**
+     * @var Analytics
+     */
+    public $analytics;
+
+    /**
      * @var AdminTranslations
      */
     public $adminTranslations;
@@ -189,6 +201,7 @@ class Dependencies
         $this->options            = new Options();
         $this->product            = new Product();
         $this->template           = new Template();
+        $this->compositeId        = new CompositeId();
         $this->order              = $this->setOrder();
         $this->requester          = $this->setRequester();
         $this->store              = $this->setStore();
@@ -206,6 +219,7 @@ class Dependencies
         $this->nonce              = $this->setNonce();
         $this->currentUser        = $this->setCurrentUser();
         $this->notices            = $this->setNotices();
+        $this->analytics          = $this->setAnalytics();
         $this->currency           = $this->setCurrency();
         $this->settings           = $this->setSettings();
     }
@@ -350,6 +364,14 @@ class Dependencies
     private function setNotices(): Notices
     {
         return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links);
+    }
+
+    /**
+     * @return Analytics
+     */
+    private function setAnalytics(): Analytics
+    {
+        return new Analytics($this->seller, $this->options);
     }
 
     /**

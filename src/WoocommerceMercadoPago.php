@@ -31,6 +31,7 @@ use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+
 use function MercadoPago\Woocommerce\add_action;
 use function MercadoPago\Woocommerce\apply_filters;
 use function MercadoPago\Woocommerce\load_textdomain;
@@ -71,6 +72,11 @@ class WoocommerceMercadoPago
      * @const
      */
     private const PLATFORM_NAME = 'woocommerce';
+
+    /**
+     * @const
+     */
+    private const TICKET_TIME_EXPIRATION = 3;
 
     /**
      * @const
@@ -427,6 +433,7 @@ class WoocommerceMercadoPago
         $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
         $this->define('MP_PRODUCT_ID_DESKTOP', self::PRODUCT_ID_DESKTOP);
         $this->define('MP_PRODUCT_ID_MOBILE', self::PRODUCT_ID_MOBILE);
+        $this->define('MP_TICKET_DATE_EXPIRATION', self::TICKET_TIME_EXPIRATION);
     }
 
     /**

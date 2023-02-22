@@ -43,8 +43,7 @@ final class Links
      */
     public function getLinks(): array
     {
-        $country            = $this->country->getPluginDefaultCountry();
-        $countryConfig      = $this->country->getCountryConfigs($country);
+        $countryConfig      = $this->country->getCountryConfigs();
 
         $mercadoPagoLinks   = $this->getMercadoPagoLinks($countryConfig);
         $documentationLinks = $this->getDocumentationLinks($countryConfig);

@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use templates\WoocommerceMercadoPago;
 
 abstract class AbstractGateway extends \WC_Payment_Gateway
 {
@@ -61,8 +61,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
         global $mercadopago;
         $this->mercadopago       = $mercadopago;
 
-        $this->discount          = $this->geActionableValue('discount', 0);
-        $this->commission        = $this->geActionableValue('commission', 0);
+        $this->discount          = $this->getActionableValue('discount', 0);
+        $this->commission        = $this->getActionableValue('commission', 0);
         $this->checkoutCountry   = $this->mercadopago->store->getCheckoutCountry();
         $this->has_fields        = true;
         $this->supports          = ['products', 'refunds'];
@@ -288,7 +288,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      *
      * @return mixed|string
      */
-    public function geActionableValue($optionName, $default)
+    public function getActionableValue($optionName, $default)
     {
         $active = $this->mercadopago->options->get("{$optionName}_checkbox", false);
 

@@ -64,6 +64,7 @@ class StoreTranslations
         $this->commonCheckout = [
             'discount_title' => __('discount of', 'woocommerce-mercadopago'),
             'fee_title'      => __('fee of', 'woocommerce-mercadopago'),
+            'shipping_title' => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
         ];
     }
 

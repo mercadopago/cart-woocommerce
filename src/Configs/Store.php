@@ -74,11 +74,13 @@ class Store
     }
 
     /**
+     * @param string $default
+     *
      * @return string
      */
-    public function getStoreId(): string
+    public function getStoreId(string $default = ''): string
     {
-        return $this->options->get(self::STORE_ID, '');
+        return $this->options->get(self::STORE_ID, $default);
     }
 
     /**
@@ -106,11 +108,13 @@ class Store
     }
 
     /**
+     * @param string $default
+     *
      * @return string
      */
-    public function getStoreCategory(): string
+    public function getStoreCategory(string $default = ''): string
     {
-        return $this->options->get(self::STORE_CATEGORY, '');
+        return $this->options->get(self::STORE_CATEGORY, $default);
     }
 
     /**
@@ -138,11 +142,12 @@ class Store
     }
 
     /**
+     * @param string $default
      * @return string
      */
-    public function getWoocommerceCountry(): string
+    public function getWoocommerceCountry(string $default = ''): string
     {
-        return $this->options->get(self::WOOCOMMERCE_COUNTRY, '');
+        return $this->options->get(self::WOOCOMMERCE_COUNTRY, $default);
     }
 
     /**

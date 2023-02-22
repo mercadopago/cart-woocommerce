@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
@@ -269,13 +270,14 @@ class Seller
     }
 
     /**
+     * @param AbstractGateway $gateway
      * @param string $default
      *
      * @return string
      */
-    public function getCheckoutDateExpirationPix(string $default): string
+    public function getCheckoutDateExpirationPix(AbstractGateway $gateway, string $default): string
     {
-        return $this->options->get(self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
+        return $this->options->getMercadoPago($gateway, self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
     }
 
     /**

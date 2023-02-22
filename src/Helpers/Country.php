@@ -151,12 +151,12 @@ final class Country
     /**
      *  Country Configs
      *
-     * @param $countrySuffix
-     *
      * @return array
      */
-    public function getCountryConfigs($countrySuffix): array
+    public function getCountryConfigs(): array
     {
+        $countrySuffix = $this->getPluginDefaultCountry();
+
         $configs = [
             self::COUNTRY_SUFFIX_MLA => [
                 'site_id'              => self::SITE_ID_MLA,

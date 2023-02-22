@@ -18,7 +18,7 @@ final class Strings
      */
     public function fixUrlAmpersand(string $link): string
     {
-        return str_replace('\/', '/', str_replace('&#038;', '&', $link));
+        return esc_url(str_replace('\/', '/', str_replace('&#038;', '&', $link)));
     }
 
     /**
@@ -33,7 +33,7 @@ final class Strings
     public function compareStrings(string $expected, string $current, bool $allowPartialMatch): bool
     {
         if ($allowPartialMatch) {
-            return str_contains($current, $expected);
+            return strpos($current, $expected) !== false;
         }
 
         return $expected === $current;

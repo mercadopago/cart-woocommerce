@@ -22,9 +22,9 @@ if (!defined('ABSPATH')) {
 
 include_once dirname(__FILE__) . '/src/Autoloader.php';
 
-use MercadoPago\Woocommerce\Packages;
 use MercadoPago\Woocommerce\Autoloader;
-use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use MercadoPago\Woocommerce\Packages;
+use templates\WoocommerceMercadoPago;
 
 if (!Autoloader::init()) {
     return false;
