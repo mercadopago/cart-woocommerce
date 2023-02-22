@@ -29,7 +29,7 @@ class CustomGateway extends AbstractGateway
 
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-gray-card');
-        $this->title              = $this->mercadopago->options->get('title', $this->adminTranslations['gateway_title']);
+        $this->title              = $this->getOption('title', $this->adminTranslations['gateway_title']);
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
@@ -300,7 +300,7 @@ class CustomGateway extends AbstractGateway
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
                 'test_mode_link_src'               => $this->mercadopago->links->getLinks()['docs_integration_test'],
-                'wallet_button'                    => $this->mercadopago->options->get('wallet_button', 'yes'),
+                'wallet_button'                    => $this->getOption('wallet_button', 'yes'),
                 'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-logos", '.png', true),
                 'wallet_button_title'              => $this->storeTranslations['wallet_button_title'],
                 'wallet_button_description'        => $this->storeTranslations['wallet_button_description'],

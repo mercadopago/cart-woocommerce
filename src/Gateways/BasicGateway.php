@@ -415,52 +415,26 @@ class BasicGateway extends AbstractGateway
     }
 
 	/**
-	 * Get Mercado Pago Devsite Page Link
-	 *
-	 * @param String $country Country Acronym
-	 *
-	 * @return String
-	 */
-	private static function get_mp_devsite_link( $country ) {
-		$country_links = [
-			'mla' => 'https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/testing',
-			'mlb' => 'https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/testing',
-			'mlc' => 'https://www.mercadopago.cl/developers/es/guides/plugins/woocommerce/testing',
-			'mco' => 'https://www.mercadopago.com.co/developers/es/guides/plugins/woocommerce/testing',
-			'mlm' => 'https://www.mercadopago.com.mx/developers/es/guides/plugins/woocommerce/testing',
-			'mpe' => 'https://www.mercadopago.com.pe/developers/es/guides/plugins/woocommerce/testing',
-			'mlu' => 'https://www.mercadopago.com.uy/developers/es/guides/plugins/woocommerce/testing',
-		];
-
-		$link = array_key_exists($country, $country_links) ? $country_links[$country] : $country_links['mla'];
-
-		return $link;
-	}
-
-	/**
 	 * Get payment methods
 	 *
 	 * @return array
 	 */
 	private function getPaymentMethods() {
 		$paymentMethodsOptions = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
-		$paymentMethods        = [];
-
-        if ( CreditsGateway::isAvailable() ) {
-            $paymentMethods[] = [
-                'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/icons/icon-credits', '.png', true),
-                'alt' => 'Credits image'
-            ];
-        }
+        $activePaymentMethods = [];
 
         foreach ($paymentMethodsOptions as $paymentMethodsOption) {
-            if ('yes' === $this->mercadopago->options->get($paymentMethodsOption['config'])) {
-                $paymentMethods[] = [
+            if ('yes' === $this->getOption($paymentMethodsOption['config'])) {
+                $activePaymentMethods[] = [
                     'src' => $paymentMethodsOption['image'],
                     'alt' => $paymentMethodsOption['id']
                 ];
             }
         }
+
+		$paymentMethods = $this->mercadopago->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
+        echo("<br>");
+        echo(var_dump($paymentMethods));
 
         return $paymentMethods;
     }
@@ -521,7 +495,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->get('ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->getOption('ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             } elseif ('debit_card' === $paymentMethod['type'] || 'prepaid_card' === $paymentMethod['type']) {
@@ -529,7 +503,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->get('ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->getOption('ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             } else {
@@ -537,7 +511,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->get('ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->getOption('ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             }

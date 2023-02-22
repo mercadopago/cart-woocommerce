@@ -15,7 +15,7 @@ use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
-use MercadoPago\Woocommerce\Helpers\CompositeId;
+use MercadoPago\Woocommerce\Helpers\PaymentMethods;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -142,9 +142,9 @@ class WoocommerceMercadoPago
     public $url;
 
     /**
-     * @var CompositeId
+     * @var PaymentMethods
      */
-    public $compositeId;
+    public $paymentMethods;
 
     /**
      * @var Store
@@ -311,7 +311,7 @@ class WoocommerceMercadoPago
         $this->requester         = $dependencies->requester;
         $this->strings           = $dependencies->strings;
         $this->url               = $dependencies->url;
-        $this->compositeId       = $dependencies->compositeId;
+        $this->paymentMethods    = $dependencies->paymentMethods;
         $this->nonce             = $dependencies->nonce;
 
         // Hooks

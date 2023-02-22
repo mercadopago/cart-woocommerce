@@ -194,7 +194,7 @@ class TicketGateway extends AbstractGateway
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
             'amount'                           => $amount,
-            'payment_methods'                  => $this->getTreatedPaymentMethods(),
+            'payment_methods'                  => $this->getPaymentMethods(),
             'site_id'                          => $this->mercadopago->seller->getSiteId(),
             'coupon_mode'                      => isset($logged_user_email) ? $this->settings['coupon_mode'] : 'no',
             'discount_action_url'              => $this->discount_action_url,
@@ -262,7 +262,7 @@ class TicketGateway extends AbstractGateway
                 'id'        => $paymentMethod['id'],
                 'field_key' => $this->get_field_key($paymentMethod['id']),
                 'label'     => array_key_exists('payment_places', $paymentMethod) ? $paymentMethod['name'] . ' (' . $this->buildPaycashPaymentsString() . ')' : $paymentMethod['name'],
-                'value'     => $this->mercadopago->options->get($paymentMethod['id'], 'yes'),
+                'value'     => $this->getOption($paymentMethod['id'], 'yes'),
                 'type'      => 'checkbox',
             );
         }
@@ -364,12 +364,11 @@ class TicketGateway extends AbstractGateway
     }
 
 	/**
-	 * Get treated payment methods
+	 * Get payment methods
 	 *
 	 * @return array
 	 */
-	public function getTreatedPaymentMethods() {
-        $treatedPaymentMethods = [];
+	public function getPaymentMethods() {
         $activePaymentMethods = [];
 		$ticketPaymentMethods = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
 
@@ -383,27 +382,7 @@ class TicketGateway extends AbstractGateway
 		}
         sort($activePaymentMethods);
 
-		foreach ( $activePaymentMethods as $paymentMethod ) {
-			$treatedPaymentMethod = [];
-			if ( isset($paymentMethod['payment_places']) ) {
-				foreach ( $paymentMethod['payment_places'] as $place ) {
-					$paymentPlaceId                  = $this->mercadopago->compositeId->generateIdFromPlace($paymentMethod['id'], $place['payment_option_id']);
-					$treatedPaymentMethod['id']      = $paymentPlaceId;
-					$treatedPaymentMethod['value']   = $paymentPlaceId;
-					$treatedPaymentMethod['rowText'] = $place['name'];
-					$treatedPaymentMethod['img']     = $place['thumbnail'];
-					$treatedPaymentMethod['alt']     = $place['name'];
-					array_push( $treatedPaymentMethods, $treatedPaymentMethod);
-				}
-			} else {
-				$treatedPaymentMethod['id']      = $paymentMethod['id'];
-				$treatedPaymentMethod['value']   = $paymentMethod['id'];
-				$treatedPaymentMethod['rowText'] = $paymentMethod['name'];
-				$treatedPaymentMethod['img']     = $paymentMethod['secure_thumbnail'];
-				$treatedPaymentMethod['alt']     = $paymentMethod['name'];
-				array_push( $treatedPaymentMethods, $treatedPaymentMethod);
-			}
-		}
+        $treatedPaymentMethods = $this->mercadopago->paymentMethods->treatTicketPaymentMethods($activePaymentMethods);
 
 		return $treatedPaymentMethods;
 	}

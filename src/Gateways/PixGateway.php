@@ -30,7 +30,7 @@ class PixGateway extends AbstractGateway
 
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-pix');
-        $this->title              = $this->mercadopago->options->get('title', $this->adminTranslations['gateway_title']);
+        $this->title              = $this->getOption('title', $this->adminTranslations['gateway_title']);
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];

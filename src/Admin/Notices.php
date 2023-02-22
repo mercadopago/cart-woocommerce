@@ -125,7 +125,7 @@ class Notices
             function () {
                 $isInstalled = false;
                 $currentUserCanInstallPlugins = current_user_can('install_plugins');
-                $minilogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo.png', '.png', true);
+                $minilogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $translations = $this->translations->notices;
 
                 $activateLink = wp_nonce_url(
@@ -168,7 +168,7 @@ class Notices
         add_action(
             'admin_notices',
             function () {
-                $miniLogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo.png', '.png', true);
+                $miniLogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $message  = $this->translations->notices['miss_pix_text'];
                 $textLink = $this->translations->notices['miss_pix_link'];
                 $urlLink  = $this->links->getLinks()['mercadopago_pix_config'];
@@ -192,7 +192,7 @@ class Notices
         add_action(
             'admin_notices',
             function () use ($message, $type, $dismiss) {
-                $minilogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo.png', '.png', true);
+                $minilogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $isDismissible = $dismiss ? 'is-dismissible' : '';
 
                 include dirname(__FILE__) . '/../../templates/admin/notices/generic-notice.php';
