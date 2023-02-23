@@ -15,6 +15,7 @@ use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Helpers\PaymentMethods;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -54,6 +55,11 @@ class WoocommerceMercadoPago
      * @const
      */
     private const PLATFORM_NAME = 'woocommerce';
+
+    /**
+     * @const
+     */
+    private const TICKET_TIME_EXPIRATION = 3;
 
     /**
      * @const
@@ -134,6 +140,11 @@ class WoocommerceMercadoPago
      * @var Url
      */
     public $url;
+
+    /**
+     * @var PaymentMethods
+     */
+    public $paymentMethods;
 
     /**
      * @var Store
@@ -240,6 +251,7 @@ class WoocommerceMercadoPago
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CustomGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PixGateway');
     }
 
@@ -287,42 +299,43 @@ class WoocommerceMercadoPago
         $this->woocommerce       = $dependencies->woocommerce;
 
         // Configs
-        $this->seller             = $dependencies->seller;
-        $this->store              = $dependencies->store;
+        $this->seller            = $dependencies->seller;
+        $this->store             = $dependencies->store;
 
         // Helpers
-        $this->cache              = $dependencies->cache;
-        $this->country            = $dependencies->country;
-        $this->currency           = $dependencies->currency;
-        $this->currentUser        = $dependencies->currentUser;
-        $this->links              = $dependencies->links;
-        $this->requester          = $dependencies->requester;
-        $this->strings            = $dependencies->strings;
-        $this->url                = $dependencies->url;
-        $this->nonce              = $dependencies->nonce;
+        $this->cache             = $dependencies->cache;
+        $this->country           = $dependencies->country;
+        $this->currency          = $dependencies->currency;
+        $this->currentUser       = $dependencies->currentUser;
+        $this->links             = $dependencies->links;
+        $this->requester         = $dependencies->requester;
+        $this->strings           = $dependencies->strings;
+        $this->url               = $dependencies->url;
+        $this->paymentMethods    = $dependencies->paymentMethods;
+        $this->nonce             = $dependencies->nonce;
 
         // Hooks
-        $this->admin              = $dependencies->admin;
-        $this->checkout           = $dependencies->checkout;
-        $this->endpoints          = $dependencies->endpoints;
-        $this->gateway            = $dependencies->gateway;
-        $this->options            = $dependencies->options;
-        $this->order              = $dependencies->order;
-        $this->plugin             = $dependencies->plugin;
-        $this->product            = $dependencies->product;
-        $this->scripts            = $dependencies->scripts;
-        $this->template           = $dependencies->template;
+        $this->admin             = $dependencies->admin;
+        $this->checkout          = $dependencies->checkout;
+        $this->endpoints         = $dependencies->endpoints;
+        $this->gateway           = $dependencies->gateway;
+        $this->options           = $dependencies->options;
+        $this->order             = $dependencies->order;
+        $this->plugin            = $dependencies->plugin;
+        $this->product           = $dependencies->product;
+        $this->scripts           = $dependencies->scripts;
+        $this->template          = $dependencies->template;
 
         // General
-        $this->logs               = $dependencies->logs;
-        $this->notices            = $dependencies->notices;
+        $this->logs              = $dependencies->logs;
+        $this->notices           = $dependencies->notices;
 
         // Exclusive
-        $this->settings           = $dependencies->settings;
+        $this->settings          = $dependencies->settings;
 
         // Translations
-        $this->adminTranslations  = $dependencies->adminTranslations;
-        $this->storeTranslations  = $dependencies->storeTranslations;
+        $this->adminTranslations = $dependencies->adminTranslations;
+        $this->storeTranslations = $dependencies->storeTranslations;
     }
 
     /**
@@ -396,6 +409,7 @@ class WoocommerceMercadoPago
         $this->define('MP_VERSION', self::PLUGIN_VERSION);
         $this->define('MP_PLATFORM_ID', self::PLATFORM_ID);
         $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
+        $this->define('MP_TICKET_DATE_EXPIRATION', self::TICKET_TIME_EXPIRATION);
     }
 
     /**

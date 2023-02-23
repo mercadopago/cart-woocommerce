@@ -50,7 +50,17 @@ class Seller
     /**
      * @const
      */
-    private const CHECKOUT_PAYMENT_METHODS = '_checkout_payments_methods';
+    private const CHECKOUT_BASIC_PAYMENT_METHODS = '_checkout_payments_methods';
+
+    /**
+     * @const
+     */
+    private const CHECKOUT_TICKET_PAYMENT_METHODS = '_all_payment_methods_ticket';
+
+    /**
+     * @const
+     */
+    private const SITE_ID_PAYMENT_METHODS = '_site_id_payment_methods';
 
     /**
      * @const
@@ -239,23 +249,60 @@ class Seller
     /**
      * @return array
      */
-    public function getCheckoutPaymentMethods(): array
+    public function getCheckoutBasicPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_PAYMENT_METHODS, '');
+        return $this->options->get(self::CHECKOUT_BASIC_PAYMENT_METHODS, '');
     }
 
     /**
-     * @param array $checkoutPaymentMethods
+     * @param array $checkoutBasicPaymentMethods
      */
-    public function setCheckoutPaymentMethods(array $checkoutPaymentMethods): void
+    public function setCheckoutBasicPaymentMethods(array $checkoutBasicPaymentMethods): void
     {
-        $this->options->set(self::CHECKOUT_PAYMENT_METHODS, $checkoutPaymentMethods);
+        $this->options->set(self::CHECKOUT_BASIC_PAYMENT_METHODS, $checkoutBasicPaymentMethods);
     }
 
     /**
      * @return array
      */
-    public function getCheckoutPaymentMethodPix(): array
+    public function getCheckoutTicketPaymentMethods(): array
+    {
+        return $this->options->get(self::CHECKOUT_TICKET_PAYMENT_METHODS, '');
+    }
+
+    /**
+     * @param array $checkoutTicketPaymentMethods
+     */
+    public function setCheckoutTicketPaymentMethods(array $checkoutTicketPaymentMethods): void
+    {
+        $this->options->set(self::CHECKOUT_TICKET_PAYMENT_METHODS, $checkoutTicketPaymentMethods);
+    }
+
+    /**
+     * @return array
+     */
+    public function getSiteIdPaymentMethods(): array
+    {
+        $siteIdPaymentMethods = $this->options->get(self::SITE_ID_PAYMENT_METHODS, []);
+        if (empty($siteIdPaymentMethods)) {
+            $this->updatePaymentMethods();
+            $siteIdPaymentMethods = $this->options->get(self::SITE_ID_PAYMENT_METHODS, []);
+        }
+        return $siteIdPaymentMethods;
+    }
+
+    /**
+     * @param array $checkoutTicketPaymentMethods
+     */
+    public function setSiteIdPaymentMethods(array $checkoutTicketPaymentMethods): void
+    {
+        $this->options->set(self::SITE_ID_PAYMENT_METHODS, $checkoutTicketPaymentMethods);
+    }
+
+    /**
+     * @return array
+     */
+    public function getCheckoutPixPaymentMethods(): array
     {
         return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, '');
     }
@@ -263,7 +310,7 @@ class Seller
     /**
      * @param array $checkoutPaymentMethodsPix
      */
-    public function setCheckoutPaymentMethodPix(array $checkoutPaymentMethodsPix): void
+    public function setCheckoutPixPaymentMethods(array $checkoutPaymentMethodsPix): void
     {
         $this->options->set(self::CHECKOUT_PAYMENT_METHOD_PIX, $checkoutPaymentMethodsPix);
     }
@@ -293,7 +340,7 @@ class Seller
      * @param string|null $accessToken
      *
      */
-    public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
+    public function updatePaymentMethods(string $publicKey = null, string $accessToken = null, $siteId = null): void
     {
         if (null === $publicKey) {
             $publicKey = $this->getCredentialsPublicKey();
@@ -303,25 +350,57 @@ class Seller
             $accessToken = $this->getCredentialsAccessToken();
         }
 
+        $paymentMethodsResponse = $this->getPaymentMethods($publicKey, $accessToken);
+
+        if (empty($paymentMethodsResponse) || 200 !== $paymentMethodsResponse['status']) {
+            $this->setCheckoutBasicPaymentMethods([]);
+            $this->setCheckoutPixPaymentMethods([]);
+            $this->setCheckoutTicketPaymentMethods([]);
+            return;
+        }
+
+        $this->setupBasicPaymentMethods($paymentMethodsResponse);
+        $this->setupPixPaymentMethods($paymentMethodsResponse);
+        $this->setupTicketPaymentMethods($paymentMethodsResponse);
+    }
+
+    /**
+     * Update Payment Methods
+     *
+     * @param string|null $publicKey
+     * @param string|null $accessToken
+     *
+     */
+    public function updatePaymentMethodsBySiteId($siteId = null): void
+    {
+        if (null === $siteId) {
+            $siteId = $this->getSiteId();
+        }
+
+        $paymentMethodsResponseBySiteId = $this->getPaymentMethodsBySiteId($siteId);
+
+        if (empty($paymentMethodsResponseBySiteId) || 200 !== $paymentMethodsResponseBySiteId['status']) {
+            $this->setSiteIdPaymentMethods([]);
+            return;
+        }
+        $this->setSiteIdPaymentMethods($paymentMethodsResponseBySiteId['data']);
+    }
+
+    /**
+     * Setup Basic Payment Methods
+     *
+     * @param array $paymentMethodsResponse
+     *
+     */
+    private function setupBasicPaymentMethods(array $paymentMethodsResponse): void
+    {
         $excludedPaymentMethods = [
             'consumer_credits',
             'paypal',
             'account_money',
         ];
 
-        $acceptedPaymentMethods = [
-            'pix' => 'setCheckoutPaymentMethodPix',
-        ];
-
-        $paymentMethodsResponse = $this->getPaymentMethods($publicKey, $accessToken);
-
-        if (empty($paymentMethodsResponse) || 200 !== $paymentMethodsResponse['status']) {
-            $this->setCheckoutPaymentMethods([]);
-            $this->setCheckoutPaymentMethodPix([]);
-            return;
-        }
-
-        $serializedPaymentMethods   = [];
+        $serializedPaymentMethods = [];
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
             if (in_array($paymentMethod['id'], $excludedPaymentMethods, true)) {
                 continue;
@@ -334,14 +413,120 @@ class Seller
                 'image'  => $paymentMethod['secure_thumbnail'],
                 'config' => 'ex_payments_' . $paymentMethod['id'],
             ];
+        }
 
-            if (in_array($paymentMethod['id'], $acceptedPaymentMethods, true)) {
-                $serializedPaymentMethods[$paymentMethod['id']] = $serializedPaymentMethods;
-                $this->{$acceptedPaymentMethods[$paymentMethod['id']]}($serializedPaymentMethods[paymentMethod['id']]);
+        $this->setCheckoutBasicPaymentMethods($serializedPaymentMethods);
+    }
+
+    /**
+     * Setup Pix Payment Methods
+     *
+     * @param array $paymentMethodsResponse
+     *
+     */
+    private function setupPixPaymentMethods(array $paymentMethodsResponse): void
+    {
+        $serializedPaymentMethods = [];
+        foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
+            if ('pix' === $paymentMethod['id']) {
+                $serializedPaymentMethods[] = [
+                    'id'     => $paymentMethod['id'],
+                    'name'   => $paymentMethod['name'],
+                    'type'   => $paymentMethod['payment_type_id'],
+                    'image'  => $paymentMethod['secure_thumbnail'],
+                    'config' => 'ex_payments_' . $paymentMethod['id'],
+                ];
+                break;
             }
         }
 
-        $this->setCheckoutPaymentMethods($serializedPaymentMethods);
+        $this->setCheckoutPixPaymentMethods($serializedPaymentMethods);
+    }
+
+    /**
+     * Setup Ticket Payment Methods
+     *
+     * @param array $paymentMethodsResponse
+     *
+     */
+    private function setupTicketPaymentMethods(array $paymentMethodsResponse): void
+    {
+        $excludedPaymentMethods = [
+            'paypal',
+            'pse',
+            'pix',
+        ];
+
+        $serializedPaymentMethods = [];
+        foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
+            if (in_array($paymentMethod['id'], $excludedPaymentMethods, true) ||
+                'account_money' === $paymentMethod['payment_type_id'] ||
+                'credit_card'   === $paymentMethod['payment_type_id'] ||
+                'debit_card'    === $paymentMethod['payment_type_id'] ||
+                'prepaid_card'  === $paymentMethod['payment_type_id']
+            ) {
+                continue;
+            }
+            $serializedPaymentMethods[] = $paymentMethod;
+        }
+
+        $serializedPaymentMethods = $this->buildPaymentPlaces($serializedPaymentMethods);
+
+        $this->setCheckoutTicketPaymentMethods($serializedPaymentMethods);
+    }
+
+    /**
+     * Build payment places for paycash
+     *
+     * @param array $serializedPaymentMethods
+     *
+     * @return array
+     */
+    public function buildPaymentPlaces(array $serializedPaymentMethods): array
+    {
+        $payment_places =
+			[
+				'paycash' => [
+					[
+						'payment_option_id' => '7eleven',
+						'name'              => '7 Eleven',
+						'status'            => 'active',
+						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/417ddb90-34ab-11e9-b8b8-15cad73057aa-s.png'
+					],
+					[
+						'payment_option_id' => 'circlek',
+						'name'              => 'Circle K',
+						'status'            => 'active',
+						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/6f952c90-34ab-11e9-8357-f13e9b392369-s.png'
+					],
+					[
+						'payment_option_id' => 'soriana',
+						'name'              => 'Soriana',
+						'status'            => 'active',
+						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/dac0bf10-01eb-11ec-ad92-052532916206-s.png'
+					],
+					[
+						'payment_option_id' => 'extra',
+						'name'              => 'Extra',
+						'status'            => 'active',
+						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/9c8f26b0-34ab-11e9-b8b8-15cad73057aa-s.png'
+					],
+					[
+						'payment_option_id' => 'calimax',
+						'name'              => 'Calimax',
+						'status'            => 'active',
+						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/52efa730-01ec-11ec-ba6b-c5f27048193b-s.png'
+					],
+				],
+			];
+
+		foreach ( $serializedPaymentMethods as $key => $method ) {
+			if (isset( $payment_places[$method['id']])) {
+				$serializedPaymentMethods[$key]['payment_places'] = $payment_places[$method['id']];
+			}
+		}
+
+        return $serializedPaymentMethods;
     }
 
     /**
@@ -484,6 +669,42 @@ class Seller
 
             $this->cache->setCache($key, $serializedResponse);
 
+            return $serializedResponse;
+        } catch (\Exception $e) {
+            return [
+                'data'   => null,
+                'status' => 500,
+            ];
+        }
+    }
+
+    /**
+     * Get Payment Methods by SiteId
+     *
+     * @param string|null $siteId
+     *
+     * @return array
+     */
+    private function getPaymentMethodsBySiteId(string $siteId): array
+    {
+        try {
+            $key   = sprintf('%ssi%s', __FUNCTION__, $siteId);
+            $cache = $this->cache->getCache($key);
+
+            if ($cache) {
+                return $cache;
+            }
+
+            $uri     = '/sites/' . $siteId . '/payment_methods';
+
+            $response           = $this->requester->get($uri);
+            $serializedResponse = [
+                'data'   => $response->getData(),
+                'status' => $response->getStatus(),
+            ];
+
+            $this->cache->setCache($key, $serializedResponse);
+            
             return $serializedResponse;
         } catch (\Exception $e) {
             return [

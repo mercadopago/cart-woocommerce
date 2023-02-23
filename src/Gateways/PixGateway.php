@@ -2,13 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
-
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
+class PixGateway extends AbstractGateway
 {
     /**
      * @const
@@ -32,7 +30,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
 
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-pix');
-        $this->title              = $this->mercadopago->options->get('title', $this->adminTranslations['gateway_title']);
+        $this->title              = $this->getOption('title', $this->adminTranslations['gateway_title']);
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
@@ -52,13 +50,21 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
     }
 
     /**
-     * Get checkout name
+     * Verify if the gateway is available
      *
-     * @return string
+     * @return bool
      */
-    public function getCheckoutName(): string
+    public static function isAvailable(): bool
     {
-        return self::CHECKOUT_NAME;
+        global $mercadopago;
+        $siteId  = $mercadopago->seller->getSiteId();
+        $country = $mercadopago->country->getWoocommerceDefaultCountry();
+
+        if ('MLB' === $siteId || ('' === $siteId && 'BR' === $country)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -75,7 +81,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
             !empty($this->mercadopago->seller->getCredentialsPublicKey()) &&
             !empty($this->mercadopago->seller->getCredentialsAccessToken())
         ) {
-            $paymentMethodPix = $this->mercadopago->seller->getCheckoutPaymentMethodPix();
+            $paymentMethodPix = $this->mercadopago->seller->getCheckoutPixPaymentMethods();
 
             if (empty($paymentMethodPix) || !in_array('pix', $paymentMethodPix['pix'], true)) {
                 if (isset($_GET['section']) && $_GET['section'] == $this->id) {
@@ -264,7 +270,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
                 'pix_template_title'               => $this->storeTranslations['pix_template_title'],
                 'pix_template_subtitle'            => $this->storeTranslations['pix_template_subtitle'],
                 'pix_template_alt'                 => $this->storeTranslations['pix_template_alt'],
-                'pix_template_src'                 => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix/pix', '.png'),
+                'pix_template_src'                 => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix/pix', '.png', true),
                 'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
                 'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
                 'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
@@ -390,7 +396,7 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/order/pix-order-received.php',
             [
-                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix', '.png'),
+                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix', '.png', true),
                 'amount'              => $transactionAmount,
                 'qr_base64'           => $qrCodeBase64,
                 'title_purchase_pix'  => $this->storeTranslations['title_purchase_pix'],

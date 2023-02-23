@@ -17,6 +17,7 @@ use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Helpers\PaymentMethods;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -115,6 +116,11 @@ class Dependencies
     public $url;
 
     /**
+     * @var PaymentMethods
+     */
+    public $paymentMethods;
+
+    /**
      * @var Store
      */
     public $store;
@@ -196,6 +202,7 @@ class Dependencies
         $this->country            = $this->setCountry();
         $this->links              = $this->setLinks();
         $this->url                = $this->setUrl();
+        $this->paymentMethods     = $this->setPaymentMethods();
         $this->plugin             = $this->setPlugin();
         $this->scripts            = $this->setScripts();
         $this->checkout           = $this->setCheckout();
@@ -259,6 +266,14 @@ class Dependencies
     private function setUrl(): Url
     {
         return new Url($this->strings);
+    }
+
+    /**
+     * @return PaymentMethods
+     */
+    private function setPaymentMethods(): PaymentMethods
+    {
+        return new PaymentMethods($this->url);
     }
 
     /**

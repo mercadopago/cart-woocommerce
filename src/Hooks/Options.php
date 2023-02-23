@@ -12,11 +12,11 @@ class Options
      * Get option
      *
      * @param string       $optionName
-     * @param mixed|string $default
+     * @param mixed        $default
      *
-     * @return mixed|string
+     * @return mixed
      */
-    public function get(string $optionName, string $default = '')
+    public function get(string $optionName, $default = '')
     {
         return get_option($optionName, $default);
     }
