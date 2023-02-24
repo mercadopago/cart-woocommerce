@@ -152,16 +152,6 @@ class CustomGateway extends AbstractGateway
                     'title' => $this->adminTranslations['advanced_configuration_subtitle'],
                     'class' => 'mp-small-text',
                 ],
-                'coupon_mode'                        => [
-                    'type'         => 'mp_toggle_switch',
-                    'title'        => $this->adminTranslations['coupon_mode_title'],
-                    'default'      => 'no',
-                    'subtitle'     => $this->adminTranslations['coupon_mode_subtitle'],
-                    'descriptions' => [
-                        'enabled'  => $this->adminTranslations['coupon_mode_descriptions_enabled'],
-                        'disabled' => $this->adminTranslations['coupon_mode_descriptions_disabled'],
-                    ],
-                ],
                 'binary_mode'                        => [
                     'type'         => 'mp_toggle_switch',
                     'title'        => $this->adminTranslations['binary_mode_title'],
@@ -573,23 +563,6 @@ class CustomGateway extends AbstractGateway
         }
 
         return $paymentMethods;
-    }
-
-    /**
-     * Get amount
-     *
-     * @return float
-     */
-    private function getAmount(): float
-    {
-        $total      = $this->get_order_total();
-        $subtotal   = (float) WC()->cart->subtotal;
-        $tax        = $total - $subtotal;
-        $discount   = $subtotal * ( $this->discount / 100 );
-        $commission = $subtotal * ( $this->commission / 100 );
-        $amount     = $subtotal - $discount + $commission;
-
-        return $amount + $tax;
     }
 
     /**

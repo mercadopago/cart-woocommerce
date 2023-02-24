@@ -258,7 +258,7 @@ class Notices
      *
      * @return void
      */
-    private function storeNotice(string $message, string $noticeType = 'success', array $data = []): void
+    public function storeNotice(string $message, string $noticeType = 'success', array $data = []): void
     {
         wc_add_notice("<p>{$message}</p>", $noticeType, $data);
     }

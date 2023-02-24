@@ -234,8 +234,8 @@ class BasicGateway extends AbstractGateway
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
                 'test_mode_link_src'               => $this->mercadopago->links->getLinks()['docs_integration_test'],
-                'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
-                'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
+                'checkout_benefits_title'           => $this->storeTranslations['checkout_benefits_title'],
+                'checkout_benefits_items'           => wp_json_encode($checkoutBenefitsItems),
                 'payment_methods_title'            => $paymentMethodsTitle,
                 'payment_methods_methods'          => wp_json_encode($paymentMethods),
                 'method'                           => $this->settings['method'],
@@ -434,7 +434,8 @@ class BasicGateway extends AbstractGateway
 	 *
 	 * @return array
 	 */
-	private function getPaymentMethods() {
+	private function getPaymentMethods(): array
+    {
 		$paymentMethodsOptions = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
         $activePaymentMethods = [];
 
@@ -447,11 +448,7 @@ class BasicGateway extends AbstractGateway
             }
         }
 
-		$paymentMethods = $this->mercadopago->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
-        echo("<br>");
-        echo(var_dump($paymentMethods));
-
-        return $paymentMethods;
+        return $this->mercadopago->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
     }
 
     /**

@@ -36,7 +36,7 @@ class PixGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->expirationDate     = (int) $this->mercadopago->seller->getCheckoutDateExpirationPix('1');
+        $this->expirationDate     = (int) $this->mercadopago->seller->getCheckoutDateExpirationPix($this, '1');
 
         $this->init_form_fields();
         $this->init_settings();
@@ -301,19 +301,18 @@ class PixGateway extends AbstractGateway
     {
         parent::process_payment($order_id);
 
-        $order = wc_get_order($order_id);
-
         // @todo: nonce validation
 
         // phpcs:ignore WordPress.Security.NonceVerification
         $checkout = map_deep($_POST, 'sanitize_text_field');
+        $order = wc_get_order($order_id);
 
         if (filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
             $this->transaction = new PixTransaction($this, $order, $checkout);
             $response = $this->transaction->createPayment();
 
             if (is_array($response) && array_key_exists('status', $response)) {
-                $this->hook->update_mp_order_payments_metadata($order->get_id(), [ $response['id'] ]);
+                $this->mercadopago->metaData->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
 
                 if ('pending' === $response['status']) {
                     if (

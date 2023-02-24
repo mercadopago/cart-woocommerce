@@ -58,6 +58,11 @@ class MetaData
     /**
      * @const
      */
+    private const TICKET_TRANSACTION_DETAILS = '_transaction_details_ticket';
+
+    /**
+     * @const
+     */
     private const MP_PIX_QR_BASE_64 = 'mp_pix_qr_base64';
 
     /**
@@ -313,6 +318,24 @@ class MetaData
     public function setPostPaymentIds($object, $value): void
     {
         $this->meta->setPost($object, self::PAYMENTS_IDS, $value);
+    }
+
+    /**
+     * @param $object
+     * @param $value
+     */
+    public function setPostTicketTransactionDetails($object, $value): void
+    {
+        $this->meta->setPost($object, self::TICKET_TRANSACTION_DETAILS, $value);
+    }
+
+    /**
+     * @param $object
+     * @param $value
+     */
+    public function setTicketTransactionDetails($object, $value): void
+    {
+        $this->meta->setData($object, self::TICKET_TRANSACTION_DETAILS, $value);
     }
 
     /**

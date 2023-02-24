@@ -8,7 +8,7 @@ use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
-use templates\WoocommerceMercadoPago;
+use MercadoPago\Woocommerce;
 
 abstract class AbstractTransaction
 {

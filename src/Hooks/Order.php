@@ -187,6 +187,27 @@ class Order
     }
 
     /**
+     * Set ticket metadata in the order
+     *
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
+     * @param $data
+     *
+     * @return void
+     */
+    public function setTicketMetadata(AbstractGateway $gateway, \WC_Order $order, $data): void
+    {
+        $externalResourceUrl = $data['transaction_details']['external_resource_url'];
+
+        if (method_exists($order, 'update_meta_data')) {
+            $this->metaData->setTicketTransactionDetails($order, $externalResourceUrl);
+            $order->save();
+        } else {
+            $this->metaData->setTicketTransactionDetails($order->get_id(), $externalResourceUrl);
+        }
+    }
+
+    /**
      * Set pix metadata in the order
      *
      * @param AbstractGateway $gateway

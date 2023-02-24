@@ -1,6 +1,6 @@
 <?php
 
-namespace templates;
+namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Admin\Analytics;
 use MercadoPago\Woocommerce\Admin\Notices;
@@ -8,7 +8,6 @@ use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\MetaData;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Dependencies;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\CompositeId;
 use MercadoPago\Woocommerce\Helpers\Country;
@@ -34,11 +33,6 @@ use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
-
-use function MercadoPago\Woocommerce\add_action;
-use function MercadoPago\Woocommerce\apply_filters;
-use function MercadoPago\Woocommerce\load_textdomain;
-use function MercadoPago\Woocommerce\unload_textdomain;
 
 if (!defined('ABSPATH')) {
     exit;
