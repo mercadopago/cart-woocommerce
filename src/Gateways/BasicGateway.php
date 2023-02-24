@@ -281,22 +281,6 @@ class BasicGateway extends AbstractGateway
     }
 
     /**
-     * Receive gateway webhook notifications
-     *
-     * @return void
-     */
-    public function webhook(): void
-    {
-        $status   = 200;
-        $response = [
-            'status'  => $status,
-            'message' => 'Webhook handled successful'
-        ];
-
-        wp_send_json_success($response, $status);
-    }
-
-    /**
      * Get benefits items
      *
      * @return array

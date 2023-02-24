@@ -4,6 +4,8 @@ namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Notification\CoreNotification;
+use MercadoPago\Woocommerce\Notification\NotificationFactory;
 
 abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
@@ -68,8 +70,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         global $mercadopago;
         $this->mercadopago       = $mercadopago;
 
-        $this->discount          = $this->geActionableValue('discount', 0);
-        $this->commission        = $this->geActionableValue('commission', 0);
+        $this->discount          = $this->getActionableValue('discount', 0);
+        $this->commission        = $this->getActionableValue('commission', 0);
         $this->checkoutCountry   = $this->mercadopago->store->getCheckoutCountry();
         $this->has_fields        = true;
         $this->supports          = ['products', 'refunds'];
@@ -347,7 +349,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      *
      * @return mixed|string
      */
-    public function geActionableValue($optionName, $default)
+    public function getActionableValue($optionName, $default)
     {
         $active = $this->getOption("{$optionName}_checkbox", false);
 
@@ -365,5 +367,22 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public function getOption($optionName, $default = ''): string
     {
         return $this->get_option($optionName, $default);
+    }
+
+    /**
+     * Receive gateway webhook notifications
+     *
+     * @return void
+     */
+    public function webhook(): void
+    {
+        $data  = $_GET;
+        $topic = $data['topic'];
+        $type  = $data['type'];
+        
+        $notificationFactory = new NotificationFactory($this->mercadopago->logs);
+        $notificationHandler = $notificationFactory->createNotificationHandler($topic, $type);
+
+        $notificationHandler->handleReceivedNotification();
     }
 }
