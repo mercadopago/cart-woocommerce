@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\PP\Sdk\Entity\Payment\Payment;
+use MercadoPago\PP\Sdk\Entity\Preference\Preference;
 use templates\WoocommerceMercadoPago;
 
 abstract class AbstractGateway extends \WC_Payment_Gateway
@@ -10,6 +12,13 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
      * @var WoocommerceMercadoPago
      */
     protected $mercadopago;
+
+    /**
+     * Transaction
+     *
+     * @var Payment|Preference
+     */
+    protected $transaction;
 
     /**
      * Commission
@@ -293,5 +302,97 @@ abstract class AbstractGateway extends \WC_Payment_Gateway
         $active = $this->mercadopago->options->get("{$optionName}_checkbox", false);
 
         return $active ? $this->mercadopago->options->get($optionName, $default) : $default;
+    }
+
+    /**
+     * Process payment and create woocommerce order
+     *
+     * @param int $order_id
+     *
+     * @return array
+     */
+    public function process_payment($order_id): array
+    {
+        $order              = wc_get_order($order_id);
+        $amount             = (float) WC()->cart->subtotal;
+        $shipping           = floatval($order->get_shipping_total());
+        $discount           = ($amount - $shipping) * $this->discount / 100;
+        $commission          = $amount * ($this->commission / 100);
+        $isTestModeSelected = 'no' === $this->mercadopago->store->getCheckboxCheckoutTestMode() ? 'yes' : 'no';
+
+        if (method_exists($order, 'update_meta_data')) {
+            $this->mercadopago->metaData->setIsProductionMode($order, $isTestModeSelected);
+            $this->mercadopago->metaData->setUsedGateway($order, get_class($this));
+
+            if (!empty($this->discount)) {
+                $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
+                $feeText = $this->getFeeText($feeTranslation, 'discount', $discount);
+                $this->mercadopago->metaData->setDiscount($order, $feeText);
+
+                $order->set_total($amount - $discount);
+            }
+
+            if (!empty($this->commission)) {
+                $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
+                $feeText = $this->getFeeText($feeTranslation, 'commission', $commission);
+                $this->mercadopago->metaData->setCommission($order, $feeText);
+            }
+
+            $order->save();
+        } else {
+            $this->mercadopago->metaData->setPostUsedGateway($order_id, get_class($this));
+
+            if (!empty($this->discount)) {
+                $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
+                $feeText = $this->getFeeText($feeTranslation, 'discount', $discount);
+                $this->mercadopago->metaData->setPostDiscount($order_id, $feeText);
+
+                $order->set_total($amount - $discount);
+            }
+
+            if (!empty($this->commission)) {
+                $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
+                $feeText = $this->getFeeText($feeTranslation, 'commission', $commission);
+                $this->mercadopago->metaData->setPostCommission($order_id, $feeText);
+            }
+        }
+    }
+
+    /**
+     * Get fee text
+     *
+     * @param string $text
+     * @param string $feeName
+     * @param $feeValue
+     *
+     * @return string
+     */
+    public function getFeeText(string $text, string $feeName, $feeValue): string
+    {
+        return "{$text} {$this->{$feeName}}% / {$text} = {$feeValue}";
+    }
+
+    /**
+     * Process if result is fail
+     *
+     * @param $function
+     * @param $logMessage
+     * @param string $noticeMessage
+     * @return array
+     */
+    public function processReturnFail($function, $logMessage, string $noticeMessage = ''): array
+    {
+        $this->mercadopago->logs->file->error($logMessage, $function);
+
+        if ($noticeMessage == '') {
+            $noticeMessage = $logMessage;
+        }
+
+        wc_add_notice('<p>' . $noticeMessage . '</p>', 'error');
+
+        return [
+            'result'   => 'fail',
+            'redirect' => '',
+        ];
     }
 }

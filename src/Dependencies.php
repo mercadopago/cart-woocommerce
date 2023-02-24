@@ -7,6 +7,7 @@ use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Analytics;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Configs\MetaData;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -72,6 +73,11 @@ class Dependencies
     public $options;
 
     /**
+     * @var Meta
+     */
+    public $meta;
+
+    /**
      * @var Plugin
      */
     public $plugin;
@@ -90,6 +96,11 @@ class Dependencies
      * @var CompositeId
      */
     public $compositeId;
+
+    /**
+     * @var MetaData
+     */
+    public $metaData;
 
     /**
      * @var Order
@@ -199,10 +210,11 @@ class Dependencies
         $this->admin              = new Admin();
         $this->endpoints          = new Endpoints();
         $this->options            = new Options();
+        $this->meta               = new Meta();
         $this->product            = new Product();
         $this->template           = new Template();
         $this->compositeId        = new CompositeId();
-        $this->order              = $this->setOrder();
+        $this->metaData           = $this->setMetaData();
         $this->requester          = $this->setRequester();
         $this->store              = $this->setStore();
         $this->seller             = $this->setSeller();
@@ -214,6 +226,7 @@ class Dependencies
         $this->checkout           = $this->setCheckout();
         $this->adminTranslations  = $this->setAdminTranslations();
         $this->storeTranslations  = $this->setStoreTranslations();
+        $this->order              = $this->setOrder();
         $this->gateway            = $this->setGateway();
         $this->logs               = $this->setLogs();
         $this->nonce              = $this->setNonce();
@@ -225,11 +238,11 @@ class Dependencies
     }
 
     /**
-     * @return Order
+     * @return MetaData
      */
-    private function setOrder(): Order
+    private function setMetaData(): MetaData
     {
-        return new Order($this->template);
+        return new MetaData($this->meta);
     }
 
     /**
@@ -356,6 +369,14 @@ class Dependencies
     private function setStoreTranslations(): StoreTranslations
     {
         return new StoreTranslations($this->links);
+    }
+
+    /**
+     * @return Order
+     */
+    private function setOrder(): Order
+    {
+        return new Order($this->template, $this->metaData, $this->storeTranslations, $this->seller);
     }
 
     /**

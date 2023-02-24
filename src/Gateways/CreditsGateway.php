@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Transactions\CreditsTransaction;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -221,17 +222,18 @@ class CreditsGateway extends AbstractGateway implements MercadoPagoGatewayInterf
      */
     public function process_payment($order_id): array
     {
-        $order = wc_get_order($order_id);
-        $order->payment_complete();
-        $order->add_order_note('Hey, your order is paid! Thank you!', true);
+        parent::process_payment($order_id);
 
-        wc_reduce_stock_levels($order_id);
+        $order              = wc_get_order($order_id);
+        $this->transaction  = new CreditsTransaction($this, $order);
 
-        $this->mercadopago->woocommerce->cart->empty_cart();
-
+        $this->mercadopago->logs->file->info(
+            'customer being redirected to Mercado Pago.',
+            __FUNCTION__
+        );
         return [
             'result'   => 'success',
-            'redirect' => $this->get_return_url($order)
+            'redirect' => $this->transaction->createPreference(),
         ];
     }
 

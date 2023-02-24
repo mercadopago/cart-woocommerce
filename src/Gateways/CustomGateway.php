@@ -3,6 +3,9 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Transactions\BasicTransaction;
+use MercadoPago\Woocommerce\Transactions\CustomTransaction;
+use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -368,18 +371,144 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
      */
     public function process_payment($order_id): array
     {
+        parent::process_payment($order_id);
+
         $order = wc_get_order($order_id);
-        $order->payment_complete();
-        $order->add_order_note('Hey, your order is paid! Thank you!', true);
 
-        wc_reduce_stock_levels($order_id);
+        // @todo: nonce validation
 
-        $this->mercadopago->woocommerce->cart->empty_cart();
+        // phpcs:ignore WordPress.Security.NonceVerification
+        $checkout = map_deep($_POST['mercadopago_custom'], 'sanitize_text_field');
 
-        return [
-            'result' => 'success',
-            'redirect' => $this->get_return_url($order)
-        ];
+        if ('wallet_button' === $checkout['checkout_type']) {
+            $this->mercadopago->logs->file->info(
+                'preparing to render wallet button checkout.',
+                __FUNCTION__
+            );
+
+            return [
+                'result'   => 'success',
+                'redirect' => add_query_arg(
+                    [
+                        'wallet_button' => 'open'
+                    ],
+                    $order->get_checkout_payment_url(true)
+                ),
+            ];
+        } else {
+            $this->mercadopago->logs->file->info(
+                'preparing to get response of custom checkout.',
+                __FUNCTION__
+            );
+
+            if (
+                $checkout['amount'] &&
+                $checkout['token'] &&
+                $checkout['paymentMethodId'] &&
+                $checkout['installments'] &&
+                -1 !== $checkout['installments']
+            ) {
+                $this->transaction = new CustomTransaction($this, $order, $checkout);
+                $response          = $this->transaction->createPayment();
+
+                $this->mercadopago->order->setCustomMetadata($order, $response);
+                $this->mercadopago->metaData->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+
+                return $this->handleResponseStatus($order, $response, $checkout);
+            }
+        }
+
+        return $this->processReturnFail(
+            __FUNCTION__,
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
+        );
+    }
+
+    /**
+     * Handle with response status
+     *
+     * @param $order
+     * @param $response
+     * @param $checkout
+     *
+     * @return array
+     */
+    public function handleResponseStatus($order, $response, $checkout): array
+    {
+        if (is_array($response) && array_key_exists('status', $response)) {
+            switch ($response['status']) {
+                case 'approved':
+                    WC()->cart->empty_cart();
+
+                    $orderStatusMessage = $this->mercadopago->order->getOrderStatusMessage('accredited');
+                    $this->mercadopago->notices->storeApprovedStatusNotice($orderStatusMessage);
+                    $this->mercadopago->order->setOrderStatus($order, 'failed', 'pending');
+
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $order->get_checkout_order_received_url(),
+                    ];
+                case 'pending':
+                    // Order approved/pending, we just redirect to the congrats page.
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $order->get_checkout_order_received_url(),
+                    ];
+                case 'in_process':
+                    // For pending, we don't know if the purchase will be made, so we must inform this status.
+                    WC()->cart->empty_cart();
+
+                    $orderStatus = $this->mercadopago->order->getOrderStatusMessage($response['status_detail']);
+                    $urlReceived = esc_url($order->get_checkout_order_received_url());
+                    $linkText    = $this->mercadopago->storeTranslations->commonMessages['cho_form_error'];
+
+                    $this->mercadopago->notices->storeInProcessStatusNotice(
+                        $orderStatus,
+                        $urlReceived,
+                        $checkout['checkout_type'],
+                        $linkText
+                    );
+
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $order->get_checkout_payment_url(true),
+                    ];
+                case 'rejected':
+                    // If rejected is received, the order will not proceed until another payment try,
+                    // so we must inform this status.
+
+                    $noticeTitle = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
+                    $orderStatus = $this->mercadopago->order->getOrderStatusMessage($response['status_detail']);
+                    $urlReceived = esc_url($order->get_checkout_payment_url());
+                    $linkText    = $this->mercadopago->storeTranslations->commonMessages['cho_button_try_again'];
+
+                    $this->mercadopago->notices->storeRejectedStatusNotice(
+                        $noticeTitle,
+                        $orderStatus,
+                        $urlReceived,
+                        $checkout['checkout_type'],
+                        $linkText
+                    );
+
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $order->get_checkout_payment_url(true),
+                    ];
+                case 'cancelled':
+                case 'in_mediation':
+                case 'charged_back':
+                    // If we enter here (an order generating a direct cancelled, in_mediation,
+                    // or charged_back status), then there must be something very wrong!
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return $this->processReturnFail(
+            __FUNCTION__,
+            $this->mercadopago->storeTranslations->commonMessages['cho_form_error']
+        );
     }
 
     /**
@@ -489,15 +618,14 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
 
         if ($isWallet) {
             $order      = wc_get_order($orderId);
-            // @todo get wallet button preference
-            $preference = '';
+            $this->transaction = new WalletButtonTransaction();
+            $preference        = $this->transaction->createPreference();
 
             $this->mercadopago->template->getWoocommerceTemplate(
                 'public/receipt/custom-checkout.php',
                 [
                     'public_key'          => $this->mercadopago->seller->getCredentialsPublicKey(),
-                    // @todo change to preference['id']
-                    'preference_id'       => $preference,
+                    'preference_id'       => $preference['id'],
                     'wallet_button_title' => $this->storeTranslations['wallet_button_title'],
                     'cancel_url'          => $order->get_cancel_order_url(),
                     'cancel_url_text'     => $this->storeTranslations['cancel_url_text'],

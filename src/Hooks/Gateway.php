@@ -85,7 +85,6 @@ class Gateway
             $discount   = $total * ($gateway->discount / 100);
             $commission = $total * ($gateway->commission / 100);
 
-
             if ($gateway->discount > 0 && $gateway->commission > 0) {
                 $title .= ' (' . $this->translations->commonCheckout['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . $this->translations->commonCheckout['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
             } elseif ($gateway->discount > 0) {
@@ -176,7 +175,7 @@ class Gateway
      */
     public function separateCheckboxes(array $exPayments): array
     {
-        $paymentMethods = array();
+        $paymentMethods = [];
 
         foreach ($exPayments['payment_method_types'] as $paymentMethodsType) {
             $paymentMethods += $this->separateCheckboxesList($paymentMethodsType['list']);
@@ -194,7 +193,7 @@ class Gateway
      */
     public function separateCheckboxesList(array $exPaymentsList): array
     {
-        $paymentMethods = array();
+        $paymentMethods = [];
 
         foreach ($exPaymentsList as $payment) {
             $paymentMethods[$payment['id']] = $payment;

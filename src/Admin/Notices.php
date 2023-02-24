@@ -158,7 +158,6 @@ class Notices
         );
     }
 
-
     /**
      * Show pix missing notice
      * @return void
@@ -198,5 +197,69 @@ class Notices
                 include dirname(__FILE__) . '/../../templates/admin/notices/generic-notice.php';
             }
         );
+    }
+
+    /**
+     * Show approved store notice
+     *
+     * @param $orderStatus
+     * @return void
+     */
+    public function storeApprovedStatusNotice($orderStatus): void
+    {
+        $this->storeNotice($orderStatus, 'notice');
+    }
+
+    /**
+     * Show in process store notice
+     *
+     * @param $orderStatus
+     * @param string $urlReceived
+     * @param string $checkoutType
+     * @param string $linkText
+     *
+     * @return void
+     */
+    public function storeInProcessStatusNotice($orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
+    {
+        $linkTag = "<a id=\"mp_pending_payment_button\" class=\"button\" href=\"${$urlReceived}\" " .
+            "data-mp-checkout-type=\"woo-mercado-pago-{$checkoutType}\">{$linkText}</a>";
+        $message = "{$orderStatus}</p><p>{$linkTag}";
+
+        $this->storeNotice($message, 'notice');
+    }
+
+    /**
+     * Show in process store notice
+     *
+     * @param string $noticeTitle
+     * @param string $orderStatus
+     * @param string $urlReceived
+     * @param string $checkoutType
+     * @param string $linkText
+     *
+     * @return void
+     */
+    public function storeRejectedStatusNotice(string $noticeTitle, string $orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
+    {
+        $link = "<a id=\"mp_failed_payment_button\" class=\"button\" href=\"{$urlReceived}\" " .
+            "data-mp-checkout-type=\"woo-mercado-pago-{$checkoutType}\">{$linkText}</a>";
+        $message = "{$noticeTitle}<br>{$orderStatus}</p><p>{$link}";
+
+        $this->storeNotice($message, 'error');
+    }
+
+    /**
+     * Show store notice
+     *
+     * @param string $message
+     * @param string $noticeType
+     * @param array $data
+     *
+     * @return void
+     */
+    private function storeNotice(string $message, string $noticeType = 'success', array $data = []): void
+    {
+        wc_add_notice("<p>{$message}</p>", $noticeType, $data);
     }
 }

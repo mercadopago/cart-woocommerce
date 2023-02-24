@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -278,18 +279,31 @@ class BasicGateway extends AbstractGateway implements MercadoPagoGatewayInterfac
      */
     public function process_payment($order_id): array
     {
-        $order = wc_get_order($order_id);
-        $order->payment_complete();
-        $order->add_order_note('Hey, your order is paid! Thank you!', true);
+        parent::process_payment($order_id);
 
-        wc_reduce_stock_levels($order_id);
+        $order             = wc_get_order($order_id);
+        $this->transaction = new BasicTransaction($this, $order);
+        $method            = $this->mercadopago->options->getMercadoPago($this, 'method', 'redirect');
 
-        $this->mercadopago->woocommerce->cart->empty_cart();
-
-        return [
-            'result'   => 'success',
-            'redirect' => $this->get_return_url($order)
-        ];
+        if ('redirect' === $method || 'iframe' === $method) {
+            $this->mercadopago->logs->file->info(
+                'customer being redirected to Mercado Pago.',
+                __FUNCTION__
+            );
+            return [
+                'result'   => 'success',
+                'redirect' => $this->transaction->createPreference(),
+            ];
+        } elseif ('modal' === $method) {
+            $this->mercadopago->logs->file->info(
+                'preparing to render Checkout Pro view.',
+                __FUNCTION__
+            );
+            return [
+                'result'   => 'success',
+                'redirect' => $order->get_checkout_payment_url(true),
+            ];
+        }
     }
 
     /**

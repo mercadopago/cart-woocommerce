@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Transactions\TicketTransaction;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -291,18 +292,57 @@ class PixGateway extends AbstractGateway implements MercadoPagoGatewayInterface
      */
     public function process_payment($order_id): array
     {
+        parent::process_payment($order_id);
+
         $order = wc_get_order($order_id);
-        $order->payment_complete();
-        $order->add_order_note('Hey, your order is paid! Thank you!', true);
 
-        wc_reduce_stock_levels($order_id);
+        // @todo: nonce validation
 
-        $this->mercadopago->woocommerce->cart->empty_cart();
+        // phpcs:ignore WordPress.Security.NonceVerification
+        $checkout = map_deep($_POST, 'sanitize_text_field');
 
-        return [
-            'result'   => 'success',
-            'redirect' => $this->get_return_url($order)
-        ];
+        if (filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
+            $this->transaction = new TicketTransaction($this, $order, $checkout);
+            $response = $this->transaction->createPayment();
+
+            if (is_array($response) && array_key_exists('status', $response)) {
+                $this->hook->update_mp_order_payments_metadata($order->get_id(), [ $response['id'] ]);
+
+                if ('pending' === $response['status']) {
+                    if (
+                        'pending_waiting_payment' === $response['status_detail'] ||
+                        'pending_waiting_transfer' === $response['status_detail']
+                    ) {
+                        WC()->cart->empty_cart();
+
+                        $this->mercadopago->order->setPixMetadata($this, $order, $response);
+
+                        $description = $this->storeTranslations['customer_not_paid'];
+                        $this->mercadopago->order->addOrderNote($order, $description);
+
+                        if ('pix' === $response['payment_method_id']) {
+                            $description = "<div style=\"text-align: justify;\"><p>{$this->storeTranslations['congrats_title']} {$this->storeTranslations['congrats_subtitle']}</small></p>";
+                            $this->mercadopago->order->addOrderNote($order, $description, 1);
+                        }
+
+                        return array(
+                            'result'   => 'success',
+                            'redirect' => $order->get_checkout_order_received_url(),
+                        );
+                    }
+                }
+            }
+
+            return $this->processReturnFail(
+                __FUNCTION__,
+                $this->mercadopago->storeTranslations->commonMessages['cho_form_error']
+            );
+        }
+
+        return $this->processReturnFail(
+            __FUNCTION__,
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
+        );
     }
 
     /**

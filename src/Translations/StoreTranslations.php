@@ -41,6 +41,11 @@ class StoreTranslations
     public $pixCheckout = [];
 
     /**
+     * @var array
+     */
+    public $commonMessages = [];
+
+    /**
      * Translations constructor
      */
     public function __construct(Links $links)
@@ -52,6 +57,7 @@ class StoreTranslations
         $this->setCreditsCheckoutTranslations();
         $this->setCustomCheckoutTranslations();
         $this->setPixCheckoutTranslations();
+        $this->setCommonMessagesTranslations();
     }
 
     /**
@@ -236,6 +242,43 @@ class StoreTranslations
             'text_time_qr_one'                 => __('Code valid for ', 'woocommerce-mercadopago'),
             'text_description_qr'              => __('If you prefer, you can pay by copying and pasting the following code', 'woocommerce-mercadopago'),
             'text_button'                      => __('Copy code', 'woocommerce-mercadopago'),
+            'customer_not_paid'                => __('Mercado Pago: The customer has not paid yet.', 'woocommerce-mercadopago'),
+            'congrats_title'                   => __('Mercado Pago: Now you just need to pay with Pix to finalize your purchase.', 'woocommerce-mercadopago'),
+            'congrats_subtitle'                => __('Scan the QR code below or copy and paste the code into your bank\'s application.', 'woocommerce-mercadopago'),
+            'expiration_30_minutes'            => __('30 minutes', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Set common messages translations
+     *
+     * @return void
+     */
+    private function setCommonMessagesTranslations(): void
+    {
+        $this->commonMessages = [
+            'cho_default_error'                        => __('A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago'),
+            'cho_form_error'                           => __('A problem was occurred when processing your payment. Are you sure you have correctly filled all information in the checkout form?', 'woocommerce-mercadopago'),
+            'cho_see_order_form'                       => __('See your order form', 'woocommerce-mercadopago'),
+            'cho_payment_declined'                     => __('Your payment was declined. You can try again.', 'woocommerce-mercadopago'),
+            'cho_button_try_again'                     => __('Click to try again', 'woocommerce-mercadopago'),
+            'cho_accredited'                           => __('That\'s it, payment accepted!', 'woocommerce-mercadopago'),
+            'cho_pending_contingency'                  => __('We are processing your payment. In less than an hour we will send you the result by email.', 'woocommerce-mercadopago'),
+            'cho_pending_review_manual'                => __('We are processing your payment. In less than 2 days we will send you by email if the payment has been approved or if additional information is needed.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_bad_filled_card_number'   => __('Check the card number.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_bad_filled_date'          => __('Check the expiration date.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_bad_filled_other'         => __('Check the information provided.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_bad_filled_security_code' => __('Check the informed security code.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_card_error'               => __('Your payment cannot be processed.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_blacklist'                => __('Your payment cannot be processed.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_call_for_authorize'       => __('You must authorize payments for your orders.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_card_disabled'            => __('Contact your card issuer to activate it. The phone is on the back of your card.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_duplicated_payment'       => __('You have already made a payment of this amount. If you have to pay again, use another card or other method of payment.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_high_risk'                => __('Your payment was declined. Please select another payment method. It is recommended in cash.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_insufficient_amount'      => __('Your payment does not have sufficient funds.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_invalid_installments'     => __('Payment cannot process the selected fee.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_max_attempts'             => __('You have reached the limit of allowed attempts. Choose another card or other payment method.', 'woocommerce-mercadopago'),
+            'cho_default'                              => __('This payment method cannot process your payment.', 'woocommerce-mercadopago'),
         ];
     }
 }
