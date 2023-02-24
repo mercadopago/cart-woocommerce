@@ -19,6 +19,7 @@ use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Helpers\PaymentMethods;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -171,6 +172,11 @@ class WoocommerceMercadoPago
     public $url;
 
     /**
+     * @var PaymentMethods
+     */
+    public $paymentMethods;
+
+    /**
      * @var Store
      */
     public $store;
@@ -285,6 +291,7 @@ class WoocommerceMercadoPago
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CustomGateway');
+        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
         $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PixGateway');
     }
 
@@ -345,8 +352,9 @@ class WoocommerceMercadoPago
         $this->requester         = $dependencies->requester;
         $this->strings           = $dependencies->strings;
         $this->url               = $dependencies->url;
-        $this->nonce             = $dependencies->nonce;
         $this->compositeId       = $dependencies->compositeId;
+        $this->paymentMethods    = $dependencies->paymentMethods;
+        $this->nonce             = $dependencies->nonce;
 
         // Hooks
         $this->admin             = $dependencies->admin;

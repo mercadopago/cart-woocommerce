@@ -43,6 +43,11 @@ class StoreTranslations
     /**
      * @var array
      */
+    public $ticketCheckout = [];
+
+    /**
+     * @var array
+     */
     public $commonMessages = [];
 
     /**
@@ -56,6 +61,7 @@ class StoreTranslations
         $this->setBasicCheckoutTranslations();
         $this->setCreditsCheckoutTranslations();
         $this->setCustomCheckoutTranslations();
+        $this->setTicketCheckoutTranslations();
         $this->setPixCheckoutTranslations();
         $this->setCommonMessagesTranslations();
     }
@@ -82,9 +88,9 @@ class StoreTranslations
     private function setBasicCheckoutTranslations(): void
     {
         $this->basicCheckout = [
-            'test_mode_title'                                 => __('Checkout Pro in Test Mode', 'woocommerce-mercadopago'),
-            'test_mode_description'                           => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
-            'test_mode_link_text'                             => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'test_mode_title'                                => __('Checkout Pro in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_description'                          => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
+            'test_mode_link_text'                            => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
             'checkout_benefits_title'                         => __('Log in to Mercado Pago and earn benefits', 'woocommerce-mercadopago'),
             'checkout_benefits_title_phone'                   => __('Easy login', 'woocommerce-mercadopago'),
             'checkout_benefits_subtitle_phone'                => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
@@ -103,11 +109,11 @@ class StoreTranslations
             'checkout_benefits_subtitle_phone_installments'   => __('Pay with or without a credit card.', 'woocommerce-mercadopago'),
             'checkout_benefits_subtitle_phone_installments_2' => __('Interest-free installments with selected banks.', 'woocommerce-mercadopago'),
             'checkout_benefits_alt_phone_installments'        => __('Blue phone installments image', 'woocommerce-mercadopago'),
-            'payment_methods_title'                           => __('Available payment methods', 'woocommerce-mercadopago'),
-            'checkout_redirect_text'                          => __('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'),
-            'checkout_redirect_alt'                           => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
-            'terms_and_conditions_description'                => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
-            'terms_and_conditions_link_text'                  => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'payment_methods_title'                          => __('Available payment methods', 'woocommerce-mercadopago'),
+            'checkout_redirect_text'                         => __('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'),
+            'checkout_redirect_alt'                          => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
+            'terms_and_conditions_description'               => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
+            'terms_and_conditions_link_text'                 => __('Terms and conditions', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -141,14 +147,31 @@ class StoreTranslations
             'test_mode_title'                  => __('No card installments in Test Mode', 'woocommerce-mercadopago'),
             'test_mode_description'            => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
             'test_mode_link_text'              => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
-            'checkout_benefits_title'          => __('How to use it?', 'woocommerce-mercadopago'),
-            'checkout_benefits_1'              => $checkoutBenefits1,
-            'checkout_benefits_2'              => $checkoutBenefits2,
-            'checkout_benefits_3'              => $checkoutBenefits3,
+            'checkout_benefits_title'           => __('How to use it?', 'woocommerce-mercadopago'),
+            'checkout_benefits_1'               => $checkoutBenefits1,
+            'checkout_benefits_2'               => $checkoutBenefits2,
+            'checkout_benefits_3'               => $checkoutBenefits3,
             'checkout_redirect_text'           => __('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'),
             'checkout_redirect_alt'            => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
             'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
             'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'banner_title'                     => __('Pay in', 'woocommerce-mercadopago'),
+            'banner_title_bold'                => __('installments', 'woocommerce-mercadopago'),
+            'banner_title_end'                 => __('with Mercado Pago', 'woocommerce-mercadopago'),
+            'banner_link'                      => __('Read more', 'woocommerce-mercadopago'),
+            'modal_title'                      => __('Buy now and pay in installments with no card later!', 'woocommerce-mercadopago'),
+            'modal_subtitle'                   => __('100% online, without paperwork or monthly fees', 'woocommerce-mercadopago'),
+            'modal_how_to'                     => __('How does it work?', 'woocommerce-mercadopago'),
+            'modal_step_1'                     => __('When paying, choose', 'woocommerce-mercadopago'),
+            'modal_step_1_bold'                => __('Mercado Pago', 'woocommerce-mercadopago'),
+            'modal_step_1_end'                 => __('. Login to your account or create one in a few steps.', 'woocommerce-mercadopago'),
+            'modal_step_2'                     => __('Search for', 'woocommerce-mercadopago'),
+            'modal_step_2_bold'                => __('Mercado Credito', 'woocommerce-mercadopago'),
+            'modal_step_2_end'                 => __('among the options, select it and choose in how many installments you would like to pay.', 'woocommerce-mercadopago'),
+            'modal_step_3'                     => __('Pay your installments monthly as you wish, in the Mercado Pago app.', 'woocommerce-mercadopago'),
+            'modal_footer'                     => __('Questions? ', 'woocommerce-mercadopago'),
+            'modal_footer_link'                => __('Check our FAQ', 'woocommerce-mercadopago'),
+            'modal_footer_end'                 => __('. Credit subject to approval.', 'woocommerce-mercadopago')
         ];
     }
 
@@ -250,6 +273,31 @@ class StoreTranslations
     }
 
     /**
+     * Set checkout ticket translations
+     *
+     * @return void
+     */
+    private function setTicketCheckoutTranslations(): void
+    {
+        $this->ticketCheckout = [
+            'test_mode_title'                  => __('Offline Methods in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_description'            => __('You can test the flow to generate an invoice, but you cannot finalize the payment.', 'woocommerce-mercadopago'),
+            'test_mode_link_text'              => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'input_document_label'             => __('Holder document', 'woocommerce-mercadopago'),
+            'input_document_helper'            => __('Invalid document', 'woocommerce-mercadopago'),
+            'ticket_text_label'                => __('Select where you want to pay', 'woocommerce-mercadopago'),
+            'input_table_button'               => __('more options', 'woocommerce-mercadopago'),
+            'input_helper_label'               => __('Select a payment method', 'woocommerce-mercadopago'),
+            'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
+            'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'print_ticket_label'               => __('Great, we processed your purchase order. Complete the payment with ticket so that we finish approving it.', 'woocommerce-mercadopago'),
+            'print_ticket_link'                => __('Print ticket', 'woocommerce-mercadopago'),
+            'paycash_concatenator'             => __(' and ', 'woocommerce-mercadopago'),
+        ];
+    }
+
+
+    /**
      * Set common messages translations
      *
      * @return void
@@ -265,17 +313,17 @@ class StoreTranslations
             'cho_accredited'                           => __('That\'s it, payment accepted!', 'woocommerce-mercadopago'),
             'cho_pending_contingency'                  => __('We are processing your payment. In less than an hour we will send you the result by email.', 'woocommerce-mercadopago'),
             'cho_pending_review_manual'                => __('We are processing your payment. In less than 2 days we will send you by email if the payment has been approved or if additional information is needed.', 'woocommerce-mercadopago'),
-            'cho_cc_rejected_bad_filled_card_number'   => __('Check the card number.', 'woocommerce-mercadopago'),
-            'cho_cc_rejected_bad_filled_date'          => __('Check the expiration date.', 'woocommerce-mercadopago'),
-            'cho_cc_rejected_bad_filled_other'         => __('Check the information provided.', 'woocommerce-mercadopago'),
-            'cho_cc_rejected_bad_filled_security_code' => __('Check the informed security code.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_bad_filled_card_number'    => __('Check the card number.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_bad_filled_date'           => __('Check the expiration date.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_bad_filled_other'          => __('Check the information provided.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_bad_filled_security_code'  => __('Check the informed security code.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_card_error'               => __('Your payment cannot be processed.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_blacklist'                => __('Your payment cannot be processed.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_call_for_authorize'       => __('You must authorize payments for your orders.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_card_disabled'            => __('Contact your card issuer to activate it. The phone is on the back of your card.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_duplicated_payment'       => __('You have already made a payment of this amount. If you have to pay again, use another card or other method of payment.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_high_risk'                => __('Your payment was declined. Please select another payment method. It is recommended in cash.', 'woocommerce-mercadopago'),
-            'cho_cc_rejected_insufficient_amount'      => __('Your payment does not have sufficient funds.', 'woocommerce-mercadopago'),
+            'cho_cc_rejected_insufficient_amount'       => __('Your payment does not have sufficient funds.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_invalid_installments'     => __('Payment cannot process the selected fee.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_max_attempts'             => __('You have reached the limit of allowed attempts. Choose another card or other payment method.', 'woocommerce-mercadopago'),
             'cho_default'                              => __('This payment method cannot process your payment.', 'woocommerce-mercadopago'),

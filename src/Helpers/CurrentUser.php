@@ -64,6 +64,19 @@ final class CurrentUser
     }
 
     /**
+     * Get WP current user roles
+     *
+     * @param string $key
+     * @param bool   $single
+     * 
+     * @return array|string
+     */
+    public function getCurrentUserMeta(string $key, bool $single = false)
+    {
+        return get_user_meta($this->getCurrentUser()->ID, $key, $single);
+    }
+
+    /**
      * Verify if current_user has specifics roles
      *
      * @param array $roles 'administrator | editor | author | contributor | subscriber'

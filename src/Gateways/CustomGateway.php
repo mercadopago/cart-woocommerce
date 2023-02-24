@@ -2,8 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
-use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 
@@ -11,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterface
+class CustomGateway extends AbstractGateway
 {
     /**
      * @const
@@ -29,15 +27,14 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
     public function __construct()
     {
         parent::__construct();
-
         $this->adminTranslations = $this->mercadopago->adminTranslations->customGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->customCheckout;
 
-        $this->id = self::ID;
-        $this->icon = $this->mercadopago->plugin->getGatewayIcon('icon-gray-card');
-        $this->title = $this->mercadopago->options->get('title', $this->adminTranslations['gateway_title']);
-        $this->description = $this->adminTranslations['gateway_description'];
-        $this->method_title = $this->adminTranslations['gateway_method_title'];
+        $this->id                 = self::ID;
+        $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-gray-card');
+        $this->title              = $this->getOption('title', $this->adminTranslations['gateway_title']);
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
 
         $this->init_form_fields();
@@ -49,17 +46,7 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         // @todo: call admin_notice hook to display currency notice
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'loadThankYouPage']);
-        $this->mercadopago->checkout->registerReceipt(self::ID, [$this, 'renderOrderForm']);
-    }
-
-    /**
-     * Get checkout name
-     *
-     * @return string
-     */
-    public function getCheckoutName(): string
-    {
-        return self::CHECKOUT_NAME;
+        $this->mercadopago->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
     }
 
     /**
@@ -315,16 +302,16 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
                 'test_mode_link_src'               => $this->mercadopago->links->getLinks()['docs_integration_test'],
-                'wallet_button'                    => $this->mercadopago->options->get('wallet_button', 'yes'),
-                'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-logos", '.png'),
+                'wallet_button'                    => $this->getOption('wallet_button', 'yes'),
+                'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-logos", '.png', true),
                 'wallet_button_title'              => $this->storeTranslations['wallet_button_title'],
                 'wallet_button_description'        => $this->storeTranslations['wallet_button_description'],
                 'wallet_button_button_text'        => $this->storeTranslations['wallet_button_button_text'],
-                'available_payments_title_icon'    => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-purple-card", '.png'),
+                'available_payments_title_icon'    => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-purple-card", '.png', true),
                 'available_payments_title'         => $this->storeTranslations['available_payments_title'],
-                'available_payments_image'         => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-down", '.png'),
-                'available_payments_chevron_up'    => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-up", '.png'),
-                'available_payments_chevron_down'  => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-down", '.png'),
+                'available_payments_image'         => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-down", '.png', true),
+                'available_payments_chevron_up'    => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-up", '.png', true),
+                'available_payments_chevron_down'  => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-down", '.png', true),
                 'payment_methods_items'            => wp_json_encode($this->getPaymentMethodsContent()),
                 'payment_methods_promotion_link'   => $this->mercadopago->links->getLinks()['mercadopago_debts'],
                 'payment_methods_promotion_text'   => $this->storeTranslations['payment_methods_promotion_text'],
@@ -540,7 +527,7 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
             $locale = 'en';
         }
 
-        return $this->mercadopago->url->getPluginFileUrl("/assets/images/gateways/wallet-button/preview-{$locale}", '.png');
+        return $this->mercadopago->url->getPluginFileUrl("/assets/images/gateways/wallet-button/preview-{$locale}", '.png', true);
     }
 
     /**
@@ -553,7 +540,7 @@ class CustomGateway extends AbstractGateway implements MercadoPagoGatewayInterfa
         $debitCard      = [];
         $creditCard     = [];
         $paymentMethods = [];
-        $cards          = $this->mercadopago->seller->getCheckoutPaymentMethods();
+        $cards          = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
 
         foreach ($cards as $card) {
             if ('credit_card' === $card['type']) {

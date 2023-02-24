@@ -37,7 +37,7 @@ class Gateway
     }
 
     /**
-     * Register gateway on Woocommerce
+     * Register gateway on Woocommerce if it is valid
      *
      * @param string $gateway
      *
@@ -45,10 +45,12 @@ class Gateway
      */
     public function registerGateway(string $gateway): void
     {
-        add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
-            $methods[] = $gateway;
-            return $methods;
-        });
+        if ($gateway::isAvailable()) {
+            add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
+                $methods[] = $gateway;
+                return $methods;
+            });
+        }
     }
 
     /**

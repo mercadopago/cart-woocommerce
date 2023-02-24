@@ -45,12 +45,13 @@ final class Links
     {
         $countryConfig      = $this->country->getCountryConfigs();
 
-        $mercadoPagoLinks   = $this->getMercadoPagoLinks($countryConfig);
-        $documentationLinks = $this->getDocumentationLinks($countryConfig);
-        $adminLinks         = $this->getAdminLinks();
-        $storeLinks         = $this->getStoreLinks();
-
-        return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $adminLinks, $storeLinks);
+        return array_merge_recursive(
+            $this->getDocumentationLinks($countryConfig),
+            $this->getMercadoPagoLinks($countryConfig),
+            $this->getCreditsLinks($countryConfig),
+            $this->getAdminLinks(),
+            $this->getStoreLinks(),
+        );
     }
 
     /**
@@ -74,7 +75,7 @@ final class Links
             'docs_integration_introduction' => $baseLink . '/docs/woocommerce/introduction',
         ];
     }
-
+    
     /**
      * Get documentation links on Mercado Pago Panel page
      *
@@ -121,5 +122,34 @@ final class Links
         return [
             'store_visit' => get_permalink(wc_get_page_id('shop')),
         ];
+    }
+
+    /**
+     * Get store links
+     *
+     * @param array $countryConfig
+     *
+     * @return array
+     */
+    private function getCreditsLinks(array $countryConfig): array
+    {
+        $siteId = $countryConfig['site_id'];
+
+        $country_links = [
+			'MLA' => array(
+				'credits_blog_link' => 'https://vendedores.mercadolibre.com.ar/nota/impulsa-tus-ventas-y-alcanza-mas-publico-con-mercado-credito',
+				'credits_faq_link'  => 'https://www.mercadopago.com.ar/help/19040'
+			),
+			'MLM' => array(
+				'credits_blog_link' => 'https://vendedores.mercadolibre.com.mx/nota/impulsa-tus-ventas-y-alcanza-a-mas-clientes-con-mercado-credito',
+				'credits_faq_link'  => 'https://www.mercadopago.com.mx/help/19040'
+			),
+			'MLB' => array(
+				'credits_blog_link' => 'https://conteudo.mercadopago.com.br/parcelamento-via-boleto-bancario-no-mercado-pago-seus-clientes-ja-podem-solicitar',
+				'credits_faq_link'  => 'https://www.mercadopago.com.br/help/19040'
+			),
+        ];
+
+        return array_key_exists($siteId, $country_links) ? $country_links[$siteId] : $country_links['MLA'];
     }
 }

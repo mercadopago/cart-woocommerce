@@ -39,13 +39,13 @@ final class Url
      *
      * @return string
      */
-    public function getPluginFileUrl(string $path, string $extension): string
+    public function getPluginFileUrl(string $path, string $extension, bool $ignoreSuffix = false): string
     {
         return sprintf(
             '%s%s%s%s',
             plugin_dir_url(__FILE__),
             '/../../../' . $path,
-            $this->getSuffix(),
+            $ignoreSuffix ? '' : $this->getSuffix(),
             $extension
         );
     }

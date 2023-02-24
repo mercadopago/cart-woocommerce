@@ -84,7 +84,7 @@ class Plugin
      */
     public function getGatewayIcon(string $iconName): string
     {
-        $path = $this->url->getPluginFileUrl("/assets/images/icons/{$iconName}", '.png');
+        $path = $this->url->getPluginFileUrl("/assets/images/icons/{$iconName}", '.png', true);
 
         return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
