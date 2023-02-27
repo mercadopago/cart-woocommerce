@@ -8,5 +8,12 @@ if (!defined('ABSPATH')) {
 
 interface NotificationInterface
 {
+    /**
+     * Handle Notification Request
+     *
+     * @param string $message
+     *
+     * @return void
+     */
     public function handleReceivedNotification();
 }

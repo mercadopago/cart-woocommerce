@@ -380,7 +380,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $topic = $data['topic'];
         $type  = $data['type'];
         
-        $notificationFactory = new NotificationFactory($this->mercadopago->logs);
+        $notificationFactory = new NotificationFactory();
         $notificationHandler = $notificationFactory->createNotificationHandler($topic, $type);
 
         $notificationHandler->handleReceivedNotification();

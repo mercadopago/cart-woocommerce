@@ -3,7 +3,6 @@
 namespace MercadoPago\Woocommerce\Notification;
 
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
-use MercadoPago\Woocommerce\Logs\Logs;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -11,17 +10,18 @@ if (!defined('ABSPATH')) {
 
 class NotificationFactory
 {
-    
-    public function createNotificationHandler(string $topic, string $type, Logs $logs): NotificationInterface {
+    public function createNotificationHandler(string $topic, string $type): NotificationInterface
+    {
+        global $mercadopago;
+
         if ('payment' === $topic && 'webhook' == $type) {
-            return new WebhookNotification($logs);
+            return new WebhookNotification($mercadopago->logs, $mercadopago->requester);
         }
 
         if ('merchant_order' === $topic && 'ipn' == $type) {
-            return new IpnNotification($logs);
+            return new IpnNotification($mercadopago->logs, $mercadopago->requester);
         }
 
-        return new CoreNotification($logs);
+        return new CoreNotification($mercadopago->logs);
     }
-
 }
