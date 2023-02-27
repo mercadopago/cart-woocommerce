@@ -2,8 +2,10 @@
 
 namespace MercadoPago\Woocommerce;
 
+use MercadoPago\Woocommerce\Admin\Analytics;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Order\Metadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -20,6 +22,7 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
+use MercadoPago\Woocommerce\Hooks\Meta;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
@@ -50,6 +53,16 @@ class WoocommerceMercadoPago
      * @const
      */
     private const PLATFORM_ID = 'bo2hnr2ic4p001kbgpt0';
+
+    /**
+     * @const
+     */
+    private const PRODUCT_ID_DESKTOP = 'BT7OF5FEOO6G01NJK3QG';
+
+    /**
+     * @const
+     */
+    private const PRODUCT_ID_MOBILE  = 'BT7OFH09QS3001K5A0H0';
 
     /**
      * @const
@@ -95,6 +108,11 @@ class WoocommerceMercadoPago
      * @var Options
      */
     public $options;
+
+    /**
+     * @var Meta
+     */
+    public $meta;
 
     /**
      * @var Plugin
@@ -152,6 +170,11 @@ class WoocommerceMercadoPago
     public $store;
 
     /**
+     * @var Metadata
+     */
+    public $metadata;
+
+    /**
      * @var Scripts
      */
     public $scripts;
@@ -195,6 +218,11 @@ class WoocommerceMercadoPago
      * @var Settings
      */
     public $settings;
+
+    /**
+     * @var Analytics
+     */
+    public $analytics;
 
     /**
      * @var AdminTranslations
@@ -301,6 +329,7 @@ class WoocommerceMercadoPago
         // Configs
         $this->seller            = $dependencies->seller;
         $this->store             = $dependencies->store;
+        $this->metadata          = $dependencies->metadata;
 
         // Helpers
         $this->cache             = $dependencies->cache;
@@ -320,6 +349,7 @@ class WoocommerceMercadoPago
         $this->endpoints         = $dependencies->endpoints;
         $this->gateway           = $dependencies->gateway;
         $this->options           = $dependencies->options;
+        $this->meta              = $dependencies->meta;
         $this->order             = $dependencies->order;
         $this->plugin            = $dependencies->plugin;
         $this->product           = $dependencies->product;
@@ -329,6 +359,7 @@ class WoocommerceMercadoPago
         // General
         $this->logs              = $dependencies->logs;
         $this->notices           = $dependencies->notices;
+        $this->analytics         = $dependencies->analytics;
 
         // Exclusive
         $this->settings          = $dependencies->settings;
@@ -409,6 +440,8 @@ class WoocommerceMercadoPago
         $this->define('MP_VERSION', self::PLUGIN_VERSION);
         $this->define('MP_PLATFORM_ID', self::PLATFORM_ID);
         $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
+        $this->define('MP_PRODUCT_ID_DESKTOP', self::PRODUCT_ID_DESKTOP);
+        $this->define('MP_PRODUCT_ID_MOBILE', self::PRODUCT_ID_MOBILE);
         $this->define('MP_TICKET_DATE_EXPIRATION', self::TICKET_TIME_EXPIRATION);
     }
 

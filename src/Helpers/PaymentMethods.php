@@ -10,11 +10,10 @@ if (!defined('ABSPATH')) {
 
 final class PaymentMethods
 {
-
     /**
      * @const
      */
-	const SEPARATOR = '|';
+    const SEPARATOR = '|';
 
     /**
      * @var Url
@@ -31,100 +30,104 @@ final class PaymentMethods
 
     /**
      * Generate ID from payment place
-     * 
+     *
+     * @param $paymentMethodId
+     * @param $paymentPlaceId
+     *
      * @return string
      */
     public function generateIdFromPlace($paymentMethodId, $paymentPlaceId): string
     {
-		return $paymentMethodId . self::SEPARATOR . $paymentPlaceId;
-	}
+        return $paymentMethodId . self::SEPARATOR . $paymentPlaceId;
+    }
 
 
     /**
      * Parse composite ID
-     * 
+     *
+     * @param $compositeId
      * @return array
      */
-	private function parseCompositeId($compositeId): array
+    private function parseCompositeId($compositeId): array
     {
-		$exploded = explode(self::SEPARATOR, $compositeId);
+        $exploded = explode(self::SEPARATOR, $compositeId);
 
-		return [
-			'payment_method_id' => $exploded[0],
-			'payment_place_id' => isset($exploded[1]) ? $exploded[1] : null,
-		];
-	}
+        return [
+            'payment_method_id' => $exploded[0],
+            'payment_place_id'  => $exploded[1] ?? null,
+        ];
+    }
 
     /**
      * Get Payment Method ID
-     * 
-     * @param string $compositeId
-     * 
+     *
+     * @param $compositeId
+     *
      * @return array
      */
-	public function getPaymentMethodId($compositeId): array
+    public function getPaymentMethodId($compositeId): array
     {
-		return $this->parseCompositeId($compositeId)['payment_method_id'];
-	}
+        return $this->parseCompositeId($compositeId)['payment_method_id'];
+    }
 
     /**
      * Get Payment Place ID
-     * 
-     * @param string $compositeId
-     * 
+     *
+     * @param $compositeId
+     *
      * @return array
      */
-	public function getPaymentPlaceId($compositeId): array
+    public function getPaymentPlaceId($compositeId): array
     {
-		return $this->parseCompositeId($compositeId)['payment_place_id'];
-	}
+        return $this->parseCompositeId($compositeId)['payment_place_id'];
+    }
 
     /**
      * Treat ticket payment methods with composite IDs
-     * 
+     *
      * @param array $paymentMethods
-     * 
+     *
      * @return array
      */
-	public function treatTicketPaymentMethods($paymentMethods): array
+    public function treatTicketPaymentMethods(array $paymentMethods): array
     {
         $treatedPaymentMethods = [];
 
-        foreach ( $paymentMethods as $paymentMethod ) {
-			$treatedPaymentMethod = [];
-			if ( isset($paymentMethod['payment_places']) ) {
-				foreach ( $paymentMethod['payment_places'] as $place ) {
-					$paymentPlaceId                  = $this->generateIdFromPlace($paymentMethod['id'], $place['payment_option_id']);
-					$treatedPaymentMethod['id']      = $paymentPlaceId;
-					$treatedPaymentMethod['value']   = $paymentPlaceId;
-					$treatedPaymentMethod['rowText'] = $place['name'];
-					$treatedPaymentMethod['img']     = $place['thumbnail'];
-					$treatedPaymentMethod['alt']     = $place['name'];
-					array_push( $treatedPaymentMethods, $treatedPaymentMethod);
-				}
-			} else {
-				$treatedPaymentMethod['id']      = $paymentMethod['id'];
-				$treatedPaymentMethod['value']   = $paymentMethod['id'];
-				$treatedPaymentMethod['rowText'] = $paymentMethod['name'];
-				$treatedPaymentMethod['img']     = $paymentMethod['secure_thumbnail'];
-				$treatedPaymentMethod['alt']     = $paymentMethod['name'];
-				array_push( $treatedPaymentMethods, $treatedPaymentMethod);
-			}
-		}
+        foreach ($paymentMethods as $paymentMethod) {
+            $treatedPaymentMethod = [];
+            if (isset($paymentMethod['payment_places'])) {
+                foreach ($paymentMethod['payment_places'] as $place) {
+                    $paymentPlaceId                  = $this->generateIdFromPlace($paymentMethod['id'], $place['payment_option_id']);
+                    $treatedPaymentMethod['id']      = $paymentPlaceId;
+                    $treatedPaymentMethod['value']   = $paymentPlaceId;
+                    $treatedPaymentMethod['rowText'] = $place['name'];
+                    $treatedPaymentMethod['img']     = $place['thumbnail'];
+                    $treatedPaymentMethod['alt']     = $place['name'];
+                    $treatedPaymentMethods[]         = $treatedPaymentMethod;
+                }
+            } else {
+                $treatedPaymentMethod['id']      = $paymentMethod['id'];
+                $treatedPaymentMethod['value']   = $paymentMethod['id'];
+                $treatedPaymentMethod['rowText'] = $paymentMethod['name'];
+                $treatedPaymentMethod['img']     = $paymentMethod['secure_thumbnail'];
+                $treatedPaymentMethod['alt']     = $paymentMethod['name'];
+                $treatedPaymentMethods[]         = $treatedPaymentMethod;
+            }
+        }
 
-		return $treatedPaymentMethods;
-	}
+        return $treatedPaymentMethods;
+    }
 
     /**
      * Treat basic payment methods
-     * 
+     *
      * @param array $paymentMethods
-     * 
+     *
      * @return array
      */
-	public function treatBasicPaymentMethods($paymentMethods): array
+    public function treatBasicPaymentMethods(array $paymentMethods): array
     {
-        if ( CreditsGateway::isAvailable() ) {
+        if (CreditsGateway::isAvailable()) {
             $paymentMethods[] = [
                 'src' => $this->url->getPluginFileUrl('/assets/images/icons/icon-credits', '.png', true),
                 'alt' => 'Credits image'
@@ -132,5 +135,5 @@ final class PaymentMethods
         }
 
         return $paymentMethods;
-	}
+    }
 }

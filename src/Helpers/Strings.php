@@ -18,7 +18,25 @@ final class Strings
      */
     public function fixUrlAmpersand(string $link): string
     {
-        return str_replace('\/', '/', str_replace('&#038;', '&', $link));
+        return esc_url(str_replace('\/', '/', str_replace('&#038;', '&', $link)));
+    }
+
+    /**
+     * Sanitizes a filename, replacing whitespace with dashes.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function sanitizeFileName(string $name): string
+    {
+        return sanitize_file_name(
+            html_entity_decode(
+                strlen($name) > 230
+                 ? substr($name, 0, 230) . '...'
+                 : $name
+            )
+        );
     }
 
     /**
@@ -33,7 +51,7 @@ final class Strings
     public function compareStrings(string $expected, string $current, bool $allowPartialMatch): bool
     {
         if ($allowPartialMatch) {
-            return str_contains($current, $expected);
+            return strpos($current, $expected) !== false;
         }
 
         return $expected === $current;

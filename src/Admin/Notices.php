@@ -125,7 +125,7 @@ class Notices
             function () {
                 $isInstalled = false;
                 $currentUserCanInstallPlugins = current_user_can('install_plugins');
-                $minilogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
+                $minilogo = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $translations = $this->translations->notices;
 
                 $activateLink = wp_nonce_url(
@@ -158,7 +158,6 @@ class Notices
         );
     }
 
-
     /**
      * Show pix missing notice
      * @return void
@@ -168,7 +167,7 @@ class Notices
         add_action(
             'admin_notices',
             function () {
-                $miniLogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
+                $miniLogo = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $message  = $this->translations->notices['miss_pix_text'];
                 $textLink = $this->translations->notices['miss_pix_link'];
                 $urlLink  = $this->links->getLinks()['mercadopago_pix_config'];
@@ -192,11 +191,75 @@ class Notices
         add_action(
             'admin_notices',
             function () use ($message, $type, $dismiss) {
-                $minilogo = $this->mercadopago->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
+                $minilogo = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $isDismissible = $dismiss ? 'is-dismissible' : '';
 
                 include dirname(__FILE__) . '/../../templates/admin/notices/generic-notice.php';
             }
         );
+    }
+
+    /**
+     * Show approved store notice
+     *
+     * @param $orderStatus
+     * @return void
+     */
+    public function storeApprovedStatusNotice($orderStatus): void
+    {
+        $this->storeNotice($orderStatus, 'notice');
+    }
+
+    /**
+     * Show in process store notice
+     *
+     * @param $orderStatus
+     * @param string $urlReceived
+     * @param string $checkoutType
+     * @param string $linkText
+     *
+     * @return void
+     */
+    public function storeInProcessStatusNotice($orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
+    {
+        $linkTag = "<a id=\"mp_pending_payment_button\" class=\"button\" href=\"$urlReceived\" " .
+            "data-mp-checkout-type=\"woo-mercado-pago-$checkoutType\">$linkText</a>";
+        $message = "$orderStatus</p><p>$linkTag";
+
+        $this->storeNotice($message, 'notice');
+    }
+
+    /**
+     * Show in process store notice
+     *
+     * @param string $noticeTitle
+     * @param string $orderStatus
+     * @param string $urlReceived
+     * @param string $checkoutType
+     * @param string $linkText
+     *
+     * @return void
+     */
+    public function storeRejectedStatusNotice(string $noticeTitle, string $orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
+    {
+        $link = "<a id=\"mp_failed_payment_button\" class=\"button\" href=\"$urlReceived\" " .
+            "data-mp-checkout-type=\"woo-mercado-pago-$checkoutType\">$linkText</a>";
+        $message = "$noticeTitle<br>$orderStatus</p><p>$link";
+
+        $this->storeNotice($message, 'error');
+    }
+
+    /**
+     * Show store notice
+     *
+     * @param string $message
+     * @param string $noticeType
+     * @param array $data
+     *
+     * @return void
+     */
+    public function storeNotice(string $message, string $noticeType = 'success', array $data = []): void
+    {
+        wc_add_notice("<p>$message</p>", $noticeType, $data);
     }
 }

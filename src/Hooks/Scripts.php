@@ -126,7 +126,7 @@ class Scripts
         $variables = [
             'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
             'container'        => '#wpbody-content',
-            'public_key'       => '',
+            'public_key'       => $this->seller->getCredentialsPublicKey(),
             'plugin_version'   => MP_VERSION,
             'platform_id'      => MP_PLATFORM_ID,
             'platform_version' => $woocommerce->version,
@@ -234,7 +234,7 @@ class Scripts
      */
     private function registerScript(string $name, string $file, array $variables = []): void
     {
-        wp_enqueue_script($name, $file, array(), MP_VERSION, true);
+        wp_enqueue_script($name, $file, [], MP_VERSION, true);
 
         if ($variables) {
             wp_localize_script($name, $name . self::SUFFIX, $variables);

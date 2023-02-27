@@ -468,7 +468,7 @@ class Settings
         $verifyAlertTestMode = Form::getSanitizeTextFromPost('input_verify_alert_test_mode');
 
         $validateCheckoutTestMode = ($checkoutTestMode === 'yes');
-        $withoutTestCredentials = (
+        $withoutTestCredentials   = (
             $this->seller->getCredentialsPublicKeyTest() === '' ||
             $this->seller->getCredentialsAccessTokenTest() === ''
         );

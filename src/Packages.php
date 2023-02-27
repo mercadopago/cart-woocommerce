@@ -11,9 +11,9 @@ class Packages
     /**
      * @var array
      */
-    protected static $packages = array(
+    protected static $packages = [
         'sdk'
-    );
+    ];
 
     /**
      * Init Packages

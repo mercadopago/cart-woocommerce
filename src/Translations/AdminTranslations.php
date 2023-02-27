@@ -96,7 +96,7 @@ class AdminTranslations
     public $updateStore = [];
 
     /**
-     * @var Links
+     * @var array
      */
     private $links;
 
@@ -601,18 +601,6 @@ class AdminTranslations
             __('disabled', 'woocommerce-mercadopago')
         );
 
-        $couponModeDescriptionsEnabled = sprintf(
-            '%s <b>%s</b>.',
-            __('Discount coupons is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
-        );
-
-        $couponModeDescriptionsDisabled = sprintf(
-            '%s <b>%s</b>.',
-            __('Discount coupons is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
-        );
-
         $binaryModeDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Pending payments', 'woocommerce-mercadopago'),
@@ -657,10 +645,6 @@ class AdminTranslations
             'wallet_button_preview_description'         => __('Check an example of how it will appear in your store:', 'woocommerce-mercadopago'),
             'advanced_configuration_title'               => __('Advanced configuration of the personalized payment experience', 'woocommerce-mercadopago'),
             'advanced_configuration_subtitle'            => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
-            'coupon_mode_title'                         => __('Discount coupons', 'woocommerce-mercadopago'),
-            'coupon_mode_subtitle'                      => __('Will you offer discount coupons to customers who buy with Mercado Pago?', 'woocommerce-mercadopago'),
-            'coupon_mode_descriptions_enabled'          => $couponModeDescriptionsEnabled,
-            'coupon_mode_descriptions_disabled'         => $couponModeDescriptionsDisabled,
             'binary_mode_title'                         => __('Automatic decline of payments without instant approval', 'woocommerce-mercadopago'),
             'binary_mode_subtitle'                      => __('Enable it if you want to automatically decline payments that are not instantly approved by banks or other institutions.', 'woocommerce-mercadopago'),
             'binary_mode_descriptions_enabled'          => $binaryModeDescriptionsEnabled,
@@ -681,18 +665,6 @@ class AdminTranslations
      */
     private function setTicketGatewaySettingsTranslations(): void
     {
-        $couponModeDescriptionsEnabled = sprintf(
-            '%s <b>%s</b>.',
-            __('Discount coupons is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
-        );
-
-        $couponModeDescriptionsDisabled = sprintf(
-            '%s <b>%s</b>.',
-            __('Discount coupons is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
-        );
-
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
@@ -727,10 +699,6 @@ class AdminTranslations
             'date_expiration_description'  => __('In how many days will cash payments expire.', 'woocommerce-mercadopago'),
             'advanced_title_title'         => __('Advanced settings', 'woocommerce-mercadopago'),
             'advanced_description_title'   => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
-            'coupon_mode_title'            => __('Discount coupons', 'woocommerce-mercadopago'),
-            'coupon_mode_subtitle'         => __('Will you offer discount coupons to customers who buy with Mercado Pago?', 'woocommerce-mercadopago'),
-            'coupon_mode_enabled'          => $couponModeDescriptionsEnabled,
-            'coupon_mode_disabled'         => $couponModeDescriptionsDisabled,
             'stock_reduce_title'           => __('Reduce inventory', 'woocommerce-mercadopago'),
             'stock_reduce_subtitle'        => __('Activates inventory reduction during the creation of an order, whether or not the final payment is credited. Disable this option to reduce it only when payments are approved.', 'woocommerce-mercadopago'),
             'stock_reduce_enabled'         => __('Reduce inventory is <b>enabled</b>.', 'woocommerce-mercadopago'),

@@ -4,8 +4,10 @@ namespace MercadoPago\Woocommerce;
 
 use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
+use MercadoPago\Woocommerce\Admin\Analytics;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Order\Metadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -22,6 +24,7 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
+use MercadoPago\Woocommerce\Hooks\Meta;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
@@ -71,6 +74,11 @@ class Dependencies
     public $options;
 
     /**
+     * @var Meta
+     */
+    public $meta;
+
+    /**
      * @var Plugin
      */
     public $plugin;
@@ -84,6 +92,11 @@ class Dependencies
      * @var Template
      */
     public $template;
+
+    /**
+     * @var Metadata
+     */
+    public $metadata;
 
     /**
      * @var Order
@@ -171,6 +184,11 @@ class Dependencies
     public $settings;
 
     /**
+     * @var Analytics
+     */
+    public $analytics;
+
+    /**
      * @var AdminTranslations
      */
     public $adminTranslations;
@@ -187,42 +205,45 @@ class Dependencies
     {
         global $woocommerce;
 
-        $this->woocommerce        = $woocommerce;
-        $this->cache              = new Cache();
-        $this->strings            = new Strings();
-        $this->admin              = new Admin();
-        $this->endpoints          = new Endpoints();
-        $this->options            = new Options();
-        $this->product            = new Product();
-        $this->template           = new Template();
-        $this->order              = $this->setOrder();
-        $this->requester          = $this->setRequester();
-        $this->store              = $this->setStore();
-        $this->seller             = $this->setSeller();
-        $this->country            = $this->setCountry();
-        $this->links              = $this->setLinks();
-        $this->url                = $this->setUrl();
-        $this->paymentMethods     = $this->setPaymentMethods();
-        $this->plugin             = $this->setPlugin();
-        $this->scripts            = $this->setScripts();
-        $this->checkout           = $this->setCheckout();
-        $this->adminTranslations  = $this->setAdminTranslations();
-        $this->storeTranslations  = $this->setStoreTranslations();
-        $this->gateway            = $this->setGateway();
-        $this->logs               = $this->setLogs();
-        $this->nonce              = $this->setNonce();
-        $this->currentUser        = $this->setCurrentUser();
-        $this->notices            = $this->setNotices();
-        $this->currency           = $this->setCurrency();
-        $this->settings           = $this->setSettings();
+        $this->woocommerce       = $woocommerce;
+        $this->cache             = new Cache();
+        $this->strings           = new Strings();
+        $this->admin             = new Admin();
+        $this->endpoints         = new Endpoints();
+        $this->options           = new Options();
+        $this->meta              = new Meta();
+        $this->product           = new Product();
+        $this->template          = new Template();
+        $this->metadata          = $this->setMetadata();
+        $this->requester         = $this->setRequester();
+        $this->store             = $this->setStore();
+        $this->seller            = $this->setSeller();
+        $this->country           = $this->setCountry();
+        $this->links             = $this->setLinks();
+        $this->url               = $this->setUrl();
+        $this->paymentMethods    = $this->setPaymentMethods();
+        $this->plugin            = $this->setPlugin();
+        $this->scripts           = $this->setScripts();
+        $this->checkout          = $this->setCheckout();
+        $this->adminTranslations = $this->setAdminTranslations();
+        $this->storeTranslations = $this->setStoreTranslations();
+        $this->order             = $this->setOrder();
+        $this->gateway           = $this->setGateway();
+        $this->logs              = $this->setLogs();
+        $this->nonce             = $this->setNonce();
+        $this->currentUser       = $this->setCurrentUser();
+        $this->notices           = $this->setNotices();
+        $this->analytics         = $this->setAnalytics();
+        $this->currency          = $this->setCurrency();
+        $this->settings          = $this->setSettings();
     }
 
     /**
-     * @return Order
+     * @return Metadata
      */
-    private function setOrder(): Order
+    private function setMetadata(): Metadata
     {
-        return new Order($this->template);
+        return new Metadata($this->meta);
     }
 
     /**
@@ -360,11 +381,27 @@ class Dependencies
     }
 
     /**
+     * @return Order
+     */
+    private function setOrder(): Order
+    {
+        return new Order($this->template, $this->metadata, $this->storeTranslations, $this->seller);
+    }
+
+    /**
      * @return Notices
      */
     private function setNotices(): Notices
     {
         return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links);
+    }
+
+    /**
+     * @return Analytics
+     */
+    private function setAnalytics(): Analytics
+    {
+        return new Analytics($this->options);
     }
 
     /**

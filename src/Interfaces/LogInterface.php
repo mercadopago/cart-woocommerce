@@ -11,9 +11,9 @@ interface LogInterface
     /**
      * Errors that do not require immediate action
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -22,9 +22,9 @@ interface LogInterface
     /**
      * Exceptional occurrences that are not errors
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -33,9 +33,9 @@ interface LogInterface
     /**
      * Normal but significant events
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -44,9 +44,9 @@ interface LogInterface
     /**
      * Interesting events
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -55,9 +55,9 @@ interface LogInterface
     /**
      * Detailed debug information
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */

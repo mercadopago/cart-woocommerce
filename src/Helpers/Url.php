@@ -36,6 +36,7 @@ final class Url
      *
      * @param string $path
      * @param string $extension
+     * @param bool $ignoreSuffix
      *
      * @return string
      */
