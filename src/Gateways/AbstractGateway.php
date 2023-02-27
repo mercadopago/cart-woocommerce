@@ -9,7 +9,6 @@ use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 
 abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
-
     /**
      * @const
      */
@@ -70,18 +69,30 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     protected $storeTranslations;
 
     /**
+     * @var array
+     */
+    protected $countryConfigs;
+
+    /**
+     * @var array
+     */
+    protected $links;
+
+    /**
      * Abstract Gateway constructor
      */
     public function __construct()
     {
         global $mercadopago;
-        $this->mercadopago       = $mercadopago;
 
-        $this->discount          = $this->getActionableValue('discount', 0);
-        $this->commission        = $this->getActionableValue('commission', 0);
-        $this->checkoutCountry   = $this->mercadopago->store->getCheckoutCountry();
-        $this->has_fields        = true;
-        $this->supports          = ['products', 'refunds'];
+        $this->mercadopago     = $mercadopago;
+        $this->discount        = $this->getActionableValue('discount', 0);
+        $this->commission      = $this->getActionableValue('commission', 0);
+        $this->checkoutCountry = $this->mercadopago->store->getCheckoutCountry();
+        $this->countryConfigs  = $this->mercadopago->country->getCountryConfigs();
+        $this->links           = $this->mercadopago->links->getLinks();
+        $this->has_fields      = true;
+        $this->supports        = ['products', 'refunds'];
 
         $this->loadResearchComponent();
     }
@@ -93,7 +104,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function payment_fields(): void
     {
-        return;
     }
 
     /**
@@ -105,30 +115,34 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         return true;
     }
+
     /**
      * Process payment and create woocommerce order
      *
-     * @param int $order_id
+     * @param $order_id
      *
      * @return array
+     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
+        global $woocommerce;
+
         $order              = wc_get_order($order_id);
-        $amount             = (float) WC()->cart->subtotal;
+        $amount             = $woocommerce->cart->get_subtotal();
         $shipping           = floatval($order->get_shipping_total());
         $discount           = ($amount - $shipping) * $this->discount / 100;
         $commission         = $amount * ($this->commission / 100);
         $isTestModeSelected = 'no' === $this->mercadopago->store->getCheckboxCheckoutTestMode() ? 'yes' : 'no';
 
         if (method_exists($order, 'update_meta_data')) {
-            $this->mercadopago->metaData->setIsProductionMode($order, $isTestModeSelected);
-            $this->mercadopago->metaData->setUsedGateway($order, get_class($this));
+            $this->mercadopago->metadata->setIsProductionModeData($order, $isTestModeSelected);
+            $this->mercadopago->metadata->setUsedGatewayData($order, get_class($this));
 
             if (!empty($this->discount)) {
                 $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
                 $feeText = $this->getFeeText($feeTranslation, 'discount', $discount);
-                $this->mercadopago->metaData->setDiscount($order, $feeText);
+                $this->mercadopago->metadata->setDiscountData($order, $feeText);
 
                 $order->set_total($amount - $discount);
             }
@@ -136,17 +150,17 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             if (!empty($this->commission)) {
                 $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
                 $feeText = $this->getFeeText($feeTranslation, 'commission', $commission);
-                $this->mercadopago->metaData->setCommission($order, $feeText);
+                $this->mercadopago->metadata->setCommissionData($order, $feeText);
             }
 
             $order->save();
         } else {
-            $this->mercadopago->metaData->setPostUsedGateway($order_id, get_class($this));
+            $this->mercadopago->metadata->setUsedGatewayPost($order_id, get_class($this));
 
             if (!empty($this->discount)) {
                 $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
                 $feeText = $this->getFeeText($feeTranslation, 'discount', $discount);
-                $this->mercadopago->metaData->setPostDiscount($order_id, $feeText);
+                $this->mercadopago->metadata->setDiscountPost($order_id, $feeText);
 
                 $order->set_total($amount - $discount);
             }
@@ -154,7 +168,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             if (!empty($this->commission)) {
                 $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
                 $feeText = $this->getFeeText($feeTranslation, 'commission', $commission);
-                $this->mercadopago->metaData->setPostCommission($order_id, $feeText);
+                $this->mercadopago->metadata->setCommissionPost($order_id, $feeText);
             }
         }
 
@@ -185,7 +199,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                     'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
                     'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
                     'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
-                    'button_url'  => $this->mercadopago->links->getLinks()['admin_settings_page'],
+                    'button_url'  => $this->links['admin_settings_page'],
                     'icon'        => 'mp-icon-badge-warning',
                     'color_card'  => 'mp-alert-color-error',
                     'size_card'   => 'mp-card-body-size',
@@ -266,7 +280,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             'admin/components/toggle-switch.php',
             [
                 'field_key'   => $this->get_field_key($key),
-                'field_value' => $this->getOption($key, $settings['default']),
+                'field_value' => $this->mercadopago->options->getMercadoPago($this, $key, $settings['default']),
                 'settings'    => $settings,
             ]
         );
@@ -325,8 +339,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             [
                 'field_key'          => $this->get_field_key($key),
                 'field_key_checkbox' => $this->get_field_key($key . '_checkbox'),
-                'field_value'        => $this->getOption($key),
-                'enabled'            => $this->getOption($key . '_checkbox'),
+                'field_value'        => $this->mercadopago->options->getMercadoPago($this, $key),
+                'enabled'            => $this->mercadopago->options->getMercadoPago($this, $key . '_checkbox'),
                 'custom_attributes'  => $this->get_custom_attribute_html($settings),
                 'settings'           => $settings,
             ]
@@ -404,22 +418,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function getActionableValue($optionName, $default): string
     {
-        $active = $this->getOption("{$optionName}_checkbox", false);
+        $active = $this->mercadopago->options->getMercadoPago($this, "{$optionName}_checkbox", false);
 
-        return $active ? $this->getOption($optionName, $default) : $default;
-    }
-
-    /**
-     * Get option
-     *
-     * @param $optionName
-     * @param string $default
-     *
-     * @return string
-     */
-    public function getOption($optionName, string $default = ''): string
-    {
-        return $this->get_option($optionName, $default);
+        return $active ? $this->mercadopago->options->getMercadoPago($this, $optionName, $default) : $default;
     }
 
     /**
@@ -433,7 +434,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function getFeeText(string $text, string $feeName, $feeValue): string
     {
-        return "{$text} {$this->{$feeName}}% / {$text} = {$feeValue}";
+        return "{$text} $this->{$feeName}% / {$text} = {$feeValue}";
     }
 
     /**
@@ -452,7 +453,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             $noticeMessage = $logMessage;
         }
 
-        $this->mercadopago->noticess->storeNotice($noticeMessage, 'error');
+        $this->mercadopago->notices->storeNotice($noticeMessage, 'error');
 
         return [
             'result'   => 'fail',
@@ -467,14 +468,15 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     protected function getAmount(): float
     {
+        global $woocommerce;
+
         $total      = $this->get_order_total();
-        $subtotal   = (float) WC()->cart->subtotal;
+        $subtotal   = $woocommerce->cart->get_subtotal();
         $tax        = $total - $subtotal;
-        $discount   = $subtotal * ( $this->discount / 100 );
-        $commission = $subtotal * ( $this->commission / 100 );
+        $discount   = $subtotal * ($this->discount / 100);
+        $commission = $subtotal * ($this->commission / 100);
         $amount     = $subtotal - $discount + $commission;
 
         return $amount + $tax;
     }
-
 }

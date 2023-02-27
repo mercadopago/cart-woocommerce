@@ -11,11 +11,6 @@ if (!defined('ABSPATH')) {
 class StoreTranslations
 {
     /**
-     * @var Links
-     */
-    private $links;
-
-    /**
      * @var array
      */
     public $commonCheckout = [];
@@ -49,6 +44,11 @@ class StoreTranslations
      * @var array
      */
     public $commonMessages = [];
+
+    /**
+     * @var array
+     */
+    public $links;
 
     /**
      * Translations constructor
@@ -233,7 +233,7 @@ class StoreTranslations
             'title_installment_cost'                              => __('Cost of installments', 'woocommerce-mercadopago'),
             'title_installment_total'                             => __('Total with installments', 'woocommerce-mercadopago'),
             'text_installments'                                   => __('installments of', 'woocommerce-mercadopago'),
-            'wallet_button_title'                                 => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
+            'wallet_button_order_receipt_title'                   => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
             'cancel_url_text'                                     => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
         ];
     }

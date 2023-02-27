@@ -5,11 +5,10 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\Analytics;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
-use MercadoPago\Woocommerce\Configs\MetaData;
+use MercadoPago\Woocommerce\Order\Metadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
-use MercadoPago\Woocommerce\Helpers\CompositeId;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
@@ -131,11 +130,6 @@ class WoocommerceMercadoPago
     public $template;
 
     /**
-     * @var CompositeId
-     */
-    public $compositeId;
-
-    /**
      * @var Order
      */
     public $order;
@@ -176,9 +170,9 @@ class WoocommerceMercadoPago
     public $store;
 
     /**
-     * @var MetaData
+     * @var Metadata
      */
-    public $metaData;
+    public $metadata;
 
     /**
      * @var Scripts
@@ -335,7 +329,7 @@ class WoocommerceMercadoPago
         // Configs
         $this->seller            = $dependencies->seller;
         $this->store             = $dependencies->store;
-        $this->metaData          = $dependencies->metaData;
+        $this->metadata          = $dependencies->metadata;
 
         // Helpers
         $this->cache             = $dependencies->cache;
@@ -346,7 +340,6 @@ class WoocommerceMercadoPago
         $this->requester         = $dependencies->requester;
         $this->strings           = $dependencies->strings;
         $this->url               = $dependencies->url;
-        $this->compositeId       = $dependencies->compositeId;
         $this->paymentMethods    = $dependencies->paymentMethods;
         $this->nonce             = $dependencies->nonce;
 

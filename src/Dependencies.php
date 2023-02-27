@@ -7,11 +7,10 @@ use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Analytics;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
-use MercadoPago\Woocommerce\Configs\MetaData;
+use MercadoPago\Woocommerce\Order\Metadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
-use MercadoPago\Woocommerce\Helpers\CompositeId;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
@@ -95,14 +94,9 @@ class Dependencies
     public $template;
 
     /**
-     * @var CompositeId
+     * @var Metadata
      */
-    public $compositeId;
-
-    /**
-     * @var MetaData
-     */
-    public $metaData;
+    public $metadata;
 
     /**
      * @var Order
@@ -220,8 +214,7 @@ class Dependencies
         $this->meta              = new Meta();
         $this->product           = new Product();
         $this->template          = new Template();
-        $this->compositeId       = new CompositeId();
-        $this->metaData          = $this->setMetaData();
+        $this->metadata          = $this->setMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();
         $this->seller            = $this->setSeller();
@@ -246,11 +239,11 @@ class Dependencies
     }
 
     /**
-     * @return MetaData
+     * @return Metadata
      */
-    private function setMetaData(): MetaData
+    private function setMetadata(): Metadata
     {
-        return new MetaData($this->meta);
+        return new Metadata($this->meta);
     }
 
     /**
@@ -392,7 +385,7 @@ class Dependencies
      */
     private function setOrder(): Order
     {
-        return new Order($this->template, $this->metaData, $this->storeTranslations, $this->seller);
+        return new Order($this->template, $this->metadata, $this->storeTranslations, $this->seller);
     }
 
     /**
@@ -408,7 +401,7 @@ class Dependencies
      */
     private function setAnalytics(): Analytics
     {
-        return new Analytics($this->seller, $this->options);
+        return new Analytics($this->options);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use MercadoPago\Woocommerce\Configs\MetaData;
+use MercadoPago\Woocommerce\Order\Metadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
@@ -19,9 +19,9 @@ class Order
     private $template;
 
     /**
-     * @var MetaData
+     * @var Metadata
      */
-    private $metaData;
+    private $metadata;
 
     /**
      * @var StoreTranslations
@@ -36,10 +36,10 @@ class Order
     /**
      * Order constructor
      */
-    public function __construct(Template $template, MetaData $metaData, StoreTranslations $storeTranslations, Seller $seller)
+    public function __construct(Template $template, Metadata $metadata, StoreTranslations $storeTranslations, Seller $seller)
     {
         $this->template          = $template;
-        $this->metaData          = $metaData;
+        $this->metadata          = $metadata;
         $this->storeTranslations = $storeTranslations;
         $this->seller            = $seller;
     }
@@ -58,7 +58,7 @@ class Order
     public function registerMetaBox(string $id, string $title, string $name, array $args, string $path): void
     {
         add_action('add_meta_boxes_shop_order', function () use ($id, $title, $name, $args, $path) {
-            $this->addMetaBox($id, $title, $name, $args, $path);
+            $this->addMetaBox($id, $title, $name, $args);
         });
     }
 
@@ -178,10 +178,10 @@ class Order
         $transactionAmount = (float) $data['transaction_amount'];
         $totalPaidAmount   = (float) $data['transaction_details']['total_paid_amount'];
 
-        $this->metaData->addInstallments($order, $installments);
-        $this->metaData->addTransactionDetails($order, $installmentAmount);
-        $this->metaData->addTransactionAmount($order, $transactionAmount);
-        $this->metaData->addTotalPaidAmount($order, $totalPaidAmount);
+        $this->metadata->addInstallmentsData($order, $installments);
+        $this->metadata->addTransactionDetailsData($order, $installmentAmount);
+        $this->metadata->addTransactionAmountData($order, $transactionAmount);
+        $this->metadata->addTotalPaidAmountData($order, $totalPaidAmount);
 
         $order->save();
     }
@@ -189,21 +189,20 @@ class Order
     /**
      * Set ticket metadata in the order
      *
-     * @param AbstractGateway $gateway
      * @param \WC_Order $order
      * @param $data
      *
      * @return void
      */
-    public function setTicketMetadata(AbstractGateway $gateway, \WC_Order $order, $data): void
+    public function setTicketMetadata(\WC_Order $order, $data): void
     {
         $externalResourceUrl = $data['transaction_details']['external_resource_url'];
 
         if (method_exists($order, 'update_meta_data')) {
-            $this->metaData->setTicketTransactionDetails($order, $externalResourceUrl);
+            $this->metadata->setTicketTransactionDetailsData($order, $externalResourceUrl);
             $order->save();
         } else {
-            $this->metaData->setTicketTransactionDetails($order->get_id(), $externalResourceUrl);
+            $this->metadata->setTicketTransactionDetailsPost($order->get_id(), $externalResourceUrl);
         }
     }
 
@@ -225,18 +224,19 @@ class Order
         $expiration        = $this->seller->getCheckoutDateExpirationPix($gateway, $defaultValue);
 
         if (method_exists($order, 'update_meta_data')) {
-            $this->metaData->setTransactionAmount($order, $transactionAmount);
-            $this->metaData->setPostPixQrBase64($order, $qrCodeBase64);
-            $this->metaData->setPixQrCode($order, $qrCode);
-            $this->metaData->setPixExpirationDate($order, $expiration);
-            $this->metaData->setPixOn($order, 1);
+            $this->metadata->setTransactionAmountData($order, $transactionAmount);
+            $this->metadata->setPixQrBase64Data($order, $qrCodeBase64);
+            $this->metadata->setPixQrCodeData($order, $qrCode);
+            $this->metadata->setPixExpirationDateData($order, $expiration);
+            $this->metadata->setPixExpirationDateData($order, $expiration);
+            $this->metadata->setPixOnData($order, 1);
             $order->save();
         } else {
-            $this->metaData->setPostTransactionAmount($order->get_id(), $transactionAmount);
-            $this->metaData->setPostPixQrBase64($order->get_id(), $qrCodeBase64);
-            $this->metaData->setPostPixQrCode($order->get_id(), $qrCode);
-            $this->metaData->setPostPixExpirationDate($order->get_id(), $expiration);
-            $this->metaData->setPostPixOn($order->get_id(), 1);
+            $this->metadata->setTransactionAmountPost($order->get_id(), $transactionAmount);
+            $this->metadata->setPixQrBase64Post($order->get_id(), $qrCodeBase64);
+            $this->metadata->setPixQrCodePost($order->get_id(), $qrCode);
+            $this->metadata->setPixExpirationDatePost($order->get_id(), $expiration);
+            $this->metadata->setPixOnPost($order->get_id(), 1);
         }
     }
 
@@ -250,7 +250,7 @@ class Order
      *
      * @return void
      */
-    public function addOrderNote(\WC_Order $order, string $description, $isCustomerNote = 0, $addedByUser = false)
+    public function addOrderNote(\WC_Order $order, string $description, int $isCustomerNote = 0, bool $addedByUser = false)
     {
         $order->add_order_note($description, $isCustomerNote, $addedByUser);
     }

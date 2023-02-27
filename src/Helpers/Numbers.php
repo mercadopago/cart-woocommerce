@@ -35,6 +35,6 @@ final class Numbers
         if ('COP' === $currency || 'CLP' === $currency) {
             return Numbers::format($amount * $ratio, 0);
         }
-        return Numbers::format($amount * $ratio * 100, 2) / 100;
+        return Numbers::format($amount * $ratio * 100) / 100;
     }
 }

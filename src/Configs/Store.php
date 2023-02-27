@@ -92,11 +92,13 @@ class Store
     }
 
     /**
+     * @param string $default
+     *
      * @return string
      */
-    public function getStoreName(): string
+    public function getStoreName(string $default = ''): string
     {
-        return $this->options->get(self::STORE_NAME, '');
+        return $this->options->get(self::STORE_NAME, $default);
     }
 
     /**

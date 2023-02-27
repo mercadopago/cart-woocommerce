@@ -2,7 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
-use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Hooks\Options;
 
 if (!defined('ABSPATH')) {
@@ -12,11 +11,6 @@ if (!defined('ABSPATH')) {
 class Analytics
 {
     /**
-     * @var Seller
-     */
-    private $seller;
-
-    /**
      * @var Options
      */
     private $options;
@@ -24,9 +18,8 @@ class Analytics
     /**
      * Analytics constructor
      */
-    public function __construct(Seller $seller, Options $options)
+    public function __construct(Options $options)
     {
-        $this->seller  = $seller;
         $this->options = $options;
     }
 

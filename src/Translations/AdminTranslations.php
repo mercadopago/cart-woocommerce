@@ -96,7 +96,7 @@ class AdminTranslations
     public $updateStore = [];
 
     /**
-     * @var Links
+     * @var array
      */
     private $links;
 

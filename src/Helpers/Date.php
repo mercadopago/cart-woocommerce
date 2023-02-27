@@ -20,5 +20,7 @@ final class Date
         if (!$value) {
             return gmdate('Y-m-d\TH:i:s.000O', strtotime('+' . $value));
         }
+
+        return '';
     }
 }

@@ -16,7 +16,7 @@ class CustomTransaction extends AbstractPaymentTransaction
      */
     public function __construct(AbstractGateway $gateway, $order, $checkout)
     {
-        parent::constructor($gateway, $order, $checkout);
+        parent::__construct($gateway, $order, $checkout);
 
         $this->transaction->payment_method_id  = $this->checkout['paymentMethodId'];
         $this->transaction->installments       = (int) $this->checkout['installments'];

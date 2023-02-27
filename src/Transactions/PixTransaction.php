@@ -17,7 +17,7 @@ class PixTransaction extends AbstractPaymentTransaction
      */
     public function __construct(AbstractGateway $gateway, $order, $checkout)
     {
-        parent::constructor($gateway, $order, $checkout);
+        parent::__construct($gateway, $order, $checkout);
 
         $this->transaction->payment_method_id          = self::ID;
         $this->transaction->date_of_expiration         = Date::format($this->getExpirationDate());
@@ -49,11 +49,11 @@ class PixTransaction extends AbstractPaymentTransaction
 
         if (1 === strlen($expirationDate) && '1' === $expirationDate) {
             $newDateExpiration = '24 hours';
-            $this->gateway->update_option('checkout_pix_date_expiration', $newDateExpiration);
+            $this->mercadopago->options->setMercadoPago($this->gateway, 'checkout_pix_date_expiration', $newDateExpiration);
             return $newDateExpiration;
         } elseif (1 === strlen($expirationDate)) {
             $newDateExpiration = $expirationDate . ' days';
-            $this->gateway->update_option('checkout_pix_date_expiration', $newDateExpiration);
+            $this->mercadopago->options->setMercadoPago($this->gateway, 'checkout_pix_date_expiration', $newDateExpiration);
             return $newDateExpiration;
         }
 

@@ -31,12 +31,12 @@ class Options
     /**
      * Get option
      *
-     * @param string       $optionName
-     * @param mixed        $default
+     * @param string $optionName
+     * @param mixed $default
      *
      * @return mixed
      */
-    public function get(string $optionName, $default = '')
+    public function get(string $optionName, $default = false)
     {
         return get_option($optionName, $default);
     }
@@ -73,5 +73,20 @@ class Options
         $option = $gateway->get_option($optionName, $default);
 
         return !$option ? $option : $this->get($optionName, $default);
+    }
+
+
+    /**
+     * Set Mercado Pago gateway option
+     *
+     * @param AbstractGateway $gateway
+     * @param string $optionName
+     * @param $value
+     *
+     * @return bool
+     */
+    public function setMercadoPago(AbstractGateway $gateway, string $optionName, $value): bool
+    {
+        return $gateway->update_option($optionName, $value);
     }
 }

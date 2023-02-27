@@ -12,81 +12,79 @@ class Meta
      * Get meta
      *
      * @param $object
-     * @param string $metaName
+     * @param string $metaKey
+     * @param bool $single
+     *
      * @return mixed|string
      */
-    public function get($object, string $metaName)
+    public function get($object, string $metaKey, bool $single = true)
     {
-        return $object->get_meta($metaName);
+        return $object->get_meta($metaKey, $single);
     }
 
     /**
      * Get post meta
      *
-     * @param $object
-     * @param string $metaName
-     * @param string $default
+     * @param int $postId
+     * @param string $metaKey
+     * @param bool $single
      *
      * @return mixed|string
      */
-    public function getPost($object, string $metaName, string $default = '')
+    public function getPost(int $postId, string $metaKey, bool $single = false)
     {
-        return get_post_meta($object, $metaName, $default);
+        return get_post_meta($postId, $metaKey, $single);
     }
 
     /**
-     * Set post meta
+     * Update post meta
      *
-     * @param $object
-     * @param string $metaName
-     * @param mixed $value
+     * @param int $postId
+     * @param string $metaKey
+     * @param $metaValue
+     * @param string $prevValue
      *
-     * @return bool
+     * @return bool|int
      */
-    public function setPost($object, string $metaName, $value): bool
+    public function setPost(int $postId, string $metaKey, $metaValue, string $prevValue = '')
     {
-        return update_post_meta($object, $metaName, $value);
+        return update_post_meta($postId, $metaKey, $metaValue, $prevValue);
     }
 
     /**
      * Add metadata
      *
      * @param $object
-     * @param string $metadataName
-     * @param mixed|string $default
-     *
-     * @return mixed|string
+     * @param string $metaKey
+     * @param string|array $value
+     * @param bool $unique
      */
-    public function addData($object, string $metadataName, string $default = '')
+    public function addData($object, string $metaKey, $value, bool $unique = false): void
     {
-        return $object->add_meta_data($metadataName, $default);
+        $object->add_meta_data($metaKey, $value, $unique);
     }
 
     /**
      * Get metadata
      *
-     * @param $object
-     * @param string $metadataName
-     * @param mixed|string $default
+     * @var $object
      *
-     * @return mixed|string
+     * @return array
      */
-    public function getData($object, string $metadataName, string $default = '')
+    public function getData($object): array
     {
-        return $object->get_meta_data($metadataName, $default);
+        return $object->get_meta_data();
     }
 
     /**
      * Set metadata
      *
      * @param $object
-     * @param string $metadataName
-     * @param mixed $value
-     *
-     * @return bool
+     * @param string $metaKey
+     * @param string|array $value
      */
-    public function setData($object, string $metadataName, $value): bool
+    public function setData($object, string $metaKey, $value): void
     {
-        return $object->update_meta_data($metadataName, $value);
+        $object->update_meta_data($metaKey, $value);
     }
 }

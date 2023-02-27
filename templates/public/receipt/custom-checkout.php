@@ -30,8 +30,8 @@ if (!defined('ABSPATH')) {
 </script>
 
 <a id="submit-payment" href="#" onclick="checkout.open()" class="button alt">
-<?= esc_html($wallet_button_title); ?>
+    <?= esc_html($wallet_button_title); ?>
 </a>
 <a class="button cancel" href="<?= esc_url($cancel_url); ?>">
-<?= esc_html($cancel_url_text); ?>
+    <?= esc_html($cancel_url_text); ?>
 </a>

@@ -8,7 +8,7 @@ use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
-use MercadoPago\Woocommerce;
+use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 abstract class AbstractTransaction
 {
@@ -79,15 +79,15 @@ abstract class AbstractTransaction
     {
         global $mercadopago;
 
-        $this->mercadopago    = $mercadopago;
-        $this->sdk            = $this->getSdkInstance();
-        $this->gateway        = $gateway;
-        $this->order          = $order;
-        $this->checkout       = $checkout;
+        $this->mercadopago = $mercadopago;
+        $this->sdk         = $this->getSdkInstance();
+        $this->gateway     = $gateway;
+        $this->order       = $order;
+        $this->checkout    = $checkout;
 
         $this->orderTotal     = 0;
         $this->ratio          = $this->mercadopago->currency->getRatio($gateway);
-        $this->countryConfigs  = $this->mercadopago->country->getCountryConfigs();
+        $this->countryConfigs = $this->mercadopago->country->getCountryConfigs();
     }
 
     /**
@@ -98,7 +98,7 @@ abstract class AbstractTransaction
         $accessToken  = $this->mercadopago->seller->getCredentialsAccessToken();
         $platformId   = MP_PLATFORM_ID;
         $productId    = Device::getDeviceProductId();
-        $integratorId = $this->mercadopago->store->getIntegratorId;
+        $integratorId = $this->mercadopago->store->getIntegratorId();
 
         return new Sdk($accessToken, $platformId, $productId, $integratorId);
     }
@@ -112,14 +112,14 @@ abstract class AbstractTransaction
      */
     public function getTransaction(string $transactionType = 'Preference')
     {
-        $transaction_log = clone $this->transaction;
+        $transactionClone = clone $this->transaction;
 
-        if (isset($transaction_log->token)) {
-            unset($transaction_log->token);
+        if (isset($transactionClone->token)) {
+            unset($transactionClone->token);
         }
 
         $this->mercadopago->logs->file->info(
-            $transactionType . ': ' . wp_json_encode($transaction_log, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            $transactionType . ': ' . wp_json_encode($transactionClone, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
             __FUNCTION__
         );
 
@@ -227,10 +227,10 @@ abstract class AbstractTransaction
             $this->getObjectAttributeValue($this->order, 'get_shipping_state', 'shipping_state');
         $shipments->receiverAddress->street_name =
             "{$this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1')} " .
-            "$this->getObjectAttributeValue($this->order, 'get_billing_address_2', 'billing_address_2')} " .
-            "$this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city')} " .
-            "$this->getObjectAttributeValue($this->order, 'get_billing_state', 'billing_state')} " .
-            "$this->getObjectAttributeValue($this->order, 'get_billing_country', 'billing_country')}";
+            "{$this->getObjectAttributeValue($this->order, 'get_billing_address_2', 'billing_address_2')} " .
+            "{$this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city')} " .
+            "{$this->getObjectAttributeValue($this->order, 'get_billing_state', 'billing_state')} " .
+            "{$this->getObjectAttributeValue($this->order, 'get_billing_country', 'billing_country')}";
         $shipments->receiverAddress->zip_code    =
             $this->getObjectAttributeValue($this->order, 'get_shipping_postcode', 'shipping_postcode');
     }
@@ -250,15 +250,15 @@ abstract class AbstractTransaction
                     $title   = $this->getObjectAttributeValue($product, 'get_name', 'post->post_title');
                     $content = $this->getObjectAttributeValue($product, 'get_description', 'post->post_content');
                     $amount  = $this->getItemAmount($orderItem);
-                    $amount  = Numbers::format($amount, 2);
+                    $amount  = Numbers::format($amount);
 
-                    $this->orderTotal += Numbers::format($amount, 2);
+                    $this->orderTotal += Numbers::format($amount);
                     $this->listOfItems[] = $title . ' x ' . $orderItem['qty'];
 
                     $item = [
                         'id'          => $orderItem['product_id'],
-                        'title'       => "{$title} x {$orderItem['qty']}",
-                        'description' => $this->getItemDescription($content),
+                        'title'       => "$title x {$orderItem['qty']}",
+                        'description' => $this->mercadopago->strings->sanitizeFileName($content),
                         'picture_url' => $this->getItemImage($product),
                         'category_id' => $this->mercadopago->store->getStoreCategory('others'),
                         'quantity'    => 1,
@@ -308,8 +308,8 @@ abstract class AbstractTransaction
                 $this->orderTotal += Numbers::format($amount);
 
                 $item = [
-                    'title'       => $this->getItemDescription($fee['name']),
-                    'description' => $this->getItemDescription($fee['name']),
+                    'title'       => $this->mercadopago->strings->sanitizeFileName($fee['name']),
+                    'description' => $this->mercadopago->strings->sanitizeFileName($fee['name']),
                     'category_id' => $this->mercadopago->store->getStoreCategory('others'),
                     'quantity'    => 1,
                     'unit_price'  => Numbers::format($amount),
@@ -335,24 +335,6 @@ abstract class AbstractTransaction
         $amount     = $lineAmount - $discount + $commission;
 
         return Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
-    }
-
-    /**
-     * Get item description
-     *
-     * @param $content
-     *
-     * @return string
-     */
-    public function getItemDescription($content): string
-    {
-        return sanitize_file_name(
-            html_entity_decode(
-                strlen($content) > 230
-                    ? substr($content, 0, 230) . '...'
-                    : $content
-            )
-        );
     }
 
     /**

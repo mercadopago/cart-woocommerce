@@ -35,7 +35,7 @@ final class Images
     {
         header('Content-type: image/png');
 
-        $errorImage = "{${dirname(__FILE__)}}/../../assets/images/{$imageName}.png";
+        $errorImage = "{${dirname(__FILE__)}}/../../assets/images/$imageName.png";
         $image = imagecreatefrompng($errorImage);
         $image = imagescale($image, 447);
         imagepng($image);

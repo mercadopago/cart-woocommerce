@@ -11,14 +11,13 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      */
     public function __construct(AbstractGateway $gateway, $order)
     {
-        parent::constructor($gateway, $order);
+        parent::__construct($gateway, $order);
 
         $this->transaction = $this->sdk->getPreferenceInstance();
 
         $this->setCommonTransaction();
         $this->setPayerTransaction();
         $this->setBackUrlsTransaction();
-        $this->setPaymentMethodsTransaction();
         $this->setAutoReturnTransaction();
         $this->setShipmentsTransaction($this->transaction->shipments);
         $this->setItemsTransaction($this->transaction->items);
@@ -43,7 +42,10 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
                 __FUNCTION__
             );
 
-            return ($this->sandbox) ? $data['sandbox_init_point'] : $data['init_point'];
+            $checkboxCheckoutTestMode = $this->mercadopago->store->getCheckboxCheckoutTestMode();
+            $testMode = ($checkboxCheckoutTestMode === 'yes');
+
+            return ($testMode) ? $data['sandbox_init_point'] : $data['init_point'];
         } catch (\Exception $e) {
             $this->mercadopago->logs->file->error(
                 'preference creation failed with error: ' . $e->getMessage(),
@@ -97,54 +99,19 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      */
     public function setBackUrlsTransaction()
     {
-        $successUrl = $this->mercadopago->options->getMercadoPago($this->gateway, 'success_url', '');
-        $failureUrl = $this->mercadopago->options->getMercadoPago($this->gateway, 'failure_url', '');
-        $pendingUrl = $this->mercadopago->options->getMercadoPago($this->gateway, 'pending_url', '');
+        $successUrl = $this->mercadopago->options->getMercadoPago($this->gateway, 'success_url');
+        $failureUrl = $this->mercadopago->options->getMercadoPago($this->gateway, 'failure_url');
+        $pendingUrl = $this->mercadopago->options->getMercadoPago($this->gateway, 'pending_url');
 
         $this->transaction->back_urls->success = $successUrl
-            ? $this->mercadopago->strings->fixUrlAmpersand(get_return_url($this->order))
+            ? $this->mercadopago->strings->fixUrlAmpersand($this->get_return_url($this->order))
             : $successUrl;
         $this->transaction->back_urls->failure = $failureUrl
             ? $this->mercadopago->strings->fixUrlAmpersand($this->order->get_cancel_order_url())
             : $failureUrl;
         $this->transaction->back_urls->pending = $pendingUrl
-            ? $this->mercadopago->strings->fixUrlAmpersand(get_return_url($this->order))
+            ? $this->mercadopago->strings->fixUrlAmpersand($this->get_return_url($this->order))
             : $pendingUrl;
-    }
-
-    /**
-     * Set payment methods
-     */
-    public function setPaymentMethodsTransaction()
-    {
-        $this->setInstallmentsTransaction();
-        $this->setExcludedPaymentMethodsTransaction();
-    }
-
-    /**
-     * Set installments
-     */
-    public function setInstallmentsTransaction()
-    {
-        $installments = (int) $this->gateway->installments;
-
-        $this->transaction->payment_methods->installments = (0 === $installments) ? 12 : $installments;
-    }
-
-    /**
-     * Set excluded payment methods
-     */
-    public function setExcludedPaymentMethodsTransaction()
-    {
-        if (count($this->gateway->exPayments) !== 0) {
-            foreach ($this->gateway->exPayments as $excluded) {
-                $entity = [
-                    'id' => $excluded,
-                ];
-
-                $this->transaction->payment_methods->excluded_payment_methods->add($entity);
-            }
-        }
     }
 
     /**

@@ -12,7 +12,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
      */
     public function __construct(AbstractGateway $gateway, $order, $checkout)
     {
-        parent::constructor($gateway, $order, $checkout);
+        parent::__construct($gateway, $order, $checkout);
 
         $this->transaction = $this->sdk->getPaymentInstance();
 
@@ -105,13 +105,13 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $payer = $this->transaction->payer;
 
         $payer->email                  = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_email', 'get_billing_email');
-        $payer->first_name             = $this->getOrderAttributeValue('billing_first_name');
-        $payer->last_name              = $this->getOrderAttributeValue('billing_last_name');
-        $payer->address->street_name   = $this->getOrderAttributeValue('billing_address_1');
+        $payer->first_name             = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_first_name', 'get_billing_first_name');
+        $payer->last_name              = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_last_name', 'get_billing_last_name');
+        $payer->address->street_name   = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_address_1', 'get_billing_address_1');
         $payer->address->street_number = '';
         $payer->address->neighborhood  = '';
-        $payer->address->city          = $this->getOrderAttributeValue('billing_city');
-        $payer->address->federal_unit  = $this->getOrderAttributeValue('billing_state');
-        $payer->address->zip_code      = $this->getOrderAttributeValue('billing_postcode');
+        $payer->address->city          = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_city', 'get_billing_billing_city');
+        $payer->address->federal_unit  = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_state', 'get_billing_state');
+        $payer->address->zip_code      = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_postcode', 'get_billing_postcode');
     }
 }

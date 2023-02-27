@@ -22,6 +22,24 @@ final class Strings
     }
 
     /**
+     * Sanitizes a filename, replacing whitespace with dashes.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public function sanitizeFileName(string $name): string
+    {
+        return sanitize_file_name(
+            html_entity_decode(
+                strlen($name) > 230
+                 ? substr($name, 0, 230) . '...'
+                 : $name
+            )
+        );
+    }
+
+    /**
      * Performs partial or strict comparison of two strings
      *
      * @param string $expected

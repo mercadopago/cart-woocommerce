@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Date;
 
 class TicketTransaction extends AbstractPaymentTransaction
 {
@@ -30,11 +31,11 @@ class TicketTransaction extends AbstractPaymentTransaction
      */
     public function __construct(AbstractGateway $gateway, $order, $checkout)
     {
-        parent::constructor($gateway, $order, $checkout);
+        parent::__construct($gateway, $order, $checkout);
 
         $this->paymentMethodId = $this->checkout['paymentMethodId'];
-        $this->paymentPlaceId  = $this->mercadopago->compositeId->getPaymentPlaceId($this->paymentMethodId);
-        $this->paymentMethodId = $this->mercadopago->compositeId->getPaymentMethodId($this->paymentMethodId);
+        $this->paymentPlaceId  = $this->mercadopago->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
+        $this->paymentMethodId = $this->mercadopago->paymentMethods->getPaymentMethodId($this->paymentMethodId);
 
         $this->transaction->payment_method_id  = $this->paymentMethodId;
         $this->transaction->external_reference = $this->getExternalReference();
@@ -98,14 +99,14 @@ class TicketTransaction extends AbstractPaymentTransaction
     {
         parent::setPayerTransaction();
 
-        $payer         = $this->transaction->payer;
+        $payer = $this->transaction->payer;
 
-        if ('BRL' === $this->countryConfig['currency']) {
+        if ('BRL' === $this->countryConfigs['currency']) {
             $payer->identification->type   = 14 === strlen($this->checkout['docNumber']) ? 'CPF' : 'CNPJ';
             $payer->identification->number = $this->checkout['docNumber'];
         }
 
-        if ('UYU' === $this->countryConfig['currency']) {
+        if ('UYU' === $this->countryConfigs['currency']) {
             $payer->identification->type   = $this->checkout['docType'];
             $payer->identification->number = $this->checkout['docNumber'];
         }
