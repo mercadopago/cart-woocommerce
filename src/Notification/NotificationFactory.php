@@ -14,8 +14,6 @@ class NotificationFactory
     {
         global $mercadopago;
 
-        echo(var_dump($data));
-
         $topic  = $data['topic'];
         $type   = $data['type'];
         $source = $data['source_news'];

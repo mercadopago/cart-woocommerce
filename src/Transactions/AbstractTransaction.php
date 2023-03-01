@@ -135,10 +135,28 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 
         $this->transaction->binary_mode          = $this->getBinaryMode();
         $this->transaction->external_reference   = $this->getExternalReference();
-        $this->transaction->notification_url     = 'https://pyppayments.requestcatcher.com/notifications'; // @todo: add notification url
+        $this->transaction->notification_url     = $this->getNotificationUrl();
         $this->transaction->statement_descriptor = $statementDescriptor;
         $this->transaction->metadata             = $this->getInternalMetadata();
     }
+
+	/**
+	 * Get notification url
+	 *
+	 * @return string|void
+	 */
+	private function getNotificationUrl() {
+		if (!strrpos(get_site_url(), 'localhost')) {
+			$notificationUrl = $this->mercadopago->store->getCustomDomain();
+
+			// Check if we have a custom URL.
+			if ( empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false ) {
+				return WC()->api_request_url($this->gateway->id);
+			} else {
+                return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway->id . '/'));
+			}
+		}
+	}
 
     /**
      * Get binary mode
