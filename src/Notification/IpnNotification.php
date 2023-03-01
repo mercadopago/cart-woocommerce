@@ -44,11 +44,11 @@ class IpnNotification extends AbstractNotification
 
         if (!isset( $this->data['id']) || ! isset($this->data['topic'])) {
             $this->logs->file->error('No ID or TOPIC param in Request IPN.', __FUNCTION__);
-            $this->setResponse( 422, null, __( 'No ID or TOPIC param in Request IPN', 'woocommerce-mercadopago' ) );
+            $this->setResponse( 422, null, 'No ID or TOPIC param in Request IPN');
         }
 
         if ('payment' === $this->data['topic'] || 'merchant_order' !== $this->data['topic']) {
-            $this->setResponse( 200, null, __( 'Discarded notification. This notification is already processed as webhook-payment.', 'woocommerce-mercadopago' ) );
+            $this->setResponse( 200, null, 'Discarded notification. This notification is already processed as webhook-payment.');
         }
 
         if ('merchant_order' === $this->data['topic']) {
@@ -59,13 +59,13 @@ class IpnNotification extends AbstractNotification
 
             if (200 !== $ipnInfo->getStatus() && 201 !== $ipnInfo->getStatus()) {
                 $this->logs->file->error('IPN merchant_order not found ' . wp_json_encode($ipnInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), __FUNCTION__);
-                $this->setResponse( 422, null, __( 'IPN merchant_order not found', 'woocommerce-mercadopago' ) );
+                $this->setResponse( 422, null, 'IPN merchant_order not found');
             }
 
             $payments = $ipnInfo->getData()['payments'];
             if (count($payments) < 1) {
                 $this->logs->file->error('Not found Payments into Merchant_Order', __FUNCTION__);
-                $this->setResponse( 422, null, __( 'Not found Payments into Merchant_Order', 'woocommerce-mercadopago' ) );
+                $this->setResponse( 422, null, 'Not found Payments into Merchant_Order');
             }
 
             $ipnInfo->getData()['ipn_type'] = 'merchant_order';
@@ -137,13 +137,13 @@ class IpnNotification extends AbstractNotification
 
         $this->updateMeta($order, '_used_gateway', 'WC_WooMercadoPago_Basic_Gateway');
         if (!empty($data['payer']['email'])) {
-            $this->updateMeta( $order, __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
+            $this->updateMeta($order, 'Buyer email', $data['payer']['email']);
         }
         if (!empty($data['payment_type_id'])) {
-            $this->updateMeta( $order, __( 'Payment type', 'woocommerce-mercadopago' ), $data['payment_type_id'] );
+            $this->updateMeta($order, 'Payment type', $data['payment_type_id']);
         }
         if (!empty($data['payment_method_id'])) {
-            $this->updateMeta( $order, __( 'Payment method', 'woocommerce-mercadopago' ), $data['payment_method_id'] );
+            $this->updateMeta($order, 'Payment method', $data['payment_method_id']);
         }
         if (!empty($data['payments'])) {
             $paymentIds = [];
@@ -160,8 +160,8 @@ class IpnNotification extends AbstractNotification
                         ']/[Refund ' . $payment['amount_refunded'] . ']'
                 );
             }
-            if ( count( $paymentIds ) > 0 ) {
-                $this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $payment_ids));
+            if ( count($paymentIds) > 0 ) {
+                $this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $paymentIds));
             }
         }
         $order->save();

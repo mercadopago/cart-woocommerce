@@ -102,7 +102,7 @@ class CoreNotification extends AbstractNotification
 		$this->updateMeta($order, '_used_gateway', get_class( $this));
 
 		if (!empty( $data['payer']['email'])) {
-			$this->updateMeta($order, __('Buyer email', 'woocommerce-mercadopago'), $data['payer']['email']);
+			$this->updateMeta($order, 'Buyer email', $data['payer']['email']);
 		}
 
 		if (!empty( $data['payments_details'])) {

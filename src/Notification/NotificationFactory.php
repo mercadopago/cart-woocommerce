@@ -14,10 +14,13 @@ class NotificationFactory
     {
         global $mercadopago;
 
+        echo(var_dump($data));
+
         $topic  = $data['topic'];
+        $type   = $data['type'];
         $source = $data['source_news'];
 
-        if ('payment' === $topic && 'webhook' == $source) {
+        if ('payment' === $type && 'webhooks' == $source) {
             return new WebhookNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->seller, $mercadopago->store, $mercadopago->requester, $data);
         }
         
