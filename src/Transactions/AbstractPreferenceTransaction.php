@@ -30,7 +30,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      *
      * @return bool
      */
-    public function createPreference(): bool
+    public function createPreference(): string
     {
         $preference = $this->getTransaction();
 
@@ -103,14 +103,14 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         $failureUrl = $this->mercadopago->options->getMercadoPago($this->gateway, 'failure_url');
         $pendingUrl = $this->mercadopago->options->getMercadoPago($this->gateway, 'pending_url');
 
-        $this->transaction->back_urls->success = $successUrl
-            ? $this->mercadopago->strings->fixUrlAmpersand($this->get_return_url($this->order))
+        $this->transaction->back_urls->success = empty($successUrl)
+            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->get_return_url($this->order)))
             : $successUrl;
-        $this->transaction->back_urls->failure = $failureUrl
-            ? $this->mercadopago->strings->fixUrlAmpersand($this->order->get_cancel_order_url())
+        $this->transaction->back_urls->failure = empty($failureUrl)
+            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->order->get_cancel_order_url()))
             : $failureUrl;
-        $this->transaction->back_urls->pending = $pendingUrl
-            ? $this->mercadopago->strings->fixUrlAmpersand($this->get_return_url($this->order))
+        $this->transaction->back_urls->pending = empty($pendingUrl)
+            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->get_return_url($this->order)))
             : $pendingUrl;
     }
 

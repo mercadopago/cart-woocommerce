@@ -87,7 +87,7 @@ class PixGateway extends AbstractGateway
         ) {
             $paymentMethodPix = $this->mercadopago->seller->getCheckoutPixPaymentMethods();
 
-            if (empty($paymentMethodPix) || !in_array('pix', $paymentMethodPix['pix'], true)) {
+            if (empty($paymentMethodPix)) {
                 if ($this->mercadopago->url->getCurrentSection() == $this->id) {
                     $this->mercadopago->notices->adminNoticeMissPix();
                 }
@@ -355,22 +355,6 @@ class PixGateway extends AbstractGateway
     }
 
     /**
-     * Receive gateway webhook notifications
-     *
-     * @return void
-     */
-    public function webhook(): void
-    {
-        $status = 200;
-        $response = [
-            'status'  => $status,
-            'message' => 'Webhook handled successful'
-        ];
-
-        wp_send_json_success($response, $status);
-    }
-
-    /**
      * Get pix order received template
      *
      * @param $order
@@ -437,14 +421,16 @@ class PixGateway extends AbstractGateway
         $defaultValue      = $this->storeTranslations['expiration_30_minutes'];
         $expirationOption  = $this->mercadopago->seller->getCheckoutDateExpirationPix($this, $defaultValue);
 
-        if (empty($qr_base64) && empty($qr_code)) {
+        if (empty($qrCodeBase64) && empty($qrCode)) {
             return;
         }
+
+        $this->mercadopago->scripts->registerStoreStyle('mp-pix-thankyou', $this->mercadopago->url->getPluginFileUrl('assets/css/public/mp-pix-thankyou', '.css'));
 
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/order/pix-order-received.php',
             [
-                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix', '.png', true),
+                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix/pix', '.png', true),
                 'amount'              => $transactionAmount,
                 'qr_base64'           => $qrCodeBase64,
                 'title_purchase_pix'  => $this->storeTranslations['title_purchase_pix'],

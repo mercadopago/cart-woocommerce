@@ -58,7 +58,7 @@ class TicketTransaction extends AbstractPaymentTransaction
         $internalMetadata['checkout_type']    = self::ID;
         $internalMetadata['ticket_settings']  = $this->mercadopago->analytics->getGatewaySettings($this->gateway::ID);
 
-        if ($this->paymentPlaceId) {
+        if (!empty($this->paymentPlaceId)) {
             $internalMetadata['payment_option_id'] = $this->paymentPlaceId;
         }
 
@@ -85,11 +85,13 @@ class TicketTransaction extends AbstractPaymentTransaction
      */
     public function getExpirationDate(): string
     {
-        return $this->mercadopago->options->getMercadoPago(
+        $dateExpirationDays = $this->mercadopago->options->getMercadoPago(
             $this->gateway,
             'date_expiration',
             MP_TICKET_DATE_EXPIRATION
         );
+
+        return gmdate('Y-m-d\TH:i:s.000O', strtotime('+' . $dateExpirationDays . ' days'));
     }
 
     /**

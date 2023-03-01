@@ -17,7 +17,7 @@ final class Date
      */
     public static function format(string $value): string
     {
-        if (!$value) {
+        if ($value) {
             return gmdate('Y-m-d\TH:i:s.000O', strtotime('+' . $value));
         }
 

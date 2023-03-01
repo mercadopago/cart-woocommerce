@@ -16,12 +16,12 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
 
         $this->transaction = $this->sdk->getPaymentInstance();
 
-        $this->transaction->description        = implode(', ', $this->listOfItems);
-        $this->transaction->transaction_amount = Numbers::format($this->orderTotal);
-
         $this->setCommonTransaction();
         $this->setAdditionalInfoTransaction();
         $this->setPayerTransaction();
+
+        $this->transaction->description        = implode(', ', $this->listOfItems);
+        $this->transaction->transaction_amount = Numbers::format($this->orderTotal);
     }
 
     /**
@@ -110,7 +110,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $payer->address->street_name   = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_address_1', 'get_billing_address_1');
         $payer->address->street_number = '';
         $payer->address->neighborhood  = '';
-        $payer->address->city          = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_city', 'get_billing_billing_city');
+        $payer->address->city          = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_city', 'get_billing_city');
         $payer->address->federal_unit  = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_state', 'get_billing_state');
         $payer->address->zip_code      = $this->getObjectAttributeValue($this->order, 'get_id', 'billing_postcode', 'get_billing_postcode');
     }

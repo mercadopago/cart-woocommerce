@@ -295,6 +295,7 @@ class StoreTranslations
             'paycash_concatenator'             => __(' and ', 'woocommerce-mercadopago'),
             'congrats_title'                   => __('To print the ticket again click', 'woocommerce-mercadopago'),
             'congrats_subtitle'                => __('here', 'woocommerce-mercadopago'),
+            'customer_not_paid'                => __('Mercado Pago: The customer has not paid yet.', 'woocommerce-mercadopago'),
         ];
     }
 

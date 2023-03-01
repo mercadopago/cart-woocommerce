@@ -306,11 +306,11 @@ class TicketGateway extends AbstractGateway
                     if ('pending_waiting_payment' === $response['status_detail'] || 'pending_waiting_transfer' === $response['status_detail']) {
                         WC()->cart->empty_cart();
 
-                        if ('yes' === $this->$this->mercadopago->options->get('stock_reduce_mode', 'no')) {
+                        if ('yes' === $this->mercadopago->options->getMercadoPago($this, 'stock_reduce_mode', 'no')) {
                             wc_reduce_stock_levels($order_id);
                         }
 
-                        $this->mercadopago->order->setTicketMetadata($this, $order, $response);
+                        $this->mercadopago->order->setTicketMetadata($order, $response);
 
                         $description = $this->storeTranslations['customer_not_paid'];
                         $this->mercadopago->order->addOrderNote($order, $description);
@@ -341,22 +341,6 @@ class TicketGateway extends AbstractGateway
             __FUNCTION__,
             $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
         );
-    }
-
-    /**
-     * Receive gateway webhook notifications
-     *
-     * @return void
-     */
-    public function webhook(): void
-    {
-        $status   = 200;
-        $response = [
-            'status'  => $status,
-            'message' => 'Webhook handled successful'
-        ];
-
-        wp_send_json_success($response, $status);
     }
 
     /**

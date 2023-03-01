@@ -16,6 +16,7 @@ use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
+use MercadoPago\Woocommerce\Helpers\OrderStatus;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
@@ -164,6 +165,11 @@ class Dependencies
     public $nonce;
 
     /**
+     * @var OrderStatus
+     */
+    public $orderStatus;
+
+    /**
      * @var CurrentUser
      */
     public $currentUser;
@@ -231,6 +237,7 @@ class Dependencies
         $this->gateway           = $this->setGateway();
         $this->logs              = $this->setLogs();
         $this->nonce             = $this->setNonce();
+        $this->orderStatus       = $this->setOrderStatus();
         $this->currentUser       = $this->setCurrentUser();
         $this->notices           = $this->setNotices();
         $this->analytics         = $this->setAnalytics();
@@ -354,6 +361,14 @@ class Dependencies
     private function setNonce(): Nonce
     {
         return new Nonce($this->logs, $this->store);
+    }
+
+    /**
+     * @return OrderStatus
+     */
+    private function setOrderStatus(): OrderStatus
+    {
+        return new OrderStatus($this->storeTranslations);
     }
 
     /**
