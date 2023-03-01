@@ -10,16 +10,19 @@ if (!defined('ABSPATH')) {
 
 class NotificationFactory
 {
-    public function createNotificationHandler(string $gateway, string $topic, string $type): NotificationInterface
+    public function createNotificationHandler(string $gateway, array $data): NotificationInterface
     {
         global $mercadopago;
 
-        if ('payment' === $topic && 'webhook' == $type) {
-            return new WebhookNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->requester, $mercadopago->seller, $mercadopago->store);
-        }
+        $topic  = $data['topic'];
+        $source = $data['source_news'];
 
-        if ('merchant_order' === $topic && 'ipn' == $type) {
-            return new IpnNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->requester, $mercadopago->seller, $mercadopago->store);
+        if ('payment' === $topic && 'webhook' == $source) {
+            return new WebhookNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->seller, $mercadopago->store, $mercadopago->requester, $data);
+        }
+        
+        if ('merchant_order' === $topic && 'ipn' == $source) {
+            return new IpnNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->seller, $mercadopago->store, $mercadopago->requester, $data);
         }
 
         return new CoreNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->seller, $mercadopago->store);

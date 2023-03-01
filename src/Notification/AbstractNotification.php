@@ -62,7 +62,7 @@ abstract class AbstractNotification implements NotificationInterface
 	 * @param array $data preference or payment data.
 	 * @return bool|WC_Order|WC_Order_Refund
 	 */
-	public function handleSuccessfulRequest( $data ) {
+	public function handleSuccessfulRequest($data) {
 		$this->logs->file->info('starting to process update...', __FUNCTION__);
 		$order_key = $data['external_reference'];
 

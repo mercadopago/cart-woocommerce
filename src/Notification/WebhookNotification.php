@@ -21,9 +21,14 @@ class WebhookNotification extends AbstractNotification
     public $requester;
 
     /**
+     * @var array`
+     */
+    public $data;
+
+    /**
      * WebhookNotification constructor
      */
-    public function __construct(string $gateway, Logs $logs, OrderStatus $orderStatus, Requester $requester, Seller $seller, Store $store)
+    public function __construct(string $gateway, Logs $logs, OrderStatus $orderStatus, Seller $seller, Store $store, Requester $requester, array $data)
     {
         parent::__construct($gateway, $logs, $orderStatus, $seller, $store);
         $this->requester = $requester;
