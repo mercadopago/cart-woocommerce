@@ -339,6 +339,8 @@ class AdminTranslations
             'subtitle_payments' => __('To view more options, please select a payment method below', 'woocommerce-mercadopago'),
             'settings_payment'  => __('Settings', 'woocommerce-mercadopago'),
             'button_payment'    => __('Continue', 'woocommerce-mercadopago'),
+            'enabled'           => __('Enabled', 'woocommerce-mercadopago'),
+            'disabled'          => __('Disabled', 'woocommerce-mercadopago'),
         ];
     }
 

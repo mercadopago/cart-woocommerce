@@ -246,6 +246,9 @@ body {
 .mp-settings-icon {
   width: 70px;
   height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mp-settings-icon-info {
@@ -810,11 +813,8 @@ input:checked + .mp-settings-slider:before {
     width: 60px;
     height: 40px;
     min-width: 60px;
-  }
-
-  .mp-settings-icon {
-    width: 60px;
-    height: 40px;
-    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

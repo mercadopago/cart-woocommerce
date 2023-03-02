@@ -226,15 +226,15 @@ function mpGoToNextStep(actualStep, nextStep, actualArrowId, nextArrowId) {
   if (window.melidata && window.melidata.client && window.melidata.client.addStoreConfigurationsStepTimer) {
     switch (nextStep) {
       case 'mp-step-2':
-        window.melidata.client.addStoreConfigurationsStepTimer({step: 'business'});
+        window.melidata.client.addStoreConfigurationsStepTimer({ step: 'business' });
         break;
 
       case 'mp-step-3':
-        window.melidata.client.addStoreConfigurationsStepTimer({step: 'payment_methods', sendOnClose: true});
+        window.melidata.client.addStoreConfigurationsStepTimer({ step: 'payment_methods', sendOnClose: true });
         break;
 
       case 'mp-step-4':
-        window.melidata.client.addStoreConfigurationsStepTimer({step: 'mode'});
+        window.melidata.client.addStoreConfigurationsStepTimer({ step: 'mode' });
         break;
 
       default:
@@ -274,6 +274,64 @@ function mpGetRequirements() {
         }
       }
     });
+}
+
+function mpGetPaymentMethods() {
+  jQuery.post(
+    ajaxurl,
+    {
+      action: 'mp_get_payment_methods',
+      nonce: mercadopago_settings_admin_js_params.nonce,
+    },
+    function (response) {
+      const payment = document.getElementById("mp-payment");
+
+      response.data.reverse().forEach((gateway) => {
+        payment.insertAdjacentHTML("afterend", createMpPaymentMethodComponent(gateway));
+      });
+
+      // added melidata events on store configuration step three
+      if (window.melidata && window.melidata.client && window.melidata.client.stepPaymentMethodsCallback) {
+        window.melidata.client.stepPaymentMethodsCallback();
+      }
+    });
+}
+
+function createMpPaymentMethodComponent(gateway) {
+  var payment_active =
+    gateway.enabled == "yes"
+      ? "mp-settings-badge-active"
+      : "mp-settings-badge-inactive";
+  var text_payment_active =
+    gateway.enabled == "yes"
+      ? gateway.badge_translator.yes
+      : gateway.badge_translator.no;
+
+  return (
+    ' <a href="' +
+    gateway.link +
+    '" class="mp-settings-link mp-settings-font-color"><div class="mp-block mp-block-flex mp-settings-payment-block mp-settings-margin-right mp-settings-align-div">\
+      <div class="mp-settings-align-div">\
+        <div class="mp-settings-icon ' +
+    gateway.icon +
+    '"></div>\
+        <span class="mp-settings-subtitle-font-size mp-settings-margin-title-payment"> <b>' +
+    gateway.title_gateway +
+    "</b> - " +
+    gateway.description +
+    ' </span>\
+        <span class="' +
+    payment_active +
+    '" > ' +
+    text_payment_active +
+    '</span>\
+      </div>\
+      <div class="mp-settings-title-align">\
+      <span class="mp-settings-text-payment">Configurar</span>\
+        <img class="mp-settings-icon-config">\
+      </div>\
+      </div></a>'
+  );
 }
 
 function mpSettingsAccordionStart() {
@@ -501,7 +559,7 @@ function mpUpdateOptionCredentials() {
             }, 3000);
           } else {
             const rad = document.querySelectorAll('input[name="mp-test-prod"]');
-            const {message, subtitle, link, linkMsg, type, test_mode} = response?.data;
+            const { message, subtitle, link, linkMsg, type, test_mode } = response?.data;
 
             mpMsgElement('msg-info-credentials', message, subtitle, link, linkMsg, type);
 
@@ -605,6 +663,7 @@ function mpUpdateTestMode() {
 
 function mp_settings_screen_load() {
   mpGetRequirements();
+  mpGetPaymentMethods();
   mpSettingsAccordionStart();
   mpSettingsAccordionOptions();
   mpValidateCredentials();

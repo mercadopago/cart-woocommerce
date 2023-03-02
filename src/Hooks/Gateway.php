@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -22,6 +23,11 @@ class Gateway
     private $template;
 
     /**
+     * @var Store
+     */
+    private $store;
+
+    /**
      * @var StoreTranslations
      */
     private $translations;
@@ -29,11 +35,12 @@ class Gateway
     /**
      * Gateway constructor
      */
-    public function __construct(Options $options, Template $template, StoreTranslations $translations)
+    public function __construct(Options $options, Template $template, Store $store, StoreTranslations $translations)
     {
-        $this->options            = $options;
-        $this->template           = $template;
-        $this->translations       = $translations;
+        $this->options      = $options;
+        $this->template     = $template;
+        $this->store        = $store;
+        $this->translations = $translations;
     }
 
     /**
@@ -46,6 +53,7 @@ class Gateway
     public function registerGateway(string $gateway): void
     {
         if ($gateway::isAvailable()) {
+            $this->store->addAvailablePaymentGateway($gateway);
             add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
                 $methods[] = $gateway;
                 return $methods;

@@ -170,10 +170,9 @@ class Settings
      */
     public function canLoadScriptsAndStyles(): bool
     {
-        return $this->admin->isAdmin() && (
-                $this->url->validatePage('mercadopago-settings') ||
-                $this->url->validateSection('woo-mercado-pago')
-            );
+        return $this->admin->isAdmin() && ($this->url->validatePage('mercadopago-settings') ||
+            $this->url->validateSection('woo-mercado-pago')
+        );
     }
 
     /**
@@ -189,6 +188,7 @@ class Settings
         $this->endpoints->registerAjaxEndpoint('mp_update_public_key', [$this, 'mercadopagoValidatePublicKey']);
         $this->endpoints->registerAjaxEndpoint('mp_update_access_token', [$this, 'mercadopagoValidateAccessToken']);
         $this->endpoints->registerAjaxEndpoint('mp_get_requirements', [$this, 'mercadopagoValidateRequirements']);
+        $this->endpoints->registerAjaxEndpoint('mp_get_payment_methods', [$this, 'mercadopagoPaymentMethods']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
     }
@@ -263,6 +263,55 @@ class Settings
             'gd_ext'   => $hasGD,
             'curl_ext' => $hasCurl
         ]);
+    }
+
+    /**
+     * Get available payment methods
+     *
+     * @return void
+     */
+    public function mercadopagoPaymentMethods(): void
+    {
+        try {
+            $this->validateAjaxNonce();
+            $payment_gateway_properties = [];
+
+            $paymentGateways = $this->store->getAvailablePaymentGateways();
+
+            $gatewayIcon = [
+                'woo-mercado-pago-basic'   => 'mp-settings-icon-mp',
+                'woo-mercado-pago-credits' => 'mp-settings-icon-mp',
+                'woo-mercado-pago-custom'  => 'mp-settings-icon-card',
+                'woo-mercado-pago-ticket'  => 'mp-settings-icon-code',
+                'woo-mercado-pago-pix'     => 'mp-settings-icon-pix',
+            ];
+
+            foreach ($paymentGateways as $paymentGateway) {
+                $gateway = new $paymentGateway();
+
+                $payment_gateway_properties[] = [
+                    'id'               => $gateway->id,
+                    'title_gateway'    => $gateway->title,
+                    'description'      => $gateway->description,
+                    'title'            => $gateway->title,
+                    'enabled'          => $gateway->settings['enabled'],
+                    'icon'             => $gatewayIcon[$gateway->id],
+                    'link'             => admin_url('admin.php?page=wc-settings&tab=checkout&section=') . $gateway->id,
+                    'badge_translator' => [
+                        'yes' => $this->translations->gatewaysSettings['enabled'],
+                        'no'  => $this->translations->gatewaysSettings['disabled'],
+                    ],
+                ];
+            }
+
+            wp_send_json_success($payment_gateway_properties);
+        } catch (\Exception $e) {
+            $response = [
+                'message' => $e->getMessage()
+            ];
+
+            wp_send_json_error($response);
+        }
     }
 
     /**
@@ -468,8 +517,7 @@ class Settings
         $verifyAlertTestMode = Form::getSanitizeTextFromPost('input_verify_alert_test_mode');
 
         $validateCheckoutTestMode = ($checkoutTestMode === 'yes');
-        $withoutTestCredentials   = (
-            $this->seller->getCredentialsPublicKeyTest() === '' ||
+        $withoutTestCredentials   = ($this->seller->getCredentialsPublicKeyTest() === '' ||
             $this->seller->getCredentialsAccessTokenTest() === ''
         );
 

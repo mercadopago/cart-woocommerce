@@ -11,16 +11,16 @@ if (!defined('ABSPATH')) {
 final class OrderStatus
 {
     /**
-     * @var StoreTranslations
+     * @var array
      */
-    private $storeTranslations;
+    private $translations;
 
     /**
      * Order constructor
      */
     public function __construct(StoreTranslations $storeTranslations)
     {
-        $this->storeTranslations = $storeTranslations;
+        $this->translations = $storeTranslations['orderStatus'];
     }
 
     /**
@@ -120,15 +120,15 @@ final class OrderStatus
 	 * @param object $order Order.
 	 * @param string $usedGateway Class of gateway.
 	 */
-	private function approvedFlow( $data, $order, $usedGateway ) {
-		if ( 'partially_refunded' === $data['status_detail'] ) {
+	private function approvedFlow($data, $order, $usedGateway) {
+		if ('partially_refunded' === $data['status_detail']) {
 			return;
 		}
 
 		$status = $order->get_status();
 
-		if ( 'pending' === $status || 'on-hold' === $status || 'failed' === $status ) {
-			$order->add_order_note( 'Mercado Pago: ' . __( 'Payment approved.', 'woocommerce-mercadopago' ) );
+		if ('pending' === $status || 'on-hold' === $status || 'failed' === $status) {
+			$order->add_order_note('Mercado Pago: ' . $this->translations['payment_approved']);
 
 			/**
 			 * Apply filters woocommerce_payment_complete_order_status.
@@ -182,11 +182,11 @@ final class OrderStatus
 					}
 
 					$order->add_order_note(
-						'Mercado Pago: ' . __( 'Waiting for the Pix payment.', 'woocommerce-mercadopago' )
+						'Mercado Pago: ' . $this->translations['pending_pix']
 					);
 
 					$order->add_order_note(
-						'Mercado Pago: ' . __( 'Waiting for the Pix payment.', 'woocommerce-mercadopago' ),
+						'Mercado Pago: ' . $this->translations['pending_pix'],
 						1,
 						false
 					);
@@ -199,11 +199,11 @@ final class OrderStatus
 					}
 
 					$order->add_order_note(
-						'Mercado Pago: ' . __( 'Waiting for the ticket payment.', 'woocommerce-mercadopago' )
+						'Mercado Pago: ' . $this->translations['pending_ticket']
 					);
 
 					$order->add_order_note(
-						'Mercado Pago: ' . __( 'Waiting for the ticket payment.', 'woocommerce-mercadopago' ),
+						'Mercado Pago: ' . $this->translations['pending_ticket'],
 						1,
 						false
 					);
@@ -211,7 +211,7 @@ final class OrderStatus
 
 				default:
 					$order->add_order_note(
-						'Mercado Pago: ' . __( 'The customer has not made the payment yet.', 'woocommerce-mercadopago' )
+						'Mercado Pago: ' . $this->translations['pending'],
 					);
 					break;
 			}
@@ -230,7 +230,7 @@ final class OrderStatus
 		if ( $this->canUpdateOrderStatus( $order ) ) {
 			$order->update_status(
 				self::mapMpStatusToWoocommerceStatus( 'inprocess' ),
-				'Mercado Pago: ' . __( 'Payment is pending review.', 'woocommerce-mercadopago' )
+				'Mercado Pago: ' . $this->translations['in_process'],
 			);
 		} else {
 			$this->validateOrderNoteType( $data, $order, 'in_process' );
@@ -247,7 +247,7 @@ final class OrderStatus
 		if ( $this->canUpdateOrderStatus( $order ) ) {
 			$order->update_status(
 				self::mapMpStatusToWoocommerceStatus( 'rejected' ),
-				'Mercado Pago: ' . __( 'Payment was declined. The customer can try again.', 'woocommerce-mercadopago' )
+				'Mercado Pago: ' . $this->translations['rejected']
 			);
 		} else {
 			$this->validateOrderNoteType( $data, $order, 'rejected' );
@@ -262,7 +262,7 @@ final class OrderStatus
 	private function refundedFlow( $order ) {
 		$order->update_status(
 			self::mapMpStatusToWoocommerceStatus( 'refunded' ),
-			'Mercado Pago: ' . __( 'Payment was returned to the customer.', 'woocommerce-mercadopago' )
+			'Mercado Pago: ' . $this->translations['refunded']
 		);
 	}
 
@@ -276,7 +276,7 @@ final class OrderStatus
 		if ( $this->canUpdateOrderStatus( $order ) ) {
 			$order->update_status(
 				self::mapMpStatusToWoocommerceStatus( 'cancelled' ),
-				'Mercado Pago: ' . __( 'Payment was canceled.', 'woocommerce-mercadopago' )
+				'Mercado Pago: ' . $this->translations['cancelled']
 			);
 		} else {
 			$this->validateOrderNoteType( $data, $order, 'cancelled' );
@@ -291,7 +291,7 @@ final class OrderStatus
 	private function inMediationFlow( $order ) {
 		$order->update_status( self::mapMpStatusToWoocommerceStatus( 'inmediation' ) );
 		$order->add_order_note(
-			'Mercado Pago: ' . __( 'The payment is in mediation or the purchase was unknown by the customer.', 'woocommerce-mercadopago' )
+			'Mercado Pago: ' . $this->translations['in_mediation']
 		);
 	}
 
@@ -303,10 +303,7 @@ final class OrderStatus
 	private function chargedBackFlow( $order ) {
 		$order->update_status( self::mapMpStatusToWoocommerceStatus( 'chargedback' ) );
 		$order->add_order_note(
-			'Mercado Pago: ' . __(
-				'The payment is in mediation or the purchase was unknown by the customer.',
-				'woocommerce-mercadopago'
-			)
+			'Mercado Pago: ' . $this->translations['charged_back']
 		);
 	}
 
@@ -352,7 +349,7 @@ final class OrderStatus
 	 * @param string $status Status.
 	 */
 	protected function validateOrderNoteType( $data, $order, $status ) {
-		$payment_id = $data['id'];
+		$paymentId = $data['id'];
 
 		if ( isset( $data['ipn_type'] ) && 'merchant_order' === $data['ipn_type'] ) {
 			$payments = array();
@@ -361,16 +358,14 @@ final class OrderStatus
 				$payments[] = $payment['id'];
 			}
 
-			$payment_id = implode( ',', $payments );
+			$paymentId = implode( ',', $payments );
 		}
 
-		$order->add_order_note(
-			sprintf(
-				/* translators: 1: payment_id 2: status */
-				__( 'Mercado Pago: The payment %1$s was notified by Mercado Pago with status %2$s.', 'woocommerce-mercadopago' ),
-				$payment_id,
-				$status
-			)
+		$order->add_order_note('Mercado Pago: ' .
+			$this->translations['validate_order_1'] .
+			' '. $paymentId . ' ' .
+			$this->translations['validate_order_1'] .
+			' '. $status . '.'
 		);
 	}
 }

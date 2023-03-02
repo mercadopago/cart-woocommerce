@@ -341,7 +341,7 @@ class Dependencies
      */
     private function setGateway(): Gateway
     {
-        return new Gateway($this->options, $this->template, $this->storeTranslations);
+        return new Gateway($this->options, $this->template, $this->store, $this->storeTranslations);
     }
 
     /**

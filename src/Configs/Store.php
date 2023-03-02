@@ -61,6 +61,11 @@ class Store
     private const CHECKBOX_CHECKOUT_TEST_MODE = 'checkbox_checkout_test_mode';
 
     /**
+     * @const
+     */
+    private $availablePaymentGateways = [];
+
+    /**
      * @var Options
      */
     private $options;
@@ -238,5 +243,23 @@ class Store
     public function setCheckboxCheckoutTestMode(string $checkboxCheckoutTestMode): void
     {
         $this->options->set(self::CHECKBOX_CHECKOUT_TEST_MODE, $checkboxCheckoutTestMode);
+    }
+
+    /**
+     * @return array
+     */
+    public function getAvailablePaymentGateways(): array
+    {
+        return $this->availablePaymentGateways;
+    }
+
+    /**
+     * @param array $paymentGateway
+     */
+    public function addAvailablePaymentGateway(string $paymentGateway): void
+    {
+        if (!in_array($paymentGateway, $this->availablePaymentGateways, true)) {
+            $this->availablePaymentGateways[] = $paymentGateway;
+        }
     }
 }
