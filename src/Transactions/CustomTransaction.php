@@ -36,7 +36,7 @@ class CustomTransaction extends AbstractPaymentTransaction
 
         $internalMetadata['checkout']         = 'custom';
         $internalMetadata['checkout_type']    = self::ID;
-        $internalMetadata['custom_settings']  = $this->mercadopago->analytics->getGatewaySettings($this->gateway::ID);
+        $internalMetadata['custom_settings']  = $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }

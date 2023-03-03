@@ -34,7 +34,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
         $internalMetadata['checkout']       = 'smart';
         $internalMetadata['checkout_type']  =
             $this->mercadopago->options->getMercadoPago($this->gateway, 'method', 'redirect');
-        $internalMetadata['basic_settings'] = $this->mercadopago->analytics->getGatewaySettings($this->gateway::ID);
+        $internalMetadata['basic_settings'] = $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }

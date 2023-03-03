@@ -32,7 +32,7 @@ class CreditsTransaction extends AbstractPreferenceTransaction
 
         $internalMetadata['checkout']         = 'pro';
         $internalMetadata['checkout_type']    = self::ID;
-        $internalMetadata['credits_settings'] = $this->mercadopago->analytics->getGatewaySettings($this->gateway::ID);
+        $internalMetadata['credits_settings'] = $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }

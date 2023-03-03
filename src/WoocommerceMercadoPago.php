@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce;
 
-use MercadoPago\Woocommerce\Admin\Analytics;
+use MercadoPago\Woocommerce\Admin\MetadataSettings;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Order\Metadata;
@@ -225,9 +225,9 @@ class WoocommerceMercadoPago
     public $settings;
 
     /**
-     * @var Analytics
+     * @var MetadataSettings
      */
-    public $analytics;
+    public $metadataSettings;
 
     /**
      * @var AdminTranslations
@@ -365,7 +365,7 @@ class WoocommerceMercadoPago
         // General
         $this->logs              = $dependencies->logs;
         $this->notices           = $dependencies->notices;
-        $this->analytics         = $dependencies->analytics;
+        $this->metadataSettings  = $dependencies->metadataSettings;
 
         // Exclusive
         $this->settings          = $dependencies->settings;

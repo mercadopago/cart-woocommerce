@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Analytics
+class MetadataSettings
 {
     /**
      * @var Options
@@ -16,7 +16,7 @@ class Analytics
     private $options;
 
     /**
-     * Analytics constructor
+     * MetadataSettings constructor
      */
     public function __construct(Options $options)
     {

@@ -4,7 +4,7 @@ namespace MercadoPago\Woocommerce;
 
 use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
-use MercadoPago\Woocommerce\Admin\Analytics;
+use MercadoPago\Woocommerce\Admin\MetadataSettings;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Order\Metadata;
@@ -190,9 +190,9 @@ class Dependencies
     public $settings;
 
     /**
-     * @var Analytics
+     * @var MetadataSettings
      */
-    public $analytics;
+    public $metadataSettings;
 
     /**
      * @var AdminTranslations
@@ -240,7 +240,7 @@ class Dependencies
         $this->orderStatus       = $this->setOrderStatus();
         $this->currentUser       = $this->setCurrentUser();
         $this->notices           = $this->setNotices();
-        $this->analytics         = $this->setAnalytics();
+        $this->metadataSettings  = $this->setMetadataSettings();
         $this->currency          = $this->setCurrency();
         $this->settings          = $this->setSettings();
     }
@@ -412,11 +412,11 @@ class Dependencies
     }
 
     /**
-     * @return Analytics
+     * @return MetadataSettings
      */
-    private function setAnalytics(): Analytics
+    private function setMetadataSettings(): MetadataSettings
     {
-        return new Analytics($this->options);
+        return new MetadataSettings($this->options);
     }
 
     /**

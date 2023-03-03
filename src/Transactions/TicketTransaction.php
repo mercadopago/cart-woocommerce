@@ -56,7 +56,7 @@ class TicketTransaction extends AbstractPaymentTransaction
 
         $internalMetadata['checkout']         = 'custom';
         $internalMetadata['checkout_type']    = self::ID;
-        $internalMetadata['ticket_settings']  = $this->mercadopago->analytics->getGatewaySettings($this->gateway::ID);
+        $internalMetadata['ticket_settings']  = $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
 
         if (!empty($this->paymentPlaceId)) {
             $internalMetadata['payment_option_id'] = $this->paymentPlaceId;
