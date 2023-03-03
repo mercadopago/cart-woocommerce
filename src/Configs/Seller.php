@@ -2,7 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
@@ -51,11 +50,6 @@ class Seller
     /**
      * @const
      */
-    private const GATEWAY_TITLE = 'title';
-
-    /**
-     * @const
-     */
     private const CHECKOUT_BASIC_PAYMENT_METHODS = '_checkout_payments_methods';
 
     /**
@@ -72,11 +66,6 @@ class Seller
      * @const
      */
     private const CHECKOUT_PAYMENT_METHOD_PIX = '_mp_payment_methods_pix';
-
-    /**
-     * @const
-     */
-    private const CHECKOUT_EXPIRATION_DATE_PIX = 'checkout_pix_date_expiration';
 
     /**
      * @const
@@ -227,17 +216,6 @@ class Seller
     }
 
     /**
-     * @param AbstractGateway $gateway
-     * @param $default
-     *
-     * @return mixed|string
-     */
-    public function getGatewayTitle(AbstractGateway $gateway, $default)
-    {
-        return $this->options->getMercadoPago($gateway, self::GATEWAY_TITLE, $default);
-    }
-
-    /**
      * @return bool
      */
     public function isTestMode(): bool
@@ -328,7 +306,7 @@ class Seller
      */
     public function getCheckoutPixPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, []);
+        return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, '');
     }
 
     /**
@@ -337,17 +315,6 @@ class Seller
     public function setCheckoutPixPaymentMethods(array $checkoutPaymentMethodsPix): void
     {
         $this->options->set(self::CHECKOUT_PAYMENT_METHOD_PIX, $checkoutPaymentMethodsPix);
-    }
-
-    /**
-     * @param AbstractGateway $gateway
-     * @param string $default
-     *
-     * @return string
-     */
-    public function getCheckoutDateExpirationPix(AbstractGateway $gateway, string $default): string
-    {
-        return $this->options->getMercadoPago($gateway, self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
     }
 
     /**

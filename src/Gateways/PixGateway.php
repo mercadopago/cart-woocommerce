@@ -37,7 +37,7 @@ class PixGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->expirationDate     = (int) $this->mercadopago->seller->getCheckoutDateExpirationPix($this, '1');
+        $this->expirationDate     = (int) $this->mercadopago->store->getCheckoutDateExpirationPix($this, '1');
 
         $this->init_form_fields();
         $this->init_settings();
@@ -419,7 +419,7 @@ class PixGateway extends AbstractGateway
 
         $transactionAmount = Numbers::format($transactionAmount);
         $defaultValue      = $this->storeTranslations['expiration_30_minutes'];
-        $expirationOption  = $this->mercadopago->seller->getCheckoutDateExpirationPix($this, $defaultValue);
+        $expirationOption  = $this->mercadopago->store->getCheckoutDateExpirationPix($this, $defaultValue);
 
         if (empty($qrCodeBase64) && empty($qrCode)) {
             return;

@@ -400,7 +400,7 @@ class Dependencies
      */
     private function setOrder(): Order
     {
-        return new Order($this->template, $this->metadata, $this->storeTranslations, $this->seller);
+        return new Order($this->template, $this->metadata, $this->storeTranslations, $this->store);
     }
 
     /**

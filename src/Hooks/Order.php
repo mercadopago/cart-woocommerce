@@ -3,7 +3,7 @@
 namespace MercadoPago\Woocommerce\Hooks;
 
 use MercadoPago\Woocommerce\Order\Metadata;
-use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -29,19 +29,19 @@ class Order
     private $storeTranslations;
 
     /**
-     * @var Seller
+     * @var Store
      */
-    private $seller;
+    private $store;
 
     /**
      * Order constructor
      */
-    public function __construct(Template $template, Metadata $metadata, StoreTranslations $storeTranslations, Seller $seller)
+    public function __construct(Template $template, Metadata $metadata, StoreTranslations $storeTranslations, Store $store)
     {
         $this->template          = $template;
         $this->metadata          = $metadata;
         $this->storeTranslations = $storeTranslations;
-        $this->seller            = $seller;
+        $this->store             = $store;
     }
 
     /**
@@ -221,7 +221,7 @@ class Order
         $qrCodeBase64      = $data['point_of_interaction']['transaction_data']['qr_code_base64'];
         $qrCode            = $data['point_of_interaction']['transaction_data']['qr_code'];
         $defaultValue      = $this->storeTranslations->pixCheckout['expiration_30_minutes'];
-        $expiration        = $this->seller->getCheckoutDateExpirationPix($gateway, $defaultValue);
+        $expiration        = $this->store->getCheckoutDateExpirationPix($gateway, $defaultValue);
 
         if (method_exists($order, 'update_meta_data')) {
             $this->metadata->setTransactionAmountData($order, $transactionAmount);
@@ -253,5 +253,54 @@ class Order
     public function addOrderNote(\WC_Order $order, string $description, int $isCustomerNote = 0, bool $addedByUser = false)
     {
         $order->add_order_note($description, $isCustomerNote, $addedByUser);
+    }
+
+    /**
+     * Get order status message
+     *
+     * @param string $statusDetail
+     *
+     * @return string
+     */
+    public function getOrderStatusMessage(string $statusDetail): string
+    {
+        $messages = $this->storeTranslations->commonMessages;
+
+        switch ($statusDetail) {
+            case 'accredited':
+                return $messages['cho_accredited'];
+            case 'pending_contingency':
+                return $messages['cho_pending_contingency'];
+            case 'pending_review_manual':
+                return $messages['cho_pending_review_manual'];
+            case 'cc_rejected_bad_filled_card_number':
+                return $messages['cho_cc_rejected_bad_filled_card_number'];
+            case 'cc_rejected_bad_filled_date':
+                return $messages['cho_cc_rejected_bad_filled_date'];
+            case 'cc_rejected_bad_filled_other':
+                return $messages['cho_cc_rejected_bad_filled_other'];
+            case 'cc_rejected_bad_filled_security_code':
+                return $messages['cho_cc_rejected_bad_filled_security_code'];
+            case 'cc_rejected_card_error':
+                return $messages['cho_cc_rejected_card_error'];
+            case 'cc_rejected_blacklist':
+                return $messages['cho_cc_rejected_blacklist'];
+            case 'cc_rejected_call_for_authorize':
+                return $messages['cho_cc_rejected_call_for_authorize'];
+            case 'cc_rejected_card_disabled':
+                return $messages['cho_cc_rejected_card_disabled'];
+            case 'cc_rejected_duplicated_payment':
+                return $messages['cho_cc_rejected_duplicated_payment'];
+            case 'cc_rejected_high_risk':
+                return $messages['cho_cc_rejected_high_risk'];
+            case 'cc_rejected_insufficient_amount':
+                return $messages['cho_cc_rejected_insufficient_amount'];
+            case 'cc_rejected_invalid_installments':
+                return $messages['cho_cc_rejected_invalid_installments'];
+            case 'cc_rejected_max_attempts':
+                return $messages['cho_cc_rejected_max_attempts'];
+            default:
+                return $messages['cho_default'];
+        }
     }
 }

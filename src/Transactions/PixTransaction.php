@@ -45,7 +45,7 @@ class PixTransaction extends AbstractPaymentTransaction
      */
     public function getExpirationDate(): string
     {
-        $expirationDate = $this->mercadopago->seller->getCheckoutDateExpirationPix($this->gateway, '');
+        $expirationDate = $this->mercadopago->store->getCheckoutDateExpirationPix($this->gateway, '');
 
         if (1 === strlen($expirationDate) && '1' === $expirationDate) {
             $expirationDate = '24 hours';

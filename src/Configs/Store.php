@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
 
 if (!defined('ABSPATH')) {
@@ -59,6 +60,16 @@ class Store
      * @const
      */
     private const CHECKBOX_CHECKOUT_TEST_MODE = 'checkbox_checkout_test_mode';
+
+    /**
+     * @const
+     */
+    private const GATEWAY_TITLE = 'title';
+
+    /**
+     * @const
+     */
+    private const CHECKOUT_EXPIRATION_DATE_PIX = 'checkout_pix_date_expiration';
 
     /**
      * @const
@@ -261,5 +272,27 @@ class Store
         if (!in_array($paymentGateway, $this->availablePaymentGateways, true)) {
             $this->availablePaymentGateways[] = $paymentGateway;
         }
+    }
+
+    /**
+     * @param AbstractGateway $gateway
+     * @param $default
+     *
+     * @return mixed|string
+     */
+    public function getGatewayTitle(AbstractGateway $gateway, $default)
+    {
+        return $this->options->getMercadoPago($gateway, self::GATEWAY_TITLE, $default);
+    }
+
+    /**
+     * @param AbstractGateway $gateway
+     * @param string $default
+     *
+     * @return string
+     */
+    public function getCheckoutDateExpirationPix(AbstractGateway $gateway, string $default): string
+    {
+        return $this->options->getMercadoPago($gateway, self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
     }
 }
