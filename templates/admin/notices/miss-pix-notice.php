@@ -6,7 +6,7 @@
  * @var string $urlLink
  * @var string $textLink
  *
- * @see \MercadoPago\Woocommerce\Admin\Notices
+ * @see \MercadoPago\Woocommerce\Helpers\Notices
  */
 
 if (!defined('ABSPATH')) {

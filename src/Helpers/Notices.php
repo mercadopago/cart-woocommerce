@@ -1,9 +1,7 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Admin;
+namespace MercadoPago\Woocommerce\Helpers;
 
-use MercadoPago\Woocommerce\Helpers\Links;
-use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
