@@ -21,13 +21,6 @@ class BasicGateway extends AbstractGateway
     public const CHECKOUT_NAME = 'checkout-basic';
 
     /**
-     * Excluded payment methods
-     *
-     * @var int
-     */
-    public $exPayments;
-
-    /**
      * BasicGateway constructor
      */
     public function __construct()
