@@ -6,6 +6,7 @@ use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Notification\NotificationFactory;
 
 abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
@@ -478,5 +479,23 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $amount     = $subtotal - $discount + $commission;
 
         return $amount + $tax;
+    }
+
+    /**
+     * Receive gateway webhook notifications
+     *
+     * @var string $gateway
+     * 
+     * @return void
+     */
+    public function webhook(): void
+    {
+        $data    = $_GET;
+        $gateway = get_class($this);
+
+        $notificationFactory = new NotificationFactory();
+        $notificationHandler = $notificationFactory->createNotificationHandler($gateway, $data);
+
+        $notificationHandler->handleReceivedNotification();
     }
 }

@@ -18,7 +18,7 @@ final class Strings
      */
     public function fixUrlAmpersand(string $link): string
     {
-        return esc_url(str_replace('\/', '/', str_replace('&#038;', '&', $link)));
+        return str_replace('\\/', '/', str_replace('&#038;', '&', $link));
     }
 
     /**

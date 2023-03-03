@@ -10,7 +10,7 @@ use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
-abstract class AbstractTransaction
+abstract class AbstractTransaction extends \WC_Payment_Gateway
 {
     /**
      * @var WoocommerceMercadoPago
@@ -135,17 +135,35 @@ abstract class AbstractTransaction
 
         $this->transaction->binary_mode          = $this->getBinaryMode();
         $this->transaction->external_reference   = $this->getExternalReference();
-        $this->transaction->notification_url     = ''; // @todo: add notification url
+        $this->transaction->notification_url     = $this->getNotificationUrl();
         $this->transaction->statement_descriptor = $statementDescriptor;
         $this->transaction->metadata             = $this->getInternalMetadata();
     }
+
+	/**
+	 * Get notification url
+	 *
+	 * @return string|void
+	 */
+	private function getNotificationUrl() {
+		if (!strrpos(get_site_url(), 'localhost')) {
+			$notificationUrl = $this->mercadopago->store->getCustomDomain();
+
+			// Check if we have a custom URL.
+			if ( empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false ) {
+				return WC()->api_request_url($this->gateway->id);
+			} else {
+                return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway->id . '/'));
+			}
+		}
+	}
 
     /**
      * Get binary mode
      *
      * @return string
      */
-    public function getBinaryMode(): string
+    public function getBinaryMode(): bool
     {
         $binaryMode = !$this->gateway
             ? $this->mercadopago->options->getMercadoPago($this->gateway, 'binary_mode', 'no')
@@ -323,11 +341,11 @@ abstract class AbstractTransaction
     /**
      * Get item amount
      *
-     * @param array $item
+     * @param array|WC_Order_Item_Product $item
      *
      * @return float
      */
-    public function getItemAmount(array $item): float
+    public function getItemAmount($item): float
     {
         $lineAmount = $item['line_total'] + $item['line_tax'];
         $discount   = (float) $lineAmount * ($this->gateway->discount / 100);

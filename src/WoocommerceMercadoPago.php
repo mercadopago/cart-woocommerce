@@ -200,6 +200,11 @@ class WoocommerceMercadoPago
     public $nonce;
 
     /**
+     * @var OrderStatus
+     */
+    public $orderStatus;
+
+    /**
      * @var CurrentUser
      */
     public $currentUser;
@@ -342,6 +347,7 @@ class WoocommerceMercadoPago
         $this->url               = $dependencies->url;
         $this->paymentMethods    = $dependencies->paymentMethods;
         $this->nonce             = $dependencies->nonce;
+        $this->orderStatus       = $dependencies->orderStatus;
 
         // Hooks
         $this->admin             = $dependencies->admin;

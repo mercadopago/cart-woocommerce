@@ -43,6 +43,11 @@ class StoreTranslations
     /**
      * @var array
      */
+    public $orderStatus = [];
+
+    /**
+     * @var array
+     */
     public $commonMessages = [];
 
     /**
@@ -63,6 +68,7 @@ class StoreTranslations
         $this->setCustomCheckoutTranslations();
         $this->setTicketCheckoutTranslations();
         $this->setPixCheckoutTranslations();
+        $this->setOrderStatusTranslations();
         $this->setCommonMessagesTranslations();
     }
 
@@ -273,6 +279,29 @@ class StoreTranslations
     }
 
     /**
+     * Set pix checkout translations
+     *
+     * @return void
+     */
+    private function setOrderStatusTranslations(): void
+    {
+        $this->orderStatus = [
+            'payment_approved' => __( 'Payment approved.', 'woocommerce-mercadopago' ),
+            'pending_pix'      => __('Waiting for the Pix payment.', 'woocommerce-mercadopago'),
+            'pending_ticket'   => __('Waiting for the ticket payment.', 'woocommerce-mercadopago'),
+            'pending'          => __('The customer has not made the payment yet.', 'woocommerce-mercadopago'),
+            'in_process'       => __('Payment is pending review.', 'woocommerce-mercadopago'),
+            'rejected'         => __('Payment was declined. The customer can try again.', 'woocommerce-mercadopago'),
+            'refunded'         => __('Payment was returned to the customer.', 'woocommerce-mercadopago'),
+            'cancelled'        => __('Payment was canceled.', 'woocommerce-mercadopago'),
+            'in_mediation'     => __('The payment is in mediation or the purchase was unknown by the customer.', 'woocommerce-mercadopago'),
+            'charged_back'     => __('The payment is in mediation or the purchase was unknown by the customer.', 'woocommerce-mercadopago'),
+            'validate_order_1' => __('The payment', 'woocommerce-mercadopago'),
+            'validate_order_2' => __('was notified by Mercado Pago with status', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
      * Set checkout ticket translations
      *
      * @return void
@@ -295,6 +324,7 @@ class StoreTranslations
             'paycash_concatenator'             => __(' and ', 'woocommerce-mercadopago'),
             'congrats_title'                   => __('To print the ticket again click', 'woocommerce-mercadopago'),
             'congrats_subtitle'                => __('here', 'woocommerce-mercadopago'),
+            'customer_not_paid'                => __('Mercado Pago: The customer has not paid yet.', 'woocommerce-mercadopago'),
         ];
     }
 

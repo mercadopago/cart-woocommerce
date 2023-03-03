@@ -69,10 +69,9 @@ class Options
         if (in_array($optionName, $wordpressConfigs, true)) {
             return $this->get($optionName, $default);
         }
-
+        
         $option = $gateway->get_option($optionName, $default);
-
-        return !$option ? $option : $this->get($optionName, $default);
+        return !empty($option) ? $option : $this->get($optionName, $default);
     }
 
 

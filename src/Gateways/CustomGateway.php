@@ -418,7 +418,7 @@ class CustomGateway extends AbstractGateway
                 case 'approved':
                     WC()->cart->empty_cart();
 
-                    $orderStatusMessage = $this->mercadopago->order->getOrderStatusMessage('accredited');
+                    $orderStatusMessage = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
                     $this->mercadopago->notices->storeApprovedStatusNotice($orderStatusMessage);
                     $this->mercadopago->order->setOrderStatus($order, 'failed', 'pending');
 
@@ -436,7 +436,7 @@ class CustomGateway extends AbstractGateway
                     // For pending, we don't know if the purchase will be made, so we must inform this status.
                     WC()->cart->empty_cart();
 
-                    $orderStatus = $this->mercadopago->order->getOrderStatusMessage($response['status_detail']);
+                    $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($response['status_detail']);
                     $urlReceived = esc_url($order->get_checkout_order_received_url());
                     $linkText    = $this->mercadopago->storeTranslations->commonMessages['cho_form_error'];
 
@@ -455,7 +455,7 @@ class CustomGateway extends AbstractGateway
                     // If rejected is received, the order will not proceed until another payment try,
                     // so we must inform this status.
                     $noticeTitle = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
-                    $orderStatus = $this->mercadopago->order->getOrderStatusMessage($response['status_detail']);
+                    $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($response['status_detail']);
                     $urlReceived = esc_url($order->get_checkout_payment_url());
                     $linkText    = $this->mercadopago->storeTranslations->commonMessages['cho_button_try_again'];
 
@@ -486,22 +486,6 @@ class CustomGateway extends AbstractGateway
             __FUNCTION__,
             $this->mercadopago->storeTranslations->commonMessages['cho_form_error']
         );
-    }
-
-    /**
-     * Receive gateway webhook notifications
-     *
-     * @return void
-     */
-    public function webhook(): void
-    {
-        $status = 200;
-        $response = [
-            'status' => $status,
-            'message' => 'Webhook handled successful'
-        ];
-
-        wp_send_json_success($response, $status);
     }
 
     /**

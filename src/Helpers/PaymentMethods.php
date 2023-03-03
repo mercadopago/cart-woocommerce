@@ -54,7 +54,7 @@ final class PaymentMethods
 
         return [
             'payment_method_id' => $exploded[0],
-            'payment_place_id'  => $exploded[1] ?? null,
+            'payment_place_id'  => $exploded[1] ?? '',
         ];
     }
 
@@ -65,7 +65,7 @@ final class PaymentMethods
      *
      * @return array
      */
-    public function getPaymentMethodId($compositeId): array
+    public function getPaymentMethodId($compositeId): string
     {
         return $this->parseCompositeId($compositeId)['payment_method_id'];
     }
@@ -77,7 +77,7 @@ final class PaymentMethods
      *
      * @return array
      */
-    public function getPaymentPlaceId($compositeId): array
+    public function getPaymentPlaceId($compositeId): string
     {
         return $this->parseCompositeId($compositeId)['payment_place_id'];
     }
