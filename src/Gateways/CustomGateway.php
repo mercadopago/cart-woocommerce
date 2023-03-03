@@ -293,7 +293,7 @@ class CustomGateway extends AbstractGateway
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
                 'test_mode_link_src'               => $this->links['docs_integration_test'],
-                'wallet_button'                    => $this->mercadopago->options->getMercadoPago($this, 'wallet_button', 'yes'),
+                'wallet_button'                    => $this->mercadopago->options->getGatewayOption($this, 'wallet_button', 'yes'),
                 'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-logos", '.png', true),
                 'wallet_button_title'              => $this->storeTranslations['wallet_button_title'],
                 'wallet_button_description'        => $this->storeTranslations['wallet_button_description'],

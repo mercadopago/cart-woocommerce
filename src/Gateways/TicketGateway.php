@@ -238,7 +238,7 @@ class TicketGateway extends AbstractGateway
                 'id'        => $paymentMethod['id'],
                 'field_key' => $this->get_field_key($paymentMethod['id']),
                 'label'     => array_key_exists('payment_places', $paymentMethod) ? $paymentMethod['name'] . ' (' . $this->buildPaycashPaymentsString() . ')' : $paymentMethod['name'],
-                'value'     => $this->mercadopago->options->getMercadoPago($this, $paymentMethod['id'], 'yes'),
+                'value'     => $this->mercadopago->options->getGatewayOption($this, $paymentMethod['id'], 'yes'),
                 'type'      => 'checkbox',
             ];
         }
@@ -306,7 +306,7 @@ class TicketGateway extends AbstractGateway
                     if ('pending_waiting_payment' === $response['status_detail'] || 'pending_waiting_transfer' === $response['status_detail']) {
                         WC()->cart->empty_cart();
 
-                        if ('yes' === $this->mercadopago->options->getMercadoPago($this, 'stock_reduce_mode', 'no')) {
+                        if ('yes' === $this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no')) {
                             wc_reduce_stock_levels($order_id);
                         }
 

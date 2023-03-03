@@ -33,7 +33,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
 
         $internalMetadata['checkout']       = 'smart';
         $internalMetadata['checkout_type']  =
-            $this->mercadopago->options->getMercadoPago($this->gateway, 'method', 'redirect');
+            $this->mercadopago->options->getGatewayOption($this->gateway, 'method', 'redirect');
         $internalMetadata['basic_settings'] = $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
@@ -53,7 +53,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
      */
     public function setInstallmentsTransaction()
     {
-        $installments = (int) $this->mercadopago->options->getMercadoPago($this->gateway, 'installments', '24');
+        $installments = (int) $this->mercadopago->options->getGatewayOption($this->gateway, 'installments', '24');
 
         $this->transaction->payment_methods->installments = (0 === $installments) ? 12 : $installments;
     }

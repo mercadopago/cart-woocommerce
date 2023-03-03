@@ -63,7 +63,7 @@ class Options
      *
      * @return mixed|string
      */
-    public function getMercadoPago(AbstractGateway $gateway, string $optionName, string $default = '')
+    public function getGatewayOption(AbstractGateway $gateway, string $optionName, string $default = '')
     {
         $wordpressConfigs = self::COMMON_CONFIGS;
         if (in_array($optionName, $wordpressConfigs, true)) {
@@ -84,7 +84,7 @@ class Options
      *
      * @return bool
      */
-    public function setMercadoPago(AbstractGateway $gateway, string $optionName, $value): bool
+    public function setGatewayOption(AbstractGateway $gateway, string $optionName, $value): bool
     {
         return $gateway->update_option($optionName, $value);
     }

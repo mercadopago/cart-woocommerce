@@ -85,7 +85,7 @@ class TicketTransaction extends AbstractPaymentTransaction
      */
     public function getExpirationDate(): string
     {
-        $expirationDate = $this->mercadopago->options->getMercadoPago(
+        $expirationDate = $this->mercadopago->options->getGatewayOption(
             $this->gateway,
             'date_expiration',
             MP_TICKET_DATE_EXPIRATION

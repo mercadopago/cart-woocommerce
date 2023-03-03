@@ -282,7 +282,7 @@ class Store
      */
     public function getGatewayTitle(AbstractGateway $gateway, $default)
     {
-        return $this->options->getMercadoPago($gateway, self::GATEWAY_TITLE, $default);
+        return $this->options->getGatewayOption($gateway, self::GATEWAY_TITLE, $default);
     }
 
     /**
@@ -293,6 +293,6 @@ class Store
      */
     public function getCheckoutDateExpirationPix(AbstractGateway $gateway, string $default): string
     {
-        return $this->options->getMercadoPago($gateway, self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
+        return $this->options->getGatewayOption($gateway, self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
     }
 }

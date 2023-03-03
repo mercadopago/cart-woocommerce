@@ -273,7 +273,7 @@ class BasicGateway extends AbstractGateway
 
         $order             = wc_get_order($order_id);
         $this->transaction = new BasicTransaction($this, $order);
-        $method            = $this->mercadopago->options->getMercadoPago($this, 'method', 'redirect');
+        $method            = $this->mercadopago->options->getGatewayOption($this, 'method', 'redirect');
 
         if ('redirect' === $method || 'iframe' === $method) {
             $this->mercadopago->logs->file->info(
@@ -432,7 +432,7 @@ class BasicGateway extends AbstractGateway
         $activePaymentMethods = [];
 
         foreach ($paymentMethodsOptions as $paymentMethodsOption) {
-            if ('yes' === $this->mercadopago->options->getMercadoPago($this, $paymentMethodsOption['config'])) {
+            if ('yes' === $this->mercadopago->options->getGatewayOption($this, $paymentMethodsOption['config'])) {
                 $activePaymentMethods[] = [
                     'src' => $paymentMethodsOption['image'],
                     'alt' => $paymentMethodsOption['id']
@@ -499,7 +499,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->getMercadoPago($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             } elseif ('debit_card' === $paymentMethod['type'] || 'prepaid_card' === $paymentMethod['type']) {
@@ -507,7 +507,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->getMercadoPago($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             } else {
@@ -515,7 +515,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->getMercadoPago($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             }

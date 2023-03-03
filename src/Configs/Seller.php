@@ -339,7 +339,7 @@ class Seller
         if (!empty($exPaymentOptions)) {
             $options = explode(',', $exPaymentOptions);
             foreach ($options as $option) {
-                if ('no' === $this->options->getMercadoPago($gateway, 'ex_payments_' . $option, 'yes')) {
+                if ('no' === $this->options->getGatewayOption($gateway, 'ex_payments_' . $option, 'yes')) {
                     $exPayments[] = $option;
                 }
             }

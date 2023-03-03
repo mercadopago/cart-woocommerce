@@ -166,7 +166,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     public function getBinaryMode(): bool
     {
         $binaryMode = !$this->gateway
-            ? $this->mercadopago->options->getMercadoPago($this->gateway, 'binary_mode', 'no')
+            ? $this->mercadopago->options->getGatewayOption($this->gateway, 'binary_mode', 'no')
             : 'no';
 
         return 'no' !== $binaryMode;

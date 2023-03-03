@@ -281,7 +281,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             'admin/components/toggle-switch.php',
             [
                 'field_key'   => $this->get_field_key($key),
-                'field_value' => $this->mercadopago->options->getMercadoPago($this, $key, $settings['default']),
+                'field_value' => $this->mercadopago->options->getGatewayOption($this, $key, $settings['default']),
                 'settings'    => $settings,
             ]
         );
@@ -340,8 +340,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             [
                 'field_key'          => $this->get_field_key($key),
                 'field_key_checkbox' => $this->get_field_key($key . '_checkbox'),
-                'field_value'        => $this->mercadopago->options->getMercadoPago($this, $key),
-                'enabled'            => $this->mercadopago->options->getMercadoPago($this, $key . '_checkbox'),
+                'field_value'        => $this->mercadopago->options->getGatewayOption($this, $key),
+                'enabled'            => $this->mercadopago->options->getGatewayOption($this, $key . '_checkbox'),
                 'custom_attributes'  => $this->get_custom_attribute_html($settings),
                 'settings'           => $settings,
             ]
@@ -419,9 +419,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function getActionableValue($optionName, $default): string
     {
-        $active = $this->mercadopago->options->getMercadoPago($this, "{$optionName}_checkbox", false);
+        $active = $this->mercadopago->options->getGatewayOption($this, "{$optionName}_checkbox", false);
 
-        return $active ? $this->mercadopago->options->getMercadoPago($this, $optionName, $default) : $default;
+        return $active ? $this->mercadopago->options->getGatewayOption($this, $optionName, $default) : $default;
     }
 
     /**
