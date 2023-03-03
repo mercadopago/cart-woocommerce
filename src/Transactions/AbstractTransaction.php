@@ -276,7 +276,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
                     $item = [
                         'id'          => $orderItem['product_id'],
                         'title'       => "$title x {$orderItem['qty']}",
-                        'description' => $this->mercadopago->strings->sanitizeFileName($content),
+                        'description' => $this->mercadopago->strings->sanitizeAndTruncateText($content),
                         'picture_url' => $this->getItemImage($product),
                         'category_id' => $this->mercadopago->store->getStoreCategory('others'),
                         'quantity'    => 1,
@@ -326,8 +326,8 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
                 $this->orderTotal += Numbers::format($amount);
 
                 $item = [
-                    'title'       => $this->mercadopago->strings->sanitizeFileName($fee['name']),
-                    'description' => $this->mercadopago->strings->sanitizeFileName($fee['name']),
+                    'title'       => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
+                    'description' => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
                     'category_id' => $this->mercadopago->store->getStoreCategory('others'),
                     'quantity'    => 1,
                     'unit_price'  => Numbers::format($amount),
