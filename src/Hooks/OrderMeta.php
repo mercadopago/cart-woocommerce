@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Meta
+class OrderMeta
 {
     /**
      * Get meta

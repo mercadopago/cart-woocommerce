@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Order;
 
-use MercadoPago\Woocommerce\Hooks\Meta;
+use MercadoPago\Woocommerce\Hooks\OrderMeta;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -81,16 +81,16 @@ class OrderMetadata
     private const PIX_ON = 'pix_on';
 
     /**
-     * @var Meta
+     * @var OrderMeta
      */
-    private $meta;
+    private $orderMeta;
 
     /**
      * Metadata constructor
      */
-    public function __construct(Meta $meta)
+    public function __construct(OrderMeta $orderMeta)
     {
-        $this->meta = $meta;
+        $this->orderMeta = $orderMeta;
     }
 
     /**
@@ -99,7 +99,7 @@ class OrderMetadata
      */
     public function setIsProductionModeData($order, $value): void
     {
-        $this->meta->setData($order, self::IS_PRODUCTION_MODE, $value);
+        $this->orderMeta->setData($order, self::IS_PRODUCTION_MODE, $value);
     }
 
     /**
@@ -108,7 +108,7 @@ class OrderMetadata
      */
     public function setUsedGatewayData($order, $value): void
     {
-        $this->meta->setData($order, self::USED_GATEWAY, $value);
+        $this->orderMeta->setData($order, self::USED_GATEWAY, $value);
     }
 
     /**
@@ -117,7 +117,7 @@ class OrderMetadata
      */
     public function setUsedGatewayPost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::USED_GATEWAY, $metaValue);
+        $this->orderMeta->setPost($postId, self::USED_GATEWAY, $metaValue);
     }
 
     /**
@@ -126,7 +126,7 @@ class OrderMetadata
      */
     public function setDiscountData($order, $value): void
     {
-        $this->meta->setData($order, self::DISCOUNT, $value);
+        $this->orderMeta->setData($order, self::DISCOUNT, $value);
     }
 
     /**
@@ -135,7 +135,7 @@ class OrderMetadata
      */
     public function setDiscountPost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::DISCOUNT, $metaValue);
+        $this->orderMeta->setPost($postId, self::DISCOUNT, $metaValue);
     }
 
     /**
@@ -144,7 +144,7 @@ class OrderMetadata
      */
     public function setCommissionData($order, $value): void
     {
-        $this->meta->setData($order, self::COMMISSION, $value);
+        $this->orderMeta->setData($order, self::COMMISSION, $value);
     }
 
     /**
@@ -153,7 +153,7 @@ class OrderMetadata
      */
     public function setCommissionPost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::COMMISSION, $metaValue);
+        $this->orderMeta->setPost($postId, self::COMMISSION, $metaValue);
     }
 
     /**
@@ -163,7 +163,7 @@ class OrderMetadata
      */
     public function getInstallmentsMeta($order)
     {
-        return $this->meta->get($order, self::MP_INSTALLMENTS);
+        return $this->orderMeta->get($order, self::MP_INSTALLMENTS);
     }
 
     /**
@@ -172,7 +172,7 @@ class OrderMetadata
      */
     public function addInstallmentsData($order, $value): void
     {
-        $this->meta->addData($order, self::MP_INSTALLMENTS, $value);
+        $this->orderMeta->addData($order, self::MP_INSTALLMENTS, $value);
     }
 
     /**
@@ -182,7 +182,7 @@ class OrderMetadata
      */
     public function getTransactionDetailsMeta($order)
     {
-        return $this->meta->get($order, self::MP_TRANSACTION_DETAILS);
+        return $this->orderMeta->get($order, self::MP_TRANSACTION_DETAILS);
     }
 
     /**
@@ -191,7 +191,7 @@ class OrderMetadata
      */
     public function addTransactionDetailsData($order, string $value): void
     {
-        $this->meta->addData($order, self::MP_TRANSACTION_DETAILS, $value);
+        $this->orderMeta->addData($order, self::MP_TRANSACTION_DETAILS, $value);
     }
 
     /**
@@ -201,7 +201,7 @@ class OrderMetadata
      */
     public function getTransactionAmountMeta($order)
     {
-        return $this->meta->get($order, self::MP_TRANSACTION_AMOUNT);
+        return $this->orderMeta->get($order, self::MP_TRANSACTION_AMOUNT);
     }
 
     /**
@@ -212,7 +212,7 @@ class OrderMetadata
      */
     public function getTransactionAmountPost(int $postId, bool $single = false)
     {
-        return $this->meta->getPost($postId, self::MP_TRANSACTION_AMOUNT, $single);
+        return $this->orderMeta->getPost($postId, self::MP_TRANSACTION_AMOUNT, $single);
     }
 
     /**
@@ -221,7 +221,7 @@ class OrderMetadata
      */
     public function addTransactionAmountData($order, $value): void
     {
-        $this->meta->addData($order, self::MP_TRANSACTION_AMOUNT, $value);
+        $this->orderMeta->addData($order, self::MP_TRANSACTION_AMOUNT, $value);
     }
 
     /**
@@ -230,7 +230,7 @@ class OrderMetadata
      */
     public function setTransactionAmountData($order, $value): void
     {
-        $this->meta->setData($order, self::MP_TRANSACTION_AMOUNT, $value);
+        $this->orderMeta->setData($order, self::MP_TRANSACTION_AMOUNT, $value);
     }
 
     /**
@@ -239,7 +239,7 @@ class OrderMetadata
      */
     public function setTransactionAmountPost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::MP_TRANSACTION_AMOUNT, $metaValue);
+        $this->orderMeta->setPost($postId, self::MP_TRANSACTION_AMOUNT, $metaValue);
     }
 
     /**
@@ -249,7 +249,7 @@ class OrderMetadata
      */
     public function getTotalPaidAmountMeta($order)
     {
-        return $this->meta->get($order, self::MP_TOTAL_PAID_AMOUNT);
+        return $this->orderMeta->get($order, self::MP_TOTAL_PAID_AMOUNT);
     }
 
     /**
@@ -258,7 +258,7 @@ class OrderMetadata
      */
     public function addTotalPaidAmountData($order, $value): void
     {
-        $this->meta->addData($order, self::MP_TOTAL_PAID_AMOUNT, $value);
+        $this->orderMeta->addData($order, self::MP_TOTAL_PAID_AMOUNT, $value);
     }
 
     /**
@@ -269,7 +269,7 @@ class OrderMetadata
      */
     public function getPaymentIdsPost(int $postId, bool $single = false)
     {
-        return $this->meta->getPost($postId, self::PAYMENTS_IDS, $single);
+        return $this->orderMeta->getPost($postId, self::PAYMENTS_IDS, $single);
     }
 
     /**
@@ -278,7 +278,7 @@ class OrderMetadata
      */
     public function setPaymentIdsPost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::PAYMENTS_IDS, $metaValue);
+        $this->orderMeta->setPost($postId, self::PAYMENTS_IDS, $metaValue);
     }
 
     /**
@@ -288,7 +288,7 @@ class OrderMetadata
      */
     public function getTicketTransactionDetailsMeta($order)
     {
-        return $this->meta->get($order, self::TICKET_TRANSACTION_DETAILS);
+        return $this->orderMeta->get($order, self::TICKET_TRANSACTION_DETAILS);
     }
 
     /**
@@ -299,7 +299,7 @@ class OrderMetadata
      */
     public function getTicketTransactionDetailsPost(int $postId, bool $single = false)
     {
-        return $this->meta->getPost($postId, self::TICKET_TRANSACTION_DETAILS, $single);
+        return $this->orderMeta->getPost($postId, self::TICKET_TRANSACTION_DETAILS, $single);
     }
 
     /**
@@ -308,7 +308,7 @@ class OrderMetadata
      */
     public function setTicketTransactionDetailsData($order, $value): void
     {
-        $this->meta->setData($order, self::TICKET_TRANSACTION_DETAILS, $value);
+        $this->orderMeta->setData($order, self::TICKET_TRANSACTION_DETAILS, $value);
     }
 
     /**
@@ -317,7 +317,7 @@ class OrderMetadata
      */
     public function setTicketTransactionDetailsPost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::TICKET_TRANSACTION_DETAILS, $metaValue);
+        $this->orderMeta->setPost($postId, self::TICKET_TRANSACTION_DETAILS, $metaValue);
     }
 
     /**
@@ -327,7 +327,7 @@ class OrderMetadata
      */
     public function getPixQrBase64Meta($order)
     {
-        return $this->meta->get($order, self::MP_PIX_QR_BASE_64);
+        return $this->orderMeta->get($order, self::MP_PIX_QR_BASE_64);
     }
 
     /**
@@ -338,7 +338,7 @@ class OrderMetadata
      */
     public function getPixQrBase64Post(int $postId, bool $single = false)
     {
-        return $this->meta->getPost($postId, self::MP_PIX_QR_BASE_64, $single);
+        return $this->orderMeta->getPost($postId, self::MP_PIX_QR_BASE_64, $single);
     }
 
     /**
@@ -347,7 +347,7 @@ class OrderMetadata
      */
     public function setPixQrBase64Data($order, $value): void
     {
-        $this->meta->setData($order, self::MP_PIX_QR_BASE_64, $value);
+        $this->orderMeta->setData($order, self::MP_PIX_QR_BASE_64, $value);
     }
 
     /**
@@ -356,7 +356,7 @@ class OrderMetadata
      */
     public function setPixQrBase64Post(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::MP_PIX_QR_BASE_64, $metaValue);
+        $this->orderMeta->setPost($postId, self::MP_PIX_QR_BASE_64, $metaValue);
     }
 
     /**
@@ -366,7 +366,7 @@ class OrderMetadata
      */
     public function getPixQrCodeMeta($order)
     {
-        return $this->meta->get($order, self::MP_PIX_QR_CODE);
+        return $this->orderMeta->get($order, self::MP_PIX_QR_CODE);
     }
 
     /**
@@ -377,7 +377,7 @@ class OrderMetadata
      */
     public function getPixQrCodePost(int $postId, bool $single = false)
     {
-        return $this->meta->getPost($postId, self::MP_PIX_QR_CODE, $single);
+        return $this->orderMeta->getPost($postId, self::MP_PIX_QR_CODE, $single);
     }
 
     /**
@@ -386,7 +386,7 @@ class OrderMetadata
      */
     public function setPixQrCodePost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::MP_PIX_QR_CODE, $metaValue);
+        $this->orderMeta->setPost($postId, self::MP_PIX_QR_CODE, $metaValue);
     }
 
     /**
@@ -395,7 +395,7 @@ class OrderMetadata
      */
     public function setPixQrCodeData($order, $value): void
     {
-        $this->meta->setData($order, self::MP_PIX_QR_CODE, $value);
+        $this->orderMeta->setData($order, self::MP_PIX_QR_CODE, $value);
     }
 
     /**
@@ -406,7 +406,7 @@ class OrderMetadata
      */
     public function getPixExpirationDatePost(int $postId, bool $single = false)
     {
-        return $this->meta->getPost($postId, self::PIX_EXPIRATION_DATE, $single);
+        return $this->orderMeta->getPost($postId, self::PIX_EXPIRATION_DATE, $single);
     }
 
     /**
@@ -415,7 +415,7 @@ class OrderMetadata
      */
     public function setPixExpirationDatePost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::PIX_EXPIRATION_DATE, $metaValue);
+        $this->orderMeta->setPost($postId, self::PIX_EXPIRATION_DATE, $metaValue);
     }
 
     /**
@@ -424,7 +424,7 @@ class OrderMetadata
      */
     public function setPixExpirationDateData($order, $value): void
     {
-        $this->meta->setData($order, self::PIX_EXPIRATION_DATE, $value);
+        $this->orderMeta->setData($order, self::PIX_EXPIRATION_DATE, $value);
     }
 
     /**
@@ -435,7 +435,7 @@ class OrderMetadata
      */
     public function getPixOnPost(int $postId, bool $single = false)
     {
-        return $this->meta->getPost($postId, self::PIX_ON, $single);
+        return $this->orderMeta->getPost($postId, self::PIX_ON, $single);
     }
 
     /**
@@ -444,7 +444,7 @@ class OrderMetadata
      */
     public function setPixOnPost(int $postId, $metaValue): void
     {
-        $this->meta->setPost($postId, self::PIX_ON, $metaValue);
+        $this->orderMeta->setPost($postId, self::PIX_ON, $metaValue);
     }
 
     /**
@@ -453,7 +453,7 @@ class OrderMetadata
      */
     public function setPixOnData($order, $value): void
     {
-        $this->meta->setData($order, self::PIX_ON, $value);
+        $this->orderMeta->setData($order, self::PIX_ON, $value);
     }
 
     /**
@@ -475,10 +475,10 @@ class OrderMetadata
 
             foreach ($paymentsId as $paymentId) {
                 $paymentDetailKey = 'Mercado Pago - Payment ' . $paymentId;
-                $paymentDetailMetadata = count($this->meta->getPost($orderId, $paymentDetailKey));
+                $paymentDetailMetadata = count($this->orderMeta->getPost($orderId, $paymentDetailKey));
 
                 if (0 === $paymentDetailMetadata) {
-                    $this->meta->setPost(
+                    $this->orderMeta->setPost(
                         $orderId,
                         $paymentDetailKey,
                         '[Date ' . gmdate('Y-m-d H:i:s') . ']'

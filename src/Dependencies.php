@@ -25,9 +25,9 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
-use MercadoPago\Woocommerce\Hooks\Meta;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Order;
+use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
@@ -75,9 +75,9 @@ class Dependencies
     public $options;
 
     /**
-     * @var Meta
+     * @var OrderMeta
      */
-    public $meta;
+    public $orderMeta;
 
     /**
      * @var Plugin
@@ -217,7 +217,7 @@ class Dependencies
         $this->admin             = new Admin();
         $this->endpoints         = new Endpoints();
         $this->options           = new Options();
-        $this->meta              = new Meta();
+        $this->orderMeta          = new OrderMeta();
         $this->product           = new Product();
         $this->template          = new Template();
         $this->orderMetadata     = $this->setOrderMetadata();
@@ -250,7 +250,7 @@ class Dependencies
      */
     private function setOrderMetadata(): OrderMetadata
     {
-        return new OrderMetadata($this->meta);
+        return new OrderMetadata($this->orderMeta);
     }
 
     /**
