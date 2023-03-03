@@ -300,7 +300,7 @@ class TicketGateway extends AbstractGateway
             $response          = $this->transaction->createPayment();
 
             if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->metadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
 
                 if ('pending' === $response['status']) {
                     if ('pending_waiting_payment' === $response['status_detail'] || 'pending_waiting_transfer' === $response['status_detail']) {
@@ -354,8 +354,8 @@ class TicketGateway extends AbstractGateway
         $methodExists = method_exists($order, 'get_meta');
 
         $transactionDetails  = $methodExists ?
-            $this->mercadopago->metadata->getTicketTransactionDetailsMeta($order) :
-            $this->mercadopago->metadata->getTicketTransactionDetailsPost($order->get_id(), true);
+            $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order) :
+            $this->mercadopago->orderMetadata->getTicketTransactionDetailsPost($order->get_id(), true);
 
         if (empty($transactionDetails)) {
             return;

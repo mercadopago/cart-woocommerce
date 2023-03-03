@@ -7,7 +7,7 @@ use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\MetadataSettings;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
-use MercadoPago\Woocommerce\Order\Metadata;
+use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -95,9 +95,9 @@ class Dependencies
     public $template;
 
     /**
-     * @var Metadata
+     * @var OrderMetadata
      */
-    public $metadata;
+    public $orderMetadata;
 
     /**
      * @var Order
@@ -220,7 +220,7 @@ class Dependencies
         $this->meta              = new Meta();
         $this->product           = new Product();
         $this->template          = new Template();
-        $this->metadata          = $this->setMetadata();
+        $this->orderMetadata     = $this->setOrderMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();
         $this->seller            = $this->setSeller();
@@ -246,11 +246,11 @@ class Dependencies
     }
 
     /**
-     * @return Metadata
+     * @return OrderMetadata
      */
-    private function setMetadata(): Metadata
+    private function setOrderMetadata(): OrderMetadata
     {
-        return new Metadata($this->meta);
+        return new OrderMetadata($this->meta);
     }
 
     /**
@@ -400,7 +400,7 @@ class Dependencies
      */
     private function setOrder(): Order
     {
-        return new Order($this->template, $this->metadata, $this->storeTranslations, $this->store);
+        return new Order($this->template, $this->orderMetadata, $this->storeTranslations, $this->store);
     }
 
     /**

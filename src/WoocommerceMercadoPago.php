@@ -5,7 +5,7 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\MetadataSettings;
 use MercadoPago\Woocommerce\Admin\Notices;
 use MercadoPago\Woocommerce\Admin\Settings;
-use MercadoPago\Woocommerce\Order\Metadata;
+use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -170,9 +170,9 @@ class WoocommerceMercadoPago
     public $store;
 
     /**
-     * @var Metadata
+     * @var OrderMetadata
      */
-    public $metadata;
+    public $orderMetadata;
 
     /**
      * @var Scripts
@@ -334,7 +334,7 @@ class WoocommerceMercadoPago
         // Configs
         $this->seller            = $dependencies->seller;
         $this->store             = $dependencies->store;
-        $this->metadata          = $dependencies->metadata;
+        $this->orderMetadata     = $dependencies->orderMetadata;
 
         // Helpers
         $this->cache             = $dependencies->cache;

@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use MercadoPago\Woocommerce\Order\Metadata;
+use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
@@ -19,9 +19,9 @@ class Order
     private $template;
 
     /**
-     * @var Metadata
+     * @var OrderMetadata
      */
-    private $metadata;
+    private $orderMetadata;
 
     /**
      * @var StoreTranslations
@@ -36,10 +36,10 @@ class Order
     /**
      * Order constructor
      */
-    public function __construct(Template $template, Metadata $metadata, StoreTranslations $storeTranslations, Store $store)
+    public function __construct(Template $template, OrderMetadata $orderMetadata, StoreTranslations $storeTranslations, Store $store)
     {
         $this->template          = $template;
-        $this->metadata          = $metadata;
+        $this->orderMetadata     = $orderMetadata;
         $this->storeTranslations = $storeTranslations;
         $this->store             = $store;
     }
@@ -178,10 +178,10 @@ class Order
         $transactionAmount = (float) $data['transaction_amount'];
         $totalPaidAmount   = (float) $data['transaction_details']['total_paid_amount'];
 
-        $this->metadata->addInstallmentsData($order, $installments);
-        $this->metadata->addTransactionDetailsData($order, $installmentAmount);
-        $this->metadata->addTransactionAmountData($order, $transactionAmount);
-        $this->metadata->addTotalPaidAmountData($order, $totalPaidAmount);
+        $this->orderMetadata->addInstallmentsData($order, $installments);
+        $this->orderMetadata->addTransactionDetailsData($order, $installmentAmount);
+        $this->orderMetadata->addTransactionAmountData($order, $transactionAmount);
+        $this->orderMetadata->addTotalPaidAmountData($order, $totalPaidAmount);
 
         $order->save();
     }
@@ -199,10 +199,10 @@ class Order
         $externalResourceUrl = $data['transaction_details']['external_resource_url'];
 
         if (method_exists($order, 'update_meta_data')) {
-            $this->metadata->setTicketTransactionDetailsData($order, $externalResourceUrl);
+            $this->orderMetadata->setTicketTransactionDetailsData($order, $externalResourceUrl);
             $order->save();
         } else {
-            $this->metadata->setTicketTransactionDetailsPost($order->get_id(), $externalResourceUrl);
+            $this->orderMetadata->setTicketTransactionDetailsPost($order->get_id(), $externalResourceUrl);
         }
     }
 
@@ -224,19 +224,19 @@ class Order
         $expiration        = $this->store->getCheckoutDateExpirationPix($gateway, $defaultValue);
 
         if (method_exists($order, 'update_meta_data')) {
-            $this->metadata->setTransactionAmountData($order, $transactionAmount);
-            $this->metadata->setPixQrBase64Data($order, $qrCodeBase64);
-            $this->metadata->setPixQrCodeData($order, $qrCode);
-            $this->metadata->setPixExpirationDateData($order, $expiration);
-            $this->metadata->setPixExpirationDateData($order, $expiration);
-            $this->metadata->setPixOnData($order, 1);
+            $this->orderMetadata->setTransactionAmountData($order, $transactionAmount);
+            $this->orderMetadata->setPixQrBase64Data($order, $qrCodeBase64);
+            $this->orderMetadata->setPixQrCodeData($order, $qrCode);
+            $this->orderMetadata->setPixExpirationDateData($order, $expiration);
+            $this->orderMetadata->setPixExpirationDateData($order, $expiration);
+            $this->orderMetadata->setPixOnData($order, 1);
             $order->save();
         } else {
-            $this->metadata->setTransactionAmountPost($order->get_id(), $transactionAmount);
-            $this->metadata->setPixQrBase64Post($order->get_id(), $qrCodeBase64);
-            $this->metadata->setPixQrCodePost($order->get_id(), $qrCode);
-            $this->metadata->setPixExpirationDatePost($order->get_id(), $expiration);
-            $this->metadata->setPixOnPost($order->get_id(), 1);
+            $this->orderMetadata->setTransactionAmountPost($order->get_id(), $transactionAmount);
+            $this->orderMetadata->setPixQrBase64Post($order->get_id(), $qrCodeBase64);
+            $this->orderMetadata->setPixQrCodePost($order->get_id(), $qrCode);
+            $this->orderMetadata->setPixExpirationDatePost($order->get_id(), $expiration);
+            $this->orderMetadata->setPixOnPost($order->get_id(), 1);
         }
     }
 

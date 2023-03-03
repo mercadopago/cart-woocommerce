@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Metadata
+class OrderMetadata
 {
     /**
      * @const

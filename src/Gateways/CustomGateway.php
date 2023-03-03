@@ -390,7 +390,7 @@ class CustomGateway extends AbstractGateway
                 $response          = $this->transaction->createPayment();
 
                 $this->mercadopago->order->setCustomMetadata($order, $response);
-                $this->mercadopago->metadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
 
                 return $this->handleResponseStatus($order, $response, $checkout);
             }
@@ -587,10 +587,10 @@ class CustomGateway extends AbstractGateway
     public function renderThankYouPage($order_id): void
     {
         $order             = wc_get_order($order_id);
-        $installments      = $this->mercadopago->metadata->getInstallmentsMeta($order);
-        $installmentAmount = $this->mercadopago->metadata->getTransactionDetailsMeta($order);
-        $transactionAmount = $this->mercadopago->metadata->getTransactionAmountMeta($order);
-        $totalPaidAmount   = $this->mercadopago->metadata->getTotalPaidAmountMeta($order);
+        $installments      = $this->mercadopago->orderMetadata->getInstallmentsMeta($order);
+        $installmentAmount = $this->mercadopago->orderMetadata->getTransactionDetailsMeta($order);
+        $transactionAmount = $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
+        $totalPaidAmount   = $this->mercadopago->orderMetadata->getTotalPaidAmountMeta($order);
         $totalDiffCost     = (float) $totalPaidAmount - (float) $transactionAmount;
 
         if ($totalDiffCost > 0) {
