@@ -9,13 +9,13 @@ if (!defined('ABSPATH')) {
 final class Date
 {
     /**
-     * Get date/time in GMT/CUT format
+     * Sum now() with $value in GMT/CUT format
      *
      * @param string $value
      *
      * @return string
      */
-    public static function format(string $value): string
+    public static function sumToNowDate(string $value): string
     {
         if ($value) {
             return gmdate('Y-m-d\TH:i:s.000O', strtotime('+' . $value));

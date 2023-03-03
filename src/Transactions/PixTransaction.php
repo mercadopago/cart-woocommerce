@@ -20,7 +20,7 @@ class PixTransaction extends AbstractPaymentTransaction
         parent::__construct($gateway, $order, $checkout);
 
         $this->transaction->payment_method_id          = self::ID;
-        $this->transaction->date_of_expiration         = Date::format($this->getExpirationDate());
+        $this->transaction->date_of_expiration         = $this->getExpirationDate();
         $this->transaction->point_of_interaction->type = 'CHECKOUT';
     }
 
@@ -55,6 +55,6 @@ class PixTransaction extends AbstractPaymentTransaction
             $this->mercadopago->options->setMercadoPago($this->gateway, 'checkout_pix_date_expiration', $expirationDate);
         }
 
-        return gmdate('Y-m-d\TH:i:s.000O', strtotime('+' . $expirationDate));
+        return Date::sumToNowDate($expirationDate);
     }
 }

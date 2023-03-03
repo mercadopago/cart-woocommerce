@@ -39,7 +39,7 @@ class TicketTransaction extends AbstractPaymentTransaction
 
         $this->transaction->payment_method_id  = $this->paymentMethodId;
         $this->transaction->external_reference = $this->getExternalReference();
-        $this->transaction->date_of_expiration = Date::format($this->getExpirationDate());
+        $this->transaction->date_of_expiration = $this->getExpirationDate();
 
         $this->setWebpayPropertiesTransaction();
         $this->setPayerTransaction();
@@ -85,13 +85,13 @@ class TicketTransaction extends AbstractPaymentTransaction
      */
     public function getExpirationDate(): string
     {
-        $dateExpirationDays = $this->mercadopago->options->getMercadoPago(
+        $expirationDate = $this->mercadopago->options->getMercadoPago(
             $this->gateway,
             'date_expiration',
             MP_TICKET_DATE_EXPIRATION
         );
 
-        return gmdate('Y-m-d\TH:i:s.000O', strtotime('+' . $dateExpirationDays . ' days'));
+        return Date::sumToNowDate($expirationDate . ' days');
     }
 
     /**

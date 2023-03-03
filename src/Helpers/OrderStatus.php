@@ -16,11 +16,17 @@ final class OrderStatus
     private $translations;
 
     /**
+     * @var array
+     */
+    private $commonMessages;
+
+    /**
      * Order constructor
      */
     public function __construct(StoreTranslations $storeTranslations)
     {
-        $this->translations = $storeTranslations['orderStatus'];
+        $this->translations   = $storeTranslations->orderStatus;
+        $this->commonMessages = $storeTranslations->commonMessages;
     }
 
     /**
@@ -32,7 +38,7 @@ final class OrderStatus
      */
     public function getOrderStatusMessage(string $statusDetail): string
     {
-        $messages = $this->storeTranslations->commonMessages;
+        $messages = $this->commonMessages;
 
         switch ($statusDetail) {
             case 'accredited':
