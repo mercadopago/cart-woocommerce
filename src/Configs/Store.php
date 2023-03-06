@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
 
 if (!defined('ABSPATH')) {
@@ -61,6 +62,21 @@ class Store
     private const CHECKBOX_CHECKOUT_TEST_MODE = 'checkbox_checkout_test_mode';
 
     /**
+     * @const
+     */
+    private const GATEWAY_TITLE = 'title';
+
+    /**
+     * @const
+     */
+    private const CHECKOUT_EXPIRATION_DATE_PIX = 'checkout_pix_date_expiration';
+
+    /**
+     * @const
+     */
+    private $availablePaymentGateways = [];
+
+    /**
      * @var Options
      */
     private $options;
@@ -74,11 +90,13 @@ class Store
     }
 
     /**
+     * @param string $default
+     *
      * @return string
      */
-    public function getStoreId(): string
+    public function getStoreId(string $default = ''): string
     {
-        return $this->options->get(self::STORE_ID, '');
+        return $this->options->get(self::STORE_ID, $default);
     }
 
     /**
@@ -90,11 +108,13 @@ class Store
     }
 
     /**
+     * @param string $default
+     *
      * @return string
      */
-    public function getStoreName(): string
+    public function getStoreName(string $default = ''): string
     {
-        return $this->options->get(self::STORE_NAME, '');
+        return $this->options->get(self::STORE_NAME, $default);
     }
 
     /**
@@ -106,11 +126,13 @@ class Store
     }
 
     /**
+     * @param string $default
+     *
      * @return string
      */
-    public function getStoreCategory(): string
+    public function getStoreCategory(string $default = ''): string
     {
-        return $this->options->get(self::STORE_CATEGORY, '');
+        return $this->options->get(self::STORE_CATEGORY, $default);
     }
 
     /**
@@ -138,11 +160,12 @@ class Store
     }
 
     /**
+     * @param string $default
      * @return string
      */
-    public function getWoocommerceCountry(): string
+    public function getWoocommerceCountry(string $default = ''): string
     {
-        return $this->options->get(self::WOOCOMMERCE_COUNTRY, '');
+        return $this->options->get(self::WOOCOMMERCE_COUNTRY, $default);
     }
 
     /**
@@ -231,5 +254,45 @@ class Store
     public function setCheckboxCheckoutTestMode(string $checkboxCheckoutTestMode): void
     {
         $this->options->set(self::CHECKBOX_CHECKOUT_TEST_MODE, $checkboxCheckoutTestMode);
+    }
+
+    /**
+     * @return array
+     */
+    public function getAvailablePaymentGateways(): array
+    {
+        return $this->availablePaymentGateways;
+    }
+
+    /**
+     * @param array $paymentGateway
+     */
+    public function addAvailablePaymentGateway(string $paymentGateway): void
+    {
+        if (!in_array($paymentGateway, $this->availablePaymentGateways, true)) {
+            $this->availablePaymentGateways[] = $paymentGateway;
+        }
+    }
+
+    /**
+     * @param AbstractGateway $gateway
+     * @param $default
+     *
+     * @return mixed|string
+     */
+    public function getGatewayTitle(AbstractGateway $gateway, $default)
+    {
+        return $this->options->getGatewayOption($gateway, self::GATEWAY_TITLE, $default);
+    }
+
+    /**
+     * @param AbstractGateway $gateway
+     * @param string $default
+     *
+     * @return string
+     */
+    public function getCheckoutDateExpirationPix(AbstractGateway $gateway, string $default): string
+    {
+        return $this->options->getGatewayOption($gateway, self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
     }
 }

@@ -30,7 +30,7 @@ interface MercadoPagoGatewayInterface
     public function validate_fields(): bool;
 
     /**
-     * @param int $order_id
+     * @param $order_id
      *
      * @return array
      */

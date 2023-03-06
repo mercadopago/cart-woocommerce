@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Transactions\CreditsTransaction;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -30,7 +32,7 @@ class CreditsGateway extends AbstractGateway
 
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-mp');
-        $this->title              = $this->adminTranslations['gateway_title'];
+        $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
@@ -63,6 +65,10 @@ class CreditsGateway extends AbstractGateway
         return false;
     }
 
+
+    /**
+     * Set credits banner
+     */
     public function creditsBanner(): void
     {
         $this->mercadopago->scripts->registerStoreStyle('mp-credits-modal-style', $this->mercadopago->url->getPluginFileUrl('assets/css/products/credits-modal', '.css'));
@@ -71,29 +77,29 @@ class CreditsGateway extends AbstractGateway
             'public/products/credits-modal.php',
             [
                 'banner_title'           => $this->storeTranslations['banner_title'],
-				'banner_title_bold'      => $this->storeTranslations['banner_title_bold'],
-				'banner_title_end'       => $this->storeTranslations['banner_title_end'],
-				'banner_link'            => $this->storeTranslations['banner_link'],
-				'modal_title'            => $this->storeTranslations['modal_title'],
-				'modal_subtitle'         => $this->storeTranslations['modal_subtitle'],
-				'modal_how_to'           => $this->storeTranslations['modal_how_to'],
-				'modal_step_1'           => $this->storeTranslations['modal_step_1'],
-				'modal_step_1_bold'      => $this->storeTranslations['modal_step_1_bold'],
-				'modal_step_1_end'       => $this->storeTranslations['modal_step_1_end'],
-				'modal_step_2'           => $this->storeTranslations['modal_step_2'],
-				'modal_step_2_bold'      => $this->storeTranslations['modal_step_2_bold'],
-				'modal_step_2_end'       => $this->storeTranslations['modal_step_2_end'],
-				'modal_step_3'           => $this->storeTranslations['modal_step_3'],
-				'modal_footer'           => $this->storeTranslations['modal_footer'],
-				'modal_footer_help_link' => $this->mercadopago->links->getLinks()['credits_faq_link'],
-				'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
-				'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
+                'banner_title_bold'      => $this->storeTranslations['banner_title_bold'],
+                'banner_title_end'       => $this->storeTranslations['banner_title_end'],
+                'banner_link'            => $this->storeTranslations['banner_link'],
+                'modal_title'            => $this->storeTranslations['modal_title'],
+                'modal_subtitle'         => $this->storeTranslations['modal_subtitle'],
+                'modal_how_to'           => $this->storeTranslations['modal_how_to'],
+                'modal_step_1'           => $this->storeTranslations['modal_step_1'],
+                'modal_step_1_bold'      => $this->storeTranslations['modal_step_1_bold'],
+                'modal_step_1_end'       => $this->storeTranslations['modal_step_1_end'],
+                'modal_step_2'           => $this->storeTranslations['modal_step_2'],
+                'modal_step_2_bold'      => $this->storeTranslations['modal_step_2_bold'],
+                'modal_step_2_end'       => $this->storeTranslations['modal_step_2_end'],
+                'modal_step_3'           => $this->storeTranslations['modal_step_3'],
+                'modal_footer'           => $this->storeTranslations['modal_footer'],
+                'modal_footer_help_link' => $this->links['credits_faq_link'],
+                'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
+                'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
             ]
         );
 
-		$this->mercadopago->scripts->registerStoreScript('mp-credits-modal-js', $this->mercadopago->url->getPluginFileUrl('assets/js/products/credits-modal', '.js'));
+        $this->mercadopago->scripts->registerStoreScript('mp-credits-modal-js', $this->mercadopago->url->getPluginFileUrl('assets/js/products/credits-modal', '.js'));
 
-		$this->mercadopago->scripts->registerMelidataStoreScript('/products');
+        $this->mercadopago->scripts->registerMelidataStoreScript('/products');
     }
 
     /**
@@ -115,7 +121,7 @@ class CreditsGateway extends AbstractGateway
                     'title'       => $this->adminTranslations['card_settings_title'],
                     'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
                     'button_text' => $this->adminTranslations['card_settings_button_text'],
-                    'button_url'  => $this->mercadopago->links->getLinks()['admin_settings_page'],
+                    'button_url'  => $this->links['admin_settings_page'],
                     'icon'        => 'mp-icon-badge-info',
                     'color_card'  => 'mp-alert-color-success',
                     'size_card'   => 'mp-card-body-size',
@@ -229,7 +235,7 @@ class CreditsGateway extends AbstractGateway
                 'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
-                'test_mode_link_src'               => $this->mercadopago->links->getLinks()['docs_integration_test'],
+                'test_mode_link_src'               => $this->links['docs_integration_test'],
                 'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
                 'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
                 'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
@@ -237,7 +243,7 @@ class CreditsGateway extends AbstractGateway
                 'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
                 'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
                 'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-                'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
+                'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
             ]
         );
     }
@@ -255,40 +261,27 @@ class CreditsGateway extends AbstractGateway
     /**
      * Process payment and create woocommerce order
      *
-     * @param int $order_id
+     * @param $order_id
      *
      * @return array
+     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
-        $order = wc_get_order($order_id);
-        $order->payment_complete();
-        $order->add_order_note('Hey, your order is paid! Thank you!', true);
+        parent::process_payment($order_id);
 
-        wc_reduce_stock_levels($order_id);
+        $order              = wc_get_order($order_id);
+        $this->transaction  = new CreditsTransaction($this, $order);
 
-        $this->mercadopago->woocommerce->cart->empty_cart();
+        $this->mercadopago->logs->file->info(
+            'customer being redirected to Mercado Pago.',
+            __FUNCTION__
+        );
 
         return [
             'result'   => 'success',
-            'redirect' => $this->get_return_url($order)
+            'redirect' => $this->transaction->createPreference(),
         ];
-    }
-
-    /**
-     * Receive gateway webhook notifications
-     *
-     * @return void
-     */
-    public function webhook(): void
-    {
-        $status   = 200;
-        $response = [
-            'status'  => $status,
-            'message' => 'Webhook handled successful'
-        ];
-
-        wp_send_json_success($response, $status);
     }
 
 

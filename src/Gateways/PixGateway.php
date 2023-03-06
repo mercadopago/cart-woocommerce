@@ -2,6 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Helpers\Numbers;
+use MercadoPago\Woocommerce\Transactions\PixTransaction;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -30,11 +33,11 @@ class PixGateway extends AbstractGateway
 
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-pix');
-        $this->title              = $this->getOption('title', $this->adminTranslations['gateway_title']);
+        $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->expirationDate     = (int) $this->mercadopago->seller->getCheckoutDateExpirationPix('1');
+        $this->expirationDate     = (int) $this->mercadopago->store->getCheckoutDateExpirationPix($this, '1');
 
         $this->init_form_fields();
         $this->init_settings();
@@ -42,11 +45,12 @@ class PixGateway extends AbstractGateway
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->gateway->registerGatewayTitle($this);
+        // @todo: call admin_notice hook to display currency notice
         // @todo: register the endpoint to woocommerce_api_wc_mp_pix_image
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
-        $this->mercadopago->order->registerEmailBeforeOrderTable([$this, 'getTemplate']);
-        $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'getTemplate']);
-        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'loadThankYouPage']);
+        $this->mercadopago->order->registerEmailBeforeOrderTable([$this, 'getOrderReceivedTemplate']);
+        $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'getOrderReceivedTemplate']);
+        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
     }
 
     /**
@@ -83,8 +87,8 @@ class PixGateway extends AbstractGateway
         ) {
             $paymentMethodPix = $this->mercadopago->seller->getCheckoutPixPaymentMethods();
 
-            if (empty($paymentMethodPix) || !in_array('pix', $paymentMethodPix['pix'], true)) {
-                if (isset($_GET['section']) && $_GET['section'] == $this->id) {
+            if (empty($paymentMethodPix)) {
+                if ($this->mercadopago->url->getCurrentSection() == $this->id) {
                     $this->mercadopago->notices->adminNoticeMissPix();
                 }
 
@@ -100,8 +104,8 @@ class PixGateway extends AbstractGateway
                         'button_about_pix'  => $this->adminTranslations['steps_button_about_pix'],
                         'observation_three' => $this->adminTranslations['steps_observation_three'],
                         'link_title_one'    => $this->adminTranslations['steps_link_title_one'],
-                        'link_url_one'      => $this->mercadopago->links->getLinks()['mercadopago_pix'],
-                        'link_url_two'      => $this->mercadopago->links->getLinks()['mercadopago_support'],
+                        'link_url_one'      => $this->links['mercadopago_pix'],
+                        'link_url_two'      => $this->links['mercadopago_support'],
                     ]
                 );
 
@@ -125,12 +129,12 @@ class PixGateway extends AbstractGateway
                         'description' => $this->adminTranslations['header_description'],
                     ],
                     'card_settings'                      => [
-                        'type'        => 'mp_card_info',
-                        'value'       => [
+                        'type'  => 'mp_card_info',
+                        'value' => [
                             'title'       => $this->adminTranslations['card_settings_title'],
                             'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
                             'button_text' => $this->adminTranslations['card_settings_button_text'],
-                            'button_url'  => $this->mercadopago->links->getLinks()['admin_settings_page'],
+                            'button_url'  => $this->links['admin_settings_page'],
                             'icon'        => 'mp-icon-badge-info',
                             'color_card'  => 'mp-alert-color-success',
                             'size_card'   => 'mp-card-body-size',
@@ -148,12 +152,12 @@ class PixGateway extends AbstractGateway
                         ],
                     ],
                     'title'                              => [
-                        'type'            => 'text',
-                        'title'           => $this->adminTranslations['title_title'],
-                        'description'     => $this->adminTranslations['title_description'],
-                        'default'         => $this->adminTranslations['title_default'],
-                        'desc_tip'        => $this->adminTranslations['title_desc_tip'],
-                        'class'           => 'limit-title-max-length',
+                        'type'        => 'text',
+                        'title'       => $this->adminTranslations['title_title'],
+                        'description' => $this->adminTranslations['title_description'],
+                        'default'     => $this->adminTranslations['title_default'],
+                        'desc_tip'    => $this->adminTranslations['title_desc_tip'],
+                        'class'       => 'limit-title-max-length',
                     ],
                     'expiration_date'                    => [
                         'type'        => 'select',
@@ -189,12 +193,12 @@ class PixGateway extends AbstractGateway
                         'value' => '',
                     ],
                     'card_info'                          => [
-                        'type'        => 'mp_card_info',
-                        'value'       => [
+                        'type'  => 'mp_card_info',
+                        'value' => [
                             'title'       => $this->adminTranslations['card_info_title'],
                             'subtitle'    => $this->adminTranslations['card_info_subtitle'],
                             'button_text' => $this->adminTranslations['card_info_button_text'],
-                            'button_url'  => $this->mercadopago->links->getLinks()['mercadopago_pix'],
+                            'button_url'  => $this->links['mercadopago_pix'],
                             'icon'        => 'mp-icon-badge-info',
                             'color_card'  => 'mp-alert-color-success',
                             'size_card'   => 'mp-card-body-size',
@@ -211,7 +215,7 @@ class PixGateway extends AbstractGateway
                         'title' => $this->adminTranslations['advanced_configuration_subtitle'],
                         'class' => 'mp-small-text',
                     ],
-                    'discount'               => [
+                    'discount'                           => [
                         'type'              => 'mp_actionable_input',
                         'title'             => $this->adminTranslations['discount_title'],
                         'input_type'        => 'number',
@@ -224,7 +228,7 @@ class PixGateway extends AbstractGateway
                             'max'  => '99',
                         ],
                     ],
-                    'commission'             => [
+                    'commission'                         => [
                         'type'              => 'mp_actionable_input',
                         'title'             => $this->adminTranslations['commission_title'],
                         'input_type'        => 'number',
@@ -273,7 +277,7 @@ class PixGateway extends AbstractGateway
                 'pix_template_src'                 => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix/pix', '.png', true),
                 'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
                 'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-                'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
+                'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
             ]
         );
     }
@@ -291,71 +295,94 @@ class PixGateway extends AbstractGateway
     /**
      * Process payment and create woocommerce order
      *
-     * @param int $order_id
+     * @param $order_id
      *
      * @return array
+     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
-        $order = wc_get_order($order_id);
-        $order->payment_complete();
-        $order->add_order_note('Hey, your order is paid! Thank you!', true);
+        parent::process_payment($order_id);
 
-        wc_reduce_stock_levels($order_id);
+        // @todo: nonce validation
 
-        $this->mercadopago->woocommerce->cart->empty_cart();
+        // phpcs:ignore WordPress.Security.NonceVerification
+        $checkout = map_deep($_POST, 'sanitize_text_field');
+        $order    = wc_get_order($order_id);
 
-        return [
-            'result'   => 'success',
-            'redirect' => $this->get_return_url($order)
-        ];
+        if (filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
+            $this->transaction = new PixTransaction($this, $order, $checkout);
+            $response          = $this->transaction->createPayment();
+
+            if (is_array($response) && array_key_exists('status', $response)) {
+                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+
+                if ('pending' === $response['status']) {
+                    if (
+                        'pending_waiting_payment' === $response['status_detail'] ||
+                        'pending_waiting_transfer' === $response['status_detail']
+                    ) {
+                        WC()->cart->empty_cart();
+
+                        $this->mercadopago->order->setPixMetadata($this, $order, $response);
+
+                        $description = $this->storeTranslations['customer_not_paid'];
+                        $this->mercadopago->order->addOrderNote($order, $description);
+
+                        if ('pix' === $response['payment_method_id']) {
+                            $description = "<div style=\"text-align: justify;\"><p>{$this->storeTranslations['congrats_title']} {$this->storeTranslations['congrats_subtitle']}</small></p>";
+                            $this->mercadopago->order->addOrderNote($order, $description, 1);
+                        }
+
+                        return [
+                            'result'   => 'success',
+                            'redirect' => $order->get_checkout_order_received_url(),
+                        ];
+                    }
+                }
+            }
+
+            return $this->processReturnFail(
+                __FUNCTION__,
+                $this->mercadopago->storeTranslations->commonMessages['cho_form_error']
+            );
+        }
+
+        return $this->processReturnFail(
+            __FUNCTION__,
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
+        );
     }
 
     /**
-     * Receive gateway webhook notifications
-     *
-     * @return void
-     */
-    public function webhook(): void
-    {
-        $status = 200;
-        $response = [
-            'status'  => $status,
-            'message' => 'Webhook handled successful'
-        ];
-
-        wp_send_json_success($response, $status);
-    }
-
-    /**
-     * Get pix template
+     * Get pix order received template
      *
      * @param $order
      *
      * @return string
      */
-    public function getTemplate($order): string
+    public function getOrderReceivedTemplate($order): string
     {
         $orderId = $order->get_id();
-        $pixOn   = get_post_meta($orderId, 'pix_on');
+        $pixOn   = $this->mercadopago->orderMetadata->getPixOnPost($orderId);
         $pixOn   = (int) array_pop($pixOn);
 
         if (1 === $pixOn && 'pending' === $order->get_status()) {
-            $qrCode         = get_post_meta($orderId, 'mp_pix_qr_code');
-            $qrCode         = array_pop($qrCode);
+            $qrCode = $this->mercadopago->orderMetadata->getPixQrCodePost($orderId);
+            $qrCode = array_pop($qrCode);
 
-            $qrCodeBase64   = get_post_meta($orderId, 'mp_pix_qr_base64');
-            $qrCodeBase64   = array_pop($qrCodeBase64);
+            $qrCodeBase64 = $this->mercadopago->orderMetadata->getPixQrBase64Post($orderId);
+            $qrCodeBase64 = array_pop($qrCodeBase64);
 
-            $expirationDate = get_post_meta($orderId, 'checkout_pix_date_expiration');
+            $expirationDate = $this->mercadopago->orderMetadata->getPixExpirationDatePost($orderId);
             $expirationDate = array_pop($expirationDate);
 
             $siteUrl        = $this->mercadopago->options->get('siteurl');
             $hasGd          = !in_array('gd', get_loaded_extensions(), true);
-            $qrCodeImage    = $hasGd ? "data:image/jpeg;base64,{$qrCode}" : "{$siteUrl}/?wc-api=wc_mp_pix_image&id={$orderId}";
+            $qrCodeImage    = $hasGd ? "data:image/jpeg;base64,$qrCode" : "$siteUrl/?wc-api=wc_mp_pix_image&id=$orderId";
 
             return $this->mercadopago->template->getWoocommerceTemplateHtml(
-                'public/congrats/pix-image.php',
+                'public/order/pix-order-received-image.php',
                 [
                     'qr_code'              => $qrCode,
                     'expiration_date'      => $expirationDate,
@@ -369,34 +396,41 @@ class PixGateway extends AbstractGateway
     }
 
     /**
-     * Load thank you page
+     * Render thank you page
      *
-     * @param $orderId
-     *
-     * @return void
+     * @param $order_id
      */
-    public function loadThankYouPage($orderId): void
+    public function renderThankYouPage($order_id): void
     {
-        $order             = wc_get_order($orderId);
-        $methodExists      = method_exists($order, 'get_meta');
-        $qrCodeBase64      = $methodExists ? $order->get_meta('mp_pix_qr_base64') : get_post_meta($order->get_id(), 'mp_pix_qr_base64', true);
-        $qrCode            = $methodExists ? $order->get_meta('mp_pix_qr_code') : get_post_meta($order->get_id(), 'mp_pix_qr_code', true);
-        $transactionAmount = $methodExists ? $order->get_meta('mp_transaction_amount') : get_post_meta($order->get_id(), 'mp_transaction_amount', true);
-        $transactionAmount = number_format($transactionAmount, 2, ',', '.');
+        $order        = wc_get_order($order_id);
+        $methodExists = method_exists($order, 'get_meta');
 
-        $expirationOption  = $this->mercadopago->options->get('checkout_pix_date_expiration', '30 minutes');
-        $country           = $this->mercadopago->country->getPluginDefaultCountry();
-        $countryConfigs    = $this->mercadopago->country->getCountryConfigs($country);
-        $currencySymbol    = $countryConfigs['currency_symbol'];
+        $qrCodeBase64 = $methodExists ?
+            $this->mercadopago->orderMetadata->getPixQrBase64Meta($order) :
+            $this->mercadopago->orderMetadata->getPixQrBase64Post($order->get_id(), true);
 
-        if (empty($qr_base64) && empty($qr_code)) {
+        $qrCode = $methodExists ?
+            $this->mercadopago->orderMetadata->getPixQrCodeMeta($order) :
+            $this->mercadopago->orderMetadata->getPixQrCodePost($order->get_id(), true);
+
+        $transactionAmount = $methodExists ?
+            $this->mercadopago->orderMetadata->getTransactionAmountMeta($order) :
+            $this->mercadopago->orderMetadata->getTransactionAmountPost($order->get_id(), true);
+
+        $transactionAmount = Numbers::format($transactionAmount);
+        $defaultValue      = $this->storeTranslations['expiration_30_minutes'];
+        $expirationOption  = $this->mercadopago->store->getCheckoutDateExpirationPix($this, $defaultValue);
+
+        if (empty($qrCodeBase64) && empty($qrCode)) {
             return;
         }
+
+        $this->mercadopago->scripts->registerStoreStyle('mp-pix-thankyou', $this->mercadopago->url->getPluginFileUrl('assets/css/public/mp-pix-thankyou', '.css'));
 
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/order/pix-order-received.php',
             [
-                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix', '.png', true),
+                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix/pix', '.png', true),
                 'amount'              => $transactionAmount,
                 'qr_base64'           => $qrCodeBase64,
                 'title_purchase_pix'  => $this->storeTranslations['title_purchase_pix'],
@@ -406,7 +440,7 @@ class PixGateway extends AbstractGateway
                 'step_three'          => $this->storeTranslations['step_three'],
                 'step_four'           => $this->storeTranslations['step_four'],
                 'text_amount'         => $this->storeTranslations['text_amount'],
-                'currency'            => $currencySymbol,
+                'currency'            => $this->countryConfigs['currency_symbol'],
                 'text_scan_qr'        => $this->storeTranslations['text_scan_qr'],
                 'text_time_qr_one'    => $this->storeTranslations['qr_date_expiration'],
                 'qr_date_expiration'  => $expirationOption,

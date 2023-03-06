@@ -68,7 +68,7 @@ final class CurrentUser
      *
      * @param string $key
      * @param bool   $single
-     * 
+     *
      * @return array|string
      */
     public function getCurrentUserMeta(string $key, bool $single = false)

@@ -2,8 +2,9 @@
 
 namespace MercadoPago\Woocommerce;
 
-use MercadoPago\Woocommerce\Admin\Notices;
+use MercadoPago\Woocommerce\Admin\MetadataSettings;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Cache;
@@ -12,6 +13,7 @@ use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
+use MercadoPago\Woocommerce\Helpers\Notices;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
@@ -20,6 +22,7 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
+use MercadoPago\Woocommerce\Hooks\Meta;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
@@ -50,6 +53,16 @@ class WoocommerceMercadoPago
      * @const
      */
     private const PLATFORM_ID = 'bo2hnr2ic4p001kbgpt0';
+
+    /**
+     * @const
+     */
+    private const PRODUCT_ID_DESKTOP = 'BT7OF5FEOO6G01NJK3QG';
+
+    /**
+     * @const
+     */
+    private const PRODUCT_ID_MOBILE  = 'BT7OFH09QS3001K5A0H0';
 
     /**
      * @const
@@ -95,6 +108,11 @@ class WoocommerceMercadoPago
      * @var Options
      */
     public $options;
+
+    /**
+     * @var Meta
+     */
+    public $meta;
 
     /**
      * @var Plugin
@@ -152,6 +170,11 @@ class WoocommerceMercadoPago
     public $store;
 
     /**
+     * @var OrderMetadata
+     */
+    public $orderMetadata;
+
+    /**
      * @var Scripts
      */
     public $scripts;
@@ -177,6 +200,11 @@ class WoocommerceMercadoPago
     public $nonce;
 
     /**
+     * @var OrderStatus
+     */
+    public $orderStatus;
+
+    /**
      * @var CurrentUser
      */
     public $currentUser;
@@ -195,6 +223,11 @@ class WoocommerceMercadoPago
      * @var Settings
      */
     public $settings;
+
+    /**
+     * @var MetadataSettings
+     */
+    public $metadataSettings;
 
     /**
      * @var AdminTranslations
@@ -301,6 +334,7 @@ class WoocommerceMercadoPago
         // Configs
         $this->seller            = $dependencies->seller;
         $this->store             = $dependencies->store;
+        $this->orderMetadata     = $dependencies->orderMetadata;
 
         // Helpers
         $this->cache             = $dependencies->cache;
@@ -313,6 +347,7 @@ class WoocommerceMercadoPago
         $this->url               = $dependencies->url;
         $this->paymentMethods    = $dependencies->paymentMethods;
         $this->nonce             = $dependencies->nonce;
+        $this->orderStatus       = $dependencies->orderStatus;
 
         // Hooks
         $this->admin             = $dependencies->admin;
@@ -320,6 +355,7 @@ class WoocommerceMercadoPago
         $this->endpoints         = $dependencies->endpoints;
         $this->gateway           = $dependencies->gateway;
         $this->options           = $dependencies->options;
+        $this->meta              = $dependencies->meta;
         $this->order             = $dependencies->order;
         $this->plugin            = $dependencies->plugin;
         $this->product           = $dependencies->product;
@@ -329,6 +365,7 @@ class WoocommerceMercadoPago
         // General
         $this->logs              = $dependencies->logs;
         $this->notices           = $dependencies->notices;
+        $this->metadataSettings  = $dependencies->metadataSettings;
 
         // Exclusive
         $this->settings          = $dependencies->settings;
@@ -409,6 +446,8 @@ class WoocommerceMercadoPago
         $this->define('MP_VERSION', self::PLUGIN_VERSION);
         $this->define('MP_PLATFORM_ID', self::PLATFORM_ID);
         $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
+        $this->define('MP_PRODUCT_ID_DESKTOP', self::PRODUCT_ID_DESKTOP);
+        $this->define('MP_PRODUCT_ID_MOBILE', self::PRODUCT_ID_MOBILE);
         $this->define('MP_TICKET_DATE_EXPIRATION', self::TICKET_TIME_EXPIRATION);
     }
 

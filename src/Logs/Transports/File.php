@@ -40,9 +40,9 @@ class File implements LogInterface
     /**
      * Errors that do not require immediate action
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -54,9 +54,9 @@ class File implements LogInterface
     /**
      * Exceptional occurrences that are not errors
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -68,9 +68,9 @@ class File implements LogInterface
     /**
      * Normal but significant events
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -82,9 +82,9 @@ class File implements LogInterface
     /**
      * Interesting events
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -96,9 +96,9 @@ class File implements LogInterface
     /**
      * Detailed debug information
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */
@@ -112,10 +112,10 @@ class File implements LogInterface
     /**
      * Save logs with Woocommerce logger
      *
-     * @param string               $level
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $level
+     * @param string $message
+     * @param string $source
+     * @param array $context
      *
      * @return void
      */

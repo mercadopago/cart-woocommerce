@@ -4,7 +4,7 @@ namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Logs\Logs;
-use MercadoPago\Woocommerce\Admin\Notices;
+use MercadoPago\Woocommerce\Helpers\Notices;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
@@ -128,9 +128,7 @@ final class Currency
      */
     public function getAccountCurrency(): string
     {
-        $siteId  = $this->seller->getSiteId();
-        $country = $this->country->siteIdToCountry($siteId);
-        $configs = $this->country->getCountryConfigs($country);
+        $configs = $this->country->getCountryConfigs();
 
         return $configs['currency'];
     }

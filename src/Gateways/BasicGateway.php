@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Transactions\BasicTransaction;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -30,7 +32,7 @@ class BasicGateway extends AbstractGateway
 
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-mp');
-        $this->title              = $this->adminTranslations['gateway_title'];
+        $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
@@ -62,7 +64,7 @@ class BasicGateway extends AbstractGateway
                     'title'       => $this->adminTranslations['card_settings_title'],
                     'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
                     'button_text' => $this->adminTranslations['card_settings_button_text'],
-                    'button_url'  => $this->mercadopago->links->getLinks()['admin_settings_page'],
+                    'button_url'  => $this->links['admin_settings_page'],
                     'icon'        => 'mp-icon-badge-info',
                     'color_card'  => 'mp-alert-color-success',
                     'size_card'   => 'mp-card-body-size',
@@ -231,9 +233,9 @@ class BasicGateway extends AbstractGateway
                 'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
-                'test_mode_link_src'               => $this->mercadopago->links->getLinks()['docs_integration_test'],
-                'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
-                'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
+                'test_mode_link_src'               => $this->links['docs_integration_test'],
+                'checkout_benefits_title'           => $this->storeTranslations['checkout_benefits_title'],
+                'checkout_benefits_items'           => wp_json_encode($checkoutBenefitsItems),
                 'payment_methods_title'            => $paymentMethodsTitle,
                 'payment_methods_methods'          => wp_json_encode($paymentMethods),
                 'method'                           => $this->settings['method'],
@@ -242,7 +244,7 @@ class BasicGateway extends AbstractGateway
                 'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
                 'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
                 'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-                'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
+                'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
             ]
         );
     }
@@ -260,40 +262,45 @@ class BasicGateway extends AbstractGateway
     /**
      * Process payment and create woocommerce order
      *
-     * @param int $order_id
+     * @param $order_id
      *
      * @return array
+     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
-        $order = wc_get_order($order_id);
-        $order->payment_complete();
-        $order->add_order_note('Hey, your order is paid! Thank you!', true);
+        parent::process_payment($order_id);
 
-        wc_reduce_stock_levels($order_id);
+        $order             = wc_get_order($order_id);
+        $this->transaction = new BasicTransaction($this, $order);
+        $method            = $this->mercadopago->options->getGatewayOption($this, 'method', 'redirect');
 
-        $this->mercadopago->woocommerce->cart->empty_cart();
+        if ('redirect' === $method || 'iframe' === $method) {
+            $this->mercadopago->logs->file->info(
+                'customer being redirected to Mercado Pago.',
+                __FUNCTION__
+            );
 
-        return [
-            'result'   => 'success',
-            'redirect' => $this->get_return_url($order)
-        ];
-    }
+            return [
+                'result'   => 'success',
+                'redirect' => $this->transaction->createPreference(),
+            ];
+        } elseif ('modal' === $method) {
+            $this->mercadopago->logs->file->info(
+                'preparing to render Checkout Pro view.',
+                __FUNCTION__
+            );
 
-    /**
-     * Receive gateway webhook notifications
-     *
-     * @return void
-     */
-    public function webhook(): void
-    {
-        $status   = 200;
-        $response = [
-            'status'  => $status,
-            'message' => 'Webhook handled successful'
-        ];
+            return [
+                'result'   => 'success',
+                'redirect' => $order->get_checkout_payment_url(true),
+            ];
+        }
 
-        wp_send_json_success($response, $status);
+        return $this->processReturnFail(
+            __FUNCTION__,
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
+        );
     }
 
     /**
@@ -414,17 +421,18 @@ class BasicGateway extends AbstractGateway
         return array_key_exists($site, $benefits) ? $benefits[$site] : $benefits['ROLA'];
     }
 
-	/**
-	 * Get payment methods
-	 *
-	 * @return array
-	 */
-	private function getPaymentMethods() {
-		$paymentMethodsOptions = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
+    /**
+     * Get payment methods
+     *
+     * @return array
+     */
+    private function getPaymentMethods(): array
+    {
+        $paymentMethodsOptions = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
         $activePaymentMethods = [];
 
         foreach ($paymentMethodsOptions as $paymentMethodsOption) {
-            if ('yes' === $this->getOption($paymentMethodsOption['config'])) {
+            if ('yes' === $this->mercadopago->options->getGatewayOption($this, $paymentMethodsOption['config'])) {
                 $activePaymentMethods[] = [
                     'src' => $paymentMethodsOption['image'],
                     'alt' => $paymentMethodsOption['id']
@@ -432,11 +440,7 @@ class BasicGateway extends AbstractGateway
             }
         }
 
-		$paymentMethods = $this->mercadopago->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
-        echo("<br>");
-        echo(var_dump($paymentMethods));
-
-        return $paymentMethods;
+        return $this->mercadopago->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
     }
 
     /**
@@ -495,7 +499,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->getOption('ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             } elseif ('debit_card' === $paymentMethod['type'] || 'prepaid_card' === $paymentMethod['type']) {
@@ -503,7 +507,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->getOption('ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             } else {
@@ -511,7 +515,7 @@ class BasicGateway extends AbstractGateway
                     'id'        => 'ex_payments_' . $paymentMethod['id'],
                     'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
                     'label'     => $paymentMethod['name'],
-                    'value'     => $this->getOption('ex_payments_' . $paymentMethod['id'], 'yes'),
+                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
                     'type'      => 'checkbox',
                 ];
             }

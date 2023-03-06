@@ -6,7 +6,7 @@
  * @var string $message
  * @var bool $isDismissible
  *
- * @see \MercadoPago\Woocommerce\Admin\Notices
+ * @see \MercadoPago\Woocommerce\Helpers\Notices
  */
 
 if (!defined('ABSPATH')) {

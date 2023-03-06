@@ -22,8 +22,8 @@ if (!defined('ABSPATH')) {
 
 include_once dirname(__FILE__) . '/src/Autoloader.php';
 
-use MercadoPago\Woocommerce\Packages;
 use MercadoPago\Woocommerce\Autoloader;
+use MercadoPago\Woocommerce\Packages;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 if (!Autoloader::init()) {

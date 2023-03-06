@@ -70,7 +70,7 @@ class Seller
     /**
      * @const
      */
-    private const CHECKOUT_EXPIRATION_DATE_PIX = 'checkout_pix_date_expiration';
+    private const ALL_PAYMENT_METHODS = '_all_payment_methods_v0';
 
     /**
      * @var Cache
@@ -204,7 +204,7 @@ class Seller
      */
     public function getHomologValidate(): bool
     {
-        return $this->options->get(self::HOMOLOG_VALIDATE, false);
+        return $this->options->get(self::HOMOLOG_VALIDATE);
     }
 
     /**
@@ -263,11 +263,13 @@ class Seller
     }
 
     /**
-     * @return array
+     * @param string $default
+     *
+     * @return mixed
      */
-    public function getCheckoutTicketPaymentMethods(): array
+    public function getCheckoutTicketPaymentMethods(string $default = '')
     {
-        return $this->options->get(self::CHECKOUT_TICKET_PAYMENT_METHODS, '');
+        return $this->options->get(self::CHECKOUT_TICKET_PAYMENT_METHODS, $default);
     }
 
     /**
@@ -316,21 +318,33 @@ class Seller
     }
 
     /**
-     * @param string $default
-     *
-     * @return string
+     * @return mixed
      */
-    public function getCheckoutDateExpirationPix(string $default): string
+    public function getAllPaymentMethods()
     {
-        return $this->options->get(self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
+        return $this->options->get(self::ALL_PAYMENT_METHODS, '');
     }
 
     /**
-     * @param array $checkoutExpirationDatePix
+     * Get excluded payments
+     *
+     * @param $gateway
+     *
+     * @return array
      */
-    public function setCheckoutDateExpirationPix(array $checkoutExpirationDatePix): void
+    public function getExPayments($gateway): array
     {
-        $this->options->set(self::CHECKOUT_EXPIRATION_DATE_PIX, $checkoutExpirationDatePix);
+        $exPayments = [];
+        $exPaymentOptions = $this->getAllPaymentMethods();
+        if (!empty($exPaymentOptions)) {
+            $options = explode(',', $exPaymentOptions);
+            foreach ($options as $option) {
+                if ('no' === $this->options->getGatewayOption($gateway, 'ex_payments_' . $option, 'yes')) {
+                    $exPayments[] = $option;
+                }
+            }
+        }
+        return $exPayments;
     }
 
     /**
@@ -340,7 +354,7 @@ class Seller
      * @param string|null $accessToken
      *
      */
-    public function updatePaymentMethods(string $publicKey = null, string $accessToken = null, $siteId = null): void
+    public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
     {
         if (null === $publicKey) {
             $publicKey = $this->getCredentialsPublicKey();
@@ -367,11 +381,10 @@ class Seller
     /**
      * Update Payment Methods
      *
-     * @param string|null $publicKey
-     * @param string|null $accessToken
+     * @param string|null $siteId
      *
      */
-    public function updatePaymentMethodsBySiteId($siteId = null): void
+    public function updatePaymentMethodsBySiteId(string $siteId = null): void
     {
         if (null === $siteId) {
             $siteId = $this->getSiteId();
@@ -422,7 +435,6 @@ class Seller
      * Setup Pix Payment Methods
      *
      * @param array $paymentMethodsResponse
-     *
      */
     private function setupPixPaymentMethods(array $paymentMethodsResponse): void
     {
@@ -447,7 +459,6 @@ class Seller
      * Setup Ticket Payment Methods
      *
      * @param array $paymentMethodsResponse
-     *
      */
     private function setupTicketPaymentMethods(array $paymentMethodsResponse): void
     {
@@ -459,7 +470,8 @@ class Seller
 
         $serializedPaymentMethods = [];
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
-            if (in_array($paymentMethod['id'], $excludedPaymentMethods, true) ||
+            if (
+                in_array($paymentMethod['id'], $excludedPaymentMethods, true) ||
                 'account_money' === $paymentMethod['payment_type_id'] ||
                 'credit_card'   === $paymentMethod['payment_type_id'] ||
                 'debit_card'    === $paymentMethod['payment_type_id'] ||
@@ -485,46 +497,46 @@ class Seller
     public function buildPaymentPlaces(array $serializedPaymentMethods): array
     {
         $payment_places =
-			[
-				'paycash' => [
-					[
-						'payment_option_id' => '7eleven',
-						'name'              => '7 Eleven',
-						'status'            => 'active',
-						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/417ddb90-34ab-11e9-b8b8-15cad73057aa-s.png'
-					],
-					[
-						'payment_option_id' => 'circlek',
-						'name'              => 'Circle K',
-						'status'            => 'active',
-						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/6f952c90-34ab-11e9-8357-f13e9b392369-s.png'
-					],
-					[
-						'payment_option_id' => 'soriana',
-						'name'              => 'Soriana',
-						'status'            => 'active',
-						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/dac0bf10-01eb-11ec-ad92-052532916206-s.png'
-					],
-					[
-						'payment_option_id' => 'extra',
-						'name'              => 'Extra',
-						'status'            => 'active',
-						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/9c8f26b0-34ab-11e9-b8b8-15cad73057aa-s.png'
-					],
-					[
-						'payment_option_id' => 'calimax',
-						'name'              => 'Calimax',
-						'status'            => 'active',
-						'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/52efa730-01ec-11ec-ba6b-c5f27048193b-s.png'
-					],
-				],
-			];
+            [
+                'paycash' => [
+                    [
+                        'payment_option_id' => '7eleven',
+                        'name'              => '7 Eleven',
+                        'status'            => 'active',
+                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/417ddb90-34ab-11e9-b8b8-15cad73057aa-s.png'
+                    ],
+                    [
+                        'payment_option_id' => 'circlek',
+                        'name'              => 'Circle K',
+                        'status'            => 'active',
+                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/6f952c90-34ab-11e9-8357-f13e9b392369-s.png'
+                    ],
+                    [
+                        'payment_option_id' => 'soriana',
+                        'name'              => 'Soriana',
+                        'status'            => 'active',
+                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/dac0bf10-01eb-11ec-ad92-052532916206-s.png'
+                    ],
+                    [
+                        'payment_option_id' => 'extra',
+                        'name'              => 'Extra',
+                        'status'            => 'active',
+                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/9c8f26b0-34ab-11e9-b8b8-15cad73057aa-s.png'
+                    ],
+                    [
+                        'payment_option_id' => 'calimax',
+                        'name'              => 'Calimax',
+                        'status'            => 'active',
+                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/52efa730-01ec-11ec-ba6b-c5f27048193b-s.png'
+                    ],
+                ],
+            ];
 
-		foreach ( $serializedPaymentMethods as $key => $method ) {
-			if (isset( $payment_places[$method['id']])) {
-				$serializedPaymentMethods[$key]['payment_places'] = $payment_places[$method['id']];
-			}
-		}
+        foreach ($serializedPaymentMethods as $key => $method) {
+            if (isset($payment_places[$method['id']])) {
+                $serializedPaymentMethods[$key]['payment_places'] = $payment_places[$method['id']];
+            }
+        }
 
         return $serializedPaymentMethods;
     }
@@ -704,7 +716,7 @@ class Seller
             ];
 
             $this->cache->setCache($key, $serializedResponse);
-            
+
             return $serializedResponse;
         } catch (\Exception $e) {
             return [

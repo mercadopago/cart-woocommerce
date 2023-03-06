@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -22,6 +23,11 @@ class Gateway
     private $template;
 
     /**
+     * @var Store
+     */
+    private $store;
+
+    /**
      * @var StoreTranslations
      */
     private $translations;
@@ -29,11 +35,12 @@ class Gateway
     /**
      * Gateway constructor
      */
-    public function __construct(Options $options, Template $template, StoreTranslations $translations)
+    public function __construct(Options $options, Template $template, Store $store, StoreTranslations $translations)
     {
-        $this->options            = $options;
-        $this->template           = $template;
-        $this->translations       = $translations;
+        $this->options      = $options;
+        $this->template     = $template;
+        $this->store        = $store;
+        $this->translations = $translations;
     }
 
     /**
@@ -46,6 +53,7 @@ class Gateway
     public function registerGateway(string $gateway): void
     {
         if ($gateway::isAvailable()) {
+            $this->store->addAvailablePaymentGateway($gateway);
             add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
                 $methods[] = $gateway;
                 return $methods;
@@ -83,10 +91,11 @@ class Gateway
                 return $title;
             }
 
-            $total      = (float) WC()->cart->subtotal;
-            $discount   = $total * ($gateway->discount / 100);
-            $commission = $total * ($gateway->commission / 100);
+            global $woocommerce;
 
+            $subtotal   = $woocommerce->cart->get_subtotal();
+            $discount   = $subtotal * ($gateway->discount / 100);
+            $commission = $subtotal * ($gateway->commission / 100);
 
             if ($gateway->discount > 0 && $gateway->commission > 0) {
                 $title .= ' (' . $this->translations->commonCheckout['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . $this->translations->commonCheckout['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
@@ -157,7 +166,7 @@ class Gateway
                 unset($formFields[$key]);
             }
 
-            if ('mp_activable_input' === $field['type'] && !isset($formFields[$key . '_checkbox'])) {
+            if ('mp_actionable_input' === $field['type'] && !isset($formFields[$key . '_checkbox'])) {
                 $formFields[$key . '_checkbox'] = ['type' => 'checkbox'];
             }
 
@@ -178,7 +187,7 @@ class Gateway
      */
     public function separateCheckboxes(array $exPayments): array
     {
-        $paymentMethods = array();
+        $paymentMethods = [];
 
         foreach ($exPayments['payment_method_types'] as $paymentMethodsType) {
             $paymentMethods += $this->separateCheckboxesList($paymentMethodsType['list']);
@@ -196,7 +205,7 @@ class Gateway
      */
     public function separateCheckboxesList(array $exPaymentsList): array
     {
-        $paymentMethods = array();
+        $paymentMethods = [];
 
         foreach ($exPaymentsList as $payment) {
             $paymentMethods[$payment['id']] = $payment;

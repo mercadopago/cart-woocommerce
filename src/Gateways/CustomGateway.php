@@ -2,6 +2,10 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Helpers\Numbers;
+use MercadoPago\Woocommerce\Transactions\CustomTransaction;
+use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -24,12 +28,13 @@ class CustomGateway extends AbstractGateway
     public function __construct()
     {
         parent::__construct();
+
         $this->adminTranslations = $this->mercadopago->adminTranslations->customGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->customCheckout;
 
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-gray-card');
-        $this->title              = $this->getOption('title', $this->adminTranslations['gateway_title']);
+        $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
@@ -42,8 +47,8 @@ class CustomGateway extends AbstractGateway
         $this->mercadopago->gateway->registerGatewayTitle($this);
         // @todo: call admin_notice hook to display currency notice
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
-        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'loadThankYouPage']);
         $this->mercadopago->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
+        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
     }
 
     /**
@@ -72,7 +77,7 @@ class CustomGateway extends AbstractGateway
                         'title'       => $this->adminTranslations['card_settings_title'],
                         'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
                         'button_text' => $this->adminTranslations['card_settings_button_text'],
-                        'button_url'  => $this->mercadopago->links->getLinks()['admin_settings_page'],
+                        'button_url'  => $this->links['admin_settings_page'],
                         'icon'        => 'mp-icon-badge-info',
                         'color_card'  => 'mp-alert-color-success',
                         'size_card'   => 'mp-card-body-size',
@@ -107,7 +112,7 @@ class CustomGateway extends AbstractGateway
                         'title'       => $this->adminTranslations['card_info_fees_title'],
                         'subtitle'    => $this->adminTranslations['card_info_fees_subtitle'],
                         'button_text' => $this->adminTranslations['card_info_fees_button_url'],
-                        'button_url'  => $this->mercadopago->links->getLinks()['mercadopago_costs'],
+                        'button_url'  => $this->links['mercadopago_costs'],
                         'icon'        => 'mp-icon-badge-info',
                         'color_card'  => 'mp-alert-color-success',
                         'size_card'   => 'mp-card-body-size',
@@ -148,16 +153,6 @@ class CustomGateway extends AbstractGateway
                     'type'  => 'title',
                     'title' => $this->adminTranslations['advanced_configuration_subtitle'],
                     'class' => 'mp-small-text',
-                ],
-                'coupon_mode'                        => [
-                    'type'         => 'mp_toggle_switch',
-                    'title'        => $this->adminTranslations['coupon_mode_title'],
-                    'default'      => 'no',
-                    'subtitle'     => $this->adminTranslations['coupon_mode_subtitle'],
-                    'descriptions' => [
-                        'enabled'  => $this->adminTranslations['coupon_mode_descriptions_enabled'],
-                        'disabled' => $this->adminTranslations['coupon_mode_descriptions_disabled'],
-                    ],
                 ],
                 'binary_mode'                        => [
                     'type'         => 'mp_toggle_switch',
@@ -211,8 +206,6 @@ class CustomGateway extends AbstractGateway
         parent::payment_scripts($gatewaySection);
 
         global $woocommerce;
-        $countrySuffix  = $this->mercadopago->country->getPluginDefaultCountry();
-        $countryConfigs = $this->mercadopago->country->getCountryConfigs($countrySuffix);
 
         $this->mercadopago->scripts->registerStoreScript(
             'wc_mercadopago_sdk',
@@ -224,9 +217,9 @@ class CustomGateway extends AbstractGateway
             $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js'),
             [
                 'public_key'           => $this->mercadopago->seller->getCredentialsPublicKey(),
-                'site_id'              => $countryConfigs['site_id'],
-                'currency'             => $countryConfigs['currency'],
-                'intl'                 => $countryConfigs['intl'],
+                'site_id'              => $this->countryConfigs['site_id'],
+                'currency'             => $this->countryConfigs['currency'],
+                'intl'                 => $this->countryConfigs['intl'],
                 'placeholders'         => [
                     'cardExpirationDate' => $this->storeTranslations['placeholders_card_expiration_date'],
                     'issuer'             => $this->storeTranslations['placeholders_issuer'],
@@ -280,7 +273,7 @@ class CustomGateway extends AbstractGateway
         $this->mercadopago->checkout->registerReviewOrderBeforePayment(function () {
             $this->mercadopago->scripts->registerStoreScript(
                 'wc_mercadopago_custom_update_checkout',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-update-checkout', '.js'),
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-update-checkout', '.js')
             );
         });
     }
@@ -299,8 +292,8 @@ class CustomGateway extends AbstractGateway
                 'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
-                'test_mode_link_src'               => $this->mercadopago->links->getLinks()['docs_integration_test'],
-                'wallet_button'                    => $this->getOption('wallet_button', 'yes'),
+                'test_mode_link_src'               => $this->links['docs_integration_test'],
+                'wallet_button'                    => $this->mercadopago->options->getGatewayOption($this, 'wallet_button', 'yes'),
                 'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-logos", '.png', true),
                 'wallet_button_title'              => $this->storeTranslations['wallet_button_title'],
                 'wallet_button_description'        => $this->storeTranslations['wallet_button_description'],
@@ -311,7 +304,7 @@ class CustomGateway extends AbstractGateway
                 'available_payments_chevron_up'    => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-up", '.png', true),
                 'available_payments_chevron_down'  => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-down", '.png', true),
                 'payment_methods_items'            => wp_json_encode($this->getPaymentMethodsContent()),
-                'payment_methods_promotion_link'   => $this->mercadopago->links->getLinks()['mercadopago_debts'],
+                'payment_methods_promotion_link'   => $this->links['mercadopago_debts'],
                 'payment_methods_promotion_text'   => $this->storeTranslations['payment_methods_promotion_text'],
                 'site_id'                          => $this->mercadopago->seller->getSiteId() ?: $this->mercadopago->country::SITE_ID_MLA,
                 'card_form_title'                  => $this->storeTranslations['card_form_title'],
@@ -330,7 +323,7 @@ class CustomGateway extends AbstractGateway
                 'card_installments_input_helper'   => $this->storeTranslations['card_installments_input_helper'],
                 'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
                 'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-                'terms_and_conditions_link_src'    => $this->mercadopago->links->getLinks()['mercadopago_terms_and_conditions'],
+                'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
                 'amount'                           => $this->getAmount(),
                 'currency_ratio'                   => $this->mercadopago->currency->getRatio($this),
             ]
@@ -350,40 +343,149 @@ class CustomGateway extends AbstractGateway
     /**
      * Process payment and create woocommerce order
      *
-     * @param int $order_id
+     * @param $order_id
      *
      * @return array
+     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
-        $order = wc_get_order($order_id);
-        $order->payment_complete();
-        $order->add_order_note('Hey, your order is paid! Thank you!', true);
+        parent::process_payment($order_id);
 
-        wc_reduce_stock_levels($order_id);
+        // @todo: nonce validation
 
-        $this->mercadopago->woocommerce->cart->empty_cart();
+        // phpcs:ignore WordPress.Security.NonceVerification
+        $checkout = map_deep($_POST['mercadopago_custom'], 'sanitize_text_field');
+        $order    = wc_get_order($order_id);
 
-        return [
-            'result' => 'success',
-            'redirect' => $this->get_return_url($order)
-        ];
+        if ('wallet_button' === $checkout['checkout_type']) {
+            $this->mercadopago->logs->file->info(
+                'preparing to render wallet button checkout.',
+                __FUNCTION__
+            );
+
+            return [
+                'result'   => 'success',
+                'redirect' => add_query_arg(
+                    [
+                        'wallet_button' => 'open'
+                    ],
+                    $order->get_checkout_payment_url(true)
+                ),
+            ];
+        } else {
+            $this->mercadopago->logs->file->info(
+                'preparing to get response of custom checkout.',
+                __FUNCTION__
+            );
+
+            if (
+                $checkout['amount'] &&
+                $checkout['token'] &&
+                $checkout['paymentMethodId'] &&
+                $checkout['installments'] &&
+                -1 !== $checkout['installments']
+            ) {
+                $this->transaction = new CustomTransaction($this, $order, $checkout);
+                $response          = $this->transaction->createPayment();
+
+                $this->mercadopago->order->setCustomMetadata($order, $response);
+                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+
+                return $this->handleResponseStatus($order, $response, $checkout);
+            }
+        }
+
+        return $this->processReturnFail(
+            __FUNCTION__,
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
+        );
     }
 
     /**
-     * Receive gateway webhook notifications
+     * Handle with response status
      *
-     * @return void
+     * @param $order
+     * @param $response
+     * @param $checkout
+     *
+     * @return array
      */
-    public function webhook(): void
+    private function handleResponseStatus($order, $response, $checkout): array
     {
-        $status = 200;
-        $response = [
-            'status' => $status,
-            'message' => 'Webhook handled successful'
-        ];
+        if (is_array($response) && array_key_exists('status', $response)) {
+            switch ($response['status']) {
+                case 'approved':
+                    WC()->cart->empty_cart();
 
-        wp_send_json_success($response, $status);
+                    $orderStatusMessage = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
+                    $this->mercadopago->notices->storeApprovedStatusNotice($orderStatusMessage);
+                    $this->mercadopago->order->setOrderStatus($order, 'failed', 'pending');
+
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $order->get_checkout_order_received_url(),
+                    ];
+                case 'pending':
+                    // Order approved/pending, we just redirect to the congrats page.
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $order->get_checkout_order_received_url(),
+                    ];
+                case 'in_process':
+                    // For pending, we don't know if the purchase will be made, so we must inform this status.
+                    WC()->cart->empty_cart();
+
+                    $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($response['status_detail']);
+                    $urlReceived = esc_url($order->get_checkout_order_received_url());
+                    $linkText    = $this->mercadopago->storeTranslations->commonMessages['cho_form_error'];
+
+                    $this->mercadopago->notices->storeInProcessStatusNotice(
+                        $orderStatus,
+                        $urlReceived,
+                        $checkout['checkout_type'],
+                        $linkText
+                    );
+
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $order->get_checkout_payment_url(true),
+                    ];
+                case 'rejected':
+                    // If rejected is received, the order will not proceed until another payment try,
+                    // so we must inform this status.
+                    $noticeTitle = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
+                    $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($response['status_detail']);
+                    $urlReceived = esc_url($order->get_checkout_payment_url());
+                    $linkText    = $this->mercadopago->storeTranslations->commonMessages['cho_button_try_again'];
+
+                    $this->mercadopago->notices->storeRejectedStatusNotice(
+                        $noticeTitle,
+                        $orderStatus,
+                        $urlReceived,
+                        $checkout['checkout_type'],
+                        $linkText
+                    );
+
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $order->get_checkout_payment_url(true),
+                    ];
+                case 'cancelled':
+                case 'in_mediation':
+                case 'charged_back':
+                    // If we enter here (an order generating a direct cancelled, in_mediation,
+                    // or charged_back status), then there must be something very wrong!
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return $this->processReturnFail(
+            __FUNCTION__,
+            $this->mercadopago->storeTranslations->commonMessages['cho_form_error']
+        );
     }
 
     /**
@@ -399,7 +501,11 @@ class CustomGateway extends AbstractGateway
             $locale = 'en';
         }
 
-        return $this->mercadopago->url->getPluginFileUrl("/assets/images/gateways/wallet-button/preview-{$locale}", '.png', true);
+        return $this->mercadopago->url->getPluginFileUrl(
+            "/assets/images/gateways/wallet-button/preview-$locale",
+            '.png',
+            true
+        );
     }
 
     /**
@@ -428,7 +534,6 @@ class CustomGateway extends AbstractGateway
             }
         }
 
-
         if (0 !== count($creditCard)) {
             $paymentMethods[] = [
                 'title'           => $this->storeTranslations['available_payments_credit_card_title'],
@@ -448,45 +553,25 @@ class CustomGateway extends AbstractGateway
     }
 
     /**
-     * Get amount
-     *
-     * @return float
-     */
-    private function getAmount(): float
-    {
-        $total      = $this->get_order_total();
-        $subtotal   = (float) WC()->cart->subtotal;
-        $tax        = $total - $subtotal;
-        $discount   = $subtotal * ( $this->discount / 100 );
-        $commission = $subtotal * ( $this->commission / 100 );
-        $amount     = $subtotal - $discount + $commission;
-
-        return $amount + $tax;
-    }
-
-    /**
      * Render order form
      *
-     * @param $orderId
-     *
-     * @return void
+     * @param $order_id
      */
-    public function renderOrderForm($orderId): void
+    public function renderOrderForm($order_id): void
     {
         $isWallet = get_query_var('wallet_button', false);
 
         if ($isWallet) {
-            $order      = wc_get_order($orderId);
-            // @todo get wallet button preference
-            $preference = '';
+            $order             = wc_get_order($order_id);
+            $this->transaction = new WalletButtonTransaction($this, $order);
+            $preference        = $this->transaction->createPreference();
 
             $this->mercadopago->template->getWoocommerceTemplate(
                 'public/receipt/custom-checkout.php',
                 [
                     'public_key'          => $this->mercadopago->seller->getCredentialsPublicKey(),
-                    // @todo change to preference['id']
-                    'preference_id'       => $preference,
-                    'wallet_button_title' => $this->storeTranslations['wallet_button_title'],
+                    'preference_id'       => $preference['id'],
+                    'wallet_button_title' => $this->storeTranslations['wallet_button_order_receipt_title'],
                     'cancel_url'          => $order->get_cancel_order_url(),
                     'cancel_url_text'     => $this->storeTranslations['cancel_url_text'],
                 ]
@@ -495,39 +580,33 @@ class CustomGateway extends AbstractGateway
     }
 
     /**
-     * Load thank you page
+     * Render thank you page
      *
-     * @param $orderId
-     *
-     * @return void
+     * @param $order_id
      */
-    public function loadThankYouPage($orderId): void
+    public function renderThankYouPage($order_id): void
     {
-        $order             = wc_get_order($orderId);
-        $installments      = $order->get_meta('mp_installments');
-        $installmentAmount = $order->get_meta('mp_transaction_details');
-        $transactionAmount = $order->get_meta('mp_transaction_amount');
-        $totalPaidAmount   = $order->get_meta('mp_total_paid_amount');
+        $order             = wc_get_order($order_id);
+        $installments      = $this->mercadopago->orderMetadata->getInstallmentsMeta($order);
+        $installmentAmount = $this->mercadopago->orderMetadata->getTransactionDetailsMeta($order);
+        $transactionAmount = $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
+        $totalPaidAmount   = $this->mercadopago->orderMetadata->getTotalPaidAmountMeta($order);
         $totalDiffCost     = (float) $totalPaidAmount - (float) $transactionAmount;
 
-        $country           = $this->mercadopago->country->getPluginDefaultCountry();
-        $countryConfigs     = $this->mercadopago->country->getCountryConfigs($country);
-        $currencySymbol    = $countryConfigs['currency_symbol'];
-
         if ($totalDiffCost > 0) {
-            $this->mercadopago->gateway->registerOrderDetailsAfterOrderTable([$this, 'loadThankYouPage']);
+            $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'renderThankYouPage']);
             $this->mercadopago->template->getWoocommerceTemplate(
                 'public/order/custom-order-received.php',
                 [
                     'title_installment_cost'  => $this->storeTranslations['title_installment_cost'],
                     'title_installment_total' => $this->storeTranslations['title_installment_total'],
                     'text_installments'       => $this->storeTranslations['text_installments'],
-                    'currency'                => $currencySymbol,
-                    'total_paid_amount'       => number_format(floatval($totalPaidAmount), 2, ',', '.'),
-                    'transaction_amount'      => number_format(floatval($transactionAmount), 2, ',', '.'),
-                    'total_diff_cost'         => number_format(floatval($totalDiffCost), 2, ',', '.'),
-                    'installment_amount'      => number_format(floatval($installmentAmount), 2, ',', '.'),
-                    'installments'            => number_format(floatval($installments)),
+                    'currency'                => $this->countryConfigs['currency_symbol'],
+                    'total_paid_amount'       => Numbers::format($totalPaidAmount),
+                    'transaction_amount'      => Numbers::format($transactionAmount),
+                    'total_diff_cost'         => Numbers::format($totalDiffCost),
+                    'installment_amount'      => Numbers::format($installmentAmount),
+                    'installments'            => Numbers::format($installments),
                 ]
             );
         }
