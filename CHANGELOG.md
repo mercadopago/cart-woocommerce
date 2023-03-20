@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.7.2] - 2023-03-20
+
+### Added
+- Add new fields in update-metadata
+	- Cho Pro will add the fields: ```installments, transaction_details, total_paid_amount, transaction_amount, last_four_digits, e o  payment_type```
+	- Cho Custom will add the fields: ```payment_type e last_four_digits```
+	- In future release, all metadata field prefixed with "mp_" will be removed
+
+- Add security js client and retrive session id from MP_DEVICE_SESSION_ID 
+	- this improvement will increase the credit card approval rate
+
+### Changed
+- Interest attached to the order total
+### Fixed
+- Fix nonce validation when "allow costumers to create an account during checkout" is enabled
+
 ## [6.7.1] - 2023-02-15
 
 ### Changed

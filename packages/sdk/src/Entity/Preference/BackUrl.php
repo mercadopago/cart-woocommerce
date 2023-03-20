@@ -7,6 +7,10 @@ use MercadoPago\PP\Sdk\Common\AbstractEntity;
 /**
  * Class BackUrl
  *
+ * @property string $failure
+ * @property string $pending
+ * @property string $success
+ *
  * @package MercadoPago\PP\Sdk\Entity\Preference
  */
 class BackUrl extends AbstractEntity

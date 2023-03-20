@@ -8,6 +8,8 @@ use MercadoPago\PP\Sdk\Common\Manager;
 /**
  * Class Shipments
  *
+ * @property ReceiverAddress $receiver_address
+ *
  * @package MercadoPago\PP\Sdk\Entity\Payment
  */
 class Shipments extends AbstractEntity

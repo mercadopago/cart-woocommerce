@@ -32,11 +32,12 @@ class WC_WooMercadoPago_Preference_Custom extends WC_WooMercadoPago_Preference_A
 		$this->make_common_transaction();
 
 		$this->transaction->__set('transaction_amount', $this->get_transaction_amount());
-		$this->transaction->__set('token', $this->checkout['token']);
 		$this->transaction->__set('description', implode( ', ', $this->list_of_items ));
 		$this->transaction->__set('installments', (int) $this->checkout['installments']);
 		$this->transaction->__set('payment_method_id', $this->checkout['paymentMethodId']);
 		$this->transaction->__get('payer')->email = $this->get_email();
+		$this->transaction->__set('token', $this->checkout['token']);
+		$this->transaction->__set('session_id', $this->checkout['session_id']);
 
 		if ( array_key_exists( 'token', $this->checkout ) ) {
 			$this->transaction->metadata['token'] = $this->checkout['token'];

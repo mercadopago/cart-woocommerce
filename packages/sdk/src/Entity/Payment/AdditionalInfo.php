@@ -8,6 +8,11 @@ use MercadoPago\PP\Sdk\Common\Manager;
 /**
  * Class AdditionalInfo
  *
+ * @property string $ip_address
+ * @property ItemList $items
+ * @property AdditionalInfoPayer $payer
+ * @property Shipments $shipments
+ *
  * @package MercadoPago\PP\Sdk\Entity\Payment
  */
 class AdditionalInfo extends AbstractEntity

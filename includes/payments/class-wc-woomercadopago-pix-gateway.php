@@ -388,7 +388,7 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 	 */
 	public function process_payment( $order_id ) {
 		// phpcs:ignore WordPress.Security.NonceVerification
-		if ( ! isset( $_POST, $_POST['woocommerce-process-checkout-nonce'] ) || ! $this->validate_nonce_process() ) {
+		if ( ! $this->validate_nonce_process() ) {
 
 			wc_add_notice(
 				'<p>' .
@@ -677,17 +677,4 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/icons/pix.png', plugin_dir_path( __FILE__ ) ) );
 	}
 
-			/**
-	 * Is available?
-	 *
-	 * @return bool
-	 */
-	public function validate_nonce_process() {
-		if ( ( ! isset($_POST['woocommerce-process-checkout-nonce']) && ! isset($_POST['woocommerce-pay-nonce']) )
-		|| ( ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-process-checkout-nonce'] ), 'woocommerce-process_checkout' ) && ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-pay-nonce'] ), 'woocommerce-pay' ) ) ) {
-			$this->log->write_log(__FUNCTION__, 'Security nonce check failed.');
-			return false;
-		}
-		return true;
-	}
 }
