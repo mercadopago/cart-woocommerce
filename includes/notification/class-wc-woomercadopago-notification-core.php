@@ -103,7 +103,7 @@ class WC_WooMercadoPago_Notification_Core extends WC_WooMercadoPago_Notification
 		$status = $data['status'];
 
 		// Updates the type of gateway.
-		$this->update_meta( $order, '_used_gateway', get_class( $this ) );
+		$this->update_meta( $order, '_used_gateway', get_class( $this->payment ) );
 
 		if ( ! empty( $data['payer']['email'] ) ) {
 			$this->update_meta( $order, __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
@@ -126,6 +126,15 @@ class WC_WooMercadoPago_Notification_Core extends WC_WooMercadoPago_Notification
 						']/[Coupon ' . $payment['coupon_amount'] .
 						']/[Refund ' . $data['total_refunded'] . ']'
 				);
+				$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - payment_type', $payment['payment_type_id']);
+
+				if ( str_contains($payment['payment_type_id'], 'card') ) {
+					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - installments', $payment['payment_method_info']['installments']);
+					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - installment_amount', $payment['payment_method_info']['installment_amount']);
+					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - transaction_amount', $payment['total_amount']);
+					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - total_paid_amount', $payment['paid_amount']);
+					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - card_last_four_digits', $payment['payment_method_info']['last_four_digits']);
+				}
 			}
 
 			if ( count( $payment_ids ) > 0 ) {

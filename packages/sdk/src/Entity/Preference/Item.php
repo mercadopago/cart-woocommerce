@@ -7,6 +7,15 @@ use MercadoPago\PP\Sdk\Common\AbstractEntity;
 /**
  * Class Item
  *
+ * @property string $category_id
+ * @property string $currency_id
+ * @property string $description
+ * @property string $id
+ * @property string $picture_url
+ * @property int $quantity
+ * @property string $title
+ * @property float $unit_price
+ *
  * @package MercadoPago\PP\Sdk\Entity\Preference
  */
 class Item extends AbstractEntity

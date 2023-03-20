@@ -185,6 +185,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<input type="hidden" id="cardExpirationYear" data-checkout="cardExpirationYear" />
 	<input type="hidden" id="cardTokenId" name="mercadopago_custom[token]" />
 	<input type="hidden" id="cardInstallments" name="mercadopago_custom[installments]" />
+	<input type="hidden" id="mpCardSessionId" name="mercadopago_custom[session_id]" />
 </div>
 
 <script type="text/javascript">

@@ -4,13 +4,36 @@ namespace MercadoPago\PP\Sdk\Entity\Payment;
 
 use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\PP\Sdk\Common\Manager;
+use MercadoPago\PP\Sdk\Interfaces\RequesterEntityInterface;
 
 /**
  * Class Payment
  *
+ * @property string $session_id
+ * @property string $description
+ * @property string $external_reference
+ * @property string $notification_url
+ * @property int $installments
+ * @property double $transaction_amount
+ * @property string $payment_method_id
+ * @property string $statement_descriptor
+ * @property boolean $binary_mode
+ * @property string $date_of_expiration
+ * @property string $callback_url
+ * @property string $token
+ * @property string $issuer_id
+ * @property string $campaign_id
+ * @property double $coupon_amount
+ * @property string $coupon_code
+ * @property Payer $payer
+ * @property AdditionalInfo $additional_info
+ * @property TransactionDetails $transaction_details
+ * @property PointOfInteraction $point_of_interaction
+ * @property object $metadata
+ *
  * @package MercadoPago\PP\Sdk\Entity\Payment
  */
-class Payment extends AbstractEntity
+class Payment extends AbstractEntity implements RequesterEntityInterface
 {
     /**
      * @var string
@@ -113,6 +136,11 @@ class Payment extends AbstractEntity
     protected $metadata;
 
     /**
+     * @var string
+     */
+    protected $session_id;
+
+    /**
      * Payment constructor.
      *
      * @param Manager|null $manager
@@ -127,7 +155,30 @@ class Payment extends AbstractEntity
     }
 
     /**
-     * Get uris
+     * Exclude properties from entity building.
+     *
+     * @return void
+     */
+    public function setExcludedProperties()
+    {
+        $this->excluded_properties = ['session_id'];
+    }
+
+    /**
+     * Get and set custom headers for entity.
+     *
+     * @return array
+     */
+    public function getHeaders(): array
+    {
+        return [
+            'read' => [],
+            'save' => ['x-meli-session-id: ' . $this->session_id],
+        ];
+    }
+
+    /**
+     * Get uris.
      *
      * @return array
      */

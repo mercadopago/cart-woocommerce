@@ -448,6 +448,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' )
 			);
 		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification
 		$custom_checkout     = map_deep($_POST['mercadopago_custom'], 'sanitize_text_field');
 		$custom_checkout_log = $custom_checkout;
@@ -507,6 +508,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @param WC_Order $order
 	 *
 	 * @return array|string[]
+	 * @throws WC_Data_Exception
 	 */
 	protected function process_custom_checkout_flow( $custom_checkout, $order ) {
 		if (
@@ -529,11 +531,22 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 			$installment_amount = (float) $response['transaction_details']['installment_amount'];
 			$transaction_amount = (float) $response['transaction_amount'];
 			$total_paid_amount  = (float) $response['transaction_details']['total_paid_amount'];
+			$last_four_digits   = (float) $response['transaction_details']['last_four_digits'];
+			$id_payment         = (float) $response['id'];
 
+			// Old
 			$order->add_meta_data('mp_installments', $installments);
 			$order->add_meta_data('mp_transaction_details', $installment_amount);
 			$order->add_meta_data('mp_transaction_amount', $transaction_amount);
 			$order->add_meta_data('mp_total_paid_amount', $total_paid_amount);
+			$order->save();
+
+			// New key names
+			$order->add_meta_data('Mercado Pago - ' . $id_payment . ' - installments', $installments);
+			$order->add_meta_data('Mercado Pago - ' . $id_payment . ' - installment_amount', $installment_amount);
+			$order->add_meta_data('Mercado Pago - ' . $id_payment . ' - transaction_amount', $transaction_amount);
+			$order->add_meta_data('Mercado Pago - ' . $id_payment . ' - total_paid_amount', $total_paid_amount);
+			$order->add_meta_data('Mercado Pago - ' . $id_payment . ' - card_last_four_digits', $last_four_digits);
 			$order->save();
 
 			$this->hook->update_mp_order_payments_metadata( $order->get_id(), [ $response['id'] ] );
@@ -598,7 +611,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 				}
 			}
 
-			// Process when fields are imcomplete.
+			// Process when fields are incomplete.
 			return $this->process_result_fail(
 				__FUNCTION__,
 				__( 'A problem was occurred when processing your payment. Are you sure you have correctly filled all information in the checkout form?', 'woocommerce-mercadopago' ),
@@ -606,6 +619,52 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 				WC_WooMercadoPago_Module::get_common_error_messages( $response )
 			);
 		}
+	}
+
+	/**
+	 * Display installment fee as an order attachment item
+	 *
+	 * @param $order_id
+	 */
+	public function display_installment_fee_order( $order_id ) {
+		$order = wc_get_order( $order_id );
+		$order->get_meta_data();
+
+		$gatewayName = $order->get_meta( '_used_gateway' );
+		if ( strpos($gatewayName, 'Custom_Gateway') ) {
+			$total_paid_amount      = $order->get_meta( 'mp_total_paid_amount' );
+			$transaction_amount     = $order->get_meta( 'mp_transaction_amount' );
+			$installment_fee_amount = (float) $total_paid_amount - (float) $transaction_amount;
+			$total_with_fees        = $installment_fee_amount + (float) $transaction_amount;
+
+			if ( $installment_fee_amount > 0 ) {
+				$this->display_order_note( [
+					'tip_text' => __('Represents the installment fee charged by Mercado Pago.', 'woocommerce-mercadopago'),
+					'title'    => __('Mercado Pago Installment Fee:', 'woocommerce-mercadopago'),
+					'value'    => wc_price($installment_fee_amount, []),
+				] );
+
+				$this->display_order_note( [
+					'tip_text' => __('Represents the total purchase plus the installment fee charged by Mercado Pago.', 'woocommerce-mercadopago'),
+					'title'    => __('Mercado Pago Total:', 'woocommerce-mercadopago'),
+					'value'    => wc_price($total_with_fees, []),
+				] );
+			}
+		}
+	}
+
+	/**
+	 * Display generic template for order notes
+	 *
+	 * @param array $params
+	 */
+	public function display_order_note( $params ) {
+		wc_get_template(
+			'order/generic-order-note.php',
+			$params,
+			'woo/mercado/pago/module/',
+			WC_WooMercadoPago_Module::get_templates_path()
+		);
 	}
 
 	/**
@@ -757,17 +816,4 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/icons/card.png', plugin_dir_path( __FILE__ ) ) );
 	}
 
-		/**
-	 * Is available?
-	 *
-	 * @return bool
-	 */
-	public function validate_nonce_process() {
-		if ( ( ! isset($_POST['woocommerce-process-checkout-nonce']) && ! isset($_POST['woocommerce-pay-nonce']) )
-		|| ( ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-process-checkout-nonce'] ), 'woocommerce-process_checkout' ) && ! wp_verify_nonce( sanitize_key( $_POST['woocommerce-pay-nonce'] ), 'woocommerce-pay' ) ) ) {
-			$this->log->write_log(__FUNCTION__, 'Security nonce check failed.');
-			return false;
-		}
-		return true;
-	}
 }

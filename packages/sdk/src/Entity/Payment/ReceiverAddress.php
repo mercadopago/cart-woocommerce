@@ -7,6 +7,12 @@ use MercadoPago\PP\Sdk\Common\AbstractEntity;
 /**
  * Class ReceiverAddress
  *
+ * @property string $zip_code
+ * @property string $state_name
+ * @property string $city_name
+ * @property string $street_name
+ * @property string $apartment
+ *
  * @package MercadoPago\PP\Sdk\Entity\Payment
  */
 class ReceiverAddress extends AbstractEntity

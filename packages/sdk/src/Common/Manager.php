@@ -128,7 +128,7 @@ class Manager
      */
     public function handleResponse(Response $response, string $method, AbstractEntity $entity = null)
     {
-        if ($response->getStatus() == "200" || $response->getStatus() == "201") {
+        if ($response->getStatus() == '200' || $response->getStatus() == '201') {
             if ($entity && $method == 'get') {
                 $entity->setEntity($response->getData());
                 return $entity;

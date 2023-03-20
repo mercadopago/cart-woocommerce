@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit2e72c837b49e1c8b2715eb8217a4179a
+class ComposerStaticInit0a5a7a084d9028d156e27fdcaff06f78
 {
     public static $prefixLengthsPsr4 = array (
         'M' => 
@@ -30,6 +30,7 @@ class ComposerStaticInit2e72c837b49e1c8b2715eb8217a4179a
         'MercadoPago\\PP\\Sdk\\Entity\\Notification\\Notification' => __DIR__ . '/../..' . '/src/Entity/Notification/Notification.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Notification\\PaymentDetails' => __DIR__ . '/../..' . '/src/Entity/Notification/PaymentDetails.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Notification\\PaymentDetailsList' => __DIR__ . '/../..' . '/src/Entity/Notification/PaymentDetailsList.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Notification\\PaymentMethodInfo' => __DIR__ . '/../..' . '/src/Entity/Notification/PaymentMethodInfo.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Notification\\Refund' => __DIR__ . '/../..' . '/src/Entity/Notification/Refund.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Notification\\RefundList' => __DIR__ . '/../..' . '/src/Entity/Notification/RefundList.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\AdditionalInfo' => __DIR__ . '/../..' . '/src/Entity/Payment/AdditionalInfo.php',
@@ -71,15 +72,17 @@ class ComposerStaticInit2e72c837b49e1c8b2715eb8217a4179a
         'MercadoPago\\PP\\Sdk\\HttpClient\\Requester\\CurlRequester' => __DIR__ . '/../..' . '/src/HttpClient/Requester/CurlRequester.php',
         'MercadoPago\\PP\\Sdk\\HttpClient\\Requester\\RequesterInterface' => __DIR__ . '/../..' . '/src/HttpClient/Requester/RequesterInterface.php',
         'MercadoPago\\PP\\Sdk\\HttpClient\\Response' => __DIR__ . '/../..' . '/src/HttpClient/Response.php',
+        'MercadoPago\\PP\\Sdk\\Interfaces\\EntityInterface' => __DIR__ . '/../..' . '/src/Interfaces/EntityInterface.php',
+        'MercadoPago\\PP\\Sdk\\Interfaces\\RequesterEntityInterface' => __DIR__ . '/../..' . '/src/Interfaces/RequesterEntityInterface.php',
         'MercadoPago\\PP\\Sdk\\Sdk' => __DIR__ . '/../..' . '/src/Sdk.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit2e72c837b49e1c8b2715eb8217a4179a::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit2e72c837b49e1c8b2715eb8217a4179a::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit2e72c837b49e1c8b2715eb8217a4179a::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit0a5a7a084d9028d156e27fdcaff06f78::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit0a5a7a084d9028d156e27fdcaff06f78::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit0a5a7a084d9028d156e27fdcaff06f78::$classMap;
 
         }, null, ClassLoader::class);
     }

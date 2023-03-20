@@ -415,6 +415,13 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	public $title_gateway;
 
 	/**
+	 * User id
+	 *
+	 * @var int
+	 */
+	public $prior_uid;
+
+	/**
 	 * WC_WooMercadoPago_PaymentAbstract constructor.
 	 *
 	 * @throws WC_WooMercadoPago_Exception Load payment exception.
@@ -445,6 +452,8 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		$this->application_id       = $this->get_application_id( $this->mp_access_token_prod );
 		$this->logged_user_email    = ( 0 !== wp_get_current_user()->ID ) ? wp_get_current_user()->user_email : null;
 		$this->discount_action_url  = get_site_url() . '/index.php/woocommerce-mercadopago/?wc-api=' . get_class( $this );
+		$prior_user                 = wp_get_current_user();
+		$this->prior_uid            = (int) $prior_user->ID;
 		add_action( 'woocommerce_after_settings_checkout', array($this, 'mercadopago_after_form') );
 	}
 
@@ -1394,5 +1403,30 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		}
 
 		return $installments;
+	}
+
+	/**
+	 * Check if a nonce is valid
+	 *
+	 * @return bool
+	 */
+	public function validate_nonce_process() {
+		$user = wp_get_current_user();
+		$uid  = (int) $user->ID;
+
+		if ( $uid !== $this->prior_uid && WC()->checkout()->is_registration_required() ) {
+			return true;
+		}
+
+		if ( isset($_POST['woocommerce-process-checkout-nonce']) && wp_verify_nonce( sanitize_key( $_POST['woocommerce-process-checkout-nonce'] ), 'woocommerce-process_checkout' ) ) {
+			return true;
+		}
+
+		if ( isset($_POST['woocommerce-pay-nonce']) && wp_verify_nonce( sanitize_key( $_POST['woocommerce-pay-nonce'] ), 'woocommerce-pay' ) ) {
+			return true;
+		}
+
+		$this->log->write_log(__FUNCTION__, 'Security nonce check failed.');
+		return false;
 	}
 }

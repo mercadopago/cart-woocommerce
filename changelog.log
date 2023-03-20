@@ -1,6 +1,21 @@
 CHANGELOG:
 == Changelog ==
 
+= v6.7.2 (20/03/2023) =
+* Added
+- Add new fields in update-metadata
+	- Cho Pro will add the fields: ```installments, transaction_details, total_paid_amount, transaction_amount, last_four_digits, e o  payment_type```
+	- Cho Custom will add the fields: ```payment_type e last_four_digits```
+	- In future release, all metadata field prefixed with "mp_" will be removed
+
+- Add security js client and retrive session id from MP_DEVICE_SESSION_ID
+	- this improvement will increase the credit card approval rate
+
+* Changed
+- Interest attached to the order total
+* Fixed
+- Fix nonce validation when "allow costumers to create an account during checkout" is enabled
+
 = v6.7.1 (15/02/2023) =
 * Changes
 - Changed Credits Tooltips experience

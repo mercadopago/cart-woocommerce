@@ -162,7 +162,7 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
 		// WooCommerce 3.0 or later.
 		if ( method_exists( $order, 'update_meta_data' ) ) {
 			// Updates the type of gateway.
-			$order->update_meta_data( '_used_gateway', get_class( $this ) );
+			$order->update_meta_data( '_used_gateway', get_class( $this->payment ) );
 			if ( ! empty( $data['payer']['email'] ) ) {
 				$order->update_meta_data( __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
 			}
@@ -184,7 +184,7 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
 			$order->save();
 		} else {
 			// Updates the type of gateway.
-			update_post_meta( $order->id, '_used_gateway', get_class( $this ) );
+			update_post_meta( $order->id, '_used_gateway', get_class( $this->payment ) );
 			if ( ! empty( $data['payer']['email'] ) ) {
 				update_post_meta( $order->id, __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
 			}

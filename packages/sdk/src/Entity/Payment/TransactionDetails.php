@@ -7,6 +7,8 @@ use MercadoPago\PP\Sdk\Common\AbstractEntity;
 /**
  * Class TransactionDetails
  *
+ * @property string $financial_institution
+ *
  * @package MercadoPago\PP\Sdk\Entity\Payment
  */
 class TransactionDetails extends AbstractEntity

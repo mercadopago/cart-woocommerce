@@ -15,6 +15,7 @@ return array(
     'MercadoPago\\PP\\Sdk\\Entity\\Notification\\Notification' => $baseDir . '/src/Entity/Notification/Notification.php',
     'MercadoPago\\PP\\Sdk\\Entity\\Notification\\PaymentDetails' => $baseDir . '/src/Entity/Notification/PaymentDetails.php',
     'MercadoPago\\PP\\Sdk\\Entity\\Notification\\PaymentDetailsList' => $baseDir . '/src/Entity/Notification/PaymentDetailsList.php',
+    'MercadoPago\\PP\\Sdk\\Entity\\Notification\\PaymentMethodInfo' => $baseDir . '/src/Entity/Notification/PaymentMethodInfo.php',
     'MercadoPago\\PP\\Sdk\\Entity\\Notification\\Refund' => $baseDir . '/src/Entity/Notification/Refund.php',
     'MercadoPago\\PP\\Sdk\\Entity\\Notification\\RefundList' => $baseDir . '/src/Entity/Notification/RefundList.php',
     'MercadoPago\\PP\\Sdk\\Entity\\Payment\\AdditionalInfo' => $baseDir . '/src/Entity/Payment/AdditionalInfo.php',
@@ -56,5 +57,7 @@ return array(
     'MercadoPago\\PP\\Sdk\\HttpClient\\Requester\\CurlRequester' => $baseDir . '/src/HttpClient/Requester/CurlRequester.php',
     'MercadoPago\\PP\\Sdk\\HttpClient\\Requester\\RequesterInterface' => $baseDir . '/src/HttpClient/Requester/RequesterInterface.php',
     'MercadoPago\\PP\\Sdk\\HttpClient\\Response' => $baseDir . '/src/HttpClient/Response.php',
+    'MercadoPago\\PP\\Sdk\\Interfaces\\EntityInterface' => $baseDir . '/src/Interfaces/EntityInterface.php',
+    'MercadoPago\\PP\\Sdk\\Interfaces\\RequesterEntityInterface' => $baseDir . '/src/Interfaces/RequesterEntityInterface.php',
     'MercadoPago\\PP\\Sdk\\Sdk' => $baseDir . '/src/Sdk.php',
 );
