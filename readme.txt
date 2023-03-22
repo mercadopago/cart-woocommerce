@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
 Tested up to: 6.1
 Requires PHP: 7.0
-Stable tag: 6.7.1
+Stable tag: 6.7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,22 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+
+= v6.7.2 (20/03/2023) =
+* Features
+- Add new fields in update-metadata
+	- Cho Pro will add the fields: ```installments, transaction_details, total_paid_amount, transaction_amount, last_four_digits, e o  payment_type```
+	- Cho Custom will add the fields: ```payment_type e last_four_digits```
+	- In future release, all metadata field prefixed with "mp_" will be removed
+
+- Add security js client and retrive session id from MP_DEVICE_SESSION_ID
+	- this improvement will increase the credit card approval rate
+
+* Changes
+
+- Interest attached to the order total
+* Bug fixes
+- Fix nonce validation when "allow costumers to create an account during checkout" is enabled
 
 = v6.7.1 (15/02/2023) =
 * Changes

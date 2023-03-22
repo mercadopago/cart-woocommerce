@@ -7,6 +7,11 @@ use MercadoPago\PP\Sdk\Common\AbstractEntity;
 /**
  * Class Refund
  *
+ * @property float $id
+ * @property string $status
+ * @property bool $notifying
+ * @property object $metadata
+ *
  * @package MercadoPago\PP\Sdk\Entity\Notification
  */
 class Refund extends AbstractEntity

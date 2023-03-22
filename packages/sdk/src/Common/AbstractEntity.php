@@ -2,17 +2,24 @@
 
 namespace MercadoPago\PP\Sdk\Common;
 
+use MercadoPago\PP\Sdk\Interfaces\EntityInterface;
+
 /**
  * Class AbstractEntity
  *
  * @package MercadoPago\PP\Sdk\Common
  */
-abstract class AbstractEntity implements \JsonSerializable
+abstract class AbstractEntity implements \JsonSerializable, EntityInterface
 {
     /**
      * @var Manager
      */
     private $manager;
+
+    /**
+     * @var array
+     */
+    protected $excluded_properties;
 
     /**
      * AbstractEntity constructor.
@@ -22,6 +29,7 @@ abstract class AbstractEntity implements \JsonSerializable
     public function __construct(Manager $manager = null)
     {
         $this->manager = $manager;
+        $this->setExcludedProperties();
     }
 
     /**
@@ -36,7 +44,7 @@ abstract class AbstractEntity implements \JsonSerializable
 
     /**
      * @param string $name
-     * @param        $value
+     * @param mixed  $value
      */
     public function __set(string $name, $value)
     {
@@ -44,8 +52,9 @@ abstract class AbstractEntity implements \JsonSerializable
             return;
         }
 
-        if (is_subclass_of($this->{$name}, AbstractEntity::class)
-            || is_subclass_of($this->{$name}, AbstractCollection::class)) {
+        if (is_subclass_of($this->{$name}, AbstractEntity::class) ||
+            is_subclass_of($this->{$name}, AbstractCollection::class)
+        ) {
             $this->{$name}->setEntity($value);
         } else {
             $this->{$name} = $value;
@@ -103,11 +112,16 @@ abstract class AbstractEntity implements \JsonSerializable
      */
     public function toArray(): array
     {
-        $properties = $this->getProperties();
+        $data                    = [];
+        $properties              = $this->getProperties();
+        $excludedPropertiesCount = count($this->excluded_properties);
 
-        $data = [];
         foreach ($properties as $property => $value) {
-            if ($property === 'manager') {
+            if ($property === 'manager' || $property === 'excluded_properties') {
+                continue;
+            }
+
+            if ($excludedPropertiesCount !== 0 && in_array($property, $this->excluded_properties)) {
                 continue;
             }
 
@@ -144,11 +158,13 @@ abstract class AbstractEntity implements \JsonSerializable
     public function read(array $params = [])
     {
         $method = 'get';
-        $class = get_called_class();
+        $class  = get_called_class();
         $entity = new $class($this->manager);
 
-        $uri = $this->manager->getEntityUri($entity, $method, $params);
-        $header = $this->manager->getHeader();
+        $customHeaders = $this->getHeaders()['read'];
+        $header        = $this->manager->getHeader($customHeaders);
+
+        $uri      = $this->manager->getEntityUri($entity, $method, $params);
         $response = $this->manager->execute($entity, $uri, $method, $header);
 
         return $this->manager->handleResponse($response, $method, $entity);
@@ -164,8 +180,10 @@ abstract class AbstractEntity implements \JsonSerializable
     {
         $method = 'post';
 
-        $uri = $this->manager->getEntityUri($this, $method);
-        $header = $this->manager->getHeader();
+        $customHeaders = $this->getHeaders()['save'];
+        $header        = $this->manager->getHeader($customHeaders);
+
+        $uri      = $this->manager->getEntityUri($this, $method);
         $response = $this->manager->execute($this, $uri, $method, $header);
 
         return $this->manager->handleResponse($response, $method);
@@ -177,5 +195,15 @@ abstract class AbstractEntity implements \JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->toArray();
+    }
+
+    /**
+     * Exclude properties from entity building.
+     *
+     * @return void
+     */
+    public function setExcludedProperties()
+    {
+        $this->excluded_properties = [];
     }
 }

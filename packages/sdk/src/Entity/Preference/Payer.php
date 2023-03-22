@@ -8,6 +8,14 @@ use MercadoPago\PP\Sdk\Common\Manager;
 /**
  * Class Payer
  *
+ * @property Address $address
+ * @property string $date_created
+ * @property string $email
+ * @property PayerIdentification $identification
+ * @property string $name
+ * @property Phone $phone
+ * @property string $surname
+ *
  * @package MercadoPago\PP\Sdk\Entity\Preference
  */
 class Payer extends AbstractEntity

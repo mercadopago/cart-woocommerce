@@ -8,6 +8,17 @@ use MercadoPago\PP\Sdk\Common\Manager;
 /**
  * Class PaymentDetails
  *
+ * @property float $id
+ * @property string $status
+ * @property string $status_detail
+ * @property string $payment_type_id
+ * @property string $payment_method_id
+ * @property float $total_amount
+ * @property float $paid_amount
+ * @property float $coupon_amount
+ * @property float $shipping_cost
+ * @property RefundList $refunds
+
  * @package MercadoPago\PP\Sdk\Entity\Notification
  */
 class PaymentDetails extends AbstractEntity
@@ -56,6 +67,11 @@ class PaymentDetails extends AbstractEntity
      * @var float
      */
     protected $shipping_cost;
+
+    /**
+     * @var PaymentMethodInfo
+     */
+    protected $payment_method_info;
 
     /**
      * @var RefundList

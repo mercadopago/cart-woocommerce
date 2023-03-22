@@ -28,7 +28,11 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 			add_action( 'wp_enqueue_scripts', array( $this, 'add_checkout_scripts_custom' ) );
 			add_action( 'woocommerce_after_checkout_form', array( $this, 'add_mp_settings_script_custom' ) );
 			add_action( 'woocommerce_thankyou_' . $this->payment->id, array( $this, 'update_mp_settings_script_custom' ) );
+			add_action( 'woocommerce_order_details_after_order_table', array( $this, 'update_mp_settings_script_custom' ) );
 			add_action( 'woocommerce_review_order_before_payment', array( $this, 'add_init_cardform_checkout'));
+			add_action( 'woocommerce_admin_order_totals_after_total', function( $order_id ) {
+				$this->payment->display_installment_fee_order( $order_id );
+			});
 		}
 
 		add_action(
@@ -90,6 +94,14 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 			wp_enqueue_script(
 				'woocommerce-mercadopago-checkout',
 				plugins_url( '../../assets/js/securityFields/securityFields' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
+				array(),
+				WC_WooMercadoPago_Constants::VERSION,
+				true
+			);
+
+			wp_enqueue_script(
+				'woocommerce-mercadopago-security-session',
+				plugins_url( '../../assets/js/securityFields/session' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
 				array(),
 				WC_WooMercadoPago_Constants::VERSION,
 				true
@@ -213,20 +225,19 @@ class WC_WooMercadoPago_Hook_Custom extends WC_WooMercadoPago_Hook_Abstract {
 		$currency_symbol    = WC_WooMercadoPago_Configs::get_country_configs();
 		$total_diff_cost    = (float) $total_paid_amount - (float) $transaction_amount;
 
-		$parameters_custom = array(
-			'title_installment_cost'   => __( 'Cost of installments', 'woocommerce-mercadopago' ),
-			'title_installment_total'  => __( 'Total with installments', 'woocommerce-mercadopago' ),
-			'text_installments'        => __( 'installments of', 'woocommerce-mercadopago' ),
-			'currency'                 => $currency_symbol[ strtolower(get_option( '_site_id_v1' )) ]['currency_symbol'],
-			'total_paid_amount'        => number_format( floatval($total_paid_amount), 2, ',', '.' ),
-			'transaction_amount'       => number_format( floatval($transaction_amount), 2, ',', '.' ),
-			'total_diff_cost'          => number_format( floatval($total_diff_cost), 2, ',', '.' ),
-			'installment_amount'       => number_format( floatval($installment_amount), 2, ',', '.' ),
-			'installments'             => number_format( floatval($installments) ),
-		);
-
 		if ( $total_diff_cost > 0 ) {
-			add_action( 'woocommerce_order_details_after_order_table', array( $this, 'update_mp_settings_script_custom'));
+			$parameters_custom = array(
+				'title_installment_cost'  => __( 'Cost of installments', 'woocommerce-mercadopago' ),
+				'title_installment_total' => __( 'Total with installments', 'woocommerce-mercadopago' ),
+				'text_installments'       => __( 'installments of', 'woocommerce-mercadopago' ),
+				'currency'                => $currency_symbol[ strtolower(get_option( '_site_id_v1' )) ]['currency_symbol'],
+				'total_paid_amount'       => number_format( floatval($total_paid_amount), 2, ',', '.' ),
+				'transaction_amount'      => number_format( floatval($transaction_amount), 2, ',', '.' ),
+				'total_diff_cost'         => number_format( floatval($total_diff_cost), 2, ',', '.' ),
+				'installment_amount'      => number_format( floatval($installment_amount), 2, ',', '.' ),
+				'installments'            => number_format( floatval($installments) ),
+			);
+
 			wc_get_template(
 				'order-received/show-custom.php',
 				$parameters_custom,
