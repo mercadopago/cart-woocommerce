@@ -217,7 +217,7 @@ class Dependencies
         $this->admin             = new Admin();
         $this->endpoints         = new Endpoints();
         $this->options           = new Options();
-        $this->orderMeta          = new OrderMeta();
+        $this->orderMeta         = new OrderMeta();
         $this->product           = new Product();
         $this->template          = new Template();
         $this->orderMetadata     = $this->setOrderMetadata();
