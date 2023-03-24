@@ -2,8 +2,9 @@
 
 namespace MercadoPago\Woocommerce;
 
-use MercadoPago\Woocommerce\Admin\MetadataSettings;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Helpers\OrderStatus;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -22,7 +23,6 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
-use MercadoPago\Woocommerce\Hooks\Meta;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
@@ -225,9 +225,9 @@ class WoocommerceMercadoPago
     public $settings;
 
     /**
-     * @var MetadataSettings
+     * @var Metadata
      */
-    public $metadataSettings;
+    public $metadataConfig;
 
     /**
      * @var AdminTranslations
@@ -355,7 +355,6 @@ class WoocommerceMercadoPago
         $this->endpoints         = $dependencies->endpoints;
         $this->gateway           = $dependencies->gateway;
         $this->options           = $dependencies->options;
-        $this->meta              = $dependencies->meta;
         $this->order             = $dependencies->order;
         $this->plugin            = $dependencies->plugin;
         $this->product           = $dependencies->product;
@@ -365,7 +364,7 @@ class WoocommerceMercadoPago
         // General
         $this->logs              = $dependencies->logs;
         $this->notices           = $dependencies->notices;
-        $this->metadataSettings  = $dependencies->metadataSettings;
+        $this->metadataConfig    = $dependencies->metadataConfig;
 
         // Exclusive
         $this->settings          = $dependencies->settings;

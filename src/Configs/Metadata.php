@@ -1,6 +1,6 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Admin;
+namespace MercadoPago\Woocommerce\Configs;
 
 use MercadoPago\Woocommerce\Hooks\Options;
 
@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MetadataSettings
+class Metadata
 {
     /**
      * @var Options
