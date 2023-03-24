@@ -42,7 +42,6 @@ class CreditsGateway extends AbstractGateway
         $this->payment_scripts($this->id);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
-        $this->mercadopago->product->registerBeforeAddToCartForm([$this, 'creditsBanner']);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
 
@@ -101,9 +100,9 @@ class CreditsGateway extends AbstractGateway
                 'modal_step_2_end'       => $this->storeTranslations['modal_step_2_end'],
                 'modal_step_3'           => $this->storeTranslations['modal_step_3'],
                 'modal_footer'           => $this->storeTranslations['modal_footer'],
-                'modal_footer_help_link' => $this->links['credits_faq_link'],
                 'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
                 'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
+                'modal_footer_help_link' => $this->links['credits_faq_link'],
             ]
         );
     }

@@ -151,11 +151,10 @@ class TicketGateway extends AbstractGateway
      */
     public function payment_fields(): void
     {
-        $currentUser = $this->mercadopago->currentUser->getCurrentUser();
-
+        $currentUser     = $this->mercadopago->currentUser->getCurrentUser();
         $loggedUserEmail = (0 !== $currentUser->ID) ? $currentUser->user_email : null;
         $address         = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_1', true);
-        $address2       = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_2', true);
+        $address2        = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_2', true);
         $address        .= (!empty($address2) ? ' - ' . $address2 : '');
         $country         = $this->mercadopago->currentUser->getCurrentUserMeta('billing_country', true);
         $address        .= (!empty($country) ? ' - ' . $country : '');
@@ -183,27 +182,7 @@ class TicketGateway extends AbstractGateway
                 'currency_ratio'                   => $this->mercadopago->currency->getRatio($this),
                 'woocommerce_currency'             => get_woocommerce_currency(),
                 'account_currency'                 => $this->mercadopago->country->getCountryConfigs(),
-                'febraban'                         => (0 !== $currentUser->ID) ?
-                    [
-                        'firstname' => esc_js($currentUser->user_firstname),
-                        'lastname'  => esc_js($currentUser->user_lastname),
-                        'docNumber' => '',
-                        'address'   => esc_js($address),
-                        'number'    => '',
-                        'city'      => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_city', true)),
-                        'state'     => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_state', true)),
-                        'zipcode'   => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_postcode', true)),
-                    ] :
-                    [
-                        'firstname' => '',
-                        'lastname'  => '',
-                        'docNumber' => '',
-                        'address'   => '',
-                        'number'    => '',
-                        'city'      => '',
-                        'state'     => '',
-                        'zipcode'   => '',
-                    ],
+                'febraban'                         => $this->getFebrabanInfo($currentUser, $address),
             ]
         );
     }
@@ -262,7 +241,7 @@ class TicketGateway extends AbstractGateway
             }
         }
 
-        $lastElement    = array_pop($payments);
+        $lastElement     = array_pop($payments);
         $paycashPayments = implode(', ', $payments);
 
         return implode($this->storeTranslations['paycash_concatenator'], [$paycashPayments, $lastElement]);
@@ -354,9 +333,9 @@ class TicketGateway extends AbstractGateway
         $order        = wc_get_order($order_id);
         $methodExists = method_exists($order, 'get_meta');
 
-        $transactionDetails  = $methodExists ?
-            $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order) :
-            $this->mercadopago->orderMetadata->getTicketTransactionDetailsPost($order->get_id(), true);
+        $transactionDetails  = $methodExists
+            ? $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order)
+            : $this->mercadopago->orderMetadata->getTicketTransactionDetailsPost($order->get_id(), true);
 
         if (empty($transactionDetails)) {
             return;
@@ -384,16 +363,51 @@ class TicketGateway extends AbstractGateway
 
         if (! empty($ticketPaymentMethods)) {
             foreach ($ticketPaymentMethods as $ticketPaymentMethod) {
-                if (
-                    !isset($this->settings[$ticketPaymentMethod['id']])
-                    || 'yes' === $this->settings[$ticketPaymentMethod['id']]
+                if (!isset($this->settings[$ticketPaymentMethod['id']]) ||
+                    'yes' === $this->settings[$ticketPaymentMethod['id']]
                 ) {
                     $activePaymentMethods[] = $ticketPaymentMethod;
                 }
             }
         }
+
         sort($activePaymentMethods);
 
         return $this->mercadopago->paymentMethods->treatTicketPaymentMethods($activePaymentMethods);
+    }
+
+    /**
+     * Get Febraban info
+     *
+     * @param \WP_User $currentUser
+     * @param string $address
+     *
+     * @return array
+     */
+    public function getFebrabanInfo(\WP_User $currentUser, string $address): array
+    {
+        if ($currentUser->ID !== 0) {
+            return [
+                'firstname' => esc_js($currentUser->user_firstname),
+                'lastname'  => esc_js($currentUser->user_lastname),
+                'address'   => esc_js($address),
+                'city'      => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_city', true)),
+                'state'     => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_state', true)),
+                'zipcode'   => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_postcode', true)),
+                'docNumber' => '',
+                'number'    => '',
+            ];
+        }
+
+        return [
+            'firstname' => '',
+            'lastname'  => '',
+            'address'   => '',
+            'city'      => '',
+            'state'     => '',
+            'zipcode'   => '',
+            'docNumber' => '',
+            'number'    => '',
+        ];
     }
 }

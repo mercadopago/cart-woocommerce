@@ -6,6 +6,7 @@ use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -73,6 +74,11 @@ class Dependencies
      * @var Options
      */
     public $options;
+
+    /**
+     * @var Actions
+     */
+    public $actions;
 
     /**
      * @var OrderMeta
@@ -217,6 +223,7 @@ class Dependencies
         $this->admin             = new Admin();
         $this->endpoints         = new Endpoints();
         $this->options           = new Options();
+        $this->actions           = new Actions();
         $this->orderMeta         = new OrderMeta();
         $this->product           = new Product();
         $this->template          = new Template();

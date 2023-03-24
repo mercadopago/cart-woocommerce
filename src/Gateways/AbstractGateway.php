@@ -13,7 +13,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     /**
      * @const
      */
-    public const CHECKOUT_NAME = 'checkout-basic';
+    public const CHECKOUT_NAME = '';
 
     /**
      * @var WoocommerceMercadoPago
@@ -229,7 +229,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function payment_scripts(string $gatewaySection): void
     {
-        if ($this->canLoadScriptsAndStyles($gatewaySection)) {
+        if ($this->canAdminLoadScriptsAndStyles($gatewaySection)) {
             $this->mercadopago->scripts->registerAdminScript(
                 'wc_mercadopago_admin_components',
                 $this->mercadopago->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
@@ -241,30 +241,43 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             );
         }
 
-        $this->mercadopago->scripts->registerStoreScript(
-            'wc_mercadopago_checkout_components',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
-        );
+        if ($this->canCheckoutLoadScriptsAndStyles()) {
+            $this->mercadopago->scripts->registerCheckoutScript(
+                'wc_mercadopago_checkout_components',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
+            );
 
-        $this->mercadopago->scripts->registerStoreStyle(
-            'wc_mercadopago_checkout_components',
-            $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
-        );
+            $this->mercadopago->scripts->registerCheckoutStyle(
+                'wc_mercadopago_checkout_components',
+                $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
+            );
+        }
     }
 
     /**
-     * Check if scripts and styles can be loaded
+     * Check if admin scripts and styles can be loaded
      *
      * @param string $gatewaySection
      *
      * @return bool
      */
-    public function canLoadScriptsAndStyles(string $gatewaySection): bool
+    public function canAdminLoadScriptsAndStyles(string $gatewaySection): bool
     {
         return $this->mercadopago->admin->isAdmin() && (
             $this->mercadopago->url->validatePage('wc-settings') &&
             $this->mercadopago->url->validateSection($gatewaySection)
         );
+    }
+
+    /**
+     * Check if admin scripts and styles can be loaded
+     *
+     * @return bool
+     */
+    public function canCheckoutLoadScriptsAndStyles(): bool
+    {
+        return $this->mercadopago->checkout->isCheckout() &&
+            !$this->mercadopago->url->validateQueryVar('order-received');
     }
 
     /**
@@ -387,6 +400,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             ]
         );
     }
+
     /**
      * Load research component
      *
@@ -420,7 +434,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public function getActionableValue($optionName, $default): string
     {
         $active = $this->mercadopago->options->getGatewayOption($this, "{$optionName}_checkbox", false);
-
         return $active ? $this->mercadopago->options->getGatewayOption($this, $optionName, $default) : $default;
     }
 
@@ -429,13 +442,30 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      *
      * @param string $text
      * @param string $feeName
-     * @param $feeValue
+     * @param float $feeValue
      *
      * @return string
      */
-    public function getFeeText(string $text, string $feeName, $feeValue): string
+    public function getFeeText(string $text, string $feeName, float $feeValue): string
     {
-        return "{$text} $this->{$feeName}% / {$text} = {$feeValue}";
+        return "$text $this->$feeName% / $text = $feeValue";
+    }
+
+    /**
+     * Get amount
+     *
+     * @return float
+     */
+    protected function getAmount(): float
+    {
+        $total      = $this->get_order_total();
+        $subtotal   = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $tax        = $total - $subtotal;
+        $discount   = $subtotal * ($this->discount / 100);
+        $commission = $subtotal * ($this->commission / 100);
+        $amount     = $subtotal - $discount + $commission;
+
+        return $amount + $tax;
     }
 
     /**
@@ -463,29 +493,10 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
-     * Get amount
-     *
-     * @return float
-     */
-    protected function getAmount(): float
-    {
-        global $woocommerce;
-
-        $total      = $this->get_order_total();
-        $subtotal   = $woocommerce->cart->get_subtotal();
-        $tax        = $total - $subtotal;
-        $discount   = $subtotal * ($this->discount / 100);
-        $commission = $subtotal * ($this->commission / 100);
-        $amount     = $subtotal - $discount + $commission;
-
-        return $amount + $tax;
-    }
-
-    /**
      * Receive gateway webhook notifications
      *
      * @var string $gateway
-     * 
+     *
      * @return void
      */
     public function webhook(): void

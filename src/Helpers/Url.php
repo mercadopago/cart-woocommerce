@@ -134,4 +134,16 @@ final class Url
 
         return $this->strings->compareStrings($expectedUrl, $currentUrl, $allowPartialMatch);
     }
+
+    /**
+     * Validate wp query var
+     *
+     * @param string $expectedQueryVar
+     *
+     * @return bool
+     */
+    public function validateQueryVar(string $expectedQueryVar): bool
+    {
+        return (bool) get_query_var($expectedQueryVar);
+    }
 }

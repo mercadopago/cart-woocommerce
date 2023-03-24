@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\OrderStatus;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
@@ -108,6 +109,11 @@ class WoocommerceMercadoPago
      * @var Options
      */
     public $options;
+
+    /**
+     * @var Actions
+     */
+    public $actions;
 
     /**
      * @var Plugin
@@ -284,6 +290,22 @@ class WoocommerceMercadoPago
     }
 
     /**
+     * Register actions when gateway is not called on page
+     *
+     * @return void
+     */
+    public function registerActionsWhenGatewayIsNotCalled(): void
+    {
+        $this->actions->registerActionWhenGatewayIsNotCalled(
+            $this,
+            'product',
+            'registerBeforeAddToCartForm',
+            'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+            'creditsBanner'
+        );
+    }
+
+    /**
      * Init plugin
      *
      * @return void
@@ -312,6 +334,7 @@ class WoocommerceMercadoPago
         }
 
         $this->registerGateways();
+        $this->registerActionsWhenGatewayIsNotCalled();
     }
 
     /**
@@ -332,6 +355,7 @@ class WoocommerceMercadoPago
         $this->orderMetadata = $dependencies->orderMetadata;
 
         // Helpers
+        $this->actions        = $dependencies->actions;
         $this->cache          = $dependencies->cache;
         $this->country        = $dependencies->country;
         $this->currency       = $dependencies->currency;

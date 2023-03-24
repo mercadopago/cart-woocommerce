@@ -47,7 +47,7 @@ class Scripts
      */
     public function __construct(Url $url, Seller $seller)
     {
-        $this->url = $url;
+        $this->url    = $url;
         $this->seller = $seller;
     }
 
@@ -83,6 +83,37 @@ class Scripts
     }
 
     /**
+     * Register styles on checkout
+     *
+     * @param string $name
+     * @param string $file
+     *
+     * @return void
+     */
+    public function registerCheckoutStyle(string $name, string $file): void
+    {
+        add_action('wp_enqueue_scripts', function () use ($name, $file) {
+            $this->registerStyle($name, $file);
+        });
+    }
+
+    /**
+     * Register scripts on checkout
+     *
+     * @param string $name
+     * @param string $file
+     * @param array $variables
+     *
+     * @return void
+     */
+    public function registerCheckoutScript(string $name, string $file, array $variables = []): void
+    {
+        add_action('wp_enqueue_scripts', function () use ($name, $file, $variables) {
+            $this->registerScript($name, $file, $variables);
+        });
+    }
+
+    /**
      * Register styles on store
      *
      * @param string $name
@@ -92,9 +123,7 @@ class Scripts
      */
     public function registerStoreStyle(string $name, string $file): void
     {
-        add_action('wp_enqueue_scripts', function () use ($name, $file) {
-            $this->registerStyle($name, $file);
-        });
+        $this->registerStyle($name, $file);
     }
 
     /**
@@ -108,9 +137,7 @@ class Scripts
      */
     public function registerStoreScript(string $name, string $file, array $variables = []): void
     {
-        add_action('wp_enqueue_scripts', function () use ($name, $file, $variables) {
-            $this->registerScript($name, $file, $variables);
-        });
+        $this->registerScript($name, $file, $variables);
     }
 
     /**

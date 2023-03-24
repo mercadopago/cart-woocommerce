@@ -20,6 +20,7 @@ final class Images
         $image = base64_decode($base64);
         $image = imagecreatefromstring($image);
         $image = imagescale($image, 447);
+
         imagepng($image);
         imagedestroy($image);
 
@@ -36,8 +37,10 @@ final class Images
         header('Content-type: image/png');
 
         $errorImage = "{${dirname(__FILE__)}}/../../assets/images/$imageName.png";
+
         $image = imagecreatefrompng($errorImage);
         $image = imagescale($image, 447);
+
         imagepng($image);
         imagedestroy($image);
 

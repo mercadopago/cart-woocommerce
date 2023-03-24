@@ -22,6 +22,16 @@ class Checkout
     }
 
     /**
+     * Validate if the actual page belongs to the checkout section
+     *
+     * @return bool
+     */
+    public function isCheckout(): bool
+    {
+        return is_checkout();
+    }
+
+    /**
      * Register before checkout form hook
      *
      * @param string $location

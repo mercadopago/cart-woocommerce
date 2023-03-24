@@ -205,73 +205,73 @@ class CustomGateway extends AbstractGateway
     {
         parent::payment_scripts($gatewaySection);
 
-        global $woocommerce;
+        if ($this->canCheckoutLoadScriptsAndStyles()) {
+            $this->mercadopago->scripts->registerCheckoutScript(
+                'wc_mercadopago_sdk',
+                'https://sdk.mercadopago.com/js/v2'
+            );
 
-        $this->mercadopago->scripts->registerStoreScript(
-            'wc_mercadopago_sdk',
-            'https://sdk.mercadopago.com/js/v2'
-        );
+            $this->mercadopago->scripts->registerCheckoutScript(
+                'wc_mercadopago_custom_page',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-page', '.js')
+            );
 
-        $this->mercadopago->scripts->registerStoreScript(
-            'wc_mercadopago_custom_checkout',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js'),
-            [
-                'public_key'           => $this->mercadopago->seller->getCredentialsPublicKey(),
-                'site_id'              => $this->countryConfigs['site_id'],
-                'currency'             => $this->countryConfigs['currency'],
-                'intl'                 => $this->countryConfigs['intl'],
-                'placeholders'         => [
-                    'cardExpirationDate' => $this->storeTranslations['placeholders_card_expiration_date'],
-                    'issuer'             => $this->storeTranslations['placeholders_issuer'],
-                    'installments'       => $this->storeTranslations['placeholders_installments'],
-                ],
-                'cvvHint'              => [
-                    'back'  => $this->storeTranslations['cvv_hint_back'],
-                    'front' => $this->storeTranslations['cvv_hint_front'],
-                ],
-                'cvvText'              => $this->storeTranslations['cvv_text'],
-                'installmentObsFee'    => $this->storeTranslations['installment_obs_fee'],
-                'installmentButton'    => $this->storeTranslations['installment_button'],
-                'bankInterestText'     => $this->storeTranslations['bank_interest_text'],
-                'interestText'         => $this->storeTranslations['interest_text'],
-                'input_helper_message' => [
-                    'cardNumber'     => [
-                        'invalid_type'   => $this->storeTranslations['input_helper_message_invalid_type'],
-                        'invalid_length' => $this->storeTranslations['input_helper_message_invalid_length'],
+            $this->mercadopago->scripts->registerCheckoutScript(
+                'wc_mercadopago_custom_elements',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-elements', '.js')
+            );
+
+            $this->mercadopago->scripts->registerCheckoutScript(
+                'wc_mercadopago_custom_checkout',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js'),
+                [
+                    'public_key'         => $this->mercadopago->seller->getCredentialsPublicKey(),
+                    'intl'               => $this->countryConfigs['intl'],
+                    'site_id'            => $this->countryConfigs['site_id'],
+                    'currency'           => $this->countryConfigs['currency'],
+                    'theme'             => get_stylesheet(),
+                    'location'          => '/checkout',
+                    'plugin_version'    => MP_VERSION,
+                    'platform_version'  => $this->mercadopago->woocommerce->version,
+                    'cvvText'           => $this->storeTranslations['cvv_text'],
+                    'installmentObsFee' => $this->storeTranslations['installment_obs_fee'],
+                    'installmentButton' => $this->storeTranslations['installment_button'],
+                    'bankInterestText'  => $this->storeTranslations['bank_interest_text'],
+                    'interestText'      => $this->storeTranslations['interest_text'],
+                    'placeholders' => [
+                        'issuer'             => $this->storeTranslations['placeholders_issuer'],
+                        'installments'       => $this->storeTranslations['placeholders_installments'],
+                        'cardExpirationDate' => $this->storeTranslations['placeholders_card_expiration_date'],
                     ],
-                    'cardholderName' => [
-                        '221' => $this->storeTranslations['input_helper_message_card_holder_name_221'],
-                        '316' => $this->storeTranslations['input_helper_message_card_holder_name_316'],
+                    'cvvHint' => [
+                        'back'  => $this->storeTranslations['cvv_hint_back'],
+                        'front' => $this->storeTranslations['cvv_hint_front'],
                     ],
-                    'expirationDate' => [
-                        'invalid_type'   => $this->storeTranslations['input_helper_message_expiration_date_invalid_type'],
-                        'invalid_length' => $this->storeTranslations['input_helper_message_expiration_date_invalid_length'],
-                        'invalid_value'  => $this->storeTranslations['input_helper_message_expiration_date_invalid_value'],
+                    'input_helper_message' => [
+                        'cardNumber' => [
+                            'invalid_type'   => $this->storeTranslations['input_helper_message_invalid_type'],
+                            'invalid_length' => $this->storeTranslations['input_helper_message_invalid_length'],
+                        ],
+                        'cardholderName' => [
+                            '221' => $this->storeTranslations['input_helper_message_card_holder_name_221'],
+                            '316' => $this->storeTranslations['input_helper_message_card_holder_name_316'],
+                        ],
+                        'expirationDate' => [
+                            'invalid_type'   => $this->storeTranslations['input_helper_message_expiration_date_invalid_type'],
+                            'invalid_length' => $this->storeTranslations['input_helper_message_expiration_date_invalid_length'],
+                            'invalid_value'  => $this->storeTranslations['input_helper_message_expiration_date_invalid_value'],
+                        ],
+                        'securityCode' => [
+                            'invalid_type'   => $this->storeTranslations['input_helper_message_security_code_invalid_type'],
+                            'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
+                        ]
                     ],
-                    'securityCode'   => [
-                        'invalid_type'   => $this->storeTranslations['input_helper_message_security_code_invalid_type'],
-                        'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
-                    ]
-                ],
-                'theme'                => get_stylesheet(),
-                'location'             => '/checkout',
-                'plugin_version'       => MP_VERSION,
-                'platform_version'     => $woocommerce->version,
-            ]
-        );
-
-        $this->mercadopago->scripts->registerStoreScript(
-            'wc_mercadopago_custom_page',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-page', '.js')
-        );
-
-        $this->mercadopago->scripts->registerStoreScript(
-            'wc_mercadopago_custom_elements',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-elements', '.js')
-        );
+                ]
+            );
+        }
 
         $this->mercadopago->checkout->registerReviewOrderBeforePayment(function () {
-            $this->mercadopago->scripts->registerStoreScript(
+            $this->mercadopago->scripts->registerCheckoutScript(
                 'wc_mercadopago_custom_update_checkout',
                 $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-update-checkout', '.js')
             );
@@ -367,9 +367,7 @@ class CustomGateway extends AbstractGateway
             return [
                 'result'   => 'success',
                 'redirect' => add_query_arg(
-                    [
-                        'wallet_button' => 'open'
-                    ],
+                    ['wallet_button' => 'open'],
                     $order->get_checkout_payment_url(true)
                 ),
             ];
@@ -379,12 +377,11 @@ class CustomGateway extends AbstractGateway
                 __FUNCTION__
             );
 
-            if (
+            if ($checkout['token'] &&
                 $checkout['amount'] &&
-                $checkout['token'] &&
-                $checkout['paymentMethodId'] &&
                 $checkout['installments'] &&
-                -1 !== $checkout['installments']
+                $checkout['installments'] !== -1 &&
+                $checkout['paymentMethodId']
             ) {
                 $this->transaction = new CustomTransaction($this, $order, $checkout);
                 $response          = $this->transaction->createPayment();
