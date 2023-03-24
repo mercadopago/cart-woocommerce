@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
 
@@ -20,6 +21,11 @@ class PixGateway extends AbstractGateway
      * @const
      */
     public const CHECKOUT_NAME = 'checkout-pix';
+
+    /**
+     * @const
+     */
+    public const PIX_IMAGE_ENDPOINT = 'mp_pix_image';
 
     /**
      * PixGateway constructor
@@ -47,13 +53,13 @@ class PixGateway extends AbstractGateway
         $this->mercadopago->gateway->registerGatewayTitle($this);
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
 
-        $this->mercadopago->order->registerEmailBeforeOrderTable([$this, 'getOrderReceivedTemplate']);
-        $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'getOrderReceivedTemplate']);
+        $this->mercadopago->order->registerEmailBeforeOrderTable([$this, 'renderOrderReceivedTemplate']);
+        $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'renderOrderReceivedTemplate']);
 
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+        $this->mercadopago->endpoints->registerApiEndpoint(self::PIX_IMAGE_ENDPOINT, [$this, 'generatePixImage']);
 
-        // @todo: call admin_notice hook to display currency notice
-        // @todo: register the endpoint to woocommerce_api_wc_mp_pix_image
+        // @todo: call admin_notice hook to display currency notice]
     }
 
     /**
@@ -68,7 +74,7 @@ class PixGateway extends AbstractGateway
         $siteId  = $mercadopago->seller->getSiteId();
         $country = $mercadopago->country->getWoocommerceDefaultCountry();
 
-        if ('MLB' === $siteId || ($siteId === '' && $country === 'BR')) {
+        if ($siteId === 'MLB' || ($siteId === '' && $country === 'BR')) {
             return true;
         }
 
@@ -358,13 +364,40 @@ class PixGateway extends AbstractGateway
     }
 
     /**
+     * Generate pix image with gd_extension and fallback
+     *
+     * @return void
+     */
+    public function generatePixImage(): void
+    {
+        $orderId = Form::sanitizeTextFromGet('id');
+        if (!$orderId) {
+            $this->mercadopago->images->getErrorImage();
+        }
+
+        $order = wc_get_order($orderId);
+        if (!$order) {
+            $this->mercadopago->images->getErrorImage();
+        }
+
+        $qrCodeBase64 = $this->mercadopago->orderMetadata->getPixQrBase64Post($orderId);
+        $qrCodeBase64 = array_pop($qrCodeBase64);
+
+        if (!$qrCodeBase64) {
+            $this->mercadopago->images->getErrorImage();
+        }
+
+        $this->mercadopago->images->getBase64Image($qrCodeBase64);
+    }
+
+    /**
      * Get pix order received template
      *
      * @param $order
      *
      * @return void
      */
-    public function getOrderReceivedTemplate($order): void
+    public function renderOrderReceivedTemplate($order): void
     {
         $orderId = $order->get_id();
         $pixOn   = $this->mercadopago->orderMetadata->getPixOnPost($orderId);
@@ -382,8 +415,8 @@ class PixGateway extends AbstractGateway
 
             $siteUrl     = $this->mercadopago->options->get('siteurl');
             $qrCodeImage = !in_array('gd', get_loaded_extensions(), true)
-                ? "data:image/jpeg;base64,$qrCode"
-                : "$siteUrl/?wc-api=wc_mp_pix_image&id=$orderId";
+                ? "data:image/jpeg;base64,$qrCodeBase64"
+                : "$siteUrl/wc-api/". self::PIX_IMAGE_ENDPOINT ."?id=$orderId";
 
             $this->mercadopago->scripts->registerStoreStyle(
                 'mp_pix_image',

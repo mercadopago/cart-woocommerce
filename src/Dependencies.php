@@ -7,6 +7,7 @@ use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -196,6 +197,11 @@ class Dependencies
     public $settings;
 
     /**
+     * @var Images
+     */
+    public $images;
+
+    /**
      * @var Metadata
      */
     public $metadataConfig;
@@ -228,6 +234,7 @@ class Dependencies
         $this->product           = new Product();
         $this->template          = new Template();
         $this->plugin            = new Plugin();
+        $this->images            = new Images();
         $this->orderMetadata     = $this->setOrderMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();

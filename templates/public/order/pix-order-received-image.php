@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 
 <div class="mp-pix-image-container">
     <div>
-        <img class="mp-pix-image-img" src="<?= esc_html($qr_code_image) ?>" alt="pix" />
+        <img class="mp-pix-image" src="<?= esc_html($qr_code_image) ?>" alt="pix" />
     </div>
 
     <div class="mp-pix-image-date-expiration">

@@ -354,8 +354,8 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $isTest    = Form::getSanitizeTextFromPost('is_test');
-        $publicKey = Form::getSanitizeTextFromPost('public_key');
+        $isTest    = Form::sanitizeTextFromPost('is_test');
+        $publicKey = Form::sanitizeTextFromPost('public_key');
 
         $validateCredentialsResponse = $this->seller->validatePublicKey($publicKey);
 
@@ -378,8 +378,8 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $isTest      = Form::getSanitizeTextFromPost('is_test');
-        $accessToken = Form::getSanitizeTextFromPost('access_token');
+        $isTest      = Form::sanitizeTextFromPost('is_test');
+        $accessToken = Form::sanitizeTextFromPost('access_token');
 
         $validateCredentialsResponse = $this->seller->validateAccessToken($accessToken);
 
@@ -402,10 +402,10 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $publicKeyProd   = Form::getSanitizeTextFromPost('public_key_prod');
-        $accessTokenProd = Form::getSanitizeTextFromPost('access_token_prod');
-        $publicKeyTest   = Form::getSanitizeTextFromPost('public_key_test');
-        $accessTokenTest = Form::getSanitizeTextFromPost('access_token_test');
+        $publicKeyProd   = Form::sanitizeTextFromPost('public_key_prod');
+        $accessTokenProd = Form::sanitizeTextFromPost('access_token_prod');
+        $publicKeyTest   = Form::sanitizeTextFromPost('public_key_test');
+        $accessTokenTest = Form::sanitizeTextFromPost('access_token_test');
 
         $validatePublicKeyProd   = $this->seller->validatePublicKey($publicKeyProd);
         $validateAccessTokenProd = $this->seller->validateAccessToken($accessTokenProd);
@@ -477,12 +477,12 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $storeId       = Form::getSanitizeTextFromPost('store_category_id');
-        $storeName     = Form::getSanitizeTextFromPost('store_identificator');
-        $storeCategory = Form::getSanitizeTextFromPost('store_categories');
-        $customDomain  = Form::getSanitizeTextFromPost('store_url_ipn');
-        $integratorId  = Form::getSanitizeTextFromPost('store_integrator_id');
-        $debugMode     = Form::getSanitizeTextFromPost('store_debug_mode');
+        $storeId       = Form::sanitizeTextFromPost('store_category_id');
+        $storeName     = Form::sanitizeTextFromPost('store_identificator');
+        $storeCategory = Form::sanitizeTextFromPost('store_categories');
+        $customDomain  = Form::sanitizeTextFromPost('store_url_ipn');
+        $integratorId  = Form::sanitizeTextFromPost('store_integrator_id');
+        $debugMode     = Form::sanitizeTextFromPost('store_debug_mode');
 
         $this->store->setStoreId($storeId);
         $this->store->setStoreName($storeName);
@@ -505,8 +505,8 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $checkoutTestMode    = Form::getSanitizeTextFromPost('input_mode_value');
-        $verifyAlertTestMode = Form::getSanitizeTextFromPost('input_verify_alert_test_mode');
+        $checkoutTestMode    = Form::sanitizeTextFromPost('input_mode_value');
+        $verifyAlertTestMode = Form::sanitizeTextFromPost('input_verify_alert_test_mode');
 
         $validateCheckoutTestMode = ($checkoutTestMode === 'yes');
         $withoutTestCredentials   = ($this->seller->getCredentialsPublicKeyTest() === '' ||
@@ -536,6 +536,6 @@ class Settings
     private function validateAjaxNonce(): void
     {
         $this->currentUser->validateUserNeededPermissions();
-        $this->nonce->validateNonce(self::NONCE_ID, Form::getSanitizeTextFromPost('nonce'));
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
     }
 }

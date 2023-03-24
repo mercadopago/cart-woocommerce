@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\OrderStatus;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
@@ -221,6 +222,11 @@ class WoocommerceMercadoPago
     public $currency;
 
     /**
+     * @var Images
+     */
+    public $images;
+
+    /**
      * @var Settings
      */
     public $settings;
@@ -367,6 +373,7 @@ class WoocommerceMercadoPago
         $this->paymentMethods = $dependencies->paymentMethods;
         $this->nonce          = $dependencies->nonce;
         $this->orderStatus    = $dependencies->orderStatus;
+        $this->images         = $dependencies->images;
 
         // Hooks
         $this->admin     = $dependencies->admin;
