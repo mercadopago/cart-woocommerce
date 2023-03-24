@@ -31,7 +31,7 @@ class BasicGateway extends AbstractGateway
         $this->storeTranslations = $this->mercadopago->storeTranslations->basicCheckout;
 
         $this->id                 = self::ID;
-        $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-mp');
+        $this->icon               = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
         $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];

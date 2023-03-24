@@ -56,8 +56,9 @@ class TicketGateway extends AbstractGateway
     private function getCheckoutIcon(): string
     {
         $siteId   = strtoupper($this->mercadopago->seller->getSiteId());
-        $iconName = 'MLB' === $siteId ? 'icon-ticket-mlb' : 'icon-ticket';
-        return $this->mercadopago->plugin->getGatewayIcon($iconName);
+        $iconName = ($siteId === 'MLB') ? 'icon-ticket-mlb' : 'icon-ticket';
+
+        return $this->mercadopago->gateway->getGatewayIcon($iconName);
     }
 
     /**

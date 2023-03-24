@@ -284,10 +284,10 @@ function mpGetPaymentMethods() {
       nonce: mercadopago_settings_admin_js_params.nonce,
     },
     function (response) {
-      const payment = document.getElementById("mp-payment");
+      const payment = document.getElementById('mp-payment');
 
       response.data.reverse().forEach((gateway) => {
-        payment.insertAdjacentHTML("afterend", createMpPaymentMethodComponent(gateway));
+        payment.insertAdjacentElement('afterend', createMpPaymentMethodComponent(gateway));
       });
 
       // added melidata events on store configuration step three
@@ -298,40 +298,40 @@ function mpGetPaymentMethods() {
 }
 
 function createMpPaymentMethodComponent(gateway) {
-  var payment_active =
-    gateway.enabled == "yes"
-      ? "mp-settings-badge-active"
-      : "mp-settings-badge-inactive";
-  var text_payment_active =
-    gateway.enabled == "yes"
-      ? gateway.badge_translator.yes
-      : gateway.badge_translator.no;
+  const payment_active = gateway.enabled === 'yes' ? 'mp-settings-badge-active' : 'mp-settings-badge-inactive';
+  const text_payment_active = gateway.enabled === 'yes' ? gateway.badge_translator.yes : gateway.badge_translator.no;
 
-  return (
-    ' <a href="' +
-    gateway.link +
-    '" class="mp-settings-link mp-settings-font-color"><div class="mp-block mp-block-flex mp-settings-payment-block mp-settings-margin-right mp-settings-align-div">\
-      <div class="mp-settings-align-div">\
-        <div class="mp-settings-icon ' +
-    gateway.icon +
-    '"></div>\
-        <span class="mp-settings-subtitle-font-size mp-settings-margin-title-payment"> <b>' +
-    gateway.title_gateway +
-    "</b> - " +
-    gateway.description +
-    ' </span>\
-        <span class="' +
-    payment_active +
-    '" > ' +
-    text_payment_active +
-    '</span>\
-      </div>\
-      <div class="mp-settings-title-align">\
-      <span class="mp-settings-text-payment">Configurar</span>\
-        <img class="mp-settings-icon-config">\
-      </div>\
-      </div></a>'
-  );
+  const container = document.createElement('div');
+  container.appendChild(getPaymentMethodComponent(gateway, payment_active, text_payment_active));
+
+  return container;
+}
+
+function getPaymentMethodComponent(gateway, payment_active, text_payment_active) {
+  const component = `
+    <a href="${gateway.link}" class="mp-settings-link mp-settings-font-color">
+      <div class="mp-block mp-block-flex mp-settings-payment-block mp-settings-margin-right mp-settings-align-div">
+        <div class="mp-settings-align-div">
+          <div class="mp-settings-icon">
+            <img src="${gateway.icon}" alt="mp gateway icon" />
+          </div>
+
+          <span class="mp-settings-subtitle-font-size mp-settings-margin-title-payment">
+            <b>${gateway.title_gateway}</b> - ${gateway.description}
+          </span>
+
+          <span class="${payment_active}">${text_payment_active}</span>
+        </div>
+
+        <div class="mp-settings-title-align">
+        <span class="mp-settings-text-payment">Configurar</span>
+          <div class="mp-settings-icon-config"></div>
+        </div>
+      </div>
+    </a>
+  `;
+
+  return new DOMParser().parseFromString(component, 'text/html').firstChild;
 }
 
 function mpSettingsAccordionStart() {

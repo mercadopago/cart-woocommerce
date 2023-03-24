@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Hooks;
 
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
@@ -12,6 +13,11 @@ if (!defined('ABSPATH')) {
 
 class Gateway
 {
+    /**
+     * @const
+     */
+    public const GATEWAY_ICON_FILTER = 'woo_mercado_pago_icon';
+
     /**
      * @var Options
      */
@@ -33,14 +39,25 @@ class Gateway
     private $translations;
 
     /**
+     * @var Url
+     */
+    private $url;
+
+    /**
      * Gateway constructor
      */
-    public function __construct(Options $options, Template $template, Store $store, StoreTranslations $translations)
-    {
+    public function __construct(
+        Options $options,
+        Template $template,
+        Store $store,
+        StoreTranslations $translations,
+        Url $url
+    ) {
         $this->options      = $options;
         $this->template     = $template;
         $this->store        = $store;
         $this->translations = $translations;
+        $this->url          = $url;
     }
 
     /**
@@ -54,6 +71,7 @@ class Gateway
     {
         if ($gateway::isAvailable()) {
             $this->store->addAvailablePaymentGateway($gateway);
+
             add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
                 $methods[] = $gateway;
                 return $methods;
@@ -266,5 +284,18 @@ class Gateway
     public function registerWpHead($callback): void
     {
         add_action('wp_head', $callback);
+    }
+
+    /**
+     * Get gateway icon
+     *
+     * @param string $iconName
+     *
+     * @return string
+     */
+    public function getGatewayIcon(string $iconName): string
+    {
+        $path = $this->url->getPluginFileUrl("/assets/images/icons/$iconName", '.png', true);
+        return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 }

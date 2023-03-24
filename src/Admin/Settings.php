@@ -274,17 +274,9 @@ class Settings
     {
         try {
             $this->validateAjaxNonce();
+
+            $paymentGateways            = $this->store->getAvailablePaymentGateways();
             $payment_gateway_properties = [];
-
-            $paymentGateways = $this->store->getAvailablePaymentGateways();
-
-            $gatewayIcon = [
-                'woo-mercado-pago-basic'   => 'mp-settings-icon-mp',
-                'woo-mercado-pago-credits' => 'mp-settings-icon-mp',
-                'woo-mercado-pago-custom'  => 'mp-settings-icon-card',
-                'woo-mercado-pago-ticket'  => 'mp-settings-icon-code',
-                'woo-mercado-pago-pix'     => 'mp-settings-icon-pix',
-            ];
 
             foreach ($paymentGateways as $paymentGateway) {
                 $gateway = new $paymentGateway();
@@ -295,7 +287,7 @@ class Settings
                     'description'      => $gateway->description,
                     'title'            => $gateway->title,
                     'enabled'          => $gateway->settings['enabled'],
-                    'icon'             => $gatewayIcon[$gateway->id],
+                    'icon'             => $gateway->icon,
                     'link'             => admin_url('admin.php?page=wc-settings&tab=checkout&section=') . $gateway->id,
                     'badge_translator' => [
                         'yes' => $this->translations->gatewaysSettings['enabled'],

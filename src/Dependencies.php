@@ -220,6 +220,7 @@ class Dependencies
         $this->orderMeta         = new OrderMeta();
         $this->product           = new Product();
         $this->template          = new Template();
+        $this->plugin            = new Plugin();
         $this->orderMetadata     = $this->setOrderMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();
@@ -228,7 +229,6 @@ class Dependencies
         $this->links             = $this->setLinks();
         $this->url               = $this->setUrl();
         $this->paymentMethods    = $this->setPaymentMethods();
-        $this->plugin            = $this->setPlugin();
         $this->scripts           = $this->setScripts();
         $this->checkout          = $this->setCheckout();
         $this->adminTranslations = $this->setAdminTranslations();
@@ -305,14 +305,6 @@ class Dependencies
     }
 
     /**
-     * @return Plugin
-     */
-    private function setPlugin(): Plugin
-    {
-        return new Plugin($this->url);
-    }
-
-    /**
      * @return Store
      */
     private function setStore(): Store
@@ -341,7 +333,7 @@ class Dependencies
      */
     private function setGateway(): Gateway
     {
-        return new Gateway($this->options, $this->template, $this->store, $this->storeTranslations);
+        return new Gateway($this->options, $this->template, $this->store, $this->storeTranslations, $this->url);
     }
 
     /**
