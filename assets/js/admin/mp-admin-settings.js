@@ -310,7 +310,7 @@ function createMpPaymentMethodComponent(gateway) {
 function getPaymentMethodComponent(gateway, payment_active, text_payment_active) {
   const component = `
     <a href="${gateway.link}" class="mp-settings-link mp-settings-font-color">
-      <div class="mp-block mp-block-flex mp-settings-payment-block mp-settings-margin-right mp-settings-align-div">
+      <div class="mp-block mp-block-flex mp-settings-payment-block mp-settings-align-div">
         <div class="mp-settings-align-div">
           <div class="mp-settings-icon">
             <img src="${gateway.icon}" alt="mp gateway icon" />
