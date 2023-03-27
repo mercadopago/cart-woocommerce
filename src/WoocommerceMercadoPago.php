@@ -307,7 +307,7 @@ class WoocommerceMercadoPago
             'product',
             'registerBeforeAddToCartForm',
             'MercadoPago\Woocommerce\Gateways\CreditsGateway',
-            'creditsBanner'
+            'renderCreditsBanner'
         );
     }
 

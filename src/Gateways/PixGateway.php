@@ -37,13 +37,15 @@ class PixGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->pixGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->pixCheckout;
 
-        $this->id                 = self::ID;
-        $this->icon               = $this->mercadopago->gateway->getGatewayIcon('icon-pix');
-        $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id    = self::ID;
+        $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-pix');
+        $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->expirationDate     = (int) $this->mercadopago->store->getCheckoutDateExpirationPix($this, '1');
+
+        $this->expirationDate = (int) $this->mercadopago->store->getCheckoutDateExpirationPix($this, '1');
 
         $this->init_settings();
         $this->init_form_fields();
@@ -59,26 +61,7 @@ class PixGateway extends AbstractGateway
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
         $this->mercadopago->endpoints->registerApiEndpoint(self::PIX_IMAGE_ENDPOINT, [$this, 'generatePixImage']);
 
-        // @todo: call admin_notice hook to display currency notice]
-    }
-
-    /**
-     * Verify if the gateway is available
-     *
-     * @return bool
-     */
-    public static function isAvailable(): bool
-    {
-        global $mercadopago;
-
-        $siteId  = $mercadopago->seller->getSiteId();
-        $country = $mercadopago->country->getWoocommerceDefaultCountry();
-
-        if ($siteId === 'MLB' || ($siteId === '' && $country === 'BR')) {
-            return true;
-        }
-
-        return false;
+        // @todo: call admin_notice hook to display currency notice
     }
 
     /**
@@ -97,161 +80,11 @@ class PixGateway extends AbstractGateway
             $paymentMethodPix = $this->mercadopago->seller->getCheckoutPixPaymentMethods();
 
             if (empty($paymentMethodPix)) {
-                if ($this->mercadopago->url->getCurrentSection() == $this->id) {
-                    $this->mercadopago->notices->adminNoticeMissPix();
-                }
-
-                $stepsContent = $this->mercadopago->template->getWoocommerceTemplateHtml(
-                    'admin/settings/steps.php',
-                    [
-                        'title'             => $this->adminTranslations['steps_title'],
-                        'step_one_text'     => $this->adminTranslations['steps_step_one_text' ],
-                        'step_two_text'     => $this->adminTranslations['steps_step_two_text'],
-                        'step_three_text'   => $this->adminTranslations['steps_step_three_text'],
-                        'observation_one'   => $this->adminTranslations['steps_observation_one'],
-                        'observation_two'   => $this->adminTranslations['steps_observation_two'],
-                        'button_about_pix'  => $this->adminTranslations['steps_button_about_pix'],
-                        'observation_three' => $this->adminTranslations['steps_observation_three'],
-                        'link_title_one'    => $this->adminTranslations['steps_link_title_one'],
-                        'link_url_one'      => $this->links['mercadopago_pix'],
-                        'link_url_two'      => $this->links['mercadopago_support'],
-                    ]
-                );
-
-                $this->form_fields = [
-                    'header' => [
-                        'type'        => 'mp_config_title',
-                        'title'       => $this->adminTranslations['header_title'],
-                        'description' => $this->adminTranslations['header_description'],
-                    ],
-                    'steps_content' => [
-                        'title' => $stepsContent,
-                        'type'  => 'title',
-                        'class' => 'mp_title_checkout',
-                    ],
-                ];
-            } else {
-                $this->form_fields = [
-                    'header' => [
-                        'type'        => 'mp_config_title',
-                        'title'       => $this->adminTranslations['header_title'],
-                        'description' => $this->adminTranslations['header_description'],
-                    ],
-                    'card_settings'  => [
-                        'type'  => 'mp_card_info',
-                        'value' => [
-                            'title'       => $this->adminTranslations['card_settings_title'],
-                            'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
-                            'button_text' => $this->adminTranslations['card_settings_button_text'],
-                            'button_url'  => $this->links['admin_settings_page'],
-                            'icon'        => 'mp-icon-badge-info',
-                            'color_card'  => 'mp-alert-color-success',
-                            'size_card'   => 'mp-card-body-size',
-                            'target'      => '_self',
-                        ],
-                    ],
-                    'enabled' => [
-                        'type'         => 'mp_toggle_switch',
-                        'title'        => $this->adminTranslations['enabled_title'],
-                        'subtitle'     => $this->adminTranslations['enabled_subtitle'],
-                        'default'      => 'no',
-                        'descriptions' => [
-                            'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
-                            'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
-                        ],
-                    ],
-                    'title' => [
-                        'type'        => 'text',
-                        'title'       => $this->adminTranslations['title_title'],
-                        'description' => $this->adminTranslations['title_description'],
-                        'default'     => $this->adminTranslations['title_default'],
-                        'desc_tip'    => $this->adminTranslations['title_desc_tip'],
-                        'class'       => 'limit-title-max-length',
-                    ],
-                    'expiration_date' => [
-                        'type'        => 'select',
-                        'title'       => $this->adminTranslations['expiration_date_title'],
-                        'description' => $this->adminTranslations['expiration_date_description'],
-                        'default'     => '30 minutes',
-                        'options'     => [
-                            '15 minutes' => $this->adminTranslations['expiration_date_options_15_minutes'],
-                            '30 minutes' => $this->adminTranslations['expiration_date_options_30_minutes'],
-                            '60 minutes' => $this->adminTranslations['expiration_date_options_60_minutes'],
-                            '12 hours'   => $this->adminTranslations['expiration_date_options_12_hours'],
-                            '24 hours'   => $this->adminTranslations['expiration_date_options_24_hours'],
-                            '2 days'     => $this->adminTranslations['expiration_date_options_2_days'],
-                            '3 days'     => $this->adminTranslations['expiration_date_options_3_days'],
-                            '4 days'     => $this->adminTranslations['expiration_date_options_4_days'],
-                            '5 days'     => $this->adminTranslations['expiration_date_options_5_days'],
-                            '6 days'     => $this->adminTranslations['expiration_date_options_6_days'],
-                            '7 days'     => $this->adminTranslations['expiration_date_options_7_days'],
-                        ]
-                    ],
-                    'currency_conversion' => [
-                        'type'         => 'mp_toggle_switch',
-                        'title'        => $this->adminTranslations['currency_conversion_title'],
-                        'subtitle'     => $this->adminTranslations['currency_conversion_subtitle'],
-                        'default'      => 'no',
-                        'descriptions' => [
-                            'enabled'  => $this->adminTranslations['currency_conversion_descriptions_enabled'],
-                            'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
-                        ],
-                    ],
-                    'card_info_helper' => [
-                        'type'  => 'title',
-                        'value' => '',
-                    ],
-                    'card_info' => [
-                        'type'  => 'mp_card_info',
-                        'value' => [
-                            'title'       => $this->adminTranslations['card_info_title'],
-                            'subtitle'    => $this->adminTranslations['card_info_subtitle'],
-                            'button_text' => $this->adminTranslations['card_info_button_text'],
-                            'button_url'  => $this->links['mercadopago_pix'],
-                            'icon'        => 'mp-icon-badge-info',
-                            'color_card'  => 'mp-alert-color-success',
-                            'size_card'   => 'mp-card-body-size',
-                            'target'      => '_blank',
-                        ]
-                    ],
-                    'advanced_configuration_title' => [
-                        'type'  => 'title',
-                        'title' => $this->adminTranslations['advanced_configuration_title'],
-                        'class' => 'mp-subtitle-body',
-                    ],
-                    'advanced_configuration_description' => [
-                        'type'  => 'title',
-                        'title' => $this->adminTranslations['advanced_configuration_subtitle'],
-                        'class' => 'mp-small-text',
-                    ],
-                    'discount' => [
-                        'type'              => 'mp_actionable_input',
-                        'title'             => $this->adminTranslations['discount_title'],
-                        'input_type'        => 'number',
-                        'description'       => $this->adminTranslations['discount_description'],
-                        'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
-                        'default'           => '0',
-                        'custom_attributes' => [
-                            'step' => '0.01',
-                            'min'  => '0',
-                            'max'  => '99',
-                        ],
-                    ],
-                    'commission' => [
-                        'type'              => 'mp_actionable_input',
-                        'title'             => $this->adminTranslations['commission_title'],
-                        'input_type'        => 'number',
-                        'description'       => $this->adminTranslations['commission_description'],
-                        'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
-                        'default'           => '0',
-                        'custom_attributes' => [
-                            'step' => '0.01',
-                            'min'  => '0',
-                            'max'  => '99',
-                        ],
-                    ]
-                ];
+                $this->form_fields = $this->sellerWithoutPixFields();
+                return;
             }
+
+            $this->form_fields = $this->sellerWithPixFields();
         }
     }
 
@@ -292,16 +125,6 @@ class PixGateway extends AbstractGateway
     }
 
     /**
-     * Validate gateway checkout form fields
-     *
-     * @return bool
-     */
-    public function validate_fields(): bool
-    {
-        return true;
-    }
-
-    /**
      * Process payment and create woocommerce order
      *
      * @param $order_id
@@ -313,54 +136,241 @@ class PixGateway extends AbstractGateway
     {
         parent::process_payment($order_id);
 
-        // @todo: nonce validation
-
-        // phpcs:ignore WordPress.Security.NonceVerification
         $checkout = map_deep($_POST, 'sanitize_text_field');
         $order    = wc_get_order($order_id);
 
-        if (filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
-            $this->transaction = new PixTransaction($this, $order, $checkout);
-            $response          = $this->transaction->createPayment();
-
-            if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
-
-                if ('pending' === $response['status']) {
-                    if (
-                        'pending_waiting_payment' === $response['status_detail'] ||
-                        'pending_waiting_transfer' === $response['status_detail']
-                    ) {
-                        WC()->cart->empty_cart();
-
-                        $this->mercadopago->order->setPixMetadata($this, $order, $response);
-
-                        $description = $this->storeTranslations['customer_not_paid'];
-                        $this->mercadopago->order->addOrderNote($order, $description);
-
-                        if ('pix' === $response['payment_method_id']) {
-                            $description = "<div style=\"text-align: justify;\"><p>{$this->storeTranslations['congrats_title']} {$this->storeTranslations['congrats_subtitle']}</small></p>";
-                            $this->mercadopago->order->addOrderNote($order, $description, 1);
-                        }
-
-                        return [
-                            'result'   => 'success',
-                            'redirect' => $order->get_checkout_order_received_url(),
-                        ];
-                    }
-                }
-            }
-
+        if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
             return $this->processReturnFail(
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
                 __METHOD__
             );
         }
 
+        $this->transaction = new PixTransaction($this, $order, $checkout);
+        $response          = $this->transaction->createPayment();
+
+        if (is_array($response) && array_key_exists('status', $response)) {
+            $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+
+            if ($response['status'] === 'pending' && (
+                $response['status_detail'] === 'pending_waiting_payment' ||
+                $response['status_detail'] === 'pending_waiting_transfer'
+            )) {
+                $this->mercadopago->woocommerce->cart->empty_cart();
+                $this->mercadopago->order->setPixMetadata($this, $order, $response);
+                $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
+
+                $urlReceived = esc_url($order->get_checkout_order_received_url());
+                $description = "
+                    <div style='text-align: justify;'>
+                        <p>{$this->storeTranslations['congrats_title']}</p>
+                        <small>{$this->storeTranslations['congrats_subtitle']}</small>
+                    </div>
+                ";
+
+                $this->mercadopago->order->addOrderNote($order, $description, 1);
+
+                return [
+                    'result'   => 'success',
+                    'redirect' => $urlReceived,
+                ];
+            }
+        }
+
         return $this->processReturnFail(
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+            $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
             __METHOD__
         );
+    }
+
+    /**
+     * Verify if the gateway is available
+     *
+     * @return bool
+     */
+    public static function isAvailable(): bool
+    {
+        global $mercadopago;
+
+        $siteId  = $mercadopago->seller->getSiteId();
+        $country = $mercadopago->country->getWoocommerceDefaultCountry();
+
+        if ($siteId === 'MLB' || ($siteId === '' && $country === 'BR')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Mount fields for seller configure Pix
+     *
+     * @return array
+     */
+    public function sellerWithPixFields(): array
+    {
+        return [
+            'header' => [
+                'type'        => 'mp_config_title',
+                'title'       => $this->adminTranslations['header_title'],
+                'description' => $this->adminTranslations['header_description'],
+            ],
+            'card_settings'  => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_settings_title'],
+                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
+                    'button_text' => $this->adminTranslations['card_settings_button_text'],
+                    'button_url'  => $this->links['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
+                ],
+            ],
+            'enabled' => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['enabled_title'],
+                'subtitle'     => $this->adminTranslations['enabled_subtitle'],
+                'default'      => 'no',
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
+                ],
+            ],
+            'title' => [
+                'type'        => 'text',
+                'title'       => $this->adminTranslations['title_title'],
+                'description' => $this->adminTranslations['title_description'],
+                'default'     => $this->adminTranslations['title_default'],
+                'desc_tip'    => $this->adminTranslations['title_desc_tip'],
+                'class'       => 'limit-title-max-length',
+            ],
+            'expiration_date' => [
+                'type'        => 'select',
+                'title'       => $this->adminTranslations['expiration_date_title'],
+                'description' => $this->adminTranslations['expiration_date_description'],
+                'default'     => '30 minutes',
+                'options'     => [
+                    '15 minutes' => $this->adminTranslations['expiration_date_options_15_minutes'],
+                    '30 minutes' => $this->adminTranslations['expiration_date_options_30_minutes'],
+                    '60 minutes' => $this->adminTranslations['expiration_date_options_60_minutes'],
+                    '12 hours'   => $this->adminTranslations['expiration_date_options_12_hours'],
+                    '24 hours'   => $this->adminTranslations['expiration_date_options_24_hours'],
+                    '2 days'     => $this->adminTranslations['expiration_date_options_2_days'],
+                    '3 days'     => $this->adminTranslations['expiration_date_options_3_days'],
+                    '4 days'     => $this->adminTranslations['expiration_date_options_4_days'],
+                    '5 days'     => $this->adminTranslations['expiration_date_options_5_days'],
+                    '6 days'     => $this->adminTranslations['expiration_date_options_6_days'],
+                    '7 days'     => $this->adminTranslations['expiration_date_options_7_days'],
+                ]
+            ],
+            'currency_conversion' => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['currency_conversion_title'],
+                'subtitle'     => $this->adminTranslations['currency_conversion_subtitle'],
+                'default'      => 'no',
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['currency_conversion_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
+                ],
+            ],
+            'card_info_helper' => [
+                'type'  => 'title',
+                'value' => '',
+            ],
+            'card_info' => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_info_title'],
+                    'subtitle'    => $this->adminTranslations['card_info_subtitle'],
+                    'button_text' => $this->adminTranslations['card_info_button_text'],
+                    'button_url'  => $this->links['mercadopago_pix'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_blank',
+                ]
+            ],
+            'advanced_configuration_title' => [
+                'type'  => 'title',
+                'title' => $this->adminTranslations['advanced_configuration_title'],
+                'class' => 'mp-subtitle-body',
+            ],
+            'advanced_configuration_description' => [
+                'type'  => 'title',
+                'title' => $this->adminTranslations['advanced_configuration_subtitle'],
+                'class' => 'mp-small-text',
+            ],
+            'discount' => [
+                'type'              => 'mp_actionable_input',
+                'title'             => $this->adminTranslations['discount_title'],
+                'input_type'        => 'number',
+                'description'       => $this->adminTranslations['discount_description'],
+                'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
+                'default'           => '0',
+                'custom_attributes' => [
+                    'step' => '0.01',
+                    'min'  => '0',
+                    'max'  => '99',
+                ],
+            ],
+            'commission' => [
+                'type'              => 'mp_actionable_input',
+                'title'             => $this->adminTranslations['commission_title'],
+                'input_type'        => 'number',
+                'description'       => $this->adminTranslations['commission_description'],
+                'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
+                'default'           => '0',
+                'custom_attributes' => [
+                    'step' => '0.01',
+                    'min'  => '0',
+                    'max'  => '99',
+                ],
+            ]
+        ];
+    }
+
+    /**
+     * Mount fields to show the seller how to activate Pix
+     *
+     * @return array
+     */
+    public function sellerWithoutPixFields(): array
+    {
+        if ($this->mercadopago->url->getCurrentSection() == $this->id) {
+            $this->mercadopago->notices->adminNoticeMissPix();
+        }
+
+        $stepsContent = $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'admin/settings/steps.php',
+            [
+                'title'             => $this->adminTranslations['steps_title'],
+                'step_one_text'     => $this->adminTranslations['steps_step_one_text' ],
+                'step_two_text'     => $this->adminTranslations['steps_step_two_text'],
+                'step_three_text'   => $this->adminTranslations['steps_step_three_text'],
+                'observation_one'   => $this->adminTranslations['steps_observation_one'],
+                'observation_two'   => $this->adminTranslations['steps_observation_two'],
+                'button_about_pix'  => $this->adminTranslations['steps_button_about_pix'],
+                'observation_three' => $this->adminTranslations['steps_observation_three'],
+                'link_title_one'    => $this->adminTranslations['steps_link_title_one'],
+                'link_url_one'      => $this->links['mercadopago_pix'],
+                'link_url_two'      => $this->links['mercadopago_support'],
+            ]
+        );
+
+        return [
+            'header' => [
+                'type'        => 'mp_config_title',
+                'title'       => $this->adminTranslations['header_title'],
+                'description' => $this->adminTranslations['header_description'],
+            ],
+            'steps_content' => [
+                'title' => $stepsContent,
+                'type'  => 'title',
+                'class' => 'mp_title_checkout',
+            ],
+        ];
     }
 
     /**

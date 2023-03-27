@@ -30,9 +30,10 @@ class CreditsGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->creditsGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->creditsCheckout;
 
-        $this->id                 = self::ID;
-        $this->icon               = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
-        $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id    = self::ID;
+        $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
+        $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
@@ -43,68 +44,6 @@ class CreditsGateway extends AbstractGateway
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
-    }
-
-    /**
-     * Verify if the gateway is available
-     *
-     * @return bool
-     */
-    public static function isAvailable(): bool
-    {
-        global $mercadopago;
-
-        $paymentMethodsBySite = $mercadopago->seller->getSiteIdPaymentMethods();
-
-        foreach ($paymentMethodsBySite as $paymentMethod) {
-            if ('consumer_credits' === $paymentMethod['id']) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Set credits banner
-     */
-    public function creditsBanner(): void
-    {
-        $this->mercadopago->scripts->registerStoreStyle(
-            'mp-credits-modal-style',
-            $this->mercadopago->url->getPluginFileUrl('assets/css/products/credits-modal', '.css')
-        );
-
-        $this->mercadopago->scripts->registerStoreScript(
-            'mp-credits-modal-js',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/products/credits-modal', '.js')
-        );
-
-        $this->mercadopago->scripts->registerMelidataStoreScript('/products');
-
-        $this->mercadopago->template->getWoocommerceTemplate(
-            'public/products/credits-modal.php',
-            [
-                'banner_title'           => $this->storeTranslations['banner_title'],
-                'banner_title_bold'      => $this->storeTranslations['banner_title_bold'],
-                'banner_title_end'       => $this->storeTranslations['banner_title_end'],
-                'banner_link'            => $this->storeTranslations['banner_link'],
-                'modal_title'            => $this->storeTranslations['modal_title'],
-                'modal_subtitle'         => $this->storeTranslations['modal_subtitle'],
-                'modal_how_to'           => $this->storeTranslations['modal_how_to'],
-                'modal_step_1'           => $this->storeTranslations['modal_step_1'],
-                'modal_step_1_bold'      => $this->storeTranslations['modal_step_1_bold'],
-                'modal_step_1_end'       => $this->storeTranslations['modal_step_1_end'],
-                'modal_step_2'           => $this->storeTranslations['modal_step_2'],
-                'modal_step_2_bold'      => $this->storeTranslations['modal_step_2_bold'],
-                'modal_step_2_end'       => $this->storeTranslations['modal_step_2_end'],
-                'modal_step_3'           => $this->storeTranslations['modal_step_3'],
-                'modal_footer'           => $this->storeTranslations['modal_footer'],
-                'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
-                'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
-                'modal_footer_help_link' => $this->links['credits_faq_link'],
-            ]
-        );
     }
 
     /**
@@ -294,6 +233,25 @@ class CreditsGateway extends AbstractGateway
         ];
     }
 
+    /**
+     * Verify if the gateway is available
+     *
+     * @return bool
+     */
+    public static function isAvailable(): bool
+    {
+        global $mercadopago;
+
+        $paymentMethodsBySite = $mercadopago->seller->getSiteIdPaymentMethods();
+
+        foreach ($paymentMethodsBySite as $paymentMethod) {
+            if ('consumer_credits' === $paymentMethod['id']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Example Banner Credits Admin
@@ -382,14 +340,14 @@ class CreditsGateway extends AbstractGateway
     }
 
     /**
-     * Get git image path for mercado credits demonstration
+     * Get gif image path for mercado credits demonstration
      *
-     * @param $siteId
-     * @param $view
+     * @param string $siteId
+     * @param string $view
      *
      * @return string
      */
-    private function getCreditsGifPath($siteId, $view): string
+    private function getCreditsGifPath(string $siteId, string $view): string
     {
         $siteIds = [
             'mla' => 'MLA_',
@@ -418,5 +376,47 @@ class CreditsGateway extends AbstractGateway
             $this->storeTranslations['checkout_benefits_2'],
             $this->storeTranslations['checkout_benefits_3'],
         ];
+    }
+
+    /**
+     * Set credits banner
+     */
+    public function renderCreditsBanner(): void
+    {
+        $this->mercadopago->scripts->registerStoreStyle(
+            'mp-credits-modal-style',
+            $this->mercadopago->url->getPluginFileUrl('assets/css/products/credits-modal', '.css')
+        );
+
+        $this->mercadopago->scripts->registerStoreScript(
+            'mp-credits-modal-js',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/products/credits-modal', '.js')
+        );
+
+        $this->mercadopago->scripts->registerMelidataStoreScript('/products');
+
+        $this->mercadopago->template->getWoocommerceTemplate(
+            'public/products/credits-modal.php',
+            [
+                'banner_title'           => $this->storeTranslations['banner_title'],
+                'banner_title_bold'      => $this->storeTranslations['banner_title_bold'],
+                'banner_title_end'       => $this->storeTranslations['banner_title_end'],
+                'banner_link'            => $this->storeTranslations['banner_link'],
+                'modal_title'            => $this->storeTranslations['modal_title'],
+                'modal_subtitle'         => $this->storeTranslations['modal_subtitle'],
+                'modal_how_to'           => $this->storeTranslations['modal_how_to'],
+                'modal_step_1'           => $this->storeTranslations['modal_step_1'],
+                'modal_step_1_bold'      => $this->storeTranslations['modal_step_1_bold'],
+                'modal_step_1_end'       => $this->storeTranslations['modal_step_1_end'],
+                'modal_step_2'           => $this->storeTranslations['modal_step_2'],
+                'modal_step_2_bold'      => $this->storeTranslations['modal_step_2_bold'],
+                'modal_step_2_end'       => $this->storeTranslations['modal_step_2_end'],
+                'modal_step_3'           => $this->storeTranslations['modal_step_3'],
+                'modal_footer'           => $this->storeTranslations['modal_footer'],
+                'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
+                'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
+                'modal_footer_help_link' => $this->links['credits_faq_link'],
+            ]
+        );
     }
 }
