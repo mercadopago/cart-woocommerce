@@ -142,11 +142,11 @@ class Gateway
     /**
      * Register update options
      *
-     * @param \WC_Payment_Gateway $gateway
+     * @param AbstractGateway $gateway
      *
      * @return void
      */
-    public function registerUpdateOptions(\WC_Payment_Gateway $gateway): void
+    public function registerUpdateOptions(AbstractGateway $gateway): void
     {
         add_action('woocommerce_update_options_payment_gateways_' . $gateway->id, function () use ($gateway) {
             $gateway->init_settings();

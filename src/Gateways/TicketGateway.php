@@ -39,8 +39,8 @@ class TicketGateway extends AbstractGateway
         $this->method_title       = $this->adminTranslations['method_title'];
         $this->method_description = $this->description;
 
-        $this->init_form_fields();
         $this->init_settings();
+        $this->init_form_fields();
         $this->payment_scripts($this->id);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);

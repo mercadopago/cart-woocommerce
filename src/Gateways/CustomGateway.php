@@ -39,8 +39,8 @@ class CustomGateway extends AbstractGateway
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
 
-        $this->init_form_fields();
         $this->init_settings();
+        $this->init_form_fields();
         $this->payment_scripts($this->id);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);

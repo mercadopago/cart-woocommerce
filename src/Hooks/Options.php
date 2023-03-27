@@ -18,14 +18,14 @@ class Options
         '_mp_access_token_test',
         '_mp_public_key_prod',
         '_mp_access_token_prod',
-        'checkout_country',
-        'mp_statement_descriptor',
         '_mp_category_id',
         '_mp_store_identificator',
         '_mp_integrator_id',
         '_mp_custom_domain',
-        'installments',
         'auto_return',
+        'installments',
+        'checkout_country',
+        'mp_statement_descriptor',
     ];
 
     /**
@@ -66,11 +66,13 @@ class Options
     public function getGatewayOption(AbstractGateway $gateway, string $optionName, string $default = '')
     {
         $wordpressConfigs = self::COMMON_CONFIGS;
+
         if (in_array($optionName, $wordpressConfigs, true)) {
             return $this->get($optionName, $default);
         }
-        
+
         $option = $gateway->get_option($optionName, $default);
+
         return !empty($option) ? $option : $this->get($optionName, $default);
     }
 

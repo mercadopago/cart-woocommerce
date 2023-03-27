@@ -440,8 +440,8 @@ class AdminTranslations
             'installments_options_15'                   => __('15 installments', 'woocommerce-mercadopago'),
             'installments_options_18'                   => __('18 installments', 'woocommerce-mercadopago'),
             'installments_options_24'                   => __('24 installments', 'woocommerce-mercadopago'),
-            'advanced_configuration_title'               => __('Advanced settings', 'woocommerce-mercadopago'),
-            'advanced_configuration_description'         => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'advanced_configuration_title'              => __('Advanced settings', 'woocommerce-mercadopago'),
+            'advanced_configuration_description'        => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
             'method_title'                              => __('Payment experience', 'woocommerce-mercadopago'),
             'method_description'                        => __('Define what payment experience your customers will have, whether inside or outside your store.', 'woocommerce-mercadopago'),
             'method_options_redirect'                   => __('Redirect', 'woocommerce-mercadopago'),
@@ -467,6 +467,7 @@ class AdminTranslations
             'commission_title'                          => __('Commission in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
             'commission_description'                    => __('Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
             'commission_checkbox_label'                 => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+            'invalid_back_url'                          => __('This seems to be an invalid URL', 'woocommerce-mercadopago'),
         ];
     }
 
