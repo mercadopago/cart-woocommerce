@@ -394,8 +394,8 @@ class CustomGateway extends AbstractGateway
         }
 
         return $this->processReturnFail(
-            __FUNCTION__,
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+            __METHOD__
         );
     }
 
@@ -480,8 +480,8 @@ class CustomGateway extends AbstractGateway
         }
 
         return $this->processReturnFail(
-            __FUNCTION__,
-            $this->mercadopago->storeTranslations->commonMessages['cho_form_error']
+            $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+            __METHOD__
         );
     }
 

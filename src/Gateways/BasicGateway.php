@@ -33,6 +33,7 @@ class BasicGateway extends AbstractGateway
         $this->id                 = self::ID;
         $this->icon               = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
         $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
@@ -298,8 +299,8 @@ class BasicGateway extends AbstractGateway
         }
 
         return $this->processReturnFail(
-            __FUNCTION__,
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+            __METHOD__
         );
     }
 

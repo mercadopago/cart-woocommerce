@@ -13,6 +13,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     /**
      * @const
      */
+    public const ID = '';
+
+    /**
+     * @const
+     */
     public const CHECKOUT_NAME = '';
 
     /**
@@ -99,6 +104,64 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
+     * Init form fields for checkout configuration
+     *
+     * @return void
+     */
+    public function init_form_fields(): void
+    {
+        $this->form_fields = [
+            'card_info_validate' => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
+                    'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
+                    'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
+                    'button_url'  => $this->links['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-warning',
+                    'color_card'  => 'mp-alert-color-error',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Added gateway scripts
+     *
+     * @param string $gatewaySection
+     *
+     * @return void
+     */
+    public function payment_scripts(string $gatewaySection): void
+    {
+        if ($this->canAdminLoadScriptsAndStyles($gatewaySection)) {
+            $this->mercadopago->scripts->registerAdminScript(
+                'wc_mercadopago_admin_components',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
+            );
+
+            $this->mercadopago->scripts->registerAdminStyle(
+                'wc_mercadopago_admin_components',
+                $this->mercadopago->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
+            );
+        }
+
+        if ($this->canCheckoutLoadScriptsAndStyles()) {
+            $this->mercadopago->scripts->registerCheckoutScript(
+                'wc_mercadopago_checkout_components',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
+            );
+
+            $this->mercadopago->scripts->registerCheckoutStyle(
+                'wc_mercadopago_checkout_components',
+                $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
+            );
+        }
+    }
+
+    /**
      * Render gateway checkout template
      *
      * @return void
@@ -177,6 +240,24 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
+     * Receive gateway webhook notifications
+     *
+     * @var string $gateway
+     *
+     * @return void
+     */
+    public function webhook(): void
+    {
+        $data    = $_GET;
+        $gateway = get_class($this);
+
+        $notificationFactory = new NotificationFactory();
+        $notificationHandler = $notificationFactory->createNotificationHandler($gateway, $data);
+
+        $notificationHandler->handleReceivedNotification();
+    }
+
+    /**
      * Verify if the gateway is available
      *
      * @return bool
@@ -187,27 +268,51 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
-     * Init form fields for checkout configuration
+     * Check if admin scripts and styles can be loaded
+     *
+     * @param string $gatewaySection
+     *
+     * @return bool
+     */
+    public function canAdminLoadScriptsAndStyles(string $gatewaySection): bool
+    {
+        return $this->mercadopago->admin->isAdmin() && (
+                $this->mercadopago->url->validatePage('wc-settings') &&
+                $this->mercadopago->url->validateSection($gatewaySection)
+            );
+    }
+
+    /**
+     * Check if admin scripts and styles can be loaded
+     *
+     * @return bool
+     */
+    public function canCheckoutLoadScriptsAndStyles(): bool
+    {
+        return $this->mercadopago->checkout->isCheckout() &&
+            !$this->mercadopago->url->validateQueryVar('order-received');
+    }
+
+    /**
+     * Load research component
      *
      * @return void
      */
-    public function init_form_fields(): void
+    public function loadResearchComponent(): void
     {
-        $this->form_fields = [
-            'card_info_validate' => [
-                'type'  => 'mp_card_info',
-                'value' => [
-                    'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
-                    'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
-                    'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
-                    'button_url'  => $this->links['admin_settings_page'],
-                    'icon'        => 'mp-icon-badge-warning',
-                    'color_card'  => 'mp-alert-color-error',
-                    'size_card'   => 'mp-card-body-size',
-                    'target'      => '_self',
+        $this->mercadopago->gateway->registerAfterSettingsCheckout(
+            'admin/components/research-fields.php',
+            [
+                [
+                    'field_key'   => 'mp-public-key-prod',
+                    'field_value' => $this->mercadopago->seller->getCredentialsPublicKey(),
+                ],
+                [
+                    'field_key'   => 'reference',
+                    'field_value' => '{"mp-screen-name":"' . $this->getCheckoutName() . '"}',
                 ]
             ]
-        ];
+        );
     }
 
     /**
@@ -221,63 +326,72 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
-     * Added gateway scripts
+     * Get actionable component value
      *
-     * @param string $gatewaySection
+     * @param $optionName
+     * @param $default
      *
-     * @return void
+     * @return string
      */
-    public function payment_scripts(string $gatewaySection): void
+    public function getActionableValue($optionName, $default): string
     {
-        if ($this->canAdminLoadScriptsAndStyles($gatewaySection)) {
-            $this->mercadopago->scripts->registerAdminScript(
-                'wc_mercadopago_admin_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
-            );
-
-            $this->mercadopago->scripts->registerAdminStyle(
-                'wc_mercadopago_admin_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
-            );
-        }
-
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_checkout_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
-            );
-
-            $this->mercadopago->scripts->registerCheckoutStyle(
-                'wc_mercadopago_checkout_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
-            );
-        }
+        $active = $this->mercadopago->options->getGatewayOption($this, "{$optionName}_checkbox", false);
+        return $active ? $this->mercadopago->options->getGatewayOption($this, $optionName, $default) : $default;
     }
 
     /**
-     * Check if admin scripts and styles can be loaded
+     * Get fee text
      *
-     * @param string $gatewaySection
+     * @param string $text
+     * @param string $feeName
+     * @param float $feeValue
      *
-     * @return bool
+     * @return string
      */
-    public function canAdminLoadScriptsAndStyles(string $gatewaySection): bool
+    public function getFeeText(string $text, string $feeName, float $feeValue): string
     {
-        return $this->mercadopago->admin->isAdmin() && (
-            $this->mercadopago->url->validatePage('wc-settings') &&
-            $this->mercadopago->url->validateSection($gatewaySection)
-        );
+        return "$text $this->$feeName% / $text = $feeValue";
     }
 
     /**
-     * Check if admin scripts and styles can be loaded
+     * Get amount
      *
-     * @return bool
+     * @return float
      */
-    public function canCheckoutLoadScriptsAndStyles(): bool
+    protected function getAmount(): float
     {
-        return $this->mercadopago->checkout->isCheckout() &&
-            !$this->mercadopago->url->validateQueryVar('order-received');
+        $total      = $this->get_order_total();
+        $subtotal   = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $tax        = $total - $subtotal;
+        $discount   = $subtotal * ($this->discount / 100);
+        $commission = $subtotal * ($this->commission / 100);
+        $amount     = $subtotal - $discount + $commission;
+
+        return $amount + $tax;
+    }
+
+    /**
+     * Process if result is fail
+     *
+     * @param string $message
+     * @param string $source
+     * @param array $context
+     * @param bool $notice
+     *
+     * @return array
+     */
+    public function processReturnFail(string $message, string $source, array $context = [], bool $notice = false): array
+    {
+        $this->mercadopago->logs->file->error($message, $source, $context);
+
+        if ($notice) {
+            $this->mercadopago->notices->storeNotice($message);
+        }
+
+        return [
+            'result'   => 'fail',
+            'redirect' => '',
+        ];
     }
 
     /**
@@ -399,114 +513,5 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 'settings'    => $settings,
             ]
         );
-    }
-
-    /**
-     * Load research component
-     *
-     * @return void
-     */
-    public function loadResearchComponent(): void
-    {
-        $this->mercadopago->gateway->registerAfterSettingsCheckout(
-            'admin/components/research-fields.php',
-            [
-                [
-                    'field_key'   => 'mp-public-key-prod',
-                    'field_value' => $this->mercadopago->seller->getCredentialsPublicKey(),
-                ],
-                [
-                    'field_key'   => 'reference',
-                    'field_value' => '{"mp-screen-name":"' . $this->getCheckoutName() . '"}',
-                ]
-            ]
-        );
-    }
-
-    /**
-     * Get actionable component value
-     *
-     * @param $optionName
-     * @param $default
-     *
-     * @return string
-     */
-    public function getActionableValue($optionName, $default): string
-    {
-        $active = $this->mercadopago->options->getGatewayOption($this, "{$optionName}_checkbox", false);
-        return $active ? $this->mercadopago->options->getGatewayOption($this, $optionName, $default) : $default;
-    }
-
-    /**
-     * Get fee text
-     *
-     * @param string $text
-     * @param string $feeName
-     * @param float $feeValue
-     *
-     * @return string
-     */
-    public function getFeeText(string $text, string $feeName, float $feeValue): string
-    {
-        return "$text $this->$feeName% / $text = $feeValue";
-    }
-
-    /**
-     * Get amount
-     *
-     * @return float
-     */
-    protected function getAmount(): float
-    {
-        $total      = $this->get_order_total();
-        $subtotal   = $this->mercadopago->woocommerce->cart->get_subtotal();
-        $tax        = $total - $subtotal;
-        $discount   = $subtotal * ($this->discount / 100);
-        $commission = $subtotal * ($this->commission / 100);
-        $amount     = $subtotal - $discount + $commission;
-
-        return $amount + $tax;
-    }
-
-    /**
-     * Process if result is fail
-     *
-     * @param $function
-     * @param $logMessage
-     * @param string $noticeMessage
-     * @return array
-     */
-    public function processReturnFail($function, $logMessage, string $noticeMessage = ''): array
-    {
-        $this->mercadopago->logs->file->error($logMessage, $function);
-
-        if ($noticeMessage == '') {
-            $noticeMessage = $logMessage;
-        }
-
-        $this->mercadopago->notices->storeNotice($noticeMessage, 'error');
-
-        return [
-            'result'   => 'fail',
-            'redirect' => '',
-        ];
-    }
-
-    /**
-     * Receive gateway webhook notifications
-     *
-     * @var string $gateway
-     *
-     * @return void
-     */
-    public function webhook(): void
-    {
-        $data    = $_GET;
-        $gateway = get_class($this);
-
-        $notificationFactory = new NotificationFactory();
-        $notificationHandler = $notificationFactory->createNotificationHandler($gateway, $data);
-
-        $notificationHandler->handleReceivedNotification();
     }
 }
