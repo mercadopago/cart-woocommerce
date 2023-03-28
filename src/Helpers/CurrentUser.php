@@ -38,8 +38,8 @@ final class CurrentUser
      */
     public function __construct(Logs $logs, Store $store)
     {
-        $this->logs = $logs;
-        $this->store = $store;
+        $this->logs      = $logs;
+        $this->store     = $store;
         $this->debugMode = $this->store->getDebugMode();
     }
 
@@ -89,6 +89,19 @@ final class CurrentUser
     }
 
     /**
+     * Verify if current user has permission
+     * @see https://wordpress.org/documentation/article/roles-and-capabilities/
+     *
+     * @param string $capability
+     *
+     * @return bool
+     */
+    public function currentUserCan(string $capability): bool
+    {
+        return current_user_can($capability);
+    }
+
+    /**
      * Validate if user has administrator or editor permissions
      *
      * @return void
@@ -98,7 +111,7 @@ final class CurrentUser
         $neededRoles = ['administrator', 'editor', 'author', 'contributor', 'subscriber'];
 
         if (!$this->userHasRoles($neededRoles)) {
-            $this->logs->file->error('User does not have permission (need admin or editor)', __CLASS__);
+            $this->logs->file->error('User does not have permission (need admin or editor)', __METHOD__);
             wp_send_json_error('Forbidden', 403);
         }
     }

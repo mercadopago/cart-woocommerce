@@ -14,6 +14,7 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
@@ -88,6 +89,11 @@ class Settings
     private $currentUser;
 
     /**
+     * @var Logs
+     */
+    private $logs;
+
+    /**
      * Settings constructor
      */
     public function __construct(
@@ -101,7 +107,8 @@ class Settings
         AdminTranslations $translations,
         Url $url,
         Nonce $nonce,
-        CurrentUser $currentUser
+        CurrentUser $currentUser,
+        Logs $logs
     ) {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
@@ -114,13 +121,16 @@ class Settings
         $this->url          = $url;
         $this->nonce        = $nonce;
         $this->currentUser  = $currentUser;
+        $this->logs         = $logs;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
         $this->registerAjaxEndpoints();
+
         $this->plugin->registerOnPluginCredentialsUpdate(function () {
             $this->seller->updatePaymentMethods();
         });
+
         $this->plugin->registerOnPluginTestModeUpdate(function () {
             $this->seller->updatePaymentMethods();
         });
@@ -170,9 +180,10 @@ class Settings
      */
     public function canLoadScriptsAndStyles(): bool
     {
-        return $this->admin->isAdmin() && ($this->url->validatePage('mercadopago-settings') ||
-            $this->url->validateSection('woo-mercado-pago')
-        );
+        return $this->admin->isAdmin() && (
+            $this->url->validatePage('mercadopago-settings') ||
+            $this->url->validateSection('woo-mercado-pago'
+        ));
     }
 
     /**

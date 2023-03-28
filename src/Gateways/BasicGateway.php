@@ -43,6 +43,7 @@ class BasicGateway extends AbstractGateway
         $this->payment_scripts($this->id);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
+        $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
 

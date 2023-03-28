@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
+use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -115,6 +116,11 @@ class Dependencies
      * @var Requester
      */
     public $requester;
+
+    /**
+     * @var Session
+     */
+    public $session;
 
     /**
      * @var Seller
@@ -230,6 +236,7 @@ class Dependencies
         $this->endpoints         = new Endpoints();
         $this->options           = new Options();
         $this->actions           = new Actions();
+        $this->session           = new Session();
         $this->orderMeta         = new OrderMeta();
         $this->product           = new Product();
         $this->template          = new Template();
@@ -414,7 +421,7 @@ class Dependencies
      */
     private function setNotices(): Notices
     {
-        return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links);
+        return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links, $this->currentUser);
     }
 
     /**
@@ -437,7 +444,9 @@ class Dependencies
             $this->logs,
             $this->notices,
             $this->requester,
-            $this->seller
+            $this->seller,
+            $this->options,
+            $this->url
         );
     }
 
@@ -457,7 +466,8 @@ class Dependencies
             $this->adminTranslations,
             $this->url,
             $this->nonce,
-            $this->currentUser
+            $this->currentUser,
+            $this->logs
         );
     }
 }

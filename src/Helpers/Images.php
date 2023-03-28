@@ -38,7 +38,7 @@ final class Images
     {
         header('Content-type: image/png');
 
-        $image =  dirname(__FILE__) . '/../../assets/images/checkouts/pix/qr-code-expired.png';
+        $image = dirname(__FILE__) . '/../../assets/images/checkouts/pix/qr-code-expired.png';
         $image = imagecreatefrompng($image);
         $image = imagescale($image, 447);
 

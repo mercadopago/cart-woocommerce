@@ -112,7 +112,9 @@ final class Country
             self::SITE_ID_MPE => self::COUNTRY_SUFFIX_MPE,
         ];
 
-        return array_key_exists($siteId, $siteIdToCountry) ? $siteIdToCountry[$siteId] : $siteIdToCountry[self::SITE_ID_MLA];
+        return array_key_exists($siteId, $siteIdToCountry)
+            ? $siteIdToCountry[$siteId]
+            : $siteIdToCountry[self::SITE_ID_MLA];
     }
 
     /**
@@ -124,7 +126,7 @@ final class Country
     {
         $wcCountry = get_option('woocommerce_default_country', '');
 
-        if ('' !== $wcCountry) {
+        if ($wcCountry !== '') {
             $wcCountry = strlen($wcCountry) > 2 ? substr($wcCountry, 0, 2) : $wcCountry;
         }
 
@@ -244,6 +246,8 @@ final class Country
             ]
         ];
 
-        return array_key_exists($countrySuffix, $configs) ? $configs[$countrySuffix] : $configs[self::COUNTRY_SUFFIX_MLA];
+        return array_key_exists($countrySuffix, $configs)
+            ? $configs[$countrySuffix]
+            : $configs[self::COUNTRY_SUFFIX_MLA];
     }
 }

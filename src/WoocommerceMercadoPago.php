@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\OrderStatus;
+use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -140,6 +141,11 @@ class WoocommerceMercadoPago
      * @var Requester
      */
     public $requester;
+
+    /**
+     * @var Session
+     */
+    public $session;
 
     /**
      * @var Seller
@@ -374,6 +380,7 @@ class WoocommerceMercadoPago
         $this->nonce          = $dependencies->nonce;
         $this->orderStatus    = $dependencies->orderStatus;
         $this->images         = $dependencies->images;
+        $this->session        = $dependencies->session;
 
         // Hooks
         $this->admin     = $dependencies->admin;

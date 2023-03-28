@@ -32,14 +32,25 @@ class Notices
     private $links;
 
     /**
+     * @var CurrentUser
+     */
+    private $currentUser;
+
+    /**
      * Notices constructor
      */
-    public function __construct(Scripts $scripts, AdminTranslations $translations, Url $url, Links $links)
-    {
+    public function __construct(
+        Scripts $scripts,
+        AdminTranslations $translations,
+        Url $url,
+        Links $links,
+        CurrentUser $currentUser
+    ) {
         $this->scripts      = $scripts;
         $this->translations = $translations;
         $this->url          = $url;
         $this->links        = $links;
+        $this->currentUser  = $currentUser;
 
         $this->loadAdminNoticeCss();
     }
@@ -122,8 +133,9 @@ class Notices
             'admin_notices',
             function () {
                 $isInstalled = false;
-                $currentUserCanInstallPlugins = current_user_can('install_plugins');
-                $minilogo = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
+                $currentUserCanInstallPlugins = $this->currentUser->currentUserCan('install_plugins');
+
+                $minilogo     = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $translations = $this->translations->notices;
 
                 $activateLink = wp_nonce_url(
@@ -251,13 +263,13 @@ class Notices
      * Show store notice
      *
      * @param string $message
-     * @param string $noticeType
+     * @param string $type
      * @param array $data
      *
      * @return void
      */
-    public function storeNotice(string $message, string $noticeType = 'success', array $data = []): void
+    public function storeNotice(string $message, string $type = 'success', array $data = []): void
     {
-        wc_add_notice("<p>$message</p>", $noticeType, $data);
+        wc_add_notice($message, $type, $data);
     }
 }
