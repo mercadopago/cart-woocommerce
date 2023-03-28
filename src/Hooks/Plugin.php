@@ -2,8 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use MercadoPago\Woocommerce\Helpers\Url;
-
 class Plugin
 {
     /**
@@ -20,11 +18,6 @@ class Plugin
      * @const
      */
     public const UPDATE_TEST_MODE_ACTION = 'mercadopago_plugin_test_mode_updated';
-
-    /**
-     * @const
-     */
-    public const UPDATE_SESSION_ACTION = 'mercadopago_plugin_update_session';
 
     /**
      * Register to plugin update event
@@ -60,17 +53,5 @@ class Plugin
     public function registerOnPluginTestModeUpdate($callback): void
     {
         add_action(self::UPDATE_TEST_MODE_ACTION, $callback);
-    }
-
-    /**
-     * Register
-     *
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerOnPluginSession($callback): void
-    {
-        add_action(self::UPDATE_SESSION_ACTION, $callback);
     }
 }

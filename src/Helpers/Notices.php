@@ -213,6 +213,7 @@ class Notices
      * Show approved store notice
      *
      * @param $orderStatus
+     *
      * @return void
      */
     public function storeApprovedStatusNotice($orderStatus): void
@@ -232,9 +233,12 @@ class Notices
      */
     public function storeInProcessStatusNotice($orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
     {
-        $linkTag = "<a id=\"mp_pending_payment_button\" class=\"button\" href=\"$urlReceived\" " .
-            "data-mp-checkout-type=\"woo-mercado-pago-$checkoutType\">$linkText</a>";
-        $message = "$orderStatus</p><p>$linkTag";
+        $message = "
+            <p>$orderStatus</p>
+            <a id='mp_pending_payment_button' class='button' href=''$urlReceived' data-mp-checkout-type='woo-mercado-pago-$checkoutType'>
+                $linkText
+            </a>
+        ";
 
         $this->storeNotice($message, 'notice');
     }
@@ -252,9 +256,14 @@ class Notices
      */
     public function storeRejectedStatusNotice(string $noticeTitle, string $orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
     {
-        $link = "<a id=\"mp_failed_payment_button\" class=\"button\" href=\"$urlReceived\" " .
-            "data-mp-checkout-type=\"woo-mercado-pago-$checkoutType\">$linkText</a>";
-        $message = "$noticeTitle<br>$orderStatus</p><p>$link";
+        $message = "
+            $noticeTitle
+            <br>
+            <p>$orderStatus</p>
+            <a id='mp_failed_payment_button' class='button' href=''$urlReceived' data-mp-checkout-type='woo-mercado-pago-$checkoutType'>
+                $linkText
+            </a>
+        ";
 
         $this->storeNotice($message, 'error');
     }

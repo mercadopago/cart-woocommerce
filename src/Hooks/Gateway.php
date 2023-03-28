@@ -115,13 +115,12 @@ class Gateway
             $discount   = $subtotal * ($gateway->discount / 100);
             $commission = $subtotal * ($gateway->commission / 100);
 
-            if ($gateway->discount > 0 && $gateway->commission > 0) {
-                $title .= ' (' . $this->translations->commonCheckout['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . $this->translations->commonCheckout['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
-            } elseif ($gateway->discount > 0) {
-                $title .= ' (' . $this->translations->commonCheckout['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . ')';
-            } elseif ($gateway->commission > 0) {
-                $title .= ' (' . $this->translations->commonCheckout['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
-            }
+            $title .= $this->buildTitleWithDiscountAndCommission(
+                $discount,
+                $commission,
+                $this->translations->commonCheckout['discount_title'],
+                $this->translations->commonCheckout['fee_title']
+            );
 
             return $title;
         }, 10, 2);
@@ -297,5 +296,35 @@ class Gateway
     {
         $path = $this->url->getPluginFileUrl("/assets/images/icons/$iconName", '.png', true);
         return apply_filters(self::GATEWAY_ICON_FILTER, $path);
+    }
+
+    /**
+     * Build title for gateways with discount and commission
+     *
+     * @param float $discount
+     * @param float $commission
+     * @param string $strDiscount
+     * @param string $strCommission
+     *
+     * @return string
+     */
+    private function buildTitleWithDiscountAndCommission(float $discount, float $commission, string $strDiscount, string $strCommission): string
+    {
+        $treatedDiscount   = wp_strip_all_tags(wc_price($discount));
+        $treatedCommission = wp_strip_all_tags(wc_price($commission));
+
+        if ($discount > 0 && $commission > 0) {
+            return " ($strDiscount $treatedDiscount $strCommission $treatedCommission)";
+        }
+
+        if ($discount > 0) {
+            return " ($strDiscount $discount)";
+        }
+
+        if ($commission > 0) {
+            return " ($strCommission $commission)";
+        }
+
+        return '';
     }
 }
