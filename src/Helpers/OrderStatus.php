@@ -330,19 +330,22 @@ final class OrderStatus
 			'refunded'    => 'refunded',
 			'chargedback' => 'refunded',
 		);
-		$status   = $statusMap[ $mpStatus ];
-		return str_replace( '_', '-', $status );
+
+		$status = $statusMap[ $mpStatus ];
+
+        return str_replace( '_', '-', $status );
 	}
 
 	/**
 	 * Can update order status?
 	 *
-	 * @param object $order Order.
+	 * @param \WC_Order $order
 	 *
 	 * @return bool
 	 */
-	protected function canUpdateOrderStatus( $order ) {
-		return method_exists( $order, 'get_status' ) &&
+	protected function canUpdateOrderStatus(\WC_Order $order): bool
+    {
+		return method_exists($order, 'get_status') &&
 			$order->get_status() !== 'completed' &&
 			$order->get_status() !== 'processing';
 	}

@@ -6,9 +6,11 @@ use MercadoPago\PP\Sdk\Entity\Notification\Notification;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\OrderStatus;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -29,9 +31,15 @@ class CoreNotification extends AbstractNotification
     /**
      * CoreNotification constructor
      */
-    public function __construct(string $gateway, Logs $logs, OrderStatus $orderStatus, Seller $seller, Store $store)
-    {
+    public function __construct(
+        AbstractGateway $gateway,
+        Logs $logs,
+        OrderStatus $orderStatus,
+        Seller $seller,
+        Store $store
+    ) {
         parent::__construct($gateway, $logs, $orderStatus, $seller, $store);
+
         $this->sdkNotification = $this->getSdkInstance()->getNotificationInstance();
     }
 
@@ -40,72 +48,86 @@ class CoreNotification extends AbstractNotification
      */
     public function getSdkInstance(): Sdk
     {
-        $accessToken  = $this->seller->getCredentialsAccessToken();
         $platformId   = MP_PLATFORM_ID;
         $productId    = Device::getDeviceProductId();
         $integratorId = $this->store->getIntegratorId();
+        $accessToken  = $this->seller->getCredentialsAccessToken();
 
         return new Sdk($accessToken, $platformId, $productId, $integratorId);
     }
 
-    public function handleReceivedNotification() {
-        parent::handleReceivedNotification();
-        $notification_id = json_decode(file_get_contents('php://input'));
-        
-		try {
-			$notificationEntity = $this->sdkNotification->read(array('id' => $notification_id));
+    /**
+     * Handle Notification Request
+     *
+     * @param $data
+     *
+     * @return void
+     */
+    public function handleReceivedNotification($data): void
+    {
+        parent::handleReceivedNotification($data);
 
-			/**
-			 * Do action valid_mercadopago_ipn_request.
-			 *
-			 * @since 3.0.1
-			 */
+        $notification_id = json_decode(file_get_contents('php://input'));
+
+		try {
+			$notificationEntity = $this->sdkNotification->read([
+                'id' => $notification_id
+            ]);
+
 			$this->handleSuccessfulRequest($notificationEntity->toArray());
-		} catch ( \Exception $e ) {
-			$this->logs->file->error('receive notification failed: ' . $e->getMessage(), __FUNCTION__);
-			$this->setResponse(500, 'Internal Server Error', $e->getMessage());
+		} catch (\Exception $e) {
+			$this->logs->file->error($e->getMessage(), __METHOD__);
+			$this->setResponse(500, $e->getMessage());
 		}
     }
 
 	/**
 	 * Process success response
 	 *
-	 * @param array $data Payment data.
+	 * @param mixed $data
 	 *
 	 * @return void
 	 */
-	public function handleSuccessfulRequest($data)
+	public function handleSuccessfulRequest($data): void
 	{
 		try {
 			$order           = parent::handleSuccessfulRequest($data);
+            $oldOrderStatus  = $order->get_status();
 			$processedStatus = $this->getProcessedStatus($data, $order);
-			$this->logs->file->info('Changing order status to: ' . $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus)), __FUNCTION__);
-            $this->processStatus($processedStatus, $data, $order);
+
+            $this->logs->file->info(
+                sprintf(
+                    'Changing order status from %s to %s',
+                    $oldOrderStatus,
+                    $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
+                ),
+                __METHOD__
+            );
+
+            $this->processStatus($processedStatus, $order, $data);
 		} catch (\Exception $e) {
-			$this->setResponse(422, null, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __FUNCTION__);
+			$this->setResponse(422, $e->getMessage());
+			$this->logs->file->error($e->getMessage(), __METHOD__);
 		}
 	}
 
-	/**
-	 * Process status
-	 *
-	 * @param array  $data Payment data.
-	 * @param object $order Order.
-	 * @return string
-	 */
-	public function getProcessedStatus($data, $order)
-	{
+    /**
+     * Process status
+     *
+     * @param \WC_Order $order
+     * @param mixed $data
+     *
+     * @return string
+     */
+	public function getProcessedStatus(\WC_Order $order, $data): string
+    {
 		$status = $data['status'];
 
-		// Updates the type of gateway.
-		$this->updateMeta($order, '_used_gateway', get_class( $this));
-
-		if (!empty( $data['payer']['email'])) {
+		if (!empty($data['payer']['email'])) {
 			$this->updateMeta($order, 'Buyer email', $data['payer']['email']);
 		}
 
-		if (!empty( $data['payments_details'])) {
+		if (!empty($data['payments_details'])) {
 			$payment_ids = array();
 
 			foreach ($data['payments_details'] as $payment) {
@@ -124,7 +146,7 @@ class CoreNotification extends AbstractNotification
 				);
 			}
 
-			if (count( $payment_ids ) > 0) {
+			if (count($payment_ids) !== 0) {
 				$this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $payment_ids));
 			}
 		}
