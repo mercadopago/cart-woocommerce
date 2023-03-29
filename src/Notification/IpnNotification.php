@@ -213,5 +213,4 @@ class IpnNotification extends AbstractNotification
 
         return $response->getData();
 	}
-
 }

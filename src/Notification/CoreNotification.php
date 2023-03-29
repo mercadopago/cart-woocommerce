@@ -155,5 +155,4 @@ class CoreNotification extends AbstractNotification
 
 		return $status;
 	}
-
 }

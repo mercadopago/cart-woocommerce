@@ -220,8 +220,7 @@ class Seller
      */
     public function isTestMode(): bool
     {
-        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
-        return ($checkboxCheckoutTestMode === 'yes');
+        return $this->store->getCheckboxCheckoutTestMode() === 'yes';
     }
 
     /**

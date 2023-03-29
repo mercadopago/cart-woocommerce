@@ -14,7 +14,7 @@ class CustomTransaction extends AbstractPaymentTransaction
     /**
      * Custom Transaction constructor
      */
-    public function __construct(AbstractGateway $gateway, $order, $checkout)
+    public function __construct(AbstractGateway $gateway, \WC_Order $order,  array $checkout)
     {
         parent::__construct($gateway, $order, $checkout);
 
@@ -43,15 +43,19 @@ class CustomTransaction extends AbstractPaymentTransaction
 
     /**
      * Set token transaction
+     *
+     * @return void
      */
-    public function setTokenTransaction()
+    public function setTokenTransaction(): void
     {
         if (array_key_exists('token', $this->checkout)) {
             $this->transaction->token             = $this->checkout['token'];
             $this->transaction->metadata['token'] = $this->checkout['token'];
+
             if ($this->checkout['CustomerId']) {
                 $this->transaction->payer->id = $this->checkout['CustomerId'];
             }
+
             if ($this->checkout['issuer']) {
                 $this->transaction->issuer_id = $this->checkout['issuer'];
             }

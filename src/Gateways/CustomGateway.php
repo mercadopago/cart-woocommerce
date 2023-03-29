@@ -50,8 +50,6 @@ class CustomGateway extends AbstractGateway
 
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
         $this->mercadopago->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
-
-        // @todo: call admin_notice hook to display currency notice
     }
 
     /**

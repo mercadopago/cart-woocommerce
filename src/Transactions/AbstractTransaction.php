@@ -6,6 +6,7 @@ use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -39,16 +40,16 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Order
      *
-     * @var object
+     * @var \WC_Order
      */
     protected $order;
 
     /**
-     * Checkout
+     * Checkout data
      *
-     * @var null
+     * @var array
      */
-    protected $checkout;
+    protected $checkout = null;
 
     /**
      * Country configs
@@ -75,7 +76,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Abstract Transaction constructor
      */
-    public function __construct(AbstractGateway $gateway, $order, $checkout = null)
+    public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout = null)
     {
         global $mercadopago;
 
@@ -113,47 +114,43 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     public function getTransaction(string $transactionType = 'Preference')
     {
         $transactionClone = clone $this->transaction;
+        unset($transactionClone->token);
 
-        if (isset($transactionClone->token)) {
-            unset($transactionClone->token);
-        }
-
-        $this->mercadopago->logs->file->info(
-            $transactionType . ': ' . wp_json_encode($transactionClone, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-            __FUNCTION__
-        );
+        $this->mercadopago->logs->file->info($transactionType, __METHOD__, (array) $transactionClone);
 
         return $this->transaction;
     }
 
     /**
      * Set common transaction
+     *
+     * @return void
      */
-    public function setCommonTransaction()
+    public function setCommonTransaction(): void
     {
-        $statementDescriptor = $this->mercadopago->store->getStoreName('Mercado Pago');
-
         $this->transaction->binary_mode          = $this->getBinaryMode();
         $this->transaction->external_reference   = $this->getExternalReference();
         $this->transaction->notification_url     = $this->getNotificationUrl();
-        $this->transaction->statement_descriptor = $statementDescriptor;
         $this->transaction->metadata             = $this->getInternalMetadata();
+        $this->transaction->statement_descriptor = $this->mercadopago->store->getStoreName('Mercado Pago');
     }
 
 	/**
 	 * Get notification url
 	 *
 	 * @return string|void
-	 */
-	private function getNotificationUrl() {
+     */
+	private function getNotificationUrl()
+    {
 		if (!strrpos(get_site_url(), 'localhost')) {
 			$notificationUrl = $this->mercadopago->store->getCustomDomain();
 
-			// Check if we have a custom URL.
-			if ( empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false ) {
-				return WC()->api_request_url($this->gateway->id);
+			if (empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false) {
+				return $this->mercadopago->woocommerce->api_request_url($this->gateway->id);
 			} else {
-                return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway->id . '/'));
+                return $this->mercadopago->strings->fixUrlAmpersand(
+                    esc_url($notificationUrl . '/wc-api/' . $this->gateway->id . '/')
+                );
 			}
 		}
 	}
@@ -161,15 +158,15 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Get binary mode
      *
-     * @return string
+     * @return bool
      */
     public function getBinaryMode(): bool
     {
-        $binaryMode = !$this->gateway
+        $binaryMode = $this->gateway
             ? $this->mercadopago->options->getGatewayOption($this->gateway, 'binary_mode', 'no')
             : 'no';
 
-        return 'no' !== $binaryMode;
+        return $binaryMode !== 'no';
     }
 
     /**
@@ -179,13 +176,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      */
     public function getExternalReference(): string
     {
-        $storeId = $this->mercadopago->store->getStoreId('WC-');
-
-        if (method_exists($this->order, 'get_id')) {
-            return $storeId . $this->order->get_id();
-        } else {
-            return $storeId . $this->order->id;
-        }
+        return $this->mercadopago->store->getStoreId('WC-') . $this->order->get_id();
     }
 
     /**
@@ -195,20 +186,20 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      */
     public function getInternalMetadata(): array
     {
-        global $woocommerce;
-
-        $userId  = get_current_user_id();
         $seller  = $this->mercadopago->options->get('_collector_id_v1', '');
         $siteId  = $this->mercadopago->seller->getSiteId();
         $siteUrl = $this->mercadopago->options->get('siteurl');
+
         $zipCode = $this->getObjectAttributeValue($this->order, 'get_billing_postcode', 'billing_postcode');
         $zipCode = str_replace('-', '', $zipCode);
 
-        $userRegistration = get_userdata($userId)->user_registered;
+        $user             = $this->mercadopago->currentUser->getCurrentUser();
+        $userId           = $user->ID;
+        $userRegistration = $user->user_registered;
 
         return [
             'platform'         => MP_PLATFORM_ID,
-            'platform_version' => $woocommerce->version,
+            'platform_version' => $this->mercadopago->woocommerce->version,
             'module_version'   => MP_VERSION,
             'php_version'      => PHP_VERSION,
             'site_id'          => strtolower($siteId),
@@ -226,37 +217,38 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
             ],
             'user' => [
                 'registered_user'        => $userId ? 'yes' : 'no',
-                'user_email'             => $userId ? get_userdata($userId)->user_email : null,
-                'user_registration_date' => $userId ? gmdate('Y-m-d\TH:i:s.vP', strtotime($userRegistration)) : null,
+                'user_email'             => $userId ? $user->user_email : null,
+                'user_registration_date' => $userId ? Date::formatGmDate($userRegistration) : null,
             ],
         ];
     }
 
     /**
      * Set additional shipments information
+     *
+     * @return void
      */
-    public function setShipmentsTransaction($shipments)
+    public function setShipmentsTransaction($shipments): void
     {
-        $shipments->receiverAddress->apartment   =
-            $this->getObjectAttributeValue($this->order, 'get_shipping_address_2', 'shipping_address_2');
-        $shipments->receiverAddress->city_name   =
-            $this->getObjectAttributeValue($this->order, 'get_shipping_city', 'shipping_city');
-        $shipments->receiverAddress->state_name  =
-            $this->getObjectAttributeValue($this->order, 'get_shipping_state', 'shipping_state');
-        $shipments->receiverAddress->street_name =
-            "{$this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1')} " .
-            "{$this->getObjectAttributeValue($this->order, 'get_billing_address_2', 'billing_address_2')} " .
-            "{$this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city')} " .
-            "{$this->getObjectAttributeValue($this->order, 'get_billing_state', 'billing_state')} " .
-            "{$this->getObjectAttributeValue($this->order, 'get_billing_country', 'billing_country')}";
-        $shipments->receiverAddress->zip_code    =
-            $this->getObjectAttributeValue($this->order, 'get_shipping_postcode', 'shipping_postcode');
+        $shipments->receiverAddress->apartment   = $this->getObjectAttributeValue($this->order, 'get_shipping_address_2', 'shipping_address_2');
+        $shipments->receiverAddress->city_name   = $this->getObjectAttributeValue($this->order, 'get_shipping_city', 'shipping_city');
+        $shipments->receiverAddress->state_name  = $this->getObjectAttributeValue($this->order, 'get_shipping_state', 'shipping_state');
+        $shipments->receiverAddress->zip_code    = $this->getObjectAttributeValue($this->order, 'get_shipping_postcode', 'shipping_postcode');
+        $shipments->receiverAddress->street_name = "
+            {$this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1')}
+            {$this->getObjectAttributeValue($this->order, 'get_billing_address_2', 'billing_address_2')}
+            {$this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city')}
+            {$this->getObjectAttributeValue($this->order, 'get_billing_state', 'billing_state')}
+            {$this->getObjectAttributeValue($this->order, 'get_billing_country', 'billing_country')}
+        ";
     }
 
     /**
      * Set items
+     *
+     * @return void
      */
-    public function setItemsTransaction($items)
+    public function setItemsTransaction($items): void
     {
         $orderItems = $this->order->get_items();
 
@@ -292,17 +284,19 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 
     /**
      * Set shipping
+     *
+     * @return void
      */
-    public function setShippingTransaction()
+    public function setShippingTransaction(): void
     {
-        $amount = $this->order->get_total_shipping() + $this->order->get_shipping_tax();
+        $amount = $this->order->get_shipping_total() + $this->order->get_shipping_tax();
         $cost   = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
 
         if ($amount > 0) {
             $this->orderTotal += Numbers::format($cost);
 
             $item = [
-                'title'       => $this->getObjectAttributeValue($this->order, 'get_id', 'get_shipping_method', 'shipping_method'),
+                'title'       => $this->getObjectAttributeValue($this->order, 'get_shipping_method', 'shipping_method'),
                 'description' => $this->mercadopago->storeTranslations->commonCheckout['shipping_title'],
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
                 'quantity'    => 1,
@@ -315,12 +309,14 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 
     /**
      * Set fee
+     *
+     * @return void
      */
-    public function setFeeTransaction()
+    public function setFeeTransaction(): void
     {
         $fees = $this->order->get_fees();
 
-        if (0 < count($fees)) {
+        if (count($fees) > 0) {
             foreach ($fees as $fee) {
                 $amount            = ($fee['total'] + $fee['total_tax']) * $this->ratio;
                 $this->orderTotal += Numbers::format($amount);
@@ -341,7 +337,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Get item amount
      *
-     * @param array|WC_Order_Item_Product $item
+     * @param array|\WC_Order_Item_Product $item
      *
      * @return float
      */
@@ -372,7 +368,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Get the value of an object's attribute
      *
-     * @param $object
+     * @param mixed $object
      * @param string $methodName
      * @param string $attributePath
      * @param string $methodPath

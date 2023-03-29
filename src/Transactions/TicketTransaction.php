@@ -29,7 +29,7 @@ class TicketTransaction extends AbstractPaymentTransaction
     /**
      * Ticket Transaction constructor
      */
-    public function __construct(AbstractGateway $gateway, $order, $checkout)
+    public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout)
     {
         parent::__construct($gateway, $order, $checkout);
 
@@ -67,10 +67,12 @@ class TicketTransaction extends AbstractPaymentTransaction
 
     /**
      * Set webpay properties transaction
+     *
+     * @return void
      */
-    public function setWebpayPropertiesTransaction()
+    public function setWebpayPropertiesTransaction(): void
     {
-        if ('webpay' === $this->checkout['paymentMethodId']) {
+        if ($this->checkout['paymentMethodId'] === 'webpay') {
             $this->transaction->transaction_details->financial_institution = '1234';
             $this->transaction->callback_url                               = get_site_url();
             $this->transaction->additional_info->ip_address                = '127.0.0.1';
@@ -82,6 +84,8 @@ class TicketTransaction extends AbstractPaymentTransaction
 
     /**
      * Get expiration date
+     *
+     * @return string
      */
     public function getExpirationDate(): string
     {
@@ -96,19 +100,21 @@ class TicketTransaction extends AbstractPaymentTransaction
 
     /**
      * Set payer transaction
+     *
+     * @return void
      */
-    public function setPayerTransaction()
+    public function setPayerTransaction(): void
     {
         parent::setPayerTransaction();
 
         $payer = $this->transaction->payer;
 
-        if ('BRL' === $this->countryConfigs['currency']) {
+        if ($this->countryConfigs['currency'] === 'BRL' ) {
             $payer->identification->type   = 14 === strlen($this->checkout['docNumber']) ? 'CPF' : 'CNPJ';
             $payer->identification->number = $this->checkout['docNumber'];
         }
 
-        if ('UYU' === $this->countryConfigs['currency']) {
+        if ($this->countryConfigs['currency'] === 'UYU') {
             $payer->identification->type   = $this->checkout['docType'];
             $payer->identification->number = $this->checkout['docNumber'];
         }
