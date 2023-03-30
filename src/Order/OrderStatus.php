@@ -1,6 +1,6 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Helpers;
+namespace MercadoPago\Woocommerce\Order;
 
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -78,17 +78,19 @@ final class OrderStatus
         }
     }
 
-	/**
-	 * Process order status
-	 *
-	 * @param string $processed_Status
-	 * @param array  $data
-	 * @param object $order
-	 * @param string $usedGateway
-	 *
-	 * @throws \Exception Invalid status response.
-	 */
-	public function processStatus($processedStatus, $data, $order, $usedGateway) {
+    /**
+     * Process order status
+     *
+     * @param string $processedStatus
+     * @param array $data
+     * @param \WC_Order $order
+     * @param string $usedGateway
+     *
+     * @return void
+     * @throws \Exception
+     */
+	public function processStatus(string $processedStatus, array $data, \WC_Order $order, string $usedGateway): void
+    {
 		switch ($processedStatus) {
 			case 'approved':
 				$this->approvedFlow($data, $order, $usedGateway);
@@ -122,25 +124,23 @@ final class OrderStatus
 	/**
 	 * Rule of approved payment
 	 *
-	 * @param array  $data Payment data.
-	 * @param object $order Order.
-	 * @param string $usedGateway Class of gateway.
+	 * @param array $data
+	 * @param \WC_Order $order
+	 * @param string $usedGateway
+     *
+     * @return void
 	 */
-	private function approvedFlow($data, $order, $usedGateway) {
-		if ('partially_refunded' === $data['status_detail']) {
+	private function approvedFlow(array $data, \WC_Order $order, string $usedGateway): void
+    {
+		if ($data['status_detail'] === 'partially_refunded') {
 			return;
 		}
 
 		$status = $order->get_status();
 
-		if ('pending' === $status || 'on-hold' === $status || 'failed' === $status) {
+		if ($status === 'pending' || $status === 'on-hold' || $status === 'failed') {
 			$order->add_order_note('Mercado Pago: ' . $this->translations['payment_approved']);
 
-			/**
-			 * Apply filters woocommerce_payment_complete_order_status.
-			 *
-			 * @since 3.0.1
-			 */
 			$payment_completed_status = apply_filters(
 				'woocommerce_payment_complete_order_status',
 				$order->needs_processing() ? 'processing' : 'completed',
@@ -148,12 +148,13 @@ final class OrderStatus
 				$order
 			);
 
-			if ( method_exists( $order, 'get_status' ) && $order->get_status() !== 'completed' ) {
+			if (method_exists( $order, 'get_status' ) && $order->get_status() !== 'completed') {
 				switch ( $usedGateway ) {
 					case 'MercadoPago\Woocommerce\Gateways\TicketGateway':
-						if ( 'no' === get_option( 'stock_reduce_mode', 'no' ) ) {
+						if (get_option('stock_reduce_mode', 'no') === 'no') {
 							$order->payment_complete();
-							if ( 'completed' !== $payment_completed_status ) {
+
+                            if ($payment_completed_status !== 'completed') {
 								$order->update_status( self::mapMpStatusToWoocommerceStatus( 'approved' ) );
 							}
 						}
@@ -161,7 +162,7 @@ final class OrderStatus
 
 					default:
 						$order->payment_complete();
-						if ( 'completed' !== $payment_completed_status ) {
+						if ($payment_completed_status !== 'completed') {
 							$order->update_status( self::mapMpStatusToWoocommerceStatus( 'approved' ) );
 						}
 						break;
@@ -173,101 +174,100 @@ final class OrderStatus
 	/**
 	 * Rule of pending
 	 *
-	 * @param array  $data         Payment data.
-	 * @param object $order        Order.
-	 * @param string $usedGateway Gateway Class.
+	 * @param array $data
+	 * @param \WC_Order $order
+	 * @param string $usedGateway
+     *
+     * @return void
 	 */
-	private function pendingFlow( $data, $order, $usedGateway ) {
-		if ( $this->canUpdateOrderStatus( $order ) ) {
-			$order->update_status( self::mapMpStatusToWoocommerceStatus( 'pending' ) );
-			switch ( $usedGateway ) {
+	private function pendingFlow(array $data, \WC_Order $order, string $usedGateway): void
+    {
+		if ($this->canUpdateOrderStatus($order)) {
+			$order->update_status(self::mapMpStatusToWoocommerceStatus('pending'));
+
+            switch ($usedGateway) {
 				case 'MercadoPago\Woocommerce\Gateways\PixGateway':
 					$notes = $order->get_customer_order_notes();
-					if ( count( $notes ) > 1 ) {
+
+                    if (count($notes) > 1) {
 						break;
 					}
 
-					$order->add_order_note(
-						'Mercado Pago: ' . $this->translations['pending_pix']
-					);
-
-					$order->add_order_note(
-						'Mercado Pago: ' . $this->translations['pending_pix'],
-						1,
-						false
-					);
+					$order->add_order_note('Mercado Pago: ' . $this->translations['pending_pix']);
+					$order->add_order_note('Mercado Pago: ' . $this->translations['pending_pix'], 1);
 					break;
 
 				case 'MercadoPago\Woocommerce\Gateways\TicketGateway':
 					$notes = $order->get_customer_order_notes();
-					if ( count( $notes ) > 1 ) {
+
+                    if (count($notes) > 1) {
 						break;
 					}
 
-					$order->add_order_note(
-						'Mercado Pago: ' . $this->translations['pending_ticket']
-					);
-
-					$order->add_order_note(
-						'Mercado Pago: ' . $this->translations['pending_ticket'],
-						1,
-						false
-					);
+					$order->add_order_note('Mercado Pago: ' . $this->translations['pending_ticket']);
+					$order->add_order_note('Mercado Pago: ' . $this->translations['pending_ticket'], 1);
 					break;
 
 				default:
-					$order->add_order_note(
-						'Mercado Pago: ' . $this->translations['pending'],
-					);
+					$order->add_order_note('Mercado Pago: ' . $this->translations['pending']);
 					break;
 			}
 		} else {
-			$this->validateOrderNoteType( $data, $order, 'pending' );
+			$this->validateOrderNoteType($data, $order, 'pending');
 		}
 	}
 
 	/**
 	 * Rule of In Process
 	 *
-	 * @param array  $data  Payment data.
-	 * @param object $order Order.
+	 * @param array $data
+	 * @param \WC_Order $order
+     *
+     * @return void
 	 */
-	private function inProcessFlow( $data, $order ) {
-		if ( $this->canUpdateOrderStatus( $order ) ) {
+	private function inProcessFlow(array $data, \WC_Order $order): void
+    {
+		if ($this->canUpdateOrderStatus($order)) {
 			$order->update_status(
-				self::mapMpStatusToWoocommerceStatus( 'inprocess' ),
-				'Mercado Pago: ' . $this->translations['in_process'],
+				self::mapMpStatusToWoocommerceStatus('inprocess'),
+				'Mercado Pago: ' . $this->translations['in_process']
 			);
 		} else {
-			$this->validateOrderNoteType( $data, $order, 'in_process' );
+			$this->validateOrderNoteType($data, $order, 'in_process');
 		}
 	}
 
 	/**
 	 * Rule of Rejected
 	 *
-	 * @param array  $data  Payment data.
-	 * @param object $order Order.
+	 * @param array $data
+	 * @param \WC_Order $order
+     *
+     * @return void
 	 */
-	private function rejectedFlow( $data, $order ) {
-		if ( $this->canUpdateOrderStatus( $order ) ) {
+	private function rejectedFlow(array $data, \WC_Order $order): void
+    {
+		if ($this->canUpdateOrderStatus($order)) {
 			$order->update_status(
-				self::mapMpStatusToWoocommerceStatus( 'rejected' ),
+				self::mapMpStatusToWoocommerceStatus('rejected'),
 				'Mercado Pago: ' . $this->translations['rejected']
 			);
 		} else {
-			$this->validateOrderNoteType( $data, $order, 'rejected' );
+			$this->validateOrderNoteType($data, $order, 'rejected');
 		}
 	}
 
 	/**
 	 * Rule of Refunded
 	 *
-	 * @param object $order Order.
+	 * @param \WC_Order $order
+     *
+     * @return void
 	 */
-	private function refundedFlow( $order ) {
+	private function refundedFlow(\WC_Order $order): void
+    {
 		$order->update_status(
-			self::mapMpStatusToWoocommerceStatus( 'refunded' ),
+			self::mapMpStatusToWoocommerceStatus('refunded'),
 			'Mercado Pago: ' . $this->translations['refunded']
 		);
 	}
@@ -275,51 +275,57 @@ final class OrderStatus
 	/**
 	 * Rule of Cancelled
 	 *
-	 * @param array  $data  Payment data.
-	 * @param object $order Order.
+	 * @param array $data
+	 * @param \WC_Order $order
+     *
+     * @return void
 	 */
-	private function cancelledFlow( $data, $order ) {
-		if ( $this->canUpdateOrderStatus( $order ) ) {
+	private function cancelledFlow(array $data, \WC_Order $order): void
+    {
+		if ($this->canUpdateOrderStatus($order)) {
 			$order->update_status(
-				self::mapMpStatusToWoocommerceStatus( 'cancelled' ),
+				self::mapMpStatusToWoocommerceStatus('cancelled'),
 				'Mercado Pago: ' . $this->translations['cancelled']
 			);
 		} else {
-			$this->validateOrderNoteType( $data, $order, 'cancelled' );
+			$this->validateOrderNoteType($data, $order, 'cancelled');
 		}
 	}
 
 	/**
 	 * Rule of In mediation
 	 *
-	 * @param object $order Order.
+	 * @param \WC_Order $order
+     *
+     * @return void
 	 */
-	private function inMediationFlow( $order ) {
-		$order->update_status( self::mapMpStatusToWoocommerceStatus( 'inmediation' ) );
-		$order->add_order_note(
-			'Mercado Pago: ' . $this->translations['in_mediation']
-		);
+	private function inMediationFlow(\WC_Order $order) {
+		$order->update_status(self::mapMpStatusToWoocommerceStatus('inmediation'));
+		$order->add_order_note('Mercado Pago: ' . $this->translations['in_mediation']);
 	}
 
 	/**
 	 * Rule of Charged back
 	 *
-	 * @param object $order Order.
+	 * @param \WC_Order $order
+     *
+     * @return void
 	 */
-	private function chargedBackFlow( $order ) {
-		$order->update_status( self::mapMpStatusToWoocommerceStatus( 'chargedback' ) );
-		$order->add_order_note(
-			'Mercado Pago: ' . $this->translations['charged_back']
-		);
+	private function chargedBackFlow(\WC_Order $order): void
+    {
+		$order->update_status(self::mapMpStatusToWoocommerceStatus('chargedback'));
+		$order->add_order_note('Mercado Pago: ' . $this->translations['charged_back']);
 	}
 
 	/**
 	 * Mercado Pago status
 	 *
-	 * @param string $mpStatus Status.
+	 * @param string $mpStatus
+     *
 	 * @return string
 	 */
-	public static function mapMpStatusToWoocommerceStatus( $mpStatus ) {
+	public static function mapMpStatusToWoocommerceStatus(string $mpStatus): string
+    {
 		$statusMap = array(
 			'pending'     => 'pending',
 			'approved'    => 'processing',
@@ -353,14 +359,17 @@ final class OrderStatus
 	/**
 	 * Validate Order Note by Type
 	 *
-	 * @param array  $data Payment Data.
-	 * @param object $order Order.
-	 * @param string $status Status.
+	 * @param array $data
+	 * @param \WC_Order $order
+	 * @param string $status
+     *
+     * @return void
 	 */
-	protected function validateOrderNoteType( $data, $order, $status ) {
+	protected function validateOrderNoteType(array $data, \WC_Order $order, string $status): void
+    {
 		$paymentId = $data['id'];
 
-		if ( isset( $data['ipn_type'] ) && 'merchant_order' === $data['ipn_type'] ) {
+		if (isset($data['ipn_type']) && $data['ipn_type'] === 'merchant_order') {
 			$payments = array();
 
 			foreach ( $data['payments'] as $payment ) {
@@ -370,11 +379,6 @@ final class OrderStatus
 			$paymentId = implode( ',', $payments );
 		}
 
-		$order->add_order_note('Mercado Pago: ' .
-			$this->translations['validate_order_1'] .
-			' '. $paymentId . ' ' .
-			$this->translations['validate_order_1'] .
-			' '. $status . '.'
-		);
+		$order->add_order_note("Mercado Pago: {$this->translations['validate_order_1']} $paymentId {$this->translations['validate_order_1']} $status");
 	}
 }

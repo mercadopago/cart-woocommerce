@@ -5,9 +5,9 @@ namespace MercadoPago\Woocommerce\Notification;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
-use MercadoPago\Woocommerce\Helpers\OrderStatus;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Order\OrderStatus;
 
 if (!defined('ABSPATH')) {
     exit;
