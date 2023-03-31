@@ -4,9 +4,10 @@ namespace MercadoPago\Woocommerce\Notification;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Helpers\OrderStatus;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Order\OrderStatus;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -14,96 +15,116 @@ if (!defined('ABSPATH')) {
 
 class IpnNotification extends AbstractNotification
 {
-
     /**
-     * @var Requester`
+     * @var Requester
      */
     public $requester;
 
     /**
-     * @var array`
-     */
-    public $data;
-
-    /**
      * IpnNotification constructor
      */
-    public function __construct(string $gateway, Logs $logs, OrderStatus $orderStatus, Seller $seller, Store $store, Requester $requester, array $data)
-    {
+    public function __construct(
+        AbstractGateway $gateway,
+        Logs $logs,
+        OrderStatus $orderStatus,
+        Seller $seller,
+        Store $store,
+        Requester $requester
+    ) {
         parent::__construct($gateway, $logs, $orderStatus, $seller, $store);
+
         $this->requester = $requester;
-        $this->data      = $data;
     }
 
-    public function handleReceivedNotification() {
-        parent::handleReceivedNotification();
+    /**
+     * Handle Notification Request
+     *
+     * @param $data
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public function handleReceivedNotification($data): void
+    {
+        parent::handleReceivedNotification($data);
 
-        if (isset($this->data['data_id']) && isset($this->data['type'])) {
-            status_header( 200, 'OK' );
+        if (!isset( $data['id']) || ! isset($data['topic'])) {
+            $message = 'No ID or TOPIC param in Request IPN';
+            $this->logs->file->error($message, __METHOD__);
+            $this->setResponse( 422, $message);
         }
 
-        if (!isset( $this->data['id']) || ! isset($this->data['topic'])) {
-            $this->logs->file->error('No ID or TOPIC param in Request IPN.', __FUNCTION__);
-            $this->setResponse( 422, null, 'No ID or TOPIC param in Request IPN');
+        if ($data['topic'] !== 'merchant_order') {
+            $message = 'Discarded notification. This notification is already processed as webhook-payment';
+            $this->setResponse( 200, $message);
         }
 
-        if ('payment' === $this->data['topic'] || 'merchant_order' !== $this->data['topic']) {
-            $this->setResponse( 200, null, 'Discarded notification. This notification is already processed as webhook-payment.');
+        $merchantOrderId = preg_replace('/\D/', '', $data['id']);
+
+        $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+        $response = $this->requester->get('/merchant_orders/' . $merchantOrderId, $headers);
+
+        if ($response->getStatus() !== 200) {
+            $message = 'IPN merchant order not found';
+            $this->logs->file->error($message, __METHOD__, (array) $response->getData());
+            $this->setResponse(422, $message);
         }
 
-        if ('merchant_order' === $this->data['topic']) {
-            $merchantOrderId = preg_replace('/[^\d]/', '', $this->data['id']);
-            $headers = ['Authorization: Bearer ' .  $this->seller->getCredentialsAccessToken()];
+        $payments = $response->getData()['payments'];
 
-            $ipnInfo = $this->requester->get('/merchant_orders/' . $merchantOrderId, $headers);
-
-            if (200 !== $ipnInfo->getStatus() && 201 !== $ipnInfo->getStatus()) {
-                $this->logs->file->error('IPN merchant_order not found ' . wp_json_encode($ipnInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), __FUNCTION__);
-                $this->setResponse( 422, null, 'IPN merchant_order not found');
-            }
-
-            $payments = $ipnInfo->getData()['payments'];
-            if (count($payments) < 1) {
-                $this->logs->file->error('Not found Payments into Merchant_Order', __FUNCTION__);
-                $this->setResponse( 422, null, 'Not found Payments into Merchant_Order');
-            }
-
-            $ipnInfo->getData()['ipn_type'] = 'merchant_order';
-
-            $this->handleSuccessfulRequest($ipnInfo->getData());
-            
-            $this->setResponse( 200, 'OK', 'Notification IPN Successfull' );
+        if (count($payments) === 0) {
+            $message = 'Not found payments into merchant order';
+            $this->logs->file->error($message, __METHOD__);
+            $this->setResponse( 422, $message);
         }
+
+        $response->getData()['ipn_type'] = 'merchant_order';
+
+        $this->handleSuccessfulRequest($response->getData());
     }
 
 	/**
 	 * Process success response
 	 *
-	 * @param array $data Payment data.
+	 * @param mixed $data
 	 *
 	 * @return void
 	 */
-	public function handleSuccessfulRequest($data)
+	public function handleSuccessfulRequest($data): void
 	{
 		try {
 			$order           = parent::handleSuccessfulRequest($data);
-			$processedStatus = $this->getProcessedStatus($data, $order);
-			$this->logs->file->info('Changing order status to: ' . $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus)), __FUNCTION__);
-			$this->processStatus( $processedStatus, $data, $order );
-		} catch ( \Exception $e ) {
-			$this->setResponse( 422, null, $e->getMessage() );
-			$this->logs->file->error($e->getMessage(), __FUNCTION__);
+            $oldOrderStatus  = $order->get_status();
+			$processedStatus = $this->getProcessedStatus($order, $data);
+
+			$this->logs->file->info(
+                sprintf(
+                    'Changing order status from %s to %s',
+                     $oldOrderStatus,
+                     $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
+                ),
+                __METHOD__
+            );
+
+            $this->processStatus($processedStatus, $order, $data);
+            $this->setResponse(200, 'Notification IPN Successfully');
+		} catch (\Exception $e) {
+			$this->setResponse(422, $e->getMessage());
+			$this->logs->file->error($e->getMessage(), __METHOD__);
 		}
 	}
 
-	/**
-	 * Process status
-	 *
-	 * @param array  $data Payment data.
-	 * @param object $order Order.
-	 * @return string
-	 */
-	public function getProcessedStatus($data, $order) {
+    /**
+     * Process status
+     *
+     * @param \WC_Order $order
+     * @param $data
+     *
+     * @return string
+     * @throws \Exception
+     */
+	public function getProcessedStatus(\WC_Order $order, $data): string
+    {
 		$status   = 'pending';
 		$payments = $data['payments'];
 
@@ -111,69 +132,85 @@ class IpnNotification extends AbstractNotification
 			$total       = $data['shipping_cost'] + $data['total_amount'];
 			$totalPaid   = 0.00;
 			$totalRefund = 0.00;
-			
-            foreach ($data['payments'] as $payment) {
-				$couponMp = $this->getPaymentInfo($payment['id']);
 
-				if ( $couponMp > 0 ) {
-					$totalPaid += (float) $couponMp;
+            foreach ($data['payments'] as $payment) {
+				$coupon = $this->getPaymentInfo($payment['id']);
+
+				if ($coupon > 0) {
+					$totalPaid += (float) $coupon;
 				}
 
-				if ('approved' === $payment['status']) {
+				if ($payment['status'] === 'approved') {
 					$totalPaid += (float) $payment['total_paid_amount'];
-				} elseif ('refunded' === $payment['status']) {
+				} elseif ($payment['status'] === 'refunded') {
 					$totalRefund += (float) $payment['amount_refunded'];
 				}
 			}
 
-			if ( $totalPaid >= $total ) {
+			if ($totalPaid >= $total) {
 				$status = 'approved';
-			} elseif ( $totalRefund >= $total ) {
+			}
+
+            if ($totalRefund >= $total) {
 				$status = 'refunded';
-			} else {
-				$status = 'pending';
 			}
 		}
 
         $this->updateMeta($order, '_used_gateway', 'WC_WooMercadoPago_Basic_Gateway');
+
         if (!empty($data['payer']['email'])) {
             $this->updateMeta($order, 'Buyer email', $data['payer']['email']);
         }
+
         if (!empty($data['payment_type_id'])) {
             $this->updateMeta($order, 'Payment type', $data['payment_type_id']);
         }
+
         if (!empty($data['payment_method_id'])) {
             $this->updateMeta($order, 'Payment method', $data['payment_method_id']);
         }
+
         if (!empty($data['payments'])) {
             $paymentIds = [];
+
             foreach ($data['payments'] as $payment) {
-                $couponMp     = $this->getPaymentInfo($payment['id']);
+                $coupon     = $this->getPaymentInfo($payment['id'])['coupon_amount'];
                 $paymentIds[] = $payment['id'];
+
                 $this->updateMeta(
                     $order,
                     'Mercado Pago - Payment ' . $payment['id'],
                     '[Date ' . gmdate('Y-m-d H:i:s', strtotime($payment['date_created'])) .
                         ']/[Amount ' . $payment['transaction_amount'] .
                         ']/[Paid '   . $payment['total_paid_amount'] .
-                        ']/[Coupon ' . $couponMp .
+                        ']/[Coupon ' . $coupon .
                         ']/[Refund ' . $payment['amount_refunded'] . ']'
                 );
             }
-            if ( count($paymentIds) > 0 ) {
+
+            if (count($paymentIds) !== 0) {
                 $this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $paymentIds));
             }
         }
+
         $order->save();
+
 		return $status;
 	}
 
-	public function getPaymentInfo( $id ) {
-		$accessToken = $this->seller->getCredentialsAccessToken();
-        $paymentInfo  = $this->requester->get('/v1/payments/' . $id, array( 'Authorization' => 'Bearer ' . $accessToken));
-		$couponAmount = (float) $paymentInfo->getData()['coupon_amount'];
+    /**
+     * Get merchant order payment info
+     *
+     * @param string $id
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+	public function getPaymentInfo(string $id)
+    {
+        $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+        $response = $this->requester->get("/v1/payments/$id", $headers);
 
-		return $couponAmount;
+        return $response->getData();
 	}
-
 }

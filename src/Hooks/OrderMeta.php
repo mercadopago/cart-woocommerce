@@ -11,15 +11,15 @@ class OrderMeta
     /**
      * Get meta
      *
-     * @param $object
+     * @param \WC_Order $order
      * @param string $metaKey
      * @param bool $single
      *
-     * @return mixed|string
+     * @return mixed
      */
-    public function get($object, string $metaKey, bool $single = true)
+    public function get(\WC_Order $order, string $metaKey, bool $single = true)
     {
-        return $object->get_meta($metaKey, $single);
+        return $order->get_meta($metaKey, $single);
     }
 
     /**
@@ -29,7 +29,7 @@ class OrderMeta
      * @param string $metaKey
      * @param bool $single
      *
-     * @return mixed|string
+     * @return mixed
      */
     public function getPost(int $postId, string $metaKey, bool $single = false)
     {
@@ -41,50 +41,54 @@ class OrderMeta
      *
      * @param int $postId
      * @param string $metaKey
-     * @param $metaValue
+     * @param mixed $value
      * @param string $prevValue
      *
      * @return bool|int
      */
-    public function setPost(int $postId, string $metaKey, $metaValue, string $prevValue = '')
+    public function setPost(int $postId, string $metaKey, $value, string $prevValue = '')
     {
-        return update_post_meta($postId, $metaKey, $metaValue, $prevValue);
+        return update_post_meta($postId, $metaKey, $value, $prevValue);
     }
 
     /**
      * Add metadata
      *
-     * @param $object
+     * @param \WC_Order $order
      * @param string $metaKey
-     * @param string|array $value
+     * @param mixed $value
      * @param bool $unique
+     *
+     * @return void
      */
-    public function addData($object, string $metaKey, $value, bool $unique = false): void
+    public function addData(\WC_Order $order, string $metaKey, $value, bool $unique = false): void
     {
-        $object->add_meta_data($metaKey, $value, $unique);
+        $order->add_meta_data($metaKey, $value, $unique);
     }
 
     /**
      * Get metadata
      *
-     * @var $object
+     * @param \WC_Order $order
      *
      * @return array
      */
-    public function getData($object): array
+    public function getData(\WC_Order $order): array
     {
-        return $object->get_meta_data();
+        return $order->get_meta_data();
     }
 
     /**
      * Set metadata
      *
-     * @param $object
+     * @param \WC_Order $order
      * @param string $metaKey
      * @param string|array $value
+     *
+     * @return void
      */
-    public function setData($object, string $metaKey, $value): void
+    public function setData(\WC_Order $order, string $metaKey, $value): void
     {
-        $object->update_meta_data($metaKey, $value);
+        $order->update_meta_data($metaKey, $value);
     }
 }

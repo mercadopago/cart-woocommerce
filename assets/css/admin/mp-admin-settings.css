@@ -256,22 +256,6 @@ body {
   padding-right: 16px !important;
 }
 
-.mp-settings-icon-mp {
-  background: url("../../images/icons/icon-mp.png") center center no-repeat transparent;
-}
-
-.mp-settings-icon-card {
-  background: url("../../images/icons/icon-blue-card.png") center center no-repeat transparent;
-}
-
-.mp-settings-icon-code {
-  background: url("../../images/icons/icon-code.png") center center no-repeat transparent;
-}
-
-.mp-settings-icon-pix {
-  background: url("../../images/icons/icon-pix.png") center center no-repeat transparent;
-}
-
 .mp-settings-icon-config {
   background: url("../../images/icons/icon-config.png") center center no-repeat transparent;
   padding-right: 16px !important;
@@ -414,7 +398,6 @@ input:checked + .mp-settings-slider:before {
 .mp-settings-payment-block {
   border-radius: unset;
   border-bottom: 1px solid #c6c6c6;
-  width: 75%;
   display: flex;
   align-items: center;
 }
@@ -741,6 +724,8 @@ input:checked + .mp-settings-slider:before {
 }
 
 .mp-settings-link {
+  width: 75%;
+  display: flex;
   text-decoration: none;
 }
 

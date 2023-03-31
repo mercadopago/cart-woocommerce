@@ -18,14 +18,34 @@ class NotificationFactory
         $type   = $data['type'];
         $source = $data['source_news'];
 
-        if ('payment' === $type && 'webhooks' == $source) {
-            return new WebhookNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->seller, $mercadopago->store, $mercadopago->requester, $data);
-        }
-        
-        if ('merchant_order' === $topic && 'ipn' == $source) {
-            return new IpnNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->seller, $mercadopago->store, $mercadopago->requester, $data);
+        if ($type === 'payment' && $source === 'webhooks') {
+            return new WebhookNotification(
+                $gateway,
+                $mercadopago->logs,
+                $mercadopago->orderStatus,
+                $mercadopago->seller,
+                $mercadopago->store,
+                $mercadopago->requester
+            );
         }
 
-        return new CoreNotification($gateway, $mercadopago->logs, $mercadopago->orderStatus, $mercadopago->seller, $mercadopago->store);
+        if ($topic === 'merchant_order' && $source === 'ipn') {
+            return new IpnNotification(
+                $gateway,
+                $mercadopago->logs,
+                $mercadopago->orderStatus,
+                $mercadopago->seller,
+                $mercadopago->store,
+                $mercadopago->requester
+            );
+        }
+
+        return new CoreNotification(
+            $gateway,
+            $mercadopago->logs,
+            $mercadopago->orderStatus,
+            $mercadopago->seller,
+            $mercadopago->store
+        );
     }
 }

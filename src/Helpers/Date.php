@@ -21,6 +21,18 @@ final class Date
             return gmdate('Y-m-d\TH:i:s.000O', strtotime('+' . $value));
         }
 
-        return '';
+        return gmdate('Y-m-d\TH:i:s.000O');
+    }
+
+    /**
+     * Format a GMT/UTC date/time
+     *
+     * @param string $timestamp
+     *
+     * @return string
+     */
+    public static function formatGmDate(string $timestamp): string
+    {
+        return gmdate('Y-m-d\TH:i:s.vP', strtotime($timestamp));
     }
 }

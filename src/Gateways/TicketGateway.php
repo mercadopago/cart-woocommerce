@@ -32,32 +32,22 @@ class TicketGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->ticketGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->ticketCheckout;
 
-        $this->id                 = self::ID;
-        $this->icon               = $this->getCheckoutIcon();
-        $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id    = self::ID;
+        $this->icon  = $this->getCheckoutIcon();
+        $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['method_title'];
         $this->method_description = $this->description;
 
-        $this->init_form_fields();
         $this->init_settings();
+        $this->init_form_fields();
         $this->payment_scripts($this->id);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
-        $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
-    }
 
-    /**
-     * Get Mercado Pago Icon
-     *
-     * @return string
-     */
-    private function getCheckoutIcon(): string
-    {
-        $siteId   = strtoupper($this->mercadopago->seller->getSiteId());
-        $iconName = 'MLB' === $siteId ? 'icon-ticket-mlb' : 'icon-ticket';
-        return $this->mercadopago->plugin->getGatewayIcon($iconName);
+        $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
 
     /**
@@ -68,12 +58,12 @@ class TicketGateway extends AbstractGateway
     public function init_form_fields(): void
     {
         $this->form_fields = [
-            'config_header'                      => [
+            'config_header' => [
                 'type'        => 'mp_config_title',
                 'title'       => $this->adminTranslations['header_title'],
                 'description' => $this->adminTranslations['header_description'],
             ],
-            'enabled'                            => [
+            'enabled' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['enabled_title'],
                 'subtitle'     => $this->adminTranslations['enabled_subtitle'],
@@ -83,7 +73,7 @@ class TicketGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['enabled_disabled'],
                 ],
             ],
-            'title'                              => [
+            'title' => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['title_title'],
                 'description' => $this->adminTranslations['title_description'],
@@ -91,7 +81,7 @@ class TicketGateway extends AbstractGateway
                 'desc_tip'    => $this->adminTranslations['title_desc_tip'],
                 'class'       => 'limit-title-max-length',
             ],
-            'currency_conversion'                => [
+            'currency_conversion' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['currency_conversion_title'],
                 'subtitle'     => $this->adminTranslations['currency_conversion_subtitle'],
@@ -101,14 +91,14 @@ class TicketGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['currency_conversion_disabled'],
                 ],
             ],
-            'type_payments'                      => $this->field_ticket_payments(),
-            'date_expiration'                    => [
+            'type_payments'   => $this->generateExPaymentsFields(),
+            'date_expiration' => [
                 'title'       => $this->adminTranslations['date_expiration_title'],
                 'type'        => 'number',
                 'description' => $this->adminTranslations['date_expiration_description'],
                 'default'     => MP_TICKET_DATE_EXPIRATION,
             ],
-            'advanced_configuration_title'       => [
+            'advanced_configuration_title' => [
                 'type'  => 'title',
                 'title' => $this->adminTranslations['advanced_title_title'],
                 'class' => 'mp-subtitle-body',
@@ -150,11 +140,10 @@ class TicketGateway extends AbstractGateway
      */
     public function payment_fields(): void
     {
-        $currentUser = $this->mercadopago->currentUser->getCurrentUser();
-
-        $loggedUserEmail = (0 !== $currentUser->ID) ? $currentUser->user_email : null;
+        $currentUser     = $this->mercadopago->currentUser->getCurrentUser();
+        $loggedUserEmail = ($currentUser->ID !== 0) ? $currentUser->user_email : null;
         $address         = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_1', true);
-        $address2       = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_2', true);
+        $address2        = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_2', true);
         $address        .= (!empty($address2) ? ' - ' . $address2 : '');
         $country         = $this->mercadopago->currentUser->getCurrentUserMeta('billing_country', true);
         $address        .= (!empty($country) ? ' - ' . $country : '');
@@ -182,37 +171,84 @@ class TicketGateway extends AbstractGateway
                 'currency_ratio'                   => $this->mercadopago->currency->getRatio($this),
                 'woocommerce_currency'             => get_woocommerce_currency(),
                 'account_currency'                 => $this->mercadopago->country->getCountryConfigs(),
-                'febraban'                         => (0 !== $currentUser->ID) ?
-                    [
-                        'firstname' => esc_js($currentUser->user_firstname),
-                        'lastname'  => esc_js($currentUser->user_lastname),
-                        'docNumber' => '',
-                        'address'   => esc_js($address),
-                        'number'    => '',
-                        'city'      => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_city', true)),
-                        'state'     => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_state', true)),
-                        'zipcode'   => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_postcode', true)),
-                    ] :
-                    [
-                        'firstname' => '',
-                        'lastname'  => '',
-                        'docNumber' => '',
-                        'address'   => '',
-                        'number'    => '',
-                        'city'      => '',
-                        'state'     => '',
-                        'zipcode'   => '',
-                    ],
+                'febraban'                         => $this->getFebrabanInfo($currentUser, $address),
             ]
         );
     }
 
     /**
-     * Field ticket payments
+     * Process payment and create woocommerce order
+     *
+     * @param $order_id
+     *
+     * @return array
+     * @throws \WC_Data_Exception
+     */
+    public function process_payment($order_id): array
+    {
+        parent::process_payment($order_id);
+
+        $checkout = map_deep($_POST['mercadopago_ticket'], 'sanitize_text_field');
+        $order    = wc_get_order($order_id);
+
+        if ($checkout['amount'] && $checkout['paymentMethodId']) {
+            $this->transaction = new TicketTransaction($this, $order, $checkout);
+            $response          = $this->transaction->createPayment();
+
+            if (is_array($response) && array_key_exists('status', $response)) {
+                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+
+                if ($response['status'] === 'pending' && (
+                    $response['status_detail'] === 'pending_waiting_payment' ||
+                    $response['status_detail'] ===  'pending_waiting_transfer'
+                )) {
+                    $this->mercadopago->woocommerce->cart->empty_cart();
+
+                    if ($this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
+                        wc_reduce_stock_levels($order_id);
+                    }
+
+                    $this->mercadopago->order->setTicketMetadata($order, $response);
+                    $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
+
+                    if ($response['payment_type_id'] !== 'bank_transfer') {
+                        $description = sprintf(
+                            "Mercado Pago: %s <a target='_blank' href='%s'>%s</a>",
+                            $this->storeTranslations['congrats_title'],
+                            $response['transaction_details']['external_resource_url'],
+                            $this->storeTranslations['congrats_subtitle']
+                        );
+
+                        $this->mercadopago->order->addOrderNote($order, $description, 1);
+                    }
+
+                    $urlReceived = esc_url($order->get_checkout_order_received_url());
+
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $urlReceived,
+                    ];
+                }
+
+                return $this->processReturnFail(
+                    $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                    __METHOD__
+                );
+            }
+        }
+
+        return $this->processReturnFail(
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+            __METHOD__
+        );
+    }
+
+    /**
+     * Mount payment_methods field
      *
      * @return array
      */
-    private function field_ticket_payments(): array
+    private function generateExPaymentsFields(): array
     {
         $paymentMethods = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
 
@@ -236,10 +272,12 @@ class TicketGateway extends AbstractGateway
         foreach ($paymentMethods as $paymentMethod) {
             $payment_list['payment_method_types']['ticket']['list'][] = [
                 'id'        => $paymentMethod['id'],
-                'field_key' => $this->get_field_key($paymentMethod['id']),
-                'label'     => array_key_exists('payment_places', $paymentMethod) ? $paymentMethod['name'] . ' (' . $this->buildPaycashPaymentsString() . ')' : $paymentMethod['name'],
-                'value'     => $this->mercadopago->options->getGatewayOption($this, $paymentMethod['id'], 'yes'),
                 'type'      => 'checkbox',
+                'field_key' => $this->get_field_key($paymentMethod['id']),
+                'value'     => $this->mercadopago->options->getGatewayOption($this, $paymentMethod['id'], 'yes'),
+                'label'     => array_key_exists('payment_places', $paymentMethod)
+                    ? $paymentMethod['name'] . ' (' .$this->buildPaycashPaymentString(). ')'
+                    : $paymentMethod['name'],
             ];
         }
 
@@ -251,7 +289,7 @@ class TicketGateway extends AbstractGateway
      *
      * @return string
      */
-    public function buildPaycashPaymentsString(): string
+    public function buildPaycashPaymentString(): string
     {
         $getPaymentMethodsTicket = $this->mercadopago->seller->getCheckoutTicketPaymentMethods('[]');
 
@@ -261,114 +299,23 @@ class TicketGateway extends AbstractGateway
             }
         }
 
-        $lastElement    = array_pop($payments);
+        $lastElement     = array_pop($payments);
         $paycashPayments = implode(', ', $payments);
 
         return implode($this->storeTranslations['paycash_concatenator'], [$paycashPayments, $lastElement]);
     }
 
     /**
-     * Validate gateway checkout form fields
+     * Get Mercado Pago Icon
      *
-     * @return bool
+     * @return string
      */
-    public function validate_fields(): bool
+    private function getCheckoutIcon(): string
     {
-        return true;
-    }
+        $siteId   = strtoupper($this->mercadopago->seller->getSiteId());
+        $iconName = ($siteId === 'MLB') ? 'icon-ticket-mlb' : 'icon-ticket';
 
-    /**
-     * Process payment and create woocommerce order
-     *
-     * @param $order_id
-     *
-     * @return array
-     * @throws \WC_Data_Exception
-     */
-    public function process_payment($order_id): array
-    {
-        parent::process_payment($order_id);
-
-        // @todo: nonce validation
-
-        // phpcs:ignore WordPress.Security.NonceVerification
-        $checkout = map_deep($_POST['mercadopago_ticket'], 'sanitize_text_field');
-        $order    = wc_get_order($order_id);
-
-        if ($checkout['amount'] && $checkout['paymentMethodId']) {
-            $this->transaction = new TicketTransaction($this, $order, $checkout);
-            $response          = $this->transaction->createPayment();
-
-            if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
-
-                if ('pending' === $response['status']) {
-                    if ('pending_waiting_payment' === $response['status_detail'] || 'pending_waiting_transfer' === $response['status_detail']) {
-                        WC()->cart->empty_cart();
-
-                        if ('yes' === $this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no')) {
-                            wc_reduce_stock_levels($order_id);
-                        }
-
-                        $this->mercadopago->order->setTicketMetadata($order, $response);
-
-                        $description = $this->storeTranslations['customer_not_paid'];
-                        $this->mercadopago->order->addOrderNote($order, $description);
-
-                        if ('bank_transfer' !== $response['payment_type_id']) {
-                            $description = "Mercado Pago: {$this->storeTranslations['congrats_title']}" .
-                                "<a target=\"_blank\" href=\"{$response['transaction_details']['external_resource_url']}\"" .
-                                "{$this->storeTranslations['congrats_subtitle']}</a>";
-                            $this->mercadopago->order->addOrderNote($order, $description, 1);
-                        }
-
-                        return [
-                            'result'   => 'success',
-                            'redirect' => $order->get_checkout_order_received_url(),
-                        ];
-                    }
-                }
-
-
-                return $this->processReturnFail(
-                    __FUNCTION__,
-                    $this->mercadopago->storeTranslations->commonMessages['cho_form_error']
-                );
-            }
-        }
-
-        return $this->processReturnFail(
-            __FUNCTION__,
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
-        );
-    }
-
-    /**
-     * Render thank you page
-     *
-     * @param $order_id
-     */
-    public function renderThankYouPage($order_id): void
-    {
-        $order        = wc_get_order($order_id);
-        $methodExists = method_exists($order, 'get_meta');
-
-        $transactionDetails  = $methodExists ?
-            $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order) :
-            $this->mercadopago->orderMetadata->getTicketTransactionDetailsPost($order->get_id(), true);
-
-        if (empty($transactionDetails)) {
-            return;
-        }
-
-        $this->mercadopago->template->getWoocommerceTemplate(
-            'public/order/ticket-order-received.php',
-            [
-                'print_ticket_label'  => $this->storeTranslations['print_ticket_label'],
-                'print_ticket_link'   => $this->storeTranslations['print_ticket_link'],
-                'transaction_details' => $transactionDetails,
-            ]
-        );
+        return $this->mercadopago->gateway->getGatewayIcon($iconName);
     }
 
     /**
@@ -383,16 +330,79 @@ class TicketGateway extends AbstractGateway
 
         if (! empty($ticketPaymentMethods)) {
             foreach ($ticketPaymentMethods as $ticketPaymentMethod) {
-                if (
-                    !isset($this->settings[$ticketPaymentMethod['id']])
-                    || 'yes' === $this->settings[$ticketPaymentMethod['id']]
+                if (!isset($this->settings[$ticketPaymentMethod['id']]) ||
+                    'yes' === $this->settings[$ticketPaymentMethod['id']]
                 ) {
                     $activePaymentMethods[] = $ticketPaymentMethod;
                 }
             }
         }
+
         sort($activePaymentMethods);
 
         return $this->mercadopago->paymentMethods->treatTicketPaymentMethods($activePaymentMethods);
+    }
+
+    /**
+     * Get Febraban info
+     *
+     * @param \WP_User $currentUser
+     * @param string $address
+     *
+     * @return array
+     */
+    public function getFebrabanInfo(\WP_User $currentUser, string $address): array
+    {
+        if ($currentUser->ID !== 0) {
+            return [
+                'firstname' => esc_js($currentUser->user_firstname),
+                'lastname'  => esc_js($currentUser->user_lastname),
+                'address'   => esc_js($address),
+                'city'      => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_city', true)),
+                'state'     => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_state', true)),
+                'zipcode'   => esc_js($this->mercadopago->currentUser->getCurrentUserMeta('billing_postcode', true)),
+                'docNumber' => '',
+                'number'    => '',
+            ];
+        }
+
+        return [
+            'firstname' => '',
+            'lastname'  => '',
+            'address'   => '',
+            'city'      => '',
+            'state'     => '',
+            'zipcode'   => '',
+            'docNumber' => '',
+            'number'    => '',
+        ];
+    }
+
+    /**
+     * Render thank you page
+     *
+     * @param $order_id
+     */
+    public function renderThankYouPage($order_id): void
+    {
+        $order        = wc_get_order($order_id);
+        $methodExists = method_exists($order, 'get_meta');
+
+        $transactionDetails  = $methodExists
+            ? $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order)
+            : $this->mercadopago->orderMetadata->getTicketTransactionDetailsPost($order->get_id(), true);
+
+        if (empty($transactionDetails)) {
+            return;
+        }
+
+        $this->mercadopago->template->getWoocommerceTemplate(
+            'public/order/ticket-order-received.php',
+            [
+                'print_ticket_label'  => $this->storeTranslations['print_ticket_label'],
+                'print_ticket_link'   => $this->storeTranslations['print_ticket_link'],
+                'transaction_details' => $transactionDetails,
+            ]
+        );
     }
 }

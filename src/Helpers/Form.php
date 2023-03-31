@@ -15,8 +15,20 @@ final class Form
      *
      * @return string
      */
-    public static function getSanitizeTextFromPost(string $key): string
+    public static function sanitizeTextFromPost(string $key): string
     {
-        return sanitize_text_field($_POST[$key] ?? '');
+        return sanitize_text_field($_POST[$key] ?? null);
+    }
+
+    /**
+     * Get data from $_GET method with sanitize for text field
+     *
+     * @param string $key
+     *
+     * @return string
+     */
+    public static function sanitizeTextFromGet(string $key): string
+    {
+        return sanitize_text_field($_GET[$key] ?? null);
     }
 }

@@ -98,6 +98,11 @@ class AdminTranslations
     /**
      * @var array
      */
+    public $currency = [];
+
+    /**
+     * @var array
+     */
     private $links;
 
     /**
@@ -124,6 +129,7 @@ class AdminTranslations
         $this->setUpdateCredentialsTranslations();
         $this->setValidateCredentialsTranslations();
         $this->setUpdateStoreTranslations();
+        $this->setCurrencyTranslations();
     }
 
     /**
@@ -138,23 +144,14 @@ class AdminTranslations
             '<a target="_blank" href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
         );
 
-        $currencyConversion = sprintf(
-            '<b>%s</b> %s',
-            __('Attention:', 'woocommerce-mercadopago'),
-            __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.', 'woocommerce-mercadopago')
-        );
-
         $this->notices = [
+            'miss_woocommerce'      => $missWoocommerce,
             'php_wrong_version'     => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
             'missing_curl'          => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
             'missing_gd_extensions' => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago'),
             'activate_woocommerce'  => __('Activate WooCommerce', 'woocommerce-mercadopago'),
             'install_woocommerce'   => __('Install WooCommerce', 'woocommerce-mercadopago'),
             'see_woocommerce'       => __('See WooCommerce', 'woocommerce-mercadopago'),
-            'miss_woocommerce'      => $missWoocommerce,
-            'currency_enabled'      => __('Now we convert your currency', 'woocommerce-mercadopago'),
-            'currency_disabled'     => __('We no longer convert your currency', 'woocommerce-mercadopago'),
-            'currency_conversion'   => $currencyConversion,
             'miss_pix_text'         => __('Please note that to receive payments via Pix at our checkout, you must have a Pix key registered in your Mercado Pago account.', 'woocommerce-mercadopago'),
             'miss_pix_link'         => __('Register your Pix key at Mercado Pago.', 'woocommerce-mercadopago'),
         ];
@@ -440,8 +437,8 @@ class AdminTranslations
             'installments_options_15'                   => __('15 installments', 'woocommerce-mercadopago'),
             'installments_options_18'                   => __('18 installments', 'woocommerce-mercadopago'),
             'installments_options_24'                   => __('24 installments', 'woocommerce-mercadopago'),
-            'advanced_configuration_title'               => __('Advanced settings', 'woocommerce-mercadopago'),
-            'advanced_configuration_description'         => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'advanced_configuration_title'              => __('Advanced settings', 'woocommerce-mercadopago'),
+            'advanced_configuration_description'        => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
             'method_title'                              => __('Payment experience', 'woocommerce-mercadopago'),
             'method_description'                        => __('Define what payment experience your customers will have, whether inside or outside your store.', 'woocommerce-mercadopago'),
             'method_options_redirect'                   => __('Redirect', 'woocommerce-mercadopago'),
@@ -467,6 +464,7 @@ class AdminTranslations
             'commission_title'                          => __('Commission in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
             'commission_description'                    => __('Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
             'commission_checkbox_label'                 => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+            'invalid_back_url'                          => __('This seems to be an invalid URL', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -925,6 +923,27 @@ class AdminTranslations
     {
         $this->updateStore = [
             'valid_configuration' => __('Store information is valid', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    private function setCurrencyTranslations(): void
+    {
+        $currencyConversion = sprintf(
+            '<b>%s</b> %s',
+            __('Attention:', 'woocommerce-mercadopago'),
+            __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.', 'woocommerce-mercadopago')
+        );
+
+        $this->currency = [
+            'currency_enabled' => [
+                'start' => __('Now we convert your currency from', 'woocommerce-mercadopago'),
+                'final' => __('to', 'woocommerce-mercadopago')
+            ],
+            'currency_disabled' => [
+                'start' => __('We no longer convert your currency from', 'woocommerce-mercadopago'),
+                'final' => __('to', 'woocommerce-mercadopago')
+            ],
+            'currency_conversion' => $currencyConversion,
         ];
     }
 }

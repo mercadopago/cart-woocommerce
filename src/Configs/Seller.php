@@ -220,8 +220,7 @@ class Seller
      */
     public function isTestMode(): bool
     {
-        $checkboxCheckoutTestMode = $this->store->getCheckboxCheckoutTestMode();
-        return ($checkboxCheckoutTestMode === 'yes');
+        return $this->store->getCheckboxCheckoutTestMode() === 'yes';
     }
 
     /**
@@ -232,6 +231,7 @@ class Seller
         if ($this->isTestMode()) {
             return $this->getCredentialsPublicKeyTest();
         }
+
         return $this->getCredentialsPublicKeyProd();
     }
 
@@ -243,6 +243,7 @@ class Seller
         if ($this->isTestMode()) {
             return $this->getCredentialsAccessTokenTest();
         }
+
         return $this->getCredentialsAccessTokenProd();
     }
 
@@ -286,10 +287,12 @@ class Seller
     public function getSiteIdPaymentMethods(): array
     {
         $siteIdPaymentMethods = $this->options->get(self::SITE_ID_PAYMENT_METHODS, []);
+
         if (empty($siteIdPaymentMethods)) {
-            $this->updatePaymentMethods();
+            $this->updatePaymentMethodsBySiteId();
             $siteIdPaymentMethods = $this->options->get(self::SITE_ID_PAYMENT_METHODS, []);
         }
+
         return $siteIdPaymentMethods;
     }
 
@@ -334,16 +337,19 @@ class Seller
      */
     public function getExPayments($gateway): array
     {
-        $exPayments = [];
+        $exPayments       = [];
         $exPaymentOptions = $this->getAllPaymentMethods();
+
         if (!empty($exPaymentOptions)) {
             $options = explode(',', $exPaymentOptions);
+
             foreach ($options as $option) {
                 if ('no' === $this->options->getGatewayOption($gateway, 'ex_payments_' . $option, 'yes')) {
                     $exPayments[] = $option;
                 }
             }
         }
+
         return $exPayments;
     }
 
@@ -356,20 +362,21 @@ class Seller
      */
     public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
     {
-        if (null === $publicKey) {
+        if ($publicKey === null) {
             $publicKey = $this->getCredentialsPublicKey();
         }
 
-        if (null === $accessToken) {
+        if ($accessToken === null) {
             $accessToken = $this->getCredentialsAccessToken();
         }
 
         $paymentMethodsResponse = $this->getPaymentMethods($publicKey, $accessToken);
 
-        if (empty($paymentMethodsResponse) || 200 !== $paymentMethodsResponse['status']) {
+        if ($paymentMethodsResponse['status'] !== 200) {
             $this->setCheckoutBasicPaymentMethods([]);
             $this->setCheckoutPixPaymentMethods([]);
             $this->setCheckoutTicketPaymentMethods([]);
+
             return;
         }
 
@@ -386,16 +393,17 @@ class Seller
      */
     public function updatePaymentMethodsBySiteId(string $siteId = null): void
     {
-        if (null === $siteId) {
+        if ($siteId === null) {
             $siteId = $this->getSiteId();
         }
 
         $paymentMethodsResponseBySiteId = $this->getPaymentMethodsBySiteId($siteId);
 
-        if (empty($paymentMethodsResponseBySiteId) || 200 !== $paymentMethodsResponseBySiteId['status']) {
+        if ($paymentMethodsResponseBySiteId['status'] !== 200) {
             $this->setSiteIdPaymentMethods([]);
             return;
         }
+
         $this->setSiteIdPaymentMethods($paymentMethodsResponseBySiteId['data']);
     }
 
@@ -407,13 +415,9 @@ class Seller
      */
     private function setupBasicPaymentMethods(array $paymentMethodsResponse): void
     {
-        $excludedPaymentMethods = [
-            'consumer_credits',
-            'paypal',
-            'account_money',
-        ];
-
+        $excludedPaymentMethods   = ['consumer_credits', 'paypal', 'account_money'];
         $serializedPaymentMethods = [];
+
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
             if (in_array($paymentMethod['id'], $excludedPaymentMethods, true)) {
                 continue;
@@ -439,6 +443,7 @@ class Seller
     private function setupPixPaymentMethods(array $paymentMethodsResponse): void
     {
         $serializedPaymentMethods = [];
+
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
             if ('pix' === $paymentMethod['id']) {
                 $serializedPaymentMethods[] = [
@@ -448,6 +453,7 @@ class Seller
                     'image'  => $paymentMethod['secure_thumbnail'],
                     'config' => 'ex_payments_' . $paymentMethod['id'],
                 ];
+
                 break;
             }
         }
@@ -462,13 +468,9 @@ class Seller
      */
     private function setupTicketPaymentMethods(array $paymentMethodsResponse): void
     {
-        $excludedPaymentMethods = [
-            'paypal',
-            'pse',
-            'pix',
-        ];
-
+        $excludedPaymentMethods   = ['paypal', 'pse', 'pix',];
         $serializedPaymentMethods = [];
+
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
             if (
                 in_array($paymentMethod['id'], $excludedPaymentMethods, true) ||
@@ -479,6 +481,7 @@ class Seller
             ) {
                 continue;
             }
+
             $serializedPaymentMethods[] = $paymentMethod;
         }
 
@@ -496,41 +499,40 @@ class Seller
      */
     public function buildPaymentPlaces(array $serializedPaymentMethods): array
     {
-        $payment_places =
-            [
-                'paycash' => [
-                    [
-                        'payment_option_id' => '7eleven',
-                        'name'              => '7 Eleven',
-                        'status'            => 'active',
-                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/417ddb90-34ab-11e9-b8b8-15cad73057aa-s.png'
-                    ],
-                    [
-                        'payment_option_id' => 'circlek',
-                        'name'              => 'Circle K',
-                        'status'            => 'active',
-                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/6f952c90-34ab-11e9-8357-f13e9b392369-s.png'
-                    ],
-                    [
-                        'payment_option_id' => 'soriana',
-                        'name'              => 'Soriana',
-                        'status'            => 'active',
-                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/dac0bf10-01eb-11ec-ad92-052532916206-s.png'
-                    ],
-                    [
-                        'payment_option_id' => 'extra',
-                        'name'              => 'Extra',
-                        'status'            => 'active',
-                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/9c8f26b0-34ab-11e9-b8b8-15cad73057aa-s.png'
-                    ],
-                    [
-                        'payment_option_id' => 'calimax',
-                        'name'              => 'Calimax',
-                        'status'            => 'active',
-                        'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/52efa730-01ec-11ec-ba6b-c5f27048193b-s.png'
-                    ],
+        $payment_places = [
+            'paycash' => [
+                [
+                    'payment_option_id' => '7eleven',
+                    'name'              => '7 Eleven',
+                    'status'            => 'active',
+                    'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/417ddb90-34ab-11e9-b8b8-15cad73057aa-s.png'
                 ],
-            ];
+                [
+                    'payment_option_id' => 'circlek',
+                    'name'              => 'Circle K',
+                    'status'            => 'active',
+                    'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/6f952c90-34ab-11e9-8357-f13e9b392369-s.png'
+                ],
+                [
+                    'payment_option_id' => 'soriana',
+                    'name'              => 'Soriana',
+                    'status'            => 'active',
+                    'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/dac0bf10-01eb-11ec-ad92-052532916206-s.png'
+                ],
+                [
+                    'payment_option_id' => 'extra',
+                    'name'              => 'Extra',
+                    'status'            => 'active',
+                    'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/9c8f26b0-34ab-11e9-b8b8-15cad73057aa-s.png'
+                ],
+                [
+                    'payment_option_id' => 'calimax',
+                    'name'              => 'Calimax',
+                    'status'            => 'active',
+                    'thumbnail'         => 'https://http2.mlstatic.com/storage/logos-api-admin/52efa730-01ec-11ec-ba6b-c5f27048193b-s.png'
+                ],
+            ],
+        ];
 
         foreach ($serializedPaymentMethods as $key => $method) {
             if (isset($payment_places[$method['id']])) {
@@ -707,7 +709,7 @@ class Seller
                 return $cache;
             }
 
-            $uri     = '/sites/' . $siteId . '/payment_methods';
+            $uri = '/sites/' . $siteId . '/payment_methods';
 
             $response           = $this->requester->get($uri);
             $serializedResponse = [

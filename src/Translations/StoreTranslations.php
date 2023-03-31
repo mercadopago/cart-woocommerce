@@ -94,9 +94,9 @@ class StoreTranslations
     private function setBasicCheckoutTranslations(): void
     {
         $this->basicCheckout = [
-            'test_mode_title'                                => __('Checkout Pro in Test Mode', 'woocommerce-mercadopago'),
-            'test_mode_description'                          => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
-            'test_mode_link_text'                            => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'test_mode_title'                                 => __('Checkout Pro in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_description'                           => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
+            'test_mode_link_text'                             => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
             'checkout_benefits_title'                         => __('Log in to Mercado Pago and earn benefits', 'woocommerce-mercadopago'),
             'checkout_benefits_title_phone'                   => __('Easy login', 'woocommerce-mercadopago'),
             'checkout_benefits_subtitle_phone'                => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
@@ -115,11 +115,11 @@ class StoreTranslations
             'checkout_benefits_subtitle_phone_installments'   => __('Pay with or without a credit card.', 'woocommerce-mercadopago'),
             'checkout_benefits_subtitle_phone_installments_2' => __('Interest-free installments with selected banks.', 'woocommerce-mercadopago'),
             'checkout_benefits_alt_phone_installments'        => __('Blue phone installments image', 'woocommerce-mercadopago'),
-            'payment_methods_title'                          => __('Available payment methods', 'woocommerce-mercadopago'),
-            'checkout_redirect_text'                         => __('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'),
-            'checkout_redirect_alt'                          => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
-            'terms_and_conditions_description'               => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
-            'terms_and_conditions_link_text'                 => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'payment_methods_title'                           => __('Available payment methods', 'woocommerce-mercadopago'),
+            'checkout_redirect_text'                          => __('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'),
+            'checkout_redirect_alt'                           => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
+            'terms_and_conditions_description'                => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
+            'terms_and_conditions_link_text'                  => __('Terms and conditions', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -153,10 +153,10 @@ class StoreTranslations
             'test_mode_title'                  => __('No card installments in Test Mode', 'woocommerce-mercadopago'),
             'test_mode_description'            => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
             'test_mode_link_text'              => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
-            'checkout_benefits_title'           => __('How to use it?', 'woocommerce-mercadopago'),
-            'checkout_benefits_1'               => $checkoutBenefits1,
-            'checkout_benefits_2'               => $checkoutBenefits2,
-            'checkout_benefits_3'               => $checkoutBenefits3,
+            'checkout_benefits_title'          => __('How to use it?', 'woocommerce-mercadopago'),
+            'checkout_benefits_1'              => $checkoutBenefits1,
+            'checkout_benefits_2'              => $checkoutBenefits2,
+            'checkout_benefits_3'              => $checkoutBenefits3,
             'checkout_redirect_text'           => __('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'),
             'checkout_redirect_alt'            => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
             'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),

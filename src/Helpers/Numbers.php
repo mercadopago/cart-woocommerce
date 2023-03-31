@@ -32,9 +32,10 @@ final class Numbers
      */
     public static function calculateByCurrency($currency, $amount, $ratio): float
     {
-        if ('COP' === $currency || 'CLP' === $currency) {
+        if ($currency === 'COP' || $currency === 'CLP') {
             return Numbers::format($amount * $ratio, 0);
         }
+
         return Numbers::format($amount * $ratio * 100) / 100;
     }
 }

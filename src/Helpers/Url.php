@@ -82,6 +82,19 @@ final class Url
     }
 
     /**
+     * Get wp query var
+     *
+     * @param string $queryVar
+     * @param mixed $default
+     *
+     * @return string
+     */
+    public function getQueryVar(string $queryVar, $default = ''): string
+    {
+        return get_query_var($queryVar, $default);
+    }
+
+    /**
      * Validate page
      *
      * @param string      $expectedPage
@@ -133,5 +146,17 @@ final class Url
         }
 
         return $this->strings->compareStrings($expectedUrl, $currentUrl, $allowPartialMatch);
+    }
+
+    /**
+     * Validate wp query var
+     *
+     * @param string $expectedQueryVar
+     *
+     * @return bool
+     */
+    public function validateQueryVar(string $expectedQueryVar): bool
+    {
+        return (bool) $this->getQueryVar($expectedQueryVar);
     }
 }

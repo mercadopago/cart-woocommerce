@@ -11,9 +11,9 @@ interface NotificationInterface
     /**
      * Handle Notification Request
      *
-     * @param string $message
+     * @param mixed $data
      *
      * @return void
      */
-    public function handleReceivedNotification();
+    public function handleReceivedNotification($data);
 }

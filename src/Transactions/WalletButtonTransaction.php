@@ -32,8 +32,7 @@ class WalletButtonTransaction extends AbstractPreferenceTransaction
 
         $internalMetadata['checkout']               = 'pro';
         $internalMetadata['checkout_type']          = self::ID;
-        $internalMetadata['wallet_button_settings'] =
-            $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
+        $internalMetadata['wallet_button_settings'] = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }

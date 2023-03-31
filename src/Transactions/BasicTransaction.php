@@ -15,7 +15,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
     /**
      * Basic Transaction constructor
      */
-    public function __construct(AbstractGateway $gateway, $order)
+    public function __construct(AbstractGateway $gateway, \WC_Order $order)
     {
         parent::__construct($gateway, $order);
 
@@ -32,17 +32,18 @@ class BasicTransaction extends AbstractPreferenceTransaction
         $internalMetadata = parent::getInternalMetadata();
 
         $internalMetadata['checkout']       = 'smart';
-        $internalMetadata['checkout_type']  =
-            $this->mercadopago->options->getGatewayOption($this->gateway, 'method', 'redirect');
-        $internalMetadata['basic_settings'] = $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
+        $internalMetadata['checkout_type']  = $this->mercadopago->options->getGatewayOption($this->gateway, 'method', 'redirect');
+        $internalMetadata['basic_settings'] = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }
 
     /**
      * Set payment methods
+     *
+     * @return void
      */
-    public function setPaymentMethodsTransaction()
+    public function setPaymentMethodsTransaction(): void
     {
         $this->setInstallmentsTransaction();
         $this->setExcludedPaymentMethodsTransaction();
@@ -50,18 +51,21 @@ class BasicTransaction extends AbstractPreferenceTransaction
 
     /**
      * Set installments
+     *
+     * @return void
      */
-    public function setInstallmentsTransaction()
+    public function setInstallmentsTransaction(): void
     {
         $installments = (int) $this->mercadopago->options->getGatewayOption($this->gateway, 'installments', '24');
-
-        $this->transaction->payment_methods->installments = (0 === $installments) ? 12 : $installments;
+        $this->transaction->payment_methods->installments = ($installments === 0) ? 12 : $installments;
     }
 
     /**
      * Set excluded payment methods
+     *
+     * @return void
      */
-    public function setExcludedPaymentMethodsTransaction()
+    public function setExcludedPaymentMethodsTransaction(): void
     {
         $exPayments = $this->mercadopago->seller->getExPayments($this->gateway);
 

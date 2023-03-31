@@ -4,9 +4,10 @@ namespace MercadoPago\Woocommerce\Notification;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Helpers\OrderStatus;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Order\OrderStatus;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -14,108 +15,130 @@ if (!defined('ABSPATH')) {
 
 class WebhookNotification extends AbstractNotification
 {
-
     /**
-     * @var Requester`
+     * @var Requester
      */
     public $requester;
 
     /**
-     * @var array`
-     */
-    public $data;
-
-    /**
      * WebhookNotification constructor
      */
-    public function __construct(string $gateway, Logs $logs, OrderStatus $orderStatus, Seller $seller, Store $store, Requester $requester, array $data)
-    {
+    public function __construct(
+        AbstractGateway $gateway,
+        Logs $logs,
+        OrderStatus $orderStatus,
+        Seller $seller,
+        Store $store,
+        Requester $requester
+    ) {
         parent::__construct($gateway, $logs, $orderStatus, $seller, $store);
+
         $this->requester = $requester;
-        $this->data      = $data;
     }
 
-    public function handleReceivedNotification() {
-        parent::handleReceivedNotification();
+    /**
+     * Handle Notification Request
+     *
+     * @param $data
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public function handleReceivedNotification($data): void
+    {
+        parent::handleReceivedNotification($data);
 
-		if (!isset($this->data['data_id']) || !isset($this->data['type'])) {
-			$this->logs->file->error(
-				'data_id or type not set: ' .
-				wp_json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-                __FUNCTION__,
-			);
-			if (!isset($this->data['id']) || !isset($this->data['topic'])) {
-				$this->logs->file->error(
-					'Mercado Pago Request failure: ' .
-					wp_json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-                    __FUNCTION__
-				);
-				$this->setResponse( 422, null, 'Mercado Pago Request failure' );
-			}
-		} else {
-			if ( 'payment' === $this->data['type'] ) {
-				$payment_id   = preg_replace( '/[^\d]/', '', $this->data['data_id'] );
-                $headers = ['Authorization: Bearer ' .  $this->seller->getCredentialsAccessToken()];
-    
-                $paymentInfo = $this->requester->get('/v1/payments/' . $payment_id, $headers);
+		if (!isset($data['data_id']) || !isset($data['type'])) {
+            $message = 'data_id or type not set';
+			$this->logs->file->error($message, __METHOD__, $data);
 
-				if (( 200 === $paymentInfo->getStatus() || 201 === $paymentInfo->getStatus())) {
-                    $this->handleSuccessfulRequest($paymentInfo->getData());
-                    $this->setResponse( 200, 'OK', 'Webhook Notification Successfull' );
-				} else {
-					$this->logs->file->error('error when processing received data: ' . wp_json_encode( $paymentInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), __FUNCTION__);
-				}
+			if (!isset($data['id']) || !isset($data['topic'])) {
+                $message = 'Mercado Pago request failure';
+				$this->logs->file->error($message, __METHOD__, $data);
+				$this->setResponse(422, $message);
 			}
 		}
-		$this->setResponse( 422, null, 'Mercado Pago Invalid Requisition' );
+
+        if ($data['type'] !== 'payment') {
+            $message = 'Mercado Pago Invalid Requisition';
+            $this->setResponse( 422, $message);
+        }
+
+        $payment_id = preg_replace('/\D/', '', $data['data_id']);
+
+        $headers  = ['Authorization: Bearer ' .  $this->seller->getCredentialsAccessToken()];
+        $response = $this->requester->get("/v1/payments/$payment_id", $headers);
+
+        if ($response->getStatus() !== 200) {
+            $message = 'Error when processing received data';
+            $this->logs->file->error($message, __METHOD__, (array) $response);
+            $this->setResponse(422, $message);
+        }
+
+        $this->handleSuccessfulRequest($response->getData());
     }
 
 	/**
 	 * Process success response
 	 *
-	 * @param array $data Payment data.
+	 * @param mixed $data
 	 *
 	 * @return void
 	 */
-	public function handleSuccessfulRequest($data)
+	public function handleSuccessfulRequest($data): void
 	{
 		try {
-			$order  = parent::handleSuccessfulRequest( $data );
-			$status = $this->getProcessedStatus( $data, $order );
-			$this->logs->file->info(
-				__FUNCTION__,
-				'Changing order status to: ' .
-				$this->orderStatus->mapMpStatusToWoocommerceStatus( str_replace( '_', '', $status))
-			);
-			$this->processStatus( $status, $data, $order );
-		} catch ( \Exception $e ) {
-			$this->logs->file->error( __FUNCTION__, $e->getMessage() );
+			$order  = parent::handleSuccessfulRequest($data);
+            $oldOrderStatus  = $order->get_status();
+            $processedStatus = $this->getProcessedStatus($order, $data);
+
+            $this->logs->file->info(
+                sprintf(
+                    'Changing order status from %s to %s',
+                    $oldOrderStatus,
+                    $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
+                ),
+                __METHOD__
+            );
+
+
+			$this->processStatus($processedStatus, $order, $data);
+            $this->setResponse(200, 'Webhook Notification Successfully');
+		} catch (\Exception $e) {
+            $this->setResponse(422, $e->getMessage());
+			$this->logs->file->error($e->getMessage(), __METHOD__);
 		}
 	}
 
-	/**
-	 * Process status
-	 *
-	 * @param array  $data Payment data.
-	 * @param object $order Order.
-	 * @return string
-	 */
-	public function getProcessedStatus($data, $order) {
-		$status        = isset( $data['status'] ) ? $data['status'] : 'pending';
-		$total_paid    = isset( $data['transaction_details']['total_paid_amount'] ) ? $data['transaction_details']['total_paid_amount'] : 0.00;
-		$total_refund  = isset( $data['transaction_amount_refunded'] ) ? $data['transaction_amount_refunded'] : 0.00;
-		$coupon_amount = isset( $data['coupon_amount'] ) ? $data['coupon_amount'] : 0.00;
+    /**
+     * Process status
+     *
+     * @param \WC_Order $order
+     * @param mixed $data
+     *
+     * @return string
+     */
+	public function getProcessedStatus(\WC_Order $order, $data): string
+    {
+		$status        = $data['status'] ?? 'pending';
+		$total_paid    = $data['transaction_details']['total_paid_amount'] ?? 0.00;
+		$total_refund  = $data['transaction_amount_refunded'] ?? 0.00;
+		$coupon_amount = $data['coupon_amount'] ?? 0.00;
 
 		$this->updateMeta( $order, '_used_gateway', get_class( $this ) );
-        if ( ! empty( $data['payer']['email'] ) ) {
+
+        if (!empty( $data['payer']['email'])) {
             $this->updateMeta($order, 'Buyer email', $data['payer']['email']);
         }
-        if ( ! empty( $data['payment_type_id'] ) ) {
+
+        if (!empty($data['payment_type_id'])) {
             $this->updateMeta($order, 'Payment type', $data['payment_type_id']);
         }
-        if ( ! empty( $data['payment_method_id'] ) ) {
+
+        if (!empty( $data['payment_method_id'])) {
             $this->updateMeta($order, 'Payment method', $data['payment_method_id']);
         }
+
         $this->updateMeta(
             $order,
             'Mercado Pago - Payment ' . $data['id'],
@@ -125,18 +148,11 @@ class WebhookNotification extends AbstractNotification
                 ']/[Coupon ' . $coupon_amount .
                 ']/[Refund ' . $total_refund . ']'
         );
+
         $this->updateMeta($order, '_Mercado_Pago_Payment_IDs', $data['id']);
+
         $order->save();
 
         return $status;
 	}
-
-	public function getPaymentInfo( $id ) {
-		$accessToken = $this->seller->getCredentialsAccessToken();
-        $paymentInfo  = $this->requester->get('/v1/payments/' . $id, array( 'Authorization' => 'Bearer ' . $accessToken));
-		$couponAmount = (float) $paymentInfo->getData()['coupon_amount'];
-
-		return $couponAmount;
-	}
-
 }

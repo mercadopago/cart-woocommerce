@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Hooks;
 
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
@@ -12,6 +13,11 @@ if (!defined('ABSPATH')) {
 
 class Gateway
 {
+    /**
+     * @const
+     */
+    public const GATEWAY_ICON_FILTER = 'woo_mercado_pago_icon';
+
     /**
      * @var Options
      */
@@ -33,14 +39,25 @@ class Gateway
     private $translations;
 
     /**
+     * @var Url
+     */
+    private $url;
+
+    /**
      * Gateway constructor
      */
-    public function __construct(Options $options, Template $template, Store $store, StoreTranslations $translations)
-    {
+    public function __construct(
+        Options $options,
+        Template $template,
+        Store $store,
+        StoreTranslations $translations,
+        Url $url
+    ) {
         $this->options      = $options;
         $this->template     = $template;
         $this->store        = $store;
         $this->translations = $translations;
+        $this->url          = $url;
     }
 
     /**
@@ -54,6 +71,7 @@ class Gateway
     {
         if ($gateway::isAvailable()) {
             $this->store->addAvailablePaymentGateway($gateway);
+
             add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
                 $methods[] = $gateway;
                 return $methods;
@@ -97,13 +115,12 @@ class Gateway
             $discount   = $subtotal * ($gateway->discount / 100);
             $commission = $subtotal * ($gateway->commission / 100);
 
-            if ($gateway->discount > 0 && $gateway->commission > 0) {
-                $title .= ' (' . $this->translations->commonCheckout['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . $this->translations->commonCheckout['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
-            } elseif ($gateway->discount > 0) {
-                $title .= ' (' . $this->translations->commonCheckout['discount_title'] . ' ' . wp_strip_all_tags(wc_price($discount)) . ')';
-            } elseif ($gateway->commission > 0) {
-                $title .= ' (' . $this->translations->commonCheckout['fee_title'] . ' ' . wp_strip_all_tags(wc_price($commission)) . ')';
-            }
+            $title .= $this->buildTitleWithDiscountAndCommission(
+                $discount,
+                $commission,
+                $this->translations->commonCheckout['discount_title'],
+                $this->translations->commonCheckout['fee_title']
+            );
 
             return $title;
         }, 10, 2);
@@ -124,11 +141,11 @@ class Gateway
     /**
      * Register update options
      *
-     * @param \WC_Payment_Gateway $gateway
+     * @param AbstractGateway $gateway
      *
      * @return void
      */
-    public function registerUpdateOptions(\WC_Payment_Gateway $gateway): void
+    public function registerUpdateOptions(AbstractGateway $gateway): void
     {
         add_action('woocommerce_update_options_payment_gateways_' . $gateway->id, function () use ($gateway) {
             $gateway->init_settings();
@@ -266,5 +283,48 @@ class Gateway
     public function registerWpHead($callback): void
     {
         add_action('wp_head', $callback);
+    }
+
+    /**
+     * Get gateway icon
+     *
+     * @param string $iconName
+     *
+     * @return string
+     */
+    public function getGatewayIcon(string $iconName): string
+    {
+        $path = $this->url->getPluginFileUrl("/assets/images/icons/$iconName", '.png', true);
+        return apply_filters(self::GATEWAY_ICON_FILTER, $path);
+    }
+
+    /**
+     * Build title for gateways with discount and commission
+     *
+     * @param float $discount
+     * @param float $commission
+     * @param string $strDiscount
+     * @param string $strCommission
+     *
+     * @return string
+     */
+    private function buildTitleWithDiscountAndCommission(float $discount, float $commission, string $strDiscount, string $strCommission): string
+    {
+        $treatedDiscount   = wp_strip_all_tags(wc_price($discount));
+        $treatedCommission = wp_strip_all_tags(wc_price($commission));
+
+        if ($discount > 0 && $commission > 0) {
+            return " ($strDiscount $treatedDiscount $strCommission $treatedCommission)";
+        }
+
+        if ($discount > 0) {
+            return " ($strDiscount $discount)";
+        }
+
+        if ($commission > 0) {
+            return " ($strCommission $commission)";
+        }
+
+        return '';
     }
 }

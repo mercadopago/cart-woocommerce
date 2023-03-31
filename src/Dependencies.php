@@ -4,8 +4,11 @@ namespace MercadoPago\Woocommerce;
 
 use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
-use MercadoPago\Woocommerce\Admin\MetadataSettings;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\Images;
+use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -16,7 +19,6 @@ use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Notices;
-use MercadoPago\Woocommerce\Helpers\OrderStatus;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
@@ -35,6 +37,7 @@ use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
+use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -75,6 +78,11 @@ class Dependencies
     public $options;
 
     /**
+     * @var Actions
+     */
+    public $actions;
+
+    /**
      * @var OrderMeta
      */
     public $orderMeta;
@@ -108,6 +116,11 @@ class Dependencies
      * @var Requester
      */
     public $requester;
+
+    /**
+     * @var Session
+     */
+    public $session;
 
     /**
      * @var Seller
@@ -190,9 +203,14 @@ class Dependencies
     public $settings;
 
     /**
-     * @var MetadataSettings
+     * @var Images
      */
-    public $metadataSettings;
+    public $images;
+
+    /**
+     * @var Metadata
+     */
+    public $metadataConfig;
 
     /**
      * @var AdminTranslations
@@ -217,9 +235,13 @@ class Dependencies
         $this->admin             = new Admin();
         $this->endpoints         = new Endpoints();
         $this->options           = new Options();
-        $this->orderMeta          = new OrderMeta();
+        $this->actions           = new Actions();
+        $this->session           = new Session();
+        $this->orderMeta         = new OrderMeta();
         $this->product           = new Product();
         $this->template          = new Template();
+        $this->plugin            = new Plugin();
+        $this->images            = new Images();
         $this->orderMetadata     = $this->setOrderMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();
@@ -228,7 +250,6 @@ class Dependencies
         $this->links             = $this->setLinks();
         $this->url               = $this->setUrl();
         $this->paymentMethods    = $this->setPaymentMethods();
-        $this->plugin            = $this->setPlugin();
         $this->scripts           = $this->setScripts();
         $this->checkout          = $this->setCheckout();
         $this->adminTranslations = $this->setAdminTranslations();
@@ -240,7 +261,7 @@ class Dependencies
         $this->orderStatus       = $this->setOrderStatus();
         $this->currentUser       = $this->setCurrentUser();
         $this->notices           = $this->setNotices();
-        $this->metadataSettings  = $this->setMetadataSettings();
+        $this->metadataConfig    = $this->setMetadataConfig();
         $this->currency          = $this->setCurrency();
         $this->settings          = $this->setSettings();
     }
@@ -305,14 +326,6 @@ class Dependencies
     }
 
     /**
-     * @return Plugin
-     */
-    private function setPlugin(): Plugin
-    {
-        return new Plugin($this->url);
-    }
-
-    /**
      * @return Store
      */
     private function setStore(): Store
@@ -341,7 +354,7 @@ class Dependencies
      */
     private function setGateway(): Gateway
     {
-        return new Gateway($this->options, $this->template, $this->store, $this->storeTranslations);
+        return new Gateway($this->options, $this->template, $this->store, $this->storeTranslations, $this->url);
     }
 
     /**
@@ -408,15 +421,15 @@ class Dependencies
      */
     private function setNotices(): Notices
     {
-        return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links);
+        return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links, $this->currentUser);
     }
 
     /**
-     * @return MetadataSettings
+     * @return Metadata
      */
-    private function setMetadataSettings(): MetadataSettings
+    private function setMetadataConfig(): Metadata
     {
-        return new MetadataSettings($this->options);
+        return new Metadata($this->options);
     }
 
     /**
@@ -431,7 +444,9 @@ class Dependencies
             $this->logs,
             $this->notices,
             $this->requester,
-            $this->seller
+            $this->seller,
+            $this->options,
+            $this->url
         );
     }
 
@@ -451,7 +466,8 @@ class Dependencies
             $this->adminTranslations,
             $this->url,
             $this->nonce,
-            $this->currentUser
+            $this->currentUser,
+            $this->logs
         );
     }
 }

@@ -63,7 +63,7 @@ final class PaymentMethods
      *
      * @param $compositeId
      *
-     * @return array
+     * @return string
      */
     public function getPaymentMethodId($compositeId): string
     {
@@ -75,7 +75,7 @@ final class PaymentMethods
      *
      * @param $compositeId
      *
-     * @return array
+     * @return string
      */
     public function getPaymentPlaceId($compositeId): string
     {
@@ -95,6 +95,7 @@ final class PaymentMethods
 
         foreach ($paymentMethods as $paymentMethod) {
             $treatedPaymentMethod = [];
+
             if (isset($paymentMethod['payment_places'])) {
                 foreach ($paymentMethod['payment_places'] as $place) {
                     $paymentPlaceId                  = $this->generateIdFromPlace($paymentMethod['id'], $place['payment_option_id']);

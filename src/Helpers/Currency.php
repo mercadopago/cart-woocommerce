@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Helpers\Notices;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
@@ -29,9 +31,19 @@ final class Currency
     private $ratios = [];
 
     /**
-     * @var AdminTranslations
+     * @var bool
      */
-    private $adminTranslations;
+    private $isShowingEnabledNotice = false;
+
+    /**
+     * @var bool
+     */
+    private $isShowingDisabledNotice = false;
+
+    /**
+     * @var array
+     */
+    private $translations;
 
     /**
      * @var Cache
@@ -51,7 +63,7 @@ final class Currency
     /**
      * @var Notices
      */
-    private $notice;
+    private $notices;
 
     /**
      * @var Requester
@@ -64,62 +76,93 @@ final class Currency
     private $seller;
 
     /**
+     * @var Options
+     */
+    private $options;
+
+    /**
+     * @var Url
+     */
+    private $url;
+
+    /**
      * Currency constructor
      *
      * @param AdminTranslations $adminTranslations
-     * @param Cache $cache
-     * @param Country $country
-     * @param Logs $logs
-     * @param Notices $notice
-     * @param Requester $requester
-     * @param Seller $seller
+     * @param Cache             $cache
+     * @param Country           $country
+     * @param Logs              $logs
+     * @param Notices           $notices
+     * @param Requester         $requester
+     * @param Seller            $seller
+     * @param Options           $options
+     * @param Url               $url
      */
-    public function __construct(AdminTranslations $adminTranslations, Cache $cache, Country $country, Logs $logs, Notices $notice, Requester $requester, Seller $seller)
-    {
-        $this->adminTranslations = $adminTranslations;
-        $this->cache             = $cache;
-        $this->country           = $country;
-        $this->logs              = $logs;
-        $this->notice            = $notice;
-        $this->requester         = $requester;
-        $this->seller            = $seller;
+    public function __construct(
+        AdminTranslations $adminTranslations,
+        Cache             $cache,
+        Country           $country,
+        Logs              $logs,
+        Notices           $notices,
+        Requester         $requester,
+        Seller            $seller,
+        Options           $options,
+        Url               $url
+    ) {
+        $this->translations = $adminTranslations->currency;
+        $this->cache        = $cache;
+        $this->country      = $country;
+        $this->logs         = $logs;
+        $this->notices      = $notices;
+        $this->requester    = $requester;
+        $this->seller       = $seller;
+        $this->options      = $options;
+        $this->url          = $url;
     }
 
     /**
-     * Init incrementing the ratios array by method
+     * Get ratio incrementing the ratios array by gateway
      *
-     * @param $method
-     *
-     * @return void
-     */
-    public function init($method)
-    {
-        if (!isset($this->ratios[$method->id])) {
-            $accountCurrency = $this->getAccountCurrency();
-            $storeCurrency   = get_woocommerce_currency();
-
-            if ($this->isEnabled($method) && $this->isAValidConversion($storeCurrency, $accountCurrency)) {
-                $ratio = $this->loadRatio($storeCurrency, $accountCurrency);
-                $this->setRatio($method->id, $ratio);
-            } else {
-                $this->setRatio($method->id);
-            }
-        }
-    }
-
-    /**
-     * Get ratio
-     *
-     * @param $method
+     * @param AbstractGateway $gateway
      *
      * @return float
      */
-    public function getRatio($method): float
+    public function getRatio(AbstractGateway $gateway): float
     {
-        $this->init($method);
-        return $this->ratios[$method->id] ?: self::DEFAULT_RATIO;
+        if (!isset($this->ratios[$gateway->id])) {
+            if ($this->isEnabled($gateway) && $this->validateConversion()) {
+                $ratio = $this->loadRatio();
+                $this->setRatio($gateway->id, $ratio);
+            } else {
+                $this->setRatio($gateway->id);
+            }
+        }
+
+        return $this->ratios[$gateway->id] ?: self::DEFAULT_RATIO;
     }
 
+    /**
+     * Set ratio
+     *
+     * @param string $gatewayId
+     * @param float $value
+     *
+     * @return void
+     */
+    public function setRatio(string $gatewayId, $value = self::DEFAULT_RATIO)
+    {
+        $this->ratios[$gatewayId] = $value;
+    }
+
+    /**
+     * Get Woocommerce currency
+     *
+     * @return string
+     */
+    public function getWoocommerceCurrency(): string
+    {
+        return get_woocommerce_currency();
+    }
 
     /**
      * Get Account currency
@@ -128,75 +171,99 @@ final class Currency
      */
     public function getAccountCurrency(): string
     {
-        $configs = $this->country->getCountryConfigs();
-
-        return $configs['currency'];
+        return $this->country->getCountryConfigs()['currency'];
     }
 
     /**
-     * Set ratio
+     * Verify if currency option is enabled
      *
-     * @param $methodId
-     * @param float $value
+     * @param AbstractGateway $gateway
+     *
+     * @return bool
+     */
+    public function isEnabled(AbstractGateway $gateway): bool
+    {
+        return $this->options->getGatewayOption($gateway, self::CURRENCY_CONVERSION) === 'yes';
+    }
+
+    /**
+     * Validate if account currency is equal to woocommerce currency
+     *
+     * @return bool
+     */
+    public function validateConversion(): bool
+    {
+        return $this->getAccountCurrency() === $this->getWoocommerceCurrency();
+    }
+
+    /**
+     * Handle currency conversion notices
+     *
+     * @param AbstractGateway $gateway
      *
      * @return void
      */
-    public function setRatio($methodId, $value = self::DEFAULT_RATIO)
+    public function handleCurrencyNotices(AbstractGateway $gateway): void
     {
-        $this->ratios[$methodId] = $value;
-    }
+        $toCurrency   = $this->getAccountCurrency();
+        $fromCurrency = $this->getWoocommerceCurrency();
 
-    /**
-     * Is the option enabled?
-     *
-     * @param $method
-     *
-     * @return bool
-     */
-    public function isEnabled($method): bool
-    {
-        return $method->get_option(self::CURRENCY_CONVERSION, '');
-    }
+        $currencyEnabledTranslation = sprintf(
+            '%s %s %s %s.',
+            $this->translations['currency_enabled']['start'],
+            $fromCurrency,
+            $this->translations['currency_enabled']['final'],
+            $toCurrency
+        );
 
-    /**
-     * Is it a valid conversion?
-     *
-     * @param string $storeCurrency
-     * @param string $accountCurrency
-     *
-     * @return bool
-     */
-    private function isAValidConversion(string $storeCurrency, string $accountCurrency): bool
-    {
-        if (!$accountCurrency || !$storeCurrency || $storeCurrency === $accountCurrency) {
-            return false;
+        $currencyDisabledTranslation = sprintf(
+            '%s %s %s %s.',
+            $this->translations['currency_disabled']['start'],
+            $fromCurrency,
+            $this->translations['currency_disabled']['final'],
+            $toCurrency
+        );
+
+        if ($this->validateConversion() || !$this->url->validateSection($gateway->id)) {
+            return;
         }
 
-        return true;
+        if ($this->isShowingEnabledNotice || $this->isShowingDisabledNotice) {
+            return;
+        }
+
+        if ($this->isEnabled($gateway)) {
+            $this->isShowingEnabledNotice = true;
+            $this->notices->adminNoticeInfo($currencyEnabledTranslation, false);
+            return;
+        }
+
+        $this->isShowingDisabledNotice = true;
+        $this->notices->adminNoticeWarning($currencyDisabledTranslation, false);
+        $this->notices->adminNoticeWarning($this->translations['currency_conversion'], false);
     }
 
     /**
      * Load ratio
      *
-     * @param string $fromCurrency
-     * @param string $toCurrency
-     *
      * @return float
      */
-    private function loadRatio(string $fromCurrency, string $toCurrency): float
+    private function loadRatio(): float
     {
-        $currencyConversionResponse = $this->getCurrencyConversion($fromCurrency, $toCurrency);
+        $response = $this->getCurrencyConversion();
 
         try {
-            if (200 !== $currencyConversionResponse['status']) {
-                throw new \Exception($currencyConversionResponse['data']);
+            if ($response['status'] !== 200 ) {
+                throw new \Exception(json_encode($response['data']));
             }
 
-            if (isset($currencyConversionResponse['data'], $currencyConversionResponse['data']['ratio']) && $currencyConversionResponse['data']['ratio'] > 0) {
-                return $currencyConversionResponse['data']['ratio'];
+            if (isset($response['data']['ratio']) && $response['data']['ratio'] > 0) {
+                return $response['data']['ratio'];
             }
         } catch (\Exception $e) {
-            $this->logs->file->error('Mercado pago gave error to get currency value, payment creation failed with error: ' . $e->getMessage(), __FUNCTION__);
+            $this->logs->file->error("'Mercado pago gave error to get currency value: {$e->getMessage()}",
+                __METHOD__
+            );
         }
 
         return self::DEFAULT_RATIO;
@@ -205,14 +272,13 @@ final class Currency
     /**
      * Get currency conversion
      *
-     * @param string $fromCurrency
-     * @param string $toCurrency
-     *
      * @return array
      */
-    private function getCurrencyConversion(string $fromCurrency, string $toCurrency): array
+    private function getCurrencyConversion(): array
     {
-        $accessToken = $this->seller->getCredentialsAccessToken();
+        $toCurrency   = $this->getAccountCurrency();
+        $fromCurrency = $this->getWoocommerceCurrency();
+        $accessToken  = $this->seller->getCredentialsAccessToken();
 
         try {
             $key   = sprintf('%sat%s-%sto%s', __FUNCTION__, $accessToken, $fromCurrency, $toCurrency);
@@ -239,32 +305,6 @@ final class Currency
                 'data'   => null,
                 'status' => 500,
             ];
-        }
-    }
-
-    /**
-     * Handle currency conversion notices
-     *
-     * @param $method
-     *
-     * @return void
-     */
-    public function handleCurrencyNotices($method)
-    {
-        $dataSession = $_SESSION[self::CURRENCY_CONVERSION] ?: [];
-
-        if ($dataSession['notice']) {
-            unset($_SESSION[self::CURRENCY_CONVERSION]['notice']);
-
-            if ('enabled' === $dataSession['notice']['type']) {
-                $this->notice->adminNoticeInfo($this->adminTranslations->notices['currency_enabled'], false);
-            } elseif ('disabled' === $dataSession['notice']['type']) {
-                $this->notice->adminNoticeInfo($this->adminTranslations->notices['currency_disabled'], false);
-            }
-        }
-
-        if (!$this->isEnabled($method) && $method->isCurrencyConvertable()) {
-            $this->notice->adminNoticeWarning($this->adminTranslations->notices['currency_conversion'], false);
         }
     }
 }

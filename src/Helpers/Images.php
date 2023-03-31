@@ -12,6 +12,8 @@ final class Images
      * Get base 64 image
      *
      * @param string $base64
+     *
+     * @return void
      */
     public function getBase64Image(string $base64): void
     {
@@ -20,6 +22,7 @@ final class Images
         $image = base64_decode($base64);
         $image = imagecreatefromstring($image);
         $image = imagescale($image, 447);
+
         imagepng($image);
         imagedestroy($image);
 
@@ -29,15 +32,16 @@ final class Images
     /**
      * Get error image
      *
-     * @param string $imageName
+     * @return void
      */
-    public function getErrorImage(string $imageName): void
+    public function getErrorImage(): void
     {
         header('Content-type: image/png');
 
-        $errorImage = "{${dirname(__FILE__)}}/../../assets/images/$imageName.png";
-        $image = imagecreatefrompng($errorImage);
+        $image = dirname(__FILE__) . '/../../assets/images/checkouts/pix/qr-code-expired.png';
+        $image = imagecreatefrompng($image);
         $image = imagescale($image, 447);
+
         imagepng($image);
         imagedestroy($image);
 

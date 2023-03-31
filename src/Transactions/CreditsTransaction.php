@@ -14,7 +14,7 @@ class CreditsTransaction extends AbstractPreferenceTransaction
     /**
      * Credits Transaction constructor
      */
-    public function __construct(AbstractGateway $gateway, $order)
+    public function __construct(AbstractGateway $gateway, \WC_Order $order)
     {
         parent::__construct($gateway, $order);
 
@@ -32,7 +32,7 @@ class CreditsTransaction extends AbstractPreferenceTransaction
 
         $internalMetadata['checkout']         = 'pro';
         $internalMetadata['checkout_type']    = self::ID;
-        $internalMetadata['credits_settings'] = $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
+        $internalMetadata['credits_settings'] = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }

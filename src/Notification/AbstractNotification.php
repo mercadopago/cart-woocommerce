@@ -4,9 +4,10 @@ namespace MercadoPago\Woocommerce\Notification;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Helpers\OrderStatus;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Order\OrderStatus;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -15,7 +16,7 @@ if (!defined('ABSPATH')) {
 abstract class AbstractNotification implements NotificationInterface
 {
     /**
-     * @var string
+     * @var AbstractGateway
      */
     public $gateway;
 
@@ -42,85 +43,119 @@ abstract class AbstractNotification implements NotificationInterface
     /**
      * AbstractNotification constructor
      */
-    public function __construct(string $gateway, Logs $logs, OrderStatus $orderStatus, Seller $seller, Store $store)
-    {
+    public function __construct(
+        AbstractGateway $gateway,
+        Logs $logs,
+        OrderStatus $orderStatus,
+        Seller $seller,
+        Store $store
+    ) {
         $this->gateway     = $gateway;
         $this->logs        = $logs;
         $this->orderStatus = $orderStatus;
         $this->seller      = $seller;
         $this->store       = $store;
     }
-    
-    public function handleReceivedNotification() {
-        @ob_clean();
-        $this->logs->file->info('received _get content: ' . wp_json_encode($_GET, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), __FUNCTION__);
+
+    /**
+     * Handle Notification Request
+     *
+     * @param mixed $data
+     *
+     * @return void
+     */
+    public function handleReceivedNotification($data) {
+        $this->logs->file->info('Received data content', __METHOD__, $data);
     }
-    
+
     /**
 	 * Process successful request
 	 *
-	 * @param array $data preference or payment data.
-	 * @return bool|WC_Order|WC_Order_Refund
-	 */
-	public function handleSuccessfulRequest($data) {
-		$this->logs->file->info('starting to process update...', __FUNCTION__);
-		$order_key = $data['external_reference'];
+	 * @param mixed $data
+     *
+     * @return bool|\WC_Order|\WC_Order_Refund
+     */
+	public function handleSuccessfulRequest($data)
+    {
+		$this->logs->file->info('Starting to process update...', __METHOD__);
 
-		if ( empty( $order_key ) ) {
-			$this->logs->file->error('External Reference not found', __FUNCTION__);
-			$this->setResponse( 422, null, 'External Reference not found' );
+        $order_key = $data['external_reference'];
+
+		if (empty($order_key)) {
+            $message = 'external_reference not found';
+			$this->logs->file->error($message, __METHOD__);
+			$this->setResponse(422, null, $message);
 		}
 
-		$invoice_prefix = get_option( '_mp_store_identificator', 'WC-' );
-		$id             = (int) str_replace( $invoice_prefix, '', $order_key );
-		$order          = wc_get_order( $id );
+		$invoice_prefix = get_option('_mp_store_identificator', 'WC-');
+		$id             = (int) str_replace($invoice_prefix, '', $order_key);
+		$order          = wc_get_order($id);
 
 		if (!$order) {
-			$this->logs->file->error('Order is invalid', __FUNCTION__);
-			$this->setResponse( 422, null, 'Order is invalid' );
+            $message = 'Order is invalid';
+			$this->logs->file->error($message, __METHOD__);
+			$this->setResponse(422, $message);
 		}
 
 		if ($order->get_id() !== $id) {
-			$this->logs->file->error('Order error', __FUNCTION__);
-			$this->setResponse( 422, null, 'Order error' );
+            $message = 'Order error';
+			$this->logs->file->error($message, __METHOD__);
+			$this->setResponse(422, $message);
 		}
 
-		$this->logs->file->info('updating metadata and status with data: ' . wp_json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), __FUNCTION__);
+		$this->logs->file->info('Updating metadata and status with data', __METHOD__, $data);
 
 		return $order;
 	}
 
-	/**
-	 * Process order status
-	 *
-	 * @param string $processedStatus Status.
-	 * @param array  $data Payment data.
-	 * @param object $order Order.
-	 *
-	 * @throws \Exception Invalid status response.
-	 */
-	public function processStatus(string $processedStatus, array $data, object $order ) {
-		$this->orderStatus->processStatus($processedStatus, $data, $order, $this->gateway);
+    /**
+     * Process order status
+     *
+     * @param string $processedStatus
+     * @param \WC_Order $order
+     * @param mixed $data
+     *
+     * @return void
+     * @throws \Exception
+     */
+	public function processStatus(string $processedStatus, \WC_Order $order, $data): void
+    {
+		$this->orderStatus->processStatus($processedStatus, $data, $order, get_class($this->gateway));
 	}
 
-	public function updateMeta( $order, $key, $value ) {
-		// WooCommerce 3.0 or later.
-		if ( method_exists( $order, 'update_meta_data' ) ) {
-			$order->update_meta_data( $key, $value );
+    /**
+     * Update order meta
+     *
+     * @param \WC_Order $order
+     * @param string $key
+     * @param mixed $value
+     *
+     * @return void
+     */
+	public function updateMeta(\WC_Order $order, string $key, $value): void
+    {
+		if (method_exists($order, 'update_meta_data')) {
+			$order->update_meta_data($key, $value);
 		} else {
-			update_post_meta( $order->id, $key, $value );
+			update_post_meta($order->get_id(), $key, $value);
 		}
 	}
 
-	/**
-	 * Set response
-	 *
-	 * @param int    $code         HTTP Code.
-	 * @param string $code_message Message.
-	 * @param string $body         Body.
-	 */
-	public function setResponse($code, $code_message, $body) {
-		status_header($code, $code_message);
-		die (wp_kses_post($body));
+    /**
+     * Set response
+     *
+     * @param int $status
+     * @param string $message
+     *
+     * @return void
+     */
+	public function setResponse(int $status, string $message): void
+    {
+        $response = [
+            'status'  => $status,
+            'message' => $message,
+        ];
+
+        wp_send_json($response, $status);
 	}
 }

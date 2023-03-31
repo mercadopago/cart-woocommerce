@@ -15,7 +15,7 @@ class PixTransaction extends AbstractPaymentTransaction
     /**
      * Pix Transaction constructor
      */
-    public function __construct(AbstractGateway $gateway, $order, $checkout)
+    public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout)
     {
         parent::__construct($gateway, $order, $checkout);
 
@@ -35,7 +35,7 @@ class PixTransaction extends AbstractPaymentTransaction
 
         $internalMetadata['checkout']      = 'custom';
         $internalMetadata['checkout_type'] = self::ID;
-        $internalMetadata['pix_settings']  = $this->mercadopago->metadataSettings->getGatewaySettings($this->gateway::ID);
+        $internalMetadata['pix_settings']  = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }
@@ -47,10 +47,10 @@ class PixTransaction extends AbstractPaymentTransaction
     {
         $expirationDate = $this->mercadopago->store->getCheckoutDateExpirationPix($this->gateway, '');
 
-        if (1 === strlen($expirationDate) && '1' === $expirationDate) {
+        if (strlen($expirationDate) === 1 && $expirationDate === '1') {
             $expirationDate = '24 hours';
             $this->mercadopago->options->setGatewayOption($this->gateway, 'checkout_pix_date_expiration', $expirationDate);
-        } elseif (1 === strlen($expirationDate)) {
+        } elseif (strlen($expirationDate) === 1) {
             $expirationDate = $expirationDate . ' days';
             $this->mercadopago->options->setGatewayOption($this->gateway, 'checkout_pix_date_expiration', $expirationDate);
         }

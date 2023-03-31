@@ -2,8 +2,11 @@
 
 namespace MercadoPago\Woocommerce;
 
-use MercadoPago\Woocommerce\Admin\MetadataSettings;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\Images;
+use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -22,7 +25,6 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
-use MercadoPago\Woocommerce\Hooks\Meta;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
@@ -30,6 +32,7 @@ use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -110,9 +113,9 @@ class WoocommerceMercadoPago
     public $options;
 
     /**
-     * @var Meta
+     * @var Actions
      */
-    public $meta;
+    public $actions;
 
     /**
      * @var Plugin
@@ -138,6 +141,11 @@ class WoocommerceMercadoPago
      * @var Requester
      */
     public $requester;
+
+    /**
+     * @var Session
+     */
+    public $session;
 
     /**
      * @var Seller
@@ -220,14 +228,19 @@ class WoocommerceMercadoPago
     public $currency;
 
     /**
+     * @var Images
+     */
+    public $images;
+
+    /**
      * @var Settings
      */
     public $settings;
 
     /**
-     * @var MetadataSettings
+     * @var Metadata
      */
-    public $metadataSettings;
+    public $metadataConfig;
 
     /**
      * @var AdminTranslations
@@ -289,6 +302,22 @@ class WoocommerceMercadoPago
     }
 
     /**
+     * Register actions when gateway is not called on page
+     *
+     * @return void
+     */
+    public function registerActionsWhenGatewayIsNotCalled(): void
+    {
+        $this->actions->registerActionWhenGatewayIsNotCalled(
+            $this,
+            'product',
+            'registerBeforeAddToCartForm',
+            'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+            'renderCreditsBanner'
+        );
+    }
+
+    /**
      * Init plugin
      *
      * @return void
@@ -317,6 +346,7 @@ class WoocommerceMercadoPago
         }
 
         $this->registerGateways();
+        $this->registerActionsWhenGatewayIsNotCalled();
     }
 
     /**
@@ -329,46 +359,48 @@ class WoocommerceMercadoPago
         $dependencies = new Dependencies();
 
         // Globals
-        $this->woocommerce       = $dependencies->woocommerce;
+        $this->woocommerce = $dependencies->woocommerce;
 
         // Configs
-        $this->seller            = $dependencies->seller;
-        $this->store             = $dependencies->store;
-        $this->orderMetadata     = $dependencies->orderMetadata;
+        $this->seller        = $dependencies->seller;
+        $this->store         = $dependencies->store;
+        $this->orderMetadata = $dependencies->orderMetadata;
 
         // Helpers
-        $this->cache             = $dependencies->cache;
-        $this->country           = $dependencies->country;
-        $this->currency          = $dependencies->currency;
-        $this->currentUser       = $dependencies->currentUser;
-        $this->links             = $dependencies->links;
-        $this->requester         = $dependencies->requester;
-        $this->strings           = $dependencies->strings;
-        $this->url               = $dependencies->url;
-        $this->paymentMethods    = $dependencies->paymentMethods;
-        $this->nonce             = $dependencies->nonce;
-        $this->orderStatus       = $dependencies->orderStatus;
+        $this->actions        = $dependencies->actions;
+        $this->cache          = $dependencies->cache;
+        $this->country        = $dependencies->country;
+        $this->currency       = $dependencies->currency;
+        $this->currentUser    = $dependencies->currentUser;
+        $this->links          = $dependencies->links;
+        $this->requester      = $dependencies->requester;
+        $this->strings        = $dependencies->strings;
+        $this->url            = $dependencies->url;
+        $this->paymentMethods = $dependencies->paymentMethods;
+        $this->nonce          = $dependencies->nonce;
+        $this->orderStatus    = $dependencies->orderStatus;
+        $this->images         = $dependencies->images;
+        $this->session        = $dependencies->session;
 
         // Hooks
-        $this->admin             = $dependencies->admin;
-        $this->checkout          = $dependencies->checkout;
-        $this->endpoints         = $dependencies->endpoints;
-        $this->gateway           = $dependencies->gateway;
-        $this->options           = $dependencies->options;
-        $this->meta              = $dependencies->meta;
-        $this->order             = $dependencies->order;
-        $this->plugin            = $dependencies->plugin;
-        $this->product           = $dependencies->product;
-        $this->scripts           = $dependencies->scripts;
-        $this->template          = $dependencies->template;
+        $this->admin     = $dependencies->admin;
+        $this->checkout  = $dependencies->checkout;
+        $this->endpoints = $dependencies->endpoints;
+        $this->gateway   = $dependencies->gateway;
+        $this->options   = $dependencies->options;
+        $this->order     = $dependencies->order;
+        $this->plugin    = $dependencies->plugin;
+        $this->product   = $dependencies->product;
+        $this->scripts   = $dependencies->scripts;
+        $this->template  = $dependencies->template;
 
         // General
-        $this->logs              = $dependencies->logs;
-        $this->notices           = $dependencies->notices;
-        $this->metadataSettings  = $dependencies->metadataSettings;
+        $this->logs           = $dependencies->logs;
+        $this->notices        = $dependencies->notices;
+        $this->metadataConfig = $dependencies->metadataConfig;
 
         // Exclusive
-        $this->settings          = $dependencies->settings;
+        $this->settings = $dependencies->settings;
 
         // Translations
         $this->adminTranslations = $dependencies->adminTranslations;

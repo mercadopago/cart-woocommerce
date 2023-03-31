@@ -30,18 +30,20 @@ class BasicGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->basicGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->basicCheckout;
 
-        $this->id                 = self::ID;
-        $this->icon               = $this->mercadopago->plugin->getGatewayIcon('icon-mp');
-        $this->title              = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id    = self::ID;
+        $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
+        $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
 
-        $this->init_form_fields();
         $this->init_settings();
+        $this->init_form_fields();
         $this->payment_scripts($this->id);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
+        $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
 
@@ -52,13 +54,17 @@ class BasicGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
+        $successUrl = $this->mercadopago->options->getGatewayOption($this, 'success_url', '');
+        $failureUrl = $this->mercadopago->options->getGatewayOption($this, 'failure_url', '');
+        $pendingUrl = $this->mercadopago->options->getGatewayOption($this, 'pending_url', '');
+
         $this->form_fields = [
-            'header'                             => [
+            'header' => [
                 'type'        => 'mp_config_title',
                 'title'       => $this->adminTranslations['header_title'],
                 'description' => $this->adminTranslations['header_description'],
             ],
-            'card_settings'                      => [
+            'card_settings' => [
                 'type'  => 'mp_card_info',
                 'value' => [
                     'title'       => $this->adminTranslations['card_settings_title'],
@@ -71,7 +77,7 @@ class BasicGateway extends AbstractGateway
                     'target'      => '_self',
                 ],
             ],
-            'enabled'                            => [
+            'enabled' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['enabled_title'],
                 'subtitle'     => $this->adminTranslations['enabled_subtitle'],
@@ -81,7 +87,7 @@ class BasicGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
                 ],
             ],
-            'title'                              => [
+            'title' => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['title_title'],
                 'description' => $this->adminTranslations['title_description'],
@@ -89,7 +95,7 @@ class BasicGateway extends AbstractGateway
                 'desc_tip'    => $this->adminTranslations['title_desc_tip'],
                 'class'       => 'limit-title-max-length',
             ],
-            'currency_conversion'                => [
+            'currency_conversion' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['currency_conversion_title'],
                 'subtitle'     => $this->adminTranslations['currency_conversion_subtitle'],
@@ -99,8 +105,8 @@ class BasicGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
                 ],
             ],
-            'ex_payments'                        => $this->fieldExPayments(),
-            'installments'                       => [
+            'ex_payments'  => $this->generateExPaymentsFields(),
+            'installments' => [
                 'type'        => 'select',
                 'title'       => $this->adminTranslations['installments_title'],
                 'description' => $this->adminTranslations['installments_description'],
@@ -119,7 +125,7 @@ class BasicGateway extends AbstractGateway
                     '24' => $this->adminTranslations['installments_options_24'],
                 ],
             ],
-            'advanced_configuration_title'       => [
+            'advanced_configuration_title' => [
                 'type'  => 'title',
                 'title' => $this->adminTranslations['advanced_configuration_title'],
                 'class' => 'mp-subtitle-body',
@@ -129,7 +135,7 @@ class BasicGateway extends AbstractGateway
                 'title' => $this->adminTranslations['advanced_configuration_description'],
                 'class' => 'mp-small-text',
             ],
-            'method'                             => [
+            'method' => [
                 'type'        => 'select',
                 'title'       => $this->adminTranslations['method_title'],
                 'description' => $this->adminTranslations['method_description'],
@@ -139,7 +145,7 @@ class BasicGateway extends AbstractGateway
                     'modal'    => $this->adminTranslations['method_options_modal'],
                 ],
             ],
-            'auto_return'                        => [
+            'auto_return' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['auto_return_title'],
                 'subtitle'     => $this->adminTranslations['auto_return_subtitle'],
@@ -149,22 +155,22 @@ class BasicGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['auto_return_descriptions_disabled'],
                 ],
             ],
-            'success_url'                        => [
+            'success_url' => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['success_url_title'],
-                'description' => $this->validateBackUrl($this->settings['success_url'], $this->adminTranslations['success_url_description']),
+                'description' => $this->validateBackUrl($successUrl, $this->adminTranslations['success_url_description']),
             ],
-            'failure_url'                        => [
+            'failure_url' => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['failure_url_title'],
-                'description' => $this->validateBackUrl($this->settings['failure_url'], $this->adminTranslations['failure_url_description']),
+                'description' => $this->validateBackUrl($failureUrl, $this->adminTranslations['failure_url_description']),
             ],
-            'pending_url'                        => [
+            'pending_url' => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['pending_url_title'],
-                'description' => $this->validateBackUrl($this->settings['pending_url'], $this->adminTranslations['pending_url_description']),
+                'description' => $this->validateBackUrl($pendingUrl, $this->adminTranslations['pending_url_description']),
             ],
-            'binary_mode'                        => [
+            'binary_mode' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['binary_mode_title'],
                 'subtitle'     => $this->adminTranslations['binary_mode_subtitle'],
@@ -174,7 +180,7 @@ class BasicGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
                 ],
             ],
-            'discount'                           => [
+            'discount' => [
                 'type'              => 'mp_actionable_input',
                 'title'             => $this->adminTranslations['discount_title'],
                 'input_type'        => 'number',
@@ -187,7 +193,7 @@ class BasicGateway extends AbstractGateway
                     'max'  => '99',
                 ],
             ],
-            'commission'                         => [
+            'commission' => [
                 'type'              => 'mp_actionable_input',
                 'title'             => $this->adminTranslations['commission_title'],
                 'input_type'        => 'number',
@@ -234,8 +240,8 @@ class BasicGateway extends AbstractGateway
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
                 'test_mode_link_src'               => $this->links['docs_integration_test'],
-                'checkout_benefits_title'           => $this->storeTranslations['checkout_benefits_title'],
-                'checkout_benefits_items'           => wp_json_encode($checkoutBenefitsItems),
+                'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
+                'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
                 'payment_methods_title'            => $paymentMethodsTitle,
                 'payment_methods_methods'          => wp_json_encode($paymentMethods),
                 'method'                           => $this->settings['method'],
@@ -247,16 +253,6 @@ class BasicGateway extends AbstractGateway
                 'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
             ]
         );
-    }
-
-    /**
-     * Validate gateway checkout form fields
-     *
-     * @return bool
-     */
-    public function validate_fields(): bool
-    {
-        return true;
     }
 
     /**
@@ -275,32 +271,149 @@ class BasicGateway extends AbstractGateway
         $this->transaction = new BasicTransaction($this, $order);
         $method            = $this->mercadopago->options->getGatewayOption($this, 'method', 'redirect');
 
-        if ('redirect' === $method || 'iframe' === $method) {
-            $this->mercadopago->logs->file->info(
-                'customer being redirected to Mercado Pago.',
-                __FUNCTION__
-            );
+        switch ($method) {
+            case 'iframe':
+            case 'redirect':
+                $this->mercadopago->logs->file->info(
+                    'customer being redirected to Mercado Pago.',
+                    __METHOD__
+                );
 
-            return [
-                'result'   => 'success',
-                'redirect' => $this->transaction->createPreference(),
-            ];
-        } elseif ('modal' === $method) {
-            $this->mercadopago->logs->file->info(
-                'preparing to render Checkout Pro view.',
-                __FUNCTION__
-            );
+                return [
+                    'result'   => 'success',
+                    'redirect' => $this->transaction->createPreference(),
+                ];
 
-            return [
-                'result'   => 'success',
-                'redirect' => $order->get_checkout_payment_url(true),
-            ];
+            case 'modal':
+                $this->mercadopago->logs->file->info(
+                    'preparing to render Checkout Pro view.',
+                    __METHOD__
+                );
+
+                return [
+                    'result'   => 'success',
+                    'redirect' => $order->get_checkout_payment_url(true),
+                ];
+
+            default:
+                break;
         }
 
         return $this->processReturnFail(
-            __FUNCTION__,
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error']
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+            __METHOD__
         );
+    }
+
+    /**
+     * Validate Back URL and return error message or default string
+     *
+     * @param $url
+     * @param $default
+     *
+     * @return string
+     */
+    private function validateBackUrl($url, $default): string
+    {
+        if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL) === false) {
+            $icon = $this->mercadopago->url->getPluginFileUrl('/assets/images/icons/icon-warning', '.png', true);
+            return "<img width='14' height='14' src='$icon' /> ". $this->adminTranslations['invalid_back_url'];
+        }
+
+        return $default;
+    }
+
+    /**
+     * Get payment methods
+     *
+     * @return array
+     */
+    private function getPaymentMethods(): array
+    {
+        $activePaymentMethods  = [];
+        $paymentMethodsOptions = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
+
+        foreach ($paymentMethodsOptions as $paymentMethodsOption) {
+            if ($this->mercadopago->options->getGatewayOption($this, $paymentMethodsOption['config']) === 'yes') {
+                $activePaymentMethods[] = [
+                    'src' => $paymentMethodsOption['image'],
+                    'alt' => $paymentMethodsOption['id']
+                ];
+            }
+        }
+
+        return $this->mercadopago->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
+    }
+
+    /**
+     * Mount payment_methods fields
+     *
+     * @return array
+     */
+    private function generateExPaymentsFields(): array
+    {
+        $paymentList = [
+            'type'                 => 'mp_checkbox_list',
+            'title'                => $this->adminTranslations['ex_payments_title'],
+            'description'          => $this->adminTranslations['ex_payments_description'],
+            'payment_method_types' => [
+                'credit_card' => [
+                    'list'  => [],
+                    'label' => $this->adminTranslations['ex_payments_type_credit_card_label'],
+                ],
+                'debit_card' => [
+                    'list'  => [],
+                    'label' => $this->adminTranslations['ex_payments_type_debit_card_label'],
+                ],
+                'other' => [
+                    'list'  => [],
+                    'label' => $this->adminTranslations['ex_payments_type_other_label'],
+                ],
+            ],
+        ];
+
+        $allPayments = $this->mercadopago->options->get('_checkout_payments_methods');
+
+        if (empty($allPayments)) {
+            return $paymentList;
+        }
+
+        foreach ($allPayments as $paymentMethod) {
+            switch ($paymentMethod['type']) {
+                case 'credit_card':
+                    $paymentList['payment_method_types']['credit_card']['list'][] = $this->serializePaymentMethod($paymentMethod);
+                    break;
+
+                case 'debit_card':
+                case 'prepaid_card':
+                    $paymentList['payment_method_types']['debit_card']['list'][] = $this->serializePaymentMethod($paymentMethod);
+                    break;
+
+                default:
+                    $paymentList['payment_method_types']['other']['list'][] = $this->serializePaymentMethod($paymentMethod);
+                    break;
+            }
+        }
+
+        return $paymentList;
+    }
+
+    /**
+     * Serialize payment_methods to mount settings fields
+     *
+     * @param mixed $paymentMethod
+     *
+     * @return array
+     */
+    private function serializePaymentMethod($paymentMethod): array
+    {
+        return [
+            'id'        => 'ex_payments_' . $paymentMethod['id'],
+            'type'      => 'checkbox',
+            'label'     => $paymentMethod['name'],
+            'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
+            'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
+        ];
     }
 
     /**
@@ -418,109 +531,7 @@ class BasicGateway extends AbstractGateway
         ];
 
         $site = $this->mercadopago->seller->getSiteId();
+
         return array_key_exists($site, $benefits) ? $benefits[$site] : $benefits['ROLA'];
-    }
-
-    /**
-     * Get payment methods
-     *
-     * @return array
-     */
-    private function getPaymentMethods(): array
-    {
-        $paymentMethodsOptions = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
-        $activePaymentMethods = [];
-
-        foreach ($paymentMethodsOptions as $paymentMethodsOption) {
-            if ('yes' === $this->mercadopago->options->getGatewayOption($this, $paymentMethodsOption['config'])) {
-                $activePaymentMethods[] = [
-                    'src' => $paymentMethodsOption['image'],
-                    'alt' => $paymentMethodsOption['id']
-                ];
-            }
-        }
-
-        return $this->mercadopago->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
-    }
-
-    /**
-     * Validate Back URL and return error message or default string
-     *
-     * @param $url
-     * @param $default
-     *
-     * @return string
-     */
-    private function validateBackUrl($url, $default): string
-    {
-        if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL) === false) {
-            return '<img width="14" height="14" src="' . $this->mercadopago->url->getPluginFileUrl('/assets/images/icons/icon-warning', '.png', true) . '"> ' .
-                'This seems to be an invalid URL.';
-        }
-        return $default;
-    }
-
-    /**
-     * Field payments
-     *
-     * @return array
-     */
-    private function fieldExPayments(): array
-    {
-        $paymentList = [
-            'type'                 => 'mp_checkbox_list',
-            'title'                => $this->adminTranslations['ex_payments_title'],
-            'description'          => $this->adminTranslations['ex_payments_description'],
-            'payment_method_types' => [
-                'credit_card' => [
-                    'label' => $this->adminTranslations['ex_payments_type_credit_card_label'],
-                    'list'  => [],
-                ],
-                'debit_card'  => [
-                    'label' => $this->adminTranslations['ex_payments_type_debit_card_label'],
-                    'list'  => [],
-                ],
-                'other'       => [
-                    'label' => $this->adminTranslations['ex_payments_type_other_label'],
-                    'list'  => [],
-                ],
-            ],
-        ];
-
-        $allPayments = $this->mercadopago->options->get('_checkout_payments_methods');
-
-        if (empty($allPayments)) {
-            return $paymentList;
-        }
-
-        foreach ($allPayments as $paymentMethod) {
-            if ('credit_card' === $paymentMethod['type']) {
-                $paymentList['payment_method_types']['credit_card']['list'][] = [
-                    'id'        => 'ex_payments_' . $paymentMethod['id'],
-                    'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
-                    'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
-                    'type'      => 'checkbox',
-                ];
-            } elseif ('debit_card' === $paymentMethod['type'] || 'prepaid_card' === $paymentMethod['type']) {
-                $paymentList['payment_method_types']['debit_card']['list'][] = [
-                    'id'        => 'ex_payments_' . $paymentMethod['id'],
-                    'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
-                    'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
-                    'type'      => 'checkbox',
-                ];
-            } else {
-                $paymentList['payment_method_types']['other']['list'][] = [
-                    'id'        => 'ex_payments_' . $paymentMethod['id'],
-                    'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
-                    'label'     => $paymentMethod['name'],
-                    'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
-                    'type'      => 'checkbox',
-                ];
-            }
-        }
-
-        return $paymentList;
     }
 }

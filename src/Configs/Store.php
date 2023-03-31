@@ -257,7 +257,7 @@ class Store
     }
 
     /**
-     * @return array
+     * @return array<AbstractGateway>
      */
     public function getAvailablePaymentGateways(): array
     {
@@ -265,7 +265,7 @@ class Store
     }
 
     /**
-     * @param array $paymentGateway
+     * @param string $paymentGateway
      */
     public function addAvailablePaymentGateway(string $paymentGateway): void
     {
