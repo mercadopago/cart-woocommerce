@@ -93,9 +93,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
         $this->mercadopago = $mercadopago;
 
-        $this->discount   = $this->getActionableValue('discount', 0);
-        $this->commission = $this->getActionableValue('commission', 0);
-
         $this->checkoutCountry = $this->mercadopago->store->getCheckoutCountry();
         $this->countryConfigs  = $this->mercadopago->country->getCountryConfigs();
         $this->links           = $this->mercadopago->links->getLinks();

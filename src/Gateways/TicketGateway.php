@@ -120,7 +120,9 @@ class TicketGateway extends AbstractGateway
                     'enabled'  => $this->adminTranslations['stock_reduce_enabled'],
                     'disabled' => $this->adminTranslations['stock_reduce_disabled'],
                 ],
-            ]
+            ],
+            'discount'   => $this->getDiscountField(),
+            'commission' => $this->getCommissionField(),
         ];
     }
 

@@ -35,7 +35,7 @@ class CustomGateway extends AbstractGateway
         $this->id    = self::ID;
         $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-gray-card');
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
-        
+
         $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
@@ -166,32 +166,8 @@ class CustomGateway extends AbstractGateway
                         'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
                     ],
                 ],
-                'discount' => [
-                    'type'              => 'mp_actionable_input',
-                    'title'             => $this->adminTranslations['discount_title'],
-                    'input_type'        => 'number',
-                    'description'       => $this->adminTranslations['discount_description'],
-                    'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
-                    'default'           => '0',
-                    'custom_attributes' => [
-                        'step' => '0.01',
-                        'min'  => '0',
-                        'max'  => '99',
-                    ],
-                ],
-                'commission' => [
-                    'type'              => 'mp_actionable_input',
-                    'title'             => $this->adminTranslations['commission_title'],
-                    'input_type'        => 'number',
-                    'description'       => $this->adminTranslations['commission_description'],
-                    'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
-                    'default'           => '0',
-                    'custom_attributes' => [
-                        'step' => '0.01',
-                        'min'  => '0',
-                        'max'  => '99',
-                    ],
-                ]
+                'discount'   => $this->getDiscountField(),
+                'commission' => $this->getCommissionField(),
             ];
         }
     }
