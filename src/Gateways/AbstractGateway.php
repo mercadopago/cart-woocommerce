@@ -101,6 +101,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->supports   = ['products', 'refunds'];
 
         $this->loadResearchComponent();
+        $this->loadMelidataStoreScripts();
     }
 
     /**
@@ -289,6 +290,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public function canCheckoutLoadScriptsAndStyles(): bool
     {
         return $this->mercadopago->checkout->isCheckout() &&
+            $this->mercadopago->gateway->isEnabled($this) &&
             !$this->mercadopago->url->validateQueryVar('order-received');
     }
 
@@ -312,6 +314,37 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 ]
             ]
         );
+    }
+
+    /**
+     * Load melidata script on store
+     *
+     * @return void
+     */
+    public function loadMelidataStoreScripts(): void
+    {
+        $this->mercadopago->checkout->registerBeforePay(function () {
+            $this->mercadopago->scripts->registerMelidataStoreScript('/woocommerce_pay');
+        });
+
+        $this->mercadopago->checkout->registerBeforeCheckoutForm(function () {
+            $this->mercadopago->scripts->registerMelidataStoreScript('/checkout');
+        });
+
+        $this->mercadopago->checkout->registerPayOrderBeforeSubmit(function () {
+            $this->mercadopago->scripts->registerMelidataStoreScript('/pay_order');
+        });
+
+        $this->mercadopago->gateway->registerBeforeThankYou(function ($orderId) {
+            $order         = wc_get_order($orderId);
+            $paymentMethod = $order->get_payment_method();
+
+            foreach ($this->mercadopago->store->getAvailablePaymentGateways() as $gateway) {
+                if ($gateway::ID === $paymentMethod) {
+                    $this->mercadopago->scripts->registerMelidataStoreScript('/thankyou', $paymentMethod);
+                }
+            }
+        });
     }
 
     /**

@@ -242,6 +242,7 @@ class Dependencies
         $this->template          = new Template();
         $this->plugin            = new Plugin();
         $this->images            = new Images();
+        $this->checkout          = new Checkout();
         $this->orderMetadata     = $this->setOrderMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();
@@ -251,7 +252,6 @@ class Dependencies
         $this->url               = $this->setUrl();
         $this->paymentMethods    = $this->setPaymentMethods();
         $this->scripts           = $this->setScripts();
-        $this->checkout          = $this->setCheckout();
         $this->adminTranslations = $this->setAdminTranslations();
         $this->storeTranslations = $this->setStoreTranslations();
         $this->order             = $this->setOrder();
@@ -339,14 +339,6 @@ class Dependencies
     private function setScripts(): Scripts
     {
         return new Scripts($this->url, $this->seller);
-    }
-
-    /**
-     * @return Checkout
-     */
-    private function setCheckout(): Checkout
-    {
-        return new Checkout($this->scripts);
     }
 
     /**

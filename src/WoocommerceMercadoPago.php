@@ -309,8 +309,7 @@ class WoocommerceMercadoPago
     public function registerActionsWhenGatewayIsNotCalled(): void
     {
         $this->actions->registerActionWhenGatewayIsNotCalled(
-            $this,
-            'product',
+            $this->product,
             'registerBeforeAddToCartForm',
             'MercadoPago\Woocommerce\Gateways\CreditsGateway',
             'renderCreditsBanner'

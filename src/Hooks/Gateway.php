@@ -68,6 +68,18 @@ class Gateway
     }
 
     /**
+     * Verify if gateway is enabled and available
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return bool
+     */
+    public function isEnabled(AbstractGateway $gateway): bool
+    {
+        return $gateway->is_available();
+    }
+
+    /**
      * Register gateway on Woocommerce if it is valid
      *
      * @param string $gateway
@@ -96,8 +108,6 @@ class Gateway
     public function registerGatewayTitle(AbstractGateway $gateway): void
     {
         add_filter('woocommerce_gateway_title', function ($title, $id) use ($gateway) {
-             error_log("$id - $gateway->id - $gateway->commission - $gateway->discount");
-
             if (!preg_match('/woo-mercado-pago/', $id)) {
                 return $title;
             }
@@ -284,18 +294,6 @@ class Gateway
                 $this->template->getWoocommerceTemplate($name, $arg);
             }
         });
-    }
-
-    /**
-     * Register wp head
-     *
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerWpHead($callback): void
-    {
-        add_action('wp_head', $callback);
     }
 
     /**

@@ -257,7 +257,7 @@ class Store
     }
 
     /**
-     * @return array<AbstractGateway>
+     * @return array<string>
      */
     public function getAvailablePaymentGateways(): array
     {
