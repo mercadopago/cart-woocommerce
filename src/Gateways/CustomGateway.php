@@ -35,14 +35,16 @@ class CustomGateway extends AbstractGateway
         $this->id    = self::ID;
         $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-gray-card');
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        
+        $this->init_settings();
+        $this->init_form_fields();
+        $this->payment_scripts($this->id);
 
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-
-        $this->init_settings();
-        $this->init_form_fields();
-        $this->payment_scripts($this->id);
+        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->commission         = $this->getActionableValue('commission', 0);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->gateway->registerGatewayTitle($this);

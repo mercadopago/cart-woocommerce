@@ -34,15 +34,19 @@ class BasicGateway extends AbstractGateway
         $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->description        = $this->adminTranslations['gateway_description'];
-        $this->method_title       = $this->adminTranslations['gateway_method_title'];
-        $this->method_description = $this->adminTranslations['gateway_method_description'];
-
         $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['gateway_method_title'];
+        $this->method_description = $this->adminTranslations['gateway_method_description'];
+        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->commission         = $this->getActionableValue('commission', 0);
+
         $this->mercadopago->gateway->registerUpdateOptions($this);
+        $this->mercadopago->gateway->registerGatewayTitle($this);
+
         $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
     }
@@ -180,32 +184,8 @@ class BasicGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
                 ],
             ],
-            'discount' => [
-                'type'              => 'mp_actionable_input',
-                'title'             => $this->adminTranslations['discount_title'],
-                'input_type'        => 'number',
-                'description'       => $this->adminTranslations['discount_description'],
-                'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
-                'default'           => '0',
-                'custom_attributes' => [
-                    'step' => '0.01',
-                    'min'  => '0',
-                    'max'  => '99',
-                ],
-            ],
-            'commission' => [
-                'type'              => 'mp_actionable_input',
-                'title'             => $this->adminTranslations['commission_title'],
-                'input_type'        => 'number',
-                'description'       => $this->adminTranslations['commission_description'],
-                'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
-                'default'           => '0',
-                'custom_attributes' => [
-                    'step' => '0.01',
-                    'min'  => '0',
-                    'max'  => '99',
-                ],
-            ]
+            'discount'   => $this->getDiscountField(),
+            'commission' => $this->getCommissionField(),
         ];
     }
 
@@ -317,7 +297,7 @@ class BasicGateway extends AbstractGateway
     {
         if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL) === false) {
             $icon = $this->mercadopago->url->getPluginFileUrl('/assets/images/icons/icon-warning', '.png', true);
-            return "<img width='14' height='14' src='$icon' /> ". $this->adminTranslations['invalid_back_url'];
+            return "<img width='14' height='14' style='vertical-align: middle' src='$icon' /> ". $this->adminTranslations['invalid_back_url'];
         }
 
         return $default;

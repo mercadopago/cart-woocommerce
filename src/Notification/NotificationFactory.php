@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Notification;
 
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 
 if (!defined('ABSPATH')) {
@@ -10,7 +11,7 @@ if (!defined('ABSPATH')) {
 
 class NotificationFactory
 {
-    public function createNotificationHandler(string $gateway, array $data): NotificationInterface
+    public function createNotificationHandler(AbstractGateway $gateway, array $data): NotificationInterface
     {
         global $mercadopago;
 

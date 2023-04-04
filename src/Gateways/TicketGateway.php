@@ -36,15 +36,18 @@ class TicketGateway extends AbstractGateway
         $this->icon  = $this->getCheckoutIcon();
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->description        = $this->adminTranslations['gateway_description'];
-        $this->method_title       = $this->adminTranslations['method_title'];
-        $this->method_description = $this->description;
-
         $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['method_title'];
+        $this->method_description = $this->description;
+        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->commission         = $this->getActionableValue('commission', 0);
+
         $this->mercadopago->gateway->registerUpdateOptions($this);
+        $this->mercadopago->gateway->registerGatewayTitle($this);
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
 
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);

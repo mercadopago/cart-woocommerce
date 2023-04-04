@@ -59,21 +59,23 @@ class Options
      *
      * @param AbstractGateway $gateway
      * @param string $optionName
-     * @param string $default
+     * @param mixed $default
      *
-     * @return mixed|string
+     * @return mixed
      */
-    public function getGatewayOption(AbstractGateway $gateway, string $optionName, string $default = '')
+    public function getGatewayOption(AbstractGateway $gateway, string $optionName, $default = '')
     {
-        $wordpressConfigs = self::COMMON_CONFIGS;
-
-        if (in_array($optionName, $wordpressConfigs, true)) {
+        if (in_array($optionName, self::COMMON_CONFIGS, true)) {
             return $this->get($optionName, $default);
         }
 
         $option = $gateway->get_option($optionName, $default);
 
-        return !empty($option) ? $option : $this->get($optionName, $default);
+        if (!empty($option)) {
+            return $option;
+        }
+
+        return $this->get($optionName, $default);
     }
 
 

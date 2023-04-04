@@ -226,6 +226,8 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Set additional shipments information
      *
+     * @param $shipments
+     *
      * @return void
      */
     public function setShipmentsTransaction($shipments): void
@@ -245,6 +247,8 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 
     /**
      * Set items
+     *
+     * @param $items
      *
      * @return void
      */

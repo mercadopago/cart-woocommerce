@@ -200,7 +200,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $shipping           = floatval($order->get_shipping_total());
         $discount           = ($amount - $shipping) * $this->discount / 100;
         $commission         = $amount * ($this->commission / 100);
-        $isTestModeSelected = 'no' === $this->mercadopago->store->getCheckboxCheckoutTestMode() ? 'yes' : 'no';
+        $isTestModeSelected = $this->mercadopago->store->getCheckboxCheckoutTestMode() === 'no' ? 'yes' : 'no';
 
         if (method_exists($order, 'update_meta_data')) {
             $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isTestModeSelected);
@@ -251,11 +251,10 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function webhook(): void
     {
-        $data    = $_GET;
-        $gateway = get_class($this);
+        $data = $_GET;
 
         $notificationFactory = new NotificationFactory();
-        $notificationHandler = $notificationFactory->createNotificationHandler($gateway, $data);
+        $notificationHandler = $notificationFactory->createNotificationHandler($this, $data);
 
         $notificationHandler->handleReceivedNotification($data);
     }
@@ -331,15 +330,20 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     /**
      * Get actionable component value
      *
-     * @param $optionName
-     * @param $default
+     * @param string $optionName
+     * @param mixed $default
      *
      * @return string
      */
-    public function getActionableValue($optionName, $default): string
+    public function getActionableValue(string $optionName, $default): string
     {
-        $active = $this->mercadopago->options->getGatewayOption($this, "{$optionName}_checkbox", false);
-        return $active ? $this->mercadopago->options->getGatewayOption($this, $optionName, $default) : $default;
+        $active = $this->mercadopago->options->getGatewayOption($this, "{$optionName}_checkbox");
+
+        if ($active === 'yes') {
+            return $this->mercadopago->options->getGatewayOption($this, $optionName, $default);
+        }
+
+        return $default;
     }
 
     /**
@@ -394,6 +398,50 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         return [
             'result'   => 'fail',
             'redirect' => '',
+        ];
+    }
+
+    /**
+     * Get commission config field
+     *
+     * @return array
+     */
+    public function getCommissionField(): array
+    {
+        return [
+            'type'              => 'mp_actionable_input',
+            'title'             => $this->adminTranslations['discount_title'],
+            'input_type'        => 'number',
+            'description'       => $this->adminTranslations['discount_description'],
+            'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
+            'default'           => '0',
+            'custom_attributes' => [
+                'step' => '0.01',
+                'min'  => '0',
+                'max'  => '99',
+            ],
+        ];
+    }
+
+    /**
+     * Get discount config field
+     *
+     * @return array
+     */
+    public function getDiscountField(): array
+    {
+        return [
+            'type'              => 'mp_actionable_input',
+            'title'             => $this->adminTranslations['commission_title'],
+            'input_type'        => 'number',
+            'description'       => $this->adminTranslations['commission_description'],
+            'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
+            'default'           => '0',
+            'custom_attributes' => [
+                'step' => '0.01',
+                'min'  => '0',
+                'max'  => '99',
+            ],
         ];
     }
 
