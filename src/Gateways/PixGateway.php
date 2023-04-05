@@ -25,6 +25,11 @@ class PixGateway extends AbstractGateway
     /**
      * @const
      */
+    public const LOG_SOURCE = 'MercadoPago_PixGateway';
+
+    /**
+     * @const
+     */
     public const PIX_IMAGE_ENDPOINT = 'mp_pix_image';
 
     /**
@@ -141,7 +146,7 @@ class PixGateway extends AbstractGateway
         if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
             return $this->processReturnFail(
                 $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-                __METHOD__
+                self::LOG_SOURCE
             );
         }
 
@@ -178,7 +183,7 @@ class PixGateway extends AbstractGateway
 
         return $this->processReturnFail(
             $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-            __METHOD__
+            self::LOG_SOURCE
         );
     }
 

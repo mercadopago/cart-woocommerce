@@ -32,14 +32,14 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      */
     public function createPreference(): string
     {
-        $preference = $this->getTransaction();
+        $preference = $this->getTransaction('Preference');
 
         try {
             $data = $preference->save();
-            $this->mercadopago->logs->file->info('Preference created', __METHOD__, $data);
+            $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
             return $this->mercadopago->seller->isTestMode() ? $data['sandbox_init_point'] : $data['init_point'];
         } catch (\Exception $e) {
-            $this->mercadopago->logs->file->error('Preference creation failed: ' . $e->getMessage(), __METHOD__);
+            $this->mercadopago->logs->file->error('Preference creation failed: ' . $e->getMessage(), __CLASS__);
             return false;
         }
     }

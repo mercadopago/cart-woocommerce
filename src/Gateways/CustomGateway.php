@@ -23,6 +23,11 @@ class CustomGateway extends AbstractGateway
     public const CHECKOUT_NAME = 'checkout-custom';
 
     /**
+     * @const
+     */
+    public const LOG_SOURCE = 'MercadoPago_CustomGateway';
+
+    /**
      * CustomGateway constructor
      */
     public function __construct()
@@ -325,10 +330,7 @@ class CustomGateway extends AbstractGateway
 
         switch ($checkout['checkout_type']) {
             case 'wallet_button':
-                $this->mercadopago->logs->file->info(
-                    'Preparing to render wallet button checkout.',
-                    __METHOD__
-                );
+                $this->mercadopago->logs->file->info('Preparing to render wallet button checkout.', self::LOG_SOURCE);
 
                 return [
                     'result'   => 'success',
@@ -341,10 +343,7 @@ class CustomGateway extends AbstractGateway
                 ];
 
             default:
-                $this->mercadopago->logs->file->info(
-                    'preparing to get response of custom checkout.',
-                    __FUNCTION__
-                );
+                $this->mercadopago->logs->file->info('Preparing to get response of custom checkout.', self::LOG_SOURCE);
 
                 if ($checkout['token'] &&
                     $checkout['amount'] &&
@@ -364,7 +363,7 @@ class CustomGateway extends AbstractGateway
 
         return $this->processReturnFail(
             $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            __METHOD__
+            self::LOG_SOURCE
         );
     }
 
@@ -576,7 +575,7 @@ class CustomGateway extends AbstractGateway
 
         return $this->processReturnFail(
             $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-            __METHOD__
+            self::LOG_SOURCE
         );
     }
 }

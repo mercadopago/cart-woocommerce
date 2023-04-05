@@ -35,10 +35,10 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
 
         try {
             $data = $payment->save();
-            $this->mercadopago->logs->file->info('Payment created', __METHOD__, $data);
+            $this->mercadopago->logs->file->info('Payment created', __CLASS__, $data);
             return $data;
         } catch (\Exception $e) {
-            $this->mercadopago->logs->file->error('Payment creation failed: ' . $e->getMessage(), __METHOD__);
+            $this->mercadopago->logs->file->error('Payment creation failed: ' . $e->getMessage(), __CLASS__);
             return $e->getMessage();
         }
     }

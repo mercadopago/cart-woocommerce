@@ -21,6 +21,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public const CHECKOUT_NAME = '';
 
     /**
+     * @const
+     */
+    public const LOG_SOURCE = '';
+
+    /**
      * @var WoocommerceMercadoPago
      */
     protected $mercadopago;
@@ -387,7 +392,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function getFeeText(string $text, string $feeName, float $feeValue): string
     {
-        return "$text $this->$feeName% / $text = $feeValue";
+        return "$text {$this->$feeName}% / $text = $feeValue";
     }
 
     /**

@@ -76,7 +76,7 @@ class CoreNotification extends AbstractNotification
 
 			$this->handleSuccessfulRequest($notificationEntity->toArray());
 		} catch (\Exception $e) {
-			$this->logs->file->error($e->getMessage(), __METHOD__);
+			$this->logs->file->error($e->getMessage(), __CLASS__);
 			$this->setResponse(500, $e->getMessage());
 		}
     }
@@ -101,13 +101,13 @@ class CoreNotification extends AbstractNotification
                     $oldOrderStatus,
                     $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
                 ),
-                __METHOD__
+                __CLASS__
             );
 
             $this->processStatus($processedStatus, $order, $data);
 		} catch (\Exception $e) {
 			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __METHOD__);
+			$this->logs->file->error($e->getMessage(), __CLASS__);
 		}
 	}
 

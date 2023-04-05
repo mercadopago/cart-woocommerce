@@ -21,6 +21,11 @@ class CreditsGateway extends AbstractGateway
     public const CHECKOUT_NAME = 'checkout-credits';
 
     /**
+     * @const
+     */
+    public const LOG_SOURCE = 'MercadoPago_CreditsGateway';
+
+    /**
      * CreditsGateway constructor
      */
     public function __construct()
@@ -202,10 +207,7 @@ class CreditsGateway extends AbstractGateway
         $order              = wc_get_order($order_id);
         $this->transaction  = new CreditsTransaction($this, $order);
 
-        $this->mercadopago->logs->file->info(
-            'customer being redirected to Mercado Pago.',
-            __FUNCTION__
-        );
+        $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
 
         return [
             'result'   => 'success',

@@ -42,11 +42,11 @@ class File implements LogInterface
      *
      * @param string $message
      * @param string $source
-     * @param array $context
+     * @param mixed $context
      *
      * @return void
      */
-    public function error(string $message, string $source, array $context = []): void
+    public function error(string $message, string $source, $context = []): void
     {
         $this->save(LogLevels::ERROR, $message, $source, $context);
     }
@@ -56,11 +56,11 @@ class File implements LogInterface
      *
      * @param string $message
      * @param string $source
-     * @param array $context
+     * @param mixed $context
      *
      * @return void
      */
-    public function warning(string $message, string $source, array $context = []): void
+    public function warning(string $message, string $source, $context = []): void
     {
         $this->save(LogLevels::WARNING, $message, $source, $context);
     }
@@ -70,11 +70,11 @@ class File implements LogInterface
      *
      * @param string $message
      * @param string $source
-     * @param array $context
+     * @param mixed $context
      *
      * @return void
      */
-    public function notice(string $message, string $source, array $context = []): void
+    public function notice(string $message, string $source, $context = []): void
     {
         $this->save(LogLevels::NOTICE, $message, $source, $context);
     }
@@ -84,11 +84,11 @@ class File implements LogInterface
      *
      * @param string $message
      * @param string $source
-     * @param array $context
+     * @param mixed $context
      *
      * @return void
      */
-    public function info(string $message, string $source, array $context = []): void
+    public function info(string $message, string $source, $context = []): void
     {
         $this->save(LogLevels::INFO, $message, $source, $context);
     }
@@ -98,11 +98,11 @@ class File implements LogInterface
      *
      * @param string $message
      * @param string $source
-     * @param array $context
+     * @param mixed $context
      *
      * @return void
      */
-    public function debug(string $message, string $source, array $context = []): void
+    public function debug(string $message, string $source, $context = []): void
     {
         if (WP_DEBUG) {
             $this->save(LogLevels::DEBUG, $message, $source, $context);
@@ -115,11 +115,11 @@ class File implements LogInterface
      * @param string $level
      * @param string $message
      * @param string $source
-     * @param array $context
+     * @param mixed $context
      *
      * @return void
      */
-    private function save(string $level, string $message, string $source, array $context = []): void
+    private function save(string $level, string $message, string $source, $context = []): void
     {
         if (!$this->debugMode) {
             return;

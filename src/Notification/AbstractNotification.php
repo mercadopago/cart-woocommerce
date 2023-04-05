@@ -65,7 +65,7 @@ abstract class AbstractNotification implements NotificationInterface
      * @return void
      */
     public function handleReceivedNotification($data) {
-        $this->logs->file->info('Received data content', __METHOD__, $data);
+        $this->logs->file->info('Received data content', __CLASS__, $data);
     }
 
     /**
@@ -77,13 +77,13 @@ abstract class AbstractNotification implements NotificationInterface
      */
 	public function handleSuccessfulRequest($data)
     {
-		$this->logs->file->info('Starting to process update...', __METHOD__);
+		$this->logs->file->info('Starting to process update...', __CLASS__);
 
         $order_key = $data['external_reference'];
 
 		if (empty($order_key)) {
             $message = 'external_reference not found';
-			$this->logs->file->error($message, __METHOD__);
+			$this->logs->file->error($message, __CLASS__);
 			$this->setResponse(422, null, $message);
 		}
 
@@ -93,17 +93,17 @@ abstract class AbstractNotification implements NotificationInterface
 
 		if (!$order) {
             $message = 'Order is invalid';
-			$this->logs->file->error($message, __METHOD__);
+			$this->logs->file->error($message, __CLASS__);
 			$this->setResponse(422, $message);
 		}
 
 		if ($order->get_id() !== $id) {
             $message = 'Order error';
-			$this->logs->file->error($message, __METHOD__);
+			$this->logs->file->error($message, __CLASS__);
 			$this->setResponse(422, $message);
 		}
 
-		$this->logs->file->info('Updating metadata and status with data', __METHOD__, $data);
+		$this->logs->file->info('Updating metadata and status with data', __CLASS__, $data);
 
 		return $order;
 	}

@@ -23,6 +23,11 @@ class TicketGateway extends AbstractGateway
     public const CHECKOUT_NAME = 'checkout-ticket';
 
     /**
+     * @const
+     */
+    public const LOG_SOURCE = 'MercadoPago_TicketGateway';
+
+    /**
      * TicketGateway constructor
      */
     public function __construct()
@@ -237,14 +242,14 @@ class TicketGateway extends AbstractGateway
 
                 return $this->processReturnFail(
                     $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                    __METHOD__
+                    self::LOG_SOURCE
                 );
             }
         }
 
         return $this->processReturnFail(
             $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            __METHOD__
+            self::LOG_SOURCE
         );
     }
 

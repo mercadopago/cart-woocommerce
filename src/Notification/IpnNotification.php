@@ -50,7 +50,7 @@ class IpnNotification extends AbstractNotification
 
         if (!isset( $data['id']) || ! isset($data['topic'])) {
             $message = 'No ID or TOPIC param in Request IPN';
-            $this->logs->file->error($message, __METHOD__);
+            $this->logs->file->error($message, __CLASS__);
             $this->setResponse( 422, $message);
         }
 
@@ -66,7 +66,7 @@ class IpnNotification extends AbstractNotification
 
         if ($response->getStatus() !== 200) {
             $message = 'IPN merchant order not found';
-            $this->logs->file->error($message, __METHOD__, (array) $response->getData());
+            $this->logs->file->error($message, __CLASS__, (array) $response->getData());
             $this->setResponse(422, $message);
         }
 
@@ -74,7 +74,7 @@ class IpnNotification extends AbstractNotification
 
         if (count($payments) === 0) {
             $message = 'Not found payments into merchant order';
-            $this->logs->file->error($message, __METHOD__);
+            $this->logs->file->error($message, __CLASS__);
             $this->setResponse( 422, $message);
         }
 
@@ -103,14 +103,14 @@ class IpnNotification extends AbstractNotification
                      $oldOrderStatus,
                      $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
                 ),
-                __METHOD__
+                __CLASS__
             );
 
             $this->processStatus($processedStatus, $order, $data);
             $this->setResponse(200, 'Notification IPN Successfully');
 		} catch (\Exception $e) {
 			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __METHOD__);
+			$this->logs->file->error($e->getMessage(), __CLASS__);
 		}
 	}
 

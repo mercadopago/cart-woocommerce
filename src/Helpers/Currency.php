@@ -262,7 +262,7 @@ final class Currency
             }
         } catch (\Exception $e) {
             $this->logs->file->error("'Mercado pago gave error to get currency value: {$e->getMessage()}",
-                __METHOD__
+                __CLASS__
             );
         }
 

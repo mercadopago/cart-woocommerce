@@ -21,6 +21,11 @@ class BasicGateway extends AbstractGateway
     public const CHECKOUT_NAME = 'checkout-basic';
 
     /**
+     * @const
+     */
+    public const LOG_SOURCE = 'MercadoPago_BasicGateway';
+
+    /**
      * BasicGateway constructor
      */
     public function __construct()
@@ -254,22 +259,14 @@ class BasicGateway extends AbstractGateway
         switch ($method) {
             case 'iframe':
             case 'redirect':
-                $this->mercadopago->logs->file->info(
-                    'customer being redirected to Mercado Pago.',
-                    __METHOD__
-                );
-
+                $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
                 return [
                     'result'   => 'success',
                     'redirect' => $this->transaction->createPreference(),
                 ];
 
             case 'modal':
-                $this->mercadopago->logs->file->info(
-                    'preparing to render Checkout Pro view.',
-                    __METHOD__
-                );
-
+                $this->mercadopago->logs->file->info('Preparing to render Checkout Pro view.', self::LOG_SOURCE);
                 return [
                     'result'   => 'success',
                     'redirect' => $order->get_checkout_payment_url(true),
@@ -281,7 +278,7 @@ class BasicGateway extends AbstractGateway
 
         return $this->processReturnFail(
             $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            __METHOD__
+            self::LOG_SOURCE
         );
     }
 

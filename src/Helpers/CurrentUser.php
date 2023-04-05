@@ -111,7 +111,7 @@ final class CurrentUser
         $neededRoles = ['administrator', 'editor', 'author', 'contributor', 'subscriber'];
 
         if (!$this->userHasRoles($neededRoles)) {
-            $this->logs->file->error('User does not have permission (need admin or editor)', __METHOD__);
+            $this->logs->file->error('User does not have permission (need admin or editor)', __CLASS__);
             wp_send_json_error('Forbidden', 403);
         }
     }

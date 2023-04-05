@@ -50,11 +50,11 @@ class WebhookNotification extends AbstractNotification
 
 		if (!isset($data['data_id']) || !isset($data['type'])) {
             $message = 'data_id or type not set';
-			$this->logs->file->error($message, __METHOD__, $data);
+			$this->logs->file->error($message, __CLASS__, $data);
 
 			if (!isset($data['id']) || !isset($data['topic'])) {
                 $message = 'Mercado Pago request failure';
-				$this->logs->file->error($message, __METHOD__, $data);
+				$this->logs->file->error($message, __CLASS__, $data);
 				$this->setResponse(422, $message);
 			}
 		}
@@ -71,7 +71,7 @@ class WebhookNotification extends AbstractNotification
 
         if ($response->getStatus() !== 200) {
             $message = 'Error when processing received data';
-            $this->logs->file->error($message, __METHOD__, (array) $response);
+            $this->logs->file->error($message, __CLASS__, (array) $response);
             $this->setResponse(422, $message);
         }
 
@@ -98,7 +98,7 @@ class WebhookNotification extends AbstractNotification
                     $oldOrderStatus,
                     $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
                 ),
-                __METHOD__
+                __CLASS__
             );
 
 
@@ -106,7 +106,7 @@ class WebhookNotification extends AbstractNotification
             $this->setResponse(200, 'Webhook Notification Successfully');
 		} catch (\Exception $e) {
             $this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __METHOD__);
+			$this->logs->file->error($e->getMessage(), __CLASS__);
 		}
 	}
 

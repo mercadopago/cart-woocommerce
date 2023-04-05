@@ -111,12 +111,12 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      *
      * @return Payment|Preference
      */
-    public function getTransaction(string $transactionType = 'Preference')
+    public function getTransaction(string $transactionType)
     {
         $transactionClone = clone $this->transaction;
-        unset($transactionClone->token);
 
-        $this->mercadopago->logs->file->info($transactionType, __METHOD__, (array) $transactionClone);
+        unset($transactionClone->token);
+        $this->mercadopago->logs->file->info("$transactionType payload", $this->gateway::LOG_SOURCE, $transactionClone);
 
         return $this->transaction;
     }
