@@ -186,11 +186,11 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      */
     public function getInternalMetadata(): array
     {
-        $seller  = $this->mercadopago->options->get('_collector_id_v1', '');
+        $seller  = $this->mercadopago->seller->getClientId();
         $siteId  = $this->mercadopago->seller->getSiteId();
         $siteUrl = $this->mercadopago->options->get('siteurl');
 
-        $zipCode = $this->getObjectAttributeValue($this->order, 'get_billing_postcode', 'billing_postcode');
+        $zipCode = $this->mercadopago->orderBilling->getZipcode($this->order);
         $zipCode = str_replace('-', '', $zipCode);
 
         $user             = $this->mercadopago->currentUser->getCurrentUser();
@@ -210,10 +210,10 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
             'seller_website'   => $siteUrl,
             'billing_address'  => [
                 'zip_code'     => $zipCode,
-                'street_name'  => $this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1'),
-                'city_name'    => $this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city'),
-                'state_name'   => $this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_state'),
-                'country_name' => $this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_country'),
+                'street_name'  => $this->mercadopago->orderBilling->getAddress1($this->order),
+                'city_name'    => $this->mercadopago->orderBilling->getCity($this->order),
+                'state_name'   => $this->mercadopago->orderBilling->getState($this->order),
+                'country_name' => $this->mercadopago->orderBilling->getCountry($this->order),
             ],
             'user' => [
                 'registered_user'        => $userId ? 'yes' : 'no',
@@ -232,17 +232,11 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      */
     public function setShipmentsTransaction($shipments): void
     {
-        $shipments->receiverAddress->apartment   = $this->getObjectAttributeValue($this->order, 'get_shipping_address_2', 'shipping_address_2');
-        $shipments->receiverAddress->city_name   = $this->getObjectAttributeValue($this->order, 'get_shipping_city', 'shipping_city');
-        $shipments->receiverAddress->state_name  = $this->getObjectAttributeValue($this->order, 'get_shipping_state', 'shipping_state');
-        $shipments->receiverAddress->zip_code    = $this->getObjectAttributeValue($this->order, 'get_shipping_postcode', 'shipping_postcode');
-        $shipments->receiverAddress->street_name = "
-            {$this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_address_2', 'billing_address_2')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_state', 'billing_state')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_country', 'billing_country')}
-        ";
+        $shipments->receiverAddress->apartment   = $this->mercadopago->orderShipping->getAddress2($this->order);
+        $shipments->receiverAddress->city_name   = $this->mercadopago->orderShipping->getCity($this->order);
+        $shipments->receiverAddress->state_name  = $this->mercadopago->orderShipping->getState($this->order);
+        $shipments->receiverAddress->zip_code    = $this->mercadopago->orderShipping->getZipcode($this->order);
+        $shipments->receiverAddress->street_name = $this->mercadopago->orderShipping->getFullAddress($this->order);
     }
 
     /**

@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
+use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -37,6 +38,7 @@ use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
+use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
@@ -101,11 +103,6 @@ class Dependencies
      * @var Template
      */
     public $template;
-
-    /**
-     * @var OrderMetadata
-     */
-    public $orderMetadata;
 
     /**
      * @var Order
@@ -178,6 +175,21 @@ class Dependencies
     public $nonce;
 
     /**
+     * @var OrderBilling
+     */
+    public $orderBilling;
+
+    /**
+     * @var OrderShipping
+     */
+    public $orderShipping;
+
+    /**
+     * @var OrderMetadata
+     */
+    public $orderMetadata;
+
+    /**
      * @var OrderStatus
      */
     public $orderStatus;
@@ -243,6 +255,8 @@ class Dependencies
         $this->plugin            = new Plugin();
         $this->images            = new Images();
         $this->checkout          = new Checkout();
+        $this->orderBilling      = new OrderBilling();
+        $this->orderShipping     = new OrderShipping();
         $this->orderMetadata     = $this->setOrderMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();

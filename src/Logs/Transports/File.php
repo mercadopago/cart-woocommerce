@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
 class File implements LogInterface
 {
     /**
+     * @const
+     */
+    private const ENCODE_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
+
+    /**
      * @var \WC_Logger
      */
     private $logger;
@@ -125,6 +130,7 @@ class File implements LogInterface
             return;
         }
 
-        $this->logger->{$level}($message . ' - Context: ' . json_encode($context), ['source' => $source]);
+        $context = json_encode($context, self::ENCODE_FLAGS);
+        $this->logger->{$level}("$message - Context: $context" , ['source' => $source]);
     }
 }

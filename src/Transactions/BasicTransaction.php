@@ -8,6 +8,11 @@ use MercadoPago\Woocommerce\Gateways\BasicGateway;
 class BasicTransaction extends AbstractPreferenceTransaction
 {
     /**
+     * @const
+     */
+    public const ID = 'basic';
+
+    /**
      * Basic Transaction constructor
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order)
