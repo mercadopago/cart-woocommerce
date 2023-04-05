@@ -107,4 +107,24 @@ class OrderShipping
     {
         return "{$this->getAddress1($order)} / {$this->getAddress2($order)} - {$this->getCity($order)} - {$this->getState($order)} - {$this->getCountry($order)}";
     }
+
+    /**
+     * @param \WC_Order $order
+     *
+     * @return string
+     */
+    public function getShippingMethod(\WC_Order $order): string
+    {
+        return $order->get_shipping_method();
+    }
+
+    /**
+     * @param \WC_Order $order
+     *
+     * @return float
+     */
+    public function getTotal(\WC_Order $order): float
+    {
+        return (float) $order->get_shipping_total();
+    }
 }

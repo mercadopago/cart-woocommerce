@@ -39,7 +39,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
             $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
             return $this->mercadopago->store->isTestMode() ? $data['sandbox_init_point'] : $data['init_point'];
         } catch (\Exception $e) {
-            $this->mercadopago->logs->file->error('Preference creation failed: ' . $e->getMessage(), __CLASS__);
+            $this->mercadopago->logs->file->error('Preference creation failed: ' . $e->getMessage(), $this->gateway::LOG_SOURCE);
             return false;
         }
     }

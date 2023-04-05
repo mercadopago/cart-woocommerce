@@ -87,7 +87,7 @@ class OrderMeta
      *
      * @return void
      */
-    public function setData(\WC_Order $order, string $metaKey, $value): void
+    public function updateData(\WC_Order $order, string $metaKey, $value): void
     {
         $order->update_meta_data($metaKey, $value);
     }

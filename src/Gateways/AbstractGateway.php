@@ -196,51 +196,33 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function process_payment($order_id): array
     {
-        global $woocommerce;
+        $order = wc_get_order($order_id);
 
-        $order              = wc_get_order($order_id);
-        $amount             = $woocommerce->cart->get_subtotal();
-        $shipping           = floatval($order->get_shipping_total());
-        $discount           = ($amount - $shipping) * $this->discount / 100;
-        $commission         = $amount * ($this->commission / 100);
-        $isTestModeSelected = $this->mercadopago->store->getCheckboxCheckoutTestMode() === 'no' ? 'yes' : 'no';
+        $amount     = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $shipping   = $this->mercadopago->orderShipping->getTotal($order);
+        $isTestMode = $this->mercadopago->store->isTestMode();
 
-        if (method_exists($order, 'update_meta_data')) {
-            $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isTestModeSelected);
-            $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this));
+        $discount   = ($amount - $shipping) * $this->discount / 100;
+        $commission = $amount * ($this->commission / 100);
 
-            if (!empty($this->discount)) {
-                $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
-                $feeText = $this->getFeeText($feeTranslation, 'discount', $discount);
-                $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
+        $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isTestMode);
+        $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this));
 
-                $order->set_total($amount - $discount);
-            }
+        if ($this->discount !== 0) {
+            $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
+            $feeText     = $this->getFeeText($translation, 'discount', $discount);
 
-            if (!empty($this->commission)) {
-                $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
-                $feeText = $this->getFeeText($feeTranslation, 'commission', $commission);
-                $this->mercadopago->orderMetadata->setCommissionData($order, $feeText);
-            }
-
-            $order->save();
-        } else {
-            $this->mercadopago->orderMetadata->setUsedGatewayPost($order_id, get_class($this));
-
-            if (!empty($this->discount)) {
-                $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
-                $feeText = $this->getFeeText($feeTranslation, 'discount', $discount);
-                $this->mercadopago->orderMetadata->setDiscountPost($order_id, $feeText);
-
-                $order->set_total($amount - $discount);
-            }
-
-            if (!empty($this->commission)) {
-                $feeTranslation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
-                $feeText = $this->getFeeText($feeTranslation, 'commission', $commission);
-                $this->mercadopago->orderMetadata->setCommissionPost($order_id, $feeText);
-            }
+            $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
         }
+
+        if ($this->commission !== 0) {
+            $translation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
+            $feeText     = $this->getFeeText($translation, 'commission', $commission);
+
+            $this->mercadopago->orderMetadata->setCommissionData($order, $feeText);
+        }
+
+        $order->save();
 
         return [];
     }
