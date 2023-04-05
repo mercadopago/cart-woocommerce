@@ -205,7 +205,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
             'site_id'          => strtolower($siteId),
             'sponsor_id'       => $this->countryConfigs['sponsor_id'],
             'collector'        => $seller,
-            'test_mode'        => $this->mercadopago->seller->isTestMode(),
+            'test_mode'        => $this->mercadopago->store->isTestMode(),
             'details'          => '',
             'seller_website'   => $siteUrl,
             'billing_address'  => [

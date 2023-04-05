@@ -37,7 +37,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         try {
             $data = $preference->save();
             $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
-            return $this->mercadopago->seller->isTestMode() ? $data['sandbox_init_point'] : $data['init_point'];
+            return $this->mercadopago->store->isTestMode() ? $data['sandbox_init_point'] : $data['init_point'];
         } catch (\Exception $e) {
             $this->mercadopago->logs->file->error('Preference creation failed: ' . $e->getMessage(), __CLASS__);
             return false;
@@ -53,10 +53,10 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     {
         parent::setCommonTransaction();
 
-        $isTestUser = $this->mercadopago->options->get('_test_user_v1', '');
-        $isTestMode = $this->mercadopago->seller->isTestMode();
+        $isTestMode = $this->mercadopago->store->isTestMode();
+        $isTestUser = $this->mercadopago->seller->isTestUser();
 
-        if (!$isTestUser && !$isTestMode) {
+        if (!$isTestMode && !$isTestUser) {
             $this->transaction->sponsor_id = $this->countryConfigs['sponsor_id'];
         }
     }

@@ -73,6 +73,11 @@ class Seller
     private const ALL_PAYMENT_METHODS = '_all_payment_methods_v0';
 
     /**
+     * @const
+     */
+    private const TEST_USER = '_test_user_v1';
+
+    /**
      * @var Cache
      */
     private $cache;
@@ -218,9 +223,25 @@ class Seller
     /**
      * @return bool
      */
-    public function isTestMode(): bool
+    public function getTestUser(): bool
     {
-        return $this->store->getCheckboxCheckoutTestMode() === 'yes';
+        return $this->options->get(self::TEST_USER);
+    }
+
+    /**
+     * @param bool $testUser
+     */
+    public function setTestUser(bool $testUser): void
+    {
+        $this->options->set(self::TEST_USER, $testUser);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTestUser(): bool
+    {
+        return $this->getTestUser();
     }
 
     /**
@@ -228,7 +249,7 @@ class Seller
      */
     public function getCredentialsPublicKey(): string
     {
-        if ($this->isTestMode()) {
+        if ($this->store->isTestMode()) {
             return $this->getCredentialsPublicKeyTest();
         }
 
@@ -240,7 +261,7 @@ class Seller
      */
     public function getCredentialsAccessToken(): string
     {
-        if ($this->isTestMode()) {
+        if ($this->store->isTestMode()) {
             return $this->getCredentialsAccessTokenTest();
         }
 

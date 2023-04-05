@@ -245,7 +245,7 @@ class Store
      */
     public function getCheckboxCheckoutTestMode(): string
     {
-        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, '');
+        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, 'no');
     }
 
     /**
@@ -254,6 +254,14 @@ class Store
     public function setCheckboxCheckoutTestMode(string $checkboxCheckoutTestMode): void
     {
         $this->options->set(self::CHECKBOX_CHECKOUT_TEST_MODE, $checkboxCheckoutTestMode);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTestMode(): bool
+    {
+        return $this->getCheckboxCheckoutTestMode() === 'yes';
     }
 
     /**
