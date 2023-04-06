@@ -359,41 +359,40 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     /**
      * Register commission and discount on admin order totals
      *
+     * @param AbstractGateway $gateway
      * @param int $orderId
      *
      * @return void
      */
-    public function registerCommissionAndDiscountOnAdminOrderTotals(int $orderId): void
+    public function registerCommissionAndDiscount(AbstractGateway $gateway, int $orderId): void
     {
         $order       = wc_get_order($orderId);
         $usedGateway = $this->mercadopago->orderMetadata->getUsedGatewayData($order);
 
-        foreach ($this->mercadopago->store->getAvailablePaymentGateways() as $gateway) {
-            if ($gateway::ID === $usedGateway) {
-                $discount   = explode('=', $this->mercadopago->orderMetadata->getDiscountData($order))[1];
-                $commission = explode('=', $this->mercadopago->orderMetadata->getCommissionData($order))[1];
+        if ($gateway::ID === $usedGateway) {
+            $discount   = explode('=', $this->mercadopago->orderMetadata->getDiscountData($order))[1];
+            $commission = explode('=', $this->mercadopago->orderMetadata->getCommissionData($order))[1];
 
-                if ($commission) {
-                    $this->mercadopago->template->getWoocommerceTemplate(
-                        'admin/order/generic-note.php',
-                        [
-                            'tip' => 'Represents the commission configured on plugin settings.',
-                            'title' => 'Mercado Pago commission:',
-                            'value' => $commission,
-                        ]
-                    );
-                }
+            if ($commission) {
+                $this->mercadopago->template->getWoocommerceTemplate(
+                    'admin/order/generic-note.php',
+                    [
+                        'tip' => 'Represents the commission configured on plugin settings.',
+                        'title' => 'Mercado Pago commission:',
+                        'value' => $commission,
+                    ]
+                );
+            }
 
-                if ($discount) {
-                    $this->mercadopago->template->getWoocommerceTemplate(
-                        'admin/order/generic-note.php',
-                        [
-                            'tip' => 'Represents the discount configured on plugin settings.',
-                            'title' => 'Mercado Pago discount:',
-                            'value' => $discount,
-                        ]
-                    );
-                }
+            if ($discount) {
+                $this->mercadopago->template->getWoocommerceTemplate(
+                    'admin/order/generic-note.php',
+                    [
+                        'tip' => 'Represents the discount configured on plugin settings.',
+                        'title' => 'Mercado Pago discount:',
+                        'value' => $discount,
+                    ]
+                );
             }
         }
     }

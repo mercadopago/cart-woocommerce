@@ -57,7 +57,7 @@ class TicketGateway extends AbstractGateway
 
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
 
-        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrderTotals']);
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
     }
 
     /**
@@ -194,7 +194,6 @@ class TicketGateway extends AbstractGateway
      * @param $order_id
      *
      * @return array
-     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
@@ -416,5 +415,17 @@ class TicketGateway extends AbstractGateway
                 'transaction_details' => $transactionDetails,
             ]
         );
+    }
+
+    /**
+     * Register commission and discount on admin order totals
+     *
+     * @param int $orderId
+     *
+     * @return void
+     */
+    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
+    {
+        parent::registerCommissionAndDiscount($this, $orderId);
     }
 }
