@@ -523,7 +523,7 @@ class OrderMetadata
         $paymentIdMetadata = count($this->getPaymentIdsPost($orderId));
 
         if (count($paymentsId) > 0) {
-            if ($paymentIdMetadata === 0) {
+            if ($paymentIdMetadata == 0) {
                 $this->setPaymentIdsPost($orderId, implode(', ', $paymentsId));
             }
 
@@ -531,7 +531,7 @@ class OrderMetadata
                 $paymentDetailKey = 'Mercado Pago - Payment ' . $paymentId;
                 $paymentDetailMetadata = count($this->orderMeta->getPost($orderId, $paymentDetailKey));
 
-                if ($paymentDetailMetadata === 0) {
+                if ($paymentDetailMetadata == 0) {
                     $this->orderMeta->setPost($orderId, $paymentDetailKey, '[Date ' . gmdate('Y-m-d H:i:s') . ']');
                 }
             }

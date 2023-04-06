@@ -146,7 +146,7 @@ class CoreNotification extends AbstractNotification
 				);
 			}
 
-			if (count($payment_ids) !== 0) {
+			if (count($payment_ids) != 0) {
 				$this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $payment_ids));
 			}
 		}

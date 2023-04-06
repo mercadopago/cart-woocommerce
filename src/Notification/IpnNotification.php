@@ -72,7 +72,7 @@ class IpnNotification extends AbstractNotification
 
         $payments = $response->getData()['payments'];
 
-        if (count($payments) === 0) {
+        if (count($payments) == 0) {
             $message = 'Not found payments into merchant order';
             $this->logs->file->error($message, __CLASS__);
             $this->setResponse( 422, $message);
@@ -188,7 +188,7 @@ class IpnNotification extends AbstractNotification
                 );
             }
 
-            if (count($paymentIds) !== 0) {
+            if (count($paymentIds) != 0) {
                 $this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $paymentIds));
             }
         }
