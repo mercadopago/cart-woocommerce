@@ -120,7 +120,7 @@ class Gateway
                 return $title;
             }
 
-            if ($gateway->commission === 0 && $gateway->discount === 0) {
+            if ($gateway->commission == 0 && $gateway->discount == 0) {
                 return $title;
             }
 

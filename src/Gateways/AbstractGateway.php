@@ -459,11 +459,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
-     * Get commission config field
+     * Get discount config field
      *
      * @return array
      */
-    public function getCommissionField(): array
+    public function getDiscountField(): array
     {
         return [
             'type'              => 'mp_actionable_input',
@@ -481,11 +481,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
-     * Get discount config field
+     * Get commission config field
      *
      * @return array
      */
-    public function getDiscountField(): array
+    public function getCommissionField(): array
     {
         return [
             'type'              => 'mp_actionable_input',
