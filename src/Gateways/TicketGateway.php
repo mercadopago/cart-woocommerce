@@ -56,6 +56,8 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
 
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrderTotals']);
     }
 
     /**

@@ -90,6 +90,38 @@ class Store
     }
 
     /**
+     * @return bool
+     */
+    public function isTestMode(): bool
+    {
+        return $this->getCheckboxCheckoutTestMode() === 'yes';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isProductionMode(): bool
+    {
+        return $this->getCheckboxCheckoutTestMode() !== 'yes';
+    }
+
+    /**
+     * @return string
+     */
+    public function getTestMode(): string
+    {
+        return $this->getCheckboxCheckoutTestMode();
+    }
+
+    /**
+     * @return string
+     */
+    public function getProductionMode(): string
+    {
+        return $this->getCheckboxCheckoutTestMode() === 'yes' ? 'no' : 'yes';
+    }
+
+    /**
      * @param string $default
      *
      * @return string
@@ -254,14 +286,6 @@ class Store
     public function setCheckboxCheckoutTestMode(string $checkboxCheckoutTestMode): void
     {
         $this->options->set(self::CHECKBOX_CHECKOUT_TEST_MODE, $checkboxCheckoutTestMode);
-    }
-
-    /**
-     * @return bool
-     */
-    public function isTestMode(): bool
-    {
-        return $this->getCheckboxCheckoutTestMode() === 'yes';
     }
 
     /**

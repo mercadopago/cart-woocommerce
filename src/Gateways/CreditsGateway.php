@@ -53,6 +53,8 @@ class CreditsGateway extends AbstractGateway
         $this->mercadopago->gateway->registerGatewayTitle($this);
 
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrderTotals']);
     }
 
     /**

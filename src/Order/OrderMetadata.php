@@ -93,15 +93,15 @@ class OrderMetadata
         $this->orderMeta = $orderMeta;
     }
 
+
     /**
      * @param \WC_Order $order
-     * @param mixed $value
      *
-     * @return void
+     * @return mixed
      */
-    public function setIsProductionModeData(\WC_Order $order, $value): void
+    public function getUsedGatewayData(\WC_Order $order)
     {
-        $this->orderMeta->updateData($order, self::IS_PRODUCTION_MODE, $value);
+        return $this->orderMeta->get($order, self::USED_GATEWAY);
     }
 
     /**
@@ -112,7 +112,38 @@ class OrderMetadata
      */
     public function setUsedGatewayData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::USED_GATEWAY, $value);
+        $this->orderMeta->update($order, self::USED_GATEWAY, $value);
+    }
+
+    /**
+     * @param \WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getIsProductionModeData(\WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::IS_PRODUCTION_MODE);
+    }
+
+    /**
+     * @param \WC_Order $order
+     * @param mixed $value
+     *
+     * @return void
+     */
+    public function setIsProductionModeData(\WC_Order $order, $value): void
+    {
+        $this->orderMeta->update($order, self::IS_PRODUCTION_MODE, $value);
+    }
+
+    /**
+     * @param \WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getDiscountData(\WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::DISCOUNT);
     }
 
     /**
@@ -123,7 +154,17 @@ class OrderMetadata
      */
     public function setDiscountData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::DISCOUNT, $value);
+        $this->orderMeta->update($order, self::DISCOUNT, $value);
+    }
+
+    /**
+     * @param \WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getCommissionData(\WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::COMMISSION);
     }
 
     /**
@@ -134,7 +175,7 @@ class OrderMetadata
      */
     public function setCommissionData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::COMMISSION, $value);
+        $this->orderMeta->update($order, self::COMMISSION, $value);
     }
 
     /**
@@ -155,7 +196,7 @@ class OrderMetadata
      */
     public function addInstallmentsData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->addData($order, self::MP_INSTALLMENTS, $value);
+        $this->orderMeta->add($order, self::MP_INSTALLMENTS, $value);
     }
 
     /**
@@ -176,7 +217,7 @@ class OrderMetadata
      */
     public function addTransactionDetailsData(\WC_Order $order, string $value): void
     {
-        $this->orderMeta->addData($order, self::MP_TRANSACTION_DETAILS, $value);
+        $this->orderMeta->add($order, self::MP_TRANSACTION_DETAILS, $value);
     }
 
     /**
@@ -208,7 +249,7 @@ class OrderMetadata
      */
     public function addTransactionAmountData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->addData($order, self::MP_TRANSACTION_AMOUNT, $value);
+        $this->orderMeta->add($order, self::MP_TRANSACTION_AMOUNT, $value);
     }
 
     /**
@@ -219,7 +260,7 @@ class OrderMetadata
      */
     public function setTransactionAmountData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::MP_TRANSACTION_AMOUNT, $value);
+        $this->orderMeta->update($order, self::MP_TRANSACTION_AMOUNT, $value);
     }
 
     /**
@@ -251,7 +292,7 @@ class OrderMetadata
      */
     public function addTotalPaidAmountData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->addData($order, self::MP_TOTAL_PAID_AMOUNT, $value);
+        $this->orderMeta->add($order, self::MP_TOTAL_PAID_AMOUNT, $value);
     }
 
     /**
@@ -305,7 +346,7 @@ class OrderMetadata
      */
     public function setTicketTransactionDetailsData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::TICKET_TRANSACTION_DETAILS, $value);
+        $this->orderMeta->update($order, self::TICKET_TRANSACTION_DETAILS, $value);
     }
 
     /**
@@ -348,7 +389,7 @@ class OrderMetadata
      */
     public function setPixQrBase64Data(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::MP_PIX_QR_BASE_64, $value);
+        $this->orderMeta->update($order, self::MP_PIX_QR_BASE_64, $value);
     }
 
     /**
@@ -402,7 +443,7 @@ class OrderMetadata
      */
     public function setPixQrCodeData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::MP_PIX_QR_CODE, $value);
+        $this->orderMeta->update($order, self::MP_PIX_QR_CODE, $value);
     }
 
     /**
@@ -433,7 +474,7 @@ class OrderMetadata
      */
     public function setPixExpirationDateData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::PIX_EXPIRATION_DATE, $value);
+        $this->orderMeta->update($order, self::PIX_EXPIRATION_DATE, $value);
     }
 
     /**
@@ -466,7 +507,7 @@ class OrderMetadata
      */
     public function setPixOnData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->updateData($order, self::PIX_ON, $value);
+        $this->orderMeta->update($order, self::PIX_ON, $value);
     }
 
     /**

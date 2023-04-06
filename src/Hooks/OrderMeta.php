@@ -9,20 +9,6 @@ if (!defined('ABSPATH')) {
 class OrderMeta
 {
     /**
-     * Get meta
-     *
-     * @param \WC_Order $order
-     * @param string $metaKey
-     * @param bool $single
-     *
-     * @return mixed
-     */
-    public function get(\WC_Order $order, string $metaKey, bool $single = true)
-    {
-        return $order->get_meta($metaKey, $single);
-    }
-
-    /**
      * Get post meta
      *
      * @param int $postId
@@ -52,6 +38,32 @@ class OrderMeta
     }
 
     /**
+     * Get meta
+     *
+     * @param \WC_Order $order
+     * @param string $metaKey
+     * @param bool $single
+     *
+     * @return mixed
+     */
+    public function get(\WC_Order $order, string $metaKey, bool $single = true)
+    {
+        return $order->get_meta($metaKey, $single);
+    }
+
+    /**
+     * Get all metadata
+     *
+     * @param \WC_Order $order
+     *
+     * @return array
+     */
+    public function getAll(\WC_Order $order): array
+    {
+        return $order->get_meta_data();
+    }
+
+    /**
      * Add metadata
      *
      * @param \WC_Order $order
@@ -61,21 +73,9 @@ class OrderMeta
      *
      * @return void
      */
-    public function addData(\WC_Order $order, string $metaKey, $value, bool $unique = false): void
+    public function add(\WC_Order $order, string $metaKey, $value, bool $unique = false): void
     {
         $order->add_meta_data($metaKey, $value, $unique);
-    }
-
-    /**
-     * Get metadata
-     *
-     * @param \WC_Order $order
-     *
-     * @return array
-     */
-    public function getData(\WC_Order $order): array
-    {
-        return $order->get_meta_data();
     }
 
     /**
@@ -87,8 +87,9 @@ class OrderMeta
      *
      * @return void
      */
-    public function updateData(\WC_Order $order, string $metaKey, $value): void
+    public function update(\WC_Order $order, string $metaKey, $value): void
     {
         $order->update_meta_data($metaKey, $value);
+        $order->save();
     }
 }

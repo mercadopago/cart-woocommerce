@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
@@ -146,6 +147,56 @@ class Order
     }
 
     /**
+     * Register total line after WooCommerce order totals callback
+     *
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function registerAdminOrderTotalsAfterTotal($callback): void
+    {
+        add_action('woocommerce_admin_order_totals_after_total', $callback);
+    }
+
+    /**
+     * Register total line after WooCommerce order totals template
+     *
+     * @param string $tip
+     * @param string $title
+     * @param string $value
+     *
+     * @return void
+     */
+    public function registerAdminOrderTotalsAfterTotalTemplate(string $tip, string $title, string $value): void
+    {
+        add_action('woocommerce_admin_order_totals_after_total', function ($orderId) use ($tip, $title, $value) {
+            $this->template->getWoocommerceTemplate(
+                'admin/order/generic-note.php',
+                [
+                    'tip'   => $tip,
+                    'title' => $title,
+                    'value' => $value
+                ]
+            );
+        });
+    }
+
+    /**
+     * Add order note
+     *
+     * @param \WC_Order $order
+     * @param string $description
+     * @param int $isCustomerNote
+     * @param bool $addedByUser
+     *
+     * @return void
+     */
+    public function addOrderNote(\WC_Order $order, string $description, int $isCustomerNote = 0, bool $addedByUser = false)
+    {
+        $order->add_order_note($description, $isCustomerNote, $addedByUser);
+    }
+
+    /**
      * Set order status from/to
      *
      * @param \WC_Order $order
@@ -238,20 +289,5 @@ class Order
             $this->orderMetadata->setPixExpirationDatePost($order->get_id(), $expiration);
             $this->orderMetadata->setPixOnPost($order->get_id(), 1);
         }
-    }
-
-    /**
-     * Add order note
-     *
-     * @param \WC_Order $order
-     * @param string $description
-     * @param int $isCustomerNote
-     * @param bool $addedByUser
-     *
-     * @return void
-     */
-    public function addOrderNote(\WC_Order $order, string $description, int $isCustomerNote = 0, bool $addedByUser = false)
-    {
-        $order->add_order_note($description, $isCustomerNote, $addedByUser);
     }
 }

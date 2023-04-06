@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
+use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Notification\NotificationFactory;
@@ -192,37 +193,34 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      * @param $order_id
      *
      * @return array
-     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
         $order = wc_get_order($order_id);
 
-        $amount     = $this->mercadopago->woocommerce->cart->get_subtotal();
-        $shipping   = $this->mercadopago->orderShipping->getTotal($order);
-        $isTestMode = $this->mercadopago->store->isTestMode();
+        $amount           = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $shipping         = $this->mercadopago->orderShipping->getTotal($order);
+        $isProductionMode = $this->mercadopago->store->getProductionMode();
 
         $discount   = ($amount - $shipping) * $this->discount / 100;
         $commission = $amount * ($this->commission / 100);
 
-        $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isTestMode);
-        $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this));
+        $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
+        $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this)::ID);
 
-        if ($this->discount !== 0) {
+        if ($this->discount != 0) {
             $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
             $feeText     = $this->getFeeText($translation, 'discount', $discount);
 
             $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
         }
 
-        if ($this->commission !== 0) {
+        if ($this->commission != 0) {
             $translation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
             $feeText     = $this->getFeeText($translation, 'commission', $commission);
 
             $this->mercadopago->orderMetadata->setCommissionData($order, $feeText);
         }
-
-        $order->save();
 
         return [];
     }
@@ -335,6 +333,72 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
+     * Process if result is fail
+     *
+     * @param string $message
+     * @param string $source
+     * @param array $context
+     * @param bool $notice
+     *
+     * @return array
+     */
+    public function processReturnFail(string $message, string $source, array $context = [], bool $notice = false): array
+    {
+        $this->mercadopago->logs->file->error($message, $source, $context);
+
+        if ($notice) {
+            $this->mercadopago->notices->storeNotice($message);
+        }
+
+        return [
+            'result'   => 'fail',
+            'redirect' => '',
+        ];
+    }
+
+    /**
+     * Register commission and discount on admin order totals
+     *
+     * @param int $orderId
+     *
+     * @return void
+     */
+    public function registerCommissionAndDiscountOnAdminOrderTotals(int $orderId): void
+    {
+        $order       = wc_get_order($orderId);
+        $usedGateway = $this->mercadopago->orderMetadata->getUsedGatewayData($order);
+
+        foreach ($this->mercadopago->store->getAvailablePaymentGateways() as $gateway) {
+            if ($gateway::ID === $usedGateway) {
+                $discount   = explode('=', $this->mercadopago->orderMetadata->getDiscountData($order))[1];
+                $commission = explode('=', $this->mercadopago->orderMetadata->getCommissionData($order))[1];
+
+                if ($commission) {
+                    $this->mercadopago->template->getWoocommerceTemplate(
+                        'admin/order/generic-note.php',
+                        [
+                            'tip' => 'Represents the commission configured on plugin settings.',
+                            'title' => 'Mercado Pago commission:',
+                            'value' => $commission,
+                        ]
+                    );
+                }
+
+                if ($discount) {
+                    $this->mercadopago->template->getWoocommerceTemplate(
+                        'admin/order/generic-note.php',
+                        [
+                            'tip' => 'Represents the discount configured on plugin settings.',
+                            'title' => 'Mercado Pago discount:',
+                            'value' => $discount,
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    /**
      * Get checkout name
      *
      * @return string
@@ -374,7 +438,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function getFeeText(string $text, string $feeName, float $feeValue): string
     {
-        return "$text {$this->$feeName}% / $text = $feeValue";
+        $total = Numbers::formatWithCurrencySymbol($this->mercadopago->currency->getCurrencySymbol(), $feeValue);
+        return "$text {$this->$feeName}% = $total";
     }
 
     /**
@@ -392,30 +457,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $amount     = $subtotal - $discount + $commission;
 
         return $amount + $tax;
-    }
-
-    /**
-     * Process if result is fail
-     *
-     * @param string $message
-     * @param string $source
-     * @param array $context
-     * @param bool $notice
-     *
-     * @return array
-     */
-    public function processReturnFail(string $message, string $source, array $context = [], bool $notice = false): array
-    {
-        $this->mercadopago->logs->file->error($message, $source, $context);
-
-        if ($notice) {
-            $this->mercadopago->notices->storeNotice($message);
-        }
-
-        return [
-            'result'   => 'fail',
-            'redirect' => '',
-        ];
     }
 
     /**
