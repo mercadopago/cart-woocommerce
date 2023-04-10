@@ -297,6 +297,10 @@ class WoocommerceMercadoPago
     public function registerHooks(): void
     {
         add_action('wp_loaded', [$this, 'init']);
+        add_filter('query_vars', function ($vars) {
+            $vars[] = 'wallet_button';
+            return $vars;
+        });
     }
 
     /**

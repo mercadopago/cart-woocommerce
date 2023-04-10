@@ -68,115 +68,104 @@ class CustomGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
-        parent::init_form_fields();
-
-        if (!empty($this->mercadopago->store->getCheckoutCountry()) &&
-            !empty($this->mercadopago->seller->getCredentialsPublicKey()) &&
-            !empty($this->mercadopago->seller->getCredentialsAccessToken())
-        ) {
-            $this->form_fields = [
-                'header' => [
-                    'type'        => 'mp_config_title',
-                    'title'       => $this->adminTranslations['header_title'],
-                    'description' => $this->adminTranslations['gateway_description'],
+        $this->form_fields = [
+            'header' => [
+                'type'        => 'mp_config_title',
+                'title'       => $this->adminTranslations['header_title'],
+                'description' => $this->adminTranslations['gateway_description'],
+            ],
+            'card_settings' => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_settings_title'],
+                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
+                    'button_text' => $this->adminTranslations['card_settings_button_text'],
+                    'button_url'  => $this->links['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
                 ],
-                'card_settings' => [
-                    'type'  => 'mp_card_info',
-                    'value' => [
-                        'title'       => $this->adminTranslations['card_settings_title'],
-                        'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
-                        'button_text' => $this->adminTranslations['card_settings_button_text'],
-                        'button_url'  => $this->links['admin_settings_page'],
-                        'icon'        => 'mp-icon-badge-info',
-                        'color_card'  => 'mp-alert-color-success',
-                        'size_card'   => 'mp-card-body-size',
-                        'target'      => '_self',
-                    ],
+            ],
+            'enabled' => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['enabled_title'],
+                'subtitle'     => $this->adminTranslations['enabled_subtitle'],
+                'default'      => 'no',
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
                 ],
-                'enabled' => [
-                    'type'         => 'mp_toggle_switch',
-                    'title'        => $this->adminTranslations['enabled_title'],
-                    'subtitle'     => $this->adminTranslations['enabled_subtitle'],
-                    'default'      => 'no',
-                    'descriptions' => [
-                        'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
-                        'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
-                    ],
+            ],
+            'title' => [
+                'type'        => 'text',
+                'title'       => $this->adminTranslations['title_title'],
+                'description' => $this->adminTranslations['title_description'],
+                'default'     => $this->adminTranslations['title_default'],
+                'desc_tip'    => $this->adminTranslations['title_desc_tip'],
+                'class'       => 'limit-title-max-length',
+            ],
+            'card_info_helper' => [
+                'type'  => 'title',
+                'value' => '',
+            ],
+            'card_info_fees' => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_info_fees_title'],
+                    'subtitle'    => $this->adminTranslations['card_info_fees_subtitle'],
+                    'button_text' => $this->adminTranslations['card_info_fees_button_url'],
+                    'button_url'  => $this->links['mercadopago_costs'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_blank',
                 ],
-                'title' => [
-                    'type'        => 'text',
-                    'title'       => $this->adminTranslations['title_title'],
-                    'description' => $this->adminTranslations['title_description'],
-                    'default'     => $this->adminTranslations['title_default'],
-                    'desc_tip'    => $this->adminTranslations['title_desc_tip'],
-                    'class'       => 'limit-title-max-length',
+            ],
+            'currency_conversion' => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['currency_conversion_title'],
+                'subtitle'     => $this->adminTranslations['currency_conversion_subtitle'],
+                'default'      => 'no',
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['currency_conversion_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
                 ],
-                'card_info_helper' => [
-                    'type'  => 'title',
-                    'value' => '',
+            ],
+            'wallet_button' => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['wallet_button_title'],
+                'subtitle'     => $this->adminTranslations['wallet_button_subtitle'],
+                'default'      => 'yes',
+                'after_toggle' => $this->getWalletButtonPreview(),
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['wallet_button_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['wallet_button_descriptions_disabled'],
                 ],
-                'card_info_fees' => [
-                    'type'  => 'mp_card_info',
-                    'value' => [
-                        'title'       => $this->adminTranslations['card_info_fees_title'],
-                        'subtitle'    => $this->adminTranslations['card_info_fees_subtitle'],
-                        'button_text' => $this->adminTranslations['card_info_fees_button_url'],
-                        'button_url'  => $this->links['mercadopago_costs'],
-                        'icon'        => 'mp-icon-badge-info',
-                        'color_card'  => 'mp-alert-color-success',
-                        'size_card'   => 'mp-card-body-size',
-                        'target'      => '_blank',
-                    ],
+            ],
+            'advanced_configuration_title' => [
+                'type'  => 'title',
+                'title' => $this->adminTranslations['advanced_configuration_title'],
+                'class' => 'mp-subtitle-body',
+            ],
+            'advanced_configuration_description' => [
+                'type'  => 'title',
+                'title' => $this->adminTranslations['advanced_configuration_subtitle'],
+                'class' => 'mp-small-text',
+            ],
+            'binary_mode' => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['binary_mode_title'],
+                'subtitle'     => $this->adminTranslations['binary_mode_subtitle'],
+                'default'      => 'no',
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['binary_mode_descriptions_enabled'],
+                    'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
                 ],
-                'currency_conversion' => [
-                    'type'         => 'mp_toggle_switch',
-                    'title'        => $this->adminTranslations['currency_conversion_title'],
-                    'subtitle'     => $this->adminTranslations['currency_conversion_subtitle'],
-                    'default'      => 'no',
-                    'descriptions' => [
-                        'enabled'  => $this->adminTranslations['currency_conversion_descriptions_enabled'],
-                        'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
-                    ],
-                ],
-                'wallet_button' => [
-                    'type'         => 'mp_toggle_switch',
-                    'title'        => $this->adminTranslations['wallet_button_title'],
-                    'subtitle'     => $this->adminTranslations['wallet_button_subtitle'],
-                    'default'      => 'yes',
-                    'descriptions' => [
-                        'enabled'  => $this->adminTranslations['wallet_button_descriptions_enabled'],
-                        'disabled' => $this->adminTranslations['wallet_button_descriptions_disabled'],
-                    ],
-                ],
-                'wallet_button_preview' => [
-                    'type'        => 'mp_preview',
-                    'description' => $this->adminTranslations['wallet_button_preview_description'],
-                    'url'         => $this->getWalletButtonPreviewUrl(),
-                ],
-                'advanced_configuration_title' => [
-                    'type'  => 'title',
-                    'title' => $this->adminTranslations['advanced_configuration_title'],
-                    'class' => 'mp-subtitle-body',
-                ],
-                'advanced_configuration_description' => [
-                    'type'  => 'title',
-                    'title' => $this->adminTranslations['advanced_configuration_subtitle'],
-                    'class' => 'mp-small-text',
-                ],
-                'binary_mode' => [
-                    'type'         => 'mp_toggle_switch',
-                    'title'        => $this->adminTranslations['binary_mode_title'],
-                    'subtitle'     => $this->adminTranslations['binary_mode_subtitle'],
-                    'default'      => 'no',
-                    'descriptions' => [
-                        'enabled'  => $this->adminTranslations['binary_mode_descriptions_enabled'],
-                        'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
-                    ],
-                ],
-                'discount'   => $this->getDiscountField(),
-                'commission' => $this->getCommissionField(),
-            ];
-        }
+            ],
+            'discount'   => $this->getDiscountField(),
+            'commission' => $this->getCommissionField(),
+        ];
     }
 
     /**
@@ -331,20 +320,19 @@ class CustomGateway extends AbstractGateway
 
         switch ($checkout['checkout_type']) {
             case 'wallet_button':
-                $this->mercadopago->logs->file->info('Preparing to render wallet button checkout.', self::LOG_SOURCE);
+                $this->mercadopago->logs->file->info('Preparing to render wallet button checkout', self::LOG_SOURCE);
 
                 return [
                     'result'   => 'success',
-                    'redirect' => add_query_arg(
-                        [
-                            'wallet_button' => 'open'
-                        ],
+                    'redirect' => $this->mercadopago->url->setQueryVar(
+                        'wallet_button',
+                        'open',
                         $order->get_checkout_payment_url(true)
                     ),
                 ];
 
             default:
-                $this->mercadopago->logs->file->info('Preparing to get response of custom checkout.', self::LOG_SOURCE);
+                $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
 
                 if ($checkout['token'] &&
                     $checkout['amount'] &&
@@ -422,7 +410,7 @@ class CustomGateway extends AbstractGateway
             }
         }
 
-        if (count($creditCard) !== 0) {
+        if (count($creditCard) != 0) {
             $paymentMethods[] = [
                 'title'           => $this->storeTranslations['available_payments_credit_card_title'],
                 'label'           => $this->storeTranslations['available_payments_credit_card_label'],
@@ -430,7 +418,7 @@ class CustomGateway extends AbstractGateway
             ];
         }
 
-        if (count($debitCard) !== 0) {
+        if (count($debitCard) != 0) {
             $paymentMethods[] = [
                 'title'           => $this->storeTranslations['available_payments_debit_card_title'],
                 'payment_methods' => $debitCard,
@@ -447,9 +435,7 @@ class CustomGateway extends AbstractGateway
      */
     public function renderOrderForm($order_id): void
     {
-        $isWallet = $this->mercadopago->url->getQueryVar('wallet_button', false);
-
-        if ($isWallet) {
+        if ($this->mercadopago->url->validateQueryVar('wallet_button')) {
             $order             = wc_get_order($order_id);
             $this->transaction = new WalletButtonTransaction($this, $order);
             $preference        = $this->transaction->createPreference();
@@ -590,5 +576,23 @@ class CustomGateway extends AbstractGateway
     public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
     {
         parent::registerCommissionAndDiscount($this, $orderId);
+    }
+
+    /**
+     * Generating Wallet Button preview component
+     *
+     * @return string
+     */
+    public function getWalletButtonPreview(): string
+    {
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'admin/components/preview.php',
+            [
+                'settings' => [
+                    'url'         => $this->getWalletButtonPreviewUrl(),
+                    'description' => $this->adminTranslations['wallet_button_preview_description'],
+                ],
+            ]
+        );
     }
 }

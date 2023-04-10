@@ -271,7 +271,9 @@ function removeBlockOverlay() {
 }
 
 function cardFormLoad() {
-  if (document.getElementById("payment_method_woo-mercado-pago-custom").checked) {
+  const checkoutCustomPaymentMethodElement = document.getElementById("payment_method_woo-mercado-pago-custom");
+
+  if (checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked) {
     setTimeout(() => {
       if (!cardFormMounted) {
         handleCardFormLoad();

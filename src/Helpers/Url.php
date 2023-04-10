@@ -82,6 +82,20 @@ final class Url
     }
 
     /**
+     * Set wp query var
+     *
+     * @param string $key
+     * @param string $value
+     * @param string $url
+     *
+     * @return string
+     */
+    public function setQueryVar(string $key, string $value, string $url): string
+    {
+        return add_query_arg($key, $value, $url);
+    }
+
+    /**
      * Get wp query var
      *
      * @param string $queryVar

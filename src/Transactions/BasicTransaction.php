@@ -69,7 +69,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
     {
         $exPayments = $this->mercadopago->seller->getExPayments($this->gateway);
 
-        if (count($exPayments) !== 0) {
+        if (count($exPayments) != 0) {
             foreach ($exPayments as $excluded) {
                 $entity = [
                     'id' => $excluded,

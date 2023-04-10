@@ -153,7 +153,7 @@ class TicketGateway extends AbstractGateway
     public function payment_fields(): void
     {
         $currentUser     = $this->mercadopago->currentUser->getCurrentUser();
-        $loggedUserEmail = ($currentUser->ID !== 0) ? $currentUser->user_email : null;
+        $loggedUserEmail = ($currentUser->ID != 0) ? $currentUser->user_email : null;
         $address         = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_1', true);
         $address2        = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_2', true);
         $address        .= (!empty($address2) ? ' - ' . $address2 : '');
@@ -364,7 +364,7 @@ class TicketGateway extends AbstractGateway
      */
     public function getFebrabanInfo(\WP_User $currentUser, string $address): array
     {
-        if ($currentUser->ID !== 0) {
+        if ($currentUser->ID != 0) {
             return [
                 'firstname' => esc_js($currentUser->user_firstname),
                 'lastname'  => esc_js($currentUser->user_lastname),

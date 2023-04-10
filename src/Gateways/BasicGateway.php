@@ -217,7 +217,7 @@ class BasicGateway extends AbstractGateway
     {
         $checkoutBenefitsItems = $this->getBenefits();
         $paymentMethods        = $this->getPaymentMethods();
-        $paymentMethodsTitle   = count($paymentMethods) !== 0 ? $this->storeTranslations['payment_methods_title'] : '';
+        $paymentMethodsTitle   = count($paymentMethods) != 0 ? $this->storeTranslations['payment_methods_title'] : '';
 
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/checkouts/basic-checkout.php',

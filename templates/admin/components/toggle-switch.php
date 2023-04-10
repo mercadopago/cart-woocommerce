@@ -55,8 +55,8 @@ if (!defined('ABSPATH')) {
         </div>
 
         <?php
-            if (isset($settings['after_toggle']) && $settings['after_toggle']) {
-                echo $settings['after_toggle']; //@TODO escape backend var
+            if (isset($settings['after_toggle'])) {
+                echo $settings['after_toggle'];
             }
         ?>
     </td>
