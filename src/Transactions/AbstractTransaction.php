@@ -363,27 +363,4 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
             ? wp_get_attachment_url($product->get_image_id())
             : $this->mercadopago->url->getPluginFileUrl('assets/images/gateways/all/blue-cart', '.png', true);
     }
-
-    /**
-     * Get the value of an object's attribute
-     *
-     * @param mixed $object
-     * @param string $methodName
-     * @param string $attributePath
-     * @param string $methodPath
-     *
-     * @return string
-     */
-    public function getObjectAttributeValue($object, string $methodName, string $attributePath, string $methodPath = ''): string
-    {
-        if (!$methodPath) {
-            $methodPath = $methodName;
-        }
-
-        $value = is_object($object) && method_exists($object, $methodName)
-            ? $object->{$methodPath}()
-            : $object->{$attributePath};
-
-        return html_entity_decode($value);
-    }
 }

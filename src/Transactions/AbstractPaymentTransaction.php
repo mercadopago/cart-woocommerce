@@ -35,10 +35,10 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
 
         try {
             $data = $payment->save();
-            $this->mercadopago->logs->file->info('Payment created', __CLASS__, $data);
+            $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
             return $data;
         } catch (\Exception $e) {
-            $this->mercadopago->logs->file->error('Payment creation failed: ' . $e->getMessage(), __CLASS__);
+            $this->mercadopago->logs->file->error('Payment creation failed: ' . $e->getMessage(), $this->gateway::LOG_SOURCE);
             return $e->getMessage();
         }
     }
@@ -82,19 +82,13 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
      */
     public function setAdditionalInfoPayerTransaction(): void
     {
-        $payer   = $this->transaction->additional_info->payer;
-        $address = $payer->address;
+        $payer = $this->transaction->additional_info->payer;
 
-        $payer->first_name    = $this->getObjectAttributeValue($this->order, 'get_billing_first_name', 'billing_first_name');
-        $payer->last_name     = $this->getObjectAttributeValue($this->order, 'get_billing_last_name', 'billing_last_name');
-        $payer->phone->number = $this->getObjectAttributeValue($this->order, 'get_billing_phone', 'billing_phone');
-        $address->zip_code    = $this->getObjectAttributeValue($this->order, 'get_billing_postcode', 'billing_postcode');
-        $address->street_name = "
-            {$this->getObjectAttributeValue($this->order, 'get_id', 'billing_address_1', 'get_billing_address_1')}
-            {$this->getObjectAttributeValue($this->order, 'get_id', 'billing_city', 'get_billing_city')}
-            {$this->getObjectAttributeValue($this->order, 'get_id', 'billing_state', 'get_billing_state')}
-            {$this->getObjectAttributeValue($this->order, 'get_id', 'billing_country', 'get_billing_country')}
-        ";
+        $payer->first_name           = $this->mercadopago->orderBilling->getFirstName($this->order);
+        $payer->last_name            = $this->mercadopago->orderBilling->getLastName($this->order);
+        $payer->phone->number        = $this->mercadopago->orderBilling->getPhone($this->order);
+        $payer->address->zip_code    = $this->mercadopago->orderBilling->getZipcode($this->order);
+        $payer->address->street_name = $this->mercadopago->orderBilling->getFullAddress($this->order);
     }
 
     /**
@@ -106,14 +100,14 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
     {
         $payer = $this->transaction->payer;
 
+        $payer->email                  = $this->mercadopago->orderBilling->getEmail($this->order);
+        $payer->first_name             = $this->mercadopago->orderBilling->getFirstName($this->order);
+        $payer->last_name              = $this->mercadopago->orderBilling->getLastName($this->order);
+        $payer->address->city          = $this->mercadopago->orderBilling->getCity($this->order);
+        $payer->address->federal_unit  = $this->mercadopago->orderBilling->getState($this->order);
+        $payer->address->zip_code      = $this->mercadopago->orderBilling->getZipcode($this->order);
+        $payer->address->street_name   = $this->mercadopago->orderBilling->getFullAddress($this->order);
         $payer->address->street_number = '';
         $payer->address->neighborhood  = '';
-        $payer->email                  = $this->getObjectAttributeValue($this->order, 'get_billing_email', 'billing_email');
-        $payer->first_name             = $this->getObjectAttributeValue($this->order, 'get_billing_first_name', 'billing_first_name');
-        $payer->last_name              = $this->getObjectAttributeValue($this->order, 'get_billing_last_name', 'billing_last_name');
-        $payer->address->street_name   = $this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1');
-        $payer->address->city          = $this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city');
-        $payer->address->federal_unit  = $this->getObjectAttributeValue($this->order, 'get_billing_state', 'billing_state');
-        $payer->address->zip_code      = $this->getObjectAttributeValue($this->order, 'get_billing_postcode', 'billing_postcode');
     }
 }

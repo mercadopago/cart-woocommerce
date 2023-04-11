@@ -21,19 +21,24 @@ if (!defined('ABSPATH')) {
 ?>
 
 <div>
-	<table style="margin-top:-24px;margin-bottom:60px;">
+	<table style="margin-top:-24px; margin-bottom:60px;">
 		<tfoot>
 			<tr>
-				<th><?= esc_html($title_installment_cost); ?></th>
+				<th style="width: 55.5%;">
+                    <?= esc_html($title_installment_cost); ?>
+                </th>
+
 				<td class="order_details">
                     <?= esc_html($currency); ?>
                     <?= esc_html($total_diff_cost); ?>
                 </td>
 			</tr>
+
 			<tr>
-				<th style="width:454.96px ">
+				<th style="width: 55.5%;">
                     <?= esc_html($title_installment_total); ?>
                 </th>
+
 				<td class="order_details">
                     <?= esc_html($currency); ?>
                     <?= esc_html($total_paid_amount); ?>

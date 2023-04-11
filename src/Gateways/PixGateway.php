@@ -141,8 +141,8 @@ class PixGateway extends AbstractGateway
     {
         parent::process_payment($order_id);
 
-        $checkout = map_deep($_POST, 'sanitize_text_field');
         $order    = wc_get_order($order_id);
+        $checkout = Form::sanitizeFromData($_POST);
 
         if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
             return $this->processReturnFail(

@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Transactions\TicketTransaction;
 
 if (!defined('ABSPATH')) {
@@ -199,8 +200,8 @@ class TicketGateway extends AbstractGateway
     {
         parent::process_payment($order_id);
 
-        $checkout = map_deep($_POST['mercadopago_ticket'], 'sanitize_text_field');
         $order    = wc_get_order($order_id);
+        $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
         if ($checkout['amount'] && $checkout['paymentMethodId']) {
             $this->transaction = new TicketTransaction($this, $order, $checkout);

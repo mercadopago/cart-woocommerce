@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
@@ -53,12 +54,13 @@ class CustomGateway extends AbstractGateway
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->gateway->registerGatewayTitle($this);
-        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
+        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderInstallmentsRateDetails']);
+
+        $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'renderInstallmentsRateDetails']);
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
         $this->mercadopago->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
-
-        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
     }
 
     /**
@@ -315,8 +317,8 @@ class CustomGateway extends AbstractGateway
     {
         parent::process_payment($order_id);
 
-        $checkout = map_deep($_POST['mercadopago_custom'], 'sanitize_text_field');
         $order    = wc_get_order($order_id);
+        $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
 
         switch ($checkout['checkout_type']) {
             case 'wallet_button':
@@ -334,11 +336,11 @@ class CustomGateway extends AbstractGateway
             default:
                 $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
 
-                if ($checkout['token'] &&
-                    $checkout['amount'] &&
-                    $checkout['installments'] &&
-                    $checkout['installments'] !== -1 &&
-                    $checkout['paymentMethodId']
+                if (
+                    !empty($checkout['token']) &&
+                    !empty($checkout['amount']) &&
+                    !empty($checkout['paymentMethodId']) &&
+                    !empty($checkout['installments']) && $checkout['installments'] !== -1
                 ) {
                     $this->transaction = new CustomTransaction($this, $order, $checkout);
                     $response          = $this->transaction->createPayment();
@@ -353,6 +355,24 @@ class CustomGateway extends AbstractGateway
         return $this->processReturnFail(
             $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
             self::LOG_SOURCE
+        );
+    }
+
+    /**
+     * Generating Wallet Button preview component
+     *
+     * @return string
+     */
+    public function getWalletButtonPreview(): string
+    {
+        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+            'admin/components/preview.php',
+            [
+                'settings' => [
+                    'url'         => $this->getWalletButtonPreviewUrl(),
+                    'description' => $this->adminTranslations['wallet_button_preview_description'],
+                ],
+            ]
         );
     }
 
@@ -441,7 +461,7 @@ class CustomGateway extends AbstractGateway
             $preference        = $this->transaction->createPreference();
 
             $this->mercadopago->template->getWoocommerceTemplate(
-                'public/receipt/custom-checkout.php',
+                'public/receipt/wallet-button.php',
                 [
                     'public_key'          => $this->mercadopago->seller->getCredentialsPublicKey(),
                     'preference_id'       => $preference['id'],
@@ -458,7 +478,7 @@ class CustomGateway extends AbstractGateway
      *
      * @param $order_id
      */
-    public function renderThankYouPage($order_id): void
+    public function renderInstallmentsRateDetails($order_id): void
     {
         $order             = wc_get_order($order_id);
         $installments      = $this->mercadopago->orderMetadata->getInstallmentsMeta($order);
@@ -468,7 +488,6 @@ class CustomGateway extends AbstractGateway
         $totalDiffCost     = (float) $totalPaidAmount - (float) $transactionAmount;
 
         if ($totalDiffCost > 0) {
-            $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'renderThankYouPage']);
             $this->mercadopago->template->getWoocommerceTemplate(
                 'public/order/custom-order-received.php',
                 [
@@ -497,6 +516,8 @@ class CustomGateway extends AbstractGateway
      */
     private function handleResponseStatus($order, $response, $checkout): array
     {
+        error_log(json_encode($response));
+
         if (is_array($response) && array_key_exists('status', $response)) {
             switch ($response['status']) {
                 case 'approved':
@@ -576,23 +597,5 @@ class CustomGateway extends AbstractGateway
     public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
     {
         parent::registerCommissionAndDiscount($this, $orderId);
-    }
-
-    /**
-     * Generating Wallet Button preview component
-     *
-     * @return string
-     */
-    public function getWalletButtonPreview(): string
-    {
-        return $this->mercadopago->template->getWoocommerceTemplateHtml(
-            'admin/components/preview.php',
-            [
-                'settings' => [
-                    'url'         => $this->getWalletButtonPreviewUrl(),
-                    'description' => $this->adminTranslations['wallet_button_preview_description'],
-                ],
-            ]
-        );
     }
 }
