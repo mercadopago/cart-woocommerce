@@ -12,6 +12,7 @@
  * @var string $wallet_button_title
  * @var string $wallet_button_description
  * @var string $wallet_button_button_text
+ * @var string $available_payments_title_icon
  * @var string $available_payments_title
  * @var string $available_payments_image
  * @var string $available_payments_chevron_up
@@ -51,7 +52,7 @@ if (!defined('ABSPATH')) {
 
 <div class='mp-checkout-container'>
     <div class='mp-checkout-custom-container'>
-        <?php if (true === $test_mode) : ?>
+        <?php if ($test_mode): ?>
             <div class="mp-checkout-pro-test-mode">
                 <test-mode
                     title="<?= esc_html($test_mode_title) ?>"
@@ -63,9 +64,10 @@ if (!defined('ABSPATH')) {
             </div>
         <?php endif; ?>
 
-        <?php if ('yes' === $wallet_button) : ?>
+        <?php if ($wallet_button === 'yes'): ?>
             <div class='mp-wallet-button-container'>
                 <img src="<?= esc_url($wallet_button_image); ?>">
+
                 <div class='mp-wallet-button-title'>
                     <span><?= esc_html($wallet_button_title); ?></span>
                 </div>
@@ -92,14 +94,16 @@ if (!defined('ABSPATH')) {
                         </p>
                     </div>
 
-                    <img src="<?= esc_url($available_payments_image); ?>"
-                         class='mp-checkout-custom-available-payments-collapsible'/>
+                    <img
+                        src="<?= esc_url($available_payments_image); ?>"
+                        class='mp-checkout-custom-available-payments-collapsible'
+                    />
                 </div>
 
                 <div class='mp-checkout-custom-available-payments-content'>
                     <payment-methods methods='<?= esc_html($payment_methods_items); ?>'></payment-methods>
 
-                    <?php if ('mla' === $site_id) : ?>
+                    <?php if ($site_id === 'MLA'): ?>
                         <span id="mp_promotion_link"> | </span>
                         <a
                             href='<?= esc_url($payment_methods_promotion_link); ?>'
@@ -191,6 +195,7 @@ if (!defined('ABSPATH')) {
                         </input-label>
 
                         <div id="form-checkout__securityCode-container" class="mp-checkout-custom-card-input"></div>
+
                         <p id="mp-security-code-info" class="mp-checkout-custom-info-text"></p>
 
                         <input-helper
@@ -238,8 +243,7 @@ if (!defined('ABSPATH')) {
                     </div>
                 </div>
 
-                <div id="mp-checkout-custom-installments-container"
-                     class="mp-checkout-custom-installments-container"></div>
+                <div id="mp-checkout-custom-installments-container" class="mp-checkout-custom-installments-container"></div>
 
                 <input-helper
                     isVisible=false
@@ -279,8 +283,7 @@ if (!defined('ABSPATH')) {
 
 <div id="mercadopago-utilities">
     <input type="hidden" id="mp-amount" value='<?= esc_textarea($amount); ?>' name="mercadopago_custom[amount]"/>
-    <input type="hidden" id="currency_ratio" value='<?= esc_textarea($currency_ratio); ?>'
-           name="mercadopago_custom[currency_ratio]"/>
+    <input type="hidden" id="currency_ratio" value='<?= esc_textarea($currency_ratio); ?>' name="mercadopago_custom[currency_ratio]"/>
     <input type="hidden" id="paymentMethodId" name="mercadopago_custom[paymentMethodId]"/>
     <input type="hidden" id="mp_checkout_type" name="mercadopago_custom[checkout_type]" value="custom"/>
     <input type="hidden" id="cardExpirationMonth" data-checkout="cardExpirationMonth"/>
@@ -296,14 +299,14 @@ if (!defined('ABSPATH')) {
 		jQuery('form.checkout, form#order_review').submit();
 	}
 
-	var availablePayment = document.getElementsByClassName('mp-checkout-custom-available-payments')[0];
-	var collapsible = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-header')[0];
+    const availablePayment = document.getElementsByClassName('mp-checkout-custom-available-payments')[0];
+    const collapsible = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-header')[0];
 
-	collapsible.addEventListener("click", function() {
-		var icon = collapsible.getElementsByClassName('mp-checkout-custom-available-payments-collapsible')[0];
-		var content = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-content')[0];
+    collapsible.addEventListener("click", function() {
+        const icon = collapsible.getElementsByClassName('mp-checkout-custom-available-payments-collapsible')[0];
+        const content = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-content')[0];
 
-		if (content.style.maxHeight) {
+        if (content.style.maxHeight) {
 			content.style.maxHeight = null;
 			content.style.padding = "0px";
 			icon.src = "<?= esc_url($available_payments_chevron_down); ?>";
@@ -311,7 +314,6 @@ if (!defined('ABSPATH')) {
 			let hg = content.scrollHeight + 15 + "px";
 			content.style.setProperty("max-height", hg, "important");
 			content.style.setProperty("padding", "24px 0px 0px", "important");
-
 			icon.src = "<?= esc_url($available_payments_chevron_up); ?>";
 		}
 	});
