@@ -166,6 +166,7 @@ class PixGateway extends AbstractGateway
                 $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
 
                 $urlReceived = esc_url($order->get_checkout_order_received_url());
+
                 $description = "
                     <div style='text-align: justify;'>
                         <p>{$this->storeTranslations['congrats_title']}</p>
