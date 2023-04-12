@@ -336,8 +336,7 @@ class CustomGateway extends AbstractGateway
             default:
                 $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
 
-                if (
-                    !empty($checkout['token']) &&
+                if (!empty($checkout['token']) &&
                     !empty($checkout['amount']) &&
                     !empty($checkout['paymentMethodId']) &&
                     !empty($checkout['installments']) && $checkout['installments'] !== -1
@@ -516,8 +515,6 @@ class CustomGateway extends AbstractGateway
      */
     private function handleResponseStatus($order, $response, $checkout): array
     {
-        error_log(json_encode($response));
-
         if (is_array($response) && array_key_exists('status', $response)) {
             switch ($response['status']) {
                 case 'approved':

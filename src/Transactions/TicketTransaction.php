@@ -107,14 +107,10 @@ class TicketTransaction extends AbstractPaymentTransaction
     {
         parent::setPayerTransaction();
 
-        $payer = $this->transaction->payer;
+        $payer    = $this->transaction->payer;
+        $currency = $this->countryConfigs['currency'];
 
-        if ($this->countryConfigs['currency'] === 'BRL' ) {
-            $payer->identification->type   = 14 === strlen($this->checkout['docNumber']) ? 'CPF' : 'CNPJ';
-            $payer->identification->number = $this->checkout['docNumber'];
-        }
-
-        if ($this->countryConfigs['currency'] === 'UYU') {
+        if ($currency === 'BRL' || $currency === 'UYU') {
             $payer->identification->type   = $this->checkout['docType'];
             $payer->identification->number = $this->checkout['docNumber'];
         }

@@ -203,7 +203,11 @@ class TicketGateway extends AbstractGateway
         $order    = wc_get_order($order_id);
         $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
-        if ($checkout['amount'] && $checkout['paymentMethodId']) {
+        if (!empty($checkout['amount']) &&
+            !empty($checkout['docType']) &&
+            !empty($checkout['docNumber']) &&
+            !empty($checkout['paymentMethodId'])
+        ) {
             $this->transaction = new TicketTransaction($this, $order, $checkout);
             $response          = $this->transaction->createPayment();
 
