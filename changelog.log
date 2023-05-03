@@ -1,6 +1,17 @@
 CHANGELOG:
 == Changelog ==
 
+= v6.7.3 (02/05/2023) =
+* Added
+- Test compatibility with WooCommerce v7.6
+- Test compatibility with WordPress v6.2
+
+* Changed
+- process_nonce_validation was removed from process_payment
+
+* Fixed
+- Fix http_user_agent log using wp_is_mobile() instead regex
+
 = v6.7.2 (20/03/2023) =
 * Added
 - Add new fields in update-metadata
