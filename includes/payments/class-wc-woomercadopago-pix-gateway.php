@@ -388,20 +388,6 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 	 */
 	public function process_payment( $order_id ) {
 		// phpcs:ignore WordPress.Security.NonceVerification
-		if ( ! $this->validate_nonce_process() ) {
-
-			wc_add_notice(
-				'<p>' .
-				__( 'A problem occurred when processing your payment. Please try again.', 'woocommerce-mercadopago' ) .
-				'</p>',
-				'error'
-			);
-			return array(
-				'result'   => 'fail',
-				'redirect' => '',
-			);
-		}
-		// phpcs:ignore WordPress.Security.NonceVerification
 		$pix_checkout = map_deep($_POST, 'sanitize_text_field');
 		$this->log->write_log( __FUNCTION__, 'Payment via Pix POST: ' );
 		$order          = wc_get_order( $order_id );

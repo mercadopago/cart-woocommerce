@@ -1405,28 +1405,4 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		return $installments;
 	}
 
-	/**
-	 * Check if a nonce is valid
-	 *
-	 * @return bool
-	 */
-	public function validate_nonce_process() {
-		$user = wp_get_current_user();
-		$uid  = (int) $user->ID;
-
-		if ( $uid !== $this->prior_uid && WC()->checkout()->is_registration_required() ) {
-			return true;
-		}
-
-		if ( isset($_POST['woocommerce-process-checkout-nonce']) && wp_verify_nonce( sanitize_key( $_POST['woocommerce-process-checkout-nonce'] ), 'woocommerce-process_checkout' ) ) {
-			return true;
-		}
-
-		if ( isset($_POST['woocommerce-pay-nonce']) && wp_verify_nonce( sanitize_key( $_POST['woocommerce-pay-nonce'] ), 'woocommerce-pay' ) ) {
-			return true;
-		}
-
-		$this->log->write_log(__FUNCTION__, 'Security nonce check failed.');
-		return false;
-	}
 }

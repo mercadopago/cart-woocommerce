@@ -441,7 +441,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 */
 	public function process_payment( $order_id ) {
 		// phpcs:ignore WordPress.Security.NonceVerification
-		if ( ! isset( $_POST['mercadopago_custom']) || ! $this->validate_nonce_process() ) {
+		if ( ! isset( $_POST['mercadopago_custom']) ) {
 			return $this->process_result_fail(
 				__FUNCTION__,
 				__( 'A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago' ),
