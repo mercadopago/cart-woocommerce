@@ -260,6 +260,7 @@ class WoocommerceMercadoPago
         $this->defineConstants();
         $this->loadPluginTextDomain();
         $this->registerHooks();
+        do_action('mp_main_plugin_loaded');
     }
 
     /**
