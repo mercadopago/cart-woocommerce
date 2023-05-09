@@ -348,9 +348,7 @@ class WoocommerceMercadoPago
         $this->registerGateways();
         $this->registerActionsWhenGatewayIsNotCalled();
         $this->plugin->registerOnPluginLoaded(function () {
-            $this->logs->file->info(
-                print('mercadopago_main_plugin_loaded was triggered'),
-                __METHOD__);
+            $this->logs->file->info('mercadopago_main_plugin_loaded was triggered', __METHOD__);
             return;
         });
         do_action($this->plugin::LOADED_PLUGIN_ACTION);
