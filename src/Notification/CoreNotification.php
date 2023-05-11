@@ -7,6 +7,7 @@ use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
@@ -136,7 +137,7 @@ class CoreNotification extends AbstractNotification
 				$this->updateMeta(
 					$order,
 					'Mercado Pago - Payment ' . $payment['id'],
-					'[Date ' . gmdate( 'Y-m-d H:i:s' ) .
+					'[Date ' . Date::getNowDate('Y-m-d H:i:s') .
 						']/[Amount ' . $payment['total_amount'] .
 						']/[Payment Type ' . $payment['payment_type_id'] .
 						']/[Payment Method ' . $payment['payment_method_id'] .

@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Order;
 
+use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
 
 if (!defined('ABSPATH')) {
@@ -194,7 +195,7 @@ class OrderMetadata
      *
      * @return void
      */
-    public function addInstallmentsData(\WC_Order $order, $value): void
+    public function setInstallmentsData(\WC_Order $order, $value): void
     {
         $this->orderMeta->add($order, self::MP_INSTALLMENTS, $value);
     }
@@ -215,7 +216,7 @@ class OrderMetadata
      *
      * @return void
      */
-    public function addTransactionDetailsData(\WC_Order $order, string $value): void
+    public function setTransactionDetailsData(\WC_Order $order, string $value): void
     {
         $this->orderMeta->add($order, self::MP_TRANSACTION_DETAILS, $value);
     }
@@ -231,28 +232,6 @@ class OrderMetadata
     }
 
     /**
-     * @param int $postId
-     * @param bool $single
-     *
-     * @return mixed
-     */
-    public function getTransactionAmountPost(int $postId, bool $single = false)
-    {
-        return $this->orderMeta->getPost($postId, self::MP_TRANSACTION_AMOUNT, $single);
-    }
-
-    /**
-     * @param \WC_Order $order
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function addTransactionAmountData(\WC_Order $order, $value): void
-    {
-        $this->orderMeta->add($order, self::MP_TRANSACTION_AMOUNT, $value);
-    }
-
-    /**
      * @param \WC_Order $order
      * @param mixed $value
      *
@@ -260,18 +239,7 @@ class OrderMetadata
      */
     public function setTransactionAmountData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->update($order, self::MP_TRANSACTION_AMOUNT, $value);
-    }
-
-    /**
-     * @param int $postId
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function setTransactionAmountPost(int $postId, $value): void
-    {
-        $this->orderMeta->setPost($postId, self::MP_TRANSACTION_AMOUNT, $value);
+        $this->orderMeta->add($order, self::MP_TRANSACTION_AMOUNT, $value);
     }
 
     /**
@@ -290,31 +258,31 @@ class OrderMetadata
      *
      * @return void
      */
-    public function addTotalPaidAmountData(\WC_Order $order, $value): void
+    public function setTotalPaidAmountData(\WC_Order $order, $value): void
     {
         $this->orderMeta->add($order, self::MP_TOTAL_PAID_AMOUNT, $value);
     }
 
     /**
-     * @param int $postId
+     * @param \WC_Order $order
      * @param bool $single
      *
      * @return mixed
      */
-    public function getPaymentIdsPost(int $postId, bool $single = false)
+    public function getPaymentsIdMeta(\WC_Order $order, bool $single = true)
     {
-        return $this->orderMeta->getPost($postId, self::PAYMENTS_IDS, $single);
+        return $this->orderMeta->get($order, self::PAYMENTS_IDS, $single);
     }
 
     /**
-     * @param int $postId
+     * @param \WC_Order $order
      * @param mixed $value
      *
      * @return void
      */
-    public function setPaymentIdsPost(int $postId, $value): void
+    public function setPaymentsIdData(\WC_Order $order, $value): void
     {
-        $this->orderMeta->setPost($postId, self::PAYMENTS_IDS, $value);
+        $this->orderMeta->add($order, self::PAYMENTS_IDS, $value);
     }
 
     /**
@@ -393,17 +361,6 @@ class OrderMetadata
     }
 
     /**
-     * @param int $postId
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function setPixQrBase64Post(int $postId, $value): void
-    {
-        $this->orderMeta->setPost($postId, self::MP_PIX_QR_BASE_64, $value);
-    }
-
-    /**
      * @param \WC_Order $order
      *
      * @return mixed
@@ -422,17 +379,6 @@ class OrderMetadata
     public function getPixQrCodePost(int $postId, bool $single = false)
     {
         return $this->orderMeta->getPost($postId, self::MP_PIX_QR_CODE, $single);
-    }
-
-    /**
-     * @param int $postId
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function setPixQrCodePost(int $postId, $value): void
-    {
-        $this->orderMeta->setPost($postId, self::MP_PIX_QR_CODE, $value);
     }
 
     /**
@@ -458,17 +404,6 @@ class OrderMetadata
     }
 
     /**
-     * @param int $postId
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function setPixExpirationDatePost(int $postId, $value): void
-    {
-        $this->orderMeta->setPost($postId, self::PIX_EXPIRATION_DATE, $value);
-    }
-
-    /**
      * @param \WC_Order $order
      * @param mixed $value
      */
@@ -489,17 +424,6 @@ class OrderMetadata
     }
 
     /**
-     * @param int $postId
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function setPixOnPost(int $postId, $value): void
-    {
-        $this->orderMeta->setPost($postId, self::PIX_ON, $value);
-    }
-
-    /**
      * @param \WC_Order $order
      * @param mixed $value
      *
@@ -511,29 +435,52 @@ class OrderMetadata
     }
 
     /**
+     * Set custom metadata in the order
+     *
+     * @param \WC_Order $order
+     * @param mixed $data
+     *
+     * @return void
+     */
+    public function setCustomMetadata(\WC_Order $order, $data): void
+    {
+        $installments      = (float) $data['installments'];
+        $installmentAmount = (float) $data['transaction_details']['installment_amount'];
+        $totalPaidAmount   = (float) $data['transaction_details']['total_paid_amount'];
+        $transactionAmount = (float) $data['transaction_amount'];
+
+         $this->setInstallmentsData($order, $installments);
+         $this->setTransactionDetailsData($order, $installmentAmount);
+         $this->setTransactionAmountData($order, $transactionAmount);
+         $this->setTotalPaidAmountData($order, $totalPaidAmount);
+         $this->updatePaymentsOrderMetadata($order, [$data['id']]);
+
+        $order->save();
+    }
+
+    /**
      * Update an order's payments metadata
      *
-     * @param string $orderId
+     * @param \WC_Order $order
      * @param array $paymentsId
      *
      * @return void
      */
-    public function updatePaymentsOrderMetadata(string $orderId, array $paymentsId)
+    public function updatePaymentsOrderMetadata(\WC_Order $order, array $paymentsId)
     {
-        $paymentIdMetadata = count($this->getPaymentIdsPost($orderId));
+        $paymentsIdMetadata = $this->getPaymentsIdMeta($order);
 
-        if (count($paymentsId) > 0) {
-            if ($paymentIdMetadata == 0) {
-                $this->setPaymentIdsPost($orderId, implode(', ', $paymentsId));
-            }
+        if (empty($paymentsIdMetadata)) {
+            $this->setPaymentsIdData($order, implode(', ', $paymentsId));
+        }
 
-            foreach ($paymentsId as $paymentId) {
-                $paymentDetailKey = 'Mercado Pago - Payment ' . $paymentId;
-                $paymentDetailMetadata = count($this->orderMeta->getPost($orderId, $paymentDetailKey));
+        foreach ($paymentsId as $paymentId) {
+            $date                  = Date::getNowDate('Y-m-d H:i:s');
+            $paymentDetailKey      = "Mercado Pago - Payment $paymentId";
+            $paymentDetailMetadata = $this->orderMeta->get($order, $paymentDetailKey);
 
-                if ($paymentDetailMetadata == 0) {
-                    $this->orderMeta->setPost($orderId, $paymentDetailKey, '[Date ' . gmdate('Y-m-d H:i:s') . ']');
-                }
+            if (empty($paymentDetailMetadata)) {
+                $this->orderMeta->update($order, $paymentDetailKey, "[Date $date]");
             }
         }
     }

@@ -2,7 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
@@ -197,47 +196,6 @@ class Order
     }
 
     /**
-     * Set order status from/to
-     *
-     * @param \WC_Order $order
-     * @param string $fromStatus
-     * @param string $toStatus
-     *
-     * @return void
-     */
-    public function setOrderStatus(\WC_Order $order, string $fromStatus, string $toStatus): void
-    {
-        if ($order->get_status() === $fromStatus) {
-            $order->set_status($toStatus);
-
-            $order->save();
-        }
-    }
-
-    /**
-     * Set custom metadata in the order
-     *
-     * @param \WC_Order $order
-     * @param $data
-     *
-     * @return void
-     */
-    public function setCustomMetadata(\WC_Order $order, $data): void
-    {
-        $installments      = (float) $data['installments'];
-        $installmentAmount = (float) $data['transaction_details']['installment_amount'];
-        $transactionAmount = (float) $data['transaction_amount'];
-        $totalPaidAmount   = (float) $data['transaction_details']['total_paid_amount'];
-
-        $this->orderMetadata->addInstallmentsData($order, $installments);
-        $this->orderMetadata->addTransactionDetailsData($order, $installmentAmount);
-        $this->orderMetadata->addTransactionAmountData($order, $transactionAmount);
-        $this->orderMetadata->addTotalPaidAmountData($order, $totalPaidAmount);
-
-        $order->save();
-    }
-
-    /**
      * Set ticket metadata in the order
      *
      * @param \WC_Order $order
@@ -274,20 +232,13 @@ class Order
         $defaultValue      = $this->storeTranslations->pixCheckout['expiration_30_minutes'];
         $expiration        = $this->store->getCheckoutDateExpirationPix($gateway, $defaultValue);
 
-        if (method_exists($order, 'update_meta_data')) {
-            $this->orderMetadata->setTransactionAmountData($order, $transactionAmount);
-            $this->orderMetadata->setPixQrBase64Data($order, $qrCodeBase64);
-            $this->orderMetadata->setPixQrCodeData($order, $qrCode);
-            $this->orderMetadata->setPixExpirationDateData($order, $expiration);
-            $this->orderMetadata->setPixExpirationDateData($order, $expiration);
-            $this->orderMetadata->setPixOnData($order, 1);
-            $order->save();
-        } else {
-            $this->orderMetadata->setTransactionAmountPost($order->get_id(), $transactionAmount);
-            $this->orderMetadata->setPixQrBase64Post($order->get_id(), $qrCodeBase64);
-            $this->orderMetadata->setPixQrCodePost($order->get_id(), $qrCode);
-            $this->orderMetadata->setPixExpirationDatePost($order->get_id(), $expiration);
-            $this->orderMetadata->setPixOnPost($order->get_id(), 1);
-        }
+        $this->orderMetadata->setTransactionAmountData($order, $transactionAmount);
+        $this->orderMetadata->setPixQrBase64Data($order, $qrCodeBase64);
+        $this->orderMetadata->setPixQrCodeData($order, $qrCode);
+        $this->orderMetadata->setPixExpirationDateData($order, $expiration);
+        $this->orderMetadata->setPixExpirationDateData($order, $expiration);
+        $this->orderMetadata->setPixOnData($order, 1);
+
+        $order->save();
     }
 }

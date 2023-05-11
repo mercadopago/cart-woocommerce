@@ -63,11 +63,12 @@ class PixGateway extends AbstractGateway
 
         $this->mercadopago->order->registerEmailBeforeOrderTable([$this, 'renderOrderReceivedTemplate']);
         $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'renderOrderReceivedTemplate']);
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
         $this->mercadopago->endpoints->registerApiEndpoint(self::PIX_IMAGE_ENDPOINT, [$this, 'generatePixImage']);
 
-        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
+        $this->mercadopago->currency->handleCurrencyNotices($this);
     }
 
     /**
@@ -434,24 +435,16 @@ class PixGateway extends AbstractGateway
      */
     public function renderThankYouPage($order_id): void
     {
-        $order        = wc_get_order($order_id);
-        $methodExists = method_exists($order, 'get_meta');
+        $order = wc_get_order($order_id);
 
-        $transactionAmount = $methodExists
-            ? $this->mercadopago->orderMetadata->getTransactionAmountMeta($order)
-            : $this->mercadopago->orderMetadata->getTransactionAmountPost($order->get_id(), true);
-
+        $transactionAmount = $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
         $transactionAmount = Numbers::format($transactionAmount);
+
         $defaultValue      = $this->storeTranslations['expiration_30_minutes'];
         $expirationOption  = $this->mercadopago->store->getCheckoutDateExpirationPix($this, $defaultValue);
 
-        $qrCodeBase64 = $methodExists
-            ? $this->mercadopago->orderMetadata->getPixQrBase64Meta($order)
-            : $this->mercadopago->orderMetadata->getPixQrBase64Post($order->get_id(), true);
-
-        $qrCode = $methodExists
-            ? $this->mercadopago->orderMetadata->getPixQrCodeMeta($order)
-            : $this->mercadopago->orderMetadata->getPixQrCodePost($order->get_id(), true);
+        $qrCode       = $this->mercadopago->orderMetadata->getPixQrCodeMeta($order);
+        $qrCodeBase64 = $this->mercadopago->orderMetadata->getPixQrBase64Meta($order);
 
         if (empty($qrCodeBase64) && empty($qrCode)) {
             return;

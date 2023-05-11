@@ -30,6 +30,23 @@ final class OrderStatus
     }
 
     /**
+     * Set order status from/to
+     *
+     * @param \WC_Order $order
+     * @param string $fromStatus
+     * @param string $toStatus
+     *
+     * @return void
+     */
+    public function setOrderStatus(\WC_Order $order, string $fromStatus, string $toStatus): void
+    {
+        if ($order->get_status() === $fromStatus) {
+            $order->set_status($toStatus);
+            $order->save();
+        }
+    }
+
+    /**
      * Get order status message
      *
      * @param string $statusDetail
@@ -38,43 +55,41 @@ final class OrderStatus
      */
     public function getOrderStatusMessage(string $statusDetail): string
     {
-        $messages = $this->commonMessages;
-
         switch ($statusDetail) {
             case 'accredited':
-                return $messages['cho_accredited'];
+                return $this->commonMessages['cho_accredited'];
             case 'pending_contingency':
-                return $messages['cho_pending_contingency'];
+                return $this->commonMessages['cho_pending_contingency'];
             case 'pending_review_manual':
-                return $messages['cho_pending_review_manual'];
+                return $this->commonMessages['cho_pending_review_manual'];
             case 'cc_rejected_bad_filled_card_number':
-                return $messages['cho_cc_rejected_bad_filled_card_number'];
+                return $this->commonMessages['cho_cc_rejected_bad_filled_card_number'];
             case 'cc_rejected_bad_filled_date':
-                return $messages['cho_cc_rejected_bad_filled_date'];
+                return $this->commonMessages['cho_cc_rejected_bad_filled_date'];
             case 'cc_rejected_bad_filled_other':
-                return $messages['cho_cc_rejected_bad_filled_other'];
+                return $this->commonMessages['cho_cc_rejected_bad_filled_other'];
             case 'cc_rejected_bad_filled_security_code':
-                return $messages['cho_cc_rejected_bad_filled_security_code'];
+                return $this->commonMessages['cho_cc_rejected_bad_filled_security_code'];
             case 'cc_rejected_card_error':
-                return $messages['cho_cc_rejected_card_error'];
+                return $this->commonMessages['cho_cc_rejected_card_error'];
             case 'cc_rejected_blacklist':
-                return $messages['cho_cc_rejected_blacklist'];
+                return $this->commonMessages['cho_cc_rejected_blacklist'];
             case 'cc_rejected_call_for_authorize':
-                return $messages['cho_cc_rejected_call_for_authorize'];
+                return $this->commonMessages['cho_cc_rejected_call_for_authorize'];
             case 'cc_rejected_card_disabled':
-                return $messages['cho_cc_rejected_card_disabled'];
+                return $this->commonMessages['cho_cc_rejected_card_disabled'];
             case 'cc_rejected_duplicated_payment':
-                return $messages['cho_cc_rejected_duplicated_payment'];
+                return $this->commonMessages['cho_cc_rejected_duplicated_payment'];
             case 'cc_rejected_high_risk':
-                return $messages['cho_cc_rejected_high_risk'];
+                return $this->commonMessages['cho_cc_rejected_high_risk'];
             case 'cc_rejected_insufficient_amount':
-                return $messages['cho_cc_rejected_insufficient_amount'];
+                return $this->commonMessages['cho_cc_rejected_insufficient_amount'];
             case 'cc_rejected_invalid_installments':
-                return $messages['cho_cc_rejected_invalid_installments'];
+                return $this->commonMessages['cho_cc_rejected_invalid_installments'];
             case 'cc_rejected_max_attempts':
-                return $messages['cho_cc_rejected_max_attempts'];
+                return $this->commonMessages['cho_cc_rejected_max_attempts'];
             default:
-                return $messages['cho_default'];
+                return $this->commonMessages['cho_default'];
         }
     }
 

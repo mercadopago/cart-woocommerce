@@ -59,6 +59,7 @@ class CustomGateway extends AbstractGateway
         $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'renderInstallmentsRateDetails']);
         $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
+        $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
         $this->mercadopago->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
     }
@@ -344,8 +345,7 @@ class CustomGateway extends AbstractGateway
                     $this->transaction = new CustomTransaction($this, $order, $checkout);
                     $response          = $this->transaction->createPayment();
 
-                    $this->mercadopago->order->setCustomMetadata($order, $response);
-                    $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+                    $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
 
                     return $this->handleResponseStatus($order, $response, $checkout);
                 }
@@ -524,7 +524,7 @@ class CustomGateway extends AbstractGateway
                     $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
 
                     $this->mercadopago->notices->storeApprovedStatusNotice($orderStatus);
-                    $this->mercadopago->order->setOrderStatus($order, 'failed', 'pending');
+                    $this->mercadopago->orderStatus->setOrderStatus($order, 'failed', 'pending');
 
                     return [
                         'result'   => 'success',
@@ -535,14 +535,17 @@ class CustomGateway extends AbstractGateway
                 case 'in_process':
                    $this->mercadopago->woocommerce->cart->empty_cart();
 
-                    $urlReceived = esc_url($order->get_checkout_order_received_url());
-                    $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($response['status_detail']);
-                    $linkText    = $this->mercadopago->storeTranslations->commonMessages['cho_form_error'];
+                    $checkoutType = $checkout['checkout_type'];
+                    $statusDetail = $response['status_detail'];
+                    $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_form_error'];
 
-                    $this->mercadopago->notices->storeInProcessStatusNotice(
+                    $urlReceived = esc_url($order->get_checkout_order_received_url());
+                    $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($statusDetail);
+
+                    $this->mercadopago->notices->storePendingStatusNotice(
                         $orderStatus,
                         $urlReceived,
-                        $checkout['checkout_type'],
+                        $checkoutType,
                         $linkText
                     );
 
@@ -552,19 +555,19 @@ class CustomGateway extends AbstractGateway
                     ];
 
                 case 'rejected':
-                case 'cancelled':
                     $urlReceived     = esc_url($order->get_checkout_payment_url());
                     $urlRetryPayment = esc_url($order->get_checkout_payment_url(true));
 
-                    $noticeTitle = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
-                    $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($response['status_detail']);
-                    $linkText    = $this->mercadopago->storeTranslations->commonMessages['cho_button_try_again'];
+                    $checkoutType = $checkout['checkout_type'];
+                    $noticeTitle  = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
+                    $orderStatus  = $this->mercadopago->orderStatus->getOrderStatusMessage($response['status_detail']);
+                    $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_button_try_again'];
 
                     $this->mercadopago->notices->storeRejectedStatusNotice(
                         $noticeTitle,
                         $orderStatus,
                         $urlReceived,
-                        $checkout['checkout_type'],
+                        $checkoutType,
                         $linkText
                     );
 
