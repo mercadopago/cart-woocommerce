@@ -101,48 +101,52 @@ class WC_WooMercadoPago_Notification_Core extends WC_WooMercadoPago_Notification
 	 */
 	public function process_status_mp_business( $data, $order ) {
 		$status = $data['status'];
+		try {
+			// Updates the type of gateway.
+			$this->update_meta( $order, '_used_gateway', get_class( $this->payment ) );
 
-		// Updates the type of gateway.
-		$this->update_meta( $order, '_used_gateway', get_class( $this->payment ) );
+			if ( ! empty( $data['payer']['email'] ) ) {
+				$this->update_meta( $order, __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
+			}
 
-		if ( ! empty( $data['payer']['email'] ) ) {
-			$this->update_meta( $order, __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
-		}
+			if ( ! empty( $data['payments_details'] ) ) {
+				$payment_ids = array();
 
-		if ( ! empty( $data['payments_details'] ) ) {
-			$payment_ids = array();
+				foreach ( $data['payments_details'] as $payment ) {
+					$payment_ids[] = $payment['id'];
 
-			foreach ( $data['payments_details'] as $payment ) {
-				$payment_ids[] = $payment['id'];
-
-				$this->update_meta(
-					$order,
-					'Mercado Pago - Payment ' . $payment['id'],
-					'[Date ' . gmdate( 'Y-m-d H:i:s' ) .
+					$this->update_meta(
+						$order,
+						'Mercado Pago - Payment ' . $payment['id'],
+						'[Date ' . gmdate('Y-m-d H:i:s') .
 						']/[Amount ' . $payment['total_amount'] .
 						']/[Payment Type ' . $payment['payment_type_id'] .
 						']/[Payment Method ' . $payment['payment_method_id'] .
 						']/[Paid ' . $payment['paid_amount'] .
 						']/[Coupon ' . $payment['coupon_amount'] .
 						']/[Refund ' . $data['total_refunded'] . ']'
-				);
-				$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - payment_type', $payment['payment_type_id']);
+					);
+					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - payment_type', $payment['payment_type_id']);
 
-				if ( str_contains($payment['payment_type_id'], 'card') ) {
-					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - installments', $payment['payment_method_info']['installments']);
-					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - installment_amount', $payment['payment_method_info']['installment_amount']);
-					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - transaction_amount', $payment['total_amount']);
-					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - total_paid_amount', $payment['paid_amount']);
-					$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - card_last_four_digits', $payment['payment_method_info']['last_four_digits']);
+					if ( strpos($payment['payment_type_id'], 'card') !== false ) {
+						$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - installments', $payment['payment_method_info']['installments']);
+						$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - installment_amount', $payment['payment_method_info']['installment_amount']);
+						$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - transaction_amount', $payment['total_amount']);
+						$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - total_paid_amount', $payment['paid_amount']);
+						$this->update_meta($order, 'Mercado Pago - ' . $payment['id'] . ' - card_last_four_digits', $payment['payment_method_info']['last_four_digits']);
+					}
 				}
 			}
 
 			if ( count( $payment_ids ) > 0 ) {
 				$this->update_meta( $order, '_Mercado_Pago_Payment_IDs', implode( ', ', $payment_ids ) );
 			}
-		}
 
-		$order->save();
+			$order->save();
+
+		} catch ( Exception $e ) {
+			$this->log->write_log( __FUNCTION__, $e->getMessage() );
+		}
 
 		return $status;
 	}

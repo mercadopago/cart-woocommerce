@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.7.4] - 2023-05-15
+
+### Changed
+- Changed function from str_contains to strpos to be compatible for WordPress versions lower than 5.9
+- Changed the way to handle custom notification url using or not using Mercado Pago default params
+
 ## [6.7.3] - 2023-05-02
 
 ### Added
@@ -30,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Interest attached to the order total
+
 ### Fixed
 - Fix nonce validation when "allow costumers to create an account during checkout" is enabled
 

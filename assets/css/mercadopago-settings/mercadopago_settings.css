@@ -615,9 +615,10 @@ input:checked + .mp-settings-slider:before {
 	z-index: 1;
 	top: 150%;
 	left: 50%;
-	margin-left: 0px;
+	margin-left: 0;
 	padding: 16px;
 }
+
 .mp-settings-tooltip .mp-settings-tooltip-text::after {
 	content: "";
 	position: absolute;
@@ -631,20 +632,24 @@ input:checked + .mp-settings-slider:before {
 .mp-settings-tooltip:hover .mp-settings-tooltip-text {
 	visibility: visible;
 }
+
 .mp-settings-choose-mode {
 	flex-direction: column;
 	justify-content: space-between;
 }
+
 .mp-settings-mode-style {
 	width: 16px;
 	height: 16px;
 	background: rgba(0, 0, 0, 0.04);
 }
+
 .mp-settings-mode-warning {
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-start;
 }
+
 .mp-settings-select {
 	appearance: unset !important;
 	-webkit-appearance: unset !important;
@@ -659,15 +664,13 @@ input:checked + .mp-settings-slider:before {
 	height: 48px !important;
 	left: calc(50% - 544px / 2) !important;
 	top: 22px !important;
-	background: url("../../images/mercadopago-settings/iconshape.png") no-repeat
-		center right #fff !important;
+	background: url("../../images/mercadopago-settings/iconshape.png") no-repeat center right #fff !important;
 	background-origin: content-box !important;
 	border: 1px solid rgba(0, 0, 0, 0.25) !important;
 	border-radius: 6px !important;
 	text-align: center !important;
 	text-align-last: center !important;
-	/* Inside Auto Layout */
-	margin: 4px 0px !important;
+	margin: 4px 0 !important;
 	width: 100% !important;
 }
 .mp-settings-flex-start {
@@ -702,6 +705,16 @@ input:checked + .mp-settings-slider:before {
 	padding: 1rem 1rem;
 }
 
+.mp-settings-checkbox-options {
+	line-height: 1.4;
+	margin: 0.25em 0 0.5em !important;
+	display: inline-block;
+	vertical-align: middle;
+	cursor: pointer;
+	font-size: 14px;
+	user-select: none;
+}
+
 @media screen and (max-width: 780px) {
 	.mp-settings-header-img {
 		height: 100%;
@@ -709,20 +722,14 @@ input:checked + .mp-settings-slider:before {
 	}
 	.mp-block-requirements {
 		flex-direction: column;
-		margin: 10px 0px 10px 0px;
-		margin-right: unset;
-		margin-left: unset;
+		margin: 10px unset;
 	}
 	.mp-container {
 		flex-direction: column;
-		margin: 10px 0px 10px 0px;
-		margin-right: unset;
-		margin-left: unset;
+		margin: 10px unset;
 	}
 	.mp-block {
-		margin: 10px 0px 10px 0px;
-		margin-right: unset;
-		margin-left: unset;
+		margin: 10px unset;
 	}
 	.mp-settings-payment-block {
 		margin: unset;
