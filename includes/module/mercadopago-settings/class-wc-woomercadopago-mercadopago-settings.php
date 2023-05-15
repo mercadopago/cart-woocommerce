@@ -158,6 +158,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 		$devsite_links               = WC_WooMercadoPago_Helper_Links::get_mp_devsite_links();
 		$debug_mode                  = false === $this->options->get_debug_mode() ? 'no' : $this->options->get_debug_mode();
 		$url_ipn                     = $this->options->get_custom_domain();
+		$url_ipn_options_checked     = $this->options->get_custom_domain_options() ? 'checked="checked"' : '';
 		$links                       = WC_WooMercadoPago_Helper_Links::woomercadopago_settings_links();
 		$checkbox_checkout_test_mode = false === $this->options->get_checkbox_checkout_test_mode() ? 'yes' : $this->options->get_checkbox_checkout_test_mode();
 		$options_credentials         = $this->options->get_access_token_and_public_key();
@@ -166,6 +167,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 		$translation_store           = self::mp_translation_admin_store();
 		$translation_payment         = self::mp_translation_admin_payment();
 		$translation_test_mode       = self::mp_translation_admin_test_mode();
+
 		include __DIR__ . '/../../../templates/mercadopago-settings/mercadopago-settings.php';
 	}
 
@@ -268,6 +270,7 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			'placeholder_url'              => __( 'Eg: https://examples.com/my-custom-ipn-url', 'woocommerce-mercadopago' ),
 			'helper_url'                   => __( 'Add the URL to receive payments notifications. Find out more information in the ', 'woocommerce-mercadopago' ),
 			'helper_url_link'              => __( 'guides.', 'woocommerce-mercadopago' ),
+			'options_url'                  => __( 'Add plugin default params', 'woocommerce-mercadopago' ),
 			'subtitle_integrator'          => __( 'integrator_id', 'woocommerce-mercadopago' ),
 			'placeholder_integrator'       => __( 'Eg: 14987126498', 'woocommerce-mercadopago' ),
 			'helper_integrator'            => __( 'If you are a Mercado Pago Certified Partner, make sure to add your integrator_id. If you do not have the code, please ', 'woocommerce-mercadopago' ),
@@ -478,12 +481,13 @@ class WC_WooMercadoPago_MercadoPago_Settings {
 			$this->validate_ajax_nonce();
 
 			$store_info = array(
-				'mp_statement_descriptor' => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_identificator' ),
-				'_mp_category_id'         => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_categories' ),
-				'_mp_store_identificator' => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_category_id' ),
-				'_mp_custom_domain'       => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_url_ipn' ),
-				'_mp_integrator_id'       => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_integrator_id' ),
-				'_mp_debug_mode'          => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_debug_mode' ),
+				'mp_statement_descriptor'   => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_identificator' ),
+				'_mp_category_id'           => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_categories' ),
+				'_mp_store_identificator'   => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_category_id' ),
+				'_mp_custom_domain'         => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_url_ipn' ),
+				'_mp_custom_domain_options' => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_url_ipn_options' ),
+				'_mp_integrator_id'         => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_integrator_id' ),
+				'_mp_debug_mode'            => WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'store_debug_mode' ),
 			);
 
 			foreach ( $store_info as $key => $value ) {

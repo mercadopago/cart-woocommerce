@@ -241,7 +241,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 								<fieldset>
 									<legend class="mp-settings-label mp-settings-font-color"><?php echo esc_html($translation_store['subtitle_url']); ?></legend>
 									<input type="text" class="mp-settings-input" id="mp-store-url-ipn" placeholder="<?php echo esc_html($translation_store['placeholder_url']); ?>" value="<?php echo esc_html($url_ipn); ?>">
-									<span class="mp-settings-helper"><?php echo esc_html($translation_store['helper_url']); ?> <span><a  class="mp-settings-blue-text" target="_blank" href="<?php echo esc_html($devsite_links['notifications_ipn']); ?>" ><?php echo esc_html($translation_store['helper_url_link']); ?></a></span>
+
+									<div>
+										<input type="checkbox" id="mp-store-url-ipn-options" <?php echo esc_html($url_ipn_options_checked); ?> />
+										<label for="mp-store-url-ipn-options" class="mp-settings-checkbox-options"><?php echo esc_html($translation_store['options_url']); ?></label>
+									</div>
+
+									<span class="mp-settings-helper">
+										<?php echo esc_html($translation_store['helper_url']); ?>
+										<span>
+											<a class="mp-settings-blue-text" target="_blank" href="<?php echo esc_html($devsite_links['notifications_ipn']); ?>" >
+												<?php echo esc_html($translation_store['helper_url_link']); ?>
+											</a>
+										</span>
+									</span>
 								</fieldset>
 							</div>
 							<div class="mp-settings-standard-margin">

@@ -459,23 +459,28 @@ abstract class WC_WooMercadoPago_Preference_Abstract extends WC_Payment_Gateway 
 	 * @return string|void
 	 */
 	public function get_notification_url() {
-		if ( ! strrpos( get_site_url(), 'localhost' ) ) {
-			$notification_url = $this->payment->custom_domain;
+		$notification_url         = $this->payment->custom_domain;
+		$notification_url_options = $this->payment->custom_domain_options;
 
-			// Check if we have a custom URL.
-			if ( empty( $notification_url ) || filter_var( $notification_url, FILTER_VALIDATE_URL ) === false ) {
+		if ( ! empty( $notification_url ) && (
+			strrpos( $notification_url, 'localhost' ) === false ||
+			filter_var( $notification_url, FILTER_VALIDATE_URL ) === false
+		) ) {
+			if ( $notification_url_options ) {
 				return $this->get_notification_type(
-					WC()->api_request_url( $this->notification_class ),
+					WC_WooMercadoPago_Module::fix_url_ampersand(esc_url($notification_url . '/wc-api/' . $this->notification_class . '/')),
 					$this->notification_class
 				);
 			} else {
-				return $this->get_notification_type(
-					WC_WooMercadoPago_Module::fix_url_ampersand(
-						esc_url($notification_url . '/wc-api/' . $this->notification_class . '/')
-					),
-					$this->notification_class
-				);
+				return WC_WooMercadoPago_Module::fix_url_ampersand(esc_url($notification_url));
 			}
+		}
+
+		if ( empty( $notification_url ) && ! strrpos( get_site_url(), 'localhost' ) ) {
+			return $this->get_notification_type(
+				WC()->api_request_url( $this->notification_class ),
+				$this->notification_class
+			);
 		}
 	}
 

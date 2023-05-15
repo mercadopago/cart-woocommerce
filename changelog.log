@@ -1,6 +1,11 @@
 CHANGELOG:
 == Changelog ==
 
+= v6.7.4 (15/05/2023) =
+* Changed
+- Changed function from str_contains to strpos to be compatible for WordPress versions lower than 5.9
+- Changed the way to handle custom notification url using or not using Mercado Pago default params
+
 = v6.7.3 (02/05/2023) =
 * Added
 - Test compatibility with WooCommerce v7.6

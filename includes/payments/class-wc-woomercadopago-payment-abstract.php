@@ -35,6 +35,7 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		'_mp_store_identificator',
 		'_mp_integrator_id',
 		'_mp_custom_domain',
+		'_mp_custom_domain_options',
 		'installments',
 		'auto_return',
 	);
@@ -240,6 +241,13 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	public $custom_domain;
 
 	/**
+	 * Custom domain
+	 *
+	 * @var bool
+	 */
+	public $custom_domain_options;
+
+	/**
 	 * Is binary mode
 	 *
 	 * @var mixed|string
@@ -422,38 +430,47 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	public $prior_uid;
 
 	/**
+	 * Discount action URL
+	 *
+	 * @var string
+	 */
+	private $discount_action_url;
+
+	/**
 	 * WC_WooMercadoPago_PaymentAbstract constructor.
 	 *
 	 * @throws WC_WooMercadoPago_Exception Load payment exception.
 	 */
 	public function __construct() {
-		$this->mp_options           = $this->get_mp_options();
-		$this->mp_nonce             = WC_WooMercadoPago_Helper_Nonce::get_instance();
-		$this->mp_public_key_test   = $this->mp_options->get_public_key_test();
-		$this->mp_access_token_test = $this->mp_options->get_access_token_test();
-		$this->mp_public_key_prod   = $this->mp_options->get_public_key_prod();
-		$this->mp_access_token_prod = $this->mp_options->get_access_token_prod();
-		$this->checkout_country     = $this->mp_options->get_checkout_country();
-		$this->wc_country           = $this->mp_options->get_woocommerce_country();
-		$this->mp_category_id       = false === $this->mp_options->get_store_category() ? 'others' : $this->mp_options->get_store_category();
-		$this->store_identificator  = false === $this->mp_options->get_store_id() ? 'WC-' : $this->mp_options->get_store_id();
-		$this->integrator_id        = $this->mp_options->get_integrator_id();
-		$this->debug_mode           = false === $this->mp_options->get_debug_mode() ? 'no' : $this->mp_options->get_debug_mode();
-		$this->custom_domain        = $this->mp_options->get_custom_domain();
-		$this->binary_mode          = $this->get_option( 'binary_mode', 'no' );
-		$this->gateway_discount     = $this->get_activable_value('gateway_discount', 0);
-		$this->commission           = $this->get_activable_value('commission', 0);
-		$this->sandbox              = $this->is_test_user();
-		$this->supports             = array( 'products', 'refunds' );
-		$this->site_data            = WC_WooMercadoPago_Module::get_site_data();
-		$this->log                  = new WC_WooMercadoPago_Log( $this );
-		$this->mp                   = $this->get_mp_instance();
-		$this->homolog_validate     = WC_WooMercadoPago_Credentials::get_homolog_validate( $this->is_production_mode(), $this->mp_access_token_prod );
-		$this->application_id       = $this->get_application_id( $this->mp_access_token_prod );
-		$this->logged_user_email    = ( 0 !== wp_get_current_user()->ID ) ? wp_get_current_user()->user_email : null;
-		$this->discount_action_url  = get_site_url() . '/index.php/woocommerce-mercadopago/?wc-api=' . get_class( $this );
-		$prior_user                 = wp_get_current_user();
-		$this->prior_uid            = (int) $prior_user->ID;
+		$this->mp_options            = $this->get_mp_options();
+		$this->mp_nonce              = WC_WooMercadoPago_Helper_Nonce::get_instance();
+		$this->mp_public_key_test    = $this->mp_options->get_public_key_test();
+		$this->mp_access_token_test  = $this->mp_options->get_access_token_test();
+		$this->mp_public_key_prod    = $this->mp_options->get_public_key_prod();
+		$this->mp_access_token_prod  = $this->mp_options->get_access_token_prod();
+		$this->checkout_country      = $this->mp_options->get_checkout_country();
+		$this->wc_country            = $this->mp_options->get_woocommerce_country();
+		$this->mp_category_id        = false === $this->mp_options->get_store_category() ? 'others' : $this->mp_options->get_store_category();
+		$this->store_identificator   = false === $this->mp_options->get_store_id() ? 'WC-' : $this->mp_options->get_store_id();
+		$this->integrator_id         = $this->mp_options->get_integrator_id();
+		$this->debug_mode            = false === $this->mp_options->get_debug_mode() ? 'no' : $this->mp_options->get_debug_mode();
+		$this->custom_domain         = $this->mp_options->get_custom_domain();
+		$this->custom_domain_options = $this->mp_options->get_custom_domain_options();
+		$this->binary_mode           = $this->get_option( 'binary_mode', 'no' );
+		$this->gateway_discount      = $this->get_activable_value('gateway_discount', 0);
+		$this->commission            = $this->get_activable_value('commission', 0);
+		$this->sandbox               = $this->is_test_user();
+		$this->supports              = array( 'products', 'refunds' );
+		$this->site_data             = WC_WooMercadoPago_Module::get_site_data();
+		$this->log                   = new WC_WooMercadoPago_Log( $this );
+		$this->mp                    = $this->get_mp_instance();
+		$this->homolog_validate      = WC_WooMercadoPago_Credentials::get_homolog_validate( $this->is_production_mode(), $this->mp_access_token_prod );
+		$this->application_id        = $this->get_application_id( $this->mp_access_token_prod );
+		$this->logged_user_email     = ( 0 !== wp_get_current_user()->ID ) ? wp_get_current_user()->user_email : null;
+		$this->discount_action_url   = get_site_url() . '/index.php/woocommerce-mercadopago/?wc-api=' . get_class( $this );
+		$prior_user                  = wp_get_current_user();
+		$this->prior_uid             = (int) $prior_user->ID;
+
 		add_action( 'woocommerce_after_settings_checkout', array($this, 'mercadopago_after_form') );
 	}
 
@@ -558,18 +575,19 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	 */
 	public function get_common_config() {
 		return array(
-			'_mp_public_key_test'     => $this->mp_options->get_public_key_test(),
-			'_mp_access_token_test'   => $this->mp_options->get_access_token_test(),
-			'_mp_public_key_prod'     => $this->mp_options->get_public_key_prod(),
-			'_mp_access_token_prod'   => $this->mp_options->get_access_token_prod(),
-			'checkout_country'        => $this->mp_options->get_checkout_country(),
-			'mp_statement_descriptor' => $this->mp_options->get_store_name_on_invoice(),
-			'_mp_category_id'         => $this->mp_options->get_store_category(),
-			'_mp_store_identificator' => $this->mp_options->get_store_id(),
-			'_mp_integrator_id'       => $this->mp_options->get_integrator_id(),
-			'_mp_custom_domain'       => $this->mp_options->get_custom_domain(),
-			'installments'            => $this->get_option('installments'),
-			'auto_return'             => $this->get_option('auto_return'),
+			'_mp_public_key_test'       => $this->mp_options->get_public_key_test(),
+			'_mp_access_token_test'     => $this->mp_options->get_access_token_test(),
+			'_mp_public_key_prod'       => $this->mp_options->get_public_key_prod(),
+			'_mp_access_token_prod'     => $this->mp_options->get_access_token_prod(),
+			'checkout_country'          => $this->mp_options->get_checkout_country(),
+			'mp_statement_descriptor'   => $this->mp_options->get_store_name_on_invoice(),
+			'_mp_category_id'           => $this->mp_options->get_store_category(),
+			'_mp_store_identificator'   => $this->mp_options->get_store_id(),
+			'_mp_integrator_id'         => $this->mp_options->get_integrator_id(),
+			'_mp_custom_domain'         => $this->mp_options->get_custom_domain(),
+			'_mp_custom_domain_options' => $this->mp_options->get_custom_domain_options(),
+			'installments'              => $this->get_option('installments'),
+			'auto_return'               => $this->get_option('auto_return'),
 		);
 	}
 

@@ -273,6 +273,7 @@ function mp_update_store_information() {
           store_category_id: document.getElementById("mp-store-category-id").value,
           store_categories: document.getElementById("mp-store-categories").value,
           store_url_ipn: document.querySelector("#mp-store-url-ipn").value,
+          store_url_ipn_options: document.querySelector("#mp-store-url-ipn-options").checked ? 'yes' : 'no',
           store_integrator_id: document.getElementById("mp-store-integrator-id").value,
           store_debug_mode: document.querySelector("#mp-store-debug-mode:checked")?.value,
           action: "mp_update_store_information",
