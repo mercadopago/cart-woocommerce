@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
 
 class NotificationFactory
 {
-    public function createNotificationHandler(string $gateway, array $data): NotificationInterface
+    public function createNotificationHandler(AbstractGateway $gateway, array $data): NotificationInterface
     {
         global $mercadopago;
 
