@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v6.7.5 (17/05/2023) =
+* Fixed
+- Fixed property discount_action_url becoming public instead private
+
 = v6.7.4 (15/05/2023) =
 * Changed
 - Changed function from str_contains to strpos to be compatible for WordPress versions lower than 5.9
