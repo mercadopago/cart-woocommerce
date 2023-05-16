@@ -434,7 +434,7 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	 *
 	 * @var string
 	 */
-	private $discount_action_url;
+	public $discount_action_url;
 
 	/**
 	 * WC_WooMercadoPago_PaymentAbstract constructor.
