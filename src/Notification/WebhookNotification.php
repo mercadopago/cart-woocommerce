@@ -4,8 +4,8 @@ namespace MercadoPago\Woocommerce\Notification;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Requester;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 
@@ -24,7 +24,7 @@ class WebhookNotification extends AbstractNotification
      * WebhookNotification constructor
      */
     public function __construct(
-        AbstractGateway $gateway,
+        MercadoPagoGatewayInterface $gateway,
         Logs $logs,
         OrderStatus $orderStatus,
         Seller $seller,

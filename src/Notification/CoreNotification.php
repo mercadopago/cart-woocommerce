@@ -6,9 +6,9 @@ use MercadoPago\PP\Sdk\Entity\Notification\Notification;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -33,7 +33,7 @@ class CoreNotification extends AbstractNotification
      * CoreNotification constructor
      */
     public function __construct(
-        AbstractGateway $gateway,
+        MercadoPagoGatewayInterface $gateway,
         Logs $logs,
         OrderStatus $orderStatus,
         Seller $seller,
@@ -94,7 +94,7 @@ class CoreNotification extends AbstractNotification
 		try {
 			$order           = parent::handleSuccessfulRequest($data);
             $oldOrderStatus  = $order->get_status();
-			$processedStatus = $this->getProcessedStatus($data, $order);
+			$processedStatus = $this->getProcessedStatus($order, $data);
 
             $this->logs->file->info(
                 sprintf(

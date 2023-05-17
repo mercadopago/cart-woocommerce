@@ -4,7 +4,7 @@ namespace MercadoPago\Woocommerce\Notification;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 abstract class AbstractNotification implements NotificationInterface
 {
     /**
-     * @var AbstractGateway
+     * @var MercadoPagoGatewayInterface
      */
     public $gateway;
 
@@ -44,7 +44,7 @@ abstract class AbstractNotification implements NotificationInterface
      * AbstractNotification constructor
      */
     public function __construct(
-        AbstractGateway $gateway,
+        MercadoPagoGatewayInterface $gateway,
         Logs $logs,
         OrderStatus $orderStatus,
         Seller $seller,
