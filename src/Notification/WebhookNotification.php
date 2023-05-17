@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -24,7 +25,7 @@ class WebhookNotification extends AbstractNotification
      * WebhookNotification constructor
      */
     public function __construct(
-        AbstractGateway $gateway,
+        MercadoPagoGatewayInterface $gateway,
         Logs $logs,
         OrderStatus $orderStatus,
         Seller $seller,

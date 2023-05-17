@@ -11,6 +11,7 @@ use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -32,7 +33,7 @@ class CoreNotification extends AbstractNotification
      * CoreNotification constructor
      */
     public function __construct(
-        AbstractGateway $gateway,
+        MercadoPagoGatewayInterface $gateway,
         Logs $logs,
         OrderStatus $orderStatus,
         Seller $seller,
@@ -93,7 +94,7 @@ class CoreNotification extends AbstractNotification
 		try {
 			$order           = parent::handleSuccessfulRequest($data);
             $oldOrderStatus  = $order->get_status();
-			$processedStatus = $this->getProcessedStatus($data, $order);
+			$processedStatus = $this->getProcessedStatus($order, $data);
 
             $this->logs->file->info(
                 sprintf(
