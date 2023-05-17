@@ -20,6 +20,11 @@ class Plugin
     public const UPDATE_TEST_MODE_ACTION = 'mercadopago_plugin_test_mode_updated';
 
     /**
+     * @const
+     */
+    public const LOADED_PLUGIN_ACTION = 'mercadopago_main_plugin_loaded';
+
+    /**
      * Register to plugin update event
      *
      * @param mixed $callback
@@ -53,5 +58,17 @@ class Plugin
     public function registerOnPluginTestModeUpdate($callback): void
     {
         add_action(self::UPDATE_TEST_MODE_ACTION, $callback);
+    }
+
+    /**
+     * Register to plugin loaded event
+     *
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function registerOnPluginLoaded($callback): void
+    {
+        add_action(self::LOADED_PLUGIN_ACTION, $callback);
     }
 }

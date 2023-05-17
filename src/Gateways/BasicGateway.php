@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+
 
 if (!defined('ABSPATH')) {
     exit;

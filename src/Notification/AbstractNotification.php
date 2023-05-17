@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 
 if (!defined('ABSPATH')) {
     exit;
