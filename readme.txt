@@ -136,6 +136,10 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
+= v6.8.0 (22/05/2023) =
+* Features
+- Add default activation for Credits Gateway when Basic Gateway is enabled
+
 = v6.7.5 (17/05/2023) =
 * Fixed
 - Fixed property discount_action_url becoming public instead private

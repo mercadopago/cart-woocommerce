@@ -39,7 +39,7 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		$this->form_fields          = array();
 		$this->method_title         = __( 'Mercado Pago - Installments without card', 'woocommerce-mercadopago' );
 		$this->method               = $this->get_option_mp( 'method', 'redirect' );
-		$this->title                = $this->get_option_mp( 'title', __( 'Installments without card', 'woocommerce-mercadopago' ) );
+		$this->title                = $this->get_option_mp( 'title', __( 'Checkout without card', 'woocommerce-mercadopago' ) );
 		$this->method_description   = $this->description;
 		$this->credits_banner       = $this->get_option('credits_banner', 'no');
 		$this->gateway_discount     = $this->get_option('gateway_discount', 0);
@@ -482,5 +482,15 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		 * @since 3.0.1
 		 */
 		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/icons/mercadopago.png', plugin_dir_path( __FILE__ ) ) );
+	}
+
+	/**
+	 * Set Credits active by Default
+	 *
+	 */
+	public function active_by_default() {
+		$this->update_option('enabled', 'yes');
+		$this->update_option('credits_banner', 'yes');
+		$this->update_option('already_enabled_by_default', true);
 	}
 }
