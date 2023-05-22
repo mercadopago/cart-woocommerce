@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Mercado Pago payments for WooCommerce 6.0.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-"
 "mercadopago\n"
-"POT-Creation-Date: 2023-05-09 20:34+0000\n"
+"POT-Creation-Date: 2023-05-16 21:36+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -11,7 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.1\n"
 
 #: ../../includes/helpers/class-wc-woomercadopago-helper-links.php:141,
 #: ../../includes/module/class-wc-woomercadopago-module.php:352
@@ -554,7 +554,6 @@ msgstr "Cuotas sin interés con bancos seleccionados."
 
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:30,
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:31,
-#: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:42,
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:245
 msgid "Installments without card"
 msgstr "Financiación sin tarjeta de crédito"
@@ -566,6 +565,10 @@ msgstr "Tus clientes pueden comprar en hasta 12 pagos mensuales"
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:40
 msgid "Mercado Pago - Installments without card"
 msgstr "Mercado Pago - Hasta 12 pagos sin tarjeta con Mercado Pago"
+
+#: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:42
+msgid "Checkout without card"
+msgstr "Hasta 12 pagos sin tarjeta con Mercado Pago"
 
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:182
 msgid "Activate installments without card in your store checkout "
@@ -642,8 +645,7 @@ msgstr ""
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:316
 msgid "The installments without card component is <b>active</b>."
 msgstr ""
-"El componente “Hasta 12 pagos sin tarjeta con Mercado Pago” está <b>activo</"
-"b>."
+"El componente “Compra en hasta 12 pagos sin tarjeta” está <b>activo</b>."
 
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:317
 msgid "The installments without card component is <b>inactive</b>."
