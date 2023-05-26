@@ -7,7 +7,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: MPB Desenvolvimento <mpb_desenvolvimento@mercadopago.com.br>\n"
-"POT-Creation-Date: 2023-05-09 20:34+0000\n"
+"POT-Creation-Date: 2023-05-16 21:36+0000\n"
 "Project-Id-Version: undefined\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -427,7 +427,7 @@ msgstr ""
 msgid "Interest-free installments with selected banks."
 msgstr ""
 
-#: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:30, ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:31, ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:42, ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:245
+#: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:30, ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:31, ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:245
 msgid "Installments without card"
 msgstr ""
 
@@ -437,6 +437,10 @@ msgstr ""
 
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:40
 msgid "Mercado Pago - Installments without card"
+msgstr ""
+
+#: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:42
+msgid "Checkout without card"
 msgstr ""
 
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:182

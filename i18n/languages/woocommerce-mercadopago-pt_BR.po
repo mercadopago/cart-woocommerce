@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Mercado Pago payments for WooCommerce 6.0.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-"
 "mercadopago\n"
-"POT-Creation-Date: 2023-05-09 20:34+0000\n"
+"POT-Creation-Date: 2023-05-16 21:36+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -11,7 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.1\n"
 
 #: ../../includes/helpers/class-wc-woomercadopago-helper-links.php:141,
 #: ../../includes/module/class-wc-woomercadopago-module.php:352
@@ -555,7 +555,6 @@ msgstr "Parcelas sem juros em bancos selecionados."
 
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:30,
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:31,
-#: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:42,
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:245
 msgid "Installments without card"
 msgstr "Parcelado sem cartão"
@@ -567,6 +566,10 @@ msgstr "Clientes compram na hora e pagam depois em até 12x"
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:40
 msgid "Mercado Pago - Installments without card"
 msgstr "Mercado Pago - Parcelamento sem cartão"
+
+#: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:42
+msgid "Checkout without card"
+msgstr "Parcelado sem cartão com Mercado Pago"
 
 #: ../../includes/payments/class-wc-woomercadopago-credits-gateway.php:182
 msgid "Activate installments without card in your store checkout "
