@@ -196,15 +196,15 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 			if ( $this->mp instanceof MP ) {
 				$access_token = $this->mp->get_access_token();
 				if (
-				false === WC_WooMercadoPago_Credentials::validate_credentials_test($this->mp, $access_token)
-				&& true === $this->sandbox
+					false === WC_WooMercadoPago_Credentials::validate_credentials_test($this->mp, $access_token)
+					&& true === $this->sandbox
 				) {
 					return false;
 				}
 
 				if (
-				false === WC_WooMercadoPago_Credentials::validate_credentials_prod($this->mp, $access_token)
-				&& false === $this->sandbox
+					false === WC_WooMercadoPago_Credentials::validate_credentials_prod($this->mp, $access_token)
+					&& false === $this->sandbox
 				) {
 					return false;
 				}
@@ -416,27 +416,27 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 		foreach ( $all_payments as $payment_method ) {
 			if ( 'credit_card' === $payment_method['type'] ) {
 				$payment_list['payment_method_types']['credit_card']['list'][] = array(
-				'id'        => 'ex_payments_' . $payment_method['id'],
-				'field_key' => $this->get_field_key('ex_payments_' . $payment_method['id']),
-				'label'     => $payment_method['name'],
-				'value'     => $this->get_option('ex_payments_' . $payment_method['id'], 'yes'),
-				'type'      => 'checkbox',
+					'id'        => 'ex_payments_' . $payment_method['id'],
+					'field_key' => $this->get_field_key('ex_payments_' . $payment_method['id']),
+					'label'     => $payment_method['name'],
+					'value'     => $this->get_option('ex_payments_' . $payment_method['id'], 'yes'),
+					'type'      => 'checkbox',
 				);
 			} elseif ( 'debit_card' === $payment_method['type'] || 'prepaid_card' === $payment_method['type'] ) {
 				$payment_list['payment_method_types']['debit_card']['list'][] = array(
-				'id'        => 'ex_payments_' . $payment_method['id'],
-				'field_key' => $this->get_field_key('ex_payments_' . $payment_method['id']),
-				'label'     => $payment_method['name'],
-				'value'     => $this->get_option('ex_payments_' . $payment_method['id'], 'yes'),
-				'type'      => 'checkbox',
+					'id'        => 'ex_payments_' . $payment_method['id'],
+					'field_key' => $this->get_field_key('ex_payments_' . $payment_method['id']),
+					'label'     => $payment_method['name'],
+					'value'     => $this->get_option('ex_payments_' . $payment_method['id'], 'yes'),
+					'type'      => 'checkbox',
 				);
 			} else {
 				$payment_list['payment_method_types']['other']['list'][] = array(
-				'id'        => 'ex_payments_' . $payment_method['id'],
-				'field_key' => $this->get_field_key('ex_payments_' . $payment_method['id']),
-				'label'     => $payment_method['name'],
-				'value'     => $this->get_option('ex_payments_' . $payment_method['id'], 'yes'),
-				'type'      => 'checkbox',
+					'id'        => 'ex_payments_' . $payment_method['id'],
+					'field_key' => $this->get_field_key('ex_payments_' . $payment_method['id']),
+					'label'     => $payment_method['name'],
+					'value'     => $this->get_option('ex_payments_' . $payment_method['id'], 'yes'),
+					'type'      => 'checkbox',
 				);
 			}
 		}
@@ -512,35 +512,20 @@ class WC_WooMercadoPago_Basic_Gateway extends WC_WooMercadoPago_Payment_Abstract
 		$amount         = $this->get_order_total();
 		$shipping_taxes = floatval($order->get_shipping_total());
 
-		if ( method_exists($order, 'update_meta_data') ) {
-			$order->update_meta_data('is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no');
-			$order->update_meta_data('_used_gateway', get_class($this));
+		$order->update_meta_data('is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no');
+		$order->update_meta_data('_used_gateway', get_class($this));
 
-			if ( ! empty($this->gateway_discount) ) {
-				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
-				$order->update_meta_data('Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' ' . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
-				$order->set_total($amount - $discount);
-			}
-
-			if ( ! empty($this->commission) ) {
-				$comission = $amount * ( $this->commission / 100 );
-				$order->update_meta_data('Mercado Pago: comission', __('fee of', 'woocommerce-mercadopago') . ' ' . $this->commission . '% / ' . __('fee of', 'woocommerce-mercadopago') . ' = ' . $comission);
-			}
-			$order->save();
-		} else {
-			update_post_meta($order_id, '_used_gateway', get_class($this));
-
-			if ( ! empty($this->gateway_discount) ) {
-				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
-				update_post_meta($order_id, 'Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' ' . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
-				$order->set_total($amount - $discount);
-			}
-
-			if ( ! empty($this->commission) ) {
-				$comission = $amount * ( $this->commission / 100 );
-				update_post_meta($order_id, 'Mercado Pago: comission', __('fee of', 'woocommerce-mercadopago') . ' ' . $this->commission . '% / ' . __('fee of', 'woocommerce-mercadopago') . ' = ' . $comission);
-			}
+		if ( ! empty($this->gateway_discount) ) {
+			$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
+			$order->update_meta_data('Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' ' . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
+			$order->set_total($amount - $discount);
 		}
+
+		if ( ! empty($this->commission) ) {
+			$comission = $amount * ( $this->commission / 100 );
+			$order->update_meta_data('Mercado Pago: comission', __('fee of', 'woocommerce-mercadopago') . ' ' . $this->commission . '% / ' . __('fee of', 'woocommerce-mercadopago') . ' = ' . $comission);
+		}
+		$order->save();
 
 		if ( 'redirect' === $this->method || 'iframe' === $this->method ) {
 			$this->log->write_log(__FUNCTION__, 'customer being redirected to Mercado Pago.');

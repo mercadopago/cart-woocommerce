@@ -113,7 +113,7 @@ class WC_WooMercadoPago_Hook_Ticket extends WC_WooMercadoPago_Hook_Abstract {
 	public function update_mp_settings_script_ticket( $order_id ) {
 		parent::update_mp_settings_script( $order_id );
 		$order               = wc_get_order( $order_id );
-		$transaction_details = ( method_exists( $order, 'get_meta' ) ) ? $order->get_meta( '_transaction_details_ticket' ) : get_post_meta( $order->get_id(), '_transaction_details_ticket', true );
+		$transaction_details = $order->get_meta( '_transaction_details_ticket' );
 
 		if ( empty( $transaction_details ) ) {
 			return;

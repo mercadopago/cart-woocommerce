@@ -410,36 +410,21 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		$amount         = $this->get_order_total();
 		$shipping_taxes = floatval($order->get_shipping_total());
 
-		if ( method_exists( $order, 'update_meta_data' ) ) {
-			$order->update_meta_data( 'is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no' );
-			$order->update_meta_data( '_used_gateway', get_class( $this ) );
+		$order->update_meta_data( 'is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no' );
+		$order->update_meta_data( '_used_gateway', get_class( $this ) );
 
-			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
-				$order->update_meta_data( 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
-				$order->set_total($amount - $discount);
-			}
-
-			if ( ! empty( $this->commission ) ) {
-				$comission = $amount * ( $this->commission / 100 );
-				$order->update_meta_data( 'Mercado Pago: comission', __( 'fee of', 'woocommerce-mercadopago' ) . ' ' . $this->commission . '% / ' . __( 'fee of', 'woocommerce-mercadopago' ) . ' = ' . $comission );
-			}
-
-			$order->save();
-		} else {
-			update_post_meta( $order_id, '_used_gateway', get_class( $this ) );
-
-			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
-				update_post_meta( $order_id, 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
-				$order->set_total($amount - $discount);
-			}
-
-			if ( ! empty( $this->commission ) ) {
-				$comission = $amount * ( $this->commission / 100 );
-				update_post_meta( $order_id, 'Mercado Pago: comission', __( 'fee of', 'woocommerce-mercadopago' ) . ' ' . $this->commission . '% / ' . __( 'fee of', 'woocommerce-mercadopago' ) . ' = ' . $comission );
-			}
+		if ( ! empty( $this->gateway_discount ) ) {
+			$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
+			$order->update_meta_data( 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
+			$order->set_total($amount - $discount);
 		}
+
+		if ( ! empty( $this->commission ) ) {
+			$comission = $amount * ( $this->commission / 100 );
+			$order->update_meta_data( 'Mercado Pago: comission', __( 'fee of', 'woocommerce-mercadopago' ) . ' ' . $this->commission . '% / ' . __( 'fee of', 'woocommerce-mercadopago' ) . ' = ' . $comission );
+		}
+
+		$order->save();
 
 		// Check for brazilian FEBRABAN rules.
 		if ( 'mlb' === $this->mp_options->get_site_id() ) {
@@ -510,12 +495,8 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 							wc_reduce_stock_levels( $order_id );
 						}
 						// WooCommerce 3.0 or later.
-						if ( method_exists( $order, 'update_meta_data' ) ) {
-							$order->update_meta_data( '_transaction_details_ticket', $response['transaction_details']['external_resource_url'] );
-							$order->save();
-						} else {
-							update_post_meta( $order->get_id(), '_transaction_details_ticket', $response['transaction_details']['external_resource_url'] );
-						}
+						$order->update_meta_data( '_transaction_details_ticket', $response['transaction_details']['external_resource_url'] );
+						$order->save();
 						// Shows some info in checkout page.
 						$order->add_order_note(
 							'Mercado Pago: ' .
@@ -565,7 +546,7 @@ class WC_WooMercadoPago_Ticket_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		}
 	}
 
-		/**
+	/**
 	 * Process if result is fail
 	 *
 	 * @param $function

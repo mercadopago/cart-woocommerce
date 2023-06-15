@@ -18,7 +18,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 
+	/**
+	 * Const ID
+	 *
+	 * @var string
+	 */
 	const ID = 'woo-mercado-pago-credits';
+
+	/**
+	 * Credits banner
+	 *
+	 * @var string
+	 */
+	public $credits_banner;
 
 	/**
 	 * WC_WooMercadoPago_CreditsGateway constructor.
@@ -35,6 +47,8 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		if ( ! $this->validate_section() ) {
 			return;
 		}
+
+		add_action( 'admin_enqueue_scripts', [$this, 'load_admin_scripts'] );
 
 		$this->form_fields          = array();
 		$this->method_title         = __( 'Mercado Pago - Installments without card', 'woocommerce-mercadopago' );
@@ -54,14 +68,21 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		$this->icon                = $this->get_checkout_icon();
 	}
 
-	/**
-	 * Get MP fields label
-	 *
-	 * @return array
-	 */
-	public function get_form_mp_fields() {
-		if ( is_admin() && $this->is_manage_section() && ( WC_WooMercadoPago_Helper_Current_Url::validate_page('mercadopago-settings') || WC_WooMercadoPago_Helper_Current_Url::validate_section('woo-mercado-pago') ) ) {
+	public function load_admin_scripts() {
+		if ( is_admin() && $this->is_manage_section() && (
+				WC_WooMercadoPago_Helper_Current_Url::validate_page('mercadopago-settings') ||
+				WC_WooMercadoPago_Helper_Current_Url::validate_section('woo-mercado-pago')
+			) ) {
+			$siteId = strtolower( $this->mp_options->get_site_id() );
 			$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+
+			wp_enqueue_style(
+				'woocommerce-mercadopago-info-admin-credits-style',
+				plugins_url( '../assets/css/credits/example-info' . $suffix . '.css', plugin_dir_path( __FILE__ ) ),
+				array(),
+				WC_WooMercadoPago_Constants::VERSION
+			);
+
 			wp_enqueue_script(
 				'woocommerce-mercadopago-credits-config-script',
 				plugins_url( '../assets/js/credits_config_mercadopago' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
@@ -69,8 +90,38 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 				WC_WooMercadoPago_Constants::VERSION,
 				true
 			);
-		}
 
+			wp_enqueue_script(
+				'woocommerce-mercadopago-info-admin-credits-script',
+				plugins_url( '../assets/js/credits/example-info' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
+				array(),
+				WC_WooMercadoPago_Constants::VERSION,
+				true
+			);
+
+			wp_localize_script(
+				'woocommerce-mercadopago-info-admin-credits-script',
+				'wc_mp_icon_images',
+				array(
+					'computerBlueIcon'  => plugins_url( '../assets/images/credits/desktop-blue-icon.png', plugin_dir_path( __FILE__ ) ),
+					'computerGrayIcon'  => plugins_url( '../assets/images/credits/desktop-gray-icon.png', plugin_dir_path( __FILE__ ) ),
+					'cellphoneBlueIcon' => plugins_url( '../assets/images/credits/cellphone-blue-icon.png', plugin_dir_path( __FILE__ ) ),
+					'cellphoneGrayIcon' => plugins_url( '../assets/images/credits/cellphone-gray-icon.png', plugin_dir_path( __FILE__ ) ),
+					'viewMobile'        => plugins_url( $this->get_mercado_credits_gif_path( $siteId, 'mobile' ), plugin_dir_path( __FILE__ ) ),
+					'viewDesktop'       => plugins_url( $this->get_mercado_credits_gif_path( $siteId, 'desktop' ), plugin_dir_path( __FILE__ ) ),
+					'footerDesktop'     => __( 'Banner on the product page | Computer version', 'woocommerce-mercadopago' ),
+					'footerCellphone'   => __( 'Banner on the product page | Cellphone version', 'woocommerce-mercadopago' ),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Get MP fields label
+	 *
+	 * @return array
+	 */
+	public function get_form_mp_fields() {
 		if ( empty( $this->checkout_country ) ) {
 			$this->field_forms_order = array_slice( $this->field_forms_order, 0, 7 );
 		}
@@ -81,17 +132,28 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 
 		$form_fields = array();
 
-		if ( ! empty( $this->checkout_country ) && ! empty( $this->get_access_token() ) && ! empty( $this->get_public_key() ) ) {
+		if (
+			! empty( $this->checkout_country ) &&
+			! empty( $this->get_access_token() ) &&
+			! empty( $this->get_public_key() )
+		) {
 			$form_fields['checkout_header']                  = $this->field_checkout_header();
 			$form_fields['checkout_payments_advanced_title'] = $this->field_checkout_payments_advanced_title();
 			$form_fields['credits_banner']                   = $this->field_credits_banner_mode();
+			$form_fields['checkout_visualization_title']     = $this->title_separator();
+			$form_fields['checkout_visualization']           = $this->field_checkout_visualization();
+			$form_fields['checkout_banner_title']            = $this->title_separator();
+			$form_fields['credits_banner_visualization']     = $this->field_credits_banner_visualization();
 		}
 
 		$form_fields_abs = parent::get_form_mp_fields();
+
 		if ( count($form_fields_abs) === 1 ) {
 			return $form_fields_abs;
 		}
+
 		$form_fields_merge = array_merge($form_fields_abs, $form_fields);
+
 		return $this->sort_form_fields($form_fields_merge, $this->field_forms_order);
 	}
 
@@ -104,16 +166,23 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		return array(
 			// Necessary to run.
 			'description',
+
 			// Checkout Básico. Acepta todos los medios de pago y lleva tus cobros a otro nivel.
 			'checkout_header',
+
 			// No olvides de homologar tu cuenta.
 			'checkout_card_homolog',
+
 			// Set up the payment experience in your store.
 			'checkout_card_validate',
 			'enabled',
+			'checkout_visualization_title',
+			'checkout_visualization',
 			'title',
 			WC_WooMercadoPago_Helpers_CurrencyConverter::CONFIG_KEY,
 			'credits_banner',
+			'checkout_banner_title',
+			'credits_banner_visualization',
 
 			// Advanced settings.
 			'checkout_payments_advanced_title',
@@ -139,15 +208,15 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 			if ( $this->mp instanceof MP ) {
 				$access_token = $this->mp->get_access_token();
 				if (
-				false === WC_WooMercadoPago_Credentials::validate_credentials_test($this->mp, $access_token)
-				&& true === $this->sandbox
+					false === WC_WooMercadoPago_Credentials::validate_credentials_test($this->mp, $access_token)
+					&& true === $this->sandbox
 				) {
 					return false;
 				}
 
 				if (
-				false === WC_WooMercadoPago_Credentials::validate_credentials_prod($this->mp, $access_token)
-				&& false === $this->sandbox
+					false === WC_WooMercadoPago_Credentials::validate_credentials_prod($this->mp, $access_token)
+					&& false === $this->sandbox
 				) {
 					return false;
 				}
@@ -176,8 +245,6 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 	 * @return array
 	 */
 	public function field_enabled() {
-		$site = strtolower($this->mp_options->get_site_id());
-
 		return array(
 			'title'        => __('Activate installments without card in your store checkout ', 'woocommerce-mercadopago'),
 			'subtitle'     => __('Offer the option to pay in installments without card directly from your store\'s checkout.', 'woocommerce-mercadopago'),
@@ -187,29 +254,41 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 				'enabled'  => __('Payment in installments without card in the store checkout is <b>active</b>', 'woocommerce-mercadopago'),
 				'disabled' => __('Payment in installments without card in the store checkout is <b>inactive</b>', 'woocommerce-mercadopago'),
 			),
-			'after_toggle' => $this->get_ckeckout_visualization($site),
 		);
 	}
 
-	/**
-	 * Example Banner Credits Admin
-	 *
-	 * @param $siteId
-	 *
-	 * @return string
-	 */
-	public function get_ckeckout_visualization( $siteId ) {
-		return wc_get_template_html(
-			'components/credits-checkout-example.php',
-			array(
+	public function title_separator() {
+		return array(
+			'title' => '',
+			'type'  => 'title',
+		);
+	}
+
+	public function field_checkout_visualization() {
+		$siteId = strtolower( $this->mp_options->get_site_id() );
+
+		return array(
+			'type'  => 'mp_checkout_visualization',
+			'value' => array(
 				'title'     => __('Checkout visualization', 'woocommerce-mercadopago'),
 				'subtitle'  => __('Check below how this feature will be displayed to your customers:', 'woocommerce-mercadopago'),
 				'footer'    => __('Checkout Preview', 'woocommerce-mercadopago'),
 				'pill_text' => __('PREVIEW', 'woocommerce-mercadopago'),
 				'image'     => plugins_url($this->get_mercado_credits_preview_image($siteId), plugin_dir_path(__FILE__)),
 			),
-			'',
-			WC_WooMercadoPago_Module::get_templates_path()
+		);
+	}
+
+	public function field_credits_banner_visualization() {
+		return array(
+			'type'  => 'mp_credits_banner_visualization',
+			'value' => array(
+				'desktop'   => __('Computer', 'woocommerce-mercadopago'),
+				'cellphone' => __('Mobile', 'woocommerce-mercadopago'),
+				'footer'    => __('Banner on the product page | Computer version', 'woocommerce-mercadopago'),
+				'title'     => __('Component visualization', 'woocommerce-mercadopago'),
+				'subtitle'  => __('Check below how this feature will be displayed to your customers:', 'woocommerce-mercadopago'),
+			),
 		);
 	}
 
@@ -227,7 +306,7 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 			'mlm' => 'HISPANO_',
 		];
 
-		$prefix = isset($siteIds[$siteId]) ? $siteIds[$siteId] : '';
+		$prefix = $siteIds[ $siteId ] ?? '';
 
 		return sprintf('../assets/images/credits/%scheckout_preview.jpg', $prefix);
 	}
@@ -296,7 +375,13 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		];
 
 		$parameters = array_merge($parameters, WC_WooMercadoPago_Helper_Links::mp_define_terms_and_conditions());
-		wc_get_template('checkout/credits-checkout.php', $parameters, 'woo/mercado/pago/module/', WC_WooMercadoPago_Module::get_templates_path());
+
+		wc_get_template(
+			'checkout/credits-checkout.php',
+			$parameters,
+			'woo/mercado/pago/module/',
+			WC_WooMercadoPago_Module::get_templates_path()
+		);
 	}
 
 	/**
@@ -305,8 +390,6 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 	 * @return array
 	 */
 	public function field_credits_banner_mode() {
-		$site = strtolower($this->mp_options->get_site_id());
-
 		return array(
 			'title'    => __('Inform your customers about the option of paying in installments without card', 'woocommerce-mercadopago'),
 			'type'     => 'mp_toggle_switch',
@@ -316,58 +399,6 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 				'enabled'  => __('The installments without card component is <b>active</b>.', 'woocommerce-mercadopago'),
 				'disabled' => __('The installments without card component is <b>inactive</b>.', 'woocommerce-mercadopago'),
 			),
-			'after_toggle' => $this->get_credits_info_template($site)
-		);
-	}
-
-	/**
-	 * Example Banner Credits Admin
-	 *
-	 * @param $siteId
-	 *
-	 * @return string
-	 */
-	public function get_credits_info_template( $siteId ) {
-		$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-		wp_enqueue_script(
-			'woocommerce-mercadopago-info-admin-credits-script',
-			plugins_url('../assets/js/credits/example-info' . $suffix . '.js', plugin_dir_path(__FILE__)),
-			array(),
-			WC_WooMercadoPago_Constants::VERSION,
-			true
-		);
-		wp_enqueue_style(
-			'woocommerce-mercadopago-info-admin-credits-style',
-			plugins_url('../assets/css/credits/example-info' . $suffix . '.css', plugin_dir_path(__FILE__)),
-			array(),
-			WC_WooMercadoPago_Constants::VERSION
-		);
-		wp_localize_script(
-			'woocommerce-mercadopago-info-admin-credits-script',
-			'wc_mp_icon_images',
-			array(
-				'computerBlueIcon'  => plugins_url('../assets/images/credits/desktop-blue-icon.png', plugin_dir_path(__FILE__)),
-				'computerGrayIcon'  => plugins_url('../assets/images/credits/desktop-gray-icon.png', plugin_dir_path(__FILE__)),
-				'cellphoneBlueIcon' => plugins_url('../assets/images/credits/cellphone-blue-icon.png', plugin_dir_path(__FILE__)),
-				'cellphoneGrayIcon' => plugins_url('../assets/images/credits/cellphone-gray-icon.png', plugin_dir_path(__FILE__)),
-				'viewMobile'        => plugins_url($this->get_mercado_credits_gif_path($siteId, 'mobile'), plugin_dir_path(__FILE__)),
-				'viewDesktop'       => plugins_url($this->get_mercado_credits_gif_path($siteId, 'desktop'), plugin_dir_path(__FILE__)),
-				'footerDesktop'     => __('Banner on the product page | Computer version', 'woocommerce-mercadopago'),
-				'footerCellphone'   => __('Banner on the product page | Cellphone version', 'woocommerce-mercadopago'),
-			)
-		);
-
-		return wc_get_template_html(
-			'components/credits-info-example.php',
-			array(
-				'desktop'   => __('Computer', 'woocommerce-mercadopago'),
-				'cellphone' => __('Mobile', 'woocommerce-mercadopago'),
-				'footer'    => __('Banner on the product page | Computer version', 'woocommerce-mercadopago'),
-				'title'     => __('Component visualization', 'woocommerce-mercadopago'),
-				'subtitle'  => __('Check below how this feature will be displayed to your customers:', 'woocommerce-mercadopago'),
-			),
-			'',
-			WC_WooMercadoPago_Module::get_templates_path()
 		);
 	}
 
@@ -402,42 +433,27 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		$amount         = $this->get_order_total();
 		$shipping_taxes = floatval($order->get_shipping_total());
 
-		if ( method_exists($order, 'update_meta_data') ) {
-			$order->update_meta_data('is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no');
-			$order->update_meta_data('_used_gateway', get_class($this));
+		$order->update_meta_data('is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no');
+		$order->update_meta_data('_used_gateway', get_class($this));
 
-			if ( ! empty($this->gateway_discount) ) {
-				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
-				$order->update_meta_data('Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' ' . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
-				$order->set_total($amount - $discount);
-			}
-
-			if ( ! empty($this->commission) ) {
-				$comission = $amount * ( $this->commission / 100 );
-				$order->update_meta_data('Mercado Pago: comission', __('fee of', 'woocommerce-mercadopago') . ' ' . $this->commission . '% / ' . __('fee of', 'woocommerce-mercadopago') . ' = ' . $comission);
-			}
-
-			$order->save();
-		} else {
-			update_post_meta($order_id, '_used_gateway', get_class($this));
-
-			if ( ! empty($this->gateway_discount) ) {
-				$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
-				update_post_meta($order_id, 'Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' ' . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
-				$order->set_total($amount - $discount);
-			}
-
-			if ( ! empty($this->commission) ) {
-				$comission = $amount * ( $this->commission / 100 );
-				update_post_meta($order_id, 'Mercado Pago: comission', __('fee of', 'woocommerce-mercadopago') . ' ' . $this->commission . '% / ' . __('fee of', 'woocommerce-mercadopago') . ' = ' . $comission);
-			}
+		if ( ! empty($this->gateway_discount) ) {
+			$discount = ( $amount - $shipping_taxes ) * $this->gateway_discount / 100;
+			$order->update_meta_data('Mercado Pago: discount', __('discount of', 'woocommerce-mercadopago') . ' ' . $this->gateway_discount . '% / ' . __('discount of', 'woocommerce-mercadopago') . ' = ' . $discount);
+			$order->set_total($amount - $discount);
 		}
 
+		if ( ! empty($this->commission) ) {
+			$comission = $amount * ( $this->commission / 100 );
+			$order->update_meta_data('Mercado Pago: comission', __('fee of', 'woocommerce-mercadopago') . ' ' . $this->commission . '% / ' . __('fee of', 'woocommerce-mercadopago') . ' = ' . $comission);
+		}
+
+		$order->save();
+
 		$this->log->write_log(__FUNCTION__, 'customer being redirected to Mercado Pago.');
-			return array(
-				'result'   => 'success',
-				'redirect' => $this->create_preference($order),
-			);
+		return array(
+			'result'   => 'success',
+			'redirect' => $this->create_preference($order),
+		);
 	}
 
 	/**
@@ -482,6 +498,17 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		 * @since 3.0.1
 		 */
 		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/icons/mercadopago.png', plugin_dir_path( __FILE__ ) ) );
+	}
+
+	/**
+	 * Active Credits by default
+	 *
+	 * @return mixed
+	 */
+	public function active_by_default() {
+		$this->update_option('enabled', 'yes');
+		$this->update_option('credits_banner', 'yes');
+		$this->update_option('already_enabled_by_default', true);
 	}
 
 }

@@ -167,15 +167,8 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	 * @return array
 	 */
 	public function field_checkout_about_fees() {
-		$link_content = wc_get_template_html(
-			'checkout/credential/generic-alert.php',
-			array(),
-			'woo/mercado/pago/generic-alert/',
-			WC_WooMercadoPago_Module::get_templates_path()
-		);
-
 		return array(
-			'title' => $link_content,
+			'title' => '',
 			'type'  => 'title',
 		);
 	}
@@ -212,7 +205,7 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 	public function field_checkout_custom_header() {
 		$checkout_custom_header = array(
 			'title' => sprintf(
-				/* translators: %s card */
+			/* translators: %s card */
 				'<div class="mp-row">
                 <div class="mp-col-md-12 mp_subtitle_header">
                 ' . __( 'Transparent Checkout | Credit card ', 'woocommerce-mercadopago' ) . '
@@ -677,33 +670,19 @@ class WC_WooMercadoPago_Custom_Gateway extends WC_WooMercadoPago_Payment_Abstrac
 		$amount         = (float) WC()->cart->subtotal;
 		$shipping_taxes = floatval($order->get_shipping_total());
 
-		if ( method_exists( $order, 'update_meta_data' ) ) {
-			$order->update_meta_data( 'is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no' );
-			$order->update_meta_data( '_used_gateway', get_class( $this ) );
+		$order->update_meta_data( 'is_production_mode', 'no' === $this->mp_options->get_checkbox_checkout_test_mode() ? 'yes' : 'no' );
+		$order->update_meta_data( '_used_gateway', get_class( $this ) );
 
-			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = ( $amount * $this->gateway_discount / 100 );
-				$order->set_total($amount - $discount + $shipping_taxes);
-			}
-
-			if ( ! empty( $this->commission ) ) {
-				$comission = $amount * ( $this->commission / 100 );
-				$order->update_meta_data( 'Mercado Pago: commission', __( 'fee of', 'woocommerce-mercadopago' ) . ' ' . $this->commission . '% / ' . __( 'fee of', 'woocommerce-mercadopago' ) . ' = ' . $comission );
-			}
-			$order->save();
-		} else {
-			update_post_meta( $order_id, '_used_gateway', get_class( $this ) );
-			if ( ! empty( $this->gateway_discount ) ) {
-				$discount = ( $amount * $this->gateway_discount / 100 );
-				$order->update_meta_data( 'Mercado Pago: discount', __( 'discount of', 'woocommerce-mercadopago' ) . ' ' . $this->gateway_discount . '% / ' . __( 'discount of', 'woocommerce-mercadopago' ) . ' = ' . $discount );
-				$order->set_total($amount - $discount + $shipping_taxes);
-			}
-
-			if ( ! empty( $this->commission ) ) {
-				$comission = $amount * ( $this->commission / 100 );
-				update_post_meta( $order_id, 'Mercado Pago: commission', __( 'fee of', 'woocommerce-mercadopago' ) . ' ' . $this->commission . '% / ' . __( 'fee of', 'woocommerce-mercadopago' ) . ' = ' . $comission );
-			}
+		if ( ! empty( $this->gateway_discount ) ) {
+			$discount = ( $amount * $this->gateway_discount / 100 );
+			$order->set_total($amount - $discount + $shipping_taxes);
 		}
+
+		if ( ! empty( $this->commission ) ) {
+			$comission = $amount * ( $this->commission / 100 );
+			$order->update_meta_data( 'Mercado Pago: commission', __( 'fee of', 'woocommerce-mercadopago' ) . ' ' . $this->commission . '% / ' . __( 'fee of', 'woocommerce-mercadopago' ) . ' = ' . $comission );
+		}
+		$order->save();
 	}
 
 	/**

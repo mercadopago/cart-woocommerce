@@ -61,7 +61,11 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 * @return void
 	 */
 	public function load_hooks() {
+		//hook for post
 		add_action( 'add_meta_boxes_shop_order', array( $this, 'payment_status_metabox' ) );
+
+		//hook for order
+		add_action( 'add_meta_boxes_woocommerce_page_wc-orders', array( $this, 'payment_status_metabox' ) );
 		add_action( 'wp_ajax_mp_sync_payment_status', array( $this, 'mercadopago_sync_payment_status' ) );
 	}
 
@@ -70,26 +74,26 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 *
 	 * @return void
 	 */
-	public function load_scripts( $post ) {
-		add_action( 'admin_enqueue_scripts', function () use ( $post ) {
+	public function load_scripts( $order ) {
+
 			$suffix      = $this->get_suffix();
 			$script_name = 'mp_payment_status_metabox';
 
-			if ( is_admin() ) {
-				wp_enqueue_script(
-					$script_name,
-					plugins_url( '../../assets/js/payment_status_metabox' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
-					array(),
-					WC_WooMercadoPago_Constants::VERSION,
-					false
+		if ( is_admin() ) {
+
+			wp_enqueue_script(
+				$script_name,
+				plugins_url( '../../assets/js/payment_status_metabox' . $suffix . '.js', plugin_dir_path( __FILE__ ) ),
+				array(),
+				WC_WooMercadoPago_Constants::VERSION,
+				false
 				);
 
 				wp_localize_script($script_name, $script_name . '_vars', [
-					'post_id' => $post->ID,
+					'order_id' => $order->get_id(),
 					'nonce'   => $this->nonce->generate_nonce(self::NONCE_ID),
 				]);
-			}
-		} );
+		}
 	}
 
 	/**
@@ -392,10 +396,10 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	 *
 	 * @return void
 	 */
-	public function payment_status_metabox( $post ) {
-		$this->load_scripts($post);
+	public function payment_status_metabox( $post_or_order_object ) {
+		$order = ( $post_or_order_object instanceof WP_Post ) ? wc_get_order( $post_or_order_object->ID ) : $post_or_order_object;
 
-		$order = $this->get_order( $post );
+		$this->load_scripts($order);
 
 		if ( ! $order ) {
 			return;
@@ -418,13 +422,13 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	/**
 	 * Payment Status Metabox Content
 	 *
-	 * @param WP_Post $post
+	 * @param wc_get_order $order
 	 *
 	 * @return void
 	 * @throws WC_WooMercadoPago_Exception
 	 */
-	public function payment_status_metabox_content( $post ) {
-		$payment = $this->get_payment($post);
+	public function payment_status_metabox_content( $order ) {
+		$payment = $this->get_payment($order);
 
 		if ( ! $payment ) {
 			return;
@@ -434,9 +438,9 @@ class WC_WooMercadoPago_Hook_Order_Details {
 		$payment_status_details = $payment['response']['status_detail'];
 
 		if ( ! $payment['response']['payment_type_id'] && (
-			'cc_rejected_bad_filled_other' === $payment_status_details ||
-			'cc_rejected_insufficient_amount' === $payment_status_details
-		) ) {
+				'cc_rejected_bad_filled_other' === $payment_status_details ||
+				'cc_rejected_insufficient_amount' === $payment_status_details
+			) ) {
 			return;
 		}
 
@@ -545,13 +549,12 @@ class WC_WooMercadoPago_Hook_Order_Details {
 	/**
 	 * Get payment
 	 *
-	 * @param WP_Post $post
-	 *
 	 * @return array|null
 	 * @throws WC_WooMercadoPago_Exception
 	 */
-	public function get_payment( $post ) {
-		$order = $this->get_order( $post );
+	public function get_payment( $post_or_order_object ) {
+
+		$order = ( $post_or_order_object instanceof WP_Post ) ? wc_get_order( $post_or_order_object->ID ) : $post_or_order_object;
 
 		if ( ! $order ) {
 			return null;
@@ -592,9 +595,8 @@ class WC_WooMercadoPago_Hook_Order_Details {
 				WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'nonce' )
 			);
 
-			$post    = get_post( (int) WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'post_id' ) );
-			$order   = $this->get_order( $post );
-			$payment = $this->get_payment( $post );
+			$order   = wc_get_order( (int) WC_WooMercadoPago_Helper_Filter::get_sanitize_text_from_post( 'order_id' ) );
+			$payment = $this->get_payment( $order );
 			$status  = $payment['response']['status'];
 
 			$gateway      = $order->get_payment_method();

@@ -126,7 +126,7 @@ abstract class WC_WooMercadoPago_Hook_Abstract {
 			if ( apply_filters( 'wc_mercadopago_custommodule_apply_discount', 0 < $value, $woocommerce->cart ) ) {
 				$woocommerce->cart->add_fee(
 					sprintf(
-						/* translators: %s coupon  */
+					/* translators: %s coupon  */
 						__( 'Discount for coupon %s', 'woocommerce-mercadopago' ),
 						esc_attr( $checkout['campaign'] )
 					),
@@ -219,24 +219,22 @@ abstract class WC_WooMercadoPago_Hook_Abstract {
 	 * @return void
 	 */
 	public function update_mp_order_payments_metadata( $order_id, $payments_id ) {
+		$order                = wc_get_order( $order_id );
 		$payments_id_meta_key = '_Mercado_Pago_Payment_IDs';
-		$payments_id_metadata = count( get_post_meta( $order_id, $payments_id_meta_key ) );
-
+		$payments_id_metadata = (bool) $order->get_meta( $payments_id_meta_key );
 		if ( count( $payments_id ) > 0 ) {
-			if ( 0 === $payments_id_metadata ) {
-				update_post_meta( $order_id, $payments_id_meta_key, implode( ', ', $payments_id ) );
+			if ( ! $payments_id_metadata ) {
+				$order->update_meta_data(  $payments_id_meta_key, implode( ', ', $payments_id ) );
+				$order->save();
 			}
 
 			foreach ( $payments_id as $payment_id ) {
 				$payment_detail_meta_key = 'Mercado Pago - Payment ' . $payment_id;
-				$payment_detail_metadata = count ( get_post_meta( $order_id, $payment_detail_meta_key ) );
+				$payment_detail_metadata = count ( (array) $order->get_meta( $payment_detail_meta_key ) );
 
 				if ( 0 === $payment_detail_metadata ) {
-					update_post_meta(
-						$order_id,
-						$payment_detail_meta_key,
-						'[Date ' . gmdate('Y-m-d H:i:s') . ']'
-					);
+					$order->update_meta_data(  $payment_detail_meta_key, '[Date ' . gmdate('Y-m-d H:i:s') . ']' );
+					$order->save();
 				}
 			}
 		}
