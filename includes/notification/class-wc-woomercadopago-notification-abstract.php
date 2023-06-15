@@ -152,8 +152,8 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 	 */
 	public function process_cancel_order_meta_box_actions( $order ) {
 		$order_payment = wc_get_order( $order );
-		$used_gateway  = ( method_exists( $order_payment, 'get_meta' ) ) ? $order_payment->get_meta( '_used_gateway' ) : get_post_meta( $order_payment->get_id(), '_used_gateway', true );
-		$payments      = ( method_exists( $order_payment, 'get_meta' ) ) ? $order_payment->get_meta( '_Mercado_Pago_Payment_IDs' ) : get_post_meta( $order_payment->get_id(), '_Mercado_Pago_Payment_IDs', true );
+		$used_gateway  = $order_payment->get_meta( '_used_gateway' );
+		$payments      = $order_payment->get_meta( '_Mercado_Pago_Payment_IDs' );
 
 		if ( 'WC_WooMercadoPago_Custom_Gateway' === $used_gateway ) {
 			return;
@@ -227,11 +227,6 @@ abstract class WC_WooMercadoPago_Notification_Abstract {
 	}
 
 	public function update_meta( $order, $key, $value ) {
-		// WooCommerce 3.0 or later.
-		if ( method_exists( $order, 'update_meta_data' ) ) {
-			$order->update_meta_data( $key, $value );
-		} else {
-			update_post_meta( $order->id, $key, $value );
-		}
+		$order->update_meta_data( $key, $value );
 	}
 }

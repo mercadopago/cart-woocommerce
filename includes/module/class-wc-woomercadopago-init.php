@@ -194,6 +194,8 @@ class WC_WooMercadoPago_Init {
 	 * Init the plugin
 	 */
 	public static function woocommerce_mercadopago_init() {
+		$isAdmin = is_admin();
+
 		self::woocommerce_mercadopago_load_plugin_textdomain();
 		self::woocommerce_mercadopago_load_sdk();
 
@@ -201,7 +203,7 @@ class WC_WooMercadoPago_Init {
 		require_once dirname( __FILE__ ) . '/sdk/lib/rest-client/class-mp-rest-client.php';
 		require_once dirname( __FILE__ ) . '/config/class-wc-woomercadopago-constants.php';
 
-		if ( is_admin() ) {
+		if ( $isAdmin ) {
 			require_once dirname( __FILE__ ) . '../../admin/notices/class-wc-woomercadopago-notices.php';
 			require_once dirname( __FILE__ ) . '../../admin/notices/class-wc-woomercadopago-saved-cards.php';
 			require_once dirname( __FILE__ ) . '../../admin/hooks/class-wc-woomercadopago-hook-order-details.php';
@@ -238,7 +240,7 @@ class WC_WooMercadoPago_Init {
 			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-filter.php';
 			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-current-user.php';
 
-			if ( is_admin() ) {
+			if ( $isAdmin ) {
 				require_once dirname( __FILE__ ) . '../../admin/notices/class-wc-woomercadopago-review-notice.php';
 				require_once dirname( __FILE__ ) . '/mercadopago-settings/class-wc-woomercadopago-mercadopago-settings.php';
 
@@ -269,6 +271,17 @@ class WC_WooMercadoPago_Init {
 
 			add_action( 'woocommerce_order_actions', array( __CLASS__, 'add_mp_order_meta_box_actions' ) );
 
+			if ( $isAdmin ) {
+				$basicGateway   = new WC_WooMercadoPago_Basic_Gateway();
+				$creditsGateway = new WC_WooMercadoPago_Credits_Gateway();
+
+				if (
+					'yes' === $basicGateway->get_option('enabled') &&
+					! $creditsGateway->get_option('already_enabled_by_default')
+				) {
+					$creditsGateway->active_by_default();
+				}
+			}
 		} else {
 			add_action( 'admin_notices', array( __CLASS__, 'notify_woocommerce_miss' ) );
 		}

@@ -104,9 +104,9 @@ class WC_WooMercadoPago_Hook_Pix extends WC_WooMercadoPago_Hook_Abstract {
 		parent::update_mp_settings_script( $order_id );
 
 		$order              = wc_get_order( $order_id );
-		$qr_base64          = ( method_exists( $order, 'get_meta' ) ) ? $order->get_meta( 'mp_pix_qr_base64' ) : get_post_meta( $order->get_id(), 'mp_pix_qr_base64', true );
-		$qr_code            = ( method_exists( $order, 'get_meta' ) ) ? $order->get_meta( 'mp_pix_qr_code' ) : get_post_meta( $order->get_id(), 'mp_pix_qr_code', true );
-		$transaction_amount = ( method_exists( $order, 'get_meta' ) ) ? $order->get_meta( 'mp_transaction_amount' ) : get_post_meta( $order->get_id(), 'mp_transaction_amount', true );
+		$qr_base64          = $order->get_meta( 'mp_pix_qr_base64' );
+		$qr_code            = $order->get_meta( 'mp_pix_qr_code' );
+		$transaction_amount = $order->get_meta( 'mp_transaction_amount' );
 		$currency_symbol    = WC_WooMercadoPago_Configs::get_country_configs();
 
 		if ( empty( $qr_base64 ) && empty( $qr_code ) ) {

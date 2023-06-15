@@ -32,7 +32,7 @@
           {
             action: 'mp_sync_payment_status',
             nonce: mp_payment_status_metabox_vars.nonce,
-            post_id: mp_payment_status_metabox_vars.post_id,
+            order_id: mp_payment_status_metabox_vars.order_id,
           },
           function () {
           }

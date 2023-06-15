@@ -23,30 +23,30 @@ The Mercado Pago payments for WooCommerce plugin allows you to expand the functi
 For a better experience, you will be redirected to our site by clicking on the links below:
 
 * [Introduction](https://www.mercadopago.com.ar/developers/en/guides/plugins/woocommerce/introduction/)
-* [Installation](https://www.mercadopago.com.ar/developers/en/guides/plugins/woocommerce/instalation/)
-* [Integration](https://www.mercadopago.com.ar/developers/en/guides/plugins/woocommerce/integration/)
-* [Payments preferences](https://www.mercadopago.com.ar/developers/en/guides/plugins/woocommerce/preferences/)
-* [Test and receive payments](https://www.mercadopago.com.ar/developers/en/guides/plugins/woocommerce/receive-payments/)
+* [Installation](https://www.mercadopago.com.ar/developers/en/docs/woocommerce/how-tos/install-module-manually)
+* [Integration](https://www.mercadopago.com.ar/developers/en/docs/woocommerce/integration-configuration/plugin-configuration)
+* [Payments configuration](https://www.mercadopago.com.ar/developers/en/docs/woocommerce/payments-configuration)
+* [Test and receive payments](https://www.mercadopago.com.ar/developers/en/docs/woocommerce/integration-test)
 
 ## Documentación en Español
 
 Para una mejor experiencia, será redirigido a nuestro sitio haciendo clic en los links a abajo:
 
 * [Introducción](https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/introduction/)
-* [Instalación](https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/instalation/)
-* [Integración](https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/integration/)
-* [Preferencias de pago](https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/preferences/)
-* [Prueba y recibe pagos](https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/receive-payments/)
+* [Instalación](https://www.mercadopago.com.ar/developers/es/docs/woocommerce/how-tos/install-module-manually)
+* [Integración](https://www.mercadopago.com.ar/developers/es/docs/woocommerce/integration-configuration/plugin-configuration)
+* [Preferencias de pago](https://www.mercadopago.com.ar/developers/es/docs/woocommerce/payments-configuration)
+* [Prueba y recibe pagos](https://www.mercadopago.com.ar/developers/e/docs/woocommerce/integration-test)
 
 ## Documentação em Português
 
 Para uma melhor experiência, você será redirecionado para o nosso site, clicando nos links abaixo:
 
 * [Introdução](https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/introduction/)
-* [Instalação](https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/instalation/)
-* [Integração](https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/integration/)
-* [Preferências de pagamento](https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/preferences/)
-* [Teste e receba pagamentos](https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/receive-payments/)
+* [Instalação](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/how-tos/install-module-manually)
+* [Integração](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/integration-configuration/plugin-configuration)
+* [Preferências de pagamento](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/payments-configuration)
+* [Teste e receba pagamentos](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/integration-test)
 
 ## Support
 

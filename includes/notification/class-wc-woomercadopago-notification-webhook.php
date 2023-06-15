@@ -155,56 +155,32 @@ class WC_WooMercadoPago_Notification_Webhook extends WC_WooMercadoPago_Notificat
 	 * @return mixed|string
 	 */
 	public function process_status_mp_business( $data, $order ) {
-		$status        = isset( $data['status'] ) ? $data['status'] : 'pending';
-		$total_paid    = isset( $data['transaction_details']['total_paid_amount'] ) ? $data['transaction_details']['total_paid_amount'] : 0.00;
-		$total_refund  = isset( $data['transaction_amount_refunded'] ) ? $data['transaction_amount_refunded'] : 0.00;
-		$coupon_amount = isset( $data['coupon_amount'] ) ? $data['coupon_amount'] : 0.00;
+		$status        = $data['status'] ?? 'pending';
+		$total_paid    = $data['transaction_details']['total_paid_amount'] ?? 0.00;
+		$total_refund  = $data['transaction_amount_refunded'] ?? 0.00;
+		$coupon_amount = $data['coupon_amount'] ?? 0.00;
 		// WooCommerce 3.0 or later.
-		if ( method_exists( $order, 'update_meta_data' ) ) {
-			// Updates the type of gateway.
-			$order->update_meta_data( '_used_gateway', get_class( $this->payment ) );
-			if ( ! empty( $data['payer']['email'] ) ) {
-				$order->update_meta_data( __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
-			}
-			if ( ! empty( $data['payment_type_id'] ) ) {
-				$order->update_meta_data( __( 'Payment type', 'woocommerce-mercadopago' ), $data['payment_type_id'] );
-			}
-			if ( ! empty( $data['payment_method_id'] ) ) {
-				$order->update_meta_data( __( 'Payment method', 'woocommerce-mercadopago' ), $data['payment_method_id'] );
-			}
-			$order->update_meta_data(
-				'Mercado Pago - Payment ' . $data['id'],
-				'[Date ' . gmdate( 'Y-m-d H:i:s', strtotime( $data['date_created'] ) ) .
-					']/[Amount ' . $data['transaction_amount'] .
-					']/[Paid ' . $total_paid .
-					']/[Coupon ' . $coupon_amount .
-					']/[Refund ' . $total_refund . ']'
-			);
-			$order->update_meta_data( '_Mercado_Pago_Payment_IDs', $data['id'] );
-			$order->save();
-		} else {
-			// Updates the type of gateway.
-			update_post_meta( $order->id, '_used_gateway', get_class( $this->payment ) );
-			if ( ! empty( $data['payer']['email'] ) ) {
-				update_post_meta( $order->id, __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
-			}
-			if ( ! empty( $data['payment_type_id'] ) ) {
-				update_post_meta( $order->id, __( 'Payment type', 'woocommerce-mercadopago' ), $data['payment_type_id'] );
-			}
-			if ( ! empty( $data['payment_method_id'] ) ) {
-				update_post_meta( $order->id, __( 'Payment method', 'woocommerce-mercadopago' ), $data['payment_method_id'] );
-			}
-			update_post_meta(
-				$order->id,
-				'Mercado Pago - Payment ' . $data['id'],
-				'[Date ' . gmdate( 'Y-m-d H:i:s', strtotime( $data['date_created'] ) ) .
-					']/[Amount ' . $data['transaction_amount'] .
-					']/[Paid ' . $total_paid .
-					']/[Coupon ' . $coupon_amount .
-					']/[Refund ' . $total_refund . ']'
-			);
-			update_post_meta( $order->id, '_Mercado_Pago_Payment_IDs', $data['id'] );
+		// Updates the type of gateway.
+		$order->update_meta_data( '_used_gateway', get_class( $this->payment ) );
+		if ( ! empty( $data['payer']['email'] ) ) {
+			$order->update_meta_data( __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
 		}
+		if ( ! empty( $data['payment_type_id'] ) ) {
+			$order->update_meta_data( __( 'Payment type', 'woocommerce-mercadopago' ), $data['payment_type_id'] );
+		}
+		if ( ! empty( $data['payment_method_id'] ) ) {
+			$order->update_meta_data( __( 'Payment method', 'woocommerce-mercadopago' ), $data['payment_method_id'] );
+		}
+		$order->update_meta_data(
+			'Mercado Pago - Payment ' . $data['id'],
+			'[Date ' . gmdate( 'Y-m-d H:i:s', strtotime( $data['date_created'] ) ) .
+			']/[Amount ' . $data['transaction_amount'] .
+			']/[Paid ' . $total_paid .
+			']/[Coupon ' . $coupon_amount .
+			']/[Refund ' . $total_refund . ']'
+		);
+		$order->update_meta_data( '_Mercado_Pago_Payment_IDs', $data['id'] );
+		$order->save();
 
 		return $status;
 	}

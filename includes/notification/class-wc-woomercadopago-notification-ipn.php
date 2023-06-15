@@ -133,69 +133,36 @@ class WC_WooMercadoPago_Notification_IPN extends WC_WooMercadoPago_Notification_
 			}
 		}
 		// WooCommerce 3.0 or later.
-		if ( method_exists( $order, 'update_meta_data' ) ) {
-			// Updates the type of gateway.
-			$order->update_meta_data( '_used_gateway', 'WC_WooMercadoPago_Basic_Gateway' );
-			if ( ! empty( $data['payer']['email'] ) ) {
-				$order->update_meta_data( __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
+		// Updates the type of gateway.
+		$order->update_meta_data( '_used_gateway', 'WC_WooMercadoPago_Basic_Gateway' );
+		if ( ! empty( $data['payer']['email'] ) ) {
+			$order->update_meta_data( __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
+		}
+		if ( ! empty( $data['payment_type_id'] ) ) {
+			$order->update_meta_data( __( 'Payment type', 'woocommerce-mercadopago' ), $data['payment_type_id'] );
+		}
+		if ( ! empty( $data['payment_method_id'] ) ) {
+			$order->update_meta_data( __( 'Payment method', 'woocommerce-mercadopago' ), $data['payment_method_id'] );
+		}
+		if ( ! empty( $data['payments'] ) ) {
+			$payment_ids = array();
+			foreach ( $data['payments'] as $payment ) {
+				$coupon_mp     = $this->get_payment_info($payment['id']);
+				$payment_ids[] = $payment['id'];
+				$order->update_meta_data(
+					'Mercado Pago - Payment ' . $payment['id'],
+					'[Date ' . gmdate( 'Y-m-d H:i:s', strtotime( $payment['date_created'] ) ) .
+					']/[Amount ' . $payment['transaction_amount'] .
+					']/[Paid ' . $payment['total_paid_amount'] .
+					']/[Coupon ' . $coupon_mp .
+					']/[Refund ' . $payment['amount_refunded'] . ']'
+				);
 			}
-			if ( ! empty( $data['payment_type_id'] ) ) {
-				$order->update_meta_data( __( 'Payment type', 'woocommerce-mercadopago' ), $data['payment_type_id'] );
-			}
-			if ( ! empty( $data['payment_method_id'] ) ) {
-				$order->update_meta_data( __( 'Payment method', 'woocommerce-mercadopago' ), $data['payment_method_id'] );
-			}
-			if ( ! empty( $data['payments'] ) ) {
-				$payment_ids = array();
-				foreach ( $data['payments'] as $payment ) {
-					$coupon_mp     = $this->get_payment_info($payment['id']);
-					$payment_ids[] = $payment['id'];
-					$order->update_meta_data(
-						'Mercado Pago - Payment ' . $payment['id'],
-						'[Date ' . gmdate( 'Y-m-d H:i:s', strtotime( $payment['date_created'] ) ) .
-							']/[Amount ' . $payment['transaction_amount'] .
-							']/[Paid ' . $payment['total_paid_amount'] .
-							']/[Coupon ' . $coupon_mp .
-							']/[Refund ' . $payment['amount_refunded'] . ']'
-					);
-				}
-				if ( count( $payment_ids ) > 0 ) {
-					$order->update_meta_data( '_Mercado_Pago_Payment_IDs', implode( ', ', $payment_ids ) );
-				}
-			}
-			$order->save();
-		} else {
-			// Updates the type of gateway.
-			update_post_meta( $order->id, '_used_gateway', 'WC_WooMercadoPago_Basic_Gateway' );
-			if ( ! empty( $data['payer']['email'] ) ) {
-				update_post_meta( $order->id, __( 'Buyer email', 'woocommerce-mercadopago' ), $data['payer']['email'] );
-			}
-			if ( ! empty( $data['payment_type_id'] ) ) {
-				update_post_meta( $order->id, __( 'Payment type', 'woocommerce-mercadopago' ), $data['payment_type_id'] );
-			}
-			if ( ! empty( $data['payment_method_id'] ) ) {
-				update_post_meta( $order->id, __( 'Payment method', 'woocommerce-mercadopago' ), $data['payment_method_id'] );
-			}
-			if ( ! empty( $data['payments'] ) ) {
-				$payment_ids = array();
-				foreach ( $data['payments'] as $payment ) {
-					$coupon_mp     = $this->get_payment_info($payment['id']);
-					$payment_ids[] = $payment['id'];
-					update_post_meta(
-						$order->id,
-						'Mercado Pago - Payment ' . $payment['id'],
-						'[Date ' . gmdate( 'Y-m-d H:i:s', strtotime( $payment['date_created'] ) ) .
-							']/[Amount ' . $payment['transaction_amount'] .
-							']/[Paid ' . $payment['total_paid_amount'] .
-							']/[Coupon ' . $coupon_mp .
-							']/[Refund ' . $payment['amount_refunded'] . ']'
-					);
-				}
-				if ( count( $payment_ids ) > 0 ) {
-					update_post_meta( $order->id, '_Mercado_Pago_Payment_IDs', implode( ', ', $payment_ids ) );
-				}
+			if ( count( $payment_ids ) > 0 ) {
+				$order->update_meta_data( '_Mercado_Pago_Payment_IDs', implode( ', ', $payment_ids ) );
 			}
 		}
+		$order->save();
 		return $status;
 	}
 	public function get_payment_info( $id ) {

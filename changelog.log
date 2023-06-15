@@ -1,6 +1,15 @@
 CHANGELOG:
 == Changelog ==
 
+= v6.9.0 (12/06/2023) =
+* Features
+- Add default activation for Credits Gateway when Basic Gateway is enabled
+- Declare this plugin compatible with High-Performance Order Storage (HPOS)
+* Changed
+- Replace post methods with equivalent methods compatible with HPOS
+* Fixed
+- devsite link's in readme
+
 = v6.8.1 (22/05/2023) =
 * Fixed
 - Rollback version

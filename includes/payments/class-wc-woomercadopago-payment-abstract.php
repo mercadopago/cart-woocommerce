@@ -924,60 +924,7 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	}
 
 	/**
-	 * Generates the toggle switch template
-	 *
-	 * @param string $key key, $settings settings array
-	 * @return string html toggle switch template
-	 */
-	public function generate_mp_toggle_switch_html( $key, $settings ) {
-		return wc_get_template_html(
-			'components/toggle-switch.php',
-			array (
-				'field_key' => $this->get_field_key( $key ),
-				'field_value' => $this->get_option( $key, $settings['default'] ),
-				'settings' => $settings,
-			),
-			'',
-			WC_WooMercadoPago_Module::get_templates_path()
-		);
-	}
-
-	/**
-	 * Generates tip information template
-	 *
-	 * @param string $key key, $settings settings array
-	 * @return string html tip information template
-	 */
-	public function generate_mp_card_info_html( $key, $settings ) {
-		return wc_get_template_html(
-			'components/card-info.php',
-			array (
-				'settings' => $settings,
-			),
-			'',
-			WC_WooMercadoPago_Module::get_templates_path()
-		);
-	}
-
-	/**
-	 * Generates the toggle switch template
-	 *
-	 * @param string $key key, $settings settings array
-	 * @return string html toggle switch template
-	 */
-	public function generate_mp_checkbox_list_html( $key, $settings ) {
-		return wc_get_template_html(
-			'components/checkbox-list.php',
-			array (
-				'settings' => $settings,
-			),
-			'',
-			WC_WooMercadoPago_Module::get_templates_path()
-		);
-	}
-
-	/**
-	 * Get sufix to static files
+	 * Get suffix to static files
 	 *
 	 * @return String
 	 */
@@ -1107,22 +1054,6 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 				'min'  => '0',
 				'max'  => '99',
 			),
-		);
-	}
-
-	public function generate_mp_activable_input_html( $key, $settings ) {
-		return wc_get_template_html(
-			'components/activable-input.php',
-			array (
-				'field_key'          => $this->get_field_key( $key ),
-				'field_key_checkbox' => $this->get_field_key( $key . '_checkbox' ),
-				'value'              => $this->get_option( $key ),
-				'enabled'            => $this->get_option( $key . '_checkbox' ),
-				'custom_attributes'  => $this->get_custom_attribute_html( $settings ),
-				'settings'           => $settings,
-			),
-			'',
-			WC_WooMercadoPago_Module::get_templates_path()
 		);
 	}
 
@@ -1339,11 +1270,9 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 	/**
 	 * Get Country Link to Mercado Pago
 	 *
-	 * @param string $checkout Checkout by country.
-	 * @return string
+	 * @return string[]
 	 */
 	public static function get_country_link_mp_terms() {
-
 		$country_link = [
 			'mla' => [
 				'help'      => 'ayuda',
@@ -1389,7 +1318,8 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 			],
 		];
 
-	$checkout_country = strtolower(get_option( 'checkout_country', '' ));
+		$checkout_country = strtolower(get_option( 'checkout_country', '' ));
+
 		return $country_link[ $checkout_country ];
 	}
 
@@ -1423,4 +1353,107 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		return $installments;
 	}
 
+	public function generate_mp_activable_input_html( $key, $settings ) {
+		return wc_get_template_html(
+			'components/activable-input.php',
+			array (
+				'field_key'          => $this->get_field_key( $key ),
+				'field_key_checkbox' => $this->get_field_key( $key . '_checkbox' ),
+				'value'              => $this->get_option( $key ),
+				'enabled'            => $this->get_option( $key . '_checkbox' ),
+				'custom_attributes'  => $this->get_custom_attribute_html( $settings ),
+				'settings'           => $settings,
+			),
+			'',
+			WC_WooMercadoPago_Module::get_templates_path()
+		);
+	}
+
+	/**
+	 * Generates the toggle switch template
+	 *
+	 * @param string $key key, $settings settings array
+	 * @return string html toggle switch template
+	 */
+	public function generate_mp_toggle_switch_html( $key, $settings ) {
+		return wc_get_template_html(
+			'components/toggle-switch.php',
+			array (
+				'field_key' => $this->get_field_key( $key ),
+				'field_value' => $this->get_option( $key, $settings['default'] ),
+				'settings' => $settings,
+			),
+			'',
+			WC_WooMercadoPago_Module::get_templates_path()
+		);
+	}
+
+	/**
+	 * Generates tip information template
+	 *
+	 * @param string $key key, $settings settings array
+	 * @return string html tip information template
+	 */
+	public function generate_mp_card_info_html( $key, $settings ) {
+		return wc_get_template_html(
+			'components/card-info.php',
+			array (
+				'settings' => $settings,
+			),
+			'',
+			WC_WooMercadoPago_Module::get_templates_path()
+		);
+	}
+
+	/**
+	 * Generates the toggle switch template
+	 *
+	 * @param string $key key, $settings settings array
+	 * @return string html toggle switch template
+	 */
+	public function generate_mp_checkbox_list_html( $key, $settings ) {
+		return wc_get_template_html(
+			'components/checkbox-list.php',
+			array (
+				'settings' => $settings,
+			),
+			'',
+			WC_WooMercadoPago_Module::get_templates_path()
+		);
+	}
+
+	/**
+	 * Generate checkout visualization template
+	 *
+	 * @param $key
+	 * @param $settings
+	 *
+	 * @return string
+	 */
+	public function generate_mp_checkout_visualization_html( $key, $settings ) {
+		return wc_get_template_html(
+			'components/credits-checkout-example.php',
+			array(
+				'settings' => $settings,
+			),
+			'',
+			WC_WooMercadoPago_Module::get_templates_path()
+		);
+	}
+
+	/**
+	 * Generate credits banner template
+	 *
+	 * @return string
+	 */
+	public function generate_mp_credits_banner_visualization_html( $key, $settings ) {
+		return wc_get_template_html(
+			'components/credits-info-example.php',
+			array(
+				'settings' => $settings,
+			),
+			'',
+			WC_WooMercadoPago_Module::get_templates_path()
+		);
+	}
 }
