@@ -1,5 +1,5 @@
 {
-    "version": "6.9.0",
+    "version": "6.9.1",
     "name": "cart-woocommerce",
     "description": "Gateway de pagamento Mercado Pago para WooCommerce",
     "scripts": {
