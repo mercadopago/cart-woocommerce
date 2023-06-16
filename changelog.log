@@ -1,5 +1,7 @@
 CHANGELOG:
 == Changelog ==
+= v6.9.1 (16/06/2023) =
+Fix pix renderization
 
 = v6.9.0 (12/06/2023) =
 * Features

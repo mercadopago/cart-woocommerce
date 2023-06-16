@@ -571,10 +571,20 @@ class WC_WooMercadoPago_Pix_Gateway extends WC_WooMercadoPago_Payment_Abstract {
 			$mp_pix_qr_base64             = $order->get_meta( 'mp_pix_qr_base64' );
 			$checkout_pix_date_expiration = $order->get_meta( 'checkout_pix_date_expiration');
 
-			$qr_code         = array_pop( $mp_pix_qr_code );
-			$qr_image        = array_pop( $mp_pix_qr_base64 );
+			if ( is_array($mp_pix_qr_code) ) {
+				$mp_pix_qr_code = array_pop( $mp_pix_qr_code );
+			}
+			if ( is_array($mp_pix_qr_base64) ) {
+				$mp_pix_qr_base64 = array_pop( $mp_pix_qr_base64 );
+			}
+			if ( is_array( $checkout_pix_date_expiration ) ) {
+				$checkout_pix_date_expiration = array_pop( $checkout_pix_date_expiration );
+			}
+
+			$qr_code         = $mp_pix_qr_code;
+			$qr_image        = $mp_pix_qr_base64;
 			$src             = 'data:image/jpeg;base64';
-			$expiration_date = array_pop( $checkout_pix_date_expiration );
+			$expiration_date = $checkout_pix_date_expiration;
 
 			$order         = $order->get_id();
 			$qr_code_image = get_option('siteurl') . '/?wc-api=wc_mp_pix_image&id=' . $order;
