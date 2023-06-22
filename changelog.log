@@ -1,5 +1,10 @@
 CHANGELOG:
 == Changelog ==
+= v6.9.2 (23/06/2023) =
+* Fixed
+Fixed bug that was causing the admin panel to become unresponsive or inaccessible
+
+== Changelog ==
 = v6.9.1 (16/06/2023) =
 Fix pix renderization
 
