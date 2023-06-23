@@ -271,17 +271,6 @@ class WC_WooMercadoPago_Init {
 
 			add_action( 'woocommerce_order_actions', array( __CLASS__, 'add_mp_order_meta_box_actions' ) );
 
-			if ( $isAdmin ) {
-				$basicGateway   = new WC_WooMercadoPago_Basic_Gateway();
-				$creditsGateway = new WC_WooMercadoPago_Credits_Gateway();
-
-				if (
-					'yes' === $basicGateway->get_option('enabled') &&
-					! $creditsGateway->get_option('already_enabled_by_default')
-				) {
-					$creditsGateway->active_by_default();
-				}
-			}
 		} else {
 			add_action( 'admin_notices', array( __CLASS__, 'notify_woocommerce_miss' ) );
 		}
