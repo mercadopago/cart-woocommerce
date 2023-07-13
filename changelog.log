@@ -1,5 +1,13 @@
 CHANGELOG:
 == Changelog ==
+= v6.9.3 (13/07/2023) =
+* Fixed
+- Updated the link to obtain credentials on the developer site
+- Resolved warning related to the missing return type of the function AbstractCollection::getIterator()
+* Changed
+- Improved default activation of Credits Gateway
+
+== Changelog ==
 = v6.9.2 (23/06/2023) =
 * Fixed
 Fixed bug that was causing the admin panel to become unresponsive or inaccessible

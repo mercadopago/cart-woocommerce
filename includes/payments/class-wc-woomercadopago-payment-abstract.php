@@ -726,6 +726,19 @@ class WC_WooMercadoPago_Payment_Abstract extends WC_Payment_Gateway {
 		return parent::update_option( $key, $value );
 	}
 
+
+	/**
+	 * Update Option Default
+	 *
+	 * @param string $key key.
+	 * @param string $value value.
+	 * @return bool
+	 */
+	public function update_option_default( $key, $value = '' ) {
+
+		return parent::update_option( $key, $value );
+	}
+
 	/**
 	 * Get Mercado Pago form fields
 	 *

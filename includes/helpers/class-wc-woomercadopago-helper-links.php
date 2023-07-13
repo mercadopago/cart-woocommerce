@@ -21,18 +21,17 @@ class WC_WooMercadoPago_Helper_Links {
 	 * Links by country configured in woocommerce.
 	 */
 	public static function woomercadopago_settings_links() {
-		$link_settings       = WC_WooMercadoPago_Module::define_link_country();
-		$link_prefix_mp      = 'https://www.mercadopago.';
-		$link_prefix_mp_link = 'https://www.mercadopago.com/';
-		$link_costs_mp       = 'costs-section';
-		$link_developers     = 'developers/';
-		$link_guides         = '/docs/woocommerce/integration-configuration';
-		$link_credentials    = 'panel/credentials';
+		$link_settings    = WC_WooMercadoPago_Module::define_link_country();
+		$link_prefix_mp   = 'https://www.mercadopago.';
+		$link_costs_mp    = 'costs-section';
+		$link_developers  = 'developers/';
+		$link_guides      = '/docs/woocommerce/integration-configuration';
+		$link_credentials = 'settings/account/credentials';
 
 		return array (
 			'link_costs' => $link_prefix_mp . $link_settings ['sufix_url'] . $link_costs_mp,
 			'link_guides_plugin' => $link_prefix_mp . $link_settings ['sufix_url'] . $link_developers . $link_settings ['translate'] . $link_guides,
-			'link_credentials' => $link_prefix_mp_link . $link_developers . $link_credentials,
+			'link_credentials' => $link_prefix_mp . $link_settings ['sufix_url'] . $link_credentials
 		);
 	}
 
