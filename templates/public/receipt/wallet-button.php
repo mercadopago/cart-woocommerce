@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 ?>
 
 <script>
-	window.addEventListener("load", function(event) {
+	window.addEventListener('load', function() {
 		window.mp = new MercadoPago('<?= esc_html($public_key); ?>');
 
 		window.checkout = window.mp.checkout({
@@ -29,9 +29,12 @@ if (!defined('ABSPATH')) {
 	});
 </script>
 
-<a id="submit-payment" href="#" onclick="checkout.open()" class="button alt">
-    <?= esc_html($wallet_button_title); ?>
-</a>
-<a class="button cancel" href="<?= esc_url($cancel_url); ?>">
-    <?= esc_html($cancel_url_text); ?>
-</a>
+<div style="margin-bottom: 24px">
+    <a id="submit-payment" href="#" onclick="checkout.open()" class="button alt">
+        <?= esc_html($wallet_button_title); ?>
+    </a>
+
+    <a class="button cancel" href="<?= esc_url($cancel_url); ?>">
+        <?= esc_html($cancel_url_text); ?>
+    </a>
+</div>

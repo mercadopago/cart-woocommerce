@@ -121,6 +121,36 @@ final class Currency
     }
 
     /**
+     * Get account currency
+     *
+     * @return string
+     */
+    public function getCurrency(): string
+    {
+        return $this->country->getCountryConfigs()['currency'];
+    }
+
+    /**
+     * Get account currency symbol
+     *
+     * @return string
+     */
+    public function getCurrencySymbol(): string
+    {
+        return $this->country->getCountryConfigs()['currency_symbol'];
+    }
+
+    /**
+     * Get Woocommerce currency
+     *
+     * @return string
+     */
+    public function getWoocommerceCurrency(): string
+    {
+        return get_woocommerce_currency();
+    }
+
+    /**
      * Get ratio incrementing the ratios array by gateway
      *
      * @param AbstractGateway $gateway
@@ -130,7 +160,7 @@ final class Currency
     public function getRatio(AbstractGateway $gateway): float
     {
         if (!isset($this->ratios[$gateway->id])) {
-            if ($this->isEnabled($gateway) && $this->validateConversion()) {
+            if ($this->isConversionEnabled($gateway) && $this->validateConversion()) {
                 $ratio = $this->loadRatio();
                 $this->setRatio($gateway->id, $ratio);
             } else {
@@ -155,33 +185,13 @@ final class Currency
     }
 
     /**
-     * Get Woocommerce currency
-     *
-     * @return string
-     */
-    public function getWoocommerceCurrency(): string
-    {
-        return get_woocommerce_currency();
-    }
-
-    /**
-     * Get Account currency
-     *
-     * @return string
-     */
-    public function getAccountCurrency(): string
-    {
-        return $this->country->getCountryConfigs()['currency'];
-    }
-
-    /**
      * Verify if currency option is enabled
      *
      * @param AbstractGateway $gateway
      *
      * @return bool
      */
-    public function isEnabled(AbstractGateway $gateway): bool
+    public function isConversionEnabled(AbstractGateway $gateway): bool
     {
         return $this->options->getGatewayOption($gateway, self::CURRENCY_CONVERSION) === 'yes';
     }
@@ -193,7 +203,7 @@ final class Currency
      */
     public function validateConversion(): bool
     {
-        return $this->getAccountCurrency() === $this->getWoocommerceCurrency();
+        return $this->getCurrency() === $this->getWoocommerceCurrency();
     }
 
     /**
@@ -205,7 +215,7 @@ final class Currency
      */
     public function handleCurrencyNotices(AbstractGateway $gateway): void
     {
-        $toCurrency   = $this->getAccountCurrency();
+        $toCurrency   = $this->getCurrency();
         $fromCurrency = $this->getWoocommerceCurrency();
 
         $currencyEnabledTranslation = sprintf(
@@ -232,7 +242,7 @@ final class Currency
             return;
         }
 
-        if ($this->isEnabled($gateway)) {
+        if ($this->isConversionEnabled($gateway)) {
             $this->isShowingEnabledNotice = true;
             $this->notices->adminNoticeInfo($currencyEnabledTranslation, false);
             return;
@@ -262,7 +272,7 @@ final class Currency
             }
         } catch (\Exception $e) {
             $this->logs->file->error("'Mercado pago gave error to get currency value: {$e->getMessage()}",
-                __METHOD__
+                __CLASS__
             );
         }
 
@@ -276,7 +286,7 @@ final class Currency
      */
     private function getCurrencyConversion(): array
     {
-        $toCurrency   = $this->getAccountCurrency();
+        $toCurrency   = $this->getCurrency();
         $fromCurrency = $this->getWoocommerceCurrency();
         $accessToken  = $this->seller->getCredentialsAccessToken();
 

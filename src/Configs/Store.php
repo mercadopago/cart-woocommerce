@@ -90,6 +90,38 @@ class Store
     }
 
     /**
+     * @return bool
+     */
+    public function isTestMode(): bool
+    {
+        return $this->getCheckboxCheckoutTestMode() === 'yes';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isProductionMode(): bool
+    {
+        return $this->getCheckboxCheckoutTestMode() !== 'yes';
+    }
+
+    /**
+     * @return string
+     */
+    public function getTestMode(): string
+    {
+        return $this->getCheckboxCheckoutTestMode();
+    }
+
+    /**
+     * @return string
+     */
+    public function getProductionMode(): string
+    {
+        return $this->getCheckboxCheckoutTestMode() === 'yes' ? 'no' : 'yes';
+    }
+
+    /**
      * @param string $default
      *
      * @return string
@@ -245,7 +277,7 @@ class Store
      */
     public function getCheckboxCheckoutTestMode(): string
     {
-        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, '');
+        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, 'no');
     }
 
     /**
@@ -257,7 +289,7 @@ class Store
     }
 
     /**
-     * @return array<AbstractGateway>
+     * @return array<string>
      */
     public function getAvailablePaymentGateways(): array
     {

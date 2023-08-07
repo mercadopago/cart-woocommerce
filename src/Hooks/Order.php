@@ -146,44 +146,53 @@ class Order
     }
 
     /**
-     * Set order status from/to
+     * Register total line after WooCommerce order totals callback
      *
-     * @param \WC_Order $order
-     * @param string $fromStatus
-     * @param string $toStatus
+     * @param mixed $callback
      *
      * @return void
      */
-    public function setOrderStatus(\WC_Order $order, string $fromStatus, string $toStatus): void
+    public function registerAdminOrderTotalsAfterTotal($callback): void
     {
-        if ($order->get_status() === $fromStatus) {
-            $order->set_status($toStatus);
-
-            $order->save();
-        }
+        add_action('woocommerce_admin_order_totals_after_total', $callback);
     }
 
     /**
-     * Set custom metadata in the order
+     * Register total line after WooCommerce order totals template
      *
-     * @param \WC_Order $order
-     * @param $data
+     * @param string $tip
+     * @param string $title
+     * @param string $value
      *
      * @return void
      */
-    public function setCustomMetadata(\WC_Order $order, $data): void
+    public function registerAdminOrderTotalsAfterTotalTemplate(string $tip, string $title, string $value): void
     {
-        $installments      = (float) $data['installments'];
-        $installmentAmount = (float) $data['transaction_details']['installment_amount'];
-        $transactionAmount = (float) $data['transaction_amount'];
-        $totalPaidAmount   = (float) $data['transaction_details']['total_paid_amount'];
+        add_action('woocommerce_admin_order_totals_after_total', function ($orderId) use ($tip, $title, $value) {
+            $this->template->getWoocommerceTemplate(
+                'admin/order/generic-note.php',
+                [
+                    'tip'   => $tip,
+                    'title' => $title,
+                    'value' => $value
+                ]
+            );
+        });
+    }
 
-        $this->orderMetadata->addInstallmentsData($order, $installments);
-        $this->orderMetadata->addTransactionDetailsData($order, $installmentAmount);
-        $this->orderMetadata->addTransactionAmountData($order, $transactionAmount);
-        $this->orderMetadata->addTotalPaidAmountData($order, $totalPaidAmount);
-
-        $order->save();
+    /**
+     * Add order note
+     *
+     * @param \WC_Order $order
+     * @param string $description
+     * @param int $isCustomerNote
+     * @param bool $addedByUser
+     *
+     * @return void
+     */
+    public function addOrderNote(\WC_Order $order, string $description, int $isCustomerNote = 0, bool $addedByUser = false)
+    {
+        $order->add_order_note($description, $isCustomerNote, $addedByUser);
     }
 
     /**
@@ -223,35 +232,13 @@ class Order
         $defaultValue      = $this->storeTranslations->pixCheckout['expiration_30_minutes'];
         $expiration        = $this->store->getCheckoutDateExpirationPix($gateway, $defaultValue);
 
-        if (method_exists($order, 'update_meta_data')) {
-            $this->orderMetadata->setTransactionAmountData($order, $transactionAmount);
-            $this->orderMetadata->setPixQrBase64Data($order, $qrCodeBase64);
-            $this->orderMetadata->setPixQrCodeData($order, $qrCode);
-            $this->orderMetadata->setPixExpirationDateData($order, $expiration);
-            $this->orderMetadata->setPixExpirationDateData($order, $expiration);
-            $this->orderMetadata->setPixOnData($order, 1);
-            $order->save();
-        } else {
-            $this->orderMetadata->setTransactionAmountPost($order->get_id(), $transactionAmount);
-            $this->orderMetadata->setPixQrBase64Post($order->get_id(), $qrCodeBase64);
-            $this->orderMetadata->setPixQrCodePost($order->get_id(), $qrCode);
-            $this->orderMetadata->setPixExpirationDatePost($order->get_id(), $expiration);
-            $this->orderMetadata->setPixOnPost($order->get_id(), 1);
-        }
-    }
+        $this->orderMetadata->setTransactionAmountData($order, $transactionAmount);
+        $this->orderMetadata->setPixQrBase64Data($order, $qrCodeBase64);
+        $this->orderMetadata->setPixQrCodeData($order, $qrCode);
+        $this->orderMetadata->setPixExpirationDateData($order, $expiration);
+        $this->orderMetadata->setPixExpirationDateData($order, $expiration);
+        $this->orderMetadata->setPixOnData($order, 1);
 
-    /**
-     * Add order note
-     *
-     * @param \WC_Order $order
-     * @param string $description
-     * @param int $isCustomerNote
-     * @param bool $addedByUser
-     *
-     * @return void
-     */
-    public function addOrderNote(\WC_Order $order, string $description, int $isCustomerNote = 0, bool $addedByUser = false)
-    {
-        $order->add_order_note($description, $isCustomerNote, $addedByUser);
+        $order->save();
     }
 }

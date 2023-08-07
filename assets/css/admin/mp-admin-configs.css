@@ -600,6 +600,10 @@
 	font-size: 14px;
 }
 
+.mp-preview p {
+  margin: 16px 0 !important;
+}
+
 @media screen and (max-width: 1200px) {
 	.mp-list-group {
 		display: block;

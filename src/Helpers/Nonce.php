@@ -55,7 +55,7 @@ final class Nonce
         $nonce = wp_create_nonce($id);
 
         if (!$nonce) {
-            $this->logs->file->error("Security nonce $id creation failed.", __METHOD__);
+            $this->logs->file->error("Security nonce $id creation failed.", __CLASS__);
             return '';
         }
 
@@ -86,7 +86,7 @@ final class Nonce
     public function validateNonce(string $id, string $nonce): void
     {
         if (!wp_verify_nonce($nonce, $id)) {
-            $this->logs->file->error("Security nonce $id check failed. Nonce: $nonce", __METHOD__);
+            $this->logs->file->error("Security nonce $id check failed. Nonce: $nonce", __CLASS__);
             wp_send_json_error('Forbidden', 403);
         }
     }

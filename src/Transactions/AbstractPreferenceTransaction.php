@@ -32,14 +32,14 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      */
     public function createPreference(): string
     {
-        $preference = $this->getTransaction();
+        $preference = $this->getTransaction('Preference');
 
         try {
             $data = $preference->save();
-            $this->mercadopago->logs->file->info('Preference created', __METHOD__, $data);
-            return $this->mercadopago->seller->isTestMode() ? $data['sandbox_init_point'] : $data['init_point'];
+            $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
+            return $this->mercadopago->store->isTestMode() ? $data['sandbox_init_point'] : $data['init_point'];
         } catch (\Exception $e) {
-            $this->mercadopago->logs->file->error('Preference creation failed: ' . $e->getMessage(), __METHOD__);
+            $this->mercadopago->logs->file->error('Preference creation failed: ' . $e->getMessage(), $this->gateway::LOG_SOURCE);
             return false;
         }
     }
@@ -53,10 +53,10 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     {
         parent::setCommonTransaction();
 
-        $isTestUser = $this->mercadopago->options->get('_test_user_v1', '');
-        $isTestMode = $this->mercadopago->seller->isTestMode();
+        $isTestMode = $this->mercadopago->store->isTestMode();
+        $isTestUser = $this->mercadopago->seller->isTestUser();
 
-        if (!$isTestUser && !$isTestMode) {
+        if (!$isTestMode && !$isTestUser) {
             $this->transaction->sponsor_id = $this->countryConfigs['sponsor_id'];
         }
     }
@@ -70,18 +70,12 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     {
         $payer = $this->transaction->payer;
 
-        $payer->email                = $this->getObjectAttributeValue($this->order, 'get_billing_email', 'billing_email');
-        $payer->name                 = $this->getObjectAttributeValue($this->order, 'get_billing_first_name', 'billing_first_name');
-        $payer->surname              = $this->getObjectAttributeValue($this->order, 'get_billing_last_name', 'billing_last_name');
-        $payer->phone->number        = $this->getObjectAttributeValue($this->order, 'get_billing_phone', 'billing_phone');
-        $payer->address->zip_code    = $this->getObjectAttributeValue($this->order, 'get_billing_postcode', 'billing_postcode');
-        $payer->address->street_name = "
-            {$this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_address_2', 'billing_address_2')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_state', 'billing_state')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_country', 'billing_country')}
-        ";
+        $payer->email                = $this->mercadopago->orderBilling->getEmail($this->order);
+        $payer->name                 = $this->mercadopago->orderBilling->getFirstName($this->order);
+        $payer->surname              = $this->mercadopago->orderBilling->getLastName($this->order);
+        $payer->phone->number        = $this->mercadopago->orderBilling->getPhone($this->order);
+        $payer->address->zip_code    = $this->mercadopago->orderBilling->getZipcode($this->order);
+        $payer->address->street_name = $this->mercadopago->orderBilling->getFullAddress($this->order);
     }
 
     /**
@@ -115,9 +109,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      */
     public function setAutoReturnTransaction(): void
     {
-        $autoReturn = $this->mercadopago->options->get('auto_return', 'yes') === 'yes';
-
-        if ($autoReturn) {
+        if ($this->mercadopago->options->getGatewayOption($this->gateway, 'auto_return') === 'yes') {
             $this->transaction->auto_return = 'approved';
         }
     }

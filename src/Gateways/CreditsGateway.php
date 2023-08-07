@@ -21,6 +21,11 @@ class CreditsGateway extends AbstractGateway
     public const CHECKOUT_NAME = 'checkout-credits';
 
     /**
+     * @const
+     */
+    public const LOG_SOURCE = 'MercadoPago_CreditsGateway';
+
+    /**
      * CreditsGateway constructor
      */
     public function __construct()
@@ -34,16 +39,23 @@ class CreditsGateway extends AbstractGateway
         $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->description        = $this->adminTranslations['gateway_description'];
-        $this->method_title       = $this->adminTranslations['gateway_method_title'];
-        $this->method_description = $this->adminTranslations['gateway_method_description'];
-
         $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['gateway_method_title'];
+        $this->method_description = $this->adminTranslations['gateway_method_description'];
+        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->commission         = $this->getActionableValue('commission', 0);
+
         $this->mercadopago->gateway->registerUpdateOptions($this);
+        $this->mercadopago->gateway->registerGatewayTitle($this);
+
+        $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
     }
 
     /**
@@ -122,32 +134,8 @@ class CreditsGateway extends AbstractGateway
                 'title' => $this->adminTranslations['advanced_configuration_description'],
                 'class' => 'mp-small-text',
             ],
-            'discount' => [
-                'type'              => 'mp_actionable_input',
-                'title'             => $this->adminTranslations['discount_title'],
-                'input_type'        => 'number',
-                'description'       => $this->adminTranslations['discount_description'],
-                'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
-                'default'           => '0',
-                'custom_attributes' => [
-                    'step' => '0.01',
-                    'min'  => '0',
-                    'max'  => '99',
-                ],
-            ],
-            'commission' => [
-                'type'              => 'mp_actionable_input',
-                'title'             => $this->adminTranslations['commission_title'],
-                'input_type'        => 'number',
-                'description'       => $this->adminTranslations['commission_description'],
-                'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
-                'default'           => '0',
-                'custom_attributes' => [
-                    'step' => '0.01',
-                    'min'  => '0',
-                    'max'  => '99',
-                ],
-            ]
+            'discount'   => $this->getDiscountField(),
+            'commission' => $this->getCommissionField(),
         ];
     }
 
@@ -180,7 +168,7 @@ class CreditsGateway extends AbstractGateway
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/checkouts/credits-checkout.php',
             [
-                'test_mode'                        => $this->mercadopago->seller->isTestMode(),
+                'test_mode'                        => $this->mercadopago->store->isTestMode(),
                 'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
@@ -213,7 +201,6 @@ class CreditsGateway extends AbstractGateway
      * @param $order_id
      *
      * @return array
-     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
@@ -222,10 +209,7 @@ class CreditsGateway extends AbstractGateway
         $order              = wc_get_order($order_id);
         $this->transaction  = new CreditsTransaction($this, $order);
 
-        $this->mercadopago->logs->file->info(
-            'customer being redirected to Mercado Pago.',
-            __FUNCTION__
-        );
+        $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
 
         return [
             'result'   => 'success',
@@ -383,40 +367,57 @@ class CreditsGateway extends AbstractGateway
      */
     public function renderCreditsBanner(): void
     {
-        $this->mercadopago->scripts->registerStoreStyle(
-            'mp-credits-modal-style',
-            $this->mercadopago->url->getPluginFileUrl('assets/css/products/credits-modal', '.css')
-        );
+        $gatewayEnabled = $this->mercadopago->gateway->isEnabled($this);
+        $bannerEnabled  = $this->mercadopago->options->getGatewayOption($this, 'credits_banner', 'no') === 'yes';
 
-        $this->mercadopago->scripts->registerStoreScript(
-            'mp-credits-modal-js',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/products/credits-modal', '.js')
-        );
+        if ($gatewayEnabled && $bannerEnabled) {
+            $this->mercadopago->scripts->registerStoreStyle(
+                'mp-credits-modal-style',
+                $this->mercadopago->url->getPluginFileUrl('assets/css/products/credits-modal', '.css')
+            );
 
-        $this->mercadopago->scripts->registerMelidataStoreScript('/products');
+            $this->mercadopago->scripts->registerStoreScript(
+                'mp-credits-modal-js',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/products/credits-modal', '.js')
+            );
 
-        $this->mercadopago->template->getWoocommerceTemplate(
-            'public/products/credits-modal.php',
-            [
-                'banner_title'           => $this->storeTranslations['banner_title'],
-                'banner_title_bold'      => $this->storeTranslations['banner_title_bold'],
-                'banner_title_end'       => $this->storeTranslations['banner_title_end'],
-                'banner_link'            => $this->storeTranslations['banner_link'],
-                'modal_title'            => $this->storeTranslations['modal_title'],
-                'modal_subtitle'         => $this->storeTranslations['modal_subtitle'],
-                'modal_how_to'           => $this->storeTranslations['modal_how_to'],
-                'modal_step_1'           => $this->storeTranslations['modal_step_1'],
-                'modal_step_1_bold'      => $this->storeTranslations['modal_step_1_bold'],
-                'modal_step_1_end'       => $this->storeTranslations['modal_step_1_end'],
-                'modal_step_2'           => $this->storeTranslations['modal_step_2'],
-                'modal_step_2_bold'      => $this->storeTranslations['modal_step_2_bold'],
-                'modal_step_2_end'       => $this->storeTranslations['modal_step_2_end'],
-                'modal_step_3'           => $this->storeTranslations['modal_step_3'],
-                'modal_footer'           => $this->storeTranslations['modal_footer'],
-                'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
-                'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
-                'modal_footer_help_link' => $this->links['credits_faq_link'],
-            ]
-        );
+            $this->mercadopago->scripts->registerMelidataStoreScript('/products');
+
+            $this->mercadopago->template->getWoocommerceTemplate(
+                'public/products/credits-modal.php',
+                [
+                    'banner_title' => $this->storeTranslations['banner_title'],
+                    'banner_title_bold' => $this->storeTranslations['banner_title_bold'],
+                    'banner_title_end' => $this->storeTranslations['banner_title_end'],
+                    'banner_link' => $this->storeTranslations['banner_link'],
+                    'modal_title' => $this->storeTranslations['modal_title'],
+                    'modal_subtitle' => $this->storeTranslations['modal_subtitle'],
+                    'modal_how_to' => $this->storeTranslations['modal_how_to'],
+                    'modal_step_1' => $this->storeTranslations['modal_step_1'],
+                    'modal_step_1_bold' => $this->storeTranslations['modal_step_1_bold'],
+                    'modal_step_1_end' => $this->storeTranslations['modal_step_1_end'],
+                    'modal_step_2' => $this->storeTranslations['modal_step_2'],
+                    'modal_step_2_bold' => $this->storeTranslations['modal_step_2_bold'],
+                    'modal_step_2_end' => $this->storeTranslations['modal_step_2_end'],
+                    'modal_step_3' => $this->storeTranslations['modal_step_3'],
+                    'modal_footer' => $this->storeTranslations['modal_footer'],
+                    'modal_footer_link' => $this->storeTranslations['modal_footer_link'],
+                    'modal_footer_end' => $this->storeTranslations['modal_footer_end'],
+                    'modal_footer_help_link' => $this->links['credits_faq_link'],
+                ]
+            );
+        }
+    }
+
+    /**
+     * Register commission and discount on admin order totals
+     *
+     * @param int $orderId
+     *
+     * @return void
+     */
+    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
+    {
+        parent::registerCommissionAndDiscount($this, $orderId);
     }
 }

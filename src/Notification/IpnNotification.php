@@ -4,8 +4,8 @@ namespace MercadoPago\Woocommerce\Notification;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Requester;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
@@ -51,7 +51,7 @@ class IpnNotification extends AbstractNotification
 
         if (!isset( $data['id']) || ! isset($data['topic'])) {
             $message = 'No ID or TOPIC param in Request IPN';
-            $this->logs->file->error($message, __METHOD__);
+            $this->logs->file->error($message, __CLASS__);
             $this->setResponse( 422, $message);
         }
 
@@ -67,15 +67,15 @@ class IpnNotification extends AbstractNotification
 
         if ($response->getStatus() !== 200) {
             $message = 'IPN merchant order not found';
-            $this->logs->file->error($message, __METHOD__, (array) $response->getData());
+            $this->logs->file->error($message, __CLASS__, (array) $response->getData());
             $this->setResponse(422, $message);
         }
 
         $payments = $response->getData()['payments'];
 
-        if (count($payments) === 0) {
+        if (count($payments) == 0) {
             $message = 'Not found payments into merchant order';
-            $this->logs->file->error($message, __METHOD__);
+            $this->logs->file->error($message, __CLASS__);
             $this->setResponse( 422, $message);
         }
 
@@ -104,14 +104,14 @@ class IpnNotification extends AbstractNotification
                      $oldOrderStatus,
                      $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
                 ),
-                __METHOD__
+                __CLASS__
             );
 
             $this->processStatus($processedStatus, $order, $data);
             $this->setResponse(200, 'Notification IPN Successfully');
 		} catch (\Exception $e) {
 			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __METHOD__);
+			$this->logs->file->error($e->getMessage(), __CLASS__);
 		}
 	}
 
@@ -189,7 +189,7 @@ class IpnNotification extends AbstractNotification
                 );
             }
 
-            if (count($paymentIds) !== 0) {
+            if (count($paymentIds) != 0) {
                 $this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $paymentIds));
             }
         }

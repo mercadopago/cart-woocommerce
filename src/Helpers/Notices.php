@@ -231,7 +231,7 @@ class Notices
      *
      * @return void
      */
-    public function storeInProcessStatusNotice($orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
+    public function storePendingStatusNotice($orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
     {
         $message = "
             <p>$orderStatus</p>
@@ -257,10 +257,9 @@ class Notices
     public function storeRejectedStatusNotice(string $noticeTitle, string $orderStatus, string $urlReceived, string $checkoutType, string $linkText): void
     {
         $message = "
-            $noticeTitle
-            <br>
-            <p>$orderStatus</p>
-            <a id='mp_failed_payment_button' class='button' href=''$urlReceived' data-mp-checkout-type='woo-mercado-pago-$checkoutType'>
+            <p>$noticeTitle</p>
+            <span>$orderStatus</span>
+            <a id='mp_failed_payment_button' class='button' href='$urlReceived' data-mp-checkout-type='woo-mercado-pago-$checkoutType'>
                 $linkText
             </a>
         ";

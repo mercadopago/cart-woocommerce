@@ -436,17 +436,17 @@ class Settings
 
             $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
             if ($sellerInfo['status'] === 200) {
-                $this->seller->setSiteId($sellerInfo['data']['site_id']);
                 $this->store->setCheckoutCountry($sellerInfo['data']['site_id']);
+                $this->seller->setSiteId($sellerInfo['data']['site_id']);
+                $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
             }
 
-            if (
-                (empty($publicKeyTest) && empty($accessTokenTest)) ||
-                ($validatePublicKeyTest['status'] === 200 &&
-                    $validateAccessTokenTest['status'] === 200 &&
-                    $validatePublicKeyTest['data']['is_test'] === true &&
-                    $validateAccessTokenTest['data']['is_test'] === true)
-            ) {
+            if ((empty($publicKeyTest) && empty($accessTokenTest)) || (
+                $validatePublicKeyTest['status'] === 200 &&
+                $validateAccessTokenTest['status'] === 200 &&
+                $validatePublicKeyTest['data']['is_test'] === true &&
+                $validateAccessTokenTest['data']['is_test'] === true
+            )) {
                 $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
                 $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
 
@@ -520,7 +520,9 @@ class Settings
         $verifyAlertTestMode = Form::sanitizeTextFromPost('input_verify_alert_test_mode');
 
         $validateCheckoutTestMode = ($checkoutTestMode === 'yes');
-        $withoutTestCredentials   = ($this->seller->getCredentialsPublicKeyTest() === '' ||
+
+        $withoutTestCredentials = (
+            $this->seller->getCredentialsPublicKeyTest() === '' ||
             $this->seller->getCredentialsAccessTokenTest() === ''
         );
 

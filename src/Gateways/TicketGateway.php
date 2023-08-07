@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Transactions\TicketTransaction;
 
 if (!defined('ABSPATH')) {
@@ -23,6 +24,11 @@ class TicketGateway extends AbstractGateway
     public const CHECKOUT_NAME = 'checkout-ticket';
 
     /**
+     * @const
+     */
+    public const LOG_SOURCE = 'MercadoPago_TicketGateway';
+
+    /**
      * TicketGateway constructor
      */
     public function __construct()
@@ -36,18 +42,24 @@ class TicketGateway extends AbstractGateway
         $this->icon  = $this->getCheckoutIcon();
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->description        = $this->adminTranslations['gateway_description'];
-        $this->method_title       = $this->adminTranslations['method_title'];
-        $this->method_description = $this->description;
-
         $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['method_title'];
+        $this->method_description = $this->description;
+        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->commission         = $this->getActionableValue('commission', 0);
+
         $this->mercadopago->gateway->registerUpdateOptions($this);
+        $this->mercadopago->gateway->registerGatewayTitle($this);
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
 
+        $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
     }
 
     /**
@@ -117,7 +129,9 @@ class TicketGateway extends AbstractGateway
                     'enabled'  => $this->adminTranslations['stock_reduce_enabled'],
                     'disabled' => $this->adminTranslations['stock_reduce_disabled'],
                 ],
-            ]
+            ],
+            'discount'   => $this->getDiscountField(),
+            'commission' => $this->getCommissionField(),
         ];
     }
 
@@ -141,7 +155,7 @@ class TicketGateway extends AbstractGateway
     public function payment_fields(): void
     {
         $currentUser     = $this->mercadopago->currentUser->getCurrentUser();
-        $loggedUserEmail = ($currentUser->ID !== 0) ? $currentUser->user_email : null;
+        $loggedUserEmail = ($currentUser->ID != 0) ? $currentUser->user_email : null;
         $address         = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_1', true);
         $address2        = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_2', true);
         $address        .= (!empty($address2) ? ' - ' . $address2 : '');
@@ -151,7 +165,7 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/checkouts/ticket-checkout.php',
             [
-                'test_mode'                        => $this->mercadopago->seller->isTestMode(),
+                'test_mode'                        => $this->mercadopago->store->isTestMode(),
                 'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
@@ -182,21 +196,24 @@ class TicketGateway extends AbstractGateway
      * @param $order_id
      *
      * @return array
-     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
         parent::process_payment($order_id);
 
-        $checkout = map_deep($_POST['mercadopago_ticket'], 'sanitize_text_field');
         $order    = wc_get_order($order_id);
+        $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
-        if ($checkout['amount'] && $checkout['paymentMethodId']) {
+        if (!empty($checkout['amount']) &&
+            !empty($checkout['docType']) &&
+            !empty($checkout['docNumber']) &&
+            !empty($checkout['paymentMethodId'])
+        ) {
             $this->transaction = new TicketTransaction($this, $order, $checkout);
             $response          = $this->transaction->createPayment();
 
             if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order->get_id(), [$response['id']]);
+                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
 
                 if ($response['status'] === 'pending' && (
                     $response['status_detail'] === 'pending_waiting_payment' ||
@@ -232,14 +249,14 @@ class TicketGateway extends AbstractGateway
 
                 return $this->processReturnFail(
                     $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                    __METHOD__
+                    self::LOG_SOURCE
                 );
             }
         }
 
         return $this->processReturnFail(
             $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            __METHOD__
+            self::LOG_SOURCE
         );
     }
 
@@ -353,7 +370,7 @@ class TicketGateway extends AbstractGateway
      */
     public function getFebrabanInfo(\WP_User $currentUser, string $address): array
     {
-        if ($currentUser->ID !== 0) {
+        if ($currentUser->ID != 0) {
             return [
                 'firstname' => esc_js($currentUser->user_firstname),
                 'lastname'  => esc_js($currentUser->user_lastname),
@@ -404,5 +421,17 @@ class TicketGateway extends AbstractGateway
                 'transaction_details' => $transactionDetails,
             ]
         );
+    }
+
+    /**
+     * Register commission and discount on admin order totals
+     *
+     * @param int $orderId
+     *
+     * @return void
+     */
+    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
+    {
+        parent::registerCommissionAndDiscount($this, $orderId);
     }
 }

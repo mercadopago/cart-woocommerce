@@ -23,6 +23,11 @@ class BasicGateway extends AbstractGateway
     public const CHECKOUT_NAME = 'checkout-basic';
 
     /**
+     * @const
+     */
+    public const LOG_SOURCE = 'MercadoPago_BasicGateway';
+
+    /**
      * BasicGateway constructor
      */
     public function __construct()
@@ -36,17 +41,23 @@ class BasicGateway extends AbstractGateway
         $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->description        = $this->adminTranslations['gateway_description'];
-        $this->method_title       = $this->adminTranslations['gateway_method_title'];
-        $this->method_description = $this->adminTranslations['gateway_method_description'];
-
         $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
+        $this->description        = $this->adminTranslations['gateway_description'];
+        $this->method_title       = $this->adminTranslations['gateway_method_title'];
+        $this->method_description = $this->adminTranslations['gateway_method_description'];
+        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->commission         = $this->getActionableValue('commission', 0);
+
         $this->mercadopago->gateway->registerUpdateOptions($this);
+        $this->mercadopago->gateway->registerGatewayTitle($this);
+
         $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
     }
 
     /**
@@ -182,32 +193,8 @@ class BasicGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
                 ],
             ],
-            'discount' => [
-                'type'              => 'mp_actionable_input',
-                'title'             => $this->adminTranslations['discount_title'],
-                'input_type'        => 'number',
-                'description'       => $this->adminTranslations['discount_description'],
-                'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
-                'default'           => '0',
-                'custom_attributes' => [
-                    'step' => '0.01',
-                    'min'  => '0',
-                    'max'  => '99',
-                ],
-            ],
-            'commission' => [
-                'type'              => 'mp_actionable_input',
-                'title'             => $this->adminTranslations['commission_title'],
-                'input_type'        => 'number',
-                'description'       => $this->adminTranslations['commission_description'],
-                'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
-                'default'           => '0',
-                'custom_attributes' => [
-                    'step' => '0.01',
-                    'min'  => '0',
-                    'max'  => '99',
-                ],
-            ]
+            'discount'   => $this->getDiscountField(),
+            'commission' => $this->getCommissionField(),
         ];
     }
 
@@ -232,12 +219,12 @@ class BasicGateway extends AbstractGateway
     {
         $checkoutBenefitsItems = $this->getBenefits();
         $paymentMethods        = $this->getPaymentMethods();
-        $paymentMethodsTitle   = count($paymentMethods) !== 0 ? $this->storeTranslations['payment_methods_title'] : '';
+        $paymentMethodsTitle   = count($paymentMethods) != 0 ? $this->storeTranslations['payment_methods_title'] : '';
 
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/checkouts/basic-checkout.php',
             [
-                'test_mode'                        => $this->mercadopago->seller->isTestMode(),
+                'test_mode'                        => $this->mercadopago->store->isTestMode(),
                 'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
                 'test_mode_description'            => $this->storeTranslations['test_mode_description'],
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
@@ -263,7 +250,6 @@ class BasicGateway extends AbstractGateway
      * @param $order_id
      *
      * @return array
-     * @throws \WC_Data_Exception
      */
     public function process_payment($order_id): array
     {
@@ -276,22 +262,14 @@ class BasicGateway extends AbstractGateway
         switch ($method) {
             case 'iframe':
             case 'redirect':
-                $this->mercadopago->logs->file->info(
-                    'customer being redirected to Mercado Pago.',
-                    __METHOD__
-                );
-
+                $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
                 return [
                     'result'   => 'success',
                     'redirect' => $this->transaction->createPreference(),
                 ];
 
             case 'modal':
-                $this->mercadopago->logs->file->info(
-                    'preparing to render Checkout Pro view.',
-                    __METHOD__
-                );
-
+                $this->mercadopago->logs->file->info('Preparing to render Checkout Pro view.', self::LOG_SOURCE);
                 return [
                     'result'   => 'success',
                     'redirect' => $order->get_checkout_payment_url(true),
@@ -303,7 +281,7 @@ class BasicGateway extends AbstractGateway
 
         return $this->processReturnFail(
             $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            __METHOD__
+            self::LOG_SOURCE
         );
     }
 
@@ -319,7 +297,7 @@ class BasicGateway extends AbstractGateway
     {
         if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL) === false) {
             $icon = $this->mercadopago->url->getPluginFileUrl('/assets/images/icons/icon-warning', '.png', true);
-            return "<img width='14' height='14' src='$icon' /> ". $this->adminTranslations['invalid_back_url'];
+            return "<img width='14' height='14' style='vertical-align: middle' src='$icon' /> ". $this->adminTranslations['invalid_back_url'];
         }
 
         return $default;
@@ -535,5 +513,17 @@ class BasicGateway extends AbstractGateway
         $site = $this->mercadopago->seller->getSiteId();
 
         return array_key_exists($site, $benefits) ? $benefits[$site] : $benefits['ROLA'];
+    }
+
+    /**
+     * Register commission and discount on admin order totals
+     *
+     * @param int $orderId
+     *
+     * @return void
+     */
+    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
+    {
+        parent::registerCommissionAndDiscount($this, $orderId);
     }
 }

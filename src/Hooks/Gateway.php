@@ -34,6 +34,11 @@ class Gateway
     private $store;
 
     /**
+     * @var Checkout
+     */
+    private $checkout;
+
+    /**
      * @var StoreTranslations
      */
     private $translations;
@@ -47,17 +52,31 @@ class Gateway
      * Gateway constructor
      */
     public function __construct(
-        Options $options,
-        Template $template,
-        Store $store,
+        Options           $options,
+        Template          $template,
+        Store             $store,
+        Checkout          $checkout,
         StoreTranslations $translations,
-        Url $url
+        Url               $url
     ) {
         $this->options      = $options;
         $this->template     = $template;
         $this->store        = $store;
+        $this->checkout     = $checkout;
         $this->translations = $translations;
         $this->url          = $url;
+    }
+
+    /**
+     * Verify if gateway is enabled and available
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return bool
+     */
+    public function isEnabled(AbstractGateway $gateway): bool
+    {
+        return $gateway->is_available();
     }
 
     /**
@@ -93,25 +112,29 @@ class Gateway
                 return $title;
             }
 
-            if ($id !== $gateway->id) {
+            if ($gateway->id !== $id) {
                 return $title;
             }
 
-            if (!is_checkout() && !(defined('DOING_AJAX') && DOING_AJAX)) {
+            if (!$this->checkout->isCheckout() && !(defined('DOING_AJAX') && DOING_AJAX)) {
                 return $title;
             }
 
-            if ($title !== $gateway->title && (0 === $gateway->commission && 0 === $gateway->discount)) {
+            if ($gateway->commission == 0 && $gateway->discount == 0) {
                 return $title;
             }
 
-            if (!is_numeric($gateway->discount) || $gateway->commission > 99 || $gateway->discount > 99) {
+            if (!is_numeric($gateway->discount) || $gateway->discount > 99) {
                 return $title;
             }
 
-            global $woocommerce;
+            if (!is_numeric($gateway->commission) || $gateway->commission > 99) {
+                return $title;
+            }
 
-            $subtotal   = $woocommerce->cart->get_subtotal();
+            global $mercadopago;
+
+            $subtotal   = $mercadopago->woocommerce->cart->get_subtotal();
             $discount   = $subtotal * ($gateway->discount / 100);
             $commission = $subtotal * ($gateway->commission / 100);
 
@@ -271,18 +294,6 @@ class Gateway
                 $this->template->getWoocommerceTemplate($name, $arg);
             }
         });
-    }
-
-    /**
-     * Register wp head
-     *
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerWpHead($callback): void
-    {
-        add_action('wp_head', $callback);
     }
 
     /**

@@ -199,12 +199,13 @@ class Scripts
      * Register melidata script on store
      *
      * @param string $location
+     * @param string $paymentMethod
      *
      * @return void
      */
-    public function registerMelidataStoreScript(string $location): void
+    public function registerMelidataStoreScript(string $location, string $paymentMethod = ''): void
     {
-        $this->registerMelidataScript('buyer', $location);
+        $this->registerMelidataScript('buyer', $location, $paymentMethod);
     }
 
     /**
@@ -212,10 +213,11 @@ class Scripts
      *
      * @param string $type
      * @param string $location
+     * @param string $paymentMethod
      *
      * @return void
      */
-    private function registerMelidataScript(string $type, string $location): void
+    private function registerMelidataScript(string $type, string $location, string $paymentMethod = ''): void
     {
         global $woocommerce;
 
@@ -224,6 +226,7 @@ class Scripts
             'type'             => $type,
             'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
             'location'         => $location,
+            'payment_method'   => $paymentMethod,
             'plugin_version'   => MP_VERSION,
             'platform_version' => $woocommerce->version,
         ];

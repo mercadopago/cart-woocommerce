@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
+use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -37,6 +38,7 @@ use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Logs\Transports\File;
 use MercadoPago\Woocommerce\Logs\Transports\Remote;
+use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
@@ -101,11 +103,6 @@ class Dependencies
      * @var Template
      */
     public $template;
-
-    /**
-     * @var OrderMetadata
-     */
-    public $orderMetadata;
 
     /**
      * @var Order
@@ -178,6 +175,21 @@ class Dependencies
     public $nonce;
 
     /**
+     * @var OrderBilling
+     */
+    public $orderBilling;
+
+    /**
+     * @var OrderShipping
+     */
+    public $orderShipping;
+
+    /**
+     * @var OrderMetadata
+     */
+    public $orderMetadata;
+
+    /**
      * @var OrderStatus
      */
     public $orderStatus;
@@ -242,6 +254,9 @@ class Dependencies
         $this->template          = new Template();
         $this->plugin            = new Plugin();
         $this->images            = new Images();
+        $this->checkout          = new Checkout();
+        $this->orderBilling      = new OrderBilling();
+        $this->orderShipping     = new OrderShipping();
         $this->orderMetadata     = $this->setOrderMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();
@@ -251,7 +266,6 @@ class Dependencies
         $this->url               = $this->setUrl();
         $this->paymentMethods    = $this->setPaymentMethods();
         $this->scripts           = $this->setScripts();
-        $this->checkout          = $this->setCheckout();
         $this->adminTranslations = $this->setAdminTranslations();
         $this->storeTranslations = $this->setStoreTranslations();
         $this->order             = $this->setOrder();
@@ -342,19 +356,18 @@ class Dependencies
     }
 
     /**
-     * @return Checkout
-     */
-    private function setCheckout(): Checkout
-    {
-        return new Checkout($this->scripts);
-    }
-
-    /**
      * @return Gateway
      */
     private function setGateway(): Gateway
     {
-        return new Gateway($this->options, $this->template, $this->store, $this->storeTranslations, $this->url);
+        return new Gateway(
+            $this->options,
+            $this->template,
+            $this->store,
+            $this->checkout,
+            $this->storeTranslations,
+            $this->url
+        );
     }
 
     /**

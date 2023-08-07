@@ -707,6 +707,12 @@ class AdminTranslations
             'type_payments_description'    => __('Enable the available payment methods', 'woocommerce-mercadopago'),
             'type_payments_desctip'        => __('Choose the available payment methods in your store.', 'woocommerce-mercadopago'),
             'type_payments_label'          => __('All payment methods', 'woocommerce-mercadopago'),
+            'discount_title'               => __('Discount in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
+            'discount_description'         => __('Choose a percentage value that you want to discount your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
+            'discount_checkbox_label'      => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+            'commission_title'             => __('Commission in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
+            'commission_description'       => __('Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
+            'commission_checkbox_label'    => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
         ];
     }
 

@@ -111,12 +111,12 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      *
      * @return Payment|Preference
      */
-    public function getTransaction(string $transactionType = 'Preference')
+    public function getTransaction(string $transactionType)
     {
         $transactionClone = clone $this->transaction;
-        unset($transactionClone->token);
 
-        $this->mercadopago->logs->file->info($transactionType, __METHOD__, (array) $transactionClone);
+        unset($transactionClone->token);
+        $this->mercadopago->logs->file->info("$transactionType payload", $this->gateway::LOG_SOURCE, $transactionClone);
 
         return $this->transaction;
     }
@@ -186,11 +186,11 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      */
     public function getInternalMetadata(): array
     {
-        $seller  = $this->mercadopago->options->get('_collector_id_v1', '');
+        $seller  = $this->mercadopago->seller->getClientId();
         $siteId  = $this->mercadopago->seller->getSiteId();
         $siteUrl = $this->mercadopago->options->get('siteurl');
 
-        $zipCode = $this->getObjectAttributeValue($this->order, 'get_billing_postcode', 'billing_postcode');
+        $zipCode = $this->mercadopago->orderBilling->getZipcode($this->order);
         $zipCode = str_replace('-', '', $zipCode);
 
         $user             = $this->mercadopago->currentUser->getCurrentUser();
@@ -205,15 +205,15 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
             'site_id'          => strtolower($siteId),
             'sponsor_id'       => $this->countryConfigs['sponsor_id'],
             'collector'        => $seller,
-            'test_mode'        => $this->mercadopago->seller->isTestMode(),
+            'test_mode'        => $this->mercadopago->store->isTestMode(),
             'details'          => '',
             'seller_website'   => $siteUrl,
             'billing_address'  => [
                 'zip_code'     => $zipCode,
-                'street_name'  => $this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1'),
-                'city_name'    => $this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city'),
-                'state_name'   => $this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_state'),
-                'country_name' => $this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_country'),
+                'street_name'  => $this->mercadopago->orderBilling->getAddress1($this->order),
+                'city_name'    => $this->mercadopago->orderBilling->getCity($this->order),
+                'state_name'   => $this->mercadopago->orderBilling->getState($this->order),
+                'country_name' => $this->mercadopago->orderBilling->getCountry($this->order),
             ],
             'user' => [
                 'registered_user'        => $userId ? 'yes' : 'no',
@@ -226,59 +226,53 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Set additional shipments information
      *
+     * @param $shipments
+     *
      * @return void
      */
     public function setShipmentsTransaction($shipments): void
     {
-        $shipments->receiverAddress->apartment   = $this->getObjectAttributeValue($this->order, 'get_shipping_address_2', 'shipping_address_2');
-        $shipments->receiverAddress->city_name   = $this->getObjectAttributeValue($this->order, 'get_shipping_city', 'shipping_city');
-        $shipments->receiverAddress->state_name  = $this->getObjectAttributeValue($this->order, 'get_shipping_state', 'shipping_state');
-        $shipments->receiverAddress->zip_code    = $this->getObjectAttributeValue($this->order, 'get_shipping_postcode', 'shipping_postcode');
-        $shipments->receiverAddress->street_name = "
-            {$this->getObjectAttributeValue($this->order, 'get_billing_address_1', 'billing_address_1')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_address_2', 'billing_address_2')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_city', 'billing_city')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_state', 'billing_state')}
-            {$this->getObjectAttributeValue($this->order, 'get_billing_country', 'billing_country')}
-        ";
+        $shipments->receiver_address->apartment   = $this->mercadopago->orderShipping->getAddress2($this->order);
+        $shipments->receiver_address->city_name   = $this->mercadopago->orderShipping->getCity($this->order);
+        $shipments->receiver_address->state_name  = $this->mercadopago->orderShipping->getState($this->order);
+        $shipments->receiver_address->zip_code    = $this->mercadopago->orderShipping->getZipcode($this->order);
+        $shipments->receiver_address->street_name = $this->mercadopago->orderShipping->getFullAddress($this->order);
     }
 
     /**
-     * Set items
+     * Set items on transaction
+     *
+     * @param $items
      *
      * @return void
      */
     public function setItemsTransaction($items): void
     {
-        $orderItems = $this->order->get_items();
+        foreach ($this->order->get_items() as $item) {
+            $product  = $item->get_product();
+            $quantity = $item->get_quantity();
 
-        if (count($orderItems) > 0) {
-            foreach ($orderItems as $orderItem) {
-                if ($orderItem['qty']) {
-                    $product = wc_get_product($orderItem['product_id']);
+            $title = $product->get_name();
+            $title = "$title x $quantity";
 
-                    $title   = $this->getObjectAttributeValue($product, 'get_name', 'post->post_title');
-                    $content = $this->getObjectAttributeValue($product, 'get_description', 'post->post_content');
-                    $amount  = $this->getItemAmount($orderItem);
-                    $amount  = Numbers::format($amount);
+            $amount = $this->getItemAmount($item);
+            $amount = Numbers::format($amount);
 
-                    $this->orderTotal += Numbers::format($amount);
-                    $this->listOfItems[] = $title . ' x ' . $orderItem['qty'];
+            $this->orderTotal   += Numbers::format($amount);
+            $this->listOfItems[] = $title;
 
-                    $item = [
-                        'id'          => $orderItem['product_id'],
-                        'title'       => "$title x {$orderItem['qty']}",
-                        'description' => $this->mercadopago->strings->sanitizeAndTruncateText($content),
-                        'picture_url' => $this->getItemImage($product),
-                        'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                        'quantity'    => 1,
-                        'unit_price'  => $amount,
-                        'currency_id' => $this->countryConfigs['currency'],
-                    ];
+            $item = [
+                'id'          => $item->get_product_id(),
+                'title'       => $title,
+                'description' => $this->mercadopago->strings->sanitizeAndTruncateText($product->get_description()),
+                'picture_url' => $this->getItemImage($product),
+                'category_id' => $this->mercadopago->store->getStoreCategory('others'),
+                'quantity'    => 1,
+                'unit_price'  => $amount,
+                'currency_id' => $this->countryConfigs['currency'],
+            ];
 
-                    $items->add($item);
-                }
-            }
+            $items->add($item);
         }
     }
 
@@ -289,18 +283,20 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      */
     public function setShippingTransaction(): void
     {
-        $amount = $this->order->get_shipping_total() + $this->order->get_shipping_tax();
+        $amount = Numbers::format($this->order->get_shipping_total()) + Numbers::format($this->order->get_shipping_tax());
         $cost   = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
 
         if ($amount > 0) {
             $this->orderTotal += Numbers::format($cost);
 
             $item = [
-                'title'       => $this->getObjectAttributeValue($this->order, 'get_shipping_method', 'shipping_method'),
+                'id'          => 'shipping',
+                'title'       => $this->mercadopago->orderShipping->getShippingMethod($this->order),
                 'description' => $this->mercadopago->storeTranslations->commonCheckout['shipping_title'],
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
                 'quantity'    => 1,
                 'unit_price'  => Numbers::format($amount),
+                'currency_id' => $this->countryConfigs['currency'],
             ];
 
             $this->transaction->items->add($item);
@@ -316,36 +312,39 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     {
         $fees = $this->order->get_fees();
 
-        if (count($fees) > 0) {
-            foreach ($fees as $fee) {
-                $amount            = ($fee['total'] + $fee['total_tax']) * $this->ratio;
-                $this->orderTotal += Numbers::format($amount);
+        foreach ($fees as $fee) {
+            $feeTotal = Numbers::format($fee->get_total());
+            $feeTaxes = Numbers::format($fee->get_total_tax());
+            $amount   = ($feeTotal + $feeTaxes) * $this->ratio;
 
-                $item = [
-                    'title'       => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
-                    'description' => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
-                    'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                    'quantity'    => 1,
-                    'unit_price'  => Numbers::format($amount),
-                ];
+            $this->orderTotal += Numbers::format($amount);
 
-                $this->transaction->items->add($item);
-            }
+            $item = [
+                'id'          => 'fee',
+                'title'       => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
+                'description' => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
+                'category_id' => $this->mercadopago->store->getStoreCategory('others'),
+                'quantity'    => 1,
+                'unit_price'  => Numbers::format($amount),
+                'currency_id' => $this->countryConfigs['currency'],
+            ];
+
+            $this->transaction->items->add($item);
         }
     }
 
     /**
      * Get item amount
      *
-     * @param array|\WC_Order_Item_Product $item
+     * @param \WC_Order_Item|\WC_Order_Item_Product $item
      *
      * @return float
      */
-    public function getItemAmount($item): float
+    public function getItemAmount(\WC_Order_Item $item): float
     {
-        $lineAmount = $item['line_total'] + $item['line_tax'];
-        $discount   = (float) $lineAmount * ($this->gateway->discount / 100);
-        $commission = (float) $lineAmount * ($this->gateway->commission / 100);
+        $lineAmount = $item->get_subtotal() + $item->get_subtotal_tax();
+        $discount   = Numbers::format($lineAmount * ($this->gateway->discount / 100));
+        $commission = Numbers::format($lineAmount * ($this->gateway->commission / 100));
         $amount     = $lineAmount - $discount + $commission;
 
         return Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
@@ -354,7 +353,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Get item image
      *
-     * @param $product
+     * @param mixed $product
      *
      * @return string
      */
@@ -362,29 +361,6 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     {
         return is_object($product) && method_exists($product, 'get_image_id')
             ? wp_get_attachment_url($product->get_image_id())
-            : $this->mercadopago->url->getPluginFileUrl('assets/images/gateways/all/blue-cart', '.png');
-    }
-
-    /**
-     * Get the value of an object's attribute
-     *
-     * @param mixed $object
-     * @param string $methodName
-     * @param string $attributePath
-     * @param string $methodPath
-     *
-     * @return string
-     */
-    public function getObjectAttributeValue($object, string $methodName, string $attributePath, string $methodPath = ''): string
-    {
-        if (!$methodPath) {
-            $methodPath = $methodName;
-        }
-
-        $value = is_object($object) && method_exists($object, $methodName)
-            ? $object->{$methodPath}()
-            : $object->{$attributePath};
-
-        return html_entity_decode($value);
+            : $this->mercadopago->url->getPluginFileUrl('assets/images/gateways/all/blue-cart', '.png', true);
     }
 }

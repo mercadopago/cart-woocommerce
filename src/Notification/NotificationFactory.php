@@ -2,8 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Notification;
 
-use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 
 if (!defined('ABSPATH')) {
     exit;

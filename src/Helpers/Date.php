@@ -9,6 +9,18 @@ if (!defined('ABSPATH')) {
 final class Date
 {
     /**
+     * Get now date
+     *
+     * @param string $format
+     *
+     * @return string
+     */
+    public static function getNowDate(string $format): string
+    {
+        return gmdate($format);
+    }
+
+    /**
      * Sum now() with $value in GMT/CUT format
      *
      * @param string $value

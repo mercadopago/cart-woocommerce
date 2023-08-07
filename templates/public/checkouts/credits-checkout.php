@@ -27,7 +27,7 @@ if (!defined('ABSPATH')) {
 <div class='mp-checkout-container'>
     <div class="mp-checkout-pro-container">
         <div class="mp-checkout-pro-content">
-            <?php if (true === $test_mode) : ?>
+            <?php if ($test_mode): ?>
                 <div class="mp-checkout-pro-test-mode">
                     <test-mode
                         title="<?= esc_html($test_mode_title) ?>"
@@ -46,6 +46,7 @@ if (!defined('ABSPATH')) {
                 list-mode='count'
             >
             </checkout-benefits>
+
             <div class="mp-checkout-pro-redirect">
                 <checkout-redirect-v2
                     text="<?= esc_html($checkout_redirect_text) ?>"
@@ -56,6 +57,7 @@ if (!defined('ABSPATH')) {
             </div>
         </div>
     </div>
+
     <div class="mp-checkout-pro-terms-and-conditions">
         <terms-and-conditions
             description="<?= esc_html($terms_and_conditions_description) ?>"
@@ -68,11 +70,8 @@ if (!defined('ABSPATH')) {
 
 <script type="text/javascript">
     if (document.getElementById("payment_method_woo-mercado-pago-custom")) {
-        jQuery("form.checkout").on(
-            "checkout_place_order_woo-mercado-pago-basic",
-            function () {
-                cardFormLoad();
-            }
-        );
+        jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-basic", function () {
+            cardFormLoad();
+        });
     }
 </script>

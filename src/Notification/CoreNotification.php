@@ -6,8 +6,9 @@ use MercadoPago\PP\Sdk\Entity\Notification\Notification;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -77,7 +78,7 @@ class CoreNotification extends AbstractNotification
 
 			$this->handleSuccessfulRequest($notificationEntity->toArray());
 		} catch (\Exception $e) {
-			$this->logs->file->error($e->getMessage(), __METHOD__);
+			$this->logs->file->error($e->getMessage(), __CLASS__);
 			$this->setResponse(500, $e->getMessage());
 		}
     }
@@ -102,13 +103,13 @@ class CoreNotification extends AbstractNotification
                     $oldOrderStatus,
                     $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
                 ),
-                __METHOD__
+                __CLASS__
             );
 
             $this->processStatus($processedStatus, $order, $data);
 		} catch (\Exception $e) {
 			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __METHOD__);
+			$this->logs->file->error($e->getMessage(), __CLASS__);
 		}
 	}
 
@@ -137,7 +138,7 @@ class CoreNotification extends AbstractNotification
 				$this->updateMeta(
 					$order,
 					'Mercado Pago - Payment ' . $payment['id'],
-					'[Date ' . gmdate( 'Y-m-d H:i:s' ) .
+					'[Date ' . Date::getNowDate('Y-m-d H:i:s') .
 						']/[Amount ' . $payment['total_amount'] .
 						']/[Payment Type ' . $payment['payment_type_id'] .
 						']/[Payment Method ' . $payment['payment_method_id'] .
@@ -147,7 +148,7 @@ class CoreNotification extends AbstractNotification
 				);
 			}
 
-			if (count($payment_ids) !== 0) {
+			if (count($payment_ids) != 0) {
 				$this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $payment_ids));
 			}
 		}

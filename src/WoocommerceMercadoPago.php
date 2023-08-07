@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
+use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -32,6 +33,7 @@ use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
@@ -178,9 +180,24 @@ class WoocommerceMercadoPago
     public $store;
 
     /**
+     * @var OrderBilling
+     */
+    public $orderBilling;
+
+    /**
+     * @var OrderShipping
+     */
+    public $orderShipping;
+
+    /**
      * @var OrderMetadata
      */
     public $orderMetadata;
+
+    /**
+     * @var OrderStatus
+     */
+    public $orderStatus;
 
     /**
      * @var Scripts
@@ -206,11 +223,6 @@ class WoocommerceMercadoPago
      * @var Nonce
      */
     public $nonce;
-
-    /**
-     * @var OrderStatus
-     */
-    public $orderStatus;
 
     /**
      * @var CurrentUser
@@ -285,6 +297,10 @@ class WoocommerceMercadoPago
     public function registerHooks(): void
     {
         add_action('wp_loaded', [$this, 'init']);
+        add_filter('query_vars', function ($vars) {
+            $vars[] = 'wallet_button';
+            return $vars;
+        });
     }
 
     /**
@@ -309,8 +325,7 @@ class WoocommerceMercadoPago
     public function registerActionsWhenGatewayIsNotCalled(): void
     {
         $this->actions->registerActionWhenGatewayIsNotCalled(
-            $this,
-            'product',
+            $this->product,
             'registerBeforeAddToCartForm',
             'MercadoPago\Woocommerce\Gateways\CreditsGateway',
             'renderCreditsBanner'
@@ -369,7 +384,12 @@ class WoocommerceMercadoPago
         // Configs
         $this->seller        = $dependencies->seller;
         $this->store         = $dependencies->store;
+
+        // Order
+        $this->orderBilling  = $dependencies->orderBilling;
+        $this->orderShipping = $dependencies->orderShipping;
         $this->orderMetadata = $dependencies->orderMetadata;
+        $this->orderStatus   = $dependencies->orderStatus;
 
         // Helpers
         $this->actions        = $dependencies->actions;
@@ -383,7 +403,6 @@ class WoocommerceMercadoPago
         $this->url            = $dependencies->url;
         $this->paymentMethods = $dependencies->paymentMethods;
         $this->nonce          = $dependencies->nonce;
-        $this->orderStatus    = $dependencies->orderStatus;
         $this->images         = $dependencies->images;
         $this->session        = $dependencies->session;
 

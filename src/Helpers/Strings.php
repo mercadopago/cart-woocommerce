@@ -25,18 +25,17 @@ final class Strings
      * Sanitizes a text, replacing complex characters and symbols, and truncates it to 230 characters
      *
      * @param string $text
+     * @param int $limit
      *
      * @return string
      */
-    public function sanitizeAndTruncateText(string $text): string
+    public function sanitizeAndTruncateText(string $text, int $limit = 80): string
     {
-        return sanitize_file_name(
-            html_entity_decode(
-                strlen($text) > 230
-                 ? substr($text, 0, 230) . '...'
-                 : $text
-            )
-        );
+        if (strlen($text) > $limit) {
+            return sanitize_file_name(html_entity_decode(substr($text, 0, $limit))) . '...';
+        }
+
+        return sanitize_file_name(html_entity_decode($text));
     }
 
     /**
