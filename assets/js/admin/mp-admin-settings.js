@@ -88,7 +88,7 @@ function selectTestMode(test) {
     badgeTest.style.display = 'block';
     badgeProd.style.display = 'none';
   } else {
-    const red_badge = document.getElementById('mp-red-badge');
+    const red_badge = document.getElementById('mp-red-badge').parentElement;
     badge.classList.remove('mp-settings-test-mode-alert');
     badge.classList.add('mp-settings-prod-mode-alert');
 
@@ -116,10 +116,10 @@ function mpVerifyAlertTestMode() {
     document.getElementById('mp-public-key-test').value === '' ||
     document.getElementById('mp-access-token-test').value === ''
   )) {
-    document.getElementById('mp-red-badge').style.display = 'block';
+    document.getElementById('mp-red-badge').parentElement.style.display = 'flex';
     return true;
   } else {
-    document.getElementById('mp-red-badge').style.display = 'none';
+    document.getElementById('mp-red-badge').parentElement.style.display = 'none';
     return false;
   }
 }
@@ -650,7 +650,7 @@ function mpUpdateTestMode() {
             mpShowMessage(response.data, 'success', 'test_mode');
           } else {
             if (rad[0].checked) {
-              document.getElementById('mp-red-badge').style.display = 'block';
+              document.getElementById('mp-red-badge').parentElement.style.display = 'flex';
             }
             mpShowMessage(response.data, 'error', 'test_mode');
           }

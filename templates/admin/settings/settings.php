@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 ?>
 
 <script>
-    window.addEventListener("load", function () {
+    window.addEventListener("load", function() {
         mp_settings_screen_load();
     });
 </script>
@@ -45,7 +45,7 @@ if (!defined('ABSPATH')) {
     <div class="mp-settings-header">
         <div class="mp-settings-header-img"></div>
         <div class="mp-settings-header-logo"></div>
-        <hr class="mp-settings-header-hr"/>
+        <hr class="mp-settings-header-hr" />
         <p class="mp-settings-header-title"><?= $headerTranslations['title_header'] ?></p>
     </div>
 
@@ -201,26 +201,14 @@ if (!defined('ABSPATH')) {
                         <label for="mp-public-key-prod" class="mp-settings-label mp-settings-font-color">
                             <?= $credentialsTranslations['public_key'] ?> <span style="color: red;">&nbsp;*</span>
                         </label>
-                        <input
-                            type="text"
-                            id="mp-public-key-prod"
-                            class="mp-settings-input"
-                            value="<?= $publicKeyProd ?>"
-                            placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>"
-                        />
+                        <input type="text" id="mp-public-key-prod" class="mp-settings-input" value="<?= $publicKeyProd ?>" placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>" />
                     </fieldset>
 
                     <fieldset>
                         <label for="mp-access-token-prod" class="mp-settings-label mp-settings-font-color">
                             <?= $credentialsTranslations['access_token'] ?> <span style="color: red;">&nbsp;*</span>
                         </label>
-                        <input
-                            type="text"
-                            id="mp-access-token-prod"
-                            class="mp-settings-input"
-                            value="<?= $accessTokenProd ?>"
-                            placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>"
-                        />
+                        <input type="text" id="mp-access-token-prod" class="mp-settings-input" value="<?= $accessTokenProd ?>" placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>" />
                     </fieldset>
                 </div>
 
@@ -236,26 +224,14 @@ if (!defined('ABSPATH')) {
                         <label for="mp-public-key-test" class="mp-settings-label mp-settings-font-color">
                             <?= $credentialsTranslations['public_key'] ?>
                         </label>
-                        <input
-                            type="text"
-                            id="mp-public-key-test"
-                            class="mp-settings-input"
-                            value="<?= $publicKeyTest ?>"
-                            placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>"
-                        />
+                        <input type="text" id="mp-public-key-test" class="mp-settings-input" value="<?= $publicKeyTest ?>" placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>" />
                     </fieldset>
 
                     <fieldset>
                         <label for="mp-access-token-test" class="mp-settings-label mp-settings-font-color">
                             <?= $credentialsTranslations['access_token'] ?>
                         </label>
-                        <input
-                            type="text"
-                            id="mp-access-token-test"
-                            class="mp-settings-input"
-                            value="<?= $accessTokenTest ?>"
-                            placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>"
-                        />
+                        <input type="text" id="mp-access-token-test" class="mp-settings-input" value="<?= $accessTokenTest ?>" placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>" />
                     </fieldset>
                 </div>
             </div>
@@ -266,7 +242,7 @@ if (!defined('ABSPATH')) {
         </div>
     </div>
 
-    <hr class="mp-settings-hr"/>
+    <hr class="mp-settings-hr" />
 
     <div class="mp-settings-credentials">
         <div id="mp-settings-step-two" class="mp-settings-title-align">
@@ -274,7 +250,7 @@ if (!defined('ABSPATH')) {
                 <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right"><?= $storeTranslations['title_store'] ?></span>
                 <img class="mp-settings-margin-left mp-settings-margin-right" id="mp-settings-icon-store" />
             </div>
-            <div class="mp-settings-title-container mp-settings-margin-left" >
+            <div class="mp-settings-title-container mp-settings-margin-left">
                 <img class="mp-settings-icon-open" id="mp-store-info-arrow-up" />
             </div>
         </div>
@@ -295,13 +271,7 @@ if (!defined('ABSPATH')) {
                             <label for="mp-store-identification" class="mp-settings-label mp-settings-font-color">
                                 <?= $storeTranslations['subtitle_name_store'] ?>
                             </label>
-                            <input
-                                type="text"
-                                id="mp-store-identification"
-                                class="mp-settings-input"
-                                value="<?= $storeName ?>"
-                                placeholder= "<?= $storeTranslations['placeholder_name_store'] ?>"
-                            />
+                            <input type="text" id="mp-store-identification" class="mp-settings-input" value="<?= $storeName ?>" placeholder="<?= $storeTranslations['placeholder_name_store'] ?>" />
                         </fieldset>
                         <span class="mp-settings-helper"><?= $storeTranslations['helper_name_store'] ?></span>
                     </div>
@@ -311,13 +281,7 @@ if (!defined('ABSPATH')) {
                             <label for="mp-store-category-id" class="mp-settings-label mp-settings-font-color">
                                 <?= $storeTranslations['subtitle_activities_store'] ?>
                             </label>
-                            <input
-                                type="text"
-                                id="mp-store-category-id"
-                                class="mp-settings-input"
-                                value="<?= $storeId ?>"
-                                placeholder="<?= $storeTranslations['placeholder_activities_store'] ?>"
-                            />
+                            <input type="text" id="mp-store-category-id" class="mp-settings-input" value="<?= $storeId ?>" placeholder="<?= $storeTranslations['placeholder_activities_store'] ?>" />
                         </fieldset>
                         <span class="mp-settings-helper"><?= $storeTranslations['helper_activities_store'] ?></span>
                     </div>
@@ -328,13 +292,13 @@ if (!defined('ABSPATH')) {
                         </label>
                         <select name="<?= $storeTranslations['placeholder_category_store'] ?>" class="mp-settings-select" id="mp-store-categories">
                             <?php
-                                foreach ($categories as $category) {
-                                    echo '
+                            foreach ($categories as $category) {
+                                echo '
                                         <option value="' . $category['id'] . '"' . ($storeCategory === $category['id'] ? 'selected' : '') . '>
                                             ' . $category['description'] . '
                                         </option>
                                     ';
-                                }
+                            }
                             ?>
                         </select>
                         <span class="mp-settings-helper"><?= $storeTranslations['helper_category_store'] ?></span>
@@ -362,13 +326,7 @@ if (!defined('ABSPATH')) {
                                     <label for="mp-store-url-ipn" class="mp-settings-label mp-settings-font-color">
                                         <?= $storeTranslations['subtitle_url'] ?>
                                     </label>
-                                    <input
-                                        type="text"
-                                        id="mp-store-url-ipn"
-                                        class="mp-settings-input"
-                                        value="<?= $customDomain ?>"
-                                        placeholder="<?= $storeTranslations['placeholder_url'] ?>"
-                                    />
+                                    <input type="text" id="mp-store-url-ipn" class="mp-settings-input" value="<?= $customDomain ?>" placeholder="<?= $storeTranslations['placeholder_url'] ?>" />
                                     <span class="mp-settings-helper"><?= $storeTranslations['helper_url'] ?></span>
                                 </fieldset>
                             </div>
@@ -378,13 +336,7 @@ if (!defined('ABSPATH')) {
                                     <label for="mp-store-integrator-id" class="mp-settings-label mp-settings-font-color">
                                         <?= $storeTranslations['subtitle_integrator'] ?>
                                     </label>
-                                    <input
-                                        type="text"
-                                        id="mp-store-integrator-id"
-                                        class="mp-settings-input"
-                                        value="<?= $integratorId ?>"
-                                        placeholder="<?= $storeTranslations['placeholder_integrator'] ?>"
-                                    />
+                                    <input type="text" id="mp-store-integrator-id" class="mp-settings-input" value="<?= $integratorId ?>" placeholder="<?= $storeTranslations['placeholder_integrator'] ?>" />
                                     <span class="mp-settings-helper"><?= $storeTranslations['helper_integrator'] ?></span>
                                 </fieldset>
                             </div>
@@ -392,23 +344,18 @@ if (!defined('ABSPATH')) {
                             <div class="mp-container">
                                 <div>
                                     <label class="mp-settings-switch">
-                                        <input
-                                            id="mp-store-debug-mode"
-                                            type="checkbox"
-                                            value="yes"
-                                            <?= ($debugMode === 'yes') ? 'checked' : '' ?>
-                                        />
+                                        <input id="mp-store-debug-mode" type="checkbox" value="yes" <?= ($debugMode === 'yes') ? 'checked' : '' ?> />
                                         <span class="mp-settings-slider mp-settings-round"></span>
                                     </label>
                                 </div>
                                 <div>
-									<span class="mp-settings-subtitle-font-size mp-settings-debug mp-settings-font-color">
-									    <?= $storeTranslations['title_debug'] ?>
-									</span>
-                                    <br/>
+                                    <span class="mp-settings-subtitle-font-size mp-settings-debug mp-settings-font-color">
+                                        <?= $storeTranslations['title_debug'] ?>
+                                    </span>
+                                    <br />
                                     <span class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color mp-settings-debug">
-									    <?= $storeTranslations['subtitle_debug'] ?>
-									</span>
+                                        <?= $storeTranslations['subtitle_debug'] ?>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -484,66 +431,51 @@ if (!defined('ABSPATH')) {
 
                     <div class="mp-settings-mode-container">
                         <div class="mp-settings-mode-spacing">
-                            <input
-                                type="radio"
-                                id="mp-settings-testmode-test"
-                                class="mp-settings-radio-button"
-                                name="mp-test-prod"
-                                value="yes"
-                                <?= $testMode ? 'checked' : '' ?>
-                            />
+                            <input type="radio" id="mp-settings-testmode-test" class="mp-settings-radio-button" name="mp-test-prod" value="yes" <?= $testMode ? 'checked' : '' ?> />
                         </div>
                         <label for="mp-settings-testmode-test">
                             <span class="mp-settings-subtitle-font-size mp-settings-font-color">
-								<?= $testModeTranslations['title_test'] ?>
-							</span>
+                                <?= $testModeTranslations['title_test'] ?>
+                            </span>
                             <br />
                             <span class="mp-settings-subtitle-font-size mp-settings-title-color">
-								<?= $testModeTranslations['subtitle_test'] ?>
-							<span>
-                            <a id="mp-test-mode-rules-link" class="mp-settings-blue-text" target="_blank" href="<?= $links['docs_integration_test'] ?>">
-                                <?= $testModeTranslations['subtitle_test_link'] ?>
-							</a>
+                                <?= $testModeTranslations['subtitle_test'] ?>
+                                <span>
+                                    <a id="mp-test-mode-rules-link" class="mp-settings-blue-text" target="_blank" href="<?= $links['docs_integration_test'] ?>">
+                                        <?= $testModeTranslations['subtitle_test_link'] ?>
+                                    </a>
                         </label>
                     </div>
 
                     <div class="mp-settings-mode-container">
                         <div class="mp-settings-mode-spacing">
-                            <input
-                                type="radio"
-                                id="mp-settings-testmode-prod"
-                                class="mp-settings-radio-button"
-                                name="mp-test-prod"
-                                value="no"
-                                <?= $testMode ? '' : 'checked' ?>
-                            />
+                            <input type="radio" id="mp-settings-testmode-prod" class="mp-settings-radio-button" name="mp-test-prod" value="no" <?= $testMode ? '' : 'checked' ?> />
                         </div>
                         <label for="mp-settings-testmode-prod">
                             <span class="mp-settings-subtitle-font-size mp-settings-font-color">
                                 <?= $testModeTranslations['title_prod'] ?>
                             </span>
-                                <br />
-                                <span class="mp-settings-subtitle-font-size mp-settings-title-color">
+                            <br />
+                            <span class="mp-settings-subtitle-font-size mp-settings-title-color">
                                 <?= $testModeTranslations['subtitle_prod'] ?>
                             </span>
                         </label>
                     </div>
 
-                    <div class="mp-settings-alert-payment-methods">
-                        <div id="mp-red-badge" class="mp-settings-alert-red" style="display:none;">
-                            <div class="mp-settings-alert-payment-methods-gray">
-                                <div class="mp-settings-margin-right mp-settings-mode-style">
-                                    <span id="mp-icon-badge-error" class="mp-settings-icon-warning"></span>
-                                </div>
+                    <div class="mp-settings-alert-payment-methods" style="display:none;">
+                        <div id="mp-red-badge" class="mp-settings-alert-red"></div>
+                        <div class="mp-settings-alert-payment-methods-gray">
+                            <div class="mp-settings-margin-right mp-settings-mode-style">
+                                <span id="mp-icon-badge-error" class="mp-settings-icon-warning"></span>
+                            </div>
 
-                                <div class="mp-settings-mode-warning">
-                                    <div class="mp-settings-margin-left">
-                                        <div class="mp-settings-alert-mode-title">
-                                            <span id="mp-text-badge"><?= $testModeTranslations['title_alert_test'] ?></span>
-                                        </div>
-                                        <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
-											<span id="mp-helper-test-error"><?= $testModeTranslations['test_credentials_helper'] ?></span>
-                                        </div>
+                            <div class="mp-settings-mode-warning">
+                                <div class="mp-settings-margin-left">
+                                    <div class="mp-settings-alert-mode-title">
+                                        <span id="mp-text-badge"><?= $testModeTranslations['title_alert_test'] ?></span>
+                                    </div>
+                                    <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
+                                        <span id="mp-helper-test-error"><?= $testModeTranslations['test_credentials_helper'] ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -551,31 +483,30 @@ if (!defined('ABSPATH')) {
                     </div>
 
                     <div class="mp-settings-alert-payment-methods">
-                        <div id="mp-orange-badge" class="<?= $testMode ? 'mp-settings-alert-payment-methods-orange' : 'mp-settings-alert-payment-methods-green' ?>">
-                            <div class="mp-settings-alert-payment-methods-gray">
-                                <div class="mp-settings-margin-right mp-settings-mode-style">
-                                    <span id="mp-icon-badge" class="<?= $testMode ? 'mp-settings-icon-warning' : 'mp-settings-icon-success' ?>"></span>
-                                </div>
+                        <div id="mp-orange-badge" class="<?= $testMode ? 'mp-settings-alert-payment-methods-orange' : 'mp-settings-alert-payment-methods-green' ?>"></div>
+                        <div class="mp-settings-alert-payment-methods-gray">
+                            <div class="mp-settings-margin-right mp-settings-mode-style">
+                                <span id="mp-icon-badge" class="<?= $testMode ? 'mp-settings-icon-warning' : 'mp-settings-icon-success' ?>"></span>
+                            </div>
 
-                                <div class="mp-settings-mode-warning">
-                                    <div class="mp-settings-margin-left">
-                                        <div class="mp-settings-alert-mode-title">
-                                            <span id="mp-title-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>">
-                                                <span id="mp-text-badge" class="mp-display-block"> <?= $testModeTranslations['title_message_prod'] ?></span>
-                                            </span>
-                                            <span id="mp-title-helper-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
-                                                <span id="mp-text-badge" class="mp-display-block"><?= $testModeTranslations['title_message_test'] ?></span>
-                                            </span>
-                                        </div>
+                            <div class="mp-settings-mode-warning">
+                                <div class="mp-settings-margin-left">
+                                    <div class="mp-settings-alert-mode-title">
+                                        <span id="mp-title-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>">
+                                            <span id="mp-text-badge" class="mp-display-block"> <?= $testModeTranslations['title_message_prod'] ?></span>
+                                        </span>
+                                        <span id="mp-title-helper-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
+                                            <span id="mp-text-badge" class="mp-display-block"><?= $testModeTranslations['title_message_test'] ?></span>
+                                        </span>
+                                    </div>
 
-                                        <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
-                                            <span id="mp-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>"><?= $testModeTranslations['subtitle_message_prod'] ?></span>
-                                            <span id="mp-helper-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
-                                                <span><?= $testModeTranslations['subtitle_test_one'] ?></span><br/>
-                                                <span><?= $testModeTranslations['subtitle_test_two'] ?></span><br/>
-                                                <span><?= $testModeTranslations['subtitle_test_three'] ?></span>
-                                            </span>
-                                        </div>
+                                    <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
+                                        <span id="mp-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>"><?= $testModeTranslations['subtitle_message_prod'] ?></span>
+                                        <span id="mp-helper-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
+                                            <span><?= $testModeTranslations['subtitle_test_one'] ?></span><br />
+                                            <span><?= $testModeTranslations['subtitle_test_two'] ?></span><br />
+                                            <span><?= $testModeTranslations['subtitle_test_three'] ?></span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
