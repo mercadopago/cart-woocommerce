@@ -159,6 +159,11 @@ class Settings
                 $this->url->getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
             );
 
+            $this->scripts->registerAdminStyle(
+                'mercadopago_admin_configs_css',
+                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
+            );
+
             $this->scripts->registerAdminScript(
                 'mercadopago_settings_admin_js',
                 $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
@@ -470,9 +475,9 @@ class Settings
         $response = [
             'type'      => 'error',
             'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
-            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'],
+            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] + ' ',
             'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
-            'link'      => '#',
+            'link'      => $this->links->getLinks()['mercadopago_credentials'],
             'test_mode' => $this->store->getCheckboxCheckoutTestMode()
         ];
 
