@@ -43,69 +43,27 @@ final class Links
      */
     public function getLinks(): array
     {
-        $linksSettings      = $this->getLinksSettings();
+        $countryConfig = $this->country->getCountryConfigs();
 
-        $mercadoPagoLinks   = $this->getMercadoPagoLinks($linksSettings);
-        $documentationLinks = $this->getDocumentationLinks($linksSettings);
-        $adminLinks         = $this->getAdminLinks();
-        $storeLinks         = $this->getStoreLinks();
-
-        return array_merge_recursive($mercadoPagoLinks, $documentationLinks, $adminLinks, $storeLinks);
-    }
-
-    /**
-     * Get links settings from the country configured by default in Woocommerce
-     *
-     * @return array
-     */
-    private function getLinksSettings(): array
-    {
-        $country = $this->country->getPluginDefaultCountry();
-
-        $settings = [
-            'AR' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.ar',
-            ],
-            'BR' => [
-                'translate'  => 'pt',
-                'suffix_url' => '.com.br',
-            ],
-            'CL' => [
-                'translate'  => 'es',
-                'suffix_url' => '.cl',
-            ],
-            'CO' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.co',
-            ],
-            'MX' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.mx',
-            ],
-            'PE' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.pe',
-            ],
-            'UY' => [
-                'translate'  => 'es',
-                'suffix_url' => '.com.uy',
-            ],
-        ];
-
-        return array_key_exists($country, $settings) ? $settings[$country] : $settings['AR'];
+        return array_merge_recursive(
+            $this->getDocumentationLinks($countryConfig),
+            $this->getMercadoPagoLinks($countryConfig),
+            $this->getCreditsLinks($countryConfig),
+            $this->getAdminLinks(),
+            $this->getStoreLinks()
+        );
     }
 
     /**
      * Get documentation links on Mercado Pago Devsite page
      *
-     * @param array $linkSettings
+     * @param array $countryConfig
      *
      * @return array
      */
-    private function getDocumentationLinks(array $linkSettings): array
+    private function getDocumentationLinks(array $countryConfig): array
     {
-        $baseLink = self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/developers/' . $linkSettings['translate'];
+        $baseLink = self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/developers/' . $countryConfig['translate'];
 
         return [
             'docs_developers_program'       => $baseLink . '/developer-program',
@@ -121,18 +79,23 @@ final class Links
     /**
      * Get documentation links on Mercado Pago Panel page
      *
-     * @param array $linkSettings
+     * @param array $countryConfig
      *
      * @return array
      */
-    private function getMercadoPagoLinks(array $linkSettings): array
+    private function getMercadoPagoLinks(array $countryConfig): array
     {
         return [
-            'mercadopago_home'        => self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/home',
-            'mercadopago_costs'       => self::MP_URL_PREFIX . $linkSettings['suffix_url'] . '/costs-section',
-            'mercadopago_test_user'   => self::MP_URL . '/developers/panel/test-users',
-            'mercadopago_credentials' => self::MP_URL . '/developers/panel/credentials',
-            'mercadopago_developers'  => self::MP_DEVELOPERS_URL,
+            'mercadopago_home'                 => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/home',
+            'mercadopago_costs'                => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/costs-section',
+            'mercadopago_test_user'            => self::MP_URL . '/developers/panel/test-users',
+            'mercadopago_credentials'          => self::MP_URL . '/developers/panel/credentials',
+            'mercadopago_developers'           => self::MP_DEVELOPERS_URL,
+            'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br/pix',
+            'mercadopago_debts'                => self::MP_URL_PREFIX . '.com.ar/cuotas',
+            'mercadopago_support'              => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/developers/' . $countryConfig['translate'] . '/support/contact',
+            'mercadopago_terms_and_conditions' => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . $countryConfig['help'] . $countryConfig['terms_and_conditions'],
+            'mercadopago_pix_config'           => self::MP_URL_PREFIX . '.com.br/stop/pix?url=https://www.mercadopago.com.br/admin-pix-keys/my-keys?authentication_mode=required',
         ];
     }
 
@@ -159,5 +122,34 @@ final class Links
         return [
             'store_visit' => get_permalink(wc_get_page_id('shop')),
         ];
+    }
+
+    /**
+     * Get store links
+     *
+     * @param array $countryConfig
+     *
+     * @return array
+     */
+    private function getCreditsLinks(array $countryConfig): array
+    {
+        $siteId = $countryConfig['site_id'];
+
+        $country_links = [
+            'MLA' => [
+                'credits_blog_link' => 'https://vendedores.mercadolibre.com.ar/nota/impulsa-tus-ventas-y-alcanza-mas-publico-con-mercado-credito',
+                'credits_faq_link'  => 'https://www.mercadopago.com.ar/help/19040'
+            ],
+            'MLM' => [
+                'credits_blog_link' => 'https://vendedores.mercadolibre.com.mx/nota/impulsa-tus-ventas-y-alcanza-a-mas-clientes-con-mercado-credito',
+                'credits_faq_link'  => 'https://www.mercadopago.com.mx/help/19040'
+            ],
+            'MLB' => [
+                'credits_blog_link' => 'https://conteudo.mercadopago.com.br/parcelamento-via-boleto-bancario-no-mercado-pago-seus-clientes-ja-podem-solicitar',
+                'credits_faq_link'  => 'https://www.mercadopago.com.br/help/19040'
+            ],
+        ];
+
+        return array_key_exists($siteId, $country_links) ? $country_links[$siteId] : $country_links['MLA'];
     }
 }

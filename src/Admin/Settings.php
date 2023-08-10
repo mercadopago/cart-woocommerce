@@ -14,6 +14,8 @@ use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -67,7 +69,7 @@ class Settings
     private $store;
 
     /**
-     * @var Translations
+     * @var AdminTranslations
      */
     private $translations;
 
@@ -87,6 +89,11 @@ class Settings
     private $currentUser;
 
     /**
+     * @var Logs
+     */
+    private $logs;
+
+    /**
      * Settings constructor
      */
     public function __construct(
@@ -97,10 +104,11 @@ class Settings
         Scripts $scripts,
         Seller $seller,
         Store $store,
-        Translations $translations,
+        AdminTranslations $translations,
         Url $url,
         Nonce $nonce,
-        CurrentUser $currentUser
+        CurrentUser $currentUser,
+        Logs $logs
     ) {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
@@ -113,10 +121,19 @@ class Settings
         $this->url          = $url;
         $this->nonce        = $nonce;
         $this->currentUser  = $currentUser;
+        $this->logs         = $logs;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
         $this->registerAjaxEndpoints();
+
+        $this->plugin->registerOnPluginCredentialsUpdate(function () {
+            $this->seller->updatePaymentMethods();
+        });
+
+        $this->plugin->registerOnPluginTestModeUpdate(function () {
+            $this->seller->updatePaymentMethods();
+        });
     }
 
     /**
@@ -165,8 +182,8 @@ class Settings
     {
         return $this->admin->isAdmin() && (
             $this->url->validatePage('mercadopago-settings') ||
-            $this->url->validateSection('woo-mercado-pago')
-        );
+            $this->url->validateSection('woo-mercado-pago'
+        ));
     }
 
     /**
@@ -182,6 +199,7 @@ class Settings
         $this->endpoints->registerAjaxEndpoint('mp_update_public_key', [$this, 'mercadopagoValidatePublicKey']);
         $this->endpoints->registerAjaxEndpoint('mp_update_access_token', [$this, 'mercadopagoValidateAccessToken']);
         $this->endpoints->registerAjaxEndpoint('mp_get_requirements', [$this, 'mercadopagoValidateRequirements']);
+        $this->endpoints->registerAjaxEndpoint('mp_get_payment_methods', [$this, 'mercadopagoPaymentMethods']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
     }
@@ -259,6 +277,47 @@ class Settings
     }
 
     /**
+     * Get available payment methods
+     *
+     * @return void
+     */
+    public function mercadopagoPaymentMethods(): void
+    {
+        try {
+            $this->validateAjaxNonce();
+
+            $paymentGateways            = $this->store->getAvailablePaymentGateways();
+            $payment_gateway_properties = [];
+
+            foreach ($paymentGateways as $paymentGateway) {
+                $gateway = new $paymentGateway();
+
+                $payment_gateway_properties[] = [
+                    'id'               => $gateway->id,
+                    'title_gateway'    => $gateway->title,
+                    'description'      => $gateway->description,
+                    'title'            => $gateway->title,
+                    'enabled'          => $gateway->settings['enabled'],
+                    'icon'             => $gateway->icon,
+                    'link'             => admin_url('admin.php?page=wc-settings&tab=checkout&section=') . $gateway->id,
+                    'badge_translator' => [
+                        'yes' => $this->translations->gatewaysSettings['enabled'],
+                        'no'  => $this->translations->gatewaysSettings['disabled'],
+                    ],
+                ];
+            }
+
+            wp_send_json_success($payment_gateway_properties);
+        } catch (\Exception $e) {
+            $response = [
+                'message' => $e->getMessage()
+            ];
+
+            wp_send_json_error($response);
+        }
+    }
+
+    /**
      * Validate store tips
      *
      * @return void
@@ -306,8 +365,8 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $isTest    = Form::getSanitizeTextFromPost('is_test');
-        $publicKey = Form::getSanitizeTextFromPost('public_key');
+        $isTest    = Form::sanitizeTextFromPost('is_test');
+        $publicKey = Form::sanitizeTextFromPost('public_key');
 
         $validateCredentialsResponse = $this->seller->validatePublicKey($publicKey);
 
@@ -330,8 +389,8 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $isTest      = Form::getSanitizeTextFromPost('is_test');
-        $accessToken = Form::getSanitizeTextFromPost('access_token');
+        $isTest      = Form::sanitizeTextFromPost('is_test');
+        $accessToken = Form::sanitizeTextFromPost('access_token');
 
         $validateCredentialsResponse = $this->seller->validateAccessToken($accessToken);
 
@@ -354,10 +413,10 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $publicKeyProd   = Form::getSanitizeTextFromPost('public_key_prod');
-        $accessTokenProd = Form::getSanitizeTextFromPost('access_token_prod');
-        $publicKeyTest   = Form::getSanitizeTextFromPost('public_key_test');
-        $accessTokenTest = Form::getSanitizeTextFromPost('access_token_test');
+        $publicKeyProd   = Form::sanitizeTextFromPost('public_key_prod');
+        $accessTokenProd = Form::sanitizeTextFromPost('access_token_prod');
+        $publicKeyTest   = Form::sanitizeTextFromPost('public_key_test');
+        $accessTokenTest = Form::sanitizeTextFromPost('access_token_test');
 
         $validatePublicKeyProd   = $this->seller->validatePublicKey($publicKeyProd);
         $validateAccessTokenProd = $this->seller->validateAccessToken($accessTokenProd);
@@ -377,17 +436,17 @@ class Settings
 
             $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
             if ($sellerInfo['status'] === 200) {
-                $this->seller->setSiteId($sellerInfo['data']['site_id']);
                 $this->store->setCheckoutCountry($sellerInfo['data']['site_id']);
+                $this->seller->setSiteId($sellerInfo['data']['site_id']);
+                $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
             }
 
-            if (
-                (empty($publicKeyTest) && empty($accessTokenTest)) ||
-                ($validatePublicKeyTest['status'] === 200 &&
+            if ((empty($publicKeyTest) && empty($accessTokenTest)) || (
+                $validatePublicKeyTest['status'] === 200 &&
                 $validateAccessTokenTest['status'] === 200 &&
                 $validatePublicKeyTest['data']['is_test'] === true &&
-                $validateAccessTokenTest['data']['is_test'] === true)
-            ) {
+                $validateAccessTokenTest['data']['is_test'] === true
+            )) {
                 $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
                 $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
 
@@ -429,12 +488,12 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $storeId       = Form::getSanitizeTextFromPost('store_category_id');
-        $storeName     = Form::getSanitizeTextFromPost('store_identificator');
-        $storeCategory = Form::getSanitizeTextFromPost('store_categories');
-        $customDomain  = Form::getSanitizeTextFromPost('store_url_ipn');
-        $integratorId  = Form::getSanitizeTextFromPost('store_integrator_id');
-        $debugMode     = Form::getSanitizeTextFromPost('store_debug_mode');
+        $storeId       = Form::sanitizeTextFromPost('store_category_id');
+        $storeName     = Form::sanitizeTextFromPost('store_identificator');
+        $storeCategory = Form::sanitizeTextFromPost('store_categories');
+        $customDomain  = Form::sanitizeTextFromPost('store_url_ipn');
+        $integratorId  = Form::sanitizeTextFromPost('store_integrator_id');
+        $debugMode     = Form::sanitizeTextFromPost('store_debug_mode');
 
         $this->store->setStoreId($storeId);
         $this->store->setStoreName($storeName);
@@ -457,10 +516,11 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $checkoutTestMode    = Form::getSanitizeTextFromPost('input_mode_value');
-        $verifyAlertTestMode = Form::getSanitizeTextFromPost('input_verify_alert_test_mode');
+        $checkoutTestMode    = Form::sanitizeTextFromPost('input_mode_value');
+        $verifyAlertTestMode = Form::sanitizeTextFromPost('input_verify_alert_test_mode');
 
         $validateCheckoutTestMode = ($checkoutTestMode === 'yes');
+
         $withoutTestCredentials = (
             $this->seller->getCredentialsPublicKeyTest() === '' ||
             $this->seller->getCredentialsAccessTokenTest() === ''
@@ -489,6 +549,6 @@ class Settings
     private function validateAjaxNonce(): void
     {
         $this->currentUser->validateUserNeededPermissions();
-        $this->nonce->validateNonce(self::NONCE_ID, Form::getSanitizeTextFromPost('nonce'));
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
     }
 }

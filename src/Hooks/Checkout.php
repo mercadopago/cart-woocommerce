@@ -9,42 +9,25 @@ if (!defined('ABSPATH')) {
 class Checkout
 {
     /**
-     * @var Scripts
-     */
-    private $scripts;
-
-    /**
-     * Checkout constructor
-     */
-    public function __construct(Scripts $scripts)
-    {
-        $this->scripts = $scripts;
-    }
-
-    /**
-     * Register after checkout form hook
+     * Validate if the actual page belongs to the checkout section
      *
-     * @param mixed $callback
-     *
-     * @return void
+     * @return bool
      */
-    public function registerAfterCheckoutForm($callback)
+    public function isCheckout(): bool
     {
-        add_action('woocommerce_after_checkout_form', $callback);
+        return is_checkout();
     }
 
     /**
      * Register before checkout form hook
      *
-     * @param string $location
+     * @param mixed $callback
      *
      * @return void
      */
-    public function registerBeforeCheckoutForm(string $location)
+    public function registerBeforeCheckoutForm($callback)
     {
-        add_action('woocommerce_before_checkout_form', function () use ($location) {
-            $this->scripts->registerMelidataStoreScript($location);
-        });
+        add_action('woocommerce_before_checkout_form', $callback);
     }
 
     /**
@@ -60,6 +43,30 @@ class Checkout
     }
 
     /**
+     * Register before woocommerce pay
+     *
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function registerBeforePay($callback)
+    {
+        add_action('before_woocommerce_pay', $callback);
+    }
+
+    /**
+     * Register pay order before submit hook
+     *
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function registerPayOrderBeforeSubmit($callback)
+    {
+        add_action('woocommerce_pay_order_before_submit', $callback);
+    }
+
+    /**
      * Register receipt hook
      *
      * @param string $id
@@ -70,33 +77,5 @@ class Checkout
     public function registerReceipt(string $id, $callback)
     {
         add_action('woocommerce_receipt_' . $id, $callback);
-    }
-
-    /**
-     * Register before woocommerce pay
-     *
-     * @param string $location
-     *
-     * @return void
-     */
-    public function registerBeforePay(string $location)
-    {
-        add_action('before_woocommerce_pay', function () use ($location) {
-            $this->scripts->registerMelidataStoreScript($location);
-        });
-    }
-
-    /**
-     * Register pay order before submit hook
-     *
-     * @param string $location
-     *
-     * @return void
-     */
-    public function registerPayOrderBeforeSubmit(string $location)
-    {
-        add_action('woocommerce_pay_order_before_submit', function () use ($location) {
-            $this->scripts->registerMelidataStoreScript($location);
-        });
     }
 }

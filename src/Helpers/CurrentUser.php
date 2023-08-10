@@ -2,13 +2,14 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Logs\Logs;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class CurrentUser
+final class CurrentUser
 {
     /**
      * @var Logs
@@ -16,13 +17,30 @@ class CurrentUser
     private $logs;
 
     /**
+     * Store
+     *
+     * @var Store
+     */
+    private $store;
+
+    /**
+     * Is debug mode
+     *
+     * @var mixed|string
+     */
+    public $debugMode;
+
+    /**
      * CurrentUser constructor
      *
      * @param Logs $logs
+     * @param Store $store
      */
-    public function __construct(Logs $logs)
+    public function __construct(Logs $logs, Store $store)
     {
-        $this->logs = $logs;
+        $this->logs      = $logs;
+        $this->store     = $store;
+        $this->debugMode = $this->store->getDebugMode();
     }
 
     /**
@@ -46,6 +64,19 @@ class CurrentUser
     }
 
     /**
+     * Get WP current user roles
+     *
+     * @param string $key
+     * @param bool   $single
+     *
+     * @return array|string
+     */
+    public function getCurrentUserMeta(string $key, bool $single = false)
+    {
+        return get_user_meta($this->getCurrentUser()->ID, $key, $single);
+    }
+
+    /**
      * Verify if current_user has specifics roles
      *
      * @param array $roles 'administrator | editor | author | contributor | subscriber'
@@ -54,7 +85,20 @@ class CurrentUser
      */
     public function userHasRoles(array $roles): bool
     {
-        return !empty(array_intersect($roles, $this->getCurrentUserRoles()));
+        return is_super_admin($this->getCurrentUser()) || !empty(array_intersect($roles, $this->getCurrentUserRoles()));
+    }
+
+    /**
+     * Verify if current user has permission
+     * @see https://wordpress.org/documentation/article/roles-and-capabilities/
+     *
+     * @param string $capability
+     *
+     * @return bool
+     */
+    public function currentUserCan(string $capability): bool
+    {
+        return current_user_can($capability);
     }
 
     /**
@@ -64,9 +108,9 @@ class CurrentUser
      */
     public function validateUserNeededPermissions(): void
     {
-        $needed_roles = ['administrator', 'editor'];
+        $neededRoles = ['administrator', 'editor', 'author', 'contributor', 'subscriber'];
 
-        if (!$this->userHasRoles($needed_roles)) {
+        if (!$this->userHasRoles($neededRoles)) {
             $this->logs->file->error('User does not have permission (need admin or editor)', __CLASS__);
             wp_send_json_error('Forbidden', 403);
         }

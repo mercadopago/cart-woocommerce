@@ -46,13 +46,13 @@ class Remote implements LogInterface
     /**
      * Errors that do not require immediate action
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param mixed $context
      *
      * @return void
      */
-    public function error(string $message, string $source, array $context = []): void
+    public function error(string $message, string $source, $context = []): void
     {
         $this->save(LogLevels::ERROR, $message, $source, $context);
     }
@@ -60,13 +60,13 @@ class Remote implements LogInterface
     /**
      * Exceptional occurrences that are not errors
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param mixed $context
      *
      * @return void
      */
-    public function warning(string $message, string $source, array $context = []): void
+    public function warning(string $message, string $source, $context = []): void
     {
         $this->save(LogLevels::WARNING, $message, $source, $context);
     }
@@ -74,13 +74,13 @@ class Remote implements LogInterface
     /**
      * Normal but significant events
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param mixed $context
      *
      * @return void
      */
-    public function notice(string $message, string $source, array $context = []): void
+    public function notice(string $message, string $source, $context = []): void
     {
         $this->save(LogLevels::NOTICE, $message, $source, $context);
     }
@@ -88,13 +88,13 @@ class Remote implements LogInterface
     /**
      * Interesting events
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param mixed $context
      *
      * @return void
      */
-    public function info(string $message, string $source, array $context = []): void
+    public function info(string $message, string $source, $context = []): void
     {
         $this->save(LogLevels::INFO, $message, $source, $context);
     }
@@ -102,13 +102,13 @@ class Remote implements LogInterface
     /**
      * Detailed debug information
      *
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $message
+     * @param string $source
+     * @param mixed $context
      *
      * @return void
      */
-    public function debug(string $message, string $source, array $context = []): void
+    public function debug(string $message, string $source, $context = []): void
     {
         if (WP_DEBUG) {
             $this->save(LogLevels::DEBUG, $message, $source, $context);
@@ -118,14 +118,14 @@ class Remote implements LogInterface
     /**
      * Save logs by sending to API
      *
-     * @param string               $level
-     * @param string               $message
-     * @param string               $source
-     * @param array<string, mixed> $context
+     * @param string $level
+     * @param string $message
+     * @param string $source
+     * @param mixed $context
      *
      * @return void
      */
-    private function save(string $level, string $message, string $source, array $context = []): void
+    private function save(string $level, string $message, string $source, $context = []): void
     {
         if (!$this->debugMode) {
             return;

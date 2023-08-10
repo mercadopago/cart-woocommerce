@@ -2,6 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -9,20 +14,73 @@ if (!defined('ABSPATH')) {
 class Gateway
 {
     /**
+     * @const
+     */
+    public const GATEWAY_ICON_FILTER = 'woo_mercado_pago_icon';
+
+    /**
      * @var Options
      */
     private $options;
 
     /**
+     * @var Template
+     */
+    private $template;
+
+    /**
+     * @var Store
+     */
+    private $store;
+
+    /**
+     * @var Checkout
+     */
+    private $checkout;
+
+    /**
+     * @var StoreTranslations
+     */
+    private $translations;
+
+    /**
+     * @var Url
+     */
+    private $url;
+
+    /**
      * Gateway constructor
      */
-    public function __construct(Options $options)
-    {
-        $this->options = $options;
+    public function __construct(
+        Options           $options,
+        Template          $template,
+        Store             $store,
+        Checkout          $checkout,
+        StoreTranslations $translations,
+        Url               $url
+    ) {
+        $this->options      = $options;
+        $this->template     = $template;
+        $this->store        = $store;
+        $this->checkout     = $checkout;
+        $this->translations = $translations;
+        $this->url          = $url;
     }
 
     /**
-     * Register gateway on Woocommerce
+     * Verify if gateway is enabled and available
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return bool
+     */
+    public function isEnabled(AbstractGateway $gateway): bool
+    {
+        return $gateway->is_available();
+    }
+
+    /**
+     * Register gateway on Woocommerce if it is valid
      *
      * @param string $gateway
      *
@@ -30,22 +88,65 @@ class Gateway
      */
     public function registerGateway(string $gateway): void
     {
-        add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
-            $methods[] = $gateway;
-            return $methods;
-        });
+        if ($gateway::isAvailable()) {
+            $this->store->addAvailablePaymentGateway($gateway);
+
+            add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
+                $methods[] = $gateway;
+                return $methods;
+            });
+        }
     }
 
     /**
      * Register gateway title
      *
+     * @param AbstractGateway $gateway
+     *
      * @return void
      */
-    public function registerGatewayTitle(): void
+    public function registerGatewayTitle(AbstractGateway $gateway): void
     {
-        add_filter('woocommerce_gateway_title', function ($title) {
+        add_filter('woocommerce_gateway_title', function ($title, $id) use ($gateway) {
+            if (!preg_match('/woo-mercado-pago/', $id)) {
+                return $title;
+            }
+
+            if ($gateway->id !== $id) {
+                return $title;
+            }
+
+            if (!$this->checkout->isCheckout() && !(defined('DOING_AJAX') && DOING_AJAX)) {
+                return $title;
+            }
+
+            if ($gateway->commission == 0 && $gateway->discount == 0) {
+                return $title;
+            }
+
+            if (!is_numeric($gateway->discount) || $gateway->discount > 99) {
+                return $title;
+            }
+
+            if (!is_numeric($gateway->commission) || $gateway->commission > 99) {
+                return $title;
+            }
+
+            global $mercadopago;
+
+            $subtotal   = $mercadopago->woocommerce->cart->get_subtotal();
+            $discount   = $subtotal * ($gateway->discount / 100);
+            $commission = $subtotal * ($gateway->commission / 100);
+
+            $title .= $this->buildTitleWithDiscountAndCommission(
+                $discount,
+                $commission,
+                $this->translations->commonCheckout['discount_title'],
+                $this->translations->commonCheckout['fee_title']
+            );
+
             return $title;
-        });
+        }, 10, 2);
     }
 
     /**
@@ -60,32 +161,24 @@ class Gateway
         });
     }
 
-
     /**
      * Register update options
      *
-     * @param string $id
-     * @param $gateway
+     * @param AbstractGateway $gateway
      *
      * @return void
      */
-    public function registerUpdateOptions(string $id, $gateway): void
+    public function registerUpdateOptions(AbstractGateway $gateway): void
     {
-        add_action('woocommerce_update_options_payment_gateways_' . $id, function () use ($gateway) {
+        add_action('woocommerce_update_options_payment_gateways_' . $gateway->id, function () use ($gateway) {
             $gateway->init_settings();
+
             $postData   = $gateway->get_post_data();
             $formFields = $this->getCustomFormFields($gateway);
 
             foreach ($formFields as $key => $field) {
-                if ('title' !== $gateway->get_field_type($field)) {
-                    $value = $gateway->get_field_value($key, $field, $postData);
-                    $commonConfigs = $gateway->get_common_configs();
-
-                    if (in_array($key, $commonConfigs, true)) {
-                        $this->options->set($key, $value);
-                    }
-
-                    $gateway->settings[$key] = $value;
+                if ($gateway->get_field_type($field) !== 'config_title') {
+                    $gateway->settings[$key] = $gateway->get_field_value($key, $field, $postData);
                 }
             }
 
@@ -109,14 +202,12 @@ class Gateway
 
         foreach ($formFields as $key => $field) {
             if ('mp_checkbox_list' === $field['type']) {
-                $formFields += $this->separateCheckBoxes($formFields[$key]);
+                $formFields += $this->separateCheckboxes($formFields[$key]);
                 unset($formFields[$key]);
             }
 
-            if ('mp_activable_input' === $field['type'] && !isset($formFields[$key . '_checkbox'])) {
-                $formFields[$key . '_checkbox'] = array(
-                    'type' => 'checkbox',
-                );
+            if ('mp_actionable_input' === $field['type'] && !isset($formFields[$key . '_checkbox'])) {
+                $formFields[$key . '_checkbox'] = ['type' => 'checkbox'];
             }
 
             if ('mp_toggle_switch' === $field['type']) {
@@ -130,32 +221,36 @@ class Gateway
     /**
      * Separates multiple exPayments checkbox into an array
      *
-     * @param array $exPayments exPayments form field
+     * @param array $exPayments
      *
      * @return array
      */
-    public function separateCheckBoxes(array $exPayments): array
+    public function separateCheckboxes(array $exPayments): array
     {
-        $paymentMethods = array();
+        $paymentMethods = [];
+
         foreach ($exPayments['payment_method_types'] as $paymentMethodsType) {
-            $paymentMethods += $this->separateCheckBoxesList($paymentMethodsType['list']);
+            $paymentMethods += $this->separateCheckboxesList($paymentMethodsType['list']);
         }
+
         return $paymentMethods;
     }
 
     /**
      * Separates multiple exPayments checkbox into an array
      *
-     * @param array $exPaymentsList list of payment_methods
+     * @param array $exPaymentsList
      *
      * @return array
      */
-    public function separateCheckBoxesList(array $exPaymentsList): array
+    public function separateCheckboxesList(array $exPaymentsList): array
     {
-        $paymentMethods = array();
+        $paymentMethods = [];
+
         foreach ($exPaymentsList as $payment) {
             $paymentMethods[$payment['id']] = $payment;
         }
+
         return $paymentMethods;
     }
 
@@ -163,7 +258,7 @@ class Gateway
      * Register thank you page
      *
      * @param string $id
-     * @param $callback
+     * @param mixed $callback
      *
      * @return void
      */
@@ -175,7 +270,7 @@ class Gateway
     /**
      * Register before thank you page
      *
-     * @param $callback
+     * @param mixed $callback
      *
      * @return void
      */
@@ -189,44 +284,58 @@ class Gateway
      *
      * @param string $name
      * @param array $args
-     * @param string $path
-     * @param string $defaultPath
      *
      * @return void
      */
-    public function registerAfterSettingsCheckout(string $name, array $args, string $path, string $defaultPath = ''): void
+    public function registerAfterSettingsCheckout(string $name, array $args): void
     {
-        add_action('woocommerce_after_settings_checkout', function () use ($name, $args, $path, $defaultPath) {
+        add_action('woocommerce_after_settings_checkout', function () use ($name, $args) {
             foreach ($args as $arg) {
-                wc_get_template($name, $arg, $path, $defaultPath);
+                $this->template->getWoocommerceTemplate($name, $arg);
             }
         });
     }
 
     /**
-     * Register wp head
+     * Get gateway icon
      *
-     * @param $callback
+     * @param string $iconName
      *
-     * @return void
+     * @return string
      */
-    public function registerWpHead($callback): void
+    public function getGatewayIcon(string $iconName): string
     {
-        add_action('wp_head', $callback);
+        $path = $this->url->getPluginFileUrl("/assets/images/icons/$iconName", '.png', true);
+        return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 
     /**
-     * Register query vars
+     * Build title for gateways with discount and commission
      *
-     * @param string $var
+     * @param float $discount
+     * @param float $commission
+     * @param string $strDiscount
+     * @param string $strCommission
      *
-     * @return void
+     * @return string
      */
-    public function registerQueryVars(string $var): void
+    private function buildTitleWithDiscountAndCommission(float $discount, float $commission, string $strDiscount, string $strCommission): string
     {
-        add_filter('query_vars', function ($vars) use ($var) {
-            $vars [] = $var;
-            return $vars;
-        });
+        $treatedDiscount   = wp_strip_all_tags(wc_price($discount));
+        $treatedCommission = wp_strip_all_tags(wc_price($commission));
+
+        if ($discount > 0 && $commission > 0) {
+            return " ($strDiscount $treatedDiscount $strCommission $treatedCommission)";
+        }
+
+        if ($discount > 0) {
+            return " ($strDiscount $discount)";
+        }
+
+        if ($commission > 0) {
+            return " ($strCommission $commission)";
+        }
+
+        return '';
     }
 }
