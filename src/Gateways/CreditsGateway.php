@@ -420,4 +420,16 @@ class CreditsGateway extends AbstractGateway
     {
         parent::registerCommissionAndDiscount($this, $orderId);
     }
+
+    /**
+	 * Enable Credits by default
+	 *
+	 * @return mixed
+	 */
+	public function active_by_default() {
+
+		$this->update_option_default('enabled', 'yes');
+		$this->update_option_default('credits_banner', 'yes');
+
+	}
 }
