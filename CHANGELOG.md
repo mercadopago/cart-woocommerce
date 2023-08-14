@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.9.3] - 2023-07-13
+### Fixed
+- Updated the link to obtain credentials on the developer site
+- Resolved warning related to the missing return type of the function AbstractCollection::getIterator()
+### Changed
+- Improved default activation of Credits Gateway
+
 ## [6.9.2] - 2023-06-23
 ### Fixed
 - Fixed bug that was causing the admin panel to become unresponsive or inaccessible

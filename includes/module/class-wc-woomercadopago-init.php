@@ -239,6 +239,7 @@ class WC_WooMercadoPago_Init {
 			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-nonce.php';
 			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-filter.php';
 			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-current-user.php';
+			include_once dirname( __FILE__ ) . '/../helpers/class-wc-woomercadopago-helper-credits-enable.php';
 
 			if ( $isAdmin ) {
 				require_once dirname( __FILE__ ) . '../../admin/notices/class-wc-woomercadopago-review-notice.php';
@@ -266,10 +267,18 @@ class WC_WooMercadoPago_Init {
 			WC_WooMercadoPago_Module::init_mercado_pago_class();
 			new WC_WooMercadoPago_Products_Hook_Credits();
 			WC_WooMercadoPago_Image_Generator::init_image_generator_class();
+			WC_WooMercadoPago_Helper_Credits_Enable::register_enable_credits_action();
 
 			self::update_plugin_version();
 
 			add_action( 'woocommerce_order_actions', array( __CLASS__, 'add_mp_order_meta_box_actions' ) );
+			/**
+			 * Activate credits by default, if the seller has cho pro enabled
+			 * and it was not previously enabled by default.
+			 *
+			 * @since 6.9.3
+			 */
+			do_action(WC_WooMercadoPago_Helper_Credits_Enable::ENABLE_CREDITS_ACTION);
 
 		} else {
 			add_action( 'admin_notices', array( __CLASS__, 'notify_woocommerce_miss' ) );

@@ -499,4 +499,16 @@ class WC_WooMercadoPago_Credits_Gateway extends WC_WooMercadoPago_Payment_Abstra
 		 */
 		return apply_filters( 'woocommerce_mercadopago_icon', plugins_url( '../assets/images/icons/mercadopago.png', plugin_dir_path( __FILE__ ) ) );
 	}
+
+	/**
+	 * Enable Credits by default
+	 *
+	 * @return mixed
+	 */
+	public function active_by_default() {
+
+		$this->update_option_default('enabled', 'yes');
+		$this->update_option_default('credits_banner', 'yes');
+
+	}
 }
