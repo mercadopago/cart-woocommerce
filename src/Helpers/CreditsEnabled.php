@@ -5,7 +5,7 @@ namespace MercadoPago\Woocommerce\Helpers;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Hooks\Options;
-use MercadoPago\Woocommerce\Hooks\Actions;
+use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Gateways\CreditsGateway;
 use MercadoPago\Woocommerce\Gateways\BasicGateway;
 
@@ -75,7 +75,7 @@ class CreditsEnabled
         if ($this->admin->isAdmin()) {
             $this->options->set(self::CREDITS_ACTIVATION_NEEDED, 'yes');
             $this->options->set(self::ALREADY_ENABLE_BY_DEFAULT, 'no');
-            $this->actions->set(self::ENABLE_CREDITS_ACTION, [$this, 'executeEnableCreditsAction']);
+            $this->actions->add(self::ENABLE_CREDITS_ACTION, [$this, 'executeEnableCreditsAction']);
         }
     }
 

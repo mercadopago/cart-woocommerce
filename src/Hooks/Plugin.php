@@ -2,8 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
-use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
-
 class Plugin
 {
     /**
@@ -71,7 +69,6 @@ class Plugin
      */
     public function registerOnPluginLoaded($callback): void
     {
-        $creditsEnabled = new CreditsEnabled(); //TODO check if is right
         add_action(self::LOADED_PLUGIN_ACTION, $callback);
     }
 }

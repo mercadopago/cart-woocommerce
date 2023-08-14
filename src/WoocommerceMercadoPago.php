@@ -22,6 +22,7 @@ use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Helpers\PaymentMethods;
+use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -265,6 +266,11 @@ class WoocommerceMercadoPago
     public $storeTranslations;
 
     /**
+     * @var CreditsEnabled
+     */
+    public $creditsEnabled;
+
+    /**
      * WoocommerceMercadoPago constructor
      */
     public function __construct()
@@ -363,10 +369,12 @@ class WoocommerceMercadoPago
         $this->registerGateways();
         $this->registerActionsWhenGatewayIsNotCalled();
         $this->plugin->registerOnPluginLoaded(function () {
+            $this->creditsEnabled->registerEnableCreditsAction();
             $this->logs->file->info('mercadopago_main_plugin_loaded was triggered', __METHOD__);
             return;
         });
         do_action($this->plugin::LOADED_PLUGIN_ACTION);
+        do_action($this->creditsEnabled::ENABLE_CREDITS_ACTION);
     }
 
     /**
@@ -429,6 +437,9 @@ class WoocommerceMercadoPago
         // Translations
         $this->adminTranslations = $dependencies->adminTranslations;
         $this->storeTranslations = $dependencies->storeTranslations;
+
+        //Credits Auto Enable
+        $this->creditsEnabled = $dependencies->creditsEnabled;
     }
 
     /**
