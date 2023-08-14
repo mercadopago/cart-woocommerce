@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
         </div>
 
         <div class="mp-right-alert">
-            <p><?= wp_kses_post($message, 'b') ?></p>
+            <p><?= wp_kses_post($message) ?></p>
         </div>
     </div>
 </div>
