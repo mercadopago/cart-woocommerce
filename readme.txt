@@ -2,7 +2,7 @@
 Contributors: mercadopago, mercadolivre, claudiosanches, marcelohama
 Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
-Tested up to: 6.2
+Tested up to: 6.3
 Requires PHP: 7.2 to 8.1
 Stable tag: 6.9.3
 License: GPLv2 or later
