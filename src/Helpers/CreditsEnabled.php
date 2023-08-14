@@ -97,7 +97,7 @@ class CreditsEnabled
                     }
 
                     if (isset($basicGateway->settings['enabled']) && $this->options->getGatewayOption($basicGateway, 'enabled')  === 'yes') {
-                        $creditsGateway->active_by_default();
+                        $creditsGateway->activeByDefault();
                         $this->options->set(self::ALREADY_ENABLE_BY_DEFAULT, 'yes');
                     }
                 }
