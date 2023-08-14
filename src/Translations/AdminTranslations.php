@@ -312,6 +312,7 @@ class AdminTranslations
             'placeholder_activities_store' => __('Ex: Mary Store', 'woocommerce-mercadopago'),
             'placeholder_category_store'   => __('Select', 'woocommerce-mercadopago'),
             'placeholder_url'              => __('Ex: https://examples.com/my-custom-ipn-url', 'woocommerce-mercadopago'),
+            'options_url'                  => __('Add plugin default params', 'woocommerce-mercadopago'),
             'placeholder_integrator'       => __('Ex: 14987126498', 'woocommerce-mercadopago'),
             'accordion_advanced_store'     => __('Show advanced options', 'woocommerce-mercadopago'),
             'button_store'                 => __('Save and continue', 'woocommerce-mercadopago'),

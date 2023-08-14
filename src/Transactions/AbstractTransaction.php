@@ -148,9 +148,11 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 			if (empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false) {
 				return $this->mercadopago->woocommerce->api_request_url($this->gateway->id);
 			} else {
-                return $this->mercadopago->strings->fixUrlAmpersand(
-                    esc_url($notificationUrl . '/wc-api/' . $this->gateway->id . '/')
-                );
+                $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
+                if ($customDomainOptions === 'yes') {
+                    return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway->id . '/'));
+                }
+                return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl));
 			}
 		}
 	}

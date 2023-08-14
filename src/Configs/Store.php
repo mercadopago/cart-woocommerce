@@ -49,6 +49,11 @@ class Store
     /**
      * @const
      */
+    private const CUSTOM_DOMAIN_OPTIONS = '_mp_custom_domain_options';
+
+    /**
+     * @const
+     */
     private const DEBUG_MODE = '_mp_debug_mode';
 
     /**
@@ -238,6 +243,22 @@ class Store
     public function setCustomDomain(string $customDomain): void
     {
         $this->options->set(self::CUSTOM_DOMAIN, $customDomain);
+    }
+
+    /**
+     * @return string
+     */
+    public function getCustomDomainOptions(): string
+    {
+        return $this->options->get(self::CUSTOM_DOMAIN_OPTIONS, '');
+    }
+
+    /**
+     * @param string $customDomainOptions
+     */
+    public function setCustomDomainOptions(string $customDomainOptions): void
+    {
+        $this->options->set(self::CUSTOM_DOMAIN_OPTIONS, $customDomainOptions);
     }
 
     /**

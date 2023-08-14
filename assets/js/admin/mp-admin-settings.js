@@ -587,6 +587,7 @@ function mpUpdateStoreInformation() {
           ajaxurl,
           {
             store_url_ipn: document.querySelector('#mp-store-url-ipn').value,
+            store_url_ipn_options: document.querySelector('#mp-store-url-ipn-options').checked ? 'yes' : 'no',
             store_categories: document.getElementById('mp-store-categories').value,
             store_category_id: document.getElementById('mp-store-category-id').value,
             store_integrator_id: document.getElementById('mp-store-integrator-id').value,

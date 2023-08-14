@@ -371,15 +371,15 @@ body {
   transition: 0.4s;
 }
 
-input:checked + .mp-settings-slider {
+input:checked+.mp-settings-slider {
   background-color: #2196f3;
 }
 
-input:focus + .mp-settings-slider {
+input:focus+.mp-settings-slider {
   box-shadow: 0 0 1px #2196f3;
 }
 
-input:checked + .mp-settings-slider:before {
+input:checked+.mp-settings-slider:before {
   -webkit-transform: translateX(16px);
   -ms-transform: translateX(16px);
   transform: translateX(16px);
@@ -751,6 +751,16 @@ input:checked + .mp-settings-slider:before {
 
 .mp-text-center {
   text-align: center !important;
+}
+
+.mp-settings-checkbox-options {
+  line-height: 1.4;
+  margin: 0.25em 0 0.5em !important;
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
 }
 
 @media screen and (max-width: 780px) {

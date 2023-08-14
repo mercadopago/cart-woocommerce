@@ -15,6 +15,7 @@
  * @var string $storeName
  * @var string $storeCategory
  * @var string $customDomain
+ * @var string $customDomainOptions
  * @var string $integratorId
  * @var string $debugMode
  * @var string $checkboxCheckoutTestMode
@@ -327,6 +328,10 @@ if (!defined('ABSPATH')) {
                                         <?= $storeTranslations['subtitle_url'] ?>
                                     </label>
                                     <input type="text" id="mp-store-url-ipn" class="mp-settings-input" value="<?= $customDomain ?>" placeholder="<?= $storeTranslations['placeholder_url'] ?>" />
+                                    <div>
+                                        <input type="checkbox" id="mp-store-url-ipn-options" <?php checked($customDomainOptions, 'yes'); ?> />
+                                        <label for="mp-store-url-ipn-options" class="mp-settings-checkbox-options"><?php echo esc_html($storeTranslations['options_url']); ?></label>
+                                    </div>
                                     <span class="mp-settings-helper"><?= $storeTranslations['helper_url'] ?></span>
                                 </fieldset>
                             </div>
@@ -348,7 +353,7 @@ if (!defined('ABSPATH')) {
                                         <span class="mp-settings-slider mp-settings-round"></span>
                                     </label>
                                 </div>
-                                <div>
+                                <label for="mp-store-debug-mode">
                                     <span class="mp-settings-subtitle-font-size mp-settings-debug mp-settings-font-color">
                                         <?= $storeTranslations['title_debug'] ?>
                                     </span>
@@ -356,7 +361,7 @@ if (!defined('ABSPATH')) {
                                     <span class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color mp-settings-debug">
                                         <?= $storeTranslations['subtitle_debug'] ?>
                                     </span>
-                                </div>
+                                </label>
                             </div>
                         </div>
                     </div>
