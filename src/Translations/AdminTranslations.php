@@ -166,7 +166,7 @@ class AdminTranslations
     {
         $this->plugin = [
             'set_plugin'     => __('Set plugin', 'woocommerce-mercadopago'),
-            'payment_method' => __('Payment method', 'woocommerce-mercadopago'),
+            'payment_method' => __('Payment methods', 'woocommerce-mercadopago'),
             'plugin_manual'  => __('Plugin manual', 'woocommerce-mercadopago'),
         ];
     }
