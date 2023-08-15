@@ -368,13 +368,17 @@ class WoocommerceMercadoPago
 
         $this->registerGateways();
         $this->registerActionsWhenGatewayIsNotCalled();
+        if($this->admin->isAdmin() && $this->options->get('mercadopago_credits_activation_needed') !== 'no'){
+            $this->plugin->registerEnableCreditsAction(array($this->creditsEnabled, 'enableCreditsAction'));
+            $this->plugin->executeCreditsAction();
+        }
         $this->plugin->registerOnPluginLoaded(function () {
-            $this->creditsEnabled->registerEnableCreditsAction();
             $this->logs->file->info('mercadopago_main_plugin_loaded was triggered', __METHOD__);
             return;
         });
         do_action($this->plugin::LOADED_PLUGIN_ACTION);
-        do_action($this->creditsEnabled::ENABLE_CREDITS_ACTION);
+        $this->plugin->executeCreditsAction();
+
     }
 
     /**

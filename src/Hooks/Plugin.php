@@ -25,6 +25,21 @@ class Plugin
     public const LOADED_PLUGIN_ACTION = 'mercadopago_main_plugin_loaded';
 
     /**
+     * @const
+     */
+    const CREDITS_ACTIVATION_NEEDED = 'mercadopago_credits_activation_needed';
+
+    /**
+     * @const
+     */
+    const ALREADY_ENABLE_BY_DEFAULT = 'mercadopago_already_enabled_by_default';
+
+    /**
+     * @const
+     */
+    const ENABLE_CREDITS_ACTION     = 'mp_enable_credits_action';
+
+    /**
      * Register to plugin update event
      *
      * @param mixed $callback
@@ -70,5 +85,23 @@ class Plugin
     public function registerOnPluginLoaded($callback): void
     {
         add_action(self::LOADED_PLUGIN_ACTION, $callback);
+    }
+
+    /**
+     * Register to credits activate event
+     *
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function registerEnableCreditsAction($callback)
+    {
+        update_option(self::CREDITS_ACTIVATION_NEEDED, 'yes');
+        update_option(self::ALREADY_ENABLE_BY_DEFAULT, 'no');
+        add_action(self::ENABLE_CREDITS_ACTION, $callback);
+    }
+
+    public function executeCreditsAction(): void {
+        do_action(self::ENABLE_CREDITS_ACTION);
     }
 }

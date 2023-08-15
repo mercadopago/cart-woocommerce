@@ -70,16 +70,7 @@ class CreditsEnabled
         $this->actions      = $actions;
     }
 
-    public function registerEnableCreditsAction()
-    {
-        if ($this->admin->isAdmin()) {
-            $this->options->set(self::CREDITS_ACTIVATION_NEEDED, 'yes');
-            $this->options->set(self::ALREADY_ENABLE_BY_DEFAULT, 'no');
-            $this->actions->add(self::ENABLE_CREDITS_ACTION, [$this, 'executeEnableCreditsAction']);
-        }
-    }
-
-    public function executeEnableCreditsAction()
+    public function enableCreditsAction()
     {
 
         try {
