@@ -399,7 +399,7 @@ class AdminTranslations
         );
 
         $this->basicGatewaySettings = [
-            'gateway_title'                             => __('Checkout Pro', 'woocommerce-mercadopago'),
+            'gateway_title'                             => __('Your saved cards or money in Mercado Pago', 'woocommerce-mercadopago'),
             'gateway_description'                       => __('Debit, Credit and invoice in Mercado Pago environment', 'woocommerce-mercadopago'),
             'gateway_method_title'                      => __('Mercado Pago - Checkout Pro', 'woocommerce-mercadopago'),
             'gateway_method_description'                => __('Debit, Credit and invoice in Mercado Pago environment', 'woocommerce-mercadopago'),
