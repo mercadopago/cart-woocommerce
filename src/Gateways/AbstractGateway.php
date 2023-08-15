@@ -117,21 +117,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function init_form_fields(): void
     {
-        $this->form_fields = [
-            'card_info_validate' => [
-                'type'  => 'mp_card_info',
-                'value' => [
-                    'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
-                    'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
-                    'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
-                    'button_url'  => $this->links['admin_settings_page'],
-                    'icon'        => 'mp-icon-badge-warning',
-                    'color_card'  => 'mp-alert-color-error',
-                    'size_card'   => 'mp-card-body-size',
-                    'target'      => '_self',
-                ]
-            ]
-        ];
+        $this->form_fields = [];
     }
 
     /**
@@ -261,10 +247,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function canAdminLoadScriptsAndStyles(string $gatewaySection): bool
     {
-        return $this->mercadopago->admin->isAdmin() && (
-                $this->mercadopago->url->validatePage('wc-settings') &&
-                $this->mercadopago->url->validateSection($gatewaySection)
-            );
+        return $this->mercadopago->admin->isAdmin() && ($this->mercadopago->url->validatePage('wc-settings') &&
+            $this->mercadopago->url->validateSection($gatewaySection)
+        );
     }
 
     /**

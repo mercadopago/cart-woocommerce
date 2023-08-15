@@ -67,6 +67,10 @@ class BasicGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
+        if($this->addMissingCredentialsNoticeAsFormField()){
+            return;
+        }
+
         $successUrl = $this->mercadopago->options->getGatewayOption($this, 'success_url', '');
         $failureUrl = $this->mercadopago->options->getGatewayOption($this, 'failure_url', '');
         $pendingUrl = $this->mercadopago->options->getGatewayOption($this, 'pending_url', '');

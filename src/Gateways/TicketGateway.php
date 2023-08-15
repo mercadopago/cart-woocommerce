@@ -69,6 +69,10 @@ class TicketGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
+        if($this->addMissingCredentialsNoticeAsFormField()){
+            return;
+        }
+
         $this->form_fields = [
             'config_header' => [
                 'type'        => 'mp_config_title',

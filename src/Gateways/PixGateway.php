@@ -78,7 +78,9 @@ class PixGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
-        parent::init_form_fields();
+        if($this->addMissingCredentialsNoticeAsFormField()){
+            return;
+        }
 
         if (!empty($this->mercadopago->store->getCheckoutCountry()) &&
             !empty($this->mercadopago->seller->getCredentialsPublicKey()) &&
