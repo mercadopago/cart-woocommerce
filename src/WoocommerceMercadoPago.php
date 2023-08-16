@@ -82,7 +82,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_NAME = 'woocommerce-plugins-enablers/woocommerce-mercadopago.php';
+    private const PLUGIN_NAME = 'woocommerce-mercadopago/woocommerce-mercadopago.php';
 
     /**
      * @var \WooCommerce

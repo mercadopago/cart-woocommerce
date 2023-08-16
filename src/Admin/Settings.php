@@ -159,6 +159,11 @@ class Settings
                 $this->url->getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
             );
 
+            $this->scripts->registerAdminStyle(
+                'mercadopago_admin_configs_css',
+                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
+            );
+
             $this->scripts->registerAdminScript(
                 'mercadopago_settings_admin_js',
                 $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
@@ -239,12 +244,13 @@ class Settings
         $publicKeyTest   = $this->seller->getCredentialsPublicKeyTest();
         $accessTokenTest = $this->seller->getCredentialsAccessTokenTest();
 
-        $storeId       = $this->store->getStoreId();
-        $storeName     = $this->store->getStoreName();
-        $storeCategory = $this->store->getStoreCategory();
-        $customDomain  = $this->store->getCustomDomain();
-        $integratorId  = $this->store->getIntegratorId();
-        $debugMode     = $this->store->getDebugMode();
+        $storeId             = $this->store->getStoreId();
+        $storeName           = $this->store->getStoreName();
+        $storeCategory       = $this->store->getStoreCategory();
+        $customDomain        = $this->store->getCustomDomain();
+        $customDomainOptions = $this->store->getCustomDomainOptions();
+        $integratorId        = $this->store->getIntegratorId();
+        $debugMode           = $this->store->getDebugMode();
 
         $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
         $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
@@ -470,9 +476,9 @@ class Settings
         $response = [
             'type'      => 'error',
             'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
-            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'],
+            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] . ' ',
             'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
-            'link'      => '#',
+            'link'      => $this->links->getLinks()['mercadopago_credentials'],
             'test_mode' => $this->store->getCheckboxCheckoutTestMode()
         ];
 
@@ -488,17 +494,19 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $storeId       = Form::sanitizeTextFromPost('store_category_id');
-        $storeName     = Form::sanitizeTextFromPost('store_identificator');
-        $storeCategory = Form::sanitizeTextFromPost('store_categories');
-        $customDomain  = Form::sanitizeTextFromPost('store_url_ipn');
-        $integratorId  = Form::sanitizeTextFromPost('store_integrator_id');
-        $debugMode     = Form::sanitizeTextFromPost('store_debug_mode');
+        $storeId              = Form::sanitizeTextFromPost('store_category_id');
+        $storeName            = Form::sanitizeTextFromPost('store_identificator');
+        $storeCategory        = Form::sanitizeTextFromPost('store_categories');
+        $customDomain         = Form::sanitizeTextFromPost('store_url_ipn');
+        $customDomainOptions  = Form::sanitizeTextFromPost('store_url_ipn_options');
+        $integratorId         = Form::sanitizeTextFromPost('store_integrator_id');
+        $debugMode            = Form::sanitizeTextFromPost('store_debug_mode');
 
         $this->store->setStoreId($storeId);
         $this->store->setStoreName($storeName);
         $this->store->setStoreCategory($storeCategory);
         $this->store->setCustomDomain($customDomain);
+        $this->store->setCustomDomainOptions($customDomainOptions);
         $this->store->setIntegratorId($integratorId);
         $this->store->setDebugMode($debugMode);
 

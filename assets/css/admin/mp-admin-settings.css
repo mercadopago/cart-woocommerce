@@ -1,16 +1,18 @@
+/* TODO: remove this if not useful
 body {
   background: #f0f0f1;
   color: #3c434a;
-  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
   font-size: 13px;
   line-height: 1.4em;
   min-width: 600px;
 }
+*/
 
 .mp-settings {
-  margin: 0 48px 0 24px;
+  margin: 0 55px 0 23px;
   font-size: 16px;
   min-width: 550px;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
 }
 
 .mp-settings-header {
@@ -369,15 +371,15 @@ body {
   transition: 0.4s;
 }
 
-input:checked + .mp-settings-slider {
+input:checked+.mp-settings-slider {
   background-color: #2196f3;
 }
 
-input:focus + .mp-settings-slider {
+input:focus+.mp-settings-slider {
   box-shadow: 0 0 1px #2196f3;
 }
 
-input:checked + .mp-settings-slider:before {
+input:checked+.mp-settings-slider:before {
   -webkit-transform: translateX(16px);
   -ms-transform: translateX(16px);
   transform: translateX(16px);
@@ -514,28 +516,26 @@ input:checked + .mp-settings-slider:before {
 
 .mp-settings-alert-payment-methods {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
+  position: relative;
   margin-top: 12px;
 }
 
 .mp-settings-alert-payment-methods-orange {
   width: 6px;
   background-color: #ff7733;
-  height: 142px;
   border-radius: 6px 0 0 6px;
 }
 
 .mp-settings-alert-red {
   width: 6px;
   background-color: #ff0000;
-  height: 100%;
   border-radius: 6px 0 0 6px;
 }
 
 .mp-settings-alert-payment-methods-green {
   width: 6px;
   background-color: #00a650;
-  height: 75px;
   border-radius: 6px 0 0 6px;
 }
 
@@ -544,7 +544,7 @@ input:checked + .mp-settings-slider:before {
   width: 550px;
   background: rgba(0, 0, 0, 0.04);
   display: flex;
-  padding: 16px 20px 14px;
+  padding: 16px 20px 16px 14px;
   align-items: flex-start;
 }
 
@@ -751,6 +751,16 @@ input:checked + .mp-settings-slider:before {
 
 .mp-text-center {
   text-align: center !important;
+}
+
+.mp-settings-checkbox-options {
+  line-height: 1.4;
+  margin: 0.25em 0 0.5em !important;
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
 }
 
 @media screen and (max-width: 780px) {
