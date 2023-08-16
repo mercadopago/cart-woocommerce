@@ -24,6 +24,7 @@ use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Helpers\PaymentMethods;
+use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -235,6 +236,11 @@ class Dependencies
     public $storeTranslations;
 
     /**
+     * @var CreditsEnabled
+     */
+    public $creditsEnabled;
+
+    /**
      * Dependencies constructor
      */
     public function __construct()
@@ -278,6 +284,7 @@ class Dependencies
         $this->metadataConfig    = $this->setMetadataConfig();
         $this->currency          = $this->setCurrency();
         $this->settings          = $this->setSettings();
+        $this->creditsEnabled    = $this-> setCreditsEnabled();
     }
 
     /**
@@ -481,6 +488,19 @@ class Dependencies
             $this->nonce,
             $this->currentUser,
             $this->logs
+        );
+    }
+
+      /**
+     * @return CreditsEnabled
+     */
+    private function setCreditsEnabled(): CreditsEnabled
+    {
+        return new CreditsEnabled(
+            $this->admin,
+            $this->logs,
+            $this->options,
+            $this->actions
         );
     }
 }

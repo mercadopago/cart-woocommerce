@@ -426,4 +426,14 @@ class CreditsGateway extends AbstractGateway
     {
         parent::registerCommissionAndDiscount($this, $orderId);
     }
+
+    /**
+	 * Enable Credits by default
+	 *
+	 */
+	public function activeByDefault() {
+
+        $this->mercadopago->options->setGatewayOption($this, 'enabled', 'yes');
+        $this->mercadopago->options->setGatewayOption($this, 'credits_banner', 'yes');
+	}
 }
