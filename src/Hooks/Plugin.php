@@ -27,16 +27,6 @@ class Plugin
     /**
      * @const
      */
-    const CREDITS_ACTIVATION_NEEDED = 'mercadopago_credits_activation_needed';
-
-    /**
-     * @const
-     */
-    const ALREADY_ENABLE_BY_DEFAULT = 'mercadopago_already_enabled_by_default';
-
-    /**
-     * @const
-     */
     const ENABLE_CREDITS_ACTION     = 'mp_enable_credits_action';
 
     /**
