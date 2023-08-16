@@ -476,7 +476,7 @@ class Settings
         $response = [
             'type'      => 'error',
             'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
-            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] + ' ',
+            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] . ' ',
             'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
             'link'      => $this->links->getLinks()['mercadopago_credentials'],
             'test_mode' => $this->store->getCheckboxCheckoutTestMode()
