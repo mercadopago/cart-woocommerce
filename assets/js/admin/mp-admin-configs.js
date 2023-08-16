@@ -60,8 +60,8 @@
       pElement[0] ? (pElement[0].style.display = 'none') : null;
     }
 
-    const h2s = document.querySelectorAll('h2');
-    h2s[4] ? (h2s[4].style.display = 'none') : null;
+    const mainFormH2 = document.querySelector('#mainform > h2');
+    mainFormH2.classList.length === 0 ? (mainFormH2.style.display = 'none') : null;
 
     document.querySelectorAll('.mp-hidden-field-description').forEach((element) => {
       element.closest('tr').style.display = 'none';

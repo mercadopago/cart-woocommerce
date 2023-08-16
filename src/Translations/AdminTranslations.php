@@ -145,15 +145,21 @@ class AdminTranslations
         );
 
         $this->notices = [
-            'miss_woocommerce'      => $missWoocommerce,
-            'php_wrong_version'     => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
-            'missing_curl'          => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
-            'missing_gd_extensions' => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago'),
-            'activate_woocommerce'  => __('Activate WooCommerce', 'woocommerce-mercadopago'),
-            'install_woocommerce'   => __('Install WooCommerce', 'woocommerce-mercadopago'),
-            'see_woocommerce'       => __('See WooCommerce', 'woocommerce-mercadopago'),
-            'miss_pix_text'         => __('Please note that to receive payments via Pix at our checkout, you must have a Pix key registered in your Mercado Pago account.', 'woocommerce-mercadopago'),
-            'miss_pix_link'         => __('Register your Pix key at Mercado Pago.', 'woocommerce-mercadopago'),
+            'miss_woocommerce'          => $missWoocommerce,
+            'php_wrong_version'         => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
+            'missing_curl'              => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
+            'missing_gd_extensions'     => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago'),
+            'activate_woocommerce'      => __('Activate WooCommerce', 'woocommerce-mercadopago'),
+            'install_woocommerce'       => __('Install WooCommerce', 'woocommerce-mercadopago'),
+            'see_woocommerce'           => __('See WooCommerce', 'woocommerce-mercadopago'),
+            'miss_pix_text'             => __('Please note that to receive payments via Pix at our checkout, you must have a Pix key registered in your Mercado Pago account.', 'woocommerce-mercadopago'),
+            'miss_pix_link'             => __('Register your Pix key at Mercado Pago.', 'woocommerce-mercadopago'),
+            'dismissed_review_title'    => __('Do you have a minute to share your experience with our plugin?', 'woocommerce-mercadopago'),
+            'dismissed_review_subtitle' => __('Your opinion is very important so that we can offer you the best possible payment solution and continue to improve.', 'woocommerce-mercadopago'),
+            'dismissed_review_button'   => __('Rate the plugin', 'woocommerce-mercadopago'),
+            'saved_cards_title'         => __('Enable payments via Mercado Pago account'),
+            'saved_cards_subtitle'      => __('When you enable this function, your customers pay faster using their Mercado Pago accounts.</br>The approval rate of these payments in your store can be 25% higher compared to other payment methods.', 'woocommerce-mercadopago'),
+            'saved_cards_button'        => __('Activate', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -166,7 +172,7 @@ class AdminTranslations
     {
         $this->plugin = [
             'set_plugin'     => __('Set plugin', 'woocommerce-mercadopago'),
-            'payment_method' => __('Payment method', 'woocommerce-mercadopago'),
+            'payment_method' => __('Payment methods', 'woocommerce-mercadopago'),
             'plugin_manual'  => __('Plugin manual', 'woocommerce-mercadopago'),
         ];
     }
@@ -269,6 +275,9 @@ class AdminTranslations
             'card_info_title'           => __('Important! To sell you must enter your credentials.', 'woocommerce-mercadopago'),
             'card_info_subtitle'        => $cardInfoSubtitle,
             'card_info_button_text'     => __('Enter credentials', 'woocommerce-mercadopago'),
+            'card_homolog_title'        => __( 'Activate your credentials to be able to sell', 'woocommerce-mercadopago' ),
+            'card_homolog_subtitle'     => __( 'Credentials are codes that you must enter to enable sales. Go below on Activate Credentials. On the next screen, use again the Activate Credentials button and fill in the fields with the requested information.', 'woocommerce-mercadopago' ),
+            'card_homolog_button_text'  => __( 'Activate credentials', 'woocommerce-mercadopago' ),
         ];
     }
 
@@ -312,6 +321,7 @@ class AdminTranslations
             'placeholder_activities_store' => __('Ex: Mary Store', 'woocommerce-mercadopago'),
             'placeholder_category_store'   => __('Select', 'woocommerce-mercadopago'),
             'placeholder_url'              => __('Ex: https://examples.com/my-custom-ipn-url', 'woocommerce-mercadopago'),
+            'options_url'                  => __('Add plugin default params', 'woocommerce-mercadopago'),
             'placeholder_integrator'       => __('Ex: 14987126498', 'woocommerce-mercadopago'),
             'accordion_advanced_store'     => __('Show advanced options', 'woocommerce-mercadopago'),
             'button_store'                 => __('Save and continue', 'woocommerce-mercadopago'),
@@ -398,7 +408,7 @@ class AdminTranslations
         );
 
         $this->basicGatewaySettings = [
-            'gateway_title'                             => __('Checkout Pro', 'woocommerce-mercadopago'),
+            'gateway_title'                             => __('Your saved cards or money in Mercado Pago', 'woocommerce-mercadopago'),
             'gateway_description'                       => __('Debit, Credit and invoice in Mercado Pago environment', 'woocommerce-mercadopago'),
             'gateway_method_title'                      => __('Mercado Pago - Checkout Pro', 'woocommerce-mercadopago'),
             'gateway_method_description'                => __('Debit, Credit and invoice in Mercado Pago environment', 'woocommerce-mercadopago'),
@@ -683,8 +693,8 @@ class AdminTranslations
             'method_title'                 => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
             'header_title'                 => __('Transparent Checkout | Invoice or Loterica', 'woocommerce-mercadopago'),
             'header_description'           => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
-            'enabled_title'                => __('Activate installments without card in your store checkout', 'woocommerce-mercadopago'),
-            'enabled_subtitle'             => __('Offer the option to pay in installments without card directly from your store\'s checkout.', 'woocommerce-mercadopago'),
+            'enabled_title'                => __('Enable the Checkout', 'woocommerce-mercadopago'),
+            'enabled_subtitle'             => __('By disabling it, you will disable all invoice payments from Mercado Pago Transparent Checkout.', 'woocommerce-mercadopago'),
             'enabled_enabled'              => __('The transparent checkout for tickets is <b>enabled</b>.', 'woocommerce-mercadopago'),
             'enabled_disabled'             => __('The transparent checkout for tickets is <b>disabled</b>.', 'woocommerce-mercadopago'),
             'title_title'                  => __('Title in the store Checkout', 'woocommerce-mercadopago'),
@@ -941,14 +951,6 @@ class AdminTranslations
         );
 
         $this->currency = [
-            'currency_enabled' => [
-                'start' => __('Now we convert your currency from', 'woocommerce-mercadopago'),
-                'final' => __('to', 'woocommerce-mercadopago')
-            ],
-            'currency_disabled' => [
-                'start' => __('We no longer convert your currency from', 'woocommerce-mercadopago'),
-                'final' => __('to', 'woocommerce-mercadopago')
-            ],
             'currency_conversion' => $currencyConversion,
         ];
     }

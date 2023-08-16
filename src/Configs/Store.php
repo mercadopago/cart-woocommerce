@@ -49,7 +49,22 @@ class Store
     /**
      * @const
      */
+    private const CUSTOM_DOMAIN_OPTIONS = '_mp_custom_domain_options';
+
+    /**
+     * @const
+     */
     private const DEBUG_MODE = '_mp_debug_mode';
+
+    /**
+     * @const
+     */
+    private const DISMISSED_REVIEW_NOTICE = '_mp_dismiss_review';
+
+    /**
+     * @const
+     */
+    private const DISMISSED_SAVED_CARDS_NOTICE = '_mp_dismiss_saved_cards_notice';
 
     /**
      * @const
@@ -243,6 +258,22 @@ class Store
     /**
      * @return string
      */
+    public function getCustomDomainOptions(): string
+    {
+        return $this->options->get(self::CUSTOM_DOMAIN_OPTIONS, '');
+    }
+
+    /**
+     * @param string $customDomainOptions
+     */
+    public function setCustomDomainOptions(string $customDomainOptions): void
+    {
+        $this->options->set(self::CUSTOM_DOMAIN_OPTIONS, $customDomainOptions);
+    }
+
+    /**
+     * @return string
+     */
     public function getDebugMode(): string
     {
         return $this->options->get(self::DEBUG_MODE, 'no');
@@ -254,6 +285,38 @@ class Store
     public function setDebugMode(string $debugMode): void
     {
         $this->options->set(self::DEBUG_MODE, $debugMode);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDismissedReviewNotice(): string
+    {
+        return $this->options->get(self::DISMISSED_REVIEW_NOTICE, 0);
+    }
+
+    /**
+     * @param string $dismissedReviewNotice
+     */
+    public function setDismissedReviewNotice(int $dismissedReviewNotice): void
+    {
+        $this->options->set(self::DISMISSED_REVIEW_NOTICE, $dismissedReviewNotice);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDismissedSavedCardsNotice(): string
+    {
+        return $this->options->get(self::DISMISSED_SAVED_CARDS_NOTICE, 0);
+    }
+
+    /**
+     * @param string $dismissedSavedCardsNotice
+     */
+    public function setDismissedSavedCardsNotice(int $dismissedSavedCardsNotice): void
+    {
+        $this->options->set(self::DISMISSED_SAVED_CARDS_NOTICE, $dismissedSavedCardsNotice);
     }
 
     /**
@@ -277,7 +340,7 @@ class Store
      */
     public function getCheckboxCheckoutTestMode(): string
     {
-        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, 'no');
+        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, 'yes');
     }
 
     /**

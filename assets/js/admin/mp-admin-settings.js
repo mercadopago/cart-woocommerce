@@ -88,7 +88,7 @@ function selectTestMode(test) {
     badgeTest.style.display = 'block';
     badgeProd.style.display = 'none';
   } else {
-    const red_badge = document.getElementById('mp-red-badge');
+    const red_badge = document.getElementById('mp-red-badge').parentElement;
     badge.classList.remove('mp-settings-test-mode-alert');
     badge.classList.add('mp-settings-prod-mode-alert');
 
@@ -116,10 +116,10 @@ function mpVerifyAlertTestMode() {
     document.getElementById('mp-public-key-test').value === '' ||
     document.getElementById('mp-access-token-test').value === ''
   )) {
-    document.getElementById('mp-red-badge').style.display = 'block';
+    document.getElementById('mp-red-badge').parentElement.style.display = 'flex';
     return true;
   } else {
-    document.getElementById('mp-red-badge').style.display = 'none';
+    document.getElementById('mp-red-badge').parentElement.style.display = 'none';
     return false;
   }
 }
@@ -587,6 +587,7 @@ function mpUpdateStoreInformation() {
           ajaxurl,
           {
             store_url_ipn: document.querySelector('#mp-store-url-ipn').value,
+            store_url_ipn_options: document.querySelector('#mp-store-url-ipn-options').checked ? 'yes' : 'no',
             store_categories: document.getElementById('mp-store-categories').value,
             store_category_id: document.getElementById('mp-store-category-id').value,
             store_integrator_id: document.getElementById('mp-store-integrator-id').value,
@@ -650,7 +651,7 @@ function mpUpdateTestMode() {
             mpShowMessage(response.data, 'success', 'test_mode');
           } else {
             if (rad[0].checked) {
-              document.getElementById('mp-red-badge').style.display = 'block';
+              document.getElementById('mp-red-badge').parentElement.style.display = 'flex';
             }
             mpShowMessage(response.data, 'error', 'test_mode');
           }
