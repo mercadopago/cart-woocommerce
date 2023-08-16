@@ -128,7 +128,6 @@ class Notices
      */
     public function insertDismissibleNotices(): void
     {
-        $pagesToShow = ['dashboard', 'plugins', 'woocommerce_page_wc-settings'];
         if (
             !is_admin()
             || !$this->url->validateSection('mercado-pago')
