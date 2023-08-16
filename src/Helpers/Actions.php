@@ -25,16 +25,4 @@ final class Actions
             });
         }
     }
-
-     /**
-     * Add aaction
-     *
-     * @param string $hookName
-     * @param callable $callback
-     *
-     */
-    public function add(string $hookName, callable $callback): void
-    {
-        add_action($hookName, $callback);
-    }
 }
