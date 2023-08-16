@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 
 ?>
 
-<div id="saved-cards-notice" class="notice mp-saved-cards-notice">
+<div id="saved-cards-notice" class="notice is-dismissible mp-saved-cards-notice">
     <div class="mp-left-saved-cards">
         <div>
             <img src="<?= esc_url($cardIcon) ?>">

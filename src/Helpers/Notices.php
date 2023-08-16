@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
@@ -43,6 +45,21 @@ class Notices
     private $store;
 
     /**
+     * @var Nonce
+     */
+    private $nonce;
+
+    /**
+     * @var Endpoints
+     */
+    private $endpoints;
+
+    /**
+     * @const
+     */
+    const NONCE_ID = 'mp_notices_dismiss';
+
+    /**
      * Notices constructor
      */
     public function __construct(
@@ -51,7 +68,9 @@ class Notices
         Url $url,
         Links $links,
         CurrentUser $currentUser,
-        Store $store
+        Store $store,
+        Nonce $nonce,
+        Endpoints $endpoints
     ) {
         $this->scripts      = $scripts;
         $this->translations = $translations;
@@ -59,22 +78,45 @@ class Notices
         $this->links        = $links->getLinks();
         $this->currentUser  = $currentUser;
         $this->store        = $store;
+        $this->nonce        = $nonce;
+        $this->endpoints    = $endpoints;
 
-        $this->loadAdminNoticeCss();
+        $this->loadAdminNoticesCss();
+        $this->loadAdminNoticesJs();
         $this->insertDismissibleNotices();
+        $this->endpoints->registerAjaxEndpoint('mp_review_notice_dismiss', [$this, 'reviewNoticeDismiss']);
+        $this->endpoints->registerAjaxEndpoint('mp_saved_cards_notice_dismiss', [$this, 'savedCardsDismiss']);
     }
 
     /**
-     * Load admin notice css
+     * Load admin notices css
      *
      * @return void
      */
-    public function loadAdminNoticeCss(): void
+    public function loadAdminNoticesCss(): void
     {
         if (is_admin()) {
             $this->scripts->registerAdminStyle(
-                'woocommerce-mercadopago-admin-notice',
-                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-notice', '.css')
+                'woocommerce-mercadopago-admin-notice-css',
+                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-notices', '.css')
+            );
+        }
+    }
+
+    /**
+     * Load admin notices js
+     *
+     * @return void
+     */
+    public function loadAdminNoticesJs(): void
+    {
+        if (is_admin()) {
+            $this->scripts->registerAdminScript(
+                'woocommerce_mercadopago_admin_notice_js',
+                $this->url->getPluginFileUrl('assets/js/admin/mp-admin-notices', '.js'),
+                [
+                    'nonce' => $this->nonce->generateNonce(self::NONCE_ID)
+                ]
             );
         }
     }
@@ -335,4 +377,28 @@ class Notices
     {
         wc_add_notice($message, $type, $data);
     }
+
+	/**
+	 * Dismiss the review admin notice
+	 */
+	public function reviewNoticeDismiss(): void
+    {
+        $this->currentUser->validateUserNeededPermissions();
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+
+        $this->store->setDismissedReviewNotice(1);
+        wp_send_json_success();
+	}
+
+	/**
+	 * Dismiss the saved cards admin notice
+	 */
+	public function savedCardsDismiss(): void
+    {
+        $this->currentUser->validateUserNeededPermissions();
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+
+        $this->store->setDismissedSavedCardsNotice(1);
+		wp_send_json_success();
+	}
 }

@@ -292,13 +292,13 @@ class Store
      */
     public function getDismissedReviewNotice(): string
     {
-        return $this->options->get(self::DISMISSED_REVIEW_NOTICE, false);
+        return $this->options->get(self::DISMISSED_REVIEW_NOTICE, 0);
     }
 
     /**
      * @param string $dismissedReviewNotice
      */
-    public function setDismissedReviewNotice(string $dismissedReviewNotice): void
+    public function setDismissedReviewNotice(int $dismissedReviewNotice): void
     {
         $this->options->set(self::DISMISSED_REVIEW_NOTICE, $dismissedReviewNotice);
     }
@@ -308,13 +308,13 @@ class Store
      */
     public function getDismissedSavedCardsNotice(): string
     {
-        return $this->options->get(self::DISMISSED_SAVED_CARDS_NOTICE, false);
+        return $this->options->get(self::DISMISSED_SAVED_CARDS_NOTICE, 0);
     }
 
     /**
      * @param string $dismissedSavedCardsNotice
      */
-    public function setDismissedSavedCardsNotice(string $dismissedSavedCardsNotice): void
+    public function setDismissedSavedCardsNotice(int $dismissedSavedCardsNotice): void
     {
         $this->options->set(self::DISMISSED_SAVED_CARDS_NOTICE, $dismissedSavedCardsNotice);
     }

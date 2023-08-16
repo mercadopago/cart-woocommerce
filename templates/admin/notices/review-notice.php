@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 
 ?>
 
-<div id="message" class="notice mp-rating-notice">
+<div id="message" class="notice is-dismissible mp-rating-notice">
     <div class="mp-rating-frame">
         <div class="mp-left-rating">
             <div>
