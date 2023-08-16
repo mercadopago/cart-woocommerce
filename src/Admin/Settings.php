@@ -303,7 +303,7 @@ class Settings
                     'title_gateway'    => $gateway->title,
                     'description'      => $gateway->description,
                     'title'            => $gateway->title,
-                    'enabled'          => $gateway->settings['enabled'],
+                    'enabled'          => $gateway->settings['enabled']?: false,
                     'icon'             => $gateway->icon,
                     'link'             => admin_url('admin.php?page=wc-settings&tab=checkout&section=') . $gateway->id,
                     'badge_translator' => [
@@ -468,7 +468,7 @@ class Settings
                 }
             }
 
-            do_action($this->plugin::UPDATE_CREDENTIALS_ACTION);
+            $this->plugin->executeUpdateCredentialAction();
 
             wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
         }
@@ -510,7 +510,7 @@ class Settings
         $this->store->setIntegratorId($integratorId);
         $this->store->setDebugMode($debugMode);
 
-        do_action($this->plugin::UPDATE_STORE_INFO_ACTION);
+        $this->plugin->executeUpdateStoreInfoAction();
 
         wp_send_json_success($this->translations->updateStore['valid_configuration']);
     }
@@ -540,7 +540,7 @@ class Settings
 
         $this->store->setCheckboxCheckoutTestMode($checkoutTestMode);
 
-        do_action($this->plugin::UPDATE_TEST_MODE_ACTION);
+        $this->plugin->executeUpdateTestModeAction();
 
         if ($validateCheckoutTestMode) {
             wp_send_json_success('Mercado Pago\'s Payment Methods in Test Mode');

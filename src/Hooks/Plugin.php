@@ -97,4 +97,44 @@ class Plugin
     {
         do_action(self::ENABLE_CREDITS_ACTION);
     }
+
+    /**
+     * Execute plugin loaded event
+     *
+     * @return void
+     */
+    public function executePluginLoadedAction(): void
+    {
+        do_action(self::LOADED_PLUGIN_ACTION);
+    }
+
+    /**
+     * Execute credential update event
+     *
+     * @return void
+     */
+    public function executeUpdateCredentialAction(): void
+    {
+        do_action(self::UPDATE_CREDENTIALS_ACTION);
+    }
+
+    /**
+     * Execute store info event
+     *
+     * @return void
+     */
+    public function executeUpdateStoreInfoAction(): void
+    {
+        do_action(self::UPDATE_STORE_INFO_ACTION);
+    }
+
+    /**
+     * Execute test mode update event
+     *
+     * @return void
+     */
+    public function executeUpdateTestModeAction(): void
+    {
+        do_action(self::UPDATE_TEST_MODE_ACTION);
+    }
 }
