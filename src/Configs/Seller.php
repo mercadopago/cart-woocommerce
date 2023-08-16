@@ -273,7 +273,7 @@ class Seller
      */
     public function getCheckoutBasicPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_BASIC_PAYMENT_METHODS, '');
+        return $this->options->get(self::CHECKOUT_BASIC_PAYMENT_METHODS, []);
     }
 
     /**
