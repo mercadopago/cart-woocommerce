@@ -70,17 +70,19 @@ class BasicGateway extends AbstractGateway
         if($this->addMissingCredentialsNoticeAsFormField()){
             return;
         }
+        parent::init_form_fields();
 
         $successUrl = $this->mercadopago->options->getGatewayOption($this, 'success_url', '');
         $failureUrl = $this->mercadopago->options->getGatewayOption($this, 'failure_url', '');
         $pendingUrl = $this->mercadopago->options->getGatewayOption($this, 'pending_url', '');
 
-        $this->form_fields = [
+        $this->form_fields = array_merge($this->form_fields, [
             'header' => [
                 'type'        => 'mp_config_title',
                 'title'       => $this->adminTranslations['header_title'],
                 'description' => $this->adminTranslations['header_description'],
             ],
+            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
             'card_settings' => [
                 'type'  => 'mp_card_info',
                 'value' => [
@@ -199,7 +201,7 @@ class BasicGateway extends AbstractGateway
             ],
             'discount'   => $this->getDiscountField(),
             'commission' => $this->getCommissionField(),
-        ];
+        ]);
     }
 
     /**

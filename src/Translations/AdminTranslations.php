@@ -269,6 +269,9 @@ class AdminTranslations
             'card_info_title'           => __('Important! To sell you must enter your credentials.', 'woocommerce-mercadopago'),
             'card_info_subtitle'        => $cardInfoSubtitle,
             'card_info_button_text'     => __('Enter credentials', 'woocommerce-mercadopago'),
+            'card_homolog_title'        => __( 'Activate your credentials to be able to sell', 'woocommerce-mercadopago' ),
+            'card_homolog_subtitle'     => __( 'Credentials are codes that you must enter to enable sales. Go below on Activate Credentials. On the next screen, use again the Activate Credentials button and fill in the fields with the requested information.', 'woocommerce-mercadopago' ),
+            'card_homolog_button_text'  => __( 'Activate credentials', 'woocommerce-mercadopago' ),
         ];
     }
 

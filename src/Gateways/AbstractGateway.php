@@ -120,6 +120,52 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->form_fields = [];
     }
 
+    protected function addMissingCredentialsNoticeAsFormField(): bool
+    {
+        if (empty($this->mercadopago->seller->getCredentialsPublicKey()) || empty($this->mercadopago->seller->getCredentialsAccessToken())) {
+            $this->form_fields = [
+                'card_info_validate' => [
+                    'type'  => 'mp_card_info',
+                    'value' => [
+                        'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
+                        'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
+                        'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
+                        'button_url'  => $this->links['admin_settings_page'],
+                        'icon'        => 'mp-icon-badge-warning',
+                        'color_card'  => 'mp-alert-color-error',
+                        'size_card'   => 'mp-card-body-size',
+                        'target'      => '_self',
+                    ]
+                ]
+            ];
+            return true;
+        }
+        return false;
+    }
+
+    protected function getHomologValidateNoticeOrHidden(): array
+    {
+        if ($this->mercadopago->seller->getHomologValidate()) {
+            return [
+                'type'  => 'title',
+                'value' => '',
+            ];
+        }
+        return [
+            'type'  => 'mp_card_info',
+            'value' => [
+                'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_homolog_title'],
+                'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_homolog_subtitle'],
+                'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_homolog_button_text'],
+                'button_url'  => $this->links['admin_settings_page'],
+                'icon'        => 'mp-icon-badge-warning',
+                'color_card'  => 'mp-alert-color-alert',
+                'size_card'   => 'mp-card-body-size-homolog',
+                'target'      => '_blank',
+            ]
+        ];
+    }
+
     /**
      * Added gateway scripts
      *

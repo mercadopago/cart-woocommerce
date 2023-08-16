@@ -81,6 +81,7 @@ class PixGateway extends AbstractGateway
         if($this->addMissingCredentialsNoticeAsFormField()){
             return;
         }
+        parent::init_form_fields();
 
         if (!empty($this->mercadopago->store->getCheckoutCountry()) &&
             !empty($this->mercadopago->seller->getCredentialsPublicKey()) &&
@@ -89,11 +90,11 @@ class PixGateway extends AbstractGateway
             $paymentMethodPix = $this->mercadopago->seller->getCheckoutPixPaymentMethods();
 
             if (empty($paymentMethodPix)) {
-                $this->form_fields = $this->sellerWithoutPixFields();
+                $this->form_fields = array_merge($this->form_fields, $this->sellerWithoutPixFields());
                 return;
             }
 
-            $this->form_fields = $this->sellerWithPixFields();
+            $this->form_fields = array_merge($this->form_fields, $this->sellerWithPixFields());
         }
     }
 
@@ -224,6 +225,7 @@ class PixGateway extends AbstractGateway
                 'title'       => $this->adminTranslations['header_title'],
                 'description' => $this->adminTranslations['header_description'],
             ],
+            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
             'card_settings'  => [
                 'type'  => 'mp_card_info',
                 'value' => [
