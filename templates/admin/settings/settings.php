@@ -436,7 +436,7 @@ if (!defined('ABSPATH')) {
 
                     <div class="mp-settings-mode-container">
                         <div class="mp-settings-mode-spacing">
-                            <input type="radio" id="mp-settings-testmode-test" class="mp-settings-radio-button" name="mp-test-prod" value="yes" <?= $testMode ? 'checked' : '' ?> />
+                            <input type="radio" id="mp-settings-testmode-test" class="mp-settings-radio-button" name="mp-test-prod" value="yes" <?= checked($testMode) ?> />
                         </div>
                         <label for="mp-settings-testmode-test">
                             <span class="mp-settings-subtitle-font-size mp-settings-font-color">
@@ -454,7 +454,7 @@ if (!defined('ABSPATH')) {
 
                     <div class="mp-settings-mode-container">
                         <div class="mp-settings-mode-spacing">
-                            <input type="radio" id="mp-settings-testmode-prod" class="mp-settings-radio-button" name="mp-test-prod" value="no" <?= $testMode ? '' : 'checked' ?> />
+                            <input type="radio" id="mp-settings-testmode-prod" class="mp-settings-radio-button" name="mp-test-prod" value="no" <?= checked(!$testMode) ?> />
                         </div>
                         <label for="mp-settings-testmode-prod">
                             <span class="mp-settings-subtitle-font-size mp-settings-font-color">

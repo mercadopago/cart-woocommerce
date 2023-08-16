@@ -340,7 +340,7 @@ class Store
      */
     public function getCheckboxCheckoutTestMode(): string
     {
-        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, 'no');
+        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, 'yes');
     }
 
     /**
