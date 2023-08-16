@@ -89,19 +89,22 @@ class Plugin
 
     /**
      * Register to credits activate event
-     *
      * @param mixed $callback
      *
      * @return void
      */
     public function registerEnableCreditsAction($callback)
     {
-        update_option(self::CREDITS_ACTIVATION_NEEDED, 'yes');
-        update_option(self::ALREADY_ENABLE_BY_DEFAULT, 'no');
         add_action(self::ENABLE_CREDITS_ACTION, $callback);
     }
 
-    public function executeCreditsAction(): void {
+    /**
+     * Execute credits activate event
+     *
+     * @return void
+     */
+    public function executeCreditsAction(): void
+    {
         do_action(self::ENABLE_CREDITS_ACTION);
     }
 }
