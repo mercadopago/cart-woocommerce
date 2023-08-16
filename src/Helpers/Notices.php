@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
@@ -27,7 +28,7 @@ class Notices
     private $url;
 
     /**
-     * @var Links
+     * @var array
      */
     private $links;
 
@@ -37,6 +38,11 @@ class Notices
     private $currentUser;
 
     /**
+     * @var Store
+     */
+    private $store;
+
+    /**
      * Notices constructor
      */
     public function __construct(
@@ -44,15 +50,18 @@ class Notices
         AdminTranslations $translations,
         Url $url,
         Links $links,
-        CurrentUser $currentUser
+        CurrentUser $currentUser,
+        Store $store
     ) {
         $this->scripts      = $scripts;
         $this->translations = $translations;
         $this->url          = $url;
-        $this->links        = $links;
+        $this->links        = $links->getLinks();
         $this->currentUser  = $currentUser;
+        $this->store        = $store;
 
         $this->loadAdminNoticeCss();
+        $this->insertDismissibleNotices();
     }
 
     /**
@@ -66,6 +75,52 @@ class Notices
             $this->scripts->registerAdminStyle(
                 'woocommerce-mercadopago-admin-notice',
                 $this->url->getPluginFileUrl('assets/css/admin/mp-admin-notice', '.css')
+            );
+        }
+    }
+
+    /**
+     * Insert admin dismissible notices
+     *
+     * @return void
+     */
+    public function insertDismissibleNotices(): void
+    {
+        $pagesToShow = ['dashboard', 'plugins', 'woocommerce_page_wc-settings'];
+        if (
+            !is_admin()
+            || !$this->url->validateSection('mercado-pago')
+        ) {
+            return;
+        }
+
+        if (!$this->store->getDismissedReviewNotice()) {
+            add_action(
+                'admin_notices',
+                function () {
+                    $minilogo   = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
+                    $title      = $this->translations->notices['dismissed_review_title'];
+                    $subtitle   = $this->translations->notices['dismissed_review_subtitle'];
+                    $buttonText = $this->translations->notices['dismissed_review_button'];
+                    $buttonLink = $this->links['wordpress_review_link'];
+
+                    include dirname(__FILE__) . '/../../templates/admin/notices/review-notice.php';
+                }
+            );
+        }
+
+        if (!$this->store->getDismissedSavedCardsNotice()) {
+            add_action(
+                'admin_notices',
+                function () {
+                    $cardIcon   = $this->url->getPluginFileUrl('assets/images/icons/icon-mp-card', '.png', true);
+                    $title      = $this->translations->notices['saved_cards_title'];
+                    $subtitle   = $this->translations->notices['saved_cards_subtitle'];
+                    $buttonText = $this->translations->notices['saved_cards_button'];
+                    $buttonLink = $this->links['admin_settings_page'];
+
+                    include dirname(__FILE__) . '/../../templates/admin/notices/saved-cards-notice.php';
+                }
             );
         }
     }
@@ -180,7 +235,7 @@ class Notices
                 $miniLogo = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $message  = $this->translations->notices['miss_pix_text'];
                 $textLink = $this->translations->notices['miss_pix_link'];
-                $urlLink  = $this->links->getLinks()['mercadopago_pix_config'];
+                $urlLink  = $this->links['mercadopago_pix_config'];
 
                 include dirname(__FILE__) . '/../../templates/admin/notices/miss-pix-notice.php';
             }

@@ -50,7 +50,8 @@ final class Links
             $this->getMercadoPagoLinks($countryConfig),
             $this->getCreditsLinks($countryConfig),
             $this->getAdminLinks(),
-            $this->getStoreLinks()
+            $this->getStoreLinks(),
+            $this->getWordpressLinks(),
         );
     }
 
@@ -151,5 +152,17 @@ final class Links
         ];
 
         return array_key_exists($siteId, $country_links) ? $country_links[$siteId] : $country_links['MLA'];
+    }
+
+    /**
+     * Get wordpress links
+     *
+     * @return array
+     */
+    private function getWordpressLinks(): array
+    {
+        return [
+            'wordpress_review_link' => 'https://wordpress.org/support/plugin/woocommerce-mercadopago/reviews/?filter=5#new-post',
+        ];
     }
 }

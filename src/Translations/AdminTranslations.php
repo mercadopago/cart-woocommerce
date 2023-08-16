@@ -145,15 +145,21 @@ class AdminTranslations
         );
 
         $this->notices = [
-            'miss_woocommerce'      => $missWoocommerce,
-            'php_wrong_version'     => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
-            'missing_curl'          => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
-            'missing_gd_extensions' => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago'),
-            'activate_woocommerce'  => __('Activate WooCommerce', 'woocommerce-mercadopago'),
-            'install_woocommerce'   => __('Install WooCommerce', 'woocommerce-mercadopago'),
-            'see_woocommerce'       => __('See WooCommerce', 'woocommerce-mercadopago'),
-            'miss_pix_text'         => __('Please note that to receive payments via Pix at our checkout, you must have a Pix key registered in your Mercado Pago account.', 'woocommerce-mercadopago'),
-            'miss_pix_link'         => __('Register your Pix key at Mercado Pago.', 'woocommerce-mercadopago'),
+            'miss_woocommerce'          => $missWoocommerce,
+            'php_wrong_version'         => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
+            'missing_curl'              => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
+            'missing_gd_extensions'     => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago'),
+            'activate_woocommerce'      => __('Activate WooCommerce', 'woocommerce-mercadopago'),
+            'install_woocommerce'       => __('Install WooCommerce', 'woocommerce-mercadopago'),
+            'see_woocommerce'           => __('See WooCommerce', 'woocommerce-mercadopago'),
+            'miss_pix_text'             => __('Please note that to receive payments via Pix at our checkout, you must have a Pix key registered in your Mercado Pago account.', 'woocommerce-mercadopago'),
+            'miss_pix_link'             => __('Register your Pix key at Mercado Pago.', 'woocommerce-mercadopago'),
+            'dismissed_review_title'    => __('Do you have a minute to share your experience with our plugin?', 'woocommerce-mercadopago'),
+            'dismissed_review_subtitle' => __('Your opinion is very important so that we can offer you the best possible payment solution and continue to improve.', 'woocommerce-mercadopago'),
+            'dismissed_review_button'   => __('Rate the plugin', 'woocommerce-mercadopago'),
+            'saved_cards_title'         => __('Enable payments via Mercado Pago account'),
+            'saved_cards_subtitle'      => __('When you enable this function, your customers pay faster using their Mercado Pago accounts.</br>The approval rate of these payments in your store can be 25% higher compared to other payment methods.', 'woocommerce-mercadopago'),
+            'saved_cards_button'        => __('Activate', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -945,14 +951,6 @@ class AdminTranslations
         );
 
         $this->currency = [
-            'currency_enabled' => [
-                'start' => __('Now we convert your currency from', 'woocommerce-mercadopago'),
-                'final' => __('to', 'woocommerce-mercadopago')
-            ],
-            'currency_disabled' => [
-                'start' => __('We no longer convert your currency from', 'woocommerce-mercadopago'),
-                'final' => __('to', 'woocommerce-mercadopago')
-            ],
             'currency_conversion' => $currencyConversion,
         ];
     }

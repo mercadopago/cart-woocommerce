@@ -59,6 +59,16 @@ class Store
     /**
      * @const
      */
+    private const DISMISSED_REVIEW_NOTICE = '_mp_dismiss_review';
+
+    /**
+     * @const
+     */
+    private const DISMISSED_SAVED_CARDS_NOTICE = '_mp_dismiss_saved_cards_notice';
+
+    /**
+     * @const
+     */
     private const CHECKBOX_CHECKOUT_PRODUCTION_MODE = 'checkbox_checkout_production_mode';
 
     /**
@@ -275,6 +285,38 @@ class Store
     public function setDebugMode(string $debugMode): void
     {
         $this->options->set(self::DEBUG_MODE, $debugMode);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDismissedReviewNotice(): string
+    {
+        return $this->options->get(self::DISMISSED_REVIEW_NOTICE, false);
+    }
+
+    /**
+     * @param string $dismissedReviewNotice
+     */
+    public function setDismissedReviewNotice(string $dismissedReviewNotice): void
+    {
+        $this->options->set(self::DISMISSED_REVIEW_NOTICE, $dismissedReviewNotice);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDismissedSavedCardsNotice(): string
+    {
+        return $this->options->get(self::DISMISSED_SAVED_CARDS_NOTICE, false);
+    }
+
+    /**
+     * @param string $dismissedSavedCardsNotice
+     */
+    public function setDismissedSavedCardsNotice(string $dismissedSavedCardsNotice): void
+    {
+        $this->options->set(self::DISMISSED_SAVED_CARDS_NOTICE, $dismissedSavedCardsNotice);
     }
 
     /**
