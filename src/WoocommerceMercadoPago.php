@@ -375,7 +375,7 @@ class WoocommerceMercadoPago
         });
 
         $this->plugin->executeCreditsAction();
-        do_action($this->plugin::LOADED_PLUGIN_ACTION);
+        $this->plugin->executePluginLoadedAction();
     }
 
     /**
