@@ -39,7 +39,7 @@ class CustomGateway extends AbstractGateway
         $this->storeTranslations = $this->mercadopago->storeTranslations->customCheckout;
 
         $this->id    = self::ID;
-        $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-gray-card');
+        $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-blue-card');
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
         $this->init_settings();
