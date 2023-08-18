@@ -216,10 +216,11 @@ class CreditsGateway extends AbstractGateway
         $this->transaction  = new CreditsTransaction($this, $order);
 
         $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
+        $preference        = $this->transaction->createPreference();
 
         return [
             'result'   => 'success',
-            'redirect' => $this->transaction->createPreference(),
+            'redirect' => $this->mercadopago->store->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
         ];
     }
 
