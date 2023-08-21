@@ -39,7 +39,7 @@ class CustomGateway extends AbstractGateway
         $this->storeTranslations = $this->mercadopago->storeTranslations->customCheckout;
 
         $this->id    = self::ID;
-        $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-gray-card');
+        $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-blue-card');
         $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
         $this->init_settings();
@@ -71,12 +71,18 @@ class CustomGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
-        $this->form_fields = [
+        if ($this->addMissingCredentialsNoticeAsFormField()) {
+            return;
+        }
+        parent::init_form_fields();
+
+        $this->form_fields = array_merge($this->form_fields, [
             'header' => [
                 'type'        => 'mp_config_title',
                 'title'       => $this->adminTranslations['header_title'],
                 'description' => $this->adminTranslations['gateway_description'],
             ],
+            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
             'card_settings' => [
                 'type'  => 'mp_card_info',
                 'value' => [
@@ -168,7 +174,7 @@ class CustomGateway extends AbstractGateway
             ],
             'discount'   => $this->getDiscountField(),
             'commission' => $this->getCommissionField(),
-        ];
+        ]);
     }
 
     /**
@@ -337,7 +343,8 @@ class CustomGateway extends AbstractGateway
             default:
                 $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
 
-                if (!empty($checkout['token']) &&
+                if (
+                    !empty($checkout['token']) &&
                     !empty($checkout['amount']) &&
                     !empty($checkout['paymentMethodId']) &&
                     !empty($checkout['installments']) && $checkout['installments'] !== -1
@@ -533,7 +540,7 @@ class CustomGateway extends AbstractGateway
 
                 case 'pending':
                 case 'in_process':
-                   $this->mercadopago->woocommerce->cart->empty_cart();
+                    $this->mercadopago->woocommerce->cart->empty_cart();
 
                     $checkoutType = $checkout['checkout_type'];
                     $statusDetail = $response['status_detail'];

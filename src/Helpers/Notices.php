@@ -2,6 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
@@ -27,7 +30,7 @@ class Notices
     private $url;
 
     /**
-     * @var Links
+     * @var array
      */
     private $links;
 
@@ -37,6 +40,26 @@ class Notices
     private $currentUser;
 
     /**
+     * @var Store
+     */
+    private $store;
+
+    /**
+     * @var Nonce
+     */
+    private $nonce;
+
+    /**
+     * @var Endpoints
+     */
+    private $endpoints;
+
+    /**
+     * @const
+     */
+    const NONCE_ID = 'mp_notices_dismiss';
+
+    /**
      * Notices constructor
      */
     public function __construct(
@@ -44,28 +67,101 @@ class Notices
         AdminTranslations $translations,
         Url $url,
         Links $links,
-        CurrentUser $currentUser
+        CurrentUser $currentUser,
+        Store $store,
+        Nonce $nonce,
+        Endpoints $endpoints
     ) {
         $this->scripts      = $scripts;
         $this->translations = $translations;
         $this->url          = $url;
-        $this->links        = $links;
+        $this->links        = $links->getLinks();
         $this->currentUser  = $currentUser;
+        $this->store        = $store;
+        $this->nonce        = $nonce;
+        $this->endpoints    = $endpoints;
 
-        $this->loadAdminNoticeCss();
+        $this->loadAdminNoticesCss();
+        $this->loadAdminNoticesJs();
+        $this->insertDismissibleNotices();
+        $this->endpoints->registerAjaxEndpoint('mp_review_notice_dismiss', [$this, 'reviewNoticeDismiss']);
+        $this->endpoints->registerAjaxEndpoint('mp_saved_cards_notice_dismiss', [$this, 'savedCardsDismiss']);
     }
 
     /**
-     * Load admin notice css
+     * Load admin notices css
      *
      * @return void
      */
-    public function loadAdminNoticeCss(): void
+    public function loadAdminNoticesCss(): void
     {
         if (is_admin()) {
             $this->scripts->registerAdminStyle(
-                'woocommerce-mercadopago-admin-notice',
-                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-notice', '.css')
+                'woocommerce-mercadopago-admin-notice-css',
+                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-notices', '.css')
+            );
+        }
+    }
+
+    /**
+     * Load admin notices js
+     *
+     * @return void
+     */
+    public function loadAdminNoticesJs(): void
+    {
+        if (is_admin()) {
+            $this->scripts->registerAdminScript(
+                'woocommerce_mercadopago_admin_notice_js',
+                $this->url->getPluginFileUrl('assets/js/admin/mp-admin-notices', '.js'),
+                [
+                    'nonce' => $this->nonce->generateNonce(self::NONCE_ID)
+                ]
+            );
+        }
+    }
+
+    /**
+     * Insert admin dismissible notices
+     *
+     * @return void
+     */
+    public function insertDismissibleNotices(): void
+    {
+        if (
+            !is_admin()
+            || !$this->url->validateSection('mercado-pago')
+        ) {
+            return;
+        }
+
+        if (!$this->store->getDismissedReviewNotice()) {
+            add_action(
+                'admin_notices',
+                function () {
+                    $minilogo   = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
+                    $title      = $this->translations->notices['dismissed_review_title'];
+                    $subtitle   = $this->translations->notices['dismissed_review_subtitle'];
+                    $buttonText = $this->translations->notices['dismissed_review_button'];
+                    $buttonLink = $this->links['wordpress_review_link'];
+
+                    include dirname(__FILE__) . '/../../templates/admin/notices/review-notice.php';
+                }
+            );
+        }
+
+        if (!$this->store->getDismissedSavedCardsNotice()) {
+            add_action(
+                'admin_notices',
+                function () {
+                    $cardIcon   = $this->url->getPluginFileUrl('assets/images/icons/icon-mp-card', '.png', true);
+                    $title      = $this->translations->notices['saved_cards_title'];
+                    $subtitle   = $this->translations->notices['saved_cards_subtitle'];
+                    $buttonText = $this->translations->notices['saved_cards_button'];
+                    $buttonLink = $this->links['admin_settings_page'];
+
+                    include dirname(__FILE__) . '/../../templates/admin/notices/saved-cards-notice.php';
+                }
             );
         }
     }
@@ -180,7 +276,7 @@ class Notices
                 $miniLogo = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
                 $message  = $this->translations->notices['miss_pix_text'];
                 $textLink = $this->translations->notices['miss_pix_link'];
-                $urlLink  = $this->links->getLinks()['mercadopago_pix_config'];
+                $urlLink  = $this->links['mercadopago_pix_config'];
 
                 include dirname(__FILE__) . '/../../templates/admin/notices/miss-pix-notice.php';
             }
@@ -280,4 +376,28 @@ class Notices
     {
         wc_add_notice($message, $type, $data);
     }
+
+	/**
+	 * Dismiss the review admin notice
+	 */
+	public function reviewNoticeDismiss(): void
+    {
+        $this->currentUser->validateUserNeededPermissions();
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+
+        $this->store->setDismissedReviewNotice(1);
+        wp_send_json_success();
+	}
+
+	/**
+	 * Dismiss the saved cards admin notice
+	 */
+	public function savedCardsDismiss(): void
+    {
+        $this->currentUser->validateUserNeededPermissions();
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+
+        $this->store->setDismissedSavedCardsNotice(1);
+		wp_send_json_success();
+	}
 }

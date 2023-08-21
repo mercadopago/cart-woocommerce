@@ -65,12 +65,18 @@ class CreditsGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
-        $this->form_fields = [
+        if($this->addMissingCredentialsNoticeAsFormField()){
+            return;
+        }
+        parent::init_form_fields();
+
+        $this->form_fields = array_merge($this->form_fields, [
             'header' => [
                 'type'        => 'mp_config_title',
                 'title'       => $this->adminTranslations['header_title'],
                 'description' => $this->adminTranslations['header_description'],
             ],
+            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
             'card_settings' => [
                 'type'  => 'mp_card_info',
                 'value' => [
@@ -136,7 +142,7 @@ class CreditsGateway extends AbstractGateway
             ],
             'discount'   => $this->getDiscountField(),
             'commission' => $this->getCommissionField(),
-        ];
+        ]);
     }
 
     /**
@@ -421,4 +427,14 @@ class CreditsGateway extends AbstractGateway
     {
         parent::registerCommissionAndDiscount($this, $orderId);
     }
+
+    /**
+	 * Enable Credits by default
+	 *
+	 */
+	public function activeByDefault() {
+
+        $this->mercadopago->options->setGatewayOption($this, 'enabled', 'yes');
+        $this->mercadopago->options->setGatewayOption($this, 'credits_banner', 'yes');
+	}
 }
