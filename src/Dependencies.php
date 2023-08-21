@@ -274,17 +274,17 @@ class Dependencies
         $this->scripts           = $this->setScripts();
         $this->adminTranslations = $this->setAdminTranslations();
         $this->storeTranslations = $this->setStoreTranslations();
-        $this->order             = $this->setOrder();
         $this->gateway           = $this->setGateway();
         $this->logs              = $this->setLogs();
         $this->nonce             = $this->setNonce();
         $this->orderStatus       = $this->setOrderStatus();
         $this->currentUser       = $this->setCurrentUser();
+        $this->order             = $this->setOrder();
         $this->notices           = $this->setNotices();
         $this->metadataConfig    = $this->setMetadataConfig();
         $this->currency          = $this->setCurrency();
         $this->settings          = $this->setSettings();
-        $this->creditsEnabled    = $this-> setCreditsEnabled();
+        $this->creditsEnabled    = $this->setCreditsEnabled();
     }
 
     /**
@@ -433,7 +433,21 @@ class Dependencies
      */
     private function setOrder(): Order
     {
-        return new Order($this->template, $this->orderMetadata, $this->storeTranslations, $this->store);
+        return new Order(
+            $this->template,
+            $this->orderMetadata,
+            $this->orderStatus,
+            $this->adminTranslations,
+            $this->storeTranslations,
+            $this->store,
+            $this->seller,
+            $this->scripts,
+            $this->url,
+            $this->nonce,
+            $this->endpoints,
+            $this->currentUser,
+            $this->requester
+        );
     }
 
     /**
@@ -441,7 +455,16 @@ class Dependencies
      */
     private function setNotices(): Notices
     {
-        return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links, $this->currentUser, $this->store, $this->nonce, $this->endpoints);
+        return new Notices(
+            $this->scripts,
+            $this->adminTranslations,
+            $this->url,
+            $this->links,
+            $this->currentUser,
+            $this->store,
+            $this->nonce,
+            $this->endpoints
+        );
     }
 
     /**
@@ -491,7 +514,7 @@ class Dependencies
         );
     }
 
-      /**
+    /**
      * @return CreditsEnabled
      */
     private function setCreditsEnabled(): CreditsEnabled

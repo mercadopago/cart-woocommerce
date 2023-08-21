@@ -103,6 +103,11 @@ class AdminTranslations
     /**
      * @var array
      */
+    public $statusSync = [];
+
+    /**
+     * @var array
+     */
     private $links;
 
     /**
@@ -130,6 +135,7 @@ class AdminTranslations
         $this->setValidateCredentialsTranslations();
         $this->setUpdateStoreTranslations();
         $this->setCurrencyTranslations();
+        $this->setStatusSyncTranslations();
     }
 
     /**
@@ -952,6 +958,21 @@ class AdminTranslations
 
         $this->currency = [
             'currency_conversion' => $currencyConversion,
+        ];
+    }
+
+    private function setStatusSyncTranslations(): void
+    {
+        $this->statusSync = [
+            'metabox_title'            => __('Payment status on Mercado Pago', 'woocommerce-mercadopago'),
+            'link_description_success' => __('View purchase details at Mercado Pago', 'woocommerce-mercadopago'),
+            'sync_button_success'      => __('Sync order status', 'woocommerce-mercadopago'),
+            'link_description_pending' => __('View purchase details at Mercado Pago', 'woocommerce-mercadopago'),
+            'sync_button_pending'      => __('Sync order status', 'woocommerce-mercadopago'),
+            'link_description_failure' => __('Check the reasons why the purchase was declined.', 'woocommerce-mercadopago' ),
+            'sync_button_failure'      => __('Sync order status', 'woocommerce-mercadopago'),
+            'response_success'         => __('Order update successfully. This page will be reloaded...', 'woocommerce-mercadopago'),
+            'response_error'           => __('Unable to update order:', 'woocommerce-mercadopago'),
         ];
     }
 }

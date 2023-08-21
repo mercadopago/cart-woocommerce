@@ -391,7 +391,7 @@ final class OrderStatus
 				$payments[] = $payment['id'];
 			}
 
-			$paymentId = implode( ',', $payments );
+			$paymentId = implode(',', $payments);
 		}
 
 		$order->add_order_note("Mercado Pago: {$this->translations['validate_order_1']} $paymentId {$this->translations['validate_order_1']} $status");
