@@ -30,6 +30,8 @@ function mercadoPagoFormHandler() {
     });
   }
 
+  setMercadoPagoSessionId();
+
   if (mercado_pago_submit) {
     return true;
   }
@@ -133,6 +135,7 @@ function initCardForm() {
       },
       callbacks: {
         onReady: () => {
+          removeLoadSpinner();
           resolve();
         },
         onFormMounted: function (error) {
@@ -264,6 +267,18 @@ function getAmount() {
   return String(amount * currencyRatio);
 }
 
+/**
+ * Get and set MP Armor to improve payment approval
+ * @return {void}
+ */
+function setMercadoPagoSessionId() {
+  try {
+    document.querySelector('#mpCardSessionId').value = MP_DEVICE_SESSION_ID;
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
 function removeBlockOverlay() {
   if (jQuery("form#order_review").length > 0) {
     jQuery(".blockOverlay").css("display", "none");
@@ -274,11 +289,13 @@ function cardFormLoad() {
   const checkoutCustomPaymentMethodElement = document.getElementById("payment_method_woo-mercado-pago-custom");
 
   if (checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked) {
+    createLoadSpinner();
     setTimeout(() => {
       if (!cardFormMounted) {
         handleCardFormLoad();
       }
-    }, 1000);
+
+    }, 2500);
   } else {
     if (cardFormMounted) {
       cardForm.unmount();
@@ -331,12 +348,7 @@ function sendMetric(name, message) {
   navigator.sendBeacon(url, JSON.stringify(payload));
 }
 
-jQuery("form.checkout").on(
-  "checkout_place_order_woo-mercado-pago-custom",
-  function () {
-    return mercadoPagoFormHandler();
-  }
-);
+jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-custom", mercadoPagoFormHandler);
 
 jQuery("body").on("payment_method_selected", function () {
   if (!triggeredPaymentMethodSelectedEvent) {
@@ -359,4 +371,14 @@ jQuery(document.body).on("checkout_error", () => {
 
 if (!triggeredPaymentMethodSelectedEvent) {
   jQuery("body").trigger("payment_method_selected");
+}
+
+function createLoadSpinner() {
+    document.querySelector('.mp-checkout-custom-container').style.display = 'none';
+    document.querySelector('.mp-checkout-custom-load').style.display = 'flex';
+}
+
+function removeLoadSpinner() {
+    document.querySelector('.mp-checkout-custom-container').style.display = 'block';
+    document.querySelector('.mp-checkout-custom-load').style.display= 'none';
 }
