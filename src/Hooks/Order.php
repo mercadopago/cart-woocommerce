@@ -176,6 +176,7 @@ class Order
         switch ($paymentStatusType) {
             case 'success':
                 return [
+                    'card_title'        => $this->adminTranslations->statusSync['card_title'],
                     'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-success', '.png', true),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
@@ -187,6 +188,7 @@ class Order
             
             case 'pending':
                 return [
+                    'card_title'        => $this->adminTranslations->statusSync['card_title'],
                     'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-alert', '.png', true),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
@@ -200,6 +202,7 @@ class Order
             case 'refunded':
             case 'charged_back':
                 return [
+                    'card_title'        => $this->adminTranslations->statusSync['card_title'],
                     'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-warning', '.png', true),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],

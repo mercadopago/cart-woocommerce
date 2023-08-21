@@ -965,6 +965,7 @@ class AdminTranslations
     {
         $this->statusSync = [
             'metabox_title'            => __('Payment status on Mercado Pago', 'woocommerce-mercadopago'),
+            'card_title'               => __('This is the payment status of your Mercado Pago Activities. To check the order status, please refer to Order details.', 'woocommerce-mercadopago'),
             'link_description_success' => __('View purchase details at Mercado Pago', 'woocommerce-mercadopago'),
             'sync_button_success'      => __('Sync order status', 'woocommerce-mercadopago'),
             'link_description_pending' => __('View purchase details at Mercado Pago', 'woocommerce-mercadopago'),
