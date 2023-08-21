@@ -58,6 +58,8 @@ class BasicGateway extends AbstractGateway
         $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
 
         $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
+
+        $this->mercadopago->gateway->registerThankyouPage($this->id, [$this, 'saveOrderPaymentsId']);
     }
 
     /**
