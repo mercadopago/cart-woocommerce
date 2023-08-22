@@ -269,10 +269,12 @@ class BasicGateway extends AbstractGateway
             case 'iframe':
             case 'redirect':
                 $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
+                $preference        = $this->transaction->createPreference();
+
                 return [
-                    'result'   => 'success',
-                    'redirect' => $this->transaction->createPreference(),
-                ];
+                'result'   => 'success',
+                'redirect' => $this->mercadopago->store->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
+                    ];
 
             case 'modal':
                 $this->mercadopago->logs->file->info('Preparing to render Checkout Pro view.', self::LOG_SOURCE);

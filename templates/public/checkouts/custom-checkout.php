@@ -49,7 +49,9 @@ if (!defined('ABSPATH')) {
 }
 
 ?>
-
+<div class="mp-checkout-custom-load">
+    <div class="spinner"></div>
+</div>
 <div class='mp-checkout-container'>
     <div class='mp-checkout-custom-container'>
         <?php if ($test_mode): ?>
@@ -290,6 +292,7 @@ if (!defined('ABSPATH')) {
     <input type="hidden" id="cardExpirationYear" data-checkout="cardExpirationYear"/>
     <input type="hidden" id="cardTokenId" name="mercadopago_custom[token]"/>
     <input type="hidden" id="cardInstallments" name="mercadopago_custom[installments]"/>
+    <input type="hidden" id="mpCardSessionId" name="mercadopago_custom[session_id]" />
 </div>
 
 <script type="text/javascript">
@@ -299,8 +302,8 @@ if (!defined('ABSPATH')) {
 		jQuery('form.checkout, form#order_review').submit();
 	}
 
-    const availablePayment = document.getElementsByClassName('mp-checkout-custom-available-payments')[0];
-    const collapsible = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-header')[0];
+    var availablePayment = document.getElementsByClassName('mp-checkout-custom-available-payments')[0];
+    var collapsible = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-header')[0];
 
     collapsible.addEventListener("click", function() {
         const icon = collapsible.getElementsByClassName('mp-checkout-custom-available-payments-collapsible')[0];

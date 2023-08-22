@@ -189,6 +189,12 @@ class CustomGateway extends AbstractGateway
         parent::payment_scripts($gatewaySection);
 
         if ($this->canCheckoutLoadScriptsAndStyles()) {
+
+            $this->mercadopago->scripts->registerCheckoutScript(
+                'wc_mercadopago_security_session',
+                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/session', '.js')
+            );
+
             $this->mercadopago->scripts->registerCheckoutScript(
                 'wc_mercadopago_sdk',
                 'https://sdk.mercadopago.com/js/v2'
