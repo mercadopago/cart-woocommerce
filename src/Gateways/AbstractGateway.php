@@ -276,7 +276,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function webhook(): void
     {
-        $data = $_GET;
+        $data = Form::sanitizeFromData($_GET);
 
         $notificationFactory = new NotificationFactory();
         $notificationHandler = $notificationFactory->createNotificationHandler($this, $data);

@@ -171,7 +171,7 @@ class Order
         $paymentInfo = $this->getLastPaymentInfo($order);
 
         $paymentStatusType = PaymentStatus::getStatusType($paymentInfo['status']);
-        $cardContent       = PaymentStatus::getCardDescription($paymentInfo['status_detail'], $paymentInfo['payment_tye'] === 'credit_card');
+        $cardContent       = PaymentStatus::getCardDescription($this->adminTranslations->statusSync, $paymentInfo['status_detail'], $paymentInfo['payment_tye'] === 'credit_card');
 
         switch ($paymentStatusType) {
             case 'success':
