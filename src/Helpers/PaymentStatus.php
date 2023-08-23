@@ -42,8 +42,11 @@ final class PaymentStatus
 	 * @return array
 	 */
 	public static function getCardDescription($translationsArray, $paymentStatusDetail, $isCreditCard) {
-		$alertTitle  = array_key_exists($paymentStatusDetail,$translationsArray) ? $translationsArray[$paymentStatusDetail] : $translationsArray['generic'];
-		$description = array_key_exists($paymentStatusDetail,$translationsArray) ? $translationsArray[$paymentStatusDetail] . ($isCreditCard ?: '_cc') : $translationsArray['generic'];
+		$alertTitleTranslationKey = 'alert_title_' . $paymentStatusDetail;
+		$descriptionTranslationKey = 'description_' . $paymentStatusDetail . ($isCreditCard ? '_cc' : '');
+
+		$alertTitle  = array_key_exists($alertTitleTranslationKey, $translationsArray) ? $translationsArray[$alertTitleTranslationKey] : $translationsArray['generic'];
+		$description = array_key_exists($descriptionTranslationKey, $translationsArray) ? $translationsArray[$descriptionTranslationKey] : $translationsArray['generic'];
 
 		return [
 			'alert_title' => $alertTitle,
