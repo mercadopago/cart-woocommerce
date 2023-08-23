@@ -24,6 +24,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     /**
      * @const
      */
+    public const WEBHOOK_API_NAME = '';
+
+    /**
+     * @const
+     */
     public const LOG_SOURCE = '';
 
     /**
