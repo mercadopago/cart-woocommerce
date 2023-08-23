@@ -294,11 +294,11 @@ if (!defined('ABSPATH')) {
                         <select name="<?= $storeTranslations['placeholder_category_store'] ?>" class="mp-settings-select" id="mp-store-categories">
                             <?php
                             foreach ($categories as $category) {
-                                echo '
+                                echo wp_kses_post('
                                         <option value="' . $category['id'] . '"' . ($storeCategory === $category['id'] ? 'selected' : '') . '>
                                             ' . $category['description'] . '
                                         </option>
-                                    ';
+                                    ');
                             }
                             ?>
                         </select>
@@ -329,7 +329,7 @@ if (!defined('ABSPATH')) {
                                     </label>
                                     <input type="text" id="mp-store-url-ipn" class="mp-settings-input" value="<?= $customDomain ?>" placeholder="<?= $storeTranslations['placeholder_url'] ?>" />
                                     <div>
-                                        <input type="checkbox" id="mp-store-url-ipn-options" <?php checked($customDomainOptions, 'yes'); ?> />
+                                        <input type="checkbox" id="mp-store-url-ipn-options" <?= checked($customDomainOptions, 'yes'); ?> />
                                         <label for="mp-store-url-ipn-options" class="mp-settings-checkbox-options"><?php echo esc_html($storeTranslations['options_url']); ?></label>
                                     </div>
                                     <span class="mp-settings-helper"><?= $storeTranslations['helper_url'] ?></span>
@@ -349,7 +349,7 @@ if (!defined('ABSPATH')) {
                             <div class="mp-container">
                                 <div>
                                     <label class="mp-settings-switch">
-                                        <input id="mp-store-debug-mode" type="checkbox" value="yes" <?= ($debugMode === 'yes') ? 'checked' : '' ?> />
+                                        <input id="mp-store-debug-mode" type="checkbox" value="yes" <?= checked($debugMode, 'yes'); ?> />
                                         <span class="mp-settings-slider mp-settings-round"></span>
                                     </label>
                                 </div>

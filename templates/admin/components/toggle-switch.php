@@ -56,7 +56,7 @@ if (!defined('ABSPATH')) {
 
         <?php
             if (isset($settings['after_toggle'])) {
-                echo $settings['after_toggle'];
+                echo wp_kses_post($settings['after_toggle']);
             }
         ?>
     </td>
