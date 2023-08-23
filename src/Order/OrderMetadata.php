@@ -296,17 +296,6 @@ class OrderMetadata
     }
 
     /**
-     * @param int $postId
-     * @param bool $single
-     *
-     * @return mixed
-     */
-    public function getTicketTransactionDetailsPost(int $postId, bool $single = false)
-    {
-        return $this->orderMeta->getPost($postId, self::TICKET_TRANSACTION_DETAILS, $single);
-    }
-
-    /**
      * @param \WC_Order $order
      * @param mixed $value
      *
@@ -318,17 +307,6 @@ class OrderMetadata
     }
 
     /**
-     * @param int $postId
-     * @param mixed $value
-     *
-     * @return void
-     */
-    public function setTicketTransactionDetailsPost(int $postId, $value): void
-    {
-        $this->orderMeta->setPost($postId, self::TICKET_TRANSACTION_DETAILS, $value);
-    }
-
-    /**
      * @param \WC_Order $order
      *
      * @return mixed
@@ -336,17 +314,6 @@ class OrderMetadata
     public function getPixQrBase64Meta(\WC_Order $order)
     {
         return $this->orderMeta->get($order, self::MP_PIX_QR_BASE_64);
-    }
-
-    /**
-     * @param int $postId
-     * @param bool $single
-     *
-     * @return mixed
-     */
-    public function getPixQrBase64Post(int $postId, bool $single = false)
-    {
-        return $this->orderMeta->getPost($postId, self::MP_PIX_QR_BASE_64, $single);
     }
 
     /**
@@ -371,17 +338,6 @@ class OrderMetadata
     }
 
     /**
-     * @param int $postId
-     * @param bool $single
-     *
-     * @return mixed
-     */
-    public function getPixQrCodePost(int $postId, bool $single = false)
-    {
-        return $this->orderMeta->getPost($postId, self::MP_PIX_QR_CODE, $single);
-    }
-
-    /**
      * @param \WC_Order $order
      * @param mixed $value
      *
@@ -393,34 +349,12 @@ class OrderMetadata
     }
 
     /**
-     * @param int $postId
-     * @param bool $single
-     *
-     * @return mixed
-     */
-    public function getPixExpirationDatePost(int $postId, bool $single = false)
-    {
-        return $this->orderMeta->getPost($postId, self::PIX_EXPIRATION_DATE, $single);
-    }
-
-    /**
      * @param \WC_Order $order
      * @param mixed $value
      */
     public function setPixExpirationDateData(\WC_Order $order, $value): void
     {
         $this->orderMeta->update($order, self::PIX_EXPIRATION_DATE, $value);
-    }
-
-    /**
-     * @param int $postId
-     * @param bool $single
-     *
-     * @return mixed
-     */
-    public function getPixOnPost(int $postId, bool $single = false)
-    {
-        return $this->orderMeta->getPost($postId, self::PIX_ON, $single);
     }
 
     /**
