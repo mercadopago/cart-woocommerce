@@ -318,6 +318,16 @@ class OrderMetadata
 
     /**
      * @param \WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPixOnMeta(\WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PIX_ON);
+    }
+
+    /**
+     * @param \WC_Order $order
      * @param mixed $value
      *
      * @return void
@@ -355,6 +365,16 @@ class OrderMetadata
     public function setPixExpirationDateData(\WC_Order $order, $value): void
     {
         $this->orderMeta->update($order, self::PIX_EXPIRATION_DATE, $value);
+    }
+
+    /**
+     * @param \WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPixExpirationDateData(\WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PIX_EXPIRATION_DATE);
     }
 
     /**
