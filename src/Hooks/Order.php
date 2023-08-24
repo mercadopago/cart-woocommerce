@@ -2,9 +2,19 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use Exception;
+use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\CurrentUser;
+use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Helpers\Nonce;
+use MercadoPago\Woocommerce\Helpers\PaymentStatus;
+use MercadoPago\Woocommerce\Helpers\Requester;
+use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
@@ -24,9 +34,19 @@ class Order
     private $orderMetadata;
 
     /**
+     * @var OrderStatus
+     */
+    private $orderStatus;
+
+    /**
      * @var StoreTranslations
      */
     private $storeTranslations;
+
+    /**
+     * @var AdminTranslations
+     */
+    private $adminTranslations;
 
     /**
      * @var Store
@@ -34,32 +54,219 @@ class Order
     private $store;
 
     /**
+     * @var Seller
+     */
+    private $seller;
+
+    /**
+     * @var Scripts
+     */
+    private $scripts;
+
+    /**
+     * @var Url
+     */
+    private $url;
+
+    /**
+     * @var Nonce
+     */
+    private $nonce;
+
+    /**
+     * @var Endpoints
+     */
+    private $endpoints;
+
+    /**
+     * @var CurrentUser
+     */
+    private $currentUser;
+
+    /**
+     * @var Requester
+     */
+    private $requester;
+
+    /**
+     * @const
+     */
+    const NONCE_ID = 'MP_ORDER_NONCE';
+
+    /**
      * Order constructor
      */
-    public function __construct(Template $template, OrderMetadata $orderMetadata, StoreTranslations $storeTranslations, Store $store)
+    public function __construct(Template $template, OrderMetadata $orderMetadata, OrderStatus $orderStatus, AdminTranslations $adminTranslations, StoreTranslations $storeTranslations, Store $store, Seller $seller, Scripts $scripts, Url $url, Nonce $nonce, Endpoints $endpoints, CurrentUser $currentUser, Requester $requester)
     {
         $this->template          = $template;
         $this->orderMetadata     = $orderMetadata;
+        $this->orderStatus       = $orderStatus;
+        $this->adminTranslations = $adminTranslations;
         $this->storeTranslations = $storeTranslations;
         $this->store             = $store;
+        $this->seller            = $seller;
+        $this->scripts           = $scripts;
+        $this->url               = $url;
+        $this->nonce             = $nonce;
+        $this->endpoints         = $endpoints;
+        $this->currentUser       = $currentUser;
+        $this->requester         = $requester;
+
+        $this->registerStatusSyncMetaBox();
+        $this->endpoints->registerAjaxEndpoint('mp_sync_payment_status', [$this, 'paymentStatusSync']);
+    }
+
+    private function registerStatusSyncMetabox(): void
+    {
+        $this->registerMetaBox(function ($postOrOrderObject) {
+            $order = ($postOrOrderObject instanceof \WP_Post) ? wc_get_order($postOrOrderObject->ID) : $postOrOrderObject;
+
+            if (!$order) {
+                return;
+            }
+
+            $paymentMethod     = $this->orderMetadata->getUsedGatewayData($order);
+            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) { 
+                return $gateway::ID === $paymentMethod;
+            });
+
+            if (!$isMpPaymentMethod) {
+                return;
+            }
+
+            $this->loadScripts($order);
+
+            $this->addMetaBox(
+                'mp_payment_status_sync',
+                $this->adminTranslations->statusSync['metabox_title'],
+                'admin/order/payment-status-metabox-content.php',
+                $this->getMetaboxData($order)
+            );
+        });
+    }
+
+    private function loadScripts($order): void
+    {
+        $this->scripts->registerAdminScript(
+            'mp_payment_status_sync',
+            $this->url->getPluginFileUrl('assets/js/admin/order/payment-status-sync', '.js'),
+            [
+                'order_id' => $order->ID,
+                'nonce' => $this->nonce->generateNonce(self::NONCE_ID),
+            ]
+        );
+
+        $this->scripts->registerAdminStyle(
+            'mp_payment_status_sync',
+            $this->url->getPluginFileUrl('assets/css/admin/order/payment-status-sync', '.css'),
+            [
+                'order_id' => $order->ID,
+                'nonce' => $this->nonce->generateNonce(self::NONCE_ID),
+            ]
+        );
+    }
+
+    private function getMetaboxData($order): array
+    {
+        $paymentInfo = $this->getLastPaymentInfo($order);
+
+        $paymentStatusType = PaymentStatus::getStatusType($paymentInfo['status']);
+        $cardContent       = PaymentStatus::getCardDescription($this->adminTranslations->statusSync, $paymentInfo['status_detail'], $paymentInfo['payment_tye'] === 'credit_card');
+
+        switch ($paymentStatusType) {
+            case 'success':
+                return [
+                    'card_title'        => $this->adminTranslations->statusSync['card_title'],
+                    'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-success', '.png', true),
+                    'alert_title'       => $cardContent['alert_title'],
+                    'alert_description' => $cardContent['description'],
+                    'link'              => 'https://www.mercadopago.com',
+                    'border_left_color' => '#00A650',
+                    'link_description'  => $this->adminTranslations->statusSync['link_description_success'],
+                    'sync_button_text'  => $this->adminTranslations->statusSync['sync_button_success'],
+                ];
+            
+            case 'pending':
+                return [
+                    'card_title'        => $this->adminTranslations->statusSync['card_title'],
+                    'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-alert', '.png', true),
+                    'alert_title'       => $cardContent['alert_title'],
+                    'alert_description' => $cardContent['description'],
+                    'link'              => 'https://www.mercadopago.com',
+                    'border_left_color' => '#f73',
+                    'link_description'  => $this->adminTranslations->statusSync['link_description_pending'],
+                    'sync_button_text'  => $this->adminTranslations->statusSync['sync_button_pending'],
+                ];
+
+            case 'rejected':
+            case 'refunded':
+            case 'charged_back':
+                return [
+                    'card_title'        => $this->adminTranslations->statusSync['card_title'],
+                    'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-warning', '.png', true),
+                    'alert_title'       => $cardContent['alert_title'],
+                    'alert_description' => $cardContent['description'],
+                    'link'              => 'https://www.mercadopago.com/developers',
+                    'border_left_color' => '#F23D4F',
+                    'link_description'  => $this->adminTranslations->statusSync['link_description_failure'],
+                    'sync_button_text'  => $this->adminTranslations->statusSync['sync_button_failure'],
+                ];
+
+            default:
+                return [];
+        }
+    }
+
+    private function getLastPaymentInfo($order)
+    {
+        $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
+        $lastPaymentId = trim(end($paymentsIds));
+
+        if (!$lastPaymentId) {
+            return false;
+        }
+
+        $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+        $response = $this->requester->get("/v1/payments/$lastPaymentId", $headers);
+
+        return $response->getData();
+    }
+
+    public function paymentStatusSync(): void
+    {
+        try {
+            $this->currentUser->validateUserNeededPermissions();
+            $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+
+            $order       = wc_get_order(Form::sanitizeTextFromPost('order_id'));
+            $paymentData = $this->getLastPaymentInfo($order);
+            
+            if (!$paymentData) {
+                throw new Exception('Couldn\'t find payment');
+            }
+            $this->orderStatus->processStatus($paymentData['status'], (array) $paymentData, $order, $this->orderMetadata->getUsedGatewayData($order));
+
+            wp_send_json_success(
+				$this->adminTranslations->statusSync['response_success'],
+			);
+		} catch ( \Exception $e ) {
+			wp_send_json_error(
+                $this->adminTranslations->statusSync['response_error'] . ' ' . $e->getMessage(),
+				500
+			);
+		}
     }
 
     /**
      * Register meta box addition on order page
      *
-     * @param string $id
-     * @param string $title
-     * @param string $name
-     * @param array $args
-     * @param string $path
+     * @param mixed $callback
      *
      * @return void
      */
-    public function registerMetaBox(string $id, string $title, string $name, array $args, string $path): void
+    public function registerMetaBox($callback): void
     {
-        add_action('add_meta_boxes_shop_order', function () use ($id, $title, $name, $args, $path) {
-            $this->addMetaBox($id, $title, $name, $args);
-        });
+        add_action('add_meta_boxes_shop_order', $callback);
     }
 
     /**

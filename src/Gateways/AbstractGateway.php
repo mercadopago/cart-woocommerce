@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
+use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
@@ -108,6 +109,15 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
         $this->loadResearchComponent();
         $this->loadMelidataStoreScripts();
+    }
+
+    public function saveOrderPaymentsId(string $orderId) {
+        $order = wc_get_order($orderId);
+        $paymentIds = Form::sanitizeTextFromGet('payment_id');
+
+        if ($paymentIds) {
+            $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, explode(',', $paymentIds));
+        }
     }
 
     /**
@@ -266,7 +276,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function webhook(): void
     {
-        $data = $_GET;
+        $data = Form::sanitizeFromData($_GET);
 
         $notificationFactory = new NotificationFactory();
         $notificationHandler = $notificationFactory->createNotificationHandler($this, $data);
