@@ -26,6 +26,11 @@ class TicketGateway extends AbstractGateway
     /**
      * @const
      */
+    public const WEBHOOK_API_NAME = 'WC_WooMercadoPago_Ticket_Gateway';
+
+    /**
+     * @const
+     */
     public const LOG_SOURCE = 'MercadoPago_TicketGateway';
 
     /**
@@ -57,7 +62,7 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
 
         $this->mercadopago->currency->handleCurrencyNotices($this);
-        $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+        $this->mercadopago->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
 
         $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
     }

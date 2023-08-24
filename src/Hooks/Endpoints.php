@@ -31,6 +31,6 @@ class Endpoints
      */
     public function registerApiEndpoint(string $endpoint, $callback): void
     {
-        add_action('woocommerce_api_' . $endpoint, $callback);
+        add_action('woocommerce_api_' . strtolower($endpoint), $callback);
     }
 }
