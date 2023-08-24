@@ -145,6 +145,16 @@ class CoreNotification extends AbstractNotification
 						']/[Coupon ' . $payment['coupon_amount'] .
 						']/[Refund ' . $data['total_refunded'] . ']'
 				);
+
+                $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - payment_type', $payment['payment_type_id']);
+    
+                if ( strpos($payment['payment_type_id'], 'card') !== false ) {
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installments', $payment['payment_method_info']['installments']);
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installment_amount', $payment['payment_method_info']['installment_amount']);
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - transaction_amount', $payment['total_amount']);
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - total_paid_amount', $payment['paid_amount']);
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - card_last_four_digits', $payment['payment_method_info']['last_four_digits']);
+                }
 			}
 
 			if (count($payment_ids) != 0) {
