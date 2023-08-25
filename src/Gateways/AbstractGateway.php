@@ -122,7 +122,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
         if ($paymentIds) {
             $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, explode(',', $paymentIds));
+            return;
         }
+        $this->mercadopago->logs->file->info("no payment ids to update", "MercadoPago_AbstractGateway");
     }
 
     /**
