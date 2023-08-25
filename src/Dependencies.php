@@ -311,7 +311,7 @@ class Dependencies
      */
     private function setSeller(): Seller
     {
-        return new Seller($this->cache, $this->options, $this->requester, $this->store);
+        return new Seller($this->cache, $this->options, $this->requester, $this->store, $this->logs);
     }
 
     /**
@@ -446,7 +446,8 @@ class Dependencies
             $this->nonce,
             $this->endpoints,
             $this->currentUser,
-            $this->requester
+            $this->requester,
+            $this->logs
         );
     }
 

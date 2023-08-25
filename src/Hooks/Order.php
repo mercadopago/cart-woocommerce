@@ -16,6 +16,7 @@ use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+use MercadoPago\Woocommerce\Logs\Logs;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -89,6 +90,11 @@ class Order
     private $requester;
 
     /**
+     * @var Logs
+     */
+    private $logs;
+
+    /**
      * @const
      */
     const NONCE_ID = 'MP_ORDER_NONCE';
@@ -126,7 +132,7 @@ class Order
             }
 
             $paymentMethod     = $this->orderMetadata->getUsedGatewayData($order);
-            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) { 
+            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) {
                 return $gateway::ID === $paymentMethod;
             });
 
@@ -185,7 +191,7 @@ class Order
                     'link_description'  => $this->adminTranslations->statusSync['link_description_success'],
                     'sync_button_text'  => $this->adminTranslations->statusSync['sync_button_success'],
                 ];
-            
+
             case 'pending':
                 return [
                     'card_title'        => $this->adminTranslations->statusSync['card_title'],
@@ -240,7 +246,7 @@ class Order
 
             $order       = wc_get_order(Form::sanitizeTextFromPost('order_id'));
             $paymentData = $this->getLastPaymentInfo($order);
-            
+
             if (!$paymentData) {
                 throw new Exception('Couldn\'t find payment');
             }
@@ -250,6 +256,9 @@ class Order
 				$this->adminTranslations->statusSync['response_success'],
 			);
 		} catch ( \Exception $e ) {
+            $this->logs->file->error("'Mercado pago gave error in payment status Sync: {$e->getMessage()}",
+                __CLASS__
+            );
 			wp_send_json_error(
                 $this->adminTranslations->statusSync['response_error'] . ' ' . $e->getMessage(),
 				500

@@ -315,6 +315,9 @@ class Settings
 
             wp_send_json_success($payment_gateway_properties);
         } catch (\Exception $e) {
+            $this->logs->file->error("'Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
+                __CLASS__
+            );
             $response = [
                 'message' => $e->getMessage()
             ];
