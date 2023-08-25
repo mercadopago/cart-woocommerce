@@ -22,6 +22,8 @@ final class PaymentMethods
 
     /**
      * Url constructor
+     * 
+     * @param Url $url
      */
     public function __construct(Url $url)
     {

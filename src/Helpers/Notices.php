@@ -61,6 +61,15 @@ class Notices
 
     /**
      * Notices constructor
+     * 
+     * @param Scripts $scripts
+     * @param AdminTranslations $translations
+     * @param Url $url
+     * @param Links $links
+     * @param CurrentUser $currentUser
+     * @param Store $store
+     * @param Nonce $nonce
+     * @param Endpoints $endpoints
      */
     public function __construct(
         Scripts $scripts,

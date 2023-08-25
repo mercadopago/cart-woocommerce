@@ -87,6 +87,8 @@ final class Country
 
     /**
      * Country constructor
+     * 
+     * @param Seller $seller
      */
     public function __construct(Seller $seller)
     {
@@ -151,7 +153,7 @@ final class Country
     }
 
     /**
-     *  Country Configs
+     * Country Configs
      *
      * @return array
      */

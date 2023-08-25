@@ -15,6 +15,8 @@ final class Url
 
     /**
      * Url constructor
+     * 
+     * @param Strings $strings
      */
     public function __construct(Strings $strings)
     {

@@ -13,6 +13,9 @@ class CreditsTransaction extends AbstractPreferenceTransaction
 
     /**
      * Credits Transaction constructor
+     * 
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order)
     {

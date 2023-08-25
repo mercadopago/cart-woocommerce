@@ -135,6 +135,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->form_fields = [];
     }
 
+    /**
+     * Add a "missing credentials" notice into the $form_fields array if there ir no credentials configured.
+     * Returns true when the notice is added to the array, and false otherwise.
+     *
+     * @return bool
+     */
     protected function addMissingCredentialsNoticeAsFormField(): bool
     {
         if (empty($this->mercadopago->seller->getCredentialsPublicKey()) || empty($this->mercadopago->seller->getCredentialsAccessToken())) {
@@ -158,6 +164,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         return false;
     }
 
+    /**
+     * If the seller is homologated, it returns an array of an empty $form_fields field.
+     * If not, then return a notice to inform that the seller must be homologated to be able to sell.
+     *
+     * @return array
+     */
     protected function getHomologValidateNoticeOrHidden(): array
     {
         if ($this->mercadopago->seller->getHomologValidate()) {
@@ -274,8 +286,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
     /**
      * Receive gateway webhook notifications
-     *
-     * @var string $gateway
      *
      * @return void
      */

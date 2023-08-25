@@ -34,6 +34,8 @@ class File implements LogInterface
 
     /**
      * File Logs constructor
+     * 
+     * @param Store $store
      */
     public function __construct(Store $store)
     {

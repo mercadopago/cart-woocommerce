@@ -30,6 +30,8 @@ final class Links
 
     /**
      * Links constructor
+     * 
+     * @param Country $country
      */
     public function __construct(Country $country)
     {

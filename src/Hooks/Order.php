@@ -95,6 +95,11 @@ class Order
 
     /**
      * Order constructor
+     * 
+     * @param Template $template
+     * @param OrderMetadata $orderMetadata
+     * @param StoreTranslations $storeTranslations
+     * @param Store $store
      */
     public function __construct(Template $template, OrderMetadata $orderMetadata, OrderStatus $orderStatus, AdminTranslations $adminTranslations, StoreTranslations $storeTranslations, Store $store, Seller $seller, Scripts $scripts, Url $url, Nonce $nonce, Endpoints $endpoints, CurrentUser $currentUser, Requester $requester)
     {

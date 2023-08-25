@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -21,6 +22,13 @@ class IpnNotification extends AbstractNotification
 
     /**
      * IpnNotification constructor
+     * 
+     * @param MercadoPagoGatewayInterface $gateway
+     * @param Logs $logs
+     * @param OrderStatus $orderStatus
+     * @param Seller $seller
+     * @param Store $store
+     * @param Requester $requester
      */
     public function __construct(
         MercadoPagoGatewayInterface $gateway,
@@ -128,7 +136,7 @@ class IpnNotification extends AbstractNotification
 		$payments = $data['payments'];
 
 		if (is_array($payments)) {
-			$total       = $data['shipping_cost'] + $data['total_amount'];
+			$total       = (float) $data['shipping_cost'] + (float) $data['total_amount'];
 			$totalPaid   = 0.00;
 			$totalRefund = 0.00;
 
