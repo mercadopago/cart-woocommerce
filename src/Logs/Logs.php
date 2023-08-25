@@ -23,6 +23,9 @@ class Logs
 
     /**
      * Logs constructor
+     * 
+     * @param File $file
+     * @param Remote $remote
      */
     public function __construct(File $file, Remote $remote)
     {

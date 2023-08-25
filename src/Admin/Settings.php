@@ -95,6 +95,19 @@ class Settings
 
     /**
      * Settings constructor
+     * 
+     * @param Admin $admin
+     * @param Endpoints $endpoints
+     * @param Links $links
+     * @param Plugin $plugin
+     * @param Scripts $scripts
+     * @param Seller $seller
+     * @param Store $store
+     * @param AdminTranslations $translations
+     * @param Url $url
+     * @param Nonce $nonce
+     * @param CurrentUser $currentUser
+     * @param Logs $logs
      */
     public function __construct(
         Admin $admin,

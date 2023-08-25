@@ -46,42 +46,41 @@ class CreditsEnabled
     private $options;
 
     /**
-     * @var Actions
-     */
-    private $actions;
-
-    /**
      * CreditsEnabled constructor
      *
      * @param Admin             $admin
      * @param Logs              $logs
      * @param Options           $options
-     * @param Actions           $actions
      */
     public function __construct(
         Admin             $admin,
         Logs              $logs,
-        Options           $options,
-        Actions           $actions
+        Options           $options
     ) {
         $this->admin        = $admin;
         $this->logs         = $logs;
         $this->options      = $options;
-        $this->actions      = $actions;
     }
 
-    public function setCreditsDefaultOptions(){
-        if($this->admin->isAdmin() && $this->options->get(self::CREDITS_ACTIVATION_NEEDED) !== 'no'){
+    /**
+     * Set default CreditsEnabled options when needed
+     */
+    public function setCreditsDefaultOptions(): void
+    {
+        if ($this->admin->isAdmin() && $this->options->get(self::CREDITS_ACTIVATION_NEEDED) !== 'no') {
             $this->options->set(self::CREDITS_ACTIVATION_NEEDED, 'yes');
             $this->options->set(self::ALREADY_ENABLE_BY_DEFAULT, 'no');
         }
     }
 
-    public function enableCreditsAction()
+    /**
+     * Enable credits on the first execution
+     */
+    public function enableCreditsAction(): void
     {
         $this->setCreditsDefaultOptions();
-        try {
 
+        try {
             if ($this->admin->isAdmin() && $this->options->get(self::CREDITS_ACTIVATION_NEEDED) === 'yes') {
 
                 $this->options->set(self::CREDITS_ACTIVATION_NEEDED, 'no');
@@ -100,8 +99,9 @@ class CreditsEnabled
                     }
                 }
             }
-        } catch (Exception $ex) {
-            $this->logs->file->error("'Mercado pago gave error to enable Credits: {$ex->getMessage()}",
+        } catch (\Exception $ex) {
+            $this->logs->file->error(
+                "Mercado pago gave error to enable Credits: {$ex->getMessage()}",
                 __CLASS__
             );
         }

@@ -112,6 +112,8 @@ class AdminTranslations
 
     /**
      * Translations constructor
+     * 
+     * @param Links $links
      */
     public function __construct(Links $links)
     {

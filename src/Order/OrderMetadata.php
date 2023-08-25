@@ -88,12 +88,13 @@ class OrderMetadata
 
     /**
      * Metadata constructor
+     * 
+     * @param OrderMeta orderMeta
      */
     public function __construct(OrderMeta $orderMeta)
     {
         $this->orderMeta = $orderMeta;
     }
-
 
     /**
      * @param \WC_Order $order
@@ -212,7 +213,7 @@ class OrderMetadata
 
     /**
      * @param \WC_Order $order
-     * @param mixed $value
+     * @param string $value
      *
      * @return void
      */

@@ -8,6 +8,9 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
 {
     /**
      * Preference Transaction constructor
+     * 
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order)
     {
@@ -30,7 +33,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      *
      * @return array|bool
      */
-    public function createPreference(): array
+    public function createPreference()
     {
         $preference = $this->getTransaction('Preference');
 

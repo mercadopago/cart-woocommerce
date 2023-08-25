@@ -22,6 +22,13 @@ class WebhookNotification extends AbstractNotification
 
     /**
      * WebhookNotification constructor
+     * 
+     * @param MercadoPagoGatewayInterface $gateway
+     * @param Logs $logs
+     * @param OrderStatus $orderStatus
+     * @param Seller $seller
+     * @param Store $store
+     * @param Requester $requester
      */
     public function __construct(
         MercadoPagoGatewayInterface $gateway,
