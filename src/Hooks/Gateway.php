@@ -50,6 +50,13 @@ class Gateway
 
     /**
      * Gateway constructor
+     *
+     * @param Options $options
+     * @param Template $template
+     * @param Store $store
+     * @param Checkout $checkout
+     * @param StoreTranslations $translations
+     * @param Url $url
      */
     public function __construct(
         Options           $options,
@@ -185,7 +192,7 @@ class Gateway
             $optionKey       = $gateway->get_option_key();
             $sanitizedFields = apply_filters('woocommerce_settings_api_sanitized_fields_' . $gateway->id, $gateway->settings);
 
-            return $this->options->set($optionKey, $sanitizedFields);
+            $this->options->set($optionKey, $sanitizedFields);
         });
     }
 

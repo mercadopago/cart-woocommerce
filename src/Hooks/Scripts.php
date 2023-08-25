@@ -44,6 +44,9 @@ class Scripts
 
     /**
      * Scripts constructor
+     * 
+     * @param Url $url
+     * @param Seller $seller
      */
     public function __construct(Url $url, Seller $seller)
     {

@@ -61,6 +61,15 @@ class Notices
 
     /**
      * Notices constructor
+     * 
+     * @param Scripts $scripts
+     * @param AdminTranslations $translations
+     * @param Url $url
+     * @param Links $links
+     * @param CurrentUser $currentUser
+     * @param Store $store
+     * @param Nonce $nonce
+     * @param Endpoints $endpoints
      */
     public function __construct(
         Scripts $scripts,
@@ -382,8 +391,8 @@ class Notices
 	 */
 	public function reviewNoticeDismiss(): void
     {
-        $this->currentUser->validateUserNeededPermissions();
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+        $this->currentUser->validateUserNeededPermissions();
 
         $this->store->setDismissedReviewNotice(1);
         wp_send_json_success();
@@ -394,8 +403,8 @@ class Notices
 	 */
 	public function savedCardsDismiss(): void
     {
-        $this->currentUser->validateUserNeededPermissions();
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+        $this->currentUser->validateUserNeededPermissions();
 
         $this->store->setDismissedSavedCardsNotice(1);
 		wp_send_json_success();

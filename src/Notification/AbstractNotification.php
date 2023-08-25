@@ -42,6 +42,12 @@ abstract class AbstractNotification implements NotificationInterface
 
     /**
      * AbstractNotification constructor
+     * 
+     * @param MercadoPagoGatewayInterface $gateway
+     * @param Logs $logs
+     * @param OrderStatus $orderStatus
+     * @param Seller $seller
+     * @param Store $store
      */
     public function __construct(
         MercadoPagoGatewayInterface $gateway,
@@ -64,7 +70,8 @@ abstract class AbstractNotification implements NotificationInterface
      *
      * @return void
      */
-    public function handleReceivedNotification($data) {
+    public function handleReceivedNotification($data): void
+    {
         $this->logs->file->info('Received data content', __CLASS__, $data);
     }
 
@@ -84,7 +91,7 @@ abstract class AbstractNotification implements NotificationInterface
 		if (empty($order_key)) {
             $message = 'external_reference not found';
 			$this->logs->file->error($message, __CLASS__);
-			$this->setResponse(422, null, $message);
+			$this->setResponse(422, $message);
 		}
 
 		$invoice_prefix = get_option('_mp_store_identificator', 'WC-');

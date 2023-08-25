@@ -104,6 +104,11 @@ class Seller
 
     /**
      * Credentials constructor
+     * 
+     * @param Cache $cache
+     * @param Options $options
+     * @param Requester $requester
+     * @param Store $store
      */
     public function __construct(Cache $cache, Options $options, Requester $requester, Store $store)
     {
@@ -730,7 +735,7 @@ class Seller
     /**
      * Get Payment Methods by SiteId
      *
-     * @param string|null $siteId
+     * @param string $siteId
      *
      * @return array
      */

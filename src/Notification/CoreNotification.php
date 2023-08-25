@@ -31,6 +31,12 @@ class CoreNotification extends AbstractNotification
 
     /**
      * CoreNotification constructor
+     * 
+     * @param MercadoPagoGatewayInterface $gateway
+     * @param Logs $logs
+     * @param OrderStatus $orderStatus
+     * @param Seller $seller
+     * @param Store $store
      */
     public function __construct(
         MercadoPagoGatewayInterface $gateway,
@@ -89,7 +95,7 @@ class CoreNotification extends AbstractNotification
 	 *
 	 * @return void
 	 */
-	public function handleSuccessfulRequest($data): void
+	public function handleSuccessfulRequest($data)
 	{
 		try {
 			$order           = parent::handleSuccessfulRequest($data);

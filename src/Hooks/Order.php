@@ -101,6 +101,11 @@ class Order
 
     /**
      * Order constructor
+     * 
+     * @param Template $template
+     * @param OrderMetadata $orderMetadata
+     * @param StoreTranslations $storeTranslations
+     * @param Store $store
      */
     public function __construct(Template $template, OrderMetadata $orderMetadata, OrderStatus $orderStatus, AdminTranslations $adminTranslations, StoreTranslations $storeTranslations, Store $store, Seller $seller, Scripts $scripts, Url $url, Nonce $nonce, Endpoints $endpoints, CurrentUser $currentUser, Requester $requester)
     {
@@ -122,6 +127,9 @@ class Order
         $this->endpoints->registerAjaxEndpoint('mp_sync_payment_status', [$this, 'paymentStatusSync']);
     }
 
+    /**
+     * Registers the Status Sync Metabox
+     */
     private function registerStatusSyncMetabox(): void
     {
         $this->registerMetaBox(function ($postOrOrderObject) {
@@ -151,6 +159,11 @@ class Order
         });
     }
 
+    /**
+     * Load the Status Sync Metabox script and style
+     * 
+     * @param \WC_Order $order
+     */
     private function loadScripts($order): void
     {
         $this->scripts->registerAdminScript(
@@ -172,6 +185,13 @@ class Order
         );
     }
 
+    /**
+     * Get the data to be renreded on the Status Sync Metabox
+     * 
+     * @param \WC_Order $order
+     * 
+     * @return array
+     */
     private function getMetaboxData($order): array
     {
         $paymentInfo = $this->getLastPaymentInfo($order);
@@ -223,6 +243,13 @@ class Order
         }
     }
 
+    /**
+     * Get the last order payment info
+     * 
+     * @param \WC_Order $order
+     * 
+     * @return array|bool
+     */
     private function getLastPaymentInfo($order)
     {
         $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
@@ -238,11 +265,16 @@ class Order
         return $response->getData();
     }
 
+    /**
+     * Updates the order based on current payment status from API
+     * 
+     * @param \WC_Order $order
+     */
     public function paymentStatusSync(): void
     {
         try {
-            $this->currentUser->validateUserNeededPermissions();
             $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+            $this->currentUser->validateUserNeededPermissions();
 
             $order       = wc_get_order(Form::sanitizeTextFromPost('order_id'));
             $paymentData = $this->getLastPaymentInfo($order);

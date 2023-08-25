@@ -523,8 +523,7 @@ class Dependencies
         return new CreditsEnabled(
             $this->admin,
             $this->logs,
-            $this->options,
-            $this->actions
+            $this->options
         );
     }
 }

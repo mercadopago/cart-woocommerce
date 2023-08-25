@@ -41,7 +41,8 @@ final class PaymentStatus
 	 *
 	 * @return array
 	 */
-	public static function getCardDescription($translationsArray, $paymentStatusDetail, $isCreditCard) {
+	public static function getCardDescription($translationsArray, $paymentStatusDetail, $isCreditCard)
+	{
 		$alertTitleTranslationKey = 'alert_title_' . $paymentStatusDetail;
 		$descriptionTranslationKey = 'description_' . $paymentStatusDetail . ($isCreditCard ? '_cc' : '');
 
