@@ -556,7 +556,7 @@ class Settings
      */
     private function validateAjaxNonce(): void
     {
-        $this->currentUser->validateUserNeededPermissions();
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+        $this->currentUser->validateUserNeededPermissions();
     }
 }
