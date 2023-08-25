@@ -18,7 +18,8 @@ final class Actions
      *
      * @return void
      */
-    public function registerActionWhenGatewayIsNotCalled($hook, string $hookMethod, string $gateway, string $gatewayMethod): void {
+    public function registerActionWhenGatewayIsNotCalled($hook, string $hookMethod, string $gateway, string $gatewayMethod): void
+    {
         if (method_exists($hook, $hookMethod) && class_exists($gateway) && method_exists($gateway, $gatewayMethod)) {
             $hook->{$hookMethod}(function () use ($gateway, $gatewayMethod) {
                 (new $gateway)->{$gatewayMethod}();

@@ -968,6 +968,11 @@ class AdminTranslations
         ];
     }
 
+    /**
+     * Set status sync metabox translations
+     *
+     * @return void
+     */
     private function setStatusSyncTranslations(): void
     {
         $this->statusSync = [

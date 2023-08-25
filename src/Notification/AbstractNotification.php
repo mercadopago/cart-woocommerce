@@ -70,7 +70,7 @@ abstract class AbstractNotification implements NotificationInterface
      *
      * @return void
      */
-    public function handleReceivedNotification($data)
+    public function handleReceivedNotification($data): void
     {
         $this->logs->file->info('Received data content', __CLASS__, $data);
     }
