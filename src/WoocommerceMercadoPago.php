@@ -369,11 +369,6 @@ class WoocommerceMercadoPago
         $this->registerGateways();
         $this->registerActionsWhenGatewayIsNotCalled();
         $this->plugin->registerEnableCreditsAction(array($this->creditsEnabled, 'enableCreditsAction'));
-        $this->plugin->registerOnPluginLoaded(function () {
-            $this->logs->file->info('mercadopago_main_plugin_loaded was triggered', __METHOD__);
-            return;
-        });
-
         $this->plugin->executeCreditsAction();
         $this->plugin->executePluginLoadedAction();
     }
