@@ -491,7 +491,7 @@ class Dependencies
         );
     }
 
-      /**
+    /**
      * @return CreditsEnabled
      */
     private function setCreditsEnabled(): CreditsEnabled
@@ -499,8 +499,7 @@ class Dependencies
         return new CreditsEnabled(
             $this->admin,
             $this->logs,
-            $this->options,
-            $this->actions
+            $this->options
         );
     }
 }

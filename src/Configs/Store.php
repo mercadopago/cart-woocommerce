@@ -98,6 +98,8 @@ class Store
 
     /**
      * Store constructor
+     * 
+     * @param Options $options
      */
     public function __construct(Options $options)
     {
@@ -288,15 +290,15 @@ class Store
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getDismissedReviewNotice(): string
+    public function getDismissedReviewNotice(): int
     {
         return $this->options->get(self::DISMISSED_REVIEW_NOTICE, 0);
     }
 
     /**
-     * @param string $dismissedReviewNotice
+     * @param int $dismissedReviewNotice
      */
     public function setDismissedReviewNotice(int $dismissedReviewNotice): void
     {
@@ -304,15 +306,15 @@ class Store
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getDismissedSavedCardsNotice(): string
+    public function getDismissedSavedCardsNotice(): int
     {
         return $this->options->get(self::DISMISSED_SAVED_CARDS_NOTICE, 0);
     }
 
     /**
-     * @param string $dismissedSavedCardsNotice
+     * @param int $dismissedSavedCardsNotice
      */
     public function setDismissedSavedCardsNotice(int $dismissedSavedCardsNotice): void
     {

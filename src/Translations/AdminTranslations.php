@@ -107,6 +107,8 @@ class AdminTranslations
 
     /**
      * Translations constructor
+     * 
+     * @param Links $links
      */
     public function __construct(Links $links)
     {
@@ -942,6 +944,11 @@ class AdminTranslations
         ];
     }
 
+    /**
+     * Set currency translations
+     *
+     * @return void
+     */
     private function setCurrencyTranslations(): void
     {
         $currencyConversion = sprintf(

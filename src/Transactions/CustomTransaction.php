@@ -13,6 +13,10 @@ class CustomTransaction extends AbstractPaymentTransaction
 
     /**
      * Custom Transaction constructor
+     * 
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
+     * @param array $checkout
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout)
     {

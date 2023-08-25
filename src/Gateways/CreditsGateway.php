@@ -435,10 +435,9 @@ class CreditsGateway extends AbstractGateway
 
     /**
 	 * Enable Credits by default
-	 *
 	 */
-	public function activeByDefault() {
-
+	public function activeByDefault(): void
+    {
         $this->mercadopago->options->setGatewayOption($this, 'enabled', 'yes');
         $this->mercadopago->options->setGatewayOption($this, 'credits_banner', 'yes');
 	}

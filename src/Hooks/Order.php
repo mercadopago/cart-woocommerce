@@ -35,6 +35,11 @@ class Order
 
     /**
      * Order constructor
+     * 
+     * @param Template $template
+     * @param OrderMetadata $orderMetadata
+     * @param StoreTranslations $storeTranslations
+     * @param Store $store
      */
     public function __construct(Template $template, OrderMetadata $orderMetadata, StoreTranslations $storeTranslations, Store $store)
     {

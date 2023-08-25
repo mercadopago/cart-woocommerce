@@ -17,6 +17,8 @@ class Metadata
 
     /**
      * MetadataSettings constructor
+     * 
+     * @param Options $options
      */
     public function __construct(Options $options)
     {

@@ -64,7 +64,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     protected $ratio;
 
     /**
-     * @var int
+     * @var float
      */
     protected $orderTotal;
 
@@ -75,6 +75,10 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 
     /**
      * Abstract Transaction constructor
+     * 
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
+     * @param array $checkout
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout = null)
     {
