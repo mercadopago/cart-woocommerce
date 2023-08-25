@@ -126,7 +126,7 @@ class Order
             }
 
             $paymentMethod     = $this->orderMetadata->getUsedGatewayData($order);
-            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) { 
+            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) {
                 return $gateway::ID === $paymentMethod;
             });
 
@@ -147,7 +147,7 @@ class Order
 
     private function loadScripts($order): void
     {
-        $this->scripts->registerAdminScript(
+        $this->scripts->registerStoreScript(
             'mp_payment_status_sync',
             $this->url->getPluginFileUrl('assets/js/admin/order/payment-status-sync', '.js'),
             [
@@ -156,7 +156,7 @@ class Order
             ]
         );
 
-        $this->scripts->registerAdminStyle(
+        $this->scripts->registerStoreStyle(
             'mp_payment_status_sync',
             $this->url->getPluginFileUrl('assets/css/admin/order/payment-status-sync', '.css'),
             [
@@ -185,7 +185,7 @@ class Order
                     'link_description'  => $this->adminTranslations->statusSync['link_description_success'],
                     'sync_button_text'  => $this->adminTranslations->statusSync['sync_button_success'],
                 ];
-            
+
             case 'pending':
                 return [
                     'card_title'        => $this->adminTranslations->statusSync['card_title'],
@@ -240,7 +240,7 @@ class Order
 
             $order       = wc_get_order(Form::sanitizeTextFromPost('order_id'));
             $paymentData = $this->getLastPaymentInfo($order);
-            
+
             if (!$paymentData) {
                 throw new Exception('Couldn\'t find payment');
             }
@@ -267,6 +267,7 @@ class Order
     public function registerMetaBox($callback): void
     {
         add_action('add_meta_boxes_shop_order', $callback);
+        add_action('add_meta_boxes_woocommerce_page_wc-orders', $callback);
     }
 
     /**
@@ -413,13 +414,8 @@ class Order
     public function setTicketMetadata(\WC_Order $order, $data): void
     {
         $externalResourceUrl = $data['transaction_details']['external_resource_url'];
-
-        if (method_exists($order, 'update_meta_data')) {
-            $this->orderMetadata->setTicketTransactionDetailsData($order, $externalResourceUrl);
-            $order->save();
-        } else {
-            $this->orderMetadata->setTicketTransactionDetailsPost($order->get_id(), $externalResourceUrl);
-        }
+        $this->orderMetadata->setTicketTransactionDetailsData($order, $externalResourceUrl);
+        $order->save();
     }
 
     /**
