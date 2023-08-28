@@ -418,11 +418,7 @@ class TicketGateway extends AbstractGateway
     public function renderThankYouPage($order_id): void
     {
         $order        = wc_get_order($order_id);
-        $methodExists = method_exists($order, 'get_meta');
-
-        $transactionDetails  = $methodExists
-            ? $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order)
-            : $this->mercadopago->orderMetadata->getTicketTransactionDetailsPost($order->get_id(), true);
+        $transactionDetails  =  $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order);
 
         if (empty($transactionDetails)) {
             return;
