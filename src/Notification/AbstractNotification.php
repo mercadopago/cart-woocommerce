@@ -141,11 +141,7 @@ abstract class AbstractNotification implements NotificationInterface
      */
 	public function updateMeta(\WC_Order $order, string $key, $value): void
     {
-		if (method_exists($order, 'update_meta_data')) {
 			$order->update_meta_data($key, $value);
-		} else {
-			update_post_meta($order->get_id(), $key, $value);
-		}
 	}
 
     /**
