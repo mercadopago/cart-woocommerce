@@ -217,18 +217,26 @@ class CreditsGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
-        parent::process_payment($order_id);
+        try {
+            parent::process_payment($order_id);
 
-        $order              = wc_get_order($order_id);
-        $this->transaction  = new CreditsTransaction($this, $order);
+            $order              = wc_get_order($order_id);
+            $this->transaction  = new CreditsTransaction($this, $order);
 
-        $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
-        $preference        = $this->transaction->createPreference();
+            $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
+            $preference        = $this->transaction->createPreference();
 
-        return [
-            'result'   => 'success',
-            'redirect' => $this->mercadopago->store->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
-        ];
+            return [
+                'result'   => 'success',
+                'redirect' => $this->mercadopago->store->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
+            ];
+        } catch (\Exception $e) {
+            return $this->processReturnFail(
+                $e,
+                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                self::LOG_SOURCE
+            );
+        }
     }
 
     /**
