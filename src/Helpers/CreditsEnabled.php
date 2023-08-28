@@ -98,6 +98,7 @@ class CreditsEnabled
                         $this->options->set(self::ALREADY_ENABLE_BY_DEFAULT, 'yes');
                     }
                 }
+                $this->logs->file->info('Credits was activated automatically', __METHOD__);
             }
         } catch (\Exception $ex) {
             $this->logs->file->error(

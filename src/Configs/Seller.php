@@ -98,6 +98,11 @@ class Seller
     private $store;
 
     /**
+     * @var Logs
+     */
+    private $logs;
+
+    /**
      * Credentials constructor
      * 
      * @param Cache $cache
@@ -599,6 +604,9 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
+            $this->logs->file->error("'Mercado pago gave error to get seller info: {$e->getMessage()}",
+                __CLASS__
+            );
             return [
                 'data'   => null,
                 'status' => 500,
@@ -665,6 +673,9 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
+            $this->logs->file->error("'Mercado pago gave error to validate seller credentials: {$e->getMessage()}",
+                __CLASS__
+            );
             return [
                 'data'   => null,
                 'status' => 500,
@@ -711,6 +722,9 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
+            $this->logs->file->error("'Mercado pago gave error to get seller payment methods: {$e->getMessage()}",
+                __CLASS__
+            );
             return [
                 'data'   => null,
                 'status' => 500,
@@ -747,6 +761,9 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
+            $this->logs->file->error("'Mercado pago gave error to get seller payment methods by ID: {$e->getMessage()}",
+                __CLASS__
+            );
             return [
                 'data'   => null,
                 'status' => 500,

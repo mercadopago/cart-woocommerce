@@ -95,7 +95,7 @@ class Settings
 
     /**
      * Settings constructor
-     * 
+     *
      * @param Admin $admin
      * @param Endpoints $endpoints
      * @param Links $links
@@ -328,6 +328,9 @@ class Settings
 
             wp_send_json_success($payment_gateway_properties);
         } catch (\Exception $e) {
+            $this->logs->file->error("'Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
+                __CLASS__
+            );
             $response = [
                 'message' => $e->getMessage()
             ];
@@ -430,72 +433,78 @@ class Settings
      */
     public function mercadopagoUpdateOptionCredentials(): void
     {
-        $this->validateAjaxNonce();
+        try {
+            $this->validateAjaxNonce();
 
-        $publicKeyProd   = Form::sanitizeTextFromPost('public_key_prod');
-        $accessTokenProd = Form::sanitizeTextFromPost('access_token_prod');
-        $publicKeyTest   = Form::sanitizeTextFromPost('public_key_test');
-        $accessTokenTest = Form::sanitizeTextFromPost('access_token_test');
+            $publicKeyProd   = Form::sanitizeTextFromPost('public_key_prod');
+            $accessTokenProd = Form::sanitizeTextFromPost('access_token_prod');
+            $publicKeyTest   = Form::sanitizeTextFromPost('public_key_test');
+            $accessTokenTest = Form::sanitizeTextFromPost('access_token_test');
 
-        $validatePublicKeyProd   = $this->seller->validatePublicKey($publicKeyProd);
-        $validateAccessTokenProd = $this->seller->validateAccessToken($accessTokenProd);
-        $validatePublicKeyTest   = $this->seller->validatePublicKey($publicKeyTest);
-        $validateAccessTokenTest = $this->seller->validateAccessToken($accessTokenTest);
+            $validatePublicKeyProd   = $this->seller->validatePublicKey($publicKeyProd);
+            $validateAccessTokenProd = $this->seller->validateAccessToken($accessTokenProd);
+            $validatePublicKeyTest   = $this->seller->validatePublicKey($publicKeyTest);
+            $validateAccessTokenTest = $this->seller->validateAccessToken($accessTokenTest);
 
-        if (
-            $validatePublicKeyProd['status'] === 200 &&
-            $validateAccessTokenProd['status'] === 200 &&
-            $validatePublicKeyProd['data']['is_test'] === false &&
-            $validateAccessTokenProd['data']['is_test'] === false
-        ) {
-            $this->seller->setCredentialsPublicKeyProd($publicKeyProd);
-            $this->seller->setCredentialsAccessTokenProd($accessTokenProd);
-            $this->seller->setHomologValidate($validateAccessTokenProd['data']['homologated']);
-            $this->seller->setClientId($validateAccessTokenProd['data']['client_id']);
+            if (
+                $validatePublicKeyProd['status'] === 200 &&
+                $validateAccessTokenProd['status'] === 200 &&
+                $validatePublicKeyProd['data']['is_test'] === false &&
+                $validateAccessTokenProd['data']['is_test'] === false
+            ) {
+                $this->seller->setCredentialsPublicKeyProd($publicKeyProd);
+                $this->seller->setCredentialsAccessTokenProd($accessTokenProd);
+                $this->seller->setHomologValidate($validateAccessTokenProd['data']['homologated']);
+                $this->seller->setClientId($validateAccessTokenProd['data']['client_id']);
 
-            $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
-            if ($sellerInfo['status'] === 200) {
-                $this->store->setCheckoutCountry($sellerInfo['data']['site_id']);
-                $this->seller->setSiteId($sellerInfo['data']['site_id']);
-                $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
-            }
-
-            if ((empty($publicKeyTest) && empty($accessTokenTest)) || (
-                $validatePublicKeyTest['status'] === 200 &&
-                $validateAccessTokenTest['status'] === 200 &&
-                $validatePublicKeyTest['data']['is_test'] === true &&
-                $validateAccessTokenTest['data']['is_test'] === true
-            )) {
-                $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
-                $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
-
-                if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
-                    $this->store->setCheckboxCheckoutTestMode('no');
-                    $response = [
-                        'type'      => 'alert',
-                        'message'   => $this->translations->updateCredentials['no_test_mode_title'],
-                        'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
-                        'test_mode' => 'no',
-                    ];
-                    wp_send_json_error($response);
+                $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
+                if ($sellerInfo['status'] === 200) {
+                    $this->store->setCheckoutCountry($sellerInfo['data']['site_id']);
+                    $this->seller->setSiteId($sellerInfo['data']['site_id']);
+                    $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
                 }
+
+                if ((empty($publicKeyTest) && empty($accessTokenTest)) || (
+                    $validatePublicKeyTest['status'] === 200 &&
+                    $validateAccessTokenTest['status'] === 200 &&
+                    $validatePublicKeyTest['data']['is_test'] === true &&
+                    $validateAccessTokenTest['data']['is_test'] === true
+                )) {
+                    $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
+                    $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
+
+                    if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
+                        $this->store->setCheckboxCheckoutTestMode('no');
+                        $response = [
+                            'type'      => 'alert',
+                            'message'   => $this->translations->updateCredentials['no_test_mode_title'],
+                            'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
+                            'test_mode' => 'no',
+                        ];
+                        wp_send_json_error($response);
+                    }
+                }
+
+                $this->plugin->executeUpdateCredentialAction();
+
+                wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
             }
 
-            $this->plugin->executeUpdateCredentialAction();
+            $response = [
+                'type'      => 'error',
+                'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
+                'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] . ' ',
+                'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
+                'link'      => $this->links->getLinks()['mercadopago_credentials'],
+                'test_mode' => $this->store->getCheckboxCheckoutTestMode()
+            ];
 
-            wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
+            wp_send_json_error($response);
+        } catch (\Exception $e) {
+            $this->logs->file->error("'Mercado pago gave error in update option credentials: {$e->getMessage()}",
+                __CLASS__
+            );
         }
-
-        $response = [
-            'type'      => 'error',
-            'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
-            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] . ' ',
-            'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
-            'link'      => $this->links->getLinks()['mercadopago_credentials'],
-            'test_mode' => $this->store->getCheckboxCheckoutTestMode()
-        ];
-
-        wp_send_json_error($response);
     }
 
     /**
