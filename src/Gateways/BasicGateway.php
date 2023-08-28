@@ -266,38 +266,35 @@ class BasicGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
-        parent::process_payment($order_id);
+        try {
+            parent::process_payment($order_id);
 
-        $order             = wc_get_order($order_id);
-        $this->transaction = new BasicTransaction($this, $order);
-        $method            = $this->mercadopago->options->getGatewayOption($this, 'method', 'redirect');
+            $order             = wc_get_order($order_id);
+            $this->transaction = new BasicTransaction($this, $order);
+            $method            = $this->mercadopago->options->getGatewayOption($this, 'method', 'redirect');
 
-        switch ($method) {
-            case 'iframe':
-            case 'redirect':
-                $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
-                $preference        = $this->transaction->createPreference();
-
-                return [
-                'result'   => 'success',
-                'redirect' => $this->mercadopago->store->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
-                    ];
-
-            case 'modal':
+            if ($method === 'modal') {
                 $this->mercadopago->logs->file->info('Preparing to render Checkout Pro view.', self::LOG_SOURCE);
                 return [
                     'result'   => 'success',
                     'redirect' => $order->get_checkout_payment_url(true),
                 ];
+            }
 
-            default:
-                break;
+            $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
+            $preference = $this->transaction->createPreference();
+            return [
+                'result'   => 'success',
+                'redirect' => $this->mercadopago->store->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
+            ];
+        } catch (\Exception $e) {
+            return $this->processReturnFail(
+                $e,
+                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                self::LOG_SOURCE
+            );
         }
 
-        return $this->processReturnFail(
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            self::LOG_SOURCE
-        );
     }
 
     /**

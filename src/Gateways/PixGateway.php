@@ -149,56 +149,59 @@ class PixGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
-        parent::process_payment($order_id);
+        try {
+            parent::process_payment($order_id);
 
-        $order    = wc_get_order($order_id);
-        $checkout = Form::sanitizeFromData($_POST);
+            $order    = wc_get_order($order_id);
+            $checkout = Form::sanitizeFromData($_POST);
 
-        if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
+            if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
+                return $this->processReturnFail(
+                    new \Exception('Email not valid on ' . __METHOD__),
+                    $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                    self::LOG_SOURCE
+                );
+            }
+
+            $this->transaction = new PixTransaction($this, $order, $checkout);
+            $response          = $this->transaction->createPayment();
+
+            if (is_array($response) && array_key_exists('status', $response)) {
+                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
+
+                if ($response['status'] === 'pending' && (
+                    $response['status_detail'] === 'pending_waiting_payment' ||
+                    $response['status_detail'] === 'pending_waiting_transfer'
+                )) {
+                    $this->mercadopago->woocommerce->cart->empty_cart();
+                    $this->mercadopago->order->setPixMetadata($this, $order, $response);
+                    $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
+
+                    $urlReceived = esc_url($order->get_checkout_order_received_url());
+
+                    $description = "
+                        <div style='text-align: justify;'>
+                            <p>{$this->storeTranslations['congrats_title']}</p>
+                            <small>{$this->storeTranslations['congrats_subtitle']}</small>
+                        </div>
+                    ";
+
+                    $this->mercadopago->order->addOrderNote($order, $description, 1);
+
+                    return [
+                        'result'   => 'success',
+                        'redirect' => $urlReceived,
+                    ];
+                }
+            }
+            throw new \Exception('Unable to process payment on ' . __METHOD__);
+        } catch (\Exception $e) {
             return $this->processReturnFail(
-                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                $e,
+                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                 self::LOG_SOURCE
             );
         }
-
-        $this->transaction = new PixTransaction($this, $order, $checkout);
-        $response          = $this->transaction->createPayment();
-
-        if (is_array($response) && array_key_exists('status', $response)) {
-            $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
-
-            if (
-                $response['status'] === 'pending' && (
-                $response['status_detail'] === 'pending_waiting_payment' ||
-                $response['status_detail'] === 'pending_waiting_transfer'
-                )
-            ) {
-                $this->mercadopago->woocommerce->cart->empty_cart();
-                $this->mercadopago->order->setPixMetadata($this, $order, $response);
-                $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
-
-                $urlReceived = esc_url($order->get_checkout_order_received_url());
-
-                $description = "
-                    <div style='text-align: justify;'>
-                        <p>{$this->storeTranslations['congrats_title']}</p>
-                        <small>{$this->storeTranslations['congrats_subtitle']}</small>
-                    </div>
-                ";
-
-                $this->mercadopago->order->addOrderNote($order, $description, 1);
-
-                return [
-                    'result'   => 'success',
-                    'redirect' => $urlReceived,
-                ];
-            }
-        }
-
-        return $this->processReturnFail(
-            $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-            self::LOG_SOURCE
-        );
     }
 
     /**

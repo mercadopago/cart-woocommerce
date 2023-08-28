@@ -252,17 +252,21 @@ class Order
      */
     private function getLastPaymentInfo($order)
     {
-        $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
-        $lastPaymentId = trim(end($paymentsIds));
-
-        if (!$lastPaymentId) {
+        try {
+            $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
+            $lastPaymentId = trim(end($paymentsIds));
+    
+            if (!$lastPaymentId) {
+                return false;
+            }
+    
+            $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+            $response = $this->requester->get("/v1/payments/$lastPaymentId", $headers);
+    
+            return $response->getData();
+        } catch (\Exception $e) {
             return false;
         }
-
-        $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
-        $response = $this->requester->get("/v1/payments/$lastPaymentId", $headers);
-
-        return $response->getData();
     }
 
     /**

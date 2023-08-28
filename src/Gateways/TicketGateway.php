@@ -210,65 +210,69 @@ class TicketGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
-        parent::process_payment($order_id);
+        try {
+            parent::process_payment($order_id);
 
-        $order    = wc_get_order($order_id);
-        $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
+            $order    = wc_get_order($order_id);
+            $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
-        if (!empty($checkout['amount']) &&
-            !empty($checkout['docType']) &&
-            !empty($checkout['docNumber']) &&
-            !empty($checkout['paymentMethodId'])
-        ) {
-            $this->transaction = new TicketTransaction($this, $order, $checkout);
-            $response          = $this->transaction->createPayment();
+            if (!empty($checkout['amount']) &&
+                !empty($checkout['docType']) &&
+                !empty($checkout['docNumber']) &&
+                !empty($checkout['paymentMethodId'])
+            ) {
+                $this->transaction = new TicketTransaction($this, $order, $checkout);
+                $response          = $this->transaction->createPayment();
 
-            if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
+                if (is_array($response) && array_key_exists('status', $response)) {
+                    $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
 
-                if ($response['status'] === 'pending' && (
-                    $response['status_detail'] === 'pending_waiting_payment' ||
-                    $response['status_detail'] ===  'pending_waiting_transfer'
-                )) {
-                    $this->mercadopago->woocommerce->cart->empty_cart();
+                    if ($response['status'] === 'pending' && (
+                        $response['status_detail'] === 'pending_waiting_payment' ||
+                        $response['status_detail'] ===  'pending_waiting_transfer'
+                    )) {
+                        $this->mercadopago->woocommerce->cart->empty_cart();
 
-                    if ($this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
-                        wc_reduce_stock_levels($order_id);
+                        if ($this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
+                            wc_reduce_stock_levels($order_id);
+                        }
+
+                        $this->mercadopago->order->setTicketMetadata($order, $response);
+                        $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
+
+                        if ($response['payment_type_id'] !== 'bank_transfer') {
+                            $description = sprintf(
+                                "Mercado Pago: %s <a target='_blank' href='%s'>%s</a>",
+                                $this->storeTranslations['congrats_title'],
+                                $response['transaction_details']['external_resource_url'],
+                                $this->storeTranslations['congrats_subtitle']
+                            );
+
+                            $this->mercadopago->order->addOrderNote($order, $description, 1);
+                        }
+
+                        $urlReceived = esc_url($order->get_checkout_order_received_url());
+
+                        return [
+                            'result'   => 'success',
+                            'redirect' => $urlReceived,
+                        ];
                     }
 
-                    $this->mercadopago->order->setTicketMetadata($order, $response);
-                    $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
-
-                    if ($response['payment_type_id'] !== 'bank_transfer') {
-                        $description = sprintf(
-                            "Mercado Pago: %s <a target='_blank' href='%s'>%s</a>",
-                            $this->storeTranslations['congrats_title'],
-                            $response['transaction_details']['external_resource_url'],
-                            $this->storeTranslations['congrats_subtitle']
-                        );
-
-                        $this->mercadopago->order->addOrderNote($order, $description, 1);
-                    }
-
-                    $urlReceived = esc_url($order->get_checkout_order_received_url());
-
-                    return [
-                        'result'   => 'success',
-                        'redirect' => $urlReceived,
-                    ];
+                    return $this->processReturnFail(
+                        new \Exception('Invalid status or status_detail on ' . __METHOD__),
+                        $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                        self::LOG_SOURCE
+                    );
                 }
-
-                return $this->processReturnFail(
-                    $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                    self::LOG_SOURCE
-                );
             }
+        } catch (\Exception $e) {
+            return $this->processReturnFail(
+                $e,
+                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                self::LOG_SOURCE
+            );
         }
-
-        return $this->processReturnFail(
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            self::LOG_SOURCE
-        );
     }
 
     /**

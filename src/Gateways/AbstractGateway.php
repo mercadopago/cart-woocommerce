@@ -400,9 +400,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      *
      * @return array
      */
-    public function processReturnFail(string $message, string $source, array $context = [], bool $notice = false): array
+    public function processReturnFail(\Exception $e, string $message, string $source, array $context = [], bool $notice = false): array
     {
-        $this->mercadopago->logs->file->error($message, $source, $context);
+        $this->mercadopago->logs->file->error($e->getMessage(), $source, $context);
 
         if ($notice) {
             $this->mercadopago->notices->storeNotice($message);
