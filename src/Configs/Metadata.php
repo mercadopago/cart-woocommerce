@@ -17,7 +17,7 @@ class Metadata
 
     /**
      * MetadataSettings constructor
-     * 
+     *
      * @param Options $options
      */
     public function __construct(Options $options)
@@ -34,7 +34,7 @@ class Metadata
      */
     public function getGatewaySettings(string $gatewayId): array
     {
-        return $this->getSettings("woocommerce_{$gatewayId}_settings");
+        return $this->getSettings("woocommerce_woo-mercado-pago-{$gatewayId}_settings");
     }
 
     /**
@@ -46,15 +46,12 @@ class Metadata
      */
     public function getSettings(string $option): array
     {
-        $options        = $this->options->get($option, []);
+        $options = $this->options->get($option, []);
         $ignoredOptions = $this->getIgnoredOptions();
-        $validValues    = [];
 
-        foreach ($options as $key => $value) {
-            if (!empty($value) && !in_array($key, $ignoredOptions, true)) {
-                $validValues[$key] = $value;
-            }
-        }
+        $validValues = array_filter($options, function ($value, $key) use ($ignoredOptions) {
+            return !empty($value) && !in_array($key, $ignoredOptions, true);
+        }, ARRAY_FILTER_USE_BOTH);
 
         return $validValues;
     }
