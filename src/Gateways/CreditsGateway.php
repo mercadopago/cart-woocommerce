@@ -173,7 +173,7 @@ class CreditsGateway extends AbstractGateway
     {
         $checkoutBenefitsItems = $this->getBenefits();
         $checkoutRedirectSrc   = $this->mercadopago->url->getPluginFileUrl(
-            '/assets/images/checkouts/basic/cho-pro-redirect-v2',
+            'assets/images/checkouts/basic/cho-pro-redirect-v2',
             '.png',
             true
         );
@@ -313,19 +313,19 @@ class CreditsGateway extends AbstractGateway
     {
         $siteId = strtoupper($this->mercadopago->seller->getSiteId());
 
-        $this->mercadopago->scripts->registerAdminStyle(
+        $this->mercadopago->scripts->registerCreditsAdminStyle(
             'mp_info_admin_credits_style',
-            $this->mercadopago->url->getPluginFileUrl('/assets/css/admin/credits/example-info', '.css')
+            $this->mercadopago->url->getPluginFileUrl('assets/css/admin/credits/example-info', '.css')
         );
 
-        $this->mercadopago->scripts->registerAdminScript(
+        $this->mercadopago->scripts->registerCreditsAdminScript(
             'mp_info_admin_credits_script',
-            $this->mercadopago->url->getPluginFileUrl('/assets/js/admin/credits/example-info', '.js'),
+            $this->mercadopago->url->getPluginFileUrl('assets/js/admin/credits/example-info', '.js'),
             [
-                'computerBlueIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-blue-icon', '.png', true),
-                'computerGrayIcon'  => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/desktop-gray-icon', '.png', true),
-                'cellphoneBlueIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-blue-icon', '.png', true),
-                'cellphoneGrayIcon' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/credits/cellphone-gray-icon', '.png', true),
+                'computerBlueIcon'  => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/credits/desktop-blue-icon', '.png', true),
+                'computerGrayIcon'  => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/credits/desktop-gray-icon', '.png', true),
+                'cellphoneBlueIcon' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/credits/cellphone-blue-icon', '.png', true),
+                'cellphoneGrayIcon' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/credits/cellphone-gray-icon', '.png', true),
                 'viewMobile'        => $this->getCreditsGifPath($siteId, 'mobile'),
                 'viewDesktop'       => $this->getCreditsGifPath($siteId, 'desktop'),
                 'footerDesktop'     => $this->adminTranslations['credits_banner_desktop'],
