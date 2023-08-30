@@ -172,7 +172,9 @@ class Scripts
      */
     public function registerCreditsAdminScript(string $name, string $file, array $variables = []): void
     {
-        $this->registerAdminScript($name, $file, $variables);
+        if ($this->url->validateSection('woo-mercado-pago-credits')) {
+            $this->registerAdminScript($name, $file, $variables);
+        }
     }
 
     /**
@@ -182,7 +184,9 @@ class Scripts
      */
     public function registerCreditsAdminStyle(string $name, string $file): void
     {
-        $this->registerAdminStyle($name, $file);
+        if ($this->url->validateSection('woo-mercado-pago-credits')) {
+            $this->registerAdminStyle($name, $file);
+        }
     }
 
     /**
