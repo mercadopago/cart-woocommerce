@@ -14,7 +14,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
 
     /**
      * Basic Transaction constructor
-     * 
+     *
      * @param AbstractGateway $gateway
      * @param \WC_Order $order
      */
@@ -36,7 +36,6 @@ class BasicTransaction extends AbstractPreferenceTransaction
 
         $internalMetadata['checkout']       = 'smart';
         $internalMetadata['checkout_type']  = $this->mercadopago->options->getGatewayOption($this->gateway, 'method', 'redirect');
-        $internalMetadata['basic_settings'] = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }

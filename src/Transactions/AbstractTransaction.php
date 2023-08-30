@@ -75,7 +75,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 
     /**
      * Abstract Transaction constructor
-     * 
+     *
      * @param AbstractGateway $gateway
      * @param \WC_Order $order
      * @param array $checkout
@@ -213,6 +213,12 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
             'collector'        => $seller,
             'test_mode'        => $this->mercadopago->store->isTestMode(),
             'details'          => '',
+            'basic_settings'   => $this->mercadopago->metadataConfig->getGatewaySettings('basic'),
+			'custom_settings'  => $this->mercadopago->metadataConfig->getGatewaySettings('custom'),
+			'ticket_settings'  => $this->mercadopago->metadataConfig->getGatewaySettings('ticket'),
+			'pix_settings'     => $this->mercadopago->metadataConfig->getGatewaySettings('pix'),
+			'credits_settings' => $this->mercadopago->metadataConfig->getGatewaySettings('credits'),
+            'wallet_button_settings' => $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button'),
             'seller_website'   => $siteUrl,
             'billing_address'  => [
                 'zip_code'     => $zipCode,
