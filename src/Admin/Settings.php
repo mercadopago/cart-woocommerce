@@ -347,7 +347,7 @@ class Settings
 
             wp_send_json_success($payment_gateway_properties);
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
                 __CLASS__
             );
             $response = [
@@ -520,7 +520,7 @@ class Settings
 
             wp_send_json_error($response);
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error in update option credentials: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error in update option credentials: {$e->getMessage()}",
                 __CLASS__
             );
         }

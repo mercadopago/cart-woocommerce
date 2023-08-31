@@ -292,7 +292,7 @@ class Order
 				$this->adminTranslations->statusSync['response_success'],
 			);
 		} catch ( \Exception $e ) {
-            $this->logs->file->error("'Mercado pago gave error in payment status Sync: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error in payment status Sync: {$e->getMessage()}",
                 __CLASS__
             );
 			wp_send_json_error(

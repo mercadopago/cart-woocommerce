@@ -604,7 +604,7 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to get seller info: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to get seller info: {$e->getMessage()}",
                 __CLASS__
             );
             return [
@@ -673,7 +673,7 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to validate seller credentials: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to validate seller credentials: {$e->getMessage()}",
                 __CLASS__
             );
             return [
@@ -722,7 +722,7 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to get seller payment methods: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to get seller payment methods: {$e->getMessage()}",
                 __CLASS__
             );
             return [
@@ -761,7 +761,7 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to get seller payment methods by ID: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to get seller payment methods by ID: {$e->getMessage()}",
                 __CLASS__
             );
             return [
