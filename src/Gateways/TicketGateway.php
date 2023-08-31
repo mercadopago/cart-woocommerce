@@ -284,10 +284,6 @@ class TicketGateway extends AbstractGateway
     {
         $paymentMethods = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
 
-        if (!is_array($paymentMethods)) {
-            $paymentMethods = json_decode($paymentMethods, true);
-        }
-
         $payment_list = [
             'type'                 => 'mp_checkbox_list',
             'title'                => $this->adminTranslations['type_payments_title'],
@@ -323,7 +319,7 @@ class TicketGateway extends AbstractGateway
      */
     public function buildPaycashPaymentString(): string
     {
-        $getPaymentMethodsTicket = $this->mercadopago->seller->getCheckoutTicketPaymentMethods('[]');
+        $getPaymentMethodsTicket = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
 
         foreach ($getPaymentMethodsTicket as $payment) {
             if ('paycash' === $payment['id']) {

@@ -281,9 +281,24 @@ class Seller
     /**
      * @return array
      */
+    public function getPaymentMethodsByGatewayOption(string $gatewayOption): array
+    {
+        $paymentMethods = $this->options->get($gatewayOption, []);
+        if (!$paymentMethods) {
+            $this->updatePaymentMethods();
+            $paymentMethods = $this->options->get($gatewayOption, []);
+        }
+
+        return $paymentMethods;
+    }
+
+
+    /**
+     * @return array
+     */
     public function getCheckoutBasicPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_BASIC_PAYMENT_METHODS, []);
+        return $this->getPaymentMethodsByGatewayOption(self::CHECKOUT_BASIC_PAYMENT_METHODS);
     }
 
     /**
@@ -297,11 +312,11 @@ class Seller
     /**
      * @param string $default
      *
-     * @return mixed
+     * @return array
      */
-    public function getCheckoutTicketPaymentMethods(string $default = '')
+    public function getCheckoutTicketPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_TICKET_PAYMENT_METHODS, $default);
+        return $this->getPaymentMethodsByGatewayOption(self::CHECKOUT_TICKET_PAYMENT_METHODS);
     }
 
     /**
@@ -340,7 +355,7 @@ class Seller
      */
     public function getCheckoutPixPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, []);
+        return $this->getPaymentMethodsByGatewayOption(self::CHECKOUT_PAYMENT_METHOD_PIX);
     }
 
     /**
