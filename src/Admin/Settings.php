@@ -186,8 +186,11 @@ class Settings
             );
 
             $this->scripts->registerCaronteAdminScript();
-            $this->scripts->registerNoticesAdminScript();
             $this->scripts->registerMelidataAdminScript();
+        }
+
+        if ($this->canLoadScriptsNoticesAdmin()) {
+            $this->scripts->registerNoticesAdminScript();
         }
     }
 
@@ -202,6 +205,22 @@ class Settings
             $this->url->validatePage('mercadopago-settings') ||
             $this->url->validateSection('woo-mercado-pago'
         ));
+    }
+
+    /**
+     * Check if scripts notices can be loaded
+     *
+     * @return bool
+     */
+    public function canLoadScriptsNoticesAdmin(): bool
+    {
+        return $this->admin->isAdmin() && (
+                $this->url->validateUrl('index') ||
+                $this->url->validateUrl('plugins') ||
+                $this->url->validatePage('wc-admin') ||
+                $this->url->validatePage('wc-settings') ||
+                $this->url->validatePage('mercadopago-settings')
+            );
     }
 
     /**
