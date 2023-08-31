@@ -112,7 +112,7 @@ class AdminTranslations
 
     /**
      * Translations constructor
-     * 
+     *
      * @param Links $links
      */
     public function __construct(Links $links)
@@ -701,6 +701,9 @@ class AdminTranslations
             'method_title'                 => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
             'header_title'                 => __('Transparent Checkout | Invoice or Loterica', 'woocommerce-mercadopago'),
             'header_description'           => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
+            'card_settings_title'          => __('Mercado Pago plugin general settings', 'woocommerce-mercadopago'),
+            'card_settings_subtitle'       => __('Set the deadlines and fees, test your store or access the Plugin manual.', 'woocommerce-mercadopago'),
+            'card_settings_button_text'    => __('Go to Settings', 'woocommerce-mercadopago'),
             'enabled_title'                => __('Enable the Checkout', 'woocommerce-mercadopago'),
             'enabled_subtitle'             => __('By disabling it, you will disable all invoice payments from Mercado Pago Transparent Checkout.', 'woocommerce-mercadopago'),
             'enabled_enabled'              => __('The transparent checkout for tickets is <b>enabled</b>.', 'woocommerce-mercadopago'),
