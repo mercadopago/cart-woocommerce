@@ -289,6 +289,10 @@ class Seller
             $paymentMethods = $this->options->get($gatewayOption, []);
         }
 
+        if (!is_array($paymentMethods)) {
+            $paymentMethods = json_decode($paymentMethods);
+        }
+
         return $paymentMethods;
     }
 
@@ -545,7 +549,7 @@ class Seller
      */
     public function buildPaymentPlaces(array $serializedPaymentMethods): array
     {
-        $payment_places = [
+        $paymentPlaces = [
             'paycash' => [
                 [
                     'payment_option_id' => '7eleven',
@@ -581,8 +585,8 @@ class Seller
         ];
 
         foreach ($serializedPaymentMethods as $key => $method) {
-            if (isset($payment_places[$method['id']])) {
-                $serializedPaymentMethods[$key]['payment_places'] = $payment_places[$method['id']];
+            if (isset($paymentPlaces[$method['id']])) {
+                $serializedPaymentMethods[$key]['payment_places'] = $paymentPlaces[$method['id']];
             }
         }
 
