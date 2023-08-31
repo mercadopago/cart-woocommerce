@@ -288,15 +288,15 @@ class CustomGateway extends AbstractGateway
                 'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
                 'test_mode_link_src'               => $this->links['docs_integration_test'],
                 'wallet_button'                    => $this->mercadopago->options->getGatewayOption($this, 'wallet_button', 'yes'),
-                'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-logos", '.png', true),
+                'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("assets/images/icons/icon-logos", '.png', true),
                 'wallet_button_title'              => $this->storeTranslations['wallet_button_title'],
                 'wallet_button_description'        => $this->storeTranslations['wallet_button_description'],
                 'wallet_button_button_text'        => $this->storeTranslations['wallet_button_button_text'],
-                'available_payments_title_icon'    => $this->mercadopago->url->getPluginFileUrl("/assets/images/icons/icon-purple-card", '.png', true),
+                'available_payments_title_icon'    => $this->mercadopago->url->getPluginFileUrl("assets/images/icons/icon-purple-card", '.png', true),
                 'available_payments_title'         => $this->storeTranslations['available_payments_title'],
-                'available_payments_image'         => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-down", '.png', true),
-                'available_payments_chevron_up'    => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-up", '.png', true),
-                'available_payments_chevron_down'  => $this->mercadopago->url->getPluginFileUrl("/assets/images/checkouts/custom/chevron-down", '.png', true),
+                'available_payments_image'         => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-down", '.png', true),
+                'available_payments_chevron_up'    => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-up", '.png', true),
+                'available_payments_chevron_down'  => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-down", '.png', true),
                 'payment_methods_items'            => wp_json_encode($this->getPaymentMethodsContent()),
                 'payment_methods_promotion_link'   => $this->links['mercadopago_debts'],
                 'payment_methods_promotion_text'   => $this->storeTranslations['payment_methods_promotion_text'],
@@ -410,7 +410,7 @@ class CustomGateway extends AbstractGateway
         }
 
         return $this->mercadopago->url->getPluginFileUrl(
-            "/assets/images/gateways/wallet-button/preview-$locale",
+            "assets/images/gateways/wallet-button/preview-$locale",
             '.png',
             true
         );
