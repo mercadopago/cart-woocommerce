@@ -494,12 +494,15 @@ class Settings
 
                     if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
                         $this->store->setCheckboxCheckoutTestMode('no');
+                        $this->plugin->executeUpdateCredentialAction();
+
                         $response = [
                             'type'      => 'alert',
                             'message'   => $this->translations->updateCredentials['no_test_mode_title'],
                             'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
                             'test_mode' => 'no',
                         ];
+
                         wp_send_json_error($response);
                     }
                 }
