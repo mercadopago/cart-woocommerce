@@ -79,6 +79,15 @@
         const someChecked = $('.mp-child[data-group="' + group + '"]:checked').length > 0;
         checkall.prop("checked", someChecked);
       }).change();
+      // removing onbeforeunload so wordpress do not prompt confirmation on reload/exit
+      window.onbeforeunload = '';
+      // now adding browser's default prompt if some config was changed
+      $('input, textarea, select, checkbox').on('change', function () {
+        window.onbeforeunload = function (e) {
+          e.preventDefault();
+          return true;
+        }
+      });
 
       // clicking .checkall will check or uncheck all children in the same group
       $('.mp-selectall').click(function () {
@@ -101,9 +110,9 @@
       '[id^="woocommerce_woo-mercado-pago"][id$="advanced_configuration_description"]'
     ).nextElementSibling;
 
-    collapseTitle.style.cursor        = "pointer";
+    collapseTitle.style.cursor = "pointer";
     collapseDescription.style.display = "none";
-    collapseTable.style.display       = "none";
+    collapseTable.style.display = "none";
 
     collapseTitle.innerHTML += makeCollapsibleOptions(
       "header_plus",
@@ -115,15 +124,15 @@
 
     collapseTitle.onclick = function () {
       if (collapseTable.style.display === "none") {
-        collapseTable.style.display       = "block";
+        collapseTable.style.display = "block";
         collapseDescription.style.display = "block";
-        headerLess.style.display          = "block";
-        headerPlus.style.display          = "none";
+        headerLess.style.display = "block";
+        headerPlus.style.display = "none";
       } else {
-        collapseTable.style.display       = "none";
+        collapseTable.style.display = "none";
         collapseDescription.style.display = "none";
-        headerLess.style.display          = "none";
-        headerPlus.style.display          = "block";
+        headerLess.style.display = "none";
+        headerPlus.style.display = "block";
       }
     };
   }
