@@ -348,7 +348,7 @@ class Settings
 
             wp_send_json_success($payment_gateway_properties);
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
                 __CLASS__
             );
             $response = [
@@ -517,12 +517,15 @@ class Settings
 
                     if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
                         $this->store->setCheckboxCheckoutTestMode('no');
+                        $this->plugin->executeUpdateCredentialAction();
+
                         $response = [
                             'type'      => 'alert',
                             'message'   => $this->translations->updateCredentials['no_test_mode_title'],
                             'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
                             'test_mode' => 'no',
                         ];
+
                         wp_send_json_error($response);
                     }
                 }
@@ -543,7 +546,7 @@ class Settings
 
             wp_send_json_error($response);
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error in update option credentials: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error in update option credentials: {$e->getMessage()}",
                 __CLASS__
             );
         }

@@ -240,7 +240,7 @@ final class Currency
                 return $response['data']['ratio'];
             }
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to get currency value: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to get currency value: {$e->getMessage()}",
                 __CLASS__
             );
         }
