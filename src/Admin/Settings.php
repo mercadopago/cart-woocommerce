@@ -237,8 +237,9 @@ class Settings
         $this->endpoints->registerAjaxEndpoint('mp_update_access_token', [$this, 'mercadopagoValidateAccessToken']);
         $this->endpoints->registerAjaxEndpoint('mp_get_requirements', [$this, 'mercadopagoValidateRequirements']);
         $this->endpoints->registerAjaxEndpoint('mp_get_payment_methods', [$this, 'mercadopagoPaymentMethods']);
-        $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_payment_tips', [$this, 'mercadopagoValidatePaymentTips']);
     }
 
     /**
@@ -356,6 +357,28 @@ class Settings
 
             wp_send_json_error($response);
         }
+    }
+
+     /**
+     * Validate store tips
+     *
+     * @return void
+     */
+    public function mercadopagoValidatePaymentTips(): void
+    {
+        $this->validateAjaxNonce();
+
+        $paymentGateways    = $this->store->getAvailablePaymentGateways();
+
+        foreach ( $paymentGateways as $gateway ) {
+            $gateway = new $gateway();
+
+            if ( 'yes' === $gateway->settings['enabled'] ) {
+                wp_send_json_success($this->translations->configurationTips['valid_payment_tips']);
+            }
+        }
+
+        wp_send_json_error($this->translations->configurationTips['invalid_payment_tips']);
     }
 
     /**

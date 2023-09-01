@@ -294,9 +294,9 @@ if (!defined('ABSPATH')) {
                         <select name="<?= $storeTranslations['placeholder_category_store'] ?>" class="mp-settings-select" id="mp-store-categories">
                             <?php
                             foreach ($categories as $category) {
-                                echo wp_kses_post('
-                                        <option value="' . $category['id'] . '"' . ($storeCategory === $category['id'] ? 'selected' : '') . '>
-                                            ' . $category['description'] . '
+                                echo ('
+                                        <option value="' . esc_attr($category['id']) . '"' . (esc_attr($storeCategory) === esc_attr($category['id']) ? 'selected' : '') . '>
+                                            ' . esc_attr($category['description']) . '
                                         </option>
                                     ');
                             }

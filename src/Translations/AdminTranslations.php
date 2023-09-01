@@ -565,8 +565,8 @@ class AdminTranslations
             'credits_banner_toggle_mobile'              => __('Mobile', 'woocommerce-mercadopago'),
             'credits_banner_toggle_title'               => __('Component visualization', 'woocommerce-mercadopago'),
             'credits_banner_toggle_subtitle'            => __('Check below how this feature will be displayed to your customers:', 'woocommerce-mercadopago'),
-            'advanced_configuration_title'               => __('Advanced settings', 'woocommerce-mercadopago'),
-            'advanced_configuration_description'         => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'advanced_configuration_title'              => __('Advanced settings', 'woocommerce-mercadopago'),
+            'advanced_configuration_description'        => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
             'discount_title'                            => __('Discount in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
             'discount_description'                      => __('Enable it if you want to automatically decline payments that are not instantly approved by banks or other institutions.', 'woocommerce-mercadopago'),
             'discount_checkbox_label'                   => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
@@ -904,6 +904,8 @@ class AdminTranslations
         $this->configurationTips = [
             'valid_store_tips'         => __('Store business fields are valid', 'woocommerce-mercadopago'),
             'invalid_store_tips'       => __('Store business fields could not be validated', 'woocommerce-mercadopago'),
+            'valid_payment_tips'         => __('At least one paymet method is enabled', 'woocommerce-mercadopago'),
+            'invalid_payment_tips'       => __('No payment method enabled', 'woocommerce-mercadopago'),
             'valid_credentials_tips'   => __('Credentials fields are valid', 'woocommerce-mercadopago'),
             'invalid_credentials_tips' => __('Credentials fields could not be validated', 'woocommerce-mercadopago'),
         ];
