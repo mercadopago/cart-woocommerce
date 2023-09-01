@@ -86,6 +86,19 @@ class TicketGateway extends AbstractGateway
                 'description' => $this->adminTranslations['header_description'],
             ],
             'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
+            'card_settings'  => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_settings_title'],
+                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
+                    'button_text' => $this->adminTranslations['card_settings_button_text'],
+                    'button_url'  => $this->links['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
+                ],
+            ],
             'enabled' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['enabled_title'],
