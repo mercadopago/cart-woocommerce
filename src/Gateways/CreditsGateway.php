@@ -234,7 +234,9 @@ class CreditsGateway extends AbstractGateway
             return $this->processReturnFail(
                 $e,
                 $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-                self::LOG_SOURCE
+                self::LOG_SOURCE,
+                array(),
+                true
             );
         }
     }

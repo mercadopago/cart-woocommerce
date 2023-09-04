@@ -198,8 +198,10 @@ class PixGateway extends AbstractGateway
         } catch (\Exception $e) {
             return $this->processReturnFail(
                 $e,
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                self::LOG_SOURCE
+                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                self::LOG_SOURCE,
+                array(),
+                true
             );
         }
     }
