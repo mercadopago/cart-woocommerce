@@ -405,7 +405,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->mercadopago->logs->file->error($e->getMessage(), $source, $context);
 
         if ($notice) {
-            $this->mercadopago->notices->storeNotice($message);
+            $this->mercadopago->notices->storeNotice($message, 'error');
         }
 
         return [
