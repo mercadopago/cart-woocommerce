@@ -38,7 +38,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
             $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
             return $data;
         } catch (\Exception $e) {
-            $this->mercadopago->logs->file->error('Payment creation failed: ' . $e->getMessage(), $this->gateway::LOG_SOURCE);
+            $this->mercadopago->logs->file->error('Payment creation failed: ' . $e->getMessage(), $this->gateway::LOG_SOURCE, $payment);
             return $e->getMessage();
         }
     }
