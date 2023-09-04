@@ -53,7 +53,7 @@ class BasicGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
@@ -206,8 +206,8 @@ class BasicGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
                 ],
             ],
-            'discount'   => $this->getDiscountField(),
-            'commission' => $this->getCommissionField(),
+            'gateway_discount' => $this->getDiscountField(),
+            'commission'       => $this->getCommissionField(),
         ]);
     }
 
@@ -291,7 +291,9 @@ class BasicGateway extends AbstractGateway
             return $this->processReturnFail(
                 $e,
                 $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-                self::LOG_SOURCE
+                self::LOG_SOURCE,
+                array(),
+                true
             );
         }
 
