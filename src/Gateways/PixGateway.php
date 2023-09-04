@@ -58,7 +58,7 @@ class PixGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
         $this->expirationDate     = (int) $this->mercadopago->store->getCheckoutDateExpirationPix($this, '1');
 
@@ -324,8 +324,8 @@ class PixGateway extends AbstractGateway
                 'title' => $this->adminTranslations['advanced_configuration_subtitle'],
                 'class' => 'mp-small-text',
             ],
-            'discount'   => $this->getDiscountField(),
-            'commission' => $this->getCommissionField(),
+            'gateway_discount' => $this->getDiscountField(),
+            'commission'       => $this->getCommissionField(),
         ];
     }
 

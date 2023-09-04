@@ -54,7 +54,7 @@ class TicketGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['method_title'];
         $this->method_description = $this->description;
-        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
@@ -154,8 +154,8 @@ class TicketGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['stock_reduce_disabled'],
                 ],
             ],
-            'discount'   => $this->getDiscountField(),
-            'commission' => $this->getCommissionField(),
+            'gateway_discount' => $this->getDiscountField(),
+            'commission'       => $this->getCommissionField(),
         ]);
     }
 

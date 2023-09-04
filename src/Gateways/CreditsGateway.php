@@ -51,7 +51,7 @@ class CreditsGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
@@ -147,8 +147,8 @@ class CreditsGateway extends AbstractGateway
                 'title' => $this->adminTranslations['advanced_configuration_description'],
                 'class' => 'mp-small-text',
             ],
-            'discount'   => $this->getDiscountField(),
-            'commission' => $this->getCommissionField(),
+            'gateway_discount' => $this->getDiscountField(),
+            'commission'       => $this->getCommissionField(),
         ]);
     }
 
