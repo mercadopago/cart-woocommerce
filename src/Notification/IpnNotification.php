@@ -22,7 +22,7 @@ class IpnNotification extends AbstractNotification
 
     /**
      * IpnNotification constructor
-     * 
+     *
      * @param MercadoPagoGatewayInterface $gateway
      * @param Logs $logs
      * @param OrderStatus $orderStatus
@@ -57,7 +57,7 @@ class IpnNotification extends AbstractNotification
 
         if (!isset( $data['id']) || ! isset($data['topic'])) {
             $message = 'No ID or TOPIC param in Request IPN';
-            $this->logs->file->error($message, __CLASS__);
+            $this->logs->file->error($message, __CLASS__, $data);
             $this->setResponse( 422, $message);
         }
 
@@ -81,7 +81,7 @@ class IpnNotification extends AbstractNotification
 
         if (count($payments) == 0) {
             $message = 'Not found payments into merchant order';
-            $this->logs->file->error($message, __CLASS__);
+            $this->logs->file->error($message, __CLASS__, $data);
             $this->setResponse( 422, $message);
         }
 
@@ -117,7 +117,7 @@ class IpnNotification extends AbstractNotification
             $this->setResponse(200, 'Notification IPN Successfully');
 		} catch (\Exception $e) {
 			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __CLASS__);
+			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
 		}
 	}
 

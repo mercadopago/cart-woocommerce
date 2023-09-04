@@ -36,9 +36,11 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     public function createPreference()
     {
         $preference = $this->getTransaction('Preference');
+
         $data = $preference->save();
         $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
         return $data;
+
     }
 
     /**

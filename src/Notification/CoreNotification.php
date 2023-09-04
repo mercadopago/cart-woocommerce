@@ -31,7 +31,7 @@ class CoreNotification extends AbstractNotification
 
     /**
      * CoreNotification constructor
-     * 
+     *
      * @param MercadoPagoGatewayInterface $gateway
      * @param Logs $logs
      * @param OrderStatus $orderStatus
@@ -83,7 +83,7 @@ class CoreNotification extends AbstractNotification
 
 			$this->handleSuccessfulRequest($notificationEntity->toArray());
 		} catch (\Exception $e) {
-			$this->logs->file->error($e->getMessage(), __CLASS__);
+			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
 			$this->setResponse(500, $e->getMessage());
 		}
     }
@@ -114,7 +114,7 @@ class CoreNotification extends AbstractNotification
             $this->processStatus($processedStatus, $order, $data);
 		} catch (\Exception $e) {
 			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __CLASS__);
+			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
 		}
 	}
 
@@ -153,7 +153,7 @@ class CoreNotification extends AbstractNotification
 				);
 
                 $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - payment_type', $payment['payment_type_id']);
-    
+
                 if ( strpos($payment['payment_type_id'], 'card') !== false ) {
                     $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installments', $payment['payment_method_info']['installments']);
                     $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installment_amount', $payment['payment_method_info']['installment_amount']);

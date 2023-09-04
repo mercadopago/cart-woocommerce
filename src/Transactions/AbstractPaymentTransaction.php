@@ -32,9 +32,11 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
     public function createPayment()
     {
         $payment = $this->getTransaction('Payment');
+
         $data = $payment->save();
         $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
         return $data;
+      
     }
 
     /**
