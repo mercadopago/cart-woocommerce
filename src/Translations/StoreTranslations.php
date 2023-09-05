@@ -57,6 +57,8 @@ class StoreTranslations
 
     /**
      * Translations constructor
+     * 
+     * @param Links $links
      */
     public function __construct(Links $links)
     {
@@ -80,9 +82,10 @@ class StoreTranslations
     private function setCommonCheckoutTranslations(): void
     {
         $this->commonCheckout = [
-            'discount_title' => __('discount of', 'woocommerce-mercadopago'),
-            'fee_title'      => __('fee of', 'woocommerce-mercadopago'),
-            'shipping_title' => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
+            'discount_title'     => __('discount of', 'woocommerce-mercadopago'),
+            'fee_title'          => __('fee of', 'woocommerce-mercadopago'),
+            'text_concatenation' => __('and', 'woocommerce-mercadopago'),
+            'shipping_title'     => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
         ];
     }
 

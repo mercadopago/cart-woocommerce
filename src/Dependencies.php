@@ -24,6 +24,7 @@ use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Helpers\PaymentMethods;
+use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -235,6 +236,11 @@ class Dependencies
     public $storeTranslations;
 
     /**
+     * @var CreditsEnabled
+     */
+    public $creditsEnabled;
+
+    /**
      * Dependencies constructor
      */
     public function __construct()
@@ -268,16 +274,17 @@ class Dependencies
         $this->scripts           = $this->setScripts();
         $this->adminTranslations = $this->setAdminTranslations();
         $this->storeTranslations = $this->setStoreTranslations();
-        $this->order             = $this->setOrder();
         $this->gateway           = $this->setGateway();
         $this->logs              = $this->setLogs();
         $this->nonce             = $this->setNonce();
         $this->orderStatus       = $this->setOrderStatus();
         $this->currentUser       = $this->setCurrentUser();
+        $this->order             = $this->setOrder();
         $this->notices           = $this->setNotices();
         $this->metadataConfig    = $this->setMetadataConfig();
         $this->currency          = $this->setCurrency();
         $this->settings          = $this->setSettings();
+        $this->creditsEnabled    = $this->setCreditsEnabled();
     }
 
     /**
@@ -304,7 +311,7 @@ class Dependencies
      */
     private function setSeller(): Seller
     {
-        return new Seller($this->cache, $this->options, $this->requester, $this->store);
+        return new Seller($this->cache, $this->options, $this->requester, $this->store, $this->logs);
     }
 
     /**
@@ -426,7 +433,22 @@ class Dependencies
      */
     private function setOrder(): Order
     {
-        return new Order($this->template, $this->orderMetadata, $this->storeTranslations, $this->store);
+        return new Order(
+            $this->template,
+            $this->orderMetadata,
+            $this->orderStatus,
+            $this->adminTranslations,
+            $this->storeTranslations,
+            $this->store,
+            $this->seller,
+            $this->scripts,
+            $this->url,
+            $this->nonce,
+            $this->endpoints,
+            $this->currentUser,
+            $this->requester,
+            $this->logs
+        );
     }
 
     /**
@@ -434,7 +456,16 @@ class Dependencies
      */
     private function setNotices(): Notices
     {
-        return new Notices($this->scripts, $this->adminTranslations, $this->url, $this->links, $this->currentUser);
+        return new Notices(
+            $this->scripts,
+            $this->adminTranslations,
+            $this->url,
+            $this->links,
+            $this->currentUser,
+            $this->store,
+            $this->nonce,
+            $this->endpoints
+        );
     }
 
     /**
@@ -481,6 +512,18 @@ class Dependencies
             $this->nonce,
             $this->currentUser,
             $this->logs
+        );
+    }
+
+    /**
+     * @return CreditsEnabled
+     */
+    private function setCreditsEnabled(): CreditsEnabled
+    {
+        return new CreditsEnabled(
+            $this->admin,
+            $this->logs,
+            $this->options
         );
     }
 }

@@ -64,7 +64,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     protected $ratio;
 
     /**
-     * @var int
+     * @var float
      */
     protected $orderTotal;
 
@@ -75,6 +75,10 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 
     /**
      * Abstract Transaction constructor
+     *
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
+     * @param array $checkout
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout = null)
     {
@@ -146,11 +150,13 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
 			$notificationUrl = $this->mercadopago->store->getCustomDomain();
 
 			if (empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false) {
-				return $this->mercadopago->woocommerce->api_request_url($this->gateway->id);
+				return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME);
 			} else {
-                return $this->mercadopago->strings->fixUrlAmpersand(
-                    esc_url($notificationUrl . '/wc-api/' . $this->gateway->id . '/')
-                );
+                $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
+                if ($customDomainOptions === 'yes') {
+                    return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway::WEBHOOK_API_NAME . '/'));
+                }
+                return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl));
 			}
 		}
 	}
@@ -207,6 +213,12 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
             'collector'        => $seller,
             'test_mode'        => $this->mercadopago->store->isTestMode(),
             'details'          => '',
+            'basic_settings'   => $this->mercadopago->metadataConfig->getGatewaySettings('basic'),
+			'custom_settings'  => $this->mercadopago->metadataConfig->getGatewaySettings('custom'),
+			'ticket_settings'  => $this->mercadopago->metadataConfig->getGatewaySettings('ticket'),
+			'pix_settings'     => $this->mercadopago->metadataConfig->getGatewaySettings('pix'),
+			'credits_settings' => $this->mercadopago->metadataConfig->getGatewaySettings('credits'),
+            'wallet_button_settings' => $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button'),
             'seller_website'   => $siteUrl,
             'billing_address'  => [
                 'zip_code'     => $zipCode,

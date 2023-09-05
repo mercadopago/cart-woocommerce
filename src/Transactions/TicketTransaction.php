@@ -28,6 +28,10 @@ class TicketTransaction extends AbstractPaymentTransaction
 
     /**
      * Ticket Transaction constructor
+     *
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
+     * @param array $checkout
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout)
     {
@@ -56,7 +60,6 @@ class TicketTransaction extends AbstractPaymentTransaction
 
         $internalMetadata['checkout']         = 'custom';
         $internalMetadata['checkout_type']    = self::ID;
-        $internalMetadata['ticket_settings']  = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         if (!empty($this->paymentPlaceId)) {
             $internalMetadata['payment_option_id'] = $this->paymentPlaceId;

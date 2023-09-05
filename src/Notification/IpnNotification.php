@@ -5,7 +5,6 @@ namespace MercadoPago\Woocommerce\Notification;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Requester;
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
@@ -23,6 +22,13 @@ class IpnNotification extends AbstractNotification
 
     /**
      * IpnNotification constructor
+     *
+     * @param MercadoPagoGatewayInterface $gateway
+     * @param Logs $logs
+     * @param OrderStatus $orderStatus
+     * @param Seller $seller
+     * @param Store $store
+     * @param Requester $requester
      */
     public function __construct(
         MercadoPagoGatewayInterface $gateway,
@@ -51,7 +57,7 @@ class IpnNotification extends AbstractNotification
 
         if (!isset( $data['id']) || ! isset($data['topic'])) {
             $message = 'No ID or TOPIC param in Request IPN';
-            $this->logs->file->error($message, __CLASS__);
+            $this->logs->file->error($message, __CLASS__, $data);
             $this->setResponse( 422, $message);
         }
 
@@ -75,7 +81,7 @@ class IpnNotification extends AbstractNotification
 
         if (count($payments) == 0) {
             $message = 'Not found payments into merchant order';
-            $this->logs->file->error($message, __CLASS__);
+            $this->logs->file->error($message, __CLASS__, $data);
             $this->setResponse( 422, $message);
         }
 
@@ -111,7 +117,7 @@ class IpnNotification extends AbstractNotification
             $this->setResponse(200, 'Notification IPN Successfully');
 		} catch (\Exception $e) {
 			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __CLASS__);
+			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
 		}
 	}
 
@@ -130,7 +136,7 @@ class IpnNotification extends AbstractNotification
 		$payments = $data['payments'];
 
 		if (is_array($payments)) {
-			$total       = $data['shipping_cost'] + $data['total_amount'];
+			$total       = (float) $data['shipping_cost'] + (float) $data['total_amount'];
 			$totalPaid   = 0.00;
 			$totalRefund = 0.00;
 

@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
+use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
@@ -20,6 +21,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      * @const
      */
     public const CHECKOUT_NAME = '';
+
+    /**
+     * @const
+     */
+    public const WEBHOOK_API_NAME = '';
 
     /**
      * @const
@@ -110,6 +116,17 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->loadMelidataStoreScripts();
     }
 
+    public function saveOrderPaymentsId(string $orderId) {
+        $order = wc_get_order($orderId);
+        $paymentIds = Form::sanitizeTextFromGet('payment_id');
+
+        if ($paymentIds) {
+            $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, explode(',', $paymentIds));
+            return;
+        }
+        $this->mercadopago->logs->file->info("no payment ids to update", "MercadoPago_AbstractGateway");
+    }
+
     /**
      * Init form fields for checkout configuration
      *
@@ -117,19 +134,63 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function init_form_fields(): void
     {
-        $this->form_fields = [
-            'card_info_validate' => [
-                'type'  => 'mp_card_info',
-                'value' => [
-                    'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
-                    'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
-                    'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
-                    'button_url'  => $this->links['admin_settings_page'],
-                    'icon'        => 'mp-icon-badge-warning',
-                    'color_card'  => 'mp-alert-color-error',
-                    'size_card'   => 'mp-card-body-size',
-                    'target'      => '_self',
+        $this->form_fields = [];
+    }
+
+    /**
+     * Add a "missing credentials" notice into the $form_fields array if there ir no credentials configured.
+     * Returns true when the notice is added to the array, and false otherwise.
+     *
+     * @return bool
+     */
+    protected function addMissingCredentialsNoticeAsFormField(): bool
+    {
+        if (empty($this->mercadopago->seller->getCredentialsPublicKey()) || empty($this->mercadopago->seller->getCredentialsAccessToken())) {
+            $this->form_fields = [
+                'card_info_validate' => [
+                    'type'  => 'mp_card_info',
+                    'value' => [
+                        'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
+                        'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
+                        'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
+                        'button_url'  => $this->links['admin_settings_page'],
+                        'icon'        => 'mp-icon-badge-warning',
+                        'color_card'  => 'mp-alert-color-error',
+                        'size_card'   => 'mp-card-body-size',
+                        'target'      => '_self',
+                    ]
                 ]
+            ];
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * If the seller is homologated, it returns an array of an empty $form_fields field.
+     * If not, then return a notice to inform that the seller must be homologated to be able to sell.
+     *
+     * @return array
+     */
+    protected function getHomologValidateNoticeOrHidden(): array
+    {
+        if ($this->mercadopago->seller->getHomologValidate()) {
+            return [
+                'type'  => 'title',
+                'value' => '',
+            ];
+        }
+        return [
+            'type'  => 'mp_card_info',
+            'value' => [
+                'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_homolog_title'],
+                'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_homolog_subtitle'],
+                'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_homolog_button_text'],
+                'button_url'  => $this->links['admin_settings_page'],
+                'icon'        => 'mp-icon-badge-warning',
+                'color_card'  => 'mp-alert-color-alert',
+                'size_card'   => 'mp-card-body-size-homolog',
+                'target'      => '_blank',
             ]
         ];
     }
@@ -210,7 +271,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
         if ($this->discount != 0) {
             $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
-            $feeText     = $this->getFeeText($translation, 'discount', $discount);
+            $feeText     = $this->getFeeText($translation, 'gateway_discount', $discount);
 
             $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
         }
@@ -228,13 +289,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     /**
      * Receive gateway webhook notifications
      *
-     * @var string $gateway
-     *
      * @return void
      */
     public function webhook(): void
     {
-        $data = $_GET;
+        $data = Form::sanitizeFromData($_GET);
 
         $notificationFactory = new NotificationFactory();
         $notificationHandler = $notificationFactory->createNotificationHandler($this, $data);
@@ -261,10 +320,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function canAdminLoadScriptsAndStyles(string $gatewaySection): bool
     {
-        return $this->mercadopago->admin->isAdmin() && (
-                $this->mercadopago->url->validatePage('wc-settings') &&
-                $this->mercadopago->url->validateSection($gatewaySection)
-            );
+        return $this->mercadopago->admin->isAdmin() && ($this->mercadopago->url->validatePage('wc-settings') &&
+            $this->mercadopago->url->validateSection($gatewaySection)
+        );
     }
 
     /**
@@ -342,12 +400,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      *
      * @return array
      */
-    public function processReturnFail(string $message, string $source, array $context = [], bool $notice = false): array
+    public function processReturnFail(\Exception $e, string $message, string $source, array $context = [], bool $notice = false): array
     {
-        $this->mercadopago->logs->file->error($message, $source, $context);
+        $this->mercadopago->logs->file->error($e->getMessage(), $source, $context);
 
         if ($notice) {
-            $this->mercadopago->notices->storeNotice($message);
+            $this->mercadopago->notices->storeNotice($message, 'error');
         }
 
         return [

@@ -8,34 +8,6 @@ if (!defined('ABSPATH')) {
 
 class OrderMeta
 {
-    /**
-     * Get post meta
-     *
-     * @param int $postId
-     * @param string $metaKey
-     * @param bool $single
-     *
-     * @return mixed
-     */
-    public function getPost(int $postId, string $metaKey, bool $single = false)
-    {
-        return get_post_meta($postId, $metaKey, $single);
-    }
-
-    /**
-     * Update post meta
-     *
-     * @param int $postId
-     * @param string $metaKey
-     * @param mixed $value
-     * @param string $prevValue
-     *
-     * @return bool|int
-     */
-    public function setPost(int $postId, string $metaKey, $value, string $prevValue = '')
-    {
-        return update_post_meta($postId, $metaKey, $value, $prevValue);
-    }
 
     /**
      * Get meta

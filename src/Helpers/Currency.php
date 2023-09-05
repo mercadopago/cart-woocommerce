@@ -215,41 +215,10 @@ final class Currency
      */
     public function handleCurrencyNotices(AbstractGateway $gateway): void
     {
-        $toCurrency   = $this->getCurrency();
-        $fromCurrency = $this->getWoocommerceCurrency();
-
-        $currencyEnabledTranslation = sprintf(
-            '%s %s %s %s.',
-            $this->translations['currency_enabled']['start'],
-            $fromCurrency,
-            $this->translations['currency_enabled']['final'],
-            $toCurrency
-        );
-
-        $currencyDisabledTranslation = sprintf(
-            '%s %s %s %s.',
-            $this->translations['currency_disabled']['start'],
-            $fromCurrency,
-            $this->translations['currency_disabled']['final'],
-            $toCurrency
-        );
-
         if ($this->validateConversion() || !$this->url->validateSection($gateway->id)) {
             return;
         }
 
-        if ($this->isShowingEnabledNotice || $this->isShowingDisabledNotice) {
-            return;
-        }
-
-        if ($this->isConversionEnabled($gateway)) {
-            $this->isShowingEnabledNotice = true;
-            $this->notices->adminNoticeInfo($currencyEnabledTranslation, false);
-            return;
-        }
-
-        $this->isShowingDisabledNotice = true;
-        $this->notices->adminNoticeWarning($currencyDisabledTranslation, false);
         $this->notices->adminNoticeWarning($this->translations['currency_conversion'], false);
     }
 
@@ -271,7 +240,7 @@ final class Currency
                 return $response['data']['ratio'];
             }
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to get currency value: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to get currency value: {$e->getMessage()}",
                 __CLASS__
             );
         }

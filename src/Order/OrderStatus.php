@@ -314,7 +314,8 @@ final class OrderStatus
      *
      * @return void
 	 */
-	private function inMediationFlow(\WC_Order $order) {
+	private function inMediationFlow(\WC_Order $order): void
+	{
 		$order->update_status(self::mapMpStatusToWoocommerceStatus('inmediation'));
 		$order->add_order_note('Mercado Pago: ' . $this->translations['in_mediation']);
 	}
@@ -391,7 +392,7 @@ final class OrderStatus
 				$payments[] = $payment['id'];
 			}
 
-			$paymentId = implode( ',', $payments );
+			$paymentId = implode(',', $payments);
 		}
 
 		$order->add_order_note("Mercado Pago: {$this->translations['validate_order_1']} $paymentId {$this->translations['validate_order_1']} $status");

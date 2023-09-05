@@ -95,6 +95,19 @@ class Settings
 
     /**
      * Settings constructor
+     *
+     * @param Admin $admin
+     * @param Endpoints $endpoints
+     * @param Links $links
+     * @param Plugin $plugin
+     * @param Scripts $scripts
+     * @param Seller $seller
+     * @param Store $store
+     * @param AdminTranslations $translations
+     * @param Url $url
+     * @param Nonce $nonce
+     * @param CurrentUser $currentUser
+     * @param Logs $logs
      */
     public function __construct(
         Admin $admin,
@@ -159,6 +172,11 @@ class Settings
                 $this->url->getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
             );
 
+            $this->scripts->registerAdminStyle(
+                'mercadopago_admin_configs_css',
+                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
+            );
+
             $this->scripts->registerAdminScript(
                 'mercadopago_settings_admin_js',
                 $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
@@ -168,8 +186,11 @@ class Settings
             );
 
             $this->scripts->registerCaronteAdminScript();
-            $this->scripts->registerNoticesAdminScript();
             $this->scripts->registerMelidataAdminScript();
+        }
+
+        if ($this->canLoadScriptsNoticesAdmin()) {
+            $this->scripts->registerNoticesAdminScript();
         }
     }
 
@@ -187,6 +208,22 @@ class Settings
     }
 
     /**
+     * Check if scripts notices can be loaded
+     *
+     * @return bool
+     */
+    public function canLoadScriptsNoticesAdmin(): bool
+    {
+        return $this->admin->isAdmin() && (
+                $this->url->validateUrl('index') ||
+                $this->url->validateUrl('plugins') ||
+                $this->url->validatePage('wc-admin') ||
+                $this->url->validatePage('wc-settings') ||
+                $this->url->validatePage('mercadopago-settings')
+            );
+    }
+
+    /**
      * Register ajax endpoints
      *
      * @return void
@@ -200,8 +237,9 @@ class Settings
         $this->endpoints->registerAjaxEndpoint('mp_update_access_token', [$this, 'mercadopagoValidateAccessToken']);
         $this->endpoints->registerAjaxEndpoint('mp_get_requirements', [$this, 'mercadopagoValidateRequirements']);
         $this->endpoints->registerAjaxEndpoint('mp_get_payment_methods', [$this, 'mercadopagoPaymentMethods']);
-        $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_payment_tips', [$this, 'mercadopagoValidatePaymentTips']);
     }
 
     /**
@@ -239,12 +277,13 @@ class Settings
         $publicKeyTest   = $this->seller->getCredentialsPublicKeyTest();
         $accessTokenTest = $this->seller->getCredentialsAccessTokenTest();
 
-        $storeId       = $this->store->getStoreId();
-        $storeName     = $this->store->getStoreName();
-        $storeCategory = $this->store->getStoreCategory();
-        $customDomain  = $this->store->getCustomDomain();
-        $integratorId  = $this->store->getIntegratorId();
-        $debugMode     = $this->store->getDebugMode();
+        $storeId             = $this->store->getStoreId();
+        $storeName           = $this->store->getStoreName();
+        $storeCategory       = $this->store->getStoreCategory();
+        $customDomain        = $this->store->getCustomDomain();
+        $customDomainOptions = $this->store->getCustomDomainOptions();
+        $integratorId        = $this->store->getIntegratorId();
+        $debugMode           = $this->store->getDebugMode();
 
         $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
         $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
@@ -297,7 +336,7 @@ class Settings
                     'title_gateway'    => $gateway->title,
                     'description'      => $gateway->description,
                     'title'            => $gateway->title,
-                    'enabled'          => $gateway->settings['enabled'],
+                    'enabled'          => $gateway->settings['enabled']?: false,
                     'icon'             => $gateway->icon,
                     'link'             => admin_url('admin.php?page=wc-settings&tab=checkout&section=') . $gateway->id,
                     'badge_translator' => [
@@ -309,12 +348,37 @@ class Settings
 
             wp_send_json_success($payment_gateway_properties);
         } catch (\Exception $e) {
+            $this->logs->file->error("Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
+                __CLASS__
+            );
             $response = [
                 'message' => $e->getMessage()
             ];
 
             wp_send_json_error($response);
         }
+    }
+
+     /**
+     * Validate store tips
+     *
+     * @return void
+     */
+    public function mercadopagoValidatePaymentTips(): void
+    {
+        $this->validateAjaxNonce();
+
+        $paymentGateways    = $this->store->getAvailablePaymentGateways();
+
+        foreach ( $paymentGateways as $gateway ) {
+            $gateway = new $gateway();
+
+            if ( 'yes' === $gateway->settings['enabled'] ) {
+                wp_send_json_success($this->translations->configurationTips['valid_payment_tips']);
+            }
+        }
+
+        wp_send_json_error($this->translations->configurationTips['invalid_payment_tips']);
     }
 
     /**
@@ -411,72 +475,81 @@ class Settings
      */
     public function mercadopagoUpdateOptionCredentials(): void
     {
-        $this->validateAjaxNonce();
+        try {
+            $this->validateAjaxNonce();
 
-        $publicKeyProd   = Form::sanitizeTextFromPost('public_key_prod');
-        $accessTokenProd = Form::sanitizeTextFromPost('access_token_prod');
-        $publicKeyTest   = Form::sanitizeTextFromPost('public_key_test');
-        $accessTokenTest = Form::sanitizeTextFromPost('access_token_test');
+            $publicKeyProd   = Form::sanitizeTextFromPost('public_key_prod');
+            $accessTokenProd = Form::sanitizeTextFromPost('access_token_prod');
+            $publicKeyTest   = Form::sanitizeTextFromPost('public_key_test');
+            $accessTokenTest = Form::sanitizeTextFromPost('access_token_test');
 
-        $validatePublicKeyProd   = $this->seller->validatePublicKey($publicKeyProd);
-        $validateAccessTokenProd = $this->seller->validateAccessToken($accessTokenProd);
-        $validatePublicKeyTest   = $this->seller->validatePublicKey($publicKeyTest);
-        $validateAccessTokenTest = $this->seller->validateAccessToken($accessTokenTest);
+            $validatePublicKeyProd   = $this->seller->validatePublicKey($publicKeyProd);
+            $validateAccessTokenProd = $this->seller->validateAccessToken($accessTokenProd);
+            $validatePublicKeyTest   = $this->seller->validatePublicKey($publicKeyTest);
+            $validateAccessTokenTest = $this->seller->validateAccessToken($accessTokenTest);
 
-        if (
-            $validatePublicKeyProd['status'] === 200 &&
-            $validateAccessTokenProd['status'] === 200 &&
-            $validatePublicKeyProd['data']['is_test'] === false &&
-            $validateAccessTokenProd['data']['is_test'] === false
-        ) {
-            $this->seller->setCredentialsPublicKeyProd($publicKeyProd);
-            $this->seller->setCredentialsAccessTokenProd($accessTokenProd);
-            $this->seller->setHomologValidate($validateAccessTokenProd['data']['homologated']);
-            $this->seller->setClientId($validateAccessTokenProd['data']['client_id']);
+            if (
+                $validatePublicKeyProd['status'] === 200 &&
+                $validateAccessTokenProd['status'] === 200 &&
+                $validatePublicKeyProd['data']['is_test'] === false &&
+                $validateAccessTokenProd['data']['is_test'] === false
+            ) {
+                $this->seller->setCredentialsPublicKeyProd($publicKeyProd);
+                $this->seller->setCredentialsAccessTokenProd($accessTokenProd);
+                $this->seller->setHomologValidate($validateAccessTokenProd['data']['homologated']);
+                $this->seller->setClientId($validateAccessTokenProd['data']['client_id']);
 
-            $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
-            if ($sellerInfo['status'] === 200) {
-                $this->store->setCheckoutCountry($sellerInfo['data']['site_id']);
-                $this->seller->setSiteId($sellerInfo['data']['site_id']);
-                $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
-            }
-
-            if ((empty($publicKeyTest) && empty($accessTokenTest)) || (
-                $validatePublicKeyTest['status'] === 200 &&
-                $validateAccessTokenTest['status'] === 200 &&
-                $validatePublicKeyTest['data']['is_test'] === true &&
-                $validateAccessTokenTest['data']['is_test'] === true
-            )) {
-                $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
-                $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
-
-                if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
-                    $this->store->setCheckboxCheckoutTestMode('no');
-                    $response = [
-                        'type'      => 'alert',
-                        'message'   => $this->translations->updateCredentials['no_test_mode_title'],
-                        'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
-                        'test_mode' => 'no',
-                    ];
-                    wp_send_json_error($response);
+                $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
+                if ($sellerInfo['status'] === 200) {
+                    $this->store->setCheckoutCountry($sellerInfo['data']['site_id']);
+                    $this->seller->setSiteId($sellerInfo['data']['site_id']);
+                    $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
                 }
+
+                if ((empty($publicKeyTest) && empty($accessTokenTest)) || (
+                    $validatePublicKeyTest['status'] === 200 &&
+                    $validateAccessTokenTest['status'] === 200 &&
+                    $validatePublicKeyTest['data']['is_test'] === true &&
+                    $validateAccessTokenTest['data']['is_test'] === true
+                )) {
+                    $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
+                    $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
+
+                    if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
+                        $this->store->setCheckboxCheckoutTestMode('no');
+                        $this->plugin->executeUpdateCredentialAction();
+
+                        $response = [
+                            'type'      => 'alert',
+                            'message'   => $this->translations->updateCredentials['no_test_mode_title'],
+                            'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
+                            'test_mode' => 'no',
+                        ];
+
+                        wp_send_json_error($response);
+                    }
+                }
+
+                $this->plugin->executeUpdateCredentialAction();
+
+                wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
             }
 
-            do_action($this->plugin::UPDATE_CREDENTIALS_ACTION);
+            $response = [
+                'type'      => 'error',
+                'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
+                'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] . ' ',
+                'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
+                'link'      => $this->links->getLinks()['mercadopago_credentials'],
+                'test_mode' => $this->store->getCheckboxCheckoutTestMode()
+            ];
 
-            wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
+            wp_send_json_error($response);
+        } catch (\Exception $e) {
+            $this->logs->file->error("Mercado pago gave error in update option credentials: {$e->getMessage()}",
+                __CLASS__
+            );
         }
-
-        $response = [
-            'type'      => 'error',
-            'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
-            'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'],
-            'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
-            'link'      => '#',
-            'test_mode' => $this->store->getCheckboxCheckoutTestMode()
-        ];
-
-        wp_send_json_error($response);
     }
 
     /**
@@ -488,21 +561,23 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $storeId       = Form::sanitizeTextFromPost('store_category_id');
-        $storeName     = Form::sanitizeTextFromPost('store_identificator');
-        $storeCategory = Form::sanitizeTextFromPost('store_categories');
-        $customDomain  = Form::sanitizeTextFromPost('store_url_ipn');
-        $integratorId  = Form::sanitizeTextFromPost('store_integrator_id');
-        $debugMode     = Form::sanitizeTextFromPost('store_debug_mode');
+        $storeId              = Form::sanitizeTextFromPost('store_category_id');
+        $storeName            = Form::sanitizeTextFromPost('store_identificator');
+        $storeCategory        = Form::sanitizeTextFromPost('store_categories');
+        $customDomain         = Form::sanitizeTextFromPost('store_url_ipn');
+        $customDomainOptions  = Form::sanitizeTextFromPost('store_url_ipn_options');
+        $integratorId         = Form::sanitizeTextFromPost('store_integrator_id');
+        $debugMode            = Form::sanitizeTextFromPost('store_debug_mode');
 
         $this->store->setStoreId($storeId);
         $this->store->setStoreName($storeName);
         $this->store->setStoreCategory($storeCategory);
         $this->store->setCustomDomain($customDomain);
+        $this->store->setCustomDomainOptions($customDomainOptions);
         $this->store->setIntegratorId($integratorId);
         $this->store->setDebugMode($debugMode);
 
-        do_action($this->plugin::UPDATE_STORE_INFO_ACTION);
+        $this->plugin->executeUpdateStoreInfoAction();
 
         wp_send_json_success($this->translations->updateStore['valid_configuration']);
     }
@@ -532,7 +607,7 @@ class Settings
 
         $this->store->setCheckboxCheckoutTestMode($checkoutTestMode);
 
-        do_action($this->plugin::UPDATE_TEST_MODE_ACTION);
+        $this->plugin->executeUpdateTestModeAction();
 
         if ($validateCheckoutTestMode) {
             wp_send_json_success('Mercado Pago\'s Payment Methods in Test Mode');
@@ -548,7 +623,7 @@ class Settings
      */
     private function validateAjaxNonce(): void
     {
-        $this->currentUser->validateUserNeededPermissions();
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+        $this->currentUser->validateUserNeededPermissions();
     }
 }

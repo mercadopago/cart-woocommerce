@@ -8,6 +8,9 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
 {
     /**
      * Preference Transaction constructor
+     *
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order)
     {
@@ -28,20 +31,16 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     /**
      * Create preference
      *
-     * @return string|bool
+     * @return array|bool
      */
-    public function createPreference(): string
+    public function createPreference()
     {
         $preference = $this->getTransaction('Preference');
 
-        try {
-            $data = $preference->save();
-            $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
-            return $this->mercadopago->store->isTestMode() ? $data['sandbox_init_point'] : $data['init_point'];
-        } catch (\Exception $e) {
-            $this->mercadopago->logs->file->error('Preference creation failed: ' . $e->getMessage(), $this->gateway::LOG_SOURCE);
-            return false;
-        }
+        $data = $preference->save();
+        $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
+        return $data;
+
     }
 
     /**

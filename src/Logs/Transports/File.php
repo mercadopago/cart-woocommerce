@@ -34,6 +34,8 @@ class File implements LogInterface
 
     /**
      * File Logs constructor
+     *
+     * @param Store $store
      */
     public function __construct(Store $store)
     {
@@ -126,7 +128,7 @@ class File implements LogInterface
      */
     private function save(string $level, string $message, string $source, $context = []): void
     {
-        if (!$this->debugMode) {
+        if (!$this->debugMode && ($level != LogLevels::ERROR)) {
             return;
         }
 

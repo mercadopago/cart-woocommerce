@@ -79,7 +79,7 @@ final class CurrentUser
     /**
      * Verify if current_user has specifics roles
      *
-     * @param array $roles 'administrator | editor | author | contributor | subscriber'
+     * @param array $roles
      *
      * @return bool
      */
@@ -108,10 +108,10 @@ final class CurrentUser
      */
     public function validateUserNeededPermissions(): void
     {
-        $neededRoles = ['administrator', 'editor', 'author', 'contributor', 'subscriber'];
+        $neededRoles = ['administrator', 'manage_woocommerce'];
 
         if (!$this->userHasRoles($neededRoles)) {
-            $this->logs->file->error('User does not have permission (need admin or editor)', __CLASS__);
+            $this->logs->file->error('User does not have permissions', __CLASS__);
             wp_send_json_error('Forbidden', 403);
         }
     }

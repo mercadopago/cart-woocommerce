@@ -30,6 +30,8 @@ final class Links
 
     /**
      * Links constructor
+     * 
+     * @param Country $country
      */
     public function __construct(Country $country)
     {
@@ -50,7 +52,8 @@ final class Links
             $this->getMercadoPagoLinks($countryConfig),
             $this->getCreditsLinks($countryConfig),
             $this->getAdminLinks(),
-            $this->getStoreLinks()
+            $this->getStoreLinks(),
+            $this->getWordpressLinks(),
         );
     }
 
@@ -89,7 +92,7 @@ final class Links
             'mercadopago_home'                 => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/home',
             'mercadopago_costs'                => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/costs-section',
             'mercadopago_test_user'            => self::MP_URL . '/developers/panel/test-users',
-            'mercadopago_credentials'          => self::MP_URL . '/developers/panel/credentials',
+            'mercadopago_credentials'          => self::MP_URL_PREFIX . $countryConfig['suffix_url'] .  '/settings/account/credentials',
             'mercadopago_developers'           => self::MP_DEVELOPERS_URL,
             'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br/pix',
             'mercadopago_debts'                => self::MP_URL_PREFIX . '.com.ar/cuotas',
@@ -151,5 +154,17 @@ final class Links
         ];
 
         return array_key_exists($siteId, $country_links) ? $country_links[$siteId] : $country_links['MLA'];
+    }
+
+    /**
+     * Get wordpress links
+     *
+     * @return array
+     */
+    private function getWordpressLinks(): array
+    {
+        return [
+            'wordpress_review_link' => 'https://wordpress.org/support/plugin/woocommerce-mercadopago/reviews/?filter=5#new-post',
+        ];
     }
 }

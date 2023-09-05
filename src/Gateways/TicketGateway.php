@@ -26,6 +26,11 @@ class TicketGateway extends AbstractGateway
     /**
      * @const
      */
+    public const WEBHOOK_API_NAME = 'WC_WooMercadoPago_Ticket_Gateway';
+
+    /**
+     * @const
+     */
     public const LOG_SOURCE = 'MercadoPago_TicketGateway';
 
     /**
@@ -49,7 +54,7 @@ class TicketGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['method_title'];
         $this->method_description = $this->description;
-        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
@@ -57,7 +62,7 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
 
         $this->mercadopago->currency->handleCurrencyNotices($this);
-        $this->mercadopago->endpoints->registerApiEndpoint($this->id, [$this, 'webhook']);
+        $this->mercadopago->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
 
         $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
     }
@@ -69,11 +74,30 @@ class TicketGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
-        $this->form_fields = [
+        if($this->addMissingCredentialsNoticeAsFormField()){
+            return;
+        }
+        parent::init_form_fields();
+
+        $this->form_fields = array_merge($this->form_fields, [
             'config_header' => [
                 'type'        => 'mp_config_title',
                 'title'       => $this->adminTranslations['header_title'],
                 'description' => $this->adminTranslations['header_description'],
+            ],
+            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
+            'card_settings'  => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_settings_title'],
+                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
+                    'button_text' => $this->adminTranslations['card_settings_button_text'],
+                    'button_url'  => $this->links['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
+                ],
             ],
             'enabled' => [
                 'type'         => 'mp_toggle_switch',
@@ -130,9 +154,9 @@ class TicketGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['stock_reduce_disabled'],
                 ],
             ],
-            'discount'   => $this->getDiscountField(),
-            'commission' => $this->getCommissionField(),
-        ];
+            'gateway_discount' => $this->getDiscountField(),
+            'commission'       => $this->getCommissionField(),
+        ]);
     }
 
     /**
@@ -199,65 +223,72 @@ class TicketGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
-        parent::process_payment($order_id);
-
         $order    = wc_get_order($order_id);
-        $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
+        try {
+            parent::process_payment($order_id);
 
-        if (!empty($checkout['amount']) &&
-            !empty($checkout['docType']) &&
-            !empty($checkout['docNumber']) &&
-            !empty($checkout['paymentMethodId'])
-        ) {
-            $this->transaction = new TicketTransaction($this, $order, $checkout);
-            $response          = $this->transaction->createPayment();
+            $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
-            if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
+            if (!empty($checkout['amount']) &&
+                !empty($checkout['docType']) &&
+                !empty($checkout['docNumber']) &&
+                !empty($checkout['paymentMethodId'])
+            ) {
+                $this->transaction = new TicketTransaction($this, $order, $checkout);
+                $response          = $this->transaction->createPayment();
 
-                if ($response['status'] === 'pending' && (
-                    $response['status_detail'] === 'pending_waiting_payment' ||
-                    $response['status_detail'] ===  'pending_waiting_transfer'
-                )) {
-                    $this->mercadopago->woocommerce->cart->empty_cart();
+                if (is_array($response) && array_key_exists('status', $response)) {
+                    $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
 
-                    if ($this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
-                        wc_reduce_stock_levels($order_id);
+                    if ($response['status'] === 'pending' && (
+                        $response['status_detail'] === 'pending_waiting_payment' ||
+                        $response['status_detail'] ===  'pending_waiting_transfer'
+                    )) {
+                        $this->mercadopago->woocommerce->cart->empty_cart();
+
+                        if ($this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
+                            wc_reduce_stock_levels($order_id);
+                        }
+
+                        $this->mercadopago->order->setTicketMetadata($order, $response);
+                        $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
+
+                        if ($response['payment_type_id'] !== 'bank_transfer') {
+                            $description = sprintf(
+                                "Mercado Pago: %s <a target='_blank' href='%s'>%s</a>",
+                                $this->storeTranslations['congrats_title'],
+                                $response['transaction_details']['external_resource_url'],
+                                $this->storeTranslations['congrats_subtitle']
+                            );
+
+                            $this->mercadopago->order->addOrderNote($order, $description, 1);
+                        }
+
+                        $urlReceived = esc_url($order->get_checkout_order_received_url());
+
+                        return [
+                            'result'   => 'success',
+                            'redirect' => $urlReceived,
+                        ];
                     }
 
-                    $this->mercadopago->order->setTicketMetadata($order, $response);
-                    $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
-
-                    if ($response['payment_type_id'] !== 'bank_transfer') {
-                        $description = sprintf(
-                            "Mercado Pago: %s <a target='_blank' href='%s'>%s</a>",
-                            $this->storeTranslations['congrats_title'],
-                            $response['transaction_details']['external_resource_url'],
-                            $this->storeTranslations['congrats_subtitle']
-                        );
-
-                        $this->mercadopago->order->addOrderNote($order, $description, 1);
-                    }
-
-                    $urlReceived = esc_url($order->get_checkout_order_received_url());
-
-                    return [
-                        'result'   => 'success',
-                        'redirect' => $urlReceived,
-                    ];
+                    return $this->processReturnFail(
+                        new \Exception('Invalid status or status_detail on ' . __METHOD__),
+                        $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                        self::LOG_SOURCE,
+                        (array) $response
+                    );
                 }
-
-                return $this->processReturnFail(
-                    $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                    self::LOG_SOURCE
-                );
             }
+        } catch (\Exception $e) {
+            return $this->processReturnFail(
+                $e,
+                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                self::LOG_SOURCE,
+                (array) $order,
+                true
+            );
         }
-
-        return $this->processReturnFail(
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            self::LOG_SOURCE
-        );
     }
 
     /**
@@ -268,10 +299,6 @@ class TicketGateway extends AbstractGateway
     private function generateExPaymentsFields(): array
     {
         $paymentMethods = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
-
-        if (!is_array($paymentMethods)) {
-            $paymentMethods = json_decode($paymentMethods, true);
-        }
 
         $payment_list = [
             'type'                 => 'mp_checkbox_list',
@@ -308,7 +335,7 @@ class TicketGateway extends AbstractGateway
      */
     public function buildPaycashPaymentString(): string
     {
-        $getPaymentMethodsTicket = $this->mercadopago->seller->getCheckoutTicketPaymentMethods('[]');
+        $getPaymentMethodsTicket = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
 
         foreach ($getPaymentMethodsTicket as $payment) {
             if ('paycash' === $payment['id']) {
@@ -403,11 +430,7 @@ class TicketGateway extends AbstractGateway
     public function renderThankYouPage($order_id): void
     {
         $order        = wc_get_order($order_id);
-        $methodExists = method_exists($order, 'get_meta');
-
-        $transactionDetails  = $methodExists
-            ? $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order)
-            : $this->mercadopago->orderMetadata->getTicketTransactionDetailsPost($order->get_id(), true);
+        $transactionDetails  =  $this->mercadopago->orderMetadata->getTicketTransactionDetailsMeta($order);
 
         if (empty($transactionDetails)) {
             return;

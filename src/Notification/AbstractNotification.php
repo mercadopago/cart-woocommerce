@@ -4,7 +4,6 @@ namespace MercadoPago\Woocommerce\Notification;
 
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
@@ -43,6 +42,12 @@ abstract class AbstractNotification implements NotificationInterface
 
     /**
      * AbstractNotification constructor
+     *
+     * @param MercadoPagoGatewayInterface $gateway
+     * @param Logs $logs
+     * @param OrderStatus $orderStatus
+     * @param Seller $seller
+     * @param Store $store
      */
     public function __construct(
         MercadoPagoGatewayInterface $gateway,
@@ -65,7 +70,8 @@ abstract class AbstractNotification implements NotificationInterface
      *
      * @return void
      */
-    public function handleReceivedNotification($data) {
+    public function handleReceivedNotification($data): void
+    {
         $this->logs->file->info('Received data content', __CLASS__, $data);
     }
 
@@ -84,8 +90,8 @@ abstract class AbstractNotification implements NotificationInterface
 
 		if (empty($order_key)) {
             $message = 'external_reference not found';
-			$this->logs->file->error($message, __CLASS__);
-			$this->setResponse(422, null, $message);
+			$this->logs->file->error($message, __CLASS__, $data);
+			$this->setResponse(422, $message);
 		}
 
 		$invoice_prefix = get_option('_mp_store_identificator', 'WC-');
@@ -94,13 +100,13 @@ abstract class AbstractNotification implements NotificationInterface
 
 		if (!$order) {
             $message = 'Order is invalid';
-			$this->logs->file->error($message, __CLASS__);
+			$this->logs->file->error($message, __CLASS__, $data);
 			$this->setResponse(422, $message);
 		}
 
 		if ($order->get_id() !== $id) {
             $message = 'Order error';
-			$this->logs->file->error($message, __CLASS__);
+			$this->logs->file->error($message, __CLASS__, $order);
 			$this->setResponse(422, $message);
 		}
 
@@ -135,11 +141,7 @@ abstract class AbstractNotification implements NotificationInterface
      */
 	public function updateMeta(\WC_Order $order, string $key, $value): void
     {
-		if (method_exists($order, 'update_meta_data')) {
 			$order->update_meta_data($key, $value);
-		} else {
-			update_post_meta($order->get_id(), $key, $value);
-		}
 	}
 
     /**

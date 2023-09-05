@@ -23,6 +23,8 @@ final class Requester
 
     /**
      * Requester constructor
+     * 
+     * @param HttpClientInterface $httpClient
      */
     public function __construct(HttpClientInterface $httpClient)
     {

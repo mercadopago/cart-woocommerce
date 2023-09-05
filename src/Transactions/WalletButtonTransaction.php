@@ -13,8 +13,11 @@ class WalletButtonTransaction extends AbstractPreferenceTransaction
 
     /**
      * Wallet Button Transaction constructor
+     *
+     * @param AbstractGateway $gateway
+     * @param \WC_Order $order
      */
-    public function __construct(AbstractGateway $gateway, $order)
+    public function __construct(AbstractGateway $gateway, \WC_Order $order)
     {
         parent::__construct($gateway, $order);
 
@@ -32,7 +35,6 @@ class WalletButtonTransaction extends AbstractPreferenceTransaction
 
         $internalMetadata['checkout']               = 'pro';
         $internalMetadata['checkout_type']          = self::ID;
-        $internalMetadata['wallet_button_settings'] = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }

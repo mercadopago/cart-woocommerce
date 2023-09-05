@@ -8,7 +8,6 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -32,6 +31,12 @@ class CoreNotification extends AbstractNotification
 
     /**
      * CoreNotification constructor
+     *
+     * @param MercadoPagoGatewayInterface $gateway
+     * @param Logs $logs
+     * @param OrderStatus $orderStatus
+     * @param Seller $seller
+     * @param Store $store
      */
     public function __construct(
         MercadoPagoGatewayInterface $gateway,
@@ -78,7 +83,7 @@ class CoreNotification extends AbstractNotification
 
 			$this->handleSuccessfulRequest($notificationEntity->toArray());
 		} catch (\Exception $e) {
-			$this->logs->file->error($e->getMessage(), __CLASS__);
+			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
 			$this->setResponse(500, $e->getMessage());
 		}
     }
@@ -90,7 +95,7 @@ class CoreNotification extends AbstractNotification
 	 *
 	 * @return void
 	 */
-	public function handleSuccessfulRequest($data): void
+	public function handleSuccessfulRequest($data)
 	{
 		try {
 			$order           = parent::handleSuccessfulRequest($data);
@@ -109,7 +114,7 @@ class CoreNotification extends AbstractNotification
             $this->processStatus($processedStatus, $order, $data);
 		} catch (\Exception $e) {
 			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __CLASS__);
+			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
 		}
 	}
 
@@ -146,6 +151,16 @@ class CoreNotification extends AbstractNotification
 						']/[Coupon ' . $payment['coupon_amount'] .
 						']/[Refund ' . $data['total_refunded'] . ']'
 				);
+
+                $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - payment_type', $payment['payment_type_id']);
+
+                if ( strpos($payment['payment_type_id'], 'card') !== false ) {
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installments', $payment['payment_method_info']['installments']);
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installment_amount', $payment['payment_method_info']['installment_amount']);
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - transaction_amount', $payment['total_amount']);
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - total_paid_amount', $payment['paid_amount']);
+                    $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - card_last_four_digits', $payment['payment_method_info']['last_four_digits']);
+                }
 			}
 
 			if (count($payment_ids) != 0) {

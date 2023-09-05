@@ -50,6 +50,13 @@ class Gateway
 
     /**
      * Gateway constructor
+     *
+     * @param Options $options
+     * @param Template $template
+     * @param Store $store
+     * @param Checkout $checkout
+     * @param StoreTranslations $translations
+     * @param Url $url
      */
     public function __construct(
         Options           $options,
@@ -185,7 +192,7 @@ class Gateway
             $optionKey       = $gateway->get_option_key();
             $sanitizedFields = apply_filters('woocommerce_settings_api_sanitized_fields_' . $gateway->id, $gateway->settings);
 
-            return $this->options->set($optionKey, $sanitizedFields);
+            $this->options->set($optionKey, $sanitizedFields);
         });
     }
 
@@ -305,7 +312,7 @@ class Gateway
      */
     public function getGatewayIcon(string $iconName): string
     {
-        $path = $this->url->getPluginFileUrl("/assets/images/icons/$iconName", '.png', true);
+        $path = $this->url->getPluginFileUrl("assets/images/icons/$iconName", '.png', true);
         return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 
@@ -323,17 +330,18 @@ class Gateway
     {
         $treatedDiscount   = wp_strip_all_tags(wc_price($discount));
         $treatedCommission = wp_strip_all_tags(wc_price($commission));
+        $textConcatenation = $this->translations->commonCheckout['text_concatenation'];
 
         if ($discount > 0 && $commission > 0) {
-            return " ($strDiscount $treatedDiscount $strCommission $treatedCommission)";
+            return " ($strDiscount $treatedDiscount $textConcatenation $strCommission $treatedCommission)";
         }
 
         if ($discount > 0) {
-            return " ($strDiscount $discount)";
+            return " ($strDiscount $treatedDiscount)";
         }
 
         if ($commission > 0) {
-            return " ($strCommission $commission)";
+            return " ($strCommission $treatedCommission)";
         }
 
         return '';

@@ -37,7 +37,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<li class="mp-list-group-item">
 					<div class="mp-custom-checkbox">
 						<fieldset>
-							<input class="mp-custom-checkbox-input mp-child" id="<?php echo esc_attr($payment_method['field_key']); ?>" name="<?php echo esc_attr($payment_method['field_key']); ?>" type="checkbox" value="1" data-group="<?php echo esc_attr($key); ?>" <?php echo checked($payment_method['value'], 'yes'); ?>>
+							<input class="mp-custom-checkbox-input mp-child" id="<?php echo esc_attr($payment_method['field_key']); ?>" name="<?php echo esc_attr($payment_method['field_key']); ?>" type="checkbox" value="1" data-group="<?php echo esc_attr($key); ?>" <?= checked($payment_method['value'], 'yes'); ?>>
 							<label class="mp-custom-checkbox-label" for="<?php echo esc_attr($payment_method['field_key']); ?>"><?php echo esc_html($payment_method['label']); ?></label>
 						</fieldset>
 					</div>

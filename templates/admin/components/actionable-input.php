@@ -50,7 +50,7 @@ if (!defined('ABSPATH')) {
                         name="<?= esc_attr($field_key_checkbox); ?>"
                         id="<?= esc_attr($field_key_checkbox); ?>"
                         value="1"
-                        <?php checked($enabled, 'yes'); ?>
+                        <?= checked($enabled, 'yes'); ?>
                     />
                     <?= wp_kses_post($settings['checkbox_label']); ?>
                 </label>

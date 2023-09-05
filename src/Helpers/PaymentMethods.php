@@ -22,6 +22,8 @@ final class PaymentMethods
 
     /**
      * Url constructor
+     *
+     * @param Url $url
      */
     public function __construct(Url $url)
     {
@@ -130,7 +132,7 @@ final class PaymentMethods
     {
         if (CreditsGateway::isAvailable()) {
             $paymentMethods[] = [
-                'src' => $this->url->getPluginFileUrl('/assets/images/icons/icon-credits', '.png', true),
+                'src' => $this->url->getPluginFileUrl('assets/images/icons/icon-credits', '.png', true),
                 'alt' => 'Credits image'
             ];
         }
