@@ -58,7 +58,7 @@ class PixGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
         $this->expirationDate     = (int) $this->mercadopago->store->getCheckoutDateExpirationPix($this, '1');
 
@@ -132,7 +132,7 @@ class PixGateway extends AbstractGateway
                 'pix_template_title'               => $this->storeTranslations['pix_template_title'],
                 'pix_template_subtitle'            => $this->storeTranslations['pix_template_subtitle'],
                 'pix_template_alt'                 => $this->storeTranslations['pix_template_alt'],
-                'pix_template_src'                 => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix/pix', '.png', true),
+                'pix_template_src'                 => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/pix/pix', '.png', true),
                 'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
                 'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
                 'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
@@ -149,17 +149,18 @@ class PixGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
+        $order    = wc_get_order($order_id);
         try {
             parent::process_payment($order_id);
 
-            $order    = wc_get_order($order_id);
             $checkout = Form::sanitizeFromData($_POST);
 
             if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
                 return $this->processReturnFail(
                     new \Exception('Email not valid on ' . __METHOD__),
                     $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-                    self::LOG_SOURCE
+                    self::LOG_SOURCE,
+                    (array) $order
                 );
             }
 
@@ -198,8 +199,10 @@ class PixGateway extends AbstractGateway
         } catch (\Exception $e) {
             return $this->processReturnFail(
                 $e,
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                self::LOG_SOURCE
+                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                self::LOG_SOURCE,
+                (array) $order,
+                true
             );
         }
     }
@@ -324,8 +327,8 @@ class PixGateway extends AbstractGateway
                 'title' => $this->adminTranslations['advanced_configuration_subtitle'],
                 'class' => 'mp-small-text',
             ],
-            'discount'   => $this->getDiscountField(),
-            'commission' => $this->getCommissionField(),
+            'gateway_discount' => $this->getDiscountField(),
+            'commission'       => $this->getCommissionField(),
         ];
     }
 
@@ -481,7 +484,7 @@ class PixGateway extends AbstractGateway
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/order/pix-order-received.php',
             [
-                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/pix/pix', '.png', true),
+                'img_pix'             => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/pix/pix', '.png', true),
                 'amount'              => Numbers::format($transactionAmount),
                 'qr_base64'           => $qrCodeBase64,
                 'title_purchase_pix'  => $this->storeTranslations['title_purchase_pix'],

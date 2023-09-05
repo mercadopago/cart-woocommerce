@@ -281,9 +281,28 @@ class Seller
     /**
      * @return array
      */
+    public function getPaymentMethodsByGatewayOption(string $gatewayOption): array
+    {
+        $paymentMethods = $this->options->get($gatewayOption, []);
+        if (!$paymentMethods) {
+            $this->updatePaymentMethods();
+            $paymentMethods = $this->options->get($gatewayOption, []);
+        }
+
+        if (!is_array($paymentMethods)) {
+            $paymentMethods = json_decode($paymentMethods);
+        }
+
+        return $paymentMethods;
+    }
+
+
+    /**
+     * @return array
+     */
     public function getCheckoutBasicPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_BASIC_PAYMENT_METHODS, []);
+        return $this->getPaymentMethodsByGatewayOption(self::CHECKOUT_BASIC_PAYMENT_METHODS);
     }
 
     /**
@@ -297,11 +316,11 @@ class Seller
     /**
      * @param string $default
      *
-     * @return mixed
+     * @return array
      */
-    public function getCheckoutTicketPaymentMethods(string $default = '')
+    public function getCheckoutTicketPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_TICKET_PAYMENT_METHODS, $default);
+        return $this->getPaymentMethodsByGatewayOption(self::CHECKOUT_TICKET_PAYMENT_METHODS);
     }
 
     /**
@@ -340,7 +359,7 @@ class Seller
      */
     public function getCheckoutPixPaymentMethods(): array
     {
-        return $this->options->get(self::CHECKOUT_PAYMENT_METHOD_PIX, []);
+        return $this->getPaymentMethodsByGatewayOption(self::CHECKOUT_PAYMENT_METHOD_PIX);
     }
 
     /**
@@ -530,7 +549,7 @@ class Seller
      */
     public function buildPaymentPlaces(array $serializedPaymentMethods): array
     {
-        $payment_places = [
+        $paymentPlaces = [
             'paycash' => [
                 [
                     'payment_option_id' => '7eleven',
@@ -566,8 +585,8 @@ class Seller
         ];
 
         foreach ($serializedPaymentMethods as $key => $method) {
-            if (isset($payment_places[$method['id']])) {
-                $serializedPaymentMethods[$key]['payment_places'] = $payment_places[$method['id']];
+            if (isset($paymentPlaces[$method['id']])) {
+                $serializedPaymentMethods[$key]['payment_places'] = $paymentPlaces[$method['id']];
             }
         }
 
@@ -604,7 +623,7 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to get seller info: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to get seller info: {$e->getMessage()}",
                 __CLASS__
             );
             return [
@@ -673,7 +692,7 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to validate seller credentials: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to validate seller credentials: {$e->getMessage()}",
                 __CLASS__
             );
             return [
@@ -722,7 +741,7 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to get seller payment methods: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to get seller payment methods: {$e->getMessage()}",
                 __CLASS__
             );
             return [
@@ -761,7 +780,7 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error to get seller payment methods by ID: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error to get seller payment methods by ID: {$e->getMessage()}",
                 __CLASS__
             );
             return [

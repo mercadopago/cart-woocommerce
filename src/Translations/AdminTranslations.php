@@ -112,7 +112,7 @@ class AdminTranslations
 
     /**
      * Translations constructor
-     * 
+     *
      * @param Links $links
      */
     public function __construct(Links $links)
@@ -565,8 +565,8 @@ class AdminTranslations
             'credits_banner_toggle_mobile'              => __('Mobile', 'woocommerce-mercadopago'),
             'credits_banner_toggle_title'               => __('Component visualization', 'woocommerce-mercadopago'),
             'credits_banner_toggle_subtitle'            => __('Check below how this feature will be displayed to your customers:', 'woocommerce-mercadopago'),
-            'advanced_configuration_title'               => __('Advanced settings', 'woocommerce-mercadopago'),
-            'advanced_configuration_description'         => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'advanced_configuration_title'              => __('Advanced settings', 'woocommerce-mercadopago'),
+            'advanced_configuration_description'        => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
             'discount_title'                            => __('Discount in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
             'discount_description'                      => __('Enable it if you want to automatically decline payments that are not instantly approved by banks or other institutions.', 'woocommerce-mercadopago'),
             'discount_checkbox_label'                   => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
@@ -701,6 +701,9 @@ class AdminTranslations
             'method_title'                 => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
             'header_title'                 => __('Transparent Checkout | Invoice or Loterica', 'woocommerce-mercadopago'),
             'header_description'           => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
+            'card_settings_title'          => __('Mercado Pago plugin general settings', 'woocommerce-mercadopago'),
+            'card_settings_subtitle'       => __('Set the deadlines and fees, test your store or access the Plugin manual.', 'woocommerce-mercadopago'),
+            'card_settings_button_text'    => __('Go to Settings', 'woocommerce-mercadopago'),
             'enabled_title'                => __('Enable the Checkout', 'woocommerce-mercadopago'),
             'enabled_subtitle'             => __('By disabling it, you will disable all invoice payments from Mercado Pago Transparent Checkout.', 'woocommerce-mercadopago'),
             'enabled_enabled'              => __('The transparent checkout for tickets is <b>enabled</b>.', 'woocommerce-mercadopago'),
@@ -901,6 +904,8 @@ class AdminTranslations
         $this->configurationTips = [
             'valid_store_tips'         => __('Store business fields are valid', 'woocommerce-mercadopago'),
             'invalid_store_tips'       => __('Store business fields could not be validated', 'woocommerce-mercadopago'),
+            'valid_payment_tips'         => __('At least one paymet method is enabled', 'woocommerce-mercadopago'),
+            'invalid_payment_tips'       => __('No payment method enabled', 'woocommerce-mercadopago'),
             'valid_credentials_tips'   => __('Credentials fields are valid', 'woocommerce-mercadopago'),
             'invalid_credentials_tips' => __('Credentials fields could not be validated', 'woocommerce-mercadopago'),
         ];

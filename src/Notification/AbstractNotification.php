@@ -42,7 +42,7 @@ abstract class AbstractNotification implements NotificationInterface
 
     /**
      * AbstractNotification constructor
-     * 
+     *
      * @param MercadoPagoGatewayInterface $gateway
      * @param Logs $logs
      * @param OrderStatus $orderStatus
@@ -90,7 +90,7 @@ abstract class AbstractNotification implements NotificationInterface
 
 		if (empty($order_key)) {
             $message = 'external_reference not found';
-			$this->logs->file->error($message, __CLASS__);
+			$this->logs->file->error($message, __CLASS__, $data);
 			$this->setResponse(422, $message);
 		}
 
@@ -100,13 +100,13 @@ abstract class AbstractNotification implements NotificationInterface
 
 		if (!$order) {
             $message = 'Order is invalid';
-			$this->logs->file->error($message, __CLASS__);
+			$this->logs->file->error($message, __CLASS__, $data);
 			$this->setResponse(422, $message);
 		}
 
 		if ($order->get_id() !== $id) {
             $message = 'Order error';
-			$this->logs->file->error($message, __CLASS__);
+			$this->logs->file->error($message, __CLASS__, $order);
 			$this->setResponse(422, $message);
 		}
 

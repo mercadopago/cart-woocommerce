@@ -101,7 +101,7 @@ class Order
 
     /**
      * Order constructor
-     * 
+     *
      * @param Template $template
      * @param OrderMetadata $orderMetadata
      * @param StoreTranslations $storeTranslations
@@ -161,7 +161,7 @@ class Order
 
     /**
      * Load the Status Sync Metabox script and style
-     * 
+     *
      * @param \WC_Order $order
      */
     private function loadScripts($order): void
@@ -187,9 +187,9 @@ class Order
 
     /**
      * Get the data to be renreded on the Status Sync Metabox
-     * 
+     *
      * @param \WC_Order $order
-     * 
+     *
      * @return array
      */
     private function getMetaboxData($order): array
@@ -203,7 +203,7 @@ class Order
             case 'success':
                 return [
                     'card_title'        => $this->adminTranslations->statusSync['card_title'],
-                    'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-success', '.png', true),
+                    'img_src'           => $this->url->getPluginFileUrl('assets/images/icons/icon-success', '.png', true),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
                     'link'              => 'https://www.mercadopago.com',
@@ -215,7 +215,7 @@ class Order
             case 'pending':
                 return [
                     'card_title'        => $this->adminTranslations->statusSync['card_title'],
-                    'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-alert', '.png', true),
+                    'img_src'           => $this->url->getPluginFileUrl('assets/images/icons/icon-alert', '.png', true),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
                     'link'              => 'https://www.mercadopago.com',
@@ -229,7 +229,7 @@ class Order
             case 'charged_back':
                 return [
                     'card_title'        => $this->adminTranslations->statusSync['card_title'],
-                    'img_src'           => $this->url->getPluginFileUrl('/assets/images/icons/icon-warning', '.png', true),
+                    'img_src'           => $this->url->getPluginFileUrl('assets/images/icons/icon-warning', '.png', true),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
                     'link'              => 'https://www.mercadopago.com/developers',
@@ -245,9 +245,9 @@ class Order
 
     /**
      * Get the last order payment info
-     * 
+     *
      * @param \WC_Order $order
-     * 
+     *
      * @return array|bool
      */
     private function getLastPaymentInfo($order)
@@ -255,14 +255,14 @@ class Order
         try {
             $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
             $lastPaymentId = trim(end($paymentsIds));
-    
+
             if (!$lastPaymentId) {
                 return false;
             }
-    
+
             $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
             $response = $this->requester->get("/v1/payments/$lastPaymentId", $headers);
-    
+
             return $response->getData();
         } catch (\Exception $e) {
             return false;
@@ -271,7 +271,7 @@ class Order
 
     /**
      * Updates the order based on current payment status from API
-     * 
+     *
      * @param \WC_Order $order
      */
     public function paymentStatusSync(): void
@@ -292,7 +292,7 @@ class Order
 				$this->adminTranslations->statusSync['response_success'],
 			);
 		} catch ( \Exception $e ) {
-            $this->logs->file->error("'Mercado pago gave error in payment status Sync: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error in payment status Sync: {$e->getMessage()}",
                 __CLASS__
             );
 			wp_send_json_error(

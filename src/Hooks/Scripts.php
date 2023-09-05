@@ -44,7 +44,7 @@ class Scripts
 
     /**
      * Scripts constructor
-     * 
+     *
      * @param Url $url
      * @param Seller $seller
      */
@@ -163,6 +163,30 @@ class Scripts
         ];
 
         $this->registerAdminScript(self::NOTICES_SCRIPT_NAME, $file, $variables);
+    }
+
+    /**
+     * Register credits script on admin
+     *
+     * @return void
+     */
+    public function registerCreditsAdminScript(string $name, string $file, array $variables = []): void
+    {
+        if ($this->url->validateSection('woo-mercado-pago-credits')) {
+            $this->registerAdminScript($name, $file, $variables);
+        }
+    }
+
+    /**
+     * Register credits style on admin
+     *
+     * @return void
+     */
+    public function registerCreditsAdminStyle(string $name, string $file): void
+    {
+        if ($this->url->validateSection('woo-mercado-pago-credits')) {
+            $this->registerAdminStyle($name, $file);
+        }
     }
 
     /**

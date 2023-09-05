@@ -186,8 +186,11 @@ class Settings
             );
 
             $this->scripts->registerCaronteAdminScript();
-            $this->scripts->registerNoticesAdminScript();
             $this->scripts->registerMelidataAdminScript();
+        }
+
+        if ($this->canLoadScriptsNoticesAdmin()) {
+            $this->scripts->registerNoticesAdminScript();
         }
     }
 
@@ -205,6 +208,22 @@ class Settings
     }
 
     /**
+     * Check if scripts notices can be loaded
+     *
+     * @return bool
+     */
+    public function canLoadScriptsNoticesAdmin(): bool
+    {
+        return $this->admin->isAdmin() && (
+                $this->url->validateUrl('index') ||
+                $this->url->validateUrl('plugins') ||
+                $this->url->validatePage('wc-admin') ||
+                $this->url->validatePage('wc-settings') ||
+                $this->url->validatePage('mercadopago-settings')
+            );
+    }
+
+    /**
      * Register ajax endpoints
      *
      * @return void
@@ -218,8 +237,9 @@ class Settings
         $this->endpoints->registerAjaxEndpoint('mp_update_access_token', [$this, 'mercadopagoValidateAccessToken']);
         $this->endpoints->registerAjaxEndpoint('mp_get_requirements', [$this, 'mercadopagoValidateRequirements']);
         $this->endpoints->registerAjaxEndpoint('mp_get_payment_methods', [$this, 'mercadopagoPaymentMethods']);
-        $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
+        $this->endpoints->registerAjaxEndpoint('mp_validate_payment_tips', [$this, 'mercadopagoValidatePaymentTips']);
     }
 
     /**
@@ -328,7 +348,7 @@ class Settings
 
             wp_send_json_success($payment_gateway_properties);
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
                 __CLASS__
             );
             $response = [
@@ -337,6 +357,28 @@ class Settings
 
             wp_send_json_error($response);
         }
+    }
+
+     /**
+     * Validate store tips
+     *
+     * @return void
+     */
+    public function mercadopagoValidatePaymentTips(): void
+    {
+        $this->validateAjaxNonce();
+
+        $paymentGateways    = $this->store->getAvailablePaymentGateways();
+
+        foreach ( $paymentGateways as $gateway ) {
+            $gateway = new $gateway();
+
+            if ( 'yes' === $gateway->settings['enabled'] ) {
+                wp_send_json_success($this->translations->configurationTips['valid_payment_tips']);
+            }
+        }
+
+        wp_send_json_error($this->translations->configurationTips['invalid_payment_tips']);
     }
 
     /**
@@ -475,12 +517,15 @@ class Settings
 
                     if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
                         $this->store->setCheckboxCheckoutTestMode('no');
+                        $this->plugin->executeUpdateCredentialAction();
+
                         $response = [
                             'type'      => 'alert',
                             'message'   => $this->translations->updateCredentials['no_test_mode_title'],
                             'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
                             'test_mode' => 'no',
                         ];
+
                         wp_send_json_error($response);
                     }
                 }
@@ -501,7 +546,7 @@ class Settings
 
             wp_send_json_error($response);
         } catch (\Exception $e) {
-            $this->logs->file->error("'Mercado pago gave error in update option credentials: {$e->getMessage()}",
+            $this->logs->file->error("Mercado pago gave error in update option credentials: {$e->getMessage()}",
                 __CLASS__
             );
         }

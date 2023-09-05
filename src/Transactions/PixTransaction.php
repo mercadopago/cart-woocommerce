@@ -14,7 +14,7 @@ class PixTransaction extends AbstractPaymentTransaction
 
     /**
      * Pix Transaction constructor
-     * 
+     *
      * @param AbstractGateway $gateway
      * @param \WC_Order $order
      * @param array $checkout
@@ -39,7 +39,6 @@ class PixTransaction extends AbstractPaymentTransaction
 
         $internalMetadata['checkout']      = 'custom';
         $internalMetadata['checkout_type'] = self::ID;
-        $internalMetadata['pix_settings']  = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }

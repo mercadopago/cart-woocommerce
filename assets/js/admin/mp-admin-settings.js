@@ -212,6 +212,31 @@ function mpValidateStoreTips() {
     });
 }
 
+function mpValidatePaymentTips() {
+  const iconPayment = document.getElementById('mp-settings-icon-payment');
+  jQuery
+    .post(
+      ajaxurl,
+      {
+        action: 'mp_validate_payment_tips',
+        nonce: mercadopago_settings_admin_js_params.nonce,
+      },
+      function () {
+      }
+    )
+    .done(function (response) {
+      if (response.success) {
+          iconPayment.classList.remove('mp-settings-icon-payment');
+          iconPayment.classList.add('mp-settings-icon-success');
+      } else {
+          iconPayment.classList.remove('mp-settings-icon-success');
+      }
+    })
+    .fail(function () {
+      iconPayment.classList.remove('mp-settings-icon-success');
+    });
+}
+
 function mpGoToNextStep(actualStep, nextStep, actualArrowId, nextArrowId) {
   const actual = document.getElementById(actualStep);
   const actualArrow = document.getElementById(actualArrowId);
@@ -670,6 +695,7 @@ function mp_settings_screen_load() {
   mpValidateCredentials();
   mpValidateCredentialsTips();
   mpValidateStoreTips();
+  mpValidatePaymentTips();
   mpVerifyAlertTestMode();
   mpUpdateOptionCredentials();
   mpUpdateStoreInformation();

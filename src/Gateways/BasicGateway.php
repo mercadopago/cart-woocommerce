@@ -53,7 +53,7 @@ class BasicGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
@@ -206,8 +206,8 @@ class BasicGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
                 ],
             ],
-            'discount'   => $this->getDiscountField(),
-            'commission' => $this->getCommissionField(),
+            'gateway_discount' => $this->getDiscountField(),
+            'commission'       => $this->getCommissionField(),
         ]);
     }
 
@@ -248,7 +248,7 @@ class BasicGateway extends AbstractGateway
                 'payment_methods_methods'          => wp_json_encode($paymentMethods),
                 'method'                           => $this->settings['method'],
                 'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
-                'checkout_redirect_src'            => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/cho-pro-redirect-v2', '.png', true),
+                'checkout_redirect_src'            => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/cho-pro-redirect-v2', '.png', true),
                 'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
                 'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
                 'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
@@ -266,10 +266,10 @@ class BasicGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
+        $order             = wc_get_order($order_id);
         try {
             parent::process_payment($order_id);
 
-            $order             = wc_get_order($order_id);
             $this->transaction = new BasicTransaction($this, $order);
             $method            = $this->mercadopago->options->getGatewayOption($this, 'method', 'redirect');
 
@@ -291,7 +291,9 @@ class BasicGateway extends AbstractGateway
             return $this->processReturnFail(
                 $e,
                 $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-                self::LOG_SOURCE
+                self::LOG_SOURCE,
+                (array) $order,
+                true
             );
         }
 
@@ -308,7 +310,7 @@ class BasicGateway extends AbstractGateway
     private function validateBackUrl($url, $default): string
     {
         if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL) === false) {
-            $icon = $this->mercadopago->url->getPluginFileUrl('/assets/images/icons/icon-warning', '.png', true);
+            $icon = $this->mercadopago->url->getPluginFileUrl('assets/images/icons/icon-warning', '.png', true);
             return "<img width='14' height='14' style='vertical-align: middle' src='$icon' /> ". $this->adminTranslations['invalid_back_url'];
         }
 
@@ -421,7 +423,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-phone', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
                     ],
                 ],
@@ -429,7 +431,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-wallet', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ],
                 ],
@@ -437,7 +439,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_protection'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-protection', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
                     ],
                 ]
@@ -447,7 +449,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-phone', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
                     ]
                 ],
@@ -455,7 +457,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_2'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-wallet', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ]
                 ],
@@ -463,7 +465,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_protection'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-protection', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
                     ]
                 ]
@@ -473,7 +475,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_3'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-wallet', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ]
                 ],
@@ -481,7 +483,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone_installments'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone_installments'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-phone-installments', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone-installments', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone_installments'],
                     ]
                 ],
@@ -489,7 +491,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_protection_2'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection_2'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-protection', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
                     ]
                 ]
@@ -499,7 +501,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-phone', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
                     ]
                 ],
@@ -507,7 +509,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_3'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-wallet', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ]
                 ],
@@ -515,7 +517,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone_installments'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone_installments_2'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('/assets/images/checkouts/basic/blue-phone-installments', '.png', true),
+                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone-installments', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone_installments'],
                     ]
                 ]

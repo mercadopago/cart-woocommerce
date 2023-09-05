@@ -54,7 +54,7 @@ class TicketGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['method_title'];
         $this->method_description = $this->description;
-        $this->discount           = $this->getActionableValue('discount', 0);
+        $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
@@ -86,6 +86,19 @@ class TicketGateway extends AbstractGateway
                 'description' => $this->adminTranslations['header_description'],
             ],
             'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
+            'card_settings'  => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_settings_title'],
+                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
+                    'button_text' => $this->adminTranslations['card_settings_button_text'],
+                    'button_url'  => $this->links['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
+                ],
+            ],
             'enabled' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['enabled_title'],
@@ -141,8 +154,8 @@ class TicketGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['stock_reduce_disabled'],
                 ],
             ],
-            'discount'   => $this->getDiscountField(),
-            'commission' => $this->getCommissionField(),
+            'gateway_discount' => $this->getDiscountField(),
+            'commission'       => $this->getCommissionField(),
         ]);
     }
 
@@ -210,10 +223,10 @@ class TicketGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
+        $order    = wc_get_order($order_id);
         try {
             parent::process_payment($order_id);
 
-            $order    = wc_get_order($order_id);
             $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
             if (!empty($checkout['amount']) &&
@@ -262,7 +275,8 @@ class TicketGateway extends AbstractGateway
                     return $this->processReturnFail(
                         new \Exception('Invalid status or status_detail on ' . __METHOD__),
                         $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                        self::LOG_SOURCE
+                        self::LOG_SOURCE,
+                        (array) $response
                     );
                 }
             }
@@ -270,7 +284,9 @@ class TicketGateway extends AbstractGateway
             return $this->processReturnFail(
                 $e,
                 $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-                self::LOG_SOURCE
+                self::LOG_SOURCE,
+                (array) $order,
+                true
             );
         }
     }
@@ -283,10 +299,6 @@ class TicketGateway extends AbstractGateway
     private function generateExPaymentsFields(): array
     {
         $paymentMethods = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
-
-        if (!is_array($paymentMethods)) {
-            $paymentMethods = json_decode($paymentMethods, true);
-        }
 
         $payment_list = [
             'type'                 => 'mp_checkbox_list',
@@ -323,7 +335,7 @@ class TicketGateway extends AbstractGateway
      */
     public function buildPaycashPaymentString(): string
     {
-        $getPaymentMethodsTicket = $this->mercadopago->seller->getCheckoutTicketPaymentMethods('[]');
+        $getPaymentMethodsTicket = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
 
         foreach ($getPaymentMethodsTicket as $payment) {
             if ('paycash' === $payment['id']) {

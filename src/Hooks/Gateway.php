@@ -312,7 +312,7 @@ class Gateway
      */
     public function getGatewayIcon(string $iconName): string
     {
-        $path = $this->url->getPluginFileUrl("/assets/images/icons/$iconName", '.png', true);
+        $path = $this->url->getPluginFileUrl("assets/images/icons/$iconName", '.png', true);
         return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 
@@ -330,17 +330,18 @@ class Gateway
     {
         $treatedDiscount   = wp_strip_all_tags(wc_price($discount));
         $treatedCommission = wp_strip_all_tags(wc_price($commission));
+        $textConcatenation = $this->translations->commonCheckout['text_concatenation'];
 
         if ($discount > 0 && $commission > 0) {
-            return " ($strDiscount $treatedDiscount $strCommission $treatedCommission)";
+            return " ($strDiscount $treatedDiscount $textConcatenation $strCommission $treatedCommission)";
         }
 
         if ($discount > 0) {
-            return " ($strDiscount $discount)";
+            return " ($strDiscount $treatedDiscount)";
         }
 
         if ($commission > 0) {
-            return " ($strCommission $commission)";
+            return " ($strCommission $treatedCommission)";
         }
 
         return '';

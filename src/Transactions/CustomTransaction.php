@@ -13,7 +13,7 @@ class CustomTransaction extends AbstractPaymentTransaction
 
     /**
      * Custom Transaction constructor
-     * 
+     *
      * @param AbstractGateway $gateway
      * @param \WC_Order $order
      * @param array $checkout
@@ -40,7 +40,6 @@ class CustomTransaction extends AbstractPaymentTransaction
 
         $internalMetadata['checkout']         = 'custom';
         $internalMetadata['checkout_type']    = self::ID;
-        $internalMetadata['custom_settings']  = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $internalMetadata;
     }
