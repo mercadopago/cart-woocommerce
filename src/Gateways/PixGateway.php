@@ -149,17 +149,18 @@ class PixGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
+        $order    = wc_get_order($order_id);
         try {
             parent::process_payment($order_id);
 
-            $order    = wc_get_order($order_id);
             $checkout = Form::sanitizeFromData($_POST);
 
             if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
                 return $this->processReturnFail(
                     new \Exception('Email not valid on ' . __METHOD__),
                     $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-                    self::LOG_SOURCE
+                    self::LOG_SOURCE,
+                    (array) $order
                 );
             }
 
@@ -200,7 +201,7 @@ class PixGateway extends AbstractGateway
                 $e,
                 $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
                 self::LOG_SOURCE,
-                array(),
+                (array) $order,
                 true
             );
         }

@@ -333,10 +333,10 @@ class CustomGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
+        $order    = wc_get_order($order_id);
         try {
             parent::process_payment($order_id);
 
-            $order    = wc_get_order($order_id);
             $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
 
             switch ($checkout['checkout_type']) {
@@ -374,7 +374,7 @@ class CustomGateway extends AbstractGateway
                 $e,
                 $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
                 self::LOG_SOURCE,
-                array(),
+                (array) $order,
                 true
             );
         }
@@ -609,7 +609,8 @@ class CustomGateway extends AbstractGateway
             return $this->processReturnFail(
                 $e,
                 $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                self::LOG_SOURCE
+                self::LOG_SOURCE,
+                (array) $response
             );
         }
     }

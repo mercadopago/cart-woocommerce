@@ -217,10 +217,10 @@ class CreditsGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
+        $order              = wc_get_order($order_id);
         try {
             parent::process_payment($order_id);
 
-            $order              = wc_get_order($order_id);
             $this->transaction  = new CreditsTransaction($this, $order);
 
             $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
@@ -235,7 +235,7 @@ class CreditsGateway extends AbstractGateway
                 $e,
                 $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
                 self::LOG_SOURCE,
-                array(),
+                (array) $order,
                 true
             );
         }
