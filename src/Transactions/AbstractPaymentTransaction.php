@@ -36,7 +36,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $data = $payment->save();
         $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
         return $data;
-      
+
     }
 
     /**
@@ -46,9 +46,21 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
      */
     public function setAdditionalInfoTransaction(): void
     {
+        $this->setAdditionalInfoBaseInfoTransaction();
         $this->setAdditionalInfoItemsTransaction();
         $this->setAdditionalInfoShipmentsTransaction();
         $this->setAdditionalInfoPayerTransaction();
+    }
+
+    /**
+     * Set base information
+     *
+     * @return void
+     */
+    public function setAdditionalInfoBaseInfoTransaction(): void
+    {
+        $this->transaction->additional_info->ip_address = $this->mercadopago->url->getBaseUrl();
+        $this->transaction->additional_info->referral_url = $this->mercadopago->url->getServerAddress();
     }
 
     /**
