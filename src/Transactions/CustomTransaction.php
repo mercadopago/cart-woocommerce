@@ -25,7 +25,6 @@ class CustomTransaction extends AbstractPaymentTransaction
         $this->transaction->payment_method_id  = $this->checkout['paymentMethodId'];
         $this->transaction->installments       = (int) $this->checkout['installments'];
 
-        $this->setAdditionalInfoTransaction();
         $this->setTokenTransaction();
     }
 
