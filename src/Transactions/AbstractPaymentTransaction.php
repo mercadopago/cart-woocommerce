@@ -99,7 +99,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $seller->platform_url  = $this->mercadopago->url->getBaseUrl();
         $seller->referral_url  = $this->mercadopago->url->getBaseUrl();
 
-        //TODO verify address, phone and registration fields based on task PPWP-
+        //TODO verify address, phone and registration fields based on task PPWP-1929
     }
 
     /**
@@ -130,7 +130,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
             $payer->platform_email         = $this->mercadopago->currentUser->getCurrentUserData()->user_email;
             $payer->register_updated_at    = $this->mercadopago->currentUser->getCurrentUserData()->user_modified;
 
-            //TODO verify this field based on task PPWP-
+            //TODO verify this field based on task PPWP-1929
             //$payer->last_purchase          = $this->mercadopago->currentUser->getCurrentUserLastPurchase();
         }
 
