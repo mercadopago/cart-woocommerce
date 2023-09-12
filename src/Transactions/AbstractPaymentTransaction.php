@@ -49,6 +49,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $this->setAdditionalInfoItemsTransaction();
         $this->setAdditionalInfoShipmentsTransaction();
         $this->setAdditionalInfoPayerTransaction();
+        $this->setAdditionalInfoSellerTransaction();
     }
 
     /**
@@ -58,8 +59,8 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
      */
     public function setAdditionalInfoBaseInfoTransaction(): void
     {
-        $this->transaction->additional_info->ip_address = $this->mercadopago->url->getBaseUrl();
-        $this->transaction->additional_info->referral_url = $this->mercadopago->url->getServerAddress();
+        $this->transaction->additional_info->ip_address = $this->mercadopago->url->getServerAddress();
+        $this->transaction->additional_info->referral_url = $this->mercadopago->url->getBaseUrl();
     }
 
     /**
@@ -83,6 +84,25 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
     }
 
     /**
+     * Set additional seller information
+     *
+     * @return void
+     */
+    public function setAdditionalInfoSellerTransaction(): void
+    {
+        $seller = $this->transaction->additional_info->seller;
+
+        $seller->store_id      = $this->mercadopago->store->getStoreId();
+        $seller->business_type = $this->mercadopago->store->getStoreCategory('others');
+        $seller->collector     = $this->mercadopago->seller->getClientId();
+        $seller->website       = $this->mercadopago->url->getBaseUrl();
+        $seller->platform_url  = $this->mercadopago->url->getBaseUrl();
+        $seller->referral_url  = $this->mercadopago->url->getBaseUrl();
+
+        //TODO verify address, phone and registration fields based on task PPWP-
+    }
+
+    /**
      * Set additional payer information
      *
      * @return void
@@ -101,9 +121,8 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $payer->address->country     = $this->mercadopago->orderBilling->getCountry($this->order);
         $payer->address->zip_code    = $this->mercadopago->orderBilling->getZipcode($this->order);
         $payer->address->street_name = $this->mercadopago->orderBilling->getAddress1($this->order);
-        $payer->address->number      = $this->mercadopago->orderBilling->getAddress2($this->order);
+        $payer->address->apartment   = $this->mercadopago->orderBilling->getAddress2($this->order);
 
-        //registered user information
         if ($this->mercadopago->currentUser->isUserLoggedIn()) {
             $payer->registered_user        = true;
             $payer->identification->number = $this->mercadopago->currentUser->getCurrentUserMeta('billing_document', true);

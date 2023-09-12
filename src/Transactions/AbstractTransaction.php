@@ -244,11 +244,13 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      */
     public function setShipmentsTransaction($shipments): void
     {
-        $shipments->receiver_address->apartment   = $this->mercadopago->orderShipping->getAddress2($this->order);
-        $shipments->receiver_address->city_name   = $this->mercadopago->orderShipping->getCity($this->order);
-        $shipments->receiver_address->state_name  = $this->mercadopago->orderShipping->getState($this->order);
-        $shipments->receiver_address->zip_code    = $this->mercadopago->orderShipping->getZipcode($this->order);
-        $shipments->receiver_address->street_name = $this->mercadopago->orderShipping->getFullAddress($this->order);
+        $shipments->receiver_address->street_name     = $this->mercadopago->orderShipping->getAddress1($this->order);
+        $shipments->receiver_address->zip_code        = $this->mercadopago->orderShipping->getZipcode($this->order);
+        $shipments->receiver_address->city            = $this->mercadopago->orderShipping->getCity($this->order);
+        $shipments->receiver_address->state           = $this->mercadopago->orderShipping->getState($this->order);
+        $shipments->receiver_address->country         = $this->mercadopago->orderShipping->getCountry($this->order);
+        $shipments->receiver_address->apartment       = $this->mercadopago->orderShipping->getAddress2($this->order);
+
     }
 
     /**
