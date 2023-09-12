@@ -36,7 +36,6 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $data = $payment->save();
         $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
         return $data;
-
     }
 
     /**
@@ -94,9 +93,28 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
 
         $payer->first_name           = $this->mercadopago->orderBilling->getFirstName($this->order);
         $payer->last_name            = $this->mercadopago->orderBilling->getLastName($this->order);
+        $payer->user_email           = $this->mercadopago->orderBilling->getEmail($this->order);
         $payer->phone->number        = $this->mercadopago->orderBilling->getPhone($this->order);
+        $payer->mobile->number       = $this->mercadopago->orderBilling->getPhone($this->order);
+        $payer->address->city        = $this->mercadopago->orderBilling->getCity($this->order);
+        $payer->address->state       = $this->mercadopago->orderBilling->getState($this->order);
+        $payer->address->country     = $this->mercadopago->orderBilling->getCountry($this->order);
         $payer->address->zip_code    = $this->mercadopago->orderBilling->getZipcode($this->order);
-        $payer->address->street_name = $this->mercadopago->orderBilling->getFullAddress($this->order);
+        $payer->address->street_name = $this->mercadopago->orderBilling->getAddress1($this->order);
+        $payer->address->number      = $this->mercadopago->orderBilling->getAddress2($this->order);
+
+        //registered user information
+        if ($this->mercadopago->currentUser->isUserLoggedIn()) {
+            $payer->registered_user        = true;
+            $payer->identification->number = $this->mercadopago->currentUser->getCurrentUserMeta('billing_document', true);
+            $payer->registration_date      = $this->mercadopago->currentUser->getCurrentUserData()->user_registered;
+            $payer->platform_email         = $this->mercadopago->currentUser->getCurrentUserData()->user_email;
+            $payer->register_updated_at    = $this->mercadopago->currentUser->getCurrentUserData()->user_modified;
+
+            //TODO verify this field based on task PPWP-
+            //$payer->last_purchase          = $this->mercadopago->currentUser->getCurrentUserLastPurchase();
+        }
+
     }
 
     /**

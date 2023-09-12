@@ -48,6 +48,16 @@ final class CurrentUser
      *
      * @return \WP_User
      */
+    public function isUserLoggedIn(): bool
+    {
+        return is_user_logged_in();
+    }
+
+    /**
+     * Get WP current user
+     *
+     * @return \WP_User
+     */
     public function getCurrentUser(): \WP_User
     {
         return wp_get_current_user();
@@ -61,6 +71,16 @@ final class CurrentUser
     public function getCurrentUserRoles(): array
     {
         return $this->getCurrentUser()->roles;
+    }
+
+    /**
+     * Retrieves current user info
+     *
+     * @return  \WP_User|false
+     */
+    public function getCurrentUserData()
+    {
+        return get_userdata($this->getCurrentUser()->ID);
     }
 
     /**
@@ -114,5 +134,31 @@ final class CurrentUser
             $this->logs->file->error('User does not have permissions', __CLASS__);
             wp_send_json_error('Forbidden', 403);
         }
+    }
+
+    /**
+     * Returns the date of the user's last purchase with completed status
+     *
+     * @return string
+     */
+    public function getCurrentUserLastPurchase(): string
+    {
+        $purchase_dates = array();
+
+        $customer_orders = wc_get_orders(array(
+            'customer' => $this->getCurrentUser()->ID,
+            'status'   => 'completed',
+        ));
+
+        foreach ($customer_orders as $order) {
+            $purchase_dates[] = strtotime($order->get_date_completed());
+        }
+
+        rsort($purchase_dates);
+
+        if (!empty($purchase_dates)) {
+            return date('Y-m-d H:i:s', $purchase_dates[0]);
+        }
+        return "";
     }
 }
