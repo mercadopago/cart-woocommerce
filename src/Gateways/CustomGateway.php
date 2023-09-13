@@ -70,6 +70,16 @@ class CustomGateway extends AbstractGateway
     }
 
     /**
+     * Get checkout name
+     *
+     * @return string
+     */
+    public function getCheckoutName(): string
+    {
+        return self::CHECKOUT_NAME;
+    }
+
+    /**
      * Init form fields for checkout configuration
      *
      * @return void
@@ -559,8 +569,21 @@ class CustomGateway extends AbstractGateway
                     case 'in_process':
                         $this->mercadopago->woocommerce->cart->empty_cart();
 
-                        $checkoutType = $checkout['checkout_type'];
                         $statusDetail = $response['status_detail'];
+
+                        if ($statusDetail === 'pending_challenge') {
+                            $this->mercadopago->session->setSession('mp_3ds_url', $response['three_ds_info']['external_resource_url']);
+                            $this->mercadopago->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
+                            $this->mercadopago->session->setSession('mp_order_id', $order->ID);
+
+                            return [
+                                'result'   => 'success',
+                                'redirect' => false,
+                                'messages' => '<script>load3DSFlow();</script>',
+                            ];
+                        }
+
+                        $checkoutType = $checkout['checkout_type'];
                         $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_form_error'];
 
                         $urlReceived = esc_url($order->get_checkout_order_received_url());

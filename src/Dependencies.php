@@ -511,6 +511,7 @@ class Dependencies
             $this->url,
             $this->nonce,
             $this->currentUser,
+            $this->session,
             $this->logs
         );
     }

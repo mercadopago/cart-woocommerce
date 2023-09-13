@@ -17,7 +17,8 @@ final class Session
      */
     public function getSession(string $key)
     {
-        return $_SESSION[$key] ?? null;
+        //return $_SESSION[$key] ?? null;
+        return WC()->session->get($key) ?? null;
     }
 
     /**
@@ -30,7 +31,8 @@ final class Session
      */
     public function setSession(string $key, $value): void
     {
-        $_SESSION[$key] = $value;
+        //$_SESSION[$key] = $value;
+        WC()->session->set($key, $value) ?? null;
     }
 
     /**
@@ -42,6 +44,7 @@ final class Session
      */
     public function deleteSession(string $key): void
     {
-        unset($_SESSION[$key]);
+        //unset($_SESSION[$key]);
+        $this->setSession($key, null);
     }
 }
