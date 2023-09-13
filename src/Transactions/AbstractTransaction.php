@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 abstract class AbstractTransaction extends \WC_Payment_Gateway
@@ -139,27 +140,27 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
         $this->transaction->statement_descriptor = $this->mercadopago->store->getStoreName('Mercado Pago');
     }
 
-	/**
-	 * Get notification url
-	 *
-	 * @return string|void
+    /**
+     * Get notification url
+     *
+     * @return string|void
      */
-	private function getNotificationUrl()
+    private function getNotificationUrl()
     {
-		if (!strrpos(get_site_url(), 'localhost')) {
-			$notificationUrl = $this->mercadopago->store->getCustomDomain();
+        if (!strrpos(get_site_url(), 'localhost')) {
+            $notificationUrl = $this->mercadopago->store->getCustomDomain();
 
-			if (empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false) {
-				return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME);
-			} else {
+            if (empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false) {
+                return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME);
+            } else {
                 $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
                 if ($customDomainOptions === 'yes') {
                     return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway::WEBHOOK_API_NAME . '/'));
                 }
                 return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl));
-			}
-		}
-	}
+            }
+        }
+    }
 
     /**
      * Get binary mode
@@ -191,53 +192,54 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
      * @return array
      */
     public function getInternalMetadata(): array
-    {
-        $seller  = $this->mercadopago->seller->getClientId();
-        $siteId  = $this->mercadopago->seller->getSiteId();
-        $siteUrl = $this->mercadopago->options->get('siteurl');
+{
+    $seller  = $this->mercadopago->seller->getClientId();
+    $siteId  = $this->mercadopago->seller->getSiteId();
+    $siteUrl = $this->mercadopago->options->get('siteurl');
 
-        $zipCode = $this->mercadopago->orderBilling->getZipcode($this->order);
-        $zipCode = str_replace('-', '', $zipCode);
+    $zipCode = $this->mercadopago->orderBilling->getZipcode($this->order);
+    $zipCode = str_replace('-', '', $zipCode);
 
-        $user             = $this->mercadopago->currentUser->getCurrentUser();
-        $userId           = $user->ID;
-        $userRegistration = $user->user_registered;
+    $user             = $this->mercadopago->currentUser->getCurrentUser();
+    $userId           = $user->ID;
+    $userRegistration = $user->user_registered;
 
-        return [
-            'platform'         => MP_PLATFORM_ID,
-            'platform_version' => $this->mercadopago->woocommerce->version,
-            'module_version'   => MP_VERSION,
-            'php_version'      => PHP_VERSION,
-            'site_id'          => strtolower($siteId),
-            'sponsor_id'       => $this->countryConfigs['sponsor_id'],
-            'collector'        => $seller,
-            'test_mode'        => $this->mercadopago->store->isTestMode(),
-            'details'          => '',
-            'basic_settings'   => $this->mercadopago->metadataConfig->getGatewaySettings('basic'),
-			'custom_settings'  => $this->mercadopago->metadataConfig->getGatewaySettings('custom'),
-			'ticket_settings'  => $this->mercadopago->metadataConfig->getGatewaySettings('ticket'),
-			'pix_settings'     => $this->mercadopago->metadataConfig->getGatewaySettings('pix'),
-			'credits_settings' => $this->mercadopago->metadataConfig->getGatewaySettings('credits'),
-            'wallet_button_settings' => $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button'),
-            'seller_website'   => $siteUrl,
-            'billing_address'  => [
-                'zip_code'     => $zipCode,
-                'street_name'  => $this->mercadopago->orderBilling->getAddress1($this->order),
-                'city_name'    => $this->mercadopago->orderBilling->getCity($this->order),
-                'state_name'   => $this->mercadopago->orderBilling->getState($this->order),
-                'country_name' => $this->mercadopago->orderBilling->getCountry($this->order),
-            ],
-            'user' => [
-                'registered_user'        => $userId ? 'yes' : 'no',
-                'user_email'             => $userId ? $user->user_email : null,
-                'user_registration_date' => $userId ? Date::formatGmDate($userRegistration) : null,
-            ],
-            'cpp_extra' => [
-                'platform_version' => $this->mercadopago->woocommerce->version,
-                'module_version'   => MP_VERSION,
-            ]
-        ];
-    }
+    $metadata = new PaymentMetadata();
+    $metadata->platform         = MP_PLATFORM_ID;
+    $metadata->platform_version = $this->mercadopago->woocommerce->version;
+    $metadata->module_version   = MP_VERSION;
+    $metadata->php_version      = PHP_VERSION;
+    $metadata->site_id          = strtolower($siteId);
+    $metadata->sponsor_id       = $this->countryConfigs['sponsor_id'];
+    $metadata->collector        = $seller;
+    $metadata->test_mode        = $this->mercadopago->store->isTestMode();
+    $metadata->details          = '';
+    $metadata->basic_settings   = $this->mercadopago->metadataConfig->getGatewaySettings('basic');
+    $metadata->custom_settings  = $this->mercadopago->metadataConfig->getGatewaySettings('custom');
+    $metadata->ticket_settings  = $this->mercadopago->metadataConfig->getGatewaySettings('ticket');
+    $metadata->pix_settings     = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
+    $metadata->credits_settings = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
+    $metadata->wallet_button_settings = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
+    $metadata->seller_website   = $siteUrl;
+    $metadata->billing_address  = [
+        'zip_code'     => $zipCode,
+        'street_name'  => $this->mercadopago->orderBilling->getAddress1($this->order),
+        'city_name'    => $this->mercadopago->orderBilling->getCity($this->order),
+        'state_name'   => $this->mercadopago->orderBilling->getState($this->order),
+        'country_name' => $this->mercadopago->orderBilling->getCountry($this->order),
+    ];
+    $metadata->user = [
+        'registered_user'        => $userId ? 'yes' : 'no',
+        'user_email'             => $userId ? $user->user_email : null,
+        'user_registration_date' => $userId ? Date::formatGmDate($userRegistration) : null,
+    ];
+    $metadata->cpp_extra = [
+        'platform_version' => $this->mercadopago->woocommerce->version,
+        'module_version'   => MP_VERSION,
+    ];
+
+    return $metadata->metadataToArray($metadata);
+}
 
     /**
      * Set additional shipments information
@@ -254,7 +256,6 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
         $shipments->receiver_address->state           = $this->mercadopago->orderShipping->getState($this->order);
         $shipments->receiver_address->country         = $this->mercadopago->orderShipping->getCountry($this->order);
         $shipments->receiver_address->apartment       = $this->mercadopago->orderShipping->getAddress2($this->order);
-
     }
 
     /**
