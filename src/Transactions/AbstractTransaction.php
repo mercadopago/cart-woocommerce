@@ -232,6 +232,10 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
                 'user_email'             => $userId ? $user->user_email : null,
                 'user_registration_date' => $userId ? Date::formatGmDate($userRegistration) : null,
             ],
+            'cpp_extra' => [
+                'platform_version' => $this->mercadopago->woocommerce->version,
+                'module_version'   => MP_VERSION,
+            ]
         ];
     }
 
