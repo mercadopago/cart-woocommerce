@@ -33,4 +33,16 @@ class Endpoints
     {
         add_action('woocommerce_api_' . strtolower($endpoint), $callback);
     }
+    /**
+     * Register WC_AJAX endpoints
+     *
+     * @param string $endpoint
+     * @param mixed  $callback
+     *
+     * @return void
+     */
+    public function registerWCAjaxEndpoint(string $endpoint, $callback): void
+    {
+        add_action('wc_ajax_' . $endpoint, $callback);
+    }
 }
