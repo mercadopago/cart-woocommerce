@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
+use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -89,6 +90,11 @@ class Settings
     private $currentUser;
 
     /**
+     * @var Session
+     */
+    private $session;
+
+    /**
      * @var Logs
      */
     private $logs;
@@ -107,6 +113,7 @@ class Settings
      * @param Url $url
      * @param Nonce $nonce
      * @param CurrentUser $currentUser
+     * @param Session $session
      * @param Logs $logs
      */
     public function __construct(
@@ -121,6 +128,7 @@ class Settings
         Url $url,
         Nonce $nonce,
         CurrentUser $currentUser,
+        Session $session,
         Logs $logs
     ) {
         $this->admin        = $admin;
@@ -134,6 +142,7 @@ class Settings
         $this->url          = $url;
         $this->nonce        = $nonce;
         $this->currentUser  = $currentUser;
+        $this->session      = $session;
         $this->logs         = $logs;
 
         $this->loadMenu();
@@ -240,6 +249,7 @@ class Settings
         $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_payment_tips', [$this, 'mercadopagoValidatePaymentTips']);
+        $this->endpoints->registerWCAjaxEndpoint('mp_get_3ds_from_session', [$this, 'mercadopagoGet3DSFromSession']);
     }
 
     /**
@@ -614,6 +624,32 @@ class Settings
         }
 
         wp_send_json_success('Mercado Pago\'s Payment Methods in Production Mode');
+    }
+
+    /**
+     * Get 3DS information from Session
+     *
+     * @return void
+     */
+    public function mercadopagoGet3DSFromSession() {
+        try {
+            wp_send_json_success([
+                'result' => 'success',
+                'data'   => [
+                    '3ds_url'  => $this->session->getSession('mp_3ds_url'),
+                    '3ds_creq' => $this->session->getSession('mp_3ds_creq'),
+                    'order_id' => $this->session->getSession('mp_order_id'),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            $this->logs->file->error('3DS session error: ' . $e->getMessage(), __CLASS__);
+            wp_send_json_error([
+                'result' => 'failure',
+                'data' => [
+                    'error' => 'Couldn\'t find 3DS info on current session',
+                ],
+            ]);
+        }
     }
 
     /**
