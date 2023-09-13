@@ -10,6 +10,9 @@ use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadataAddress;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadataUser;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadataCpp;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 abstract class AbstractTransaction extends \WC_Payment_Gateway
@@ -136,7 +139,7 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
         $this->transaction->binary_mode          = $this->getBinaryMode();
         $this->transaction->external_reference   = $this->getExternalReference();
         $this->transaction->notification_url     = $this->getNotificationUrl();
-        $this->transaction->metadata             = $this->getInternalMetadata();
+        $this->transaction->metadata             = (array) $this->getInternalMetadata();
         $this->transaction->statement_descriptor = $this->mercadopago->store->getStoreName('Mercado Pago');
     }
 
@@ -189,9 +192,9 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     /**
      * Get internal metadata
      *
-     * @return array
+     * @return PaymentMetadata
      */
-    public function getInternalMetadata(): array
+    public function getInternalMetadata(): PaymentMetadata
 {
     $seller  = $this->mercadopago->seller->getClientId();
     $siteId  = $this->mercadopago->seller->getSiteId();
@@ -205,40 +208,37 @@ abstract class AbstractTransaction extends \WC_Payment_Gateway
     $userRegistration = $user->user_registered;
 
     $metadata = new PaymentMetadata();
-    $metadata->platform         = MP_PLATFORM_ID;
-    $metadata->platform_version = $this->mercadopago->woocommerce->version;
-    $metadata->module_version   = MP_VERSION;
-    $metadata->php_version      = PHP_VERSION;
-    $metadata->site_id          = strtolower($siteId);
-    $metadata->sponsor_id       = $this->countryConfigs['sponsor_id'];
-    $metadata->collector        = $seller;
-    $metadata->test_mode        = $this->mercadopago->store->isTestMode();
-    $metadata->details          = '';
-    $metadata->basic_settings   = $this->mercadopago->metadataConfig->getGatewaySettings('basic');
-    $metadata->custom_settings  = $this->mercadopago->metadataConfig->getGatewaySettings('custom');
-    $metadata->ticket_settings  = $this->mercadopago->metadataConfig->getGatewaySettings('ticket');
-    $metadata->pix_settings     = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
-    $metadata->credits_settings = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
-    $metadata->wallet_button_settings = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
-    $metadata->seller_website   = $siteUrl;
-    $metadata->billing_address  = [
-        'zip_code'     => $zipCode,
-        'street_name'  => $this->mercadopago->orderBilling->getAddress1($this->order),
-        'city_name'    => $this->mercadopago->orderBilling->getCity($this->order),
-        'state_name'   => $this->mercadopago->orderBilling->getState($this->order),
-        'country_name' => $this->mercadopago->orderBilling->getCountry($this->order),
-    ];
-    $metadata->user = [
-        'registered_user'        => $userId ? 'yes' : 'no',
-        'user_email'             => $userId ? $user->user_email : null,
-        'user_registration_date' => $userId ? Date::formatGmDate($userRegistration) : null,
-    ];
-    $metadata->cpp_extra = [
-        'platform_version' => $this->mercadopago->woocommerce->version,
-        'module_version'   => MP_VERSION,
-    ];
+    $metadata->platform                      = MP_PLATFORM_ID;
+    $metadata->platform_version              = $this->mercadopago->woocommerce->version;
+    $metadata->module_version                = MP_VERSION;
+    $metadata->php_version                   = PHP_VERSION;
+    $metadata->site_id                       = strtolower($siteId);
+    $metadata->sponsor_id                    = $this->countryConfigs['sponsor_id'];
+    $metadata->collector                     = $seller;
+    $metadata->test_mode                     = $this->mercadopago->store->isTestMode();
+    $metadata->details                       = '';
+    $metadata->seller_website                = $siteUrl;
+    $metadata->basic_settings                = $this->mercadopago->metadataConfig->getGatewaySettings('basic');
+    $metadata->custom_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('custom');
+    $metadata->ticket_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('ticket');
+    $metadata->pix_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
+    $metadata->credits_settings              = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
+    $metadata->wallet_button_settings        = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
+    $metadata->billing_address                = new PaymentMetadataAddress();
+    $metadata->billing_address->zip_code     = $zipCode;
+    $metadata->billing_address->street_name  = $this->mercadopago->orderBilling->getAddress1($this->order);
+    $metadata->billing_address->city_name    = $this->mercadopago->orderBilling->getCity($this->order);
+    $metadata->billing_address->state_name   = $this->mercadopago->orderBilling->getState($this->order);
+    $metadata->billing_address->country_name = $this->mercadopago->orderBilling->getCountry($this->order);
+    $metadata->user                          = new PaymentMetadataUser();
+    $metadata->user->registered_user         = $userId ? 'yes' : 'no';
+    $metadata->user->user_email              = $userId ? $user->user_email : null;
+    $metadata->user->user_registration_date  = $userId ? Date::formatGmDate($userRegistration) : null;
+    $metadata->cpp_extra                     = new PaymentMetadataCpp();
+    $metadata->cpp_extra->platform_version   = $this->mercadopago->woocommerce->version;
+    $metadata->cpp_extra->module_version     = MP_VERSION;
 
-    return $metadata->metadataToArray($metadata);
+    return $metadata;
 }
 
     /**

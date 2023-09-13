@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Date;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
 
 class TicketTransaction extends AbstractPaymentTransaction
 {
@@ -52,17 +53,17 @@ class TicketTransaction extends AbstractPaymentTransaction
     /**
      * Get internal metadata
      *
-     * @return array
+     * @return PaymentMetadata
      */
-    public function getInternalMetadata(): array
+    public function getInternalMetadata(): PaymentMetadata
     {
         $internalMetadata = parent::getInternalMetadata();
 
-        $internalMetadata['checkout']         = 'custom';
-        $internalMetadata['checkout_type']    = self::ID;
+        $internalMetadata->checkout        = 'custom';
+        $internalMetadata->checkout_type   = self::ID;
 
         if (!empty($this->paymentPlaceId)) {
-            $internalMetadata['payment_option_id'] = $this->paymentPlaceId;
+            $internalMetadata->payment_option_id = $this->paymentPlaceId;
         }
 
         return $internalMetadata;

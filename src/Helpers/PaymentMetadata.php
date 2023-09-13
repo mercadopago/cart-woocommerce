@@ -8,34 +8,114 @@ if (!defined('ABSPATH')) {
 
 class PaymentMetadata
 {
+    /**
+     * @var string
+     */
     public $platform;
-    public $platform_version;
-    public $module_version;
-    public $php_version;
-    public $site_id;
-    public $sponsor_id;
-    public $collector;
-    public $test_mode;
-    public $details;
-    public $basic_settings;
-    public $custom_settings;
-    public $ticket_settings;
-    public $pix_settings;
-    public $credits_settings;
-    public $wallet_button_settings;
-    public $seller_website;
-    public $billing_address;
-    public $user;
-    public $cpp_extra;
 
     /**
-     * Convert PaymentMetadata object to an array.
-     *
-     * @param PaymentMetadata $paymentMetadata The PaymentMetadata object to convert.
-     *
-     * @return array The converted array representation of PaymentMetadata.
+     * @var string
      */
-    public function metadataToArray($paymentMetadata): array {
-        return (array) $paymentMetadata;
-    }
+    public $platform_version;
+
+    /**
+     * @var string
+     */
+    public $module_version;
+
+    /**
+     * @var string
+     */
+    public $php_version;
+
+    /**
+     * @var string
+     */
+    public $site_id;
+
+    /**
+     * @var string
+     */
+    public $sponsor_id;
+
+    /**
+     * @var string
+     */
+    public $collector;
+
+    /**
+     * @var string
+     */
+    public $test_mode;
+
+    /**
+     * @var string
+     */
+    public $details;
+
+    /**
+     * @var string
+     */
+    public $basic_settings;
+
+    /**
+     * @var string
+     */
+    public $custom_settings;
+
+    /**
+     * @var string
+     */
+    public $ticket_settings;
+
+    /**
+     * @var string
+     */
+    public $pix_settings;
+
+    /**
+     * @var string
+     */
+    public $credits_settings;
+
+    /**
+     * @var string
+     */
+    public $wallet_button_settings;
+
+    /**
+     * @var string
+     */
+    public $seller_website;
+
+    /**
+     * @var string
+     */
+    public $checkout;
+
+    /**
+     * @var string
+     */
+    public $checkout_type;
+
+    /**
+     * @var string
+     */
+    public $payment_option_id;
+
+    /**
+     * @var PaymentMetadataAddress
+     */
+    public $billing_address;
+
+    /**
+     * @var PaymentMetadataUser
+     */
+    public $user;
+
+    /**
+     * @var PaymentMetadataCpp
+     */
+    public $cpp_extra;
+
 }

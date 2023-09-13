@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
 
 class CreditsTransaction extends AbstractPreferenceTransaction
 {
@@ -27,14 +28,14 @@ class CreditsTransaction extends AbstractPreferenceTransaction
     /**
      * Get internal metadata
      *
-     * @return array
+     * @return PaymentMetadata
      */
-    public function getInternalMetadata(): array
+    public function getInternalMetadata(): PaymentMetadata
     {
         $internalMetadata = parent::getInternalMetadata();
 
-        $internalMetadata['checkout']         = 'pro';
-        $internalMetadata['checkout_type']    = self::ID;
+        $internalMetadata->checkout        = 'pro';
+        $internalMetadata->checkout_type   = self::ID;
 
         return $internalMetadata;
     }
