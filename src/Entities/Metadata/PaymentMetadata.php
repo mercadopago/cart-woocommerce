@@ -1,0 +1,121 @@
+<?php
+
+namespace MercadoPago\Woocommerce\Entities\Metadata;
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class PaymentMetadata
+{
+    /**
+     * @var string
+     */
+    public $platform;
+
+    /**
+     * @var string
+     */
+    public $platform_version;
+
+    /**
+     * @var string
+     */
+    public $module_version;
+
+    /**
+     * @var string
+     */
+    public $php_version;
+
+    /**
+     * @var string
+     */
+    public $site_id;
+
+    /**
+     * @var string
+     */
+    public $sponsor_id;
+
+    /**
+     * @var string
+     */
+    public $collector;
+
+    /**
+     * @var string
+     */
+    public $test_mode;
+
+    /**
+     * @var string
+     */
+    public $details;
+
+    /**
+     * @var string
+     */
+    public $basic_settings;
+
+    /**
+     * @var string
+     */
+    public $custom_settings;
+
+    /**
+     * @var string
+     */
+    public $ticket_settings;
+
+    /**
+     * @var string
+     */
+    public $pix_settings;
+
+    /**
+     * @var string
+     */
+    public $credits_settings;
+
+    /**
+     * @var string
+     */
+    public $wallet_button_settings;
+
+    /**
+     * @var string
+     */
+    public $seller_website;
+
+    /**
+     * @var string
+     */
+    public $checkout;
+
+    /**
+     * @var string
+     */
+    public $checkout_type;
+
+    /**
+     * @var string
+     */
+    public $payment_option_id;
+
+    /**
+     * @var PaymentMetadataAddress
+     */
+    public $billing_address;
+
+    /**
+     * @var PaymentMetadataUser
+     */
+    public $user;
+
+    /**
+     * @var PaymentMetadataCpp
+     */
+    public $cpp_extra;
+
+}

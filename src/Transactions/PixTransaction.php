@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Date;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 
 class PixTransaction extends AbstractPaymentTransaction
 {
@@ -31,14 +32,14 @@ class PixTransaction extends AbstractPaymentTransaction
     /**
      * Get internal metadata
      *
-     * @return array
+     * @return PaymentMetadata
      */
-    public function getInternalMetadata(): array
+    public function getInternalMetadata(): PaymentMetadata
     {
         $internalMetadata = parent::getInternalMetadata();
 
-        $internalMetadata['checkout']      = 'custom';
-        $internalMetadata['checkout_type'] = self::ID;
+        $internalMetadata->checkout      = 'custom';
+        $internalMetadata->checkout_type = self::ID;
 
         return $internalMetadata;
     }

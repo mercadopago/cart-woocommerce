@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Gateways\BasicGateway;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 
 class BasicTransaction extends AbstractPreferenceTransaction
 {
@@ -28,14 +29,14 @@ class BasicTransaction extends AbstractPreferenceTransaction
     /**
      * Get internal metadata
      *
-     * @return array
+     * @return PaymentMetadata
      */
-    public function getInternalMetadata(): array
+    public function getInternalMetadata(): PaymentMetadata
     {
         $internalMetadata = parent::getInternalMetadata();
 
-        $internalMetadata['checkout']       = 'smart';
-        $internalMetadata['checkout_type']  = $this->mercadopago->options->getGatewayOption($this->gateway, 'method', 'redirect');
+        $internalMetadata->checkout       = 'smart';
+        $internalMetadata->checkout_type  = $this->mercadopago->options->getGatewayOption($this->gateway, 'method', 'redirect');
 
         return $internalMetadata;
     }
