@@ -1,6 +1,6 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Helpers;
+namespace MercadoPago\Woocommerce\Entities\Metadata;
 
 if (!defined('ABSPATH')) {
     exit;

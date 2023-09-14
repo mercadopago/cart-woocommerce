@@ -4,7 +4,7 @@ namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Gateways\BasicGateway;
-use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 
 class BasicTransaction extends AbstractPreferenceTransaction
 {

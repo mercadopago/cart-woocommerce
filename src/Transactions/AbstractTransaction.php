@@ -9,10 +9,10 @@ use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
-use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
-use MercadoPago\Woocommerce\Helpers\PaymentMetadataAddress;
-use MercadoPago\Woocommerce\Helpers\PaymentMetadataUser;
-use MercadoPago\Woocommerce\Helpers\PaymentMetadataCpp;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataAddress;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataUser;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataCpp;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
 abstract class AbstractTransaction extends \WC_Payment_Gateway

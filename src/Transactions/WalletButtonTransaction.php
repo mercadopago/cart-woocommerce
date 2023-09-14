@@ -3,7 +3,7 @@
 namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
-use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 
 class WalletButtonTransaction extends AbstractPreferenceTransaction
 {
