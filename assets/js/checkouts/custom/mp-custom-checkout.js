@@ -387,6 +387,10 @@ function removeLoadSpinner3ds() {
   document.getElementById("mp-spinner-3ds").remove();
 }
 
+function removeModal3ds() {
+  document.getElementById("mp-3ds-modal-container").remove();
+}
+
 
 function threeDSHandler(url_3ds, cred_3ds) {
   try {
@@ -458,8 +462,10 @@ function load3DSFlow(){
       threeDSHandler(url_3ds, cred_3ds);
     } else {
       console.error('Error POST:', response);
+      removeModal3ds();
     }
   }).fail(function (xhr, textStatus, errorThrown) {
     console.error('Failed to make POST:', textStatus, errorThrown);
+    removeModal3ds();
   });
 }
