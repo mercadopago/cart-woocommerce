@@ -382,3 +382,20 @@ function removeLoadSpinner() {
     document.querySelector('.mp-checkout-custom-container').style.display = 'block';
     document.querySelector('.mp-checkout-custom-load').style.display= 'none';
 }
+
+window.addEventListener("message", (e) => {
+  if (e.data.status === "COMPLETE") {
+    jQuery.post(
+      '/?wc-ajax=mp_redirect_after_3ds_challenge'
+    ).done(
+      function (response) {
+        if (response.data.redirect) {
+          window.location.href = response.data.redirect;
+        } else {
+          // @TODO: implement error message (#PPWP-1900)
+          console.log('error');
+        }
+      }
+    );
+  }
+});
