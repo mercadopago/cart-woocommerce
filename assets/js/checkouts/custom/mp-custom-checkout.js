@@ -19,7 +19,7 @@ function mercadoPagoFormHandler() {
   let formOrderReview = document.querySelector("form[id=order_review]");
 
   if (formOrderReview) {
-    let choCustomContent = document.querySelector( ".mp-checkout-custom-container");
+    let choCustomContent = document.querySelector(".mp-checkout-custom-container");
     let choCustomHelpers = choCustomContent.querySelectorAll("input-helper");
 
     choCustomHelpers.forEach((item) => {
@@ -236,8 +236,8 @@ function initCardForm() {
             } else if (error.message.includes("cardholderName")) {
               CheckoutPage.setDisplayOfError("fcCardholderName", "add", "mp-error");
               return CheckoutPage.setDisplayOfInputHelper("mp-card-holder-name", "flex");
-            } else if ( error.message.includes("expirationMonth") || error.message.includes("expirationYear")) {
-              CheckoutPage.setDisplayOfError("fcCardExpirationDateContainer", "add", "mp-error" );
+            } else if (error.message.includes("expirationMonth") || error.message.includes("expirationYear")) {
+              CheckoutPage.setDisplayOfError("fcCardExpirationDateContainer", "add", "mp-error");
               return CheckoutPage.setDisplayOfInputHelper("mp-expiration-date", "flex");
             } else if (error.message.includes("securityCode")) {
               CheckoutPage.setDisplayOfError("fcSecurityNumberContainer", "add", "mp-error");
@@ -374,13 +374,13 @@ if (!triggeredPaymentMethodSelectedEvent) {
 }
 
 function createLoadSpinner() {
-    document.querySelector('.mp-checkout-custom-container').style.display = 'none';
-    document.querySelector('.mp-checkout-custom-load').style.display = 'flex';
+  document.querySelector('.mp-checkout-custom-container').style.display = 'none';
+  document.querySelector('.mp-checkout-custom-load').style.display = 'flex';
 }
 
 function removeLoadSpinner() {
-    document.querySelector('.mp-checkout-custom-container').style.display = 'block';
-    document.querySelector('.mp-checkout-custom-load').style.display= 'none';
+  document.querySelector('.mp-checkout-custom-container').style.display = 'block';
+  document.querySelector('.mp-checkout-custom-load').style.display = 'none';
 }
 
 function removeLoadSpinner3ds() {
@@ -414,7 +414,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
 
     var form3ds = idocument.createElement("form");
     form3ds.name = "mp-3ds-frame";
-    form3ds.className="mp-modal"
+    form3ds.className = "mp-modal"
     form3ds.setAttribute("target", "mp-3ds-frame");
     form3ds.setAttribute("method", "post");
     form3ds.setAttribute("action", url_3ds);
@@ -428,15 +428,8 @@ function threeDSHandler(url_3ds, cred_3ds) {
 
     form3ds.submit();
 
-    document.querySelector('#mp-3ds-modal-close').addEventListener('click', function() {
+    document.querySelector('#mp-3ds-modal-close').addEventListener('click', function () {
       document.querySelector('#mp-3ds-modal-container').remove();
-  });
-
-    window.addEventListener("message", (e) => {
-      if (e.data.status === "COMPLETE") {
-        removeLoadSpinner3ds();
-        redirectAfter3dsChallenge();
-      }
     });
   } catch (error) {
     console.log(error);
@@ -444,12 +437,12 @@ function threeDSHandler(url_3ds, cred_3ds) {
   }
 }
 
-function load3DSFlow(){
+function load3DSFlow() {
   var divSpinner = document.createElement("div");
   divSpinner.className = "spinner";
   divSpinner.setAttribute("id", "mp-spinner-3ds");
   var divModalContainer = document.createElement("div");
-  divModalContainer.setAttribute("id", "mp-3ds-modal-container" );
+  divModalContainer.setAttribute("id", "mp-3ds-modal-container");
   divModalContainer.className = "mp-3ds-modal";
   divModalContainer.appendChild(divSpinner);
   document.body.appendChild(divModalContainer);
@@ -482,3 +475,10 @@ function redirectAfter3dsChallenge() {
     }
   );
 }
+
+window.addEventListener("message", (e) => {
+  if (e.data.status === "COMPLETE") {
+    removeLoadSpinner3ds();
+    redirectAfter3dsChallenge();
+  }
+});
