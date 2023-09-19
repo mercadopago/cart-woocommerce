@@ -478,7 +478,7 @@ function redirectAfter3dsChallenge() {
 
 window.addEventListener("message", (e) => {
   if (e.data.status === "COMPLETE") {
-    removeLoadSpinner3ds();
     redirectAfter3dsChallenge();
+    removeLoadSpinner3ds();
   }
 });
