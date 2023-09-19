@@ -345,9 +345,16 @@ class CustomGateway extends AbstractGateway
     {
         $order    = wc_get_order($order_id);
         try {
-            parent::process_payment($order_id);
-
             $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
+
+            if ($checkout['is_3ds']) {
+                return [
+                    'result'   => 'success',
+                    'redirect' => esc_url($order->get_checkout_order_received_url()),
+                ];
+            }
+            
+            parent::process_payment($order_id);
 
             switch ($checkout['checkout_type']) {
                 case 'wallet_button':
@@ -575,6 +582,7 @@ class CustomGateway extends AbstractGateway
                             $this->mercadopago->session->setSession('mp_3ds_url', $response['three_ds_info']['external_resource_url']);
                             $this->mercadopago->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
                             $this->mercadopago->session->setSession('mp_order_id', $order->ID);
+                            $this->mercadopago->session->setSession('mp_payment_id', $response['id']);
 
                             return [
                                 'result'   => 'success',

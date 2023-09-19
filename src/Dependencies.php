@@ -13,6 +13,7 @@ use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Endpoints\FrontendEndpoints;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
@@ -241,6 +242,11 @@ class Dependencies
     public $creditsEnabled;
 
     /**
+     * @var FrontendEndpoints
+     */
+    public $frontendEndpoints;
+
+    /**
      * Dependencies constructor
      */
     public function __construct()
@@ -285,6 +291,7 @@ class Dependencies
         $this->currency          = $this->setCurrency();
         $this->settings          = $this->setSettings();
         $this->creditsEnabled    = $this->setCreditsEnabled();
+        $this->frontendEndpoints = $this->setFrontendEndpoints();
     }
 
     /**
@@ -525,6 +532,20 @@ class Dependencies
             $this->admin,
             $this->logs,
             $this->options
+        );
+    }
+
+    /**
+     * @return FrontendEndpoints
+     */
+    private function setFrontendEndpoints(): FrontendEndpoints
+    {
+        return new FrontendEndpoints(
+            $this->endpoints,
+            $this->logs,
+            $this->requester,
+            $this->session,
+            $this->seller
         );
     }
 }
