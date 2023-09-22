@@ -62,7 +62,13 @@ function createToken() {
         document.querySelector("#cardTokenId").value = cardToken.token;
         mercado_pago_submit = true;
         hasToken = true;
-        jQuery("form.checkout, form#order_review").submit();
+
+        if (formId === "order_review") {
+          handle3dsPayOrderFormSubmission();
+          return false;
+        }
+
+        jQuery("form.checkout").submit();
       } else {
         throw new Error("cardToken is empty");
       }
@@ -356,8 +362,9 @@ jQuery("body").on("payment_method_selected", function () {
   }
 });
 
-jQuery("form#order_review").submit(function () {
+jQuery("form#order_review").submit(function (event) {
   if (document.getElementById("payment_method_woo-mercado-pago-custom").checked) {
+    event.preventDefault();
     return mercadoPagoFormHandler();
   } else {
     cardFormLoad();
@@ -472,6 +479,32 @@ function redirectAfter3dsChallenge() {
         // @TODO: implement error message (#PPWP-1900)
         console.log('error');
       }
+    }
+  );
+}
+
+function handle3dsPayOrderFormSubmission() {
+  var serializedForm = jQuery('#order_review').serialize();
+
+  jQuery.post(
+      '#',
+      serializedForm
+  ).done(
+      function(response) {
+          if (response.three_ds_flow) {
+            load3DSFlow();
+            return;
+          }
+
+          if (response.redirect) {
+            window.location.href = response.redirect;
+          }
+
+          window.location.reload();
+      }
+  ).error(
+    function() {
+      window.location.reload();
     }
   );
 }

@@ -385,6 +385,7 @@ class CustomGateway extends AbstractGateway
 
                         return $this->handleResponseStatus($order, $response, $checkout);
                     }
+                    throw new \Exception('Invalid checkout data');
             }
         } catch (\Exception $e) {
             return $this->processReturnFail(
@@ -395,6 +396,14 @@ class CustomGateway extends AbstractGateway
                 true
             );
         }
+
+        return $this->processReturnFail(
+            new \Exception('Couldn\'t process payment'),
+            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+            self::LOG_SOURCE,
+            (array) $order,
+            true
+        );
     }
 
     /**
@@ -546,6 +555,27 @@ class CustomGateway extends AbstractGateway
 
     /**
      * Handle with response status
+     * The order_pay page always redirect the requester, so we must stop the current execution to return a JSON.
+     * See mp-custom-checkout.js to understand how to handle the return.
+     *
+     * @param $return
+     */
+    private function handlePayForOrderRequest($return)
+    {
+        if (!headers_sent()) {
+            header('Content-Type: application/json;');
+        }
+        echo wp_json_encode($return);
+        die();
+    }
+
+    private function isOrderPayPage(): bool
+    {
+        return isset($_GET['pay_for_order']);
+    }
+
+    /**
+     * Handle with response status
      *
      * @param $order
      * @param $response
@@ -567,29 +597,42 @@ class CustomGateway extends AbstractGateway
                         $this->mercadopago->notices->storeApprovedStatusNotice($orderStatus);
                         $this->mercadopago->orderStatus->setOrderStatus($order, 'failed', 'pending');
 
-                        return [
+                        $return = [
                             'result'   => 'success',
                             'redirect' => $urlReceived,
                         ];
 
+                        if ($this->isOrderPayPage()) {
+                            $this->handlePayForOrderRequest($return);
+                        }
+
+                        return $return;
+
                     case 'pending':
                     case 'in_process':
-                        $this->mercadopago->woocommerce->cart->empty_cart();
-
                         $statusDetail = $response['status_detail'];
-
+                        
                         if ($statusDetail === 'pending_challenge') {
                             $this->mercadopago->session->setSession('mp_3ds_url', $response['three_ds_info']['external_resource_url']);
                             $this->mercadopago->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
                             $this->mercadopago->session->setSession('mp_order_id', $order->ID);
                             $this->mercadopago->session->setSession('mp_payment_id', $response['id']);
 
-                            return [
-                                'result'   => 'success',
-                                'redirect' => false,
-                                'messages' => '<script>load3DSFlow();</script>',
+                            $return = [
+                                'result'        => 'success',
+                                'three_ds_flow' => true,
+                                'redirect'      => false,
+                                'messages'      => '<script>load3DSFlow();</script>',
                             ];
+
+                            if ($this->isOrderPayPage()) {
+                                $this->handlePayForOrderRequest($return);
+                            }
+
+                            return $return;
                         }
+                        
+                        $this->mercadopago->woocommerce->cart->empty_cart();
 
                         $checkoutType = $checkout['checkout_type'];
                         $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_form_error'];
@@ -604,10 +647,16 @@ class CustomGateway extends AbstractGateway
                             $linkText
                         );
 
-                        return [
+                        $return = [
                             'result'   => 'success',
                             'redirect' => $order->get_checkout_payment_url(true),
                         ];
+
+                        if ($this->isOrderPayPage()) {
+                            $this->handlePayForOrderRequest($return);
+                        }
+
+                        return $return;
 
                     case 'rejected':
                         $urlReceived     = esc_url($order->get_checkout_payment_url());
@@ -626,10 +675,16 @@ class CustomGateway extends AbstractGateway
                             $linkText
                         );
 
-                        return [
+                        $return = [
                             'result'   => 'success',
                             'redirect' => $urlRetryPayment,
                         ];
+
+                        if ($this->isOrderPayPage()) {
+                            $this->handlePayForOrderRequest($return);
+                        }
+
+                        return $return;
 
                     default:
                         break;
