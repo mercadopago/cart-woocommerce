@@ -175,4 +175,16 @@ final class Url
     {
         return (bool) $this->getQueryVar($expectedQueryVar);
     }
+
+    /**
+     * Validate $_GET var
+     *
+     * @param string $expectedQueryVar
+     *
+     * @return bool
+     */
+    public function validateGetVar($expectedVar): bool
+    {
+        return isset($_GET[$expectedVar]);
+    }
 }

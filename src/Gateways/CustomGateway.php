@@ -569,9 +569,15 @@ class CustomGateway extends AbstractGateway
         die();
     }
 
+    /**
+     * Check if there is a pay_for_order query param.
+     * This indicates that the user is on the Order Pay Checkout page.
+     *
+     * @return bool
+     */
     private function isOrderPayPage(): bool
     {
-        return isset($_GET['pay_for_order']);
+        return $this->mercadopago->url->validateGetVar('pay_for_order');
     }
 
     /**
