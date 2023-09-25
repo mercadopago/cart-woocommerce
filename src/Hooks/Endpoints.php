@@ -33,6 +33,7 @@ class Endpoints
     {
         add_action('woocommerce_api_' . strtolower($endpoint), $callback);
     }
+
     /**
      * Register WC_AJAX endpoints
      *

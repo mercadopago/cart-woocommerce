@@ -11,7 +11,7 @@ use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
-abstract class AbstractTransaction extends \WC_Payment_Gateway
+abstract class AbstractTransaction
 {
     /**
      * @var WoocommerceMercadoPago

@@ -90,7 +90,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<div id="mp-box-loading"></div>
 
 			<!-- utilities -->
-			<div id="mercadopago-utilities">
+			<div id="mercadopago-utilities" style="display:none;">
 				<input type="hidden" id="site_id" value="<?= esc_textarea($site_id); ?>" name="mercadopago_ticket[site_id]" />
 				<input type="hidden" id="amountTicket" value="<?= esc_textarea($amount); ?>" name="mercadopago_ticket[amount]" />
 				<input type="hidden" id="currency_ratioTicket" value="<?= esc_textarea($currency_ratio); ?>" name="mercadopago_ticket[currency_ratio]" />
