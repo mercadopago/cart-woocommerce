@@ -244,6 +244,12 @@ class StoreTranslations
             'text_installments'                                   => __('installments of', 'woocommerce-mercadopago'),
             'wallet_button_order_receipt_title'                   => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
             'cancel_url_text'                                     => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
+            'title_loading_3ds_frame'                             => __('We are taking you to validate the card', 'woocommerce-mercadopago'),
+            'title_loading_3ds_frame2'                             => __('with your bank', 'woocommerce-mercadopago'),
+            'text_loading_3ds_frame'                              => __('We need to confirm that you are the cardholder.', 'woocommerce-mercadopago'),
+            'title_loading_3ds_response'                          => __('We are receiving the response from your bank', 'woocommerce-mercadopago'),
+            'title_3ds_frame'                                     => __('Complete the bank validation so your payment can be approved', 'woocommerce-mercadopago'),
+            'tooltip_3ds_frame'                                   => __('Please keep this page open. If you close it, you will not be able to resume the validation.', 'woocommerce-mercadopago'),
         ];
     }
 

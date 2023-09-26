@@ -270,6 +270,14 @@ class CustomGateway extends AbstractGateway
                             'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
                         ]
                     ],
+                    'threeDsText' => [
+                        'title_loading'             => $this->storeTranslations['title_loading_3ds_frame'],
+                        'title_loading2'             => $this->storeTranslations['title_loading_3ds_frame2'],
+                        'text_loading'       => $this->storeTranslations['text_loading_3ds_frame'],
+                        'title_loading_response' => $this->storeTranslations['title_loading_3ds_response'],
+                        'title_frame' => $this->storeTranslations['title_3ds_frame'],
+                        'tooltip_frame' => $this->storeTranslations['tooltip_3ds_frame'],
+                    ],
                 ]
             );
         }
@@ -623,14 +631,13 @@ class CustomGateway extends AbstractGateway
                             $this->mercadopago->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
                             $this->mercadopago->session->setSession('mp_order_id', $order->ID);
                             $this->mercadopago->session->setSession('mp_payment_id', $response['id']);
-                            $this->mercadopago->session->setSession('mp_3ds_card_info', 
-                            ucfirst($response['payment_method_id']). '****' .$response['card']['last_four_digits']);
+                            $lastFourDigits = (empty($response['card']['last_four_digits'])) ? '****' : $response['card']['last_four_digits'];
 
                             $return = [
                                 'result'        => 'success',
                                 'three_ds_flow' => true,
                                 'redirect'      => false,
-                                'messages'      => '<script>load3DSFlow();</script>',
+                                'messages'      => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
                             ];
 
                             if ($this->isOrderPayPage()) {

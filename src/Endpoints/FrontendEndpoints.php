@@ -82,7 +82,6 @@ class FrontendEndpoints
                     '3ds_creq' => $this->session->getSession('mp_3ds_creq'),
                     'payment_id' => $this->session->getSession('mp_payment_id'),
                     'order_id' => $this->session->getSession('mp_order_id'),
-                    '3ds_card_info' => $this->session->getSession('mp_3ds_card_info'),
                 ],
             ]);
         } catch (\Exception $e) {

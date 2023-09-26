@@ -422,7 +422,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
       '<div class="mp-alert-color-success"></div>'
       + '<div class="mp-card-body-3ds">'
       + '<div class="mp-icon-badge-info"></div>'
-      + '<div><span class="mp-text-subtitle">Ajuste taxas e prazos, teste sua loja ou acesso o manual do plugin.</span></div>'
+      + '<div><span class="mp-text-subtitle">' + wc_mercadopago_custom_checkout_params.threeDsText.tooltip_frame + '</span></div>'
       + '</div>';
 
     var divModalContent = document.getElementById("mp-3ds-modal-content");
@@ -430,8 +430,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
     iframe.name = "mp-3ds-frame";
     iframe.id = "mp-3ds-frame";
     iframe.onload = removeLoadSpinner3ds();
-    document.getElementById('mp-3ds-title').innerText =
-    'Mantén abierta esta pantalla. Si la cierras, no podrás retomar la validación.';
+    document.getElementById('mp-3ds-title').innerText = wc_mercadopago_custom_checkout_params.threeDsText.tooltip_frame;
     divModalContent.appendChild(divMpCardInfo);
 
     divModalContent.appendChild(iframe);
@@ -459,7 +458,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
   }
 }
 
-function load3DSFlow() {
+function load3DSFlow(lastFourDigits) {
   var divModalContainer = document.createElement("div");
   divModalContainer.setAttribute("id", "mp-3ds-modal-container" );
   divModalContainer.className = "mp-3ds-modal";
@@ -473,18 +472,20 @@ function load3DSFlow() {
     + '   <div>'
     + '     <div class="spinner" id="mp-spinner-3ds"></div>'
     + '       <div class="loading-text-3ds">'
-    + '         <p>Te estamos llevando a validar la tarjeta </p>'
-    + '         <p>(' + document.getElementById("paymentMethodId").value + ' **** ****) con tu banco</p>'
+    + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading + '</p>'
+    + '         <p>(' + document.getElementById("paymentMethodId").value + '****' + lastFourDigits  + ') '
+    +                   wc_mercadopago_custom_checkout_params.threeDsText.title_loading2
+    + '          </p>'
     + '       </div>'
-    + '       <p class="normal-text-3ds">Necesitamos confirmar que eres titular de la tarjeta.</p>'
+    + '       <p class="normal-text-3ds">' +  wc_mercadopago_custom_checkout_params.threeDsText.text_loading + '</p>'
     + '   </div>'
     + ' <div>';
   divModalContainer.appendChild(divModalContent);
   document.body.appendChild(divModalContainer);
 
   document.querySelector('#mp-3ds-modal-close').addEventListener('click', function() {
-    document.querySelector('#mp-3ds-modal-container').remove();
-    console.log('3ds modal has been closed');
+    //document.querySelector('#mp-3ds-modal-container').remove();
+    //console.log('3ds modal has been closed');
     redirectAfter3dsChallenge();
   });
 
