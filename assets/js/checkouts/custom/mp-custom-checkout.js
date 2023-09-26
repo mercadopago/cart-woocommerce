@@ -391,7 +391,22 @@ function removeLoadSpinner() {
 }
 
 function removeLoadSpinner3ds() {
-  document.getElementById("mp-spinner-3ds").remove();
+  document.getElementById("loading-container-3ds").remove();
+}
+
+
+
+function addLoadSpinner3dsSubmit() {
+  var modalContent = document.getElementById("mp-3ds-modal-content");
+  modalContent.innerHTML =
+    '<div id="loading-container-3ds">'
+  + '   <div>'
+  + '     <div class="spinner" id="mp-spinner-3ds"></div>'
+  + '       <div class="loading-text-3ds">'
+  + '         <p>Estamos recibiendo la respuesta de tu banco</p>'
+  + '       </div>'
+  + '   </div>'
+  + ' <div>';
 }
 
 function removeModal3ds() {
@@ -400,28 +415,31 @@ function removeModal3ds() {
 
 function threeDSHandler(url_3ds, cred_3ds) {
   try {
-    var divModalContent = document.createElement("div");
-    divModalContent.className = "mp-3ds-modal-content";
-    var spanModalClose = document.createElement("span");
-    spanModalClose.setAttribute("id", "mp-3ds-modal-close");
-    spanModalClose.className = "mp-3ds-close";
-    spanModalClose.innerHTML = "&times;";
+
+    var divMpCardInfo = document.createElement('div');
+    divMpCardInfo.className = 'mp-card-info';
+    divMpCardInfo.innerHTML =
+      '<div class="mp-alert-color-success"></div>'
+      + '<div class="mp-card-body-3ds">'
+      + '<div class="mp-icon-badge-info"></div>'
+      + '<div><span class="mp-text-subtitle">Ajuste taxas e prazos, teste sua loja ou acesso o manual do plugin.</span></div>'
+      + '</div>';
+
+    var divModalContent = document.getElementById("mp-3ds-modal-content");
     var iframe = document.createElement("iframe");
     iframe.name = "mp-3ds-frame";
     iframe.id = "mp-3ds-frame";
-    iframe.height = "500px";
-    iframe.width = "600px";
     iframe.onload = removeLoadSpinner3ds();
-    divModalContent.appendChild(spanModalClose);
-    divModalContent.appendChild(iframe);
-    var divModalContainer = document.getElementById("mp-3ds-modal-container");
-    divModalContainer.appendChild(divModalContent);
+    document.getElementById('mp-3ds-title').innerText =
+    'Mantén abierta esta pantalla. Si la cierras, no podrás retomar la validación.';
+    divModalContent.appendChild(divMpCardInfo);
 
+    divModalContent.appendChild(iframe);
     var idocument = iframe.contentWindow.document;
 
     var form3ds = idocument.createElement("form");
     form3ds.name = "mp-3ds-frame";
-    form3ds.className = "mp-modal"
+    form3ds.className="mp-modal"
     form3ds.setAttribute("target", "mp-3ds-frame");
     form3ds.setAttribute("method", "post");
     form3ds.setAttribute("action", url_3ds);
@@ -435,9 +453,6 @@ function threeDSHandler(url_3ds, cred_3ds) {
 
     form3ds.submit();
 
-    document.querySelector('#mp-3ds-modal-close').addEventListener('click', function () {
-      document.querySelector('#mp-3ds-modal-container').remove();
-    });
   } catch (error) {
     console.log(error);
     alert("Error doing Challenge, try again later.");
@@ -445,19 +460,41 @@ function threeDSHandler(url_3ds, cred_3ds) {
 }
 
 function load3DSFlow() {
-  var divSpinner = document.createElement("div");
-  divSpinner.className = "spinner";
-  divSpinner.setAttribute("id", "mp-spinner-3ds");
   var divModalContainer = document.createElement("div");
-  divModalContainer.setAttribute("id", "mp-3ds-modal-container");
+  divModalContainer.setAttribute("id", "mp-3ds-modal-container" );
   divModalContainer.className = "mp-3ds-modal";
-  divModalContainer.appendChild(divSpinner);
+  var divModalContent = document.createElement("div");
+  divModalContent.id = "mp-3ds-modal-content";
+  divModalContent.innerHTML =  '<div id="modal-3ds-title">'
+    + '<span id="mp-3ds-title"></span>'
+    + '<span id="mp-3ds-modal-close" class="mp-3ds-close">&times;</span>'
+    + '</div>'
+    + '<div id="loading-container-3ds">'
+    + '   <div>'
+    + '     <div class="spinner" id="mp-spinner-3ds"></div>'
+    + '       <div class="loading-text-3ds">'
+    + '         <p>Te estamos llevando a validar la tarjeta </p>'
+    + '         <p>(' + document.getElementById("paymentMethodId").value + ' **** ****) con tu banco</p>'
+    + '       </div>'
+    + '       <p class="normal-text-3ds">Necesitamos confirmar que eres titular de la tarjeta.</p>'
+    + '   </div>'
+    + ' <div>';
+  divModalContainer.appendChild(divModalContent);
   document.body.appendChild(divModalContainer);
+
+  document.querySelector('#mp-3ds-modal-close').addEventListener('click', function() {
+    document.querySelector('#mp-3ds-modal-container').remove();
+    console.log('3ds modal has been closed');
+    redirectAfter3dsChallenge();
+  });
+
+
   jQuery.post('/?wc-ajax=mp_get_3ds_from_session').done(function (response) {
     if (response.success) {
       var url_3ds = response.data.data['3ds_url'];
       var cred_3ds = response.data.data['3ds_creq'];
-      threeDSHandler(url_3ds, cred_3ds);
+      var card_info_3ds = response.data.data['3ds_card_info'];
+      threeDSHandler(url_3ds, cred_3ds, card_info_3ds);
     } else {
       console.error('Error POST:', response);
       removeModal3ds();
@@ -466,6 +503,7 @@ function load3DSFlow() {
     console.error('Failed to make POST:', textStatus, errorThrown);
     removeModal3ds();
   });
+
 }
 
 function redirectAfter3dsChallenge() {
@@ -474,10 +512,13 @@ function redirectAfter3dsChallenge() {
   ).done(
     function (response) {
       if (response.data.redirect) {
+        removeModal3ds();
         window.location.href = response.data.redirect;
       } else {
         // @TODO: implement error message (#PPWP-1900)
-        console.log('error');
+        console.log(response.data.data.error);
+        setDisplayOfErrorCheckout(response.data.data.error);
+        removeModal3ds(); 
       }
     }
   );
@@ -511,7 +552,28 @@ function handle3dsPayOrderFormSubmission() {
 
 window.addEventListener("message", (e) => {
   if (e.data.status === "COMPLETE") {
+    document.getElementById("mp-3ds-modal-content").innerHTML='';
+    addLoadSpinner3dsSubmit();
     redirectAfter3dsChallenge();
-    removeLoadSpinner3ds();
-  }
+  } 
+
 });
+
+function setDisplayOfErrorCheckout(errorMessage) {
+  removeElementsByClass('woocommerce-NoticeGroup-checkout');
+  var divWooNotice = document.createElement("div");
+  divWooNotice.className = "woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout";
+  divWooNotice.innerHTML =  '<ul class="woocommerce-error">' +
+                              '<li>'.concat(errorMessage).concat('<li>') +
+                            '</ul>';
+  form.prepend(divWooNotice);
+
+}
+
+
+function removeElementsByClass(className) {
+  const elements = document.getElementsByClassName(className);
+  while(elements.length > 0) {
+      elements[0].parentNode.removeChild(elements[0]);
+  }
+}

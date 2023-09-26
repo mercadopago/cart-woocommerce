@@ -623,6 +623,8 @@ class CustomGateway extends AbstractGateway
                             $this->mercadopago->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
                             $this->mercadopago->session->setSession('mp_order_id', $order->ID);
                             $this->mercadopago->session->setSession('mp_payment_id', $response['id']);
+                            $this->mercadopago->session->setSession('mp_3ds_card_info', 
+                            ucfirst($response['payment_method_id']). '****' .$response['card']['last_four_digits']);
 
                             $return = [
                                 'result'        => 'success',

@@ -80,8 +80,9 @@ class FrontendEndpoints
                 'data'   => [
                     '3ds_url'  => $this->session->getSession('mp_3ds_url'),
                     '3ds_creq' => $this->session->getSession('mp_3ds_creq'),
-                    'test' => $this->session->getSession('mp_payment_id'),
-                    'test2' => $this->session->getSession('mp_order_id'),
+                    'payment_id' => $this->session->getSession('mp_payment_id'),
+                    'order_id' => $this->session->getSession('mp_order_id'),
+                    '3ds_card_info' => $this->session->getSession('mp_3ds_card_info'),
                 ],
             ]);
         } catch (\Exception $e) {
@@ -103,6 +104,7 @@ class FrontendEndpoints
     public function mercadopagoRedirectAfter3DSChallenge(): void
     {
         try {
+            
             $orderId   = $this->session->getSession('mp_order_id');
             $paymentId = $this->session->getSession('mp_payment_id');
 
@@ -120,6 +122,14 @@ class FrontendEndpoints
                 wp_send_json_success([
                     'result'   => 'success',
                     'redirect' => $order->get_checkout_order_received_url(),
+                ]);
+            } else {
+                wp_send_json_error([
+                    'result' => 'failure',
+                    'redirect' => '',
+                    'data' => [
+                        'error' => 'Erroooooooooo', // @TODO: Get error message
+                    ],
                 ]);
             }
         } catch(\Exception $e) {
