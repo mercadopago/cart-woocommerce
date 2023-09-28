@@ -1265,6 +1265,7 @@ div .mp-error{
   height: 274px;
   position: relative;
   width: 704px;
+  margin: auto;
 }
 
 
@@ -1317,6 +1318,7 @@ div .mp-error{
   width: 24px;
   height: 18px;
   margin: 0px 12px 0px 10px;
+  min-block-size: -webkit-fill-available;
 }
 
 .mp-card-body-3ds {
@@ -1332,7 +1334,7 @@ div .mp-error{
 .mp-text-subtitle {
   font-size: 14px;
   vertical-align: super;
-  font-family: Proxima Nova;
+  font-family: 'Proxima Nova',sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
