@@ -417,6 +417,12 @@ function removeModal3ds() {
 function threeDSHandler(url_3ds, cred_3ds) {
   try {
 
+    if(url_3ds == null || cred_3ds == null){
+      removeModal3ds();
+      console.log('Invalid parameters for 3ds');
+      return;
+    }
+
     var divMpCardInfo = document.createElement('div');
     divMpCardInfo.className = 'mp-card-info';
     divMpCardInfo.innerHTML =
@@ -531,7 +537,7 @@ function handle3dsPayOrderFormSubmission() {
   ).done(
       function(response) {
           if (response.three_ds_flow) {
-            load3DSFlow();
+            load3DSFlow(response.last_four_digits);
             return;
           }
 

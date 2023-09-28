@@ -637,6 +637,7 @@ class CustomGateway extends AbstractGateway
                             $return = [
                                 'result'        => 'success',
                                 'three_ds_flow' => true,
+                                'last_four_digits'=>  $lastFourDigits,
                                 'redirect'      => false,
                                 'messages'      => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
                             ];
