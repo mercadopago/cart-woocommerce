@@ -49,6 +49,11 @@ class StoreTranslations
      * @var array
      */
     public $commonMessages = [];
+    
+    /**
+     * @var array
+     */
+    public $threeDsTranslations;
 
     /**
      * @var array
@@ -72,6 +77,7 @@ class StoreTranslations
         $this->setPixCheckoutTranslations();
         $this->setOrderStatusTranslations();
         $this->setCommonMessagesTranslations();
+        $this->set3dsTranslations();
     }
 
     /**
@@ -244,12 +250,6 @@ class StoreTranslations
             'text_installments'                                   => __('installments of', 'woocommerce-mercadopago'),
             'wallet_button_order_receipt_title'                   => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
             'cancel_url_text'                                     => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
-            'title_loading_3ds_frame'                             => __('We are taking you to validate the card', 'woocommerce-mercadopago'),
-            'title_loading_3ds_frame2'                             => __('with your bank', 'woocommerce-mercadopago'),
-            'text_loading_3ds_frame'                              => __('We need to confirm that you are the cardholder.', 'woocommerce-mercadopago'),
-            'title_loading_3ds_response'                          => __('We are receiving the response from your bank', 'woocommerce-mercadopago'),
-            'title_3ds_frame'                                     => __('Complete the bank validation so your payment can be approved', 'woocommerce-mercadopago'),
-            'tooltip_3ds_frame'                                   => __('Please keep this page open. If you close it, you will not be able to resume the validation.', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -368,6 +368,24 @@ class StoreTranslations
             'cho_cc_rejected_invalid_installments'     => __('Payment cannot process the selected fee.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_max_attempts'             => __('You have reached the limit of allowed attempts. Choose another card or other payment method.', 'woocommerce-mercadopago'),
             'cho_default'                              => __('This payment method cannot process your payment.', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Set credits checkout translations
+     *
+     * @return void
+     */
+    private function set3dsTranslations(): void
+    {
+        $this->threeDsTranslations = [
+            'title_loading_3ds_frame'                             => __('We are taking you to validate the card', 'woocommerce-mercadopago'),
+            'title_loading_3ds_frame2'                            => __('with your bank', 'woocommerce-mercadopago'),
+            'text_loading_3ds_frame'                              => __('We need to confirm that you are the cardholder.', 'woocommerce-mercadopago'),
+            'title_loading_3ds_response'                          => __('We are receiving the response from your bank', 'woocommerce-mercadopago'),
+            'title_3ds_frame'                                     => __('Complete the bank validation so your payment can be approved', 'woocommerce-mercadopago'),
+            'tooltip_3ds_frame'                                   => __('Please keep this page open. If you close it, you will not be able to resume the validation.', 'woocommerce-mercadopago'),
+            'messege_3ds_close'                                   => __('<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
         ];
     }
 }

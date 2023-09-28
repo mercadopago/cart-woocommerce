@@ -391,7 +391,7 @@ function removeLoadSpinner() {
 }
 
 function removeLoadSpinner3ds() {
-  document.getElementById("loading-container-3ds").remove();
+  document.getElementById("mp-loading-container-3ds").remove();
 }
 
 
@@ -399,17 +399,18 @@ function removeLoadSpinner3ds() {
 function addLoadSpinner3dsSubmit() {
   var modalContent = document.getElementById("mp-3ds-modal-content");
   modalContent.innerHTML =
-    '<div id="loading-container-3ds">'
+    '<div id="mp-loading-container-3ds">'
   + '   <div>'
-  + '     <div class="spinner" id="mp-spinner-3ds"></div>'
+  + '     <div class="mp-spinner-3ds"></div>'
   + '       <div class="loading-text-3ds">'
-  + '         <p>Estamos recibiendo la respuesta de tu banco</p>'
+  + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading_response + '</p>'
   + '       </div>'
   + '   </div>'
   + ' <div>';
 }
 
 function removeModal3ds() {
+  CheckoutPage.clearInputs();
   document.getElementById("mp-3ds-modal-container").remove();
 }
 
@@ -422,7 +423,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
       '<div class="mp-alert-color-success"></div>'
       + '<div class="mp-card-body-3ds">'
       + '<div class="mp-icon-badge-info"></div>'
-      + '<div><span class="mp-text-subtitle">' + wc_mercadopago_custom_checkout_params.threeDsText.tooltip_frame + '</span></div>'
+      + '<div><span class="mp-text-subtitle">' + wc_mercadopago_custom_checkout_params.threeDsText.title_frame + '</span></div>'
       + '</div>';
 
     var divModalContent = document.getElementById("mp-3ds-modal-content");
@@ -464,29 +465,28 @@ function load3DSFlow(lastFourDigits) {
   divModalContainer.className = "mp-3ds-modal";
   var divModalContent = document.createElement("div");
   divModalContent.id = "mp-3ds-modal-content";
-  divModalContent.innerHTML =  '<div id="modal-3ds-title">'
+  divModalContent.innerHTML =  '<div><div id="mp-modal-3ds-title">'
     + '<span id="mp-3ds-title"></span>'
-    + '<span id="mp-3ds-modal-close" class="mp-3ds-close">&times;</span>'
+    + '<span id="mp-3ds-modal-close" >&times;</span>'
     + '</div>'
-    + '<div id="loading-container-3ds">'
+    + '<div id="mp-loading-container-3ds">'
     + '   <div>'
-    + '     <div class="spinner" id="mp-spinner-3ds"></div>'
+    + '     <div class="mp-spinner-3ds"></div>'
     + '       <div class="loading-text-3ds">'
-    + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading + '</p>'
-    + '         <p>(' + document.getElementById("paymentMethodId").value + '****' + lastFourDigits  + ') '
+    + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading + '<br>'
+    + '           (' + document.getElementById("paymentMethodId").value + '****' + lastFourDigits  + ') '
     +                   wc_mercadopago_custom_checkout_params.threeDsText.title_loading2
     + '          </p>'
     + '       </div>'
     + '       <p class="normal-text-3ds">' +  wc_mercadopago_custom_checkout_params.threeDsText.text_loading + '</p>'
     + '   </div>'
-    + ' <div>';
+    + ' <div></div>';
   divModalContainer.appendChild(divModalContent);
   document.body.appendChild(divModalContainer);
 
   document.querySelector('#mp-3ds-modal-close').addEventListener('click', function() {
-    //document.querySelector('#mp-3ds-modal-container').remove();
-    //console.log('3ds modal has been closed');
-    redirectAfter3dsChallenge();
+    setDisplayOfErrorCheckout(wc_mercadopago_custom_checkout_params.threeDsText.messege_close);
+    removeModal3ds();
   });
 
 
@@ -516,8 +516,6 @@ function redirectAfter3dsChallenge() {
         removeModal3ds();
         window.location.href = response.data.redirect;
       } else {
-        // @TODO: implement error message (#PPWP-1900)
-        console.log(response.data.data.error);
         setDisplayOfErrorCheckout(response.data.data.error);
         removeModal3ds(); 
       }
@@ -564,7 +562,7 @@ function setDisplayOfErrorCheckout(errorMessage) {
   removeElementsByClass('woocommerce-NoticeGroup-checkout');
   var divWooNotice = document.createElement("div");
   divWooNotice.className = "woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout";
-  divWooNotice.innerHTML =  '<ul class="woocommerce-error">' +
+  divWooNotice.innerHTML =  '<ul class="woocommerce-error" role="alert">' +
                               '<li>'.concat(errorMessage).concat('<li>') +
                             '</ul>';
   form.prepend(divWooNotice);

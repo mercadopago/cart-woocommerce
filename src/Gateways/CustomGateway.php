@@ -271,12 +271,13 @@ class CustomGateway extends AbstractGateway
                         ]
                     ],
                     'threeDsText' => [
-                        'title_loading'             => $this->storeTranslations['title_loading_3ds_frame'],
-                        'title_loading2'             => $this->storeTranslations['title_loading_3ds_frame2'],
-                        'text_loading'       => $this->storeTranslations['text_loading_3ds_frame'],
-                        'title_loading_response' => $this->storeTranslations['title_loading_3ds_response'],
-                        'title_frame' => $this->storeTranslations['title_3ds_frame'],
-                        'tooltip_frame' => $this->storeTranslations['tooltip_3ds_frame'],
+                        'title_loading'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame'],
+                        'title_loading2'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame2'],
+                        'text_loading'       => $this->mercadopago->storeTranslations->threeDsTranslations['text_loading_3ds_frame'],
+                        'title_loading_response' => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_response'],
+                        'title_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['title_3ds_frame'],
+                        'tooltip_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['tooltip_3ds_frame'],
+                        'messege_close' => $this->mercadopago->storeTranslations->threeDsTranslations['messege_3ds_close'],
                     ],
                 ]
             );

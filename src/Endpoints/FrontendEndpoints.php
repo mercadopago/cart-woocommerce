@@ -127,7 +127,7 @@ class FrontendEndpoints
                     'result' => 'failure',
                     'redirect' => '',
                     'data' => [
-                        'error' => 'Erroooooooooo', // @TODO: Get error message
+                        'error' => __('<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
                     ],
                 ]);
             }
