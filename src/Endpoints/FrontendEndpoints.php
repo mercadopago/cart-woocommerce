@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -39,10 +40,15 @@ class FrontendEndpoints
      */
     public $seller;
 
+      /**
+     * @var array
+     */
+    private $threeDsTranslations;
+
     /**
      * 
      */
-    public function __construct(Endpoints $endpoints, Logs $logs, Requester $requester, Session $session, Seller $seller)
+    public function __construct(Endpoints $endpoints, Logs $logs, Requester $requester, Session $session, Seller $seller, StoreTranslations $storeTranslations)
     {
         $this->endpoints = $endpoints;
         $this->logs      = $logs;
@@ -50,6 +56,7 @@ class FrontendEndpoints
         $this->session   = $session;
         $this->seller    = $seller;
         $this->registerFrontendEndpoints();
+        $this->threeDsTranslations = $storeTranslations->threeDsTranslations;
     }
 
     /**
@@ -80,8 +87,6 @@ class FrontendEndpoints
                 'data'   => [
                     '3ds_url'  => $this->session->getSession('mp_3ds_url'),
                     '3ds_creq' => $this->session->getSession('mp_3ds_creq'),
-                    'payment_id' => $this->session->getSession('mp_payment_id'),
-                    'order_id' => $this->session->getSession('mp_order_id'),
                 ],
             ]);
         } catch (\Exception $e) {
@@ -127,7 +132,7 @@ class FrontendEndpoints
                     'result' => 'failure',
                     'redirect' => '',
                     'data' => [
-                        'error' => __('<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
+                        'error' => $this->threeDsTranslations['message_3ds_declined'],
                     ],
                 ]);
             }

@@ -402,7 +402,7 @@ function addLoadSpinner3dsSubmit() {
     '<div id="mp-loading-container-3ds">'
   + '   <div>'
   + '     <div class="mp-spinner-3ds"></div>'
-  + '       <div class="loading-text-3ds">'
+  + '       <div class="mp-loading-text-3ds">'
   + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading_response + '</p>'
   + '       </div>'
   + '   </div>'
@@ -472,20 +472,20 @@ function load3DSFlow(lastFourDigits) {
     + '<div id="mp-loading-container-3ds">'
     + '   <div>'
     + '     <div class="mp-spinner-3ds"></div>'
-    + '       <div class="loading-text-3ds">'
+    + '       <div class="mp-loading-text-3ds">'
     + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading + '<br>'
     + '           (' + document.getElementById("paymentMethodId").value + '****' + lastFourDigits  + ') '
     +                   wc_mercadopago_custom_checkout_params.threeDsText.title_loading2
     + '          </p>'
     + '       </div>'
-    + '       <p class="normal-text-3ds">' +  wc_mercadopago_custom_checkout_params.threeDsText.text_loading + '</p>'
+    + '       <p class="mp-normal-text-3ds">' +  wc_mercadopago_custom_checkout_params.threeDsText.text_loading + '</p>'
     + '   </div>'
     + ' <div></div>';
   divModalContainer.appendChild(divModalContent);
   document.body.appendChild(divModalContainer);
 
   document.querySelector('#mp-3ds-modal-close').addEventListener('click', function() {
-    setDisplayOfErrorCheckout(wc_mercadopago_custom_checkout_params.threeDsText.messege_close);
+    setDisplayOfErrorCheckout(wc_mercadopago_custom_checkout_params.threeDsText.message_close);
     removeModal3ds();
   });
 
@@ -494,8 +494,7 @@ function load3DSFlow(lastFourDigits) {
     if (response.success) {
       var url_3ds = response.data.data['3ds_url'];
       var cred_3ds = response.data.data['3ds_creq'];
-      var card_info_3ds = response.data.data['3ds_card_info'];
-      threeDSHandler(url_3ds, cred_3ds, card_info_3ds);
+      threeDSHandler(url_3ds, cred_3ds);
     } else {
       console.error('Error POST:', response);
       removeModal3ds();

@@ -545,7 +545,8 @@ class Dependencies
             $this->logs,
             $this->requester,
             $this->session,
-            $this->seller
+            $this->seller,
+            $this->storeTranslations
         );
     }
 }

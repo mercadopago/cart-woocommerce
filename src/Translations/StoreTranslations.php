@@ -385,7 +385,7 @@ class StoreTranslations
             'title_loading_3ds_response'                          => __('We are receiving the response from your bank', 'woocommerce-mercadopago'),
             'title_3ds_frame'                                     => __('Complete the bank validation so your payment can be approved', 'woocommerce-mercadopago'),
             'tooltip_3ds_frame'                                   => __('Please keep this page open. If you close it, you will not be able to resume the validation.', 'woocommerce-mercadopago'),
-            'messege_3ds_close'                                   => __('<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
+            'message_3ds_declined'                                   => __('<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
         ];
     }
 }

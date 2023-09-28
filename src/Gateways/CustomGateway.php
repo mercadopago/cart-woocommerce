@@ -277,7 +277,7 @@ class CustomGateway extends AbstractGateway
                         'title_loading_response' => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_response'],
                         'title_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['title_3ds_frame'],
                         'tooltip_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['tooltip_3ds_frame'],
-                        'messege_close' => $this->mercadopago->storeTranslations->threeDsTranslations['messege_3ds_close'],
+                        'message_close' => $this->mercadopago->storeTranslations->threeDsTranslations['message_3ds_declined'],
                     ],
                 ]
             );

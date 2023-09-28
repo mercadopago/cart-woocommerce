@@ -1268,7 +1268,7 @@ div .mp-error{
 }
 
 
-.loading-text-3ds {
+.mp-loading-text-3ds {
   font-family: 'Proxima Nova',sans-serif;
   font-size: 24px;
   font-weight: 600;
@@ -1277,16 +1277,7 @@ div .mp-error{
   
 }
 
-.loading-text-3ds .text-3ds {
-  font-family: 'Open Sans', sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 20px;
-  letter-spacing: 0em;
-  text-align: center;
-}
-
-.loading-text-3ds > p {
+.mp-loading-text-3ds > p {
   margin-bottom: 12px;
 }
 
@@ -1365,6 +1356,6 @@ div .mp-error{
   align-self: stretch;
 }
 
-.normal-text-3ds {
+.mp-normal-text-3ds {
   text-align: center;
 }
