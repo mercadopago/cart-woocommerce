@@ -270,6 +270,15 @@ class CustomGateway extends AbstractGateway
                             'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
                         ]
                     ],
+                    'threeDsText' => [
+                        'title_loading'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame'],
+                        'title_loading2'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame2'],
+                        'text_loading'       => $this->mercadopago->storeTranslations->threeDsTranslations['text_loading_3ds_frame'],
+                        'title_loading_response' => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_response'],
+                        'title_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['title_3ds_frame'],
+                        'tooltip_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['tooltip_3ds_frame'],
+                        'message_close' => $this->mercadopago->storeTranslations->threeDsTranslations['message_3ds_declined'],
+                    ],
                 ]
             );
         }
@@ -623,12 +632,14 @@ class CustomGateway extends AbstractGateway
                             $this->mercadopago->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
                             $this->mercadopago->session->setSession('mp_order_id', $order->ID);
                             $this->mercadopago->session->setSession('mp_payment_id', $response['id']);
+                            $lastFourDigits = (empty($response['card']['last_four_digits'])) ? '****' : $response['card']['last_four_digits'];
 
                             $return = [
                                 'result'        => 'success',
                                 'three_ds_flow' => true,
+                                'last_four_digits'=>  $lastFourDigits,
                                 'redirect'      => false,
-                                'messages'      => '<script>load3DSFlow();</script>',
+                                'messages'      => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
                             ];
 
                             if ($this->isOrderPayPage()) {

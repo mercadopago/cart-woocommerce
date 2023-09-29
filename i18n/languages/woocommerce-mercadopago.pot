@@ -2027,3 +2027,31 @@ msgstr ""
 #: ../../src/Translations/StoreTranslations.php:364
 msgid "This payment method cannot process your payment."
 msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:247
+msgid "We are taking you to validate the card"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:248
+msgid "with your bank"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:249
+msgid "We need to confirm that you are the cardholder."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:250
+msgid "We are receiving the response from your bank"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:251
+msgid "Complete the bank validation so your payment can be approved"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:252
+msgid "Please keep this page open. If you close it, you will not be able to resume the validation."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:253
+msgid "<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases."
+msgstr ""

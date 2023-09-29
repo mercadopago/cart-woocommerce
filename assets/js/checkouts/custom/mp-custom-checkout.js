@@ -391,37 +391,61 @@ function removeLoadSpinner() {
 }
 
 function removeLoadSpinner3ds() {
-  document.getElementById("mp-spinner-3ds").remove();
+  document.getElementById("mp-loading-container-3ds").remove();
+}
+
+
+
+function addLoadSpinner3dsSubmit() {
+  var modalContent = document.getElementById("mp-3ds-modal-content");
+  modalContent.innerHTML =
+    '<div id="mp-loading-container-3ds">'
+  + '   <div>'
+  + '     <div class="mp-spinner-3ds"></div>'
+  + '       <div class="mp-loading-text-3ds">'
+  + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading_response + '</p>'
+  + '       </div>'
+  + '   </div>'
+  + ' <div>';
 }
 
 function removeModal3ds() {
+  CheckoutPage.clearInputs();
   document.getElementById("mp-3ds-modal-container").remove();
 }
 
 function threeDSHandler(url_3ds, cred_3ds) {
   try {
-    var divModalContent = document.createElement("div");
-    divModalContent.className = "mp-3ds-modal-content";
-    var spanModalClose = document.createElement("span");
-    spanModalClose.setAttribute("id", "mp-3ds-modal-close");
-    spanModalClose.className = "mp-3ds-close";
-    spanModalClose.innerHTML = "&times;";
+
+    if(url_3ds == null || cred_3ds == null){
+      removeModal3ds();
+      console.log('Invalid parameters for 3ds');
+      return;
+    }
+
+    var divMpCardInfo = document.createElement('div');
+    divMpCardInfo.className = 'mp-card-info';
+    divMpCardInfo.innerHTML =
+      '<div class="mp-alert-color-success"></div>'
+      + '<div class="mp-card-body-3ds">'
+      + '<div class="mp-icon-badge-info"></div>'
+      + '<div><span class="mp-text-subtitle">' + wc_mercadopago_custom_checkout_params.threeDsText.title_frame + '</span></div>'
+      + '</div>';
+
+    var divModalContent = document.getElementById("mp-3ds-modal-content");
     var iframe = document.createElement("iframe");
     iframe.name = "mp-3ds-frame";
     iframe.id = "mp-3ds-frame";
-    iframe.height = "500px";
-    iframe.width = "600px";
     iframe.onload = removeLoadSpinner3ds();
-    divModalContent.appendChild(spanModalClose);
-    divModalContent.appendChild(iframe);
-    var divModalContainer = document.getElementById("mp-3ds-modal-container");
-    divModalContainer.appendChild(divModalContent);
+    document.getElementById('mp-3ds-title').innerText = wc_mercadopago_custom_checkout_params.threeDsText.tooltip_frame;
+    divModalContent.appendChild(divMpCardInfo);
 
+    divModalContent.appendChild(iframe);
     var idocument = iframe.contentWindow.document;
 
     var form3ds = idocument.createElement("form");
     form3ds.name = "mp-3ds-frame";
-    form3ds.className = "mp-modal"
+    form3ds.className="mp-modal"
     form3ds.setAttribute("target", "mp-3ds-frame");
     form3ds.setAttribute("method", "post");
     form3ds.setAttribute("action", url_3ds);
@@ -435,24 +459,43 @@ function threeDSHandler(url_3ds, cred_3ds) {
 
     form3ds.submit();
 
-    document.querySelector('#mp-3ds-modal-close').addEventListener('click', function () {
-      document.querySelector('#mp-3ds-modal-container').remove();
-    });
   } catch (error) {
     console.log(error);
     alert("Error doing Challenge, try again later.");
   }
 }
 
-function load3DSFlow() {
-  var divSpinner = document.createElement("div");
-  divSpinner.className = "spinner";
-  divSpinner.setAttribute("id", "mp-spinner-3ds");
+function load3DSFlow(lastFourDigits) {
   var divModalContainer = document.createElement("div");
-  divModalContainer.setAttribute("id", "mp-3ds-modal-container");
+  divModalContainer.setAttribute("id", "mp-3ds-modal-container" );
   divModalContainer.className = "mp-3ds-modal";
-  divModalContainer.appendChild(divSpinner);
+  var divModalContent = document.createElement("div");
+  divModalContent.id = "mp-3ds-modal-content";
+  divModalContent.innerHTML =  '<div><div id="mp-modal-3ds-title">'
+    + '<span id="mp-3ds-title"></span>'
+    + '<span id="mp-3ds-modal-close" >&times;</span>'
+    + '</div>'
+    + '<div id="mp-loading-container-3ds">'
+    + '   <div>'
+    + '     <div class="mp-spinner-3ds"></div>'
+    + '       <div class="mp-loading-text-3ds">'
+    + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading + '<br>'
+    + '           (' + document.getElementById("paymentMethodId").value + '****' + lastFourDigits  + ') '
+    +                   wc_mercadopago_custom_checkout_params.threeDsText.title_loading2
+    + '          </p>'
+    + '       </div>'
+    + '       <p class="mp-normal-text-3ds">' +  wc_mercadopago_custom_checkout_params.threeDsText.text_loading + '</p>'
+    + '   </div>'
+    + ' <div></div>';
+  divModalContainer.appendChild(divModalContent);
   document.body.appendChild(divModalContainer);
+
+  document.querySelector('#mp-3ds-modal-close').addEventListener('click', function() {
+    setDisplayOfErrorCheckout(wc_mercadopago_custom_checkout_params.threeDsText.message_close);
+    removeModal3ds();
+  });
+
+
   jQuery.post('/?wc-ajax=mp_get_3ds_from_session').done(function (response) {
     if (response.success) {
       var url_3ds = response.data.data['3ds_url'];
@@ -466,6 +509,7 @@ function load3DSFlow() {
     console.error('Failed to make POST:', textStatus, errorThrown);
     removeModal3ds();
   });
+
 }
 
 function redirectAfter3dsChallenge() {
@@ -474,10 +518,11 @@ function redirectAfter3dsChallenge() {
   ).done(
     function (response) {
       if (response.data.redirect) {
+        removeModal3ds();
         window.location.href = response.data.redirect;
       } else {
-        // @TODO: implement error message (#PPWP-1900)
-        console.log('error');
+        setDisplayOfErrorCheckout(response.data.data.error);
+        removeModal3ds(); 
       }
     }
   );
@@ -492,7 +537,7 @@ function handle3dsPayOrderFormSubmission() {
   ).done(
       function(response) {
           if (response.three_ds_flow) {
-            load3DSFlow();
+            load3DSFlow(response.last_four_digits);
             return;
           }
 
@@ -511,7 +556,28 @@ function handle3dsPayOrderFormSubmission() {
 
 window.addEventListener("message", (e) => {
   if (e.data.status === "COMPLETE") {
+    document.getElementById("mp-3ds-modal-content").innerHTML='';
+    addLoadSpinner3dsSubmit();
     redirectAfter3dsChallenge();
-    removeLoadSpinner3ds();
-  }
+  } 
+
 });
+
+function setDisplayOfErrorCheckout(errorMessage) {
+  removeElementsByClass('woocommerce-NoticeGroup-checkout');
+  var divWooNotice = document.createElement("div");
+  divWooNotice.className = "woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout";
+  divWooNotice.innerHTML =  '<ul class="woocommerce-error" role="alert">' +
+                              '<li>'.concat(errorMessage).concat('<li>') +
+                            '</ul>';
+  form.prepend(divWooNotice);
+
+}
+
+
+function removeElementsByClass(className) {
+  const elements = document.getElementsByClassName(className);
+  while(elements.length > 0) {
+      elements[0].parentNode.removeChild(elements[0]);
+  }
+}
