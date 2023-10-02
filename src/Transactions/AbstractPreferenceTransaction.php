@@ -89,7 +89,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         $pendingUrl = $this->mercadopago->options->getGatewayOption($this->gateway, 'pending_url');
 
         $this->transaction->back_urls->success = empty($successUrl)
-            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->get_return_url($this->order)))
+            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->gateway->get_return_url($this->order)))
             : $successUrl;
 
         $this->transaction->back_urls->failure = empty($failureUrl)
@@ -97,7 +97,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
             : $failureUrl;
 
         $this->transaction->back_urls->pending = empty($pendingUrl)
-            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->get_return_url($this->order)))
+            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->gateway->get_return_url($this->order)))
             : $pendingUrl;
     }
 
