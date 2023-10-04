@@ -15,7 +15,7 @@ final class Url
 
     /**
      * Url constructor
-     * 
+     *
      * @param Strings $strings
      */
     public function __construct(Strings $strings)
@@ -81,6 +81,26 @@ final class Url
     public function getCurrentUrl(): string
     {
         return isset($_SERVER['REQUEST_URI']) ? sanitize_text_field($_SERVER['REQUEST_URI']) : '';
+    }
+
+    /**
+     * Get base url of  current url
+     *
+     * @return string
+     */
+    public function getBaseUrl(): string
+    {
+        return home_url();
+    }
+
+    /**
+     * Get server address
+     *
+     * @return string
+     */
+    public function getServerAddress(): string
+    {
+        return isset($_SERVER['SERVER_ADDR']) ? sanitize_text_field($_SERVER['SERVER_ADDR']) : '';
     }
 
     /**
