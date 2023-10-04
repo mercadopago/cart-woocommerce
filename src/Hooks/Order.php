@@ -170,7 +170,7 @@ class Order
             'mp_payment_status_sync',
             $this->url->getPluginFileUrl('assets/js/admin/order/payment-status-sync', '.js'),
             [
-                'order_id' => $order->ID,
+                'order_id' => $order->get_id(),
                 'nonce' => $this->nonce->generateNonce(self::NONCE_ID),
             ]
         );
@@ -179,7 +179,7 @@ class Order
             'mp_payment_status_sync',
             $this->url->getPluginFileUrl('assets/css/admin/order/payment-status-sync', '.css'),
             [
-                'order_id' => $order->ID,
+                'order_id' =>$order->get_id(),
                 'nonce' => $this->nonce->generateNonce(self::NONCE_ID),
             ]
         );
@@ -197,7 +197,7 @@ class Order
         $paymentInfo = $this->getLastPaymentInfo($order);
 
         $paymentStatusType = PaymentStatus::getStatusType($paymentInfo['status']);
-        $cardContent       = PaymentStatus::getCardDescription($this->adminTranslations->statusSync, $paymentInfo['status_detail'], $paymentInfo['payment_tye'] === 'credit_card');
+        $cardContent       = PaymentStatus::getCardDescription($this->adminTranslations->statusSync, $paymentInfo['status_detail'], $paymentInfo['payment_type_id'] === 'credit_card');
 
         switch ($paymentStatusType) {
             case 'success':
