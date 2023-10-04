@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
+use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
@@ -89,6 +90,11 @@ class Settings
     private $currentUser;
 
     /**
+     * @var Session
+     */
+    private $session;
+
+    /**
      * @var Logs
      */
     private $logs;
@@ -107,6 +113,7 @@ class Settings
      * @param Url $url
      * @param Nonce $nonce
      * @param CurrentUser $currentUser
+     * @param Session $session
      * @param Logs $logs
      */
     public function __construct(
@@ -121,6 +128,7 @@ class Settings
         Url $url,
         Nonce $nonce,
         CurrentUser $currentUser,
+        Session $session,
         Logs $logs
     ) {
         $this->admin        = $admin;
@@ -134,6 +142,7 @@ class Settings
         $this->url          = $url;
         $this->nonce        = $nonce;
         $this->currentUser  = $currentUser;
+        $this->session      = $session;
         $this->logs         = $logs;
 
         $this->loadMenu();

@@ -15,7 +15,7 @@ use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataUser;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataCpp;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 
-abstract class AbstractTransaction extends \WC_Payment_Gateway
+abstract class AbstractTransaction
 {
     /**
      * @var WoocommerceMercadoPago

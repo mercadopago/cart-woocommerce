@@ -66,6 +66,16 @@ class CreditsGateway extends AbstractGateway
     }
 
     /**
+     * Get checkout name
+     *
+     * @return string
+     */
+    public function getCheckoutName(): string
+    {
+        return self::CHECKOUT_NAME;
+    }
+
+    /**
      * Init form fields for checkout configuration
      *
      * @return void

@@ -10,7 +10,7 @@ Open your terminal and run the script below in your ````wp-content/plugins```` t
 
 ````
 plugin_base_dir="woocommerce-plugins-enablers" \
-&& git clone --quiet --recursive -j8 git@github.com:mercadolibre/fury_woocommerce-plugins-enablers.git $plugin_base_dir \
+&& git clone --quiet --recursive -j8 git@github.com:melisource/fury_woocommerce-plugins-enablers.git $plugin_base_dir \
 && cd $plugin_base_dir && composer i && composer i -d "./packages/sdk/"
 ````
 

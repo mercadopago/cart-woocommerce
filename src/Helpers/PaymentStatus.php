@@ -46,8 +46,8 @@ final class PaymentStatus
 		$alertTitleTranslationKey = 'alert_title_' . $paymentStatusDetail;
 		$descriptionTranslationKey = 'description_' . $paymentStatusDetail . ($isCreditCard ? '_cc' : '');
 
-		$alertTitle  = array_key_exists($alertTitleTranslationKey, $translationsArray) ? $translationsArray[$alertTitleTranslationKey] : $translationsArray['generic'];
-		$description = array_key_exists($descriptionTranslationKey, $translationsArray) ? $translationsArray[$descriptionTranslationKey] : $translationsArray['generic'];
+		$alertTitle  = array_key_exists($alertTitleTranslationKey, $translationsArray) ? $translationsArray[$alertTitleTranslationKey] : $translationsArray['alert_title_generic'];
+		$description = array_key_exists($descriptionTranslationKey, $translationsArray) ? $translationsArray[$descriptionTranslationKey] : $translationsArray['description_generic'];
 
 		return [
 			'alert_title' => $alertTitle,

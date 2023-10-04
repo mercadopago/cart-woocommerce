@@ -23,8 +23,9 @@ class CustomTransaction extends AbstractPaymentTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->transaction->payment_method_id  = $this->checkout['paymentMethodId'];
-        $this->transaction->installments       = (int) $this->checkout['installments'];
+        $this->transaction->payment_method_id   = $this->checkout['paymentMethodId'];
+        $this->transaction->installments        = (int) $this->checkout['installments'];
+        $this->transaction->three_d_secure_mode = 'optional';
 
         $this->setTokenTransaction();
     }
