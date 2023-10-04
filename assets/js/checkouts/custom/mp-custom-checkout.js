@@ -394,19 +394,17 @@ function removeLoadSpinner3ds() {
   document.getElementById("mp-loading-container-3ds").remove();
 }
 
-
-
 function addLoadSpinner3dsSubmit() {
   var modalContent = document.getElementById("mp-3ds-modal-content");
   modalContent.innerHTML =
     '<div id="mp-loading-container-3ds">'
-  + '   <div>'
-  + '     <div class="mp-spinner-3ds"></div>'
-  + '       <div class="mp-loading-text-3ds">'
-  + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading_response + '</p>'
-  + '       </div>'
-  + '   </div>'
-  + ' <div>';
+    + '   <div>'
+    + '     <div class="mp-spinner-3ds"></div>'
+    + '       <div class="mp-loading-text-3ds">'
+    + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading_response + '</p>'
+    + '       </div>'
+    + '   </div>'
+    + ' <div>';
 }
 
 function removeModal3ds() {
@@ -417,8 +415,9 @@ function removeModal3ds() {
 function threeDSHandler(url_3ds, cred_3ds) {
   try {
 
-    if(url_3ds == null || cred_3ds == null){
+    if (url_3ds == null || cred_3ds == null) {
       removeModal3ds();
+      sendMetric('MP_THREE_DS_ERROR', '3DS URL or CRED not set');
       console.log('Invalid parameters for 3ds');
       return;
     }
@@ -445,7 +444,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
 
     var form3ds = idocument.createElement("form");
     form3ds.name = "mp-3ds-frame";
-    form3ds.className="mp-modal"
+    form3ds.className = "mp-modal"
     form3ds.setAttribute("target", "mp-3ds-frame");
     form3ds.setAttribute("method", "post");
     form3ds.setAttribute("action", url_3ds);
@@ -460,6 +459,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
     form3ds.submit();
 
   } catch (error) {
+    sendMetric('MP_THREE_DS_ERROR', '3DS Loading error: ' + error);
     console.log(error);
     alert("Error doing Challenge, try again later.");
   }
@@ -467,11 +467,11 @@ function threeDSHandler(url_3ds, cred_3ds) {
 
 function load3DSFlow(lastFourDigits) {
   var divModalContainer = document.createElement("div");
-  divModalContainer.setAttribute("id", "mp-3ds-modal-container" );
+  divModalContainer.setAttribute("id", "mp-3ds-modal-container");
   divModalContainer.className = "mp-3ds-modal";
   var divModalContent = document.createElement("div");
   divModalContent.id = "mp-3ds-modal-content";
-  divModalContent.innerHTML =  '<div><div id="mp-modal-3ds-title">'
+  divModalContent.innerHTML = '<div><div id="mp-modal-3ds-title">'
     + '<span id="mp-3ds-title"></span>'
     + '<span id="mp-3ds-modal-close" >&times;</span>'
     + '</div>'
@@ -480,21 +480,20 @@ function load3DSFlow(lastFourDigits) {
     + '     <div class="mp-spinner-3ds"></div>'
     + '       <div class="mp-loading-text-3ds">'
     + '         <p>' + wc_mercadopago_custom_checkout_params.threeDsText.title_loading + '<br>'
-    + '           (' + document.getElementById("paymentMethodId").value + '****' + lastFourDigits  + ') '
-    +                   wc_mercadopago_custom_checkout_params.threeDsText.title_loading2
+    + '           (' + document.getElementById("paymentMethodId").value + '****' + lastFourDigits + ') '
+    + wc_mercadopago_custom_checkout_params.threeDsText.title_loading2
     + '          </p>'
     + '       </div>'
-    + '       <p class="mp-normal-text-3ds">' +  wc_mercadopago_custom_checkout_params.threeDsText.text_loading + '</p>'
+    + '       <p class="mp-normal-text-3ds">' + wc_mercadopago_custom_checkout_params.threeDsText.text_loading + '</p>'
     + '   </div>'
     + ' <div></div>';
   divModalContainer.appendChild(divModalContent);
   document.body.appendChild(divModalContainer);
 
-  document.querySelector('#mp-3ds-modal-close').addEventListener('click', function() {
+  document.querySelector('#mp-3ds-modal-close').addEventListener('click', function () {
     setDisplayOfErrorCheckout(wc_mercadopago_custom_checkout_params.threeDsText.message_close);
     removeModal3ds();
   });
-
 
   jQuery.post('/?wc-ajax=mp_get_3ds_from_session').done(function (response) {
     if (response.success) {
@@ -518,11 +517,12 @@ function redirectAfter3dsChallenge() {
   ).done(
     function (response) {
       if (response.data.redirect) {
+        sendMetric('MP_THREE_DS_SUCCESS', '3DS challenge complete');
         removeModal3ds();
         window.location.href = response.data.redirect;
       } else {
         setDisplayOfErrorCheckout(response.data.data.error);
-        removeModal3ds(); 
+        removeModal3ds();
       }
     }
   );
@@ -532,23 +532,23 @@ function handle3dsPayOrderFormSubmission() {
   var serializedForm = jQuery('#order_review').serialize();
 
   jQuery.post(
-      '#',
-      serializedForm
+    '#',
+    serializedForm
   ).done(
-      function(response) {
-          if (response.three_ds_flow) {
-            load3DSFlow(response.last_four_digits);
-            return;
-          }
-
-          if (response.redirect) {
-            window.location.href = response.redirect;
-          }
-
-          window.location.reload();
+    function (response) {
+      if (response.three_ds_flow) {
+        load3DSFlow(response.last_four_digits);
+        return;
       }
+
+      if (response.redirect) {
+        window.location.href = response.redirect;
+      }
+
+      window.location.reload();
+    }
   ).error(
-    function() {
+    function () {
       window.location.reload();
     }
   );
@@ -556,28 +556,27 @@ function handle3dsPayOrderFormSubmission() {
 
 window.addEventListener("message", (e) => {
   if (e.data.status === "COMPLETE") {
-    document.getElementById("mp-3ds-modal-content").innerHTML='';
+    sendMetric('MP_THREE_DS_SUCCESS', '3DS iframe Closed');
+    document.getElementById("mp-3ds-modal-content").innerHTML = '';
     addLoadSpinner3dsSubmit();
     redirectAfter3dsChallenge();
-  } 
-
+  }
 });
 
 function setDisplayOfErrorCheckout(errorMessage) {
+  sendMetric('MP_THREE_DS_ERROR', errorMessage);
   removeElementsByClass('woocommerce-NoticeGroup-checkout');
   var divWooNotice = document.createElement("div");
   divWooNotice.className = "woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout";
-  divWooNotice.innerHTML =  '<ul class="woocommerce-error" role="alert">' +
-                              '<li>'.concat(errorMessage).concat('<li>') +
-                            '</ul>';
+  divWooNotice.innerHTML = '<ul class="woocommerce-error" role="alert">' +
+    '<li>'.concat(errorMessage).concat('<li>') +
+    '</ul>';
   form.prepend(divWooNotice);
-
 }
-
 
 function removeElementsByClass(className) {
   const elements = document.getElementsByClassName(className);
-  while(elements.length > 0) {
-      elements[0].parentNode.removeChild(elements[0]);
+  while (elements.length > 0) {
+    elements[0].parentNode.removeChild(elements[0]);
   }
 }
