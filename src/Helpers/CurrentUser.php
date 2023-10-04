@@ -48,6 +48,16 @@ final class CurrentUser
      *
      * @return \WP_User
      */
+    public function isUserLoggedIn(): bool
+    {
+        return is_user_logged_in();
+    }
+
+    /**
+     * Get WP current user
+     *
+     * @return \WP_User
+     */
     public function getCurrentUser(): \WP_User
     {
         return wp_get_current_user();
@@ -61,6 +71,16 @@ final class CurrentUser
     public function getCurrentUserRoles(): array
     {
         return $this->getCurrentUser()->roles;
+    }
+
+    /**
+     * Retrieves current user info
+     *
+     * @return  \WP_User|false
+     */
+    public function getCurrentUserData()
+    {
+        return get_userdata($this->getCurrentUser()->ID);
     }
 
     /**

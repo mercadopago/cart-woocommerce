@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 
 class CustomTransaction extends AbstractPaymentTransaction
 {
@@ -25,21 +26,20 @@ class CustomTransaction extends AbstractPaymentTransaction
         $this->transaction->payment_method_id  = $this->checkout['paymentMethodId'];
         $this->transaction->installments       = (int) $this->checkout['installments'];
 
-        $this->setAdditionalInfoTransaction();
         $this->setTokenTransaction();
     }
 
     /**
      * Get internal metadata
      *
-     * @return array
+     * @return PaymentMetadata
      */
-    public function getInternalMetadata(): array
+    public function getInternalMetadata(): PaymentMetadata
     {
         $internalMetadata = parent::getInternalMetadata();
 
-        $internalMetadata['checkout']         = 'custom';
-        $internalMetadata['checkout_type']    = self::ID;
+        $internalMetadata->checkout        = 'custom';
+        $internalMetadata->checkout_type   = self::ID;
 
         return $internalMetadata;
     }
