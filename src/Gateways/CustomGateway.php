@@ -518,13 +518,13 @@ class CustomGateway extends AbstractGateway
             $preference        = $this->transaction->createPreference();
 
             $this->mercadopago->template->getWoocommerceTemplate(
-                'public/receipt/wallet-button.php',
+                'public/receipt/preference-modal.php',
                 [
-                    'public_key'          => $this->mercadopago->seller->getCredentialsPublicKey(),
-                    'preference_id'       => $preference['id'],
-                    'wallet_button_title' => $this->storeTranslations['wallet_button_order_receipt_title'],
-                    'cancel_url'          => $order->get_cancel_order_url(),
-                    'cancel_url_text'     => $this->storeTranslations['cancel_url_text'],
+                    'public_key'        => $this->mercadopago->seller->getCredentialsPublicKey(),
+                    'preference_id'     => $preference['id'],
+                    'pay_with_mp_title' => $this->storeTranslations['wallet_button_order_receipt_title'],
+                    'cancel_url'        => $order->get_cancel_order_url(),
+                    'cancel_url_text'   => $this->storeTranslations['cancel_url_text'],
                 ]
             );
         }

@@ -129,6 +129,8 @@ class StoreTranslations
             'checkout_redirect_alt'                           => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
             'terms_and_conditions_description'                => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
             'terms_and_conditions_link_text'                  => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'pay_with_mp_title'                               => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
+            'cancel_url_text'                                 => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
         ];
     }
 

@@ -3,10 +3,11 @@
 /**
  * @var string $public_key
  * @var string $preference_id
- * @var string $wallet_button_title
+ * @var string $pay_with_mp_title
  * @var string $cancel_url
  * @var string $cancel_url_text
  *
+ * @see \MercadoPago\Woocommerce\Gateways\BasicGateway
  * @see \MercadoPago\Woocommerce\Gateways\CustomGateway
  */
 
@@ -30,7 +31,7 @@ if (!defined('ABSPATH')) {
 
 <div style="margin-bottom: 24px">
 	<a id="submit-payment" href="#" onclick="checkout.open()" class="button alt">
-		<?= esc_html($wallet_button_title); ?>
+		<?= esc_html($pay_with_mp_title); ?>
 	</a>
 
 	<a class="button cancel" href="<?= esc_url($cancel_url); ?>">
