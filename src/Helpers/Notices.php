@@ -228,52 +228,6 @@ class Notices
     }
 
     /**
-     * Show woocommerce missing notice
-     *
-     * @return void
-     */
-    public function adminNoticeMissWoocoommerce(): void
-    {
-        add_action(
-            'admin_notices',
-            function () {
-                $isInstalled = false;
-                $currentUserCanInstallPlugins = $this->currentUser->currentUserCan('install_plugins');
-
-                $minilogo     = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
-                $translations = $this->translations->notices;
-
-                $activateLink = wp_nonce_url(
-                    self_admin_url('plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=all'),
-                    'activate-plugin_woocommerce/woocommerce.php'
-                );
-
-                $installLink = wp_nonce_url(
-                    self_admin_url('update.php?action=install-plugin&plugin=woocommerce'),
-                    'install-plugin_woocommerce'
-                );
-
-                if (function_exists('get_plugins')) {
-                    $allPlugins  = get_plugins();
-                    $isInstalled = !empty($allPlugins['woocommerce/woocommerce.php']);
-                }
-
-                if ($isInstalled && $currentUserCanInstallPlugins) {
-                    $missWoocommerceAction = 'active';
-                } else {
-                    if ($currentUserCanInstallPlugins) {
-                        $missWoocommerceAction = 'install';
-                    } else {
-                        $missWoocommerceAction = 'see';
-                    }
-                }
-
-                include dirname(__FILE__) . '/../../templates/admin/notices/miss-woocommerce-notice.php';
-            }
-        );
-    }
-
-    /**
      * Show pix missing notice
      * @return void
      */
