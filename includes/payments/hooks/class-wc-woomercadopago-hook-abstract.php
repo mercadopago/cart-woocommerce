@@ -164,7 +164,7 @@ abstract class WC_WooMercadoPago_Hook_Abstract {
 			return $title;
 		}
 
-		$total            = (float) WC()->cart->subtotal;
+		$total            = (float) WC()->cart->total;
 		$price_discount   = $total * ( $this->payment->gateway_discount / 100 );
 		$price_commission = $total * ( $this->payment->commission / 100 );
 
