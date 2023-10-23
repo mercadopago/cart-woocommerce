@@ -61,7 +61,7 @@ class Notices
 
     /**
      * Notices constructor
-     * 
+     *
      * @param Scripts $scripts
      * @param AdminTranslations $translations
      * @param Url $url
@@ -294,7 +294,7 @@ class Notices
     {
         $message = "
             <p>$orderStatus</p>
-            <a id='mp_pending_payment_button' class='button' href=''$urlReceived' data-mp-checkout-type='woo-mercado-pago-$checkoutType'>
+            <a id='mp_pending_payment_button' class='button' href='$urlReceived' data-mp-checkout-type='woo-mercado-pago-$checkoutType'>
                 $linkText
             </a>
         ";

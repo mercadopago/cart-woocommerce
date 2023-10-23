@@ -362,7 +362,7 @@ class CustomGateway extends AbstractGateway
                     'redirect' => esc_url($order->get_checkout_order_received_url()),
                 ];
             }
-            
+
             parent::process_payment($order_id);
 
             switch ($checkout['checkout_type']) {
@@ -626,7 +626,7 @@ class CustomGateway extends AbstractGateway
                     case 'pending':
                     case 'in_process':
                         $statusDetail = $response['status_detail'];
-                        
+
                         if ($statusDetail === 'pending_challenge') {
                             $this->mercadopago->session->setSession('mp_3ds_url', $response['three_ds_info']['external_resource_url']);
                             $this->mercadopago->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
@@ -648,11 +648,11 @@ class CustomGateway extends AbstractGateway
 
                             return $return;
                         }
-                        
+
                         $this->mercadopago->woocommerce->cart->empty_cart();
 
                         $checkoutType = $checkout['checkout_type'];
-                        $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_form_error'];
+                        $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_see_order_form'];
 
                         $urlReceived = esc_url($order->get_checkout_order_received_url());
                         $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($statusDetail);
