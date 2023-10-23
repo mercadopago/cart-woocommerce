@@ -116,7 +116,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->loadMelidataStoreScripts();
     }
 
-    public function saveOrderPaymentsId(string $orderId) {
+    public function saveOrderPaymentsId(string $orderId)
+    {
         $order = wc_get_order($orderId);
         $paymentIds = Form::sanitizeTextFromGet('payment_id');
 
@@ -679,5 +680,30 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 'settings'    => $settings,
             ]
         );
+    }
+
+    /**
+     * Update Option
+     *
+     * @param string $key key.
+     * @param string $value value.
+     * @return bool
+     */
+    public function update_option($key, $value = '')
+    {
+        if ('enabled' === $key && 'yes' === $value) {
+            if (empty($this->mercadopago->seller->getCredentialsPublicKey()) || empty($this->mercadopago->seller->getCredentialsAccessToken())) {
+                $message = __('Configure your credentials to enable Mercado Pago payment methods.', 'woocommerce-mercadopago');
+                $this->mercadopago->logs->file->error("no credentials to enable payment method", "MercadoPago_AbstractGateway");
+                echo wp_json_encode(
+                    array(
+                        'success' => false,
+                        'data'    => $message,
+                    )
+                );
+                die();
+            }
+        }
+        return parent::update_option($key, $value);
     }
 }
