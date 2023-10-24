@@ -25,6 +25,11 @@ class Seller
     /**
      * @const
      */
+    private const COLLECTOR_ID = '_collector_id_v1';
+
+    /**
+     * @const
+     */
     private const CREDENTIALS_PUBLIC_KEY_PROD = '_mp_public_key_prod';
 
     /**
@@ -104,7 +109,7 @@ class Seller
 
     /**
      * Credentials constructor
-     * 
+     *
      * @param Cache $cache
      * @param Options $options
      * @param Requester $requester
@@ -148,6 +153,22 @@ class Seller
     public function setClientId(string $clientId): void
     {
         $this->options->set(self::CLIENT_ID, $clientId);
+    }
+
+    /**
+     * @return string
+     */
+    public function getCollectorId(): string
+    {
+        return $this->options->get(self::COLLECTOR_ID, '');
+    }
+
+    /**
+     * @param string $collectorId
+     */
+    public function setCollectorId(string $collectorId): void
+    {
+        $this->options->set(self::COLLECTOR_ID, $collectorId);
     }
 
     /**

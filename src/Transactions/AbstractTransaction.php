@@ -196,7 +196,7 @@ abstract class AbstractTransaction
      */
     public function getInternalMetadata(): PaymentMetadata
 {
-    $seller  = $this->mercadopago->seller->getClientId();
+    $seller  = $this->mercadopago->seller->getCollectorId();
     $siteId  = $this->mercadopago->seller->getSiteId();
     $siteUrl = $this->mercadopago->options->get('siteurl');
 

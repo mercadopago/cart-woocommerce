@@ -30,7 +30,7 @@ final class Links
 
     /**
      * Links constructor
-     * 
+     *
      * @param Country $country
      */
     public function __construct(Country $country)
@@ -53,7 +53,7 @@ final class Links
             $this->getCreditsLinks($countryConfig),
             $this->getAdminLinks(),
             $this->getStoreLinks(),
-            $this->getWordpressLinks(),
+            $this->getWordpressLinks()
         );
     }
 
@@ -70,9 +70,9 @@ final class Links
 
         return [
             'docs_developers_program'       => $baseLink . '/developer-program',
-            'docs_test_cards'               => $baseLink . '/docs/checkout-api/integration-test/test-cards',
+            'docs_test_cards'               => $baseLink . '/docs/checkout-api/additional-content/your-integrations/test/cards',
             'docs_reasons_refusals'         => $baseLink . '/docs/woocommerce/reasons-refusals',
-            'docs_ipn_notification'         => $baseLink . '/docs/woocommerce/additional-content/notifications/ipn',
+            'docs_ipn_notification'         => $baseLink . '/docs/woocommerce/integration-configuration/notifications',
             'docs_integration_test'         => $baseLink . '/docs/woocommerce/integration-test',
             'docs_integration_config'       => $baseLink . '/docs/woocommerce/integration-configuration',
             'docs_integration_introduction' => $baseLink . '/docs/woocommerce/introduction',

@@ -289,7 +289,7 @@ class Order
             $this->orderStatus->processStatus($paymentData['status'], (array) $paymentData, $order, $this->orderMetadata->getUsedGatewayData($order));
 
             wp_send_json_success(
-				$this->adminTranslations->statusSync['response_success'],
+				$this->adminTranslations->statusSync['response_success']
 			);
 		} catch ( \Exception $e ) {
             $this->logs->file->error("Mercado pago gave error in payment status Sync: {$e->getMessage()}",

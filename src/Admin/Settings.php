@@ -534,14 +534,13 @@ class Settings
                             'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
                             'test_mode' => 'no',
                         ];
-
                         wp_send_json_error($response);
+
+                    } else {
+                        $this->plugin->executeUpdateCredentialAction();
+                        wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
                     }
                 }
-
-                $this->plugin->executeUpdateCredentialAction();
-
-                wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
             }
 
             $response = [
