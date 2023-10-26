@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Record info LOG only if option activated in STEP 2 of config
 ### Added
-- 
 - Payment implementation with 3DS security flow
+
 ## [6.9.3] - 2023-07-13
 ### Fixed
 - Updated the link to obtain credentials on the developer site
