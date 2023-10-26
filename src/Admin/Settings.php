@@ -610,7 +610,8 @@ class Settings
         );
 
         if ($verifyAlertTestMode === 'yes' || ($validateCheckoutTestMode && $withoutTestCredentials)) {
-            wp_send_json_error('Invalid credentials for test mode');
+            wp_send_json_error($this->translations->updateCredentials['invalid_credentials_title'] .
+                $this->translations->updateCredentials['for_test_mode']);
         }
 
         $this->store->setCheckboxCheckoutTestMode($checkoutTestMode);
@@ -618,10 +619,10 @@ class Settings
         $this->plugin->executeUpdateTestModeAction();
 
         if ($validateCheckoutTestMode) {
-            wp_send_json_success('Mercado Pago\'s Payment Methods in Test Mode');
+            wp_send_json_success($this->translations->testModeSettings['title_message_test']);
         }
 
-        wp_send_json_success('Mercado Pago\'s Payment Methods in Production Mode');
+        wp_send_json_success($this->translations->testModeSettings['title_message_prod']);
     }
 
     /**

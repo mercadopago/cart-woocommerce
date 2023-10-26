@@ -135,7 +135,7 @@ class Order
         $this->registerMetaBox(function ($postOrOrderObject) {
             $order = ($postOrOrderObject instanceof \WP_Post) ? wc_get_order($postOrOrderObject->ID) : $postOrOrderObject;
 
-            if (!$order) {
+            if (!$order || !$this->getLastPaymentInfo($order))  {
                 return;
             }
 

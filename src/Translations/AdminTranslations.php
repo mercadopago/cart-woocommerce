@@ -338,7 +338,7 @@ class AdminTranslations
             'helper_category_store'        => __('Select "Other categories" if you do not find the appropriate category.', 'woocommerce-mercadopago'),
             'helper_integrator_link'       => __('request it now.', 'woocommerce-mercadopago'),
             'helper_url'                   => $helperUrl,
-            'helper_integrator'            => $helperIntegrator,
+            'helper_integrator'            => $helperIntegrator
         ];
     }
 
@@ -940,6 +940,7 @@ class AdminTranslations
             'invalid_credentials_title'        => __('Invalid credentials', 'woocommerce-mercadopago'),
             'invalid_credentials_subtitle'     => __('See our manual to learn', 'woocommerce-mercadopago'),
             'invalid_credentials_link_message' => __('how to enter the credentials the right way.', 'woocommerce-mercadopago'),
+            'for_test_mode' => __(' for test mode', 'woocommerce-mercadopago'),
         ];
     }
 
