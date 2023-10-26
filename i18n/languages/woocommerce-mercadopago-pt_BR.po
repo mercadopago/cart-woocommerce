@@ -2650,6 +2650,10 @@ msgstr ""
 "que você pague com o meio de pagamento e dispositivo que costuma usar para "
 "compras on-line."
 
+#: ../../src/Translations/AdminTranslations.php:945
+msgid " for test mode"
+msgstr " para o modo teste"
+
 #~ msgid "Now we convert your currency"
 #~ msgstr "Agora convertemos sua moeda"
 

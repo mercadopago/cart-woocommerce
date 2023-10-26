@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
+use MercadoPago\Woocommerce\Helpers\NotificationType;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataAddress;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataUser;
@@ -154,11 +155,13 @@ abstract class AbstractTransaction
             $notificationUrl = $this->mercadopago->store->getCustomDomain();
 
             if (empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false) {
-                return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME);
+                return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME)
+                    . '?source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
             } else {
                 $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
                 if ($customDomainOptions === 'yes') {
-                    return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway::WEBHOOK_API_NAME . '/'));
+                    return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway::WEBHOOK_API_NAME . '/'
+                        . '?source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME)));
                 }
                 return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl));
             }

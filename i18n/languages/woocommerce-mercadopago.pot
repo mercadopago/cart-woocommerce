@@ -2055,3 +2055,7 @@ msgstr ""
 #: ../../src/Translations/StoreTranslations.php:253
 msgid "<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases."
 msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:945
+msgid " for test mode"
+msgstr ""
