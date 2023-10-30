@@ -98,7 +98,7 @@ class Store
 
     /**
      * Store constructor
-     * 
+     *
      * @param Options $options
      */
     public function __construct(Options $options)
@@ -143,7 +143,7 @@ class Store
      *
      * @return string
      */
-    public function getStoreId(string $default = ''): string
+    public function getStoreId(string $default = 'WC-'): string
     {
         return $this->options->get(self::STORE_ID, $default);
     }
@@ -262,7 +262,7 @@ class Store
      */
     public function getCustomDomainOptions(): string
     {
-        return $this->options->get(self::CUSTOM_DOMAIN_OPTIONS, '');
+        return $this->options->get(self::CUSTOM_DOMAIN_OPTIONS, 'yes');
     }
 
     /**

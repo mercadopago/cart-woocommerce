@@ -2643,6 +2643,10 @@ msgstr ""
 "<b>Por motivos de seguridad, tu pago fue rechazado</b><br>Te recomendamos "
 "pagar con el medio de pago y dispositivo que sueles usar para compras online."
 
+#: ../../src/Translations/AdminTranslations.php:168
+msgid "Enable payments via Mercado Pago account"
+msgstr "Pagos a través de la cuenta de Mercado Pago"
+
 #: ../../src/Translations/AdminTranslations.php:945
 msgid " for test mode"
 msgstr " para el modo de prueba"

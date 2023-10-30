@@ -552,7 +552,7 @@ class WoocommerceMercadoPago
                     ),
                     'activate_woocommerce' => __('Activate WooCommerce', 'woocommerce-mercadopago'),
                     'install_woocommerce'  => __('Install WooCommerce', 'woocommerce-mercadopago'),
-                    'see_woocommerce'      => __('See WooCommerce', 'woocommerce-mercadopago'),        
+                    'see_woocommerce'      => __('See WooCommerce', 'woocommerce-mercadopago'),
                 ];
 
                 $activateLink = wp_nonce_url(
