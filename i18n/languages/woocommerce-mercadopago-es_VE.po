@@ -1089,16 +1089,16 @@ msgid ""
 "By disabling it, you will disable all invoice payments from Mercado Pago "
 "Transparent Checkout."
 msgstr ""
-"Ao desativar, você desabilita pagamentos por boleto e lotérica no Checkout "
-"Transparente Mercado Pago."
+"Al desactivar, desabilitarás todos los medios de pago en efectivo en el "
+"Checkout Transparente de Mercado Pago."
 
 #: ../../src/Translations/AdminTranslations.php:709
 msgid "The transparent checkout for tickets is <b>enabled</b>."
-msgstr "O checkout transparente para boletos está <b>ativo</b>."
+msgstr "El Checkout Transparente está <b>activo</b> para pagos en efectivo"
 
 #: ../../src/Translations/AdminTranslations.php:710
 msgid "The transparent checkout for tickets is <b>disabled</b>."
-msgstr "O checkout transparente para boletos está <b>inativo</b>."
+msgstr "El Checkout Transparente está <b>inactivo</b> para pagos en efectivo"
 
 #: ../../src/Translations/AdminTranslations.php:719
 msgid "Payment Due"
@@ -1110,7 +1110,7 @@ msgstr "Em quantos dias os pagamentos via boleto e em lotéricas vencerão."
 
 #: ../../src/Translations/AdminTranslations.php:723
 msgid "Reduce inventory"
-msgstr "Reduzir inventário"
+msgstr "Reducir inventario"
 
 #: ../../src/Translations/AdminTranslations.php:724
 msgid ""
@@ -1118,29 +1118,29 @@ msgid ""
 "not the final payment is credited. Disable this option to reduce it only "
 "when payments are approved."
 msgstr ""
-"Ative a redução de inventário durante a criação de um pedido, seja o "
-"pagamento aprovado ou não. Desative esta opção para reduzi-lo somente quando "
-"os pagamentos estiverem aprovados."
+"Activa la reducción del inventario durante la creación de un pedido, se "
+"acredite o no el pago final. Desactiva esta opción para reducirlo solo "
+"cuando los pagos estén aprobados."
 
 #: ../../src/Translations/AdminTranslations.php:725
 msgid "Reduce inventory is <b>enabled</b>."
-msgstr "Reduzir inventário está <b>ativo</b>."
+msgstr "Reducir inventario está <b>activo</b>."
 
 #: ../../src/Translations/AdminTranslations.php:726
 msgid "Reduce inventory is <b>disabled</b>."
-msgstr "Reduzir inventário está <b>inativo</b>."
+msgstr "Reducir inventario está <b>inactivo</b>."
 
 #: ../../src/Translations/AdminTranslations.php:728
 msgid "Enable the available payment methods"
-msgstr "Habilite os meios de pagamento disponíveis"
+msgstr "Habilita los medios de pago disponibles"
 
 #: ../../src/Translations/AdminTranslations.php:729
 msgid "Choose the available payment methods in your store."
-msgstr "Habilite os meios de pagamento disponíveis para seus clientes."
+msgstr "Elige los medios de pago que se aceptan en la tienda"
 
 #: ../../src/Translations/AdminTranslations.php:730
 msgid "All payment methods"
-msgstr "Todos os meios de pagamento"
+msgstr "Medios de pago disponibles"
 
 #: ../../src/Translations/AdminTranslations.php:749,
 #: ../../src/Translations/AdminTranslations.php:755
@@ -2642,6 +2642,10 @@ msgid ""
 msgstr ""
 "<b>Por motivos de seguridad, tu pago fue rechazado</b><br>Te recomendamos "
 "pagar con el medio de pago y dispositivo que sueles usar para compras online."
+
+#: ../../src/Translations/AdminTranslations.php:168
+msgid "Enable payments via Mercado Pago account"
+msgstr "Pagos a través de la cuenta de Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:945
 msgid " for test mode"

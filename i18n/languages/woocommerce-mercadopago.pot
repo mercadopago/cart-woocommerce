@@ -2056,6 +2056,10 @@ msgstr ""
 msgid "<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases."
 msgstr ""
 
+#: ../../src/Translations/AdminTranslations.php:168
+msgid "Enable payments via Mercado Pago account"
+msgstr ""
+
 #: ../../src/Translations/AdminTranslations.php:945
 msgid " for test mode"
 msgstr ""
