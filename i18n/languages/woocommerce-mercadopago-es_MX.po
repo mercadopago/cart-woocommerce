@@ -22,10 +22,10 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:157
 msgid ""
-"Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. "
+"Mercado Pago payments for WooCommerce requires PHP version 7.4 or later. "
 "Please update your PHP version."
 msgstr ""
-"El plugin de Mercado Pago requiere la versión de PHP 7.2 o posterior. Por "
+"El plugin de Mercado Pago requiere la versión de PHP 7.4 o posterior. Por "
 "favor actualice su versión de PHP."
 
 #: ../../src/Translations/AdminTranslations.php:158
@@ -1094,11 +1094,11 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:709
 msgid "The transparent checkout for tickets is <b>enabled</b>."
-msgstr "El Checkout Transparente está <b>activo</b> para pagos en efectivo"
+msgstr "El Checkout Transparente está <b>activo</b> para pagos en efectivo."
 
 #: ../../src/Translations/AdminTranslations.php:710
 msgid "The transparent checkout for tickets is <b>disabled</b>."
-msgstr "El Checkout Transparente está <b>inactivo</b> para pagos en efectivo"
+msgstr "El Checkout Transparente está <b>inactivo</b> para pagos en efectivo."
 
 #: ../../src/Translations/AdminTranslations.php:719
 msgid "Payment Due"
@@ -1136,7 +1136,7 @@ msgstr "Habilita los medios de pago disponibles"
 
 #: ../../src/Translations/AdminTranslations.php:729
 msgid "Choose the available payment methods in your store."
-msgstr "Elige los medios de pago que se aceptan en la tienda"
+msgstr "Elige los medios de pago que se aceptan en la tienda."
 
 #: ../../src/Translations/AdminTranslations.php:730
 msgid "All payment methods"

@@ -53,7 +53,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_MIN_PHP = '7.2';
+    private const PLUGIN_MIN_PHP = '7.4';
 
     /**
      * @const

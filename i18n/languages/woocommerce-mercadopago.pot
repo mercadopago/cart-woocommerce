@@ -21,7 +21,7 @@ msgid "The Mercado Pago module needs an active version of %s in order to work!"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:157
-msgid "Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version."
+msgid "Mercado Pago payments for WooCommerce requires PHP version 7.4 or later. Please update your PHP version."
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:158
