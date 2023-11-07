@@ -198,51 +198,51 @@ abstract class AbstractTransaction
      * @return PaymentMetadata
      */
     public function getInternalMetadata(): PaymentMetadata
-{
-    $seller  = $this->mercadopago->seller->getCollectorId();
-    $siteId  = $this->mercadopago->seller->getSiteId();
-    $siteUrl = $this->mercadopago->options->get('siteurl');
+    {
+        $seller  = $this->mercadopago->seller->getCollectorId();
+        $siteId  = $this->mercadopago->seller->getSiteId();
+        $siteUrl = $this->mercadopago->options->get('siteurl');
 
-    $zipCode = $this->mercadopago->orderBilling->getZipcode($this->order);
-    $zipCode = str_replace('-', '', $zipCode);
+        $zipCode = $this->mercadopago->orderBilling->getZipcode($this->order);
+        $zipCode = str_replace('-', '', $zipCode);
 
-    $user             = $this->mercadopago->currentUser->getCurrentUser();
-    $userId           = $user->ID;
-    $userRegistration = $user->user_registered;
+        $user             = $this->mercadopago->currentUser->getCurrentUser();
+        $userId           = $user->ID;
+        $userRegistration = $user->user_registered;
 
-    $metadata = new PaymentMetadata();
-    $metadata->platform                      = MP_PLATFORM_ID;
-    $metadata->platform_version              = $this->mercadopago->woocommerce->version;
-    $metadata->module_version                = MP_VERSION;
-    $metadata->php_version                   = PHP_VERSION;
-    $metadata->site_id                       = strtolower($siteId);
-    $metadata->sponsor_id                    = $this->countryConfigs['sponsor_id'];
-    $metadata->collector                     = $seller;
-    $metadata->test_mode                     = $this->mercadopago->store->isTestMode();
-    $metadata->details                       = '';
-    $metadata->seller_website                = $siteUrl;
-    $metadata->basic_settings                = $this->mercadopago->metadataConfig->getGatewaySettings('basic');
-    $metadata->custom_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('custom');
-    $metadata->ticket_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('ticket');
-    $metadata->pix_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
-    $metadata->credits_settings              = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
-    $metadata->wallet_button_settings        = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
-    $metadata->billing_address                = new PaymentMetadataAddress();
-    $metadata->billing_address->zip_code     = $zipCode;
-    $metadata->billing_address->street_name  = $this->mercadopago->orderBilling->getAddress1($this->order);
-    $metadata->billing_address->city_name    = $this->mercadopago->orderBilling->getCity($this->order);
-    $metadata->billing_address->state_name   = $this->mercadopago->orderBilling->getState($this->order);
-    $metadata->billing_address->country_name = $this->mercadopago->orderBilling->getCountry($this->order);
-    $metadata->user                          = new PaymentMetadataUser();
-    $metadata->user->registered_user         = $userId ? 'yes' : 'no';
-    $metadata->user->user_email              = $userId ? $user->user_email : null;
-    $metadata->user->user_registration_date  = $userId ? Date::formatGmDate($userRegistration) : null;
-    $metadata->cpp_extra                     = new PaymentMetadataCpp();
-    $metadata->cpp_extra->platform_version   = $this->mercadopago->woocommerce->version;
-    $metadata->cpp_extra->module_version     = MP_VERSION;
+        $metadata = new PaymentMetadata();
+        $metadata->platform                      = MP_PLATFORM_ID;
+        $metadata->platform_version              = $this->mercadopago->woocommerce->version;
+        $metadata->module_version                = MP_VERSION;
+        $metadata->php_version                   = PHP_VERSION;
+        $metadata->site_id                       = strtolower($siteId);
+        $metadata->sponsor_id                    = $this->countryConfigs['sponsor_id'];
+        $metadata->collector                     = $seller;
+        $metadata->test_mode                     = $this->mercadopago->store->isTestMode();
+        $metadata->details                       = '';
+        $metadata->seller_website                = $siteUrl;
+        $metadata->basic_settings                = $this->mercadopago->metadataConfig->getGatewaySettings('basic');
+        $metadata->custom_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('custom');
+        $metadata->ticket_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('ticket');
+        $metadata->pix_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
+        $metadata->credits_settings              = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
+        $metadata->wallet_button_settings        = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
+        $metadata->billing_address                = new PaymentMetadataAddress();
+        $metadata->billing_address->zip_code     = $zipCode;
+        $metadata->billing_address->street_name  = $this->mercadopago->orderBilling->getAddress1($this->order);
+        $metadata->billing_address->city_name    = $this->mercadopago->orderBilling->getCity($this->order);
+        $metadata->billing_address->state_name   = $this->mercadopago->orderBilling->getState($this->order);
+        $metadata->billing_address->country_name = $this->mercadopago->orderBilling->getCountry($this->order);
+        $metadata->user                          = new PaymentMetadataUser();
+        $metadata->user->registered_user         = $userId ? 'yes' : 'no';
+        $metadata->user->user_email              = $userId ? $user->user_email : null;
+        $metadata->user->user_registration_date  = $userId ? Date::formatGmDate($userRegistration) : null;
+        $metadata->cpp_extra                     = new PaymentMetadataCpp();
+        $metadata->cpp_extra->platform_version   = $this->mercadopago->woocommerce->version;
+        $metadata->cpp_extra->module_version     = MP_VERSION;
 
-    return $metadata;
-}
+        return $metadata;
+    }
 
     /**
      * Set additional shipments information
@@ -384,5 +384,97 @@ abstract class AbstractTransaction
         return is_object($product) && method_exists($product, 'get_image_id')
             ? wp_get_attachment_url($product->get_image_id())
             : $this->mercadopago->url->getPluginFileUrl('assets/images/gateways/all/blue-cart', '.png', true);
+    }
+
+    /**
+     * Set additional info
+     *
+     * @return void
+     */
+    public function setAdditionalInfoTransaction(): void
+    {
+        $this->setAdditionalInfoBaseInfoTransaction();
+        $this->setAdditionalInfoItemsTransaction();
+        $this->setAdditionalInfoShipmentsTransaction();
+        $this->setAdditionalInfoPayerTransaction();
+        $this->setAdditionalInfoSellerTransaction();
+    }
+
+    /**
+     * Set base information
+     *
+     * @return void
+     */
+    public function setAdditionalInfoBaseInfoTransaction(): void
+    {
+        $this->transaction->additional_info->ip_address = $this->mercadopago->url->getServerAddress();
+        $this->transaction->additional_info->referral_url = $this->mercadopago->url->getBaseUrl();
+    }
+
+    /**
+     * Set additional items information
+     *
+     * @return void
+     */
+    public function setAdditionalInfoItemsTransaction(): void
+    {
+        $this->setItemsTransaction($this->transaction->additional_info->items);
+    }
+
+    /**
+     * Set additional shipments information
+     *
+     * @return void
+     */
+    public function setAdditionalInfoShipmentsTransaction(): void
+    {
+        $this->setShipmentsTransaction($this->transaction->additional_info->shipments);
+    }
+
+    /**
+     * Set additional seller information
+     *
+     * @return void
+     */
+    public function setAdditionalInfoSellerTransaction(): void
+    {
+        $seller = $this->transaction->additional_info->seller;
+
+        $seller->store_id      = $this->mercadopago->store->getStoreId();
+        $seller->business_type = $this->mercadopago->store->getStoreCategory('others');
+        $seller->collector     = $this->mercadopago->seller->getClientId();
+        $seller->website       = $this->mercadopago->url->getBaseUrl();
+        $seller->platform_url  = $this->mercadopago->url->getBaseUrl();
+        $seller->referral_url  = $this->mercadopago->url->getBaseUrl();
+    }
+
+    /**
+     * Set additional payer information
+     *
+     * @return void
+     */
+    public function setAdditionalInfoPayerTransaction(): void
+    {
+        $payer = $this->transaction->additional_info->payer;
+
+        $payer->first_name           = $this->mercadopago->orderBilling->getFirstName($this->order);
+        $payer->last_name            = $this->mercadopago->orderBilling->getLastName($this->order);
+        $payer->user_email           = $this->mercadopago->orderBilling->getEmail($this->order);
+        $payer->phone->number        = $this->mercadopago->orderBilling->getPhone($this->order);
+        $payer->mobile->number       = $this->mercadopago->orderBilling->getPhone($this->order);
+        $payer->address->city        = $this->mercadopago->orderBilling->getCity($this->order);
+        $payer->address->state       = $this->mercadopago->orderBilling->getState($this->order);
+        $payer->address->country     = $this->mercadopago->orderBilling->getCountry($this->order);
+        $payer->address->zip_code    = $this->mercadopago->orderBilling->getZipcode($this->order);
+        $payer->address->street_name = $this->mercadopago->orderBilling->getAddress1($this->order);
+        $payer->address->apartment   = $this->mercadopago->orderBilling->getAddress2($this->order);
+
+        if ($this->mercadopago->currentUser->isUserLoggedIn()) {
+            $payer->registered_user        = true;
+            $payer->identification->number = $this->mercadopago->currentUser->getCurrentUserMeta('billing_document', true);
+            $payer->registration_date      = $this->mercadopago->currentUser->getCurrentUserData()->user_registered;
+            $payer->platform_email         = $this->mercadopago->currentUser->getCurrentUserData()->user_email;
+            $payer->register_updated_at    = $this->mercadopago->currentUser->getCurrentUserData()->user_modified;
+        }
     }
 }
