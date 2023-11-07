@@ -1,6 +1,6 @@
 # Plugins Enablers (Woocommerce)
 
-[![made-with-Php](https://img.shields.io/badge/Made%20with-Php-1f425f.svg)](https://www.php.net/) [![php-version](https://img.shields.io/badge/Php->=7.2-1f425f)]()
+[![made-with-Php](https://img.shields.io/badge/Made%20with-Php-1f425f.svg)](https://www.php.net/) [![php-version](https://img.shields.io/badge/Php->=7.4-1f425f)]()
 
 The base project for the Plugins Enablers Initiative.
 

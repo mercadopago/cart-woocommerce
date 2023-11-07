@@ -44,10 +44,10 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:157
 msgid ""
-"Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. "
+"Mercado Pago payments for WooCommerce requires PHP version 7.4 or later. "
 "Please update your PHP version."
 msgstr ""
-"O plugin do Mercado Pago para o WooCommerce requer o PHP versão 7.2 ou "
+"O plugin do Mercado Pago para o WooCommerce requer o PHP versão 7.4 ou "
 "posterior. Por favor, atualize sua versão do PHP."
 
 #: ../../src/Translations/AdminTranslations.php:158

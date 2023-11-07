@@ -154,7 +154,7 @@ class AdminTranslations
 
         $this->notices = [
             'miss_woocommerce'          => $missWoocommerce,
-            'php_wrong_version'         => __('Mercado Pago payments for WooCommerce requires PHP version 7.2 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
+            'php_wrong_version'         => __('Mercado Pago payments for WooCommerce requires PHP version 7.4 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
             'missing_curl'              => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
             'missing_gd_extensions'     => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago'),
             'activate_woocommerce'      => __('Activate WooCommerce', 'woocommerce-mercadopago'),
