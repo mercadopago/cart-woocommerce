@@ -332,6 +332,7 @@ class AdminTranslations
             'options_url'                  => __('Add plugin default params', 'woocommerce-mercadopago'),
             'placeholder_integrator'       => __('Ex: 14987126498', 'woocommerce-mercadopago'),
             'accordion_advanced_store'     => __('Show advanced options', 'woocommerce-mercadopago'),
+            'accordion_advanced_store'     => __('Hide advanced options', 'woocommerce-mercadopago'),
             'button_store'                 => __('Save and continue', 'woocommerce-mercadopago'),
             'helper_name_store'            => __('If this field is empty, the purchase will be identified as Mercado Pago.', 'woocommerce-mercadopago'),
             'helper_activities_store'      => __('In Activities, you will view this term before the order number', 'woocommerce-mercadopago'),

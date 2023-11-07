@@ -26,6 +26,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         $this->setItemsTransaction($this->transaction->items);
         $this->setShippingTransaction();
         $this->setFeeTransaction();
+        $this->setAdditionalInfoTransaction();
     }
 
     /**
