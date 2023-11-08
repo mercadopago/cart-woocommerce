@@ -193,7 +193,11 @@ class AdminTranslations
     private function setOrderSettingsTranslations(): void
     {
         $this->order = [
-            'cancel_order' => __('Cancel order', 'woocommerce-mercadopago'),
+            'cancel_order'                => __('Cancel order', 'woocommerce-mercadopago'),
+            'order_note_commission_title' => __('Mercado Pago commission:', 'woocommerce-mercadopago'),
+            'order_note_commission_tip'   => __('Represents the commission configured on plugin settings.', 'woocommerce-mercadopago'),
+            'order_note_discount_title'   => __('Mercado Pago discount:', 'woocommerce-mercadopago'),
+            'order_note_discount_tip'     => __('Represents the discount configured on plugin settings.', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -544,10 +548,10 @@ class AdminTranslations
             'enabled_subtitle'                          => __('Offer the option to pay in installments without card directly from your store\'s checkout.', 'woocommerce-mercadopago'),
             'enabled_descriptions_enabled'              => $enabledDescriptionsEnabled,
             'enabled_descriptions_disabled'             => $enabledDescriptionsDisabled,
-            'enabled_toggle_title'                      => 'Checkout visualization',
-            'enabled_toggle_subtitle'                   => 'Check below how this feature will be displayed to your customers:',
-            'enabled_toggle_footer'                     => 'Checkout Preview',
-            'enabled_toggle_pill_text'                  => 'PREVIEW',
+            'enabled_toggle_title'                      => __('Checkout visualization', 'woocommerce-mercadopago'),
+            'enabled_toggle_subtitle'                   => __('Check below how this feature will be displayed to your customers:', 'woocommerce-mercadopago'),
+            'enabled_toggle_footer'                     => __('Checkout Preview', 'woocommerce-mercadopago'),
+            'enabled_toggle_pill_text'                  => __('PREVIEW', 'woocommerce-mercadopago'),
             'title_title'                               => __('Title in the store Checkout', 'woocommerce-mercadopago'),
             'title_description'                         => __('It is possible to edit the title. Maximum of 85 characters.', 'woocommerce-mercadopago'),
             'title_default'                             => __('Up to 12 installments without card with Mercado Pago', 'woocommerce-mercadopago'),
@@ -662,8 +666,8 @@ class AdminTranslations
             'wallet_button_descriptions_enabled'        => $walletButtonDescriptionsEnabled,
             'wallet_button_descriptions_disabled'       => $walletButtonDescriptionsDisabled,
             'wallet_button_preview_description'         => __('Check an example of how it will appear in your store:', 'woocommerce-mercadopago'),
-            'advanced_configuration_title'               => __('Advanced configuration of the personalized payment experience', 'woocommerce-mercadopago'),
-            'advanced_configuration_subtitle'            => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'advanced_configuration_title'              => __('Advanced configuration of the personalized payment experience', 'woocommerce-mercadopago'),
+            'advanced_configuration_subtitle'           => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
             'binary_mode_title'                         => __('Automatic decline of payments without instant approval', 'woocommerce-mercadopago'),
             'binary_mode_subtitle'                      => __('Enable it if you want to automatically decline payments that are not instantly approved by banks or other institutions.', 'woocommerce-mercadopago'),
             'binary_mode_descriptions_enabled'          => $binaryModeDescriptionsEnabled,
@@ -815,8 +819,8 @@ class AdminTranslations
             'card_info_title'                           => __('Would you like to know how Pix works?', 'woocommerce-mercadopago'),
             'card_info_subtitle'                        => __('We have a dedicated page where we explain how it works and its advantages.', 'woocommerce-mercadopago'),
             'card_info_button_text'                     => __('Find out more about Pix', 'woocommerce-mercadopago'),
-            'advanced_configuration_title'               => __('Advanced configuration of the Pix experience', 'woocommerce-mercadopago'),
-            'advanced_configuration_subtitle'            => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'advanced_configuration_title'              => __('Advanced configuration of the Pix experience', 'woocommerce-mercadopago'),
+            'advanced_configuration_subtitle'           => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
             'discount_title'                            => __('Discount in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
             'discount_description'                      => __('Choose a percentage value that you want to discount your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
             'discount_checkbox_label'                   => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
@@ -905,8 +909,8 @@ class AdminTranslations
         $this->configurationTips = [
             'valid_store_tips'         => __('Store business fields are valid', 'woocommerce-mercadopago'),
             'invalid_store_tips'       => __('Store business fields could not be validated', 'woocommerce-mercadopago'),
-            'valid_payment_tips'         => __('At least one paymet method is enabled', 'woocommerce-mercadopago'),
-            'invalid_payment_tips'       => __('No payment method enabled', 'woocommerce-mercadopago'),
+            'valid_payment_tips'       => __('At least one payment method is enabled', 'woocommerce-mercadopago'),
+            'invalid_payment_tips'     => __('No payment method enabled', 'woocommerce-mercadopago'),
             'valid_credentials_tips'   => __('Credentials fields are valid', 'woocommerce-mercadopago'),
             'invalid_credentials_tips' => __('Credentials fields could not be validated', 'woocommerce-mercadopago'),
         ];
@@ -941,7 +945,7 @@ class AdminTranslations
             'invalid_credentials_title'        => __('Invalid credentials', 'woocommerce-mercadopago'),
             'invalid_credentials_subtitle'     => __('See our manual to learn', 'woocommerce-mercadopago'),
             'invalid_credentials_link_message' => __('how to enter the credentials the right way.', 'woocommerce-mercadopago'),
-            'for_test_mode' => __(' for test mode', 'woocommerce-mercadopago'),
+            'for_test_mode'                    => __(' for test mode', 'woocommerce-mercadopago'),
         ];
     }
 
