@@ -190,7 +190,9 @@ class Settings
                 'mercadopago_settings_admin_js',
                 $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
                 [
-                    'nonce' => $this->nonce->generateNonce(self::NONCE_ID)
+                    'nonce'              => $this->nonce->generateNonce(self::NONCE_ID),
+                    'show_advanced_text' => $this->translations->storeSettings['accordion_advanced_store_show'],
+                    'hide_advanced_text' => $this->translations->storeSettings['accordion_advanced_store_hide'],
                 ]
             );
 

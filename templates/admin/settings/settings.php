@@ -318,7 +318,7 @@ if (!defined('ABSPATH')) {
 
                     <div>
                         <p class="mp-settings-blue-text" id="mp-advanced-options">
-                            <?= $storeTranslations['accordion_advanced_store'] ?>
+                            <?= $storeTranslations['accordion_advanced_store_show'] ?>
                         </p>
 
                         <div class="mp-settings-advanced-options" style="display:none">
