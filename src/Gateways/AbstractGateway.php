@@ -272,7 +272,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
         if ($this->discount != 0) {
             $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
-            $feeText     = $this->getFeeText($translation, 'gateway_discount', $discount);
+            $feeText     = $this->getFeeText($translation, 'discount', $discount);
 
             $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
         }
