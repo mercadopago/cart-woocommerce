@@ -968,79 +968,30 @@ class AdminTranslations
      */
     private function setCurrencyTranslations(): void
     {
-        $notCompatiblecurrencyConversion = sprintf(
+        $notCompatibleCurrencyConversion = sprintf(
             '<b>%s</b> %s',
             __('Attention:', 'woocommerce-mercadopago'),
             __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.', 'woocommerce-mercadopago')
         );
 
-        $nowWeConvert = sprintf(
-            '%s %s ',
-            __('We are converting your currency from: ', 'woocommerce-mercadopago'),
-            get_woocommerce_currency(),
-        );
-
-        $nowWeConvertMLA = sprintf(
-            '%s %s  %s ',
-            __('We are converting your currency from: ', 'woocommerce-mercadopago'),
-            get_woocommerce_currency(),
-            __('to ARS', 'woocommerce-mercadopago'),
-        );
-
-        $nowWeConvertMLB = sprintf(
-            '%s %s  %s ',
-            __('We are converting your currency from: ', 'woocommerce-mercadopago'),
-            get_woocommerce_currency(),
-            __('to BRL', 'woocommerce-mercadopago'),
-        );
-
-        $nowWeConvertMLC = sprintf(
-            '%s %s  %s ',
-            __('We are converting your currency from: ', 'woocommerce-mercadopago'),
-            get_woocommerce_currency(),
-            __('to CLP', 'woocommerce-mercadopago'),
-        );
-
-        $nowWeConvertMCO = sprintf(
-            '%s %s  %s ',
-            __('We are converting your currency from: ', 'woocommerce-mercadopago'),
-            get_woocommerce_currency(),
-            __('to COP', 'woocommerce-mercadopago'),
-        );
-
-        $nowWeConvertMLM = sprintf(
-            '%s %s  %s ',
-            __('We are converting your currency from: ', 'woocommerce-mercadopago'),
-            get_woocommerce_currency(),
-            __('to MXN', 'woocommerce-mercadopago'),
-        );
-
-        $nowWeConvertMPE = sprintf(
-            '%s %s  %s ',
-            __('We are converting your currency from: ', 'woocommerce-mercadopago'),
-            get_woocommerce_currency(),
-            __('to PEN', 'woocommerce-mercadopago'),
-        );
-
-        $nowWeConvertMLU = sprintf(
-            '%s %s  %s ',
-            __('We are converting your currency from: ', 'woocommerce-mercadopago'),
-            get_woocommerce_currency(),
-            __('to UYU', 'woocommerce-mercadopago'),
-        );
-
+        $baseConversionMessage = __('We are converting your currency from: ', 'woocommerce-mercadopago');
         $this->currency = [
-            'not_compatible_currency_conversion' => $notCompatiblecurrencyConversion,
-            'now_we_convert'     => $nowWeConvert,
-            'now_we_convert_MLA' => $nowWeConvertMLA,
-            'now_we_convert_MLB' => $nowWeConvertMLB,
-            'now_we_convert_MLC' => $nowWeConvertMLC,
-            'now_we_convert_MLM' => $nowWeConvertMLM,
-            'now_we_convert_MPE' => $nowWeConvertMPE,
-            'now_we_convert_MCO' => $nowWeConvertMCO,
-            'now_we_convert_MLU' => $nowWeConvertMLU,
+            'not_compatible_currency_conversion' => $notCompatibleCurrencyConversion,
+            'now_we_convert'     => $this->generateConversionMessage($baseConversionMessage),
+            'now_we_convert_MLA' => $this->generateConversionMessage($baseConversionMessage, 'ARS'),
+            'now_we_convert_MLB' => $this->generateConversionMessage($baseConversionMessage, 'BRL'),
+            'now_we_convert_MLC' => $this->generateConversionMessage($baseConversionMessage, 'CLP'),
+            'now_we_convert_MLM' => $this->generateConversionMessage($baseConversionMessage, 'MXN'),
+            'now_we_convert_MPE' => $this->generateConversionMessage($baseConversionMessage, 'PEN'),
+            'now_we_convert_MCO' => $this->generateConversionMessage($baseConversionMessage, 'COP'),
+            'now_we_convert_MLU' => $this->generateConversionMessage($baseConversionMessage, 'UYU'),
         ];
     }
+
+    private function generateConversionMessage($baseMessage, $currency = ''): string
+{
+    return sprintf('%s %s  %s ', $baseMessage, get_woocommerce_currency(), __("to $currency", 'woocommerce-mercadopago'));
+}
 
     /**
      * Set status sync metabox translations
