@@ -436,8 +436,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 $this->mercadopago->template->getWoocommerceTemplate(
                     'admin/order/generic-note.php',
                     [
-                        'tip' => 'Represents the commission configured on plugin settings.',
-                        'title' => 'Mercado Pago commission:',
+                        'tip'   => $this->mercadopago->adminTranslations->order['order_note_commission_tip'],
+                        'title' => $this->mercadopago->adminTranslations->order['order_note_commission_title'],
                         'value' => $commission,
                     ]
                 );
@@ -447,8 +447,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 $this->mercadopago->template->getWoocommerceTemplate(
                     'admin/order/generic-note.php',
                     [
-                        'tip' => 'Represents the discount configured on plugin settings.',
-                        'title' => 'Mercado Pago discount:',
+                        'tip'   => $this->mercadopago->adminTranslations->order['order_note_discount_tip'],
+                        'title' => $this->mercadopago->adminTranslations->order['order_note_discount_title'],
                         'value' => $discount,
                     ]
                 );
