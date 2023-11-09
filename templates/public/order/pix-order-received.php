@@ -12,7 +12,6 @@
  * @var string $step_three
  * @var string $step_four
  * @var string $text_amount
- * @var string $currency
  * @var string $text_scan_qr
  * @var string $text_time_qr_one
  * @var string $qr_date_expiration
@@ -74,7 +73,6 @@ if (!defined('ABSPATH')) {
             <p class="mp-details-pix-amount">
 				<span class="mp-details-pix-qr">
 					<?= esc_html($text_amount); ?>
-					<b><?= esc_html($currency); ?></b>
 				</span>
                 <span class="mp-details-pix-qr-value">
 					<?= esc_html($amount); ?>

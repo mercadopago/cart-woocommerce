@@ -495,7 +495,7 @@ class PixGateway extends AbstractGateway
             'public/order/pix-order-received.php',
             [
                 'img_pix'             => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/pix/pix', '.png', true),
-                'amount'              => Numbers::format($transactionAmount),
+                'amount'              => Numbers::formatWithCurrencySymbol($this->countryConfigs['currency_symbol'], $transactionAmount),
                 'qr_base64'           => $qrCodeBase64,
                 'title_purchase_pix'  => $this->storeTranslations['title_purchase_pix'],
                 'title_how_to_pay'    => $this->storeTranslations['title_how_to_pay'],
@@ -504,7 +504,6 @@ class PixGateway extends AbstractGateway
                 'step_three'          => $this->storeTranslations['step_three'],
                 'step_four'           => $this->storeTranslations['step_four'],
                 'text_amount'         => $this->storeTranslations['text_amount'],
-                'currency'            => $this->countryConfigs['currency_symbol'],
                 'text_scan_qr'        => $this->storeTranslations['text_scan_qr'],
                 'text_time_qr_one'    => $this->storeTranslations['expiration_date_text'],
                 'qr_date_expiration'  => $expirationOption,
