@@ -380,12 +380,12 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $paymentGateways    = $this->store->getAvailablePaymentGateways();
+        $paymentGateways = $this->store->getAvailablePaymentGateways();
 
         foreach ($paymentGateways as $gateway) {
             $gateway = new $gateway();
 
-            if ('yes' === (isset($gateway->settings['enabled']) || $gateway->settings['enabled'])) {
+            if (isset($gateway->settings['enabled']) && 'yes' === $gateway->settings['enabled']) {
                 wp_send_json_success($this->translations->configurationTips['valid_payment_tips']);
             }
         }
