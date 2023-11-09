@@ -151,10 +151,12 @@ class Settings
 
         $this->plugin->registerOnPluginCredentialsUpdate(function () {
             $this->seller->updatePaymentMethods();
+            $this->seller->updatePaymentMethodsBySiteId();
         });
 
         $this->plugin->registerOnPluginTestModeUpdate(function () {
             $this->seller->updatePaymentMethods();
+            $this->seller->updatePaymentMethodsBySiteId();
         });
     }
 
