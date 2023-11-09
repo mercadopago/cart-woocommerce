@@ -13,7 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: ../../src/WoocommerceMercadoPago.php:550,
 #: ../../src/Translations/AdminTranslations.php:151
@@ -1070,16 +1070,6 @@ msgstr "Confira um exemplo de como vai aparecer na loja:"
 #: ../../src/Translations/AdminTranslations.php:665
 msgid "Advanced configuration of the personalized payment experience"
 msgstr "Configuração Avançada"
-
-#: ../../src/Translations/AdminTranslations.php:672,
-#: ../../src/Translations/AdminTranslations.php:733,
-#: ../../src/Translations/AdminTranslations.php:821
-msgid ""
-"Choose a percentage value that you want to discount your customers for "
-"paying with Mercado Pago."
-msgstr ""
-"Selecione um valor percentual que quiser descontar para seus clientes por "
-"pagar com Mercado Pago."
 
 #: ../../src/Translations/AdminTranslations.php:700,
 #: ../../src/Translations/AdminTranslations.php:714
@@ -2674,6 +2664,35 @@ msgstr ""
 "que você pague com o meio de pagamento e dispositivo que costuma usar para "
 "compras on-line."
 
+#: ../../src/Translations/AdminTranslations.php:553
+msgid "Checkout without card"
+msgstr "Parcelado sem cartão com Mercado Pago"
+
+#: ../../src/Translations/AdminTranslations.php:481
+msgid ""
+"Choose a percentage value that you want to discount your customers for "
+"paying with Mercado Pago."
+msgstr ""
+"Selecione um valor percentual que quiser descontar para seus clientes por "
+"pagar com Mercado Pago."
+
+#: ../../src/Translations/AdminTranslations.php:646
+msgid ""
+"By disabling it, you will disable all credit cards payments from Mercado "
+"Pago Transparent Checkout."
+msgstr ""
+"Ao desativar, você desabilita todos os meios de pagamento de cartão de "
+"crédito no Checkout Transparente Mercado Pago."
+
+#: ../../src/Translations/AdminTranslations.php:722
+msgid "Advanced configuration of the cash payment experience"
+msgstr ""
+"Configuração avançada da experiência de pagamento via boleto e em lotéricas"
+
+#: ../../src/Translations/AdminTranslations.php:547
+msgid "Checkout visualization"
+msgstr "Visualização no checkout:"
+
 #~ msgid "Now we convert your currency"
 #~ msgstr "Agora convertemos sua moeda"
 
@@ -2694,11 +2713,6 @@ msgstr ""
 #~ msgstr ""
 #~ "Você vai oferecer cupons de desconto para os clientes que comprarem com "
 #~ "Mercado Pago?"
-
-#~ msgid "Advanced configuration of the cash payment experience"
-#~ msgstr ""
-#~ "Configuração avançada da experiência de pagamento via boleto e em "
-#~ "lotéricas"
 
 #~ msgid "Your document data is invalid"
 #~ msgstr "Número de documento inválido"

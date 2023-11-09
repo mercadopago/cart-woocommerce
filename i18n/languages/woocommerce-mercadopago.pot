@@ -808,10 +808,6 @@ msgstr ""
 msgid "Advanced configuration of the personalized payment experience"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:672, ../../src/Translations/AdminTranslations.php:733, ../../src/Translations/AdminTranslations.php:821
-msgid "Choose a percentage value that you want to discount your customers for paying with Mercado Pago."
-msgstr ""
-
 #: ../../src/Translations/AdminTranslations.php:700, ../../src/Translations/AdminTranslations.php:714
 msgid "Invoice"
 msgstr ""
@@ -2070,4 +2066,25 @@ msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:390
 msgid "<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases."
+msgstr ""
+
+
+#: ../../src/Translations/AdminTranslations.php:553
+msgid "Checkout without card"
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:481
+msgid "Choose a percentage value that you want to discount your customers for paying with Mercado Pago."
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:646
+msgid "By disabling it, you will disable all credit cards payments from Mercado Pago Transparent Checkout."
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:722
+msgid "Advanced configuration of the cash payment experience"
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:547
+msgid "Checkout visualization"
 msgstr ""

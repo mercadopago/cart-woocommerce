@@ -71,6 +71,7 @@ final class Links
         return [
             'docs_developers_program'       => $baseLink . '/developer-program',
             'docs_test_cards'               => $baseLink . '/docs/checkout-api/additional-content/your-integrations/test/cards',
+            'docs_integration_credentials'  => $baseLink . '/docs/checkout-api/additional-content/your-integrations/credentials',
             'docs_reasons_refusals'         => $baseLink . '/docs/woocommerce/reasons-refusals',
             'docs_ipn_notification'         => $baseLink . '/docs/woocommerce/integration-configuration/notifications',
             'docs_integration_test'         => $baseLink . '/docs/woocommerce/integration-test',
