@@ -95,7 +95,7 @@ class CustomGateway extends AbstractGateway
             'header' => [
                 'type'        => 'mp_config_title',
                 'title'       => $this->adminTranslations['header_title'],
-                'description' => $this->adminTranslations['gateway_description'],
+                'description' => $this->adminTranslations['header_description'],
             ],
             'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
             'card_settings' => [
