@@ -163,7 +163,8 @@ class Store
      */
     public function getStoreName(string $default = ''): string
     {
-        return $this->options->get(self::STORE_NAME, $default);
+        $storeName = $this->options->get(self::STORE_NAME, $default);
+        return empty($storeName) ? $default : $storeName;
     }
 
     /**
