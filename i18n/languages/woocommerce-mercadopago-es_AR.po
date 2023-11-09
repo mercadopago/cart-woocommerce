@@ -2709,10 +2709,6 @@ msgstr ""
 msgid "Advanced configuration of the cash payment experience"
 msgstr "Configuración avanzada de la experiencia de pago en efectivo"
 
-#: ../../src/Translations/AdminTranslations.php:547
-msgid "Checkout visualization"
-msgstr "Visualización en el checkout"
-
 #~ msgid "Now we convert your currency"
 #~ msgstr "Ahora convertimos tu moneda"
 
