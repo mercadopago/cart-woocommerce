@@ -151,10 +151,12 @@ class Settings
 
         $this->plugin->registerOnPluginCredentialsUpdate(function () {
             $this->seller->updatePaymentMethods();
+            $this->seller->updatePaymentMethodsBySiteId();
         });
 
         $this->plugin->registerOnPluginTestModeUpdate(function () {
             $this->seller->updatePaymentMethods();
+            $this->seller->updatePaymentMethodsBySiteId();
         });
     }
 
@@ -290,7 +292,7 @@ class Settings
 
         $storeId             = $this->store->getStoreId();
         $storeName           = $this->store->getStoreName();
-        $storeCategory       = $this->store->getStoreCategory();
+        $storeCategory       = $this->store->getStoreCategory('others');
         $customDomain        = $this->store->getCustomDomain();
         $customDomainOptions = $this->store->getCustomDomainOptions();
         $integratorId        = $this->store->getIntegratorId();
@@ -371,7 +373,7 @@ class Settings
         }
     }
 
-     /**
+    /**
      * Validate store tips
      *
      * @return void
@@ -380,12 +382,12 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $paymentGateways    = $this->store->getAvailablePaymentGateways();
+        $paymentGateways = $this->store->getAvailablePaymentGateways();
 
         foreach ($paymentGateways as $gateway) {
             $gateway = new $gateway();
 
-            if ('yes' ===  ( isset($gateway->settings['enabled'])  && $gateway->settings['enabled'])) {
+            if (isset($gateway->settings['enabled']) && 'yes' === $gateway->settings['enabled']) {
                 wp_send_json_success($this->translations->configurationTips['valid_payment_tips']);
             }
         }

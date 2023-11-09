@@ -436,7 +436,7 @@ class AdminTranslations
             'enabled_descriptions_disabled'             => $enabledDescriptionsDisabled,
             'title_title'                               => __('Title in the store Checkout', 'woocommerce-mercadopago'),
             'title_description'                         => __('Change the display text in Checkout, maximum characters: 85', 'woocommerce-mercadopago'),
-            'title_default'                             => __('Checkout Pro', 'woocommerce-mercadopago'),
+            'title_default'                             => __('Your saved cards or money in Mercado Pago', 'woocommerce-mercadopago'),
             'title_desc_tip'                            => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
             'currency_conversion_title'                 => __('Convert Currency', 'woocommerce-mercadopago'),
             'currency_conversion_subtitle'              => __('Activate this option so that the value of the currency set in WooCommerce is compatible with the value of the currency you use in Mercado Pago.', 'woocommerce-mercadopago'),
