@@ -288,7 +288,7 @@ class Settings
 
         $storeId             = $this->store->getStoreId();
         $storeName           = $this->store->getStoreName();
-        $storeCategory       = $this->store->getStoreCategory();
+        $storeCategory       = $this->store->getStoreCategory('others');
         $customDomain        = $this->store->getCustomDomain();
         $customDomainOptions = $this->store->getCustomDomainOptions();
         $integratorId        = $this->store->getIntegratorId();
@@ -369,7 +369,7 @@ class Settings
         }
     }
 
-     /**
+    /**
      * Validate store tips
      *
      * @return void
@@ -383,7 +383,7 @@ class Settings
         foreach ($paymentGateways as $gateway) {
             $gateway = new $gateway();
 
-            if ('yes' ===  ( isset($gateway->settings['enabled'])  && $gateway->settings['enabled'])) {
+            if ('yes' === (isset($gateway->settings['enabled']) || $gateway->settings['enabled'])) {
                 wp_send_json_success($this->translations->configurationTips['valid_payment_tips']);
             }
         }
