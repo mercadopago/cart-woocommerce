@@ -25,6 +25,7 @@ class PixTransaction extends AbstractPaymentTransaction
         parent::__construct($gateway, $order, $checkout);
 
         $this->transaction->payment_method_id          = self::ID;
+        $this->transaction->installments               = 1;
         $this->transaction->date_of_expiration         = $this->getExpirationDate();
         $this->transaction->point_of_interaction->type = 'CHECKOUT';
     }

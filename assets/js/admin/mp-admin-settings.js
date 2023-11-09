@@ -406,9 +406,9 @@ function mpSettingsAccordionOptions() {
 
     if (!element.classList.contains('active') && !elementBlock.classList.contains('mp-settings-flex-start')) {
       elementBlock.classList.toggle('mp-settings-flex-start');
-      element.textContent = 'Show advanced options';
+      element.textContent = mercadopago_settings_admin_js_params.show_advanced_text;
     } else {
-      element.textContent = 'Hide advanced options';
+      element.textContent = mercadopago_settings_admin_js_params.hide_advanced_text;
       elementBlock.classList.remove('mp-settings-flex-start');
     }
   });

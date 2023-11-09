@@ -151,10 +151,12 @@ class Settings
 
         $this->plugin->registerOnPluginCredentialsUpdate(function () {
             $this->seller->updatePaymentMethods();
+            $this->seller->updatePaymentMethodsBySiteId();
         });
 
         $this->plugin->registerOnPluginTestModeUpdate(function () {
             $this->seller->updatePaymentMethods();
+            $this->seller->updatePaymentMethodsBySiteId();
         });
     }
 
@@ -190,7 +192,9 @@ class Settings
                 'mercadopago_settings_admin_js',
                 $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
                 [
-                    'nonce' => $this->nonce->generateNonce(self::NONCE_ID)
+                    'nonce'              => $this->nonce->generateNonce(self::NONCE_ID),
+                    'show_advanced_text' => $this->translations->storeSettings['accordion_advanced_store_show'],
+                    'hide_advanced_text' => $this->translations->storeSettings['accordion_advanced_store_hide'],
                 ]
             );
 
@@ -288,7 +292,7 @@ class Settings
 
         $storeId             = $this->store->getStoreId();
         $storeName           = $this->store->getStoreName();
-        $storeCategory       = $this->store->getStoreCategory();
+        $storeCategory       = $this->store->getStoreCategory('others');
         $customDomain        = $this->store->getCustomDomain();
         $customDomainOptions = $this->store->getCustomDomainOptions();
         $integratorId        = $this->store->getIntegratorId();
@@ -369,7 +373,7 @@ class Settings
         }
     }
 
-     /**
+    /**
      * Validate store tips
      *
      * @return void
@@ -378,12 +382,12 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $paymentGateways    = $this->store->getAvailablePaymentGateways();
+        $paymentGateways = $this->store->getAvailablePaymentGateways();
 
         foreach ($paymentGateways as $gateway) {
             $gateway = new $gateway();
 
-            if ('yes' ===  ( isset($gateway->settings['enabled'])  && $gateway->settings['enabled'])) {
+            if (isset($gateway->settings['enabled']) && 'yes' === $gateway->settings['enabled']) {
                 wp_send_json_success($this->translations->configurationTips['valid_payment_tips']);
             }
         }

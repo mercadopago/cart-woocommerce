@@ -84,7 +84,7 @@ class Store
     /**
      * @const
      */
-    private const CHECKOUT_EXPIRATION_DATE_PIX = 'checkout_pix_date_expiration';
+    private const CHECKOUT_EXPIRATION_DATE_PIX = 'expiration_date';
 
     /**
      * @const
@@ -163,7 +163,8 @@ class Store
      */
     public function getStoreName(string $default = ''): string
     {
-        return $this->options->get(self::STORE_NAME, $default);
+        $storeName = $this->options->get(self::STORE_NAME, $default);
+        return empty($storeName) ? $default : $storeName;
     }
 
     /**

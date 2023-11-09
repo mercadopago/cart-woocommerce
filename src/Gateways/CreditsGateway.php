@@ -302,9 +302,9 @@ class CreditsGateway extends AbstractGateway
     private function getCreditsPreviewImage($siteId): string
     {
         $siteIds = [
-            'mla' => 'MLA_',
-            'mlb' => 'MLB_',
-            'mlm' => 'MLM_',
+            'MLA' => 'MLA_',
+            'MLB' => 'MLB_',
+            'MLM' => 'MLM_',
         ];
 
         $prefix = $siteIds[$siteId] ?? '';
@@ -368,9 +368,9 @@ class CreditsGateway extends AbstractGateway
     private function getCreditsGifPath(string $siteId, string $view): string
     {
         $siteIds = [
-            'mla' => 'MLA_',
-            'mlb' => 'MLB_',
-            'mlm' => 'MLM_',
+            'MLA' => 'MLA_',
+            'MLB' => 'MLB_',
+            'MLM' => 'MLM_',
         ];
 
         $prefix = $siteIds[$siteId] ?? '';

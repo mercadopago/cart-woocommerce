@@ -538,6 +538,16 @@ class WoocommerceMercadoPago
      */
     public function adminNoticeMissWoocoommerce(): void
     {
+        add_action('admin_enqueue_scripts', function () {
+            wp_register_style(
+                'woocommerce-mercadopago-admin-notice-css',
+                sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/css/admin/mp-admin-notices.css'), 
+                false,
+                MP_VERSION
+            );
+            wp_enqueue_style('woocommerce-mercadopago-admin-notice-css');
+        });
+
         add_action(
             'admin_notices',
             function () {
