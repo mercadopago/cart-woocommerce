@@ -301,30 +301,6 @@ final class Currency
      */
     private function showWeConvertingNoticeByCountry()
     {
-        switch ($this->getCurrency()) {
-            case 'ARS':
-                $this->notices->adminNoticeInfo($this->translations['now_we_convert_MLA']);
-                break;
-            case 'BRL':
-                $this->notices->adminNoticeInfo($this->translations['now_we_convert_MLB']);
-                break;
-            case 'CLP':
-                $this->notices->adminNoticeInfo($this->translations['now_we_convert_MLC']);
-                break;
-            case 'COP':
-                $this->notices->adminNoticeInfo($this->translations['now_we_convert_MCO']);
-                break;
-            case 'MXN':
-                $this->notices->adminNoticeInfo($this->translations['now_we_convert_MLM']);
-                break;
-            case 'PEN':
-                $this->notices->adminNoticeInfo($this->translations['now_we_convert_MPE']);
-                break;
-            case 'UYU':
-                $this->notices->adminNoticeInfo($this->translations['now_we_convert_MLU']);
-                break;
-            default:
-                $this->notices->adminNoticeInfo($this->translations['now_we_convert_MLA']);
-        }
+        $this->notices->adminNoticeInfo($this->translations['now_we_convert'] . $this->getCurrency());
     }
 }

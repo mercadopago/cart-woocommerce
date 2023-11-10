@@ -978,19 +978,12 @@ class AdminTranslations
         $this->currency = [
             'not_compatible_currency_conversion' => $notCompatibleCurrencyConversion,
             'now_we_convert'     => $this->generateConversionMessage($baseConversionMessage),
-            'now_we_convert_MLA' => $this->generateConversionMessage($baseConversionMessage, 'ARS'),
-            'now_we_convert_MLB' => $this->generateConversionMessage($baseConversionMessage, 'BRL'),
-            'now_we_convert_MLC' => $this->generateConversionMessage($baseConversionMessage, 'CLP'),
-            'now_we_convert_MLM' => $this->generateConversionMessage($baseConversionMessage, 'MXN'),
-            'now_we_convert_MPE' => $this->generateConversionMessage($baseConversionMessage, 'PEN'),
-            'now_we_convert_MCO' => $this->generateConversionMessage($baseConversionMessage, 'COP'),
-            'now_we_convert_MLU' => $this->generateConversionMessage($baseConversionMessage, 'UYU'),
         ];
     }
 
     private function generateConversionMessage($baseMessage, $currency = ''): string
 {
-    return sprintf('%s %s  %s ', $baseMessage, get_woocommerce_currency(), __("to $currency", 'woocommerce-mercadopago'));
+    return sprintf('%s %s  %s ', $baseMessage, get_woocommerce_currency(), __("to ", 'woocommerce-mercadopago'));
 }
 
     /**

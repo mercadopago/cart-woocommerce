@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Mercado Pago payments for WooCommerce\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-"
 "mercadopago\n"
-"POT-Creation-Date: 2023-11-09 19:38+0000\n"
+"POT-Creation-Date: 2023-11-10 14:19+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -13,7 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.4.1\n"
 
 #: ../../src/WoocommerceMercadoPago.php:560,
 #: ../../src/Translations/AdminTranslations.php:151
@@ -630,7 +630,6 @@ msgstr "Ir para configurações"
 
 #: ../../src/Translations/AdminTranslations.php:433,
 #: ../../src/Translations/AdminTranslations.php:649,
-#: ../../src/Translations/AdminTranslations.php:650,
 #: ../../src/Translations/AdminTranslations.php:794
 msgid "Enable the checkout"
 msgstr "Ativar o checkout"
@@ -761,8 +760,7 @@ msgid "24 installments"
 msgstr "24 parcelas"
 
 #: ../../src/Translations/AdminTranslations.php:463,
-#: ../../src/Translations/AdminTranslations.php:573,
-#: ../../src/Translations/AdminTranslations.php:726
+#: ../../src/Translations/AdminTranslations.php:573
 msgid "Advanced settings"
 msgstr "Configuração Avançada"
 
@@ -850,8 +848,6 @@ msgid "Automatic decline of payments without instant approval"
 msgstr "Recusa automática de pagamentos sem aprovação instantânea"
 
 #: ../../src/Translations/AdminTranslations.php:480,
-#: ../../src/Translations/AdminTranslations.php:485,
-#: ../../src/Translations/AdminTranslations.php:576,
 #: ../../src/Translations/AdminTranslations.php:672
 msgid ""
 "Enable it if you want to automatically decline payments that are not "
@@ -871,6 +867,18 @@ msgstr "Pix, débito, crédito e boleto, no ambiente do Mercado Pago."
 #: ../../src/Translations/AdminTranslations.php:824
 msgid "Discount in Mercado Pago Checkouts"
 msgstr "Desconto nos checkouts Mercado Pago"
+
+#: ../../src/Translations/AdminTranslations.php:485,
+#: ../../src/Translations/AdminTranslations.php:576,
+#: ../../src/Translations/AdminTranslations.php:676,
+#: ../../src/Translations/AdminTranslations.php:737,
+#: ../../src/Translations/AdminTranslations.php:825
+msgid ""
+"Choose a percentage value that you want to discount your customers for "
+"paying with Mercado Pago."
+msgstr ""
+"Selecione um valor percentual que quiser descontar para seus clientes por "
+"pagar com Mercado Pago."
 
 #: ../../src/Translations/AdminTranslations.php:486,
 #: ../../src/Translations/AdminTranslations.php:489,
@@ -983,8 +991,8 @@ msgstr ""
 "É possível modificar o título dentro da sua loja. Caracteres máximos: 85."
 
 #: ../../src/Translations/AdminTranslations.php:557
-msgid "Up to 12 installments without card with Mercado Pago"
-msgstr "Parcelado em até 12x sem cartão com Mercado Pago"
+msgid "Checkout without card"
+msgstr "Parcelado sem cartão com Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:563
 msgid ""
@@ -1064,6 +1072,14 @@ msgstr ""
 msgid "Mercado Pago Plugin general settings"
 msgstr "Configurações gerais do plugin do Mercado Pago"
 
+#: ../../src/Translations/AdminTranslations.php:650
+msgid ""
+"By disabling it, you will disable all credit cards payments from Mercado "
+"Pago Transparent Checkout."
+msgstr ""
+"Ao desativar, você desabilita todos os meios de pagamento de cartão de "
+"crédito no Checkout Transparente Mercado Pago."
+
 #: ../../src/Translations/AdminTranslations.php:657
 msgid "Installments Fees"
 msgstr "Taxas de parcelamento"
@@ -1100,8 +1116,8 @@ msgstr "Confira um exemplo de como vai aparecer na loja:"
 msgid "Advanced configuration of the personalized payment experience"
 msgstr "Configuração Avançada"
 
-#: ../../src/Translations/AdminTranslations.php:700,
-#: ../../src/Translations/AdminTranslations.php:714
+#: ../../src/Translations/AdminTranslations.php:704,
+#: ../../src/Translations/AdminTranslations.php:718
 msgid "Invoice"
 msgstr "Boleto e lotérica"
 
@@ -1145,6 +1161,11 @@ msgstr "Vencimento do pagamento"
 #: ../../src/Translations/AdminTranslations.php:725
 msgid "In how many days will cash payments expire."
 msgstr "Em quantos dias os pagamentos via boleto e em lotéricas vencerão."
+
+#: ../../src/Translations/AdminTranslations.php:726
+msgid "Advanced configuration of the cash payment experience"
+msgstr ""
+"Configuração avançada da experiência de pagamento via boleto e em lotéricas"
 
 #: ../../src/Translations/AdminTranslations.php:728
 msgid "Reduce inventory"
@@ -1531,50 +1552,19 @@ msgstr ""
 "moeda que você usa na sua conta do Mercado Pago. Por favor, ative a "
 "conversão de moeda."
 
-#: ../../src/Translations/AdminTranslations.php:979,
-#: ../../src/Translations/AdminTranslations.php:985,
-#: ../../src/Translations/AdminTranslations.php:992,
-#: ../../src/Translations/AdminTranslations.php:999,
-#: ../../src/Translations/AdminTranslations.php:1006,
-#: ../../src/Translations/AdminTranslations.php:1013,
-#: ../../src/Translations/AdminTranslations.php:1020,
-#: ../../src/Translations/AdminTranslations.php:1027
+#: ../../src/Translations/AdminTranslations.php:977
 msgid "We are converting your currency from: "
 msgstr "Agora convertemos sua moeda de:"
 
-#: ../../src/Translations/AdminTranslations.php:987
-msgid "to ARS"
-msgstr "para ARS"
+#: ../../src/Translations/AdminTranslations.php:986
+msgid "to "
+msgstr "para"
 
-#: ../../src/Translations/AdminTranslations.php:994
-msgid "to BRL"
-msgstr "para BRL"
-
-#: ../../src/Translations/AdminTranslations.php:1001
-msgid "to CLP"
-msgstr "para CLP"
-
-#: ../../src/Translations/AdminTranslations.php:1008
-msgid "to COP"
-msgstr "para COP"
-
-#: ../../src/Translations/AdminTranslations.php:1015
-msgid "to MXN"
-msgstr "Para MXN"
-
-#: ../../src/Translations/AdminTranslations.php:1022
-msgid "to PEN"
-msgstr "Para PEN"
-
-#: ../../src/Translations/AdminTranslations.php:1029
-msgid "to UYU"
-msgstr "Para UYU"
-
-#: ../../src/Translations/AdminTranslations.php:1053
+#: ../../src/Translations/AdminTranslations.php:997
 msgid "Payment status on Mercado Pago"
 msgstr "Status de pagamento no Mercado Pago"
 
-#: ../../src/Translations/AdminTranslations.php:1054
+#: ../../src/Translations/AdminTranslations.php:998
 msgid ""
 "This is the payment status of your Mercado Pago Activities. To check the "
 "order status, please refer to Order details."
@@ -1582,51 +1572,51 @@ msgstr ""
 "Este é o status de pagamento das suas Atividades no Mercado Pago. Para "
 "verificar o status do pedido, consulte Detalhes do pedido."
 
-#: ../../src/Translations/AdminTranslations.php:1055,
-#: ../../src/Translations/AdminTranslations.php:1057
+#: ../../src/Translations/AdminTranslations.php:999,
+#: ../../src/Translations/AdminTranslations.php:1001
 msgid "View purchase details at Mercado Pago"
 msgstr "Ver detalhes da compra no Mercado Pago"
 
-#: ../../src/Translations/AdminTranslations.php:1056,
-#: ../../src/Translations/AdminTranslations.php:1058,
-#: ../../src/Translations/AdminTranslations.php:1060
+#: ../../src/Translations/AdminTranslations.php:1000,
+#: ../../src/Translations/AdminTranslations.php:1002,
+#: ../../src/Translations/AdminTranslations.php:1004
 msgid "Sync order status"
 msgstr "Sincronizar status do pedido"
 
-#: ../../src/Translations/AdminTranslations.php:1059
+#: ../../src/Translations/AdminTranslations.php:1003
 msgid "Check the reasons why the purchase was declined."
 msgstr "Consulte os motivos de recusa da sua compra."
 
-#: ../../src/Translations/AdminTranslations.php:1061
+#: ../../src/Translations/AdminTranslations.php:1005
 msgid "Order update successfully. This page will be reloaded..."
 msgstr "Pedido atualizado com sucesso. Esta página será recarregada…"
 
-#: ../../src/Translations/AdminTranslations.php:1062
+#: ../../src/Translations/AdminTranslations.php:1006
 msgid "Unable to update order:"
 msgstr "Não foi possível atualizar o pedido:"
 
-#: ../../src/Translations/AdminTranslations.php:1063
+#: ../../src/Translations/AdminTranslations.php:1007
 msgid "Payment made"
 msgstr "Pagamento realizado"
 
-#: ../../src/Translations/AdminTranslations.php:1064
+#: ../../src/Translations/AdminTranslations.php:1008
 msgid "Payment made by the buyer and already credited in the account."
 msgstr "Pagamento realizado pelo comprador e já creditado na conta."
 
-#: ../../src/Translations/AdminTranslations.php:1065
+#: ../../src/Translations/AdminTranslations.php:1009
 msgid "Call resolved"
 msgstr "Chamado resolvido"
 
-#: ../../src/Translations/AdminTranslations.php:1066,
-#: ../../src/Translations/AdminTranslations.php:1116
+#: ../../src/Translations/AdminTranslations.php:1010,
+#: ../../src/Translations/AdminTranslations.php:1060
 msgid "Please contact Mercado Pago for further details."
 msgstr "Entre em contato com o Mercado Pago para consultar mais detalhes."
 
-#: ../../src/Translations/AdminTranslations.php:1067
+#: ../../src/Translations/AdminTranslations.php:1011
 msgid "Payment refunded"
 msgstr "Pagamento devolvido"
 
-#: ../../src/Translations/AdminTranslations.php:1068
+#: ../../src/Translations/AdminTranslations.php:1012
 msgid ""
 "Your refund request has been made. Please contact Mercado Pago for further "
 "details."
@@ -1634,59 +1624,59 @@ msgstr ""
 "Sua solicitação de reembolso foi feita. Entre em contato com o Mercado Pago "
 "para mais detalhes."
 
-#: ../../src/Translations/AdminTranslations.php:1069,
-#: ../../src/Translations/AdminTranslations.php:1071
+#: ../../src/Translations/AdminTranslations.php:1013,
+#: ../../src/Translations/AdminTranslations.php:1015
 msgid "Payment returned"
 msgstr "Pagamento devolvido"
 
-#: ../../src/Translations/AdminTranslations.php:1070
+#: ../../src/Translations/AdminTranslations.php:1014
 msgid "The payment has been returned to the client."
 msgstr "O pagamento já foi devolvido ao cliente."
 
-#: ../../src/Translations/AdminTranslations.php:1072
+#: ../../src/Translations/AdminTranslations.php:1016
 msgid "The payment has been partially returned to the client."
 msgstr "O pagamento já foi devolvido parcialmente ao cliente."
 
-#: ../../src/Translations/AdminTranslations.php:1073
+#: ../../src/Translations/AdminTranslations.php:1017
 msgid "Payment canceled"
 msgstr "Pagamento cancelado"
 
-#: ../../src/Translations/AdminTranslations.php:1074
+#: ../../src/Translations/AdminTranslations.php:1018
 msgid "The payment has been successfully canceled."
 msgstr "O pagamento foi cancelado com sucesso."
 
-#: ../../src/Translations/AdminTranslations.php:1075
+#: ../../src/Translations/AdminTranslations.php:1019
 msgid "Purchase canceled"
 msgstr "Compra cancelada"
 
-#: ../../src/Translations/AdminTranslations.php:1076
+#: ../../src/Translations/AdminTranslations.php:1020
 msgid "The payment has been canceled by the customer."
 msgstr "O pagamento foi cancelado pelo cliente."
 
-#: ../../src/Translations/AdminTranslations.php:1077,
-#: ../../src/Translations/AdminTranslations.php:1079,
-#: ../../src/Translations/AdminTranslations.php:1081,
-#: ../../src/Translations/AdminTranslations.php:1083,
-#: ../../src/Translations/AdminTranslations.php:1085,
-#: ../../src/Translations/AdminTranslations.php:1093,
-#: ../../src/Translations/AdminTranslations.php:1095,
-#: ../../src/Translations/AdminTranslations.php:1097,
-#: ../../src/Translations/AdminTranslations.php:1099,
-#: ../../src/Translations/AdminTranslations.php:1101,
-#: ../../src/Translations/AdminTranslations.php:1103,
-#: ../../src/Translations/AdminTranslations.php:1105,
-#: ../../src/Translations/AdminTranslations.php:1160
+#: ../../src/Translations/AdminTranslations.php:1021,
+#: ../../src/Translations/AdminTranslations.php:1023,
+#: ../../src/Translations/AdminTranslations.php:1025,
+#: ../../src/Translations/AdminTranslations.php:1027,
+#: ../../src/Translations/AdminTranslations.php:1029,
+#: ../../src/Translations/AdminTranslations.php:1037,
+#: ../../src/Translations/AdminTranslations.php:1039,
+#: ../../src/Translations/AdminTranslations.php:1041,
+#: ../../src/Translations/AdminTranslations.php:1043,
+#: ../../src/Translations/AdminTranslations.php:1045,
+#: ../../src/Translations/AdminTranslations.php:1047,
+#: ../../src/Translations/AdminTranslations.php:1049,
+#: ../../src/Translations/AdminTranslations.php:1104
 msgid "Pending payment"
 msgstr "Pagamento pendente"
 
-#: ../../src/Translations/AdminTranslations.php:1078,
-#: ../../src/Translations/AdminTranslations.php:1080,
-#: ../../src/Translations/AdminTranslations.php:1082,
-#: ../../src/Translations/AdminTranslations.php:1084
+#: ../../src/Translations/AdminTranslations.php:1022,
+#: ../../src/Translations/AdminTranslations.php:1024,
+#: ../../src/Translations/AdminTranslations.php:1026,
+#: ../../src/Translations/AdminTranslations.php:1028
 msgid "Awaiting payment from the buyer."
 msgstr "Aguardando pagamento do comprador."
 
-#: ../../src/Translations/AdminTranslations.php:1086
+#: ../../src/Translations/AdminTranslations.php:1030
 msgid ""
 "We are veryfing the payment. We will notify you by email in up to 6 hours if "
 "everything is fine so that you can deliver the product or provide the "
@@ -1695,44 +1685,44 @@ msgstr ""
 "Estamos verificando o pagamento. Avisaremos por e-mail em até 6 horas se "
 "estiver tudo bem para que você possa entregar o produto ou prestar o serviço."
 
-#: ../../src/Translations/AdminTranslations.php:1087,
-#: ../../src/Translations/AdminTranslations.php:1107,
-#: ../../src/Translations/AdminTranslations.php:1109,
+#: ../../src/Translations/AdminTranslations.php:1031,
+#: ../../src/Translations/AdminTranslations.php:1051,
+#: ../../src/Translations/AdminTranslations.php:1053,
+#: ../../src/Translations/AdminTranslations.php:1055,
+#: ../../src/Translations/AdminTranslations.php:1057,
+#: ../../src/Translations/AdminTranslations.php:1063,
+#: ../../src/Translations/AdminTranslations.php:1065,
+#: ../../src/Translations/AdminTranslations.php:1067,
+#: ../../src/Translations/AdminTranslations.php:1069,
+#: ../../src/Translations/AdminTranslations.php:1071,
+#: ../../src/Translations/AdminTranslations.php:1073,
+#: ../../src/Translations/AdminTranslations.php:1075,
+#: ../../src/Translations/AdminTranslations.php:1078,
+#: ../../src/Translations/AdminTranslations.php:1080,
+#: ../../src/Translations/AdminTranslations.php:1082,
+#: ../../src/Translations/AdminTranslations.php:1084,
+#: ../../src/Translations/AdminTranslations.php:1086,
+#: ../../src/Translations/AdminTranslations.php:1088,
+#: ../../src/Translations/AdminTranslations.php:1090,
+#: ../../src/Translations/AdminTranslations.php:1092,
+#: ../../src/Translations/AdminTranslations.php:1094,
+#: ../../src/Translations/AdminTranslations.php:1096,
+#: ../../src/Translations/AdminTranslations.php:1098,
+#: ../../src/Translations/AdminTranslations.php:1100,
+#: ../../src/Translations/AdminTranslations.php:1102,
+#: ../../src/Translations/AdminTranslations.php:1108,
 #: ../../src/Translations/AdminTranslations.php:1111,
-#: ../../src/Translations/AdminTranslations.php:1113,
-#: ../../src/Translations/AdminTranslations.php:1119,
-#: ../../src/Translations/AdminTranslations.php:1121,
-#: ../../src/Translations/AdminTranslations.php:1123,
-#: ../../src/Translations/AdminTranslations.php:1125,
-#: ../../src/Translations/AdminTranslations.php:1127,
-#: ../../src/Translations/AdminTranslations.php:1129,
-#: ../../src/Translations/AdminTranslations.php:1131,
-#: ../../src/Translations/AdminTranslations.php:1134,
-#: ../../src/Translations/AdminTranslations.php:1136,
-#: ../../src/Translations/AdminTranslations.php:1138,
-#: ../../src/Translations/AdminTranslations.php:1140,
-#: ../../src/Translations/AdminTranslations.php:1142,
-#: ../../src/Translations/AdminTranslations.php:1144,
-#: ../../src/Translations/AdminTranslations.php:1146,
-#: ../../src/Translations/AdminTranslations.php:1148,
-#: ../../src/Translations/AdminTranslations.php:1150,
-#: ../../src/Translations/AdminTranslations.php:1152,
-#: ../../src/Translations/AdminTranslations.php:1154,
-#: ../../src/Translations/AdminTranslations.php:1156,
-#: ../../src/Translations/AdminTranslations.php:1158,
-#: ../../src/Translations/AdminTranslations.php:1164,
-#: ../../src/Translations/AdminTranslations.php:1167,
-#: ../../src/Translations/AdminTranslations.php:1169
+#: ../../src/Translations/AdminTranslations.php:1113
 msgid "Declined payment"
 msgstr "Pagamento recusado"
 
-#: ../../src/Translations/AdminTranslations.php:1088,
-#: ../../src/Translations/AdminTranslations.php:1110,
-#: ../../src/Translations/AdminTranslations.php:1112,
-#: ../../src/Translations/AdminTranslations.php:1114,
-#: ../../src/Translations/AdminTranslations.php:1120,
-#: ../../src/Translations/AdminTranslations.php:1130,
-#: ../../src/Translations/AdminTranslations.php:1135
+#: ../../src/Translations/AdminTranslations.php:1032,
+#: ../../src/Translations/AdminTranslations.php:1054,
+#: ../../src/Translations/AdminTranslations.php:1056,
+#: ../../src/Translations/AdminTranslations.php:1058,
+#: ../../src/Translations/AdminTranslations.php:1064,
+#: ../../src/Translations/AdminTranslations.php:1074,
+#: ../../src/Translations/AdminTranslations.php:1079
 msgid ""
 "The card-issuing bank declined the payment. Please ask your client to use "
 "another card or to get in touch with the bank."
@@ -1740,11 +1730,11 @@ msgstr ""
 "O banco emissor do cartão recusou o pagamento. Solicite ao seu cliente que "
 "utilize outro cartão ou entre em contato com o banco."
 
-#: ../../src/Translations/AdminTranslations.php:1089
+#: ../../src/Translations/AdminTranslations.php:1033
 msgid "Payment authorized. Awaiting capture."
 msgstr "Pagamento autorizado. Aguardando captura."
 
-#: ../../src/Translations/AdminTranslations.php:1090
+#: ../../src/Translations/AdminTranslations.php:1034
 msgid ""
 "The payment has been authorized on the client's card. Please capture the "
 "payment."
@@ -1752,17 +1742,17 @@ msgstr ""
 "O pagamento foi autorizado no cartão do cliente. Por favor, confirme o "
 "pagamento."
 
-#: ../../src/Translations/AdminTranslations.php:1091
+#: ../../src/Translations/AdminTranslations.php:1035
 msgid "Payment in process"
 msgstr "Pagamento em processamento"
 
-#: ../../src/Translations/AdminTranslations.php:1092,
-#: ../../src/Translations/AdminTranslations.php:1102
+#: ../../src/Translations/AdminTranslations.php:1036,
+#: ../../src/Translations/AdminTranslations.php:1046
 msgid "Please wait or contact Mercado Pago for further details"
 msgstr ""
 "Aguarde ou entre em contato com o Mercado Pago para consultar mais detalhes"
 
-#: ../../src/Translations/AdminTranslations.php:1094
+#: ../../src/Translations/AdminTranslations.php:1038
 msgid ""
 "The bank is reviewing the payment. As soon as we have their confirmation, we "
 "will notify you via email so that you can deliver the product or provide the "
@@ -1772,21 +1762,21 @@ msgstr ""
 "iremos notificá-lo por email para que possa entregar o produto ou prestar o "
 "serviço."
 
-#: ../../src/Translations/AdminTranslations.php:1096,
-#: ../../src/Translations/AdminTranslations.php:1098,
-#: ../../src/Translations/AdminTranslations.php:1100
+#: ../../src/Translations/AdminTranslations.php:1040,
+#: ../../src/Translations/AdminTranslations.php:1042,
+#: ../../src/Translations/AdminTranslations.php:1044
 msgid "Awaiting payment information validation."
 msgstr "Aguardando validação das informações de pagamento."
 
-#: ../../src/Translations/AdminTranslations.php:1104
+#: ../../src/Translations/AdminTranslations.php:1048
 msgid "Waiting for the buyer."
 msgstr "Aguardando o comprador."
 
-#: ../../src/Translations/AdminTranslations.php:1106
+#: ../../src/Translations/AdminTranslations.php:1050
 msgid "Waiting for the card issuer."
 msgstr "Aguardando o emissor do cartão."
 
-#: ../../src/Translations/AdminTranslations.php:1108
+#: ../../src/Translations/AdminTranslations.php:1052
 msgid ""
 "The payment could not be processed. Please ask your client to use another "
 "card or to get in touch with the bank."
@@ -1794,21 +1784,21 @@ msgstr ""
 "O pagamento não pôde ser processado. Solicite ao seu cliente que utilize "
 "outro cartão ou entre em contato com o banco."
 
-#: ../../src/Translations/AdminTranslations.php:1115
+#: ../../src/Translations/AdminTranslations.php:1059
 msgid "Mercado Pago did not process the payment"
 msgstr "O Mercado Pago não processou o pagamento"
 
-#: ../../src/Translations/AdminTranslations.php:1117,
-#: ../../src/Translations/AdminTranslations.php:1162
+#: ../../src/Translations/AdminTranslations.php:1061,
+#: ../../src/Translations/AdminTranslations.php:1106
 msgid "Expired payment deadline"
 msgstr "Prazo expirado para pagamento"
 
-#: ../../src/Translations/AdminTranslations.php:1118,
-#: ../../src/Translations/AdminTranslations.php:1163
+#: ../../src/Translations/AdminTranslations.php:1062,
+#: ../../src/Translations/AdminTranslations.php:1107
 msgid "The client did not pay within the time limit."
 msgstr "O cliente não pagou dentro do limite de tempo."
 
-#: ../../src/Translations/AdminTranslations.php:1122
+#: ../../src/Translations/AdminTranslations.php:1066
 msgid ""
 "The CVV is invalid. Please ask your client to review the details or use "
 "another card."
@@ -1816,7 +1806,7 @@ msgstr ""
 "O CVV é inválido. Peça ao seu cliente para revisar os detalhes ou usar outro "
 "cartão."
 
-#: ../../src/Translations/AdminTranslations.php:1124
+#: ../../src/Translations/AdminTranslations.php:1068
 msgid ""
 "The card is expired. Please ask your client to use another card or to "
 "contact the bank."
@@ -1824,9 +1814,9 @@ msgstr ""
 "O cartão expirou. Peça ao seu cliente para usar outro cartão ou entrar em "
 "contato com o banco."
 
-#: ../../src/Translations/AdminTranslations.php:1126,
-#: ../../src/Translations/AdminTranslations.php:1149,
-#: ../../src/Translations/AdminTranslations.php:1151
+#: ../../src/Translations/AdminTranslations.php:1070,
+#: ../../src/Translations/AdminTranslations.php:1093,
+#: ../../src/Translations/AdminTranslations.php:1095
 msgid ""
 "This payment was declined because it did not pass Mercado Pago security "
 "controls. Please ask your client to use another card."
@@ -1834,8 +1824,8 @@ msgstr ""
 "Este pagamento foi recusado porque não passou nos controles de segurança do "
 "Mercado Pago. Por favor, peça ao seu cliente para usar outro cartão."
 
-#: ../../src/Translations/AdminTranslations.php:1128,
-#: ../../src/Translations/AdminTranslations.php:1147
+#: ../../src/Translations/AdminTranslations.php:1072,
+#: ../../src/Translations/AdminTranslations.php:1091
 msgid ""
 "The buyer is suspended in our platform. Your client must contact us to check "
 "what happened."
@@ -1843,7 +1833,7 @@ msgstr ""
 "O comprador está suspenso em nossa plataforma. Seu cliente deverá entrar em "
 "contato conosco para verificar o ocorrido."
 
-#: ../../src/Translations/AdminTranslations.php:1132
+#: ../../src/Translations/AdminTranslations.php:1076
 msgid ""
 "The card does not have sufficient balance. Please ask your client to use "
 "another card or to get in touch with the bank."
@@ -1851,7 +1841,7 @@ msgstr ""
 "O cartão não tem saldo suficiente. Solicite ao seu cliente que utilize outro "
 "cartão ou entre em contato com o banco."
 
-#: ../../src/Translations/AdminTranslations.php:1133
+#: ../../src/Translations/AdminTranslations.php:1077
 msgid ""
 "The card does not have enough limit. Please ask your client to use another "
 "card or to get in touch with the bank."
@@ -1859,7 +1849,7 @@ msgstr ""
 "O cartão não tem limite suficiente. Solicite ao seu cliente que utilize "
 "outro cartão ou entre em contato com o banco."
 
-#: ../../src/Translations/AdminTranslations.php:1137
+#: ../../src/Translations/AdminTranslations.php:1081
 msgid ""
 "The CVV was entered incorrectly several times. Please ask your client to use "
 "another card or to get in touch with the bank."
@@ -1867,7 +1857,7 @@ msgstr ""
 "O CVV foi digitado incorretamente diversas vezes. Solicite ao seu cliente "
 "que utilize outro cartão ou entre em contato com o banco."
 
-#: ../../src/Translations/AdminTranslations.php:1139
+#: ../../src/Translations/AdminTranslations.php:1083
 msgid ""
 "The card does not allow the number of installments entered. Please ask your "
 "client to choose another installment plan or to use another card."
@@ -1875,7 +1865,7 @@ msgstr ""
 "O cartão não permite o número de parcelas inseridas. Solicite ao seu cliente "
 "que opte por outro parcelamento ou utilize outro cartão."
 
-#: ../../src/Translations/AdminTranslations.php:1141
+#: ../../src/Translations/AdminTranslations.php:1085
 msgid ""
 "The card-issuing bank declined the payment. Please instruct your client to "
 "ask the bank to authotize it or to use another card."
@@ -1883,7 +1873,7 @@ msgstr ""
 "O banco emissor do cartão recusou o pagamento. Instrua seu cliente a "
 "solicitar ao banco a autorização ou a utilização de outro cartão."
 
-#: ../../src/Translations/AdminTranslations.php:1143
+#: ../../src/Translations/AdminTranslations.php:1087
 msgid ""
 "From Mercado Pago we have detected that this payment has already been made "
 "before. If that is not the case, your client may try to pay again."
@@ -1892,7 +1882,7 @@ msgstr ""
 "anteriormente. Se não for esse o caso, seu cliente poderá tentar pagar "
 "novamente."
 
-#: ../../src/Translations/AdminTranslations.php:1145
+#: ../../src/Translations/AdminTranslations.php:1089
 msgid ""
 "The card is not active yet. Please ask your client to use another card or to "
 "get in touch with the bank to activate it."
@@ -1900,7 +1890,7 @@ msgstr ""
 "O cartão ainda não está ativo. Solicite ao seu cliente que utilize outro "
 "cartão ou entre em contato com o banco para ativá-lo."
 
-#: ../../src/Translations/AdminTranslations.php:1153
+#: ../../src/Translations/AdminTranslations.php:1097
 msgid ""
 "The amount exceeded the card limit. Please ask your client to use another "
 "card or to get in touch with the bank."
@@ -1908,9 +1898,9 @@ msgstr ""
 "O valor ultrapassou o limite do cartão. Solicite ao seu cliente que utilize "
 "outro cartão ou entre em contato com o banco."
 
-#: ../../src/Translations/AdminTranslations.php:1155,
-#: ../../src/Translations/AdminTranslations.php:1157,
-#: ../../src/Translations/AdminTranslations.php:1159
+#: ../../src/Translations/AdminTranslations.php:1099,
+#: ../../src/Translations/AdminTranslations.php:1101,
+#: ../../src/Translations/AdminTranslations.php:1103
 msgid ""
 "Please ask your client to use another card or to get in touch with the card "
 "issuer."
@@ -1918,7 +1908,7 @@ msgstr ""
 "Peça ao seu cliente para usar outro cartão ou entre em contato com o emissor "
 "do cartão."
 
-#: ../../src/Translations/AdminTranslations.php:1161
+#: ../../src/Translations/AdminTranslations.php:1105
 msgid ""
 "The amount exceeded the card's limit. Please ask your client to use another "
 "card or to get in touch with the bank."
@@ -1926,7 +1916,7 @@ msgstr ""
 "O valor ultrapassou o limite do cartão. Solicite ao seu cliente que utilize "
 "outro cartão ou entre em contato com o banco."
 
-#: ../../src/Translations/AdminTranslations.php:1165
+#: ../../src/Translations/AdminTranslations.php:1109
 msgid ""
 "The debit function is not enabled for the card. Please tell your client that "
 "it is possible to pay with credit or to use another one."
@@ -1934,7 +1924,7 @@ msgstr ""
 "A função de débito não está habilitada para o cartão. Informe ao seu cliente "
 "que é possível pagar com crédito ou utilizar outro."
 
-#: ../../src/Translations/AdminTranslations.php:1166
+#: ../../src/Translations/AdminTranslations.php:1110
 msgid ""
 "The credit function is not enabled for the card. Please tell your client "
 "that it is possible to pay with debit or to use another one."
@@ -1942,7 +1932,7 @@ msgstr ""
 "A função de crédito não está habilitada para o cartão. Informe ao seu "
 "cliente que é possível pagar com débito ou utilizar outro."
 
-#: ../../src/Translations/AdminTranslations.php:1168
+#: ../../src/Translations/AdminTranslations.php:1112
 msgid ""
 "The card-issuing bank declined the payment. Please instruct your client to "
 "ask the bank to authorize it."
@@ -1950,7 +1940,7 @@ msgstr ""
 "O banco emissor do cartão recusou o pagamento. Por favor, instrua seu "
 "cliente a pedir autorização ao banco."
 
-#: ../../src/Translations/AdminTranslations.php:1170
+#: ../../src/Translations/AdminTranslations.php:1114
 msgid ""
 "The buyer does not have enough balance to make the purchase. Please ask your "
 "client to deposit money to the Mercado Pago Account or to use a different "
@@ -1960,11 +1950,11 @@ msgstr ""
 "cliente para depositar dinheiro na conta do Mercado Pago ou usar outro "
 "método de pagamento."
 
-#: ../../src/Translations/AdminTranslations.php:1171
+#: ../../src/Translations/AdminTranslations.php:1115
 msgid "There was an error"
 msgstr "Houve um erro"
 
-#: ../../src/Translations/AdminTranslations.php:1172
+#: ../../src/Translations/AdminTranslations.php:1116
 msgid "The transaction could not be completed."
 msgstr "Não foi possível completar a transação."
 
@@ -2732,30 +2722,26 @@ msgstr ""
 "que você pague com o meio de pagamento e dispositivo que costuma usar para "
 "compras on-line."
 
-#: ../../src/Translations/AdminTranslations.php:553
-msgid "Checkout without card"
-msgstr "Parcelado sem cartão com Mercado Pago"
+#~ msgid "Up to 12 installments without card with Mercado Pago"
+#~ msgstr "Parcelado em até 12x sem cartão com Mercado Pago"
 
-#: ../../src/Translations/AdminTranslations.php:481
-msgid ""
-"Choose a percentage value that you want to discount your customers for "
-"paying with Mercado Pago."
-msgstr ""
-"Selecione um valor percentual que quiser descontar para seus clientes por "
-"pagar com Mercado Pago."
+#~ msgid "to BRL"
+#~ msgstr "para BRL"
 
-#: ../../src/Translations/AdminTranslations.php:646
-msgid ""
-"By disabling it, you will disable all credit cards payments from Mercado "
-"Pago Transparent Checkout."
-msgstr ""
-"Ao desativar, você desabilita todos os meios de pagamento de cartão de "
-"crédito no Checkout Transparente Mercado Pago."
+#~ msgid "to CLP"
+#~ msgstr "para CLP"
 
-#: ../../src/Translations/AdminTranslations.php:722
-msgid "Advanced configuration of the cash payment experience"
-msgstr ""
-"Configuração avançada da experiência de pagamento via boleto e em lotéricas"
+#~ msgid "to COP"
+#~ msgstr "para COP"
+
+#~ msgid "to MXN"
+#~ msgstr "Para MXN"
+
+#~ msgid "to PEN"
+#~ msgstr "Para PEN"
+
+#~ msgid "to UYU"
+#~ msgstr "Para UYU"
 
 #~ msgid "Now we convert your currency"
 #~ msgstr "Agora convertemos sua moeda"
