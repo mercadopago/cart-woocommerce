@@ -49,7 +49,7 @@ class StoreTranslations
      * @var array
      */
     public $commonMessages = [];
-    
+
     /**
      * @var array
      */
@@ -62,7 +62,7 @@ class StoreTranslations
 
     /**
      * Translations constructor
-     * 
+     *
      * @param Links $links
      */
     public function __construct(Links $links)
@@ -200,7 +200,7 @@ class StoreTranslations
     private function setCustomCheckoutTranslations(): void
     {
         $this->customCheckout = [
-            'test_mode_title'                                     => __('No card installments in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_title'                                     => __('Checkout Custom in Test Mode', 'woocommerce-mercadopago'),
             'test_mode_description'                               => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
             'test_mode_link_text'                                 => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
             'wallet_button_title'                                 => __('Pay with saved cards', 'woocommerce-mercadopago'),

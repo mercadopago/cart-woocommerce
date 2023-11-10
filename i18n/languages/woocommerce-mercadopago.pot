@@ -2112,3 +2112,8 @@ msgstr ""
 #: ../../src/Translations/AdminTranslations.php:722
 msgid "Advanced configuration of the cash payment experience"
 msgstr ""
+
+
+#: ../../src/Translations/StoreTranslations.php:722
+msgid "Checkout Custom in Test Mode"
+msgstr ""
