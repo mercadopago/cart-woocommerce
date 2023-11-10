@@ -554,7 +554,7 @@ class Settings
                 'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
                 'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] . ' ',
                 'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
-                'link'      => $this->links->getLinks()['mercadopago_credentials'],
+                'link'      => $this->links->getLinks()['docs_integration_credentials'],
                 'test_mode' => $this->store->getCheckboxCheckoutTestMode()
             ];
 
