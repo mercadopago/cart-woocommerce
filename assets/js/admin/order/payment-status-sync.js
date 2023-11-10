@@ -77,7 +77,7 @@
   
     function canShowLoader(flag) {
       const text = document.querySelector('#mp-sync-payment-status-button span');
-      const loader = document.querySelector('.mp-small-loader');
+      const loader = document.querySelector('.mp-status-sync-metabox-small-loader');
   
       if (text && loader) {
         if (flag) {
