@@ -968,16 +968,23 @@ class AdminTranslations
      */
     private function setCurrencyTranslations(): void
     {
-        $currencyConversion = sprintf(
+        $notCompatibleCurrencyConversion = sprintf(
             '<b>%s</b> %s',
             __('Attention:', 'woocommerce-mercadopago'),
             __('The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion.', 'woocommerce-mercadopago')
         );
 
+        $baseConversionMessage = __('We are converting your currency from: ', 'woocommerce-mercadopago');
         $this->currency = [
-            'currency_conversion' => $currencyConversion,
+            'not_compatible_currency_conversion' => $notCompatibleCurrencyConversion,
+            'now_we_convert'     => $this->generateConversionMessage($baseConversionMessage),
         ];
     }
+
+    private function generateConversionMessage($baseMessage, $currency = ''): string
+{
+    return sprintf('%s %s  %s ', $baseMessage, get_woocommerce_currency(), __("to ", 'woocommerce-mercadopago'));
+}
 
     /**
      * Set status sync metabox translations
