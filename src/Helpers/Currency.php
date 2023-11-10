@@ -160,7 +160,7 @@ final class Currency
     public function getRatio(AbstractGateway $gateway): float
     {
         if (!isset($this->ratios[$gateway->id])) {
-            if ($this->isConversionEnabled($gateway) && $this->validateConversion()) {
+            if ($this->isConversionEnabled($gateway) && !$this->validateConversion()) {
                 $ratio = $this->loadRatio();
                 $this->setRatio($gateway->id, $ratio);
             } else {
