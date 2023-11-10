@@ -538,6 +538,7 @@ class CustomGateway extends AbstractGateway
     public function renderInstallmentsRateDetails($order_id): void
     {
         $order             = wc_get_order($order_id);
+        $currency          = $this->countryConfigs['currency_symbol'];
         $installments      = $this->mercadopago->orderMetadata->getInstallmentsMeta($order);
         $installmentAmount = $this->mercadopago->orderMetadata->getTransactionDetailsMeta($order);
         $transactionAmount = $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
@@ -551,11 +552,10 @@ class CustomGateway extends AbstractGateway
                     'title_installment_cost'  => $this->storeTranslations['title_installment_cost'],
                     'title_installment_total' => $this->storeTranslations['title_installment_total'],
                     'text_installments'       => $this->storeTranslations['text_installments'],
-                    'currency'                => $this->countryConfigs['currency_symbol'],
-                    'total_paid_amount'       => Numbers::format($totalPaidAmount),
-                    'transaction_amount'      => Numbers::format($transactionAmount),
-                    'total_diff_cost'         => Numbers::format($totalDiffCost),
-                    'installment_amount'      => Numbers::format($installmentAmount),
+                    'total_paid_amount'       => Numbers::formatWithCurrencySymbol($currency, $totalPaidAmount),
+                    'transaction_amount'      => Numbers::formatWithCurrencySymbol($currency, $transactionAmount),
+                    'total_diff_cost'         => Numbers::formatWithCurrencySymbol($currency, $totalDiffCost),
+                    'installment_amount'      => Numbers::formatWithCurrencySymbol($currency, $installmentAmount),
                     'installments'            => Numbers::format($installments),
                 ]
             );
