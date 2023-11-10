@@ -1101,11 +1101,11 @@ msgstr "Configuración Avanzada"
 #: ../../src/Translations/AdminTranslations.php:700,
 #: ../../src/Translations/AdminTranslations.php:714
 msgid "Invoice"
-msgstr "Boleto e lotérica"
+msgstr "Efectivo"
 
 #: ../../src/Translations/AdminTranslations.php:707
 msgid "Transparent Checkout | Invoice or Loterica"
-msgstr "Checkout Transparente | Boleto ou lotérica"
+msgstr "Checkout Transparente | Efectivo"
 
 #: ../../src/Translations/AdminTranslations.php:708,
 #: ../../src/Translations/AdminTranslations.php:790
@@ -2708,6 +2708,10 @@ msgstr ""
 #: ../../src/Translations/AdminTranslations.php:722
 msgid "Advanced configuration of the cash payment experience"
 msgstr "Configuración avanzada de la experiencia de pago en efectivo"
+
+#: ../../src/Translations/StoreTranslations.php:722
+msgid "Checkout Custom in Test Mode"
+msgstr "Tarjeta de crédito en Modo Test"
 
 #~ msgid "Now we convert your currency"
 #~ msgstr "Ahora convertimos tu moneda"
