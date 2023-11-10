@@ -401,6 +401,19 @@ jQuery(document.body).on("checkout_error", () => {
   mercado_pago_submit = false;
 });
 
+jQuery(document).on("updated_checkout", function () {
+  const checkoutCustomPaymentMethodElement = document.getElementById("payment_method_woo-mercado-pago-custom")
+
+  // Checkout Custom is not selected, so we can stop checking
+  if (checkoutCustomPaymentMethodElement || checkoutCustomPaymentMethodElement.checked) {
+    if (cardFormMounted) {
+      cardForm.unmount();
+    }
+    handleCardFormLoad();
+    return;
+  }
+});
+
 jQuery(document).ready(() => {
   setCardFormLoadInterval();
 });
