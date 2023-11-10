@@ -2743,6 +2743,10 @@ msgstr ""
 #~ msgid "to UYU"
 #~ msgstr "Para UYU"
 
+#: ../../src/Translations/StoreTranslations.php:722
+msgid "Checkout Custom in Test Mode"
+msgstr "Cartões de crédito em Modo Teste"
+
 #~ msgid "Now we convert your currency"
 #~ msgstr "Agora convertemos sua moeda"
 

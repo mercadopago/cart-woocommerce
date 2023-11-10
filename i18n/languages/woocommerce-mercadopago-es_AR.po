@@ -1123,11 +1123,11 @@ msgstr "Configuración Avanzada"
 #: ../../src/Translations/AdminTranslations.php:704,
 #: ../../src/Translations/AdminTranslations.php:718
 msgid "Invoice"
-msgstr "Boleto e lotérica"
+msgstr "Efectivo"
 
 #: ../../src/Translations/AdminTranslations.php:707
 msgid "Transparent Checkout | Invoice or Loterica"
-msgstr "Checkout Transparente | Boleto ou lotérica"
+msgstr "Checkout Transparente | Efectivo"
 
 #: ../../src/Translations/AdminTranslations.php:708,
 #: ../../src/Translations/AdminTranslations.php:790
@@ -2732,14 +2732,12 @@ msgstr ""
 #~ msgid "to COP"
 #~ msgstr "a COP"
 
-#~ msgid "to MXN"
-#~ msgstr "a MXN"
+#: ../../src/Translations/StoreTranslations.php:722
+msgid "Checkout Custom in Test Mode"
+msgstr "Tarjeta de crédito en Modo Test"
 
-#~ msgid "to PEN"
-#~ msgstr "a PEN"
-
-#~ msgid "to UYU"
-#~ msgstr "a UYU"
+#~ msgid "Now we convert your currency"
+#~ msgstr "Ahora convertimos tu moneda"
 
 #~ msgid "We no longer convert your currency"
 #~ msgstr "Dejamos de convertir tu moneda"
