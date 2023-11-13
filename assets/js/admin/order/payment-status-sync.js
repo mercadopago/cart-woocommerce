@@ -10,8 +10,8 @@
       }
   
       const orderDataElement = document.getElementById('woocommerce-order-data');
-      const paymentStatusMetaboxElement = document.getElementById('mp-payment-status-metabox');
-      const paymentStatusMetaboxTitle = document.querySelector('#mp-payment-status-metabox > div.postbox-header > h2');
+      const paymentStatusMetaboxElement = document.getElementById('mp_payment_status_sync');
+      const paymentStatusMetaboxTitle = document.querySelector('#mp_payment_status_sync > div.postbox-header > h2');
   
       if (orderDataElement && paymentStatusMetaboxElement) {
         orderDataElement.after(paymentStatusMetaboxElement);
@@ -77,7 +77,7 @@
   
     function canShowLoader(flag) {
       const text = document.querySelector('#mp-sync-payment-status-button span');
-      const loader = document.querySelector('.mp-small-loader');
+      const loader = document.querySelector('.mp-status-sync-metabox-small-loader');
   
       if (text && loader) {
         if (flag) {
