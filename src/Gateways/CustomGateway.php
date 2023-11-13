@@ -282,13 +282,6 @@ class CustomGateway extends AbstractGateway
                 ]
             );
         }
-
-        $this->mercadopago->checkout->registerReviewOrderBeforePayment(function () {
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_custom_update_checkout',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-update-checkout', '.js')
-            );
-        });
     }
 
     /**
