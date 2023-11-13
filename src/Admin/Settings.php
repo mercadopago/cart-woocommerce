@@ -405,10 +405,9 @@ class Settings
         $this->validateAjaxNonce();
 
         $storeId       = $this->store->getStoreId();
-        $storeName     = $this->store->getStoreName();
         $storeCategory = $this->store->getStoreCategory();
 
-        if ($storeId && $storeName && $storeCategory) {
+        if ($storeId && $storeCategory) {
             wp_send_json_success($this->translations->configurationTips['valid_store_tips']);
         }
 
