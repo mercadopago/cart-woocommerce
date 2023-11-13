@@ -1212,14 +1212,14 @@ div .mp-error{
   display:none;
   justify-content:center;
   align-items:center;
-  .spinner{
-    border:4px solid rgba(0,0,255,.1);
-    border-top:4px solid #009ee3;
-    border-radius:50%;
-    width:40px;
-    height:40px;
-    animation:spin 2s linear infinite;
-  }
+}
+.spinner-card-form {
+  border:4px solid rgba(0,0,255,.1) !important;
+  border-top:4px solid #009ee3 !important;
+  border-radius:50% !important;
+  width:40px !important;
+  height:40px !important;
+  animation:spin 2s linear infinite;
 }
 .mp-spinner-3ds{
   border:4px solid rgba(0,0,255,.1);

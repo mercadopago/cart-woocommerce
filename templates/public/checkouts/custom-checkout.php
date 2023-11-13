@@ -50,7 +50,7 @@ if (!defined('ABSPATH')) {
 
 ?>
 <div class="mp-checkout-custom-load">
-    <div class="spinner"></div>
+    <div class="spinner-card-form"></div>
 </div>
 <div class='mp-checkout-container'>
     <div class='mp-checkout-custom-container'>
