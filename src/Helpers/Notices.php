@@ -137,10 +137,7 @@ class Notices
      */
     public function insertDismissibleNotices(): void
     {
-        if (
-            !is_admin()
-            || !$this->url->validateSection('mercado-pago')
-        ) {
+        if (!$this->shouldShowNotices()) {
             return;
         }
 
@@ -173,6 +170,21 @@ class Notices
                 }
             );
         }
+    }
+
+    /**
+     * Check if notices should be shown
+     *
+     * @return bool
+     */
+    public function shouldShowNotices(): bool
+    {
+        return is_admin() &&
+            (
+                $this->url->validateSection('mercado-pago')
+                || $this->url->validateUrl('index')
+                || $this->url->validateUrl('plugins')
+            );
     }
 
     /**
@@ -340,27 +352,27 @@ class Notices
         wc_add_notice($message, $type, $data);
     }
 
-	/**
-	 * Dismiss the review admin notice
-	 */
-	public function reviewNoticeDismiss(): void
+    /**
+     * Dismiss the review admin notice
+     */
+    public function reviewNoticeDismiss(): void
     {
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
         $this->currentUser->validateUserNeededPermissions();
 
         $this->store->setDismissedReviewNotice(1);
         wp_send_json_success();
-	}
+    }
 
-	/**
-	 * Dismiss the saved cards admin notice
-	 */
-	public function savedCardsDismiss(): void
+    /**
+     * Dismiss the saved cards admin notice
+     */
+    public function savedCardsDismiss(): void
     {
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
         $this->currentUser->validateUserNeededPermissions();
 
         $this->store->setDismissedSavedCardsNotice(1);
-		wp_send_json_success();
-	}
+        wp_send_json_success();
+    }
 }
