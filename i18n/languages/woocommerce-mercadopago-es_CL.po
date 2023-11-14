@@ -989,10 +989,8 @@ msgid "It is possible to edit the title. Maximum of 85 characters."
 msgstr "Puedes cambiar el título dentro tu tienda. Caracteres máximos: 85."
 
 #: ../../src/Translations/AdminTranslations.php:557
-#, fuzzy
-#| msgid "Installments without card"
 msgid "Checkout without card"
-msgstr "Cuotas sin tarjeta"
+msgstr "Hasta 12 pagos sin tarjeta con Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:563
 msgid ""
@@ -1073,10 +1071,6 @@ msgid "Mercado Pago Plugin general settings"
 msgstr "Configuraciones generales del plugin de Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:650
-#, fuzzy
-#| msgid ""
-#| "By disabling it, you will disable all Pix payments from Mercado Pago "
-#| "Transparent Checkout."
 msgid ""
 "By disabling it, you will disable all credit cards payments from Mercado "
 "Pago Transparent Checkout."
@@ -1122,8 +1116,6 @@ msgstr "Configuración Avanzada"
 
 #: ../../src/Translations/AdminTranslations.php:704,
 #: ../../src/Translations/AdminTranslations.php:718
-#: ../../src/Translations/AdminTranslations.php:700,
-#: ../../src/Translations/AdminTranslations.php:714
 msgid "Invoice"
 msgstr "Efectivo"
 
@@ -1560,7 +1552,7 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:977
 msgid "We are converting your currency from: "
-msgstr "Ahora convertimos tu moneda de:"
+msgstr "Ahora convertimos tu moneda de: "
 
 #: ../../src/Translations/AdminTranslations.php:986
 msgid "to "
@@ -2722,33 +2714,21 @@ msgstr ""
 "<b>Por motivos de seguridad, tu pago fue rechazado</b><br>Te recomendamos "
 "pagar con el medio de pago y dispositivo que sueles usar para compras online."
 
-#: ../../src/Translations/AdminTranslations.php:553
-msgid "Checkout without card"
-msgstr "Hasta 12 pagos sin tarjeta con Mercado Pago"
-
-#: ../../src/Translations/AdminTranslations.php:481
-msgid ""
-"Choose a percentage value that you want to discount your customers for "
-"paying with Mercado Pago."
-msgstr ""
-"Elige un valor porcentual que quieras descontar a tus clientes por pagar con "
-"Mercado Pago."
-
-#: ../../src/Translations/AdminTranslations.php:646
-msgid ""
-"By disabling it, you will disable all credit cards payments from Mercado "
-"Pago Transparent Checkout."
-msgstr ""
-"Al desactivar, desabilitarás todos los medios de pago con tarjeta de crédito "
-"en el Checkout Transparente de Mercado Pago."
-
-#: ../../src/Translations/AdminTranslations.php:722
-msgid "Advanced configuration of the cash payment experience"
-msgstr "Configuración avanzada de la experiencia de pago en efectivo"
-
 #: ../../src/Translations/StoreTranslations.php:722
 msgid "Checkout Custom in Test Mode"
 msgstr "Tarjeta de crédito en Modo Test"
+
+#~ msgid "Up to 12 installments without card with Mercado Pago"
+#~ msgstr "Hasta 12 pagos sin tarjeta con Mercado Pago"
+
+#~ msgid "to BRL"
+#~ msgstr "a BRL"
+
+#~ msgid "to CLP"
+#~ msgstr "a CLP"
+
+#~ msgid "to COP"
+#~ msgstr "a COP"
 
 #~ msgid "Now we convert your currency"
 #~ msgstr "Ahora convertimos tu moneda"
