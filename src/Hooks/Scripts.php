@@ -267,6 +267,26 @@ class Scripts
     }
 
     /**
+     * Register scripts for payment block
+     *
+     * @param string $name
+     * @param string $file
+     * @param string $version
+     * @param array $deps
+     * @param array $variables
+     *
+     * @return void
+     */
+    public function registerPaymentBlockScript(string $name, string $file, string $version, array $deps = [], array $variables = []): void
+    {
+        wp_enqueue_script($name, $file, $deps, $version, true);
+
+        if ($variables) {
+            wp_localize_script($name, $name . self::SUFFIX, $variables);
+        }
+    }
+
+    /**
      * Register styles
      *
      * @param string $name

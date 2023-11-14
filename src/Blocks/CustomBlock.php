@@ -10,15 +10,15 @@ class CustomBlock extends AbstractBlock {
     /**
      * @var string
      */
-    protected $scriptName = 'basic';
+    protected $scriptName = 'custom';
 
     /**
      * @var string
      */
-    protected $name = 'woo-mercado-pago-basic';
+    protected $name = 'woo-mercado-pago-custom';
 
     /**
-     * BasicBlock constructor
+     * CustomBlock constructor
      */
     public function __construct()
     {

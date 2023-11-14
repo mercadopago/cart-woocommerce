@@ -305,7 +305,7 @@ class WoocommerceMercadoPago
      */
     public function registerHooks(): void
     {
-        add_action('wp_loaded', [$this, 'init']);
+        add_action('plugins_loaded', [$this, 'init']);
         add_filter('query_vars', function ($vars) {
             $vars[] = 'wallet_button';
             return $vars;
@@ -337,7 +337,6 @@ class WoocommerceMercadoPago
             add_action(
                 'woocommerce_blocks_payment_method_type_registration',
                 function(PaymentMethodRegistry $payment_method_registry) {
-                    $this->logs->file->info("executing payment_method_registry 2", "MercadoPagoBlocks");
                     $payment_method_registry->register(new BasicBlock);
                     $payment_method_registry->register(new CustomBlock);
                 }
@@ -389,8 +388,8 @@ class WoocommerceMercadoPago
             $this->verifyGdNotice();
         }
 
-        $this->registerBlocks();
         $this->registerGateways();
+        $this->registerBlocks();
         $this->registerActionsWhenGatewayIsNotCalled();
         $this->plugin->registerEnableCreditsAction(array($this->creditsEnabled, 'enableCreditsAction'));
         $this->plugin->executeCreditsAction();
