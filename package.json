@@ -8,17 +8,22 @@
     "url": "https://github.com/mercadopago/cart-woocommerce"
   },
   "scripts": {
-    "build": "npm run build:js && npm run build:css",
+    "build": "npm run build:js && npm run build:css && npm run build:webpack",
     "build:js": "node -e 'require(\"./main.js\").minifyFiles(\"js\")'",
     "build:css": "node -e 'require(\"./main.js\").minifyFiles(\"css\")'",
+    "build:webpack": "wp-scripts build assets/js/blocks/*",
+    "start:webpack": "wp-scripts start",
     "php:fix": "composer phpcbf",
     "php:lint": "composer phpcs",
     "js:lint": "jshint",
     "pot": "node -e 'require(\"./main.js\").generatePotFiles()'"
   },
   "devDependencies": {
-    "minify": "^7.2.2",
+    "@woocommerce/dependency-extraction-webpack-plugin": "^2.2.0",
+    "@woocommerce/eslint-plugin": "^2.2.0",
+    "@wordpress/scripts": "^26.16.0",
     "wp-pot": "^1.10.2",
-    "jshint": "^2.13.5"
+    "jshint": "^2.13.5",
+    "minify": "^7.2.2"
   }
 }

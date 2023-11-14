@@ -2,7 +2,10 @@
 
 namespace MercadoPago\Woocommerce;
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Blocks\BasicBlock;
+use MercadoPago\Woocommerce\Blocks\CustomBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
@@ -324,6 +327,25 @@ class WoocommerceMercadoPago
     }
 
     /**
+     * Register woocommerce blocks support
+     *
+     * @return void
+     */
+    public function registerBlocks(): void
+    {
+        if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+            add_action(
+                'woocommerce_blocks_payment_method_type_registration',
+                function(PaymentMethodRegistry $payment_method_registry) {
+                    $this->logs->file->info("executing payment_method_registry 2", "MercadoPagoBlocks");
+                    $payment_method_registry->register(new BasicBlock);
+                    $payment_method_registry->register(new CustomBlock);
+                }
+            );
+        }
+    }
+
+    /**
      * Register actions when gateway is not called on page
      *
      * @return void
@@ -367,6 +389,7 @@ class WoocommerceMercadoPago
             $this->verifyGdNotice();
         }
 
+        $this->registerBlocks();
         $this->registerGateways();
         $this->registerActionsWhenGatewayIsNotCalled();
         $this->plugin->registerEnableCreditsAction(array($this->creditsEnabled, 'enableCreditsAction'));
