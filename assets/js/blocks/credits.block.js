@@ -3,8 +3,10 @@
 import { registerPaymentMethod } from "@woocommerce/blocks-registry";
 import { getSetting } from "@woocommerce/settings";
 import { decodeEntities } from "@wordpress/html-entities";
-import CheckoutBenefits from './CheckoutBenefits';
-import TestMode from './TestMode';
+import CheckoutBenefits from "./CheckoutBenefits";
+import ChoRedirectV2 from "./ChoRedirectV2";
+import TermsAndConditions from "./TermsAndConditions";
+import TestMode from "./TestMode";
 
 const paymentMethodName = "woo-mercado-pago-credits";
 const paymentMethodParams = wc_mercadopago_credits_blocks_params;
@@ -25,6 +27,12 @@ const Content = () => {
     test_mode_link_src,
     checkout_benefits_title,
     checkout_benefits_items,
+    checkout_redirect_text,
+    checkout_redirect_src,
+    checkout_redirect_alt,
+    terms_and_conditions_description,
+    terms_and_conditions_link_text,
+    terms_and_conditions_link_src,
   } = paymentMethodParams;
 
   return (
@@ -37,13 +45,25 @@ const Content = () => {
             linkText={test_mode_link_text}
             linkSrc={test_mode_link_src}
           />
-          <CheckoutBenefits title={checkout_benefits_title} items={checkout_benefits_items} />
+          <CheckoutBenefits
+            title={checkout_benefits_title}
+            items={checkout_benefits_items}
+          />
+          <ChoRedirectV2
+            text={checkout_redirect_text}
+            src={checkout_redirect_src}
+            alt={checkout_redirect_alt}
+          />
         </div>
       </div>
+      <TermsAndConditions
+        description={terms_and_conditions_description}
+        linkText={terms_and_conditions_link_text}
+        linkSrc={terms_and_conditions_link_src}
+      />
     </div>
   );
 };
-
 
 const mercadopagoPaymentMethod = {
   name: paymentMethodName,
