@@ -33,18 +33,21 @@ const Content = () => {
     terms_and_conditions_description,
     terms_and_conditions_link_text,
     terms_and_conditions_link_src,
+    test_mode,
   } = paymentMethodParams;
 
   return (
     <div className="mp-checkout-container">
       <div className="mp-checkout-pro-container">
         <div className="mp-checkout-pro-content">
-          <TestMode
-            title={test_mode_title}
-            description={test_mode_description}
-            linkText={test_mode_link_text}
-            linkSrc={test_mode_link_src}
-          />
+          {test_mode ? (
+            <TestMode
+              title={test_mode_title}
+              description={test_mode_description}
+              linkText={test_mode_link_text}
+              linkSrc={test_mode_link_src}
+            />
+          ) : null}
           <CheckoutBenefits
             title={checkout_benefits_title}
             items={checkout_benefits_items}

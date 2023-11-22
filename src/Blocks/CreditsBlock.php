@@ -40,6 +40,7 @@ class CreditsBlock extends AbstractBlock
             '.png',
             true
         );
+        $testMode = (get_option("checkbox_checkout_test_mode") == "no") ? false : true;
         return [
             'test_mode_title'           => $this->storeTranslations['test_mode_title'],
             'test_mode_description'     => $this->storeTranslations['test_mode_description'],
@@ -53,6 +54,7 @@ class CreditsBlock extends AbstractBlock
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
+            'test_mode' => $testMode,
         ];
     }
 
