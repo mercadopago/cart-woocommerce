@@ -6,6 +6,7 @@ use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Blocks\BasicBlock;
 use MercadoPago\Woocommerce\Blocks\CustomBlock;
+use MercadoPago\Woocommerce\Blocks\CreditsBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
@@ -339,6 +340,7 @@ class WoocommerceMercadoPago
                 function(PaymentMethodRegistry $payment_method_registry) {
                     $payment_method_registry->register(new BasicBlock);
                     $payment_method_registry->register(new CustomBlock);
+                    $payment_method_registry->register(new CreditsBlock);
                 }
             );
         }
@@ -563,7 +565,7 @@ class WoocommerceMercadoPago
         add_action('admin_enqueue_scripts', function () {
             wp_register_style(
                 'woocommerce-mercadopago-admin-notice-css',
-                sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/css/admin/mp-admin-notices.css'), 
+                sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/css/admin/mp-admin-notices.css'),
                 false,
                 MP_VERSION
             );
