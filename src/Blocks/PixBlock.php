@@ -43,8 +43,6 @@ class PixBlock extends AbstractBlock
         return [
             'test_mode_title'           => $this->storeTranslations['test_mode_title'],
             'test_mode_description'     => $this->storeTranslations['test_mode_description'],
-            'test_mode_link_text'       => $this->storeTranslations['test_mode_link_text'],
-            'test_mode_link_src'        => $this->links['docs_integration_test'],
             'pix_template_title'        => $this->storeTranslations['pix_template_title'],
             'pix_template_subtitle'     => $this->storeTranslations['pix_template_subtitle'],
             'pix_template_alt'          => $this->storeTranslations['pix_template_alt'],

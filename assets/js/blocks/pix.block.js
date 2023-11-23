@@ -22,8 +22,6 @@ const Content = () => {
   const {
     test_mode_title,
     test_mode_description,
-    test_mode_link_text,
-    test_mode_link_src,
     pix_template_title,
     pix_template_subtitle,
     pix_template_src,
@@ -42,8 +40,6 @@ const Content = () => {
             <TestMode
               title={test_mode_title}
               description={test_mode_description}
-              linkText={test_mode_link_text}
-              linkSrc={test_mode_link_src}
             />
           ) : null}
           <PixTemplate
