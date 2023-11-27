@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Blocks\BasicBlock;
 use MercadoPago\Woocommerce\Blocks\CustomBlock;
 use MercadoPago\Woocommerce\Blocks\CreditsBlock;
+use MercadoPago\Woocommerce\Blocks\PixBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
@@ -341,6 +342,7 @@ class WoocommerceMercadoPago
                     $payment_method_registry->register(new BasicBlock);
                     $payment_method_registry->register(new CustomBlock);
                     $payment_method_registry->register(new CreditsBlock);
+                    $payment_method_registry->register(new PixBlock);
                 }
             );
         }
