@@ -42,11 +42,6 @@ interface MercadoPagoGatewayInterface
     public function webhook(): void;
 
     /**
-     * @return array
-     */
-    public function getPaymentFieldsParams(): array;
-
-    /**
      * @return bool
      */
     public static function isAvailable(): bool;

@@ -23,11 +23,6 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     protected $scriptName = '';
 
     /**
-     * @var array
-     */
-    protected $settings = [];
-
-    /**
      * @var WoocommerceMercadoPago
      */
     protected $mercadopago;

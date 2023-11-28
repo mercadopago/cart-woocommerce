@@ -293,57 +293,47 @@ class CustomGateway extends AbstractGateway
     {
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/checkouts/custom-checkout.php',
-            $this->getPaymentFieldsParams()
+            [
+                'test_mode'                        => $this->mercadopago->store->isTestMode(),
+                'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
+                'test_mode_description'            => $this->storeTranslations['test_mode_description'],
+                'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
+                'test_mode_link_src'               => $this->links['docs_integration_test'],
+                'wallet_button'                    => $this->mercadopago->options->getGatewayOption($this, 'wallet_button', 'yes'),
+                'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("assets/images/icons/icon-logos", '.png', true),
+                'wallet_button_title'              => $this->storeTranslations['wallet_button_title'],
+                'wallet_button_description'        => $this->storeTranslations['wallet_button_description'],
+                'wallet_button_button_text'        => $this->storeTranslations['wallet_button_button_text'],
+                'available_payments_title_icon'    => $this->mercadopago->url->getPluginFileUrl("assets/images/icons/icon-purple-card", '.png', true),
+                'available_payments_title'         => $this->storeTranslations['available_payments_title'],
+                'available_payments_image'         => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-down", '.png', true),
+                'available_payments_chevron_up'    => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-up", '.png', true),
+                'available_payments_chevron_down'  => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-down", '.png', true),
+                'payment_methods_items'            => wp_json_encode($this->getPaymentMethodsContent()),
+                'payment_methods_promotion_link'   => $this->links['mercadopago_debts'],
+                'payment_methods_promotion_text'   => $this->storeTranslations['payment_methods_promotion_text'],
+                'site_id'                          => $this->mercadopago->seller->getSiteId() ?: $this->mercadopago->country::SITE_ID_MLA,
+                'card_form_title'                  => $this->storeTranslations['card_form_title'],
+                'card_number_input_label'          => $this->storeTranslations['card_number_input_label'],
+                'card_number_input_helper'         => $this->storeTranslations['card_number_input_helper'],
+                'card_holder_name_input_label'     => $this->storeTranslations['card_holder_name_input_label'],
+                'card_holder_name_input_helper'    => $this->storeTranslations['card_holder_name_input_helper'],
+                'card_expiration_input_label'      => $this->storeTranslations['card_expiration_input_label'],
+                'card_expiration_input_helper'     => $this->storeTranslations['card_expiration_input_helper'],
+                'card_security_code_input_label'   => $this->storeTranslations['card_security_code_input_label'],
+                'card_security_code_input_helper'  => $this->storeTranslations['card_security_code_input_helper'],
+                'card_document_input_label'        => $this->storeTranslations['card_document_input_label'],
+                'card_document_input_helper'       => $this->storeTranslations['card_document_input_helper'],
+                'card_installments_title'          => $this->storeTranslations['card_installments_title'],
+                'card_issuer_input_label'          => $this->storeTranslations['card_issuer_input_label'],
+                'card_installments_input_helper'   => $this->storeTranslations['card_installments_input_helper'],
+                'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
+                'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
+                'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
+                'amount'                           => $this->getAmount(),
+                'currency_ratio'                   => $this->mercadopago->currency->getRatio($this),
+            ]
         );
-    }
-
-    /**
-     * Get Payment Fields params
-     *
-     * @return array
-     */
-    public function getPaymentFieldsParams(): array
-    {
-        return [
-            'test_mode'                        => $this->mercadopago->store->isTestMode(),
-            'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
-            'test_mode_description'            => $this->storeTranslations['test_mode_description'],
-            'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
-            'test_mode_link_src'               => $this->links['docs_integration_test'],
-            'wallet_button'                    => $this->mercadopago->options->getGatewayOption($this, 'wallet_button', 'yes'),
-            'wallet_button_image'              => $this->mercadopago->url->getPluginFileUrl("assets/images/icons/icon-logos", '.png', true),
-            'wallet_button_title'              => $this->storeTranslations['wallet_button_title'],
-            'wallet_button_description'        => $this->storeTranslations['wallet_button_description'],
-            'wallet_button_button_text'        => $this->storeTranslations['wallet_button_button_text'],
-            'available_payments_title_icon'    => $this->mercadopago->url->getPluginFileUrl("assets/images/icons/icon-purple-card", '.png', true),
-            'available_payments_title'         => $this->storeTranslations['available_payments_title'],
-            'available_payments_image'         => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-down", '.png', true),
-            'available_payments_chevron_up'    => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-up", '.png', true),
-            'available_payments_chevron_down'  => $this->mercadopago->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-down", '.png', true),
-            'payment_methods_items'            => wp_json_encode($this->getPaymentMethodsContent()),
-            'payment_methods_promotion_link'   => $this->links['mercadopago_debts'],
-            'payment_methods_promotion_text'   => $this->storeTranslations['payment_methods_promotion_text'],
-            'site_id'                          => $this->mercadopago->seller->getSiteId() ?: $this->mercadopago->country::SITE_ID_MLA,
-            'card_form_title'                  => $this->storeTranslations['card_form_title'],
-            'card_number_input_label'          => $this->storeTranslations['card_number_input_label'],
-            'card_number_input_helper'         => $this->storeTranslations['card_number_input_helper'],
-            'card_holder_name_input_label'     => $this->storeTranslations['card_holder_name_input_label'],
-            'card_holder_name_input_helper'    => $this->storeTranslations['card_holder_name_input_helper'],
-            'card_expiration_input_label'      => $this->storeTranslations['card_expiration_input_label'],
-            'card_expiration_input_helper'     => $this->storeTranslations['card_expiration_input_helper'],
-            'card_security_code_input_label'   => $this->storeTranslations['card_security_code_input_label'],
-            'card_security_code_input_helper'  => $this->storeTranslations['card_security_code_input_helper'],
-            'card_document_input_label'        => $this->storeTranslations['card_document_input_label'],
-            'card_document_input_helper'       => $this->storeTranslations['card_document_input_helper'],
-            'card_installments_title'          => $this->storeTranslations['card_installments_title'],
-            'card_issuer_input_label'          => $this->storeTranslations['card_issuer_input_label'],
-            'card_installments_input_helper'   => $this->storeTranslations['card_installments_input_helper'],
-            'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
-            'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-            'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'amount'                           => $this->getAmount(),
-            'currency_ratio'                   => $this->mercadopago->currency->getRatio($this),
-        ];
     }
 
     /**

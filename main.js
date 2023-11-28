@@ -9,7 +9,7 @@ const wpPot = require('wp-pot');
  * @param extension
  */
 function minifyFiles (extension) {
-  const assetsFiles = findFilesInDir(`./assets/${extension}`, `.${extension}`, '/blocks');
+  const assetsFiles = findFilesInDir(`./assets/${extension}`, `.${extension}`);
   const isNotMinifiedAndHasSelectedExtension = (filePath) => filePath.includes(`.${extension}`) && !filePath.includes('.min');
   const filteredFiles = assetsFiles.filter((filePath) => isNotMinifiedAndHasSelectedExtension(filePath));
 
@@ -47,7 +47,7 @@ function generatePotFiles () {
  *
  * @returns {*[]}
  */
-function findFilesInDir (startPath, filter, excludes = '') {
+function findFilesInDir (startPath, filter) {
   let results = [];
 
   if (!fs.existsSync(startPath)) {
@@ -59,15 +59,10 @@ function findFilesInDir (startPath, filter, excludes = '') {
 
   for (let i = 0; i < files.length; i++) {
     const filename = path.join(startPath, files[i]);
-
-    if (filename.includes(excludes)) {
-      continue;
-    }
-
     const stat = fs.lstatSync(filename);
 
     if (stat.isDirectory()) {
-      results = results.concat(findFilesInDir(filename, filter, excludes));
+      results = results.concat(findFilesInDir(filename, filter));
     } else if (filename.indexOf(filter) >= 0) {
       results.push(filename);
     }
