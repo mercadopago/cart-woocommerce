@@ -135,19 +135,29 @@ class PixGateway extends AbstractGateway
     {
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/checkouts/pix-checkout.php',
-            [
-                'test_mode'                        => $this->mercadopago->store->isTestMode(),
-                'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
-                'test_mode_description'            => $this->storeTranslations['test_mode_description'],
-                'pix_template_title'               => $this->storeTranslations['pix_template_title'],
-                'pix_template_subtitle'            => $this->storeTranslations['pix_template_subtitle'],
-                'pix_template_alt'                 => $this->storeTranslations['pix_template_alt'],
-                'pix_template_src'                 => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/pix/pix', '.png', true),
-                'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
-                'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-                'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            ]
+            $this->getPaymentFieldsParams()
         );
+    }
+
+    /**
+     * Get Payment Fields params
+     *
+     * @return array
+     */
+    public function getPaymentFieldsParams(): array
+    {
+        return [
+            'test_mode'                        => $this->mercadopago->store->isTestMode(),
+            'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
+            'test_mode_description'            => $this->storeTranslations['test_mode_description'],
+            'pix_template_title'               => $this->storeTranslations['pix_template_title'],
+            'pix_template_subtitle'            => $this->storeTranslations['pix_template_subtitle'],
+            'pix_template_alt'                 => $this->storeTranslations['pix_template_alt'],
+            'pix_template_src'                 => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/pix/pix', '.png', true),
+            'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
+            'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
+            'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
+        ];
     }
 
     /**

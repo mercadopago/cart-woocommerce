@@ -3,10 +3,10 @@
 import { registerPaymentMethod } from "@woocommerce/blocks-registry";
 import { getSetting } from "@woocommerce/settings";
 import { decodeEntities } from "@wordpress/html-entities";
-import CheckoutBenefits from "./CheckoutBenefits";
-import ChoRedirectV2 from "./ChoRedirectV2";
-import TermsAndConditions from "./TermsAndConditions";
-import TestMode from "./TestMode";
+import CheckoutBenefits from "./components/CheckoutBenefits";
+import ChoRedirectV2 from "./components/ChoRedirectV2";
+import TermsAndConditions from "./components/TermsAndConditions";
+import TestMode from "./components/TestMode";
 
 const paymentMethodName = "woo-mercado-pago-credits";
 const paymentMethodParams = wc_mercadopago_credits_blocks_params;

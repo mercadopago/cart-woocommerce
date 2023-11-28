@@ -6,7 +6,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class BasicBlock extends AbstractBlock {
+class BasicBlock extends AbstractBlock
+{
     /**
      * @var string
      */
@@ -33,11 +34,6 @@ class BasicBlock extends AbstractBlock {
      */
     public function getScriptParams(): array
     {
-        return [
-            'test_mode_title'       => $this->storeTranslations['test_mode_title'],
-            'test_mode_description' => $this->storeTranslations['test_mode_description'],
-            'test_mode_link_text'   => $this->storeTranslations['test_mode_link_text'],
-            'test_mode_link_src'    => $this->links['docs_integration_test'],
-        ];
+        return $this->gateway->getPaymentFieldsParams();
     }
 }
