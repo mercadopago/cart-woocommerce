@@ -11,7 +11,7 @@
     "build": "npm run build:js && npm run build:css && npm run build:webpack",
     "build:js": "node -e 'require(\"./main.js\").minifyFiles(\"js\")'",
     "build:css": "node -e 'require(\"./main.js\").minifyFiles(\"css\")'",
-    "build:webpack": "wp-scripts build assets/js/blocks/*",
+    "build:webpack": "wp-scripts build assets/js/blocks/**.js",
     "start:webpack": "wp-scripts start",
     "php:fix": "composer phpcbf",
     "php:lint": "composer phpcs",
