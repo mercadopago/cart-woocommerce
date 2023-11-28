@@ -188,6 +188,19 @@ class TicketGateway extends AbstractGateway
      */
     public function payment_fields(): void
     {
+        $this->mercadopago->template->getWoocommerceTemplate(
+            'public/checkouts/ticket-checkout.php',
+            $this->getPaymentFieldsParams()
+        );
+    }
+
+    /**
+     * Get Payment Fields params
+     *
+     * @return array
+     */
+    public function getPaymentFieldsParams(): array
+    {
         $currentUser     = $this->mercadopago->currentUser->getCurrentUser();
         $loggedUserEmail = ($currentUser->ID != 0) ? $currentUser->user_email : null;
         $address         = $this->mercadopago->currentUser->getCurrentUserMeta('billing_address_1', true);
@@ -196,32 +209,29 @@ class TicketGateway extends AbstractGateway
         $country         = $this->mercadopago->currentUser->getCurrentUserMeta('billing_country', true);
         $address        .= (!empty($country) ? ' - ' . $country : '');
 
-        $this->mercadopago->template->getWoocommerceTemplate(
-            'public/checkouts/ticket-checkout.php',
-            [
-                'test_mode'                        => $this->mercadopago->store->isTestMode(),
-                'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
-                'test_mode_description'            => $this->storeTranslations['test_mode_description'],
-                'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
-                'test_mode_link_src'               => $this->links['docs_integration_test'],
-                'input_document_label'             => $this->storeTranslations['input_document_label'],
-                'input_document_helper'            => $this->storeTranslations['input_document_helper'],
-                'ticket_text_label'                => $this->storeTranslations['ticket_text_label'],
-                'input_table_button'               => $this->storeTranslations['input_table_button'],
-                'input_helper_label'               => $this->storeTranslations['input_helper_label'],
-                'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
-                'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-                'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-                'amount'                           => $this->getAmount(),
-                'payment_methods'                  => $this->getPaymentMethods(),
-                'site_id'                          => $this->mercadopago->seller->getSiteId(),
-                'payer_email'                      => esc_js($loggedUserEmail),
-                'currency_ratio'                   => $this->mercadopago->currency->getRatio($this),
-                'woocommerce_currency'             => get_woocommerce_currency(),
-                'account_currency'                 => $this->mercadopago->country->getCountryConfigs(),
-                'febraban'                         => $this->getFebrabanInfo($currentUser, $address),
-            ]
-        );
+        return [
+            'test_mode'                        => $this->mercadopago->store->isTestMode(),
+            'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
+            'test_mode_description'            => $this->storeTranslations['test_mode_description'],
+            'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
+            'test_mode_link_src'               => $this->links['docs_integration_test'],
+            'input_document_label'             => $this->storeTranslations['input_document_label'],
+            'input_document_helper'            => $this->storeTranslations['input_document_helper'],
+            'ticket_text_label'                => $this->storeTranslations['ticket_text_label'],
+            'input_table_button'               => $this->storeTranslations['input_table_button'],
+            'input_helper_label'               => $this->storeTranslations['input_helper_label'],
+            'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
+            'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
+            'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
+            'amount'                           => $this->getAmount(),
+            'payment_methods'                  => $this->getPaymentMethods(),
+            'site_id'                          => $this->mercadopago->seller->getSiteId(),
+            'payer_email'                      => esc_js($loggedUserEmail),
+            'currency_ratio'                   => $this->mercadopago->currency->getRatio($this),
+            'woocommerce_currency'             => get_woocommerce_currency(),
+            'account_currency'                 => $this->mercadopago->country->getCountryConfigs(),
+            'febraban'                         => $this->getFebrabanInfo($currentUser, $address),
+        ];
     }
 
     /**
