@@ -181,38 +181,31 @@ class CreditsGateway extends AbstractGateway
      */
     public function payment_fields(): void
     {
+        $checkoutBenefitsItems = $this->getBenefits();
+        $checkoutRedirectSrc   = $this->mercadopago->url->getPluginFileUrl(
+            'assets/images/checkouts/basic/cho-pro-redirect-v2',
+            '.png',
+            true
+        );
+
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/checkouts/credits-checkout.php',
-            $this->getPaymentFieldsParams()
+            [
+                'test_mode'                        => $this->mercadopago->store->isTestMode(),
+                'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
+                'test_mode_description'            => $this->storeTranslations['test_mode_description'],
+                'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
+                'test_mode_link_src'               => $this->links['docs_integration_test'],
+                'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
+                'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
+                'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
+                'checkout_redirect_src'            => $checkoutRedirectSrc,
+                'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
+                'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
+                'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
+                'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
+            ]
         );
-    }
-
-    /**
-     * Get Payment Fields params
-     *
-     * @return array
-     */
-    public function getPaymentFieldsParams(): array
-    {
-        $checkoutBenefitsItems = $this->getBenefits();
-        $paymentMethods        = $this->getPaymentMethods();
-        $paymentMethodsTitle   = count($paymentMethods) != 0 ? $this->storeTranslations['payment_methods_title'] : '';
-
-        return [
-            'test_mode'                        => $this->mercadopago->store->isTestMode(),
-            'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
-            'test_mode_description'            => $this->storeTranslations['test_mode_description'],
-            'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
-            'test_mode_link_src'               => $this->links['docs_integration_test'],
-            'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
-            'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
-            'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
-            'checkout_redirect_src'            => $checkoutRedirectSrc,
-            'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
-            'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
-            'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-            'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-        ];
     }
 
     /**

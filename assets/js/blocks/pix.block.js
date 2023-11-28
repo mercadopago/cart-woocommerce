@@ -3,9 +3,9 @@
 import { registerPaymentMethod } from "@woocommerce/blocks-registry";
 import { getSetting } from "@woocommerce/settings";
 import { decodeEntities } from "@wordpress/html-entities";
-import PixTemplate from "./components/PixTemplate";
-import TermsAndConditions from "./components/TermsAndConditions";
-import TestMode from "./components/TestMode";
+import PixTemplate from "./PixTemplate";
+import TermsAndConditions from "./TermsAndConditions";
+import TestMode from "./TestMode";
 
 const paymentMethodName = "woo-mercado-pago-pix";
 const paymentMethodParams = wc_mercadopago_pix_blocks_params;
