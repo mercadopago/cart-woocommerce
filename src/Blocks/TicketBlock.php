@@ -6,17 +6,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class CreditsBlock extends AbstractBlock
+class TicketBlock extends AbstractBlock
 {
     /**
      * @var string
      */
-    protected $scriptName = 'credits';
+    protected $scriptName = 'ticket';
 
     /**
      * @var string
      */
-    protected $name = 'woo-mercado-pago-credits';
+    protected $name = 'woo-mercado-pago-ticket';
 
     /**
      * CustomBlock constructor
@@ -24,7 +24,7 @@ class CreditsBlock extends AbstractBlock
     public function __construct()
     {
         parent::__construct();
-        $this->storeTranslations = $this->mercadopago->storeTranslations->creditsCheckout;
+        $this->storeTranslations = $this->mercadopago->storeTranslations->ticketCheckout;
     }
 
     /**
@@ -36,5 +36,4 @@ class CreditsBlock extends AbstractBlock
     {
         return $this->gateway->getPaymentFieldsParams();
     }
-
 }

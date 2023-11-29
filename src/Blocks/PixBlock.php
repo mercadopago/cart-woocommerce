@@ -34,23 +34,6 @@ class PixBlock extends AbstractBlock
      */
     public function getScriptParams(): array
     {
-        $pix_template_src   = $this->mercadopago->url->getPluginFileUrl(
-            'assets/images/checkouts/pix/pix',
-            '.png',
-            true
-        );
-        $testMode = (get_option("checkbox_checkout_test_mode") == "no") ? false : true;
-        return [
-            'test_mode_title'           => $this->storeTranslations['test_mode_title'],
-            'test_mode_description'     => $this->storeTranslations['test_mode_description'],
-            'pix_template_title'        => $this->storeTranslations['pix_template_title'],
-            'pix_template_subtitle'     => $this->storeTranslations['pix_template_subtitle'],
-            'pix_template_alt'          => $this->storeTranslations['pix_template_alt'],
-            'pix_template_src'          => $pix_template_src,
-            'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
-            'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-            'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'test_mode' => $testMode,
-        ];
+        return $this->gateway->getPaymentFieldsParams();
     }
 }

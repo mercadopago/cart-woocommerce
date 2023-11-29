@@ -195,9 +195,11 @@ class CreditsGateway extends AbstractGateway
     public function getPaymentFieldsParams(): array
     {
         $checkoutBenefitsItems = $this->getBenefits();
-        $paymentMethods        = $this->getPaymentMethods();
-        $paymentMethodsTitle   = count($paymentMethods) != 0 ? $this->storeTranslations['payment_methods_title'] : '';
-
+        $checkoutRedirectSrc   = $this->mercadopago->url->getPluginFileUrl(
+            'assets/images/checkouts/basic/cho-pro-redirect-v2',
+            '.png',
+            true
+        );
         return [
             'test_mode'                        => $this->mercadopago->store->isTestMode(),
             'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
