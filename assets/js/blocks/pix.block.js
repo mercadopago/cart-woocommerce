@@ -30,7 +30,9 @@ const Content = () => {
     terms_and_conditions_link_text,
     terms_and_conditions_link_src,
     test_mode,
-  } = paymentMethodParams;
+  } = settings.params;
+
+  console.log("PIX:" + JSON.stringify(settings))
 
   return (
     <div className="mp-checkout-container">

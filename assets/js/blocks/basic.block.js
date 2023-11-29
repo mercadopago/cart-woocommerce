@@ -1,13 +1,13 @@
 /* globals wc_mercadopago_basic_blocks_params */
 
+import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { getSetting } from '@woocommerce/settings';
 import { decodeEntities } from '@wordpress/html-entities';
-import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import TestMode from './components/TestMode';
 import CheckoutBenefits from './components/CheckoutBenefits';
-import PaymentMethodsV2 from './components/PaymentMethodsV2';
 import ChoRedirectV2 from './components/ChoRedirectV2';
+import PaymentMethodsV2 from './components/PaymentMethodsV2';
 import TermsAndConditions from './components/TermsAndConditions';
+import TestMode from './components/TestMode';
 
 const paymentMethodName = 'woo-mercado-pago-basic';
 const paymentMethodParams = wc_mercadopago_basic_blocks_params;
@@ -38,7 +38,9 @@ const Content = () => {
     terms_and_conditions_link_text,
     terms_and_conditions_link_src,
     test_mode,
-  } = paymentMethodParams;
+  } = settings.params;
+
+  console.log("BASIC:" + JSON.stringify(settings))
 
   return (
     <div className="mp-checkout-container">
