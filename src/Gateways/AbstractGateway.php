@@ -507,8 +507,13 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     protected function getAmount(): float
     {
-        $total      = $this->get_order_total();
-        $subtotal   = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $total    = $this->get_order_total();
+        $subtotal = 0;
+
+        if (isset($this->mercadopago->woocommerce->cart)) {
+            $subtotal = $this->mercadopago->woocommerce->cart->get_subtotal();
+        }
+
         $tax        = $total - $subtotal;
         $discount   = $subtotal * ($this->discount / 100);
         $commission = $subtotal * ($this->commission / 100);
