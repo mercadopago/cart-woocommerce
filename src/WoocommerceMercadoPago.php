@@ -341,10 +341,10 @@ class WoocommerceMercadoPago
                 'woocommerce_blocks_payment_method_type_registration',
                 function(PaymentMethodRegistry $payment_method_registry) {
                     $payment_method_registry->register(new BasicBlock);
-                   // $payment_method_registry->register(new CustomBlock);
+                    $payment_method_registry->register(new CustomBlock);
                     $payment_method_registry->register(new CreditsBlock);
                     $payment_method_registry->register(new PixBlock);
-                    $payment_method_registry->register(new TicketBlock);
+                    //$payment_method_registry->register(new TicketBlock);
                 }
             );
         }

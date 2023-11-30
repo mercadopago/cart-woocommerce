@@ -10,7 +10,6 @@ import TermsAndConditions from './components/TermsAndConditions';
 import TestMode from './components/TestMode';
 
 const paymentMethodName = 'woo-mercado-pago-basic';
-const paymentMethodParams = wc_mercadopago_basic_blocks_params;
 
 const settings = getSetting(`woo-mercado-pago-basic_data`, {});
 const defaultLabel = decodeEntities(settings.title) || 'Checkout Pro';
@@ -39,8 +38,6 @@ const Content = () => {
     terms_and_conditions_link_src,
     test_mode,
   } = settings.params;
-
-  console.log("BASIC:" + JSON.stringify(settings))
 
   return (
     <div className="mp-checkout-container">

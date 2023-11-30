@@ -117,13 +117,6 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
      */
     public function get_payment_method_data(): array
     {
-        if ($this->mercadopago->admin->isAdmin()){
-            return [
-                'title'       => $this->get_setting('title'),
-                'description' => $this->get_setting('description'),
-                'supports'    => $this->get_supported_features(),
-            ];
-        }
         $variables  = $this->getScriptParams();
         return [
             'title'       => $this->get_setting('title'),
