@@ -9,7 +9,6 @@ import TermsAndConditions from "./components/TermsAndConditions";
 import TestMode from "./components/TestMode";
 
 const paymentMethodName = "woo-mercado-pago-credits";
-const paymentMethodParams = wc_mercadopago_credits_blocks_params;
 
 const settings = getSetting(`woo-mercado-pago-credits_data`, {});
 const defaultLabel = decodeEntities(settings.title) || "Checkout Credits";
@@ -36,8 +35,6 @@ const Content = () => {
     test_mode,
   } = settings.params;
 
-  console.log("CREDITS:" + JSON.stringify(settings))
-
   return (
     <div className="mp-checkout-container">
       <div className="mp-checkout-pro-container">
@@ -53,6 +50,7 @@ const Content = () => {
           <CheckoutBenefits
             title={checkout_benefits_title}
             items={checkout_benefits_items}
+            listMode="count"
           />
           <ChoRedirectV2
             text={checkout_redirect_text}

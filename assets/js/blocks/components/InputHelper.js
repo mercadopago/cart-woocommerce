@@ -1,8 +1,8 @@
 const InputHelper = ({ isVisible, message, inputId, id }) => (
   <input-table
     isVisible={isVisible}
-    message={buttonName}
-    input-id={columns}
+    message={message}
+    input-id={inputId}
     id={id}
   ></input-table>
 );

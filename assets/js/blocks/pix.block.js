@@ -8,7 +8,6 @@ import TermsAndConditions from "./components/TermsAndConditions";
 import TestMode from "./components/TestMode";
 
 const paymentMethodName = "woo-mercado-pago-pix";
-const paymentMethodParams = wc_mercadopago_pix_blocks_params;
 
 const settings = getSetting(`woo-mercado-pago-pix_data`, {});
 const defaultLabel = decodeEntities(settings.title) || "Checkout Pix";
@@ -31,8 +30,6 @@ const Content = () => {
     terms_and_conditions_link_src,
     test_mode,
   } = settings.params;
-
-  console.log("PIX:" + JSON.stringify(settings))
 
   return (
     <div className="mp-checkout-container">

@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_basic_blocks_params */
+/* globals wc_mercadopago_ticket_blocks_params */
 
 import { registerPaymentMethod } from "@woocommerce/blocks-registry";
 import { getSetting } from "@woocommerce/settings";
@@ -10,7 +10,6 @@ import TermsAndConditions from "./components/TermsAndConditions";
 import TestMode from "./components/TestMode";
 
 const paymentMethodName = "woo-mercado-pago-ticket";
-const paymentMethodParams = wc_mercadopago_basic_blocks_params;
 
 const settings = getSetting(`woo-mercado-pago-ticket_data`, {});
 const defaultLabel = decodeEntities(settings.title) || "Checkout Ticket";
@@ -26,8 +25,8 @@ const Content = () => {
     test_mode_description,
     test_mode_link_text,
     test_mode_link_src,
-    labelMessage,
-    helperMessage,
+    input_document_label,
+    input_document_helper,
     documents,
     ticket_text_label,
     input_table_button,
@@ -42,7 +41,21 @@ const Content = () => {
     test_mode,
   } = settings.params;
 
-  console.log("TICKET:" + JSON.stringify(settings))
+  let inputDocumentConfig = {
+    labelMessage: input_document_label,
+    helperMessage: input_document_helper,
+    inputName: "mercadopago_ticket[docNumber]",
+    selectName: "mercadopago_ticket[docType]",
+    flagError: "mercadopago_ticket[docNumberError]",
+    documents: null,
+    validate: "true",
+  };
+
+  if (site_id === "MLB") {
+    inputDocumentConfig.documents = '["CPF","CNPJ"]';
+  } else if (site_id === "MLU") {
+    inputDocumentConfig.documents = '["CI","OTRO"]';
+  }
 
   return (
     <div className="mp-checkout-container">
@@ -56,22 +69,14 @@ const Content = () => {
               link-src={test_mode_link_src}
             />
           ) : null}
-          <div className="mp-checkout-ticket-input-document">
-            <InputDocument
-              label-message={labelMessage}
-              helper-message={helperMessage}
-              input-name="mercadopago_ticket[docNumber]"
-              select-name="mercadopago_ticket[docType]"
-              flag-error="mercadopago_ticket[docNumberError]"
-              documents='["CI","OTRO"]'
-              validate="true"
-            />
-          </div>
+          {inputDocumentConfig ? (
+            <InputDocument {...inputDocumentConfig} />
+          ) : null}
           <p className="mp-checkout-ticket-tex">{ticket_text_label}</p>
           <InputTable
             name={"mercadopago_ticket[paymentMethodId]"}
             buttonName={input_table_button}
-            columns={payment_methods}
+            columns={JSON.stringify(payment_methods)}
           />
           <InputHelper
             isVisible={"false"}
@@ -81,7 +86,7 @@ const Content = () => {
           />
           <div id="mp-box-loading"></div>
 
-          <div id="mercadopago-utilities" style="display:none;">
+          <div id="mercadopago-utilities" style={{ display: "none" }}>
             <input
               type="hidden"
               id="site_id"
