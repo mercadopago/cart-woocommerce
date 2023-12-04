@@ -6,7 +6,7 @@
  * @var string $message
  * @var bool $isDismissible
  *
- * @see \MercadoPago\Woocommerce\Admin\Notices
+ * @see \MercadoPago\Woocommerce\Helpers\Notices
  */
 
 if (!defined('ABSPATH')) {
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
         </div>
 
         <div class="mp-right-alert">
-            <p><?= esc_html($message) ?></p>
+            <p><?= wp_kses_post($message) ?></p>
         </div>
     </div>
 </div>

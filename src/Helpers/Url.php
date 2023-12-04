@@ -15,6 +15,8 @@ final class Url
 
     /**
      * Url constructor
+     *
+     * @param Strings $strings
      */
     public function __construct(Strings $strings)
     {
@@ -36,16 +38,17 @@ final class Url
      *
      * @param string $path
      * @param string $extension
+     * @param bool $ignoreSuffix
      *
      * @return string
      */
-    public function getPluginFileUrl(string $path, string $extension): string
+    public function getPluginFileUrl(string $path, string $extension, bool $ignoreSuffix = false): string
     {
         return sprintf(
             '%s%s%s%s',
             plugin_dir_url(__FILE__),
             '/../../../' . $path,
-            $this->getSuffix(),
+            $ignoreSuffix ? '' : $this->getSuffix(),
             $extension
         );
     }
@@ -78,6 +81,53 @@ final class Url
     public function getCurrentUrl(): string
     {
         return isset($_SERVER['REQUEST_URI']) ? sanitize_text_field($_SERVER['REQUEST_URI']) : '';
+    }
+
+    /**
+     * Get base url of  current url
+     *
+     * @return string
+     */
+    public function getBaseUrl(): string
+    {
+        return home_url();
+    }
+
+    /**
+     * Get server address
+     *
+     * @return string
+     */
+    public function getServerAddress(): string
+    {
+        return isset($_SERVER['SERVER_ADDR']) ? sanitize_text_field($_SERVER['SERVER_ADDR']) : '';
+    }
+
+    /**
+     * Set wp query var
+     *
+     * @param string $key
+     * @param string $value
+     * @param string $url
+     *
+     * @return string
+     */
+    public function setQueryVar(string $key, string $value, string $url): string
+    {
+        return add_query_arg($key, $value, $url);
+    }
+
+    /**
+     * Get wp query var
+     *
+     * @param string $queryVar
+     * @param mixed $default
+     *
+     * @return string
+     */
+    public function getQueryVar(string $queryVar, $default = ''): string
+    {
+        return get_query_var($queryVar, $default);
     }
 
     /**
@@ -132,5 +182,29 @@ final class Url
         }
 
         return $this->strings->compareStrings($expectedUrl, $currentUrl, $allowPartialMatch);
+    }
+
+    /**
+     * Validate wp query var
+     *
+     * @param string $expectedQueryVar
+     *
+     * @return bool
+     */
+    public function validateQueryVar(string $expectedQueryVar): bool
+    {
+        return (bool) $this->getQueryVar($expectedQueryVar);
+    }
+
+    /**
+     * Validate $_GET var
+     *
+     * @param string $expectedQueryVar
+     *
+     * @return bool
+     */
+    public function validateGetVar($expectedVar): bool
+    {
+        return isset($_GET[$expectedVar]);
     }
 }

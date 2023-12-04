@@ -7,7 +7,7 @@
  * @var string $missWoocommerceAction
  * @var array $translations
  *
- * @see \MercadoPago\Woocommerce\Admin\Notices
+ * @see \MercadoPago\Woocommerce\Helpers\Notices
  */
 
 if (!defined('ABSPATH')) {

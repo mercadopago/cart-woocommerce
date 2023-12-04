@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Configs;
 
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
 
 if (!defined('ABSPATH')) {
@@ -48,7 +49,22 @@ class Store
     /**
      * @const
      */
+    private const CUSTOM_DOMAIN_OPTIONS = '_mp_custom_domain_options';
+
+    /**
+     * @const
+     */
     private const DEBUG_MODE = '_mp_debug_mode';
+
+    /**
+     * @const
+     */
+    private const DISMISSED_REVIEW_NOTICE = '_mp_dismiss_review';
+
+    /**
+     * @const
+     */
+    private const DISMISSED_SAVED_CARDS_NOTICE = '_mp_dismiss_saved_cards_notice';
 
     /**
      * @const
@@ -61,12 +77,29 @@ class Store
     private const CHECKBOX_CHECKOUT_TEST_MODE = 'checkbox_checkout_test_mode';
 
     /**
+     * @const
+     */
+    private const GATEWAY_TITLE = 'title';
+
+    /**
+     * @const
+     */
+    private const CHECKOUT_EXPIRATION_DATE_PIX = 'expiration_date';
+
+    /**
+     * @const
+     */
+    private $availablePaymentGateways = [];
+
+    /**
      * @var Options
      */
     private $options;
 
     /**
      * Store constructor
+     *
+     * @param Options $options
      */
     public function __construct(Options $options)
     {
@@ -74,11 +107,45 @@ class Store
     }
 
     /**
+     * @return bool
+     */
+    public function isTestMode(): bool
+    {
+        return $this->getCheckboxCheckoutTestMode() === 'yes';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isProductionMode(): bool
+    {
+        return $this->getCheckboxCheckoutTestMode() !== 'yes';
+    }
+
+    /**
      * @return string
      */
-    public function getStoreId(): string
+    public function getTestMode(): string
     {
-        return $this->options->get(self::STORE_ID, '');
+        return $this->getCheckboxCheckoutTestMode();
+    }
+
+    /**
+     * @return string
+     */
+    public function getProductionMode(): string
+    {
+        return $this->getCheckboxCheckoutTestMode() === 'yes' ? 'no' : 'yes';
+    }
+
+    /**
+     * @param string $default
+     *
+     * @return string
+     */
+    public function getStoreId(string $default = 'WC-'): string
+    {
+        return $this->options->get(self::STORE_ID, $default);
     }
 
     /**
@@ -90,11 +157,14 @@ class Store
     }
 
     /**
+     * @param string $default
+     *
      * @return string
      */
-    public function getStoreName(): string
+    public function getStoreName(string $default = ''): string
     {
-        return $this->options->get(self::STORE_NAME, '');
+        $storeName = $this->options->get(self::STORE_NAME, $default);
+        return empty($storeName) ? $default : $storeName;
     }
 
     /**
@@ -106,11 +176,13 @@ class Store
     }
 
     /**
+     * @param string $default
+     *
      * @return string
      */
-    public function getStoreCategory(): string
+    public function getStoreCategory(string $default = ''): string
     {
-        return $this->options->get(self::STORE_CATEGORY, '');
+        return $this->options->get(self::STORE_CATEGORY, $default);
     }
 
     /**
@@ -138,11 +210,12 @@ class Store
     }
 
     /**
+     * @param string $default
      * @return string
      */
-    public function getWoocommerceCountry(): string
+    public function getWoocommerceCountry(string $default = ''): string
     {
-        return $this->options->get(self::WOOCOMMERCE_COUNTRY, '');
+        return $this->options->get(self::WOOCOMMERCE_COUNTRY, $default);
     }
 
     /**
@@ -188,6 +261,22 @@ class Store
     /**
      * @return string
      */
+    public function getCustomDomainOptions(): string
+    {
+        return $this->options->get(self::CUSTOM_DOMAIN_OPTIONS, 'yes');
+    }
+
+    /**
+     * @param string $customDomainOptions
+     */
+    public function setCustomDomainOptions(string $customDomainOptions): void
+    {
+        $this->options->set(self::CUSTOM_DOMAIN_OPTIONS, $customDomainOptions);
+    }
+
+    /**
+     * @return string
+     */
     public function getDebugMode(): string
     {
         return $this->options->get(self::DEBUG_MODE, 'no');
@@ -199,6 +288,38 @@ class Store
     public function setDebugMode(string $debugMode): void
     {
         $this->options->set(self::DEBUG_MODE, $debugMode);
+    }
+
+    /**
+     * @return int
+     */
+    public function getDismissedReviewNotice(): int
+    {
+        return $this->options->get(self::DISMISSED_REVIEW_NOTICE, 0);
+    }
+
+    /**
+     * @param int $dismissedReviewNotice
+     */
+    public function setDismissedReviewNotice(int $dismissedReviewNotice): void
+    {
+        $this->options->set(self::DISMISSED_REVIEW_NOTICE, $dismissedReviewNotice);
+    }
+
+    /**
+     * @return int
+     */
+    public function getDismissedSavedCardsNotice(): int
+    {
+        return $this->options->get(self::DISMISSED_SAVED_CARDS_NOTICE, 0);
+    }
+
+    /**
+     * @param int $dismissedSavedCardsNotice
+     */
+    public function setDismissedSavedCardsNotice(int $dismissedSavedCardsNotice): void
+    {
+        $this->options->set(self::DISMISSED_SAVED_CARDS_NOTICE, $dismissedSavedCardsNotice);
     }
 
     /**
@@ -222,7 +343,7 @@ class Store
      */
     public function getCheckboxCheckoutTestMode(): string
     {
-        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, '');
+        return $this->options->get(self::CHECKBOX_CHECKOUT_TEST_MODE, 'yes');
     }
 
     /**
@@ -231,5 +352,45 @@ class Store
     public function setCheckboxCheckoutTestMode(string $checkboxCheckoutTestMode): void
     {
         $this->options->set(self::CHECKBOX_CHECKOUT_TEST_MODE, $checkboxCheckoutTestMode);
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getAvailablePaymentGateways(): array
+    {
+        return $this->availablePaymentGateways;
+    }
+
+    /**
+     * @param string $paymentGateway
+     */
+    public function addAvailablePaymentGateway(string $paymentGateway): void
+    {
+        if (!in_array($paymentGateway, $this->availablePaymentGateways, true)) {
+            $this->availablePaymentGateways[] = $paymentGateway;
+        }
+    }
+
+    /**
+     * @param AbstractGateway $gateway
+     * @param $default
+     *
+     * @return mixed|string
+     */
+    public function getGatewayTitle(AbstractGateway $gateway, $default)
+    {
+        return $this->options->getGatewayOption($gateway, self::GATEWAY_TITLE, $default);
+    }
+
+    /**
+     * @param AbstractGateway $gateway
+     * @param string $default
+     *
+     * @return string
+     */
+    public function getCheckoutDateExpirationPix(AbstractGateway $gateway, string $default): string
+    {
+        return $this->options->getGatewayOption($gateway, self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
     }
 }

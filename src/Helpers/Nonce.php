@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Logs\Logs;
 
 if (!defined('ABSPATH')) {
@@ -16,11 +17,30 @@ final class Nonce
     private $logs;
 
     /**
-     * Nonce constructor
+     * Store
+     *
+     * @var Store
      */
-    public function __construct(Logs $logs)
+    private $store;
+
+    /**
+     * Is debug mode
+     *
+     * @var mixed|string
+     */
+    public $debugMode;
+
+    /**
+     * Nonce constructor
+     *
+     * @param Logs $logs
+     * @param Store $store
+     */
+    public function __construct(Logs $logs, Store $store)
     {
-        $this->logs = $logs;
+        $this->logs      = $logs;
+        $this->store     = $store;
+        $this->debugMode = $this->store->getDebugMode();
     }
 
     /**
@@ -35,7 +55,7 @@ final class Nonce
         $nonce = wp_create_nonce($id);
 
         if (!$nonce) {
-            $this->logs->file->error('Security nonce ' . $id . ' creation failed.', __CLASS__);
+            $this->logs->file->error("Security nonce $id creation failed.", __CLASS__);
             return '';
         }
 
@@ -66,7 +86,7 @@ final class Nonce
     public function validateNonce(string $id, string $nonce): void
     {
         if (!wp_verify_nonce($nonce, $id)) {
-            $this->logs->file->error('Security nonce ' . $id . ' check failed.', __FUNCTION__);
+            $this->logs->file->error("Security nonce $id check failed. Nonce: $nonce", __CLASS__);
             wp_send_json_error('Forbidden', 403);
         }
     }

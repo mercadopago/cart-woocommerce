@@ -18,7 +18,24 @@ final class Strings
      */
     public function fixUrlAmpersand(string $link): string
     {
-        return str_replace('\/', '/', str_replace('&#038;', '&', $link));
+        return str_replace('\\/', '/', str_replace('&#038;', '&', $link));
+    }
+
+    /**
+     * Sanitizes a text, replacing complex characters and symbols, and truncates it to 230 characters
+     *
+     * @param string $text
+     * @param int $limit
+     *
+     * @return string
+     */
+    public function sanitizeAndTruncateText(string $text, int $limit = 80): string
+    {
+        if (strlen($text) > $limit) {
+            return sanitize_file_name(html_entity_decode(substr($text, 0, $limit))) . '...';
+        }
+
+        return sanitize_file_name(html_entity_decode($text));
     }
 
     /**
@@ -33,7 +50,7 @@ final class Strings
     public function compareStrings(string $expected, string $current, bool $allowPartialMatch): bool
     {
         if ($allowPartialMatch) {
-            return str_contains($current, $expected);
+            return strpos($current, $expected) !== false;
         }
 
         return $expected === $current;

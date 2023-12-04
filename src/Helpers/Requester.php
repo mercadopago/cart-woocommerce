@@ -23,6 +23,8 @@ final class Requester
 
     /**
      * Requester constructor
+     * 
+     * @param HttpClientInterface $httpClient
      */
     public function __construct(HttpClientInterface $httpClient)
     {
@@ -31,9 +33,10 @@ final class Requester
 
     /**
      * @param string $uri
-     * @param array  $headers
+     * @param array $headers
      *
      * @return Response
+     * @throws \Exception
      */
     public function get(string $uri, array $headers = []): Response
     {
@@ -42,10 +45,11 @@ final class Requester
 
     /**
      * @param string $uri
-     * @param array  $headers
-     * @param array  $body
+     * @param array $headers
+     * @param array $body
      *
      * @return Response
+     * @throws \Exception
      */
     public function post(string $uri, array $headers = [], array $body = []): Response
     {
@@ -54,10 +58,11 @@ final class Requester
 
     /**
      * @param string $uri
-     * @param array  $headers
-     * @param array  $body
+     * @param array $headers
+     * @param array $body
      *
      * @return Response
+     * @throws \Exception
      */
     public function put(string $uri, array $headers = [], array $body = []): Response
     {

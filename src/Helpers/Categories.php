@@ -9,6 +9,8 @@ if (!defined('ABSPATH')) {
 final class Categories
 {
     /**
+     * Get all store categories
+     * 
      * @return array
      */
     public static function getCategories(): array
@@ -100,7 +102,7 @@ final class Categories
             ],
             [
                 'id'          => 'virtual goods',
-                'description' => 'E-books, Music Files, Software, Digital Images,  PDF Files and any item which can be electronically stored in a file, Mobile Recharge, DTH Recharge and any Online Recharge',
+                'description' => 'E-books, Music Files, Software, Digital Images, PDF Files and any item which can be electronically stored in a file, Mobile Recharge, DTH Recharge and any Online Recharge',
             ],
             [
                 'id'          => 'others',
