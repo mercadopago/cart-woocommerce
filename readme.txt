@@ -2,9 +2,9 @@
 Contributors:
 Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
-Tested up to: 6.2
-Requires PHP: 7.2 to 8.1
-Stable tag: 6.9.3
+Tested up to: 6.4
+Requires PHP: 7.4 to 8.3
+Stable tag: 7.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
