@@ -13,7 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: ../../src/WoocommerceMercadoPago.php:560,
 #: ../../src/Translations/AdminTranslations.php:151
@@ -1554,7 +1554,7 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:977
 msgid "We are converting your currency from: "
-msgstr "Agora convertemos sua moeda de:"
+msgstr "Agora convertemos sua moeda de: "
 
 #: ../../src/Translations/AdminTranslations.php:986
 msgid "to "
@@ -2722,6 +2722,10 @@ msgstr ""
 "que você pague com o meio de pagamento e dispositivo que costuma usar para "
 "compras on-line."
 
+#: ../../src/Translations/StoreTranslations.php:722
+msgid "Checkout Custom in Test Mode"
+msgstr "Cartões de crédito em Modo Teste"
+
 #~ msgid "Up to 12 installments without card with Mercado Pago"
 #~ msgstr "Parcelado em até 12x sem cartão com Mercado Pago"
 
@@ -2742,10 +2746,6 @@ msgstr ""
 
 #~ msgid "to UYU"
 #~ msgstr "Para UYU"
-
-#: ../../src/Translations/StoreTranslations.php:722
-msgid "Checkout Custom in Test Mode"
-msgstr "Cartões de crédito em Modo Teste"
 
 #~ msgid "Now we convert your currency"
 #~ msgstr "Agora convertemos sua moeda"
