@@ -15,7 +15,10 @@
     "php:fix": "composer phpcbf",
     "php:lint": "composer phpcs",
     "js:lint": "jshint",
-    "pot": "node -e 'require(\"./main.js\").generatePotFiles()'"
+    "pot": "node -e 'require(\"./main.js\").generatePotFiles()'",
+    "prebuild:narciso": "sh packages/narciso/bin/pre-assets.sh",
+    "postbuild:narciso": "sh packages/narciso/bin/post-assets.sh",
+    "build:narciso": "webpack --mode=production --config narciso.webpack.config.js"
   },
   "devDependencies": {
     "@woocommerce/dependency-extraction-webpack-plugin": "^2.2.0",

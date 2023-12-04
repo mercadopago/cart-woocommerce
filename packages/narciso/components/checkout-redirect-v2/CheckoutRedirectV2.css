@@ -1,0 +1,40 @@
+.mp-checkout-redirect-v2-container {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 12px !important;
+  gap: 16px !important;
+  height: 100% !important;
+  background: #f5f5f5 !important;
+  border-radius: 6px !important;
+  flex: none !important;
+  order: 2 !important;
+  align-self: stretch !important;
+  flex-grow: 0 !important;
+}
+
+.mp-checkout-redirect-v2-image {
+  width: 100% !important;
+  height: auto !important;
+  max-width: 12px !important;
+  max-height: 100% !important;
+  position: inherit !important;
+  float: none !important;
+  margin-left: 20px !important;
+}
+
+.mp-checkout-redirect-v2-text {
+  width: 85% !important;
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-size: 12px !important;
+  line-height: 15px !important;
+  display: flex !important;
+  align-items: center !important;
+  color: #737373 !important;
+  flex: none;
+  order: 1;
+  flex-grow: 1;
+}
