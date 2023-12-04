@@ -2,6 +2,7 @@
 
 import { registerPaymentMethod } from "@woocommerce/blocks-registry";
 import { getSetting } from "@woocommerce/settings";
+import { useEffect, useRef } from "@wordpress/element";
 import { decodeEntities } from "@wordpress/html-entities";
 import InputDocument from "./components/InputDocument";
 import InputHelper from "./components/InputHelper";
@@ -19,7 +20,7 @@ const Label = (props) => {
   return <PaymentMethodLabel text={defaultLabel} />;
 };
 
-const Content = () => {
+const Content = (props) => {
   const {
     test_mode_title,
     test_mode_description,
@@ -27,7 +28,6 @@ const Content = () => {
     test_mode_link_src,
     input_document_label,
     input_document_helper,
-    documents,
     ticket_text_label,
     input_table_button,
     input_helper_label,
@@ -41,10 +41,15 @@ const Content = () => {
     test_mode,
   } = settings.params;
 
+  const { eventRegistration, emitResponse } = props;
+  const { onPaymentSetup } = eventRegistration;
+  const ref = useRef(null);
+
   let inputDocumentConfig = {
     labelMessage: input_document_label,
     helperMessage: input_document_helper,
     inputName: "mercadopago_ticket[docNumber]",
+    selectId: "docType",
     selectName: "mercadopago_ticket[docType]",
     flagError: "mercadopago_ticket[docNumberError]",
     documents: null,
@@ -57,10 +62,51 @@ const Content = () => {
     inputDocumentConfig.documents = '["CI","OTRO"]';
   }
 
+  useEffect(() => {
+    const unsubscribe = onPaymentSetup(async () => {
+      const paymentMethodData = {};
+      paymentMethodData["payment_from_blocks"] = true;
+      paymentMethodData["amount"] = amount.toString();
+      paymentMethodData["site_id"] = site_id;
+      paymentMethodData["currency_ratio"] = currency_ratio;
+      paymentMethodData["mercadopago_ticket_doc_number"] =
+        ref.current.querySelector(
+          "#form-checkout__identificationNumber-container > input"
+        ).value;
+      paymentMethodData["mercadopago_ticket_doc_type"] =
+        ref.current.querySelector("#docType").value;
+
+      const checkedPaymentMethod = payment_methods.find((method) => {
+        const selector = `#${method.id}`;
+        const element = ref.current.querySelector(selector);
+        return element && element.checked;
+      });
+
+      if (checkedPaymentMethod) {
+        paymentMethodData["mercadopago_ticket_payment_method"] =
+          ref.current.querySelector(`#${checkedPaymentMethod.id}`).value;
+      }
+
+      return {
+        type: emitResponse.responseTypes.SUCCESS,
+        meta: {
+          paymentMethodData,
+        },
+      };
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [
+    emitResponse.responseTypes.ERROR,
+    emitResponse.responseTypes.SUCCESS,
+    onPaymentSetup,
+  ]);
+
   return (
     <div className="mp-checkout-container">
       <div className="mp-checkout-ticket-container">
-        <div className="mp-checkout-ticket-content">
+        <div ref={ref} className="mp-checkout-ticket-content">
           {test_mode ? (
             <TestMode
               title={test_mode_title}
@@ -85,42 +131,6 @@ const Content = () => {
             id={"payment-method-helper"}
           />
           <div id="mp-box-loading"></div>
-
-          <div id="mercadopago-utilities" style={{ display: "none" }}>
-            <input
-              type="hidden"
-              id="site_id"
-              value={site_id}
-              name="`mercadopago_ticket[site_id]`"
-            />
-            <input
-              type="hidden"
-              id="amountTicket"
-              value={amount}
-              name="`mercadopago_ticket[amount]`"
-            />
-            <input
-              type="hidden"
-              id="currency_ratioTicket"
-              value={currency_ratio}
-              name="mercadopago_ticket[currency_ratio]"
-            />
-            <input
-              type="hidden"
-              id="campaign_idTicket"
-              name="mercadopago_ticket[campaign_id]"
-            />
-            <input
-              type="hidden"
-              id="campaignTicket"
-              name="mercadopago_ticket[campaign]"
-            />
-            <input
-              type="hidden"
-              id="discountTicket"
-              name="mercadopago_ticket[discount]"
-            />
-          </div>
         </div>
       </div>
       <TermsAndConditions
