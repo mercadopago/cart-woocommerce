@@ -47,6 +47,11 @@ interface MercadoPagoGatewayInterface
     public function getPaymentFieldsParams(): array;
 
     /**
+     * @return void
+     */
+    public function registerCheckoutScripts(): void;
+
+    /**
      * @return bool
      */
     public static function isAvailable(): bool;

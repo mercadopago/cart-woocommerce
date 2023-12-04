@@ -43,9 +43,9 @@ interface MercadoPagoPaymentBlockInterface {
     /**
      * Set block payment gateway
      *
-     * @return MercadoPagoGatewayInterface
+     * @return ?MercadoPagoGatewayInterface
      */
-    public function setGateway(): MercadoPagoGatewayInterface;
+    public function setGateway(): ?MercadoPagoGatewayInterface;
 
     /**
      * Set payment block script params

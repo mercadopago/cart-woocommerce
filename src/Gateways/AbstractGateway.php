@@ -218,16 +218,28 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         }
 
         if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_checkout_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
-            );
-
-            $this->mercadopago->scripts->registerCheckoutStyle(
-                'wc_mercadopago_checkout_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
-            );
+            $this->registerCheckoutScripts();
         }
+    }
+
+    /**
+     * Register checkout scripts
+     *
+     * @param string $gatewaySection
+     *
+     * @return void
+     */
+    public function registerCheckoutScripts(): void
+    {
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_checkout_components',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
+        );
+
+        $this->mercadopago->scripts->registerCheckoutStyle(
+            'wc_mercadopago_checkout_components',
+            $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
+        );
     }
 
     /**

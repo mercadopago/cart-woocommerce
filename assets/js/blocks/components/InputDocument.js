@@ -2,7 +2,11 @@ const InputDocument = ({
   labelMessage,
   helperMessage,
   inputName,
+  hiddenId,
+  inputDataCheckout,
+  selectId,
   selectName,
+  selectDataCheckout,
   flagError,
   documents,
   validate,
@@ -12,7 +16,11 @@ const InputDocument = ({
       label-message={labelMessage}
       helper-message={helperMessage}
       input-name={inputName}
+      hidden-id={hiddenId}
+      input-data-checkout={inputDataCheckout}
+      select-id={selectId}
       select-name={selectName}
+      select-data-checkout={selectDataCheckout}
       flag-error={flagError}
       documents={documents}
       validate={validate}
