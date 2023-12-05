@@ -1,10 +1,16 @@
 CHANGELOG:
 == Changelog ==
+= v7.0.3 (05/12/2023) =
+* Fixed
+- Checkout PRO Modal dependency loading
+
+== Changelog ==
 = v7.0.2 (05/12/2023) =
 * Fixed
 - Credits enabled by default searching for available countries
 - Status sync rendering compatibility
 
+== Changelog ==
 = v7.0.1 (05/12/2023) =
 * Fixed
 - Shipping rate value on transparent checkouts
