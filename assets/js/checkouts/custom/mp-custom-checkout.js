@@ -296,8 +296,8 @@ function cardFormLoad() {
 
   if (checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked) {
     setTimeout(() => {
-      createLoadSpinner();
       if (!cardFormMounted) {
+        createLoadSpinner();
         handleCardFormLoad();
       }
 
