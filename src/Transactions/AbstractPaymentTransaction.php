@@ -19,9 +19,25 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $this->setCommonTransaction();
         $this->setAdditionalInfoTransaction();
         $this->setPayerTransaction();
+        $this->setShippingTransaction();
 
         $this->transaction->description        = implode(', ', $this->listOfItems);
         $this->transaction->transaction_amount = Numbers::format($this->orderTotal);
+    }
+
+    /**
+     * Set shipping
+     *
+     * @return void
+     */
+    public function setShippingTransaction(): void
+    {
+        $amount = Numbers::format($this->order->get_shipping_total()) + Numbers::format($this->order->get_shipping_tax());
+        $cost   = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
+
+        if ($amount > 0) {
+            $this->orderTotal += Numbers::format($cost);
+        }
     }
 
     /**
