@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Blocks\BasicBlock;
 use MercadoPago\Woocommerce\Blocks\CustomBlock;
 use MercadoPago\Woocommerce\Blocks\CreditsBlock;
 use MercadoPago\Woocommerce\Blocks\PixBlock;
+use MercadoPago\Woocommerce\Blocks\TicketBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Images;
@@ -340,9 +341,10 @@ class WoocommerceMercadoPago
                 'woocommerce_blocks_payment_method_type_registration',
                 function(PaymentMethodRegistry $payment_method_registry) {
                     $payment_method_registry->register(new BasicBlock);
-                    $payment_method_registry->register(new CustomBlock);
+                   // $payment_method_registry->register(new CustomBlock);
                     $payment_method_registry->register(new CreditsBlock);
                     $payment_method_registry->register(new PixBlock);
+                    $payment_method_registry->register(new TicketBlock);
                 }
             );
         }

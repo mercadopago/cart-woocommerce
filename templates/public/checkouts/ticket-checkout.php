@@ -48,6 +48,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						helper-message="<?= esc_html($input_document_helper); ?>"
 						input-name='mercadopago_ticket[docNumber]'
 						select-name='mercadopago_ticket[docType]'
+                        select-id = 'docType'
 						flag-error='mercadopago_ticket[docNumberError]'
 						documents='["CI","OTRO"]'
 						validate=true>
@@ -62,6 +63,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						helper-message="<?= esc_html($input_document_helper); ?>"
 						input-name='mercadopago_ticket[docNumber]'
 						select-name='mercadopago_ticket[docType]'
+                        select-id = 'docType'
 						flag-error='mercadopago_ticket[docNumberError]'
 						documents='["CPF","CNPJ"]'
 						validate=true>
@@ -92,11 +94,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<!-- utilities -->
 			<div id="mercadopago-utilities" style="display:none;">
 				<input type="hidden" id="site_id" value="<?= esc_textarea($site_id); ?>" name="mercadopago_ticket[site_id]" />
-				<input type="hidden" id="amountTicket" value="<?= esc_textarea($amount); ?>" name="mercadopago_ticket[amount]" />
-				<input type="hidden" id="currency_ratioTicket" value="<?= esc_textarea($currency_ratio); ?>" name="mercadopago_ticket[currency_ratio]" />
-				<input type="hidden" id="campaign_idTicket" name="mercadopago_ticket[campaign_id]" />
-				<input type="hidden" id="campaignTicket" name="mercadopago_ticket[campaign]" />
-				<input type="hidden" id="discountTicket" name="mercadopago_ticket[discount]" />
+				<input type="hidden" id="ticket_amount" value="<?= esc_textarea($amount); ?>" name="mercadopago_ticket[amount]" />
+				<input type="hidden" id="ticket_currency_ratio" value="<?= esc_textarea($currency_ratio); ?>" name="mercadopago_ticket[currency_ratio]" />
+				<input type="hidden" id="ticket_campaign_id" name="mercadopago_ticket[campaign_id]" />
+				<input type="hidden" id="ticket_campaign" name="mercadopago_ticket[campaign]" />
+				<input type="hidden" id="ticket_discount" name="mercadopago_ticket[discount]" />
 			</div>
 		</div>
 
