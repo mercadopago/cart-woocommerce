@@ -136,6 +136,19 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
+= v7.0.1 (05/12/2023) =
+* Fixed
+- Shipping rate value on transparent checkouts
+
+= v7.0.0 (04/12/2023) =
+* Changed
+- Complete refactoring of the Plugin
+- Improvement in the additional information node
+- Full refactoring of the Plugin
+- Added payment implementation with 3DS security flow
+* Fixed
+- Record info LOG only if option activated in STEP 2 of config
+
 = v6.9.3 (13/07/2023) =
 * Fixed
 - Updated the link to obtain credentials on the developer site
