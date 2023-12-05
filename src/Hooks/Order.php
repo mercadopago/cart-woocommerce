@@ -141,7 +141,7 @@ class Order
 
             $paymentMethod     = $this->orderMetadata->getUsedGatewayData($order);
             $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) {
-                return $gateway::ID === $paymentMethod;
+                return $gateway::ID === $paymentMethod || $gateway::WEBHOOK_API_NAME === $paymentMethod;
             });
 
             if (!$isMpPaymentMethod) {
