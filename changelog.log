@@ -1,5 +1,10 @@
 CHANGELOG:
 == Changelog ==
+= v7.0.1 (05/12/2023) =
+* Fixed
+- Shipping rate value on transparent checkouts
+
+== Changelog ==
 = v7.0.0 (04/12/2023) =
 * Changed
 - Complete refactoring of the Plugin
