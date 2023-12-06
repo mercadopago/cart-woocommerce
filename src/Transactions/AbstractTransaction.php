@@ -166,7 +166,9 @@ abstract class AbstractTransaction
         }
 
         if (empty($customDomain) && !strrpos(get_site_url(), 'localhost')) {
-            return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME) . '?source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
+            $notificationUrl  = $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME);
+            $urlJoinCharacter = preg_match('#/wc-api/#', $notificationUrl) ? '?' : '&';
+            return $notificationUrl . $urlJoinCharacter . 'source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
         }
     }
 
