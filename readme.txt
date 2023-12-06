@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
 Tested up to: 6.4
 Requires PHP: 7.4 to 8.3
-Stable tag: 7.0.3
+Stable tag: 7.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,16 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+
+= v7.0.4 (06/12/2023) =
+* Changed
+- Improved notification_url
+- Improved checkout sanitized urls
+- Changed initial hook from wc_loaded to plugins_loaded
+
+* Fixed
+- Always render pix qrcode on thankyou page
+- Removed get_checkout_order_received_url sanitization
 
 = v7.0.3 (05/12/2023) =
 * Fixed
