@@ -663,8 +663,8 @@ class CustomGateway extends AbstractGateway
                         return $return;
 
                     case 'rejected':
-                        $urlReceived     = esc_url($order->get_checkout_payment_url());
-                        $urlRetryPayment = esc_url($order->get_checkout_payment_url(true));
+                        $urlReceived     = $order->get_checkout_payment_url();
+                        $urlRetryPayment = $order->get_checkout_payment_url(true);
 
                         $checkoutType = $checkout['checkout_type'];
                         $noticeTitle  = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];

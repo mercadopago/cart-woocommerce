@@ -151,20 +151,22 @@ abstract class AbstractTransaction
      */
     private function getNotificationUrl()
     {
-        if (!strrpos(get_site_url(), 'localhost')) {
-            $notificationUrl = $this->mercadopago->store->getCustomDomain();
+        $customDomain        = $this->mercadopago->store->getCustomDomain();
+        $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
 
-            if (empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false) {
-                return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME)
-                    . '?source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
+        if (!empty($customDomain) && (
+            strrpos($customDomain, 'localhost') === false ||
+            filter_var($customDomain, FILTER_VALIDATE_URL) === false
+        )) {
+            if ($customDomainOptions === 'yes') {
+                return $customDomain . '?wc-api=' . $this->gateway::WEBHOOK_API_NAME . '&source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
             } else {
-                $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
-                if ($customDomainOptions === 'yes') {
-                    return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway::WEBHOOK_API_NAME . '/'
-                        . '?source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME)));
-                }
-                return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl));
+                return $customDomain;
             }
+        }
+
+        if (empty($customDomain) && !strrpos(get_site_url(), 'localhost')) {
+            return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME) . '?source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
         }
     }
 
