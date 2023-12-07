@@ -9,8 +9,7 @@ const InputDocument = ({
   selectDataCheckout,
   flagError,
   documents,
-  validate,
-  selectId
+  validate
 }) => (
   <div className="mp-checkout-ticket-input-document">
     <input-document
