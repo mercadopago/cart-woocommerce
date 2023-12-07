@@ -83,7 +83,7 @@ abstract class AbstractTransaction
      *
      * @param AbstractGateway $gateway
      * @param \WC_Order $order
-     * @param array $checkout
+     * @param array|null $checkout
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout = null)
     {
@@ -193,7 +193,7 @@ abstract class AbstractTransaction
      */
     public function getExternalReference(): string
     {
-        return $this->mercadopago->store->getStoreId('WC-') . $this->order->get_id();
+        return $this->mercadopago->store->getStoreId() . $this->order->get_id();
     }
 
     /**
@@ -257,12 +257,12 @@ abstract class AbstractTransaction
      */
     public function setShipmentsTransaction($shipments): void
     {
-        $shipments->receiver_address->street_name     = $this->mercadopago->orderShipping->getAddress1($this->order);
-        $shipments->receiver_address->zip_code        = $this->mercadopago->orderShipping->getZipcode($this->order);
-        $shipments->receiver_address->city            = $this->mercadopago->orderShipping->getCity($this->order);
-        $shipments->receiver_address->state           = $this->mercadopago->orderShipping->getState($this->order);
-        $shipments->receiver_address->country         = $this->mercadopago->orderShipping->getCountry($this->order);
-        $shipments->receiver_address->apartment       = $this->mercadopago->orderShipping->getAddress2($this->order);
+        $shipments->receiver_address->street_name = $this->mercadopago->orderShipping->getAddress1($this->order);
+        $shipments->receiver_address->zip_code    = $this->mercadopago->orderShipping->getZipcode($this->order);
+        $shipments->receiver_address->city        = $this->mercadopago->orderShipping->getCity($this->order);
+        $shipments->receiver_address->state       = $this->mercadopago->orderShipping->getState($this->order);
+        $shipments->receiver_address->country     = $this->mercadopago->orderShipping->getCountry($this->order);
+        $shipments->receiver_address->apartment   = $this->mercadopago->orderShipping->getAddress2($this->order);
     }
 
     /**
@@ -293,9 +293,9 @@ abstract class AbstractTransaction
                 'description' => $this->mercadopago->strings->sanitizeAndTruncateText($product->get_description()),
                 'picture_url' => $this->getItemImage($product),
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'quantity'    => 1,
                 'unit_price'  => $amount,
                 'currency_id' => $this->countryConfigs['currency'],
+                'quantity'    => 1,
             ];
 
             $items->add($item);
@@ -320,9 +320,9 @@ abstract class AbstractTransaction
                 'title'       => $this->mercadopago->orderShipping->getShippingMethod($this->order),
                 'description' => $this->mercadopago->storeTranslations->commonCheckout['shipping_title'],
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'quantity'    => 1,
                 'unit_price'  => Numbers::format($amount),
                 'currency_id' => $this->countryConfigs['currency'],
+                'quantity'    => 1,
             ];
 
             $this->transaction->items->add($item);
@@ -350,13 +350,33 @@ abstract class AbstractTransaction
                 'title'       => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
                 'description' => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'quantity'    => 1,
                 'unit_price'  => Numbers::format($amount),
                 'currency_id' => $this->countryConfigs['currency'],
+                'quantity'    => 1,
             ];
 
             $this->transaction->items->add($item);
         }
+    }
+
+    /**
+     * Set discounts
+     *
+     * @return void
+     */
+    public function setDiscountsTransaction(): void
+    {
+        $item = [
+            'id'          => 'discounts',
+            'title'       => __( 'Discount provided by store', 'woocommerce-mercadopago' ),
+            'description' => __( 'Discount provided by store', 'woocommerce-mercadopago' ),
+            'category_id' => $this->mercadopago->store->getStoreCategory('others'),
+            'unit_price'  => -Numbers::format($this->order->get_discount_total()),
+            'currency_id' => $this->countryConfigs['currency'],
+            'quantity'    => 1,
+        ];
+
+        $this->transaction->items->add($item);
     }
 
     /**
