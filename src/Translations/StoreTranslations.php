@@ -92,6 +92,7 @@ class StoreTranslations
             'fee_title'          => __('fee of', 'woocommerce-mercadopago'),
             'text_concatenation' => __('and', 'woocommerce-mercadopago'),
             'shipping_title'     => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
+            'store_discount'     => __('Discount provided by store', 'woocommerce-mercadopago'),
         ];
     }
 

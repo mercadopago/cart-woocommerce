@@ -305,9 +305,11 @@ abstract class AbstractTransaction
     /**
      * Set shipping
      *
+     * @param $items
+     *
      * @return void
      */
-    public function setShippingTransaction(): void
+    public function setShippingTransaction($items): void
     {
         $amount = Numbers::format($this->order->get_shipping_total()) + Numbers::format($this->order->get_shipping_tax());
         $cost   = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
@@ -325,16 +327,18 @@ abstract class AbstractTransaction
                 'quantity'    => 1,
             ];
 
-            $this->transaction->items->add($item);
+            $items->add($item);
         }
     }
 
     /**
      * Set fee
      *
+     * @param $items
+     *
      * @return void
      */
-    public function setFeeTransaction(): void
+    public function setFeeTransaction($items): void
     {
         $fees = $this->order->get_fees();
 
@@ -355,28 +359,37 @@ abstract class AbstractTransaction
                 'quantity'    => 1,
             ];
 
-            $this->transaction->items->add($item);
+            $items->add($item);
         }
     }
 
     /**
      * Set discounts
      *
+     * @param $items
+     *
      * @return void
      */
-    public function setDiscountsTransaction(): void
+    public function setDiscountsTransaction($items): void
     {
-        $item = [
-            'id'          => 'discounts',
-            'title'       => __( 'Discount provided by store', 'woocommerce-mercadopago' ),
-            'description' => __( 'Discount provided by store', 'woocommerce-mercadopago' ),
-            'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-            'unit_price'  => -Numbers::format($this->order->get_discount_total()),
-            'currency_id' => $this->countryConfigs['currency'],
-            'quantity'    => 1,
-        ];
+        $amount = Numbers::format($this->order->get_discount_total());
+        $cost   = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
 
-        $this->transaction->items->add($item);
+        if ($amount > 0) {
+            $this->orderTotal += Numbers::format($cost);
+
+            $item = [
+                'id' => 'discounts',
+                'title' => $this->mercadopago->storeTranslations->commonCheckout['store_discount'],
+                'description' => $this->mercadopago->storeTranslations->commonCheckout['store_discount'],
+                'category_id' => $this->mercadopago->store->getStoreCategory('others'),
+                'unit_price' => -$amount,
+                'currency_id' => $this->countryConfigs['currency'],
+                'quantity' => 1,
+            ];
+
+            $items->add($item);
+        }
     }
 
     /**
@@ -442,7 +455,11 @@ abstract class AbstractTransaction
      */
     public function setAdditionalInfoItemsTransaction(): void
     {
-        $this->setItemsTransaction($this->transaction->additional_info->items);
+        $items = $this->transaction->additional_info->items;
+
+        $this->setItemsTransaction($items);
+        $this->setFeeTransaction($items);
+        $this->setDiscountsTransaction($items);
     }
 
     /**
