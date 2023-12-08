@@ -1341,12 +1341,12 @@ div .mp-error{
 
 .mp-text-subtitle {
   font-size: 14px;
-  vertical-align: super;
   font-family: 'Proxima Nova',sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 18px;
+  vertical-align: middle;
 }
 
 #mp-modal-3ds-title {

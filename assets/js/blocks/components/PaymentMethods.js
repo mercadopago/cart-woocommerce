@@ -1,7 +1,5 @@
 const PaymentMethods = ({ methods }) => (
-    <div className="mp-checkout-custom-available-payments-content">
-      <payment-methods methods={methods} />
-    </div>
+    <payment-methods methods={methods} />
   );
   
   export default PaymentMethods;

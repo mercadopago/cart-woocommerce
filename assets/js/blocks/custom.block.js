@@ -85,21 +85,20 @@ const Content = (props) => {
     const content = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-content')[0];
 
     if (content.style.maxHeight) {
+      icon.src = settings.params.available_payments_chevron_down
       content.style.maxHeight = null;
       content.style.padding = '0px';
-      icon.src = settings.params.available_payments_chevron_down
     } else {
       let hg = content.scrollHeight + 15 + 'px';
+      icon.src = settings.params.available_payments_chevron_up
       content.style.setProperty('max-height', hg, 'important');
       content.style.setProperty('padding', '24px 0px 0px', 'important');
-      icon.src = settings.params.available_payments_chevron_up
     }
   }
 
   useEffect(() => {
     initCardForm();
     const unsubscribe = onPaymentSetup(async () => {
-      console.log('onPaymentSetup');
       if (document.querySelector("#mp_checkout_type").value !== 'wallet_button') {
         try {
           if (CheckoutPage.validateInputsCreateToken()) {
@@ -144,7 +143,6 @@ const Content = (props) => {
 
   useEffect(() => {
     const handle3ds = onCheckoutSuccess(async (checkoutResponse) => {
-      console.log('oncheckoutsuccess');
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
       if (paymentDetails.three_ds_flow) {
         load3DSFlow(paymentDetails.last_four_digits);

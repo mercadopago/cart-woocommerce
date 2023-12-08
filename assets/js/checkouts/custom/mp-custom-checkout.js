@@ -614,6 +614,7 @@ function setDisplayOfErrorCheckout(errorMessage) {
     '<li>'.concat(errorMessage).concat('<li>') +
     '</ul>';
   mpCheckoutForm.prepend(divWooNotice);
+  window.scrollTo(0, 0);
 }
 
 function removeElementsByClass(className) {
