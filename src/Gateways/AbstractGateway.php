@@ -260,8 +260,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         $order = wc_get_order($order_id);
 
-        $this->mercadopago->logs->file->info('order from gateway', 'order', (array) $order);
-
         $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_subtotal();
         $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_subtotal_tax();
 
