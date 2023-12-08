@@ -376,7 +376,10 @@ abstract class AbstractTransaction
      */
     public function setDiscountsTransaction($items): void
     {
-        $amount = Numbers::format($this->order->get_discount_total());
+        $discountTotal = Numbers::format($this->order->get_discount_total());
+        $discountTaxes = Numbers::format($this->order->get_discount_tax());
+
+        $amount = $discountTotal + $discountTaxes;
         $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
 
         if ($amount > 0) {

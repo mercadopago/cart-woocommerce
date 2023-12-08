@@ -260,12 +260,16 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         $order = wc_get_order($order_id);
 
-        $amount           = $this->mercadopago->woocommerce->cart->get_subtotal();
-        $shipping         = $this->mercadopago->orderShipping->getTotal($order);
+        $this->mercadopago->logs->file->info('order from gateway', 'order', (array) $order);
+
+        $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_subtotal_tax();
+
         $isProductionMode = $this->mercadopago->store->getProductionMode();
 
-        $discount   = ($amount - $shipping) * $this->discount / 100;
-        $commission = $amount * ($this->commission / 100);
+        $subtotal   = $cartSubtotal + $cartSubtotalTax;
+        $discount   = $subtotal * $this->discount / 100;
+        $commission = $subtotal * ($this->commission / 100);
 
         $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
         $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this)::ID);
@@ -594,7 +598,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         return $this->mercadopago->template->getWoocommerceTemplateHtml(
             'admin/components/checkbox-list.php',
             [
-                'settings'    => $settings,
+                'settings' => $settings,
             ]
         );
     }
@@ -687,23 +691,32 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      *
      * @param string $key key.
      * @param string $value value.
+     *
      * @return bool
      */
-    public function update_option($key, $value = '')
+    public function update_option($key, $value = ''): bool
     {
-        if ('enabled' === $key && 'yes' === $value) {
-            if (empty($this->mercadopago->seller->getCredentialsPublicKey()) || empty($this->mercadopago->seller->getCredentialsAccessToken())) {
-                $message = __('Configure your credentials to enable Mercado Pago payment methods.', 'woocommerce-mercadopago');
-                $this->mercadopago->logs->file->error("no credentials to enable payment method", "MercadoPago_AbstractGateway");
+        if ($key === 'enabled' && $value === 'yes') {
+            $publicKey   = $this->mercadopago->seller->getCredentialsPublicKey();
+            $accessToken = $this->mercadopago->seller->getCredentialsAccessToken();
+
+            if (empty($publicKey) || empty($accessToken)) {
+                $this->mercadopago->logs->file->error(
+                    "No credentials to enable payment method",
+                    "MercadoPago_AbstractGateway"
+                );
+
                 echo wp_json_encode(
                     array(
+                        'data'    => $this->mercadopago->adminTranslations->gatewaysSettings['empty_credentials'],
                         'success' => false,
-                        'data'    => $message,
                     )
                 );
+
                 die();
             }
         }
+
         return parent::update_option($key, $value);
     }
 }

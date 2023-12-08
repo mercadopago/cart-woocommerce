@@ -141,7 +141,10 @@ class Gateway
 
             global $mercadopago;
 
-            $subtotal   = $mercadopago->woocommerce->cart->get_subtotal();
+            $cartSubtotal    = $mercadopago->woocommerce->cart->get_subtotal();
+            $cartSubtotalTax = $mercadopago->woocommerce->cart->get_subtotal_tax();
+
+            $subtotal   = $cartSubtotal + $cartSubtotalTax;
             $discount   = $subtotal * ($gateway->discount / 100);
             $commission = $subtotal * ($gateway->commission / 100);
 
