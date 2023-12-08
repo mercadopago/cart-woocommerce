@@ -28,8 +28,7 @@ if (!defined('ABSPATH')) {
                 <test-mode
                     title="<?= esc_html($test_mode_title) ?>"
                     description="<?= esc_html($test_mode_description) ?>"
-                >
-                </test-mode>
+                />
             </div>
         <?php endif; ?>
 
@@ -38,16 +37,14 @@ if (!defined('ABSPATH')) {
             subtitle="<?= esc_html($pix_template_subtitle) ?>"
             alt="<?= esc_html($pix_template_alt) ?>"
             src="<?= esc_html($pix_template_src) ?>"
-        >
-        </pix-template>
+        />
 
         <div class="mp-checkout-pix-terms-and-conditions">
             <terms-and-conditions
                 description="<?= esc_html($terms_and_conditions_description) ?>"
                 link-text="<?= esc_html($terms_and_conditions_link_text) ?>"
                 link-src="<?= esc_html($terms_and_conditions_link_src) ?>"
-            >
-            </terms-and-conditions>
+            />
         </div>
     </div>
 </div>

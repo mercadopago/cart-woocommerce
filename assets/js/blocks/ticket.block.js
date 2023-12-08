@@ -137,6 +137,7 @@ const Content = (props) => {
         description={terms_and_conditions_description}
         linkText={terms_and_conditions_link_text}
         linkSrc={terms_and_conditions_link_src}
+        checkoutClass={'ticket'}
       />
     </div>
   );

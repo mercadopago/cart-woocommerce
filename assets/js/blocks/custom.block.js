@@ -3,7 +3,7 @@
 import { getSetting } from '@woocommerce/settings';
 import { decodeEntities } from '@wordpress/html-entities';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import { useEffect, useRef } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import InputDocument from "./components/InputDocument";
 import InputHelper from "./components/InputHelper";
 import InputLabel from "./components/InputLabel";
@@ -61,8 +61,10 @@ const Content = (props) => {
     currency_ratio
   } = settings.params;
 
-  const { eventRegistration, emitResponse } = props;
-  const { onPaymentSetup } = eventRegistration;
+  const [checkoutType, setCheckoutType] = useState('custom');
+
+  const { eventRegistration, emitResponse, onSubmit } = props;
+  const { onPaymentSetup, onCheckoutSuccess } = eventRegistration;
   const ref = useRef(null);
 
   window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
@@ -71,8 +73,8 @@ const Content = (props) => {
 
   const submitWalletButton = (event) => {
     event.preventDefault();
-    jQuery('#mp_checkout_type').val('wallet_button');
-    form.submit();
+    setCheckoutType('wallet_button');
+    onSubmit();
   }
 
   const collapsibleEvent = () => {
@@ -97,11 +99,20 @@ const Content = (props) => {
   useEffect(() => {
     initCardForm();
     const unsubscribe = onPaymentSetup(async () => {
-      try {
-        const cardToken = await cardForm.createCardToken();
-        document.querySelector("#cardTokenId").value = cardToken.token;
-      } catch (error) {
-        console.warn("Token creation error: ", error);
+      console.log('onPaymentSetup');
+      if (document.querySelector("#mp_checkout_type").value !== 'wallet_button') {
+        try {
+          if (CheckoutPage.validateInputsCreateToken()) {
+            const cardToken = await cardForm.createCardToken();
+            document.querySelector("#cardTokenId").value = cardToken.token;
+          } else {
+            return {
+              type: emitResponse.responseTypes.ERROR,
+            }
+          }
+        } catch (error) {
+          console.warn("Token creation error: ", error);
+        }
       }
 
       const checkoutInputs = ref.current;
@@ -109,10 +120,12 @@ const Content = (props) => {
 
       checkoutInputs.childNodes.forEach(input => {
         if (input.tagName === 'INPUT' && input.name) {
-          console.log('processing ' + input.name + ' as ' + input.value);
           paymentMethodData[input.name] = input.value;
         }
       });
+
+      // asserting that next submit will be "custom", unless the submitWalletButton function is fired
+      setCheckoutType('custom');
 
       return {
         type: emitResponse.responseTypes.SUCCESS,
@@ -127,6 +140,20 @@ const Content = (props) => {
     emitResponse.responseTypes.ERROR,
     emitResponse.responseTypes.SUCCESS,
     onPaymentSetup
+  ]);
+
+  useEffect(() => {
+    const handle3ds = onCheckoutSuccess(async (checkoutResponse) => {
+      console.log('oncheckoutsuccess');
+      const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
+      if (paymentDetails.three_ds_flow) {
+        load3DSFlow(paymentDetails.last_four_digits);
+      }
+    });
+
+    return () => { handle3ds(); };
+  }, [
+    onCheckoutSuccess
   ]);
 
   return (
@@ -160,7 +187,7 @@ const Content = (props) => {
               </div>
 
               <div class={'mp-wallet-button-button'}>
-                <button id={'mp-wallet-button'} onclick={submitWalletButton}>
+                <button id={'mp-wallet-button'} onClick={submitWalletButton}>
                   {wallet_button_button_text}
                 </button>
               </div>
@@ -348,6 +375,7 @@ const Content = (props) => {
                 description={terms_and_conditions_description}
                 linkText={terms_and_conditions_link_text}
                 linkSrc={terms_and_conditions_link_src}
+                checkoutClass={'custom'}
               />
             </div>
           </div>
@@ -358,7 +386,7 @@ const Content = (props) => {
         <input type={'hidden'} id={'mp-amount'} defaultValue={amount} name={'mercadopago_custom[amount]'} />
         <input type={'hidden'} id={'currency_ratio'} defaultValue={currency_ratio} name={'mercadopago_custom[currency_ratio]'} />
         <input type={'hidden'} id={'paymentMethodId'} name={'mercadopago_custom[payment_method_id]'} />
-        <input type={'hidden'} id={'mp_checkout_type'} name={'mercadopago_custom[checkout_type]'} value={'custom'} />
+        <input type={'hidden'} id={'mp_checkout_type'} name={'mercadopago_custom[checkout_type]'} value={checkoutType} />
         <input type={'hidden'} id={'cardExpirationMonth'} data-checkout={'cardExpirationMonth'} />
         <input type={'hidden'} id={'cardExpirationYear'} data-checkout={'cardExpirationYear'} />
         <input type={'hidden'} id={'cardTokenId'} name={'mercadopago_custom[token]'} />
