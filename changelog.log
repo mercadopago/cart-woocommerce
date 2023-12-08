@@ -1,5 +1,15 @@
 CHANGELOG:
 == Changelog ==
+
+= v7.0.5 (08/12/2023) =
+* Fixed
+- Fixed discounts and commision calcs
+
+* Changed
+- Improved Metadata getSettings return value
+- Improved 3ds fields validation to proccess payment
+- Review and improved checkout items calc methods
+
 = v7.0.4 (06/12/2023) =
 * Changed
 - Improved notification_url

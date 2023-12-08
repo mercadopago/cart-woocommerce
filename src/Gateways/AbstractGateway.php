@@ -266,14 +266,19 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         $order = wc_get_order($order_id);
 
-        $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_subtotal();
-        $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_subtotal_tax();
-
+        $ratio            = $this->mercadopago->currency->getRatio($this);
+        $currency         = $this->mercadopago->country->getCountryConfigs()['currency'];
         $isProductionMode = $this->mercadopago->store->getProductionMode();
 
-        $subtotal   = $cartSubtotal + $cartSubtotalTax;
-        $discount   = $subtotal * $this->discount / 100;
+        $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_subtotal_tax();
+        $subtotal        = $cartSubtotal + $cartSubtotalTax;
+
+        $discount = $subtotal * $this->discount / 100;
+        $discount = Numbers::calculateByCurrency($currency, $discount, $ratio);
+
         $commission = $subtotal * ($this->commission / 100);
+        $commission = Numbers::calculateByCurrency($currency, $commission, $ratio);
 
         $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
         $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this)::ID);

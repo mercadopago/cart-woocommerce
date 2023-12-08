@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.5] - 2023-12-08
+### Fixed
+- Fixed discounts and commision calcs
+
+### Changed
+- Improved Metadata getSettings return value
+- Improved 3ds fields validation to proccess payment
+- Review and improved checkout items calc methods
+
 ## [7.0.4] - 2023-12-06
 ### Changed
 - Improved notification_url
