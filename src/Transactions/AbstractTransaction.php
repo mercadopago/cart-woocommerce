@@ -90,14 +90,15 @@ abstract class AbstractTransaction
         global $mercadopago;
 
         $this->mercadopago = $mercadopago;
-        $this->sdk         = $this->getSdkInstance();
-        $this->gateway     = $gateway;
         $this->order       = $order;
+        $this->gateway     = $gateway;
         $this->checkout    = $checkout;
+        $this->sdk         = $this->getSdkInstance();
 
-        $this->orderTotal     = 0;
         $this->ratio          = $this->mercadopago->currency->getRatio($gateway);
         $this->countryConfigs = $this->mercadopago->country->getCountryConfigs();
+
+        $this->orderTotal     = 0;
     }
 
     /**
@@ -168,6 +169,7 @@ abstract class AbstractTransaction
         if (empty($customDomain) && !strrpos(get_site_url(), 'localhost')) {
             $notificationUrl  = $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME);
             $urlJoinCharacter = preg_match('#/wc-api/#', $notificationUrl) ? '?' : '&';
+
             return $notificationUrl . $urlJoinCharacter . 'source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
         }
     }
@@ -231,7 +233,7 @@ abstract class AbstractTransaction
         $metadata->pix_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
         $metadata->credits_settings              = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
         $metadata->wallet_button_settings        = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
-        $metadata->billing_address                = new PaymentMetadataAddress();
+        $metadata->billing_address               = new PaymentMetadataAddress();
         $metadata->billing_address->zip_code     = $zipCode;
         $metadata->billing_address->street_name  = $this->mercadopago->orderBilling->getAddress1($this->order);
         $metadata->billing_address->city_name    = $this->mercadopago->orderBilling->getCity($this->order);
@@ -282,9 +284,8 @@ abstract class AbstractTransaction
             $title = "$title x $quantity";
 
             $amount = $this->getItemAmount($item);
-            $amount = Numbers::format($amount);
 
-            $this->orderTotal   += Numbers::format($amount);
+            $this->orderTotal   += $amount;
             $this->listOfItems[] = $title;
 
             $item = [
@@ -311,18 +312,21 @@ abstract class AbstractTransaction
      */
     public function setShippingTransaction($items): void
     {
-        $amount = Numbers::format($this->order->get_shipping_total()) + Numbers::format($this->order->get_shipping_tax());
-        $cost   = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
+        $shipTotal = Numbers::format($this->order->get_shipping_total());
+        $shipTaxes = Numbers::format($this->order->get_shipping_tax());
+
+        $amount = $shipTotal + $shipTaxes;
+        $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
 
         if ($amount > 0) {
-            $this->orderTotal += Numbers::format($cost);
+            $this->orderTotal += $amount;
 
             $item = [
                 'id'          => 'shipping',
                 'title'       => $this->mercadopago->orderShipping->getShippingMethod($this->order),
                 'description' => $this->mercadopago->storeTranslations->commonCheckout['shipping_title'],
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'unit_price'  => Numbers::format($amount),
+                'unit_price'  => $amount,
                 'currency_id' => $this->countryConfigs['currency'],
                 'quantity'    => 1,
             ];
@@ -340,21 +344,21 @@ abstract class AbstractTransaction
      */
     public function setFeeTransaction($items): void
     {
-        $fees = $this->order->get_fees();
-
-        foreach ($fees as $fee) {
+        foreach ($this->order->get_fees() as $fee) {
             $feeTotal = Numbers::format($fee->get_total());
             $feeTaxes = Numbers::format($fee->get_total_tax());
-            $amount   = ($feeTotal + $feeTaxes) * $this->ratio;
 
-            $this->orderTotal += Numbers::format($amount);
+            $amount = $feeTotal + $feeTaxes;
+            $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
+
+            $this->orderTotal += $amount;
 
             $item = [
                 'id'          => 'fee',
                 'title'       => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
                 'description' => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'unit_price'  => Numbers::format($amount),
+                'unit_price'  => $amount,
                 'currency_id' => $this->countryConfigs['currency'],
                 'quantity'    => 1,
             ];
@@ -373,19 +377,19 @@ abstract class AbstractTransaction
     public function setDiscountsTransaction($items): void
     {
         $amount = Numbers::format($this->order->get_discount_total());
-        $cost   = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
+        $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
 
         if ($amount > 0) {
-            $this->orderTotal += Numbers::format($cost);
+            $this->orderTotal -= $amount;
 
             $item = [
-                'id' => 'discounts',
-                'title' => $this->mercadopago->storeTranslations->commonCheckout['store_discount'],
+                'id'          => 'discount',
+                'title'       => $this->mercadopago->storeTranslations->commonCheckout['store_discount'],
                 'description' => $this->mercadopago->storeTranslations->commonCheckout['store_discount'],
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'unit_price' => -$amount,
+                'unit_price'  => -$amount,
                 'currency_id' => $this->countryConfigs['currency'],
-                'quantity' => 1,
+                'quantity'    => 1,
             ];
 
             $items->add($item);
@@ -458,8 +462,9 @@ abstract class AbstractTransaction
         $items = $this->transaction->additional_info->items;
 
         $this->setItemsTransaction($items);
-        $this->setFeeTransaction($items);
+        $this->setShippingTransaction($items);
         $this->setDiscountsTransaction($items);
+        $this->setFeeTransaction($items);
     }
 
     /**
