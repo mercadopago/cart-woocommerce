@@ -350,7 +350,7 @@ class CustomGateway extends AbstractGateway
         try {
             $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
 
-            if ($checkout['is_3ds']) {
+            if (isset($checkout['is_3ds'])) {
                 return [
                     'result'   => 'success',
                     'redirect' => $order->get_checkout_order_received_url(),

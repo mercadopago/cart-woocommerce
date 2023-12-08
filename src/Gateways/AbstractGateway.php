@@ -87,6 +87,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     protected $storeTranslations;
 
     /**
+     * @var float
+     */
+    protected $ratio;
+
+    /**
      * @var array
      */
     protected $countryConfigs;
@@ -107,6 +112,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
         $this->checkoutCountry = $this->mercadopago->store->getCheckoutCountry();
         $this->countryConfigs  = $this->mercadopago->country->getCountryConfigs();
+        $this->ratio           = $this->mercadopago->currency->getRatio($this);
         $this->links           = $this->mercadopago->links->getLinks();
 
         $this->has_fields = true;
@@ -509,14 +515,20 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     protected function getAmount(): float
     {
-        $total      = $this->get_order_total();
-        $subtotal   = $this->mercadopago->woocommerce->cart->get_subtotal();
-        $tax        = $total - $subtotal;
+        $cartTotal       = $this->mercadopago->woocommerce->cart->__get('total');
+        $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_subtotal_tax();
+
+        $subtotal = $cartSubtotal + $cartSubtotalTax;
+        $total    = $cartTotal - $subtotal;
+
         $discount   = $subtotal * ($this->discount / 100);
         $commission = $subtotal * ($this->commission / 100);
         $amount     = $subtotal - $discount + $commission;
 
-        return $amount + $tax;
+        $calculatedTotal = $total + $amount;
+
+        return Numbers::calculateByCurrency($this->countryConfigs['currency'], $calculatedTotal, $this->ratio);
     }
 
     /**
