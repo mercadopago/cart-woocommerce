@@ -139,6 +139,7 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 = v7.0.5 (08/12/2023) =
 * Fixed
 - Fixed discounts and commision calcs
+- Instance logs for Seller and Order classes
 
 * Changed
 - Improved Metadata getSettings return value

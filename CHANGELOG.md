@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [7.0.5] - 2023-12-08
 ### Fixed
 - Fixed discounts and commision calcs
+- Instance logs for Seller and Order classes
 
 ### Changed
 - Improved Metadata getSettings return value
