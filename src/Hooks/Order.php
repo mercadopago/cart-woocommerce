@@ -99,16 +99,40 @@ class Order
      */
     const NONCE_ID = 'MP_ORDER_NONCE';
 
-    /**
+          /**
      * Order constructor
      *
      * @param Template $template
      * @param OrderMetadata $orderMetadata
+     * @param OrderStatus $orderStatus
+     * @param AdminTranslations $adminTranslations
      * @param StoreTranslations $storeTranslations
      * @param Store $store
+     * @param Seller $seller
+     * @param Scripts $scripts
+     * @param Url $url
+     * @param Nonce $nonce
+     * @param Endpoints $endpoints
+     * @param CurrentUser $currentUser
+     * @param Requester $requester
+     * @param Logs $logs
      */
-    public function __construct(Template $template, OrderMetadata $orderMetadata, OrderStatus $orderStatus, AdminTranslations $adminTranslations, StoreTranslations $storeTranslations, Store $store, Seller $seller, Scripts $scripts, Url $url, Nonce $nonce, Endpoints $endpoints, CurrentUser $currentUser, Requester $requester)
-    {
+    public function __construct(
+        Template          $template,
+        OrderMetadata     $orderMetadata,
+        OrderStatus       $orderStatus,
+        AdminTranslations $adminTranslations,
+        StoreTranslations $storeTranslations,
+        Store             $store,
+        Seller            $seller,
+        Scripts           $scripts,
+        Url               $url,
+        Nonce             $nonce,
+        Endpoints         $endpoints,
+        CurrentUser       $currentUser,
+        Requester         $requester,
+        Logs              $logs
+    ) {
         $this->template          = $template;
         $this->orderMetadata     = $orderMetadata;
         $this->orderStatus       = $orderStatus;
@@ -122,6 +146,7 @@ class Order
         $this->endpoints         = $endpoints;
         $this->currentUser       = $currentUser;
         $this->requester         = $requester;
+        $this->logs              = $logs;
 
         $this->registerStatusSyncMetaBox();
         $this->endpoints->registerAjaxEndpoint('mp_sync_payment_status', [$this, 'paymentStatusSync']);
