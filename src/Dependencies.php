@@ -272,6 +272,7 @@ class Dependencies
         $this->orderMetadata     = $this->setOrderMetadata();
         $this->requester         = $this->setRequester();
         $this->store             = $this->setStore();
+        $this->logs              = $this->setLogs();
         $this->seller            = $this->setSeller();
         $this->country           = $this->setCountry();
         $this->links             = $this->setLinks();
@@ -281,7 +282,6 @@ class Dependencies
         $this->adminTranslations = $this->setAdminTranslations();
         $this->storeTranslations = $this->setStoreTranslations();
         $this->gateway           = $this->setGateway();
-        $this->logs              = $this->setLogs();
         $this->nonce             = $this->setNonce();
         $this->orderStatus       = $this->setOrderStatus();
         $this->currentUser       = $this->setCurrentUser();

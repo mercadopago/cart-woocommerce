@@ -99,16 +99,40 @@ class Order
      */
     const NONCE_ID = 'MP_ORDER_NONCE';
 
-    /**
+          /**
      * Order constructor
      *
      * @param Template $template
      * @param OrderMetadata $orderMetadata
+     * @param OrderStatus $orderStatus
+     * @param AdminTranslations $adminTranslations
      * @param StoreTranslations $storeTranslations
      * @param Store $store
+     * @param Seller $seller
+     * @param Scripts $scripts
+     * @param Url $url
+     * @param Nonce $nonce
+     * @param Endpoints $endpoints
+     * @param CurrentUser $currentUser
+     * @param Requester $requester
+     * @param Logs $logs
      */
-    public function __construct(Template $template, OrderMetadata $orderMetadata, OrderStatus $orderStatus, AdminTranslations $adminTranslations, StoreTranslations $storeTranslations, Store $store, Seller $seller, Scripts $scripts, Url $url, Nonce $nonce, Endpoints $endpoints, CurrentUser $currentUser, Requester $requester)
-    {
+    public function __construct(
+        Template          $template,
+        OrderMetadata     $orderMetadata,
+        OrderStatus       $orderStatus,
+        AdminTranslations $adminTranslations,
+        StoreTranslations $storeTranslations,
+        Store             $store,
+        Seller            $seller,
+        Scripts           $scripts,
+        Url               $url,
+        Nonce             $nonce,
+        Endpoints         $endpoints,
+        CurrentUser       $currentUser,
+        Requester         $requester,
+        Logs              $logs
+    ) {
         $this->template          = $template;
         $this->orderMetadata     = $orderMetadata;
         $this->orderStatus       = $orderStatus;
@@ -122,6 +146,7 @@ class Order
         $this->endpoints         = $endpoints;
         $this->currentUser       = $currentUser;
         $this->requester         = $requester;
+        $this->logs              = $logs;
 
         $this->registerStatusSyncMetaBox();
         $this->endpoints->registerAjaxEndpoint('mp_sync_payment_status', [$this, 'paymentStatusSync']);
@@ -141,7 +166,7 @@ class Order
 
             $paymentMethod     = $this->orderMetadata->getUsedGatewayData($order);
             $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) {
-                return $gateway::ID === $paymentMethod;
+                return $gateway::ID === $paymentMethod || $gateway::WEBHOOK_API_NAME === $paymentMethod;
             });
 
             if (!$isMpPaymentMethod) {
@@ -164,7 +189,7 @@ class Order
      *
      * @param \WC_Order $order
      */
-    private function loadScripts($order): void
+    private function loadScripts(\WC_Order $order): void
     {
         $this->scripts->registerStoreScript(
             'mp_payment_status_sync',
@@ -192,7 +217,7 @@ class Order
      *
      * @return array
      */
-    private function getMetaboxData($order): array
+    private function getMetaboxData(\WC_Order $order): array
     {
         $paymentInfo = $this->getLastPaymentInfo($order);
 
@@ -248,9 +273,9 @@ class Order
      *
      * @param \WC_Order $order
      *
-     * @return array|bool
+     * @return bool|\MercadoPago\PP\Sdk\Common\AbstractCollection|\MercadoPago\PP\Sdk\Common\AbstractEntity|object
      */
-    private function getLastPaymentInfo($order)
+    private function getLastPaymentInfo(\WC_Order $order)
     {
         try {
             $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
@@ -272,7 +297,6 @@ class Order
     /**
      * Updates the order based on current payment status from API
      *
-     * @param \WC_Order $order
      */
     public function paymentStatusSync(): void
     {
@@ -295,6 +319,7 @@ class Order
             $this->logs->file->error("Mercado pago gave error in payment status Sync: {$e->getMessage()}",
                 __CLASS__
             );
+
 			wp_send_json_error(
                 $this->adminTranslations->statusSync['response_error'] . ' ' . $e->getMessage(),
 				500

@@ -361,7 +361,8 @@ class CustomGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
-        $order    = wc_get_order($order_id);
+        $order = wc_get_order($order_id);
+
         try {
             $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
 
@@ -401,6 +402,7 @@ class CustomGateway extends AbstractGateway
 
                         return $this->handleResponseStatus($order, $response, $checkout);
                     }
+
                     throw new \Exception('Invalid checkout data');
             }
         } catch (\Exception $e) {
@@ -412,14 +414,6 @@ class CustomGateway extends AbstractGateway
                 true
             );
         }
-
-        return $this->processReturnFail(
-            new \Exception('Couldn\'t process payment'),
-            $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
-            self::LOG_SOURCE,
-            (array) $order,
-            true
-        );
     }
 
     /**
@@ -613,7 +607,7 @@ class CustomGateway extends AbstractGateway
                     case 'approved':
                         $this->mercadopago->woocommerce->cart->empty_cart();
 
-                        $urlReceived = esc_url($order->get_checkout_order_received_url());
+                        $urlReceived = $order->get_checkout_order_received_url();
                         $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
 
                         $this->mercadopago->notices->storeApprovedStatusNotice($orderStatus);
@@ -642,11 +636,11 @@ class CustomGateway extends AbstractGateway
                             $lastFourDigits = (empty($response['card']['last_four_digits'])) ? '****' : $response['card']['last_four_digits'];
 
                             $return = [
-                                'result'          => 'success',
-                                'three_ds_flow'   => true,
-                                'last_four_digits'=> $lastFourDigits,
-                                'redirect'        => false,
-                                'messages'        => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
+                                'result'           => 'success',
+                                'three_ds_flow'    => true,
+                                'last_four_digits' =>  $lastFourDigits,
+                                'redirect'         => false,
+                                'messages'         => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
                             ];
 
                             if ($this->isOrderPayPage()) {
@@ -661,7 +655,7 @@ class CustomGateway extends AbstractGateway
                         $checkoutType = $checkout['checkout_type'];
                         $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_see_order_form'];
 
-                        $urlReceived = esc_url($order->get_checkout_order_received_url());
+                        $urlReceived = $order->get_checkout_order_received_url();
                         $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($statusDetail);
 
                         $this->mercadopago->notices->storePendingStatusNotice(
@@ -683,8 +677,8 @@ class CustomGateway extends AbstractGateway
                         return $return;
 
                     case 'rejected':
-                        $urlReceived     = esc_url($order->get_checkout_payment_url());
-                        $urlRetryPayment = esc_url($order->get_checkout_payment_url(true));
+                        $urlReceived     = $order->get_checkout_payment_url();
+                        $urlRetryPayment = $order->get_checkout_payment_url(true);
 
                         $checkoutType = $checkout['checkout_type'];
                         $noticeTitle  = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];

@@ -361,6 +361,7 @@ class AdminTranslations
             'button_payment'    => __('Continue', 'woocommerce-mercadopago'),
             'enabled'           => __('Enabled', 'woocommerce-mercadopago'),
             'disabled'          => __('Disabled', 'woocommerce-mercadopago'),
+            'empty_credentials' => __('Configure your credentials to enable Mercado Pago payment methods.', 'woocommerce-mercadopago'),
         ];
     }
 

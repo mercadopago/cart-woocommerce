@@ -83,21 +83,22 @@ abstract class AbstractTransaction
      *
      * @param AbstractGateway $gateway
      * @param \WC_Order $order
-     * @param array $checkout
+     * @param array|null $checkout
      */
     public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout = null)
     {
         global $mercadopago;
 
         $this->mercadopago = $mercadopago;
-        $this->sdk         = $this->getSdkInstance();
-        $this->gateway     = $gateway;
         $this->order       = $order;
+        $this->gateway     = $gateway;
         $this->checkout    = $checkout;
+        $this->sdk         = $this->getSdkInstance();
 
-        $this->orderTotal     = 0;
         $this->ratio          = $this->mercadopago->currency->getRatio($gateway);
         $this->countryConfigs = $this->mercadopago->country->getCountryConfigs();
+
+        $this->orderTotal     = 0;
     }
 
     /**
@@ -151,20 +152,25 @@ abstract class AbstractTransaction
      */
     private function getNotificationUrl()
     {
-        if (!strrpos(get_site_url(), 'localhost')) {
-            $notificationUrl = $this->mercadopago->store->getCustomDomain();
+        $customDomain        = $this->mercadopago->store->getCustomDomain();
+        $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
 
-            if (empty($notificationUrl) || filter_var($notificationUrl, FILTER_VALIDATE_URL) === false) {
-                return $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME)
-                    . '?source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
+        if (!empty($customDomain) && (
+            strrpos($customDomain, 'localhost') === false ||
+            filter_var($customDomain, FILTER_VALIDATE_URL) === false
+        )) {
+            if ($customDomainOptions === 'yes') {
+                return $customDomain . '?wc-api=' . $this->gateway::WEBHOOK_API_NAME . '&source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
             } else {
-                $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
-                if ($customDomainOptions === 'yes') {
-                    return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl . '/wc-api/' . $this->gateway::WEBHOOK_API_NAME . '/'
-                        . '?source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME)));
-                }
-                return $this->mercadopago->strings->fixUrlAmpersand(esc_url($notificationUrl));
+                return $customDomain;
             }
+        }
+
+        if (empty($customDomain) && !strrpos(get_site_url(), 'localhost')) {
+            $notificationUrl  = $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME);
+            $urlJoinCharacter = preg_match('#/wc-api/#', $notificationUrl) ? '?' : '&';
+
+            return $notificationUrl . $urlJoinCharacter . 'source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
         }
     }
 
@@ -189,7 +195,7 @@ abstract class AbstractTransaction
      */
     public function getExternalReference(): string
     {
-        return $this->mercadopago->store->getStoreId('WC-') . $this->order->get_id();
+        return $this->mercadopago->store->getStoreId() . $this->order->get_id();
     }
 
     /**
@@ -227,7 +233,7 @@ abstract class AbstractTransaction
         $metadata->pix_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
         $metadata->credits_settings              = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
         $metadata->wallet_button_settings        = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
-        $metadata->billing_address                = new PaymentMetadataAddress();
+        $metadata->billing_address               = new PaymentMetadataAddress();
         $metadata->billing_address->zip_code     = $zipCode;
         $metadata->billing_address->street_name  = $this->mercadopago->orderBilling->getAddress1($this->order);
         $metadata->billing_address->city_name    = $this->mercadopago->orderBilling->getCity($this->order);
@@ -253,12 +259,12 @@ abstract class AbstractTransaction
      */
     public function setShipmentsTransaction($shipments): void
     {
-        $shipments->receiver_address->street_name     = $this->mercadopago->orderShipping->getAddress1($this->order);
-        $shipments->receiver_address->zip_code        = $this->mercadopago->orderShipping->getZipcode($this->order);
-        $shipments->receiver_address->city            = $this->mercadopago->orderShipping->getCity($this->order);
-        $shipments->receiver_address->state           = $this->mercadopago->orderShipping->getState($this->order);
-        $shipments->receiver_address->country         = $this->mercadopago->orderShipping->getCountry($this->order);
-        $shipments->receiver_address->apartment       = $this->mercadopago->orderShipping->getAddress2($this->order);
+        $shipments->receiver_address->street_name = $this->mercadopago->orderShipping->getAddress1($this->order);
+        $shipments->receiver_address->zip_code    = $this->mercadopago->orderShipping->getZipcode($this->order);
+        $shipments->receiver_address->city        = $this->mercadopago->orderShipping->getCity($this->order);
+        $shipments->receiver_address->state       = $this->mercadopago->orderShipping->getState($this->order);
+        $shipments->receiver_address->country     = $this->mercadopago->orderShipping->getCountry($this->order);
+        $shipments->receiver_address->apartment   = $this->mercadopago->orderShipping->getAddress2($this->order);
     }
 
     /**
@@ -278,9 +284,8 @@ abstract class AbstractTransaction
             $title = "$title x $quantity";
 
             $amount = $this->getItemAmount($item);
-            $amount = Numbers::format($amount);
 
-            $this->orderTotal   += Numbers::format($amount);
+            $this->orderTotal   += $amount;
             $this->listOfItems[] = $title;
 
             $item = [
@@ -289,9 +294,9 @@ abstract class AbstractTransaction
                 'description' => $this->mercadopago->strings->sanitizeAndTruncateText($product->get_description()),
                 'picture_url' => $this->getItemImage($product),
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'quantity'    => 1,
                 'unit_price'  => $amount,
                 'currency_id' => $this->countryConfigs['currency'],
+                'quantity'    => 1,
             ];
 
             $items->add($item);
@@ -301,57 +306,64 @@ abstract class AbstractTransaction
     /**
      * Set shipping
      *
+     * @param $items
+     *
      * @return void
      */
-    public function setShippingTransaction(): void
+    public function setShippingTransaction($items): void
     {
-        $amount = Numbers::format($this->order->get_shipping_total()) + Numbers::format($this->order->get_shipping_tax());
-        $cost   = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
+        $shipTotal = Numbers::format($this->order->get_shipping_total());
+        $shipTaxes = Numbers::format($this->order->get_shipping_tax());
+
+        $amount = $shipTotal + $shipTaxes;
+        $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
 
         if ($amount > 0) {
-            $this->orderTotal += Numbers::format($cost);
+            $this->orderTotal += $amount;
 
             $item = [
                 'id'          => 'shipping',
                 'title'       => $this->mercadopago->orderShipping->getShippingMethod($this->order),
                 'description' => $this->mercadopago->storeTranslations->commonCheckout['shipping_title'],
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'quantity'    => 1,
-                'unit_price'  => Numbers::format($amount),
+                'unit_price'  => $amount,
                 'currency_id' => $this->countryConfigs['currency'],
+                'quantity'    => 1,
             ];
 
-            $this->transaction->items->add($item);
+            $items->add($item);
         }
     }
 
     /**
      * Set fee
      *
+     * @param $items
+     *
      * @return void
      */
-    public function setFeeTransaction(): void
+    public function setFeeTransaction($items): void
     {
-        $fees = $this->order->get_fees();
-
-        foreach ($fees as $fee) {
+        foreach ($this->order->get_fees() as $fee) {
             $feeTotal = Numbers::format($fee->get_total());
             $feeTaxes = Numbers::format($fee->get_total_tax());
-            $amount   = ($feeTotal + $feeTaxes) * $this->ratio;
 
-            $this->orderTotal += Numbers::format($amount);
+            $amount = $feeTotal + $feeTaxes;
+            $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
+
+            $this->orderTotal += $amount;
 
             $item = [
                 'id'          => 'fee',
                 'title'       => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
                 'description' => $this->mercadopago->strings->sanitizeAndTruncateText($fee['name']),
                 'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'quantity'    => 1,
-                'unit_price'  => Numbers::format($amount),
+                'unit_price'  => $amount,
                 'currency_id' => $this->countryConfigs['currency'],
+                'quantity'    => 1,
             ];
 
-            $this->transaction->items->add($item);
+            $items->add($item);
         }
     }
 
@@ -418,7 +430,11 @@ abstract class AbstractTransaction
      */
     public function setAdditionalInfoItemsTransaction(): void
     {
-        $this->setItemsTransaction($this->transaction->additional_info->items);
+        $items = $this->transaction->additional_info->items;
+
+        $this->setItemsTransaction($items);
+        $this->setShippingTransaction($items);
+        $this->setFeeTransaction($items);
     }
 
     /**
@@ -474,7 +490,7 @@ abstract class AbstractTransaction
             $payer->identification->number = $this->mercadopago->currentUser->getCurrentUserMeta('billing_document', true);
             $payer->registration_date      = $this->mercadopago->currentUser->getCurrentUserData()->user_registered;
             $payer->platform_email         = $this->mercadopago->currentUser->getCurrentUserData()->user_email;
-            $payer->register_updated_at    = $this->mercadopago->currentUser->getCurrentUserData()->user_modified;
+            $payer->register_updated_at    = $this->mercadopago->currentUser->getCurrentUserData()->__get('user_modified');
         }
     }
 }

@@ -124,7 +124,7 @@ final class Links
     private function getStoreLinks(): array
     {
         return [
-            'store_visit' => ''//get_permalink(wc_get_page_id('shop')),
+            'store_visit' => home_url(),
         ];
     }
 

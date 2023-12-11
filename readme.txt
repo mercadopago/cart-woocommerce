@@ -2,9 +2,9 @@
 Contributors:
 Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
-Tested up to: 6.2
-Requires PHP: 7.2 to 8.1
-Stable tag: 6.9.3
+Tested up to: 6.4
+Requires PHP: 7.4 to 8.3
+Stable tag: 7.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,52 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+
+= v7.0.6 (11/12/2023) =
+* Fixed
+- Fixed applying store discount code twice
+
+= v7.0.5 (08/12/2023) =
+* Fixed
+- Fixed discounts and commision calcs
+- Instance logs for Seller and Order classes
+
+* Changed
+- Improved Metadata getSettings return value
+- Improved 3ds fields validation to proccess payment
+- Review and improved checkout items calc methods
+
+= v7.0.4 (06/12/2023) =
+* Changed
+- Improved notification_url
+- Improved checkout sanitized urls
+- Changed initial hook from wc_loaded to plugins_loaded
+
+* Fixed
+- Always render pix qrcode on thankyou page
+- Removed get_checkout_order_received_url sanitization
+
+= v7.0.3 (05/12/2023) =
+* Fixed
+- Checkout PRO Modal dependency loading
+
+= v7.0.2 (05/12/2023) =
+* Fixed
+- Credits enabled by default searching for available countries
+- Status sync rendering compatibility
+
+= v7.0.1 (05/12/2023) =
+* Fixed
+- Shipping rate value on transparent checkouts
+
+= v7.0.0 (04/12/2023) =
+* Changed
+- Complete refactoring of the Plugin
+- Improvement in the additional information node
+- Full refactoring of the Plugin
+- Added payment implementation with 3DS security flow
+* Fixed
+- Record info LOG only if option activated in STEP 2 of config
 
 = v6.9.3 (13/07/2023) =
 * Fixed

@@ -295,9 +295,9 @@ function cardFormLoad() {
   const checkoutCustomPaymentMethodElement = document.getElementById("payment_method_woo-mercado-pago-custom");
 
   if (checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked) {
-    createLoadSpinner();
     setTimeout(() => {
       if (!cardFormMounted) {
+        createLoadSpinner();
         handleCardFormLoad();
       }
 

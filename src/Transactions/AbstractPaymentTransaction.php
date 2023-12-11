@@ -17,8 +17,8 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $this->transaction = $this->sdk->getPaymentInstance();
 
         $this->setCommonTransaction();
-        $this->setAdditionalInfoTransaction();
         $this->setPayerTransaction();
+        $this->setAdditionalInfoTransaction();
 
         $this->transaction->description        = implode(', ', $this->listOfItems);
         $this->transaction->transaction_amount = Numbers::format($this->orderTotal);
@@ -28,6 +28,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
      * Create Payment
      *
      * @return string|array
+     * @throws \Exception
      */
     public function createPayment()
     {
