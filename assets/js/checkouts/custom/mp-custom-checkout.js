@@ -544,10 +544,20 @@ function load3DSFlow(lastFourDigits) {
       threeDSHandler(url_3ds, cred_3ds);
     } else {
       console.error('Error POST:', response);
+      window.dispatchEvent(new CustomEvent('completed_3ds', {
+        detail: {
+          error: true,
+        },
+      }));
       removeModal3ds();
     }
   }).fail(function (xhr, textStatus, errorThrown) {
     console.error('Failed to make POST:', textStatus, errorThrown);
+    window.dispatchEvent(new CustomEvent('completed_3ds', {
+      detail: {
+        error: true,
+      },
+    }));
     removeModal3ds();
   });
 
@@ -559,10 +569,20 @@ function redirectAfter3dsChallenge() {
   ).done(
     function (response) {
       if (response.data.redirect) {
+        window.dispatchEvent(new CustomEvent('completed_3ds', {
+          detail: {
+            error: false,
+          },
+        }));
         sendMetric('MP_THREE_DS_SUCCESS', '3DS challenge complete');
         removeModal3ds();
         window.location.href = response.data.redirect;
       } else {
+        window.dispatchEvent(new CustomEvent('completed_3ds', {
+          detail: {
+            error: response.data.data.error
+          },
+        }));
         setDisplayOfErrorCheckout(response.data.data.error);
         removeModal3ds();
       }
@@ -614,6 +634,7 @@ function setDisplayOfErrorCheckout(errorMessage) {
     '<li>'.concat(errorMessage).concat('<li>') +
     '</ul>';
   mpCheckoutForm.prepend(divWooNotice);
+  window.scrollTo(0, 0);
 }
 
 function removeElementsByClass(className) {

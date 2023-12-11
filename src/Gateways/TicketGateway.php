@@ -84,7 +84,7 @@ class TicketGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
-        if($this->addMissingCredentialsNoticeAsFormField()){
+        if ($this->addMissingCredentialsNoticeAsFormField()) {
             return;
         }
         parent::init_form_fields();
@@ -244,15 +244,21 @@ class TicketGateway extends AbstractGateway
     public function process_payment($order_id): array
     {
         $order    = wc_get_order($order_id);
+        $checkout = [];
         try {
             parent::process_payment($order_id);
-
             $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
-            if (!empty($checkout['amount']) &&
-                !empty($checkout['docType']) &&
-                !empty($checkout['docNumber']) &&
-                !empty($checkout['paymentMethodId'])
+            // Blocks data arrives in a different way
+            if (empty($checkout)) {
+                $checkout = $this->processBlocksCheckoutData('mercadopago_ticket', Form::sanitizeFromData($_POST));
+            }
+
+            if (
+                !empty($checkout['amount']) &&
+                !empty($checkout['doc_type']) &&
+                !empty($checkout['doc_number']) &&
+                !empty($checkout['payment_method_id'])
             ) {
                 $this->transaction = new TicketTransaction($this, $order, $checkout);
                 $response          = $this->transaction->createPayment();
@@ -340,7 +346,7 @@ class TicketGateway extends AbstractGateway
                 'field_key' => $this->get_field_key($paymentMethod['id']),
                 'value'     => $this->mercadopago->options->getGatewayOption($this, $paymentMethod['id'], 'yes'),
                 'label'     => array_key_exists('payment_places', $paymentMethod)
-                    ? $paymentMethod['name'] . ' (' .$this->buildPaycashPaymentString(). ')'
+                    ? $paymentMethod['name'] . ' (' . $this->buildPaycashPaymentString() . ')'
                     : $paymentMethod['name'],
             ];
         }
@@ -392,9 +398,10 @@ class TicketGateway extends AbstractGateway
         $activePaymentMethods = [];
         $ticketPaymentMethods = $this->mercadopago->seller->getCheckoutTicketPaymentMethods();
 
-        if (! empty($ticketPaymentMethods)) {
+        if (!empty($ticketPaymentMethods)) {
             foreach ($ticketPaymentMethods as $ticketPaymentMethod) {
-                if (!isset($this->settings[$ticketPaymentMethod['id']]) ||
+                if (
+                    !isset($this->settings[$ticketPaymentMethod['id']]) ||
                     'yes' === $this->settings[$ticketPaymentMethod['id']]
                 ) {
                     $activePaymentMethods[] = $ticketPaymentMethod;

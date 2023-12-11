@@ -344,7 +344,7 @@ class WoocommerceMercadoPago
                     $payment_method_registry->register(new CustomBlock);
                     $payment_method_registry->register(new CreditsBlock);
                     $payment_method_registry->register(new PixBlock);
-                    //$payment_method_registry->register(new TicketBlock);
+                    $payment_method_registry->register(new TicketBlock);
                 }
             );
         }

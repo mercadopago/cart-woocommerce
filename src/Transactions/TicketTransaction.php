@@ -38,7 +38,7 @@ class TicketTransaction extends AbstractPaymentTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->paymentMethodId = $this->checkout['paymentMethodId'];
+        $this->paymentMethodId = $this->checkout['payment_method_id'];
         $this->paymentPlaceId  = $this->mercadopago->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
         $this->paymentMethodId = $this->mercadopago->paymentMethods->getPaymentMethodId($this->paymentMethodId);
 
@@ -77,7 +77,7 @@ class TicketTransaction extends AbstractPaymentTransaction
      */
     public function setWebpayPropertiesTransaction(): void
     {
-        if ($this->checkout['paymentMethodId'] === 'webpay') {
+        if ($this->checkout['payment_method_id'] === 'webpay') {
             $this->transaction->transaction_details->financial_institution = '1234';
             $this->transaction->callback_url                               = get_site_url();
             $this->transaction->additional_info->ip_address                = '127.0.0.1';
@@ -116,8 +116,8 @@ class TicketTransaction extends AbstractPaymentTransaction
         $currency = $this->countryConfigs['currency'];
 
         if ($currency === 'BRL' || $currency === 'UYU') {
-            $payer->identification->type   = $this->checkout['docType'];
-            $payer->identification->number = $this->checkout['docNumber'];
+            $payer->identification->type   = $this->checkout['doc_type'];
+            $payer->identification->number = $this->checkout['doc_number'];
         }
     }
 }
