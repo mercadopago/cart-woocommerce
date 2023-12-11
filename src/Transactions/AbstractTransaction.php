@@ -368,38 +368,6 @@ abstract class AbstractTransaction
     }
 
     /**
-     * Set discounts
-     *
-     * @param $items
-     *
-     * @return void
-     */
-    public function setDiscountsTransaction($items): void
-    {
-        $discountTotal = Numbers::format($this->order->get_discount_total());
-        $discountTaxes = Numbers::format($this->order->get_discount_tax());
-
-        $amount = $discountTotal + $discountTaxes;
-        $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
-
-        if ($amount > 0) {
-            $this->orderTotal -= $amount;
-
-            $item = [
-                'id'          => 'discount',
-                'title'       => $this->mercadopago->storeTranslations->commonCheckout['store_discount'],
-                'description' => $this->mercadopago->storeTranslations->commonCheckout['store_discount'],
-                'category_id' => $this->mercadopago->store->getStoreCategory('others'),
-                'unit_price'  => -$amount,
-                'currency_id' => $this->countryConfigs['currency'],
-                'quantity'    => 1,
-            ];
-
-            $items->add($item);
-        }
-    }
-
-    /**
      * Get item amount
      *
      * @param \WC_Order_Item|\WC_Order_Item_Product $item
@@ -466,7 +434,6 @@ abstract class AbstractTransaction
 
         $this->setItemsTransaction($items);
         $this->setShippingTransaction($items);
-        $this->setDiscountsTransaction($items);
         $this->setFeeTransaction($items);
     }
 
@@ -523,7 +490,7 @@ abstract class AbstractTransaction
             $payer->identification->number = $this->mercadopago->currentUser->getCurrentUserMeta('billing_document', true);
             $payer->registration_date      = $this->mercadopago->currentUser->getCurrentUserData()->user_registered;
             $payer->platform_email         = $this->mercadopago->currentUser->getCurrentUserData()->user_email;
-            $payer->register_updated_at    = $this->mercadopago->currentUser->getCurrentUserData()->user_modified;
+            $payer->register_updated_at    = $this->mercadopago->currentUser->getCurrentUserData()->__get('user_modified');
         }
     }
 }

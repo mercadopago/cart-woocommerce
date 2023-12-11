@@ -189,7 +189,7 @@ class Order
      *
      * @param \WC_Order $order
      */
-    private function loadScripts($order): void
+    private function loadScripts(\WC_Order $order): void
     {
         $this->scripts->registerStoreScript(
             'mp_payment_status_sync',
@@ -217,7 +217,7 @@ class Order
      *
      * @return array
      */
-    private function getMetaboxData($order): array
+    private function getMetaboxData(\WC_Order $order): array
     {
         $paymentInfo = $this->getLastPaymentInfo($order);
 
@@ -273,9 +273,9 @@ class Order
      *
      * @param \WC_Order $order
      *
-     * @return array|bool
+     * @return bool|\MercadoPago\PP\Sdk\Common\AbstractCollection|\MercadoPago\PP\Sdk\Common\AbstractEntity|object
      */
-    private function getLastPaymentInfo($order)
+    private function getLastPaymentInfo(\WC_Order $order)
     {
         try {
             $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
@@ -297,7 +297,6 @@ class Order
     /**
      * Updates the order based on current payment status from API
      *
-     * @param \WC_Order $order
      */
     public function paymentStatusSync(): void
     {
@@ -320,6 +319,7 @@ class Order
             $this->logs->file->error("Mercado pago gave error in payment status Sync: {$e->getMessage()}",
                 __CLASS__
             );
+
 			wp_send_json_error(
                 $this->adminTranslations->statusSync['response_error'] . ' ' . $e->getMessage(),
 				500

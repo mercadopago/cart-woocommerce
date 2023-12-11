@@ -303,11 +303,14 @@ class Seller
     }
 
     /**
+     * @param string $gatewayOption
+     *
      * @return array
      */
     public function getPaymentMethodsByGatewayOption(string $gatewayOption): array
     {
         $paymentMethods = $this->options->get($gatewayOption, []);
+
         if (!$paymentMethods) {
             $this->updatePaymentMethods();
             $paymentMethods = $this->options->get($gatewayOption, []);
