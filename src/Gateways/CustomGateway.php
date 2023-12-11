@@ -636,19 +636,11 @@ class CustomGateway extends AbstractGateway
                             $lastFourDigits = (empty($response['card']['last_four_digits'])) ? '****' : $response['card']['last_four_digits'];
 
                             $return = [
-<<<<<<< HEAD
-                                'result'          => 'success',
-                                'three_ds_flow'   => true,
-                                'last_four_digits'=> $lastFourDigits,
-                                'redirect'        => false,
-                                'messages'        => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
-=======
                                 'result'           => 'success',
                                 'three_ds_flow'    => true,
                                 'last_four_digits' =>  $lastFourDigits,
                                 'redirect'         => false,
                                 'messages'         => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
->>>>>>> 517f4eb4b1da9d4ca6011b921bfa93d787d9fcfb
                             ];
 
                             if ($this->isOrderPayPage()) {
