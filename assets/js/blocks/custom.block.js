@@ -144,8 +144,36 @@ const Content = (props) => {
   useEffect(() => {
     const handle3ds = onCheckoutSuccess(async (checkoutResponse) => {
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
+
       if (paymentDetails.three_ds_flow) {
+        const threeDsPromise = new Promise((resolve, reject) => {
+          window.addEventListener('completed_3ds', (e) => {
+            if (e.detail.error) {
+              reject(e.error);
+            }
+            resolve();
+          });
+        });
+
         load3DSFlow(paymentDetails.last_four_digits);
+
+        // await for completed_3ds response
+        const response = await threeDsPromise.then(() => {
+          return {
+            type: emitResponse.responseTypes.SUCCESS,
+          }
+        }).catch((error) => {
+          return {
+            type: emitResponse.responseTypes.ERROR,
+            message: error,
+          }
+        });
+
+        return response;
+      }
+
+      return {
+        type: emitResponse.responseTypes.SUCCESS,
       }
     });
 
