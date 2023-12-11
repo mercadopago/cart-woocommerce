@@ -286,7 +286,7 @@ if (!defined('ABSPATH')) {
 <div id="mercadopago-utilities" style="display:none;">
     <input type="hidden" id="mp-amount" value='<?= esc_textarea($amount); ?>' name="mercadopago_custom[amount]"/>
     <input type="hidden" id="currency_ratio" value='<?= esc_textarea($currency_ratio); ?>' name="mercadopago_custom[currency_ratio]"/>
-    <input type="hidden" id="paymentMethodId" name="mercadopago_custom[paymentMethodId]"/>
+    <input type="hidden" id="paymentMethodId" name="mercadopago_custom[payment_method_id]"/>
     <input type="hidden" id="mp_checkout_type" name="mercadopago_custom[checkout_type]" value="custom"/>
     <input type="hidden" id="cardExpirationMonth" data-checkout="cardExpirationMonth"/>
     <input type="hidden" id="cardExpirationYear" data-checkout="cardExpirationYear"/>

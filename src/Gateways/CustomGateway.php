@@ -204,84 +204,90 @@ class CustomGateway extends AbstractGateway
         parent::payment_scripts($gatewaySection);
 
         if ($this->canCheckoutLoadScriptsAndStyles()) {
-
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_security_session',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/session', '.js')
-            );
-
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_sdk',
-                'https://sdk.mercadopago.com/js/v2'
-            );
-
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_custom_page',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-page', '.js')
-            );
-
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_custom_elements',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-elements', '.js')
-            );
-
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_custom_checkout',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js'),
-                [
-                    'public_key'         => $this->mercadopago->seller->getCredentialsPublicKey(),
-                    'intl'               => $this->countryConfigs['intl'],
-                    'site_id'            => $this->countryConfigs['site_id'],
-                    'currency'           => $this->countryConfigs['currency'],
-                    'theme'             => get_stylesheet(),
-                    'location'          => '/checkout',
-                    'plugin_version'    => MP_VERSION,
-                    'platform_version'  => $this->mercadopago->woocommerce->version,
-                    'cvvText'           => $this->storeTranslations['cvv_text'],
-                    'installmentObsFee' => $this->storeTranslations['installment_obs_fee'],
-                    'installmentButton' => $this->storeTranslations['installment_button'],
-                    'bankInterestText'  => $this->storeTranslations['bank_interest_text'],
-                    'interestText'      => $this->storeTranslations['interest_text'],
-                    'placeholders' => [
-                        'issuer'             => $this->storeTranslations['placeholders_issuer'],
-                        'installments'       => $this->storeTranslations['placeholders_installments'],
-                        'cardExpirationDate' => $this->storeTranslations['placeholders_card_expiration_date'],
-                    ],
-                    'cvvHint' => [
-                        'back'  => $this->storeTranslations['cvv_hint_back'],
-                        'front' => $this->storeTranslations['cvv_hint_front'],
-                    ],
-                    'input_helper_message' => [
-                        'cardNumber' => [
-                            'invalid_type'   => $this->storeTranslations['input_helper_message_invalid_type'],
-                            'invalid_length' => $this->storeTranslations['input_helper_message_invalid_length'],
-                        ],
-                        'cardholderName' => [
-                            '221' => $this->storeTranslations['input_helper_message_card_holder_name_221'],
-                            '316' => $this->storeTranslations['input_helper_message_card_holder_name_316'],
-                        ],
-                        'expirationDate' => [
-                            'invalid_type'   => $this->storeTranslations['input_helper_message_expiration_date_invalid_type'],
-                            'invalid_length' => $this->storeTranslations['input_helper_message_expiration_date_invalid_length'],
-                            'invalid_value'  => $this->storeTranslations['input_helper_message_expiration_date_invalid_value'],
-                        ],
-                        'securityCode' => [
-                            'invalid_type'   => $this->storeTranslations['input_helper_message_security_code_invalid_type'],
-                            'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
-                        ]
-                    ],
-                    'threeDsText' => [
-                        'title_loading'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame'],
-                        'title_loading2'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame2'],
-                        'text_loading'       => $this->mercadopago->storeTranslations->threeDsTranslations['text_loading_3ds_frame'],
-                        'title_loading_response' => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_response'],
-                        'title_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['title_3ds_frame'],
-                        'tooltip_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['tooltip_3ds_frame'],
-                        'message_close' => $this->mercadopago->storeTranslations->threeDsTranslations['message_3ds_declined'],
-                    ],
-                ]
-            );
+            $this->registerCheckoutScripts();
         }
+    }
+
+    public function registerCheckoutScripts(): void
+    {
+        parent::registerCheckoutScripts();
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_security_session',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/session', '.js')
+        );
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_sdk',
+            'https://sdk.mercadopago.com/js/v2'
+        );
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_custom_page',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-page', '.js')
+        );
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_custom_elements',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-elements', '.js')
+        );
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_custom_checkout',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js'),
+            [
+                'public_key'         => $this->mercadopago->seller->getCredentialsPublicKey(),
+                'intl'               => $this->countryConfigs['intl'],
+                'site_id'            => $this->countryConfigs['site_id'],
+                'currency'           => $this->countryConfigs['currency'],
+                'theme'             => get_stylesheet(),
+                'location'          => '/checkout',
+                'plugin_version'    => MP_VERSION,
+                'platform_version'  => $this->mercadopago->woocommerce->version,
+                'cvvText'           => $this->storeTranslations['cvv_text'],
+                'installmentObsFee' => $this->storeTranslations['installment_obs_fee'],
+                'installmentButton' => $this->storeTranslations['installment_button'],
+                'bankInterestText'  => $this->storeTranslations['bank_interest_text'],
+                'interestText'      => $this->storeTranslations['interest_text'],
+                'placeholders' => [
+                    'issuer'             => $this->storeTranslations['placeholders_issuer'],
+                    'installments'       => $this->storeTranslations['placeholders_installments'],
+                    'cardExpirationDate' => $this->storeTranslations['placeholders_card_expiration_date'],
+                ],
+                'cvvHint' => [
+                    'back'  => $this->storeTranslations['cvv_hint_back'],
+                    'front' => $this->storeTranslations['cvv_hint_front'],
+                ],
+                'input_helper_message' => [
+                    'cardNumber' => [
+                        'invalid_type'   => $this->storeTranslations['input_helper_message_invalid_type'],
+                        'invalid_length' => $this->storeTranslations['input_helper_message_invalid_length'],
+                    ],
+                    'cardholderName' => [
+                        '221' => $this->storeTranslations['input_helper_message_card_holder_name_221'],
+                        '316' => $this->storeTranslations['input_helper_message_card_holder_name_316'],
+                    ],
+                    'expirationDate' => [
+                        'invalid_type'   => $this->storeTranslations['input_helper_message_expiration_date_invalid_type'],
+                        'invalid_length' => $this->storeTranslations['input_helper_message_expiration_date_invalid_length'],
+                        'invalid_value'  => $this->storeTranslations['input_helper_message_expiration_date_invalid_value'],
+                    ],
+                    'securityCode' => [
+                        'invalid_type'   => $this->storeTranslations['input_helper_message_security_code_invalid_type'],
+                        'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
+                    ]
+                ],
+                'threeDsText' => [
+                    'title_loading'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame'],
+                    'title_loading2'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame2'],
+                    'text_loading'       => $this->mercadopago->storeTranslations->threeDsTranslations['text_loading_3ds_frame'],
+                    'title_loading_response' => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_response'],
+                    'title_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['title_3ds_frame'],
+                    'tooltip_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['tooltip_3ds_frame'],
+                    'message_close' => $this->mercadopago->storeTranslations->threeDsTranslations['message_3ds_declined'],
+                ],
+            ]
+        );
     }
 
     /**
@@ -359,11 +365,9 @@ class CustomGateway extends AbstractGateway
         try {
             $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
 
-            if ($checkout['is_3ds']) {
-                return [
-                    'result'   => 'success',
-                    'redirect' => esc_url($order->get_checkout_order_received_url()),
-                ];
+            // Blocks data arrives in a different way
+            if (empty($checkout)) {
+                $checkout = $this->processBlocksCheckoutData('mercadopago_custom', Form::sanitizeFromData($_POST));
             }
 
             parent::process_payment($order_id);
@@ -387,7 +391,7 @@ class CustomGateway extends AbstractGateway
                     if (
                         !empty($checkout['token']) &&
                         !empty($checkout['amount']) &&
-                        !empty($checkout['paymentMethodId']) &&
+                        !empty($checkout['payment_method_id']) &&
                         !empty($checkout['installments']) && $checkout['installments'] !== -1
                     ) {
                         $this->transaction = new CustomTransaction($this, $order, $checkout);
@@ -638,11 +642,11 @@ class CustomGateway extends AbstractGateway
                             $lastFourDigits = (empty($response['card']['last_four_digits'])) ? '****' : $response['card']['last_four_digits'];
 
                             $return = [
-                                'result'        => 'success',
-                                'three_ds_flow' => true,
-                                'last_four_digits'=>  $lastFourDigits,
-                                'redirect'      => false,
-                                'messages'      => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
+                                'result'          => 'success',
+                                'three_ds_flow'   => true,
+                                'last_four_digits'=> $lastFourDigits,
+                                'redirect'        => false,
+                                'messages'        => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
                             ];
 
                             if ($this->isOrderPayPage()) {

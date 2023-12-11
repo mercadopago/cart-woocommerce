@@ -116,6 +116,25 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->loadMelidataStoreScripts();
     }
 
+    /**
+     * Process blocks checkout data
+     *
+     * @return array
+     */
+    public function processBlocksCheckoutData($prefix, $postData): array
+    {
+        $checkoutData = [];
+
+        foreach ($postData as $key => $value) {
+            if (strpos($key, $prefix) === 0) {
+                $newKey = substr($key, strlen($prefix));
+                $checkoutData[$newKey] = $value;
+            }
+        }
+
+        return $checkoutData;
+    }
+
     public function saveOrderPaymentsId(string $orderId)
     {
         $order = wc_get_order($orderId);
@@ -218,16 +237,28 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         }
 
         if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->mercadopago->scripts->registerCheckoutScript(
-                'wc_mercadopago_checkout_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
-            );
-
-            $this->mercadopago->scripts->registerCheckoutStyle(
-                'wc_mercadopago_checkout_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
-            );
+            $this->registerCheckoutScripts();
         }
+    }
+
+    /**
+     * Register checkout scripts
+     *
+     * @param string $gatewaySection
+     *
+     * @return void
+     */
+    public function registerCheckoutScripts(): void
+    {
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_checkout_components',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
+        );
+
+        $this->mercadopago->scripts->registerCheckoutStyle(
+            'wc_mercadopago_checkout_components',
+            $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
+        );
     }
 
     /**
@@ -507,8 +538,13 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     protected function getAmount(): float
     {
-        $total      = $this->get_order_total();
-        $subtotal   = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $total    = $this->get_order_total();
+        $subtotal = 0;
+
+        if (isset($this->mercadopago->woocommerce->cart)) {
+            $subtotal = $this->mercadopago->woocommerce->cart->get_subtotal();
+        }
+
         $tax        = $total - $subtotal;
         $discount   = $subtotal * ($this->discount / 100);
         $commission = $subtotal * ($this->commission / 100);

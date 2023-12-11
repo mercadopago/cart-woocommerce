@@ -43,7 +43,7 @@ const Content = () => {
           ) : null}
           <PixTemplate
             title={pix_template_title}
-            subTitle={pix_template_subtitle}
+            subtitle={pix_template_subtitle}
             alt={pix_template_alt}
             linkSrc={pix_template_src}
           />
@@ -53,6 +53,7 @@ const Content = () => {
         description={terms_and_conditions_description}
         linkText={terms_and_conditions_link_text}
         linkSrc={terms_and_conditions_link_src}
+        checkoutClass={'pix'}
       />
     </div>
   );

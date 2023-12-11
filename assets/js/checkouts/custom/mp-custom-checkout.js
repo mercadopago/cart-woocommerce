@@ -6,13 +6,13 @@ var mercado_pago_submit = false;
 var triggeredPaymentMethodSelectedEvent = false;
 var cardFormMounted = false;
 
-var form = document.querySelector("form[name=checkout]");
-var formId = "checkout";
+var mpCheckoutForm = document.querySelector("form[name=checkout]");
+var mpFormId = "checkout";
 
-if (form) {
-  form.id = formId;
+if (mpCheckoutForm) {
+  mpCheckoutForm.id = mpFormId;
 } else {
-  formId = "order_review";
+  mpFormId = "order_review";
 }
 
 function mercadoPagoFormHandler() {
@@ -63,7 +63,7 @@ function createToken() {
         mercado_pago_submit = true;
         hasToken = true;
 
-        if (formId === "order_review") {
+        if (mpFormId === "order_review") {
           handle3dsPayOrderFormSubmission();
           return false;
         }
@@ -91,7 +91,7 @@ function initCardForm() {
       amount: getAmount(),
       iframe: true,
       form: {
-        id: formId,
+        id: mpFormId,
         cardNumber: {
           id: "form-checkout__cardNumber-container",
           placeholder: "0000 0000 0000 0000",
@@ -544,10 +544,20 @@ function load3DSFlow(lastFourDigits) {
       threeDSHandler(url_3ds, cred_3ds);
     } else {
       console.error('Error POST:', response);
+      window.dispatchEvent(new CustomEvent('completed_3ds', {
+        detail: {
+          error: true,
+        },
+      }));
       removeModal3ds();
     }
   }).fail(function (xhr, textStatus, errorThrown) {
     console.error('Failed to make POST:', textStatus, errorThrown);
+    window.dispatchEvent(new CustomEvent('completed_3ds', {
+      detail: {
+        error: true,
+      },
+    }));
     removeModal3ds();
   });
 
@@ -559,10 +569,20 @@ function redirectAfter3dsChallenge() {
   ).done(
     function (response) {
       if (response.data.redirect) {
+        window.dispatchEvent(new CustomEvent('completed_3ds', {
+          detail: {
+            error: false,
+          },
+        }));
         sendMetric('MP_THREE_DS_SUCCESS', '3DS challenge complete');
         removeModal3ds();
         window.location.href = response.data.redirect;
       } else {
+        window.dispatchEvent(new CustomEvent('completed_3ds', {
+          detail: {
+            error: response.data.data.error
+          },
+        }));
         setDisplayOfErrorCheckout(response.data.data.error);
         removeModal3ds();
       }
@@ -613,7 +633,8 @@ function setDisplayOfErrorCheckout(errorMessage) {
   divWooNotice.innerHTML = '<ul class="woocommerce-error" role="alert">' +
     '<li>'.concat(errorMessage).concat('<li>') +
     '</ul>';
-  form.prepend(divWooNotice);
+  mpCheckoutForm.prepend(divWooNotice);
+  window.scrollTo(0, 0);
 }
 
 function removeElementsByClass(className) {

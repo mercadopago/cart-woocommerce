@@ -1,5 +1,5 @@
-const TermsAndConditions = ({ description, linkText, linkSrc }) => (
-  <div className="mp-checkout-pro-terms-and-conditions">
+const TermsAndConditions = ({ description, linkText, linkSrc, checkoutClass='pro' }) => (
+  <div className={`mp-checkout-${checkoutClass}-terms-and-conditions`}>
     <terms-and-conditions description={description} link-text={linkText} link-src={linkSrc} />
   </div>
 );

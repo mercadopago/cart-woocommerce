@@ -50,6 +50,7 @@ const Content = () => {
           <CheckoutBenefits
             title={checkout_benefits_title}
             items={checkout_benefits_items}
+            titleAlign="left"
             listMode="count"
           />
           <ChoRedirectV2

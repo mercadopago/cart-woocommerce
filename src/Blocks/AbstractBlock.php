@@ -76,7 +76,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
      */
     public function is_active(): bool
     {
-        return $this->gateway->isAvailable();
+        return isset($this->gateway) && $this->gateway->isAvailable();
     }
 
     /**
@@ -117,13 +117,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
      */
     public function get_payment_method_data(): array
     {
-        if ($this->mercadopago->admin->isAdmin()){
-            return [
-                'title'       => $this->get_setting('title'),
-                'description' => $this->get_setting('description'),
-                'supports'    => $this->get_supported_features(),
-            ];
-        }
+        $this->gateway->registerCheckoutScripts();
         $variables  = $this->getScriptParams();
         return [
             'title'       => $this->get_setting('title'),
@@ -146,9 +140,9 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     /**
      * Set block payment gateway
      *
-     * @return MercadoPagoGatewayInterface
+     * @return ?MercadoPagoGatewayInterface
      */
-    public function setGateway(): MercadoPagoGatewayInterface
+    public function setGateway(): ?MercadoPagoGatewayInterface
     {
         $payment_gateways_class = WC()->payment_gateways();
         $payment_gateways       = $payment_gateways_class->payment_gateways();
