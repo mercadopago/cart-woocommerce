@@ -11,11 +11,11 @@
   align-items: center !important;
 }
 
-.mp-focus {
+div .mp-focus {
   border: 1px solid #7f54b3 !important;
 }
 
-.mp-error {
+div .mp-error {
   border: 1px solid #f23d4f !important;
 }
 
@@ -53,7 +53,7 @@
   line-height: 20px !important;
   width: 80% !important;
   height: 20px !important;
-  padding: 14px !important;
+  padding: 0 14px !important;
   border: 0 !important;
   outline: none !important;
   border-radius: 8px !important;
