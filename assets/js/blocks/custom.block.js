@@ -164,11 +164,8 @@ const Content = (props) => {
             type: emitResponse.responseTypes.SUCCESS,
           }
         }).catch((error) => {
-          console.log('catching error: ' + error);
           return {
             type: emitResponse.responseTypes.FAIL,
-            error: 'error',
-            response: 'response',
             message: error,
           }
         });

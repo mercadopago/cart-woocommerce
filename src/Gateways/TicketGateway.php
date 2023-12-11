@@ -244,24 +244,21 @@ class TicketGateway extends AbstractGateway
     public function process_payment($order_id): array
     {
         $order    = wc_get_order($order_id);
-        $checkout = null;
+        $checkout = [];
         try {
             parent::process_payment($order_id);
+            $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
-            if (isset($_POST['payment_from_blocks'])) {
-                $checkout["amount"] = Form::sanitizeFromData($_POST['amount']);
-                $checkout["docType"] = Form::sanitizeFromData($_POST['mercadopago_ticket_doc_type']);
-                $checkout["docNumber"] = Form::sanitizeFromData($_POST['mercadopago_ticket_doc_number']);
-                $checkout["paymentMethodId"] =  Form::sanitizeFromData($_POST['mercadopago_ticket_payment_method']);
-            } else {
-                $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
+            // Blocks data arrives in a different way
+            if (empty($checkout)) {
+                $checkout = $this->processBlocksCheckoutData('mercadopago_ticket', Form::sanitizeFromData($_POST));
             }
 
             if (
                 !empty($checkout['amount']) &&
-                !empty($checkout['docType']) &&
-                !empty($checkout['docNumber']) &&
-                !empty($checkout['paymentMethodId'])
+                !empty($checkout['doc_type']) &&
+                !empty($checkout['doc_number']) &&
+                !empty($checkout['payment_method_id'])
             ) {
                 $this->transaction = new TicketTransaction($this, $order, $checkout);
                 $response          = $this->transaction->createPayment();

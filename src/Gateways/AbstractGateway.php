@@ -116,6 +116,25 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->loadMelidataStoreScripts();
     }
 
+    /**
+     * Process blocks checkout data
+     *
+     * @return array
+     */
+    public function processBlocksCheckoutData($prefix, $postData): array
+    {
+        $checkoutData = [];
+
+        foreach ($postData as $key => $value) {
+            if (strpos($key, $prefix) === 0) {
+                $newKey = substr($key, strlen($prefix));
+                $checkoutData[$newKey] = $value;
+            }
+        }
+
+        return $checkoutData;
+    }
+
     public function saveOrderPaymentsId(string $orderId)
     {
         $order = wc_get_order($orderId);

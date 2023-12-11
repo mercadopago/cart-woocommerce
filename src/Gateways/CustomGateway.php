@@ -367,22 +367,7 @@ class CustomGateway extends AbstractGateway
 
             // Blocks data arrives in a different way
             if (empty($checkout)) {
-                $checkout = [];
-                $post = Form::sanitizeFromData($_POST);
-                $prefix = 'mercadopago_custom';
-                foreach ($post as $key => $value) {
-                    if (strpos($key, $prefix) === 0) {
-                        $newKey = substr($key, strlen($prefix));
-                        $checkout[$newKey] = $value;
-                    }
-                }
-            }
-
-            if ($checkout['is_3ds']) {
-                return [
-                    'result'   => 'success',
-                    'redirect' => esc_url($order->get_checkout_order_received_url()),
-                ];
+                $checkout = $this->processBlocksCheckoutData('mercadopago_custom', Form::sanitizeFromData($_POST));
             }
 
             parent::process_payment($order_id);

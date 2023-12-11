@@ -65,15 +65,12 @@ const Content = (props) => {
   useEffect(() => {
     const unsubscribe = onPaymentSetup(async () => {
       const paymentMethodData = {};
-      paymentMethodData["payment_from_blocks"] = true;
-      paymentMethodData["amount"] = amount.toString();
-      paymentMethodData["site_id"] = site_id;
-      paymentMethodData["currency_ratio"] = currency_ratio;
-      paymentMethodData["mercadopago_ticket_doc_number"] =
+      paymentMethodData["mercadopago_ticket[amount]"] = amount.toString();
+      paymentMethodData["mercadopago_ticket[doc_number]"] =
         ref.current.querySelector(
           "#form-checkout__identificationNumber-container > input"
         ).value;
-      paymentMethodData["mercadopago_ticket_doc_type"] =
+      paymentMethodData["mercadopago_ticket[doc_type]"] =
         ref.current.querySelector("#docType").value;
 
       const checkedPaymentMethod = payment_methods.find((method) => {
@@ -83,7 +80,7 @@ const Content = (props) => {
       });
 
       if (checkedPaymentMethod) {
-        paymentMethodData["mercadopago_ticket_payment_method"] =
+        paymentMethodData["mercadopago_ticket[payment_method_id]"] =
           ref.current.querySelector(`#${checkedPaymentMethod.id}`).value;
       }
 
@@ -120,7 +117,7 @@ const Content = (props) => {
           ) : null}
           <p className="mp-checkout-ticket-tex">{ticket_text_label}</p>
           <InputTable
-            name={"mercadopago_ticket[paymentMethodId]"}
+            name={"mercadopago_ticket[payment_method_id]"}
             buttonName={input_table_button}
             columns={JSON.stringify(payment_methods)}
           />
