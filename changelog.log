@@ -1,6 +1,47 @@
 CHANGELOG:
 == Changelog ==
-= v7.0.0 (*/10/2023) =
+
+= v7.0.6 (11/12/2023) =
+* Fixed
+- Fixed applying store discount code twice
+
+= v7.0.5 (08/12/2023) =
+* Fixed
+- Fixed discounts and commision calcs
+- Instance logs for Seller and Order classes
+
+* Changed
+- Improved Metadata getSettings return value
+- Improved 3ds fields validation to proccess payment
+- Review and improved checkout items calc methods
+
+= v7.0.4 (06/12/2023) =
+* Changed
+- Improved notification_url
+- Improved checkout sanitized urls
+- Changed initial hook from wc_loaded to plugins_loaded
+
+* Fixed
+- Always render pix qrcode on thankyou page
+- Removed get_checkout_order_received_url sanitization
+
+= v7.0.3 (05/12/2023) =
+* Fixed
+- Checkout PRO Modal dependency loading
+
+== Changelog ==
+= v7.0.2 (05/12/2023) =
+* Fixed
+- Credits enabled by default searching for available countries
+- Status sync rendering compatibility
+
+== Changelog ==
+= v7.0.1 (05/12/2023) =
+* Fixed
+- Shipping rate value on transparent checkouts
+
+== Changelog ==
+= v7.0.0 (04/12/2023) =
 * Changed
 - Complete refactoring of the Plugin
 - Improvement in the additional information node

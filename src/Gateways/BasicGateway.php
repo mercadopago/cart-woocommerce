@@ -573,6 +573,11 @@ class BasicGateway extends AbstractGateway
         $this->transaction = new BasicTransaction($this, $order);
         $preference        = $this->transaction->createPreference();
 
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_sdk',
+            'https://sdk.mercadopago.com/js/v2'
+        );
+
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/receipt/preference-modal.php',
             [

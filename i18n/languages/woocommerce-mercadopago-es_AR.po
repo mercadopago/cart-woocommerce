@@ -13,7 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: ../../src/WoocommerceMercadoPago.php:560,
 #: ../../src/Translations/AdminTranslations.php:151
@@ -989,10 +989,8 @@ msgid "It is possible to edit the title. Maximum of 85 characters."
 msgstr "Puedes cambiar el título dentro tu tienda. Caracteres máximos: 85."
 
 #: ../../src/Translations/AdminTranslations.php:557
-#, fuzzy
-#| msgid "Installments without card"
 msgid "Checkout without card"
-msgstr "Cuotas sin tarjeta"
+msgstr "Hasta 12 pagos sin tarjeta con Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:563
 msgid ""
@@ -1073,10 +1071,6 @@ msgid "Mercado Pago Plugin general settings"
 msgstr "Configuraciones generales del plugin de Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:650
-#, fuzzy
-#| msgid ""
-#| "By disabling it, you will disable all Pix payments from Mercado Pago "
-#| "Transparent Checkout."
 msgid ""
 "By disabling it, you will disable all credit cards payments from Mercado "
 "Pago Transparent Checkout."
@@ -1558,7 +1552,7 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:977
 msgid "We are converting your currency from: "
-msgstr "Ahora convertimos tu moneda de:"
+msgstr "Ahora convertimos tu moneda de: "
 
 #: ../../src/Translations/AdminTranslations.php:986
 msgid "to "
@@ -2720,6 +2714,10 @@ msgstr ""
 "<b>Por motivos de seguridad, tu pago fue rechazado</b><br>Te recomendamos "
 "pagar con el medio de pago y dispositivo que sueles usar para compras online."
 
+#: ../../src/Translations/StoreTranslations.php:722
+msgid "Checkout Custom in Test Mode"
+msgstr "Tarjeta de crédito en Modo Test"
+
 #~ msgid "Up to 12 installments without card with Mercado Pago"
 #~ msgstr "Hasta 12 pagos sin tarjeta con Mercado Pago"
 
@@ -2731,10 +2729,6 @@ msgstr ""
 
 #~ msgid "to COP"
 #~ msgstr "a COP"
-
-#: ../../src/Translations/StoreTranslations.php:722
-msgid "Checkout Custom in Test Mode"
-msgstr "Tarjeta de crédito en Modo Test"
 
 #~ msgid "Now we convert your currency"
 #~ msgstr "Ahora convertimos tu moneda"

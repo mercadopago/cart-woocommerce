@@ -59,7 +59,7 @@ class CustomTransaction extends AbstractPaymentTransaction
                 $this->transaction->payer->id = $this->checkout['customer_id'];
             }
 
-            if ($this->checkout['issuer']) {
+            if (isset($this->checkout['issuer'])) {
                 $this->transaction->issuer_id = $this->checkout['issuer'];
             }
         }

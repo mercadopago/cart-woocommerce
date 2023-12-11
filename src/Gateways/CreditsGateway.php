@@ -410,10 +410,11 @@ class CreditsGateway extends AbstractGateway
      */
     public function renderCreditsBanner(): void
     {
-        $gatewayEnabled = $this->mercadopago->gateway->isEnabled($this);
-        $bannerEnabled  = $this->mercadopago->options->getGatewayOption($this, 'credits_banner', 'no') === 'yes';
+        $gatewayAvailable = $this->isAvailable();
+        $gatewayEnabled   = $this->mercadopago->gateway->isEnabled($this);
+        $bannerEnabled    = $this->mercadopago->options->getGatewayOption($this, 'credits_banner', 'no') === 'yes';
 
-        if ($gatewayEnabled && $bannerEnabled) {
+        if ($gatewayAvailable && $gatewayEnabled && $bannerEnabled) {
             $this->mercadopago->scripts->registerStoreStyle(
                 'mp-credits-modal-style',
                 $this->mercadopago->url->getPluginFileUrl('assets/css/products/credits-modal', '.css')

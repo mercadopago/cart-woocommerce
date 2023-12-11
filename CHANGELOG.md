@@ -5,7 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [7.0.0] - 2023-10
+## [7.0.6] - 2023-12-11
+### Fixed
+- Fixed applying store discount code twice
+
+## [7.0.5] - 2023-12-08
+### Fixed
+- Fixed discounts and commision calcs
+- Instance logs for Seller and Order classes
+
+### Changed
+- Improved Metadata getSettings return value
+- Improved 3ds fields validation to proccess payment
+- Review and improved checkout items calc methods
+
+## [7.0.4] - 2023-12-06
+### Changed
+- Improved notification_url
+- Improved checkout sanitized urls
+- Changed initial hook from wc_loaded to plugins_loaded
+
+### Fixed
+- Always render pix qrcode on thankyou page
+- Removed get_checkout_order_received_url sanitization
+
+## [7.0.3] - 2023-12-05
+### Fixed
+- Checkout PRO Modal dependency loading
+
+## [7.0.2] - 2023-12-05
+### Fixed
+- Credits enabled by default searching for available countries
+- Status sync rendering compatibility
+
+## [7.0.1] - 2023-12-05
+### Fixed
+- Shipping rate value on transparent checkouts
+
+## [7.0.0] - 2023-12-04
 ### Changed
 - Complete refactoring of the Plugin
 - Improvement in the additional information node
