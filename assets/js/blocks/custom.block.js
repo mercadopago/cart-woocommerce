@@ -149,7 +149,7 @@ const Content = (props) => {
         const threeDsPromise = new Promise((resolve, reject) => {
           window.addEventListener('completed_3ds', (e) => {
             if (e.detail.error) {
-              reject(e.error);
+              reject(e.detail.error);
             }
             resolve();
           });
@@ -213,7 +213,7 @@ const Content = (props) => {
               </div>
 
               <div class={'mp-wallet-button-button'}>
-                <button id={'mp-wallet-button'} onClick={submitWalletButton}>
+                <button id={'mp-wallet-button'} type={'button'} onClick={submitWalletButton}>
                   {wallet_button_button_text}
                 </button>
               </div>
