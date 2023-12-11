@@ -149,6 +149,7 @@ const Content = (props) => {
         const threeDsPromise = new Promise((resolve, reject) => {
           window.addEventListener('completed_3ds', (e) => {
             if (e.detail.error) {
+              console.log('rejecting with ' + e.detail.error);
               reject(e.detail.error);
             }
             resolve();
@@ -163,8 +164,11 @@ const Content = (props) => {
             type: emitResponse.responseTypes.SUCCESS,
           }
         }).catch((error) => {
+          console.log('catching error: ' + error);
           return {
-            type: emitResponse.responseTypes.ERROR,
+            type: emitResponse.responseTypes.FAIL,
+            error: 'error',
+            response: 'response',
             message: error,
           }
         });
