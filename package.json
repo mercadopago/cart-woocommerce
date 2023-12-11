@@ -8,14 +8,17 @@
     "url": "https://github.com/mercadopago/cart-woocommerce"
   },
   "scripts": {
-    "build": "npm run build:js && npm run build:css && npm run build:webpack",
+    "build": "npm run build:narciso && npm run build:js && npm run build:css && npm run build:webpack",
     "build:js": "node -e 'require(\"./main.js\").minifyFiles(\"js\")'",
     "build:css": "node -e 'require(\"./main.js\").minifyFiles(\"css\")'",
     "build:webpack": "wp-scripts build assets/js/blocks/**.js",
     "php:fix": "composer phpcbf",
     "php:lint": "composer phpcs",
     "js:lint": "jshint",
-    "pot": "node -e 'require(\"./main.js\").generatePotFiles()'"
+    "pot": "node -e 'require(\"./main.js\").generatePotFiles()'",
+    "prebuild:narciso": "sh packages/narciso/bin/pre-assets.sh",
+    "postbuild:narciso": "sh packages/narciso/bin/post-assets.sh",
+    "build:narciso": "webpack --mode=production --config narciso.webpack.config.js"
   },
   "devDependencies": {
     "@woocommerce/dependency-extraction-webpack-plugin": "^2.2.0",
@@ -23,9 +26,7 @@
     "@wordpress/scripts": "^26.16.0",
     "jshint": "^2.13.5",
     "minify": "^7.2.2",
-    "wp-pot": "^1.10.2"
-  },
-  "dependencies": {
+    "wp-pot": "^1.10.2",
     "css-minimizer-webpack-plugin": "^5.0.1"
   }
 }
