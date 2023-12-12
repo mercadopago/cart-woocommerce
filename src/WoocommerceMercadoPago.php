@@ -48,7 +48,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '7.0.0';
+    private const PLUGIN_VERSION = '7.0.6';
 
     /**
      * @const
@@ -302,7 +302,7 @@ class WoocommerceMercadoPago
      */
     public function registerHooks(): void
     {
-        add_action('wp_loaded', [$this, 'init']);
+        add_action('plugins_loaded', [$this, 'init']);
         add_filter('query_vars', function ($vars) {
             $vars[] = 'wallet_button';
             return $vars;
@@ -541,7 +541,7 @@ class WoocommerceMercadoPago
         add_action('admin_enqueue_scripts', function () {
             wp_register_style(
                 'woocommerce-mercadopago-admin-notice-css',
-                sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/css/admin/mp-admin-notices.css'), 
+                sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/css/admin/mp-admin-notices.css'),
                 false,
                 MP_VERSION
             );

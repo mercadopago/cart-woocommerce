@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Hooks;
 
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -141,9 +142,18 @@ class Gateway
 
             global $mercadopago;
 
-            $subtotal   = $mercadopago->woocommerce->cart->get_subtotal();
-            $discount   = $subtotal * ($gateway->discount / 100);
+            $ratio    = $mercadopago->currency->getRatio($gateway);
+            $currency = $mercadopago->country->getCountryConfigs()['currency'];
+
+            $cartSubtotal    = $mercadopago->woocommerce->cart->get_cart_contents_total();
+            $cartSubtotalTax = $mercadopago->woocommerce->cart->get_cart_contents_tax();
+            $subtotal        = $cartSubtotal + $cartSubtotalTax;
+
+            $discount = $subtotal * ($gateway->discount / 100);
+            $discount = Numbers::calculateByCurrency($currency, $discount, $ratio);
+
             $commission = $subtotal * ($gateway->commission / 100);
+            $commission = Numbers::calculateByCurrency($currency, $commission, $ratio);
 
             $title .= $this->buildTitleWithDiscountAndCommission(
                 $discount,

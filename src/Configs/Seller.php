@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Configs;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
+use MercadoPago\Woocommerce\Logs\Logs;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -114,13 +115,15 @@ class Seller
      * @param Options $options
      * @param Requester $requester
      * @param Store $store
+     * @param Logs $logs
      */
-    public function __construct(Cache $cache, Options $options, Requester $requester, Store $store)
+    public function __construct(Cache $cache, Options $options, Requester $requester, Store $store, Logs $logs)
     {
         $this->cache     = $cache;
         $this->options   = $options;
         $this->requester = $requester;
         $this->store     = $store;
+        $this->logs      = $logs;
     }
 
     /**
@@ -300,11 +303,14 @@ class Seller
     }
 
     /**
+     * @param string $gatewayOption
+     *
      * @return array
      */
     public function getPaymentMethodsByGatewayOption(string $gatewayOption): array
     {
         $paymentMethods = $this->options->get($gatewayOption, []);
+
         if (!$paymentMethods) {
             $this->updatePaymentMethods();
             $paymentMethods = $this->options->get($gatewayOption, []);

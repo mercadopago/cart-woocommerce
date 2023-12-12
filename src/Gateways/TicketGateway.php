@@ -271,7 +271,7 @@ class TicketGateway extends AbstractGateway
                             $this->mercadopago->order->addOrderNote($order, $description, 1);
                         }
 
-                        $urlReceived = esc_url($order->get_checkout_order_received_url());
+                        $urlReceived = $order->get_checkout_order_received_url();
 
                         return [
                             'result'   => 'success',
