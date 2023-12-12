@@ -15,7 +15,7 @@ if [ ! -d "$TMP_DIR" ]; then
 fi
 
 cd $BASE_DIR
-cp -r assets i18n src templates woocommerce-mercadopago.php composer.json composer.lock $TMP_DIR
+cp -r assets build i18n src templates woocommerce-mercadopago.php composer.json composer.lock $TMP_DIR
 cd $TMP_DIR/ && composer install --no-dev && composer dump-autoload -o
 cd $BASE_DIR
 mkdir -p $TMP_DIR/packages/sdk

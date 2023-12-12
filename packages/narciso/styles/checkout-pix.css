@@ -1,0 +1,19 @@
+.mp-checkout-pix-container {
+    background-color: #fff !important;
+    display: flex;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 24px 16px !important
+}
+
+.mp-checkout-pix-test-mode {
+    padding-bottom: 32px !important
+}
+
+.mp-checkout-pix-terms-and-conditions {
+    align-items: center !important;
+    display: flex;
+    justify-content: center !important;
+    padding-top: 42px !important;
+    text-align: center !important
+}

@@ -1,0 +1,38 @@
+.mp-checkout-pro-terms-and-conditions {
+    align-items: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    padding-top: 16px !important;
+    text-align: center !important
+}
+
+.mp-checkout-pro-container {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important
+}
+
+.mp-checkout-pro-content {
+    background-color: #fff !important;
+    padding: 24px 16px !important
+}
+
+.mp-checkout-pro-test-mode {
+    padding: 0 0 25px !important
+}
+
+.mp-checkout-pro-payment-methods {
+    padding-top: 24px !important
+}
+
+.mp-checkout-pro-redirect {
+    margin-top: 24px !important
+}
+
+.mp-checkout-pro-content {
+    padding: 24px 16px 8px !important
+}
+
+.mp-checkout-pro-payment-methods {
+    padding-top: 32px !important
+}

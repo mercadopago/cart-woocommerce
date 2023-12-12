@@ -41,6 +41,12 @@ add_action('before_woocommerce_init', function () {
     }
 });
 
+add_action('before_woocommerce_init', function () {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, true);
+    }
+});
+
 if (!class_exists('WoocommerceMercadoPago')) {
     $GLOBALS['mercadopago'] = new WoocommerceMercadoPago();
 }

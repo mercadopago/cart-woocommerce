@@ -1,0 +1,472 @@
+
+
+.mp-checkout-custom-dual-column-row {
+    align-items: flex-start !important;
+    flex-direction: row !important
+}
+
+.mp-checkout-custom-input-document {
+    padding: 0 0 25px !important
+}
+
+.mp-checkout-custom-issuers-container {
+    display: block;
+    padding: 0 0 16px !important
+}
+
+.mp-checkout-custom-issuers-container-display-none {
+    display: none;
+    padding: 0 0 16px !important
+}
+
+.mp-checkout-custom-installments {
+    display: block;
+    padding: 16px 0 0 !important
+}
+
+.mp-checkout-custom-installments-display-none {
+    display: none;
+    padding: 16px 0 0 !important
+}
+
+.mp-checkout-custom-terms-and-conditions {
+    align-items: center !important;
+    display: flex;
+    justify-content: center !important;
+    padding: 8px 0 0 !important;
+    text-align: center !important
+}
+
+.mp-checkout-custom-left-card-input {
+    margin-right: 16px !important
+}
+
+.mp-checkout-custom-info-text {
+    color: rgba(0, 0, 0, .55) !important;
+    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    font-size: 13px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    line-height: 18px !important;
+    margin-block-end: 0 !important;
+    margin-block-start: 0 !important;
+    margin-inline-end: 0 !important;
+    margin-inline-start: 0 !important;
+    padding: 4px 0 0 6px !important
+}
+
+#mp-checkout-custom-box-input-tax-cft {
+    padding: 0 0 16px !important
+}
+
+#mp-checkout-custom-tax-tea-text {
+    font-size: 12px !important;
+    line-height: 1.29 !important
+}
+
+#mp-checkout-custom-tax-cft-text,
+#mp-checkout-custom-tax-tea-text {
+    color: rgba(0, 0, 0, .55) !important;
+    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    font-stretch: normal !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    letter-spacing: normal !important
+}
+
+#mp-checkout-custom-tax-cft-text {
+    font-size: 27px !important;
+    line-height: 1.25 !important
+}
+
+.mp-card-holder-name {
+    margin: 0 !important;
+    padding-left: 14px !important
+}
+
+.mp-checkout-custom-container {
+    background-color: #fff !important;
+    display: flex;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 24px 16px !important
+}
+
+.mp-checkout-custom-test-mode {
+    padding-bottom: 32px !important
+}
+
+.mp-wallet-button-container {
+    align-items: center;
+    border: 1px solid rgba(0, 0, 0, .1) !important;
+    border-radius: 6px !important;
+    display: flex;
+    flex-direction: column !important;
+    height: auto !important;
+    margin-bottom: 25px !important;
+    padding: 24px 16px !important
+}
+
+.mp-wallet-button-container .mp-wallet-button-title {
+    align-items: center !important;
+    color: rgba(0, 0, 0, .9) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    font-size: 16px !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    line-height: 20px !important
+}
+
+.mp-wallet-button-container img {
+    float: none !important;
+    margin: 0 !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
+    padding-bottom: 16px !important;
+    position: inherit !important
+}
+
+.mp-wallet-button-container .mp-wallet-button-title span {
+    color: #000000e5 !important;
+    font-size: 16px !important;
+    padding-left: 8px !important
+}
+
+.mp-wallet-button-container .mp-wallet-button-description {
+    color: #000 !important;
+    display: flex;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    line-height: 18px !important;
+    margin: 8px 0 16px !important;
+    text-align: center
+}
+
+.mp-wallet-button-container .mp-wallet-button-button button,
+.mp-wallet-button-container .mp-wallet-button-description {
+    align-items: center !important;
+    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    font-style: normal !important
+}
+
+.mp-wallet-button-container .mp-wallet-button-button button {
+    background: #009ee3 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    color: #fff !important;
+    cursor: pointer !important;
+    display: flex !important;
+    flex-direction: row !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+    line-height: 16px !important;
+    padding: 8px 12px !important;
+    text-align: center !important;
+    transition: all .3ms ease-in-out !important
+}
+
+.mp-wallet-button-container .mp-wallet-button-button button:hover {
+    background-color: #007eb5 !important;
+    color: #fff !important;
+    transition: all .3ms ease-in-out !important
+}
+
+.mp-checkout-custom-available-payments {
+    align-items: center !important;
+    display: flex;
+    flex-direction: column !important;
+    padding: 0 0 32px !important;
+    width: 100% !important
+}
+
+.mp-checkout-custom-available-payments .mp-checkout-custom-available-payments-header {
+    align-items: center !important;
+    cursor: pointer !important;
+    display: flex;
+    justify-content: space-between !important;
+    user-select: none !important;
+    width: 100% !important
+}
+
+.mp-checkout-custom-available-payments .mp-checkout-custom-available-payments-header .mp-checkout-custom-available-payments-title {
+    align-items: center !important;
+    color: #7f54b3 !important;
+    display: flex;
+    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    font-size: 14px !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    line-height: 18px !important;
+    padding: 0 4px !important
+}
+
+.mp-checkout-custom-available-payments-text {
+    color: #7f54b3 !important;
+    font-size: 14px !important
+}
+
+.mp-checkout-custom-available-payments .mp-checkout-custom-available-payments-header img {
+    float: none !important;
+    margin: 0 !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
+    position: inherit !important
+}
+
+.mp-checkout-custom-available-payments .mp-checkout-custom-available-payments-header .mp-checkout-custom-available-payments-title p {
+    margin-block-end: 0 !important;
+    margin-block-start: 0 !important;
+    margin-inline-end: 0 !important;
+    margin-inline-start: 0 !important;
+    padding-left: 8px !important
+}
+
+.mp-checkout-custom-available-payments .mp-checkout-custom-available-payments-content {
+    max-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    transition: all .2s ease-out !important;
+    width: 100% !important
+}
+
+.mp-checkout-custom-available-payments .mp-checkout-custom-available-payments-content hr {
+    border-color: rgba(0, 0, 0, .1) !important;
+    border-width: 1px !important;
+    margin-block-end: 0 !important;
+    margin-block-start: 0 !important;
+    margin-inline-end: 0 !important;
+    margin-inline-start: 0 !important;
+    margin-top: 8px !important
+}
+
+.mp-checkout-custom-available-payments .mp-checkout-custom-available-payments-content a {
+    color: #7f54b3 !important;
+    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+    line-height: 18px !important;
+    text-align: left !important
+}
+
+.mp-checkout-custom-card-form {
+    display: flex;
+    flex-direction: column !important;
+    justify-content: flex-start !important
+}
+
+form div div .mp-checkout-custom-card-form-title {
+    color: rgba(0, 0, 0, .9) !important;
+    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    font-size: 16px !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    line-height: 20px !important;
+    margin-block-end: 0 !important;
+    margin-block-start: 0 !important;
+    margin-inline-end: 0 !important;
+    margin-inline-start: 0 !important;
+    padding-bottom: 25px !important;
+    padding-left: 0 !important
+}
+
+.mp-checkout-custom-card-form .mp-checkout-custom-card-row {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-bottom: 24px
+}
+
+.mp-checkout-custom-card-form .mp-checkout-custom-card-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 50%
+}
+
+.mp-checkout-custom-card-form .mp-checkout-custom-card-input {
+    background: #fff !important;
+    border: 1px solid rgba(0, 0, 0, .25);
+    border-radius: 6px !important;
+    color: #000 !important;
+    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    font-size: 16px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    height: 40px !important;
+    line-height: 20px !important;
+    outline: 0 !important
+}
+
+.mp-checkout-custom-card-input-iframe {
+    border: 1px solid rgba(0, 0, 0, .25) !important;
+    border-radius: 6px !important
+}
+
+.mp-checkout-custom-load {
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner-card-form {
+    border: 4px solid rgba(0, 0, 255, .1) !important;
+    border-top: 4px solid #009ee3 !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    animation: spin 2s linear infinite;
+}
+
+.mp-spinner-3ds {
+    border: 4px solid rgba(0, 0, 255, .1);
+    border-top: 4px solid #009ee3;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+    margin: auto;
+}
+
+.mp-3ds-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#mp-3ds-modal-content {
+    width: 800px;
+    padding: 48px;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffff;
+    border-radius: 6px;
+}
+
+#mp-3ds-modal-content>div {
+    width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#mp-3ds-modal-close {
+    cursor: pointer;
+    float: right;
+}
+
+#mp-loading-container-3ds {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 274px;
+    position: relative;
+    width: 704px;
+    margin: auto;
+}
+
+
+.mp-loading-text-3ds {
+    font-family: 'Proxima Nova', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+    padding-top: 24px;
+
+}
+
+.mp-loading-text-3ds>p {
+    margin-bottom: 12px;
+}
+
+#mp-3ds-frame {
+    min-width: 600px;
+    min-height: 500px;
+    border: none;
+    margin: auto;
+    display: block;
+}
+
+
+@keyframes spin {
+    0% {
+        transform: rotate(0)
+    }
+
+    100% {
+        transform: rotate(360deg)
+    }
+}
+
+.mp-card-info {
+    display: -webkit-inline-box;
+    margin-bottom: 8px;
+    justify-content: center;
+}
+
+.mp-alert-color-success {
+    width: 6px;
+    background: #009ee3;
+    border-radius: 6px 0 0 6px;
+}
+
+.mp-icon-badge-info {
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAA6lBMVEUAAAAAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMBnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuP///9MYiCLAAAATHRSTlMAABJBe7HX7/6wAy9+xgE3nukBHInqG0bLyQRq62sIf/b3+/nhWyAfqQKSjrUH812FQkCE9dXYUhXw1BTTwQq/CcDWr80QPeNFafzKW/JxxwAAAAFiS0dETYBoIGUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAHdElNRQfmCwkODC587ENtAAAB+ElEQVRIx5WWaV/iMBDGEwptbcsCCnSphdb7WI/dFcFjVVw8Vs33/zxO2p+CzBO6fV7O5J9jMpmJEDNJrYpVrdmOq5Tr2CtVq5IZBRQ5PD+o68Efcp164HuYIOu3RrOlmFrNxipAyLTW7iioTrvLCDKE35VRvXCBkDJaj9USxf1onpBykKRqqTaSwYyg+ZNNVaDN5HMN2t56WjSe1uh/nIPOGxePp3OEOUDx5PHZ2t7e4rHqaoLuq81c9s7u3o7NzG26QQIa7L46lk4gi9sbGvCabKb9Aw0c7DNH0yPA5/lzmO/1B3O0fAICHo+jY73C8RH3BFJU6tx8cqqB0xPuqVeE5aCQ//z1+ywGDscSVVchpfju3aqoqVKqCRvah+fnQ+gYCQeaxxcX4xHyXAp0hOFYR2mMjuEKNM3VtQau/yAfBG5u9U3f3kAAbeluooHJPdwSOvS9GXBgWJcAf8VKOWAKU8MMUGqg5DMDlHwovc0ApTd6QGYgwE/UCGRPFBQBI5AVAVBmHh51Lj0+LNrzMgMKmfOkgScWv6yQEdHtsT35nuezHeWlEhfj5+n0edEW//us3rK/oQqVvshZg/iPhvKaRPMtaJAUrJEmk69NLurHy8bHL9FiG5Vhzzz+LUSNulumsWfEapmvQ/nPyfz3Z3SZf39q4PvzDpPK5SX4V3wiAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIyLTExLTA5VDE0OjEyOjQyKzAwOjAwxiqBfAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMi0xMS0wOVQxNDoxMjo0MiswMDowMLd3OcAAAAAASUVORK5CYII=) 100% 50% no-repeat transparent;
+    background-size: 18px;
+    width: 24px;
+    height: 18px;
+    margin: 0px 12px 0px 10px;
+    min-block-size: -webkit-fill-available;
+}
+
+.mp-card-body-3ds {
+    display: flex;
+    align-items: flex-start;
+    padding: 5px 0px 5px 0px;
+    background: rgba(0, 0, 0, .04);
+    border-radius: 0 6px 6px 0;
+    height: 30px;
+    width: 100%;
+}
+
+.mp-text-subtitle {
+    font-size: 14px;
+    font-family: 'Proxima Nova', sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 18px;
+    vertical-align: middle;
+}
+
+#mp-modal-3ds-title {
+    font-family: 'Proxima Nova', sans-serif;
+    margin-bottom: 8px;
+    text-align: left;
+    font-style: normal;
+    font-weight: 600;
+}
+
+#content-load-3ds {
+    display: flex;
+    width: 704px;
+    flex-direction: column;
+    gap: 12px;
+    flex-shrink: 0;
+    align-self: stretch;
+}
+
+.mp-normal-text-3ds {
+    text-align: center;
+}
