@@ -1,0 +1,39 @@
+.mp-pix-image-container {
+  text-align: center;
+}
+
+.mp-pix-image {
+  border: none;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: bold;
+  outline: none;
+  text-decoration: none;
+  text-transform: capitalize;
+  vertical-align: middle;
+  max-width: 100%;
+  width: 168px;
+  height: 168px;
+  margin: 0 0 10px;
+}
+
+.mp-pix-image-date-expiration {
+  margin: 0 0 16px;
+  border: none;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: bold;
+  outline: none;
+  text-decoration: none;
+  text-transform: capitalize;
+  vertical-align: middle;
+  max-width: 100%;
+}
+
+.mp-pix-image-qr-code {
+  margin-left: auto;
+  margin-right: auto;
+  width: 320px;
+  word-break: break-word;
+  font-size: 10px;
+}

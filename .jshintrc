@@ -1,5 +1,5 @@
 {
-	"boss": true, 
+	"boss": true,
 	"curly": true,
 	"eqeqeq": true,
 	"eqnull": true,
@@ -11,7 +11,7 @@
 	"trailing": true,
 	"undef": true,
 	"unused": true,
-	"esversion": 6,
+	"esversion": 11,
 	"browser": true,
 	"globals": {
 		"_": false,
