@@ -84,7 +84,7 @@ class Store
     /**
      * @const
      */
-    private const CHECKOUT_EXPIRATION_DATE_PIX = 'checkout_pix_date_expiration';
+    private const CHECKOUT_EXPIRATION_DATE_PIX = 'expiration_date';
 
     /**
      * @const
@@ -98,7 +98,7 @@ class Store
 
     /**
      * Store constructor
-     * 
+     *
      * @param Options $options
      */
     public function __construct(Options $options)
@@ -143,7 +143,7 @@ class Store
      *
      * @return string
      */
-    public function getStoreId(string $default = ''): string
+    public function getStoreId(string $default = 'WC-'): string
     {
         return $this->options->get(self::STORE_ID, $default);
     }
@@ -163,7 +163,8 @@ class Store
      */
     public function getStoreName(string $default = ''): string
     {
-        return $this->options->get(self::STORE_NAME, $default);
+        $storeName = $this->options->get(self::STORE_NAME, $default);
+        return empty($storeName) ? $default : $storeName;
     }
 
     /**
@@ -262,7 +263,7 @@ class Store
      */
     public function getCustomDomainOptions(): string
     {
-        return $this->options->get(self::CUSTOM_DOMAIN_OPTIONS, '');
+        return $this->options->get(self::CUSTOM_DOMAIN_OPTIONS, 'yes');
     }
 
     /**

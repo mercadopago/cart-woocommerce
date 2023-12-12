@@ -24,14 +24,16 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         $this->setAutoReturnTransaction();
         $this->setShipmentsTransaction($this->transaction->shipments);
         $this->setItemsTransaction($this->transaction->items);
-        $this->setShippingTransaction();
-        $this->setFeeTransaction();
+        $this->setShippingTransaction($this->transaction->items);
+        $this->setFeeTransaction($this->transaction->items);
+        $this->setAdditionalInfoTransaction();
     }
 
     /**
      * Create preference
      *
      * @return array|bool
+     * @throws \Exception
      */
     public function createPreference()
     {
@@ -39,8 +41,8 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
 
         $data = $preference->save();
         $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
-        return $data;
 
+        return $data;
     }
 
     /**

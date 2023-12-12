@@ -188,7 +188,7 @@ class PixGateway extends AbstractGateway
                     $this->mercadopago->order->setPixMetadata($this, $order, $response);
                     $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
 
-                    $urlReceived = esc_url($order->get_checkout_order_received_url());
+                    $urlReceived = $order->get_checkout_order_received_url();
 
                     $description = "
                         <div style='text-align: justify;'>
@@ -442,10 +442,12 @@ class PixGateway extends AbstractGateway
                 $expirationDate = array_pop($expirationDate);
             }
 
-            $siteUrl     = $this->mercadopago->options->get('siteurl');
+            $siteUrl       = $this->mercadopago->options->get('siteurl');
+            $imageEndpoint = self::PIX_IMAGE_ENDPOINT;
+
             $qrCodeImage = !in_array('gd', get_loaded_extensions(), true)
                 ? "data:image/jpeg;base64,$qrCodeBase64"
-                : "$siteUrl/wc-api/" . self::PIX_IMAGE_ENDPOINT . "?id=" . $order->get_id();
+                : "$siteUrl?wc-api=$imageEndpoint&id={$order->get_id()}";
 
             $this->mercadopago->scripts->registerStoreStyle(
                 'mp_pix_image',
@@ -495,7 +497,7 @@ class PixGateway extends AbstractGateway
             'public/order/pix-order-received.php',
             [
                 'img_pix'             => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/pix/pix', '.png', true),
-                'amount'              => Numbers::format($transactionAmount),
+                'amount'              => Numbers::formatWithCurrencySymbol($this->countryConfigs['currency_symbol'], $transactionAmount),
                 'qr_base64'           => $qrCodeBase64,
                 'title_purchase_pix'  => $this->storeTranslations['title_purchase_pix'],
                 'title_how_to_pay'    => $this->storeTranslations['title_how_to_pay'],
@@ -504,7 +506,6 @@ class PixGateway extends AbstractGateway
                 'step_three'          => $this->storeTranslations['step_three'],
                 'step_four'           => $this->storeTranslations['step_four'],
                 'text_amount'         => $this->storeTranslations['text_amount'],
-                'currency'            => $this->countryConfigs['currency_symbol'],
                 'text_scan_qr'        => $this->storeTranslations['text_scan_qr'],
                 'text_time_qr_one'    => $this->storeTranslations['expiration_date_text'],
                 'qr_date_expiration'  => $expirationOption,

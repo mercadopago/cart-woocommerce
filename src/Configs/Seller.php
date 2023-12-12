@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Configs;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
+use MercadoPago\Woocommerce\Logs\Logs;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -21,6 +22,11 @@ class Seller
      * @const
      */
     private const CLIENT_ID = '_mp_client_id';
+
+    /**
+     * @const
+     */
+    private const COLLECTOR_ID = '_collector_id_v1';
 
     /**
      * @const
@@ -104,18 +110,20 @@ class Seller
 
     /**
      * Credentials constructor
-     * 
+     *
      * @param Cache $cache
      * @param Options $options
      * @param Requester $requester
      * @param Store $store
+     * @param Logs $logs
      */
-    public function __construct(Cache $cache, Options $options, Requester $requester, Store $store)
+    public function __construct(Cache $cache, Options $options, Requester $requester, Store $store, Logs $logs)
     {
         $this->cache     = $cache;
         $this->options   = $options;
         $this->requester = $requester;
         $this->store     = $store;
+        $this->logs      = $logs;
     }
 
     /**
@@ -148,6 +156,22 @@ class Seller
     public function setClientId(string $clientId): void
     {
         $this->options->set(self::CLIENT_ID, $clientId);
+    }
+
+    /**
+     * @return string
+     */
+    public function getCollectorId(): string
+    {
+        return $this->options->get(self::COLLECTOR_ID, '');
+    }
+
+    /**
+     * @param string $collectorId
+     */
+    public function setCollectorId(string $collectorId): void
+    {
+        $this->options->set(self::COLLECTOR_ID, $collectorId);
     }
 
     /**
@@ -279,11 +303,14 @@ class Seller
     }
 
     /**
+     * @param string $gatewayOption
+     *
      * @return array
      */
     public function getPaymentMethodsByGatewayOption(string $gatewayOption): array
     {
         $paymentMethods = $this->options->get($gatewayOption, []);
+
         if (!$paymentMethods) {
             $this->updatePaymentMethods();
             $paymentMethods = $this->options->get($gatewayOption, []);

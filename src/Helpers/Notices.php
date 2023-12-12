@@ -61,7 +61,7 @@ class Notices
 
     /**
      * Notices constructor
-     * 
+     *
      * @param Scripts $scripts
      * @param AdminTranslations $translations
      * @param Url $url
@@ -137,10 +137,7 @@ class Notices
      */
     public function insertDismissibleNotices(): void
     {
-        if (
-            !is_admin()
-            || !$this->url->validateSection('mercado-pago')
-        ) {
+        if (!$this->shouldShowNotices()) {
             return;
         }
 
@@ -173,6 +170,21 @@ class Notices
                 }
             );
         }
+    }
+
+    /**
+     * Check if notices should be shown
+     *
+     * @return bool
+     */
+    public function shouldShowNotices(): bool
+    {
+        return is_admin() &&
+            (
+                $this->url->validateSection('mercado-pago')
+                || $this->url->validateUrl('index')
+                || $this->url->validateUrl('plugins')
+            );
     }
 
     /**
@@ -225,52 +237,6 @@ class Notices
     public function adminNoticeError(string $message, bool $dismiss = true): void
     {
         $this->adminNotice($message, 'notice-error', $dismiss);
-    }
-
-    /**
-     * Show woocommerce missing notice
-     *
-     * @return void
-     */
-    public function adminNoticeMissWoocoommerce(): void
-    {
-        add_action(
-            'admin_notices',
-            function () {
-                $isInstalled = false;
-                $currentUserCanInstallPlugins = $this->currentUser->currentUserCan('install_plugins');
-
-                $minilogo     = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
-                $translations = $this->translations->notices;
-
-                $activateLink = wp_nonce_url(
-                    self_admin_url('plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=all'),
-                    'activate-plugin_woocommerce/woocommerce.php'
-                );
-
-                $installLink = wp_nonce_url(
-                    self_admin_url('update.php?action=install-plugin&plugin=woocommerce'),
-                    'install-plugin_woocommerce'
-                );
-
-                if (function_exists('get_plugins')) {
-                    $allPlugins  = get_plugins();
-                    $isInstalled = !empty($allPlugins['woocommerce/woocommerce.php']);
-                }
-
-                if ($isInstalled && $currentUserCanInstallPlugins) {
-                    $missWoocommerceAction = 'active';
-                } else {
-                    if ($currentUserCanInstallPlugins) {
-                        $missWoocommerceAction = 'install';
-                    } else {
-                        $missWoocommerceAction = 'see';
-                    }
-                }
-
-                include dirname(__FILE__) . '/../../templates/admin/notices/miss-woocommerce-notice.php';
-            }
-        );
     }
 
     /**
@@ -340,7 +306,7 @@ class Notices
     {
         $message = "
             <p>$orderStatus</p>
-            <a id='mp_pending_payment_button' class='button' href=''$urlReceived' data-mp-checkout-type='woo-mercado-pago-$checkoutType'>
+            <a id='mp_pending_payment_button' class='button' href='$urlReceived' data-mp-checkout-type='woo-mercado-pago-$checkoutType'>
                 $linkText
             </a>
         ";
@@ -386,27 +352,27 @@ class Notices
         wc_add_notice($message, $type, $data);
     }
 
-	/**
-	 * Dismiss the review admin notice
-	 */
-	public function reviewNoticeDismiss(): void
+    /**
+     * Dismiss the review admin notice
+     */
+    public function reviewNoticeDismiss(): void
     {
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
         $this->currentUser->validateUserNeededPermissions();
 
         $this->store->setDismissedReviewNotice(1);
         wp_send_json_success();
-	}
+    }
 
-	/**
-	 * Dismiss the saved cards admin notice
-	 */
-	public function savedCardsDismiss(): void
+    /**
+     * Dismiss the saved cards admin notice
+     */
+    public function savedCardsDismiss(): void
     {
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
         $this->currentUser->validateUserNeededPermissions();
 
         $this->store->setDismissedSavedCardsNotice(1);
-		wp_send_json_success();
-	}
+        wp_send_json_success();
+    }
 }

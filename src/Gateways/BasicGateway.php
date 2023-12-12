@@ -65,6 +65,7 @@ class BasicGateway extends AbstractGateway
         $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->gateway->registerThankyouPage($this->id, [$this, 'saveOrderPaymentsId']);
+        $this->mercadopago->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
     }
 
     /**
@@ -549,5 +550,33 @@ class BasicGateway extends AbstractGateway
     public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
     {
         parent::registerCommissionAndDiscount($this, $orderId);
+    }
+
+    /**
+     * Render order form
+     *
+     * @param $order_id
+     */
+    public function renderOrderForm($order_id): void
+    {
+        $order             = wc_get_order($order_id);
+        $this->transaction = new BasicTransaction($this, $order);
+        $preference        = $this->transaction->createPreference();
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_sdk',
+            'https://sdk.mercadopago.com/js/v2'
+        );
+
+        $this->mercadopago->template->getWoocommerceTemplate(
+            'public/receipt/preference-modal.php',
+            [
+                'public_key'          => $this->mercadopago->seller->getCredentialsPublicKey(),
+                'preference_id'       => $preference['id'],
+                'pay_with_mp_title'   => $this->storeTranslations['pay_with_mp_title'],
+                'cancel_url'          => $order->get_cancel_order_url(),
+                'cancel_url_text'     => $this->storeTranslations['cancel_url_text'],
+            ]
+        );
     }
 }

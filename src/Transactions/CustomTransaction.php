@@ -55,11 +55,11 @@ class CustomTransaction extends AbstractPaymentTransaction
         if (array_key_exists('token', $this->checkout)) {
             $this->transaction->token = $this->checkout['token'];
 
-            if ($this->checkout['CustomerId']) {
+            if (isset($this->checkout['CustomerId'])) {
                 $this->transaction->payer->id = $this->checkout['CustomerId'];
             }
 
-            if ($this->checkout['issuer']) {
+            if (isset($this->checkout['issuer'])) {
                 $this->transaction->issuer_id = $this->checkout['issuer'];
             }
         }

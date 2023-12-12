@@ -22,6 +22,7 @@ class WalletButtonTransaction extends AbstractPreferenceTransaction
     {
         parent::__construct($gateway, $order);
 
+        $this->transaction->auto_return = null;
         $this->transaction->purpose = 'wallet_purchase';
     }
 

@@ -48,12 +48,12 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '7.0.0';
+    private const PLUGIN_VERSION = '7.0.6';
 
     /**
      * @const
      */
-    private const PLUGIN_MIN_PHP = '7.2';
+    private const PLUGIN_MIN_PHP = '7.4';
 
     /**
      * @const
@@ -302,7 +302,7 @@ class WoocommerceMercadoPago
      */
     public function registerHooks(): void
     {
-        add_action('wp_loaded', [$this, 'init']);
+        add_action('plugins_loaded', [$this, 'init']);
         add_filter('query_vars', function ($vars) {
             $vars[] = 'wallet_button';
             return $vars;
@@ -345,6 +345,11 @@ class WoocommerceMercadoPago
      */
     public function init(): void
     {
+        if (!class_exists('WC_Payment_Gateway')) {
+            $this->adminNoticeMissWoocoommerce();
+            return;
+        }
+
         $this->setProperties();
         $this->setPluginSettingsLink();
 
@@ -360,10 +365,6 @@ class WoocommerceMercadoPago
 
         if (!in_array('gd', get_loaded_extensions(), true)) {
             $this->verifyGdNotice();
-        }
-
-        if (!class_exists('WC_Payment_Gateway')) {
-            $this->notices->adminNoticeMissWoocoommerce();
         }
 
         $this->registerGateways();
@@ -527,5 +528,70 @@ class WoocommerceMercadoPago
         if (!defined($name)) {
             define($name, $value);
         }
+    }
+
+    /**
+     * Show woocommerce missing notice
+     * This function should use Wordpress features only
+     *
+     * @return void
+     */
+    public function adminNoticeMissWoocoommerce(): void
+    {
+        add_action('admin_enqueue_scripts', function () {
+            wp_register_style(
+                'woocommerce-mercadopago-admin-notice-css',
+                sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/css/admin/mp-admin-notices.css'),
+                false,
+                MP_VERSION
+            );
+            wp_enqueue_style('woocommerce-mercadopago-admin-notice-css');
+        });
+
+        add_action(
+            'admin_notices',
+            function () {
+                $isInstalled = false;
+                $currentUserCanInstallPlugins = current_user_can('install_plugins');
+
+                $minilogo     = sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/images/minilogo.png');
+                $translations = [
+                    'miss_woocommerce'     => sprintf(
+                        __('The Mercado Pago module needs an active version of %s in order to work!', 'woocommerce-mercadopago'),
+                        '<a target="_blank" href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
+                    ),
+                    'activate_woocommerce' => __('Activate WooCommerce', 'woocommerce-mercadopago'),
+                    'install_woocommerce'  => __('Install WooCommerce', 'woocommerce-mercadopago'),
+                    'see_woocommerce'      => __('See WooCommerce', 'woocommerce-mercadopago'),
+                ];
+
+                $activateLink = wp_nonce_url(
+                    self_admin_url('plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=all'),
+                    'activate-plugin_woocommerce/woocommerce.php'
+                );
+
+                $installLink = wp_nonce_url(
+                    self_admin_url('update.php?action=install-plugin&plugin=woocommerce'),
+                    'install-plugin_woocommerce'
+                );
+
+                if (function_exists('get_plugins')) {
+                    $allPlugins  = get_plugins();
+                    $isInstalled = !empty($allPlugins['woocommerce/woocommerce.php']);
+                }
+
+                if ($isInstalled && $currentUserCanInstallPlugins) {
+                    $missWoocommerceAction = 'active';
+                } else {
+                    if ($currentUserCanInstallPlugins) {
+                        $missWoocommerceAction = 'install';
+                    } else {
+                        $missWoocommerceAction = 'see';
+                    }
+                }
+
+                include dirname(__FILE__) . '/../templates/admin/notices/miss-woocommerce-notice.php';
+            }
+        );
     }
 }

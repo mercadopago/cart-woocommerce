@@ -42,6 +42,7 @@ class TicketTransaction extends AbstractPaymentTransaction
         $this->paymentPlaceId  = $this->mercadopago->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
         $this->paymentMethodId = $this->mercadopago->paymentMethods->getPaymentMethodId($this->paymentMethodId);
 
+        $this->transaction->installments = 1;
         $this->transaction->payment_method_id  = $this->paymentMethodId;
         $this->transaction->external_reference = $this->getExternalReference();
         $this->transaction->date_of_expiration = $this->getExpirationDate();

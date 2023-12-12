@@ -87,6 +87,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     protected $storeTranslations;
 
     /**
+     * @var float
+     */
+    protected $ratio;
+
+    /**
      * @var array
      */
     protected $countryConfigs;
@@ -107,6 +112,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
         $this->checkoutCountry = $this->mercadopago->store->getCheckoutCountry();
         $this->countryConfigs  = $this->mercadopago->country->getCountryConfigs();
+        $this->ratio           = $this->mercadopago->currency->getRatio($this);
         $this->links           = $this->mercadopago->links->getLinks();
 
         $this->has_fields = true;
@@ -116,7 +122,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->loadMelidataStoreScripts();
     }
 
-    public function saveOrderPaymentsId(string $orderId) {
+    public function saveOrderPaymentsId(string $orderId)
+    {
         $order = wc_get_order($orderId);
         $paymentIds = Form::sanitizeTextFromGet('payment_id');
 
@@ -259,19 +266,26 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         $order = wc_get_order($order_id);
 
-        $amount           = $this->mercadopago->woocommerce->cart->get_subtotal();
-        $shipping         = $this->mercadopago->orderShipping->getTotal($order);
+        $ratio            = $this->mercadopago->currency->getRatio($this);
+        $currency         = $this->mercadopago->country->getCountryConfigs()['currency'];
         $isProductionMode = $this->mercadopago->store->getProductionMode();
 
-        $discount   = ($amount - $shipping) * $this->discount / 100;
-        $commission = $amount * ($this->commission / 100);
+        $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_cart_contents_total();
+        $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_cart_contents_tax();
+        $subtotal        = $cartSubtotal + $cartSubtotalTax;
+
+        $discount = $subtotal * $this->discount / 100;
+        $discount = Numbers::calculateByCurrency($currency, $discount, $ratio);
+
+        $commission = $subtotal * ($this->commission / 100);
+        $commission = Numbers::calculateByCurrency($currency, $commission, $ratio);
 
         $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
         $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this)::ID);
 
         if ($this->discount != 0) {
             $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
-            $feeText     = $this->getFeeText($translation, 'gateway_discount', $discount);
+            $feeText     = $this->getFeeText($translation, 'discount', $discount);
 
             $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
         }
@@ -435,8 +449,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 $this->mercadopago->template->getWoocommerceTemplate(
                     'admin/order/generic-note.php',
                     [
-                        'tip' => 'Represents the commission configured on plugin settings.',
-                        'title' => 'Mercado Pago commission:',
+                        'tip'   => $this->mercadopago->adminTranslations->order['order_note_commission_tip'],
+                        'title' => $this->mercadopago->adminTranslations->order['order_note_commission_title'],
                         'value' => $commission,
                     ]
                 );
@@ -446,8 +460,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 $this->mercadopago->template->getWoocommerceTemplate(
                     'admin/order/generic-note.php',
                     [
-                        'tip' => 'Represents the discount configured on plugin settings.',
-                        'title' => 'Mercado Pago discount:',
+                        'tip'   => $this->mercadopago->adminTranslations->order['order_note_discount_tip'],
+                        'title' => $this->mercadopago->adminTranslations->order['order_note_discount_title'],
                         'value' => $discount,
                     ]
                 );
@@ -506,14 +520,20 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     protected function getAmount(): float
     {
-        $total      = $this->get_order_total();
-        $subtotal   = $this->mercadopago->woocommerce->cart->get_subtotal();
-        $tax        = $total - $subtotal;
+        $cartTotal       = $this->mercadopago->woocommerce->cart->__get('total');
+        $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_subtotal();
+        $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_subtotal_tax();
+
+        $subtotal = $cartSubtotal + $cartSubtotalTax;
+        $total    = $cartTotal - $subtotal;
+
         $discount   = $subtotal * ($this->discount / 100);
         $commission = $subtotal * ($this->commission / 100);
         $amount     = $subtotal - $discount + $commission;
 
-        return $amount + $tax;
+        $calculatedTotal = $total + $amount;
+
+        return Numbers::calculateByCurrency($this->countryConfigs['currency'], $calculatedTotal, $this->ratio);
     }
 
     /**
@@ -593,7 +613,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         return $this->mercadopago->template->getWoocommerceTemplateHtml(
             'admin/components/checkbox-list.php',
             [
-                'settings'    => $settings,
+                'settings' => $settings,
             ]
         );
     }
@@ -679,5 +699,39 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 'settings'    => $settings,
             ]
         );
+    }
+
+    /**
+     * Update Option
+     *
+     * @param string $key key.
+     * @param string $value value.
+     *
+     * @return bool
+     */
+    public function update_option($key, $value = ''): bool
+    {
+        if ($key === 'enabled' && $value === 'yes') {
+            $publicKey   = $this->mercadopago->seller->getCredentialsPublicKey();
+            $accessToken = $this->mercadopago->seller->getCredentialsAccessToken();
+
+            if (empty($publicKey) || empty($accessToken)) {
+                $this->mercadopago->logs->file->error(
+                    "No credentials to enable payment method",
+                    "MercadoPago_AbstractGateway"
+                );
+
+                echo wp_json_encode(
+                    array(
+                        'data'    => $this->mercadopago->adminTranslations->gatewaysSettings['empty_credentials'],
+                        'success' => false,
+                    )
+                );
+
+                die();
+            }
+        }
+
+        return parent::update_option($key, $value);
     }
 }

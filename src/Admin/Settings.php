@@ -151,10 +151,12 @@ class Settings
 
         $this->plugin->registerOnPluginCredentialsUpdate(function () {
             $this->seller->updatePaymentMethods();
+            $this->seller->updatePaymentMethodsBySiteId();
         });
 
         $this->plugin->registerOnPluginTestModeUpdate(function () {
             $this->seller->updatePaymentMethods();
+            $this->seller->updatePaymentMethodsBySiteId();
         });
     }
 
@@ -190,7 +192,9 @@ class Settings
                 'mercadopago_settings_admin_js',
                 $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
                 [
-                    'nonce' => $this->nonce->generateNonce(self::NONCE_ID)
+                    'nonce'              => $this->nonce->generateNonce(self::NONCE_ID),
+                    'show_advanced_text' => $this->translations->storeSettings['accordion_advanced_store_show'],
+                    'hide_advanced_text' => $this->translations->storeSettings['accordion_advanced_store_hide'],
                 ]
             );
 
@@ -212,8 +216,8 @@ class Settings
     {
         return $this->admin->isAdmin() && (
             $this->url->validatePage('mercadopago-settings') ||
-            $this->url->validateSection('woo-mercado-pago'
-        ));
+            $this->url->validateSection('woo-mercado-pago')
+            );
     }
 
     /**
@@ -288,7 +292,7 @@ class Settings
 
         $storeId             = $this->store->getStoreId();
         $storeName           = $this->store->getStoreName();
-        $storeCategory       = $this->store->getStoreCategory();
+        $storeCategory       = $this->store->getStoreCategory('others');
         $customDomain        = $this->store->getCustomDomain();
         $customDomainOptions = $this->store->getCustomDomainOptions();
         $integratorId        = $this->store->getIntegratorId();
@@ -345,7 +349,7 @@ class Settings
                     'title_gateway'    => $gateway->title,
                     'description'      => $gateway->description,
                     'title'            => $gateway->title,
-                    'enabled'          => $gateway->settings['enabled']?: false,
+                    'enabled'          => !isset($gateway->settings['enabled']) ? false : $gateway->settings['enabled'],
                     'icon'             => $gateway->icon,
                     'link'             => admin_url('admin.php?page=wc-settings&tab=checkout&section=') . $gateway->id,
                     'badge_translator' => [
@@ -357,7 +361,8 @@ class Settings
 
             wp_send_json_success($payment_gateway_properties);
         } catch (\Exception $e) {
-            $this->logs->file->error("Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
+            $this->logs->file->error(
+                "Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
                 __CLASS__
             );
             $response = [
@@ -368,7 +373,7 @@ class Settings
         }
     }
 
-     /**
+    /**
      * Validate store tips
      *
      * @return void
@@ -377,12 +382,12 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $paymentGateways    = $this->store->getAvailablePaymentGateways();
+        $paymentGateways = $this->store->getAvailablePaymentGateways();
 
-        foreach ( $paymentGateways as $gateway ) {
+        foreach ($paymentGateways as $gateway) {
             $gateway = new $gateway();
 
-            if ( 'yes' === $gateway->settings['enabled'] ) {
+            if (isset($gateway->settings['enabled']) && 'yes' === $gateway->settings['enabled']) {
                 wp_send_json_success($this->translations->configurationTips['valid_payment_tips']);
             }
         }
@@ -400,10 +405,9 @@ class Settings
         $this->validateAjaxNonce();
 
         $storeId       = $this->store->getStoreId();
-        $storeName     = $this->store->getStoreName();
         $storeCategory = $this->store->getStoreCategory();
 
-        if ($storeId && $storeName && $storeCategory) {
+        if ($storeId && $storeCategory) {
             wp_send_json_success($this->translations->configurationTips['valid_store_tips']);
         }
 
@@ -515,12 +519,14 @@ class Settings
                     $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
                 }
 
-                if ((empty($publicKeyTest) && empty($accessTokenTest)) || (
+                if (
+                    (empty($publicKeyTest) && empty($accessTokenTest)) || (
                     $validatePublicKeyTest['status'] === 200 &&
                     $validateAccessTokenTest['status'] === 200 &&
                     $validatePublicKeyTest['data']['is_test'] === true &&
                     $validateAccessTokenTest['data']['is_test'] === true
-                )) {
+                    )
+                ) {
                     $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
                     $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
 
@@ -534,14 +540,12 @@ class Settings
                             'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
                             'test_mode' => 'no',
                         ];
-
                         wp_send_json_error($response);
+                    } else {
+                        $this->plugin->executeUpdateCredentialAction();
+                        wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
                     }
                 }
-
-                $this->plugin->executeUpdateCredentialAction();
-
-                wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
             }
 
             $response = [
@@ -549,13 +553,14 @@ class Settings
                 'message'   => $this->translations->updateCredentials['invalid_credentials_title'],
                 'subtitle'  => $this->translations->updateCredentials['invalid_credentials_subtitle'] . ' ',
                 'linkMsg'   => $this->translations->updateCredentials['invalid_credentials_link_message'],
-                'link'      => $this->links->getLinks()['mercadopago_credentials'],
+                'link'      => $this->links->getLinks()['docs_integration_credentials'],
                 'test_mode' => $this->store->getCheckboxCheckoutTestMode()
             ];
 
             wp_send_json_error($response);
         } catch (\Exception $e) {
-            $this->logs->file->error("Mercado pago gave error in update option credentials: {$e->getMessage()}",
+            $this->logs->file->error(
+                "Mercado pago gave error in update option credentials: {$e->getMessage()}",
                 __CLASS__
             );
         }
@@ -611,7 +616,8 @@ class Settings
         );
 
         if ($verifyAlertTestMode === 'yes' || ($validateCheckoutTestMode && $withoutTestCredentials)) {
-            wp_send_json_error('Invalid credentials for test mode');
+            wp_send_json_error($this->translations->updateCredentials['invalid_credentials_title'] .
+                $this->translations->updateCredentials['for_test_mode']);
         }
 
         $this->store->setCheckboxCheckoutTestMode($checkoutTestMode);
@@ -619,10 +625,10 @@ class Settings
         $this->plugin->executeUpdateTestModeAction();
 
         if ($validateCheckoutTestMode) {
-            wp_send_json_success('Mercado Pago\'s Payment Methods in Test Mode');
+            wp_send_json_success($this->translations->testModeSettings['title_message_test']);
         }
 
-        wp_send_json_success('Mercado Pago\'s Payment Methods in Production Mode');
+        wp_send_json_success($this->translations->testModeSettings['title_message_prod']);
     }
 
     /**

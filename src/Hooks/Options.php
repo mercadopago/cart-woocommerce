@@ -22,8 +22,6 @@ class Options
         '_mp_store_identificator',
         '_mp_integrator_id',
         '_mp_custom_domain',
-        'auto_return',
-        'installments',
         'checkout_country',
         'mp_statement_descriptor',
     ];

@@ -46,14 +46,17 @@ class Metadata
      */
     public function getSettings(string $option): array
     {
-        $options = $this->options->get($option, []);
+        $options        = $this->options->get($option, []);
         $ignoredOptions = $this->getIgnoredOptions();
+        $validOptions   = [];
 
-        $validValues = array_filter($options, function ($value, $key) use ($ignoredOptions) {
-            return !empty($value) && !in_array($key, $ignoredOptions, true);
-        }, ARRAY_FILTER_USE_BOTH);
+        foreach ($options as $key => $value) {
+            if (!empty($value) && !in_array($key, $ignoredOptions, true)) {
+                $validOptions[$key] = $value;
+            }
+        }
 
-        return $validValues;
+        return $validOptions;
     }
 
     /**

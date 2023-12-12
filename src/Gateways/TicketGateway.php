@@ -239,11 +239,8 @@ class TicketGateway extends AbstractGateway
 
             $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
-            if (!empty($checkout['amount']) &&
-                !empty($checkout['docType']) &&
-                !empty($checkout['docNumber']) &&
-                !empty($checkout['paymentMethodId'])
-            ) {
+                                                                                                                                                                                                                                                                                                        if ( !empty($checkout['paymentMethodId'])) {
+                $this->validateRulesForSiteId($checkout);
                 $this->transaction = new TicketTransaction($this, $order, $checkout);
                 $response          = $this->transaction->createPayment();
 
@@ -274,7 +271,7 @@ class TicketGateway extends AbstractGateway
                             $this->mercadopago->order->addOrderNote($order, $description, 1);
                         }
 
-                        $urlReceived = esc_url($order->get_checkout_order_received_url());
+                        $urlReceived = $order->get_checkout_order_received_url();
 
                         return [
                             'result'   => 'success',
@@ -290,6 +287,7 @@ class TicketGateway extends AbstractGateway
                     );
                 }
             }
+            throw new \Exception('Unable to process payment on ' . __METHOD__);
         } catch (\Exception $e) {
             return $this->processReturnFail(
                 $e,
@@ -430,6 +428,32 @@ class TicketGateway extends AbstractGateway
             'docNumber' => '',
             'number'    => '',
         ];
+    }
+
+    public function validateRulesForSiteId($checkout) {
+
+        if ( // Rules for ticket MLB
+            ($checkout['site_id'] === 'MLB' && (empty($checkout['docNumber']) || !isset($checkout['docNumber']) ))
+        ) {
+            return $this->processReturnFail(
+                new \Exception('Document is required on ' . __METHOD__),
+                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                self::LOG_SOURCE
+            );
+        }
+
+        if ( // Rules for efective MLU
+            ($checkout['site_id'] === 'MLU' && (
+                (empty($checkout['docNumber']) || !isset($checkout['docNumber']))
+                || (empty($checkout['docType']) || !isset($checkout['docType']))
+                ))
+        ) {
+            return $this->processReturnFail(
+                new \Exception('Document is required on ' . __METHOD__),
+                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                self::LOG_SOURCE
+            );
+        }
     }
 
     /**

@@ -160,7 +160,7 @@ final class Currency
     public function getRatio(AbstractGateway $gateway): float
     {
         if (!isset($this->ratios[$gateway->id])) {
-            if ($this->isConversionEnabled($gateway) && $this->validateConversion()) {
+            if ($this->isConversionEnabled($gateway) && !$this->validateConversion()) {
                 $ratio = $this->loadRatio();
                 $this->setRatio($gateway->id, $ratio);
             } else {
@@ -219,7 +219,14 @@ final class Currency
             return;
         }
 
-        $this->notices->adminNoticeWarning($this->translations['currency_conversion'], false);
+        if(!$this->validateConversion() && $this->isConversionEnabled($gateway))
+        {
+            $this->showWeConvertingNoticeByCountry();
+        }
+
+        if(!$this->validateConversion() && !$this->isConversionEnabled($gateway)) {
+            $this->notices->adminNoticeWarning($this->translations['not_compatible_currency_conversion']);
+        }
     }
 
     /**
@@ -285,5 +292,15 @@ final class Currency
                 'status' => 500,
             ];
         }
+    }
+
+    /**
+     * Set how 'we converting' notice is show up.
+     *
+     * @return array
+     */
+    private function showWeConvertingNoticeByCountry()
+    {
+        $this->notices->adminNoticeInfo($this->translations['now_we_convert'] . $this->getCurrency());
     }
 }

@@ -30,7 +30,7 @@ final class Links
 
     /**
      * Links constructor
-     * 
+     *
      * @param Country $country
      */
     public function __construct(Country $country)
@@ -53,7 +53,7 @@ final class Links
             $this->getCreditsLinks($countryConfig),
             $this->getAdminLinks(),
             $this->getStoreLinks(),
-            $this->getWordpressLinks(),
+            $this->getWordpressLinks()
         );
     }
 
@@ -70,9 +70,10 @@ final class Links
 
         return [
             'docs_developers_program'       => $baseLink . '/developer-program',
-            'docs_test_cards'               => $baseLink . '/docs/checkout-api/integration-test/test-cards',
+            'docs_test_cards'               => $baseLink . '/docs/checkout-api/additional-content/your-integrations/test/cards',
+            'docs_integration_credentials'  => $baseLink . '/docs/checkout-api/additional-content/your-integrations/credentials',
             'docs_reasons_refusals'         => $baseLink . '/docs/woocommerce/reasons-refusals',
-            'docs_ipn_notification'         => $baseLink . '/docs/woocommerce/additional-content/notifications/ipn',
+            'docs_ipn_notification'         => $baseLink . '/docs/woocommerce/integration-configuration/notifications',
             'docs_integration_test'         => $baseLink . '/docs/woocommerce/integration-test',
             'docs_integration_config'       => $baseLink . '/docs/woocommerce/integration-configuration',
             'docs_integration_introduction' => $baseLink . '/docs/woocommerce/introduction',
@@ -94,7 +95,7 @@ final class Links
             'mercadopago_test_user'            => self::MP_URL . '/developers/panel/test-users',
             'mercadopago_credentials'          => self::MP_URL_PREFIX . $countryConfig['suffix_url'] .  '/settings/account/credentials',
             'mercadopago_developers'           => self::MP_DEVELOPERS_URL,
-            'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br/pix',
+            'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br/ferramentas-para-vender/aceitar-pix',
             'mercadopago_debts'                => self::MP_URL_PREFIX . '.com.ar/cuotas',
             'mercadopago_support'              => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/developers/' . $countryConfig['translate'] . '/support/contact',
             'mercadopago_terms_and_conditions' => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . $countryConfig['help'] . $countryConfig['terms_and_conditions'],
@@ -123,7 +124,7 @@ final class Links
     private function getStoreLinks(): array
     {
         return [
-            'store_visit' => get_permalink(wc_get_page_id('shop')),
+            'store_visit' => home_url(),
         ];
     }
 
