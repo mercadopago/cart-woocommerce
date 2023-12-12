@@ -11,7 +11,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-abstract class AbstractBlock extends AbstractPaymentMethodType implements MercadoPagoPaymentBlockInterface {
+abstract class AbstractBlock extends AbstractPaymentMethodType implements MercadoPagoPaymentBlockInterface
+{
     /**
      * @var string
      */

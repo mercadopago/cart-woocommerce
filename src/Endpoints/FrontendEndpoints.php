@@ -46,30 +46,39 @@ class FrontendEndpoints
     private $threeDsTranslations;
 
     /**
-     * 
+     *
      */
-    public function __construct(Endpoints $endpoints, Logs $logs, Requester $requester, Session $session, Seller $seller, StoreTranslations $storeTranslations)
-    {
-        $this->endpoints = $endpoints;
-        $this->logs      = $logs;
-        $this->requester = $requester;
-        $this->session   = $session;
-        $this->seller    = $seller;
-        $this->registerFrontendEndpoints();
+    public function __construct(
+        Endpoints $endpoints,
+        Logs $logs,
+        Requester $requester,
+        Session $session,
+        Seller $seller,
+        StoreTranslations $storeTranslations
+    ) {
+        $this->endpoints           = $endpoints;
+        $this->logs                = $logs;
+        $this->requester           = $requester;
+        $this->session             = $session;
+        $this->seller              = $seller;
         $this->threeDsTranslations = $storeTranslations->threeDsTranslations;
+
+        $this->registerFrontendEndpoints();
     }
 
     /**
-     * 
+     *
      */
-    public function registerFrontendEndpoints() {
+    public function registerFrontendEndpoints()
+    {
         $this->registerCustomCheckoutEndpoints();
     }
 
     /**
-     * 
+     *
      */
-    public function registerCustomCheckoutEndpoints() {
+    public function registerCustomCheckoutEndpoints()
+    {
         $this->endpoints->registerWCAjaxEndpoint('mp_get_3ds_from_session', [$this, 'mercadopagoGet3DSFromSession']);
         $this->endpoints->registerWCAjaxEndpoint('mp_redirect_after_3ds_challenge', [$this, 'mercadopagoRedirectAfter3DSChallenge']);
     }
@@ -108,7 +117,6 @@ class FrontendEndpoints
     public function mercadopagoRedirectAfter3DSChallenge(): void
     {
         try {
-            
             $orderId   = $this->session->getSession('mp_order_id');
             $paymentId = $this->session->getSession('mp_payment_id');
 
@@ -136,7 +144,7 @@ class FrontendEndpoints
                     ],
                 ]);
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logs->file->error('3DS session error: ' . $e->getMessage(), __CLASS__);
         }
 

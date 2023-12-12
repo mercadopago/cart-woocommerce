@@ -73,7 +73,10 @@ class Admin
 
             foreach ($pluginLinks as $link) {
                 $newLinks[] = sprintf(
-                    '<a href="%s" target="%s">%s</a>', $link['href'], $link['target'], $link['text']
+                    '<a href="%s" target="%s">%s</a>',
+                    $link['href'],
+                    $link['target'],
+                    $link['text']
                 );
             }
 

@@ -24,10 +24,10 @@ class CoreNotification extends AbstractNotification
      */
     protected $mercadopago;
 
-	/**
-	 * @var Notification
-	 */
-	protected $sdkNotification;
+    /**
+     * @var Notification
+     */
+    protected $sdkNotification;
 
     /**
      * CoreNotification constructor
@@ -76,31 +76,31 @@ class CoreNotification extends AbstractNotification
 
         $notification_id = json_decode(file_get_contents('php://input'));
 
-		try {
-			$notificationEntity = $this->sdkNotification->read([
+        try {
+            $notificationEntity = $this->sdkNotification->read([
                 'id' => $notification_id
             ]);
 
-			$this->handleSuccessfulRequest($notificationEntity->toArray());
-		} catch (\Exception $e) {
-			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
-			$this->setResponse(500, $e->getMessage());
-		}
+            $this->handleSuccessfulRequest($notificationEntity->toArray());
+        } catch (\Exception $e) {
+            $this->logs->file->error($e->getMessage(), __CLASS__, $data);
+            $this->setResponse(500, $e->getMessage());
+        }
     }
 
-	/**
-	 * Process success response
-	 *
-	 * @param mixed $data
-	 *
-	 * @return void
-	 */
-	public function handleSuccessfulRequest($data)
-	{
-		try {
-			$order           = parent::handleSuccessfulRequest($data);
+    /**
+     * Process success response
+     *
+     * @param mixed $data
+     *
+     * @return void
+     */
+    public function handleSuccessfulRequest($data)
+    {
+        try {
+            $order           = parent::handleSuccessfulRequest($data);
             $oldOrderStatus  = $order->get_status();
-			$processedStatus = $this->getProcessedStatus($order, $data);
+            $processedStatus = $this->getProcessedStatus($order, $data);
 
             $this->logs->file->info(
                 sprintf(
@@ -112,11 +112,11 @@ class CoreNotification extends AbstractNotification
             );
 
             $this->processStatus($processedStatus, $order, $data);
-		} catch (\Exception $e) {
-			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
-		}
-	}
+        } catch (\Exception $e) {
+            $this->setResponse(422, $e->getMessage());
+            $this->logs->file->error($e->getMessage(), __CLASS__, $data);
+        }
+    }
 
     /**
      * Process status
@@ -126,50 +126,50 @@ class CoreNotification extends AbstractNotification
      *
      * @return string
      */
-	public function getProcessedStatus(\WC_Order $order, $data): string
+    public function getProcessedStatus(\WC_Order $order, $data): string
     {
-		$status = $data['status'];
+        $status = $data['status'];
 
-		if (!empty($data['payer']['email'])) {
-			$this->updateMeta($order, 'Buyer email', $data['payer']['email']);
-		}
+        if (!empty($data['payer']['email'])) {
+            $this->updateMeta($order, 'Buyer email', $data['payer']['email']);
+        }
 
-		if (!empty($data['payments_details'])) {
-			$payment_ids = array();
+        if (!empty($data['payments_details'])) {
+            $payment_ids = array();
 
-			foreach ($data['payments_details'] as $payment) {
-				$payment_ids[] = $payment['id'];
+            foreach ($data['payments_details'] as $payment) {
+                $payment_ids[] = $payment['id'];
 
-				$this->updateMeta(
-					$order,
-					'Mercado Pago - Payment ' . $payment['id'],
-					'[Date ' . Date::getNowDate('Y-m-d H:i:s') .
-						']/[Amount ' . $payment['total_amount'] .
-						']/[Payment Type ' . $payment['payment_type_id'] .
-						']/[Payment Method ' . $payment['payment_method_id'] .
-						']/[Paid ' . $payment['paid_amount'] .
-						']/[Coupon ' . $payment['coupon_amount'] .
-						']/[Refund ' . $data['total_refunded'] . ']'
-				);
+                $this->updateMeta(
+                    $order,
+                    'Mercado Pago - Payment ' . $payment['id'],
+                    '[Date ' . Date::getNowDate('Y-m-d H:i:s') .
+                        ']/[Amount ' . $payment['total_amount'] .
+                        ']/[Payment Type ' . $payment['payment_type_id'] .
+                        ']/[Payment Method ' . $payment['payment_method_id'] .
+                        ']/[Paid ' . $payment['paid_amount'] .
+                        ']/[Coupon ' . $payment['coupon_amount'] .
+                        ']/[Refund ' . $data['total_refunded'] . ']'
+                );
 
                 $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - payment_type', $payment['payment_type_id']);
 
-                if ( strpos($payment['payment_type_id'], 'card') !== false ) {
+                if (strpos($payment['payment_type_id'], 'card') !== false) {
                     $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installments', $payment['payment_method_info']['installments']);
                     $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installment_amount', $payment['payment_method_info']['installment_amount']);
                     $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - transaction_amount', $payment['total_amount']);
                     $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - total_paid_amount', $payment['paid_amount']);
                     $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - card_last_four_digits', $payment['payment_method_info']['last_four_digits']);
                 }
-			}
+            }
 
-			if (count($payment_ids) != 0) {
-				$this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $payment_ids));
-			}
-		}
+            if (count($payment_ids) != 0) {
+                $this->updateMeta($order, '_Mercado_Pago_Payment_IDs', implode(', ', $payment_ids));
+            }
+        }
 
-		$order->save();
+        $order->save();
 
-		return $status;
-	}
+        return $status;
+    }
 }
