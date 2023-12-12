@@ -54,7 +54,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '7.0.6';
+    private const PLUGIN_VERSION = '7.1.0';
 
     /**
      * @const
