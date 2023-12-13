@@ -1,7 +1,12 @@
-node_modules
 .DS_Store
-.vscode
-.idea
-.idea/
+.phpunit.result.cache
+
+clover.xml
+coverage
+
+/.idea/
+/.vscode/
 /vendor/
+/node_modules/
+
 woocommerce-mercadopago.zip

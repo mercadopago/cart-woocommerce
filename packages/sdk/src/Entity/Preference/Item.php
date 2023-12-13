@@ -7,13 +7,13 @@ use MercadoPago\PP\Sdk\Common\AbstractEntity;
 /**
  * Class Item
  *
- * @property string $category_id
- * @property string $currency_id
- * @property string $description
  * @property string $id
- * @property string $picture_url
- * @property int $quantity
  * @property string $title
+ * @property string $description
+ * @property string $picture_url
+ * @property string $category_id
+ * @property int $quantity
+ * @property string $currency_id
  * @property float $unit_price
  *
  * @package MercadoPago\PP\Sdk\Entity\Preference
@@ -23,12 +23,12 @@ class Item extends AbstractEntity
     /**
      * @var string
      */
-    protected $category_id;
+    protected $id;
 
     /**
      * @var string
      */
-    protected $currency_id;
+    protected $title;
 
     /**
      * @var string
@@ -38,12 +38,12 @@ class Item extends AbstractEntity
     /**
      * @var string
      */
-    protected $id;
+    protected $picture_url;
 
     /**
      * @var string
      */
-    protected $picture_url;
+    protected $category_id;
 
     /**
      * @var int
@@ -53,7 +53,7 @@ class Item extends AbstractEntity
     /**
      * @var string
      */
-    protected $title;
+    protected $currency_id;
 
     /**
      * @var float

@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit7df991cb6c45ae6eb5b10f00fabea309
+class ComposerStaticInit803ba592a00aae6fcb38e9b3874cce62
 {
     public static $prefixLengthsPsr4 = array (
         'M' => 
@@ -33,20 +33,34 @@ class ComposerStaticInit7df991cb6c45ae6eb5b10f00fabea309
         'MercadoPago\\PP\\Sdk\\Entity\\Notification\\PaymentMethodInfo' => __DIR__ . '/../..' . '/src/Entity/Notification/PaymentMethodInfo.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Notification\\Refund' => __DIR__ . '/../..' . '/src/Entity/Notification/Refund.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Notification\\RefundList' => __DIR__ . '/../..' . '/src/Entity/Notification/RefundList.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Notification\\RefundNotifying' => __DIR__ . '/../..' . '/src/Entity/Notification/RefundNotifying.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Notification\\RefundNotifyingList' => __DIR__ . '/../..' . '/src/Entity/Notification/RefundNotifyingList.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\AdditionalInfo' => __DIR__ . '/../..' . '/src/Entity/Payment/AdditionalInfo.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\AdditionalInfoAddress' => __DIR__ . '/../..' . '/src/Entity/Payment/AdditionalInfoAddress.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\AdditionalInfoPayer' => __DIR__ . '/../..' . '/src/Entity/Payment/AdditionalInfoPayer.php',
-        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\AdditionalInfoPayerAddress' => __DIR__ . '/../..' . '/src/Entity/Payment/AdditionalInfoPayerAddress.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Address' => __DIR__ . '/../..' . '/src/Entity/Payment/Address.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\ApplicationData' => __DIR__ . '/../..' . '/src/Entity/Payment/ApplicationData.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\BankInfo' => __DIR__ . '/../..' . '/src/Entity/Payment/BankInfo.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Identification' => __DIR__ . '/../..' . '/src/Entity/Payment/Identification.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Item' => __DIR__ . '/../..' . '/src/Entity/Payment/Item.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\ItemList' => __DIR__ . '/../..' . '/src/Entity/Payment/ItemList.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Multipayment' => __DIR__ . '/../..' . '/src/Entity/Payment/Multipayment.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\MultipaymentV2' => __DIR__ . '/../..' . '/src/Entity/Payment/MultipaymentV2.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\MultipaymentV21' => __DIR__ . '/../..' . '/src/Entity/Payment/MultipaymentV21.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Payer' => __DIR__ . '/../..' . '/src/Entity/Payment/Payer.php',
-        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\PayerIdentification' => __DIR__ . '/../..' . '/src/Entity/Payment/PayerIdentification.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Payment' => __DIR__ . '/../..' . '/src/Entity/Payment/Payment.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\PaymentV2' => __DIR__ . '/../..' . '/src/Entity/Payment/PaymentV2.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\PaymentV21' => __DIR__ . '/../..' . '/src/Entity/Payment/PaymentV21.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Phone' => __DIR__ . '/../..' . '/src/Entity/Payment/Phone.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\PointOfInteraction' => __DIR__ . '/../..' . '/src/Entity/Payment/PointOfInteraction.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\ReceiverAddress' => __DIR__ . '/../..' . '/src/Entity/Payment/ReceiverAddress.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Seller' => __DIR__ . '/../..' . '/src/Entity/Payment/Seller.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Shipments' => __DIR__ . '/../..' . '/src/Entity/Payment/Shipments.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\Tracking' => __DIR__ . '/../..' . '/src/Entity/Payment/Tracking.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\TransactionData' => __DIR__ . '/../..' . '/src/Entity/Payment/TransactionData.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Payment\\TransactionDetails' => __DIR__ . '/../..' . '/src/Entity/Payment/TransactionDetails.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\TransactionInfo' => __DIR__ . '/../..' . '/src/Entity/Payment/TransactionInfo.php',
+        'MercadoPago\\PP\\Sdk\\Entity\\Payment\\TransactionInfoList' => __DIR__ . '/../..' . '/src/Entity/Payment/TransactionInfoList.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Preference\\Address' => __DIR__ . '/../..' . '/src/Entity/Preference/Address.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Preference\\BackUrl' => __DIR__ . '/../..' . '/src/Entity/Preference/BackUrl.php',
         'MercadoPago\\PP\\Sdk\\Entity\\Preference\\DifferentialPricing' => __DIR__ . '/../..' . '/src/Entity/Preference/DifferentialPricing.php',
@@ -80,9 +94,9 @@ class ComposerStaticInit7df991cb6c45ae6eb5b10f00fabea309
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit7df991cb6c45ae6eb5b10f00fabea309::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit7df991cb6c45ae6eb5b10f00fabea309::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit7df991cb6c45ae6eb5b10f00fabea309::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit803ba592a00aae6fcb38e9b3874cce62::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit803ba592a00aae6fcb38e9b3874cce62::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit803ba592a00aae6fcb38e9b3874cce62::$classMap;
 
         }, null, ClassLoader::class);
     }

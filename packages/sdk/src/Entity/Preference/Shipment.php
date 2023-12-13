@@ -8,28 +8,33 @@ use MercadoPago\PP\Sdk\Common\Manager;
 /**
  * Class Shipment
  *
+ * @property string $default_shipping_method
+ * @property ReceiverAddress $receiver_address
  * @property float $cost
- * @property int $default_shipping_method
  * @property string $dimensions
  * @property FreeMethodList $free_methods
  * @property boolean $free_shipping
  * @property boolean $local_pickup
  * @property string $mode
- * @property ReceiverAddress $receiver_address
  *
  * @package MercadoPago\PP\Sdk\Entity\Preference
  */
 class Shipment extends AbstractEntity
 {
     /**
+     * @var string
+     */
+    protected $default_shipping_method;
+
+    /**
+     * @var ReceiverAddress
+     */
+    protected $receiver_address;
+
+    /**
      * @var float
      */
     protected $cost;
-
-    /**
-     * @var int
-     */
-    protected $default_shipping_method;
 
     /**
      * @var string
@@ -55,11 +60,6 @@ class Shipment extends AbstractEntity
      * @var string
      */
     protected $mode;
-
-    /**
-     * @var ReceiverAddress
-     */
-    protected $receiver_address;
 
     /**
      * Shipment constructor.

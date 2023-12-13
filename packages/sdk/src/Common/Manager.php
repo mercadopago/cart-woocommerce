@@ -135,7 +135,8 @@ class Manager
             }
             return $response->getData();
         } elseif (intval($response->getStatus()) >= 400 && intval($response->getStatus()) < 500) {
-            throw new \Exception($response->getData()['message']);
+            $message = $response->getData()['message'] ?? 'No message for Multipayment scenario in v1!';
+            throw new \Exception($message);
         } else {
             throw new \Exception("Internal API Error");
         }
