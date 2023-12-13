@@ -394,9 +394,10 @@ class WoocommerceMercadoPago
             $this->verifyGdNotice();
         }
 
-        $this->registerGateways();
         $this->registerBlocks();
+        $this->registerGateways();
         $this->registerActionsWhenGatewayIsNotCalled();
+
         $this->plugin->registerEnableCreditsAction(array($this->creditsEnabled, 'enableCreditsAction'));
         $this->plugin->executeCreditsAction();
         $this->plugin->executePluginLoadedAction();
@@ -560,20 +561,20 @@ class WoocommerceMercadoPago
 
     /**
      * Show woocommerce missing notice
-     * This function should use Wordpress features only
+     * This function should use WordPress features only
      *
      * @return void
      */
     public function adminNoticeMissWoocoommerce(): void
     {
         add_action('admin_enqueue_scripts', function () {
+            wp_enqueue_style('woocommerce-mercadopago-admin-notice-css');
             wp_register_style(
                 'woocommerce-mercadopago-admin-notice-css',
                 sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/css/admin/mp-admin-notices.css'),
                 false,
                 MP_VERSION
             );
-            wp_enqueue_style('woocommerce-mercadopago-admin-notice-css');
         });
 
         add_action(
@@ -584,13 +585,13 @@ class WoocommerceMercadoPago
 
                 $minilogo     = sprintf('%s%s', plugin_dir_url(__FILE__), '../assets/images/minilogo.png');
                 $translations = [
+                    'activate_woocommerce' => __('Activate WooCommerce', 'woocommerce-mercadopago'),
+                    'install_woocommerce'  => __('Install WooCommerce', 'woocommerce-mercadopago'),
+                    'see_woocommerce'      => __('See WooCommerce', 'woocommerce-mercadopago'),
                     'miss_woocommerce'     => sprintf(
                         __('The Mercado Pago module needs an active version of %s in order to work!', 'woocommerce-mercadopago'),
                         '<a target="_blank" href="https://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>'
                     ),
-                    'activate_woocommerce' => __('Activate WooCommerce', 'woocommerce-mercadopago'),
-                    'install_woocommerce'  => __('Install WooCommerce', 'woocommerce-mercadopago'),
-                    'see_woocommerce'      => __('See WooCommerce', 'woocommerce-mercadopago'),
                 ];
 
                 $activateLink = wp_nonce_url(

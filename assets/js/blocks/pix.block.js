@@ -1,16 +1,17 @@
 /* globals wc_mercadopago_pix_blocks_params */
 
-import { registerPaymentMethod } from "@woocommerce/blocks-registry";
-import { getSetting } from "@woocommerce/settings";
-import { decodeEntities } from "@wordpress/html-entities";
-import PixTemplate from "./components/PixTemplate";
-import TermsAndConditions from "./components/TermsAndConditions";
-import TestMode from "./components/TestMode";
+import { registerPaymentMethod } from '@woocommerce/blocks-registry';
+import { decodeEntities } from '@wordpress/html-entities';
+import { getSetting } from '@woocommerce/settings';
 
-const paymentMethodName = "woo-mercado-pago-pix";
+import TestMode from './components/TestMode';
+import PixTemplate from './components/PixTemplate';
+import TermsAndConditions from './components/TermsAndConditions';
+
+const paymentMethodName = 'woo-mercado-pago-pix';
 
 const settings = getSetting(`woo-mercado-pago-pix_data`, {});
-const defaultLabel = decodeEntities(settings.title) || "Checkout Pix";
+const defaultLabel = decodeEntities(settings.title) || 'Checkout Pix';
 
 const Label = (props) => {
   const { PaymentMethodLabel } = props.components;
@@ -35,12 +36,8 @@ const Content = () => {
     <div className="mp-checkout-container">
       <div className="mp-checkout-pix-container">
         <div className="mp-checkout-pix-content">
-          {test_mode ? (
-            <TestMode
-              title={test_mode_title}
-              description={test_mode_description}
-            />
-          ) : null}
+          {test_mode ? <TestMode title={test_mode_title} description={test_mode_description} /> : null}
+
           <PixTemplate
             title={pix_template_title}
             subtitle={pix_template_subtitle}
@@ -49,6 +46,7 @@ const Content = () => {
           />
         </div>
       </div>
+
       <TermsAndConditions
         description={terms_and_conditions_description}
         linkText={terms_and_conditions_link_text}

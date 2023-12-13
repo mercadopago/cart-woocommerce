@@ -86,10 +86,6 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
      */
     public function get_payment_method_script_handles(): array
     {
-        $componentsName   = 'wc_mercadopago_checkout_components';
-        $componentsStyle  = $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css');
-        $componentsScript = $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js');
-
         $scriptName = sprintf('wc_mercadopago_%s_blocks', $this->scriptName);
         $scriptPath = $this->mercadopago->url->getPluginFileUrl("build/$this->scriptName.block", '.js', true);
         $assetPath  = $this->mercadopago->url->getPluginFilePath("build/$this->scriptName.block.asset", '.php', true);
@@ -103,9 +99,8 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             $deps    = $asset['dependencies'] ?? [];
         }
 
-        $this->mercadopago->scripts->registerCheckoutStyle($componentsName, $componentsStyle);
-        $this->mercadopago->scripts->registerCheckoutScript($componentsName, $componentsScript);
-        $this->mercadopago->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps, []);
+        $this->gateway->registerCheckoutScripts();
+        $this->mercadopago->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps);
 
         return [$scriptName];
     }
@@ -117,13 +112,11 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
      */
     public function get_payment_method_data(): array
     {
-        $this->gateway->registerCheckoutScripts();
-        $variables  = $this->getScriptParams();
         return [
             'title'       => $this->get_setting('title'),
             'description' => $this->get_setting('description'),
             'supports'    => $this->get_supported_features(),
-            'params' => $variables,
+            'params'      => $this->getScriptParams(),
         ];
     }
 

@@ -1,13 +1,14 @@
 /* globals wc_mercadopago_basic_blocks_params */
 
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import { getSetting } from '@woocommerce/settings';
 import { decodeEntities } from '@wordpress/html-entities';
-import CheckoutBenefits from './components/CheckoutBenefits';
+import { getSetting } from '@woocommerce/settings';
+
+import TestMode from './components/TestMode';
 import ChoRedirectV2 from './components/ChoRedirectV2';
 import PaymentMethodsV2 from './components/PaymentMethodsV2';
+import CheckoutBenefits from './components/CheckoutBenefits';
 import TermsAndConditions from './components/TermsAndConditions';
-import TestMode from './components/TestMode';
 
 const paymentMethodName = 'woo-mercado-pago-basic';
 
@@ -51,25 +52,19 @@ const Content = () => {
               link-src={test_mode_link_src}
             />
           ) : null}
+
           <div class="mp-checkout-pro-checkout-benefits">
-            <CheckoutBenefits
-              title={checkout_benefits_title}
-              items={checkout_benefits_items}
-            />
+            <CheckoutBenefits title={checkout_benefits_title} items={checkout_benefits_items} />
           </div>
-          <PaymentMethodsV2
-              title={payment_methods_title}
-              methods={payment_methods_methods}
-          />
+
+          <PaymentMethodsV2 title={payment_methods_title} methods={payment_methods_methods} />
+
           {method === 'redirect' ? (
-            <ChoRedirectV2
-              text={checkout_redirect_text}
-              src={checkout_redirect_src}
-              alt={checkout_redirect_alt}
-            />
+            <ChoRedirectV2 text={checkout_redirect_text} src={checkout_redirect_src} alt={checkout_redirect_alt} />
           ) : null}
         </div>
       </div>
+
       <TermsAndConditions
         description={terms_and_conditions_description}
         linkText={terms_and_conditions_link_text}

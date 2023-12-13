@@ -1,17 +1,18 @@
 /* globals wc_mercadopago_credits_blocks_params */
 
-import { registerPaymentMethod } from "@woocommerce/blocks-registry";
-import { getSetting } from "@woocommerce/settings";
-import { decodeEntities } from "@wordpress/html-entities";
-import CheckoutBenefits from "./components/CheckoutBenefits";
-import ChoRedirectV2 from "./components/ChoRedirectV2";
-import TermsAndConditions from "./components/TermsAndConditions";
-import TestMode from "./components/TestMode";
+import { registerPaymentMethod } from '@woocommerce/blocks-registry';
+import { decodeEntities } from '@wordpress/html-entities';
+import { getSetting } from '@woocommerce/settings';
 
-const paymentMethodName = "woo-mercado-pago-credits";
+import TestMode from './components/TestMode';
+import ChoRedirectV2 from './components/ChoRedirectV2';
+import CheckoutBenefits from './components/CheckoutBenefits';
+import TermsAndConditions from './components/TermsAndConditions';
+
+const paymentMethodName = 'woo-mercado-pago-credits';
 
 const settings = getSetting(`woo-mercado-pago-credits_data`, {});
-const defaultLabel = decodeEntities(settings.title) || "Checkout Credits";
+const defaultLabel = decodeEntities(settings.title) || 'Checkout Credits';
 
 const Label = (props) => {
   const { PaymentMethodLabel } = props.components;
@@ -47,19 +48,18 @@ const Content = () => {
               linkSrc={test_mode_link_src}
             />
           ) : null}
+
           <CheckoutBenefits
             title={checkout_benefits_title}
             items={checkout_benefits_items}
             titleAlign="left"
             listMode="count"
           />
-          <ChoRedirectV2
-            text={checkout_redirect_text}
-            src={checkout_redirect_src}
-            alt={checkout_redirect_alt}
-          />
+
+          <ChoRedirectV2 text={checkout_redirect_text} src={checkout_redirect_src} alt={checkout_redirect_alt} />
         </div>
       </div>
+
       <TermsAndConditions
         description={terms_and_conditions_description}
         linkText={terms_and_conditions_link_text}
