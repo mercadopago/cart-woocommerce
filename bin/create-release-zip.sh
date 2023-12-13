@@ -15,12 +15,12 @@ if [ ! -d "$TMP_DIR" ]; then
 fi
 
 cd $BASE_DIR
-cp -r assets build i18n src templates woocommerce-mercadopago.php composer.json composer.lock $TMP_DIR
-cd $TMP_DIR/ && composer install --no-dev && composer dump-autoload -o
+cp -r assets build i18n src templates index.php readme.txt woocommerce-mercadopago.php composer.json composer.lock $TMP_DIR
+cd $TMP_DIR/ && composer install --no-dev && composer dump-autoload -o && rm composer.*
 cd $BASE_DIR
 mkdir -p $TMP_DIR/packages/sdk
 cp -r packages/sdk/src packages/sdk/composer.json packages/sdk/composer.lock $TMP_DIR/packages/sdk
-cd $TMP_DIR/packages/sdk && composer install --no-dev && composer dump-autoload -o
+cd $TMP_DIR/packages/sdk && composer install --no-dev && composer dump-autoload -o && rm composer.*
 
 if [ $? -ne 0 ]; then
 	echo "Error copying files"
