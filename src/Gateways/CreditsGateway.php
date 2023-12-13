@@ -82,9 +82,10 @@ class CreditsGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
-        if($this->addMissingCredentialsNoticeAsFormField()){
+        if ($this->addMissingCredentialsNoticeAsFormField()) {
             return;
         }
+
         parent::init_form_fields();
 
         $this->form_fields = array_merge($this->form_fields, [
@@ -466,11 +467,11 @@ class CreditsGateway extends AbstractGateway
     }
 
     /**
-	 * Enable Credits by default
-	 */
-	public function activeByDefault(): void
+     * Enable Credits by default
+     */
+    public function activeByDefault(): void
     {
         $this->mercadopago->options->setGatewayOption($this, 'enabled', 'yes');
         $this->mercadopago->options->setGatewayOption($this, 'credits_banner', 'yes');
-	}
+    }
 }

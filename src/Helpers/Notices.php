@@ -57,7 +57,7 @@ class Notices
     /**
      * @const
      */
-    const NONCE_ID = 'mp_notices_dismiss';
+    private const NONCE_ID = 'mp_notices_dismiss';
 
     /**
      * Notices constructor

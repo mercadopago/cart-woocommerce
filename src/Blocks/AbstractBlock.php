@@ -11,7 +11,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-abstract class AbstractBlock extends AbstractPaymentMethodType implements MercadoPagoPaymentBlockInterface {
+abstract class AbstractBlock extends AbstractPaymentMethodType implements MercadoPagoPaymentBlockInterface
+{
     /**
      * @var string
      */
@@ -105,7 +106,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
 
         $this->mercadopago->scripts->registerCheckoutStyle($componentsName, $componentsStyle);
         $this->mercadopago->scripts->registerCheckoutScript($componentsName, $componentsScript);
-        $this->mercadopago->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps, []);
+        $this->mercadopago->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps);
 
         return [$scriptName];
     }
@@ -118,12 +119,12 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     public function get_payment_method_data(): array
     {
         $this->gateway->registerCheckoutScripts();
-        $variables  = $this->getScriptParams();
+
         return [
             'title'       => $this->get_setting('title'),
             'description' => $this->get_setting('description'),
             'supports'    => $this->get_supported_features(),
-            'params' => $variables,
+            'params'      => $this->getScriptParams(),
         ];
     }
 

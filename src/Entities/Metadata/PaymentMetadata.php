@@ -117,5 +117,4 @@ class PaymentMetadata
      * @var PaymentMetadataCpp
      */
     public $cpp_extra;
-
 }

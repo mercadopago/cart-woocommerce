@@ -155,10 +155,12 @@ abstract class AbstractTransaction
         $customDomain        = $this->mercadopago->store->getCustomDomain();
         $customDomainOptions = $this->mercadopago->store->getCustomDomainOptions();
 
-        if (!empty($customDomain) && (
+        if (
+            !empty($customDomain) && (
             strrpos($customDomain, 'localhost') === false ||
             filter_var($customDomain, FILTER_VALIDATE_URL) === false
-        )) {
+            )
+        ) {
             if ($customDomainOptions === 'yes') {
                 return $customDomain . '?wc-api=' . $this->gateway::WEBHOOK_API_NAME . '&source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
             } else {
