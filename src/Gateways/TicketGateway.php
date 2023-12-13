@@ -271,7 +271,8 @@ class TicketGateway extends AbstractGateway
                         $response['status'] === 'pending' && (
                         $response['status_detail'] === 'pending_waiting_payment' ||
                         $response['status_detail'] ===  'pending_waiting_transfer'
-                    )) {
+                        )
+                    ) {
                         $this->mercadopago->cart->emptyCart();
 
                         if ($this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
