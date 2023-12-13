@@ -48,7 +48,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						helper-message="<?= esc_html($input_document_helper); ?>"
 						input-name='mercadopago_ticket[docNumber]'
 						select-name='mercadopago_ticket[docType]'
-                        select-id = 'docType'
+                        select-id='docType'
 						flag-error='mercadopago_ticket[docNumberError]'
 						documents='["CI","OTRO"]'
 						validate=true>
@@ -63,7 +63,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						helper-message="<?= esc_html($input_document_helper); ?>"
 						input-name='mercadopago_ticket[docNumber]'
 						select-name='mercadopago_ticket[docType]'
-                        select-id = 'docType'
+                        select-id='docType'
 						flag-error='mercadopago_ticket[docNumberError]'
 						documents='["CPF","CNPJ"]'
 						validate=true>
