@@ -22,7 +22,7 @@
  * @see \MercadoPago\Woocommerce\Gateways\TicketGateway
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
     exit;
 }
 ?>

@@ -8,7 +8,7 @@
  * @see \MercadoPago\Woocommerce\Hooks\Order
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <?php echo esc_html($card_title); ?>
     </p>
 
-    <div id="mp-payment-status-content" class="mp-status-sync-metabox-content" style="border-left: 4px solid <?php echo esc_html( $border_left_color ); ?>; min-height: 70px;">
+    <div id="mp-payment-status-content" class="mp-status-sync-metabox-content" style="border-left: 4px solid <?php echo esc_html($border_left_color); ?>; min-height: 70px;">
         <div class="mp-status-sync-metabox-icon" style="width: 0 !important; padding: 0 10px;">
             <img
                 alt="alert"

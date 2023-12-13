@@ -10,15 +10,15 @@
  * @package MercadoPago
  */
 
-if ( ! defined('ABSPATH') ) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
 ?>
 
 <div class="credits-info-example-text">
-    <label><?php echo esc_html( $title ); ?></label>
-    <p><?php echo esc_html( $subtitle ); ?></p>
+    <label><?php echo esc_html($title); ?></label>
+    <p><?php echo esc_html($subtitle); ?></p>
 </div>
 <div class="credits-info-example-container">
     <div class="credits-info-example-buttons-container">
@@ -29,7 +29,7 @@ if ( ! defined('ABSPATH') ) {
                     <img class="icon-image" alt="computer" src="<?php echo esc_html(plugins_url('../../assets/images/checkouts/credits/desktop-gray-icon.png', plugin_dir_path(__FILE__))); ?>">
                 </div>
                 <div>
-                    <p><?php echo esc_html( $desktop ); ?>
+                    <p><?php echo esc_html($desktop); ?>
                 </div>
             </div>
 
@@ -42,7 +42,7 @@ if ( ! defined('ABSPATH') ) {
                 </div>
 
                 <div>
-                    <p><?php echo esc_html( $cellphone ); ?></p>
+                    <p><?php echo esc_html($cellphone); ?></p>
                 </div>
             </div>
         </div>
@@ -52,7 +52,7 @@ if ( ! defined('ABSPATH') ) {
             <img id="gif-image" alt="example" src="<?php echo esc_html(plugins_url('../../assets/images/checkouts/credits/view_desktop.gif', plugin_dir_path(__FILE__))); ?>">
         </div>
         <p id="credits-info-example-gif-footer">
-        <?php echo esc_html( $footer ); ?>
+        <?php echo esc_html($footer); ?>
         </p>
     </div>
 </div>
