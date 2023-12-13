@@ -142,18 +142,8 @@ class Gateway
 
             global $mercadopago;
 
-            $ratio    = $mercadopago->currency->getRatio($gateway);
-            $currency = $mercadopago->country->getCountryConfigs()['currency'];
-
-            $cartSubtotal    = $mercadopago->woocommerce->cart->get_cart_contents_total();
-            $cartSubtotalTax = $mercadopago->woocommerce->cart->get_cart_contents_tax();
-            $subtotal        = $cartSubtotal + $cartSubtotalTax;
-
-            $discount = $subtotal * ($gateway->discount / 100);
-            $discount = Numbers::calculateByCurrency($currency, $discount, $ratio);
-
-            $commission = $subtotal * ($gateway->commission / 100);
-            $commission = Numbers::calculateByCurrency($currency, $commission, $ratio);
+            $discount   = $mercadopago->cart->calculateSubtotalWithDiscount($gateway);
+            $commission = $mercadopago->cart->calculateSubtotalWithCommission($gateway);
 
             $title .= $this->buildTitleWithDiscountAndCommission(
                 $discount,

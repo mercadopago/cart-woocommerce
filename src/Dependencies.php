@@ -7,6 +7,7 @@ use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\Cart;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Order\OrderBilling;
@@ -247,6 +248,11 @@ class Dependencies
     public $frontendEndpoints;
 
     /**
+     * @var Cart
+     */
+    public $cart;
+
+    /**
      * Dependencies constructor
      */
     public function __construct()
@@ -292,6 +298,7 @@ class Dependencies
         $this->settings          = $this->setSettings();
         $this->creditsEnabled    = $this->setCreditsEnabled();
         $this->frontendEndpoints = $this->setFrontendEndpoints();
+        $this->cart              = $this->setCart();
     }
 
     /**
@@ -548,5 +555,13 @@ class Dependencies
             $this->seller,
             $this->storeTranslations
         );
+    }
+
+    /**
+     * @return Cart
+     */
+    private function setCart(): Cart
+    {
+        return new Cart($this->country, $this->currency);
     }
 }

@@ -605,7 +605,7 @@ class CustomGateway extends AbstractGateway
             if (is_array($response) && array_key_exists('status', $response)) {
                 switch ($response['status']) {
                     case 'approved':
-                        $this->mercadopago->woocommerce->cart->empty_cart();
+                        $this->mercadopago->cart->emptyCart();
 
                         $urlReceived = $order->get_checkout_order_received_url();
                         $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
@@ -650,7 +650,7 @@ class CustomGateway extends AbstractGateway
                             return $return;
                         }
 
-                        $this->mercadopago->woocommerce->cart->empty_cart();
+                        $this->mercadopago->cart->emptyCart();
 
                         $checkoutType = $checkout['checkout_type'];
                         $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_see_order_form'];

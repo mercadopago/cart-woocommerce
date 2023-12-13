@@ -271,7 +271,7 @@ class TicketGateway extends AbstractGateway
                         $response['status_detail'] === 'pending_waiting_payment' ||
                         $response['status_detail'] ===  'pending_waiting_transfer'
                     )) {
-                        $this->mercadopago->woocommerce->cart->empty_cart();
+                        $this->mercadopago->cart->emptyCart();
 
                         if ($this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
                             wc_reduce_stock_levels($order_id);
@@ -303,7 +303,7 @@ class TicketGateway extends AbstractGateway
                         new \Exception('Invalid status or status_detail on ' . __METHOD__),
                         $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                         self::LOG_SOURCE,
-                        (array) $response
+                        $response
                     );
                 }
             }
