@@ -30,7 +30,7 @@ if (!defined('ABSPATH')) {
 <div class='mp-checkout-container'>
     <div class="mp-checkout-ticket-container">
         <div class="mp-checkout-ticket-content">
-            <?php if ($test_mode): ?>
+            <?php if ($test_mode) : ?>
                 <div class="mp-checkout-ticket-test-mode">
                     <test-mode
                         title="<?= esc_html($test_mode_title); ?>"
@@ -41,7 +41,7 @@ if (!defined('ABSPATH')) {
                 </div>
             <?php endif; ?>
 
-            <?php if ($site_id === 'MLU'): ?>
+            <?php if ($site_id === 'MLU') : ?>
                 <div class="mp-checkout-ticket-input-document">
                     <input-document
                         label-message="<?= esc_html($input_document_label); ?>"
@@ -56,7 +56,7 @@ if (!defined('ABSPATH')) {
                 </div>
             <?php endif; ?>
 
-            <?php if ($site_id === 'MLB'): ?>
+            <?php if ($site_id === 'MLB') : ?>
                 <div class="mp-checkout-ticket-input-document">
                     <input-document
                         label-message="<?= esc_html($input_document_label); ?> "

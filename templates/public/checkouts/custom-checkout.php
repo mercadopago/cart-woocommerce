@@ -54,7 +54,7 @@ if (!defined('ABSPATH')) {
 </div>
 <div class='mp-checkout-container'>
     <div class='mp-checkout-custom-container'>
-        <?php if ($test_mode): ?>
+        <?php if ($test_mode) : ?>
             <div class="mp-checkout-pro-test-mode">
                 <test-mode
                     title="<?= esc_html($test_mode_title) ?>"
@@ -66,7 +66,7 @@ if (!defined('ABSPATH')) {
             </div>
         <?php endif; ?>
 
-        <?php if ($wallet_button === 'yes'): ?>
+        <?php if ($wallet_button === 'yes') : ?>
             <div class='mp-wallet-button-container'>
                 <img src="<?= esc_url($wallet_button_image); ?>">
 
@@ -105,7 +105,7 @@ if (!defined('ABSPATH')) {
                 <div class='mp-checkout-custom-available-payments-content'>
                     <payment-methods methods='<?= esc_html($payment_methods_items); ?>'></payment-methods>
 
-                    <?php if ($site_id === 'MLA'): ?>
+                    <?php if ($site_id === 'MLA') : ?>
                         <span id="mp_promotion_link"> | </span>
                         <a
                             href='<?= esc_url($payment_methods_promotion_link); ?>'

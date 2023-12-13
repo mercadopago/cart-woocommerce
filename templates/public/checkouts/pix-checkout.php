@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 
 <div class='mp-checkout-container'>
     <div class="mp-checkout-pix-container">
-        <?php if ($test_mode): ?>
+        <?php if ($test_mode) : ?>
             <div class="mp-checkout-pix-test-mode">
                 <test-mode
                     title="<?= esc_html($test_mode_title) ?>"
