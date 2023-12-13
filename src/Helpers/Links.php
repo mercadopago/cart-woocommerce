@@ -29,13 +29,20 @@ final class Links
     private $country;
 
     /**
+     * @var Url
+     */
+    private $url;
+
+    /**
      * Links constructor
      *
      * @param Country $country
+     * @param Url $url
      */
-    public function __construct(Country $country)
+    public function __construct(Country $country, Url $url)
     {
         $this->country = $country;
+        $this->url     = $url;
     }
 
     /**
@@ -124,7 +131,7 @@ final class Links
     private function getStoreLinks(): array
     {
         return [
-            'store_visit' => home_url(),
+            'store_visit' => $this->url->getBaseUrl(),
         ];
     }
 

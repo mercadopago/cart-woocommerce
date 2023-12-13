@@ -231,15 +231,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public function payment_scripts(string $gatewaySection): void
     {
         if ($this->canAdminLoadScriptsAndStyles($gatewaySection)) {
-            $this->mercadopago->scripts->registerAdminScript(
-                'wc_mercadopago_admin_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
-            );
-
-            $this->mercadopago->scripts->registerAdminStyle(
-                'wc_mercadopago_admin_components',
-                $this->mercadopago->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
-            );
+            $this->registerAdminScripts();
         }
 
         if ($this->canCheckoutLoadScriptsAndStyles()) {
@@ -248,9 +240,25 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
-     * Register checkout scripts
+     * Register admin scripts
      *
-     * @param string $gatewaySection
+     * @return void
+     */
+    public function registerAdminScripts()
+    {
+        $this->mercadopago->scripts->registerAdminScript(
+            'wc_mercadopago_admin_components',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
+        );
+
+        $this->mercadopago->scripts->registerAdminStyle(
+            'wc_mercadopago_admin_components',
+            $this->mercadopago->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
+        );
+    }
+
+    /**
+     * Register checkout scripts
      *
      * @return void
      */

@@ -96,6 +96,7 @@ class PixGateway extends AbstractGateway
         if ($this->addMissingCredentialsNoticeAsFormField()) {
             return;
         }
+
         parent::init_form_fields();
 
         if (

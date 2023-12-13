@@ -219,11 +219,11 @@ final class Url
     /**
      * Validate $_GET var
      *
-     * @param string $expectedQueryVar
+     * @param string $expectedVar
      *
      * @return bool
      */
-    public function validateGetVar($expectedVar): bool
+    public function validateGetVar(string $expectedVar): bool
     {
         return isset($_GET[$expectedVar]);
     }
