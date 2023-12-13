@@ -5,22 +5,22 @@ namespace MercadoPago\PP\Sdk\Entity\Payment;
 use MercadoPago\PP\Sdk\Common\AbstractEntity;
 
 /**
- * Class Phone
+ * Class Tracking
  *
- * @property string $number
- * @property string $area_code
+ * @property string $code
+ * @property string $status
  *
  * @package MercadoPago\PP\Sdk\Entity\Payment
  */
-class Phone extends AbstractEntity
+class Tracking extends AbstractEntity
 {
     /**
      * @var string
      */
-    protected $number;
+    protected $code;
 
-    /**
+     /**
      * @var string
      */
-    protected $area_code;
+    protected $status;
 }

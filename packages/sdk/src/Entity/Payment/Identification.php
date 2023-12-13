@@ -5,22 +5,22 @@ namespace MercadoPago\PP\Sdk\Entity\Payment;
 use MercadoPago\PP\Sdk\Common\AbstractEntity;
 
 /**
- * Class AdditionalInfoPayerAddress
+ * Class Identification
  *
- * @property string $street_name
- * @property string $zip_code
+ * @property string $type
+ * @property string $number
  *
  * @package MercadoPago\PP\Sdk\Entity\Payment
  */
-class AdditionalInfoPayerAddress extends AbstractEntity
+class Identification extends AbstractEntity
 {
     /**
      * @var string
      */
-    protected $zip_code;
+    protected $type;
 
     /**
      * @var string
      */
-    protected $street_name;
+    protected $number;
 }

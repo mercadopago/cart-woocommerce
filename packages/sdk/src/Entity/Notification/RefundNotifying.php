@@ -5,16 +5,15 @@ namespace MercadoPago\PP\Sdk\Entity\Notification;
 use MercadoPago\PP\Sdk\Common\AbstractEntity;
 
 /**
- * Class Refund
+ * Class RefundNotifying
  *
  * @property int $id
- * @property string $status
  * @property bool $notifying
- * @property array $metadata
- *
+ * @property float $amount
+
  * @package MercadoPago\PP\Sdk\Entity\Notification
  */
-class Refund extends AbstractEntity
+class RefundNotifying extends AbstractEntity
 {
     /**
      * @var int
@@ -22,17 +21,12 @@ class Refund extends AbstractEntity
     protected $id;
 
     /**
-     * @var string
-     */
-    protected $status;
-
-    /**
      * @var bool
      */
     protected $notifying;
 
     /**
-     * @var array
+     * @var float
      */
-    protected $metadata;
+    protected $amount;
 }

@@ -8,26 +8,16 @@ use MercadoPago\PP\Sdk\Common\Manager;
 /**
  * Class PaymentMethod
  *
- * @property int $default_installments
- * @property string $default_payment_method_id
  * @property ExcludedPaymentMethodList $excluded_payment_methods
  * @property ExcludedPaymentTypeList $excluded_payment_types
+ * @property string $default_payment_method_id
+ * @property int $default_installments
  * @property int $installments
  *
  * @package MercadoPago\PP\Sdk\Entity\Preference
  */
 class PaymentMethod extends AbstractEntity
 {
-    /**
-     * @var int
-     */
-    protected $default_installments;
-
-    /**
-     * @var string
-     */
-    protected $default_payment_method_id;
-
     /**
      * @var ExcludedPaymentMethodList
      */
@@ -37,6 +27,16 @@ class PaymentMethod extends AbstractEntity
      * @var ExcludedPaymentTypeList
      */
     protected $excluded_payment_types;
+
+    /**
+     * @var string
+     */
+    protected $default_payment_method_id;
+
+    /**
+     * @var int
+     */
+    protected $default_installments;
 
     /**
      * @var int

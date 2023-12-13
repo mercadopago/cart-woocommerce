@@ -7,8 +7,8 @@ use MercadoPago\PP\Sdk\Common\AbstractEntity;
 /**
  * Class PayerIdentification
  *
- * @property string $number
  * @property string $type
+ * @property string $number
  *
  * @package MercadoPago\PP\Sdk\Entity\Preference
  */
@@ -17,10 +17,10 @@ class PayerIdentification extends AbstractEntity
     /**
      * @var string
      */
-    protected $number;
+    protected $type;
 
     /**
      * @var string
      */
-    protected $type;
+    protected $number;
 }

@@ -23,4 +23,18 @@ class RefundList extends AbstractCollection
         $refund->setEntity($entity);
         parent::addEntity($refund, $key);
     }
+
+    /**
+     * Add multiple entities to collection
+     *
+     * @param $entities
+     */
+    public function setEntity($entities)
+    {
+        if (is_array($entities) || is_object($entities)) {
+            foreach ($entities as $value) {
+                $this->add($value, $value["id"]);
+            }
+        }
+    }
 }
