@@ -296,11 +296,11 @@ if (!defined('ABSPATH')) {
 </div>
 
 <script type="text/javascript">
-	function submitWalletButton(event) {
-		event.preventDefault();
-		jQuery('#mp_checkout_type').val('wallet_button');
-		jQuery('form.checkout, form#order_review').submit();
-	}
+    function submitWalletButton(event) {
+        event.preventDefault();
+        jQuery('#mp_checkout_type').val('wallet_button');
+        jQuery('form.checkout, form#order_review').submit();
+    }
 
     var availablePayment = document.getElementsByClassName('mp-checkout-custom-available-payments')[0];
     var collapsible = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-header')[0];
@@ -310,15 +310,15 @@ if (!defined('ABSPATH')) {
         const content = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-content')[0];
 
         if (content.style.maxHeight) {
-			content.style.maxHeight = null;
-			content.style.padding = "0px";
-			icon.src = "<?= esc_url($available_payments_chevron_down); ?>";
-		} else {
-			let hg = content.scrollHeight + 15 + "px";
-			content.style.setProperty("max-height", hg, "important");
-			content.style.setProperty("padding", "24px 0px 0px", "important");
-			icon.src = "<?= esc_url($available_payments_chevron_up); ?>";
-		}
-	});
+            content.style.maxHeight = null;
+            content.style.padding = "0px";
+            icon.src = "<?= esc_url($available_payments_chevron_down); ?>";
+        } else {
+            let hg = content.scrollHeight + 15 + "px";
+            content.style.setProperty("max-height", hg, "important");
+            content.style.setProperty("padding", "24px 0px 0px", "important");
+            icon.src = "<?= esc_url($available_payments_chevron_up); ?>";
+        }
+    });
 </script>
 
