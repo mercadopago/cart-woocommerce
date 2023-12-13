@@ -196,7 +196,8 @@ class PixGateway extends AbstractGateway
                     $response['status_detail'] === 'pending_waiting_transfer'
                     )
                 ) {
-                    $this->mercadopago->woocommerce->cart->empty_cart();
+                    $this->mercadopago->cart->emptyCart();
+
                     $this->mercadopago->order->setPixMetadata($this, $order, $response);
                     $this->mercadopago->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
 

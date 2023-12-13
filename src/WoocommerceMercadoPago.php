@@ -11,6 +11,7 @@ use MercadoPago\Woocommerce\Blocks\PixBlock;
 use MercadoPago\Woocommerce\Blocks\TicketBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\Cart;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Order\OrderBilling;
@@ -277,6 +278,11 @@ class WoocommerceMercadoPago
     public $creditsEnabled;
 
     /**
+     * @var Cart
+     */
+    public $cart;
+
+    /**
      * WoocommerceMercadoPago constructor
      */
     public function __construct()
@@ -438,6 +444,7 @@ class WoocommerceMercadoPago
         $this->nonce          = $dependencies->nonce;
         $this->images         = $dependencies->images;
         $this->session        = $dependencies->session;
+        $this->cart           = $dependencies->cart;
 
         // Hooks
         $this->admin     = $dependencies->admin;

@@ -122,7 +122,6 @@ class FrontendEndpoints
         $order = wc_get_order($orderId);
 
         try {
-
             $this->session->deleteSession('mp_3ds_url');
             $this->session->deleteSession('mp_3ds_creq');
             $this->session->deleteSession('mp_order_id');
