@@ -116,16 +116,17 @@ class FrontendEndpoints
      */
     public function mercadopagoRedirectAfter3DSChallenge(): void
     {
+        $orderId   = $this->session->getSession('mp_order_id');
+        $paymentId = $this->session->getSession('mp_payment_id');
+
+        $order = wc_get_order($orderId);
+
         try {
-            $orderId   = $this->session->getSession('mp_order_id');
-            $paymentId = $this->session->getSession('mp_payment_id');
 
             $this->session->deleteSession('mp_3ds_url');
             $this->session->deleteSession('mp_3ds_creq');
             $this->session->deleteSession('mp_order_id');
             $this->session->deleteSession('mp_payment_id');
-
-            $order = wc_get_order($orderId);
 
             $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
             $payment  = $this->requester->get("/v1/payments/$paymentId", $headers)->getData();
@@ -146,11 +147,11 @@ class FrontendEndpoints
             }
         } catch (\Exception $e) {
             $this->logs->file->error('3DS session error: ' . $e->getMessage(), __CLASS__);
-        }
 
-        wp_send_json_error([
-            'result'   => 'failed',
-            'redirect' => $order->get_checkout_payment_url(true),
-        ]);
+            wp_send_json_error([
+                'result' => 'failed',
+                'redirect' => $order->get_checkout_payment_url(true),
+            ]);
+        }
     }
 }
