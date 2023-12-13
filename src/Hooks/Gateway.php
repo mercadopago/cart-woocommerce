@@ -60,12 +60,12 @@ class Gateway
      * @param Url $url
      */
     public function __construct(
-        Options           $options,
-        Template          $template,
-        Store             $store,
-        Checkout          $checkout,
+        Options $options,
+        Template $template,
+        Store $store,
+        Checkout $checkout,
         StoreTranslations $translations,
-        Url               $url
+        Url $url
     ) {
         $this->options      = $options;
         $this->template     = $template;

@@ -27,7 +27,7 @@ class Plugin
     /**
      * @const
      */
-    const ENABLE_CREDITS_ACTION     = 'mp_enable_credits_action';
+    public const ENABLE_CREDITS_ACTION = 'mp_enable_credits_action';
 
     /**
      * Register to plugin update event

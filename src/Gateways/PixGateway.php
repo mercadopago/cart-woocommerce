@@ -190,7 +190,8 @@ class PixGateway extends AbstractGateway
             if (is_array($response) && array_key_exists('status', $response)) {
                 $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
 
-                if ($response['status'] === 'pending' && (
+                if (
+                    $response['status'] === 'pending' && (
                     $response['status_detail'] === 'pending_waiting_payment' ||
                     $response['status_detail'] === 'pending_waiting_transfer'
                 )) {

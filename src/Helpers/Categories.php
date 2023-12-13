@@ -10,7 +10,7 @@ final class Categories
 {
     /**
      * Get all store categories
-     * 
+     *
      * @return array
      */
     public static function getCategories(): array
