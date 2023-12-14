@@ -23,18 +23,6 @@ class OrderMeta
     }
 
     /**
-     * Get all metadata
-     *
-     * @param \WC_Order $order
-     *
-     * @return array
-     */
-    public function getAll(\WC_Order $order): array
-    {
-        return $order->get_meta_data();
-    }
-
-    /**
      * Add metadata
      *
      * @param \WC_Order $order

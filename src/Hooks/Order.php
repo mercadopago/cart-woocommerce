@@ -361,48 +361,6 @@ class Order
     }
 
     /**
-     * Register order actions
-     *
-     * @param array $action
-     *
-     * @return void
-     */
-    public function registerOrderActions(array $action): void
-    {
-        add_action('woocommerce_order_actions', function ($actions) use ($action) {
-            $actions[] = $action;
-            return $actions;
-        });
-    }
-
-    /**
-     * Register order status transition
-     *
-     * @param string $toStatus
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerOrderStatusTransitionTo(string $toStatus, $callback): void
-    {
-        add_action('woocommerce_order_status_' . $toStatus, $callback);
-    }
-
-    /**
-     * Register order status transition
-     *
-     * @param string $fromStatus
-     * @param string $toStatus
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerOrderStatusTransitionFromTo(string $fromStatus, string $toStatus, $callback): void
-    {
-        add_action('woocommerce_order_status_' . $fromStatus . '_to_' . $toStatus, $callback);
-    }
-
-    /**
      * Register order details after order table
      *
      * @param mixed $callback
@@ -436,29 +394,6 @@ class Order
     public function registerAdminOrderTotalsAfterTotal($callback): void
     {
         add_action('woocommerce_admin_order_totals_after_total', $callback);
-    }
-
-    /**
-     * Register total line after WooCommerce order totals template
-     *
-     * @param string $tip
-     * @param string $title
-     * @param string $value
-     *
-     * @return void
-     */
-    public function registerAdminOrderTotalsAfterTotalTemplate(string $tip, string $title, string $value): void
-    {
-        add_action('woocommerce_admin_order_totals_after_total', function ($orderId) use ($tip, $title, $value) {
-            $this->template->getWoocommerceTemplate(
-                'admin/order/generic-note.php',
-                [
-                    'tip'   => $tip,
-                    'title' => $title,
-                    'value' => $value
-                ]
-            );
-        });
     }
 
     /**

@@ -89,7 +89,7 @@ class OrderMetadata
     /**
      * Metadata constructor
      *
-     * @param OrderMeta orderMeta
+     * @param OrderMeta $orderMeta
      */
     public function __construct(OrderMeta $orderMeta)
     {
