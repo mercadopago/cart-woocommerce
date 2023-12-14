@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 
 <div class='mp-checkout-container'>
     <div class="mp-checkout-pix-container">
-        <?php if ($test_mode): ?>
+        <?php if ($test_mode) : ?>
             <div class="mp-checkout-pix-test-mode">
                 <test-mode
                     title="<?= esc_html($test_mode_title) ?>"
@@ -50,9 +50,9 @@ if (!defined('ABSPATH')) {
 </div>
 
 <script type="text/javascript">
-	if (document.getElementById("payment_method_woo-mercado-pago-custom")) {
-		jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-pix", function() {
+    if (document.getElementById("payment_method_woo-mercado-pago-custom")) {
+        jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-pix", function() {
             cardFormLoad();
         });
-	}
+    }
 </script>
