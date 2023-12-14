@@ -193,11 +193,15 @@ class AdminTranslations
     private function setOrderSettingsTranslations(): void
     {
         $this->order = [
-            'cancel_order'                => __('Cancel order', 'woocommerce-mercadopago'),
-            'order_note_commission_title' => __('Mercado Pago commission:', 'woocommerce-mercadopago'),
-            'order_note_commission_tip'   => __('Represents the commission configured on plugin settings.', 'woocommerce-mercadopago'),
-            'order_note_discount_title'   => __('Mercado Pago discount:', 'woocommerce-mercadopago'),
-            'order_note_discount_tip'     => __('Represents the discount configured on plugin settings.', 'woocommerce-mercadopago'),
+            'cancel_order'                       => __('Cancel order', 'woocommerce-mercadopago'),
+            'order_note_commission_title'        => __('Mercado Pago commission:', 'woocommerce-mercadopago'),
+            'order_note_commission_tip'          => __('Represents the commission configured on plugin settings.', 'woocommerce-mercadopago'),
+            'order_note_discount_title'          => __('Mercado Pago discount:', 'woocommerce-mercadopago'),
+            'order_note_discount_tip'            => __('Represents the discount configured on plugin settings.', 'woocommerce-mercadopago'),
+            'order_note_installments_fee_tip'    => __('Represents the installment fee charged by Mercado Pago.', 'woocommerce-mercadopago'),
+            'order_note_installments_fee_title'  => __('Mercado Pago Installment Fee:', 'woocommerce-mercadopago'),
+            'order_note_total_paid_amount_tip'   => __('Represents the total purchase plus the installment fee charged by Mercado Pago.', 'woocommerce-mercadopago'),
+            'order_note_total_paid_amount_title' => __('Mercado Pago Total:', 'woocommerce-mercadopago'),
         ];
     }
 

@@ -481,8 +481,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $usedGateway = $this->mercadopago->orderMetadata->getUsedGatewayData($order);
 
         if ($gateway::ID === $usedGateway) {
-            $discount   = explode('=', $this->mercadopago->orderMetadata->getDiscountData($order))[0];
-            $commission = explode('=', $this->mercadopago->orderMetadata->getCommissionData($order))[0];
+            $discount   = explode('=', $this->mercadopago->orderMetadata->getDiscountData($order))[1] ?? '';
+            $commission = explode('=', $this->mercadopago->orderMetadata->getCommissionData($order))[1] ?? '';
 
             if ($commission) {
                 $this->mercadopago->template->getWoocommerceTemplate(

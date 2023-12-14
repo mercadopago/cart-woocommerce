@@ -59,10 +59,12 @@ class CustomGateway extends AbstractGateway
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->gateway->registerGatewayTitle($this);
-        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderInstallmentsRateDetails']);
 
+        $this->mercadopago->gateway->registerThankYouPage($this->id, [$this, 'renderInstallmentsRateDetails']);
         $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'renderInstallmentsRateDetails']);
+
         $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
+        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerInstallmentsFeeOnAdminOrder']);
 
         $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
@@ -509,12 +511,15 @@ class CustomGateway extends AbstractGateway
     /**
      * Render order form
      *
-     * @param $order_id
+     * @param $orderId
+     *
+     * @return void
+     * @throws \Exception
      */
-    public function renderOrderForm($order_id): void
+    public function renderOrderForm($orderId): void
     {
         if ($this->mercadopago->url->validateQueryVar('wallet_button')) {
-            $order             = wc_get_order($order_id);
+            $order             = wc_get_order($orderId);
             $this->transaction = new WalletButtonTransaction($this, $order);
             $preference        = $this->transaction->createPreference();
 
@@ -729,5 +734,46 @@ class CustomGateway extends AbstractGateway
     public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
     {
         parent::registerCommissionAndDiscount($this, $orderId);
+    }
+
+    /**
+     * Register installments fee on admin order totals
+     *
+     * @param int $orderId
+     *
+     * @return void
+     */
+    public function registerInstallmentsFeeOnAdminOrder(int $orderId): void
+    {
+        $order = wc_get_order($orderId);
+
+        $currency    = $this->mercadopago->currency->getCurrencySymbol();
+        $usedGateway = $this->mercadopago->orderMetadata->getUsedGatewayData($order);
+
+        if ($this::ID === $usedGateway) {
+            $totalPaidAmount       = Numbers::format($this->mercadopago->orderMetadata->getTotalPaidAmountMeta($order));
+            $transactionAmount     = Numbers::format($this->mercadopago->orderMetadata->getTransactionAmountMeta($order));
+            $installmentsFeeAmount = $totalPaidAmount - $transactionAmount;
+
+            if ($installmentsFeeAmount > 0) {
+                $this->mercadopago->template->getWoocommerceTemplate(
+                    'admin/order/generic-note.php',
+                    [
+                        'tip'   => $this->mercadopago->adminTranslations->order['order_note_installments_fee_tip'],
+                        'title' => $this->mercadopago->adminTranslations->order['order_note_installments_fee_title'],
+                        'value' => Numbers::formatWithCurrencySymbol($currency, $installmentsFeeAmount),
+                    ]
+                );
+
+                $this->mercadopago->template->getWoocommerceTemplate(
+                    'admin/order/generic-note.php',
+                    [
+                        'tip'   => $this->mercadopago->adminTranslations->order['order_note_total_paid_amount_tip'],
+                        'title' => $this->mercadopago->adminTranslations->order['order_note_total_paid_amount_title'],
+                        'value' => Numbers::formatWithCurrencySymbol($currency, $totalPaidAmount),
+                    ]
+                );
+            }
+        }
     }
 }
