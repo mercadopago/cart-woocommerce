@@ -46,30 +46,39 @@ class FrontendEndpoints
     private $threeDsTranslations;
 
     /**
-     * 
+     *
      */
-    public function __construct(Endpoints $endpoints, Logs $logs, Requester $requester, Session $session, Seller $seller, StoreTranslations $storeTranslations)
-    {
-        $this->endpoints = $endpoints;
-        $this->logs      = $logs;
-        $this->requester = $requester;
-        $this->session   = $session;
-        $this->seller    = $seller;
-        $this->registerFrontendEndpoints();
+    public function __construct(
+        Endpoints $endpoints,
+        Logs $logs,
+        Requester $requester,
+        Session $session,
+        Seller $seller,
+        StoreTranslations $storeTranslations
+    ) {
+        $this->endpoints           = $endpoints;
+        $this->logs                = $logs;
+        $this->requester           = $requester;
+        $this->session             = $session;
+        $this->seller              = $seller;
         $this->threeDsTranslations = $storeTranslations->threeDsTranslations;
+
+        $this->registerFrontendEndpoints();
     }
 
     /**
-     * 
+     *
      */
-    public function registerFrontendEndpoints() {
+    public function registerFrontendEndpoints()
+    {
         $this->registerCustomCheckoutEndpoints();
     }
 
     /**
-     * 
+     *
      */
-    public function registerCustomCheckoutEndpoints() {
+    public function registerCustomCheckoutEndpoints()
+    {
         $this->endpoints->registerWCAjaxEndpoint('mp_get_3ds_from_session', [$this, 'mercadopagoGet3DSFromSession']);
         $this->endpoints->registerWCAjaxEndpoint('mp_redirect_after_3ds_challenge', [$this, 'mercadopagoRedirectAfter3DSChallenge']);
     }
@@ -107,17 +116,16 @@ class FrontendEndpoints
      */
     public function mercadopagoRedirectAfter3DSChallenge(): void
     {
-        try {
-            
-            $orderId   = $this->session->getSession('mp_order_id');
-            $paymentId = $this->session->getSession('mp_payment_id');
+        $orderId   = $this->session->getSession('mp_order_id');
+        $paymentId = $this->session->getSession('mp_payment_id');
 
+        $order = wc_get_order($orderId);
+
+        try {
             $this->session->deleteSession('mp_3ds_url');
             $this->session->deleteSession('mp_3ds_creq');
             $this->session->deleteSession('mp_order_id');
             $this->session->deleteSession('mp_payment_id');
-
-            $order = wc_get_order($orderId);
 
             $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
             $payment  = $this->requester->get("/v1/payments/$paymentId", $headers)->getData();
@@ -136,13 +144,13 @@ class FrontendEndpoints
                     ],
                 ]);
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->logs->file->error('3DS session error: ' . $e->getMessage(), __CLASS__);
-        }
 
-        wp_send_json_error([
-            'result'   => 'failed',
-            'redirect' => $order->get_checkout_payment_url(true),
-        ]);
+            wp_send_json_error([
+                'result' => 'failed',
+                'redirect' => $order->get_checkout_payment_url(true),
+            ]);
+        }
     }
 }

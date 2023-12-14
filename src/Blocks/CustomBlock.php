@@ -6,7 +6,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class CustomBlock extends AbstractBlock {
+class CustomBlock extends AbstractBlock
+{
     /**
      * @var string
      */

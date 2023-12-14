@@ -11,14 +11,13 @@ if (!defined('ABSPATH')) {
 
 class NotificationFactory
 {
-
-	/**
-	 * Create a notification handler based on $data
-	 *
-	 * @param array $data data from $_GET
-	 *
-	 * @return void
-	 */
+    /**
+     * Create a notification handler based on $data
+     *
+     * @param array $data data from $_GET
+     *
+     * @return void
+     */
     public function createNotificationHandler(MercadoPagoGatewayInterface $gateway, array $data): NotificationInterface
     {
         global $mercadopago;

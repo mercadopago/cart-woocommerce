@@ -16,7 +16,7 @@ class TicketGateway extends AbstractGateway
      *
      * @const
      */
-    const ID = 'woo-mercado-pago-ticket';
+    public const ID = 'woo-mercado-pago-ticket';
 
     /**
      * @const
@@ -268,11 +268,13 @@ class TicketGateway extends AbstractGateway
                 if (is_array($response) && array_key_exists('status', $response)) {
                     $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
 
-                    if ($response['status'] === 'pending' && (
+                    if (
+                        $response['status'] === 'pending' && (
                         $response['status_detail'] === 'pending_waiting_payment' ||
                         $response['status_detail'] ===  'pending_waiting_transfer'
-                    )) {
-                        $this->mercadopago->woocommerce->cart->empty_cart();
+                        )
+                    ) {
+                        $this->mercadopago->cart->emptyCart();
 
                         if ($this->mercadopago->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
                             wc_reduce_stock_levels($order_id);
@@ -452,9 +454,11 @@ class TicketGateway extends AbstractGateway
         ];
     }
 
-    public function validateRulesForSiteId($checkout) {
+    public function validateRulesForSiteId($checkout)
+    {
 
-        if ( // Rules for ticket MLB
+        if (
+            // Rules for ticket MLB
             ($checkout['site_id'] === 'MLB' && (empty($checkout['docNumber']) || !isset($checkout['docNumber']) ))
         ) {
             return $this->processReturnFail(
@@ -464,11 +468,12 @@ class TicketGateway extends AbstractGateway
             );
         }
 
-        if ( // Rules for efective MLU
+        if (
+            // Rules for efective MLU
             ($checkout['site_id'] === 'MLU' && (
                 (empty($checkout['docNumber']) || !isset($checkout['docNumber']))
                 || (empty($checkout['docType']) || !isset($checkout['docType']))
-                ))
+            ))
         ) {
             return $this->processReturnFail(
                 new \Exception('Document is required on ' . __METHOD__),

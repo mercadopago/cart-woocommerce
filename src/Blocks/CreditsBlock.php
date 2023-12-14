@@ -36,5 +36,4 @@ class CreditsBlock extends AbstractBlock
     {
         return $this->gateway->getPaymentFieldsParams();
     }
-
 }

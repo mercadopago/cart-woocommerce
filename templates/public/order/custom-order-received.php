@@ -20,24 +20,24 @@ if (!defined('ABSPATH')) {
 ?>
 
 <div>
-	<table style="margin-top:-24px; margin-bottom:60px;">
-		<tfoot>
-			<tr>
-				<th style="width: 55.5%;">
+    <table style="margin-top:-24px; margin-bottom:60px;">
+        <tfoot>
+            <tr>
+                <th style="width: 55.5%;">
                     <?= esc_html($title_installment_cost); ?>
                 </th>
 
-				<td class="order_details">
+                <td class="order_details">
                     <?= esc_html($total_diff_cost); ?>
                 </td>
-			</tr>
+            </tr>
 
-			<tr>
-				<th style="width: 55.5%;">
+            <tr>
+                <th style="width: 55.5%;">
                     <?= esc_html($title_installment_total); ?>
                 </th>
 
-				<td class="order_details">
+                <td class="order_details">
                     <?= esc_html($total_paid_amount); ?>
                     (
                         <?= esc_html($installments); ?>
@@ -45,7 +45,7 @@ if (!defined('ABSPATH')) {
                         <?= esc_html($installment_amount); ?>
                     )
                 </td>
-			</tr>
-		</tfoot>
-	</table>
+            </tr>
+        </tfoot>
+    </table>
 </div>

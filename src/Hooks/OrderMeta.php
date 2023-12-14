@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) {
 
 class OrderMeta
 {
-
     /**
      * Get meta
      *

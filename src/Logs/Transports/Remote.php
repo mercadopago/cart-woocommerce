@@ -35,7 +35,7 @@ class Remote implements LogInterface
 
     /**
      * Remote Logs constructor
-     * 
+     *
      * @param Store store
      * @param Requester $requester
      */
@@ -130,7 +130,7 @@ class Remote implements LogInterface
      */
     private function save(string $level, string $message, string $source, $context = []): void
     {
-        if (!$this->debugMode) {
+        if (!$this->debugMode && $level != LogLevels::ERROR) {
             return;
         }
 

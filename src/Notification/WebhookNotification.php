@@ -22,7 +22,7 @@ class WebhookNotification extends AbstractNotification
 
     /**
      * WebhookNotification constructor
-     * 
+     *
      * @param MercadoPagoGatewayInterface $gateway
      * @param Logs $logs
      * @param OrderStatus $orderStatus
@@ -55,20 +55,20 @@ class WebhookNotification extends AbstractNotification
     {
         parent::handleReceivedNotification($data);
 
-		if (!isset($data['data_id']) || !isset($data['type'])) {
+        if (!isset($data['data_id']) || !isset($data['type'])) {
             $message = 'data_id or type not set';
-			$this->logs->file->error($message, __CLASS__, $data);
+            $this->logs->file->error($message, __CLASS__, $data);
 
-			if (!isset($data['id']) || !isset($data['topic'])) {
+            if (!isset($data['id']) || !isset($data['topic'])) {
                 $message = 'Mercado Pago request failure';
-				$this->logs->file->error($message, __CLASS__, $data);
-				$this->setResponse(422, $message);
-			}
-		}
+                $this->logs->file->error($message, __CLASS__, $data);
+                $this->setResponse(422, $message);
+            }
+        }
 
         if ($data['type'] !== 'payment') {
             $message = 'Mercado Pago Invalid Requisition';
-            $this->setResponse( 422, $message);
+            $this->setResponse(422, $message);
         }
 
         $payment_id = preg_replace('/\D/', '', $data['data_id']);
@@ -85,17 +85,17 @@ class WebhookNotification extends AbstractNotification
         $this->handleSuccessfulRequest($response->getData());
     }
 
-	/**
-	 * Process success response
-	 *
-	 * @param mixed $data
-	 *
-	 * @return void
-	 */
-	public function handleSuccessfulRequest($data): void
-	{
-		try {
-			$order  = parent::handleSuccessfulRequest($data);
+    /**
+     * Process success response
+     *
+     * @param mixed $data
+     *
+     * @return void
+     */
+    public function handleSuccessfulRequest($data): void
+    {
+        try {
+            $order  = parent::handleSuccessfulRequest($data);
             $oldOrderStatus  = $order->get_status();
             $processedStatus = $this->getProcessedStatus($order, $data);
 
@@ -109,13 +109,13 @@ class WebhookNotification extends AbstractNotification
             );
 
 
-			$this->processStatus($processedStatus, $order, $data);
+            $this->processStatus($processedStatus, $order, $data);
             $this->setResponse(200, 'Webhook Notification Successfully');
-		} catch (\Exception $e) {
+        } catch (\Exception $e) {
             $this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __CLASS__);
-		}
-	}
+            $this->logs->file->error($e->getMessage(), __CLASS__);
+        }
+    }
 
     /**
      * Process status
@@ -125,16 +125,16 @@ class WebhookNotification extends AbstractNotification
      *
      * @return string
      */
-	public function getProcessedStatus(\WC_Order $order, $data): string
+    public function getProcessedStatus(\WC_Order $order, $data): string
     {
-		$status        = $data['status'] ?? 'pending';
-		$total_paid    = $data['transaction_details']['total_paid_amount'] ?? 0.00;
-		$total_refund  = $data['transaction_amount_refunded'] ?? 0.00;
-		$coupon_amount = $data['coupon_amount'] ?? 0.00;
+        $status        = $data['status'] ?? 'pending';
+        $total_paid    = $data['transaction_details']['total_paid_amount'] ?? 0.00;
+        $total_refund  = $data['transaction_amount_refunded'] ?? 0.00;
+        $coupon_amount = $data['coupon_amount'] ?? 0.00;
 
-		$this->updateMeta( $order, '_used_gateway', get_class( $this ) );
+        $this->updateMeta($order, '_used_gateway', get_class($this));
 
-        if (!empty( $data['payer']['email'])) {
+        if (!empty($data['payer']['email'])) {
             $this->updateMeta($order, 'Buyer email', $data['payer']['email']);
         }
 
@@ -142,14 +142,14 @@ class WebhookNotification extends AbstractNotification
             $this->updateMeta($order, 'Payment type', $data['payment_type_id']);
         }
 
-        if (!empty( $data['payment_method_id'])) {
+        if (!empty($data['payment_method_id'])) {
             $this->updateMeta($order, 'Payment method', $data['payment_method_id']);
         }
 
         $this->updateMeta(
             $order,
             'Mercado Pago - Payment ' . $data['id'],
-            '[Date ' . gmdate( 'Y-m-d H:i:s', strtotime( $data['date_created'] ) ) .
+            '[Date ' . gmdate('Y-m-d H:i:s', strtotime($data['date_created'])) .
                 ']/[Amount ' . $data['transaction_amount'] .
                 ']/[Paid ' . $total_paid .
                 ']/[Coupon ' . $coupon_amount .
@@ -161,5 +161,5 @@ class WebhookNotification extends AbstractNotification
         $order->save();
 
         return $status;
-	}
+    }
 }

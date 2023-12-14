@@ -6,7 +6,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-interface MercadoPagoPaymentBlockInterface {
+interface MercadoPagoPaymentBlockInterface
+{
     /**
      * Initializes the payment method type
      */
