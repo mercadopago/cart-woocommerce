@@ -24,8 +24,8 @@
     }
   },
   "scripts": {
-    "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml src",
-    "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml src"
+    "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml src assets templates woocommerce-mercadopago.php",
+    "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml src assets templates woocommerce-mercadopago.php"
   },
   "require": {
     "php": ">=7.2"

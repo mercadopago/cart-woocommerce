@@ -41,35 +41,35 @@ if (!defined('ABSPATH')) {
                 </div>
             <?php endif; ?>
 
-			<?php if ($site_id === 'MLU'): ?>
-				<div class="mp-checkout-ticket-input-document">
-					<input-document
-						label-message="<?= esc_html($input_document_label); ?>"
-						helper-message="<?= esc_html($input_document_helper); ?>"
-						input-name='mercadopago_ticket[docNumber]'
-						select-name='mercadopago_ticket[docType]'
+            <?php if ($site_id === 'MLU') : ?>
+                <div class="mp-checkout-ticket-input-document">
+                    <input-document
+                        label-message="<?= esc_html($input_document_label); ?>"
+                        helper-message="<?= esc_html($input_document_helper); ?>"
+                        input-name='mercadopago_ticket[docNumber]'
+                        select-name='mercadopago_ticket[docType]'
                         select-id='docType'
-						flag-error='mercadopago_ticket[docNumberError]'
-						documents='["CI","OTRO"]'
-						validate=true>
-					</input-document>
-				</div>
-			<?php endif; ?>
+                        flag-error='mercadopago_ticket[docNumberError]'
+                        documents='["CI","OTRO"]'
+                        validate=true>
+                    </input-document>
+                </div>
+            <?php endif; ?>
 
-			<?php if ($site_id === 'MLB'): ?>
-				<div class="mp-checkout-ticket-input-document">
-					<input-document
-						label-message="<?= esc_html($input_document_label); ?> "
-						helper-message="<?= esc_html($input_document_helper); ?>"
-						input-name='mercadopago_ticket[docNumber]'
-						select-name='mercadopago_ticket[docType]'
+            <?php if ($site_id === 'MLB') : ?>
+                <div class="mp-checkout-ticket-input-document">
+                    <input-document
+                        label-message="<?= esc_html($input_document_label); ?> "
+                        helper-message="<?= esc_html($input_document_helper); ?>"
+                        input-name='mercadopago_ticket[docNumber]'
+                        select-name='mercadopago_ticket[docType]'
                         select-id='docType'
-						flag-error='mercadopago_ticket[docNumberError]'
-						documents='["CPF","CNPJ"]'
-						validate=true>
-					</input-document>
-				</div>
-			<?php endif; ?>
+                        flag-error='mercadopago_ticket[docNumberError]'
+                        documents='["CPF","CNPJ"]'
+                        validate=true>
+                    </input-document>
+                </div>
+            <?php endif; ?>
 
             <p class="mp-checkout-ticket-text" data-cy="checkout-ticket-text">
                 <?= esc_html($ticket_text_label); ?>
