@@ -55,15 +55,15 @@ class IpnNotification extends AbstractNotification
     {
         parent::handleReceivedNotification($data);
 
-        if (!isset( $data['id']) || ! isset($data['topic'])) {
+        if (!isset($data['id']) || ! isset($data['topic'])) {
             $message = 'No ID or TOPIC param in Request IPN';
             $this->logs->file->error($message, __CLASS__, $data);
-            $this->setResponse( 422, $message);
+            $this->setResponse(422, $message);
         }
 
         if ($data['topic'] !== 'merchant_order') {
             $message = 'Discarded notification. This notification is already processed as webhook-payment';
-            $this->setResponse( 200, $message);
+            $this->setResponse(200, $message);
         }
 
         $merchantOrderId = preg_replace('/\D/', '', $data['id']);
@@ -82,7 +82,7 @@ class IpnNotification extends AbstractNotification
         if (count($payments) == 0) {
             $message = 'Not found payments into merchant order';
             $this->logs->file->error($message, __CLASS__, $data);
-            $this->setResponse( 422, $message);
+            $this->setResponse(422, $message);
         }
 
         $response->getData()['ipn_type'] = 'merchant_order';
@@ -90,36 +90,36 @@ class IpnNotification extends AbstractNotification
         $this->handleSuccessfulRequest($response->getData());
     }
 
-	/**
-	 * Process success response
-	 *
-	 * @param mixed $data
-	 *
-	 * @return void
-	 */
-	public function handleSuccessfulRequest($data): void
-	{
-		try {
-			$order           = parent::handleSuccessfulRequest($data);
+    /**
+     * Process success response
+     *
+     * @param mixed $data
+     *
+     * @return void
+     */
+    public function handleSuccessfulRequest($data): void
+    {
+        try {
+            $order           = parent::handleSuccessfulRequest($data);
             $oldOrderStatus  = $order->get_status();
-			$processedStatus = $this->getProcessedStatus($order, $data);
+            $processedStatus = $this->getProcessedStatus($order, $data);
 
-			$this->logs->file->info(
+            $this->logs->file->info(
                 sprintf(
                     'Changing order status from %s to %s',
-                     $oldOrderStatus,
-                     $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
+                    $oldOrderStatus,
+                    $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
                 ),
                 __CLASS__
             );
 
             $this->processStatus($processedStatus, $order, $data);
             $this->setResponse(200, 'Notification IPN Successfully');
-		} catch (\Exception $e) {
-			$this->setResponse(422, $e->getMessage());
-			$this->logs->file->error($e->getMessage(), __CLASS__, $data);
-		}
-	}
+        } catch (\Exception $e) {
+            $this->setResponse(422, $e->getMessage());
+            $this->logs->file->error($e->getMessage(), __CLASS__, $data);
+        }
+    }
 
     /**
      * Process status
@@ -130,38 +130,38 @@ class IpnNotification extends AbstractNotification
      * @return string
      * @throws \Exception
      */
-	public function getProcessedStatus(\WC_Order $order, $data): string
+    public function getProcessedStatus(\WC_Order $order, $data): string
     {
-		$status   = 'pending';
-		$payments = $data['payments'];
+        $status   = 'pending';
+        $payments = $data['payments'];
 
-		if (is_array($payments)) {
-			$total       = (float) $data['shipping_cost'] + (float) $data['total_amount'];
-			$totalPaid   = 0.00;
-			$totalRefund = 0.00;
+        if (is_array($payments)) {
+            $total       = (float) $data['shipping_cost'] + (float) $data['total_amount'];
+            $totalPaid   = 0.00;
+            $totalRefund = 0.00;
 
             foreach ($data['payments'] as $payment) {
-				$coupon = $this->getPaymentInfo($payment['id']);
+                $coupon = $this->getPaymentInfo($payment['id']);
 
-				if ($coupon > 0) {
-					$totalPaid += (float) $coupon;
-				}
+                if ($coupon > 0) {
+                    $totalPaid += (float) $coupon;
+                }
 
-				if ($payment['status'] === 'approved') {
-					$totalPaid += (float) $payment['total_paid_amount'];
-				} elseif ($payment['status'] === 'refunded') {
-					$totalRefund += (float) $payment['amount_refunded'];
-				}
-			}
+                if ($payment['status'] === 'approved') {
+                    $totalPaid += (float) $payment['total_paid_amount'];
+                } elseif ($payment['status'] === 'refunded') {
+                    $totalRefund += (float) $payment['amount_refunded'];
+                }
+            }
 
-			if ($totalPaid >= $total) {
-				$status = 'approved';
-			}
+            if ($totalPaid >= $total) {
+                $status = 'approved';
+            }
 
             if ($totalRefund >= $total) {
-				$status = 'refunded';
-			}
-		}
+                $status = 'refunded';
+            }
+        }
 
         $this->updateMeta($order, '_used_gateway', 'WC_WooMercadoPago_Basic_Gateway');
 
@@ -202,8 +202,8 @@ class IpnNotification extends AbstractNotification
 
         $order->save();
 
-		return $status;
-	}
+        return $status;
+    }
 
     /**
      * Get merchant order payment info
@@ -213,11 +213,11 @@ class IpnNotification extends AbstractNotification
      * @return mixed
      * @throws \Exception
      */
-	public function getPaymentInfo(string $id)
+    public function getPaymentInfo(string $id)
     {
         $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
         $response = $this->requester->get("/v1/payments/$id", $headers);
 
         return $response->getData();
-	}
+    }
 }

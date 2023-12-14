@@ -238,10 +238,10 @@ class CustomGateway extends AbstractGateway
             'wc_mercadopago_custom_checkout',
             $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js'),
             [
-                'public_key'         => $this->mercadopago->seller->getCredentialsPublicKey(),
-                'intl'               => $this->countryConfigs['intl'],
-                'site_id'            => $this->countryConfigs['site_id'],
-                'currency'           => $this->countryConfigs['currency'],
+                'public_key'        => $this->mercadopago->seller->getCredentialsPublicKey(),
+                'intl'              => $this->countryConfigs['intl'],
+                'site_id'           => $this->countryConfigs['site_id'],
+                'currency'          => $this->countryConfigs['currency'],
                 'theme'             => get_stylesheet(),
                 'location'          => '/checkout',
                 'plugin_version'    => MP_VERSION,
@@ -280,13 +280,13 @@ class CustomGateway extends AbstractGateway
                     ]
                 ],
                 'threeDsText' => [
-                    'title_loading'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame'],
-                    'title_loading2'             => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame2'],
-                    'text_loading'       => $this->mercadopago->storeTranslations->threeDsTranslations['text_loading_3ds_frame'],
+                    'title_loading'          => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame'],
+                    'title_loading2'         => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame2'],
+                    'text_loading'           => $this->mercadopago->storeTranslations->threeDsTranslations['text_loading_3ds_frame'],
                     'title_loading_response' => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_response'],
-                    'title_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['title_3ds_frame'],
-                    'tooltip_frame' => $this->mercadopago->storeTranslations->threeDsTranslations['tooltip_3ds_frame'],
-                    'message_close' => $this->mercadopago->storeTranslations->threeDsTranslations['message_3ds_declined'],
+                    'title_frame'            => $this->mercadopago->storeTranslations->threeDsTranslations['title_3ds_frame'],
+                    'tooltip_frame'          => $this->mercadopago->storeTranslations->threeDsTranslations['tooltip_3ds_frame'],
+                    'message_close'          => $this->mercadopago->storeTranslations->threeDsTranslations['message_3ds_declined'],
                 ],
             ]
         );
@@ -610,7 +610,7 @@ class CustomGateway extends AbstractGateway
             if (is_array($response) && array_key_exists('status', $response)) {
                 switch ($response['status']) {
                     case 'approved':
-                        $this->mercadopago->woocommerce->cart->empty_cart();
+                        $this->mercadopago->cart->emptyCart();
 
                         $urlReceived = $order->get_checkout_order_received_url();
                         $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
@@ -655,7 +655,7 @@ class CustomGateway extends AbstractGateway
                             return $return;
                         }
 
-                        $this->mercadopago->woocommerce->cart->empty_cart();
+                        $this->mercadopago->cart->emptyCart();
 
                         $checkoutType = $checkout['checkout_type'];
                         $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_see_order_form'];

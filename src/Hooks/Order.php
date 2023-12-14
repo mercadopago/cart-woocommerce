@@ -97,7 +97,7 @@ class Order
     /**
      * @const
      */
-    const NONCE_ID = 'MP_ORDER_NONCE';
+    private const NONCE_ID = 'MP_ORDER_NONCE';
 
           /**
      * Order constructor
@@ -118,20 +118,20 @@ class Order
      * @param Logs $logs
      */
     public function __construct(
-        Template          $template,
-        OrderMetadata     $orderMetadata,
-        OrderStatus       $orderStatus,
+        Template $template,
+        OrderMetadata $orderMetadata,
+        OrderStatus $orderStatus,
         AdminTranslations $adminTranslations,
         StoreTranslations $storeTranslations,
-        Store             $store,
-        Seller            $seller,
-        Scripts           $scripts,
-        Url               $url,
-        Nonce             $nonce,
-        Endpoints         $endpoints,
-        CurrentUser       $currentUser,
-        Requester         $requester,
-        Logs              $logs
+        Store $store,
+        Seller $seller,
+        Scripts $scripts,
+        Url $url,
+        Nonce $nonce,
+        Endpoints $endpoints,
+        CurrentUser $currentUser,
+        Requester $requester,
+        Logs $logs
     ) {
         $this->template          = $template;
         $this->orderMetadata     = $orderMetadata;
@@ -160,12 +160,12 @@ class Order
         $this->registerMetaBox(function ($postOrOrderObject) {
             $order = ($postOrOrderObject instanceof \WP_Post) ? wc_get_order($postOrOrderObject->ID) : $postOrOrderObject;
 
-            if (!$order || !$this->getLastPaymentInfo($order))  {
+            if (!$order || !$this->getLastPaymentInfo($order)) {
                 return;
             }
 
             $paymentMethod     = $this->orderMetadata->getUsedGatewayData($order);
-            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) {
+            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function ($gateway) use ($paymentMethod) {
                 return $gateway::ID === $paymentMethod || $gateway::WEBHOOK_API_NAME === $paymentMethod;
             });
 
@@ -215,10 +215,16 @@ class Order
      */
     private function getMetaboxData(\WC_Order $order): array
     {
-        $paymentInfo = $this->getLastPaymentInfo($order);
+        $paymentInfo  = $this->getLastPaymentInfo($order);
 
+        $isCreditCard      = $paymentInfo['payment_type_id'] === 'credit_card';
         $paymentStatusType = PaymentStatus::getStatusType($paymentInfo['status']);
-        $cardContent       = PaymentStatus::getCardDescription($this->adminTranslations->statusSync, $paymentInfo['status_detail'], $paymentInfo['payment_type_id'] === 'credit_card');
+
+        $cardContent = PaymentStatus::getCardDescription(
+            $this->adminTranslations->statusSync,
+            $paymentInfo['status_detail'],
+            $isCreditCard
+        );
 
         switch ($paymentStatusType) {
             case 'success':
@@ -309,18 +315,19 @@ class Order
             $this->orderStatus->processStatus($paymentData['status'], (array) $paymentData, $order, $this->orderMetadata->getUsedGatewayData($order));
 
             wp_send_json_success(
-				$this->adminTranslations->statusSync['response_success']
-			);
-		} catch ( \Exception $e ) {
-            $this->logs->file->error("Mercado pago gave error in payment status Sync: {$e->getMessage()}",
+                $this->adminTranslations->statusSync['response_success']
+            );
+        } catch (\Exception $e) {
+            $this->logs->file->error(
+                "Mercado pago gave error in payment status Sync: {$e->getMessage()}",
                 __CLASS__
             );
 
-			wp_send_json_error(
+            wp_send_json_error(
                 $this->adminTranslations->statusSync['response_error'] . ' ' . $e->getMessage(),
-				500
-			);
-		}
+                500
+            );
+        }
     }
 
     /**

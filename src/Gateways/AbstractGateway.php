@@ -305,19 +305,10 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         $order = wc_get_order($order_id);
 
-        $ratio            = $this->mercadopago->currency->getRatio($this);
-        $currency         = $this->mercadopago->country->getCountryConfigs()['currency'];
+        $discount   = $this->mercadopago->cart->calculateSubtotalWithDiscount($this);
+        $commission = $this->mercadopago->cart->calculateSubtotalWithCommission($this);
+
         $isProductionMode = $this->mercadopago->store->getProductionMode();
-
-        $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_cart_contents_total();
-        $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_cart_contents_tax();
-        $subtotal        = $cartSubtotal + $cartSubtotalTax;
-
-        $discount = $subtotal * $this->discount / 100;
-        $discount = Numbers::calculateByCurrency($currency, $discount, $ratio);
-
-        $commission = $subtotal * ($this->commission / 100);
-        $commission = Numbers::calculateByCurrency($currency, $commission, $ratio);
 
         $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
         $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this)::ID);
@@ -559,27 +550,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     protected function getAmount(): float
     {
-        $cartTotal       = 0;
-        $cartSubtotal    = 0;
-        $cartSubtotalTax = 0;
-
-        // When blocks is loaded on the admin, the cart object won't exist
-        if (isset($this->mercadopago->woocommerce->cart)) {
-            $cartTotal       = $this->mercadopago->woocommerce->cart->__get('total');
-            $cartSubtotal    = $this->mercadopago->woocommerce->cart->get_subtotal();
-            $cartSubtotalTax = $this->mercadopago->woocommerce->cart->get_subtotal_tax();
+        // WC_Cart is null when blocks is loaded on the admin
+        if (!$this->mercadopago->cart->isAvailable()) {
+            return 0.00;
         }
 
-        $subtotal = $cartSubtotal + $cartSubtotalTax;
-        $total    = $cartTotal - $subtotal;
-
-        $discount   = $subtotal * ($this->discount / 100);
-        $commission = $subtotal * ($this->commission / 100);
-        $amount     = $subtotal - $discount + $commission;
-
-        $calculatedTotal = $total + $amount;
-
-        return Numbers::calculateByCurrency($this->countryConfigs['currency'], $calculatedTotal, $this->ratio);
+        return $this->mercadopago->cart->calculateTotalWithDiscountAndCommission($this);
     }
 
     /**

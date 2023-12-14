@@ -71,12 +71,12 @@ if (!defined('ABSPATH')) {
 
         <div class="mp-col-md-8 mp-text-center mp-pix-right">
             <p class="mp-details-pix-amount">
-				<span class="mp-details-pix-qr">
-					<?= esc_html($text_amount); ?>
-				</span>
+                <span class="mp-details-pix-qr">
+                    <?= esc_html($text_amount); ?>
+                </span>
                 <span class="mp-details-pix-qr-value">
-					<?= esc_html($amount); ?>
-				</span>
+                    <?= esc_html($amount); ?>
+                </span>
             </p>
             <p class="mp-details-pix-qr-title">
                 <?= esc_html($text_scan_qr); ?>

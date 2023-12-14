@@ -13,7 +13,7 @@ final class Session
      *
      * @param string $key
      *
-     * @return mixed
+     * @return array|string|null
      */
     public function getSession(string $key)
     {

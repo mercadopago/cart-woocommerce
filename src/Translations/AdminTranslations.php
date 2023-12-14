@@ -987,9 +987,9 @@ class AdminTranslations
     }
 
     private function generateConversionMessage($baseMessage, $currency = ''): string
-{
-    return sprintf('%s %s  %s ', $baseMessage, get_woocommerce_currency(), __("to ", 'woocommerce-mercadopago'));
-}
+    {
+        return sprintf('%s %s  %s ', $baseMessage, get_woocommerce_currency(), __("to ", 'woocommerce-mercadopago'));
+    }
 
     /**
      * Set status sync metabox translations

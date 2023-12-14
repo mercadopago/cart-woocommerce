@@ -11,6 +11,7 @@ use MercadoPago\Woocommerce\Blocks\PixBlock;
 use MercadoPago\Woocommerce\Blocks\TicketBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\Cart;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Order\OrderBilling;
@@ -277,6 +278,11 @@ class WoocommerceMercadoPago
     public $creditsEnabled;
 
     /**
+     * @var Cart
+     */
+    public $cart;
+
+    /**
      * WoocommerceMercadoPago constructor
      */
     public function __construct()
@@ -339,12 +345,12 @@ class WoocommerceMercadoPago
         if (class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
             add_action(
                 'woocommerce_blocks_payment_method_type_registration',
-                function(PaymentMethodRegistry $payment_method_registry) {
-                    $payment_method_registry->register(new BasicBlock);
-                    $payment_method_registry->register(new CustomBlock);
-                    $payment_method_registry->register(new CreditsBlock);
-                    $payment_method_registry->register(new PixBlock);
-                    $payment_method_registry->register(new TicketBlock);
+                function (PaymentMethodRegistry $payment_method_registry) {
+                    $payment_method_registry->register(new BasicBlock());
+                    $payment_method_registry->register(new CustomBlock());
+                    $payment_method_registry->register(new CreditsBlock());
+                    $payment_method_registry->register(new PixBlock());
+                    $payment_method_registry->register(new TicketBlock());
                 }
             );
         }
@@ -439,6 +445,7 @@ class WoocommerceMercadoPago
         $this->nonce          = $dependencies->nonce;
         $this->images         = $dependencies->images;
         $this->session        = $dependencies->session;
+        $this->cart           = $dependencies->cart;
 
         // Hooks
         $this->admin     = $dependencies->admin;

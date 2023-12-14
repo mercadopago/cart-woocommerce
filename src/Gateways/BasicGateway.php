@@ -5,7 +5,6 @@ namespace MercadoPago\Woocommerce\Gateways;
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 
-
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -85,7 +84,7 @@ class BasicGateway extends AbstractGateway
      */
     public function init_form_fields(): void
     {
-        if($this->addMissingCredentialsNoticeAsFormField()){
+        if ($this->addMissingCredentialsNoticeAsFormField()) {
             return;
         }
 
@@ -318,7 +317,6 @@ class BasicGateway extends AbstractGateway
                 true
             );
         }
-
     }
 
     /**
@@ -333,7 +331,7 @@ class BasicGateway extends AbstractGateway
     {
         if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL) === false) {
             $icon = $this->mercadopago->url->getPluginFileUrl('assets/images/icons/icon-warning', '.png', true);
-            return "<img width='14' height='14' style='vertical-align: middle' src='$icon' /> ". $this->adminTranslations['invalid_back_url'];
+            return "<img width='14' height='14' style='vertical-align: middle' src='$icon' /> " . $this->adminTranslations['invalid_back_url'];
         }
 
         return $default;
