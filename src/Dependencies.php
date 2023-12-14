@@ -275,8 +275,8 @@ class Dependencies
         $this->logs              = $this->setLogs();
         $this->seller            = $this->setSeller();
         $this->country           = $this->setCountry();
-        $this->links             = $this->setLinks();
         $this->url               = $this->setUrl();
+        $this->links             = $this->setLinks();
         $this->paymentMethods    = $this->setPaymentMethods();
         $this->scripts           = $this->setScripts();
         $this->adminTranslations = $this->setAdminTranslations();
@@ -330,19 +330,19 @@ class Dependencies
     }
 
     /**
-     * @return Links
-     */
-    private function setLinks(): Links
-    {
-        return new Links($this->country);
-    }
-
-    /**
      * @return Url
      */
     private function setUrl(): Url
     {
         return new Url($this->strings);
+    }
+
+    /**
+     * @return Links
+     */
+    private function setLinks(): Links
+    {
+        return new Links($this->country, $this->url);
     }
 
     /**

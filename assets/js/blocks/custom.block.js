@@ -1,15 +1,16 @@
 /* globals wc_mercadopago_custom_blocks_params */
 
-import { getSetting } from '@woocommerce/settings';
-import { decodeEntities } from '@wordpress/html-entities';
-import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { useEffect, useRef, useState } from '@wordpress/element';
-import InputDocument from "./components/InputDocument";
-import InputHelper from "./components/InputHelper";
-import InputLabel from "./components/InputLabel";
-import PaymentMethods from "./components/PaymentMethods";
-import TermsAndConditions from "./components/TermsAndConditions";
-import TestMode from "./components/TestMode";
+import { registerPaymentMethod } from '@woocommerce/blocks-registry';
+import { decodeEntities } from '@wordpress/html-entities';
+import { getSetting } from '@woocommerce/settings';
+
+import TestMode from './components/TestMode';
+import InputLabel from './components/InputLabel';
+import InputHelper from './components/InputHelper';
+import InputDocument from './components/InputDocument';
+import PaymentMethods from './components/PaymentMethods';
+import TermsAndConditions from './components/TermsAndConditions';
 
 const paymentMethodName = 'woo-mercado-pago-custom';
 
@@ -58,24 +59,25 @@ const Content = (props) => {
     terms_and_conditions_link_text,
     terms_and_conditions_link_src,
     amount,
-    currency_ratio
+    currency_ratio,
   } = settings.params;
 
+  const ref = useRef(null);
   const [checkoutType, setCheckoutType] = useState('custom');
 
   const { eventRegistration, emitResponse, onSubmit } = props;
   const { onPaymentSetup, onCheckoutSuccess } = eventRegistration;
-  const ref = useRef(null);
 
-  window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
   window.mpFormId = 'blocks_checkout_form';
+  window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
+
   jQuery(window.mpCheckoutForm).prop('id', mpFormId);
 
   const submitWalletButton = (event) => {
     event.preventDefault();
     setCheckoutType('wallet_button');
     onSubmit();
-  }
+  };
 
   const collapsibleEvent = () => {
     const availablePayment = document.getElementsByClassName('mp-checkout-custom-available-payments')[0];
@@ -85,39 +87,42 @@ const Content = (props) => {
     const content = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-content')[0];
 
     if (content.style.maxHeight) {
-      icon.src = settings.params.available_payments_chevron_down
+      icon.src = settings.params.available_payments_chevron_down;
       content.style.maxHeight = null;
       content.style.padding = '0px';
     } else {
       let hg = content.scrollHeight + 15 + 'px';
-      icon.src = settings.params.available_payments_chevron_up
+      icon.src = settings.params.available_payments_chevron_up;
       content.style.setProperty('max-height', hg, 'important');
       content.style.setProperty('padding', '24px 0px 0px', 'important');
     }
-  }
+  };
 
   useEffect(() => {
+    if (cardFormMounted) {
+      cardForm.unmount();
+    }
+
     initCardForm();
+
     const unsubscribe = onPaymentSetup(async () => {
-      if (document.querySelector("#mp_checkout_type").value !== 'wallet_button') {
+      if (document.querySelector('#mp_checkout_type').value !== 'wallet_button') {
         try {
           if (CheckoutPage.validateInputsCreateToken()) {
             const cardToken = await cardForm.createCardToken();
-            document.querySelector("#cardTokenId").value = cardToken.token;
+            document.querySelector('#cardTokenId').value = cardToken.token;
           } else {
-            return {
-              type: emitResponse.responseTypes.ERROR,
-            }
+            return { type: emitResponse.responseTypes.ERROR };
           }
         } catch (error) {
-          console.warn("Token creation error: ", error);
+          console.warn('Token creation error: ', error);
         }
       }
 
       const checkoutInputs = ref.current;
       const paymentMethodData = {};
 
-      checkoutInputs.childNodes.forEach(input => {
+      checkoutInputs.childNodes.forEach((input) => {
         if (input.tagName === 'INPUT' && input.name) {
           paymentMethodData[input.name] = input.value;
         }
@@ -129,17 +134,13 @@ const Content = (props) => {
       return {
         type: emitResponse.responseTypes.SUCCESS,
         meta: {
-          paymentMethodData
-        }
-      }
+          paymentMethodData,
+        },
+      };
     });
 
-    return () => { unsubscribe(); };
-  }, [
-    emitResponse.responseTypes.ERROR,
-    emitResponse.responseTypes.SUCCESS,
-    onPaymentSetup
-  ]);
+    return () => unsubscribe();
+  }, [onPaymentSetup, emitResponse.responseTypes.ERROR, emitResponse.responseTypes.SUCCESS]);
 
   useEffect(() => {
     const handle3ds = onCheckoutSuccess(async (checkoutResponse) => {
@@ -152,6 +153,7 @@ const Content = (props) => {
               console.log('rejecting with ' + e.detail.error);
               reject(e.detail.error);
             }
+
             resolve();
           });
         });
@@ -159,29 +161,25 @@ const Content = (props) => {
         load3DSFlow(paymentDetails.last_four_digits);
 
         // await for completed_3ds response
-        const response = await threeDsPromise.then(() => {
-          return {
-            type: emitResponse.responseTypes.SUCCESS,
-          }
-        }).catch((error) => {
-          return {
-            type: emitResponse.responseTypes.FAIL,
-            message: error,
-          }
-        });
-
-        return response;
+        return await threeDsPromise
+          .then(() => {
+            return {
+              type: emitResponse.responseTypes.SUCCESS,
+            };
+          })
+          .catch((error) => {
+            return {
+              type: emitResponse.responseTypes.FAIL,
+              message: error,
+            };
+          });
       }
 
-      return {
-        type: emitResponse.responseTypes.SUCCESS,
-      }
+      return { type: emitResponse.responseTypes.SUCCESS };
     });
 
-    return () => { handle3ds(); };
-  }, [
-    onCheckoutSuccess
-  ]);
+    return () => handle3ds();
+  }, [onCheckoutSuccess]);
 
   return (
     <div>
@@ -209,9 +207,7 @@ const Content = (props) => {
                 <span>{wallet_button_title}</span>
               </div>
 
-              <div class={'mp-wallet-button-description'}>
-                {wallet_button_description}
-              </div>
+              <div class={'mp-wallet-button-description'}>{wallet_button_description}</div>
 
               <div class={'mp-wallet-button-button'}>
                 <button id={'mp-wallet-button'} type={'button'} onClick={submitWalletButton}>
@@ -226,15 +222,10 @@ const Content = (props) => {
               <div class={'mp-checkout-custom-available-payments-header'} onClick={collapsibleEvent}>
                 <div class={'mp-checkout-custom-available-payments-title'}>
                   <img src={available_payments_title_icon} class={'mp-icon'} />
-                  <p class={'mp-checkout-custom-available-payments-text'}>
-                    {available_payments_title}
-                  </p>
+                  <p class={'mp-checkout-custom-available-payments-text'}>{available_payments_title}</p>
                 </div>
 
-                <img
-                  src={available_payments_image}
-                  class={'mp-checkout-custom-available-payments-collapsible'}
-                />
+                <img src={available_payments_image} class={'mp-checkout-custom-available-payments-collapsible'} />
               </div>
 
               <div class={'mp-checkout-custom-available-payments-content'}>
@@ -258,31 +249,16 @@ const Content = (props) => {
             </div>
 
             <div class={'mp-checkout-custom-card-form'}>
-              <p class={'mp-checkout-custom-card-form-title'}>
-                {card_form_title}
-              </p>
+              <p class={'mp-checkout-custom-card-form-title'}>{card_form_title}</p>
 
               <div class={'mp-checkout-custom-card-row'}>
-                <InputLabel
-                  isOptinal={false}
-                  message={card_number_input_label}
-                  forId={'mp-card-number'}
-                />
-
+                <InputLabel isOptinal={false} message={card_number_input_label} forId={'mp-card-number'} />
                 <div class={'mp-checkout-custom-card-input'} id={'form-checkout__cardNumber-container'}></div>
-
-                <InputHelper
-                  isVisible={false}
-                  message={card_number_input_helper}
-                  inputId={'mp-card-number-helper'}
-                />
+                <InputHelper isVisible={false} message={card_number_input_helper} inputId={'mp-card-number-helper'} />
               </div>
 
               <div class={'mp-checkout-custom-card-row'} id={'mp-card-holder-div'}>
-                <InputLabel
-                  message={card_holder_name_input_label}
-                  isOptinal={false}
-                />
+                <InputLabel message={card_holder_name_input_label} isOptinal={false} />
 
                 <input
                   class={'mp-checkout-custom-card-input mp-card-holder-name'}
@@ -302,16 +278,12 @@ const Content = (props) => {
 
               <div class={'mp-checkout-custom-card-row mp-checkout-custom-dual-column-row'}>
                 <div class={'mp-checkout-custom-card-column'}>
-                  <InputLabel
-                    message={card_expiration_input_label}
-                    isOptinal={false}
-                  />
+                  <InputLabel message={card_expiration_input_label} isOptinal={false} />
 
                   <div
                     id={'form-checkout__expirationDate-container'}
                     class={'mp-checkout-custom-card-input mp-checkout-custom-left-card-input'}
-                  >
-                  </div>
+                  />
 
                   <InputHelper
                     isVisible={false}
@@ -321,14 +293,10 @@ const Content = (props) => {
                 </div>
 
                 <div class={'mp-checkout-custom-card-column'}>
-                  <InputLabel
-                    message={card_security_code_input_label}
-                    isOptinal={false}
-                  />
+                  <InputLabel message={card_security_code_input_label} isOptinal={false} />
 
-                  <div id={'form-checkout__securityCode-container'} class={'mp-checkout-custom-card-input'}></div>
-
-                  <p id={'mp-security-code-info'} class={'mp-checkout-custom-info-text'}></p>
+                  <div id={'form-checkout__securityCode-container'} class={'mp-checkout-custom-card-input'} />
+                  <p id={'mp-security-code-info'} class={'mp-checkout-custom-info-text'} />
 
                   <InputHelper
                     isVisible={false}
@@ -354,17 +322,11 @@ const Content = (props) => {
             </div>
 
             <div id={'mp-checkout-custom-installments'} class={'mp-checkout-custom-installments-display-none'}>
-              <p class={'mp-checkout-custom-card-form-title'}>
-                {card_installments_title}
-              </p>
+              <p class={'mp-checkout-custom-card-form-title'}>{card_installments_title}</p>
 
               <div id={'mp-checkout-custom-issuers-container'} class={'mp-checkout-custom-issuers-container'}>
                 <div class={'mp-checkout-custom-card-row'}>
-                  <InputLabel
-                    isOptinal={false}
-                    message={card_issuer_input_label}
-                    forId={'mp-issuer'}
-                  />
+                  <InputLabel isOptinal={false} message={card_issuer_input_label} forId={'mp-issuer'} />
                 </div>
 
                 <div class={'mp-input-select-input'}>
@@ -372,7 +334,10 @@ const Content = (props) => {
                 </div>
               </div>
 
-              <div id={'mp-checkout-custom-installments-container'} class={'mp-checkout-custom-installments-container'}></div>
+              <div
+                id={'mp-checkout-custom-installments-container'}
+                class={'mp-checkout-custom-installments-container'}
+              />
 
               <InputHelper
                 isVisible={false}
@@ -386,8 +351,7 @@ const Content = (props) => {
                 name={'installments'}
                 id={'form-checkout__installments'}
                 class={'mp-input-select-select'}
-              >
-              </select>
+              />
 
               <div id={'mp-checkout-custom-box-input-tax-cft'}>
                 <div id={'mp-checkout-custom-box-input-tax-tea'}>
@@ -410,15 +374,27 @@ const Content = (props) => {
       </div>
 
       <div ref={ref} id={'mercadopago-utilities'} style={{ display: 'none' }}>
-        <input type={'hidden'} id={'mp-amount'} defaultValue={amount} name={'mercadopago_custom[amount]'} />
-        <input type={'hidden'} id={'currency_ratio'} defaultValue={currency_ratio} name={'mercadopago_custom[currency_ratio]'} />
-        <input type={'hidden'} id={'paymentMethodId'} name={'mercadopago_custom[payment_method_id]'} />
-        <input type={'hidden'} id={'mp_checkout_type'} name={'mercadopago_custom[checkout_type]'} value={checkoutType} />
-        <input type={'hidden'} id={'cardExpirationMonth'} data-checkout={'cardExpirationMonth'} />
-        <input type={'hidden'} id={'cardExpirationYear'} data-checkout={'cardExpirationYear'} />
         <input type={'hidden'} id={'cardTokenId'} name={'mercadopago_custom[token]'} />
-        <input type={'hidden'} id={'cardInstallments'} name={'mercadopago_custom[installments]'} />
         <input type={'hidden'} id={'mpCardSessionId'} name={'mercadopago_custom[session_id]'} />
+        <input type={'hidden'} id={'cardExpirationYear'} data-checkout={'cardExpirationYear'} />
+        <input type={'hidden'} id={'cardExpirationMonth'} data-checkout={'cardExpirationMonth'} />
+        <input type={'hidden'} id={'cardInstallments'} name={'mercadopago_custom[installments]'} />
+        <input type={'hidden'} id={'paymentMethodId'} name={'mercadopago_custom[payment_method_id]'} />
+        <input type={'hidden'} id={'mp-amount'} defaultValue={amount} name={'mercadopago_custom[amount]'} />
+
+        <input
+          type={'hidden'}
+          id={'currency_ratio'}
+          defaultValue={currency_ratio}
+          name={'mercadopago_custom[currency_ratio]'}
+        />
+
+        <input
+          type={'hidden'}
+          id={'mp_checkout_type'}
+          name={'mercadopago_custom[checkout_type]'}
+          value={checkoutType}
+        />
       </div>
     </div>
   );

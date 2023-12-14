@@ -85,6 +85,7 @@ class CreditsGateway extends AbstractGateway
         if($this->addMissingCredentialsNoticeAsFormField()){
             return;
         }
+
         parent::init_form_fields();
 
         $this->form_fields = array_merge($this->form_fields, [

@@ -87,6 +87,7 @@ class TicketGateway extends AbstractGateway
         if ($this->addMissingCredentialsNoticeAsFormField()) {
             return;
         }
+
         parent::init_form_fields();
 
         $this->form_fields = array_merge($this->form_fields, [
@@ -243,8 +244,8 @@ class TicketGateway extends AbstractGateway
      */
     public function process_payment($order_id): array
     {
-        $order    = wc_get_order($order_id);
-        $checkout = [];
+        $order = wc_get_order($order_id);
+
         try {
             parent::process_payment($order_id);
             $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
@@ -303,7 +304,7 @@ class TicketGateway extends AbstractGateway
                         new \Exception('Invalid status or status_detail on ' . __METHOD__),
                         $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                         self::LOG_SOURCE,
-                        (array) $response
+                        $response
                     );
                 }
             }
