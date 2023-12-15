@@ -3,7 +3,6 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -90,9 +89,9 @@ class BasicGateway extends AbstractGateway
 
         parent::init_form_fields();
 
-        $successUrl = $this->mercadopago->options->getGatewayOption($this, 'success_url', '');
-        $failureUrl = $this->mercadopago->options->getGatewayOption($this, 'failure_url', '');
-        $pendingUrl = $this->mercadopago->options->getGatewayOption($this, 'pending_url', '');
+        $successUrl = $this->mercadopago->options->getGatewayOption($this, 'success_url');
+        $failureUrl = $this->mercadopago->options->getGatewayOption($this, 'failure_url');
+        $pendingUrl = $this->mercadopago->options->getGatewayOption($this, 'pending_url');
 
         $this->form_fields = array_merge($this->form_fields, [
             'header' => [
@@ -232,6 +231,25 @@ class BasicGateway extends AbstractGateway
     public function payment_scripts(string $gatewaySection): void
     {
         parent::payment_scripts($gatewaySection);
+
+        if ($this->canCheckoutLoadScriptsAndStyles()) {
+            $this->registerCheckoutScripts();
+        }
+    }
+
+    /**
+     * Register checkout scripts
+     *
+     * @return void
+     */
+    public function registerCheckoutScripts(): void
+    {
+        parent::registerCheckoutScripts();
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_sdk',
+            'https://sdk.mercadopago.com/js/v2'
+        );
     }
 
     /**
@@ -565,17 +583,13 @@ class BasicGateway extends AbstractGateway
      * Render order form
      *
      * @param $order_id
+     * @throws \Exception
      */
     public function renderOrderForm($order_id): void
     {
         $order             = wc_get_order($order_id);
         $this->transaction = new BasicTransaction($this, $order);
         $preference        = $this->transaction->createPreference();
-
-        $this->mercadopago->scripts->registerCheckoutScript(
-            'wc_mercadopago_sdk',
-            'https://sdk.mercadopago.com/js/v2'
-        );
 
         $this->mercadopago->template->getWoocommerceTemplate(
             'public/receipt/preference-modal.php',
