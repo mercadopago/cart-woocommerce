@@ -530,5 +530,4 @@ class PixGateway extends AbstractGateway
             ]
         );
     }
-
 }
