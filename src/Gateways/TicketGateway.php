@@ -64,7 +64,7 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
 
-        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
+        add_action('woocommerce_cart_calculate_fees', [$this, 'registerDiscountAndCommissionFeesOnCart']);
     }
 
     /**
@@ -537,17 +537,5 @@ class TicketGateway extends AbstractGateway
                 'transaction_details' => $transactionDetails,
             ]
         );
-    }
-
-    /**
-     * Register commission and discount on admin order totals
-     *
-     * @param int $orderId
-     *
-     * @return void
-     */
-    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
-    {
-        parent::registerCommissionAndDiscount($this, $orderId);
     }
 }

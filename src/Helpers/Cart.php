@@ -25,13 +25,19 @@ final class Cart
      */
     protected $currency;
 
-    public function __construct(Country $country, Currency $currency)
+    /**
+     * @var Session
+     */
+    protected $session;
+
+    public function __construct(Country $country, Currency $currency, Session $session)
     {
         global $woocommerce;
 
         $this->woocommerce = $woocommerce;
         $this->country     = $country;
         $this->currency    = $currency;
+        $this->session     = $session;
     }
 
     /**
@@ -143,6 +149,67 @@ final class Cart
     }
 
     /**
+     * Add plugin discount value on WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function addDiscountOnFees(AbstractGateway $gateway): void
+    {
+        $discount = $this->calculateSubtotalWithDiscount($gateway);
+
+        if ($discount > 0) {
+            $this->addFee("Discount for $gateway->title", -$discount);
+        }
+    }
+
+    /**
+     * Add plugin commission value on WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function addCommissionOnFees(AbstractGateway $gateway): void
+    {
+        $commission = $this->calculateSubtotalWithCommission($gateway);
+
+        if ($commission > 0) {
+            $this->addFee("Commission for $gateway->title", $commission);
+        }
+    }
+
+    /**
+     * Add plugin and commission to WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function addDiscountAndCommissionOnFees(AbstractGateway $gateway)
+    {
+        $selectedGateway = $this->session->getSession('chosen_payment_method');
+
+        if ($selectedGateway && $selectedGateway == $gateway::ID) {
+            $this->addDiscountOnFees($gateway);
+            $this->addCommissionOnFees($gateway);
+        }
+    }
+
+    /**
+     * Add fee to WC_Cart
+     *
+     * @param string $name
+     * @param float $value
+     * @return void
+     */
+    public function addFee(string $name, float $value): void
+    {
+        $this->getCart()->add_fee($name, $value, true);
+    }
+
+    /**
      * Verify if WC_Cart exists and is available
      *
      * @return bool
@@ -153,6 +220,8 @@ final class Cart
     }
 
     /**
+     * Empty WC_Cart
+     *
      * @return void
      */
     public function emptyCart(): void

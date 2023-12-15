@@ -562,6 +562,6 @@ class Dependencies
      */
     private function setCart(): Cart
     {
-        return new Cart($this->country, $this->currency);
+        return new Cart($this->country, $this->currency, $this->session);
     }
 }

@@ -68,12 +68,13 @@ class PixGateway extends AbstractGateway
 
         $this->mercadopago->order->registerEmailBeforeOrderTable([$this, 'renderOrderReceivedTemplate']);
         $this->mercadopago->order->registerOrderDetailsAfterOrderTable([$this, 'renderOrderReceivedTemplate']);
-        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
         $this->mercadopago->endpoints->registerApiEndpoint(self::PIX_IMAGE_ENDPOINT, [$this, 'generatePixImage']);
 
         $this->mercadopago->currency->handleCurrencyNotices($this);
+
+        add_action('woocommerce_cart_calculate_fees', [$this, 'registerDiscountAndCommissionFeesOnCart']);
     }
 
     /**
@@ -530,15 +531,4 @@ class PixGateway extends AbstractGateway
         );
     }
 
-    /**
-     * Register commission and discount on admin order totals
-     *
-     * @param int $orderId
-     *
-     * @return void
-     */
-    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
-    {
-        parent::registerCommissionAndDiscount($this, $orderId);
-    }
 }

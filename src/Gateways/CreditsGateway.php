@@ -56,13 +56,12 @@ class CreditsGateway extends AbstractGateway
 
         $this->mercadopago->gateway->registerUpdateOptions($this);
         $this->mercadopago->gateway->registerGatewayTitle($this);
+        $this->mercadopago->gateway->registerThankyouPage($this->id, [$this, 'saveOrderPaymentsId']);
 
         $this->mercadopago->currency->handleCurrencyNotices($this);
         $this->mercadopago->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
 
-        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
-
-        $this->mercadopago->gateway->registerThankyouPage($this->id, [$this, 'saveOrderPaymentsId']);
+        add_action('woocommerce_cart_calculate_fees', [$this, 'registerDiscountAndCommissionFeesOnCart']);
     }
 
     /**
@@ -452,18 +451,6 @@ class CreditsGateway extends AbstractGateway
                 ]
             );
         }
-    }
-
-    /**
-     * Register commission and discount on admin order totals
-     *
-     * @param int $orderId
-     *
-     * @return void
-     */
-    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
-    {
-        parent::registerCommissionAndDiscount($this, $orderId);
     }
 
     /**
