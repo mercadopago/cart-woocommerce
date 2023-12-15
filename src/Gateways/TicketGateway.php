@@ -180,6 +180,38 @@ class TicketGateway extends AbstractGateway
     public function payment_scripts(string $gatewaySection): void
     {
         parent::payment_scripts($gatewaySection);
+
+        if ($this->canCheckoutLoadScriptsAndStyles()) {
+            $this->registerCheckoutScripts();
+        }
+    }
+
+    /**
+     * Register checkout scripts
+     *
+     * @return void
+     */
+    public function registerCheckoutScripts(): void
+    {
+        parent::registerCheckoutScripts();
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_ticket_page',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-page', '.js')
+        );
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_ticket_elements',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-elements', '.js')
+        );
+
+        $this->mercadopago->scripts->registerCheckoutScript(
+            'wc_mercadopago_ticket_checkout',
+            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-checkout', '.js'),
+            [
+                'site_id' => $this->countryConfigs['site_id'],
+            ]
+        );
     }
 
     /**
