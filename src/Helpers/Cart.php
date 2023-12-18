@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -30,14 +31,30 @@ final class Cart
      */
     protected $session;
 
-    public function __construct(Country $country, Currency $currency, Session $session)
-    {
+    /**
+     * @var StoreTranslations
+     */
+    protected $storeTranslations;
+
+    /**
+     * @param Country $country
+     * @param Currency $currency
+     * @param Session $session
+     * @param StoreTranslations $storeTranslations
+     */
+    public function __construct(
+        Country $country,
+        Currency $currency,
+        Session $session,
+        StoreTranslations $storeTranslations
+    ) {
         global $woocommerce;
 
-        $this->woocommerce = $woocommerce;
-        $this->country     = $country;
-        $this->currency    = $currency;
-        $this->session     = $session;
+        $this->woocommerce       = $woocommerce;
+        $this->country           = $country;
+        $this->currency          = $currency;
+        $this->session           = $session;
+        $this->storeTranslations = $storeTranslations;
     }
 
     /**
@@ -157,10 +174,11 @@ final class Cart
      */
     public function addDiscountOnFees(AbstractGateway $gateway): void
     {
-        $discount = $this->calculateSubtotalWithDiscount($gateway);
+        $discount     = $this->calculateSubtotalWithDiscount($gateway);
+        $discountName = $this->storeTranslations->commonCheckout['cart_discount'];
 
         if ($discount > 0) {
-            $this->addFee("Discount for $gateway->title", -$discount);
+            $this->addFee($discountName, -$discount);
         }
     }
 
@@ -173,10 +191,11 @@ final class Cart
      */
     public function addCommissionOnFees(AbstractGateway $gateway): void
     {
-        $commission = $this->calculateSubtotalWithCommission($gateway);
+        $commission     = $this->calculateSubtotalWithCommission($gateway);
+        $commissionName = $this->storeTranslations->commonCheckout['cart_commission'];
 
         if ($commission > 0) {
-            $this->addFee("Commission for $gateway->title", $commission);
+            $this->addFee($commissionName, $commission);
         }
     }
 
