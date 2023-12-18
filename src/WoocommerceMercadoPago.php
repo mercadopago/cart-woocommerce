@@ -10,36 +10,10 @@ use MercadoPago\Woocommerce\Blocks\CreditsBlock;
 use MercadoPago\Woocommerce\Blocks\PixBlock;
 use MercadoPago\Woocommerce\Blocks\TicketBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
-use MercadoPago\Woocommerce\Helpers\Actions;
-use MercadoPago\Woocommerce\Helpers\Cart;
-use MercadoPago\Woocommerce\Helpers\Images;
-use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Helpers\Cache;
-use MercadoPago\Woocommerce\Helpers\Country;
-use MercadoPago\Woocommerce\Helpers\Currency;
-use MercadoPago\Woocommerce\Helpers\CurrentUser;
-use MercadoPago\Woocommerce\Helpers\Links;
-use MercadoPago\Woocommerce\Helpers\Nonce;
-use MercadoPago\Woocommerce\Helpers\Notices;
-use MercadoPago\Woocommerce\Helpers\Requester;
-use MercadoPago\Woocommerce\Helpers\Strings;
-use MercadoPago\Woocommerce\Helpers\Url;
-use MercadoPago\Woocommerce\Helpers\PaymentMethods;
-use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
-use MercadoPago\Woocommerce\Hooks\Admin;
-use MercadoPago\Woocommerce\Hooks\Checkout;
-use MercadoPago\Woocommerce\Hooks\Endpoints;
-use MercadoPago\Woocommerce\Hooks\Gateway;
-use MercadoPago\Woocommerce\Hooks\Options;
-use MercadoPago\Woocommerce\Hooks\Order;
-use MercadoPago\Woocommerce\Hooks\Plugin;
-use MercadoPago\Woocommerce\Hooks\Product;
-use MercadoPago\Woocommerce\Hooks\Scripts;
-use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
@@ -98,159 +72,14 @@ class WoocommerceMercadoPago
     public $woocommerce;
 
     /**
-     * @var Cache
+     * @var Hooks
      */
-    public $cache;
+    public $hooks;
 
     /**
-     * @var Strings
+     * @var Helpers
      */
-    public $strings;
-
-    /**
-     * @var Admin
-     */
-    public $admin;
-
-    /**
-     * @var Endpoints
-     */
-    public $endpoints;
-
-    /**
-     * @var Options
-     */
-    public $options;
-
-    /**
-     * @var Actions
-     */
-    public $actions;
-
-    /**
-     * @var Plugin
-     */
-    public $plugin;
-
-    /**
-     * @var Product
-     */
-    public $product;
-
-    /**
-     * @var Template
-     */
-    public $template;
-
-    /**
-     * @var Order
-     */
-    public $order;
-
-    /**
-     * @var Requester
-     */
-    public $requester;
-
-    /**
-     * @var Session
-     */
-    public $session;
-
-    /**
-     * @var Seller
-     */
-    public $seller;
-
-    /**
-     * @var Country
-     */
-    public $country;
-
-    /**
-     * @var Links
-     */
-    public $links;
-
-    /**
-     * @var Url
-     */
-    public $url;
-
-    /**
-     * @var PaymentMethods
-     */
-    public $paymentMethods;
-
-    /**
-     * @var Store
-     */
-    public $store;
-
-    /**
-     * @var OrderBilling
-     */
-    public $orderBilling;
-
-    /**
-     * @var OrderShipping
-     */
-    public $orderShipping;
-
-    /**
-     * @var OrderMetadata
-     */
-    public $orderMetadata;
-
-    /**
-     * @var OrderStatus
-     */
-    public $orderStatus;
-
-    /**
-     * @var Scripts
-     */
-    public $scripts;
-
-    /**
-     * @var Checkout
-     */
-    public $checkout;
-
-    /**
-     * @var Gateway
-     */
-    public $gateway;
-
-    /**
-     * @var Logs
-     */
-    public $logs;
-
-    /**
-     * @var Nonce
-     */
-    public $nonce;
-
-    /**
-     * @var CurrentUser
-     */
-    public $currentUser;
-
-    /**
-     * @var Notices
-     */
-    public $notices;
-
-    /**
-     * @var Currency
-     */
-    public $currency;
-
-    /**
-     * @var Images
-     */
-    public $images;
+    public $helpers;
 
     /**
      * @var Settings
@@ -263,6 +92,41 @@ class WoocommerceMercadoPago
     public $metadataConfig;
 
     /**
+     * @var Seller
+     */
+    public $sellerConfig;
+
+    /**
+     * @var Store
+     */
+    public $storeConfig;
+
+    /**
+     * @var Logs
+     */
+    public $logs;
+
+    /**
+     * @var OrderBilling
+     */
+    public $orderBilling;
+
+    /**
+     * @var OrderMetadata
+     */
+    public $orderMetadata;
+
+    /**
+     * @var OrderShipping
+     */
+    public $orderShipping;
+
+    /**
+     * @var OrderStatus
+     */
+    public $orderStatus;
+
+    /**
      * @var AdminTranslations
      */
     public $adminTranslations;
@@ -271,16 +135,6 @@ class WoocommerceMercadoPago
      * @var StoreTranslations
      */
     public $storeTranslations;
-
-    /**
-     * @var CreditsEnabled
-     */
-    public $creditsEnabled;
-
-    /**
-     * @var Cart
-     */
-    public $cart;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -328,11 +182,11 @@ class WoocommerceMercadoPago
      */
     public function registerGateways(): void
     {
-        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
-        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
-        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CustomGateway');
-        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
-        $this->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PixGateway');
+        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
+        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
+        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CustomGateway');
+        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
+        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PixGateway');
     }
 
     /**
@@ -363,8 +217,8 @@ class WoocommerceMercadoPago
      */
     public function registerActionsWhenGatewayIsNotCalled(): void
     {
-        $this->actions->registerActionWhenGatewayIsNotCalled(
-            $this->product,
+        $this->helpers->actions->registerActionWhenGatewayIsNotCalled(
+            $this->hooks->product,
             'registerBeforeAddToCartForm',
             'MercadoPago\Woocommerce\Gateways\CreditsGateway',
             'renderCreditsBanner'
@@ -404,9 +258,9 @@ class WoocommerceMercadoPago
         $this->registerGateways();
         $this->registerActionsWhenGatewayIsNotCalled();
 
-        $this->plugin->registerEnableCreditsAction(array($this->creditsEnabled, 'enableCreditsAction'));
-        $this->plugin->executeCreditsAction();
-        $this->plugin->executePluginLoadedAction();
+        $this->hooks->plugin->registerEnableCreditsAction([$this->helpers->creditsEnabled, 'enableCreditsAction']);
+        $this->hooks->plugin->executeCreditsAction();
+        $this->hooks->plugin->executePluginLoadedAction();
     }
 
     /**
@@ -422,8 +276,9 @@ class WoocommerceMercadoPago
         $this->woocommerce = $dependencies->woocommerce;
 
         // Configs
-        $this->seller        = $dependencies->seller;
-        $this->store         = $dependencies->store;
+        $this->storeConfig    = $dependencies->storeConfig;
+        $this->sellerConfig   = $dependencies->sellerConfig;
+        $this->metadataConfig = $dependencies->metadataConfig;
 
         // Order
         $this->orderBilling  = $dependencies->orderBilling;
@@ -432,37 +287,13 @@ class WoocommerceMercadoPago
         $this->orderStatus   = $dependencies->orderStatus;
 
         // Helpers
-        $this->actions        = $dependencies->actions;
-        $this->cache          = $dependencies->cache;
-        $this->country        = $dependencies->country;
-        $this->currency       = $dependencies->currency;
-        $this->currentUser    = $dependencies->currentUser;
-        $this->links          = $dependencies->links;
-        $this->requester      = $dependencies->requester;
-        $this->strings        = $dependencies->strings;
-        $this->url            = $dependencies->url;
-        $this->paymentMethods = $dependencies->paymentMethods;
-        $this->nonce          = $dependencies->nonce;
-        $this->images         = $dependencies->images;
-        $this->session        = $dependencies->session;
-        $this->cart           = $dependencies->cart;
+        $this->helpers = $dependencies->helpers;
 
         // Hooks
-        $this->admin     = $dependencies->admin;
-        $this->checkout  = $dependencies->checkout;
-        $this->endpoints = $dependencies->endpoints;
-        $this->gateway   = $dependencies->gateway;
-        $this->options   = $dependencies->options;
-        $this->order     = $dependencies->order;
-        $this->plugin    = $dependencies->plugin;
-        $this->product   = $dependencies->product;
-        $this->scripts   = $dependencies->scripts;
-        $this->template  = $dependencies->template;
+        $this->hooks = $dependencies->hooks;
 
         // General
-        $this->logs           = $dependencies->logs;
-        $this->notices        = $dependencies->notices;
-        $this->metadataConfig = $dependencies->metadataConfig;
+        $this->logs = $dependencies->logs;
 
         // Exclusive
         $this->settings = $dependencies->settings;
@@ -470,9 +301,6 @@ class WoocommerceMercadoPago
         // Translations
         $this->adminTranslations = $dependencies->adminTranslations;
         $this->storeTranslations = $dependencies->storeTranslations;
-
-        //Credits Auto Enable
-        $this->creditsEnabled = $dependencies->creditsEnabled;
     }
 
     /**
@@ -482,27 +310,27 @@ class WoocommerceMercadoPago
      */
     public function setPluginSettingsLink()
     {
-        $links = $this->links->getLinks();
+        $links = $this->helpers->links->getLinks();
 
         $pluginLinks = [
             [
                 'text'   => $this->adminTranslations->plugin['set_plugin'],
                 'href'   => $links['admin_settings_page'],
-                'target' => $this->admin::HREF_TARGET_DEFAULT,
+                'target' => $this->hooks->admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->adminTranslations->plugin['payment_method'],
                 'href'   => $links['admin_gateways_list'],
-                'target' => $this->admin::HREF_TARGET_DEFAULT,
+                'target' => $this->hooks->admin::HREF_TARGET_DEFAULT,
             ],
             [
                 'text'   => $this->adminTranslations->plugin['plugin_manual'],
                 'href'   => $links['docs_integration_introduction'],
-                'target' => $this->admin::HREF_TARGET_BLANK,
+                'target' => $this->hooks->admin::HREF_TARGET_BLANK,
             ],
         ];
 
-        $this->admin->registerPluginActionLinks(self::PLUGIN_NAME, $pluginLinks);
+        $this->hooks->admin->registerPluginActionLinks(self::PLUGIN_NAME, $pluginLinks);
     }
 
     /**
@@ -512,7 +340,7 @@ class WoocommerceMercadoPago
      */
     public function verifyPhpVersionNotice(): void
     {
-        $this->notices->adminNoticeError($this->adminTranslations->notices['php_wrong_version'], false);
+        $this->helpers->notices->adminNoticeError($this->adminTranslations->notices['php_wrong_version'], false);
     }
 
     /**
@@ -522,7 +350,7 @@ class WoocommerceMercadoPago
      */
     public function verifyCurlNotice(): void
     {
-        $this->notices->adminNoticeError($this->adminTranslations->notices['missing_curl'], false);
+        $this->helpers->notices->adminNoticeError($this->adminTranslations->notices['missing_curl'], false);
     }
 
     /**
@@ -532,7 +360,7 @@ class WoocommerceMercadoPago
      */
     public function verifyGdNotice(): void
     {
-        $this->notices->adminNoticeWarning($this->adminTranslations->notices['missing_gd_extensions'], false);
+        $this->helpers->notices->adminNoticeWarning($this->adminTranslations->notices['missing_gd_extensions'], false);
     }
 
     /**

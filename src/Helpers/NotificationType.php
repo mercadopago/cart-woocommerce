@@ -11,7 +11,7 @@ final class NotificationType
     /**
      * Get Status Type
      *
-     * @param $paymenStatus
+     * @param $ClassGateway
      *
      * @return string
      */

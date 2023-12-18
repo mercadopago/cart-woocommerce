@@ -39,8 +39,8 @@ class TicketTransaction extends AbstractPaymentTransaction
         parent::__construct($gateway, $order, $checkout);
 
         $this->paymentMethodId = $this->checkout['payment_method_id'];
-        $this->paymentPlaceId  = $this->mercadopago->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
-        $this->paymentMethodId = $this->mercadopago->paymentMethods->getPaymentMethodId($this->paymentMethodId);
+        $this->paymentPlaceId  = $this->mercadopago->helpers->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
+        $this->paymentMethodId = $this->mercadopago->helpers->paymentMethods->getPaymentMethodId($this->paymentMethodId);
 
         $this->transaction->installments = 1;
         $this->transaction->payment_method_id  = $this->paymentMethodId;
@@ -94,7 +94,7 @@ class TicketTransaction extends AbstractPaymentTransaction
      */
     public function getExpirationDate(): string
     {
-        $expirationDate = $this->mercadopago->options->getGatewayOption(
+        $expirationDate = $this->mercadopago->hooks->options->getGatewayOption(
             $this->gateway,
             'date_expiration',
             MP_TICKET_DATE_EXPIRATION

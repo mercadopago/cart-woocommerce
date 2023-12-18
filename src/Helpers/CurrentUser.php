@@ -46,7 +46,7 @@ final class CurrentUser
     /**
      * Get WP current user
      *
-     * @return \WP_User
+     * @return bool
      */
     public function isUserLoggedIn(): bool
     {

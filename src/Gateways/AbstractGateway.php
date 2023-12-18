@@ -110,10 +110,10 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
         $this->mercadopago = $mercadopago;
 
-        $this->checkoutCountry = $this->mercadopago->store->getCheckoutCountry();
-        $this->countryConfigs  = $this->mercadopago->country->getCountryConfigs();
-        $this->ratio           = $this->mercadopago->currency->getRatio($this);
-        $this->links           = $this->mercadopago->links->getLinks();
+        $this->checkoutCountry = $this->mercadopago->storeConfig->getCheckoutCountry();
+        $this->countryConfigs  = $this->mercadopago->helpers->country->getCountryConfigs();
+        $this->ratio           = $this->mercadopago->helpers->currency->getRatio($this);
+        $this->links           = $this->mercadopago->helpers->links->getLinks();
 
         $this->has_fields = true;
         $this->supports   = ['products', 'refunds'];
@@ -124,6 +124,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
 
     /**
      * Process blocks checkout data
+     *
+     * @param $prefix
+     * @param $postData
      *
      * @return array
      */
@@ -171,7 +174,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     protected function addMissingCredentialsNoticeAsFormField(): bool
     {
-        if (empty($this->mercadopago->seller->getCredentialsPublicKey()) || empty($this->mercadopago->seller->getCredentialsAccessToken())) {
+        if (empty($this->mercadopago->sellerConfig->getCredentialsPublicKey()) || empty($this->mercadopago->sellerConfig->getCredentialsAccessToken())) {
             $this->form_fields = [
                 'card_info_validate' => [
                     'type'  => 'mp_card_info',
@@ -200,7 +203,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     protected function getHomologValidateNoticeOrHidden(): array
     {
-        if ($this->mercadopago->seller->getHomologValidate()) {
+        if ($this->mercadopago->sellerConfig->getHomologValidate()) {
             return [
                 'type'  => 'title',
                 'value' => '',
@@ -246,14 +249,14 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function registerAdminScripts()
     {
-        $this->mercadopago->scripts->registerAdminScript(
+        $this->mercadopago->hooks->scripts->registerAdminScript(
             'wc_mercadopago_admin_components',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
+            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
         );
 
-        $this->mercadopago->scripts->registerAdminStyle(
+        $this->mercadopago->hooks->scripts->registerAdminStyle(
             'wc_mercadopago_admin_components',
-            $this->mercadopago->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
+            $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
         );
     }
 
@@ -264,14 +267,14 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function registerCheckoutScripts(): void
     {
-        $this->mercadopago->scripts->registerCheckoutScript(
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_checkout_components',
-            $this->mercadopago->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
+            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
         );
 
-        $this->mercadopago->scripts->registerCheckoutStyle(
+        $this->mercadopago->hooks->scripts->registerCheckoutStyle(
             'wc_mercadopago_checkout_components',
-            $this->mercadopago->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
+            $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
         );
     }
 
@@ -305,10 +308,10 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         $order = wc_get_order($order_id);
 
-        $discount   = $this->mercadopago->cart->calculateSubtotalWithDiscount($this);
-        $commission = $this->mercadopago->cart->calculateSubtotalWithCommission($this);
+        $discount   = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
+        $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
 
-        $isProductionMode = $this->mercadopago->store->getProductionMode();
+        $isProductionMode = $this->mercadopago->storeConfig->getProductionMode();
 
         $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
         $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this)::ID);
@@ -364,8 +367,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function canAdminLoadScriptsAndStyles(string $gatewaySection): bool
     {
-        return $this->mercadopago->admin->isAdmin() && ($this->mercadopago->url->validatePage('wc-settings') &&
-            $this->mercadopago->url->validateSection($gatewaySection)
+        return $this->mercadopago->hooks->admin->isAdmin() && ($this->mercadopago->helpers->url->validatePage('wc-settings') &&
+            $this->mercadopago->helpers->url->validateSection($gatewaySection)
         );
     }
 
@@ -376,9 +379,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function canCheckoutLoadScriptsAndStyles(): bool
     {
-        return $this->mercadopago->checkout->isCheckout() &&
-            $this->mercadopago->gateway->isEnabled($this) &&
-            !$this->mercadopago->url->validateQueryVar('order-received');
+        return $this->mercadopago->hooks->checkout->isCheckout() &&
+            $this->mercadopago->hooks->gateway->isEnabled($this) &&
+            !$this->mercadopago->helpers->url->validateQueryVar('order-received');
     }
 
     /**
@@ -388,12 +391,12 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function loadResearchComponent(): void
     {
-        $this->mercadopago->gateway->registerAfterSettingsCheckout(
+        $this->mercadopago->hooks->gateway->registerAfterSettingsCheckout(
             'admin/components/research-fields.php',
             [
                 [
                     'field_key'   => 'mp-public-key-prod',
-                    'field_value' => $this->mercadopago->seller->getCredentialsPublicKey(),
+                    'field_value' => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
                 ],
                 [
                     'field_key'   => 'reference',
@@ -410,25 +413,25 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function loadMelidataStoreScripts(): void
     {
-        $this->mercadopago->checkout->registerBeforePay(function () {
-            $this->mercadopago->scripts->registerMelidataStoreScript('/woocommerce_pay');
+        $this->mercadopago->hooks->checkout->registerBeforePay(function () {
+            $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/woocommerce_pay');
         });
 
-        $this->mercadopago->checkout->registerBeforeCheckoutForm(function () {
-            $this->mercadopago->scripts->registerMelidataStoreScript('/checkout');
+        $this->mercadopago->hooks->checkout->registerBeforeCheckoutForm(function () {
+            $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/checkout');
         });
 
-        $this->mercadopago->checkout->registerPayOrderBeforeSubmit(function () {
-            $this->mercadopago->scripts->registerMelidataStoreScript('/pay_order');
+        $this->mercadopago->hooks->checkout->registerPayOrderBeforeSubmit(function () {
+            $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/pay_order');
         });
 
-        $this->mercadopago->gateway->registerBeforeThankYou(function ($orderId) {
+        $this->mercadopago->hooks->gateway->registerBeforeThankYou(function ($orderId) {
             $order         = wc_get_order($orderId);
             $paymentMethod = $order->get_payment_method();
 
-            foreach ($this->mercadopago->store->getAvailablePaymentGateways() as $gateway) {
+            foreach ($this->mercadopago->storeConfig->getAvailablePaymentGateways() as $gateway) {
                 if ($gateway::ID === $paymentMethod) {
-                    $this->mercadopago->scripts->registerMelidataStoreScript('/thankyou', $paymentMethod);
+                    $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/thankyou', $paymentMethod);
                 }
             }
         });
@@ -437,6 +440,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     /**
      * Process if result is fail
      *
+     * @param \Exception $e
      * @param string $message
      * @param string $source
      * @param array $context
@@ -449,7 +453,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->mercadopago->logs->file->error($e->getMessage(), $source, $context);
 
         if ($notice) {
-            $this->mercadopago->notices->storeNotice($message, 'error');
+            $this->mercadopago->helpers->notices->storeNotice($message, 'error');
         }
 
         return [
@@ -476,7 +480,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             $commission = explode('=', $this->mercadopago->orderMetadata->getCommissionData($order))[1] ?? '';
 
             if ($commission) {
-                $this->mercadopago->template->getWoocommerceTemplate(
+                $this->mercadopago->hooks->template->getWoocommerceTemplate(
                     'admin/order/generic-note.php',
                     [
                         'tip'   => $this->mercadopago->adminTranslations->order['order_note_commission_tip'],
@@ -487,7 +491,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             }
 
             if ($discount) {
-                $this->mercadopago->template->getWoocommerceTemplate(
+                $this->mercadopago->hooks->template->getWoocommerceTemplate(
                     'admin/order/generic-note.php',
                     [
                         'tip'   => $this->mercadopago->adminTranslations->order['order_note_discount_tip'],
@@ -519,10 +523,10 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function getActionableValue(string $optionName, $default): string
     {
-        $active = $this->mercadopago->options->getGatewayOption($this, "{$optionName}_checkbox");
+        $active = $this->mercadopago->hooks->options->getGatewayOption($this, "{$optionName}_checkbox");
 
         if ($active === 'yes') {
-            return $this->mercadopago->options->getGatewayOption($this, $optionName, $default);
+            return $this->mercadopago->hooks->options->getGatewayOption($this, $optionName, $default);
         }
 
         return $default;
@@ -539,8 +543,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function getFeeText(string $text, string $feeName, float $feeValue): string
     {
-        $total = Numbers::formatWithCurrencySymbol($this->mercadopago->currency->getCurrencySymbol(), $feeValue);
-        return "$text {$this->$feeName}% = $total";
+        $total = Numbers::formatWithCurrencySymbol($this->mercadopago->helpers->currency->getCurrencySymbol(), $feeValue);
+        return "$text $feeName% = $total";
     }
 
     /**
@@ -551,11 +555,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     protected function getAmount(): float
     {
         // WC_Cart is null when blocks is loaded on the admin
-        if (!$this->mercadopago->cart->isAvailable()) {
+        if (!$this->mercadopago->helpers->cart->isAvailable()) {
             return 0.00;
         }
 
-        return $this->mercadopago->cart->calculateTotalWithDiscountAndCommission($this);
+        return $this->mercadopago->helpers->cart->calculateTotalWithDiscountAndCommission($this);
     }
 
     /**
@@ -612,11 +616,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function generate_mp_toggle_switch_html(string $key, array $settings): string
     {
-        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
             'admin/components/toggle-switch.php',
             [
                 'field_key'   => $this->get_field_key($key),
-                'field_value' => $this->mercadopago->options->getGatewayOption($this, $key, $settings['default']),
+                'field_value' => $this->mercadopago->hooks->options->getGatewayOption($this, $key, $settings['default']),
                 'settings'    => $settings,
             ]
         );
@@ -632,7 +636,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function generate_mp_checkbox_list_html(string $key, array $settings): string
     {
-        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
             'admin/components/checkbox-list.php',
             [
                 'settings' => $settings,
@@ -650,7 +654,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function generate_mp_config_title_html(string $key, array $settings): string
     {
-        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
             'admin/components/config-title.php',
             [
                 'field_key'   => $this->get_field_key($key),
@@ -670,13 +674,13 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function generate_mp_actionable_input_html(string $key, array $settings): string
     {
-        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
             'admin/components/actionable-input.php',
             [
                 'field_key'          => $this->get_field_key($key),
                 'field_key_checkbox' => $this->get_field_key($key . '_checkbox'),
-                'field_value'        => $this->mercadopago->options->getGatewayOption($this, $key),
-                'enabled'            => $this->mercadopago->options->getGatewayOption($this, $key . '_checkbox'),
+                'field_value'        => $this->mercadopago->hooks->options->getGatewayOption($this, $key),
+                'enabled'            => $this->mercadopago->hooks->options->getGatewayOption($this, $key . '_checkbox'),
                 'custom_attributes'  => $this->get_custom_attribute_html($settings),
                 'settings'           => $settings,
             ]
@@ -693,7 +697,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function generate_mp_card_info_html(string $key, array $settings): string
     {
-        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
             'admin/components/card-info.php',
             [
                 'field_key'   => $this->get_field_key($key),
@@ -713,7 +717,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function generate_mp_preview_html(string $key, array $settings): string
     {
-        return $this->mercadopago->template->getWoocommerceTemplateHtml(
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
             'admin/components/preview.php',
             [
                 'field_key'   => $this->get_field_key($key),
@@ -734,8 +738,8 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public function update_option($key, $value = ''): bool
     {
         if ($key === 'enabled' && $value === 'yes') {
-            $publicKey   = $this->mercadopago->seller->getCredentialsPublicKey();
-            $accessToken = $this->mercadopago->seller->getCredentialsAccessToken();
+            $publicKey   = $this->mercadopago->sellerConfig->getCredentialsPublicKey();
+            $accessToken = $this->mercadopago->sellerConfig->getCredentialsAccessToken();
 
             if (empty($publicKey) || empty($accessToken)) {
                 $this->mercadopago->logs->file->error(

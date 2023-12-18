@@ -3,7 +3,6 @@
 namespace MercadoPago\Woocommerce\Transactions;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
-use MercadoPago\Woocommerce\Gateways\BasicGateway;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 
 class BasicTransaction extends AbstractPreferenceTransaction
@@ -36,7 +35,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
         $internalMetadata = parent::getInternalMetadata();
 
         $internalMetadata->checkout       = 'smart';
-        $internalMetadata->checkout_type  = $this->mercadopago->options->getGatewayOption($this->gateway, 'method', 'redirect');
+        $internalMetadata->checkout_type  = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'method', 'redirect');
 
         return $internalMetadata;
     }
@@ -59,7 +58,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
      */
     public function setInstallmentsTransaction(): void
     {
-        $installments = (int) $this->mercadopago->options->getGatewayOption($this->gateway, 'installments', '24');
+        $installments = (int) $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'installments', '24');
         $this->transaction->payment_methods->installments = ($installments == 0) ? 12 : $installments;
     }
 
@@ -70,7 +69,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
      */
     public function setExcludedPaymentMethodsTransaction(): void
     {
-        $exPayments = $this->mercadopago->seller->getExPayments($this->gateway);
+        $exPayments = $this->mercadopago->sellerConfig->getExPayments($this->gateway);
 
         if (count($exPayments) != 0) {
             foreach ($exPayments as $excluded) {

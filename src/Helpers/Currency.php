@@ -6,7 +6,6 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Logs\Logs;
-use MercadoPago\Woocommerce\Helpers\Notices;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
@@ -29,16 +28,6 @@ final class Currency
      * @var array
      */
     private $ratios = [];
-
-    /**
-     * @var bool
-     */
-    private $isShowingEnabledNotice = false;
-
-    /**
-     * @var bool
-     */
-    private $isShowingDisabledNotice = false;
 
     /**
      * @var array
@@ -295,9 +284,9 @@ final class Currency
     }
 
     /**
-     * Set how 'we converting' notice is show up.
+     * Set how 'we're converting' notice is show up.
      *
-     * @return array
+     * @return void
      */
     private function showWeConvertingNoticeByCountry()
     {
