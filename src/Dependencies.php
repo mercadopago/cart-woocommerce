@@ -98,6 +98,11 @@ class Dependencies
     public $adminHook;
 
     /**
+     * @var Hooks\Cart
+     */
+    public $cartHook;
+
+    /**
      * @var Checkout
      */
     public $checkoutHook;
@@ -271,6 +276,7 @@ class Dependencies
 
         $this->woocommerce          = $woocommerce;
         $this->adminHook            = new Admin();
+        $this->cartHook             = new Hooks\Cart();
         $this->endpointsHook        = new Endpoints();
         $this->optionsHook          = new Options();
         $this->orderMetaHook        = new OrderMeta();
@@ -585,6 +591,7 @@ class Dependencies
     {
         return new Hooks(
             $this->adminHook,
+            $this->cartHook,
             $this->checkoutHook,
             $this->endpointsHook,
             $this->gatewayHook,

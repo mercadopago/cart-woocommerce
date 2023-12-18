@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce;
 
 use MercadoPago\Woocommerce\Hooks\Admin;
+use MercadoPago\Woocommerce\Hooks\Cart;
 use MercadoPago\Woocommerce\Hooks\Checkout;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Gateway;
@@ -24,6 +25,11 @@ class Hooks
      * @var Admin
      */
     public $admin;
+
+    /**
+     * @var Cart
+     */
+    public $cart;
 
     /**
      * @var Checkout
@@ -77,6 +83,7 @@ class Hooks
 
     public function __construct(
         Admin $admin,
+        Cart $cart,
         Checkout $checkout,
         Endpoints $endpoints,
         Gateway $gateway,
@@ -89,6 +96,7 @@ class Hooks
         Template $template
     ) {
         $this->admin     = $admin;
+        $this->cart      = $cart;
         $this->checkout  = $checkout;
         $this->endpoints = $endpoints;
         $this->gateway   = $gateway;

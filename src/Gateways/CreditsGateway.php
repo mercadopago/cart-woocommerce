@@ -61,9 +61,9 @@ class CreditsGateway extends AbstractGateway
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
         $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
-        $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+        $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
-        add_action('woocommerce_cart_calculate_fees', [$this, 'registerDiscountAndCommissionFeesOnCart']);
+        $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
     }
 
     /**
