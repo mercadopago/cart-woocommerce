@@ -276,6 +276,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             'wc_mercadopago_checkout_components',
             $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
         );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_checkout_update',
+            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/mp-checkout-update', '.js')
+        );
     }
 
     /**
@@ -463,44 +468,13 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     }
 
     /**
-     * Register commission and discount on admin order totals
-     *
-     * @param AbstractGateway $gateway
-     * @param int $orderId
+     * Register plugin and commission to WC_Cart fees
      *
      * @return void
      */
-    public function registerCommissionAndDiscount(AbstractGateway $gateway, int $orderId): void
+    public function registerDiscountAndCommissionFeesOnCart()
     {
-        $order       = wc_get_order($orderId);
-        $usedGateway = $this->mercadopago->orderMetadata->getUsedGatewayData($order);
-
-        if ($gateway::ID === $usedGateway) {
-            $discount   = explode('=', $this->mercadopago->orderMetadata->getDiscountData($order))[1] ?? '';
-            $commission = explode('=', $this->mercadopago->orderMetadata->getCommissionData($order))[1] ?? '';
-
-            if ($commission) {
-                $this->mercadopago->hooks->template->getWoocommerceTemplate(
-                    'admin/order/generic-note.php',
-                    [
-                        'tip'   => $this->mercadopago->adminTranslations->order['order_note_commission_tip'],
-                        'title' => $this->mercadopago->adminTranslations->order['order_note_commission_title'],
-                        'value' => $commission,
-                    ]
-                );
-            }
-
-            if ($discount) {
-                $this->mercadopago->hooks->template->getWoocommerceTemplate(
-                    'admin/order/generic-note.php',
-                    [
-                        'tip'   => $this->mercadopago->adminTranslations->order['order_note_discount_tip'],
-                        'title' => $this->mercadopago->adminTranslations->order['order_note_discount_title'],
-                        'value' => $discount,
-                    ]
-                );
-            }
-        }
+        $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFees($this);
     }
 
     /**

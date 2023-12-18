@@ -379,11 +379,7 @@ abstract class AbstractTransaction
     public function getItemAmount(\WC_Order_Item $item): float
     {
         $lineAmount = $item->get_total() + $item->get_total_tax();
-        $discount   = Numbers::format($lineAmount * ($this->gateway->discount / 100));
-        $commission = Numbers::format($lineAmount * ($this->gateway->commission / 100));
-        $amount     = $lineAmount - $discount + $commission;
-
-        return Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
+        return Numbers::calculateByCurrency($this->countryConfigs['currency'], $lineAmount, $this->ratio);
     }
 
     /**

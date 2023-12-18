@@ -59,16 +59,18 @@ class CustomGateway extends AbstractGateway
 
         $this->mercadopago->hooks->gateway->registerUpdateOptions($this);
         $this->mercadopago->hooks->gateway->registerGatewayTitle($this);
-
         $this->mercadopago->hooks->gateway->registerThankYouPage($this->id, [$this, 'renderInstallmentsRateDetails']);
-        $this->mercadopago->hooks->order->registerOrderDetailsAfterOrderTable([$this, 'renderInstallmentsRateDetails']);
 
+        $this->mercadopago->hooks->order->registerOrderDetailsAfterOrderTable([$this, 'renderInstallmentsRateDetails']);
         $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
         $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerInstallmentsFeeOnAdminOrder']);
 
-        $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
         $this->mercadopago->hooks->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
+
+        $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
+
+        $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
     }
 
     /**
@@ -728,18 +730,6 @@ class CustomGateway extends AbstractGateway
                 (array) $response
             );
         }
-    }
-
-    /**
-     * Register commission and discount on admin order totals
-     *
-     * @param int $orderId
-     *
-     * @return void
-     */
-    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
-    {
-        parent::registerCommissionAndDiscount($this, $orderId);
     }
 
     /**

@@ -73,6 +73,8 @@ class PixGateway extends AbstractGateway
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::PIX_IMAGE_ENDPOINT, [$this, 'generatePixImage']);
 
+        $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
+
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
     }
 
@@ -528,17 +530,5 @@ class PixGateway extends AbstractGateway
                 'text_button'         => $this->storeTranslations['text_button'],
             ]
         );
-    }
-
-    /**
-     * Register commission and discount on admin order totals
-     *
-     * @param int $orderId
-     *
-     * @return void
-     */
-    public function registerCommissionAndDiscountOnAdminOrder(int $orderId): void
-    {
-        parent::registerCommissionAndDiscount($this, $orderId);
     }
 }

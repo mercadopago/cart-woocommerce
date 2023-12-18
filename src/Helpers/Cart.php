@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -25,13 +26,35 @@ final class Cart
      */
     protected $currency;
 
-    public function __construct(Country $country, Currency $currency)
-    {
+    /**
+     * @var Session
+     */
+    protected $session;
+
+    /**
+     * @var StoreTranslations
+     */
+    protected $storeTranslations;
+
+    /**
+     * @param Country $country
+     * @param Currency $currency
+     * @param Session $session
+     * @param StoreTranslations $storeTranslations
+     */
+    public function __construct(
+        Country $country,
+        Currency $currency,
+        Session $session,
+        StoreTranslations $storeTranslations
+    ) {
         global $woocommerce;
 
-        $this->woocommerce = $woocommerce;
-        $this->country     = $country;
-        $this->currency    = $currency;
+        $this->woocommerce       = $woocommerce;
+        $this->country           = $country;
+        $this->currency          = $currency;
+        $this->session           = $session;
+        $this->storeTranslations = $storeTranslations;
     }
 
     /**
@@ -143,6 +166,69 @@ final class Cart
     }
 
     /**
+     * Add plugin discount value on WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function addDiscountOnFees(AbstractGateway $gateway): void
+    {
+        $discount     = $this->calculateSubtotalWithDiscount($gateway);
+        $discountName = $this->storeTranslations->commonCheckout['cart_discount'];
+
+        if ($discount > 0) {
+            $this->addFee($discountName, -$discount);
+        }
+    }
+
+    /**
+     * Add plugin commission value on WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function addCommissionOnFees(AbstractGateway $gateway): void
+    {
+        $commission     = $this->calculateSubtotalWithCommission($gateway);
+        $commissionName = $this->storeTranslations->commonCheckout['cart_commission'];
+
+        if ($commission > 0) {
+            $this->addFee($commissionName, $commission);
+        }
+    }
+
+    /**
+     * Add plugin and commission to WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function addDiscountAndCommissionOnFees(AbstractGateway $gateway)
+    {
+        $selectedGateway = $this->session->getSession('chosen_payment_method');
+
+        if ($selectedGateway && $selectedGateway == $gateway::ID) {
+            $this->addDiscountOnFees($gateway);
+            $this->addCommissionOnFees($gateway);
+        }
+    }
+
+    /**
+     * Add fee to WC_Cart
+     *
+     * @param string $name
+     * @param float $value
+     * @return void
+     */
+    public function addFee(string $name, float $value): void
+    {
+        $this->getCart()->add_fee($name, $value, true);
+    }
+
+    /**
      * Verify if WC_Cart exists and is available
      *
      * @return bool
@@ -153,6 +239,8 @@ final class Cart
     }
 
     /**
+     * Empty WC_Cart
+     *
      * @return void
      */
     public function emptyCart(): void
