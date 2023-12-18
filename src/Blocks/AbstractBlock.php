@@ -57,7 +57,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
 
         $this->mercadopago = $mercadopago;
         $this->gateway     = $this->setGateway();
-        $this->links       = $this->mercadopago->links->getLinks();
+        $this->links       = $this->mercadopago->helpers->links->getLinks();
     }
 
     /**
@@ -88,8 +88,8 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     public function get_payment_method_script_handles(): array
     {
         $scriptName = sprintf('wc_mercadopago_%s_blocks', $this->scriptName);
-        $scriptPath = $this->mercadopago->url->getPluginFileUrl("build/$this->scriptName.block", '.js', true);
-        $assetPath  = $this->mercadopago->url->getPluginFilePath("build/$this->scriptName.block.asset", '.php', true);
+        $scriptPath = $this->mercadopago->helpers->url->getPluginFileUrl("build/$this->scriptName.block", '.js', true);
+        $assetPath  = $this->mercadopago->helpers->url->getPluginFilePath("build/$this->scriptName.block.asset", '.php', true);
 
         $version = '';
         $deps    = [];
@@ -101,7 +101,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
         }
 
         $this->gateway->registerCheckoutScripts();
-        $this->mercadopago->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps);
+        $this->mercadopago->hooks->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps);
 
         return [$scriptName];
     }

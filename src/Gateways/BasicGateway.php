@@ -41,8 +41,8 @@ class BasicGateway extends AbstractGateway
         $this->storeTranslations = $this->mercadopago->storeTranslations->basicCheckout;
 
         $this->id    = self::ID;
-        $this->icon  = $this->mercadopago->gateway->getGatewayIcon('icon-mp');
-        $this->title = $this->mercadopago->store->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->icon  = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-mp');
+        $this->title = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
         $this->init_settings();
         $this->init_form_fields();
@@ -54,16 +54,16 @@ class BasicGateway extends AbstractGateway
         $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
 
-        $this->mercadopago->gateway->registerUpdateOptions($this);
-        $this->mercadopago->gateway->registerGatewayTitle($this);
+        $this->mercadopago->hooks->gateway->registerUpdateOptions($this);
+        $this->mercadopago->hooks->gateway->registerGatewayTitle($this);
 
-        $this->mercadopago->currency->handleCurrencyNotices($this);
-        $this->mercadopago->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
+        $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+        $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
 
-        $this->mercadopago->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
+        $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
-        $this->mercadopago->gateway->registerThankyouPage($this->id, [$this, 'saveOrderPaymentsId']);
-        $this->mercadopago->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
+        $this->mercadopago->hooks->gateway->registerThankyouPage($this->id, [$this, 'saveOrderPaymentsId']);
+        $this->mercadopago->hooks->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
     }
 
     /**
@@ -89,9 +89,9 @@ class BasicGateway extends AbstractGateway
 
         parent::init_form_fields();
 
-        $successUrl = $this->mercadopago->options->getGatewayOption($this, 'success_url');
-        $failureUrl = $this->mercadopago->options->getGatewayOption($this, 'failure_url');
-        $pendingUrl = $this->mercadopago->options->getGatewayOption($this, 'pending_url');
+        $successUrl = $this->mercadopago->hooks->options->getGatewayOption($this, 'success_url');
+        $failureUrl = $this->mercadopago->hooks->options->getGatewayOption($this, 'failure_url');
+        $pendingUrl = $this->mercadopago->hooks->options->getGatewayOption($this, 'pending_url');
 
         $this->form_fields = array_merge($this->form_fields, [
             'header' => [
@@ -246,7 +246,7 @@ class BasicGateway extends AbstractGateway
     {
         parent::registerCheckoutScripts();
 
-        $this->mercadopago->scripts->registerCheckoutScript(
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_sdk',
             'https://sdk.mercadopago.com/js/v2'
         );
@@ -259,7 +259,7 @@ class BasicGateway extends AbstractGateway
      */
     public function payment_fields(): void
     {
-        $this->mercadopago->template->getWoocommerceTemplate(
+        $this->mercadopago->hooks->template->getWoocommerceTemplate(
             'public/checkouts/basic-checkout.php',
             $this->getPaymentFieldsParams()
         );
@@ -277,7 +277,7 @@ class BasicGateway extends AbstractGateway
         $paymentMethodsTitle   = count($paymentMethods) != 0 ? $this->storeTranslations['payment_methods_title'] : '';
 
         return [
-            'test_mode'                        => $this->mercadopago->store->isTestMode(),
+            'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
             'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
             'test_mode_description'            => $this->storeTranslations['test_mode_description'],
             'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
@@ -288,7 +288,7 @@ class BasicGateway extends AbstractGateway
             'payment_methods_methods'          => wp_json_encode($paymentMethods),
             'method'                           => $this->settings['method'],
             'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
-            'checkout_redirect_src'            => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/cho-pro-redirect-v2', '.png', true),
+            'checkout_redirect_src'            => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/cho-pro-redirect-v2', '.png', true),
             'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
@@ -310,7 +310,7 @@ class BasicGateway extends AbstractGateway
             parent::process_payment($order_id);
 
             $this->transaction = new BasicTransaction($this, $order);
-            $method            = $this->mercadopago->options->getGatewayOption($this, 'method', 'redirect');
+            $method            = $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect');
 
             if ($method === 'modal') {
                 $this->mercadopago->logs->file->info('Preparing to render Checkout Pro view.', self::LOG_SOURCE);
@@ -324,7 +324,7 @@ class BasicGateway extends AbstractGateway
             $preference = $this->transaction->createPreference();
             return [
                 'result'   => 'success',
-                'redirect' => $this->mercadopago->store->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
+                'redirect' => $this->mercadopago->storeConfig->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
             ];
         } catch (\Exception $e) {
             return $this->processReturnFail(
@@ -348,7 +348,7 @@ class BasicGateway extends AbstractGateway
     private function validateBackUrl($url, $default): string
     {
         if (!empty($url) && filter_var($url, FILTER_VALIDATE_URL) === false) {
-            $icon = $this->mercadopago->url->getPluginFileUrl('assets/images/icons/icon-warning', '.png', true);
+            $icon = $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/icons/icon-warning', '.png', true);
             return "<img width='14' height='14' style='vertical-align: middle' src='$icon' /> " . $this->adminTranslations['invalid_back_url'];
         }
 
@@ -363,10 +363,10 @@ class BasicGateway extends AbstractGateway
     private function getPaymentMethods(): array
     {
         $activePaymentMethods  = [];
-        $paymentMethodsOptions = $this->mercadopago->seller->getCheckoutBasicPaymentMethods();
+        $paymentMethodsOptions = $this->mercadopago->sellerConfig->getCheckoutBasicPaymentMethods();
 
         foreach ($paymentMethodsOptions as $paymentMethodsOption) {
-            if ($this->mercadopago->options->getGatewayOption($this, $paymentMethodsOption['config']) === 'yes') {
+            if ($this->mercadopago->hooks->options->getGatewayOption($this, $paymentMethodsOption['config']) === 'yes') {
                 $activePaymentMethods[] = [
                     'src' => $paymentMethodsOption['image'],
                     'alt' => $paymentMethodsOption['id']
@@ -374,7 +374,7 @@ class BasicGateway extends AbstractGateway
             }
         }
 
-        return $this->mercadopago->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
+        return $this->mercadopago->helpers->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
     }
 
     /**
@@ -404,7 +404,7 @@ class BasicGateway extends AbstractGateway
             ],
         ];
 
-        $allPayments = $this->mercadopago->options->get('_checkout_payments_methods');
+        $allPayments = $this->mercadopago->hooks->options->get('_checkout_payments_methods');
 
         if (empty($allPayments)) {
             return $paymentList;
@@ -443,7 +443,7 @@ class BasicGateway extends AbstractGateway
             'id'        => 'ex_payments_' . $paymentMethod['id'],
             'type'      => 'checkbox',
             'label'     => $paymentMethod['name'],
-            'value'     => $this->mercadopago->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
+            'value'     => $this->mercadopago->hooks->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
             'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
         ];
     }
@@ -461,7 +461,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
                     ],
                 ],
@@ -469,7 +469,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ],
                 ],
@@ -477,7 +477,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_protection'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
                     ],
                 ]
@@ -487,7 +487,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
                     ]
                 ],
@@ -495,7 +495,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_2'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ]
                 ],
@@ -503,7 +503,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_protection'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
                     ]
                 ]
@@ -513,7 +513,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_3'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ]
                 ],
@@ -521,7 +521,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone_installments'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone_installments'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone-installments', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone-installments', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone_installments'],
                     ]
                 ],
@@ -529,7 +529,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_protection_2'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection_2'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-protection', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
                     ]
                 ]
@@ -539,7 +539,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
                     ]
                 ],
@@ -547,7 +547,7 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_3'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-wallet', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
                     ]
                 ],
@@ -555,14 +555,14 @@ class BasicGateway extends AbstractGateway
                     'title'    => $this->storeTranslations['checkout_benefits_title_phone_installments'],
                     'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone_installments_2'],
                     'image'    => [
-                        'src' => $this->mercadopago->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone-installments', '.png', true),
+                        'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/blue-phone-installments', '.png', true),
                         'alt' => $this->storeTranslations['checkout_benefits_alt_phone_installments'],
                     ]
                 ]
             ],
         ];
 
-        $site = $this->mercadopago->seller->getSiteId();
+        $site = $this->mercadopago->sellerConfig->getSiteId();
 
         return array_key_exists($site, $benefits) ? $benefits[$site] : $benefits['ROLA'];
     }
@@ -591,10 +591,10 @@ class BasicGateway extends AbstractGateway
         $this->transaction = new BasicTransaction($this, $order);
         $preference        = $this->transaction->createPreference();
 
-        $this->mercadopago->template->getWoocommerceTemplate(
+        $this->mercadopago->hooks->template->getWoocommerceTemplate(
             'public/receipt/preference-modal.php',
             [
-                'public_key'          => $this->mercadopago->seller->getCredentialsPublicKey(),
+                'public_key'          => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
                 'preference_id'       => $preference['id'],
                 'pay_with_mp_title'   => $this->storeTranslations['pay_with_mp_title'],
                 'cancel_url'          => $order->get_cancel_order_url(),

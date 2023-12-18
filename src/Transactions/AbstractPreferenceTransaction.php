@@ -54,8 +54,8 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     {
         parent::setCommonTransaction();
 
-        $isTestMode = $this->mercadopago->store->isTestMode();
-        $isTestUser = $this->mercadopago->seller->isTestUser();
+        $isTestMode = $this->mercadopago->storeConfig->isTestMode();
+        $isTestUser = $this->mercadopago->sellerConfig->isTestUser();
 
         if (!$isTestMode && !$isTestUser) {
             $this->transaction->sponsor_id = $this->countryConfigs['sponsor_id'];
@@ -86,20 +86,20 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      */
     public function setBackUrlsTransaction(): void
     {
-        $successUrl = $this->mercadopago->options->getGatewayOption($this->gateway, 'success_url');
-        $failureUrl = $this->mercadopago->options->getGatewayOption($this->gateway, 'failure_url');
-        $pendingUrl = $this->mercadopago->options->getGatewayOption($this->gateway, 'pending_url');
+        $successUrl = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'success_url');
+        $failureUrl = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'failure_url');
+        $pendingUrl = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'pending_url');
 
         $this->transaction->back_urls->success = empty($successUrl)
-            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->gateway->get_return_url($this->order)))
+            ? $this->mercadopago->helpers->strings->fixUrlAmpersand(esc_url($this->gateway->get_return_url($this->order)))
             : $successUrl;
 
         $this->transaction->back_urls->failure = empty($failureUrl)
-            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->order->get_cancel_order_url()))
+            ? $this->mercadopago->helpers->strings->fixUrlAmpersand(esc_url($this->order->get_cancel_order_url()))
             : $failureUrl;
 
         $this->transaction->back_urls->pending = empty($pendingUrl)
-            ? $this->mercadopago->strings->fixUrlAmpersand(esc_url($this->gateway->get_return_url($this->order)))
+            ? $this->mercadopago->helpers->strings->fixUrlAmpersand(esc_url($this->gateway->get_return_url($this->order)))
             : $pendingUrl;
     }
 
@@ -110,7 +110,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      */
     public function setAutoReturnTransaction(): void
     {
-        if ($this->mercadopago->options->getGatewayOption($this->gateway, 'auto_return') === 'yes') {
+        if ($this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'auto_return') === 'yes') {
             $this->transaction->auto_return = 'approved';
         }
     }

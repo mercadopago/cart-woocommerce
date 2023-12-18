@@ -36,7 +36,7 @@ class Remote implements LogInterface
     /**
      * Remote Logs constructor
      *
-     * @param Store store
+     * @param Store $store
      * @param Requester $requester
      */
     public function __construct(Store $store, Requester $requester)

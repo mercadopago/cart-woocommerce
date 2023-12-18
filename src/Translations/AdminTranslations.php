@@ -986,9 +986,16 @@ class AdminTranslations
         ];
     }
 
-    private function generateConversionMessage($baseMessage, $currency = ''): string
+    /**
+     * Generate conversion message
+     *
+     * @param string $baseMessage
+     *
+     * @return string
+     */
+    private function generateConversionMessage(string $baseMessage): string
     {
-        return sprintf('%s %s  %s ', $baseMessage, get_woocommerce_currency(), __("to ", 'woocommerce-mercadopago'));
+        return sprintf('%s %s %s ', $baseMessage, get_woocommerce_currency(), __("to ", 'woocommerce-mercadopago'));
     }
 
     /**

@@ -50,14 +50,14 @@ class PixTransaction extends AbstractPaymentTransaction
      */
     public function getExpirationDate(): string
     {
-        $expirationDate = $this->mercadopago->store->getCheckoutDateExpirationPix($this->gateway, '');
+        $expirationDate = $this->mercadopago->storeConfig->getCheckoutDateExpirationPix($this->gateway, '');
 
         if (strlen($expirationDate) === 1 && $expirationDate === '1') {
             $expirationDate = '24 hours';
-            $this->mercadopago->options->setGatewayOption($this->gateway, 'checkout_pix_date_expiration', $expirationDate);
+            $this->mercadopago->hooks->options->setGatewayOption($this->gateway, 'checkout_pix_date_expiration', $expirationDate);
         } elseif (strlen($expirationDate) === 1) {
             $expirationDate = $expirationDate . ' days';
-            $this->mercadopago->options->setGatewayOption($this->gateway, 'checkout_pix_date_expiration', $expirationDate);
+            $this->mercadopago->hooks->options->setGatewayOption($this->gateway, 'checkout_pix_date_expiration', $expirationDate);
         }
 
         return Date::sumToNowDate($expirationDate);

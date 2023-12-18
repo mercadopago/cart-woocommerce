@@ -31,9 +31,9 @@ class NotificationFactory
                 $gateway,
                 $mercadopago->logs,
                 $mercadopago->orderStatus,
-                $mercadopago->seller,
-                $mercadopago->store,
-                $mercadopago->requester
+                $mercadopago->sellerConfig,
+                $mercadopago->storeConfig,
+                $mercadopago->helpers->requester
             );
         }
 
@@ -42,9 +42,9 @@ class NotificationFactory
                 $gateway,
                 $mercadopago->logs,
                 $mercadopago->orderStatus,
-                $mercadopago->seller,
-                $mercadopago->store,
-                $mercadopago->requester
+                $mercadopago->sellerConfig,
+                $mercadopago->storeConfig,
+                $mercadopago->helpers->requester
             );
         }
 
@@ -52,8 +52,8 @@ class NotificationFactory
             $gateway,
             $mercadopago->logs,
             $mercadopago->orderStatus,
-            $mercadopago->seller,
-            $mercadopago->store
+            $mercadopago->sellerConfig,
+            $mercadopago->storeConfig
         );
     }
 }
