@@ -39,7 +39,7 @@ After creating and defining your gateway class, you need to make Woocommerce awa
 ```
 function initPaymentGateway() {
     global $mercadopago;
-    $mercadopago->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\MPGateway');
+    $mercadopago->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\MPGateway');
 }
 ````
 

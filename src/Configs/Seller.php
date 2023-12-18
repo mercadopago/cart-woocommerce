@@ -341,8 +341,6 @@ class Seller
     }
 
     /**
-     * @param string $default
-     *
      * @return array
      */
     public function getCheckoutTicketPaymentMethods(): array

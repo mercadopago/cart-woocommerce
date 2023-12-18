@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Hooks;
 
 use Exception;
+use MercadoPago\PP\Sdk\Common\AbstractCollection;
+use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -275,7 +277,7 @@ class Order
      *
      * @param \WC_Order $order
      *
-     * @return bool|\MercadoPago\PP\Sdk\Common\AbstractCollection|\MercadoPago\PP\Sdk\Common\AbstractEntity|object
+     * @return bool|AbstractCollection|AbstractEntity|object
      */
     private function getLastPaymentInfo(\WC_Order $order)
     {

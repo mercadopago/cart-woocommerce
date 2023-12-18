@@ -311,6 +311,9 @@ function mpGetPaymentMethods() {
     function (response) {
       const payment = document.getElementById('mp-payment');
 
+      // removes current payment methods
+      document.querySelectorAll('.mp-settings-payment-block').forEach(element => {element.remove()})
+
       response.data.reverse().forEach((gateway) => {
         payment.insertAdjacentElement('afterend', createMpPaymentMethodComponent(gateway));
       });
@@ -578,6 +581,7 @@ function mpUpdateOptionCredentials() {
             mpVerifyAlertTestMode();
             mpShowMessage(response.data, 'success', 'credentials');
             mpValidateCredentialsTips();
+            mpGetPaymentMethods();
 
             setTimeout(() => {
               mpGoToNextStep('mp-step-1', 'mp-step-2', 'mp-credentials-arrow-up', 'mp-store-info-arrow-up');

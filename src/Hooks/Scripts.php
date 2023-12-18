@@ -168,6 +168,10 @@ class Scripts
     /**
      * Register credits script on admin
      *
+     * @param string $name
+     * @param string $file
+     * @param array $variables
+     *
      * @return void
      */
     public function registerCreditsAdminScript(string $name, string $file, array $variables = []): void
@@ -179,6 +183,9 @@ class Scripts
 
     /**
      * Register credits style on admin
+     *
+     * @param string $name
+     * @param string $file
      *
      * @return void
      */
