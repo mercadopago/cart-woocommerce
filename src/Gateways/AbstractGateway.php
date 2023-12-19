@@ -33,6 +33,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public const LOG_SOURCE = '';
 
     /**
+     * @var string
+     */
+    public $iconAdmin;
+
+    /**
      * @var WoocommerceMercadoPago
      */
     protected $mercadopago;
