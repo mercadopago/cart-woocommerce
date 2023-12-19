@@ -22,9 +22,9 @@ class NotificationFactory
     {
         global $mercadopago;
 
-        $topic  = $data['topic'];
-        $type   = $data['type'];
-        $source = $data['source_news'];
+        $topic  = isset($data['topic']) ? $data['topic'] : '';
+        $type   = isset($data['type']) ? $data['type'] : '';
+        $source = isset($data['source_news']) ? $data['source_news'] : '';
 
         if ($type === 'payment' && $source === 'webhooks') {
             return new WebhookNotification(

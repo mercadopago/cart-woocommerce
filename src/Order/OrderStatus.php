@@ -147,7 +147,7 @@ final class OrderStatus
      */
     private function approvedFlow(array $data, \WC_Order $order, string $usedGateway): void
     {
-        if ($data['status_detail'] === 'partially_refunded') {
+        if (isset($data['status_detail']) && $data['status_detail'] === 'partially_refunded') {
             return;
         }
 
