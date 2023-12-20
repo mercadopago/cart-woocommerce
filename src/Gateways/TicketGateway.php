@@ -48,7 +48,6 @@ class TicketGateway extends AbstractGateway
         $this->iconAdmin = $this->getCheckoutIcon(true);
         $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
@@ -63,7 +62,6 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->hooks->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
-        $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 

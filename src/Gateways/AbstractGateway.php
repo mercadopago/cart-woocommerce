@@ -123,6 +123,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->has_fields = true;
         $this->supports   = ['products', 'refunds'];
 
+        $this->init_settings();
         $this->loadResearchComponent();
         $this->loadMelidataStoreScripts();
     }
