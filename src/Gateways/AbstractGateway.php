@@ -498,15 +498,19 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function getFeeTitle(): string
     {
-        $discount   = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
-        $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
+        if ($this->mercadopago->helpers->cart->isAvailable()) {
+            $discount = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
+            $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
 
-        return $this->mercadopago->hooks->gateway->buildTitleWithDiscountAndCommission(
-            $discount,
-            $commission,
-            $this->mercadopago->storeTranslations->commonCheckout['discount_title'],
-            $this->mercadopago->storeTranslations->commonCheckout['fee_title']
-        );
+            return $this->mercadopago->hooks->gateway->buildTitleWithDiscountAndCommission(
+                $discount,
+                $commission,
+                $this->mercadopago->storeTranslations->commonCheckout['discount_title'],
+                $this->mercadopago->storeTranslations->commonCheckout['fee_title']
+            );
+        }
+
+        return '';
     }
 
     /**
