@@ -474,7 +474,13 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function registerDiscountAndCommissionFeesOnCart()
     {
-        $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFees($this);
+        if ($this->mercadopago->hooks->checkout->isCheckout()) {
+            $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFees($this);
+        }
+
+        if ($this->mercadopago->hooks->cart->isCart()) {
+            $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFees($this);
+        }
     }
 
     /**
@@ -485,6 +491,22 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public function getCheckoutName(): string
     {
         return self::CHECKOUT_NAME;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFeeTitle(): string
+    {
+        $discount   = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
+        $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
+
+        return $this->mercadopago->hooks->gateway->buildTitleWithDiscountAndCommission(
+            $discount,
+            $commission,
+            $this->mercadopago->storeTranslations->commonCheckout['discount_title'],
+            $this->mercadopago->storeTranslations->commonCheckout['fee_title']
+        );
     }
 
     /**

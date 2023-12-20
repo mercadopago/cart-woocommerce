@@ -10,11 +10,12 @@ use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Cart;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
+use MercadoPago\Woocommerce\Hooks\Blocks;
 use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Endpoints\FrontendEndpoints;
+use MercadoPago\Woocommerce\Endpoints\CheckoutCustom;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
@@ -88,14 +89,19 @@ class Dependencies
     public $storeConfig;
 
     /**
-     * @var FrontendEndpoints
+     * @var CheckoutCustom
      */
-    public $frontendEndpoints;
+    public $checkoutCustomEndpoints;
 
     /**
      * @var Admin
      */
     public $adminHook;
+
+    /**
+     * @var Blocks
+     */
+    public $blocksHook;
 
     /**
      * @var Hooks\Cart
@@ -274,47 +280,48 @@ class Dependencies
     {
         global $woocommerce;
 
-        $this->woocommerce          = $woocommerce;
-        $this->adminHook            = new Admin();
-        $this->cartHook             = new Hooks\Cart();
-        $this->endpointsHook        = new Endpoints();
-        $this->optionsHook          = new Options();
-        $this->orderMetaHook        = new OrderMeta();
-        $this->productHook          = new Product();
-        $this->templateHook         = new Template();
-        $this->pluginHook           = new Plugin();
-        $this->checkoutHook         = new Checkout();
-        $this->actionsHelper        = new Actions();
-        $this->cacheHelper          = new Cache();
-        $this->imagesHelper         = new Images();
-        $this->sessionHelper        = new Session();
-        $this->stringsHelper        = new Strings();
-        $this->orderBilling         = new OrderBilling();
-        $this->orderShipping        = new OrderShipping();
-        $this->orderMetadata        = $this->setOrderMetadata();
-        $this->requesterHelper      = $this->setRequester();
-        $this->storeConfig          = $this->setStore();
-        $this->logs                 = $this->setLogs();
-        $this->sellerConfig         = $this->setSeller();
-        $this->countryHelper        = $this->setCountry();
-        $this->urlHelper            = $this->setUrl();
-        $this->linksHelper          = $this->setLinks();
-        $this->paymentMethodsHelper = $this->setPaymentMethods();
-        $this->scriptsHook          = $this->setScripts();
-        $this->adminTranslations    = $this->setAdminTranslations();
-        $this->storeTranslations    = $this->setStoreTranslations();
-        $this->gatewayHook          = $this->setGateway();
-        $this->nonceHelper          = $this->setNonce();
-        $this->orderStatus          = $this->setOrderStatus();
-        $this->currentUserHelper    = $this->setCurrentUser();
-        $this->orderHook            = $this->setOrder();
-        $this->noticesHelper        = $this->setNotices();
-        $this->metadataConfig       = $this->setMetadataConfig();
-        $this->currencyHelper       = $this->setCurrency();
-        $this->settings             = $this->setSettings();
-        $this->creditsEnabledHelper = $this->setCreditsEnabled();
-        $this->frontendEndpoints    = $this->setFrontendEndpoints();
-        $this->cartHelper           = $this->setCart();
+        $this->woocommerce             = $woocommerce;
+        $this->adminHook               = new Admin();
+        $this->cartHook                = new Hooks\Cart();
+        $this->blocksHook              = new Blocks();
+        $this->endpointsHook           = new Endpoints();
+        $this->optionsHook             = new Options();
+        $this->orderMetaHook           = new OrderMeta();
+        $this->productHook             = new Product();
+        $this->templateHook            = new Template();
+        $this->pluginHook              = new Plugin();
+        $this->checkoutHook            = new Checkout();
+        $this->actionsHelper           = new Actions();
+        $this->cacheHelper             = new Cache();
+        $this->imagesHelper            = new Images();
+        $this->sessionHelper           = new Session();
+        $this->stringsHelper           = new Strings();
+        $this->orderBilling            = new OrderBilling();
+        $this->orderShipping           = new OrderShipping();
+        $this->orderMetadata           = $this->setOrderMetadata();
+        $this->requesterHelper         = $this->setRequester();
+        $this->storeConfig             = $this->setStore();
+        $this->logs                    = $this->setLogs();
+        $this->sellerConfig            = $this->setSeller();
+        $this->countryHelper           = $this->setCountry();
+        $this->urlHelper               = $this->setUrl();
+        $this->linksHelper             = $this->setLinks();
+        $this->paymentMethodsHelper    = $this->setPaymentMethods();
+        $this->scriptsHook             = $this->setScripts();
+        $this->adminTranslations       = $this->setAdminTranslations();
+        $this->storeTranslations       = $this->setStoreTranslations();
+        $this->gatewayHook             = $this->setGateway();
+        $this->nonceHelper             = $this->setNonce();
+        $this->orderStatus             = $this->setOrderStatus();
+        $this->currentUserHelper       = $this->setCurrentUser();
+        $this->orderHook               = $this->setOrder();
+        $this->noticesHelper           = $this->setNotices();
+        $this->metadataConfig          = $this->setMetadataConfig();
+        $this->currencyHelper          = $this->setCurrency();
+        $this->settings                = $this->setSettings();
+        $this->creditsEnabledHelper    = $this->setCreditsEnabled();
+        $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
+        $this->cartHelper              = $this->setCart();
 
         $this->hooks   = $this->setHooks();
         $this->helpers = $this->setHelpers();
@@ -562,11 +569,11 @@ class Dependencies
     }
 
     /**
-     * @return FrontendEndpoints
+     * @return CheckoutCustom
      */
-    private function setFrontendEndpoints(): FrontendEndpoints
+    private function setCustomCheckoutEndpoints(): CheckoutCustom
     {
-        return new FrontendEndpoints(
+        return new CheckoutCustom(
             $this->endpointsHook,
             $this->logs,
             $this->requesterHelper,
@@ -591,6 +598,7 @@ class Dependencies
     {
         return new Hooks(
             $this->adminHook,
+            $this->blocksHook,
             $this->cartHook,
             $this->checkoutHook,
             $this->endpointsHook,

@@ -68,7 +68,6 @@ class PixGateway extends AbstractGateway
 
         $this->mercadopago->hooks->order->registerEmailBeforeOrderTable([$this, 'renderOrderReceivedTemplate']);
         $this->mercadopago->hooks->order->registerOrderDetailsAfterOrderTable([$this, 'renderOrderReceivedTemplate']);
-        $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::PIX_IMAGE_ENDPOINT, [$this, 'generatePixImage']);
@@ -160,6 +159,7 @@ class PixGateway extends AbstractGateway
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
+            'fee_title'                        => $this->getFeeTitle(),
         ];
     }
 

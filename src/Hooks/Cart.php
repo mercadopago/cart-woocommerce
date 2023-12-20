@@ -9,6 +9,16 @@ if (!defined('ABSPATH')) {
 class Cart
 {
     /**
+     * Validate if the actual page belongs to the cart section
+     *
+     * @return bool
+     */
+    public function isCart(): bool
+    {
+        return is_cart();
+    }
+
+    /**
      * Register WC_Cart calculate fees
      *
      * @param mixed $callback

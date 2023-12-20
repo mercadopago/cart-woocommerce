@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Interfaces;
 
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -44,9 +46,9 @@ interface MercadoPagoPaymentBlockInterface
     /**
      * Set block payment gateway
      *
-     * @return ?MercadoPagoGatewayInterface
+     * @return AbstractGateway
      */
-    public function setGateway(): ?MercadoPagoGatewayInterface;
+    public function setGateway(): AbstractGateway;
 
     /**
      * Set payment block script params

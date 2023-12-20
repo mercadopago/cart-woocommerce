@@ -62,7 +62,6 @@ class CustomGateway extends AbstractGateway
         $this->mercadopago->hooks->gateway->registerThankYouPage($this->id, [$this, 'renderInstallmentsRateDetails']);
 
         $this->mercadopago->hooks->order->registerOrderDetailsAfterOrderTable([$this, 'renderInstallmentsRateDetails']);
-        $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
         $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerInstallmentsFeeOnAdminOrder']);
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
@@ -359,6 +358,7 @@ class CustomGateway extends AbstractGateway
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
             'amount'                           => $this->getAmount(),
             'currency_ratio'                   => $this->mercadopago->helpers->currency->getRatio($this),
+            'fee_title'                        => $this->getFeeTitle(),
         ];
     }
 

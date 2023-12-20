@@ -60,7 +60,6 @@ class BasicGateway extends AbstractGateway
 
         $this->mercadopago->hooks->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
-        $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
@@ -294,6 +293,7 @@ class BasicGateway extends AbstractGateway
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
+            'fee_title'                        => $this->getFeeTitle(),
         ];
     }
 

@@ -4,6 +4,7 @@ import { useEffect, useRef } from '@wordpress/element';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { decodeEntities } from '@wordpress/html-entities';
 import { getSetting } from '@woocommerce/settings';
+import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
 
 import TestMode from './components/TestMode';
 import InputTable from './components/InputTable';
@@ -16,12 +17,37 @@ const paymentMethodName = 'woo-mercado-pago-ticket';
 const settings = getSetting(`woo-mercado-pago-ticket_data`, {});
 const defaultLabel = decodeEntities(settings.title) || 'Checkout Ticket';
 
+const updateCart = (props) => {
+  const { extensionCartUpdate } = wc.blocksCheckout;
+  const { eventRegistration, emitResponse } = props;
+  const { onPaymentSetup } = eventRegistration;
+
+  useEffect(() => {
+    addDiscountAndCommission(extensionCartUpdate, paymentMethodName);
+
+    const unsubscribe = onPaymentSetup(() => {
+      return { type: emitResponse.responseTypes.SUCCESS };
+    });
+
+    return () => {
+      removeDiscountAndCommission(extensionCartUpdate, paymentMethodName);
+      unsubscribe();
+    };
+  }, [onPaymentSetup]);
+};
+
 const Label = (props) => {
   const { PaymentMethodLabel } = props.components;
-  return <PaymentMethodLabel text={defaultLabel} />;
+
+  const feeTitle = decodeEntities(settings?.params?.fee_title || '');
+  const text = `${defaultLabel} ${feeTitle}`;
+
+  return <PaymentMethodLabel text={text} />;
 };
 
 const Content = (props) => {
+  updateCart(props);
+
   const {
     test_mode_title,
     test_mode_description,
@@ -111,7 +137,7 @@ const Content = (props) => {
 
           {inputDocumentConfig ? <InputDocument {...inputDocumentConfig} /> : null}
 
-          <p className="mp-checkout-ticket-tex">{ticket_text_label}</p>
+          <p className="mp-checkout-ticket-text">{ticket_text_label}</p>
 
           <InputTable
             name={'mercadopago_ticket[payment_method_id]'}
