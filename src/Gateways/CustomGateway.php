@@ -43,11 +43,11 @@ class CustomGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->customGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->customCheckout;
 
-        $this->id    = self::ID;
-        $this->icon  = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-blue-card');
-        $this->title = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id        = self::ID;
+        $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-blue-card');
+        $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-blue-card-admin');
+        $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
@@ -62,7 +62,6 @@ class CustomGateway extends AbstractGateway
         $this->mercadopago->hooks->gateway->registerThankYouPage($this->id, [$this, 'renderInstallmentsRateDetails']);
 
         $this->mercadopago->hooks->order->registerOrderDetailsAfterOrderTable([$this, 'renderInstallmentsRateDetails']);
-        $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
         $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerInstallmentsFeeOnAdminOrder']);
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);

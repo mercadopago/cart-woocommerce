@@ -40,11 +40,11 @@ class BasicGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->basicGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->basicCheckout;
 
-        $this->id    = self::ID;
-        $this->icon  = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-mp');
-        $this->title = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id        = self::ID;
+        $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-mp');
+        $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-mp-admin');
+        $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
@@ -60,7 +60,6 @@ class BasicGateway extends AbstractGateway
 
         $this->mercadopago->hooks->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
-        $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 

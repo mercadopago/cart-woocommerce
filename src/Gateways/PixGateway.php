@@ -47,11 +47,11 @@ class PixGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->pixGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->pixCheckout;
 
-        $this->id    = self::ID;
-        $this->icon  = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pix-blue');
-        $this->title = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id        = self::ID;
+        $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pix-blue');
+        $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pix-blue-admin');
+        $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
@@ -68,7 +68,6 @@ class PixGateway extends AbstractGateway
 
         $this->mercadopago->hooks->order->registerEmailBeforeOrderTable([$this, 'renderOrderReceivedTemplate']);
         $this->mercadopago->hooks->order->registerOrderDetailsAfterOrderTable([$this, 'renderOrderReceivedTemplate']);
-        $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerCommissionAndDiscountOnAdminOrder']);
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::PIX_IMAGE_ENDPOINT, [$this, 'generatePixImage']);

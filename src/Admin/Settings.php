@@ -350,7 +350,7 @@ class Settings
                     'description'      => $gateway->description,
                     'title'            => $gateway->title,
                     'enabled'          => !isset($gateway->settings['enabled']) ? false : $gateway->settings['enabled'],
-                    'icon'             => $gateway->icon,
+                    'icon'             => $gateway->iconAdmin,
                     'link'             => admin_url('admin.php?page=wc-settings&tab=checkout&section=') . $gateway->id,
                     'badge_translator' => [
                         'yes' => $this->translations->gatewaysSettings['enabled'],

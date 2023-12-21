@@ -577,11 +577,11 @@ function mpUpdateOptionCredentials() {
           }
         )
         .done(function (response) {
+          mpGetPaymentMethods();
           if (response.success) {
             mpVerifyAlertTestMode();
             mpShowMessage(response.data, 'success', 'credentials');
             mpValidateCredentialsTips();
-            mpGetPaymentMethods();
 
             setTimeout(() => {
               mpGoToNextStep('mp-step-1', 'mp-step-2', 'mp-credentials-arrow-up', 'mp-store-info-arrow-up');
