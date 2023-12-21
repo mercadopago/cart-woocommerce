@@ -157,9 +157,9 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     /**
      * Set block payment gateway
      *
-     * @return AbstractGateway
+     * @return ?AbstractGateway
      */
-    public function setGateway(): AbstractGateway
+    public function setGateway(): ?AbstractGateway
     {
         $payment_gateways_class = WC()->payment_gateways();
         $payment_gateways       = $payment_gateways_class->payment_gateways();
