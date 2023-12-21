@@ -43,11 +43,11 @@ class TicketGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->ticketGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->ticketCheckout;
 
-        $this->id    = self::ID;
-        $this->icon  = $this->getCheckoutIcon();
-        $this->title = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id        = self::ID;
+        $this->icon      = $this->getCheckoutIcon();
+        $this->iconAdmin = $this->getCheckoutIcon(true);
+        $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
-        $this->init_settings();
         $this->init_form_fields();
         $this->payment_scripts($this->id);
 
@@ -418,12 +418,12 @@ class TicketGateway extends AbstractGateway
      *
      * @return string
      */
-    private function getCheckoutIcon(): string
+    private function getCheckoutIcon(bool $adminVersion = false): string
     {
         $siteId   = strtoupper($this->mercadopago->sellerConfig->getSiteId());
         $iconName = ($siteId === 'MLB') ? 'icon-ticket-mlb' : 'icon-ticket';
 
-        return $this->mercadopago->hooks->gateway->getGatewayIcon($iconName);
+        return $this->mercadopago->hooks->gateway->getGatewayIcon($iconName . ($adminVersion ? '-admin' : ''));
     }
 
     /**
