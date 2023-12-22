@@ -290,11 +290,14 @@ class TicketGateway extends AbstractGateway
 
             if (
                 !empty($checkout['amount']) &&
-                !empty($checkout['doc_type']) &&
-                !empty($checkout['doc_number']) &&
                 !empty($checkout['payment_method_id'])
             ) {
-                $this->validateRulesForSiteId($checkout);
+                $siteIdRulesErrors = $this->validateRulesForSiteId($checkout);
+
+                if ($siteIdRulesErrors !== null) {
+                    return $siteIdRulesErrors;
+                }
+
                 $this->transaction = new TicketTransaction($this, $order, $checkout);
                 $response          = $this->transaction->createPayment();
 
@@ -488,14 +491,17 @@ class TicketGateway extends AbstractGateway
     }
 
     /**
+     * Validate POST data and return the errors found.
+     * Returns null if there is no errors.
+     * 
      * @param $checkout
      *
-     * @return string[]|void
+     * @return ?array
      */
     public function validateRulesForSiteId($checkout)
     {
         // Rules for ticket MLB
-        if ($checkout['site_id'] === 'MLB' && empty($checkout['docNumber'])) {
+        if ($checkout['site_id'] === 'MLB' && empty($checkout['doc_number'])) {
             return $this->processReturnFail(
                 new \Exception('Document is required on ' . __METHOD__),
                 $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
@@ -504,13 +510,15 @@ class TicketGateway extends AbstractGateway
         }
 
         // Rules for effective MLU
-        if ($checkout['site_id'] === 'MLU' && (empty($checkout['docNumber']) || empty($checkout['docType']))) {
+        if ($checkout['site_id'] === 'MLU' && (empty($checkout['doc_number']) || empty($checkout['doc_type']))) {
             return $this->processReturnFail(
                 new \Exception('Document is required on ' . __METHOD__),
                 $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                 self::LOG_SOURCE
             );
         }
+
+        return null;
     }
 
     /**

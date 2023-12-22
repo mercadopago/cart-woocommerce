@@ -211,18 +211,20 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             return;
         }
 
-        if ($this->mercadopago->hooks->cart->isCart()) {
-            $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFeesFromBlocks($this->gateway);
-        }
-
-        $action  = $this->mercadopago->helpers->session->getSession(self::ACTION_SESSION_KEY);
-
-        if ($action == 'add') {
-            $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFeesFromBlocks($this->gateway);
-        }
-
-        if ($action == 'remove') {
-            $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFeesFromBlocks($this->gateway);
+        if (isset($this->gateway)) {
+            if ($this->mercadopago->hooks->cart->isCart()) {
+                $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFeesFromBlocks($this->gateway);
+            }
+    
+            $action  = $this->mercadopago->helpers->session->getSession(self::ACTION_SESSION_KEY);
+    
+            if ($action == 'add') {
+                $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFeesFromBlocks($this->gateway);
+            }
+    
+            if ($action == 'remove') {
+                $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFeesFromBlocks($this->gateway);
+            }
         }
     }
 }

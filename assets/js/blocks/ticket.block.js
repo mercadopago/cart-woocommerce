@@ -59,7 +59,6 @@ const Content = (props) => {
     input_table_button,
     input_helper_label,
     payment_methods,
-    currency_ratio,
     amount,
     site_id,
     terms_and_conditions_description,
@@ -94,12 +93,13 @@ const Content = (props) => {
     const unsubscribe = onPaymentSetup(async () => {
       const paymentMethodData = {};
 
+      paymentMethodData['mercadopago_ticket[site_id]'] = site_id;
       paymentMethodData['mercadopago_ticket[amount]'] = amount.toString();
-      paymentMethodData['mercadopago_ticket[doc_type]'] = ref.current.querySelector('#docType').value;
+      paymentMethodData['mercadopago_ticket[doc_type]'] = ref.current.querySelector('#docType')?.value;
 
       paymentMethodData['mercadopago_ticket[doc_number]'] = ref.current.querySelector(
         '#form-checkout__identificationNumber-container > input',
-      ).value;
+      )?.value;
 
       const checkedPaymentMethod = payment_methods.find((method) => {
         const selector = `#${method.id}`;
@@ -135,7 +135,7 @@ const Content = (props) => {
             />
           ) : null}
 
-          {inputDocumentConfig ? <InputDocument {...inputDocumentConfig} /> : null}
+          {inputDocumentConfig.documents ? <InputDocument {...inputDocumentConfig} /> : null}
 
           <p className="mp-checkout-ticket-text">{ticket_text_label}</p>
 
