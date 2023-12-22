@@ -234,7 +234,7 @@ const CheckoutPage = {
   },
 
   loadAdditionalInfo(sdkAdditionalInfoNeeded) {
-    let additionalInfoNeeded = {
+    const additionalInfoNeeded = {
       issuer: false,
       cardholder_name: false,
       cardholder_identification_type: false,
@@ -258,6 +258,7 @@ const CheckoutPage = {
         additionalInfoNeeded.cardholder_identification_number = true;
       }
     }
+    return additionalInfoNeeded;
   },
 
   verifyInstallments() {
