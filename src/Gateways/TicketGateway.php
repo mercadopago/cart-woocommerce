@@ -493,7 +493,7 @@ class TicketGateway extends AbstractGateway
     /**
      * Validate POST data and return the errors found.
      * Returns null if there is no errors.
-     * 
+     *
      * @param $checkout
      *
      * @return ?array
