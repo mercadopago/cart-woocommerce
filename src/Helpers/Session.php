@@ -17,7 +17,11 @@ final class Session
      */
     public function getSession(string $key)
     {
-        return WC()->session->get($key) ?? null;
+        if ($this->isAvailable()) {
+            return WC()->session->get($key) ?? null;
+        }
+
+        return null;
     }
 
     /**
@@ -30,7 +34,9 @@ final class Session
      */
     public function setSession(string $key, $value): void
     {
-        WC()->session->set($key, $value) ?? null;
+        if ($this->isAvailable()) {
+            WC()->session->set($key, $value) ?? null;
+        }
     }
 
     /**
@@ -42,6 +48,18 @@ final class Session
      */
     public function deleteSession(string $key): void
     {
-        $this->setSession($key, null);
+        if ($this->isAvailable()) {
+            $this->setSession($key, null);
+        }
+    }
+
+    /**
+     * Verify if WC_Session exists and is available
+     *
+     * @return bool
+     */
+    public function isAvailable(): bool
+    {
+        return WC()->session !== null;
     }
 }

@@ -62,7 +62,6 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->hooks->gateway->registerThankYouPage($this->id, [$this, 'renderThankYouPage']);
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
-
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
@@ -265,6 +264,7 @@ class TicketGateway extends AbstractGateway
             'woocommerce_currency'             => get_woocommerce_currency(),
             'account_currency'                 => $this->mercadopago->helpers->country->getCountryConfigs(),
             'febraban'                         => $this->getFebrabanInfo($currentUser, $address),
+            'fee_title'                        => $this->getFeeTitle(),
         ];
     }
 

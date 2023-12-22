@@ -358,6 +358,7 @@ class CustomGateway extends AbstractGateway
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
             'amount'                           => $this->getAmount(),
             'currency_ratio'                   => $this->mercadopago->helpers->currency->getRatio($this),
+            'fee_title'                        => $this->getFeeTitle(),
         ];
     }
 

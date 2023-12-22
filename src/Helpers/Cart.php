@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use MercadoPago\Woocommerce\Blocks\AbstractBlock;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -217,6 +218,91 @@ final class Cart
     }
 
     /**
+     * Add plugin and commission to WC_Cart fees from Blocks
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function addDiscountAndCommissionOnFeesFromBlocks(AbstractGateway $gateway)
+    {
+        $selectedGateway = $this->session->getSession(AbstractBlock::GATEWAY_SESSION_KEY);
+
+        if ($selectedGateway && $selectedGateway == $gateway::ID) {
+            $this->addDiscountOnFees($gateway);
+            $this->addCommissionOnFees($gateway);
+        }
+    }
+
+    /**
+     * Remove plugin discount value on WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function removeDiscountOnFees(AbstractGateway $gateway): void
+    {
+        $discount     = $this->calculateSubtotalWithDiscount($gateway);
+        $discountName = $this->storeTranslations->commonCheckout['cart_discount'];
+
+        if ($discount > 0) {
+            $this->addFee($discountName, 0);
+        }
+    }
+
+    /**
+     * Remove plugin commission value on WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function removeCommissionOnFees(AbstractGateway $gateway): void
+    {
+        $commission     = $this->calculateSubtotalWithCommission($gateway);
+        $commissionName = $this->storeTranslations->commonCheckout['cart_commission'];
+
+        if ($commission > 0) {
+            $this->addFee($commissionName, 0);
+        }
+    }
+
+    /**
+     * Remove plugin and commission to WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function removeDiscountAndCommissionOnFees(AbstractGateway $gateway)
+    {
+        $selectedGateway = $this->session->getSession('chosen_payment_method');
+
+        if ($selectedGateway && $selectedGateway == $gateway::ID) {
+            $this->removeDiscountOnFees($gateway);
+            $this->removeCommissionOnFees($gateway);
+        }
+    }
+
+    /**
+     * Remove plugin and commission to WC_Cart fees
+     *
+     * @param AbstractGateway $gateway
+     *
+     * @return void
+     */
+    public function removeDiscountAndCommissionOnFeesFromBlocks(AbstractGateway $gateway)
+    {
+        $selectedGateway = $this->session->getSession(AbstractBlock::GATEWAY_SESSION_KEY);
+
+        if ($selectedGateway && $selectedGateway == $gateway::ID) {
+            $this->removeDiscountOnFees($gateway);
+            $this->removeCommissionOnFees($gateway);
+        }
+    }
+
+    /**
      * Add fee to WC_Cart
      *
      * @param string $name
@@ -246,5 +332,15 @@ final class Cart
     public function emptyCart(): void
     {
         $this->getCart()->empty_cart();
+    }
+
+    /**
+     * Calculate WC_Cart total and dispatch actions
+     *
+     * @return void
+     */
+    public function calculateTotal(): void
+    {
+        $this->getCart()->calculate_totals();
     }
 }

@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class FrontendEndpoints
+class CheckoutCustom
 {
     /**
      * @var Endpoints

@@ -325,7 +325,7 @@ class Gateway
      *
      * @return string
      */
-    private function buildTitleWithDiscountAndCommission(float $discount, float $commission, string $strDiscount, string $strCommission): string
+    public function buildTitleWithDiscountAndCommission(float $discount, float $commission, string $strDiscount, string $strCommission): string
     {
         $treatedDiscount   = wp_strip_all_tags(wc_price($discount));
         $treatedCommission = wp_strip_all_tags(wc_price($commission));

@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoPaymentBlockInterface;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -13,6 +14,21 @@ if (!defined('ABSPATH')) {
 
 abstract class AbstractBlock extends AbstractPaymentMethodType implements MercadoPagoPaymentBlockInterface
 {
+    /**
+     * @const
+     */
+    public const ACTION_SESSION_KEY = 'mercadopago_blocks_action';
+
+    /**
+     * @const
+     */
+    public const GATEWAY_SESSION_KEY = 'mercadopago_blocks_gateway';
+
+    /**
+     * @const
+     */
+    public const UPDATE_CART_NAMESPACE = 'mercadopago_blocks_update_cart';
+
     /**
      * @var string
      */
@@ -58,6 +74,9 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
         $this->mercadopago = $mercadopago;
         $this->gateway     = $this->setGateway();
         $this->links       = $this->mercadopago->helpers->links->getLinks();
+
+        $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
+        $this->mercadopago->hooks->blocks->registerBlocksUpdated(self::UPDATE_CART_NAMESPACE, [$this, 'updateCartToRegisterDiscountAndCommission']);
     }
 
     /**
@@ -138,9 +157,9 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     /**
      * Set block payment gateway
      *
-     * @return ?MercadoPagoGatewayInterface
+     * @return ?AbstractGateway
      */
-    public function setGateway(): ?MercadoPagoGatewayInterface
+    public function setGateway(): ?AbstractGateway
     {
         $payment_gateways_class = WC()->payment_gateways();
         $payment_gateways       = $payment_gateways_class->payment_gateways();
@@ -156,5 +175,54 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     public function getScriptParams(): array
     {
         return [];
+    }
+
+    /**
+     * Set selected gateway from blocks on session and update WC_Cart
+     *
+     * @param mixed $data
+     *
+     * @return void
+     */
+    public function updateCartToRegisterDiscountAndCommission($data)
+    {
+        $action  = $data['action'] ?? '';
+        $gateway = $data['gateway'] ?? '';
+
+        if (empty($action) || empty($gateway)) {
+            return;
+        }
+
+        $this->mercadopago->helpers->session->setSession(self::ACTION_SESSION_KEY, $action);
+        $this->mercadopago->helpers->session->setSession(self::GATEWAY_SESSION_KEY, $gateway);
+
+        $this->mercadopago->helpers->cart->calculateTotal();
+    }
+
+    /**
+     * Register plugin and commission to WC_Cart fees
+     *
+     * @return void
+     */
+    public function registerDiscountAndCommissionFeesOnCart()
+    {
+        // Avoid to add fees before WooCommerce Blocks load
+        if ($this->mercadopago->hooks->checkout->isCheckout()) {
+            return;
+        }
+
+        if ($this->mercadopago->hooks->cart->isCart()) {
+            $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFeesFromBlocks($this->gateway);
+        }
+
+        $action  = $this->mercadopago->helpers->session->getSession(self::ACTION_SESSION_KEY);
+
+        if ($action == 'add') {
+            $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFeesFromBlocks($this->gateway);
+        }
+
+        if ($action == 'remove') {
+            $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFeesFromBlocks($this->gateway);
+        }
     }
 }

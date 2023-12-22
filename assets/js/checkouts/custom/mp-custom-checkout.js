@@ -186,7 +186,7 @@ function initCardForm() {
               CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'none');
               CheckoutPage.setImageCard(paymentMethods[0].thumbnail);
               CheckoutPage.installment_amount(paymentMethods[0].payment_type_id);
-              CheckoutPage.loadAdditionalInfo(paymentMethods[0].additional_info_needed);
+              const additionalInfoNeeded = CheckoutPage.loadAdditionalInfo(paymentMethods[0].additional_info_needed);
               CheckoutPage.additionalInfoHandler(additionalInfoNeeded);
             } else {
               CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');

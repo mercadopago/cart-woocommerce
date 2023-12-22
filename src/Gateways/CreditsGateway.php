@@ -59,7 +59,6 @@ class CreditsGateway extends AbstractGateway
         $this->mercadopago->hooks->gateway->registerThankyouPage($this->id, [$this, 'saveOrderPaymentsId']);
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
-
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
@@ -431,24 +430,25 @@ class CreditsGateway extends AbstractGateway
             $this->mercadopago->hooks->template->getWoocommerceTemplate(
                 'public/products/credits-modal.php',
                 [
-                    'banner_title' => $this->storeTranslations['banner_title'],
-                    'banner_title_bold' => $this->storeTranslations['banner_title_bold'],
-                    'banner_title_end' => $this->storeTranslations['banner_title_end'],
-                    'banner_link' => $this->storeTranslations['banner_link'],
-                    'modal_title' => $this->storeTranslations['modal_title'],
-                    'modal_subtitle' => $this->storeTranslations['modal_subtitle'],
-                    'modal_how_to' => $this->storeTranslations['modal_how_to'],
-                    'modal_step_1' => $this->storeTranslations['modal_step_1'],
-                    'modal_step_1_bold' => $this->storeTranslations['modal_step_1_bold'],
-                    'modal_step_1_end' => $this->storeTranslations['modal_step_1_end'],
-                    'modal_step_2' => $this->storeTranslations['modal_step_2'],
-                    'modal_step_2_bold' => $this->storeTranslations['modal_step_2_bold'],
-                    'modal_step_2_end' => $this->storeTranslations['modal_step_2_end'],
-                    'modal_step_3' => $this->storeTranslations['modal_step_3'],
-                    'modal_footer' => $this->storeTranslations['modal_footer'],
-                    'modal_footer_link' => $this->storeTranslations['modal_footer_link'],
-                    'modal_footer_end' => $this->storeTranslations['modal_footer_end'],
+                    'banner_title'           => $this->storeTranslations['banner_title'],
+                    'banner_title_bold'      => $this->storeTranslations['banner_title_bold'],
+                    'banner_title_end'       => $this->storeTranslations['banner_title_end'],
+                    'banner_link'            => $this->storeTranslations['banner_link'],
+                    'modal_title'            => $this->storeTranslations['modal_title'],
+                    'modal_subtitle'         => $this->storeTranslations['modal_subtitle'],
+                    'modal_how_to'           => $this->storeTranslations['modal_how_to'],
+                    'modal_step_1'           => $this->storeTranslations['modal_step_1'],
+                    'modal_step_1_bold'      => $this->storeTranslations['modal_step_1_bold'],
+                    'modal_step_1_end'       => $this->storeTranslations['modal_step_1_end'],
+                    'modal_step_2'           => $this->storeTranslations['modal_step_2'],
+                    'modal_step_2_bold'      => $this->storeTranslations['modal_step_2_bold'],
+                    'modal_step_2_end'       => $this->storeTranslations['modal_step_2_end'],
+                    'modal_step_3'           => $this->storeTranslations['modal_step_3'],
+                    'modal_footer'           => $this->storeTranslations['modal_footer'],
+                    'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
+                    'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
                     'modal_footer_help_link' => $this->links['credits_faq_link'],
+                    'fee_title'              => $this->getFeeTitle(),
                 ]
             );
         }
