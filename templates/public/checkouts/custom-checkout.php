@@ -215,10 +215,10 @@ if (!defined('ABSPATH')) {
                         helper-message="<?= esc_html($card_document_input_helper); ?>"
                         input-name="identificationNumber"
                         hidden-id="form-checkout__identificationNumber"
-                        input-data-checkout="docNumber"
+                        input-data-checkout="doc_number"
                         select-id="form-checkout__identificationType"
                         select-name="identificationType"
-                        select-data-checkout="docType"
+                        select-data-checkout="doc_type"
                         flag-error="docNumberError"
                     >
                     </input-document>

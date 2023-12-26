@@ -46,9 +46,9 @@ if (!defined('ABSPATH')) {
                     <input-document
                         label-message="<?= esc_html($input_document_label); ?>"
                         helper-message="<?= esc_html($input_document_helper); ?>"
-                        input-name='mercadopago_ticket[docNumber]'
-                        select-name='mercadopago_ticket[docType]'
-                        select-id='docType'
+                        input-name='mercadopago_ticket[doc_number]'
+                        select-name='mercadopago_ticket[doc_type]'
+                        select-id='doc_type'
                         flag-error='mercadopago_ticket[docNumberError]'
                         documents='["CI","OTRO"]'
                         validate=true>
@@ -61,9 +61,9 @@ if (!defined('ABSPATH')) {
                     <input-document
                         label-message="<?= esc_html($input_document_label); ?> "
                         helper-message="<?= esc_html($input_document_helper); ?>"
-                        input-name='mercadopago_ticket[docNumber]'
-                        select-name='mercadopago_ticket[docType]'
-                        select-id='docType'
+                        input-name='mercadopago_ticket[doc_number]'
+                        select-name='mercadopago_ticket[doc_type]'
+                        select-id='doc_type'
                         flag-error='mercadopago_ticket[docNumberError]'
                         documents='["CPF","CNPJ"]'
                         validate=true>
@@ -76,7 +76,7 @@ if (!defined('ABSPATH')) {
             </p>
 
             <input-table
-                name="mercadopago_ticket[paymentMethodId]"
+                name="mercadopago_ticket[payment_method_id]"
                 button-name=<?= esc_html($input_table_button); ?>
                 columns='<?= esc_attr(wp_json_encode($payment_methods)); ?>'>
             </input-table>
