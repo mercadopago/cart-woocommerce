@@ -92,7 +92,7 @@ const Content = (props) => {
   const [checkoutType, setCheckoutType] = useState('custom');
 
   const { eventRegistration, emitResponse, onSubmit } = props;
-  const { onPaymentSetup, onCheckoutSuccess } = eventRegistration;
+  const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
 
   window.mpFormId = 'blocks_checkout_form';
   window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
@@ -206,6 +206,20 @@ const Content = (props) => {
 
     return () => handle3ds();
   }, [onCheckoutSuccess]);
+
+  useEffect(() => {
+    const unsubscribe = onCheckoutFail(checkoutResponse => {
+      const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
+
+      return {
+        type: emitResponse.responseTypes.FAIL,
+        message: paymentDetails.message,
+        messageContext: emitResponse.noticeContexts.PAYMENTS,
+      };
+    });
+
+    return () => unsubscribe();
+  }, [onCheckoutFail]);
 
   return (
     <div>
