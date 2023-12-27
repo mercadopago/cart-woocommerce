@@ -681,23 +681,17 @@ class CustomGateway extends AbstractGateway
                         return $return;
 
                     case 'rejected':
-                        $urlReceived     = $order->get_checkout_payment_url();
-                        $urlRetryPayment = $order->get_checkout_payment_url(true);
-
-                        $noticeTitle  = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
+                        $errorMessage  = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
 
                         $return = [
                             'result'   => 'failure',
-                            'redirect' => $urlRetryPayment,
-                            'message' => $noticeTitle,
+                            'message'  => $errorMessage,
                         ];
 
                         if ($this->isOrderPayPage()) {
-                            $this->mercadopago->logs->file->info('Is Order Pay Page', 'Testing');
                             $this->handlePayForOrderRequest($return);
                         }
 
-                        $this->mercadopago->logs->file->info('Is Not Order Pay Page', 'Testing', $return);
                         return $return;
 
                     default:
