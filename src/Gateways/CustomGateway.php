@@ -374,10 +374,12 @@ class CustomGateway extends AbstractGateway
         $order = wc_get_order($order_id);
 
         try {
-            $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
+            $checkout = [];
 
-            // Blocks data arrives in a different way
-            if (empty($checkout)) {
+            if (isset($_POST['mercadopago_custom'])) {
+                $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
+            } else {
+                // Blocks data arrives in a different way
                 $checkout = $this->processBlocksCheckoutData('mercadopago_custom', Form::sanitizeFromData($_POST));
             }
 
@@ -665,22 +667,11 @@ class CustomGateway extends AbstractGateway
 
                         $this->mercadopago->helpers->cart->emptyCart();
 
-                        $checkoutType = $checkout['checkout_type'];
-                        $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_see_order_form'];
-
                         $urlReceived = $order->get_checkout_order_received_url();
-                        $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage($statusDetail);
-
-                        $this->mercadopago->helpers->notices->storePendingStatusNotice(
-                            $orderStatus,
-                            $urlReceived,
-                            $checkoutType,
-                            $linkText
-                        );
 
                         $return = [
                             'result'   => 'success',
-                            'redirect' => $order->get_checkout_payment_url(true),
+                            'redirect' => $urlReceived,
                         ];
 
                         if ($this->isOrderPayPage()) {
@@ -690,25 +681,11 @@ class CustomGateway extends AbstractGateway
                         return $return;
 
                     case 'rejected':
-                        $urlReceived     = $order->get_checkout_payment_url();
-                        $urlRetryPayment = $order->get_checkout_payment_url(true);
-
-                        $checkoutType = $checkout['checkout_type'];
-                        $noticeTitle  = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
-                        $orderStatus  = $this->mercadopago->orderStatus->getOrderStatusMessage($response['status_detail']);
-                        $linkText     = $this->mercadopago->storeTranslations->commonMessages['cho_button_try_again'];
-
-                        $this->mercadopago->helpers->notices->storeRejectedStatusNotice(
-                            $noticeTitle,
-                            $orderStatus,
-                            $urlReceived,
-                            $checkoutType,
-                            $linkText
-                        );
+                        $errorMessage  = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
 
                         $return = [
-                            'result'   => 'success',
-                            'redirect' => $urlRetryPayment,
+                            'result'   => 'failure',
+                            'message'  => $errorMessage,
                         ];
 
                         if ($this->isOrderPayPage()) {
