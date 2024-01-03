@@ -154,16 +154,9 @@ final class Cart
     {
         $ratio    = $this->currency->getRatio($gateway);
         $currency = $this->country->getCountryConfigs()['currency'];
+        $total    = $this->getTotal();
 
-        $subtotal   = $this->getSubtotal();
-        $discount   = $this->calculateSubtotalWithDiscount($gateway);
-        $commission = $this->calculateSubtotalWithCommission($gateway);
-
-        $total           = $this->getTotal();
-        $amount          = $subtotal - $discount + $commission;
-        $calculatedTotal = $total + $amount;
-
-        return Numbers::calculateByCurrency($currency, $calculatedTotal, $ratio);
+        return Numbers::calculateByCurrency($currency, $total, $ratio);
     }
 
     /**
