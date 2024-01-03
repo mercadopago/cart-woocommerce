@@ -130,7 +130,7 @@ const Content = (props) => {
 
       const checkedPaymentMethod = payment_methods.find((method) => {
         const selector = `#${method.id}`;
-        const  element = ref.current.querySelector(selector);
+        const element = ref.current.querySelector(selector);
         return element && element.checked;
       });
 
@@ -145,10 +145,7 @@ const Content = (props) => {
         console.log(" inputDocHelper.style.display = 'flex'");
         inputDocHelper.style.display = 'flex';
       }
-      if (
-        paymentMethodData['mercadopago_ticket[payment_method_id]'] === '' ||
-        !paymentMethodData['mercadopago_ticket[payment_method_id]']
-      ) {
+      if (!paymentMethodData['mercadopago_ticket[payment_method_id]']) {
         inputPaymentMethod.style.display = 'flex';
         console.log(" inputPaymentMethod.style.display = 'flex'");
       }
