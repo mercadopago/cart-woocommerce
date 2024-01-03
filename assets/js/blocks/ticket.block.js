@@ -1,16 +1,16 @@
 /* globals wc_mercadopago_ticket_blocks_params */
 
-import { useEffect, useRef } from '@wordpress/element';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import { decodeEntities } from '@wordpress/html-entities';
 import { getSetting } from '@woocommerce/settings';
+import { useEffect, useRef } from '@wordpress/element';
+import { decodeEntities } from '@wordpress/html-entities';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
 
-import TestMode from './components/TestMode';
-import InputTable from './components/InputTable';
-import InputHelper from './components/InputHelper';
 import InputDocument from './components/InputDocument';
+import InputHelper from './components/InputHelper';
+import InputTable from './components/InputTable';
 import TermsAndConditions from './components/TermsAndConditions';
+import TestMode from './components/TestMode';
 
 const paymentMethodName = 'woo-mercado-pago-ticket';
 
@@ -91,19 +91,20 @@ const Content = (props) => {
 
   useEffect(() => {
     const unsubscribe = onPaymentSetup(async () => {
-      const paymentMethodData = {};
-
-      paymentMethodData['mercadopago_ticket[site_id]'] = site_id;
-      paymentMethodData['mercadopago_ticket[amount]'] = amount.toString();
-      paymentMethodData['mercadopago_ticket[doc_type]'] = ref.current.querySelector('#docType')?.value;
-
-      paymentMethodData['mercadopago_ticket[doc_number]'] = ref.current.querySelector(
-        '#form-checkout__identificationNumber-container > input',
-      )?.value;
+      const inputDocHelper = document.getElementById('mp-doc-number-helper');
+      const inputPaymentMethod = document.getElementById('mp-payment-method-helper');
+      const paymentMethodData = {
+        'mercadopago_ticket[site_id]': site_id,
+        'mercadopago_ticket[amount]': amount.toString(),
+        'mercadopago_ticket[doc_type]': ref.current.querySelector('#docType')?.value,
+        'mercadopago_ticket[doc_number]': ref.current.querySelector(
+          '#form-checkout__identificationNumber-container > input',
+        )?.value,
+      };
 
       const checkedPaymentMethod = payment_methods.find((method) => {
         const selector = `#${method.id}`;
-        const element = ref.current.querySelector(selector);
+        const  element = ref.current.querySelector(selector);
         return element && element.checked;
       });
 
@@ -111,10 +112,23 @@ const Content = (props) => {
         paymentMethodData['mercadopago_ticket[payment_method_id]'] = ref.current.querySelector(
           `#${checkedPaymentMethod.id}`,
         ).value;
+        inputPaymentMethod.style.display = 'none';
       }
 
+      if (paymentMethodData['mercadopago_ticket[doc_number]'] === '') {
+        console.log(" inputDocHelper.style.display = 'flex'");
+        inputDocHelper.style.display = 'flex';
+      }
+      if (
+        paymentMethodData['mercadopago_ticket[payment_method_id]'] === '' ||
+        !paymentMethodData['mercadopago_ticket[payment_method_id]']
+      ) {
+        inputPaymentMethod.style.display = 'flex';
+        console.log(" inputPaymentMethod.style.display = 'flex'");
+      }
+      const hasErrorInForm = inputDocHelper.style.display === 'flex' || inputPaymentMethod.style.display === 'flex';
       return {
-        type: emitResponse.responseTypes.SUCCESS,
+        type: hasErrorInForm ? emitResponse.responseTypes.ERROR : emitResponse.responseTypes.SUCCESS,
         meta: { paymentMethodData },
       };
     });
