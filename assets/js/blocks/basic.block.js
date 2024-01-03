@@ -1,16 +1,16 @@
 /* globals wc_mercadopago_basic_blocks_params */
 
-import { useEffect } from '@wordpress/element';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import { decodeEntities } from '@wordpress/html-entities';
 import { getSetting } from '@woocommerce/settings';
+import { useEffect } from '@wordpress/element';
+import { decodeEntities } from '@wordpress/html-entities';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
 
-import TestMode from './components/TestMode';
+import CheckoutBenefits from './components/CheckoutBenefits';
 import ChoRedirectV2 from './components/ChoRedirectV2';
 import PaymentMethodsV2 from './components/PaymentMethodsV2';
-import CheckoutBenefits from './components/CheckoutBenefits';
 import TermsAndConditions from './components/TermsAndConditions';
+import TestMode from './components/TestMode';
 
 const targetName = "mp_checkout_blocks_basic";
 const paymentMethodName = 'woo-mercado-pago-basic';
@@ -106,7 +106,7 @@ const Content = (props) => {
             />
           ) : null}
 
-          <div class="mp-checkout-pro-checkout-benefits">
+          <div className="mp-checkout-pro-checkout-benefits">
             <CheckoutBenefits title={checkout_benefits_title} items={checkout_benefits_items} />
           </div>
 
