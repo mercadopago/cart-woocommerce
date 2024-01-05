@@ -106,13 +106,18 @@ const Content = (props) => {
     flagError: 'mercadopago_ticket[docNumberError]',
     inputName: 'mercadopago_ticket[docNumber]',
     selectName: 'mercadopago_ticket[docType]',
-    documents: null,
+    documents: getDocumentsBySiteId(site_id),
   };
 
-  if (site_id === 'MLB') {
-    inputDocumentConfig.documents = '["CPF","CNPJ"]';
-  } else if (site_id === 'MLU') {
-    inputDocumentConfig.documents = '["CI","OTRO"]';
+  function getDocumentsBySiteId(siteId) {
+    switch (siteId) {
+      case 'MLB':
+        return '["CPF","CNPJ"]';
+      case 'MLU':
+        return '["CI","OTRO"]';
+      default:
+        return null;
+    }
   }
 
   useEffect(() => {
@@ -141,13 +146,11 @@ const Content = (props) => {
         inputPaymentMethod.style.display = 'none';
       }
 
-      if (paymentMethodData['mercadopago_ticket[doc_number]'] === '') {
-        console.log(" inputDocHelper.style.display = 'flex'");
+      if (inputDocumentConfig.documents && paymentMethodData['mercadopago_ticket[doc_number]'] === '') {
         inputDocHelper.style.display = 'flex';
       }
       if (!paymentMethodData['mercadopago_ticket[payment_method_id]']) {
         inputPaymentMethod.style.display = 'flex';
-        console.log(" inputPaymentMethod.style.display = 'flex'");
       }
       const hasErrorInForm = inputDocHelper.style.display === 'flex' || inputPaymentMethod.style.display === 'flex';
       return {
