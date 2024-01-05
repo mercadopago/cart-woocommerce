@@ -230,35 +230,23 @@ final class Cart
     /**
      * Remove plugin discount value on WC_Cart fees
      *
-     * @param AbstractGateway $gateway
-     *
      * @return void
      */
-    public function removeDiscountOnFees(AbstractGateway $gateway): void
+    public function removeDiscountOnFees(): void
     {
-        $discount     = $this->calculateSubtotalWithDiscount($gateway);
         $discountName = $this->storeTranslations->commonCheckout['cart_discount'];
-
-        if ($discount > 0) {
-            $this->addFee($discountName, 0);
-        }
+        $this->addFee($discountName, 0);
     }
 
     /**
      * Remove plugin commission value on WC_Cart fees
      *
-     * @param AbstractGateway $gateway
-     *
      * @return void
      */
-    public function removeCommissionOnFees(AbstractGateway $gateway): void
+    public function removeCommissionOnFees(): void
     {
-        $commission     = $this->calculateSubtotalWithCommission($gateway);
         $commissionName = $this->storeTranslations->commonCheckout['cart_commission'];
-
-        if ($commission > 0) {
-            $this->addFee($commissionName, 0);
-        }
+        $this->addFee($commissionName, 0);
     }
 
     /**
@@ -273,8 +261,8 @@ final class Cart
         $selectedGateway = $this->session->getSession('chosen_payment_method');
 
         if ($selectedGateway && $selectedGateway == $gateway::ID) {
-            $this->removeDiscountOnFees($gateway);
-            $this->removeCommissionOnFees($gateway);
+            $this->removeDiscountOnFees();
+            $this->removeCommissionOnFees();
         }
     }
 
@@ -290,8 +278,8 @@ final class Cart
         $selectedGateway = $this->session->getSession(AbstractBlock::GATEWAY_SESSION_KEY);
 
         if ($selectedGateway && $selectedGateway == $gateway::ID) {
-            $this->removeDiscountOnFees($gateway);
-            $this->removeCommissionOnFees($gateway);
+            $this->removeDiscountOnFees();
+            $this->removeCommissionOnFees();
         }
     }
 
