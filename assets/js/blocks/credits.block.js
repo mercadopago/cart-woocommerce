@@ -14,7 +14,7 @@ import TermsAndConditions from './components/TermsAndConditions';
 const paymentMethodName = 'woo-mercado-pago-credits';
 
 const settings = getSetting(`woo-mercado-pago-credits_data`, {});
-const defaultLabel = decodeEntities(settings.title) || 'Checkout Credits';
+const defaultLabel = decodeEntities(settings.title) || 'Checkout Creditss';
 
 const updateCart = (props) => {
   const { extensionCartUpdate } = wc.blocksCheckout;
@@ -30,7 +30,7 @@ const updateCart = (props) => {
 
     return () => {
       removeDiscountAndCommission(extensionCartUpdate, paymentMethodName);
-      unsubscribe();
+      return unsubscribe();
     };
   }, [onPaymentSetup]);
 };

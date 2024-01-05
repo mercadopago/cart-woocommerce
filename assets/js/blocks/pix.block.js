@@ -29,7 +29,7 @@ const updateCart = (props) => {
 
     return () => {
       removeDiscountAndCommission(extensionCartUpdate, paymentMethodName);
-      unsubscribe();
+      return unsubscribe();
     };
   }, [onPaymentSetup]);
 };
