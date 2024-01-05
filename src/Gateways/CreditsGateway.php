@@ -214,6 +214,7 @@ class CreditsGateway extends AbstractGateway
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
+            'fee_title'                        => $this->getFeeTitle(),
         ];
     }
 
@@ -448,7 +449,6 @@ class CreditsGateway extends AbstractGateway
                     'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
                     'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
                     'modal_footer_help_link' => $this->links['credits_faq_link'],
-                    'fee_title'              => $this->getFeeTitle(),
                 ]
             );
         }
