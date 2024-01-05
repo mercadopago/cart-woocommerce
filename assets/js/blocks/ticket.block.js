@@ -121,12 +121,24 @@ const Content = (props) => {
       }
 
       if (inputDocumentConfig.documents && paymentMethodData['mercadopago_ticket[doc_number]'] === '') {
-        inputDocHelper.style.display = 'flex';
+        setInputDisplayStyle(inputDocHelper, 'flex');
       }
+
       if (!paymentMethodData['mercadopago_ticket[payment_method_id]']) {
-        inputPaymentMethod.style.display = 'flex';
+        setInputDisplayStyle(inputPaymentMethod, 'flex');
       }
-      const hasErrorInForm = inputDocHelper.style.display === 'flex' || inputPaymentMethod.style.display === 'flex';
+
+      const hasErrorInForm = isInputDisplayFlex(inputDocHelper) || isInputDisplayFlex(inputPaymentMethod);
+
+      function setInputDisplayStyle(inputElement, displayValue) {
+        if (inputElement && inputElement.style) {
+          inputElement.style.display = displayValue;
+        }
+      }
+
+      function isInputDisplayFlex(inputElement) {
+        return inputElement && inputElement.style.display === 'flex';
+      }
       return {
         type: hasErrorInForm ? emitResponse.responseTypes.ERROR : emitResponse.responseTypes.SUCCESS,
         meta: { paymentMethodData },
