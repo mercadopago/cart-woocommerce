@@ -120,7 +120,7 @@ const Content = (props) => {
         inputPaymentMethod.style.display = 'none';
       }
 
-      if (inputDocumentConfig.documents && paymentMethodData['mercadopago_ticket[doc_number]'] === '') {
+      if (!inputDocumentConfig.documents && paymentMethodData['mercadopago_ticket[doc_number]'] === '') {
         inputDocHelper.style.display = 'flex';
       }
       if (!paymentMethodData['mercadopago_ticket[payment_method_id]']) {
