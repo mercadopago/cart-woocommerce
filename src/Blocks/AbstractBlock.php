@@ -60,7 +60,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     protected $links;
 
     /**
-     * @var array
+     * @var object
      */
     protected $storeTranslations;
 
