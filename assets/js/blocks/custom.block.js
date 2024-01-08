@@ -12,7 +12,9 @@ import InputHelper from './components/InputHelper';
 import InputDocument from './components/InputDocument';
 import PaymentMethods from './components/PaymentMethods';
 import TermsAndConditions from './components/TermsAndConditions';
+import sendMetric from "../clients/metrics";
 
+const targetName = "mp_checkout_blocks_custom";
 const paymentMethodName = 'woo-mercado-pago-custom';
 
 const settings = getSetting(`woo-mercado-pago-custom_data`, {});
@@ -171,7 +173,7 @@ const Content = (props) => {
   useEffect(() => {
     const handle3ds = onCheckoutSuccess(async (checkoutResponse) => {
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-
+      
       if (paymentDetails.three_ds_flow) {
         const threeDsPromise = new Promise((resolve, reject) => {
           window.addEventListener('completed_3ds', (e) => {
@@ -200,7 +202,7 @@ const Content = (props) => {
             };
           });
       }
-
+      sendMetric("MP_CUSTOM_BLOCKS_SUCCESS", "Payment success", targetName)
       return { type: emitResponse.responseTypes.SUCCESS };
     });
 
@@ -209,8 +211,8 @@ const Content = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
+      sendMetric("MP_CUSTOM_BLOCKS_ERROR", paymentDetails.message, targetName)
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-
       return {
         type: emitResponse.responseTypes.FAIL,
         message: paymentDetails.message,

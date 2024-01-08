@@ -12,6 +12,7 @@ import InputHelper from './components/InputHelper';
 import InputDocument from './components/InputDocument';
 import TermsAndConditions from './components/TermsAndConditions';
 
+const targetName = "mp_checkout_blocks_ticket";
 const paymentMethodName = 'woo-mercado-pago-ticket';
 
 const settings = getSetting(`woo-mercado-pago-ticket_data`, {});
@@ -20,7 +21,7 @@ const defaultLabel = decodeEntities(settings.title) || 'Checkout Ticket';
 const updateCart = (props) => {
   const { extensionCartUpdate } = wc.blocksCheckout;
   const { eventRegistration, emitResponse } = props;
-  const { onPaymentSetup } = eventRegistration;
+  const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
 
   useEffect(() => {
     addDiscountAndCommission(extensionCartUpdate, paymentMethodName);
@@ -34,6 +35,31 @@ const updateCart = (props) => {
       unsubscribe();
     };
   }, [onPaymentSetup]);
+
+  useEffect(() => {
+    
+    onCheckoutSuccess(async (checkoutResponse) => {
+      const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
+      sendMetric("MP_CUSTOM_BLOCKS_SUCCESS", paymentDetails, targetName)
+      return { type: emitResponse.responseTypes.SUCCESS };
+    });
+
+  }, [onCheckoutSuccess]);
+    
+  useEffect(() => {
+    const unsubscribe = onCheckoutFail(checkoutResponse => {
+      sendMetric("MP_CUSTOM_BLOCKS_ERROR", paymentDetails.message, targetName)
+      const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
+      return {
+        type: emitResponse.responseTypes.FAIL,
+        message: paymentDetails.message,
+        messageContext: emitResponse.noticeContexts.PAYMENTS,
+      };
+    });
+
+    return () => unsubscribe();
+  }, [onCheckoutFail]);
+  
 };
 
 const Label = (props) => {
