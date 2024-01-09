@@ -641,3 +641,5 @@ function removeElementsByClass(className) {
     elements[0].parentNode.removeChild(elements[0]);
   }
 }
+
+export { initCardForm, cardFormMounted };

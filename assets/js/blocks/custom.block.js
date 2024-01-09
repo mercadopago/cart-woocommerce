@@ -5,6 +5,7 @@ import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { decodeEntities } from '@wordpress/html-entities';
 import { getSetting } from '@woocommerce/settings';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
+import { initCardForm, cardFormMounted } from "../checkouts/custom/mp-custom-checkout"
 
 import TestMode from './components/TestMode';
 import InputLabel from './components/InputLabel';
@@ -173,7 +174,7 @@ const Content = (props) => {
   useEffect(() => {
     const handle3ds = onCheckoutSuccess(async (checkoutResponse) => {
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      
+
       if (paymentDetails.three_ds_flow) {
         const threeDsPromise = new Promise((resolve, reject) => {
           window.addEventListener('completed_3ds', (e) => {
