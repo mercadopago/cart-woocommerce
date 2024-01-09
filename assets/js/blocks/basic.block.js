@@ -11,6 +11,7 @@ import ChoRedirectV2 from './components/ChoRedirectV2';
 import PaymentMethodsV2 from './components/PaymentMethodsV2';
 import TermsAndConditions from './components/TermsAndConditions';
 import TestMode from './components/TestMode';
+import sendMetric from "./helpers/metrics.helper"
 
 const targetName = "mp_checkout_blocks_basic";
 const paymentMethodName = 'woo-mercado-pago-basic';
@@ -40,7 +41,7 @@ const updateCart = (props) => {
     
     onCheckoutSuccess(async (checkoutResponse) => {
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      sendMetric("MP_BASIC_BLOCKS_SUCCESS", paymentDetails, targetName)
+      sendMetric("MP_BASIC_BLOCKS_SUCCESS", paymentDetails, targetName);
       return { type: emitResponse.responseTypes.SUCCESS };
     });
 
@@ -48,8 +49,8 @@ const updateCart = (props) => {
     
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
-      sendMetric("MP_BASIC_BLOCKS_ERROR", paymentDetails.message, targetName)
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
+      sendMetric("MP_BASIC_BLOCKS_ERROR", paymentDetails.message, targetName);
       return {
         type: emitResponse.responseTypes.FAIL,
         message: paymentDetails.message,

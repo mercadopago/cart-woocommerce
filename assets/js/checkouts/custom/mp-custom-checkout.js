@@ -1,6 +1,6 @@
 /* globals wc_mercadopago_custom_checkout_params, MercadoPago, CheckoutPage, MP_DEVICE_SESSION_ID */
 
-import { sendMetric } from "../../clients/metrics"
+import sendMetric from "../../blocks/helpers/metrics.helper";
 
 var cardForm;
 var hasToken = false;

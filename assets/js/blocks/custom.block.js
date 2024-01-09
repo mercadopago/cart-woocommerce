@@ -12,7 +12,7 @@ import InputHelper from './components/InputHelper';
 import InputDocument from './components/InputDocument';
 import PaymentMethods from './components/PaymentMethods';
 import TermsAndConditions from './components/TermsAndConditions';
-import sendMetric from "../clients/metrics";
+import sendMetric from "./helpers/metrics.helper";
 
 const targetName = "mp_checkout_blocks_custom";
 const paymentMethodName = 'woo-mercado-pago-custom';
@@ -202,7 +202,7 @@ const Content = (props) => {
             };
           });
       }
-      sendMetric("MP_CUSTOM_BLOCKS_SUCCESS", "Payment success", targetName)
+      sendMetric("MP_CUSTOM_BLOCKS_SUCCESS", "Payment success", targetName);
       return { type: emitResponse.responseTypes.SUCCESS };
     });
 
@@ -211,8 +211,8 @@ const Content = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
-      sendMetric("MP_CUSTOM_BLOCKS_ERROR", paymentDetails.message, targetName)
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
+      sendMetric("MP_CUSTOM_BLOCKS_ERROR", paymentDetails.message, targetName);
       return {
         type: emitResponse.responseTypes.FAIL,
         message: paymentDetails.message,
