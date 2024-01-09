@@ -643,12 +643,15 @@ window.addEventListener('message', (e) => {
 
 function setDisplayOfErrorCheckout(errorMessage) {
   sendMetric('MP_THREE_DS_ERROR', errorMessage);
-  removeElementsByClass('woocommerce-NoticeGroup-checkout');
-  var divWooNotice = document.createElement('div');
-  divWooNotice.className = 'woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout';
-  divWooNotice.innerHTML = '<ul class="woocommerce-error" role="alert">' + '<li>'.concat(errorMessage).concat('<li>') + '</ul>';
-  mpCheckoutForm.prepend(divWooNotice);
-  window.scrollTo(0, 0);
+
+  if (window.mpFormId !== 'blocks_checkout_form') {
+    removeElementsByClass('woocommerce-NoticeGroup-checkout');
+    var divWooNotice = document.createElement('div');
+    divWooNotice.className = 'woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout';
+    divWooNotice.innerHTML = '<ul class="woocommerce-error" role="alert">' + '<li>'.concat(errorMessage).concat('<li>') + '</ul>';
+    mpCheckoutForm.prepend(divWooNotice);
+    window.scrollTo(0, 0);
+  }
 }
 
 function removeElementsByClass(className) {
