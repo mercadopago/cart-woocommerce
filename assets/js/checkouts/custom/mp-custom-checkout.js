@@ -1,7 +1,5 @@
 /* globals wc_mercadopago_custom_checkout_params, MercadoPago, CheckoutPage, MP_DEVICE_SESSION_ID */
 
-import sendMetric from "../../blocks/helpers/metrics.helper";
-
 var cardForm;
 var hasToken = false;
 var mercado_pago_submit = false;
@@ -641,5 +639,3 @@ function removeElementsByClass(className) {
     elements[0].parentNode.removeChild(elements[0]);
   }
 }
-
-export { initCardForm, cardFormMounted };

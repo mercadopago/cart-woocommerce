@@ -18,4 +18,4 @@ const sendMetric = (name, message, target) => {
   navigator.sendBeacon(url, JSON.stringify(payload));
 }
 
-export default { sendMetric };
+export default sendMetric;

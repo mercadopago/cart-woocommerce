@@ -11,7 +11,7 @@ import PixTemplate from './components/PixTemplate';
 import TermsAndConditions from './components/TermsAndConditions';
 import sendMetric from "./helpers/metrics.helper";
 
-const targetName = "mp_checkout_blocks_pix";
+const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-pix';
 
 const settings = getSetting(`woo-mercado-pago-pix_data`, {});
@@ -49,10 +49,10 @@ const updateCart = (props) => {
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      sendMetric("MP_PIX_BLOCKS_ERROR", paymentDetails.message, targetName);
+      const messageError = paymentDetails.message ? paymentDetails.message : paymentDetails.result;
+      sendMetric("MP_PIX_BLOCKS_ERROR", messageError, targetName);
       return {
-        type: emitResponse.responseTypes.FAIL,
-        message: paymentDetails.message,
+        type: emitResponse.responseTypes.FAIL,      
         messageContext: emitResponse.noticeContexts.PAYMENTS,
       };
     });

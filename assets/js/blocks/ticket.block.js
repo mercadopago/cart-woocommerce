@@ -13,7 +13,8 @@ import TermsAndConditions from './components/TermsAndConditions';
 import TestMode from './components/TestMode';
 import sendMetric from "./helpers/metrics.helper";
 
-const targetName = "mp_checkout_blocks_ticket";
+
+const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-ticket';
 
 const settings = getSetting(`woo-mercado-pago-ticket_data`, {});
@@ -50,10 +51,10 @@ const updateCart = (props) => {
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      sendMetric("MP_TICKET_BLOCKS_ERROR", paymentDetails.message, targetName);
+      const messageError = paymentDetails.message ? paymentDetails.message : paymentDetails.result;
+      sendMetric("MP_TICKET_BLOCKS_ERROR", messageError, targetName);
       return {
         type: emitResponse.responseTypes.FAIL,
-        message: paymentDetails.message,
         messageContext: emitResponse.noticeContexts.PAYMENTS,
       };
     });

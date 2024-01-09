@@ -5,7 +5,6 @@ import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { decodeEntities } from '@wordpress/html-entities';
 import { getSetting } from '@woocommerce/settings';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
-import { initCardForm, cardFormMounted } from "../checkouts/custom/mp-custom-checkout"
 
 import TestMode from './components/TestMode';
 import InputLabel from './components/InputLabel';
@@ -15,7 +14,7 @@ import PaymentMethods from './components/PaymentMethods';
 import TermsAndConditions from './components/TermsAndConditions';
 import sendMetric from "./helpers/metrics.helper";
 
-const targetName = "mp_checkout_blocks_custom";
+const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-custom';
 
 const settings = getSetting(`woo-mercado-pago-custom_data`, {});
@@ -213,10 +212,10 @@ const Content = (props) => {
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      sendMetric("MP_CUSTOM_BLOCKS_ERROR", paymentDetails.message, targetName);
+      const messageError = paymentDetails.message ? paymentDetails.message : paymentDetails.result;
+      sendMetric("MP_CUSTOM_BLOCKS_ERROR", messageError, targetName);
       return {
         type: emitResponse.responseTypes.FAIL,
-        message: paymentDetails.message,
         messageContext: emitResponse.noticeContexts.PAYMENTS,
       };
     });
