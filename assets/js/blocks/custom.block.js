@@ -199,6 +199,7 @@ const Content = (props) => {
             return {
               type: emitResponse.responseTypes.FAIL,
               message: error,
+              messageContext: emitResponse.noticeContexts.PAYMENTS,
             };
           });
       }
