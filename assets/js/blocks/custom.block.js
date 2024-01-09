@@ -172,6 +172,7 @@ const Content = (props) => {
 
   useEffect(() => {
     const handle3ds = onCheckoutSuccess(async (checkoutResponse) => {
+      const  processingResponse = checkoutResponse.processingResponse;
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
 
       if (paymentDetails.three_ds_flow) {
@@ -202,7 +203,7 @@ const Content = (props) => {
             };
           });
       }
-      sendMetric("MP_CUSTOM_BLOCKS_SUCCESS", "Payment success", targetName);
+      sendMetric("MP_CUSTOM_BLOCKS_SUCCESS", processingResponse.paymentStatus, targetName);
       return { type: emitResponse.responseTypes.SUCCESS };
     });
 
@@ -211,9 +212,8 @@ const Content = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
-      const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      const messageError = paymentDetails.message ? paymentDetails.message : paymentDetails.result;
-      sendMetric("MP_CUSTOM_BLOCKS_ERROR", messageError, targetName);
+      const processingResponse = checkoutResponse.processingResponse;
+      sendMetric("MP_CUSTOM_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);
       return {
         type: emitResponse.responseTypes.FAIL,
         messageContext: emitResponse.noticeContexts.PAYMENTS,

@@ -38,9 +38,9 @@ const updateCart = (props) => {
 
   useEffect(() => {
     
-    onCheckoutSuccess(async (checkoutResponse) => {
-      const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      sendMetric("MP_CREDITS_BLOCKS_SUCCESS", paymentDetails, targetName);
+    onCheckoutSuccess(async (checkoutResponse) => {    
+      const processingResponse = checkoutResponse.processingResponse;
+      sendMetric("MP_CREDITS_BLOCKS_SUCCESS", processingResponse.paymentStatus, targetName);
       return { type: emitResponse.responseTypes.SUCCESS };
     });
 
@@ -48,9 +48,8 @@ const updateCart = (props) => {
     
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
-      const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      const messageError = paymentDetails.message ? paymentDetails.message : paymentDetails.result;
-      sendMetric("MP_CREDITS_BLOCKS_ERROR", messageError, targetName);
+      const processingResponse = checkoutResponse.processingResponse;
+      sendMetric("MP_CREDITS_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);
       return {
         type: emitResponse.responseTypes.FAIL,        
         messageContext: emitResponse.noticeContexts.PAYMENTS,
