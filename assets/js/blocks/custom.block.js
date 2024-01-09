@@ -195,7 +195,7 @@ const Content = (props) => {
           })
           .catch((error) => {
             return {
-              type: emitResponse.responseTypes.ERROR,
+              type: emitResponse.responseTypes.FAIL,
               message: error,
               messageContext: emitResponse.noticeContexts.PAYMENTS,
             };
