@@ -83,12 +83,12 @@ function createToken() {
 /**
  * Init cardForm
  */
-function initCardForm() {
+function initCardForm(amount = getAmount()) {
   var mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key);
 
   return new Promise((resolve, reject) => {
     cardForm = mp.cardForm({
-      amount: getAmount(),
+      amount: amount,
       iframe: true,
       form: {
         id: mpFormId,
