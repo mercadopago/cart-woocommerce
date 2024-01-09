@@ -76,7 +76,19 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
         $this->links       = $this->mercadopago->helpers->links->getLinks();
 
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
+        $this->mercadopago->hooks->blocks->registerBlocksEnqueueCheckoutScriptsBefore([$this, 'resetCheckoutSession']);
         $this->mercadopago->hooks->blocks->registerBlocksUpdated(self::UPDATE_CART_NAMESPACE, [$this, 'updateCartToRegisterDiscountAndCommission']);
+    }
+
+    /**
+     * Deletes session data
+     *
+     * @return void
+     */
+    public function resetCheckoutSession()
+    {
+        $this->mercadopago->helpers->session->deleteSession(self::ACTION_SESSION_KEY);
+        $this->mercadopago->helpers->session->deleteSession(self::GATEWAY_SESSION_KEY);
     }
 
     /**
@@ -219,6 +231,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             $action  = $this->mercadopago->helpers->session->getSession(self::ACTION_SESSION_KEY);
 
             if ($action == 'add') {
+                $this->mercadopago->logs->file->info('Trying to add discount/comission with ' . $this->gateway->id, 'Testing');
                 $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFeesFromBlocks($this->gateway);
             }
 

@@ -85,12 +85,12 @@ function createToken() {
 /**
  * Init cardForm
  */
-function initCardForm() {
+function initCardForm(amount = getAmount()) {
   var mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key);
 
   return new Promise((resolve, reject) => {
     cardForm = mp.cardForm({
-      amount: getAmount(),
+      amount: amount,
       iframe: true,
       form: {
         id: mpFormId,
@@ -625,12 +625,15 @@ window.addEventListener('message', (e) => {
 
 function setDisplayOfErrorCheckout(errorMessage) {
   sendMetric('MP_THREE_DS_ERROR', errorMessage, threedsTarget);
-  removeElementsByClass('woocommerce-NoticeGroup-checkout');
-  var divWooNotice = document.createElement('div');
-  divWooNotice.className = 'woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout';
-  divWooNotice.innerHTML = '<ul class="woocommerce-error" role="alert">' + '<li>'.concat(errorMessage).concat('<li>') + '</ul>';
-  mpCheckoutForm.prepend(divWooNotice);
-  window.scrollTo(0, 0);
+
+  if (window.mpFormId !== 'blocks_checkout_form') {
+    removeElementsByClass('woocommerce-NoticeGroup-checkout');
+    var divWooNotice = document.createElement('div');
+    divWooNotice.className = 'woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout';
+    divWooNotice.innerHTML = '<ul class="woocommerce-error" role="alert">' + '<li>'.concat(errorMessage).concat('<li>') + '</ul>';
+    mpCheckoutForm.prepend(divWooNotice);
+    window.scrollTo(0, 0);
+  }
 }
 
 function removeElementsByClass(className) {
@@ -638,4 +641,24 @@ function removeElementsByClass(className) {
   while (elements.length > 0) {
     elements[0].parentNode.removeChild(elements[0]);
   }
+}
+
+function sendMetric(name, message, target) {
+  const url = 'https://api.mercadopago.com/v1/plugins/melidata/errors';
+  const payload = {
+    name,
+    message,
+    target: target,
+    plugin: {
+      version: wc_mercadopago_custom_checkout_params.plugin_version,
+    },
+    platform: {
+      name: 'woocommerce',
+      uri: window.location.href,
+      version: wc_mercadopago_custom_checkout_params.platform_version,
+      location: `${wc_mercadopago_custom_checkout_params.location}_${wc_mercadopago_custom_checkout_params.theme}`,
+    },
+  };
+
+  navigator.sendBeacon(url, JSON.stringify(payload));
 }

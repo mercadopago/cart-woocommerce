@@ -470,6 +470,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         return [
             'result'   => 'fail',
             'redirect' => '',
+            'message'  => $message,
         ];
     }
 

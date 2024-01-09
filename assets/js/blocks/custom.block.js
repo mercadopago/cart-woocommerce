@@ -1,17 +1,17 @@
 /* globals wc_mercadopago_custom_blocks_params */
 
-import { useEffect, useRef, useState } from '@wordpress/element';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import { decodeEntities } from '@wordpress/html-entities';
 import { getSetting } from '@woocommerce/settings';
-import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
+import { useEffect, useRef, useState } from '@wordpress/element';
+import { decodeEntities } from '@wordpress/html-entities';
+import { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission } from './helpers/cart-update.helper';
 
-import TestMode from './components/TestMode';
-import InputLabel from './components/InputLabel';
-import InputHelper from './components/InputHelper';
 import InputDocument from './components/InputDocument';
+import InputHelper from './components/InputHelper';
+import InputLabel from './components/InputLabel';
 import PaymentMethods from './components/PaymentMethods';
 import TermsAndConditions from './components/TermsAndConditions';
+import TestMode from './components/TestMode';
 import sendMetric from "./helpers/metrics.helper";
 
 const targetName = "mp_checkout_blocks";
@@ -24,7 +24,6 @@ const updateCart = (props) => {
   const { extensionCartUpdate } = wc.blocksCheckout;
   const { eventRegistration, emitResponse } = props;
   const { onPaymentSetup } = eventRegistration;
-
   useEffect(() => {
     addDiscountAndCommission(extensionCartUpdate, paymentMethodName);
 
@@ -127,10 +126,13 @@ const Content = (props) => {
   };
 
   useEffect(() => {
+    handleCartTotalChange(props.billing.cartTotal.value, props.billing.currency);
+  }, [props.billing.cartTotal.value]);
+
+  useEffect(() => {
     if (cardFormMounted) {
       cardForm.unmount();
     }
-
     initCardForm();
 
     const unsubscribe = onPaymentSetup(async () => {
@@ -200,6 +202,7 @@ const Content = (props) => {
             return {
               type: emitResponse.responseTypes.FAIL,
               message: error,
+              messageContext: emitResponse.noticeContexts.PAYMENTS,
             };
           });
       }
