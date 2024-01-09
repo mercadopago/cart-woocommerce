@@ -31,7 +31,7 @@ const updateCart = (props) => {
 
     return () => {
       removeDiscountAndCommission(extensionCartUpdate, paymentMethodName);
-      unsubscribe();
+      return unsubscribe();
     };
   }, [onPaymentSetup]);
 
@@ -40,7 +40,7 @@ const updateCart = (props) => {
     
     onCheckoutSuccess(async (checkoutResponse) => {
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
-      sendMetric("MP_CUSTOM_BLOCKS_SUCCESS", paymentDetails, targetName)
+      sendMetric("MP_PIX_BLOCKS_SUCCESS", paymentDetails, targetName)
       return { type: emitResponse.responseTypes.SUCCESS };
     });
 
@@ -48,7 +48,7 @@ const updateCart = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
-      sendMetric("MP_CUSTOM_BLOCKS_ERROR", paymentDetails.message, targetName)
+      sendMetric("MP_PIX_BLOCKS_ERROR", paymentDetails.message, targetName)
       const paymentDetails = checkoutResponse.processingResponse.paymentDetails;
       return {
         type: emitResponse.responseTypes.FAIL,
