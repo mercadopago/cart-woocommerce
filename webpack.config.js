@@ -3,7 +3,6 @@ const DependencyExtractionWebpackPlugin = require( '@woocommerce/dependency-extr
 
 module.exports = {
   ...defaultConfig,
-  mode: 'development',
   plugins: [
     ...defaultConfig.plugins.filter(
       (plugin) =>
