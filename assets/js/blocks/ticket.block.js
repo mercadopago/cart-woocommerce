@@ -40,12 +40,13 @@ const updateCart = (props) => {
 
   useEffect(() => {
     
-    onCheckoutSuccess(async (checkoutResponse) => {
+    const unsubscribe = onCheckoutSuccess(async (checkoutResponse) => {
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_TICKET_BLOCKS_SUCCESS", processingResponse.paymentStatus, targetName);
       return { type: emitResponse.responseTypes.SUCCESS };
     });
 
+    return () => unsubscribe();
   }, [onCheckoutSuccess]);
     
   useEffect(() => {
