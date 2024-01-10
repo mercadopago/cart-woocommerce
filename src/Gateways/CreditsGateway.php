@@ -241,6 +241,12 @@ class CreditsGateway extends AbstractGateway
         try {
             parent::process_payment($order_id);
 
+            if (isset($_POST['wc-woo-mercado-pago-credits-new-payment-method'])) {
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
+            } else {
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
+            }
+
             $this->transaction  = new CreditsTransaction($this, $order);
 
             $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);

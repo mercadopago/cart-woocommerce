@@ -278,14 +278,18 @@ class TicketGateway extends AbstractGateway
     public function process_payment($order_id): array
     {
         $order = wc_get_order($order_id);
+        $checkout = [];
 
         try {
             parent::process_payment($order_id);
-            $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
 
-            // Blocks data arrives in a different way
-            if (empty($checkout)) {
+            if (isset($_POST['mercadopago_ticket'])) {
+                $checkout = Form::sanitizeFromData($_POST['mercadopago_ticket']);
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
+            } else {
+                // Blocks data arrives in a different way
                 $checkout = $this->processBlocksCheckoutData('mercadopago_ticket', Form::sanitizeFromData($_POST));
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
             }
 
             if (
