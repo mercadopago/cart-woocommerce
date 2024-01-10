@@ -117,4 +117,9 @@ class PaymentMetadata
      * @var PaymentMetadataCpp
      */
     public $cpp_extra;
+
+    /**
+     * @var string
+     */
+    public $blocks_payment;
 }
