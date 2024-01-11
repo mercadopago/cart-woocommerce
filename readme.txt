@@ -136,7 +136,7 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-= v7.1.0 (26/12/2023) =
+= v7.1.0 (11/01/2024) =
 * Added
 - Added support to Woocommerce Blocks
 
