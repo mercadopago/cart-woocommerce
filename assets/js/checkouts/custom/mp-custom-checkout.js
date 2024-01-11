@@ -5,6 +5,8 @@ var hasToken = false;
 var mercado_pago_submit = false;
 var triggeredPaymentMethodSelectedEvent = false;
 var cardFormMounted = false;
+var threedsTarget = "mp_custom_checkout_security_fields_client";
+
 
 var mpCheckoutForm = document.querySelector('form[name=checkout]');
 var mpFormId = 'checkout';
@@ -332,11 +334,11 @@ function setCardFormLoadInterval() {
 function handleCardFormLoad() {
   initCardForm()
     .then(() => {
-      sendMetric('MP_CARDFORM_SUCCESS', 'Security fields loaded');
+      sendMetric('MP_CARDFORM_SUCCESS', 'Security fields loaded', threedsTarget);
     })
     .catch((error) => {
       const parsedError = handleCardFormErrors(error);
-      sendMetric('MP_CARDFORM_ERROR', parsedError);
+      sendMetric('MP_CARDFORM_ERROR', parsedError, threedsTarget);
       console.error('Mercado Pago cardForm error: ', parsedError);
     });
 }
@@ -352,26 +354,6 @@ function handleCardFormErrors(cardFormErrors) {
   }
 
   return cardFormErrors.description || cardFormErrors.message;
-}
-
-function sendMetric(name, message) {
-  const url = 'https://api.mercadopago.com/v1/plugins/melidata/errors';
-  const payload = {
-    name,
-    message,
-    target: 'mp_custom_checkout_security_fields_client',
-    plugin: {
-      version: wc_mercadopago_custom_checkout_params.plugin_version,
-    },
-    platform: {
-      name: 'woocommerce',
-      uri: window.location.href,
-      version: wc_mercadopago_custom_checkout_params.platform_version,
-      location: `${wc_mercadopago_custom_checkout_params.location}_${wc_mercadopago_custom_checkout_params.theme}`,
-    },
-  };
-
-  navigator.sendBeacon(url, JSON.stringify(payload));
 }
 
 jQuery('form.checkout').on('checkout_place_order_woo-mercado-pago-custom', mercadoPagoFormHandler);
@@ -456,7 +438,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
   try {
     if (url_3ds == null || cred_3ds == null) {
       removeModal3ds();
-      sendMetric('MP_THREE_DS_ERROR', '3DS URL or CRED not set');
+      sendMetric('MP_THREE_DS_ERROR', '3DS URL or CRED not set', threedsTarget);
       console.log('Invalid parameters for 3ds');
       return;
     }
@@ -503,7 +485,7 @@ function threeDSHandler(url_3ds, cred_3ds) {
     form3ds.submit();
   } catch (error) {
     console.log(error);
-    sendMetric('MP_THREE_DS_ERROR', '3DS Loading error: ' + error);
+    sendMetric('MP_THREE_DS_ERROR', '3DS Loading error: ' + error, threedsTarget);
     alert('Error doing Challenge, try again later.');
   }
 }
@@ -591,7 +573,7 @@ function redirectAfter3dsChallenge() {
         }),
       );
 
-      sendMetric('MP_THREE_DS_SUCCESS', '3DS challenge complete');
+      sendMetric('MP_THREE_DS_SUCCESS', '3DS challenge complete', threedsTarget);
       removeModal3ds();
 
       window.location.href = response.data.redirect;
@@ -634,7 +616,7 @@ function handle3dsPayOrderFormSubmission() {
 
 window.addEventListener('message', (e) => {
   if (e.data.status === 'COMPLETE') {
-    sendMetric('MP_THREE_DS_SUCCESS', '3DS iframe Closed');
+    sendMetric('MP_THREE_DS_SUCCESS', '3DS iframe Closed', threedsTarget);
     document.getElementById('mp-3ds-modal-content').innerHTML = '';
     addLoadSpinner3dsSubmit();
     redirectAfter3dsChallenge();
@@ -642,7 +624,7 @@ window.addEventListener('message', (e) => {
 });
 
 function setDisplayOfErrorCheckout(errorMessage) {
-  sendMetric('MP_THREE_DS_ERROR', errorMessage);
+  sendMetric('MP_THREE_DS_ERROR', errorMessage, threedsTarget);
 
   if (window.mpFormId !== 'blocks_checkout_form') {
     removeElementsByClass('woocommerce-NoticeGroup-checkout');
@@ -659,4 +641,24 @@ function removeElementsByClass(className) {
   while (elements.length > 0) {
     elements[0].parentNode.removeChild(elements[0]);
   }
+}
+
+function sendMetric(name, message, target) {
+  const url = 'https://api.mercadopago.com/v1/plugins/melidata/errors';
+  const payload = {
+    name,
+    message,
+    target: target,
+    plugin: {
+      version: wc_mercadopago_custom_checkout_params.plugin_version,
+    },
+    platform: {
+      name: 'woocommerce',
+      uri: window.location.href,
+      version: wc_mercadopago_custom_checkout_params.platform_version,
+      location: `${wc_mercadopago_custom_checkout_params.location}_${wc_mercadopago_custom_checkout_params.theme}`,
+    },
+  };
+
+  navigator.sendBeacon(url, JSON.stringify(payload));
 }

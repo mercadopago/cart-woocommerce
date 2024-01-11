@@ -9,7 +9,9 @@ import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers
 import TestMode from './components/TestMode';
 import PixTemplate from './components/PixTemplate';
 import TermsAndConditions from './components/TermsAndConditions';
+import sendMetric from "./helpers/metrics.helper";
 
+const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-pix';
 
 const settings = getSetting(`woo-mercado-pago-pix_data`, {});
@@ -18,7 +20,7 @@ const defaultLabel = decodeEntities(settings.title) || 'Checkout Pix';
 const updateCart = (props) => {
   const { extensionCartUpdate } = wc.blocksCheckout;
   const { eventRegistration, emitResponse } = props;
-  const { onPaymentSetup } = eventRegistration;
+  const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
 
   useEffect(() => {
     addDiscountAndCommission(extensionCartUpdate, paymentMethodName);
@@ -32,6 +34,33 @@ const updateCart = (props) => {
       return unsubscribe();
     };
   }, [onPaymentSetup]);
+
+  
+  useEffect(() => {
+    
+    const unsubscribe = onCheckoutSuccess(async (checkoutResponse) => {        
+      checkoutResponse.processingResponse.message = paymentMethodName;
+      const processingResponse = checkoutResponse.processingResponse;
+      sendMetric("MP_PIX_BLOCKS_SUCCESS", processingResponse.paymentStatus, targetName);
+      return { type: emitResponse.responseTypes.SUCCESS };
+    });
+
+    return () => unsubscribe();
+  }, [onCheckoutSuccess]);
+
+  useEffect(() => {
+    const unsubscribe = onCheckoutFail(checkoutResponse => {
+      const processingResponse = checkoutResponse.processingResponse;
+      sendMetric("MP_PIX_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);
+      return {
+        type: emitResponse.responseTypes.FAIL,      
+        messageContext: emitResponse.noticeContexts.PAYMENTS,
+      };
+    });
+
+    return () => unsubscribe();
+  }, [onCheckoutFail]);
+
 };
 
 const Label = (props) => {
