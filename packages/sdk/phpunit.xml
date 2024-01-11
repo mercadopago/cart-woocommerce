@@ -1,0 +1,21 @@
+<phpunit
+	backupGlobals="false"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+	>
+	<testsuites>
+		<testsuite name='pp-php-sdk-unit'>
+			<directory>./tests/unit/</directory>
+		</testsuite>
+		<testsuite name='pp-php-sdk-integration'>
+			<directory>./tests/integration/</directory>
+		</testsuite>
+	</testsuites>
+	<coverage>
+		<include>
+			<directory suffix=".php">src</directory>
+		</include>
+	</coverage>
+</phpunit>
