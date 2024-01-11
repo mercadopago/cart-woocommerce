@@ -27,7 +27,7 @@ if (!defined('ABSPATH')) {
 <div class='mp-checkout-container'>
     <div class="mp-checkout-pro-container">
         <div class="mp-checkout-pro-content">
-            <?php if ($test_mode): ?>
+            <?php if ($test_mode) : ?>
                 <div class="mp-checkout-pro-test-mode">
                     <test-mode
                         title="<?= esc_html($test_mode_title) ?>"

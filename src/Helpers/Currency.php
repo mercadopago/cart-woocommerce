@@ -6,7 +6,6 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Logs\Logs;
-use MercadoPago\Woocommerce\Helpers\Notices;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
@@ -29,16 +28,6 @@ final class Currency
      * @var array
      */
     private $ratios = [];
-
-    /**
-     * @var bool
-     */
-    private $isShowingEnabledNotice = false;
-
-    /**
-     * @var bool
-     */
-    private $isShowingDisabledNotice = false;
 
     /**
      * @var array
@@ -100,14 +89,14 @@ final class Currency
      */
     public function __construct(
         AdminTranslations $adminTranslations,
-        Cache             $cache,
-        Country           $country,
-        Logs              $logs,
-        Notices           $notices,
-        Requester         $requester,
-        Seller            $seller,
-        Options           $options,
-        Url               $url
+        Cache $cache,
+        Country $country,
+        Logs $logs,
+        Notices $notices,
+        Requester $requester,
+        Seller $seller,
+        Options $options,
+        Url $url
     ) {
         $this->translations = $adminTranslations->currency;
         $this->cache        = $cache;
@@ -219,12 +208,11 @@ final class Currency
             return;
         }
 
-        if(!$this->validateConversion() && $this->isConversionEnabled($gateway))
-        {
+        if (!$this->validateConversion() && $this->isConversionEnabled($gateway)) {
             $this->showWeConvertingNoticeByCountry();
         }
 
-        if(!$this->validateConversion() && !$this->isConversionEnabled($gateway)) {
+        if (!$this->validateConversion() && !$this->isConversionEnabled($gateway)) {
             $this->notices->adminNoticeWarning($this->translations['not_compatible_currency_conversion']);
         }
     }
@@ -239,7 +227,7 @@ final class Currency
         $response = $this->getCurrencyConversion();
 
         try {
-            if ($response['status'] !== 200 ) {
+            if ($response['status'] !== 200) {
                 throw new \Exception(json_encode($response['data']));
             }
 
@@ -247,7 +235,8 @@ final class Currency
                 return $response['data']['ratio'];
             }
         } catch (\Exception $e) {
-            $this->logs->file->error("Mercado pago gave error to get currency value: {$e->getMessage()}",
+            $this->logs->file->error(
+                "Mercado pago gave error to get currency value: {$e->getMessage()}",
                 __CLASS__
             );
         }
@@ -295,9 +284,9 @@ final class Currency
     }
 
     /**
-     * Set how 'we converting' notice is show up.
+     * Set how 'we're converting' notice is show up.
      *
-     * @return array
+     * @return void
      */
     private function showWeConvertingNoticeByCountry()
     {

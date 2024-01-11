@@ -3,7 +3,6 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
@@ -57,7 +56,7 @@ class Notices
     /**
      * @const
      */
-    const NONCE_ID = 'mp_notices_dismiss';
+    private const NONCE_ID = 'mp_notices_dismiss';
 
     /**
      * Notices constructor

@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) {
 
 class OrderMeta
 {
-
     /**
      * Get meta
      *
@@ -21,18 +20,6 @@ class OrderMeta
     public function get(\WC_Order $order, string $metaKey, bool $single = true)
     {
         return $order->get_meta($metaKey, $single);
-    }
-
-    /**
-     * Get all metadata
-     *
-     * @param \WC_Order $order
-     *
-     * @return array
-     */
-    public function getAll(\WC_Order $order): array
-    {
-        return $order->get_meta_data();
     }
 
     /**

@@ -87,7 +87,7 @@ final class Country
 
     /**
      * Country constructor
-     * 
+     *
      * @param Seller $seller
      */
     public function __construct(Seller $seller)

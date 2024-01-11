@@ -11,30 +11,29 @@ if (!defined('ABSPATH')) {
 
 class NotificationFactory
 {
-
-	/**
-	 * Create a notification handler based on $data
-	 *
-	 * @param array $data data from $_GET
-	 *
-	 * @return void
-	 */
+    /**
+     * Create a notification handler based on $data
+     *
+     * @param array $data data from $_GET
+     *
+     * @return void
+     */
     public function createNotificationHandler(MercadoPagoGatewayInterface $gateway, array $data): NotificationInterface
     {
         global $mercadopago;
 
-        $topic  = $data['topic'];
-        $type   = $data['type'];
-        $source = $data['source_news'];
+        $topic  = isset($data['topic']) ? $data['topic'] : '';
+        $type   = isset($data['type']) ? $data['type'] : '';
+        $source = isset($data['source_news']) ? $data['source_news'] : '';
 
         if ($type === 'payment' && $source === 'webhooks') {
             return new WebhookNotification(
                 $gateway,
                 $mercadopago->logs,
                 $mercadopago->orderStatus,
-                $mercadopago->seller,
-                $mercadopago->store,
-                $mercadopago->requester
+                $mercadopago->sellerConfig,
+                $mercadopago->storeConfig,
+                $mercadopago->helpers->requester
             );
         }
 
@@ -43,9 +42,9 @@ class NotificationFactory
                 $gateway,
                 $mercadopago->logs,
                 $mercadopago->orderStatus,
-                $mercadopago->seller,
-                $mercadopago->store,
-                $mercadopago->requester
+                $mercadopago->sellerConfig,
+                $mercadopago->storeConfig,
+                $mercadopago->helpers->requester
             );
         }
 
@@ -53,8 +52,8 @@ class NotificationFactory
             $gateway,
             $mercadopago->logs,
             $mercadopago->orderStatus,
-            $mercadopago->seller,
-            $mercadopago->store
+            $mercadopago->sellerConfig,
+            $mercadopago->storeConfig
         );
     }
 }

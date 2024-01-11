@@ -7,13 +7,15 @@ use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\Cart;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
+use MercadoPago\Woocommerce\Hooks\Blocks;
 use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Endpoints\FrontendEndpoints;
+use MercadoPago\Woocommerce\Endpoints\CheckoutCustom;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
@@ -57,159 +59,14 @@ class Dependencies
     public $woocommerce;
 
     /**
-     * @var Cache
+     * @var Hooks
      */
-    public $cache;
+    public $hooks;
 
     /**
-     * @var Strings
+     * @var Helpers
      */
-    public $strings;
-
-    /**
-     * @var Admin
-     */
-    public $admin;
-
-    /**
-     * @var Endpoints
-     */
-    public $endpoints;
-
-    /**
-     * @var Options
-     */
-    public $options;
-
-    /**
-     * @var Actions
-     */
-    public $actions;
-
-    /**
-     * @var OrderMeta
-     */
-    public $orderMeta;
-
-    /**
-     * @var Plugin
-     */
-    public $plugin;
-
-    /**
-     * @var Product
-     */
-    public $product;
-
-    /**
-     * @var Template
-     */
-    public $template;
-
-    /**
-     * @var Order
-     */
-    public $order;
-
-    /**
-     * @var Requester
-     */
-    public $requester;
-
-    /**
-     * @var Session
-     */
-    public $session;
-
-    /**
-     * @var Seller
-     */
-    public $seller;
-
-    /**
-     * @var Country
-     */
-    public $country;
-
-    /**
-     * @var Links
-     */
-    public $links;
-
-    /**
-     * @var Url
-     */
-    public $url;
-
-    /**
-     * @var PaymentMethods
-     */
-    public $paymentMethods;
-
-    /**
-     * @var Store
-     */
-    public $store;
-
-    /**
-     * @var Scripts
-     */
-    public $scripts;
-
-    /**
-     * @var Checkout
-     */
-    public $checkout;
-
-    /**
-     * @var Gateway
-     */
-    public $gateway;
-
-    /**
-     * @var Logs
-     */
-    public $logs;
-
-    /**
-     * @var Nonce
-     */
-    public $nonce;
-
-    /**
-     * @var OrderBilling
-     */
-    public $orderBilling;
-
-    /**
-     * @var OrderShipping
-     */
-    public $orderShipping;
-
-    /**
-     * @var OrderMetadata
-     */
-    public $orderMetadata;
-
-    /**
-     * @var OrderStatus
-     */
-    public $orderStatus;
-
-    /**
-     * @var CurrentUser
-     */
-    public $currentUser;
-
-    /**
-     * @var Notices
-     */
-    public $notices;
-
-    /**
-     * @var Currency
-     */
-    public $currency;
+    public $helpers;
 
     /**
      * @var Settings
@@ -217,14 +74,194 @@ class Dependencies
     public $settings;
 
     /**
-     * @var Images
-     */
-    public $images;
-
-    /**
      * @var Metadata
      */
     public $metadataConfig;
+
+    /**
+     * @var Seller
+     */
+    public $sellerConfig;
+
+    /**
+     * @var Store
+     */
+    public $storeConfig;
+
+    /**
+     * @var CheckoutCustom
+     */
+    public $checkoutCustomEndpoints;
+
+    /**
+     * @var Admin
+     */
+    public $adminHook;
+
+    /**
+     * @var Blocks
+     */
+    public $blocksHook;
+
+    /**
+     * @var Hooks\Cart
+     */
+    public $cartHook;
+
+    /**
+     * @var Checkout
+     */
+    public $checkoutHook;
+
+    /**
+     * @var Endpoints
+     */
+    public $endpointsHook;
+
+    /**
+     * @var Gateway
+     */
+    public $gatewayHook;
+
+    /**
+     * @var Options
+     */
+    public $optionsHook;
+
+    /**
+     * @var Order
+     */
+    public $orderHook;
+
+    /**
+     * @var OrderMeta
+     */
+    public $orderMetaHook;
+
+    /**
+     * @var Plugin
+     */
+    public $pluginHook;
+
+    /**
+     * @var Product
+     */
+    public $productHook;
+
+    /**
+     * @var Scripts
+     */
+    public $scriptsHook;
+
+    /**
+     * @var Template
+     */
+    public $templateHook;
+
+    /**
+     * @var Actions
+     */
+    public $actionsHelper;
+
+    /**
+     * @var Cache
+     */
+    public $cacheHelper;
+
+    /**
+     * @var Cart
+     */
+    public $cartHelper;
+
+    /**
+     * @var Country
+     */
+    public $countryHelper;
+
+    /**
+     * @var CreditsEnabled
+     */
+    public $creditsEnabledHelper;
+
+    /**
+     * @var Currency
+     */
+    public $currencyHelper;
+
+    /**
+     * @var CurrentUser
+     */
+    public $currentUserHelper;
+
+    /**
+     * @var Images
+     */
+    public $imagesHelper;
+
+    /**
+     * @var Links
+     */
+    public $linksHelper;
+
+    /**
+     * @var Nonce
+     */
+    public $nonceHelper;
+
+    /**
+     * @var Notices
+     */
+    public $noticesHelper;
+
+    /**
+     * @var PaymentMethods
+     */
+    public $paymentMethodsHelper;
+
+    /**
+     * @var Requester
+     */
+    public $requesterHelper;
+
+    /**
+     * @var Session
+     */
+    public $sessionHelper;
+
+    /**
+     * @var Strings
+     */
+    public $stringsHelper;
+
+    /**
+     * @var Url
+     */
+    public $urlHelper;
+
+    /**
+     * @var Logs
+     */
+    public $logs;
+
+    /**
+     * @var OrderBilling
+     */
+    public $orderBilling;
+
+    /**
+     * @var OrderMetadata
+     */
+    public $orderMetadata;
+
+    /**
+     * @var OrderShipping
+     */
+    public $orderShipping;
+
+    /**
+     * @var OrderStatus
+     */
+    public $orderStatus;
 
     /**
      * @var AdminTranslations
@@ -237,61 +274,57 @@ class Dependencies
     public $storeTranslations;
 
     /**
-     * @var CreditsEnabled
-     */
-    public $creditsEnabled;
-
-    /**
-     * @var FrontendEndpoints
-     */
-    public $frontendEndpoints;
-
-    /**
      * Dependencies constructor
      */
     public function __construct()
     {
         global $woocommerce;
 
-        $this->woocommerce       = $woocommerce;
-        $this->cache             = new Cache();
-        $this->strings           = new Strings();
-        $this->admin             = new Admin();
-        $this->endpoints         = new Endpoints();
-        $this->options           = new Options();
-        $this->actions           = new Actions();
-        $this->session           = new Session();
-        $this->orderMeta         = new OrderMeta();
-        $this->product           = new Product();
-        $this->template          = new Template();
-        $this->plugin            = new Plugin();
-        $this->images            = new Images();
-        $this->checkout          = new Checkout();
-        $this->orderBilling      = new OrderBilling();
-        $this->orderShipping     = new OrderShipping();
-        $this->orderMetadata     = $this->setOrderMetadata();
-        $this->requester         = $this->setRequester();
-        $this->store             = $this->setStore();
-        $this->logs              = $this->setLogs();
-        $this->seller            = $this->setSeller();
-        $this->country           = $this->setCountry();
-        $this->links             = $this->setLinks();
-        $this->url               = $this->setUrl();
-        $this->paymentMethods    = $this->setPaymentMethods();
-        $this->scripts           = $this->setScripts();
-        $this->adminTranslations = $this->setAdminTranslations();
-        $this->storeTranslations = $this->setStoreTranslations();
-        $this->gateway           = $this->setGateway();
-        $this->nonce             = $this->setNonce();
-        $this->orderStatus       = $this->setOrderStatus();
-        $this->currentUser       = $this->setCurrentUser();
-        $this->order             = $this->setOrder();
-        $this->notices           = $this->setNotices();
-        $this->metadataConfig    = $this->setMetadataConfig();
-        $this->currency          = $this->setCurrency();
-        $this->settings          = $this->setSettings();
-        $this->creditsEnabled    = $this->setCreditsEnabled();
-        $this->frontendEndpoints = $this->setFrontendEndpoints();
+        $this->woocommerce             = $woocommerce;
+        $this->adminHook               = new Admin();
+        $this->cartHook                = new Hooks\Cart();
+        $this->blocksHook              = new Blocks();
+        $this->endpointsHook           = new Endpoints();
+        $this->optionsHook             = new Options();
+        $this->orderMetaHook           = new OrderMeta();
+        $this->productHook             = new Product();
+        $this->templateHook            = new Template();
+        $this->pluginHook              = new Plugin();
+        $this->checkoutHook            = new Checkout();
+        $this->actionsHelper           = new Actions();
+        $this->cacheHelper             = new Cache();
+        $this->imagesHelper            = new Images();
+        $this->sessionHelper           = new Session();
+        $this->stringsHelper           = new Strings();
+        $this->orderBilling            = new OrderBilling();
+        $this->orderShipping           = new OrderShipping();
+        $this->orderMetadata           = $this->setOrderMetadata();
+        $this->requesterHelper         = $this->setRequester();
+        $this->storeConfig             = $this->setStore();
+        $this->logs                    = $this->setLogs();
+        $this->sellerConfig            = $this->setSeller();
+        $this->countryHelper           = $this->setCountry();
+        $this->urlHelper               = $this->setUrl();
+        $this->linksHelper             = $this->setLinks();
+        $this->paymentMethodsHelper    = $this->setPaymentMethods();
+        $this->scriptsHook             = $this->setScripts();
+        $this->adminTranslations       = $this->setAdminTranslations();
+        $this->storeTranslations       = $this->setStoreTranslations();
+        $this->gatewayHook             = $this->setGateway();
+        $this->nonceHelper             = $this->setNonce();
+        $this->orderStatus             = $this->setOrderStatus();
+        $this->currentUserHelper       = $this->setCurrentUser();
+        $this->orderHook               = $this->setOrder();
+        $this->noticesHelper           = $this->setNotices();
+        $this->metadataConfig          = $this->setMetadataConfig();
+        $this->currencyHelper          = $this->setCurrency();
+        $this->settings                = $this->setSettings();
+        $this->creditsEnabledHelper    = $this->setCreditsEnabled();
+        $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
+        $this->cartHelper              = $this->setCart();
+
+        $this->hooks   = $this->setHooks();
+        $this->helpers = $this->setHelpers();
     }
 
     /**
@@ -299,7 +332,7 @@ class Dependencies
      */
     private function setOrderMetadata(): OrderMetadata
     {
-        return new OrderMetadata($this->orderMeta);
+        return new OrderMetadata($this->orderMetaHook);
     }
 
     /**
@@ -318,7 +351,7 @@ class Dependencies
      */
     private function setSeller(): Seller
     {
-        return new Seller($this->cache, $this->options, $this->requester, $this->store, $this->logs);
+        return new Seller($this->cacheHelper, $this->optionsHook, $this->requesterHelper, $this->storeConfig, $this->logs);
     }
 
     /**
@@ -326,15 +359,7 @@ class Dependencies
      */
     private function setCountry(): Country
     {
-        return new Country($this->seller);
-    }
-
-    /**
-     * @return Links
-     */
-    private function setLinks(): Links
-    {
-        return new Links($this->country);
+        return new Country($this->sellerConfig);
     }
 
     /**
@@ -342,7 +367,15 @@ class Dependencies
      */
     private function setUrl(): Url
     {
-        return new Url($this->strings);
+        return new Url($this->stringsHelper);
+    }
+
+    /**
+     * @return Links
+     */
+    private function setLinks(): Links
+    {
+        return new Links($this->countryHelper, $this->urlHelper);
     }
 
     /**
@@ -350,7 +383,7 @@ class Dependencies
      */
     private function setPaymentMethods(): PaymentMethods
     {
-        return new PaymentMethods($this->url);
+        return new PaymentMethods($this->urlHelper);
     }
 
     /**
@@ -358,7 +391,7 @@ class Dependencies
      */
     private function setStore(): Store
     {
-        return new Store($this->options);
+        return new Store($this->optionsHook);
     }
 
     /**
@@ -366,7 +399,7 @@ class Dependencies
      */
     private function setScripts(): Scripts
     {
-        return new Scripts($this->url, $this->seller);
+        return new Scripts($this->urlHelper, $this->sellerConfig);
     }
 
     /**
@@ -375,12 +408,12 @@ class Dependencies
     private function setGateway(): Gateway
     {
         return new Gateway(
-            $this->options,
-            $this->template,
-            $this->store,
-            $this->checkout,
+            $this->optionsHook,
+            $this->templateHook,
+            $this->storeConfig,
+            $this->checkoutHook,
             $this->storeTranslations,
-            $this->url
+            $this->urlHelper
         );
     }
 
@@ -389,8 +422,8 @@ class Dependencies
      */
     private function setLogs(): Logs
     {
-        $file   = new File($this->store);
-        $remote = new Remote($this->store, $this->requester);
+        $file   = new File($this->storeConfig);
+        $remote = new Remote($this->storeConfig, $this->requesterHelper);
 
         return new Logs($file, $remote);
     }
@@ -400,7 +433,7 @@ class Dependencies
      */
     private function setNonce(): Nonce
     {
-        return new Nonce($this->logs, $this->store);
+        return new Nonce($this->logs, $this->storeConfig);
     }
 
     /**
@@ -416,7 +449,7 @@ class Dependencies
      */
     private function setCurrentUser(): CurrentUser
     {
-        return new CurrentUser($this->logs, $this->store);
+        return new CurrentUser($this->logs, $this->storeConfig);
     }
 
     /**
@@ -424,7 +457,7 @@ class Dependencies
      */
     private function setAdminTranslations(): AdminTranslations
     {
-        return new AdminTranslations($this->links);
+        return new AdminTranslations($this->linksHelper);
     }
 
     /**
@@ -432,7 +465,7 @@ class Dependencies
      */
     private function setStoreTranslations(): StoreTranslations
     {
-        return new StoreTranslations($this->links);
+        return new StoreTranslations($this->linksHelper);
     }
 
     /**
@@ -441,19 +474,19 @@ class Dependencies
     private function setOrder(): Order
     {
         return new Order(
-            $this->template,
+            $this->templateHook,
             $this->orderMetadata,
             $this->orderStatus,
             $this->adminTranslations,
             $this->storeTranslations,
-            $this->store,
-            $this->seller,
-            $this->scripts,
-            $this->url,
-            $this->nonce,
-            $this->endpoints,
-            $this->currentUser,
-            $this->requester,
+            $this->storeConfig,
+            $this->sellerConfig,
+            $this->scriptsHook,
+            $this->urlHelper,
+            $this->nonceHelper,
+            $this->endpointsHook,
+            $this->currentUserHelper,
+            $this->requesterHelper,
             $this->logs
         );
     }
@@ -464,14 +497,14 @@ class Dependencies
     private function setNotices(): Notices
     {
         return new Notices(
-            $this->scripts,
+            $this->scriptsHook,
             $this->adminTranslations,
-            $this->url,
-            $this->links,
-            $this->currentUser,
-            $this->store,
-            $this->nonce,
-            $this->endpoints
+            $this->urlHelper,
+            $this->linksHelper,
+            $this->currentUserHelper,
+            $this->storeConfig,
+            $this->nonceHelper,
+            $this->endpointsHook
         );
     }
 
@@ -480,7 +513,7 @@ class Dependencies
      */
     private function setMetadataConfig(): Metadata
     {
-        return new Metadata($this->options);
+        return new Metadata($this->optionsHook);
     }
 
     /**
@@ -490,14 +523,14 @@ class Dependencies
     {
         return new Currency(
             $this->adminTranslations,
-            $this->cache,
-            $this->country,
+            $this->cacheHelper,
+            $this->countryHelper,
             $this->logs,
-            $this->notices,
-            $this->requester,
-            $this->seller,
-            $this->options,
-            $this->url
+            $this->noticesHelper,
+            $this->requesterHelper,
+            $this->sellerConfig,
+            $this->optionsHook,
+            $this->urlHelper
         );
     }
 
@@ -507,18 +540,18 @@ class Dependencies
     private function setSettings(): Settings
     {
         return new Settings(
-            $this->admin,
-            $this->endpoints,
-            $this->links,
-            $this->plugin,
-            $this->scripts,
-            $this->seller,
-            $this->store,
+            $this->adminHook,
+            $this->endpointsHook,
+            $this->linksHelper,
+            $this->pluginHook,
+            $this->scriptsHook,
+            $this->sellerConfig,
+            $this->storeConfig,
             $this->adminTranslations,
-            $this->url,
-            $this->nonce,
-            $this->currentUser,
-            $this->session,
+            $this->urlHelper,
+            $this->nonceHelper,
+            $this->currentUserHelper,
+            $this->sessionHelper,
             $this->logs
         );
     }
@@ -529,24 +562,76 @@ class Dependencies
     private function setCreditsEnabled(): CreditsEnabled
     {
         return new CreditsEnabled(
-            $this->admin,
+            $this->adminHook,
             $this->logs,
-            $this->options
+            $this->optionsHook
         );
     }
 
     /**
-     * @return FrontendEndpoints
+     * @return CheckoutCustom
      */
-    private function setFrontendEndpoints(): FrontendEndpoints
+    private function setCustomCheckoutEndpoints(): CheckoutCustom
     {
-        return new FrontendEndpoints(
-            $this->endpoints,
+        return new CheckoutCustom(
+            $this->endpointsHook,
             $this->logs,
-            $this->requester,
-            $this->session,
-            $this->seller,
+            $this->requesterHelper,
+            $this->sessionHelper,
+            $this->sellerConfig,
             $this->storeTranslations
+        );
+    }
+
+    /**
+     * @return Cart
+     */
+    private function setCart(): Cart
+    {
+        return new Cart($this->countryHelper, $this->currencyHelper, $this->sessionHelper, $this->storeTranslations);
+    }
+
+    /**
+     * @return Hooks
+     */
+    private function setHooks(): Hooks
+    {
+        return new Hooks(
+            $this->adminHook,
+            $this->blocksHook,
+            $this->cartHook,
+            $this->checkoutHook,
+            $this->endpointsHook,
+            $this->gatewayHook,
+            $this->optionsHook,
+            $this->orderHook,
+            $this->orderMetaHook,
+            $this->pluginHook,
+            $this->productHook,
+            $this->scriptsHook,
+            $this->templateHook
+        );
+    }
+
+    private function setHelpers(): Helpers
+    {
+        return new Helpers(
+            $this->actionsHelper,
+            $this->cacheHelper,
+            $this->cartHelper,
+            $this->countryHelper,
+            $this->creditsEnabledHelper,
+            $this->currencyHelper,
+            $this->currentUserHelper,
+            $this->imagesHelper,
+            $this->linksHelper,
+            $this->nonceHelper,
+            $this->noticesHelper,
+            $this->paymentMethodsHelper,
+            $this->requesterHelper,
+            $this->sessionHelper,
+            $this->stringsHelper,
+            $this->urlHelper
         );
     }
 }

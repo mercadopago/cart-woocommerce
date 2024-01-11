@@ -93,6 +93,8 @@ class StoreTranslations
             'text_concatenation' => __('and', 'woocommerce-mercadopago'),
             'shipping_title'     => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
             'store_discount'     => __('Discount provided by store', 'woocommerce-mercadopago'),
+            'cart_discount'      => __('Mercado Pago Discount', 'woocommerce-mercadopago'),
+            'cart_commission'    => __('Mercado Pago Commission', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -298,7 +300,7 @@ class StoreTranslations
     private function setOrderStatusTranslations(): void
     {
         $this->orderStatus = [
-            'payment_approved' => __( 'Payment approved.', 'woocommerce-mercadopago' ),
+            'payment_approved' => __('Payment approved.', 'woocommerce-mercadopago'),
             'pending_pix'      => __('Waiting for the Pix payment.', 'woocommerce-mercadopago'),
             'pending_ticket'   => __('Waiting for the ticket payment.', 'woocommerce-mercadopago'),
             'pending'          => __('The customer has not made the payment yet.', 'woocommerce-mercadopago'),

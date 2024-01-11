@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.1.0 (26/12/2023) =
+* Added
+- Added support to Woocommerce Blocks
+
 = v7.0.6 (11/12/2023) =
 * Fixed
 - Fixed applying store discount code twice

@@ -23,7 +23,7 @@ class Logs
 
     /**
      * Logs constructor
-     * 
+     *
      * @param File $file
      * @param Remote $remote
      */

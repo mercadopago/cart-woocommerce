@@ -1,0 +1,75 @@
+.mp-test-mode-card {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 16px !important;
+  background: rgb(0 0 0 / 4%) !important;
+  border-radius: 6px !important;
+  border-left-style: solid !important;
+  border-left-color: #f73 !important;
+  border-left-width: 4px !important;
+}
+
+.mp-test-mode-badge {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #fff !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin-right: 16px !important;
+  background: #f73 !important;
+  border-radius: 12px !important;
+}
+
+.mp-test-mode-title {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-style: normal !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  line-height: 120% !important;
+  margin-left: 16px !important;
+  color: rgb(0 0 0 / 90%) !important;
+  margin-block-start: 0 !important;
+  margin-block-end: 0 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+  padding: 0 !important;
+}
+
+.mp-test-mode-description {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+  line-height: 120% !important;
+  padding-top: 4px !important;
+  padding-left: 32px !important;
+  margin-block-start: 0 !important;
+  margin-block-end: 0 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+  color: black !important;
+}
+
+.mp-test-mode-card-content {
+  display: flex !important;
+  justify-content: flex-start !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+}
+
+.mp-test-mode-link {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+  line-height: 16px !important;
+  color: #7f54b3 !important;
+  text-decoration: none !important;
+}
+
+.mp-test-mode-link:hover {
+  color: #7249a5 !important;
+  transition: all 0.3ms !important;
+}

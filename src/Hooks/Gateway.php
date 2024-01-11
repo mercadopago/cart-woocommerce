@@ -4,7 +4,6 @@ namespace MercadoPago\Woocommerce\Hooks;
 
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
-use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
@@ -60,12 +59,12 @@ class Gateway
      * @param Url $url
      */
     public function __construct(
-        Options           $options,
-        Template          $template,
-        Store             $store,
-        Checkout          $checkout,
+        Options $options,
+        Template $template,
+        Store $store,
+        Checkout $checkout,
         StoreTranslations $translations,
-        Url               $url
+        Url $url
     ) {
         $this->options      = $options;
         $this->template     = $template;
@@ -142,18 +141,8 @@ class Gateway
 
             global $mercadopago;
 
-            $ratio    = $mercadopago->currency->getRatio($gateway);
-            $currency = $mercadopago->country->getCountryConfigs()['currency'];
-
-            $cartSubtotal    = $mercadopago->woocommerce->cart->get_cart_contents_total();
-            $cartSubtotalTax = $mercadopago->woocommerce->cart->get_cart_contents_tax();
-            $subtotal        = $cartSubtotal + $cartSubtotalTax;
-
-            $discount = $subtotal * ($gateway->discount / 100);
-            $discount = Numbers::calculateByCurrency($currency, $discount, $ratio);
-
-            $commission = $subtotal * ($gateway->commission / 100);
-            $commission = Numbers::calculateByCurrency($currency, $commission, $ratio);
+            $discount   = $mercadopago->helpers->cart->calculateSubtotalWithDiscount($gateway);
+            $commission = $mercadopago->helpers->cart->calculateSubtotalWithCommission($gateway);
 
             $title .= $this->buildTitleWithDiscountAndCommission(
                 $discount,
@@ -336,7 +325,7 @@ class Gateway
      *
      * @return string
      */
-    private function buildTitleWithDiscountAndCommission(float $discount, float $commission, string $strDiscount, string $strCommission): string
+    public function buildTitleWithDiscountAndCommission(float $discount, float $commission, string $strDiscount, string $strCommission): string
     {
         $treatedDiscount   = wp_strip_all_tags(wc_price($discount));
         $treatedCommission = wp_strip_all_tags(wc_price($commission));

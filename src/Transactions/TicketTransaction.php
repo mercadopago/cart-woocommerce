@@ -38,9 +38,9 @@ class TicketTransaction extends AbstractPaymentTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->paymentMethodId = $this->checkout['paymentMethodId'];
-        $this->paymentPlaceId  = $this->mercadopago->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
-        $this->paymentMethodId = $this->mercadopago->paymentMethods->getPaymentMethodId($this->paymentMethodId);
+        $this->paymentMethodId = $this->checkout['payment_method_id'];
+        $this->paymentPlaceId  = $this->mercadopago->helpers->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
+        $this->paymentMethodId = $this->mercadopago->helpers->paymentMethods->getPaymentMethodId($this->paymentMethodId);
 
         $this->transaction->installments = 1;
         $this->transaction->payment_method_id  = $this->paymentMethodId;
@@ -77,7 +77,7 @@ class TicketTransaction extends AbstractPaymentTransaction
      */
     public function setWebpayPropertiesTransaction(): void
     {
-        if ($this->checkout['paymentMethodId'] === 'webpay') {
+        if ($this->checkout['payment_method_id'] === 'webpay') {
             $this->transaction->transaction_details->financial_institution = '1234';
             $this->transaction->callback_url                               = get_site_url();
             $this->transaction->additional_info->ip_address                = '127.0.0.1';
@@ -94,7 +94,7 @@ class TicketTransaction extends AbstractPaymentTransaction
      */
     public function getExpirationDate(): string
     {
-        $expirationDate = $this->mercadopago->options->getGatewayOption(
+        $expirationDate = $this->mercadopago->hooks->options->getGatewayOption(
             $this->gateway,
             'date_expiration',
             MP_TICKET_DATE_EXPIRATION
@@ -116,8 +116,8 @@ class TicketTransaction extends AbstractPaymentTransaction
         $currency = $this->countryConfigs['currency'];
 
         if ($currency === 'BRL' || $currency === 'UYU') {
-            $payer->identification->type   = $this->checkout['docType'];
-            $payer->identification->number = $this->checkout['docNumber'];
+            $payer->identification->type   = $this->checkout['doc_type'];
+            $payer->identification->number = $this->checkout['doc_number'];
         }
     }
 }

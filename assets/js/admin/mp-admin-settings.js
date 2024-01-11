@@ -311,6 +311,9 @@ function mpGetPaymentMethods() {
     function (response) {
       const payment = document.getElementById('mp-payment');
 
+      // removes current payment methods
+      document.querySelectorAll('.mp-settings-payment-block').forEach(element => {element.remove()})
+
       response.data.reverse().forEach((gateway) => {
         payment.insertAdjacentElement('afterend', createMpPaymentMethodComponent(gateway));
       });
@@ -574,6 +577,7 @@ function mpUpdateOptionCredentials() {
           }
         )
         .done(function (response) {
+          mpGetPaymentMethods();
           if (response.success) {
             mpVerifyAlertTestMode();
             mpShowMessage(response.data, 'success', 'credentials');

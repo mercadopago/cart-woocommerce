@@ -1,0 +1,129 @@
+.mp-input-table-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  width: 100% !important;
+}
+
+.mp-input-table-list {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  border: 1px solid rgb(0 0 0 / 25%) !important;
+  border-radius: 6px !important;
+  list-style-type: none !important;
+  margin-left: 0 !important;
+}
+
+.mp-input-table-item {
+  margin: 0 16px !important;
+  padding: 0 4px 0 0 !important;
+  cursor: pointer !important;
+}
+
+.mp-input-table-item:not(:first-child) {
+  border-top: 1px solid rgb(0 0 0 / 10%) !important;
+}
+
+.mp-input-table-label {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 16px 0 !important;
+  cursor: pointer !important;
+}
+
+.mp-input-table-option {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+.mp-input-table-row-text {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-style: normal !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+  line-height: 20px !important;
+  color: rgb(0 0 0 / 90%) !important;
+  padding-left: 16px !important;
+}
+
+.mp-input-table-row-text-image {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-size: 16px !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  line-height: 20px !important;
+  padding-left: 16px !important;
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  align-items: center !important;
+  color: #000000e5 !important;
+}
+
+.mp-input-table-row-obs {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+  line-height: 18px !important;
+  color: rgb(0 0 0 / 55%) !important;
+  text-align: right !important;
+}
+
+.mp-input-table-row-obs-highlight {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+  line-height: 18px !important;
+  color: #00a650 !important;
+}
+
+.mp-input-table-container-link {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px 0 24px !important;
+}
+
+.mp-input-table-link {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-size: 16px !important;
+  line-height: 16px !important;
+  color: #7f54b3 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+
+.mp-input-table-link:hover {
+  color: #7249a5 !important;
+  transition: all 0.3ms !important;
+}
+
+.mp-input-table-bank-interest-container {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+.mp-input-table-bank-interest-text {
+  max-width: 100% !important;
+  color: #737373 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  padding: 8px 0 0 4px !important;
+  word-break: break-word !important;
+  margin: 0 !important;
+  margin-block-start: 0 !important;
+  margin-block-end: 0 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+}

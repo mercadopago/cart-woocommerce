@@ -41,6 +41,17 @@ Para uma melhor experiência, você será redirecionado para o nosso site, clica
 * [Preferências de pagamento](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/payments-configuration)
 * [Teste e receba pagamentos](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/integration-test)
 
-## Support
+*To learn more about how to structure your gateway class, access the official [Woocommerce documentation](https://woocommerce.com/document/payment-gateway-api/).*
+
+After creating and defining your gateway class, you need to make Woocommerce aware of it through the woocommerce_payment_gateways filter. It is the responsibility of the base plugin to abstract Woocommerce resources, so to add our gateway class to the filter, just reference the registerGateway method.
+
+```
+function initPaymentGateway() {
+    global $mercadopago;
+    $mercadopago->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\MPGateway');
+}
+````
+
+As you can see in the example above, ````mercadopago```` is a global variable that represents an instance of the base plugin, global variables can be accessed from anywhere, that is, inside and outside the plugin. This variable allows payment gateway plugins to access resources of the base plugin.
 
 Something's wrong? [Get in touch with our support](https://www.mercadopago.com.ar/developers/en/support)

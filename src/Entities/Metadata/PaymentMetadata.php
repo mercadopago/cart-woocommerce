@@ -118,4 +118,8 @@ class PaymentMetadata
      */
     public $cpp_extra;
 
+    /**
+     * @var string
+     */
+    public $blocks_payment;
 }

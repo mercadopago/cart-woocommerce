@@ -54,7 +54,7 @@ if (!defined('ABSPATH')) {
 </div>
 <div class='mp-checkout-container'>
     <div class='mp-checkout-custom-container'>
-        <?php if ($test_mode): ?>
+        <?php if ($test_mode) : ?>
             <div class="mp-checkout-pro-test-mode">
                 <test-mode
                     title="<?= esc_html($test_mode_title) ?>"
@@ -66,7 +66,7 @@ if (!defined('ABSPATH')) {
             </div>
         <?php endif; ?>
 
-        <?php if ($wallet_button === 'yes'): ?>
+        <?php if ($wallet_button === 'yes') : ?>
             <div class='mp-wallet-button-container'>
                 <img src="<?= esc_url($wallet_button_image); ?>">
 
@@ -105,7 +105,7 @@ if (!defined('ABSPATH')) {
                 <div class='mp-checkout-custom-available-payments-content'>
                     <payment-methods methods='<?= esc_html($payment_methods_items); ?>'></payment-methods>
 
-                    <?php if ($site_id === 'MLA'): ?>
+                    <?php if ($site_id === 'MLA') : ?>
                         <span id="mp_promotion_link"> | </span>
                         <a
                             href='<?= esc_url($payment_methods_promotion_link); ?>'
@@ -215,10 +215,10 @@ if (!defined('ABSPATH')) {
                         helper-message="<?= esc_html($card_document_input_helper); ?>"
                         input-name="identificationNumber"
                         hidden-id="form-checkout__identificationNumber"
-                        input-data-checkout="docNumber"
+                        input-data-checkout="doc_number"
                         select-id="form-checkout__identificationType"
                         select-name="identificationType"
-                        select-data-checkout="docType"
+                        select-data-checkout="doc_type"
                         flag-error="docNumberError"
                     >
                     </input-document>
@@ -286,7 +286,7 @@ if (!defined('ABSPATH')) {
 <div id="mercadopago-utilities" style="display:none;">
     <input type="hidden" id="mp-amount" value='<?= esc_textarea($amount); ?>' name="mercadopago_custom[amount]"/>
     <input type="hidden" id="currency_ratio" value='<?= esc_textarea($currency_ratio); ?>' name="mercadopago_custom[currency_ratio]"/>
-    <input type="hidden" id="paymentMethodId" name="mercadopago_custom[paymentMethodId]"/>
+    <input type="hidden" id="paymentMethodId" name="mercadopago_custom[payment_method_id]"/>
     <input type="hidden" id="mp_checkout_type" name="mercadopago_custom[checkout_type]" value="custom"/>
     <input type="hidden" id="cardExpirationMonth" data-checkout="cardExpirationMonth"/>
     <input type="hidden" id="cardExpirationYear" data-checkout="cardExpirationYear"/>
@@ -296,11 +296,11 @@ if (!defined('ABSPATH')) {
 </div>
 
 <script type="text/javascript">
-	function submitWalletButton(event) {
-		event.preventDefault();
-		jQuery('#mp_checkout_type').val('wallet_button');
-		jQuery('form.checkout, form#order_review').submit();
-	}
+    function submitWalletButton(event) {
+        event.preventDefault();
+        jQuery('#mp_checkout_type').val('wallet_button');
+        jQuery('form.checkout, form#order_review').submit();
+    }
 
     var availablePayment = document.getElementsByClassName('mp-checkout-custom-available-payments')[0];
     var collapsible = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-header')[0];
@@ -310,15 +310,15 @@ if (!defined('ABSPATH')) {
         const content = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-content')[0];
 
         if (content.style.maxHeight) {
-			content.style.maxHeight = null;
-			content.style.padding = "0px";
-			icon.src = "<?= esc_url($available_payments_chevron_down); ?>";
-		} else {
-			let hg = content.scrollHeight + 15 + "px";
-			content.style.setProperty("max-height", hg, "important");
-			content.style.setProperty("padding", "24px 0px 0px", "important");
-			icon.src = "<?= esc_url($available_payments_chevron_up); ?>";
-		}
-	});
+            content.style.maxHeight = null;
+            content.style.padding = "0px";
+            icon.src = "<?= esc_url($available_payments_chevron_down); ?>";
+        } else {
+            let hg = content.scrollHeight + 15 + "px";
+            content.style.setProperty("max-height", hg, "important");
+            content.style.setProperty("padding", "24px 0px 0px", "important");
+            icon.src = "<?= esc_url($available_payments_chevron_up); ?>";
+        }
+    });
 </script>
 

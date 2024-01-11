@@ -76,44 +76,44 @@ abstract class AbstractNotification implements NotificationInterface
     }
 
     /**
-	 * Process successful request
-	 *
-	 * @param mixed $data
+     * Process successful request
+     *
+     * @param mixed $data
      *
      * @return bool|\WC_Order|\WC_Order_Refund
      */
-	public function handleSuccessfulRequest($data)
+    public function handleSuccessfulRequest($data)
     {
-		$this->logs->file->info('Starting to process update...', __CLASS__);
+        $this->logs->file->info('Starting to process update...', __CLASS__);
 
         $order_key = $data['external_reference'];
 
-		if (empty($order_key)) {
+        if (empty($order_key)) {
             $message = 'external_reference not found';
-			$this->logs->file->error($message, __CLASS__, $data);
-			$this->setResponse(422, $message);
-		}
+            $this->logs->file->error($message, __CLASS__, $data);
+            $this->setResponse(422, $message);
+        }
 
-		$invoice_prefix = get_option('_mp_store_identificator', 'WC-');
-		$id             = (int) str_replace($invoice_prefix, '', $order_key);
-		$order          = wc_get_order($id);
+        $invoice_prefix = get_option('_mp_store_identificator', 'WC-');
+        $id             = (int) str_replace($invoice_prefix, '', $order_key);
+        $order          = wc_get_order($id);
 
-		if (!$order) {
+        if (!$order) {
             $message = 'Order is invalid';
-			$this->logs->file->error($message, __CLASS__, $data);
-			$this->setResponse(422, $message);
-		}
+            $this->logs->file->error($message, __CLASS__, $data);
+            $this->setResponse(422, $message);
+        }
 
-		if ($order->get_id() !== $id) {
+        if ($order->get_id() !== $id) {
             $message = 'Order error';
-			$this->logs->file->error($message, __CLASS__, $order);
-			$this->setResponse(422, $message);
-		}
+            $this->logs->file->error($message, __CLASS__, $order);
+            $this->setResponse(422, $message);
+        }
 
-		$this->logs->file->info('Updating metadata and status with data', __CLASS__, $data);
+        $this->logs->file->info('Updating metadata and status with data', __CLASS__, $data);
 
-		return $order;
-	}
+        return $order;
+    }
 
     /**
      * Process order status
@@ -125,10 +125,10 @@ abstract class AbstractNotification implements NotificationInterface
      * @return void
      * @throws \Exception
      */
-	public function processStatus(string $processedStatus, \WC_Order $order, $data): void
+    public function processStatus(string $processedStatus, \WC_Order $order, $data): void
     {
-		$this->orderStatus->processStatus($processedStatus, $data, $order, get_class($this->gateway));
-	}
+        $this->orderStatus->processStatus($processedStatus, $data, $order, get_class($this->gateway));
+    }
 
     /**
      * Update order meta
@@ -139,10 +139,10 @@ abstract class AbstractNotification implements NotificationInterface
      *
      * @return void
      */
-	public function updateMeta(\WC_Order $order, string $key, $value): void
+    public function updateMeta(\WC_Order $order, string $key, $value): void
     {
-			$order->update_meta_data($key, $value);
-	}
+            $order->update_meta_data($key, $value);
+    }
 
     /**
      * Set response
@@ -152,7 +152,7 @@ abstract class AbstractNotification implements NotificationInterface
      *
      * @return void
      */
-	public function setResponse(int $status, string $message): void
+    public function setResponse(int $status, string $message): void
     {
         $response = [
             'status'  => $status,
@@ -160,5 +160,5 @@ abstract class AbstractNotification implements NotificationInterface
         ];
 
         wp_send_json($response, $status);
-	}
+    }
 }

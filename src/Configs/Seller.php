@@ -341,8 +341,6 @@ class Seller
     }
 
     /**
-     * @param string $default
-     *
      * @return array
      */
     public function getCheckoutTicketPaymentMethods(): array
@@ -421,7 +419,7 @@ class Seller
             $options = explode(',', $exPaymentOptions);
 
             foreach ($options as $option) {
-                if ('no' === $this->options->getGatewayOption($gateway, 'ex_payments_' . $option, 'yes')) {
+                if ($this->options->getGatewayOption($gateway, "ex_payments_$option", 'yes') === 'no') {
                     $exPayments[] = $option;
                 }
             }
@@ -650,9 +648,11 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("Mercado pago gave error to get seller info: {$e->getMessage()}",
+            $this->logs->file->error(
+                "Mercado pago gave error to get seller info: {$e->getMessage()}",
                 __CLASS__
             );
+
             return [
                 'data'   => null,
                 'status' => 500,
@@ -719,7 +719,8 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("Mercado pago gave error to validate seller credentials: {$e->getMessage()}",
+            $this->logs->file->error(
+                "Mercado pago gave error to validate seller credentials: {$e->getMessage()}",
                 __CLASS__
             );
             return [
@@ -768,7 +769,8 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("Mercado pago gave error to get seller payment methods: {$e->getMessage()}",
+            $this->logs->file->error(
+                "Mercado pago gave error to get seller payment methods: {$e->getMessage()}",
                 __CLASS__
             );
             return [
@@ -807,7 +809,8 @@ class Seller
 
             return $serializedResponse;
         } catch (\Exception $e) {
-            $this->logs->file->error("Mercado pago gave error to get seller payment methods by ID: {$e->getMessage()}",
+            $this->logs->file->error(
+                "Mercado pago gave error to get seller payment methods by ID: {$e->getMessage()}",
                 __CLASS__
             );
             return [

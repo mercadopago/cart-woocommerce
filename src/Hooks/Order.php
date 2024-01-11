@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Hooks;
 
 use Exception;
+use MercadoPago\PP\Sdk\Common\AbstractCollection;
+use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -97,7 +99,7 @@ class Order
     /**
      * @const
      */
-    const NONCE_ID = 'MP_ORDER_NONCE';
+    private const NONCE_ID = 'MP_ORDER_NONCE';
 
           /**
      * Order constructor
@@ -118,20 +120,20 @@ class Order
      * @param Logs $logs
      */
     public function __construct(
-        Template          $template,
-        OrderMetadata     $orderMetadata,
-        OrderStatus       $orderStatus,
+        Template $template,
+        OrderMetadata $orderMetadata,
+        OrderStatus $orderStatus,
         AdminTranslations $adminTranslations,
         StoreTranslations $storeTranslations,
-        Store             $store,
-        Seller            $seller,
-        Scripts           $scripts,
-        Url               $url,
-        Nonce             $nonce,
-        Endpoints         $endpoints,
-        CurrentUser       $currentUser,
-        Requester         $requester,
-        Logs              $logs
+        Store $store,
+        Seller $seller,
+        Scripts $scripts,
+        Url $url,
+        Nonce $nonce,
+        Endpoints $endpoints,
+        CurrentUser $currentUser,
+        Requester $requester,
+        Logs $logs
     ) {
         $this->template          = $template;
         $this->orderMetadata     = $orderMetadata;
@@ -160,12 +162,12 @@ class Order
         $this->registerMetaBox(function ($postOrOrderObject) {
             $order = ($postOrOrderObject instanceof \WP_Post) ? wc_get_order($postOrOrderObject->ID) : $postOrOrderObject;
 
-            if (!$order || !$this->getLastPaymentInfo($order))  {
+            if (!$order || !$this->getLastPaymentInfo($order)) {
                 return;
             }
 
             $paymentMethod     = $this->orderMetadata->getUsedGatewayData($order);
-            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function($gateway) use ($paymentMethod) {
+            $isMpPaymentMethod = array_filter($this->store->getAvailablePaymentGateways(), function ($gateway) use ($paymentMethod) {
                 return $gateway::ID === $paymentMethod || $gateway::WEBHOOK_API_NAME === $paymentMethod;
             });
 
@@ -202,11 +204,7 @@ class Order
 
         $this->scripts->registerStoreStyle(
             'mp_payment_status_sync',
-            $this->url->getPluginFileUrl('assets/css/admin/order/payment-status-sync', '.css'),
-            [
-                'order_id' =>$order->get_id(),
-                'nonce' => $this->nonce->generateNonce(self::NONCE_ID),
-            ]
+            $this->url->getPluginFileUrl('assets/css/admin/order/payment-status-sync', '.css')
         );
     }
 
@@ -219,10 +217,16 @@ class Order
      */
     private function getMetaboxData(\WC_Order $order): array
     {
-        $paymentInfo = $this->getLastPaymentInfo($order);
+        $paymentInfo  = $this->getLastPaymentInfo($order);
 
+        $isCreditCard      = $paymentInfo['payment_type_id'] === 'credit_card';
         $paymentStatusType = PaymentStatus::getStatusType($paymentInfo['status']);
-        $cardContent       = PaymentStatus::getCardDescription($this->adminTranslations->statusSync, $paymentInfo['status_detail'], $paymentInfo['payment_type_id'] === 'credit_card');
+
+        $cardContent = PaymentStatus::getCardDescription(
+            $this->adminTranslations->statusSync,
+            $paymentInfo['status_detail'],
+            $isCreditCard
+        );
 
         switch ($paymentStatusType) {
             case 'success':
@@ -273,7 +277,7 @@ class Order
      *
      * @param \WC_Order $order
      *
-     * @return bool|\MercadoPago\PP\Sdk\Common\AbstractCollection|\MercadoPago\PP\Sdk\Common\AbstractEntity|object
+     * @return bool|AbstractCollection|AbstractEntity|object
      */
     private function getLastPaymentInfo(\WC_Order $order)
     {
@@ -313,18 +317,19 @@ class Order
             $this->orderStatus->processStatus($paymentData['status'], (array) $paymentData, $order, $this->orderMetadata->getUsedGatewayData($order));
 
             wp_send_json_success(
-				$this->adminTranslations->statusSync['response_success']
-			);
-		} catch ( \Exception $e ) {
-            $this->logs->file->error("Mercado pago gave error in payment status Sync: {$e->getMessage()}",
+                $this->adminTranslations->statusSync['response_success']
+            );
+        } catch (\Exception $e) {
+            $this->logs->file->error(
+                "Mercado pago gave error in payment status Sync: {$e->getMessage()}",
                 __CLASS__
             );
 
-			wp_send_json_error(
+            wp_send_json_error(
                 $this->adminTranslations->statusSync['response_error'] . ' ' . $e->getMessage(),
-				500
-			);
-		}
+                500
+            );
+        }
     }
 
     /**
@@ -355,48 +360,6 @@ class Order
         add_meta_box($id, $title, function () use ($name, $args) {
             $this->template->getWoocommerceTemplate($name, $args);
         });
-    }
-
-    /**
-     * Register order actions
-     *
-     * @param array $action
-     *
-     * @return void
-     */
-    public function registerOrderActions(array $action): void
-    {
-        add_action('woocommerce_order_actions', function ($actions) use ($action) {
-            $actions[] = $action;
-            return $actions;
-        });
-    }
-
-    /**
-     * Register order status transition
-     *
-     * @param string $toStatus
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerOrderStatusTransitionTo(string $toStatus, $callback): void
-    {
-        add_action('woocommerce_order_status_' . $toStatus, $callback);
-    }
-
-    /**
-     * Register order status transition
-     *
-     * @param string $fromStatus
-     * @param string $toStatus
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function registerOrderStatusTransitionFromTo(string $fromStatus, string $toStatus, $callback): void
-    {
-        add_action('woocommerce_order_status_' . $fromStatus . '_to_' . $toStatus, $callback);
     }
 
     /**
@@ -433,29 +396,6 @@ class Order
     public function registerAdminOrderTotalsAfterTotal($callback): void
     {
         add_action('woocommerce_admin_order_totals_after_total', $callback);
-    }
-
-    /**
-     * Register total line after WooCommerce order totals template
-     *
-     * @param string $tip
-     * @param string $title
-     * @param string $value
-     *
-     * @return void
-     */
-    public function registerAdminOrderTotalsAfterTotalTemplate(string $tip, string $title, string $value): void
-    {
-        add_action('woocommerce_admin_order_totals_after_total', function ($orderId) use ($tip, $title, $value) {
-            $this->template->getWoocommerceTemplate(
-                'admin/order/generic-note.php',
-                [
-                    'tip'   => $tip,
-                    'title' => $title,
-                    'value' => $value
-                ]
-            );
-        });
     }
 
     /**

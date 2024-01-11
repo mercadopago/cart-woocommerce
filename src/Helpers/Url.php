@@ -54,6 +54,26 @@ final class Url
     }
 
     /**
+     * Get plugin file path
+     *
+     * @param string $path
+     * @param string $extension
+     * @param bool $ignoreSuffix
+     *
+     * @return string
+     */
+    public function getPluginFilePath(string $path, string $extension, bool $ignoreSuffix = false): string
+    {
+        return sprintf(
+            '%s%s%s%s',
+            untrailingslashit(plugin_dir_path(__FILE__)),
+            "/../../$path",
+            $ignoreSuffix ? '' : $this->getSuffix(),
+            $extension
+        );
+    }
+
+    /**
      * Get current page
      *
      * @return string
@@ -199,11 +219,11 @@ final class Url
     /**
      * Validate $_GET var
      *
-     * @param string $expectedQueryVar
+     * @param string $expectedVar
      *
      * @return bool
      */
-    public function validateGetVar($expectedVar): bool
+    public function validateGetVar(string $expectedVar): bool
     {
         return isset($_GET[$expectedVar]);
     }

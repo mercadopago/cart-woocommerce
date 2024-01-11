@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
 Tested up to: 6.4
 Requires PHP: 7.4 to 8.3
-Stable tag: 7.0.6
+Stable tag: 7.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,6 +135,10 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+
+= v7.1.0 (11/01/2024) =
+* Added
+- Added support to Woocommerce Blocks
 
 = v7.0.6 (11/12/2023) =
 * Fixed

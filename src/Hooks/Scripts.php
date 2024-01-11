@@ -168,6 +168,10 @@ class Scripts
     /**
      * Register credits script on admin
      *
+     * @param string $name
+     * @param string $file
+     * @param array $variables
+     *
      * @return void
      */
     public function registerCreditsAdminScript(string $name, string $file, array $variables = []): void
@@ -179,6 +183,9 @@ class Scripts
 
     /**
      * Register credits style on admin
+     *
+     * @param string $name
+     * @param string $file
      *
      * @return void
      */
@@ -264,6 +271,26 @@ class Scripts
         }
 
         $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
+    }
+
+    /**
+     * Register scripts for payment block
+     *
+     * @param string $name
+     * @param string $file
+     * @param string $version
+     * @param array $deps
+     * @param array $variables
+     *
+     * @return void
+     */
+    public function registerPaymentBlockScript(string $name, string $file, string $version, array $deps = [], array $variables = []): void
+    {
+        wp_enqueue_script($name, $file, $deps, $version, true);
+
+        if ($variables) {
+            wp_localize_script($name, $name . self::SUFFIX, $variables);
+        }
     }
 
     /**
