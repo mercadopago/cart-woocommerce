@@ -1,36 +1,45 @@
-# Plugins Enablers (Woocommerce)
+<p align="center"><a href="https://www.mercadopago.com/">    <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.18.3/mercadopago/logo__large@2x.png" height="80" width="auto" alt="MercadoPago">
+</a></p>
 
-[![made-with-Php](https://img.shields.io/badge/Made%20with-Php-1f425f.svg)](https://www.php.net/) [![php-version](https://img.shields.io/badge/Php->=7.4-1f425f)]()
+<p align="center">
+<img src="https://img.shields.io/wordpress/plugin/v/woocommerce-mercadopago" alt="version">
+<img src="https://img.shields.io/wordpress/plugin/dt/woocommerce-mercadopago" alt="download">
+<img src="https://img.shields.io/github/license/mercadopago/cart-woocommerce" alt="license">
+</p>
 
-The base project for the Plugins Enablers Initiative.
+The Mercado Pago payments for WooCommerce plugin allows you to expand the functionalities of your online store and offer a unique payment experience for your customers.
 
-## Install
+<br/>
 
-Open your terminal and run the script below in your ````wp-content/plugins```` to install the base plugin.
+## Documentation in English
 
-````
-plugin_base_dir="woocommerce-plugins-enablers" \
-&& git clone --quiet --recursive -j8 git@github.com:melisource/fury_woocommerce-plugins-enablers.git $plugin_base_dir \
-&& cd $plugin_base_dir && composer i && composer i -d "./packages/sdk/"
-````
+For a better experience, you will be redirected to our site by clicking on the links below:
 
-## Getting started
+* [Introduction](https://www.mercadopago.com.ar/developers/en/guides/plugins/woocommerce/introduction/)
+* [Installation](https://www.mercadopago.com.ar/developers/en/docs/woocommerce/how-tos/install-module-manually)
+* [Integration](https://www.mercadopago.com.ar/developers/en/docs/woocommerce/integration-configuration/plugin-configuration)
+* [Payments configuration](https://www.mercadopago.com.ar/developers/en/docs/woocommerce/payments-configuration)
+* [Test and receive payments](https://www.mercadopago.com.ar/developers/en/docs/woocommerce/integration-test)
 
-The purpose of this tutorial is to support the creation and integration of payment gateway plugins to the base plugin.
+## Documentación en Español
 
-#### Creating and integrating a payment gateway to the base plugin
+Para una mejor experiencia, será redirigido a nuestro sitio haciendo clic en los links a abajo:
 
-It is necessary that the creation of the payment gateway plugin be done along the lines of an additional Woocommerce plugin, and as part of the process, we must create a main class that will add the Wordpress loading hook to call the method that allows the plugin to be recognized as a Woocommerce payment gateway plugin.
+* [Introducción](https://www.mercadopago.com.ar/developers/es/guides/plugins/woocommerce/introduction/)
+* [Instalación](https://www.mercadopago.com.ar/developers/es/docs/woocommerce/how-tos/install-module-manually)
+* [Integración](https://www.mercadopago.com.ar/developers/es/docs/woocommerce/integration-configuration/plugin-configuration)
+* [Preferencias de pago](https://www.mercadopago.com.ar/developers/es/docs/woocommerce/payments-configuration)
+* [Prueba y recibe pagos](https://www.mercadopago.com.ar/developers/e/docs/woocommerce/integration-test)
 
-````
-add_action('wp_loaded', 'initPaymentGateway');
-````
+## Documentação em Português
 
-In addition, we must create a custom class to extend Woocommerce gateway class, allowing inheritance of gateway methods and the [configs api](https://woocommerce.com/document/settings-api/).
+Para uma melhor experiência, você será redirecionado para o nosso site, clicando nos links abaixo:
 
-````
-class MPGateway extends \WC_Payment_Gateway {}
-````
+* [Introdução](https://www.mercadopago.com.br/developers/pt/guides/plugins/woocommerce/introduction/)
+* [Instalação](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/how-tos/install-module-manually)
+* [Integração](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/integration-configuration/plugin-configuration)
+* [Preferências de pagamento](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/payments-configuration)
+* [Teste e receba pagamentos](https://www.mercadopago.com.br/developers/pt/docs/woocommerce/integration-test)
 
 *To learn more about how to structure your gateway class, access the official [Woocommerce documentation](https://woocommerce.com/document/payment-gateway-api/).*
 
@@ -45,3 +54,4 @@ function initPaymentGateway() {
 
 As you can see in the example above, ````mercadopago```` is a global variable that represents an instance of the base plugin, global variables can be accessed from anywhere, that is, inside and outside the plugin. This variable allows payment gateway plugins to access resources of the base plugin.
 
+Something's wrong? [Get in touch with our support](https://www.mercadopago.com.ar/developers/en/support)

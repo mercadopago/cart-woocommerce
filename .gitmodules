@@ -1,4 +1,0 @@
-[submodule "packages/sdk"]
-	path = packages/sdk
-	url = git@github.com:melisource/fury_pp-php-sdk.git
-	branch = master
