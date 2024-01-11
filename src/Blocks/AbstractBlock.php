@@ -27,6 +27,11 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     /**
      * @const
      */
+    public const CHOSEN_PM_SESSION_KEY = 'chosen_payment_method';
+
+    /**
+     * @const
+     */
     public const UPDATE_CART_NAMESPACE = 'mercadopago_blocks_update_cart';
 
     /**
@@ -89,6 +94,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     {
         $this->mercadopago->helpers->session->deleteSession(self::ACTION_SESSION_KEY);
         $this->mercadopago->helpers->session->deleteSession(self::GATEWAY_SESSION_KEY);
+        $this->mercadopago->helpers->session->deleteSession(self::CHOSEN_PM_SESSION_KEY);
     }
 
     /**
@@ -231,7 +237,6 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             $action  = $this->mercadopago->helpers->session->getSession(self::ACTION_SESSION_KEY);
 
             if ($action == 'add') {
-                $this->mercadopago->logs->file->info('Trying to add discount/comission with ' . $this->gateway->id, 'Testing');
                 $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFeesFromBlocks($this->gateway);
             }
 
