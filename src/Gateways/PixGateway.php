@@ -175,8 +175,13 @@ class PixGateway extends AbstractGateway
         $order    = wc_get_order($order_id);
         try {
             parent::process_payment($order_id);
-
             $checkout = Form::sanitizeFromData($_POST);
+
+            if (isset($_POST['wc-woo-mercado-pago-pix-new-payment-method'])) {
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
+            } else {
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
+            }
 
             if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
                 return $this->processReturnFail(

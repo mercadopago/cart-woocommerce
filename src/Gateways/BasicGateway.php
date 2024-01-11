@@ -310,6 +310,12 @@ class BasicGateway extends AbstractGateway
         try {
             parent::process_payment($order_id);
 
+            if (isset($_POST['wc-woo-mercado-pago-basic-new-payment-method'])) {
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
+            } else {
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
+            }
+
             $this->transaction = new BasicTransaction($this, $order);
             $method            = $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect');
 

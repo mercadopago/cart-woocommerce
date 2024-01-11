@@ -248,6 +248,7 @@ abstract class AbstractTransaction
         $metadata->cpp_extra                     = new PaymentMetadataCpp();
         $metadata->cpp_extra->platform_version   = $this->mercadopago->woocommerce->version;
         $metadata->cpp_extra->module_version     = MP_VERSION;
+        $metadata->blocks_payment                = $this->mercadopago->orderMetadata->getPaymentBlocks($this->order);
 
         return $metadata;
     }

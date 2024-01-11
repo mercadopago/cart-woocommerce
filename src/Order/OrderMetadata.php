@@ -82,6 +82,11 @@ class OrderMetadata
     private const PIX_ON = 'pix_on';
 
     /**
+     * @const
+     */
+    private const BLOCKS_PAYMENT = 'blocks_payment';
+
+    /**
      * @var OrderMeta
      */
     private $orderMeta;
@@ -438,5 +443,31 @@ class OrderMetadata
                 $this->orderMeta->update($order, $paymentDetailKey, "[Date $date]");
             }
         }
+    }
+
+    /**
+     * Update an order's payments metadata
+     *
+     * @param \WC_Order $order
+     * @param array $paymentsId
+     *
+     * @return void
+     */
+    public function markPaymentAsBlocks(\WC_Order $order, string $value)
+    {
+        $this->orderMeta->update($order, self::BLOCKS_PAYMENT, $value);
+    }
+
+    /**
+     * Update an order's payments metadata
+     *
+     * @param \WC_Order $order
+     * @param array $paymentsId
+     *
+     * @return void
+     */
+    public function getPaymentBlocks(\WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::BLOCKS_PAYMENT);
     }
 }

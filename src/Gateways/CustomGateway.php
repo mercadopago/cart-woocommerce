@@ -378,9 +378,11 @@ class CustomGateway extends AbstractGateway
 
             if (isset($_POST['mercadopago_custom'])) {
                 $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
             } else {
                 // Blocks data arrives in a different way
                 $checkout = $this->processBlocksCheckoutData('mercadopago_custom', Form::sanitizeFromData($_POST));
+                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
             }
 
             parent::process_payment($order_id);
