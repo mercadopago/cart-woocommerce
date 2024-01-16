@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
 Tested up to: 6.4
 Requires PHP: 7.4 to 8.3
-Stable tag: 7.1.0
+Stable tag: 7.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,9 +136,17 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
+= v7.1.1 (15/01/2024) =
+* Fixed
+-  Removes incorrectly showing the discount and commison information in the cart
+-  TypeError when opening orders in the admin panel
+
 = v7.1.0 (11/01/2024) =
 * Added
 - Added support to Woocommerce Blocks
+* Fixed:
+- Fixed the error that did not allow changing the name of checkouts
+- Fix checkout pro modal mode
 
 = v7.0.6 (11/12/2023) =
 * Fixed

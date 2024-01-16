@@ -1,9 +1,17 @@
 CHANGELOG:
 == Changelog ==
 
-= v7.1.0 (26/12/2023) =
+= v7.1.1 (15/01/2024) =
+* Fixed
+-  Removes incorrectly showing the discount and commison information in the cart
+-  TypeError when opening orders in the admin panel
+
+= v7.1.0 (11/01/2024) =
 * Added
 - Added support to Woocommerce Blocks
+* Fixed:
+- Fixed the error that did not allow changing the name of checkouts
+- Fix checkout pro modal mode
 
 = v7.0.6 (11/12/2023) =
 * Fixed
