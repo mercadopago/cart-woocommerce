@@ -23,6 +23,29 @@ final class Numbers
     }
 
     /**
+     * makes the variable a safe float
+     *
+     * @param mixed $value
+     *
+     * @return float
+     */
+    public static function makesValueSafe($value): float
+    {
+        if (is_string($value) && strlen($value) > 0 && !is_numeric($value[0])) {
+            $fixedValue = self::removeNonNumericPrefix($value);
+            return floatval($fixedValue);
+        }
+        return floatval($value);
+    }
+
+    public static function removeNonNumericPrefix($str)
+    {
+        return preg_replace("/[^0-9,.]/", "", $str);
+    }
+
+
+
+    /**
      * Format value with currency symbol
      *
      * @param string $currencySymbol

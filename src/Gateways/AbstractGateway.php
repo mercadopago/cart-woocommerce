@@ -484,10 +484,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         if ($this->mercadopago->hooks->checkout->isCheckout()) {
             $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFees($this);
         }
-
-        if ($this->mercadopago->hooks->cart->isCart()) {
-            $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFees($this);
-        }
     }
 
     /**

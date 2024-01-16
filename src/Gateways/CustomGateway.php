@@ -559,8 +559,8 @@ class CustomGateway extends AbstractGateway
         $currency          = $this->countryConfigs['currency_symbol'];
         $installments      = $this->mercadopago->orderMetadata->getInstallmentsMeta($order);
         $installmentAmount = $this->mercadopago->orderMetadata->getTransactionDetailsMeta($order);
-        $transactionAmount = $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
-        $totalPaidAmount   = $this->mercadopago->orderMetadata->getTotalPaidAmountMeta($order);
+        $transactionAmount = Numbers::makesValueSafe($this->mercadopago->orderMetadata->getTransactionAmountMeta($order));
+        $totalPaidAmount   = Numbers::makesValueSafe($this->mercadopago->orderMetadata->getTotalPaidAmountMeta($order));
         $totalDiffCost     = (float) $totalPaidAmount - (float) $transactionAmount;
 
         if ($totalDiffCost > 0) {
@@ -726,8 +726,8 @@ class CustomGateway extends AbstractGateway
         $usedGateway = $this->mercadopago->orderMetadata->getUsedGatewayData($order);
 
         if ($this::ID === $usedGateway) {
-            $totalPaidAmount       = Numbers::format($this->mercadopago->orderMetadata->getTotalPaidAmountMeta($order));
-            $transactionAmount     = Numbers::format($this->mercadopago->orderMetadata->getTransactionAmountMeta($order));
+            $totalPaidAmount       = Numbers::format(Numbers::makesValueSafe($this->mercadopago->orderMetadata->getTotalPaidAmountMeta($order)));
+            $transactionAmount     = Numbers::format(Numbers::makesValueSafe($this->mercadopago->orderMetadata->getTransactionAmountMeta($order)));
             $installmentsFeeAmount = $totalPaidAmount - $transactionAmount;
 
             if ($installmentsFeeAmount > 0) {
