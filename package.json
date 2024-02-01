@@ -23,7 +23,7 @@
   "devDependencies": {
     "@woocommerce/dependency-extraction-webpack-plugin": "^2.2.0",
     "@woocommerce/eslint-plugin": "^2.2.0",
-    "@wordpress/scripts": "^26.16.0",
+    "@wordpress/scripts": "^26.19.0",
     "css-minimizer-webpack-plugin": "^5.0.1",
     "jshint": "^2.13.5",
     "minify": "^7.2.2",
