@@ -2,10 +2,12 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
+use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -417,12 +419,12 @@ class CustomGateway extends AbstractGateway
                         return $this->handleResponseStatus($order, $response, $checkout);
                     }
 
-                    throw new \Exception('Invalid checkout data');
+                    throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
             }
         } catch (\Exception $e) {
             return $this->processReturnFail(
                 $e,
-                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                $e->getMessage(),
                 self::LOG_SOURCE,
                 (array) $order,
                 true
@@ -683,30 +685,27 @@ class CustomGateway extends AbstractGateway
                         return $return;
 
                     case 'rejected':
-                        $errorMessage  = $this->mercadopago->storeTranslations->commonMessages['cho_payment_declined'];
-
-                        $return = [
-                            'result'   => 'failure',
-                            'message'  => $errorMessage,
-                        ];
+                        $errorMessage = $this->getRejectedPaymentErrorMessage($response['status_detail']);
 
                         if ($this->isOrderPayPage()) {
-                            $this->handlePayForOrderRequest($return);
+                            $this->handlePayForOrderRequest(array('result'   => 'fail', 'messages'  => $errorMessage));
                         }
 
-                        return $return;
+                        $this->handleWithRejectPayment($response);
+                        // Fall-through intentional - throw RejectedPaymentException for 'rejected' case.
 
                     default:
                         break;
                 }
             }
-            throw new \Exception('Response status not mapped on ' . __METHOD__);
+            throw new ResponseStatusException('exception: Response status not mapped on ' . __METHOD__);
         } catch (\Exception $e) {
             return $this->processReturnFail(
                 $e,
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                $e->getMessage(),
                 self::LOG_SOURCE,
-                (array) $response
+                (array) $response,
+                true
             );
         }
     }

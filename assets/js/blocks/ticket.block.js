@@ -39,7 +39,7 @@ const updateCart = (props) => {
   }, [onPaymentSetup]);
 
   useEffect(() => {
-    
+
     const unsubscribe = onCheckoutSuccess(async (checkoutResponse) => {
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_TICKET_BLOCKS_SUCCESS", processingResponse.paymentStatus, targetName);
@@ -48,20 +48,21 @@ const updateCart = (props) => {
 
     return () => unsubscribe();
   }, [onCheckoutSuccess]);
-    
+
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
-      const processingResponse = checkoutResponse.processingResponse;      
+      const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_TICKET_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);
       return {
         type: emitResponse.responseTypes.FAIL,
         messageContext: emitResponse.noticeContexts.PAYMENTS,
+        message: processingResponse.paymentDetails.message,
       };
     });
 
     return () => unsubscribe();
   }, [onCheckoutFail]);
-  
+
 };
 
 const Label = (props) => {

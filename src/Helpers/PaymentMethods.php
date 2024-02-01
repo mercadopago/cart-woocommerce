@@ -13,7 +13,7 @@ final class PaymentMethods
     /**
      * @const
      */
-    private const SEPARATOR = '|';
+    private const SEPARATOR = '_';
 
     /**
      * @var Url

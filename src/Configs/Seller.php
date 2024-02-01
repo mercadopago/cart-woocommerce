@@ -66,6 +66,11 @@ class Seller
     /**
      * @const
      */
+    private const CHECKOUT_PSE_PAYMENT_METHODS = '_payment_methods_pse';
+
+    /**
+     * @const
+     */
     private const SITE_ID_PAYMENT_METHODS = '_site_id_payment_methods';
 
     /**
@@ -356,6 +361,23 @@ class Seller
         $this->options->set(self::CHECKOUT_TICKET_PAYMENT_METHODS, $checkoutTicketPaymentMethods);
     }
 
+
+    /**
+     * @return array
+     */
+    public function getCheckoutPsePaymentMethods(): array
+    {
+        return $this->getPaymentMethodsByGatewayOption(self::CHECKOUT_PSE_PAYMENT_METHODS);
+    }
+
+    /**
+     * @param array $checkoutPaymentMethodsPse
+     */
+    public function setCheckoutPsePaymentMethods(array $checkoutPaymentMethodsPse): void
+    {
+        $this->options->set(self::CHECKOUT_PSE_PAYMENT_METHODS, $checkoutPaymentMethodsPse);
+    }
+
     /**
      * @return array
      */
@@ -451,6 +473,7 @@ class Seller
             $this->setCheckoutBasicPaymentMethods([]);
             $this->setCheckoutPixPaymentMethods([]);
             $this->setCheckoutTicketPaymentMethods([]);
+            $this->setCheckoutPsePaymentMethods([]);
 
             return;
         }
@@ -458,6 +481,7 @@ class Seller
         $this->setupBasicPaymentMethods($paymentMethodsResponse);
         $this->setupPixPaymentMethods($paymentMethodsResponse);
         $this->setupTicketPaymentMethods($paymentMethodsResponse);
+        $this->setupPsePaymentMethods($paymentMethodsResponse);
     }
 
     /**
@@ -508,6 +532,33 @@ class Seller
         }
 
         $this->setCheckoutBasicPaymentMethods($serializedPaymentMethods);
+    }
+
+    /**
+     * Setup Pse Payment Methods
+     *
+     * @param array $paymentMethodsResponse
+     */
+    private function setupPsePaymentMethods(array $paymentMethodsResponse): void
+    {
+        $serializedPaymentMethods = [];
+
+        foreach ($paymentMethodsResponse['data'] as $paymentMethod) {
+            if ('pse' === $paymentMethod['id']) {
+                $serializedPaymentMethods[] = [
+                    'id'     => $paymentMethod['id'],
+                    'name'   => $paymentMethod['name'],
+                    'type'   => $paymentMethod['payment_type_id'],
+                    'image'  => $paymentMethod['secure_thumbnail'],
+                    'config' => 'ex_payments_' . $paymentMethod['id'],
+                    'financial_institutions' => $paymentMethod['financial_institutions']
+                ];
+
+                break;
+            }
+        }
+
+        $this->setCheckoutPsePaymentMethods($serializedPaymentMethods);
     }
 
     /**

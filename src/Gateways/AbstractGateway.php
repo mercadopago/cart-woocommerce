@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Notification\NotificationFactory;
+use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 
 abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
@@ -463,6 +464,20 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         $this->mercadopago->logs->file->error($e->getMessage(), $source, $context);
 
+        $errorMessages = [
+            "Invalid test user email" => $this->mercadopago->storeTranslations->commonMessages['invalid_users'],
+            "Invalid users involved" => $this->mercadopago->storeTranslations->commonMessages['invalid_users'],
+            "Invalid operators users involved" => $this->mercadopago->storeTranslations->commonMessages['invalid_operators'],
+            "exception" => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+        ];
+
+        foreach ($errorMessages as $keyword => $replacement) {
+            if (strpos($message, $keyword) !== false) {
+                $message = $replacement;
+                break;
+            }
+        }
+
         if ($notice) {
             $this->mercadopago->helpers->notices->storeNotice($message, 'error');
         }
@@ -762,5 +777,35 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         }
 
         return parent::update_option($key, $value);
+    }
+
+    /**
+     * Handle With Rejectec Payment Status
+     *
+     * @param $response
+     *
+     */
+    public function handleWithRejectPayment($response)
+    {
+        if ($response['status'] === 'rejected') {
+            $statusDetail = $response['status_detail'];
+
+            $errorMessage = $this->getRejectedPaymentErrorMessage($statusDetail);
+
+            throw new RejectedPaymentException($errorMessage);
+        }
+    }
+
+    /**
+     * Get payment rejected error message
+     *
+     * @param string $statusDetail statusDetail.
+     *
+     * @return string
+     */
+    public function getRejectedPaymentErrorMessage($statusDetail)
+    {
+        return $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_' . $statusDetail] ??
+            $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'];
     }
 }

@@ -5,64 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.2.0] - 2024-02-01
+### Added
+- Introducing Mercado PSE as a new payment method for our users in Colombia.
+- Enhanced user experience with the inclusion of informative error messages in case of payment rejection.
+### Changed
+- Improved layout of the button for consulting reasons for refusal on the order details screen
+### Fixed
+- Addressed an issue where error messages were not displaying during the submission process, affecting custom, credit, and ticket transactions. Now, users can expect a smoother and more transparent payment experience.
+- Error message did not appear in submit, custom credit and ticket.
+- Enables the sending of alphanumeric data to the field, holder's document.
+
 ## [7.1.1] - 2024-01-15
 ### Fixed
-- Removes incorrectly showing the discount and commison information in the cart
-- TypeError when opening orders in the admin panel
+- Resolved issue where the cart inaccurately displayed discount and commission information.
+- Addressed TypeError occurring when attempting to open orders in the admin panel.
 
 ## [7.1.0] - 2024-01-11
 ### Added
-- Added support to Woocommerce Blocks
-### Fixed
-- Fixed the error that did not allow changing the name of checkouts
-- Fix checkout pro modal mode
+- Added compatibility with Woocommerce Blocks, providing a seamless integration for an enriched user experience. Explore the possibilities with [WooCommerce Blocks Documentation](https://woo.com/document/woocommerce-blocks/) for detailed information and advanced features.
+### Fixed:
+- Resolved an issue preventing the modification of checkout names.
+- Resolved an issue that prevented checkout pro in modal mode from working
 
 ## [7.0.6] - 2023-12-11
 ### Fixed
-- Fixed applying store discount code twice
+- Addressed a bug where the store discount code was erroneously applied twice. This fix ensures a smoother checkout experience by resolving the double discount issue.
 
 ## [7.0.5] - 2023-12-08
 ### Fixed
-- Fixed discounts and commision calcs
-- Instance logs for Seller and Order classes
+- Resolved issues related to discounts and commission calculations, ensuring accurate and reliable results.
+- Resolved implementation of instance logs for Seller and Order classes, providing comprehensive tracking and transparency into their respective functionalities.
 
 ### Changed
-- Improved Metadata getSettings return value
-- Improved 3ds fields validation to proccess payment
-- Review and improved checkout items calc methods
+- Enhanced the return value of Metadata getSettings for improved clarity and usability.
+- Improved validation of 3D Secure (3DS) fields to facilitate smoother payment processing.
+- Conducted a comprehensive review and refinement of checkout items calculation methods to optimize performance and accuracy.
 
 ## [7.0.4] - 2023-12-06
 ### Changed
-- Improved notification_url
-- Improved checkout sanitized urls
-- Changed initial hook from wc_loaded to plugins_loaded
+- Enhanced the notification_url for improved functionality.
+- Improved the sanitization of checkout URLs for a more secure experience.
+- Updated the initial hook from wc_loaded to plugins_loaded for better integration.
 
 ### Fixed
-- Always render pix qrcode on thankyou page
-- Removed get_checkout_order_received_url sanitization
+- Ensured the consistent rendering of Pix QR codes on the thank-you page.
+- Removed unnecessary sanitization from get_checkout_order_received_url for smoother processing.
 
 ## [7.0.3] - 2023-12-05
 ### Fixed
-- Checkout PRO Modal dependency loading
+- Addressed and resolved the issue with Checkout PRO Modal dependency loading for improved efficiency and smoother functionality.
 
 ## [7.0.2] - 2023-12-05
 ### Fixed
-- Credits enabled by default searching for available countries
-- Status sync rendering compatibility
+- Credits are now enabled by default, streamlining the search for available countries.
+- Resolved status sync rendering issues, ensuring seamless compatibility.
 
 ## [7.0.1] - 2023-12-05
 ### Fixed
-- Shipping rate value on transparent checkouts
+- Corrected the issue related to shipping rate values not displaying correctly on transparent checkouts. Now, the accurate shipping rates will be transparently presented for a more seamless checkout experience.
 
 ## [7.0.0] - 2023-12-04
 ### Changed
-- Complete refactoring of the Plugin
-- Improvement in the additional information node
-- Full refactoring of the Plugin
+- Conducted a comprehensive overhaul of the entire plugin, implementing full refactoring for improved code quality and maintainability. Our code has fewer branches, which increases maintainability. This refactoring is designed to improve the quality of feature releases and provide developer users with a greater understanding of the code.
+- Elevated the functionality and user experience of the additional information node within the plugin by enriching the payment metadata with additional details, strategically aimed at boosting the payment approval rate.
 ### Fixed
-- Record info LOG only if option activated in STEP 2 of config
+- Consolidated logging behavior in STEP 2 by ensuring that logs are recorded only when the corresponding toggle in the admin( STEP 2 ) is activated. Previously, the plugin recorded logs irrespective of the toggle's status, but with this fix, the toggle now functions correctly.
 ### Added
-- Payment implementation with 3DS security flow
+- Integrating 3DS 2.0  (3-D Secure Authentication 2.0) technology. This advancement enables the authentication of transactions involving credit and debit cards in e-commerce scenarios, ensuring that the person making the purchase is genuinely the cardholder or has authorized access to the cardholder's accounts for completing the payment. To learn more about integrating 3DS with Mercado Pago, visit the [Mercado Pago DevSite](https://www.mercadopago.com.br/developers/pt/docs/checkout-api/how-tos/integrate-3ds).
 
 ## [6.9.3] - 2023-07-13
 ### Fixed

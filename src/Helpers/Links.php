@@ -84,6 +84,7 @@ final class Links
             'docs_integration_test'         => $baseLink . '/docs/woocommerce/integration-test',
             'docs_integration_config'       => $baseLink . '/docs/woocommerce/integration-configuration',
             'docs_integration_introduction' => $baseLink . '/docs/woocommerce/introduction',
+            'reasons_refusals'              => $baseLink . '/docs/woocommerce/reasons-refusals'
         ];
     }
 

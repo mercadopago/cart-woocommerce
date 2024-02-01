@@ -22,6 +22,7 @@ final class NotificationType
         $types['WC_WooMercadoPago_Custom_Gateway']  = 'webhooks';
         $types['WC_WooMercadoPago_Pix_Gateway']     = 'webhooks';
         $types['WC_WooMercadoPago_Ticket_Gateway']  = 'webhooks';
+        $types['WC_WooMercadoPago_Pse_Gateway']  = 'webhooks';
 
         return $types[ $ClassGateway ];
     }

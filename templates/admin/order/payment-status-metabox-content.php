@@ -38,18 +38,19 @@ if (!defined('ABSPATH')) {
             </p>
 
             <p style="margin: 12px 0 4px; display: flex; align-items: center; justify-content: flex-start;">
-                <a
-                    href="<?php echo esc_url($link); ?>"
-                    target="__blank"
-                    class="mp-status-sync-metabox-button primary"
-                >
-                    <?php echo esc_html($link_description); ?>
-                </a>
 
-                <button type="button" id="mp-sync-payment-status-button" class="mp-status-sync-metabox-button secondary">
+                <button type="button" id="mp-sync-payment-status-button" class="mp-status-sync-metabox-button primary">
                     <span><?php echo esc_html($sync_button_text); ?></span>
                     <div class="mp-status-sync-metabox-small-loader" style="display: none"></div>
                 </button>
+
+                <a
+                    href="<?php echo esc_url($link); ?>"
+                    target="__blank"
+                    class="mp-status-sync-metabox-link"
+                >
+                    <?php echo esc_html($link_description); ?>
+                </a>
             </p>
         </div>
     </div>

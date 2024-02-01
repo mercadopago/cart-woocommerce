@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Blocks\CustomBlock;
 use MercadoPago\Woocommerce\Blocks\CreditsBlock;
 use MercadoPago\Woocommerce\Blocks\PixBlock;
 use MercadoPago\Woocommerce\Blocks\TicketBlock;
+use MercadoPago\Woocommerce\Blocks\PseBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
@@ -29,7 +30,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '7.1.1';
+    private const PLUGIN_VERSION = '7.2.0';
 
     /**
      * @const
@@ -187,6 +188,7 @@ class WoocommerceMercadoPago
         $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CustomGateway');
         $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
         $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PixGateway');
+        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PseGateway');
     }
 
     /**
@@ -205,6 +207,7 @@ class WoocommerceMercadoPago
                     $payment_method_registry->register(new CreditsBlock());
                     $payment_method_registry->register(new PixBlock());
                     $payment_method_registry->register(new TicketBlock());
+                    $payment_method_registry->register(new PseBlock());
                 }
             );
         }

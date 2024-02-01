@@ -55,4 +55,15 @@ final class Strings
 
         return $expected === $current;
     }
+
+    public function getStreetNumberInFullAddress(string $fullAddress, string $defaultNumber)
+    {
+        $pattern = '/\b\d+[A-Za-z]*\b/';
+        preg_match($pattern, $fullAddress, $matches);
+
+        if (isset($matches[0])) {
+            return $matches[0];
+        }
+        return $defaultNumber;
+    }
 }

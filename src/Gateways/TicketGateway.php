@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
+use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Transactions\TicketTransaction;
 
@@ -308,6 +310,8 @@ class TicketGateway extends AbstractGateway
                 if (is_array($response) && array_key_exists('status', $response)) {
                     $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
 
+                    $this->handleWithRejectPayment($response);
+
                     if (
                         $response['status'] === 'pending' && (
                         $response['status_detail'] === 'pending_waiting_payment' ||
@@ -343,18 +347,18 @@ class TicketGateway extends AbstractGateway
                     }
 
                     return $this->processReturnFail(
-                        new \Exception('Invalid status or status_detail on ' . __METHOD__),
-                        $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                        new ResponseStatusException('exception : Invalid status or status_detail on ' . __METHOD__),
+                        $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
                         self::LOG_SOURCE,
                         $response
                     );
                 }
             }
-            throw new \Exception('Unable to process payment on ' . __METHOD__);
+            throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
         } catch (\Exception $e) {
             return $this->processReturnFail(
                 $e,
-                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                $e->getMessage(),
                 self::LOG_SOURCE,
                 (array) $order,
                 true
