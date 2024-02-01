@@ -68,6 +68,11 @@ class AdminTranslations
     /**
      * @var array
      */
+    public $pseGatewaySettings = [];
+
+    /**
+     * @var array
+     */
     public $pixGatewaySettings = [];
 
     /**
@@ -108,7 +113,7 @@ class AdminTranslations
     /**
      * @var array
      */
-    private $links;
+    public $links;
 
     /**
      * Translations constructor
@@ -130,6 +135,7 @@ class AdminTranslations
         $this->setCreditsGatewaySettingsTranslations();
         $this->setCustomGatewaySettingsTranslations();
         $this->setTicketGatewaySettingsTranslations();
+        $this->setPseGatewaySettingsTranslations();
         $this->setPixGatewaySettingsTranslations();
         $this->setTestModeSettingsTranslations();
         $this->setConfigurationTipsTranslations();
@@ -748,6 +754,65 @@ class AdminTranslations
     }
 
     /**
+     * Set PSE settings translations
+     *
+     * @return void
+     */
+    private function setPseGatewaySettingsTranslations(): void
+    {
+        $currencyConversionDescriptionsEnabled = sprintf(
+            '%s <b>%s</b>.',
+            __('Currency conversion is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
+        );
+
+        $currencyConversionDescriptionsDisabled = sprintf(
+            '%s <b>%s</b>.',
+            __('Currency conversion is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
+        );
+
+        $this->pseGatewaySettings = [
+            'gateway_title'                => __('PSE', 'woocommerce-mercadopago'),
+            'gateway_description'          => __('Transparent Checkout in your store environment', 'woocommerce-mercadopago'),
+            'method_title'                 => __('Mercado pago - Customized Checkout', 'woocommerce-mercadopago'),
+            'header_title'                 => __('Transparent Checkout PSE', 'woocommerce-mercadopago'),
+            'header_description'           => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.', 'woocommerce-mercadopago'),
+            'card_settings_title'          => __('Mercado Pago plugin general settings', 'woocommerce-mercadopago'),
+            'card_settings_subtitle'       => __('Set the deadlines and fees, test your store or access the Plugin manual.', 'woocommerce-mercadopago'),
+            'card_settings_button_text'    => __('Go to Settings', 'woocommerce-mercadopago'),
+            'enabled_title'                => __('Enable the Checkout', 'woocommerce-mercadopago'),
+            'enabled_subtitle'             => __('By deactivating it, you will disable PSE payments from Mercado Pago Transparent Checkout.', 'woocommerce-mercadopago'),
+            'enabled_enabled'              => __('The transparent checkout for PSE is <b>enabled</b>.', 'woocommerce-mercadopago'),
+            'enabled_disabled'             => __('The transparent checkout for PSE is <b>disabled</b>.', 'woocommerce-mercadopago'),
+            'title_title'                  => __('Title in the store Checkout', 'woocommerce-mercadopago'),
+            'title_description'            => __('Change the display text in Checkout, maximum characters: 85', 'woocommerce-mercadopago'),
+            'title_default'                => __('PSE', 'woocommerce-mercadopago'),
+            'title_desc_tip'               => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
+            'currency_conversion_title'    => __('Convert Currency', 'woocommerce-mercadopago'),
+            'currency_conversion_subtitle' => __('Activate this option so that the value of the currency set in WooCommerce is compatible with the value of the currency you use in Mercado Pago.', 'woocommerce-mercadopago'),
+            'currency_conversion_enabled'  => $currencyConversionDescriptionsEnabled,
+            'currency_conversion_disabled' => $currencyConversionDescriptionsDisabled,
+            'advanced_title_title'         => __('Advanced configuration of the PSE payment experience', 'woocommerce-mercadopago'),
+            'advanced_description_title'   => __('Edit these advanced fields only when you want to modify the preset values.', 'woocommerce-mercadopago'),
+            'stock_reduce_title'           => __('Reduce inventory', 'woocommerce-mercadopago'),
+            'stock_reduce_subtitle'        => __('Activates inventory reduction during the creation of an order, whether or not the final payment is credited. Disable this option to reduce it only when payments are approved.', 'woocommerce-mercadopago'),
+            'stock_reduce_enabled'         => __('Reduce inventory is <b>enabled</b>.', 'woocommerce-mercadopago'),
+            'stock_reduce_disabled'        => __('Reduce inventory is <b>disabled</b>.', 'woocommerce-mercadopago'),
+            'type_payments_title'          => __('Payment methods', 'woocommerce-mercadopago'),
+            'type_payments_description'    => __('Enable the available payment methods', 'woocommerce-mercadopago'),
+            'type_payments_desctip'        => __('Choose the available payment methods in your store.', 'woocommerce-mercadopago'),
+            'type_payments_label'          => __('All payment methods', 'woocommerce-mercadopago'),
+            'discount_title'               => __('Discount in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
+            'discount_description'         => __('Choose a percentage value that you want to discount your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
+            'discount_checkbox_label'      => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+            'commission_title'             => __('Commission in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
+            'commission_description'       => __('Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
+            'commission_checkbox_label'    => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
      * Set pix settings translations
      *
      * @return void
@@ -1012,7 +1077,7 @@ class AdminTranslations
             'sync_button_success'                              => __('Sync order status', 'woocommerce-mercadopago'),
             'link_description_pending'                         => __('View purchase details at Mercado Pago', 'woocommerce-mercadopago'),
             'sync_button_pending'                              => __('Sync order status', 'woocommerce-mercadopago'),
-            'link_description_failure'                         => __('Check the reasons why the purchase was declined.', 'woocommerce-mercadopago'),
+            'link_description_failure'                         => __('Consult the reasons for refusal', 'woocommerce-mercadopago'),
             'sync_button_failure'                              => __('Sync order status', 'woocommerce-mercadopago'),
             'response_success'                                 => __('Order update successfully. This page will be reloaded...', 'woocommerce-mercadopago'),
             'response_error'                                   => __('Unable to update order:', 'woocommerce-mercadopago'),
@@ -1060,72 +1125,72 @@ class AdminTranslations
             'description_pending_challenge'                    => __('Waiting for the buyer.', 'woocommerce-mercadopago'),
             'alert_title_pending_provider_response'            => __('Pending payment', 'woocommerce-mercadopago'),
             'description_pending_provider_response'            => __('Waiting for the card issuer.', 'woocommerce-mercadopago'),
-            'alert_title_bank_rejected'                        => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_bank_rejected'                        => __('The payment could not be processed. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
-            'alert_title_rejected_by_bank'                     => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_rejected_by_bank'                     => __('The card-issuing bank declined the payment. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
+            'alert_title_bank_rejected'                        => __('The card issuing bank declined the payment', 'woocommerce-mercadopago'),
+            'description_bank_rejected'                        => __('Please recommend your customer to pay with another payment method or to contact their bank.', 'woocommerce-mercadopago'),
+            'alert_title_rejected_by_bank'                     => __('The card issuing bank declined the payment', 'woocommerce-mercadopago'),
+            'description_rejected_by_bank'                     => __('Please recommend your customer to pay with another payment method or to contact their bank.', 'woocommerce-mercadopago'),
             'alert_title_rejected_insufficient_data'           => __('Declined payment', 'woocommerce-mercadopago'),
             'description_rejected_insufficient_data'           => __('The card-issuing bank declined the payment. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
-            'alert_title_bank_error'                           => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_bank_error'                           => __('The card-issuing bank declined the payment. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
+            'alert_title_bank_error'                           => __('The card issuing bank declined the payment', 'woocommerce-mercadopago'),
+            'description_bank_error'                           => __('Please recommend your customer to pay with another payment method or to contact their bank.', 'woocommerce-mercadopago'),
             'alert_title_by_admin'                             => __('Mercado Pago did not process the payment', 'woocommerce-mercadopago'),
             'description_by_admin'                             => __('Please contact Mercado Pago for further details.', 'woocommerce-mercadopago'),
             'alert_title_expired'                              => __('Expired payment deadline', 'woocommerce-mercadopago'),
             'description_expired'                              => __('The client did not pay within the time limit.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_bad_filled_card_number'   => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_bad_filled_card_number'   => __('The card-issuing bank declined the payment. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_bad_filled_security_code' => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_bad_filled_security_code' => __('The CVV is invalid. Please ask your client to review the details or use another card.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_bad_filled_date'          => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_bad_filled_date'          => __('The card is expired. Please ask your client to use another card or to contact the bank.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_high_risk'                => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_high_risk'                => __('This payment was declined because it did not pass Mercado Pago security controls. Please ask your client to use another card.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_bad_filled_card_number'   => __('Your customer entered one or more incorrect card details', 'woocommerce-mercadopago'),
+            'description_cc_rejected_bad_filled_card_number'   => __('Please ask them to enter to enter them again exactly as they appear on the card or on their bank app to complete the payment.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_bad_filled_security_code' => __('Your customer entered one or more incorrect card details', 'woocommerce-mercadopago'),
+            'description_cc_rejected_bad_filled_security_code' => __('Please ask them to enter to enter them again exactly as they appear on the card or on their bank app to complete the payment.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_bad_filled_date'          => __('Your customer entered one or more incorrect card details', 'woocommerce-mercadopago'),
+            'description_cc_rejected_bad_filled_date'          => __('Please ask them to enter to enter them again exactly as they appear on the card or on their bank app to complete the payment.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_high_risk'                => __('We protected you from a suspicious payment', 'woocommerce-mercadopago'),
+            'description_cc_rejected_high_risk'                => __('For safety reasons, this transaction cannot be completed.', 'woocommerce-mercadopago'),
             'alert_title_cc_rejected_fraud'                    => __('Declined payment', 'woocommerce-mercadopago'),
             'description_cc_rejected_fraud'                    => __('The buyer is suspended in our platform. Your client must contact us to check what happened.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_blacklist'                => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_blacklist'                => __('The card-issuing bank declined the payment. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_insufficient_amount'      => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_insufficient_amount'      => __('The card does not have sufficient balance. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
-            'description_cc_rejected_insufficient_amount_cc'   => __('The card does not have enough limit. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_other_reason'             => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_other_reason'             => __('The card-issuing bank declined the payment. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_max_attempts'             => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_max_attempts'             => __('The CVV was entered incorrectly several times. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_invalid_installments'     => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_invalid_installments'     => __('The card does not allow the number of installments entered. Please ask your client to choose another installment plan or to use another card.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_call_for_authorize'       => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_call_for_authorize'       => __('The card-issuing bank declined the payment. Please instruct your client to ask the bank to authotize it or to use another card.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_duplicated_payment'       => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_duplicated_payment'       => __('From Mercado Pago we have detected that this payment has already been made before. If that is not the case, your client may try to pay again.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_card_disabled'            => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_card_disabled'            => __('The card is not active yet. Please ask your client to use another card or to get in touch with the bank to activate it.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_blacklist'                => __('For safety reasons, the card issuing bank declined the payment', 'woocommerce-mercadopago'),
+            'description_cc_rejected_blacklist'                => __('Recommend your customer to pay with their usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_insufficient_amount'      => __("Your customer's credit card has no available limit", 'woocommerce-mercadopago'),
+            'description_cc_rejected_insufficient_amount'      => __('Please ask them to pay with another card or to choose another payment method.', 'woocommerce-mercadopago'),
+            'description_cc_rejected_insufficient_amount_cc'   => __('Please ask them to pay with another card or to choose another payment method.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_other_reason'             => __('The card issuing bank declined the payment', 'woocommerce-mercadopago'),
+            'description_cc_rejected_other_reason'             => __('Please recommend your customer to pay with another payment method or to contact their bank.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_max_attempts'             => __('Your customer reached the limit of payment attempts with this card', 'woocommerce-mercadopago'),
+            'description_cc_rejected_max_attempts'             => __('Please ask them to pay with another card or to choose another payment method.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_invalid_installments'     => __("Your customer's card  does not accept the number of installments selected", 'woocommerce-mercadopago'),
+            'description_cc_rejected_invalid_installments'     => __('Please ask them to choose a different number of installments or to pay with another method.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_call_for_authorize'       => __('Your customer needs to authorize the payment through their bank', 'woocommerce-mercadopago'),
+            'description_cc_rejected_call_for_authorize'       => __('Please ask them to call the telephone number on their card or to pay with another method.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_duplicated_payment'       => __('The payment was declined because your customer already paid for this purchase', 'woocommerce-mercadopago'),
+            'description_cc_rejected_duplicated_payment'       => __('Check your approved payments to verify it.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_card_disabled'            => __("Your customer's card was is not activated yet", 'woocommerce-mercadopago'),
+            'description_cc_rejected_card_disabled'            => __('Please ask them to contact their bank by calling the number on the back of their card or to pay with another method.', 'woocommerce-mercadopago'),
             'alert_title_payer_unavailable'                    => __('Declined payment', 'woocommerce-mercadopago'),
             'description_payer_unavailable'                    => __('The buyer is suspended in our platform. Your client must contact us to check what happened.', 'woocommerce-mercadopago'),
-            'alert_title_rejected_high_risk'                   => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_rejected_high_risk'                   => __('This payment was declined because it did not pass Mercado Pago security controls. Please ask your client to use another card.', 'woocommerce-mercadopago'),
+            'alert_title_rejected_high_risk'                   => __('We protected you from a suspicious payment', 'woocommerce-mercadopago'),
+            'description_rejected_high_risk'                   => __('Recommend your customer to pay with their usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
             'alert_title_rejected_by_regulations'              => __('Declined payment', 'woocommerce-mercadopago'),
             'description_rejected_by_regulations'              => __('This payment was declined because it did not pass Mercado Pago security controls. Please ask your client to use another card.', 'woocommerce-mercadopago'),
             'alert_title_rejected_cap_exceeded'                => __('Declined payment', 'woocommerce-mercadopago'),
             'description_rejected_cap_exceeded'                => __('The amount exceeded the card limit. Please ask your client to use another card or to get in touch with the bank.', 'woocommerce-mercadopago'),
             'alert_title_cc_rejected_3ds_challenge'            => __('Declined payment', 'woocommerce-mercadopago'),
             'description_cc_rejected_3ds_challenge'            => __('Please ask your client to use another card or to get in touch with the card issuer.', 'woocommerce-mercadopago'),
-            'alert_title_rejected_other_reason'                => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_rejected_other_reason'                => __('Please ask your client to use another card or to get in touch with the card issuer.', 'woocommerce-mercadopago'),
+            'alert_title_rejected_other_reason'                => __('The card issuing bank declined the payment', 'woocommerce-mercadopago'),
+            'description_rejected_other_reason'                => __('Please recommend your customer to pay with another payment method or to contact their bank.', 'woocommerce-mercadopago'),
             'alert_title_authorization_revoked'                => __('Declined payment', 'woocommerce-mercadopago'),
             'description_authorization_revoked'                => __('Please ask your client to use another card or to get in touch with the card issuer.', 'woocommerce-mercadopago'),
             'alert_title_cc_amount_rate_limit_exceeded'        => __('Pending payment', 'woocommerce-mercadopago'),
             'description_cc_amount_rate_limit_exceeded'        => __("The amount exceeded the card's limit. Please ask your client to use another card or to get in touch with the bank.", 'woocommerce-mercadopago'),
             'alert_title_cc_rejected_expired_operation'        => __('Expired payment deadline', 'woocommerce-mercadopago'),
             'description_cc_rejected_expired_operation'        => __('The client did not pay within the time limit.', 'woocommerce-mercadopago'),
-            'alert_title_cc_rejected_bad_filled_other'         => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_cc_rejected_bad_filled_other'         => __('The debit function is not enabled for the card. Please tell your client that it is possible to pay with credit or to use another one.', 'woocommerce-mercadopago'),
-            'description_cc_rejected_bad_filled_other_cc'      => __('The credit function is not enabled for the card. Please tell your client that it is possible to pay with debit or to use another one.', 'woocommerce-mercadopago'),
-            'alert_title_rejected_call_for_authorize'          => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_rejected_call_for_authorize'          => __('The card-issuing bank declined the payment. Please instruct your client to ask the bank to authorize it.', 'woocommerce-mercadopago'),
-            'alert_title_am_insufficient_amount'               => __('Declined payment', 'woocommerce-mercadopago'),
-            'description_am_insufficient_amount'               => __('The buyer does not have enough balance to make the purchase. Please ask your client to deposit money to the Mercado Pago Account or to use a different payment method.', 'woocommerce-mercadopago'),
-            'alert_title_generic'                              => __('There was an error', 'woocommerce-mercadopago'),
-            'description_generic'                              => __('The transaction could not be completed.', 'woocommerce-mercadopago'),
+            'alert_title_cc_rejected_bad_filled_other'         => __('Your customer entered one or more incorrect card details', 'woocommerce-mercadopago'),
+            'description_cc_rejected_bad_filled_other'         => __('Please ask them to enter to enter them again exactly as they appear on the card or on their bank app to complete the payment.', 'woocommerce-mercadopago'),
+            'description_cc_rejected_bad_filled_other_cc'      => __('Please ask them to enter to enter them again exactly as they appear on the card or on their bank app to complete the payment.', 'woocommerce-mercadopago'),
+            'alert_title_rejected_call_for_authorize'          => __('Your customer needs to authorize the payment through their bank', 'woocommerce-mercadopago'),
+            'description_rejected_call_for_authorize'          => __('Please ask them to call the telephone number on their card or to pay with another method.', 'woocommerce-mercadopago'),
+            'alert_title_am_insufficient_amount'               => __("Your customer's debit card has insufficient funds", 'woocommerce-mercadopago'),
+            'description_am_insufficient_amount'               => __('Please recommend your customer to pay with another card or to choose another payment method.', 'woocommerce-mercadopago'),
+            'alert_title_generic'                              => __('Something went wrong and the payment was declined', 'woocommerce-mercadopago'),
+            'description_generic'                              => __('Please recommend you customer to try again or to pay with another payment method.', 'woocommerce-mercadopago'),
         ];
     }
 }

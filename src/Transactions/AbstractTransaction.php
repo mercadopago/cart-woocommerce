@@ -233,6 +233,7 @@ abstract class AbstractTransaction
         $metadata->custom_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('custom');
         $metadata->ticket_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('ticket');
         $metadata->pix_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
+        $metadata->pse_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pse');
         $metadata->credits_settings              = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
         $metadata->wallet_button_settings        = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
         $metadata->billing_address               = new PaymentMetadataAddress();

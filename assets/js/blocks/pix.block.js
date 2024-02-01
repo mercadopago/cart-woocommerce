@@ -35,10 +35,10 @@ const updateCart = (props) => {
     };
   }, [onPaymentSetup]);
 
-  
+
   useEffect(() => {
-    
-    const unsubscribe = onCheckoutSuccess(async (checkoutResponse) => {        
+
+    const unsubscribe = onCheckoutSuccess(async (checkoutResponse) => {
       checkoutResponse.processingResponse.message = paymentMethodName;
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_PIX_BLOCKS_SUCCESS", processingResponse.paymentStatus, targetName);
@@ -53,8 +53,9 @@ const updateCart = (props) => {
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_PIX_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);
       return {
-        type: emitResponse.responseTypes.FAIL,      
+        type: emitResponse.responseTypes.FAIL,
         messageContext: emitResponse.noticeContexts.PAYMENTS,
+        message: processingResponse.paymentDetails.message,
       };
     });
 

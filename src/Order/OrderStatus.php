@@ -55,42 +55,10 @@ final class OrderStatus
      */
     public function getOrderStatusMessage(string $statusDetail): string
     {
-        switch ($statusDetail) {
-            case 'accredited':
-                return $this->commonMessages['cho_accredited'];
-            case 'pending_contingency':
-                return $this->commonMessages['cho_pending_contingency'];
-            case 'pending_review_manual':
-                return $this->commonMessages['cho_pending_review_manual'];
-            case 'cc_rejected_bad_filled_card_number':
-                return $this->commonMessages['cho_cc_rejected_bad_filled_card_number'];
-            case 'cc_rejected_bad_filled_date':
-                return $this->commonMessages['cho_cc_rejected_bad_filled_date'];
-            case 'cc_rejected_bad_filled_other':
-                return $this->commonMessages['cho_cc_rejected_bad_filled_other'];
-            case 'cc_rejected_bad_filled_security_code':
-                return $this->commonMessages['cho_cc_rejected_bad_filled_security_code'];
-            case 'cc_rejected_card_error':
-                return $this->commonMessages['cho_cc_rejected_card_error'];
-            case 'cc_rejected_blacklist':
-                return $this->commonMessages['cho_cc_rejected_blacklist'];
-            case 'cc_rejected_call_for_authorize':
-                return $this->commonMessages['cho_cc_rejected_call_for_authorize'];
-            case 'cc_rejected_card_disabled':
-                return $this->commonMessages['cho_cc_rejected_card_disabled'];
-            case 'cc_rejected_duplicated_payment':
-                return $this->commonMessages['cho_cc_rejected_duplicated_payment'];
-            case 'cc_rejected_high_risk':
-                return $this->commonMessages['cho_cc_rejected_high_risk'];
-            case 'cc_rejected_insufficient_amount':
-                return $this->commonMessages['cho_cc_rejected_insufficient_amount'];
-            case 'cc_rejected_invalid_installments':
-                return $this->commonMessages['cho_cc_rejected_invalid_installments'];
-            case 'cc_rejected_max_attempts':
-                return $this->commonMessages['cho_cc_rejected_max_attempts'];
-            default:
-                return $this->commonMessages['cho_default'];
+        if (isset($this->commonMessages['cho_' . $statusDetail])) {
+            return $this->commonMessages['cho_' . $statusDetail];
         }
+        return $this->commonMessages['cho_default'];
     }
 
     /**
@@ -164,22 +132,9 @@ final class OrderStatus
             );
 
             if (method_exists($order, 'get_status') && $order->get_status() !== 'completed') {
-                switch ($usedGateway) {
-                    case 'MercadoPago\Woocommerce\Gateways\TicketGateway':
-                        if (get_option('stock_reduce_mode', 'no') === 'no') {
-                            $order->payment_complete();
-                            if ($payment_completed_status !== 'completed') {
-                                $order->update_status(self::mapMpStatusToWoocommerceStatus('approved'));
-                            }
-                        }
-                        break;
-
-                    default:
-                        $order->payment_complete();
-                        if ($payment_completed_status !== 'completed') {
-                            $order->update_status(self::mapMpStatusToWoocommerceStatus('approved'));
-                        }
-                        break;
+                $order->payment_complete();
+                if ($payment_completed_status !== 'completed') {
+                    $order->update_status(self::mapMpStatusToWoocommerceStatus('approved'));
                 }
             }
         }

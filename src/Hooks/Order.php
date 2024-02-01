@@ -261,7 +261,7 @@ class Order
                     'img_src'           => $this->url->getPluginFileUrl('assets/images/icons/icon-warning', '.png', true),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
-                    'link'              => 'https://www.mercadopago.com/developers',
+                    'link'              => $this->adminTranslations->links['reasons_refusals'],
                     'border_left_color' => '#F23D4F',
                     'link_description'  => $this->adminTranslations->statusSync['link_description_failure'],
                     'sync_button_text'  => $this->adminTranslations->statusSync['sync_button_failure'],

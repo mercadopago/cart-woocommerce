@@ -43,12 +43,22 @@ class StoreTranslations
     /**
      * @var array
      */
+    public $pseCheckout = [];
+
+    /**
+     * @var array
+     */
     public $orderStatus = [];
 
     /**
      * @var array
      */
     public $commonMessages = [];
+
+    /**
+     * @var array
+     */
+    public $buyerRefusedMessages = [];
 
     /**
      * @var array
@@ -75,8 +85,10 @@ class StoreTranslations
         $this->setCustomCheckoutTranslations();
         $this->setTicketCheckoutTranslations();
         $this->setPixCheckoutTranslations();
+        $this->setPseCheckoutTranslations();
         $this->setOrderStatusTranslations();
         $this->setCommonMessagesTranslations();
+        $this->setbuyerRefusedMessagesTranslations();
         $this->set3dsTranslations();
     }
 
@@ -344,6 +356,31 @@ class StoreTranslations
 
 
     /**
+     * Set checkout pse translations
+     *
+     * @return void
+     */
+    private function setPseCheckoutTranslations(): void
+    {
+        $this->pseCheckout = [
+            'test_mode_title'                  => __('Checkout PSE in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_description'            => __('You can test the flow to generate a payment with PSE', 'woocommerce-mercadopago'),
+            'test_mode_link_text'              => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'input_document_label'             => __('Holder document', 'woocommerce-mercadopago'),
+            'input_document_helper'            => __('Invalid document', 'woocommerce-mercadopago'),
+            'pse_text_label'                   => __('Select where you want to pay', 'woocommerce-mercadopago'),
+            'input_table_button'               => __('more options', 'woocommerce-mercadopago'),
+            'person_type_label'                => __('Person type ', 'woocommerce-mercadopago'),
+            'financial_institutions_label'     => __('Financial institution', 'woocommerce-mercadopago'),
+            'financial_institutions_helper'    => __('Select the financial institution', 'woocommerce-mercadopago'),
+            'financial_placeholder'            => __('Select the institution', 'woocommerce-mercadopago'),
+            'customer_not_paid'                => __('Mercado Pago: The customer has not paid yet.', 'woocommerce-mercadopago'),
+            'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
+            'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
      * Set common messages translations
      *
      * @return void
@@ -372,7 +409,38 @@ class StoreTranslations
             'cho_cc_rejected_insufficient_amount'      => __('Your payment does not have sufficient funds.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_invalid_installments'     => __('Payment cannot process the selected fee.', 'woocommerce-mercadopago'),
             'cho_cc_rejected_max_attempts'             => __('You have reached the limit of allowed attempts. Choose another card or other payment method.', 'woocommerce-mercadopago'),
+            'invalid_users'                            => __('<strong>Invalid transaction attempt</strong><br>You are trying to perform a productive transaction using test credentials, or test transaction using productive credentials. Please ensure that you are using the correct environment settings for the desired action.', 'woocommerce-mercadopago'),
+            'invalid_operators'                        => __('<strong>Invalid transaction attempt</strong><br>It is not possible to pay with the email address entered. Please enter another e-mail address.', 'woocommerce-mercadopago'),
             'cho_default'                              => __('This payment method cannot process your payment.', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Set rejected payment messages translations for buyer
+     *
+     * @return void
+     */
+    private function setbuyerRefusedMessagesTranslations(): void
+    {
+        $this->buyerRefusedMessages = [
+            'buyer_cc_rejected_call_for_authorize'          => __('<strong>Your bank needs you to authorize the payment</strong><br>Please call the telephone number on your card or pay with another method.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_high_risk'                   => __('<strong>For safety reasons, your payment was declined</strong><br>We recommended paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
+            'buyer_rejected_high_risk'                      => __('<strong>For safety reasons, your payment was declined</strong><br>We recommended paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_bad_filled_other'            => __('<strong>One or more card details were entered incorrecctly</strong><br>Please enter them again as they appear on the card to complete the payment.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_bad_filled_security_code'    => __('<strong>One or more card details were entered incorrecctly</strong><br>Please enter them again as they appear on the card to complete the payment.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_bad_filled_date'             => __('<strong>One or more card details were entered incorrecctly</strong><br>Please enter them again as they appear on the card to complete the payment.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_bad_filled_card_number'      => __('<strong>One or more card details were entered incorrecctly</strong><br>Please enter them again as they appear on the card to complete the payment.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_insufficient_amount'         => __('<strong>Your credit card has no available limit</strong><br>Please pay using another card or choose another payment method.', 'woocommerce-mercadopago'),
+            'buyer_insufficient_amount'                     => __('<strong>Your debit card has insufficient founds</strong><br>Please pay using another card or choose another payment method.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_invalid_installments'        => __('<strong>Your card does not accept the number of installments selected</strong><br>Please choose a different number of installments or use a different payment method .', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_card_disabled'               => __('<strong>You need to activate your card</strong><br>Please contact your bank by calling the number on the back of your card or choose another payment method.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_max_attempts'                => __('<strong>You reached the limit of payment attempts with this card</strong><br>Please pay using another card or choose another payment method.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_duplicated_payment'          => __('<strong>Your payment was declined because you already paid for this purchase</strong><br>Check your card transactions to verify it.', 'woocommerce-mercadopago'),
+            'buyer_bank_error'                              => __('<strong>The card issuing bank declined the payment</strong><br>We recommended paying with another payment method or contact your bank.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_other_reason'                => __('<strong>The card issuing bank declined the payment</strong><br>We recommended paying with another payment method or contact your bank.', 'woocommerce-mercadopago'),
+            'buyer_rejected_by_bank'                        => __('<strong>The card issuing bank declined the payment</strong><br>We recommended paying with another payment method or contact your bank.', 'woocommerce-mercadopago'),
+            'buyer_cc_rejected_blacklist'                   => __('<strong>For safety reasons, the card issuing bank declined the payment</strong><br>We recommended paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
+            'buyer_default'                                 => __('<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.', 'woocommerce-mercadopago'),
         ];
     }
 

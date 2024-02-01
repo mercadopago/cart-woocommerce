@@ -81,6 +81,11 @@ class PaymentMetadata
     /**
      * @var string
      */
+    public $pse_settings;
+
+    /**
+     * @var string
+     */
     public $wallet_button_settings;
 
     /**

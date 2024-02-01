@@ -10,10 +10,9 @@ class InputSelect extends HTMLElement {
   createContainer() {
     const container = document.createElement('div');
     container.classList.add('mp-input-select-container');
-
     container.appendChild(this.createLabel());
     container.appendChild(this.createInput());
-
+    container.appendChild(this.createHelper());
     return container;
   }
 
@@ -36,6 +35,16 @@ class InputSelect extends HTMLElement {
 
     const options = this.getAttribute('options') && JSON.parse(this.getAttribute('options'));
 
+    //include default option
+    if (this.getAttribute('default-option')) {
+      const optionDefault = document.createElement('option');
+      optionDefault.setAttribute('selected', 'selected');
+      optionDefault.setAttribute('hidden', 'hidden');
+      optionDefault.innerHTML = this.getAttribute('default-option');
+      select.appendChild(optionDefault);
+    }
+
+
     if (options && options.length !== 0) {
       options.forEach((option) => {
         select.appendChild(this.createOption(option));
@@ -48,8 +57,8 @@ class InputSelect extends HTMLElement {
   createOption(value) {
     const option = document.createElement('option');
 
-    option.innerHTML = value;
-    option.value = value;
+    option.innerHTML = value.description;
+    option.value = value.id;
 
     return option;
   }
@@ -68,6 +77,25 @@ class InputSelect extends HTMLElement {
 
     return label;
   }
+
+  createHelper() {
+    const helper = document.createElement('input-helper');
+
+    helper.setAttribute('isVisible', false);
+    helper.setAttribute('message', this.getAttribute('helper-message'));
+    helper.setAttribute('input-id', 'mp-doc-number-helper');
+
+    return helper;
+}
+
+  createHiddenField(id) {
+    const field = document.createElement('input');
+    field.setAttribute('type', "hidden");
+    field.setAttribute('id', id);
+
+    return field;
+  }
+
 }
 
 customElements.define('input-select', InputSelect);

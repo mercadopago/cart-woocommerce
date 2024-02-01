@@ -293,6 +293,18 @@ class InputDocument extends HTMLElement {
     return dig === docCI.toString();
   }
 
+  isValidCC(cc) {
+    return ((typeof cc === 'string') && cc.length > 0) ;
+  }
+
+  isValidCE(ce) {
+    return ((typeof ce === 'string') && ce.length > 0) ;
+  }
+
+  isValidNIT(nit) {
+    return ((typeof nit === 'string') && nit.length > 0) ;
+  }
+
   setMaskInputDocument(select, input, hidden) {
     const masks = {
       CPF: (value) =>
@@ -318,7 +330,7 @@ class InputDocument extends HTMLElement {
         e.target.value = masks[select.value](e.target.value);
       }
       if (hidden) {
-        const value = e.target.value.replace(/\D/g, '');
+        const value = e.target.value.replace(/[^\w\s]/gi, '');
         hidden.value = value;
       }
     });
@@ -326,14 +338,13 @@ class InputDocument extends HTMLElement {
 
   createDocument(component, select, helper) {
     const input = document.createElement('input');
-
     input.setAttribute('name', this.getAttribute('input-name'));
     input.setAttribute('data-checkout', this.getAttribute('input-data-checkout'));
     input.setAttribute('data-cy', 'input-document');
     input.classList.add('mp-document');
     input.type = 'text';
-    input.inputMode = 'numeric'
-    this.setInpuProperties(select, input)
+    input.inputMode = 'text';
+    this.setInpuProperties(select, input);
 
     input.addEventListener('focus', () => {
       component.classList.add('mp-focus');
@@ -348,6 +359,9 @@ class InputDocument extends HTMLElement {
         CPF: (value) => this.isValidCPF(value),
         CNPJ: (value) => this.isValidCNPJ(value),
         CI: (value) => this.isValidCI(value),
+        CC: (value) => this.isValidCC(value),
+        CE: (value) => this.isValidCE(value),
+        NIT: (value) => this.isValidNIT(value),
       };
 
       if (typeof validateDocument[select.value] !== 'undefined') {

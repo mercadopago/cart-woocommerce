@@ -75,6 +75,14 @@
 	color: rgba(0, 0, 0, 0.7);
 }
 
+.mp-status-sync-metabox-link {
+	font-family: 'Lato', sans-serif;
+	padding: 0 8px;
+	font-size: 14px;
+	min-width: 120px;
+	height: 36px;
+}
+
 .mp-status-sync-metabox-button {
 	font-family: 'Lato', sans-serif;
 	padding: 0 8px;

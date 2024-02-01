@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
+use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
@@ -186,7 +188,7 @@ class PixGateway extends AbstractGateway
             if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
                 return $this->processReturnFail(
                     new \Exception('Email not valid on ' . __METHOD__),
-                    $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                    $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
                     self::LOG_SOURCE,
                     (array) $order
                 );
@@ -198,10 +200,12 @@ class PixGateway extends AbstractGateway
             if (is_array($response) && array_key_exists('status', $response)) {
                 $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
 
+                $this->handleWithRejectPayment($response);
+
                 if (
                     $response['status'] === 'pending' && (
-                    $response['status_detail'] === 'pending_waiting_payment' ||
-                    $response['status_detail'] === 'pending_waiting_transfer'
+                        $response['status_detail'] === 'pending_waiting_payment' ||
+                        $response['status_detail'] === 'pending_waiting_transfer'
                     )
                 ) {
                     $this->mercadopago->helpers->cart->emptyCart();
@@ -226,11 +230,11 @@ class PixGateway extends AbstractGateway
                     ];
                 }
             }
-            throw new \Exception('Unable to process payment on ' . __METHOD__);
+            throw new ResponseStatusException('exception : Unable to process payment on ' . __METHOD__);
         } catch (\Exception $e) {
             return $this->processReturnFail(
                 $e,
-                $this->mercadopago->storeTranslations->commonMessages['cho_default_error'],
+                $e->getMessage(),
                 self::LOG_SOURCE,
                 (array) $order,
                 true
@@ -378,7 +382,7 @@ class PixGateway extends AbstractGateway
             'admin/settings/steps.php',
             [
                 'title'             => $this->adminTranslations['steps_title'],
-                'step_one_text'     => $this->adminTranslations['steps_step_one_text' ],
+                'step_one_text'     => $this->adminTranslations['steps_step_one_text'],
                 'step_two_text'     => $this->adminTranslations['steps_step_two_text'],
                 'step_three_text'   => $this->adminTranslations['steps_step_three_text'],
                 'observation_one'   => $this->adminTranslations['steps_observation_one'],

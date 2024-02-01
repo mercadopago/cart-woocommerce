@@ -186,7 +186,7 @@ function initCardForm(amount = getAmount()) {
               CheckoutPage.clearInputs();
               CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'remove', 'mp-error');
               CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'none');
-              CheckoutPage.setImageCard(paymentMethods[0].secure_thumbnail);
+              CheckoutPage.setImageCard(paymentMethods[0].secure_thumbnail || paymentMethods[0].thumbnail);
               CheckoutPage.installment_amount(paymentMethods[0].payment_type_id);
               const additionalInfoNeeded = CheckoutPage.loadAdditionalInfo(paymentMethods[0].additional_info_needed);
               CheckoutPage.additionalInfoHandler(additionalInfoNeeded);
