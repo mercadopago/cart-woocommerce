@@ -34,7 +34,7 @@ class Metadata
      */
     public function getGatewaySettings(string $gatewayId): array
     {
-        return $this->getSettings("woocommerce_woo-mercado-pago-{$gatewayId}_settings");
+        return $this->getSettings("woocommerce_{$gatewayId}_settings");
     }
 
     /**

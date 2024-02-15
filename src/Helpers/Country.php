@@ -120,6 +120,48 @@ final class Country
     }
 
     /**
+     * Get Wordpress default language configured.
+     *
+     * @return string
+     */
+    private function getWordpressLanguage(): string
+    {
+        return get_option('WPLANG', '');
+    }
+
+    /**
+     * Get languages supported by plugin.
+     *
+     * @return array
+     */
+    private function getLanguagesSupportedByPlugin(): array
+    {
+        return array(
+            'es_AR',
+            'es_CL',
+            'es_CO',
+            'es_MX',
+            'es_PE',
+            'es_UY',
+            'pt_BR',
+            'en_US',
+            'es_ES'
+        );
+    }
+
+    /**
+     * Verify if WP selected lang is supported by plugin.
+     *
+     * @return bool
+     */
+    public function isLanguageSupportedByPlugin(): bool
+    {
+        $languages = $this->getLanguagesSupportedByPlugin();
+        $language_code = $this->getWordpressLanguage();
+        return in_array($language_code, $languages);
+    }
+
+    /**
      * Get Woocommerce default country configured
      *
      * @return string

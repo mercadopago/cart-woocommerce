@@ -35,8 +35,8 @@ class WalletButtonTransaction extends AbstractPreferenceTransaction
     {
         $internalMetadata = parent::getInternalMetadata();
 
-        $internalMetadata->checkout           = 'pro';
-        $internalMetadata->checkout_type      = self::ID;
+        $internalMetadata->checkout      = 'pro';
+        $internalMetadata->checkout_type = self::ID;
 
         return $internalMetadata;
     }

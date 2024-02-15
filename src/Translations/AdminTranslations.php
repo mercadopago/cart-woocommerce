@@ -174,6 +174,7 @@ class AdminTranslations
             'saved_cards_title'         => __('Enable payments via Mercado Pago account', 'woocommerce-mercadopago'),
             'saved_cards_subtitle'      => __('When you enable this function, your customers pay faster using their Mercado Pago accounts.</br>The approval rate of these payments in your store can be 25% higher compared to other payment methods.', 'woocommerce-mercadopago'),
             'saved_cards_button'        => __('Activate', 'woocommerce-mercadopago'),
+            'missing_translation'       => __("Our plugin does not support the language you've chosen, so we've switched it to the English default. If you prefer, you can also select Spanish or Portuguese (Brazilian).", 'woocommerce-mercadopago'),
         ];
     }
 

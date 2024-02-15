@@ -56,37 +56,7 @@ class PaymentMetadata
     /**
      * @var string
      */
-    public $basic_settings;
-
-    /**
-     * @var string
-     */
-    public $custom_settings;
-
-    /**
-     * @var string
-     */
-    public $ticket_settings;
-
-    /**
-     * @var string
-     */
-    public $pix_settings;
-
-    /**
-     * @var string
-     */
-    public $credits_settings;
-
-    /**
-     * @var string
-     */
-    public $pse_settings;
-
-    /**
-     * @var string
-     */
-    public $wallet_button_settings;
+    public $settings;
 
     /**
      * @var string

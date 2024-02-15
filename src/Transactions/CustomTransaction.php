@@ -39,8 +39,8 @@ class CustomTransaction extends AbstractPaymentTransaction
     {
         $internalMetadata = parent::getInternalMetadata();
 
-        $internalMetadata->checkout        = 'custom';
-        $internalMetadata->checkout_type   = self::ID;
+        $internalMetadata->checkout      = 'custom';
+        $internalMetadata->checkout_type = self::ID;
 
         return $internalMetadata;
     }

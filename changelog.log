@@ -1,6 +1,17 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.2.1 (15/02/2024) =
+* Added:
+- We have added a warning banner for when the language configured in worpress does not have the translation in our plugin.
+* Changed:
+- Improvements have been made to the readme and changelog files so that the markdown makes more sense to our users.
+- Now our plugin constructs the URLs for the assets using the absolute path instead of the relative path.
+- Prevent block scripts from loading on admin screens and do not load block scripts in checkouts that do not use Checkout Blocks.
+- We've reduced the size of the metadata sent in the payment.
+* Fixed:
+- We've fixed the currency conversion calculation.
+
 = v7.2.0 (01/02/2024) =
 * Added:
 - Introducing Mercado PSE as a new payment method for our users in Colombia.

@@ -118,13 +118,17 @@ final class Cart
      *
      * @return float
      */
-    public function calculateSubtotalWithDiscount(AbstractGateway $gateway): float
+    public function calculateSubtotalWithDiscount(AbstractGateway $gateway, bool $toConvert = true): float
     {
-        $ratio    = $this->currency->getRatio($gateway);
-        $currency = $this->country->getCountryConfigs()['currency'];
-        $discount = $this->getSubtotal() * ($gateway->discount / 100);
+        if ($toConvert) {
+            $ratio    = $this->currency->getRatio($gateway);
+            $currency = $this->country->getCountryConfigs()['currency'];
+            $discount = $this->getSubtotal() * ($gateway->discount / 100);
 
-        return Numbers::calculateByCurrency($currency, $discount, $ratio);
+            return Numbers::calculateByCurrency($currency, $discount, $ratio);
+        }
+
+        return $this->getSubtotal() * ($gateway->discount / 100);
     }
 
     /**
@@ -134,13 +138,17 @@ final class Cart
      *
      * @return float
      */
-    public function calculateSubtotalWithCommission(AbstractGateway $gateway): float
+    public function calculateSubtotalWithCommission(AbstractGateway $gateway, bool $toConvert = true): float
     {
-        $ratio      = $this->currency->getRatio($gateway);
-        $currency   = $this->country->getCountryConfigs()['currency'];
-        $commission = $this->getSubtotal() * ($gateway->commission / 100);
+        if ($toConvert) {
+            $ratio      = $this->currency->getRatio($gateway);
+            $currency   = $this->country->getCountryConfigs()['currency'];
+            $commission = $this->getSubtotal() * ($gateway->commission / 100);
 
-        return Numbers::calculateByCurrency($currency, $commission, $ratio);
+            return Numbers::calculateByCurrency($currency, $commission, $ratio);
+        }
+
+        return $this->getSubtotal() * ($gateway->commission / 100);
     }
 
     /**
@@ -168,7 +176,7 @@ final class Cart
      */
     public function addDiscountOnFees(AbstractGateway $gateway): void
     {
-        $discount     = $this->calculateSubtotalWithDiscount($gateway);
+        $discount     = $this->calculateSubtotalWithDiscount($gateway, false);
         $discountName = $this->storeTranslations->commonCheckout['cart_discount'];
 
         if ($discount > 0) {
@@ -185,7 +193,7 @@ final class Cart
      */
     public function addCommissionOnFees(AbstractGateway $gateway): void
     {
-        $commission     = $this->calculateSubtotalWithCommission($gateway);
+        $commission     = $this->calculateSubtotalWithCommission($gateway, false);
         $commissionName = $this->storeTranslations->commonCheckout['cart_commission'];
 
         if ($commission > 0) {
