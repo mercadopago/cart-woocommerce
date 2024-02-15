@@ -46,8 +46,8 @@ final class Url
     {
         return sprintf(
             '%s%s%s%s',
-            plugin_dir_url(__FILE__),
-            '/../../../' . $path,
+            trailingslashit(rtrim(plugin_dir_url(plugin_dir_path(__FILE__)), '/src')),
+            $path,
             $ignoreSuffix ? '' : $this->getSuffix(),
             $extension
         );

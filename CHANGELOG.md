@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.2.1] - 2024-02-15
+### Added
+- We have added a warning banner for when the language configured in worpress does not have the translation in our plugin.
+### Changed
+- Improvements have been made to the readme and changelog files so that the markdown makes more sense to our users.
+- Now our plugin constructs the URLs for the assets using the absolute path instead of the relative path.
+- Prevent block scripts from loading on admin screens and do not load block scripts in checkouts that do not use Checkout Blocks.
+- We've reduced the size of the metadata sent in the payment.
+### Fixed
+- We've fixed the currency conversion calculation.
+
 ## [7.2.0] - 2024-02-01
 ### Added
 - Introducing Mercado PSE as a new payment method for our users in Colombia.

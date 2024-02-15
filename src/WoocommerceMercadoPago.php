@@ -20,6 +20,7 @@ use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+use MercadoPago\Woocommerce\Helpers\Country;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -30,7 +31,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '7.2.0';
+    private const PLUGIN_VERSION = '7.2.1';
 
     /**
      * @const
@@ -136,6 +137,11 @@ class WoocommerceMercadoPago
      * @var StoreTranslations
      */
     public $storeTranslations;
+
+    /**
+     * @var Country
+     */
+    public $country;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -257,6 +263,10 @@ class WoocommerceMercadoPago
             $this->verifyGdNotice();
         }
 
+        if (!$this->country->isLanguageSupportedByPlugin()) {
+            $this->verifyCountryForTranslationsNotice();
+        }
+
         $this->registerBlocks();
         $this->registerGateways();
         $this->registerActionsWhenGatewayIsNotCalled();
@@ -304,6 +314,9 @@ class WoocommerceMercadoPago
         // Translations
         $this->adminTranslations = $dependencies->adminTranslations;
         $this->storeTranslations = $dependencies->storeTranslations;
+
+        // Country
+        $this->country = $dependencies->countryHelper;
     }
 
     /**
@@ -364,6 +377,16 @@ class WoocommerceMercadoPago
     public function verifyGdNotice(): void
     {
         $this->helpers->notices->adminNoticeWarning($this->adminTranslations->notices['missing_gd_extensions'], false);
+    }
+
+    /**
+     * Show unsupported country for translations
+     *
+     * @return void
+     */
+    public function verifyCountryForTranslationsNotice(): void
+    {
+        $this->helpers->notices->adminNoticeError($this->adminTranslations->notices['missing_translation'], true);
     }
 
     /**

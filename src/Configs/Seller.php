@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Helpers\Device;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -792,8 +793,9 @@ class Seller
     private function getPaymentMethods(string $publicKey = null, string $accessToken = null): array
     {
         try {
-            $key   = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
-            $cache = $this->cache->getCache($key);
+            $key       = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
+            $cache     = $this->cache->getCache($key);
+            $productId = Device::getDeviceProductId();
 
             if ($cache) {
                 return $cache;
@@ -802,9 +804,14 @@ class Seller
             $headers = [];
             $uri     = '/v1/payment_methods';
 
+            if ($productId) {
+                $headers[] = 'X-Product-Id: ' . $productId;
+            }
+
             if ($accessToken) {
                 $headers[] = 'Authorization: Bearer ' . $accessToken;
             }
+
 
             if ($publicKey) {
                 $uri = $uri . '?public_key=' . $publicKey;
@@ -841,16 +848,22 @@ class Seller
     private function getPaymentMethodsBySiteId(string $siteId): array
     {
         try {
-            $key   = sprintf('%ssi%s', __FUNCTION__, $siteId);
-            $cache = $this->cache->getCache($key);
+            $key       = sprintf('%ssi%s', __FUNCTION__, $siteId);
+            $cache     = $this->cache->getCache($key);
+            $productId = Device::getDeviceProductId();
 
             if ($cache) {
                 return $cache;
             }
 
+            $headers = [];
+            if ($productId) {
+                $headers[] = 'X-Product-Id: ' . $productId;
+            }
+
             $uri = '/sites/' . $siteId . '/payment_methods';
 
-            $response           = $this->requester->get($uri);
+            $response           = $this->requester->get($uri, $headers);
             $serializedResponse = [
                 'data'   => $response->getData(),
                 'status' => $response->getStatus(),

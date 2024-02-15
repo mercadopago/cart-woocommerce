@@ -140,7 +140,7 @@ abstract class AbstractTransaction
     {
         $this->transaction->binary_mode          = $this->getBinaryMode();
         $this->transaction->external_reference   = $this->getExternalReference();
-        $this->transaction->notification_url     = $this->getNotificationUrl();
+        $this->transaction->notification_url      = $this->getNotificationUrl();
         $this->transaction->metadata             = (array) $this->getInternalMetadata();
         $this->transaction->statement_descriptor = $this->mercadopago->storeConfig->getStoreName('Mercado Pago');
     }
@@ -229,13 +229,6 @@ abstract class AbstractTransaction
         $metadata->test_mode                     = $this->mercadopago->storeConfig->isTestMode();
         $metadata->details                       = '';
         $metadata->seller_website                = $siteUrl;
-        $metadata->basic_settings                = $this->mercadopago->metadataConfig->getGatewaySettings('basic');
-        $metadata->custom_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('custom');
-        $metadata->ticket_settings               = $this->mercadopago->metadataConfig->getGatewaySettings('ticket');
-        $metadata->pix_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pix');
-        $metadata->pse_settings                  = $this->mercadopago->metadataConfig->getGatewaySettings('pse');
-        $metadata->credits_settings              = $this->mercadopago->metadataConfig->getGatewaySettings('credits');
-        $metadata->wallet_button_settings        = $this->mercadopago->metadataConfig->getGatewaySettings('wallet_button');
         $metadata->billing_address               = new PaymentMetadataAddress();
         $metadata->billing_address->zip_code     = $zipCode;
         $metadata->billing_address->street_name  = $this->mercadopago->orderBilling->getAddress1($this->order);
@@ -250,6 +243,7 @@ abstract class AbstractTransaction
         $metadata->cpp_extra->platform_version   = $this->mercadopago->woocommerce->version;
         $metadata->cpp_extra->module_version     = MP_VERSION;
         $metadata->blocks_payment                = $this->mercadopago->orderMetadata->getPaymentBlocks($this->order);
+        $metadata->settings                      = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
 
         return $metadata;
     }

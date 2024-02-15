@@ -266,9 +266,8 @@ function initCardForm(amount = getAmount()) {
 
 function getAmount() {
   const amount = parseFloat(document.getElementById('mp-amount').value.replace(',', '.'));
-  const currencyRatio = parseFloat(document.getElementById('currency_ratio').value.replace(',', '.'));
 
-  return String(amount * currencyRatio);
+  return String(amount);
 }
 
 /**
