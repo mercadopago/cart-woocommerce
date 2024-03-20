@@ -126,7 +126,7 @@ final class Country
      */
     private function getWordpressLanguage(): string
     {
-        return get_option('WPLANG', '');
+        return get_locale();
     }
 
     /**
@@ -293,5 +293,65 @@ final class Country
         return array_key_exists($countrySuffix, $configs)
             ? $configs[$countrySuffix]
             : $configs[self::COUNTRY_SUFFIX_MLA];
+    }
+
+    /**
+     * Country Gateways
+     *
+     * @return array
+     */
+    public function getOrderGatewayForCountry(): array
+    {
+        $gatewayOrder = [
+            'BR' => [
+                'MercadoPago\Woocommerce\Gateways\CustomGateway',
+                'MercadoPago\Woocommerce\Gateways\PixGateway',
+                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+                'MercadoPago\Woocommerce\Gateways\BasicGateway',
+                'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+            ],
+            'AR' => [
+                'MercadoPago\Woocommerce\Gateways\BasicGateway',
+                'MercadoPago\Woocommerce\Gateways\CustomGateway',
+                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+                'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+            ],
+            'UY' => [
+                'MercadoPago\Woocommerce\Gateways\BasicGateway',
+                'MercadoPago\Woocommerce\Gateways\CustomGateway',
+                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+            ],
+            'CL' => [
+                'MercadoPago\Woocommerce\Gateways\BasicGateway',
+                'MercadoPago\Woocommerce\Gateways\CustomGateway',
+                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+            ],
+            'MX' => [
+                'MercadoPago\Woocommerce\Gateways\BasicGateway',
+                'MercadoPago\Woocommerce\Gateways\CustomGateway',
+                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+                'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+            ],
+            'CO' => [
+                'MercadoPago\Woocommerce\Gateways\BasicGateway',
+                'MercadoPago\Woocommerce\Gateways\CustomGateway',
+                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+                'MercadoPago\Woocommerce\Gateways\PseGateway',
+            ],
+            'PE' => [
+                'MercadoPago\Woocommerce\Gateways\CustomGateway',
+                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+                'MercadoPago\Woocommerce\Gateways\BasicGateway',
+            ],
+        ];
+
+        return $gatewayOrder[$this-> getPluginDefaultCountry()] ?? [ //default gateways and orders
+            'MercadoPago\Woocommerce\Gateways\BasicGateway',
+            'MercadoPago\Woocommerce\Gateways\CustomGateway',
+            'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+            'MercadoPago\Woocommerce\Gateways\PixGateway',
+            'MercadoPago\Woocommerce\Gateways\PseGateway',
+            'MercadoPago\Woocommerce\Gateways\TicketGateway',
+        ];
     }
 }

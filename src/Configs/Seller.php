@@ -323,7 +323,7 @@ class Seller
         }
 
         if (!is_array($paymentMethods)) {
-            $paymentMethods = json_decode($paymentMethods);
+            $paymentMethods = json_decode($paymentMethods, true);
         }
 
         return $paymentMethods;

@@ -6,6 +6,7 @@
  * @var array $storeTranslations
  * @var array $gatewaysTranslations
  * @var array $testModeTranslations
+ * @var array $supportTranslations
  *
  * @var string $publicKeyProd
  * @var string $accessTokenProd
@@ -20,10 +21,16 @@
  * @var string $debugMode
  * @var string $checkboxCheckoutTestMode
  * @var string $checkboxCheckoutProductionMode
+ * @var string $phpVersion
+ * @var string $wcVersion
+ * @var string $wpVersion
+ * @var string $pluginVersion
  *
  * @var array $links
  * @var bool  $testMode
  * @var array $categories
+ *
+ * @var array $pluginLogs
  *
  * @see \MercadoPago\Woocommerce\Admin\Settings
  */
@@ -128,7 +135,7 @@ if (!defined('ABSPATH')) {
                     </div>
                     <div>
                         <a target="_blank" href="<?= $links['mercadopago_costs'] ?>">
-                            <button class="mp-button" id="mp-set-installments-button">
+                            <button class="mp-button mp-button-small" id="mp-set-installments-button">
                                 <?= $headerTranslations['button_installments'] ?>
                             </button>
                         </a>
@@ -148,7 +155,7 @@ if (!defined('ABSPATH')) {
                     </div>
                     <div>
                         <a target="_blank" href="<?= $links['docs_integration_introduction'] ?>">
-                            <button id="mp-plugin-guide-button" class="mp-button mp-button-light-blue">
+                            <button id="mp-plugin-guide-button" class="mp-button mp-button-small mp-button-light-blue">
                                 <?= $headerTranslations['button_questions'] ?>
                             </button>
                         </a>
@@ -176,16 +183,14 @@ if (!defined('ABSPATH')) {
         <div id="mp-step-1" class="mp-settings-block-align-top" style="display: none;">
             <div>
                 <p class="mp-settings-subtitle-font-size mp-settings-title-color">
-                    <?= $credentialsTranslations['subtitle_credentials'] ?>
+                    <?= $credentialsTranslations['first_text_subtitle_credentials'] ?>
+                    <a id="mp-get-credentials-link" class="mp-settings-blue-text" target="_blank" href="<?= $links['mercadopago_credentials'] ?>">
+                        <?= $credentialsTranslations['text_link_credentials'] ?>
+                    </a>
+                    <?= $credentialsTranslations['second_text_subtitle_credentials'] ?>
                 </p>
             </div>
-            <div class="mp-message-credentials">
-                <a class="mp-heading-credentials" target="_blank" href="<?= $links['mercadopago_credentials'] ?>">
-                    <button id="mp-get-credentials-button" class="mp-button mp-button-light-blue">
-                        <?= $credentialsTranslations['button_link_credentials'] ?>
-                    </button>
-                </a>
-            </div>
+            <div class="mp-message-credentials"></div>
 
             <div id="msg-info-credentials"></div>
 
@@ -237,7 +242,7 @@ if (!defined('ABSPATH')) {
                 </div>
             </div>
 
-            <button class="mp-button" id="mp-btn-credentials">
+            <button class="mp-button mp-button-large" id="mp-btn-credentials">
                 <?= $credentialsTranslations['button_credentials'] ?>
             </button>
         </div>
@@ -367,7 +372,7 @@ if (!defined('ABSPATH')) {
                     </div>
                 </div>
             </div>
-            <button class="mp-button" id="mp-store-info-save"><?= $storeTranslations['button_store'] ?></button>
+            <button class="mp-button mp-button-large" id="mp-store-info-save"><?= $storeTranslations['button_store'] ?></button>
         </div>
     </div>
 
@@ -390,7 +395,7 @@ if (!defined('ABSPATH')) {
             <p id="mp-payment" class="mp-settings-subtitle-font-size mp-settings-title-color">
                 <?= $gatewaysTranslations['subtitle_payments'] ?>
             </p>
-            <button id="mp-payment-method-continue" class="mp-button">
+            <button id="mp-payment-method-continue" class="mp-button mp-button-large">
                 <?= $gatewaysTranslations['button_payment'] ?>
             </button>
         </div>
@@ -520,9 +525,121 @@ if (!defined('ABSPATH')) {
                 </div>
             </div>
 
-            <button class="mp-button" id="mp-store-mode-save">
+            <button class="mp-button mp-button-large" id="mp-store-mode-save">
                 <?= $testModeTranslations['button_test_mode'] ?>
             </button>
         </div>
     </div>
+
+    <div class="mp-settings-support-container">
+        <div id="mp-settings-support" class="mp-settings-title-align">
+
+            <div class="mp-settings-title-container">
+                <span class="mp-settings-support-title"> <?= $supportTranslations['support_title'] ?></span>
+            </div>
+
+            <div class="mp-settings-title-container mp-settings-margin-left">
+                <img class="mp-settings-icon-open" id="mp-modes-arrow-up" />
+            </div>
+        </div>
+
+        <div class="mp-settings-support-content" style="display: none;">
+            <hr class="mp-settings-hr-support">
+            <p><?= $supportTranslations['support_faqs_url'] ?></p>
+            <p id="mp-settings-support-how-to"><b><?= $supportTranslations['support_how_to'] ?></b></p>
+            <p><?= $supportTranslations['support_step_one'] ?></p>
+            <p><?= $supportTranslations['support_step_two'] ?></p>
+            <p><?= $supportTranslations['support_step_three'] ?></p>
+            <table class="mp-settings-support-content-table">
+                <tr>
+                    <th>PHP Version</th>
+                    <th>WordPress Version</th>
+                </tr>
+                <tr>
+                    <td><?= $supportTranslations['support_version'] ?> <?= $phpVersion ?></td>
+                    <td><?= $supportTranslations['support_version'] ?> <?= $wpVersion ?></td>
+                </tr>
+                <tr>
+                </tr>
+            </table>
+            <table class="mp-settings-support-content-table">
+                <tr>
+                    <th>WooCommerce Version </th>
+                    <th>Plugin Version</th>
+                </tr>
+                <tr>
+                    <td><?= $supportTranslations['support_version'] ?> <?= $wcVersion ?></td>
+                    <td><?= $supportTranslations['support_version'] ?> <?= $pluginVersion ?></td>
+                </tr>
+                <tr>
+                </tr>
+            </table>
+            <p><?= $supportTranslations['support_step_four'] ?></p>
+        </div>
+
+    </div>
+
+    <div id="supportModal" class="mp-settings-support-modal">
+
+        <!-- Modal content -->
+        <div class="mp-settings-support-modal-content">
+            <span class="mp-settings-close" onclick="closeSupportModal()">&times;</span>
+            <p class="mp-settings-modal-title"><?= $supportTranslations['support_modal_title'] ?></p>
+            <?php if (!empty($pluginLogs)) : ?>
+                <p class="mp-settings-modal-desc"><?= $supportTranslations['support_modal_desc'] ?></p>
+                <table class="mp-settings-modal-table">
+                    <thead>
+                        <tr>
+                            <th class="mp-settings-modal-table-header small-cell"><input type="checkbox" id="selectAllCheckbox"></th>
+                            <th class="mp-settings-modal-table-header"><?= $supportTranslations['support_modal_table_header_2'] ?></th>
+                            <th class="mp-settings-modal-table-header"><?= $supportTranslations['support_modal_table_header_3'] ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($pluginLogs as $logFile) : ?>
+                            <tr class="mp-settings-modal-table-row">
+                                <td class="mp-settings-modal-table-cell small-cell"><input type="checkbox" name="selected_files[]" value="<?php echo $logFile->fileFullName; ?>"></td>
+                                <td class="mp-settings-modal-table-cell"><?php echo $logFile->fileName ?></td>
+                                <td class="mp-settings-modal-table-cell"><?php echo $logFile->fileDate ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <button id="downloadSelected" class="mp-button mp-button-small" disabled><?= $supportTranslations['support_modal_download_btn'] ?></button>
+                <div class="mp-settings-button-group">
+                    <div id="mp-pagination" class="mp-settings-pagination"></div>
+                </div>
+            <?php else : ?>
+                <p class="mp-settings-modal-desc"><?= $supportTranslations['support_modal_no_content'] ?></p>
+            <?php endif; ?>
+        </div>
+
+    </div>
+
+
 </div>
+<script>
+    const downloadBtn = document.getElementById('downloadSelected');
+    const checkboxes2 = document.querySelectorAll('input[name="selected_files[]"]');
+    const allCheckbox = document.getElementById('selectAllCheckbox')
+    downloadBtn.addEventListener('click', function() {
+        const selectedFiles = [];
+        checkboxes2.forEach((cb) => {
+            if (cb.checked) {
+                selectedFiles.push(cb.value);
+                cb.checked = false;
+            }
+        });
+        allCheckbox.checked = false;
+        if (selectedFiles.length > 0) {
+            const url = "<?php echo esc_url(admin_url('admin-ajax.php')); ?>";
+            const params = new URLSearchParams();
+            params.append('action', 'mp_download_log');
+            selectedFiles.forEach((file) => {
+                params.append('files[]', file);
+            });
+            window.location.href = url + '?' + params.toString();
+            closeSupportModal()
+        }
+    });
+</script>

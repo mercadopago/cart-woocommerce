@@ -706,3 +706,77 @@ function mp_settings_screen_load() {
   mpUpdateTestMode();
   mpContinueToNextStep();
 }
+
+function openSupportModal() {
+  var modal = document.getElementById('supportModal');
+  modal.style.display = 'block';
+}
+
+function closeSupportModal() {
+  var modal = document.getElementById('supportModal');
+  modal.style.display = 'none';
+}
+
+// handle with pagination in support modal
+document.addEventListener('DOMContentLoaded', function () {
+  const checkboxes = document.querySelectorAll('input[name="selected_files[]"]');
+  const downloadButton = document.getElementById('downloadSelected');
+  const itemsPerPage = 8;
+  let currentPage = 1;
+
+  function updateTableDisplay() {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    checkboxes.forEach((checkbox, index) => {
+      checkbox.closest('tr').style.display = index >= startIndex && index < endIndex ? 'table-row' : 'none';
+    });
+  }
+
+  function updatePaginationButtons() {
+    const totalPages = Math.ceil(checkboxes.length / itemsPerPage);
+    const paginationElement = document.getElementById('mp-pagination');
+    paginationElement.innerHTML = '';
+
+    for (let i = 1; i <= totalPages; i++) {
+      const pageSpan = document.createElement('span');
+      pageSpan.textContent = i;
+      pageSpan.classList.add('mp-page-span');
+      if (i === currentPage) {
+        pageSpan.classList.add('active');
+      }
+      pageSpan.addEventListener('click', function () {
+        currentPage = i;
+        updateTableDisplay();
+        updatePaginationButtons();
+      });
+      paginationElement.appendChild(pageSpan);
+    }
+  }
+
+  updateTableDisplay();
+  updatePaginationButtons();
+
+  checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener('change', function () {
+      let atLeastOneChecked = false;
+      checkboxes.forEach((cb) => {
+        if (cb.checked) {
+          atLeastOneChecked = true;
+        }
+      });
+      downloadButton.disabled = !atLeastOneChecked;
+    });
+  });
+
+  selectAllCheckbox.addEventListener('change', function () {
+    checkboxes.forEach((checkbox) => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    downloadButton.disabled = !selectAllCheckbox.checked;
+ });
+
+});
+
+
+

@@ -64,6 +64,11 @@ class Store
     /**
      * @const
      */
+    private const ANY_ORDER_COMPLETED = '_mp_any_order_completed';
+
+    /**
+     * @const
+     */
     private const DISMISSED_SAVED_CARDS_NOTICE = '_mp_dismiss_saved_cards_notice';
 
     /**
@@ -304,6 +309,21 @@ class Store
     public function setDismissedReviewNotice(int $dismissedReviewNotice): void
     {
         $this->options->set(self::DISMISSED_REVIEW_NOTICE, $dismissedReviewNotice);
+    }
+    /**
+     * @return int
+     */
+    public function getAnyOrderCompleted(): int
+    {
+        return $this->options->get(self::ANY_ORDER_COMPLETED, 0);
+    }
+
+    /**
+     * @param int $anyOrderCompleted
+     */
+    public function setAnyOrderCompleted(int $anyOrderCompleted): void
+    {
+        $this->options->set(self::ANY_ORDER_COMPLETED, $anyOrderCompleted);
     }
 
     /**

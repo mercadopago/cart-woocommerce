@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
+use MercadoPago\Woocommerce\Configs\Seller;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -54,6 +55,11 @@ class Notices
     private $endpoints;
 
     /**
+     * @var Seller
+     */
+    private $sellerConfig;
+
+    /**
      * @const
      */
     private const NONCE_ID = 'mp_notices_dismiss';
@@ -69,7 +75,9 @@ class Notices
      * @param Store $store
      * @param Nonce $nonce
      * @param Endpoints $endpoints
+     * @param Seller $sellerConfig
      */
+
     public function __construct(
         Scripts $scripts,
         AdminTranslations $translations,
@@ -78,7 +86,8 @@ class Notices
         CurrentUser $currentUser,
         Store $store,
         Nonce $nonce,
-        Endpoints $endpoints
+        Endpoints $endpoints,
+        Seller $sellerConfig
     ) {
         $this->scripts      = $scripts;
         $this->translations = $translations;
@@ -88,12 +97,14 @@ class Notices
         $this->store        = $store;
         $this->nonce        = $nonce;
         $this->endpoints    = $endpoints;
+        $this->sellerConfig = $sellerConfig;
 
         $this->loadAdminNoticesCss();
         $this->loadAdminNoticesJs();
         $this->insertDismissibleNotices();
         $this->endpoints->registerAjaxEndpoint('mp_review_notice_dismiss', [$this, 'reviewNoticeDismiss']);
         $this->endpoints->registerAjaxEndpoint('mp_saved_cards_notice_dismiss', [$this, 'savedCardsDismiss']);
+        add_action('woocommerce_order_status_processing', [$this, 'checkOrderCompleted'], 10, 1);
     }
 
     /**
@@ -141,21 +152,24 @@ class Notices
         }
 
         if (!$this->store->getDismissedReviewNotice()) {
-            add_action(
-                'admin_notices',
-                function () {
-                    $minilogo   = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
-                    $title      = $this->translations->notices['dismissed_review_title'];
-                    $subtitle   = $this->translations->notices['dismissed_review_subtitle'];
-                    $buttonText = $this->translations->notices['dismissed_review_button'];
-                    $buttonLink = $this->links['wordpress_review_link'];
-
-                    include dirname(__FILE__) . '/../../templates/admin/notices/review-notice.php';
-                }
-            );
+            if ($this->store->getAnyOrderCompleted()) {
+                add_action(
+                    'admin_notices',
+                    function () {
+                        $title      = $this->translations->notices['dismissed_review_title'];
+                        $subtitle   = $this->translations->notices['dismissed_review_subtitle'];
+                        $buttonText = $this->translations->notices['dismissed_review_button'];
+                        $buttonLink = $this->links['wordpress_review_link'];
+                        include dirname(__FILE__) . '/../../templates/admin/notices/review-notice.php';
+                    }
+                );
+            }
         }
 
-        if (!$this->store->getDismissedSavedCardsNotice()) {
+        if (
+            !$this->store->getDismissedSavedCardsNotice() &&
+            !empty($this->sellerConfig->getCredentialsPublicKey()) && !empty($this->sellerConfig->getCredentialsAccessToken())
+        ) {
             add_action(
                 'admin_notices',
                 function () {
@@ -183,6 +197,19 @@ class Notices
                 $this->url->validateSection('mercado-pago')
                 || $this->url->validateUrl('index')
                 || $this->url->validateUrl('plugins')
+            );
+    }
+
+    /**
+     * Check if notices should be shown for settings section
+     *
+     * @return bool
+     */
+    public function shouldShowNoticesForSettingsSection(): bool
+    {
+        return is_admin() &&
+            (
+                $this->url->validatePage('mercadopago-settings')
             );
     }
 
@@ -373,5 +400,37 @@ class Notices
 
         $this->store->setDismissedSavedCardsNotice(1);
         wp_send_json_success();
+    }
+
+    public function checkOrderCompleted($order_id)
+    {
+        if (!$this->store->getAnyOrderCompleted()) {
+            $order = wc_get_order($order_id);
+            $paymentMethod = $order->get_payment_method();
+            foreach ($this->store->getAvailablePaymentGateways() as $gateway) {
+                if ($gateway::ID === $paymentMethod) {
+                    $this->store->setAnyOrderCompleted(1);
+                }
+            }
+        }
+    }
+
+    /**
+     * Show instructional notice
+     *
+     * @return void
+     */
+    public function instructionalNotice(): void
+    {
+        add_action(
+            'admin_notices',
+            function () {
+                $minilogo = $this->url->getPluginFileUrl('assets/images/icons/icon-feedback-info', '.png', true);
+                $title = $this->translations->notices['action_feedback_title'];
+                $subtitle = $this->translations->notices['action_feedback_subtitle'];
+
+                include dirname(__FILE__) . '/../../templates/admin/notices/action-feedback-notice.php';
+            }
+        );
     }
 }

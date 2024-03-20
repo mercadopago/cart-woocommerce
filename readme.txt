@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 5.6
 Tested up to: 6.4
 Requires PHP: 7.4 to 8.3
-Stable tag: 7.2.1
+Stable tag: 7.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,15 +136,19 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-= v7.2.1 (15/02/2024) =
+= v7.3.0 (20/03/2024) =
 * Added:
-- We have added a warning banner for when the language configured in worpress does not have the translation in our plugin.
+- A warning has been added to inform you that activation was successful and that you now need to enter your credentials when activating plugins.
+- We have implemented new display rules and improved the layout of the component that requests ratings for the plugin.
+- We've added a link to frequently asked questions at the end of each gateway's configuration.
+- We've implemented a new support component at the bottom of the plugin's configuration screen. Here you will find information on how to open a ticket.
 * Changed:
-- Improvements have been made to the readme and changelog files so that the markdown makes more sense to our users.
-- Now our plugin constructs the URLs for the assets using the absolute path instead of the relative path.
-- Prevent block scripts from loading on admin screens and do not load block scripts in checkouts that do not use Checkout Blocks.
-- We've reduced the size of the metadata sent in the payment.
+- We've changed the layout of the notice for filling in credentials.
+- We've changed the title of the plugin on the administration screen.
+- The payment methods have been renamed and are now sorted according to country.
+- We have made adjustments to the hierarchy of titles on the administration screen, as well as to its content, including titles and supplementary texts.
+- For step 1, we have replaced the secondary credential query button with a text-link.
 * Fixed:
-- We've fixed the currency conversion calculation.
+- We've solve the problem when the getPaymentMethodsByGatewayOption function returned an stdClass instead of an array when using json_decode.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

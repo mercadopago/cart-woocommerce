@@ -19,65 +19,103 @@
     padding-top: 0;
 }
 
-.mp-rating-notice {
-    border: 1px solid #ccc !important;
+/*< Style component review */
+.mp-rating-review {
+  display: flex;
+  margin: 32px 16px 32px 0;
+  position: relative;
 }
 
-.mp-rating-frame {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-left: 8px;
+.mp-alert-color-success {
+  width: 6px;
+  background: #009ee3;
+  border-radius: 6px 0 0 6px;
 }
 
-.mp-left-rating {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-right: 10px;
+.mp-review-body {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 24px 20px 0;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 0 6px 6px 0;
+  width: 100%;
 }
 
-.mp-left-rating img {
-    max-width: 50px;
-    min-width: 50px;
-    padding-right: 16px;
-    padding-top: 0.4em;
+.mp-icon-badge-info {
+  background: url("../../images/icons/icon-tip.png") 100% 50% no-repeat transparent;
+  background-size: 18px;
+  width: 24px;
+  height: 18px;
+  margin: 6px 12px 6px 16px;
 }
 
-.mp-right-rating {
-    padding-top: 0;
-    display: flex;
+.mp-text-title {
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.9);
+  margin: 4px 0px;
+  font-weight: bold;
 }
 
-.mp-rating-title {
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 0 !important;
+.mp-text-subtitle {
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 18px;
+  display: flex;
+  align-items: center;
+  color: rgba(0, 0, 0, 0.9);
+  margin: 4px 0px;
 }
 
-.mp-rating-subtitle {
-    font-size: 12px;
-    margin-top: 0 !important;
+.mp-review-button {
+  font-size: 14px;
+  line-height: 16px;
+  color: #ffffff;
+  border: none;
+  padding: 9px 12px 7px;
+  background: #009ee3;
+  border-radius: 5px;
+  margin: 15px 0px 5px 0px;
+  cursor: pointer;
+  transition: box-shadow 0.25s ease-out, background-color 0.2s ease-out;
+  box-shadow: 0 0 0 0 #fff;
 }
 
-.mp-rating-link {
-    background-color: #009ee3;
-    color: #fff;
-    border-radius: 4px;
-    font-weight: 600;
-    display: inline-block;
-    padding: 2px 36px 0;
-    text-align: center;
-    line-height: 34px;
-    font-size: 14px;
-    text-decoration: none;
-    width: 110px;
+.mp-review-button-a {
+  text-decoration: none;
 }
 
-.mp-rating-link:hover, .mp-rating-link:focus {
-    background-color: #007eb5;
-    color: #fff;
+.mp-review-button:hover {
+  border-color: transparent;
+  background-color: #007eb5;
+  color: #fff;
+  -webkit-transition: background-color 0.2s ease-in;
+  transition: background-color 0.2s ease-in;
 }
+
+.mp-review-button:focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.1875em rgb(27 135 201 / 30%);
+  -webkit-transition: box-shadow 0.25s ease-in;
+  transition: box-shadow 0.25s ease-in;
+}
+
+.mp-review-button:active {
+  border-color: transparent;
+  background-color: #005e88;
+  color: #fff;
+}
+
+#mp-rating-message {
+  padding-right: 0 !important;
+  background: none !important;
+  border: 0 !important;
+}
+
+/* \>*/
 
 .mp-saved-cards-notice {
     border: 1px solid #ccc !important;
@@ -142,6 +180,50 @@
     color: white;
 }
 
+.mp-feedback-info-notice {
+  border-radius: 6px;
+  background-color: var(--accent-andes-accent-color-mp, #009EE3);
+  display: flex;
+  padding-right: 16px;
+  align-items: center;
+  margin: 23px 55px 0px 23px;
+}
+
+.mp-feedback-info-frame {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 12px;
+  align-items: baseline;
+  gap: 16px;
+  align-self: stretch;
+}
+
+.mp-feedback-info-title {
+  color: var(--Text-andes-text-color-inverted, #FFF);
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 20px;
+  margin-bottom: 4px;
+}
+
+.mp-feedback-info-subtitle {
+  color: var(--Text-andes-text-color-inverted, #FFF);
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 18px;
+  margin-top: 0;
+}
+
+.mp-feedback-info-icon {
+  display: flex;
+  background-color: #007EB5;
+  border-radius: 100px;
+}
+
 @media (max-width: 768px) {
     .mp-rating-frame {
         justify-content: baseline;
@@ -177,4 +259,6 @@
         width: 100%;
         padding: 2px 28px 0;
     }
+
+
 }
