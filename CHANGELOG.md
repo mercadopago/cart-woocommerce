@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.3.0] - 2024-03-20
+### Added
+- A warning has been added to inform you that activation was successful and that you now need to enter your credentials when activating plugins.
+- We have implemented new display rules and improved the layout of the component that requests ratings for the plugin.
+- We've added a link to frequently asked questions at the end of each gateway's configuration.
+- We've implemented a new support component at the bottom of the plugin's configuration screen. Here you will find information on how to open a ticket.
+### Changed
+- We've changed the layout of the notice for filling in credentials.
+- We've changed the title of the plugin on the administration screen.
+- The payment methods have been renamed and are now sorted according to country.
+- We have made adjustments to the hierarchy of titles on the administration screen, as well as to its content, including titles and supplementary texts. 
+- For step 1, we have replaced the secondary credential query button with a text-link.
+### Fixed
+- We've solve the problem when the getPaymentMethodsByGatewayOption function returned an stdClass instead of an array when using json_decode.
+
 ## [7.2.1] - 2024-02-15
 ### Added
 - We have added a warning banner for when the language configured in worpress does not have the translation in our plugin.

@@ -465,7 +465,7 @@
 }
 
 .mp-card-body-size {
-  width: 500px;
+  width: 100%;
 }
 
 .mp-card-body-size-homolog {
@@ -502,7 +502,7 @@
 
 .mp-text-subtitle {
   font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 18px;
   display: flex;
   align-items: center;
@@ -617,3 +617,22 @@
 		width: 100%;
 	}
 }
+
+/* support link component */
+.mp-support-link-text {
+  display: inline-block;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  color: rgba(0, 0, 0, 0.90);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 18px;
+}
+.mp-support-link-text-with-link{
+  color: #009EE3;
+  text-decoration: none;
+}
+.mp-support-link-bold_text{
+  font-weight: 600;
+}
+

@@ -17,6 +17,7 @@ use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
+use MercadoPago\Woocommerce\IO\Downloader;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -100,6 +101,11 @@ class Settings
     private $logs;
 
     /**
+     * @var Downloader
+     */
+    private $downloader;
+
+    /**
      * Settings constructor
      *
      * @param Admin $admin
@@ -115,6 +121,7 @@ class Settings
      * @param CurrentUser $currentUser
      * @param Session $session
      * @param Logs $logs
+     * @param Downloader $downloader
      */
     public function __construct(
         Admin $admin,
@@ -129,7 +136,8 @@ class Settings
         Nonce $nonce,
         CurrentUser $currentUser,
         Session $session,
-        Logs $logs
+        Logs $logs,
+        Downloader $downloader
     ) {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
@@ -144,6 +152,7 @@ class Settings
         $this->currentUser  = $currentUser;
         $this->session      = $session;
         $this->logs         = $logs;
+        $this->downloader   = $downloader;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -217,7 +226,7 @@ class Settings
         return $this->admin->isAdmin() && (
             $this->url->validatePage('mercadopago-settings') ||
             $this->url->validateSection('woo-mercado-pago')
-            );
+        );
     }
 
     /**
@@ -228,12 +237,12 @@ class Settings
     public function canLoadScriptsNoticesAdmin(): bool
     {
         return $this->admin->isAdmin() && (
-                $this->url->validateUrl('index') ||
-                $this->url->validateUrl('plugins') ||
-                $this->url->validatePage('wc-admin') ||
-                $this->url->validatePage('wc-settings') ||
-                $this->url->validatePage('mercadopago-settings')
-            );
+            $this->url->validateUrl('index') ||
+            $this->url->validateUrl('plugins') ||
+            $this->url->validatePage('wc-admin') ||
+            $this->url->validatePage('wc-settings') ||
+            $this->url->validatePage('mercadopago-settings')
+        );
     }
 
     /**
@@ -253,6 +262,7 @@ class Settings
         $this->endpoints->registerAjaxEndpoint('mp_validate_credentials_tips', [$this, 'mercadopagoValidateCredentialsTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_store_tips', [$this, 'mercadopagoValidateStoreTips']);
         $this->endpoints->registerAjaxEndpoint('mp_validate_payment_tips', [$this, 'mercadopagoValidatePaymentTips']);
+        $this->endpoints->registerAjaxEndpoint('mp_download_log', [$this, 'mercadopagoDownloadLog']);
     }
 
     /**
@@ -284,6 +294,7 @@ class Settings
         $storeTranslations       = $this->translations->storeSettings;
         $gatewaysTranslations    = $this->translations->gatewaysSettings;
         $testModeTranslations    = $this->translations->testModeSettings;
+        $supportTranslations     = $this->translations->supportSettings;
 
         $publicKeyProd   = $this->seller->getCredentialsPublicKeyProd();
         $accessTokenProd = $this->seller->getCredentialsAccessTokenProd();
@@ -304,6 +315,13 @@ class Settings
         $links      = $this->links->getLinks();
         $testMode   = ($checkboxCheckoutTestMode === 'yes');
         $categories = Categories::getCategories();
+        $pluginLogs = $this->downloader->pluginLogs;
+
+        $phpVersion = phpversion() ? phpversion() : "";
+        $wpVersion = $GLOBALS['wp_version'] ? $GLOBALS['wp_version'] : "";
+        $wcVersion = $GLOBALS['woocommerce']->version ? $GLOBALS['woocommerce']->version : "";
+        $pluginVersion = MP_VERSION ? MP_VERSION : "";
+
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }
@@ -521,10 +539,10 @@ class Settings
 
                 if (
                     (empty($publicKeyTest) && empty($accessTokenTest)) || (
-                    $validatePublicKeyTest['status'] === 200 &&
-                    $validateAccessTokenTest['status'] === 200 &&
-                    $validatePublicKeyTest['data']['is_test'] === true &&
-                    $validateAccessTokenTest['data']['is_test'] === true
+                        $validatePublicKeyTest['status'] === 200 &&
+                        $validateAccessTokenTest['status'] === 200 &&
+                        $validatePublicKeyTest['data']['is_test'] === true &&
+                        $validateAccessTokenTest['data']['is_test'] === true
                     )
                 ) {
                     $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
@@ -640,5 +658,17 @@ class Settings
     {
         $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
         $this->currentUser->validateUserNeededPermissions();
+    }
+
+    public function mercadopagoDownloadLog()
+    {
+        try {
+            $this->downloader->downloadLog();
+        } catch (\Exception $e) {
+            $this->logs->file->error('Mercado pago gave error to download log files: ' . $e->getMessage(), __CLASS__);
+            http_response_code(500);
+            header("Location: " . admin_url("admin.php?page=wc-status&tab=logs"));
+            exit;
+        }
     }
 }

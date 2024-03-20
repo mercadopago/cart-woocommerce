@@ -46,6 +46,7 @@ use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+use MercadoPago\Woocommerce\IO\Downloader;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -273,6 +274,12 @@ class Dependencies
      */
     public $storeTranslations;
 
+
+    /**
+     * @var Downloader
+     */
+    public $downloader;
+
     /**
      * Dependencies constructor
      */
@@ -302,6 +309,7 @@ class Dependencies
         $this->requesterHelper         = $this->setRequester();
         $this->storeConfig             = $this->setStore();
         $this->logs                    = $this->setLogs();
+        $this->downloader              = $this->setDownloader();
         $this->sellerConfig            = $this->setSeller();
         $this->countryHelper           = $this->setCountry();
         $this->urlHelper               = $this->setUrl();
@@ -504,7 +512,8 @@ class Dependencies
             $this->currentUserHelper,
             $this->storeConfig,
             $this->nonceHelper,
-            $this->endpointsHook
+            $this->endpointsHook,
+            $this->sellerConfig
         );
     }
 
@@ -552,7 +561,8 @@ class Dependencies
             $this->nonceHelper,
             $this->currentUserHelper,
             $this->sessionHelper,
-            $this->logs
+            $this->logs,
+            $this->downloader
         );
     }
 
@@ -633,5 +643,10 @@ class Dependencies
             $this->stringsHelper,
             $this->urlHelper
         );
+    }
+
+    private function setDownloader(): Downloader
+    {
+        return new Downloader($this->logs);
     }
 }

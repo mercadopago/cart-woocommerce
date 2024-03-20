@@ -1,11 +1,10 @@
 <?php
 
 /**
- * @var string $minilogo
- * @var string $activateLink
- * @var string $installLink
- * @var string $missWoocommerceAction
- * @var array $translations
+ * @var string $title
+ * @var string $subtitle
+ * @var string $buttonLink
+ * @var string $buttonText
  *
  * @see \MercadoPago\Woocommerce\Helpers\Notices
  */
@@ -15,29 +14,21 @@ if (!defined('ABSPATH')) {
 }
 
 ?>
+<div id="mp-rating-message" class="mp-rating-review notice is-dismissible mp-rating-notice">
+    <button type="button" class="notice-dismiss"><span class="screen-reader-text"></span></button>
+    <div class="mp-alert-color-success"></div>
 
-<div id="message" class="notice is-dismissible mp-rating-notice">
-    <div class="mp-rating-frame">
-        <div class="mp-left-rating">
-            <div>
-                <img src="<?= esc_url($minilogo) ?>" alt="Mercado Pago logo" >
-            </div>
-            <div class="mp-left-rating-text">
-                <p class="mp-rating-title">
+    <div class="mp-review-body">
+        <div class="mp-icon-badge-info"></div>
+        <div>
+            <span class="mp-text-title"><b>
                     <?= wp_kses_post($title) ?>
-                </p>
-                <p class="mp-rating-subtitle">
-                    <?= wp_kses_post($subtitle) ?>
-                </p>
-            </div>
-        </div>
-        <div class="mp-right-rating">
-            <a
-                class="mp-rating-link"
-                href="<?= esc_url($buttonLink) ?>" target="blank"
-            >
-                <?= wp_kses_post($buttonText) ?>
+                </b></span>
+            <span class="mp-text-subtitle"><?= wp_kses_post($subtitle) ?></span>
+            <a class="mp-review-button-a" target="_blank" href="<?= esc_url($buttonLink) ?>">
+                <button type="button" class="mp-review-button"><?= wp_kses_post($buttonText) ?></button>
             </a>
         </div>
     </div>
 </div>
+

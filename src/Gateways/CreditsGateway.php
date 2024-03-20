@@ -159,6 +159,18 @@ class CreditsGateway extends AbstractGateway
             ],
             'gateway_discount' => $this->getDiscountField(),
             'commission'       => $this->getCommissionField(),
+            'split_section' => [
+                'type'  => 'title',
+                'title' => "",
+            ],
+            'support_link' => [
+                'type'  => 'mp_support_link',
+                'bold_text'    => $this->adminTranslations['support_link_bold_text'],
+                'text_before_link'    => $this->adminTranslations['support_link_text_before_link'],
+                'text_with_link' => $this->adminTranslations['support_link_text_with_link'],
+                'text_after_link'    => $this->adminTranslations['support_link_text_after_link'],
+                'support_link'    => $this->links['docs_support_faq'],
+            ],
         ]);
     }
 

@@ -25,7 +25,17 @@ class OrderBilling
      */
     public function getLastName(\WC_Order $order): string
     {
-        return $order->get_billing_last_name() ?? '';
+        $lastName = $order->get_billing_last_name();
+
+        if (empty($lastName)) {
+            $firstName = $this->getFirstName($order);
+            $names = explode(' ', $firstName);
+            if (count($names) >= 2) {
+                $lastName = $names[1];
+            }
+        }
+
+        return $lastName ?? '';
     }
 
     /**

@@ -186,7 +186,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 'card_info_validate' => [
                     'type'  => 'mp_card_info',
                     'value' => [
-                        'title'       => $this->mercadopago->adminTranslations->credentialsSettings['card_info_title'],
+                        'title'       => '',
                         'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
                         'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
                         'button_url'  => $this->links['admin_settings_page'],
@@ -469,6 +469,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
             "Invalid users involved" => $this->mercadopago->storeTranslations->commonMessages['invalid_users'],
             "Invalid operators users involved" => $this->mercadopago->storeTranslations->commonMessages['invalid_operators'],
             "exception" => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+            "400" => $this->mercadopago->storeTranslations->commonMessages['buyer_default'],
         ];
 
         foreach ($errorMessages as $keyword => $replacement) {
@@ -745,6 +746,26 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         );
     }
 
+      /**
+     * Generating support link component
+     *
+     * @param string $key
+     * @param array $settings
+     *
+     * @return string
+     */
+    public function generate_mp_support_link_html(string $key, array $settings): string
+    {
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
+            'admin/components/support-link.php',
+            [
+                'field_key'   => $this->get_field_key($key),
+                'field_value' => null,
+                'settings'    => $settings,
+            ]
+        );
+    }
+
     /**
      * Update Option
      *
@@ -807,5 +828,15 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         return $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_' . $statusDetail] ??
             $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'];
+    }
+
+    /**
+     * Get url setting
+     *
+     * @return string
+     */
+    public function get_settings_url()
+    {
+        return $this->links['admin_settings_page'];
     }
 }

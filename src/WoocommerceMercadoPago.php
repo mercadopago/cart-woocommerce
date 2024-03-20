@@ -31,7 +31,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '7.2.1';
+    private const PLUGIN_VERSION = '7.3.0';
 
     /**
      * @const
@@ -189,12 +189,10 @@ class WoocommerceMercadoPago
      */
     public function registerGateways(): void
     {
-        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\BasicGateway');
-        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CreditsGateway');
-        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\CustomGateway');
-        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\TicketGateway');
-        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PixGateway');
-        $this->hooks->gateway->registerGateway('MercadoPago\Woocommerce\Gateways\PseGateway');
+        $gatewaysForCountry = $this->country->getOrderGatewayForCountry();
+        foreach ($gatewaysForCountry as $gateway) {
+            $this->hooks->gateway->registerGateway($gateway);
+        }
     }
 
     /**
@@ -263,7 +261,7 @@ class WoocommerceMercadoPago
             $this->verifyGdNotice();
         }
 
-        if (!$this->country->isLanguageSupportedByPlugin()) {
+        if (!$this->country->isLanguageSupportedByPlugin() && $this->helpers->notices->shouldShowNotices()) {
             $this->verifyCountryForTranslationsNotice();
         }
 
@@ -274,6 +272,7 @@ class WoocommerceMercadoPago
         $this->hooks->plugin->registerEnableCreditsAction([$this->helpers->creditsEnabled, 'enableCreditsAction']);
         $this->hooks->plugin->executeCreditsAction();
         $this->hooks->plugin->executePluginLoadedAction();
+        $this->verifyCredentialsForInstructionNotice();
     }
 
     /**
@@ -387,6 +386,21 @@ class WoocommerceMercadoPago
     public function verifyCountryForTranslationsNotice(): void
     {
         $this->helpers->notices->adminNoticeError($this->adminTranslations->notices['missing_translation'], true);
+    }
+
+    /**
+     * Show notice when credentials are null
+     *
+     * @return void
+     */
+    public function verifyCredentialsForInstructionNotice(): void
+    {
+        if (isset($this->sellerConfig)) {
+            $publicKeyProd = $this->sellerConfig->getCredentialsPublicKeyProd();
+            if (empty($publicKeyProd) && $this->helpers->notices->shouldShowNoticesForSettingsSection()) {
+                $this->helpers->notices->instructionalNotice();
+            }
+        }
     }
 
     /**
