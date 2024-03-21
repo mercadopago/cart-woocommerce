@@ -1,9 +1,9 @@
 === Mercado Pago payments for WooCommerce ===
 Contributors:
 Tags: ecommerce, mercadopago, woocommerce
-Requires at least: 5.6
+Requires at least: 6.3
 Tested up to: 6.4
-Requires PHP: 7.4 to 8.3
+Requires PHP: 7.4
 Stable tag: 7.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
