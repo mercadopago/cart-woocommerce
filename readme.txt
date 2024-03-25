@@ -1,10 +1,10 @@
 === Mercado Pago payments for WooCommerce ===
 Contributors:
 Tags: ecommerce, mercadopago, woocommerce
-Requires at least: 5.6
+Requires at least: 6.3
 Tested up to: 6.4
-Requires PHP: 7.4 to 8.3
-Stable tag: 7.3.0
+Requires PHP: 7.4
+Stable tag: 7.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,19 +136,10 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-= v7.3.0 (20/03/2024) =
-* Added:
-- A warning has been added to inform you that activation was successful and that you now need to enter your credentials when activating plugins.
-- We have implemented new display rules and improved the layout of the component that requests ratings for the plugin.
-- We've added a link to frequently asked questions at the end of each gateway's configuration.
-- We've implemented a new support component at the bottom of the plugin's configuration screen. Here you will find information on how to open a ticket.
+= v7.3.1 (25/03/2024) =
 * Changed:
-- We've changed the layout of the notice for filling in credentials.
-- We've changed the title of the plugin on the administration screen.
-- The payment methods have been renamed and are now sorted according to country.
-- We have made adjustments to the hierarchy of titles on the administration screen, as well as to its content, including titles and supplementary texts.
-- For step 1, we have replaced the secondary credential query button with a text-link.
-* Fixed:
-- We've solve the problem when the getPaymentMethodsByGatewayOption function returned an stdClass instead of an array when using json_decode.
+- Person type update for PSE
+- Improve the layout of the admin buttons
+- Adjusting the translation of checkout pro for Spanish-speaking countries
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

@@ -179,7 +179,7 @@ const Content = (props) => {
             <InputSelect name={'mercadopago_pse[person_type]'}
                          label={person_type_label}
                          optional={false}
-                         options={'[{"id":"individual", "description": "individual"},{"id":"institucional", "description": "institucional"}]'}>
+                         options={'[{"id":"individual", "description": "individual"},{"id":"association", "description": "asociación"}]'}>
             </InputSelect>
           </div>
           <div className="mp-checkout-pse-input-document">

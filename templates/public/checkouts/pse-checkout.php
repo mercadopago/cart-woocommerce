@@ -52,7 +52,7 @@ if (! defined('ABSPATH')) {
                     name="mercadopago_pse[person_type]"
                     label=<?= esc_html($person_type_label); ?>
                     optional="false"
-                    options='[{"id":"individual", "description": "individual"},{"id":"institucional", "description": "institucional"}]'
+                    options='[{"id":"individual", "description": "individual"},{"id":"association", "description": "asociación"}]'
                 >
                 </input-select>
             </div>

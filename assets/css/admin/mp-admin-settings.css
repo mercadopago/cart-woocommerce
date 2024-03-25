@@ -172,6 +172,7 @@ body {
   cursor: pointer;
   transition: box-shadow 0.25s ease-out, background-color 0.2s ease-out;
   box-shadow: 0 0 0 0 #fff;
+  font-weight: 400;
 }
 
 .mp-button-small {
@@ -180,6 +181,9 @@ body {
 
 .mp-button-large {
   line-height: 48px;
+  font-size: 16px;
+  padding-top: 0px;
+  padding-bottom: 0px;
 }
 
 .mp-button:hover {
@@ -206,7 +210,7 @@ body {
 .mp-button-light-blue {
   border-color: transparent;
   background: rgba(71, 154, 209, 0.15);
-  color: #009ee3;
+  color: #479AD1 ;
 }
 
 .mp-button-light-blue:hover {
