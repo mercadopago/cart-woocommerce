@@ -376,7 +376,7 @@ class PseGateway extends AbstractGateway
                 || (empty($checkout['doc_type']) || !isset($checkout['doc_type']))
                 || (empty($checkout['person_type']) || !isset($checkout['person_type']))
                 || (empty($checkout['bank']) || !isset($checkout['bank']))
-                || (strcmp($checkout['person_type'], 'individual') != 0  && strcmp($checkout['person_type'], 'institutional') != 0 )
+                || (strcmp($checkout['person_type'], 'individual') != 0  && strcmp($checkout['person_type'], 'association') != 0 )
             ))
         ) {
             return $this->processReturnFail(

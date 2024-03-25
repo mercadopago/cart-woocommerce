@@ -1,6 +1,12 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.3.1 (25/03/2024) =
+* Changed:
+- Person type update for PSE
+- Improve the layout of the admin buttons
+- Adjusting the translation of checkout pro for Spanish-speaking countries
+
 = v7.3.0 (20/03/2024) =
 * Added:
 - A warning has been added to inform you that activation was successful and that you now need to enter your credentials when activating plugins.

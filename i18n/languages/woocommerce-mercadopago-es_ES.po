@@ -623,7 +623,7 @@ msgstr "no se rechazarán automaticamente"
 #: ../../src/Translations/AdminTranslations.php:427,
 #: ../../src/Translations/AdminTranslations.php:442
 msgid "Your saved cards or money available in Mercado Pago"
-msgstr "Tarjetas guardadas y dinero disponible en Mercado Pago"
+msgstr "Medios de pago disponibles en Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:428,
 #: ../../src/Translations/AdminTranslations.php:430

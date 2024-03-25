@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [7.3.1] - 2024-03-25
+### Changed
+- Person type update for PSE
+- Improve the layout of the admin buttons
+- Adjusting the translation of checkout pro for Spanish-speaking countries
+
 ## [7.3.0] - 2024-03-20
 ### Added
 - A warning has been added to inform you that activation was successful and that you now need to enter your credentials when activating plugins.
