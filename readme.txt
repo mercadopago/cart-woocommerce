@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 7.3.2
+Stable tag: 7.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,22 +136,9 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-* Added:
-- Added session_id to payment creation request header to improve approval rates.
-
 * Changed:
-- Checkout Credits component text has been adjusted.
-
-* Fixed:
-- Checkout scripts now load only at checkout time, improving overall store performance.
-- Partial refunds made through Mercado Pago are now correctly recognized as partial refunds on the platform.
-- The IP address issue for some PSE checkout payments in Colombia has been fixed.
-- 3DS flow requests for stores running in a directory now work correctly and stores using the domain root still working.
-- The Undefined Array Key Method error that occurred for some sellers when they had not configured the checkout pro method (modal or redirect) has been fixed.
-- The pix copy-paste button has been fixed.
-
-* Other improvements:
-- General code improvements and optimizations.
-- Updated dependencies (PHP SDK).
+- Our latest plugin update (version 7.3.2) aimed to optimize script loading during checkout using the woocommerce_before_checkout_form and woocommerce_blocks_enqueue_checkout_block_scripts_before hooks.
+However, to ensure compatibility with a wider range of themes, this functionality has been temporarily disabled.
+We're actively exploring solutions to achieve optimal script loading across all themes and will implement them in a future update.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

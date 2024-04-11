@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [7.3.3] - 2024-04-11
+### Changed:
+- Our latest plugin update (version 7.3.2) aimed to optimize script loading during checkout using the woocommerce_before_checkout_form and woocommerce_blocks_enqueue_checkout_block_scripts_before hooks. However, to ensure compatibility with a wider range of themes, this functionality has been temporarily disabled. We're actively exploring solutions to achieve optimal script loading across all themes and will implement them in a future update.
+
 ## [7.3.2] - 2024-04-11
 ### Added:
 - Added session_id to payment creation request header to improve approval rates.
