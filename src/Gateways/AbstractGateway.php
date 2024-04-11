@@ -243,10 +243,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         if ($this->canAdminLoadScriptsAndStyles($gatewaySection)) {
             $this->registerAdminScripts();
         }
-
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->registerCheckoutScripts();
-        }
     }
 
     /**
@@ -382,18 +378,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         return $this->mercadopago->hooks->admin->isAdmin() && ($this->mercadopago->helpers->url->validatePage('wc-settings') &&
             $this->mercadopago->helpers->url->validateSection($gatewaySection)
         );
-    }
-
-    /**
-     * Check if admin scripts and styles can be loaded
-     *
-     * @return bool
-     */
-    public function canCheckoutLoadScriptsAndStyles(): bool
-    {
-        return $this->mercadopago->hooks->checkout->isCheckout() &&
-            $this->mercadopago->hooks->gateway->isEnabled($this) &&
-            !$this->mercadopago->helpers->url->validateQueryVar('order-received');
     }
 
     /**

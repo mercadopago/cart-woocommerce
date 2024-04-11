@@ -95,7 +95,6 @@ if (!defined('ABSPATH')) {
                     <button
                         onclick="copy_qr_code()"
                         class="mp-details-pix-button"
-                        onclick="true"
                     >
                         <?= esc_html($text_button); ?>
                     </button>

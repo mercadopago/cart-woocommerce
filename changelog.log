@@ -1,6 +1,25 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.3.2 (11/04/2024) =
+* Added:
+- Added session_id to payment creation request header to improve approval rates.
+
+* Changed:
+- Checkout Credits component text has been adjusted.
+
+* Fixed:
+- Checkout scripts now load only at checkout time, improving overall store performance.
+- Partial refunds made through Mercado Pago are now correctly recognized as partial refunds on the platform.
+- The IP address issue for some PSE checkout payments in Colombia has been fixed.
+- 3DS flow requests for stores running in a directory now work correctly and stores using the domain root still working.
+- The Undefined Array Key Method error that occurred for some sellers when they had not configured the checkout pro method (modal or redirect) has been fixed.
+- The pix copy-paste button has been fixed.
+
+* Other improvements:
+- General code improvements and optimizations.
+- Updated dependencies (PHP SDK).
+
 = v7.3.1 (25/03/2024) =
 * Changed:
 - Person type update for PSE

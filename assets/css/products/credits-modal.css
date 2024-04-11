@@ -89,22 +89,23 @@
     align-items: center;
     justify-content: center;
 }
-
 .mp-credits-modal-blue-circle {
-    width: 16px;
-    height: 16px;
-    background-color: #009EE3;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 12px;
-    line-height: 15px;
-    color: #ffff;
-    position: absolute;
+  width: 16px;
+  height: 16px;
+  background-color: rgba(71, 154, 209, 0.10);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
 }
 
-.mp-credits-modal-blue-circle~span {
+.check-mark {
+  color: #009EE3;
+  font-size: 14px;
+}
+
+.mp-credits-modal-blue-circle-text {
 	margin-left: 16px;
     font-weight: 400;
     text-align: left;
@@ -115,18 +116,6 @@
     padding-left: 7px;
 }
 
-.mp-credits-modal-blue-circle~span>span {
-    font-weight: 600;
-}
-
-.mp-credits-modal-blue-circle>span {
-    color: #ffff;
-    font-size: 12px;
-}
-
-.mp-credits-modal-how-to-use>div~div~div>span{
-    font-weight: 600;
-}
 .mp-credits-modal-how-to-use {
     display: flex;
     flex-direction: column;

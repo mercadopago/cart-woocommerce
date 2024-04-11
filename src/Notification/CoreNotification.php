@@ -60,7 +60,7 @@ class CoreNotification extends AbstractNotification
         $integratorId = $this->store->getIntegratorId();
         $accessToken  = $this->seller->getCredentialsAccessToken();
 
-        return new Sdk($accessToken, $platformId, $productId, $integratorId);
+        return new Sdk($accessToken, $platformId, $productId, $integratorId, $this->seller->getCredentialsPublicKey());
     }
 
     /**
