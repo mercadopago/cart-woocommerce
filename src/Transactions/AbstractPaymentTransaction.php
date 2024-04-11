@@ -33,7 +33,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
     public function createPayment()
     {
         $payment = $this->getTransaction('Payment');
-
+        $payment->__set('session_id', $this->checkout['session_id']);
         $data = $payment->save();
         $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
         return $data;

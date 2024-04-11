@@ -67,6 +67,10 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+
+        $this->mercadopago->hooks->checkout->registerBeforeCheckoutForm(function () {
+            $this->registerCheckoutScripts();
+        });
     }
 
     /**
@@ -194,10 +198,6 @@ class TicketGateway extends AbstractGateway
     public function payment_scripts(string $gatewaySection): void
     {
         parent::payment_scripts($gatewaySection);
-
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->registerCheckoutScripts();
-        }
     }
 
     /**
@@ -207,25 +207,28 @@ class TicketGateway extends AbstractGateway
      */
     public function registerCheckoutScripts(): void
     {
-        parent::registerCheckoutScripts();
 
-        $this->mercadopago->hooks->scripts->registerCheckoutScript(
-            'wc_mercadopago_ticket_page',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-page', '.js')
-        );
+        if ($this->mercadopago->hooks->gateway->isEnabled($this)) {
+            parent::registerCheckoutScripts();
 
-        $this->mercadopago->hooks->scripts->registerCheckoutScript(
-            'wc_mercadopago_ticket_elements',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-elements', '.js')
-        );
+            $this->mercadopago->hooks->scripts->registerCheckoutScript(
+                'wc_mercadopago_ticket_page',
+                $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-page', '.js')
+            );
 
-        $this->mercadopago->hooks->scripts->registerCheckoutScript(
-            'wc_mercadopago_ticket_checkout',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-checkout', '.js'),
-            [
-                'site_id' => $this->countryConfigs['site_id'],
-            ]
-        );
+            $this->mercadopago->hooks->scripts->registerCheckoutScript(
+                'wc_mercadopago_ticket_elements',
+                $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-elements', '.js')
+            );
+
+            $this->mercadopago->hooks->scripts->registerCheckoutScript(
+                'wc_mercadopago_ticket_checkout',
+                $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-checkout', '.js'),
+                [
+                    'site_id' => $this->countryConfigs['site_id'],
+                ]
+            );
+        }
     }
 
     /**
@@ -326,8 +329,8 @@ class TicketGateway extends AbstractGateway
 
                     if (
                         $response['status'] === 'pending' && (
-                        $response['status_detail'] === 'pending_waiting_payment' ||
-                        $response['status_detail'] ===  'pending_waiting_transfer'
+                            $response['status_detail'] === 'pending_waiting_payment' ||
+                            $response['status_detail'] ===  'pending_waiting_transfer'
                         )
                     ) {
                         $this->mercadopago->helpers->cart->emptyCart();

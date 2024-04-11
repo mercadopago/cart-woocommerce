@@ -43,19 +43,18 @@ if (!defined('ABSPATH')) {
                                     <p><?php echo esc_html($modal_subtitle); ?>
                                 </div>
                                 <div>
-                                    <span><?php echo esc_html($modal_how_to); ?></span>
                                     <div class="mp-credits-modal-how-to-use">
                                         <div>
-                                            <div class="mp-credits-modal-blue-circle"><span>1</span></div>
-                                            <span><?php echo esc_html($modal_step_1); ?><span> <?php echo esc_html($modal_step_1_bold); ?></span><?php echo esc_html($modal_step_1_end); ?></span>
+                                            <div class="mp-credits-modal-blue-circle"><div class="check-mark">&#10003;</div></div>
+                                            <span class="mp-credits-modal-blue-circle-text"><?php echo esc_html($modal_step_1); ?></span>
                                         </div>
                                         <div>
-                                            <div class="mp-credits-modal-blue-circle"><span>2</span></div>
-                                            <span><?php echo esc_html($modal_step_2); ?> <span><?php echo esc_html($modal_step_2_bold); ?></span> <?php echo esc_html($modal_step_2_end); ?></span>
+                                        <div class="mp-credits-modal-blue-circle"><div class="check-mark">&#10003;</div></div>
+                                        <span class="mp-credits-modal-blue-circle-text"><?php echo esc_html($modal_step_2); ?></span>
                                         </div>
                                         <div>
-                                            <div class="mp-credits-modal-blue-circle"><span>3</span></div>
-                                            <span><?php echo esc_html($modal_step_3); ?></span>
+                                        <div class="mp-credits-modal-blue-circle"><div class="check-mark">&#10003;</div></div>
+                                        <span class="mp-credits-modal-blue-circle-text"><?php echo esc_html($modal_step_3); ?></span>
                                         </div>
                                     </div>
                                 </div>

@@ -120,7 +120,7 @@ final class Url
      */
     public function getServerAddress(): string
     {
-        return isset($_SERVER['SERVER_ADDR']) ? sanitize_text_field($_SERVER['SERVER_ADDR']) : '';
+        return isset($_SERVER['SERVER_ADDR']) ? sanitize_text_field($_SERVER['SERVER_ADDR']) : '127.0.0.1';
     }
 
     /**

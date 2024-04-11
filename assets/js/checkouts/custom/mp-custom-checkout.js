@@ -5,8 +5,7 @@ var hasToken = false;
 var mercado_pago_submit = false;
 var triggeredPaymentMethodSelectedEvent = false;
 var cardFormMounted = false;
-var threedsTarget = "mp_custom_checkout_security_fields_client";
-
+var threedsTarget = 'mp_custom_checkout_security_fields_client';
 
 var mpCheckoutForm = document.querySelector('form[name=checkout]');
 var mpFormId = 'checkout';
@@ -410,7 +409,10 @@ function removeLoadSpinner() {
 }
 
 function removeLoadSpinner3ds() {
-  document.getElementById('mp-loading-container-3ds').remove();
+  var element = document.getElementById('mp-loading-container-3ds');
+  if (element) {
+    element.remove();
+  }
 }
 
 function addLoadSpinner3dsSubmit() {
@@ -421,7 +423,7 @@ function addLoadSpinner3dsSubmit() {
     '     <div class="mp-spinner-3ds"></div>' +
     '       <div class="mp-loading-text-3ds">' +
     '         <p>' +
-                 wc_mercadopago_custom_checkout_params.threeDsText.title_loading_response +
+    wc_mercadopago_custom_checkout_params.threeDsText.title_loading_response +
     '          </p>' +
     '       </div>' +
     '   </div>' +
@@ -530,7 +532,7 @@ function load3DSFlow(lastFourDigits) {
   });
 
   jQuery
-    .post('/?wc-ajax=mp_get_3ds_from_session')
+    .post(woocommerce_params.wc_ajax_url.replace('%%endpoint%%', 'mp_get_3ds_from_session'))
     .done(function (response) {
       if (response.success) {
         var url_3ds = response.data.data['3ds_url'];
@@ -562,33 +564,35 @@ function load3DSFlow(lastFourDigits) {
 }
 
 function redirectAfter3dsChallenge() {
-  jQuery.post('/?wc-ajax=mp_redirect_after_3ds_challenge').done(function (response) {
-    if (response.data.redirect) {
-      window.dispatchEvent(
-        new CustomEvent('completed_3ds', {
-          detail: {
-            error: false,
-          },
-        }),
-      );
+  jQuery
+    .post(woocommerce_params.wc_ajax_url.replace('%%endpoint%%', 'mp_redirect_after_3ds_challenge'))
+    .done(function (response) {
+      if (response.data.redirect) {
+        window.dispatchEvent(
+          new CustomEvent('completed_3ds', {
+            detail: {
+              error: false,
+            },
+          }),
+        );
 
-      sendMetric('MP_THREE_DS_SUCCESS', '3DS challenge complete', threedsTarget);
-      removeModal3ds();
+        sendMetric('MP_THREE_DS_SUCCESS', '3DS challenge complete', threedsTarget);
+        removeModal3ds();
 
-      window.location.href = response.data.redirect;
-    } else {
-      window.dispatchEvent(
-        new CustomEvent('completed_3ds', {
-          detail: {
-            error: response.data.data.error,
-          },
-        }),
-      );
+        window.location.href = response.data.redirect;
+      } else {
+        window.dispatchEvent(
+          new CustomEvent('completed_3ds', {
+            detail: {
+              error: response.data.data.error,
+            },
+          }),
+        );
 
-      setDisplayOfErrorCheckout(response.data.data.error);
-      removeModal3ds();
-    }
-  });
+        setDisplayOfErrorCheckout(response.data.data.error);
+        removeModal3ds();
+      }
+    });
 }
 
 function handle3dsPayOrderFormSubmission() {
@@ -629,7 +633,8 @@ function setDisplayOfErrorCheckout(errorMessage) {
     removeElementsByClass('woocommerce-NoticeGroup-checkout');
     var divWooNotice = document.createElement('div');
     divWooNotice.className = 'woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout';
-    divWooNotice.innerHTML = '<ul class="woocommerce-error" role="alert">' + '<li>'.concat(errorMessage).concat('<li>') + '</ul>';
+    divWooNotice.innerHTML =
+      '<ul class="woocommerce-error" role="alert">' + '<li>'.concat(errorMessage).concat('<li>') + '</ul>';
     mpCheckoutForm.prepend(divWooNotice);
     window.scrollTo(0, 0);
   }

@@ -64,6 +64,10 @@ class BasicGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+
+        $this->mercadopago->hooks->checkout->registerBeforeCheckoutForm(function () {
+            $this->registerCheckoutScripts();
+        });
     }
 
     /**
@@ -243,10 +247,6 @@ class BasicGateway extends AbstractGateway
     public function payment_scripts(string $gatewaySection): void
     {
         parent::payment_scripts($gatewaySection);
-
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->registerCheckoutScripts();
-        }
     }
 
     /**
@@ -256,12 +256,14 @@ class BasicGateway extends AbstractGateway
      */
     public function registerCheckoutScripts(): void
     {
-        parent::registerCheckoutScripts();
 
-        $this->mercadopago->hooks->scripts->registerCheckoutScript(
-            'wc_mercadopago_sdk',
-            'https://sdk.mercadopago.com/js/v2'
-        );
+        if ($this->mercadopago->hooks->gateway->isEnabled($this)) {
+            parent::registerCheckoutScripts();
+            $this->mercadopago->hooks->scripts->registerCheckoutScript(
+                'wc_mercadopago_sdk',
+                'https://sdk.mercadopago.com/js/v2'
+            );
+        }
     }
 
     /**
@@ -298,7 +300,7 @@ class BasicGateway extends AbstractGateway
             'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
             'payment_methods_title'            => $paymentMethodsTitle,
             'payment_methods_methods'          => wp_json_encode($paymentMethods),
-            'method'                           => $this->settings['method'],
+            'method'                           => $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect'),
             'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
             'checkout_redirect_src'            => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/basic/cho-pro-redirect-v2', '.png', true),
             'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],

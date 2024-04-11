@@ -111,7 +111,7 @@ abstract class AbstractTransaction
         $productId    = Device::getDeviceProductId();
         $integratorId = $this->mercadopago->storeConfig->getIntegratorId();
 
-        return new Sdk($accessToken, $platformId, $productId, $integratorId);
+        return new Sdk($accessToken, $platformId, $productId, $integratorId, $this->mercadopago->sellerConfig->getCredentialsPublicKey());
     }
 
     /**

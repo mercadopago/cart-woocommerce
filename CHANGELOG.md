@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [7.3.2] - 2024-04-11
+### Added:
+- Added session_id to payment creation request header to improve approval rates.
+
+### Changed:
+- Checkout Credits component text has been adjusted.
+
+### Fixed:
+- Checkout scripts now load only at checkout time, improving overall store performance.
+- Partial refunds made through Mercado Pago are now correctly recognized as partial refunds on the platform.
+- The IP address issue for some PSE checkout payments in Colombia has been fixed.
+- 3DS flow requests for stores running in a directory now work correctly and stores using the domain root still working.
+- The Undefined Array Key Method error that occurred for some sellers when they had not configured the checkout pro method (modal or redirect) has been fixed.
+- The pix copy-paste button has been fixed.
+
+### Other improvements:
+- General code improvements and optimizations.
+- Updated dependencies (PHP SDK).
+
 ## [7.3.1] - 2024-03-25
 ### Changed
 - Person type update for PSE

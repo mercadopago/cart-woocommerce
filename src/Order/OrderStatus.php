@@ -88,7 +88,7 @@ final class OrderStatus
                 $this->rejectedFlow($data, $order);
                 break;
             case 'refunded':
-                $this->refundedFlow($order);
+                $this->refundedFlow($data, $order);
                 break;
             case 'cancelled':
                 $this->cancelledFlow($data, $order);
@@ -233,8 +233,19 @@ final class OrderStatus
      *
      * @return void
      */
-    private function refundedFlow(\WC_Order $order): void
+    private function refundedFlow(array $data, \WC_Order $order): void
     {
+        if ($this->isPartialRefund($data)) {
+            $refund_amount = floatval($data['total_refunded']);
+            wc_create_refund(array(
+                'amount'   => $refund_amount,
+                'reason'   => $this->translations['refunded'],
+                'order_id' => $order->get_id(),
+            ));
+            $order->add_order_note('Mercado Pago: ' . $this->translations['partial_refunded'] . $refund_amount);
+            return;
+        }
+
         $order->update_status(
             self::mapMpStatusToWoocommerceStatus('refunded'),
             'Mercado Pago: ' . $this->translations['refunded']
@@ -307,7 +318,7 @@ final class OrderStatus
             'chargedback' => 'refunded',
         );
 
-        $status = $statusMap[ $mpStatus ];
+        $status = $statusMap[$mpStatus];
 
         return str_replace('_', '-', $status);
     }
@@ -350,5 +361,17 @@ final class OrderStatus
         }
 
         $order->add_order_note("Mercado Pago: {$this->translations['validate_order_1']} $paymentId {$this->translations['validate_order_1']} $status");
+    }
+
+    /**
+     * Check if refund is partial
+     *
+     * @param array $data
+     *
+     * @return bool
+     */
+    private function isPartialRefund(array $data): bool
+    {
+        return $data['transaction_amount'] !== $data['total_refunded'] && $data['total_refunded'] !== 0;
     }
 }

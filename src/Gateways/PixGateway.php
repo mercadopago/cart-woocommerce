@@ -77,6 +77,10 @@ class PixGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+
+        $this->mercadopago->hooks->checkout->registerBeforeCheckoutForm(function () {
+            $this->registerCheckoutScripts();
+        });
     }
 
     /**
