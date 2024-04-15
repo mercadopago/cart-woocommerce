@@ -141,21 +141,10 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             $deps    = $asset['dependencies'] ?? [];
         }
 
-        $this->mercadopago->hooks->blocks->registerBlocksEnqueueCheckoutScriptsBefore([$this, 'loadGatewayCheckoutScripts']);
+        $this->gateway->registerCheckoutScripts();
         $this->mercadopago->hooks->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps);
         $this->gateway->registerCheckoutScripts();
         return [$scriptName];
-    }
-
-
-    /**
-     * Load gateway script that is not related to blocks but is still needed for proper functioning.
-     *
-     * @return void
-     */
-    public function loadGatewayCheckoutScripts(): void
-    {
-        $this->gateway->registerCheckoutScripts();
     }
 
     /**

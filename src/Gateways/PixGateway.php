@@ -77,10 +77,6 @@ class PixGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
-
-        $this->mercadopago->hooks->checkout->registerBeforeCheckoutForm(function () {
-            $this->registerCheckoutScripts();
-        });
     }
 
     /**
@@ -521,7 +517,7 @@ class PixGateway extends AbstractGateway
     {
         $order = wc_get_order($order_id);
 
-        $transactionAmount = $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
+        $transactionAmount = (float) $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
         $transactionAmount = Numbers::format($transactionAmount);
 
         $defaultValue      = $this->storeTranslations['expiration_30_minutes'];

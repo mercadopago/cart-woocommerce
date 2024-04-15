@@ -1,6 +1,12 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.3.4 (15/04/2024) =
+* Changed:
+- Thankyou page redirect for PIX and Ticket Payments working again.
+- Prevents type error on checkout screen due to amount values.
+- Removed console error message when custom checkout is not enabled.
+
 = v7.3.3 (11/04/2024) =
 * Changed:
 - Our latest plugin update (version 7.3.2) aimed to optimize script loading during checkout using the woocommerce_before_checkout_form and woocommerce_blocks_enqueue_checkout_block_scripts_before hooks. However, to ensure compatibility with a wider range of themes, this functionality has been temporarily disabled. We're actively exploring solutions to achieve optimal script loading across all themes and will implement them in a future update.
