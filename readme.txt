@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 7.3.3
+Stable tag: 7.3.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,9 +136,9 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-* Changed:
-- Our latest plugin update (version 7.3.2) aimed to optimize script loading during checkout using the woocommerce_before_checkout_form and woocommerce_blocks_enqueue_checkout_block_scripts_before hooks.
-However, to ensure compatibility with a wider range of themes, this functionality has been temporarily disabled.
-We're actively exploring solutions to achieve optimal script loading across all themes and will implement them in a future update.
+* Fixed:
+- Thankyou page redirect for PIX and Ticket Payments working again.
+- Prevents type error on checkout screen due to amount values.
+- Removed console error message when custom checkout is not enabled.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

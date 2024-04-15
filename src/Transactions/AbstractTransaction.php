@@ -310,8 +310,8 @@ abstract class AbstractTransaction
      */
     public function setShippingTransaction($items): void
     {
-        $shipTotal = Numbers::format($this->order->get_shipping_total());
-        $shipTaxes = Numbers::format($this->order->get_shipping_tax());
+        $shipTotal = Numbers::format((float) $this->order->get_shipping_total());
+        $shipTaxes = Numbers::format((float) $this->order->get_shipping_tax());
 
         $amount = $shipTotal + $shipTaxes;
         $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);
@@ -343,8 +343,8 @@ abstract class AbstractTransaction
     public function setFeeTransaction($items): void
     {
         foreach ($this->order->get_fees() as $fee) {
-            $feeTotal = Numbers::format($fee->get_total());
-            $feeTaxes = Numbers::format($fee->get_total_tax());
+            $feeTotal = Numbers::format((float) $fee->get_total());
+            $feeTaxes = Numbers::format((float) $fee->get_total_tax());
 
             $amount = $feeTotal + $feeTaxes;
             $amount = Numbers::calculateByCurrency($this->countryConfigs['currency'], $amount, $this->ratio);

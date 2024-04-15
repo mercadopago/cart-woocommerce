@@ -66,10 +66,6 @@ class PseGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
-
-        $this->mercadopago->hooks->checkout->registerBeforeCheckoutForm(function () {
-            $this->registerCheckoutScripts();
-        });
     }
 
     /**
@@ -189,6 +185,9 @@ class PseGateway extends AbstractGateway
     public function payment_scripts(string $gatewaySection): void
     {
         parent::payment_scripts($gatewaySection);
+        if ($this->canCheckoutLoadScriptsAndStyles()) {
+            $this->registerCheckoutScripts();
+        }
     }
 
     /**
@@ -198,28 +197,25 @@ class PseGateway extends AbstractGateway
      */
     public function registerCheckoutScripts(): void
     {
+        parent::registerCheckoutScripts();
 
-        if ($this->mercadopago->hooks->gateway->isEnabled($this)) {
-            parent::registerCheckoutScripts();
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_pse_page',
+            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-page', '.js')
+        );
 
-            $this->mercadopago->hooks->scripts->registerCheckoutScript(
-                'wc_mercadopago_pse_page',
-                $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-page', '.js')
-            );
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_pse_elements',
+            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-elements', '.js')
+        );
 
-            $this->mercadopago->hooks->scripts->registerCheckoutScript(
-                'wc_mercadopago_pse_elements',
-                $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-elements', '.js')
-            );
-
-            $this->mercadopago->hooks->scripts->registerCheckoutScript(
-                'wc_mercadopago_pse_checkout',
-                $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-checkout', '.js'),
-                [
-                    'financial_placeholder' => $this->storeTranslations['financial_placeholder'],
-                ]
-            );
-        }
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_pse_checkout',
+            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-checkout', '.js'),
+            [
+                'financial_placeholder' => $this->storeTranslations ['financial_placeholder'],
+            ]
+        );
     }
 
 
@@ -248,8 +244,7 @@ class PseGateway extends AbstractGateway
         $currentUser     = $this->mercadopago->helpers->currentUser->getCurrentUser();
         $loggedUserEmail = ($currentUser->ID != 0) ? $currentUser->user_email : null;
 
-        return [
-            'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
+        return ['test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
             'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
             'test_mode_description'            => $this->storeTranslations['test_mode_description'],
             'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
@@ -310,18 +305,18 @@ class PseGateway extends AbstractGateway
                     $response['status'] === 'pending' &&
                     (
                         $response['status_detail'] === 'pending_waiting_payment' ||
-                        $response['status_detail'] ===  'pending_waiting_transfer')
+                        $response['status_detail'] ===  'pending_waiting_transfer' )
                 ) {
                     $this->mercadopago->woocommerce->cart->empty_cart();
 
                     if ($this->mercadopago->hooks->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
-                        wc_reduce_stock_levels($order_id);
+                            wc_reduce_stock_levels($order_id);
                     }
                     $this->mercadopago->hooks->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
                     return [
-                        'result'   => 'success',
-                        'redirect' => $response['transaction_details']['external_resource_url'],
-                    ];
+                            'result'   => 'success',
+                            'redirect' => $response['transaction_details']['external_resource_url'],
+                        ];
                 }
                 return $this->processReturnFail(
                     new ResponseStatusException('exception : Invalid status or status_detail on ' . __METHOD__),
@@ -381,7 +376,7 @@ class PseGateway extends AbstractGateway
                 || (empty($checkout['doc_type']) || !isset($checkout['doc_type']))
                 || (empty($checkout['person_type']) || !isset($checkout['person_type']))
                 || (empty($checkout['bank']) || !isset($checkout['bank']))
-                || (strcmp($checkout['person_type'], 'individual') != 0  && strcmp($checkout['person_type'], 'association') != 0)
+                || (strcmp($checkout['person_type'], 'individual') != 0  && strcmp($checkout['person_type'], 'association') != 0 )
             ))
         ) {
             return $this->processReturnFail(

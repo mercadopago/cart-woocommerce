@@ -64,10 +64,6 @@ class BasicGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
-
-        $this->mercadopago->hooks->checkout->registerBeforeCheckoutForm(function () {
-            $this->registerCheckoutScripts();
-        });
     }
 
     /**
@@ -247,6 +243,10 @@ class BasicGateway extends AbstractGateway
     public function payment_scripts(string $gatewaySection): void
     {
         parent::payment_scripts($gatewaySection);
+
+        if ($this->canCheckoutLoadScriptsAndStyles()) {
+            $this->registerCheckoutScripts();
+        }
     }
 
     /**
@@ -256,14 +256,12 @@ class BasicGateway extends AbstractGateway
      */
     public function registerCheckoutScripts(): void
     {
+        parent::registerCheckoutScripts();
 
-        if ($this->mercadopago->hooks->gateway->isEnabled($this)) {
-            parent::registerCheckoutScripts();
-            $this->mercadopago->hooks->scripts->registerCheckoutScript(
-                'wc_mercadopago_sdk',
-                'https://sdk.mercadopago.com/js/v2'
-            );
-        }
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_sdk',
+            'https://sdk.mercadopago.com/js/v2'
+        );
     }
 
     /**
