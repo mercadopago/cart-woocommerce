@@ -1,7 +1,7 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "7.3.4",
+  "version": "7.3.5",
   "main": "main.js",
   "repository": {
     "type": "git",

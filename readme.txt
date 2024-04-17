@@ -2,9 +2,9 @@
 Contributors:
 Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
-Tested up to: 6.4
+Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 7.3.4
+Stable tag: 7.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,8 +137,7 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 == Changelog ==
 
 * Fixed:
-- Thankyou page redirect for PIX and Ticket Payments working again.
-- Prevents type error on checkout screen due to amount values.
-- Removed console error message when custom checkout is not enabled.
+- Checked field on checkout now validated.
+- Rollback SDK dependency.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).
