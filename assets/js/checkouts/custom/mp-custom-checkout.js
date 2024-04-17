@@ -382,7 +382,7 @@ jQuery(document).on('updated_checkout', function () {
   const checkoutCustomPaymentMethodElement = document.getElementById('payment_method_woo-mercado-pago-custom');
 
   // Checkout Custom is not selected, so we can stop checking
-  if (checkoutCustomPaymentMethodElement || checkoutCustomPaymentMethodElement.checked) {
+  if (checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked) {
     if (cardFormMounted) {
       cardForm.unmount();
     }

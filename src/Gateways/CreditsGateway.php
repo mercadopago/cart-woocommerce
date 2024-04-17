@@ -455,7 +455,6 @@ class CreditsGateway extends AbstractGateway
                     'banner_link'            => $this->storeTranslations['banner_link'],
                     'modal_title'            => $this->storeTranslations['modal_title'],
                     'modal_subtitle'         => $this->storeTranslations['modal_subtitle'],
-                    'modal_how_to'           => $this->storeTranslations['modal_how_to'],
                     'modal_step_1'           => $this->storeTranslations['modal_step_1'],
                     'modal_step_2'           => $this->storeTranslations['modal_step_2'],
                     'modal_step_3'           => $this->storeTranslations['modal_step_3'],
