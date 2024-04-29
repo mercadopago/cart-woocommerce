@@ -18,6 +18,7 @@ use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\IO\Downloader;
+use MercadoPago\Woocommerce\Funnel\Funnel;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -106,6 +107,11 @@ class Settings
     private $downloader;
 
     /**
+     * @var Funnel
+     */
+    private $funnel;
+
+    /**
      * Settings constructor
      *
      * @param Admin $admin
@@ -122,6 +128,7 @@ class Settings
      * @param Session $session
      * @param Logs $logs
      * @param Downloader $downloader
+     * @param Funnel $funnel
      */
     public function __construct(
         Admin $admin,
@@ -137,7 +144,8 @@ class Settings
         CurrentUser $currentUser,
         Session $session,
         Logs $logs,
-        Downloader $downloader
+        Downloader $downloader,
+        Funnel $funnel
     ) {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
@@ -153,6 +161,7 @@ class Settings
         $this->session      = $session;
         $this->logs         = $logs;
         $this->downloader   = $downloader;
+        $this->funnel       = $funnel;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -161,11 +170,13 @@ class Settings
         $this->plugin->registerOnPluginCredentialsUpdate(function () {
             $this->seller->updatePaymentMethods();
             $this->seller->updatePaymentMethodsBySiteId();
+            $this->funnel->updateStepCredentials();
         });
 
         $this->plugin->registerOnPluginTestModeUpdate(function () {
             $this->seller->updatePaymentMethods();
             $this->seller->updatePaymentMethodsBySiteId();
+            $this->funnel->updateStepPluginMode();
         });
     }
 

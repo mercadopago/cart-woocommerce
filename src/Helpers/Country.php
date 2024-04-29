@@ -120,6 +120,31 @@ final class Country
     }
 
     /**
+     * Convert Mercado Pago country to siteId
+     *
+     * @param $country
+     *
+     * @return string
+     */
+    public function countryToSiteId($country): string
+    {
+        $countryToSiteId = [
+            self::SITE_ID_MLA => self::COUNTRY_SUFFIX_MLA,
+            self::COUNTRY_SUFFIX_MLA => self::SITE_ID_MLA,
+            self::COUNTRY_SUFFIX_MLB => self::SITE_ID_MLB,
+            self::COUNTRY_SUFFIX_MLM => self::SITE_ID_MLM,
+            self::COUNTRY_SUFFIX_MLC => self::SITE_ID_MLC,
+            self::COUNTRY_SUFFIX_MLU => self::SITE_ID_MLU,
+            self::COUNTRY_SUFFIX_MCO => self::SITE_ID_MCO,
+            self::COUNTRY_SUFFIX_MPE => self::SITE_ID_MPE,
+        ];
+
+        return array_key_exists($country, $countryToSiteId)
+            ? $countryToSiteId[$country]
+            : '';
+    }
+
+    /**
      * Get Wordpress default language configured.
      *
      * @return string

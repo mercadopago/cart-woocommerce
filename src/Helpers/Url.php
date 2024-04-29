@@ -94,6 +94,16 @@ final class Url
     }
 
     /**
+     * Get current tab
+     *
+     * @return string
+     */
+    public function getCurrentTab(): string
+    {
+        return isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : '';
+    }
+
+    /**
      * Get current url
      *
      * @return string
