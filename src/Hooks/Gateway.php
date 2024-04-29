@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+use MercadoPago\Woocommerce\Funnel\Funnel;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -49,6 +50,11 @@ class Gateway
     private $url;
 
     /**
+     * @var Funnel
+     */
+    private $funnel;
+
+    /**
      * Gateway constructor
      *
      * @param Options $options
@@ -57,6 +63,7 @@ class Gateway
      * @param Checkout $checkout
      * @param StoreTranslations $translations
      * @param Url $url
+     * @param Funnel $funnel
      */
     public function __construct(
         Options $options,
@@ -64,7 +71,8 @@ class Gateway
         Store $store,
         Checkout $checkout,
         StoreTranslations $translations,
-        Url $url
+        Url $url,
+        Funnel $funnel
     ) {
         $this->options      = $options;
         $this->template     = $template;
@@ -72,6 +80,7 @@ class Gateway
         $this->checkout     = $checkout;
         $this->translations = $translations;
         $this->url          = $url;
+        $this->funnel       = $funnel;
     }
 
     /**
@@ -192,7 +201,22 @@ class Gateway
             $sanitizedFields = apply_filters('woocommerce_settings_api_sanitized_fields_' . $gateway->id, $gateway->settings);
 
             $this->options->set($optionKey, $sanitizedFields);
+            $this->funnel->updateStepPaymentMethods();
         });
+    }
+
+    /**
+     * Add action for checkout tab on settings in woocommerce
+     *
+     * @return void
+     */
+    public function registerSaveCheckoutSettings(): void
+    {
+        if (empty($this->url->getCurrentSection())) {
+            add_action('woocommerce_settings_save_checkout', function () {
+                $this->funnel->updateStepPaymentMethods();
+            });
+        }
     }
 
     /**

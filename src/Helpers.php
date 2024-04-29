@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
+use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
@@ -59,6 +60,11 @@ class Helpers
      * @var CurrentUser
      */
     public $currentUser;
+
+    /**
+     * @var Gateways
+     */
+    public $gateways;
 
     /**
      * @var Images
@@ -113,6 +119,7 @@ class Helpers
         CreditsEnabled $creditsEnabled,
         Currency $currency,
         CurrentUser $currentUser,
+        Gateways $gateways,
         Images $images,
         Links $links,
         Nonce $nonce,
@@ -130,6 +137,7 @@ class Helpers
         $this->creditsEnabled = $creditsEnabled;
         $this->currency       = $currency;
         $this->currentUser    = $currentUser;
+        $this->gateways       = $gateways;
         $this->images         = $images;
         $this->links          = $links;
         $this->nonce          = $nonce;

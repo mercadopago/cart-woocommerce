@@ -29,6 +29,12 @@ class Plugin
      */
     public const ENABLE_CREDITS_ACTION = 'mp_enable_credits_action';
 
+
+    /**
+     * @const
+     */
+    public const EXECUTE_ACTIVATE_PLUGIN = 'mp_execute_activate';
+
     /**
      * Register to plugin update event
      *
@@ -136,5 +142,26 @@ class Plugin
     public function executeUpdateTestModeAction(): void
     {
         do_action(self::UPDATE_TEST_MODE_ACTION);
+    }
+
+    /**
+     * Register activate event event
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function registerActivatePlugin($callback)
+    {
+        add_action(self::EXECUTE_ACTIVATE_PLUGIN, $callback);
+    }
+
+    /**
+     * Execute plugin activate event
+     *
+     * @return void
+     */
+    public function executeActivatePluginAction(): void
+    {
+        do_action(self::EXECUTE_ACTIVATE_PLUGIN);
     }
 }

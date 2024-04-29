@@ -97,4 +97,9 @@ class PaymentMetadata
      * @var string
      */
     public $blocks_payment;
+
+    /**
+     * @var bool
+     */
+    public $auto_update;
 }

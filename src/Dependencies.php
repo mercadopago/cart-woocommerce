@@ -6,6 +6,7 @@ use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Cart;
 use MercadoPago\Woocommerce\Helpers\Images;
@@ -20,6 +21,7 @@ use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
+use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Notices;
@@ -195,6 +197,11 @@ class Dependencies
     public $currentUserHelper;
 
     /**
+     * @var Gateways
+     */
+    public $gatewaysHelper;
+
+    /**
      * @var Images
      */
     public $imagesHelper;
@@ -281,6 +288,11 @@ class Dependencies
     public $downloader;
 
     /**
+     * @var Funnel
+     */
+    public $funnel;
+
+    /**
      * Dependencies constructor
      */
     public function __construct()
@@ -318,6 +330,8 @@ class Dependencies
         $this->scriptsHook             = $this->setScripts();
         $this->adminTranslations       = $this->setAdminTranslations();
         $this->storeTranslations       = $this->setStoreTranslations();
+        $this->gatewaysHelper          = $this->setGatewaysHelper();
+        $this->funnel                  = $this->setFunnel();
         $this->gatewayHook             = $this->setGateway();
         $this->nonceHelper             = $this->setNonce();
         $this->orderStatus             = $this->setOrderStatus();
@@ -330,6 +344,7 @@ class Dependencies
         $this->creditsEnabledHelper    = $this->setCreditsEnabled();
         $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
         $this->cartHelper              = $this->setCart();
+        $this->funnel                  = $this->setFunnel();
 
         $this->hooks   = $this->setHooks();
         $this->helpers = $this->setHelpers();
@@ -421,7 +436,8 @@ class Dependencies
             $this->storeConfig,
             $this->checkoutHook,
             $this->storeTranslations,
-            $this->urlHelper
+            $this->urlHelper,
+            $this->funnel
         );
     }
 
@@ -458,6 +474,14 @@ class Dependencies
     private function setCurrentUser(): CurrentUser
     {
         return new CurrentUser($this->logs, $this->storeConfig);
+    }
+
+    /**
+     * @return Gateways
+     */
+    private function setGatewaysHelper(): Gateways
+    {
+        return new Gateways($this->storeConfig);
     }
 
     /**
@@ -562,7 +586,8 @@ class Dependencies
             $this->currentUserHelper,
             $this->sessionHelper,
             $this->logs,
-            $this->downloader
+            $this->downloader,
+            $this->funnel
         );
     }
 
@@ -575,6 +600,19 @@ class Dependencies
             $this->adminHook,
             $this->logs,
             $this->optionsHook
+        );
+    }
+
+    /**
+     * @return Funnel
+     */
+    private function setFunnel(): Funnel
+    {
+        return new Funnel(
+            $this->storeConfig,
+            $this->sellerConfig,
+            $this->countryHelper,
+            $this->gatewaysHelper
         );
     }
 
@@ -633,6 +671,7 @@ class Dependencies
             $this->creditsEnabledHelper,
             $this->currencyHelper,
             $this->currentUserHelper,
+            $this->gatewaysHelper,
             $this->imagesHelper,
             $this->linksHelper,
             $this->nonceHelper,

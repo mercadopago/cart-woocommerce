@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 7.3.5
+Stable tag: 7.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,8 +136,9 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-* Fixed:
-- Checked field on checkout now validated.
-- Rollback SDK dependency.
+* Added:
+- A system has been implemented to collect metrics for new sellers, with the aim of facilitating the onboarding of these first-time users. These metrics will allow us to generate ideas for improving the relationship between the plugin and the seller during the onboarding process.
+* Other improvements:
+- Updated dependencies (PHP SDK).
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

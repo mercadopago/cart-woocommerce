@@ -90,6 +90,10 @@ class Seller
     private const TEST_USER = '_test_user_v1';
 
     /**
+     * @const
+     */
+    private const AUTO_UPDATE_PLUGINS = 'auto_update_plugins';
+    /**
      * @var Cache
      */
     private $cache;
@@ -306,6 +310,15 @@ class Seller
         }
 
         return $this->getCredentialsAccessTokenProd();
+    }
+
+    /**
+     * @return string
+     */
+    public function getCustIdFromAT()
+    {
+        preg_match('/(\d+)$/', $this->getCredentialsAccessToken(), $matches);
+        return $matches[0];
     }
 
     /**
@@ -882,5 +895,19 @@ class Seller
                 'status' => 500,
             ];
         }
+    }
+    /**
+     * Get auto update mode
+     *
+     * @return bool
+     */
+    public function isAutoUpdate()
+    {
+        $auto_update_plugins = $this->options->get(self::AUTO_UPDATE_PLUGINS, '');
+
+        if (is_array($auto_update_plugins) && in_array('woocommerce-mercadopago/woocommerce-mercadopago.php', $auto_update_plugins)) {
+            return true;
+        }
+        return false;
     }
 }

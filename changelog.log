@@ -1,6 +1,12 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.4.0 (25/04/2024) =
+* Added:
+- A system has been implemented to collect metrics for new sellers, with the aim of facilitating the onboarding of these first-time users. These metrics will allow us to generate ideas for improving the relationship between the plugin and the seller during the onboarding process.
+* Other improvements:
+- Updated dependencies (PHP SDK).
+
 = v7.3.5 (17/04/2024) =
 * Fixed:
 - Checked field on checkout now validated.

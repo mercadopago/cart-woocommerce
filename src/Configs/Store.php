@@ -94,6 +94,21 @@ class Store
     /**
      * @const
      */
+    private const INSTALLATION_ID = '_mp_installation_id';
+
+    /**
+     * @const
+     */
+    private const INSTALLATION_KEY = '_mp_installation_key';
+
+    /**
+     * @const
+     */
+    private const EXECUTE_ACTIVATED_PLUGIN = '_mp_execute_activate';
+
+    /**
+     * @const
+     */
     private $availablePaymentGateways = [];
 
     /**
@@ -340,6 +355,54 @@ class Store
     public function setDismissedSavedCardsNotice(int $dismissedSavedCardsNotice): void
     {
         $this->options->set(self::DISMISSED_SAVED_CARDS_NOTICE, $dismissedSavedCardsNotice);
+    }
+
+    /**
+     * @return string
+     */
+    public function getInstallationKey(): string
+    {
+        return $this->options->get(self::INSTALLATION_KEY, '');
+    }
+
+    /**
+     * @return string
+     */
+    public function getInstallationId(): string
+    {
+        return $this->options->get(self::INSTALLATION_ID, '');
+    }
+
+    /**
+     * @return bool
+     */
+    public function getExecuteActivate(): bool
+    {
+        return $this->options->get(self::EXECUTE_ACTIVATED_PLUGIN, '') === 'yes';
+    }
+
+    /**
+     * @param string $execute
+     */
+    public function setExecuteActivate(string $execute): void
+    {
+        $this->options->set(self::EXECUTE_ACTIVATED_PLUGIN, $execute);
+    }
+
+    /**
+     * @param string $installationId
+     */
+    public function setInstallationId(string $installationId): void
+    {
+        $this->options->set(self::INSTALLATION_ID, $installationId);
+    }
+
+    /**
+     * @param string $installationKey
+     */
+    public function setInstallationKey(string $installationKey): void
+    {
+        $this->options->set(self::INSTALLATION_KEY, $installationKey);
     }
 
     /**

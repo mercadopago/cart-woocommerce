@@ -11,6 +11,7 @@ use MercadoPago\Woocommerce\Blocks\PixBlock;
 use MercadoPago\Woocommerce\Blocks\TicketBlock;
 use MercadoPago\Woocommerce\Blocks\PseBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
@@ -31,7 +32,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '7.3.5';
+    private const PLUGIN_VERSION = '7.4.0';
 
     /**
      * @const
@@ -137,6 +138,11 @@ class WoocommerceMercadoPago
      * @var StoreTranslations
      */
     public $storeTranslations;
+
+    /**
+     * @var Funnel
+     */
+    public static $funnel;
 
     /**
      * @var Country
@@ -273,6 +279,31 @@ class WoocommerceMercadoPago
         $this->hooks->plugin->executeCreditsAction();
         $this->hooks->plugin->executePluginLoadedAction();
         $this->verifyCredentialsForInstructionNotice();
+        $this->hooks->plugin->registerActivatePlugin([$this, 'activatePlugin']);
+        $this->hooks->gateway->registerSaveCheckoutSettings();
+        if ($this->storeConfig->getExecuteActivate()) {
+            $this->hooks->plugin->executeActivatePluginAction();
+        }
+    }
+
+    /**
+     * Function hook disabled plugin
+     *
+     * @return void
+     */
+    public function disablePlugin()
+    {
+        self::$funnel->updateStepDisable();
+    }
+
+    /**
+     * Function hook active plugin
+     *
+     * @return void
+     */
+    public function activatePlugin()
+    {
+        self::$funnel->isInstallationId() ? self::$funnel->updateStepActivate() : self::$funnel->getInstallationId();
     }
 
     /**
@@ -316,6 +347,8 @@ class WoocommerceMercadoPago
 
         // Country
         $this->country = $dependencies->countryHelper;
+
+        self::$funnel = $dependencies->funnel;
     }
 
     /**

@@ -244,7 +244,7 @@ abstract class AbstractTransaction
         $metadata->cpp_extra->module_version     = MP_VERSION;
         $metadata->blocks_payment                = $this->mercadopago->orderMetadata->getPaymentBlocks($this->order);
         $metadata->settings                      = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
-
+        $metadata->auto_update                   = $this->mercadopago->sellerConfig->isAutoUpdate();
         return $metadata;
     }
 
