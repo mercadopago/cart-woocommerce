@@ -1,6 +1,15 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.5.0 (14/05/2024) =
+*Added:
+- Enhanced visual experience: Based on user feedback, we've refined the Credits checkout experience to make it more visually appealing and user-friendly. The modal now provides clearer information, payment methods are displayed more informatively, and tooltips are less intrusive within the store layout.
+*Changed:
+- Configurable tooltip text: We've introduced a new setting in the Credits checkout that allows sellers to customize the text displayed in the Credits tooltip. This empowers sellers to tailor the checkout experience to their specific brand and messaging.
+- Support Component: we've added a parameter to the support access link via the plugin's admin so that we can have metrics on the source of support access
+*Fixed:
+- Payment method selection bug: We've addressed a bug in the checkout pro process that prevented the selected payment methods from being respected. This ensures that buyers can consistently use their preferred payment options.
+
 = v7.4.0 (25/04/2024) =
 * Added:
 - A system has been implemented to collect metrics for new sellers, with the aim of facilitating the onboarding of these first-time users. These metrics will allow us to generate ideas for improving the relationship between the plugin and the seller during the onboarding process.

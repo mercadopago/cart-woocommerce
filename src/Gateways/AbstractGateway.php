@@ -766,6 +766,47 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         );
     }
 
+      /**
+     * Generating tooltip selection component
+     *
+     * @param string $key
+     * @param array $settings
+     *
+     * @return string
+     */
+    public function generate_mp_tooltip_selection_html(string $key, array $settings): string
+    {
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
+            'admin/components/tooltip-selection.php',
+            [
+                'field_key'   => $this->get_field_key($key),
+                'field_value' => null,
+                'settings'    => $settings,
+            ]
+        );
+    }
+
+    /**
+     * Generating credits checkout example component
+     *
+     * @param string $key
+     * @param array $settings
+     *
+     * @return string
+     */
+    public function generate_mp_credits_checkout_example_html(string $key, array $settings): string
+    {
+        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
+            'admin/components/credits-checkout-example.php',
+            [
+                'field_key'   => $this->get_field_key($key),
+                'field_value' => null,
+                'settings'    => $settings,
+            ]
+        );
+    }
+
+
     /**
      * Update Option
      *
