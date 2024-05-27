@@ -182,4 +182,23 @@ class PaymentTest extends TestCase
         $this->assertTrue(is_array($actual));
         $this->assertEquals($expected, $actual['external_reference']);
     }
+
+    function testReadPaymentSuccess()
+    {
+        $this->paymentMock = PaymentMock::COMPLETE_PAYMENT;
+        $this->payment->setEntity($this->paymentMock);
+
+        $this->responseMock->expects(self::any())->method('getStatus')->willReturn(200);
+        $this->responseMock->expects(self::any())->method('getData')->willReturn($this->paymentMock);
+
+        $this->managerMock->expects(self::any())->method('getEntityUri')->willReturn('/v1/payments/:id');
+        $this->managerMock->expects(self::any())->method('getHeader')->willReturn([]);
+        $this->managerMock->expects(self::any())->method('execute')->willReturn($this->responseMock);
+        $this->managerMock->expects(self::any())->method('handleResponse')->willReturn($this->paymentMock);
+
+        $actual = $this->payment->read(array("id" => "25604645467"));
+
+        $this->assertEquals(json_encode($this->responseMock->getData()), json_encode($actual));
+    }
+
 }

@@ -3,6 +3,7 @@
 use MercadoPago\PP\Sdk\HttpClient\Response;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use PHPUnit\Framework\TestCase;
+use MercadoPago\PP\Sdk\Tests\Unit\Mock\CurlRequestMock;
 
 /**
  * Class CurlRequesterTest
@@ -26,7 +27,7 @@ class CurlRequesterTest extends TestCase
 
         $mock->expects(self::any())->method('curlGetInfo')->willReturn($apiResponse);
 
-        $mock->expects(self::any())->method('curlExec')->willReturn(json_encode('{"test":"123"}'));
+        $mock->expects(self::any())->method('curlExec')->willReturn(CurlRequestMock::CURL_EXEC_RESPONSE);
 
         if ($errno) {
             $mock->expects(self::any())->method('curlErrno')->willReturn($errno);
@@ -105,7 +106,8 @@ class CurlRequesterTest extends TestCase
     {
         $mockResponse = new Response();
         $mockResponse->setStatus(200);
-        $mockResponse->setData('{"test":"123"}');
+        $mockResponse->setData(json_decode('{"test":"123"}', true));
+        $mockResponse->setHeaders([]);
 
         $requester = $this->getPartialCurlRequesterMock(200, 0, '');
 

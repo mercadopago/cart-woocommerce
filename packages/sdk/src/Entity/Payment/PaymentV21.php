@@ -13,6 +13,7 @@ class PaymentV21 extends Payment
     {
         return array(
             'post' => '/ppcore/prod/transaction/v21/payments',
+            'get' => '/v1/payments/:id'
         );
     }
 }

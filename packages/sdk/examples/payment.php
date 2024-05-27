@@ -10,7 +10,7 @@
         echo "</pre>";
     }
 
-    $sdk = new Sdk( 'accessToken', 'platformId', 'productId', 'integratorId' );
+    $sdk = new Sdk( 'accessToken', 'platformId', 'productId', 'integratorId', 'publicKey' );
 
     $payment = $sdk->getPaymentInstance();
 
@@ -25,5 +25,9 @@
 
     debug(json_encode($payment->save()));
 
+    //Get Payment
+    debug(json_encode($payment->read(array(
+        "id" => $payment->id,
+    ))));
  ?>
  

@@ -13,11 +13,13 @@ class NotificationTest extends TestCase
         $configKeys = new ConfigKeys();
         $envVars = $configKeys->loadConfigs();
         $accessToken = $envVars['ACCESS_TOKEN'] ?? null;
+        $publicKey = $envVars['PUBLIC_KEY'] ?? null;
         $sdk = new Sdk(
             $accessToken,
             'ppcoreinternal',
             'ppcoreinternal',
-            ''
+            '',
+            $publicKey
         );
 
         return $sdk;
@@ -29,7 +31,7 @@ class NotificationTest extends TestCase
         $configKeys = new ConfigKeys();
         $envVars = $configKeys->loadConfigs();
         $notificationUrl = $envVars['NOTIFICATION_URL'] ?? null;
-
+        
         $sdk = $this->loadSdk();
         $payment = $sdk->getPaymentInstance();
 

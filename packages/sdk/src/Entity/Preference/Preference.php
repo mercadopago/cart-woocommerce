@@ -201,6 +201,7 @@ class Preference extends AbstractEntity implements RequesterEntityInterface
     {
         return array(
             'post' => '/v1/asgard/preferences',
+            'get' => '/checkout/preferences/:id'
         );
     }
 
@@ -228,5 +229,31 @@ class Preference extends AbstractEntity implements RequesterEntityInterface
     public function save()
     {
         return parent::save();
+    }
+
+    /**
+     * Retrieves a Preference from the Checkout/Preferences API.
+     *
+     * Upon invoking this method, a request is made to the Preferences API
+     * using the provided preference ID. Authentication is performed using
+     * the seller's access token, which should be previously configured in the default headers.
+     *
+     * Note: This method is inherited from the parent class but specialized for Preferences
+     *
+     * @param array $params Associative array containing the parameters for the read operation.
+     *                      It expects an "id" key with the Preference ID as its value.
+     *                      Example: $preference->read(['id' => '1093365129-96510955-ab0f-4dda-b1c1-40fcd1c3768d'])
+     *
+     * @return mixed The result of the read operation, typically an instance of
+     *               this Preference class populated with the retrieved data.
+     *
+     * @throws \Exception Throws an exception if something goes wrong during the read operation.
+     */
+    public function read(
+        array $params = [],
+        array $queryStrings = [],
+        bool $shouldTheExpectedResponseBeMappedOntoTheEntity = true
+    ) {
+        return parent::read($params, $queryStrings, true);
     }
 }

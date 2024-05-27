@@ -1,11 +1,12 @@
 {
   "name": "mp-plugins/php-sdk",
   "description": "Mercado Pago Plugins PHP-SDK",
-  "version": "1.9.0",
+  "version": "2.10.0",
   "type": "library",
   "scripts": {
     "lint": "./vendor/bin/phpcs -q --report=checkstyle --standard=PSR2 src",
-    "test": "./vendor/bin/phpunit --coverage-html coverage --coverage-clover clover.xml --coverage-text --testdox --colors=auto --testsuite pp-php-sdk-unit"
+    "test": "./vendor/bin/phpunit --coverage-html coverage --coverage-clover clover.xml --coverage-text --testdox --colors=auto --testsuite pp-php-sdk-unit",
+    "integration-test": "./vendor/bin/phpunit --testsuite pp-php-sdk-integration"
   },
   "autoload": {
     "psr-4": {

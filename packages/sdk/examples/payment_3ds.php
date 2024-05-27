@@ -11,7 +11,7 @@ use MercadoPago\PP\Sdk\Sdk;
         echo "</pre>";
     }
 
-    $sdk = new Sdk( 'accessToken', 'platformId', 'productId', 'integratorId' );
+    $sdk = new Sdk( 'accessToken', 'platformId', 'productId', 'integratorId', 'publicKey' );
 
     $payment = $sdk->getPaymentInstance();
 

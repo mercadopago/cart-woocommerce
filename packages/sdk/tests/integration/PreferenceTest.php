@@ -7,20 +7,27 @@ use MercadoPago\PP\Sdk\Sdk;
 
 class PreferenceTest extends TestCase
 {
-    private function loadPreference()
-    {
+
+    private function loadPreferenceSdk() {
         $configKeys = new ConfigKeys();
         $envVars = $configKeys->loadConfigs();
         $accessToken = $envVars['ACCESS_TOKEN'] ?? null;
+        $publicKey = $envVars['PUBLIC_KEY'] ?? null;
         $sdk = new Sdk(
             $accessToken,
             'ppcoreinternal',
             'ppcoreinternal',
-            ''
+            '',
+            $publicKey
         );
+        return $sdk->getPreferenceInstance(); 
+    }
 
-        $preference = $sdk->getPreferenceInstance();
-
+    private function loadPreference()
+    {
+        $configKeys = new ConfigKeys();
+        $envVars = $configKeys->loadConfigs();
+        $preference = $this->loadPreferenceSdk();
         $items = ["items" =>  
             [
                 "title" => "Dummy Title",
@@ -95,5 +102,31 @@ class PreferenceTest extends TestCase
         $this->expectExceptionMessage('items.1.quantity must be a number');
 
         $preference->save();
+    }
+
+    public function testGetPreferenceSucces()
+    {
+        $preferenceSdkInstance = $this->loadPreferenceSdk();
+        $preference = $this->loadPreference();
+        $responseSave = json_decode(json_encode($preference->save()));
+    
+        $responseRead = json_decode(json_encode($preferenceSdkInstance->read(array(
+            "id" => $responseSave->id,
+        ))));
+
+        $this->assertEquals($responseRead->items[0]->unit_price, $responseSave->items[0]->unit_price);
+        $this->assertEquals($responseRead->external_reference, $responseSave->external_reference);
+    }
+
+    public function testGetPreferenceNotFound()
+    {
+        $preferenceSdkInstance = $this->loadPreferenceSdk();
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('The preference with identifier 123 was not found');
+
+        $responseRead = json_decode(json_encode($preferenceSdkInstance->read(array(
+            "id" => "123",
+        ))));        
     }
 }

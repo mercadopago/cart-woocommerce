@@ -20,6 +20,16 @@ class TransactionData extends AbstractEntity
     protected $bank_info;
 
     /**
+     * @var string
+     */
+    protected $qr_code_base64;
+
+    /**
+     * @var string
+     */
+    protected $qr_code;
+
+    /**
      * TransactionData constructor.
      *
      * @param Manager|null $manager

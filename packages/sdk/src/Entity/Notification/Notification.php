@@ -207,8 +207,11 @@ class Notification extends AbstractEntity implements RequesterEntityInterface
      *
      * @throws \Exception Throws an exception if something goes wrong during the read operation.
      */
-    public function read(array $params = [])
-    {
-        return parent::read($params);
+    public function read(
+        array $params = [],
+        array $queryStrings = [],
+        bool $shouldTheExpectedResponseBeMappedOntoTheEntity = true
+    ) {
+        return parent::read($params, $queryStrings, true);
     }
 }
