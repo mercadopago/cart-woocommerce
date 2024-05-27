@@ -182,4 +182,25 @@ class ManagerTest extends TestCase
         $this->expectExceptionMessage('Internal API Error');
         $this->manager->handleResponse($this->responseMock, 'get');
     }
+
+    function testIsHeadersAsKeyAndValueMapTrue()
+    {
+        $customHeaders = ['x-header' => 'abc123'];
+        $actual = $this->manager->isHeadersAsKeyAndValueMap($customHeaders);
+        $this->assertTrue($actual);
+    }
+
+    function testIsHeadersAsKeyAndValueMapFalse()
+    {
+        $customHeaders = ['x-header: abc123'];
+        $actual = $this->manager->isHeadersAsKeyAndValueMap($customHeaders);
+        $this->assertFalse($actual);
+    }
+
+    function testSetHeadersAsKeyAndValueMap()
+    {
+        $customHeaders = ['x-header: abc123'];
+        $actual = $this->manager->setHeadersAsKeyAndValueMap($customHeaders);
+        $this->assertEquals(['x-header' => 'abc123'], $actual);
+    }
 }

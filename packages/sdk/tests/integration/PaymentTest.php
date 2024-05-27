@@ -7,20 +7,46 @@ use MercadoPago\PP\Sdk\Sdk;
 
 class PaymentTest extends TestCase
 {
-    private function loadPayment()
-    {
+
+    private function loadPaymentSdk() {
         $configKeys = new ConfigKeys();
         $envVars = $configKeys->loadConfigs();
         $accessToken = $envVars['ACCESS_TOKEN'] ?? null;
+        $publicKey = $envVars['PUBLIC_KEY'] ?? null;
         $sdk = new Sdk(
             $accessToken,
             'ppcoreinternal',
             'ppcoreinternal',
-            ''
+            '',
+            $publicKey
         );
+        $notificationUrl = $envVars['NOTIFICATION_URL'] ?? null;
+        $payment = $sdk->getPaymentInstance(); 
+        $payment->notification_url = $notificationUrl;
+        return $payment;
+    }
 
-        $payment = $sdk->getPaymentInstance();
+    private function loadPaymentSdkV21() {
+        $configKeys = new ConfigKeys();
+        $envVars = $configKeys->loadConfigs();
+        $accessToken = $envVars['ACCESS_TOKEN'] ?? null;
+        $publicKey = $envVars['PUBLIC_KEY'] ?? null;
+        $sdk = new Sdk(
+            $accessToken,
+            'ppcoreinternal',
+            'ppcoreinternal',
+            '',
+            $publicKey
+        );
+        $notificationUrl = $envVars['NOTIFICATION_URL'] ?? null;
+        $payment = $sdk->getPaymentV21Instance(); 
+        $payment->notification_url = $notificationUrl;
+        return $payment;
+    }
 
+    private function loadPayment()
+    {
+        $payment = $this->loadPaymentSdk();
         $payment->transaction_amount = 230;
         $payment->description = "Ergonomic Silk Shirt";
         $payment->payer->first_name = "Daniel";
@@ -36,18 +62,7 @@ class PaymentTest extends TestCase
 
     private function loadPaymentV21()
     {
-        $configKeys = new ConfigKeys();
-        $envVars = $configKeys->loadConfigs();
-        $accessToken = $envVars['ACCESS_TOKEN'] ?? null;
-        $sdk = new Sdk(
-            $accessToken,
-            'ppcoreinternal',
-            'ppcoreinternal',
-            ''
-        );
-
-        $payment = $sdk->getPaymentV2Instance();
-
+        $payment = $this->loadPaymentSdkV21();
         $payment->transaction_amount = 230;
         $payment->description = "Ergonomic Silk Shirt";
         $payment->payer->first_name = "Daniel";
@@ -66,14 +81,17 @@ class PaymentTest extends TestCase
         $configKeys = new ConfigKeys();
         $envVars = $configKeys->loadConfigs();
         $accessToken = $envVars['ACCESS_TOKEN_3DS'] ?? null;
+        $publicKey = $envVars['PUBLIC_KEY'] ?? null;
         $sdk = new Sdk(
             $accessToken,
             'ppcoreinternal',
             'ppcoreinternal',
-            ''
+            '',
+            $publicKey
         );
-
-        $payment = $sdk->getPaymentInstance();
+        $notificationUrl = $envVars['NOTIFICATION_URL'] ?? null;
+        $payment = $sdk->getPaymentInstance(); 
+        $payment->notification_url = $notificationUrl;
 
         $payment->transaction_amount = 230;
         $payment->description = "Ergonomic Silk Shirt";
@@ -123,7 +141,7 @@ class PaymentTest extends TestCase
         $this->assertEquals($response->payment_method_id, 'master');
         $this->assertEquals($response->payment_type_id, 'credit_card');
         $this->assertEquals($response->installments, 1);
-        $this->assertEquals($response->status_detail, "cc_rejected_other_reason");
+        $this->assertEquals($response->status_detail, "cc_rejected_bad_filled_other");
     }
 
     public function testPaymentV21SuccessCreditCard()
@@ -163,7 +181,7 @@ class PaymentTest extends TestCase
         $this->assertEquals($response->payment_method_id, 'master');
         $this->assertEquals($response->payment_type_id, 'credit_card');
         $this->assertEquals($response->installments, 1);
-        $this->assertEquals($response->status_detail, "cc_rejected_other_reason");
+        $this->assertEquals($response->status_detail, "cc_rejected_bad_filled_other");
     }
 
     public function testPaymentSuccessBoleto()
@@ -171,6 +189,12 @@ class PaymentTest extends TestCase
         $payment = $this->loadPayment();
 
         $payment->payment_method_id = "bolbradesco";
+        $payment->payer->address->zip_code = "000";
+        $payment->payer->address->street_name = "rua teste";
+        $payment->payer->address->street_number = "123";
+        $payment->payer->address->neighborhood = "neighborhood";
+        $payment->payer->address->city = "city";
+        $payment->payer->address->federal_unit = "federal_unit";
 
         $response = json_decode(json_encode($payment->save()));
 
@@ -231,6 +255,66 @@ class PaymentTest extends TestCase
         $this->assertEquals($response->payment_method_id, 'master');
         $this->assertEquals($response->payment_type_id, 'credit_card');
         $this->assertEquals($response->installments, 1);
-        $this->assertEquals($response->status_detail, "cc_rejected_other_reason");
+        $this->assertEquals($response->status_detail, "cc_rejected_bad_filled_other");
+    }
+
+    public function testGetPaymentSuccess()
+    {
+        $payment = $this->loadPayment();
+        $payment->payment_method_id = "pix";
+        $response = json_decode(json_encode($payment->save()));
+
+        $paymentInstance = $this->loadPaymentSdk();
+        $responseRead = json_decode(json_encode($paymentInstance->read(array(
+            "id" => $response->id,
+        ))));
+
+        $this->assertEquals($responseRead->id, $response->id);
+        $this->assertEquals($responseRead->status, $response->status);
+        $this->assertEquals($responseRead->payment_type_id, $response->payment_type_id);
+        $this->assertEquals($responseRead->payment_method_id, $response->payment_method_id);
+        $this->assertEquals($responseRead->transaction_details->total_paid_amount, $response->transaction_details->total_paid_amount);
+        $this->assertEquals($responseRead->transaction_details->installment_amount, $response->transaction_details->installment_amount);
+        $this->assertEquals($responseRead->point_of_interaction->transaction_data->qr_code_base64, $response->point_of_interaction->transaction_data->qr_code_base64);
+        $this->assertEquals($responseRead->point_of_interaction->transaction_data->qr_code, $response->point_of_interaction->transaction_data->qr_code);
+    }
+
+    public function testGetPaymentNotFound()
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Payment not found');
+        $paymentInstance = $this->loadPaymentSdk();
+        $responseRead = json_decode(json_encode($paymentInstance->read(array(
+            "id" => "123",
+        ))));
+    }
+
+    public function testGetPaymentSuccessV21()
+    {
+        $payment = $this->loadPayment();
+        $payment->payment_method_id = "pix";
+        $response = json_decode(json_encode($payment->save()));
+
+        $paymentInstance = $this->loadPaymentSdkV21();
+        $responseRead = json_decode(json_encode($paymentInstance->read(array(
+            "id" => $response->id,
+        ))));
+
+        $this->assertEquals($responseRead->id, $response->id);
+        $this->assertEquals($responseRead->status, $response->status);
+        $this->assertEquals($responseRead->payment_type_id, $response->payment_type_id);
+        $this->assertEquals($responseRead->payment_method_id, $response->payment_method_id);
+        $this->assertEquals($responseRead->transaction_details->total_paid_amount, $response->transaction_details->total_paid_amount);
+        $this->assertEquals($responseRead->transaction_details->installment_amount, $response->transaction_details->installment_amount);
+    }
+
+    public function testGetPaymentNotFoundV21()
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Payment not found');
+        $paymentInstance = $this->loadPaymentSdkV21();
+        $responseRead = json_decode(json_encode($paymentInstance->read(array(
+            "id" => "123",
+        ))));
     }
 }

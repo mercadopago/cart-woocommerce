@@ -16,10 +16,13 @@ use MercadoPago\PP\Sdk\Interfaces\RequesterEntityInterface;
  * taken during a payment transaction. Its main responsibility is to ensure a secure intermediation
  * between P&P and MercadoPago during payment creation.
  *
+ * @property int $id
+ * @property string $status
  * @property string $date_of_expiration
  * @property string $operation_type
  * @property string $issuer_id
  * @property string $payment_method_id
+ * @property string $payment_type_id
  * @property string $description
  * @property string $sponsor_id
  * @property string $counter_currency
@@ -58,6 +61,16 @@ use MercadoPago\PP\Sdk\Interfaces\RequesterEntityInterface;
 class Payment extends AbstractEntity implements RequesterEntityInterface
 {
     /**
+     * @var int
+     */
+    protected $id;
+
+    /**
+     * @var string
+     */
+    protected $status;
+
+    /**
      * @var string
      */
     protected $date_of_expiration;
@@ -76,6 +89,11 @@ class Payment extends AbstractEntity implements RequesterEntityInterface
      * @var string
      */
     protected $payment_method_id;
+
+    /**
+     * @var string
+     */
+    protected $payment_type_id;
 
     /**
      * @var string
@@ -293,6 +311,7 @@ class Payment extends AbstractEntity implements RequesterEntityInterface
     {
         return array(
             'post' => '/v1/asgard/payments',
+            'get' => '/v1/payments/:id'
         );
     }
 
@@ -333,6 +352,40 @@ class Payment extends AbstractEntity implements RequesterEntityInterface
      */
     public function save()
     {
+        unset($this->id);
+        unset($this->status);
+        unset($this->payment_type_id);
+        unset($this->transaction_details->total_paid_amount);
+        unset($this->transaction_details->installment_amount);
+        unset($this->transaction_details->external_resource_url);
+        unset($this->point_of_interaction->transaction_data->qr_code_base64);
+        unset($this->point_of_interaction->transaction_data->qr_code);
         return parent::save();
+    }
+
+     /**
+     * Retrieves a Payment from the v1/payments API.
+     *
+     * Upon invoking this method, a request is made to the Payments API
+     * using the provided Payment ID. Authentication is performed using
+     * the seller's access token, which should be previously configured in the default headers.
+     *
+     * Note: This method is inherited from the parent class but specialized for Payment
+     *
+     * @param array $params Associative array containing the parameters for the read operation.
+     *                      It expects an "id" key with the Payment ID as its value.
+     *                      Example: $payment->read(['id' => '123456789'])
+     *
+     * @return mixed The result of the read operation, typically an instance of
+     *               this Payment class populated with the retrieved data.
+     *
+     * @throws \Exception Throws an exception if something goes wrong during the read operation.
+     */
+    public function read(
+        array $params = [],
+        array $queryStrings = [],
+        bool $shouldTheExpectedResponseBeMappedOntoTheEntity = true
+    ) {
+        return parent::read($params, $queryStrings, true);
     }
 }

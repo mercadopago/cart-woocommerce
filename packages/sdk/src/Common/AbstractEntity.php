@@ -152,12 +152,17 @@ abstract class AbstractEntity implements \JsonSerializable, EntityInterface
      * Read method (GET).
      *
      * @param array $params
+     * @param array $queryStrings
+     * @param bool  $shouldTheExpectedResponseBeMappedOntoTheEntity
      *
      * @return mixed
      * @throws \Exception
      */
-    public function read(array $params = [])
-    {
+    public function read(
+        array $params = [],
+        array $queryStrings = [],
+        bool $shouldTheExpectedResponseBeMappedOntoTheEntity = true
+    ) {
         $method = 'get';
         $class  = get_called_class();
         $entity = new $class($this->manager);
@@ -165,10 +170,33 @@ abstract class AbstractEntity implements \JsonSerializable, EntityInterface
         $customHeaders = $this->getHeaders()['read'];
         $header        = $this->manager->getHeader($customHeaders);
 
-        $uri      = $this->manager->getEntityUri($entity, $method, $params);
+        $uri      = $this->manager->getEntityUri($entity, $method, $params, $queryStrings);
         $response = $this->manager->execute($entity, $uri, $method, $header);
         $this->obfuscateAuthorizationHeader($header);
-        return $this->manager->handleResponse($response, $method, $entity);
+        return $this->manager->handleResponse(
+            $response,
+            $method,
+            $shouldTheExpectedResponseBeMappedOntoTheEntity ? $entity : null
+        );
+    }
+
+    /**
+     * Save method (PUT).
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public function update()
+    {
+        $method = 'put';
+
+        $customHeaders = $this->getHeaders()['update'];
+        $header        = $this->manager->getHeader($customHeaders);
+
+        $uri      = $this->manager->getEntityUri($this, $method);
+        $response = $this->manager->execute($this, $uri, $method, $header);
+        $this->obfuscateAuthorizationHeader($header);
+        return $this->manager->handleResponse($response, $method);
     }
 
     /**
@@ -185,6 +213,46 @@ abstract class AbstractEntity implements \JsonSerializable, EntityInterface
         $header        = $this->manager->getHeader($customHeaders);
 
         $uri      = $this->manager->getEntityUri($this, $method);
+        $response = $this->manager->execute($this, $uri, $method, $header);
+        $this->obfuscateAuthorizationHeader($header);
+        return $this->manager->handleResponse($response, $method);
+    }
+
+    /**
+     * Save method (POST).
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public function saveWithResponseHeaders()
+    {
+        $method = 'post';
+
+        $customHeaders = $this->getHeaders()['save'];
+        $header        = $this->manager->getHeader($customHeaders);
+
+        $uri      = $this->manager->getEntityUri($this, $method);
+        $response = $this->manager->execute($this, $uri, $method, $header);
+        $this->obfuscateAuthorizationHeader($header);
+        return $this->manager->handleResponseWithHeaders($response);
+    }
+
+    /**
+     * Save method with params (POST).
+     *
+     * @param array $params
+     * @param array $queryStrings
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public function saveWithParams(array $params = [], array $queryStrings = [])
+    {
+        $method = 'post';
+        $customHeaders = $this->getHeaders()['save'];
+        $header        = $this->manager->getHeader($customHeaders);
+
+        $uri      = $this->manager->getEntityUri($this, $method, $params, $queryStrings);
         $response = $this->manager->execute($this, $uri, $method, $header);
         $this->obfuscateAuthorizationHeader($header);
         return $this->manager->handleResponse($response, $method);
@@ -215,7 +283,7 @@ abstract class AbstractEntity implements \JsonSerializable, EntityInterface
      */
     public function obfuscateAuthorizationHeader(array $headers)
     {
-        Sdk::$cache['last_headers'] = preg_replace('/(Authorization: Bearer) (.*)/i', '$1 xxx', $headers);
+        Sdk::$cache['last_headers'] = preg_replace('/(Authorization:) (.*)/i', '$1 xxx', $headers);
     }
 
     /**

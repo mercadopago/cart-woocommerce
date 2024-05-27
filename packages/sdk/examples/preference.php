@@ -10,7 +10,7 @@
         echo "</pre>";
     }
 
-    $sdk = new Sdk( 'accessToken', 'platformId', 'productId', 'integratorId' );
+    $sdk = new Sdk( 'accessToken', 'platformId', 'productId', 'integratorId', 'publicKey' );
 
     $preference = $sdk->getPreferenceInstance();
 

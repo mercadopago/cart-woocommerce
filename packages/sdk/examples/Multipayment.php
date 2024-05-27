@@ -10,8 +10,8 @@
         echo "</pre>";
     }
 
-    $sdk = new Sdk( 'accessToken', 'platformId', 'productId', 'integratorId' );
-
+    $sdk = new Sdk( 'accessToken', 'platformId', 'productId', 'integratorId', 'publicKey' );
+    
     //Payment with two Cards
     $multipayment = $sdk->getMultipaymentInstance();
 

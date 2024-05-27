@@ -4,27 +4,27 @@ namespace MercadoPago\PP\Sdk\Tests\Unit\Entity\Monitoring;
 
 use MercadoPago\PP\Sdk\HttpClient\Response;
 use MercadoPago\PP\Sdk\Common\Manager;
-use MercadoPago\PP\Sdk\Entity\Monitoring\MelidataError;
-use MercadoPago\PP\Sdk\Tests\Unit\Mock\MelidataErrorMock;
+use MercadoPago\PP\Sdk\Entity\Monitoring\DatadogEvent;
+use MercadoPago\PP\Sdk\Tests\Unit\Mock\DatadogEventMock;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Class MelidataErrorTest
+ * Class DatadogEventTest
  *
  * @package MercadoPago\PP\Sdk\Tests\Entity\Monitoring
  */
-class MelidataErrorTest extends TestCase
+class DatadogEventTest extends TestCase
 {
     /**
-     * @var MelidataError
+     * @var DatadogEvent
      */
-    private $melidataError;
+    private $datadogEvent;
 
     /**
      * @var array
      */
-    private $melidataErrorMock;
+    private $datadogEventMock;
 
     /**
      * @var MockObject
@@ -41,7 +41,7 @@ class MelidataErrorTest extends TestCase
      */
     protected function setUp(): void
     {
-        $this->melidataErrorMock = MelidataErrorMock::COMPLETE_MELIDATA_ERROR;
+        $this->datadogEventMock = DatadogEventMock::COMPLETE_DATADOG_EVENT;
 
         $this->managerMock = $this->getMockBuilder(Manager::class)
             ->disableOriginalConstructor()
@@ -51,34 +51,32 @@ class MelidataErrorTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->melidataError = new MelidataError($this->managerMock);
-        $this->melidataError->setEntity($this->melidataErrorMock);
+        $this->datadogEvent = new DatadogEvent($this->managerMock);
+        $this->datadogEvent->setEntity($this->datadogEventMock);
     }
 
     function testSubclassesTypes()
     {
-        $plugin = $this->melidataError->__get('plugin');
-        $platform = $this->melidataError->__get('platform');
-        $details = $this->melidataError->__get('details');
+        $platform = $this->datadogEvent->__get('platform');
+        $details = $this->datadogEvent->__get('details');
 
-        $this->assertInstanceOf("MercadoPago\PP\Sdk\Entity\Monitoring\Plugin", $plugin);
         $this->assertInstanceOf("MercadoPago\PP\Sdk\Entity\Monitoring\Platform", $platform);
         $this->assertIsArray($details);
     }
 
     function testGetAndSetSuccess()
     {
-        $this->melidataError->__set('target', 'XXX');
+        $this->datadogEvent->__set('value', 'success');
 
-        $actual = $this->melidataError->__get('target');
-        $expected = 'XXX';
+        $actual = $this->datadogEvent->__get('value');
+        $expected = 'success';
 
         $this->assertEquals($expected, $actual);
     }
 
     function testGetHeadersSuccess()
     {
-        $actual = $this->melidataError->getHeaders();
+        $actual = $this->datadogEvent->getHeaders();
 
         $this->assertTrue(is_array($actual));
         $this->assertArrayHasKey('read', $actual);
@@ -89,32 +87,32 @@ class MelidataErrorTest extends TestCase
 
     function testGetUriSuccess()
     {
-        $actual = $this->melidataError->getUris();
+        $actual = $this->datadogEvent->getUris();
 
         $this->assertTrue(is_array($actual));
     }
 
-    function testSaveSuccess()
+    function testRegisterSuccess()
     {
-        $this->responseMock->expects(self::any())->method('getStatus')->willReturn(201);
-        $this->responseMock->expects(self::any())->method('getData')->willReturn($this->melidataErrorMock);
+        $this->responseMock->expects(self::any())->method('getStatus')->willReturn(200);
+        $this->responseMock->expects(self::any())->method('getData')->willReturn($this->datadogEventMock);
 
-        $this->managerMock->expects(self::any())->method('getEntityUri')->willReturn('/ppcore/prod/monitor/v1/melidata/errors');
+        $this->managerMock->expects(self::any())->method('getEntityUri')->willReturn('/ppcore/prod/monitor/v1/event/datadog/core/unit_test');
         $this->managerMock->expects(self::any())->method('getHeader')->willReturn([]);
         $this->managerMock->expects(self::any())->method('execute')->willReturn($this->responseMock);
         $this->managerMock->expects(self::any())->method('handleResponse')->willReturn(true);
 
-        $actual = $this->melidataError->registerError();
+        $actual = $this->datadogEvent->register(array("team" => "core", "event_type"=> "unit_test"));
 
         $this->assertTrue($actual);
     }
 
     function testJsonSerializeSuccess()
     {
-        $actual = $this->melidataError->jsonSerialize();
-        $expected = 'error target';
+        $actual = $this->datadogEvent->jsonSerialize();
+        $expected = 'success';
 
         $this->assertTrue(is_array($actual));
-        $this->assertEquals($expected, $actual['target']);
+        $this->assertEquals($expected, $actual['value']);
     }
 }

@@ -27,6 +27,13 @@ class Response
     private $data;
 
     /**
+     * Response data
+     *
+     * @var array
+     **/
+    private $headers;
+
+    /**
      * Response constructor.
      */
     public function __construct()
@@ -75,5 +82,27 @@ class Response
     public function setData($data)
     {
         $this->data = $data;
+    }
+
+    /**
+     * Return the data of response
+     *
+     * @return array
+     **/
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    /**
+     * Set the data of response
+     *
+     * @param array $headers
+     *
+     * @return void
+     **/
+    public function setHeaders(array $headers)
+    {
+        $this->headers = $headers;
     }
 }

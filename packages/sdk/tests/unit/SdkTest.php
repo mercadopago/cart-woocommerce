@@ -63,7 +63,7 @@ class SdkTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->sdk = new Sdk('access_token', 'platform_id', 'product_id', 'integrator_id');
+        $this->sdk = new Sdk('access_token', 'platform_id', 'product_id', 'integrator_id', 'publicKey');
     }
 
     function testGetPreferenceSuccess()
@@ -122,10 +122,24 @@ class SdkTest extends TestCase
         $this->assertInstanceOf('MercadoPago\PP\Sdk\Entity\Payment\MultipaymentV21', $actual);
     }
 
-    function testGetMelidataErrorSuccess()
+    function testGetDatadogEventSuccess()
     {
-        $actual = $this->sdk->getMelidataErrorInstance();
+        $actual = $this->sdk->getDatadogEventInstance();
 
-        $this->assertInstanceOf('MercadoPago\PP\Sdk\Entity\Monitoring\MelidataError', $actual);
+        $this->assertInstanceOf('MercadoPago\PP\Sdk\Entity\Monitoring\DatadogEvent', $actual);
+    }
+
+    function testGetRegisterErrorLogSuccess()
+    {
+        $actual = $this->sdk->getRegisterErrorLogInstance();
+
+        $this->assertInstanceOf('MercadoPago\PP\Sdk\Entity\Monitoring\RegisterErrorLog', $actual);
+    }
+
+    function testGetMerchantOrderSuccess()
+    {
+        $actual = $this->sdk->getMerchantOrderInstance();
+
+        $this->assertInstanceOf('MercadoPago\PP\Sdk\Entity\MerchantOrder\MerchantOrder', $actual);
     }
 }
