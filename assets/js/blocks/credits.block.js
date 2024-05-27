@@ -81,6 +81,7 @@ const Content = (props) => {
     test_mode_link_src,
     checkout_benefits_title,
     checkout_benefits_items,
+    checkout_benefits_tip,
     checkout_redirect_text,
     checkout_redirect_src,
     checkout_redirect_alt,
@@ -103,12 +104,18 @@ const Content = (props) => {
             />
           ) : null}
 
-          <CheckoutBenefits
-            title={checkout_benefits_title}
-            items={checkout_benefits_items}
-            titleAlign="left"
-            listMode="count"
-          />
+          <div class="mp-credits-checkout-benefits">
+            <CheckoutBenefits
+              title={checkout_benefits_title}
+              items={checkout_benefits_items}
+              titleAlign="center"
+              listMode="image"
+            />
+          </div>
+
+          <div class="mp-checkout-pro-tip">
+              <p>{checkout_benefits_tip}</p>
+          </div>
 
           <ChoRedirectV2 text={checkout_redirect_text} src={checkout_redirect_src} alt={checkout_redirect_alt} />
         </div>

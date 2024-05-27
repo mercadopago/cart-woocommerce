@@ -156,49 +156,73 @@ class StoreTranslations
      */
     private function setCreditsCheckoutTranslations(): void
     {
-        $checkoutBenefits1 = sprintf(
-            '<b>%s</b> %s.',
-            __('Log in', 'woocommerce-mercadopago'),
-            __('or create an account in Mercado Pago. If you use Mercado Libre, you already have one!', 'woocommerce-mercadopago')
-        );
-
-        $checkoutBenefits2 = sprintf(
-            '%s <b>%s</b> %s.',
-            __('Know your available limit in Mercado Crédito and', 'woocommerce-mercadopago'),
-            __('choose how many installments', 'woocommerce-mercadopago'),
-            __('you want to pay', 'woocommerce-mercadopago')
-        );
-
-        $checkoutBenefits3 = sprintf(
-            '%s <b>%s</b>.',
-            __('Pay the installments as you prefer:', 'woocommerce-mercadopago'),
-            __('with money in your account, card of from the Mercado Pago app', 'woocommerce-mercadopago')
-        );
-
         $this->creditsCheckout = [
-            'test_mode_title'                  => __('No card installments in Test Mode', 'woocommerce-mercadopago'),
-            'test_mode_description'            => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
-            'test_mode_link_text'              => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
-            'checkout_benefits_title'          => __('How to use it?', 'woocommerce-mercadopago'),
-            'checkout_benefits_1'              => $checkoutBenefits1,
-            'checkout_benefits_2'              => $checkoutBenefits2,
-            'checkout_benefits_3'              => $checkoutBenefits3,
-            'checkout_redirect_text'           => __('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'),
-            'checkout_redirect_alt'            => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
-            'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
-            'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
-            'banner_title'                     => __('Pay in', 'woocommerce-mercadopago'),
-            'banner_title_bold'                => __('installments', 'woocommerce-mercadopago'),
-            'banner_title_end'                 => __('with Mercado Pago', 'woocommerce-mercadopago'),
-            'banner_link'                      => __('Read more', 'woocommerce-mercadopago'),
-            'modal_title'                      => __('Buy now and pay in installments with no card later!', 'woocommerce-mercadopago'),
-            'modal_subtitle'                   => __('100% online, without paperwork or monthly fees', 'woocommerce-mercadopago'),
-            'modal_step_1'                     => __('You can apply for your line of credit 100% online and securely.', 'woocommerce-mercadopago'),
-            'modal_step_2'                     => __('Do everything from the Mercado Pago app!', 'woocommerce-mercadopago'),
-            'modal_step_3'                     => __('No maintenance fees or additional costs.', 'woocommerce-mercadopago'),
-            'modal_footer'                     => __('Questions? ', 'woocommerce-mercadopago'),
-            'modal_footer_link'                => __('Check our FAQ', 'woocommerce-mercadopago'),
-            'modal_footer_end'                 => __('. Credit subject to approval.', 'woocommerce-mercadopago')
+            'test_mode_title'                           => __('No card installments in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_description'                     => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
+            'test_mode_link_text'                       => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'checkout_benefits_title'                   => __('Buy in up to 12 installments without credit cards', 'woocommerce-mercadopago'),
+            'checkout_benefits_installments_title'      => __('Choose the amount of installments', 'woocommerce-mercadopago'),
+            'checkout_benefits_installments_subtitle'   => __('Learn your credit limit on Mercado Credito and choose the amount of installments.', 'woocommerce-mercadopago'),
+            'checkout_benefits_installments_alt'        => __('Step 1', 'woocommerce-mercadopago'),
+            'checkout_benefits_confirm_title'           => __('Confirm your installments', 'woocommerce-mercadopago'),
+            'checkout_benefits_confirm_subtitle'        => __('Payment is credited immediately and 100% protected. ', 'woocommerce-mercadopago'),
+            'checkout_benefits_confirm_alt'             => __('Step 2', 'woocommerce-mercadopago'),
+            'checkout_benefits_payment_title'           => __('Pay month by month', 'woocommerce-mercadopago'),
+            'checkout_benefits_payment_subtitle'        => __('Pay from your Mercado Pago account with the method of your choice.', 'woocommerce-mercadopago'),
+            'checkout_benefits_payment_alt'             => __('Step 3', 'woocommerce-mercadopago'),
+            'checkout_benefits_tip'                     => __('If you don’t have Mercado Credito yet, activate it when paying.', 'woocommerce-mercadopago'),
+            'checkout_redirect_text'                    => __('Next, we’ll take you to Mercado Pago to log in and complete your purchase.', 'woocommerce-mercadopago'),
+            'checkout_redirect_alt'                     => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
+            'terms_and_conditions_description'          => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
+            'terms_and_conditions_link_text'            => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'tooltip_link'                              => __('Learn more', 'woocommerce-mercadopago'),
+            'modal_title'                               => __('Buy through Mercado Credito without cards and pay month by month', 'woocommerce-mercadopago'),
+            'modal_step_1'                              => __('Add your product to the cart and, for the payment, select Mercado Credito.', 'woocommerce-mercadopago'),
+            'modal_step_2'                              => __('Log in to Mercado Pago.', 'woocommerce-mercadopago'),
+            'modal_step_3'                              => __('Choose the amount of installments that best suit you and you’re all set!', 'woocommerce-mercadopago'),
+            'modal_footer'                              => __('Any Questions? Check our ', 'woocommerce-mercadopago'),
+            'modal_footer_link'                         => __('Help', 'woocommerce-mercadopago'),
+            'modal_footer_init'                         => __('Credit subject to approval.', 'woocommerce-mercadopago')
+        ];
+        $this->creditsCheckout = array_merge($this->creditsCheckout, $this->setCreditsTooltipTranslations());
+    }
+
+    /**
+     * Set credits tooltip translations
+     *
+     * @return array
+     */
+    private function setCreditsTooltipTranslations(): array
+    {
+        $tooltipComponentOption1 = sprintf(
+            '<b>%s</b> %s.',
+            __('Up to 12 installments without cards', 'woocommerce-mercadopago'),
+            __('through Mercado Credito', 'woocommerce-mercadopago')
+        );
+
+        $tooltipComponentOption2 = sprintf(
+            '<b>%s</b> %s.',
+            __('Buy now, pay later', 'woocommerce-mercadopago'),
+            __('through Mercado Credito', 'woocommerce-mercadopago')
+        );
+
+        $tooltipComponentOption3 = sprintf(
+            '%s <b>%s</b>.',
+            __('With Mercado Credito,', 'woocommerce-mercadopago'),
+            __('get it now and pay month by month', 'woocommerce-mercadopago')
+        );
+
+        $tooltipComponentOption4 = sprintf(
+            '<b>%s</b> %s.',
+            __('Pay in up to 12 installments', 'woocommerce-mercadopago'),
+            __('without credit card', 'woocommerce-mercadopago')
+        );
+
+        return [
+            'tooltip_component_option1'                 => $tooltipComponentOption1,
+            'tooltip_component_option2'                 => $tooltipComponentOption2,
+            'tooltip_component_option3'                 => $tooltipComponentOption3,
+            'tooltip_component_option4'                 => $tooltipComponentOption4,
         ];
     }
 

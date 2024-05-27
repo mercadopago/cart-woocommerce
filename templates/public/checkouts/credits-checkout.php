@@ -8,6 +8,7 @@
  * @var string $test_mode_link_src
  * @var string $checkout_benefits_title
  * @var string $checkout_benefits_items
+ * @var string $checkout_benefits_tip
  * @var string $checkout_redirect_text
  * @var string $checkout_redirect_src
  * @var string $checkout_redirect_alt
@@ -39,13 +40,21 @@ if (!defined('ABSPATH')) {
                 </div>
             <?php endif; ?>
 
-            <checkout-benefits
-                title="<?= esc_html($checkout_benefits_title) ?>"
-                title-align="left"
-                items="<?= esc_html($checkout_benefits_items) ?>"
-                list-mode='count'
-            >
-            </checkout-benefits>
+            <div class="mp-credits-checkout-benefits">
+                <div class="mp-checkout-pro-checkout-benefits">
+                    <checkout-benefits
+                        title="<?= esc_html($checkout_benefits_title) ?>"
+                        title-align="center"
+                        items="<?= esc_html($checkout_benefits_items) ?>"
+                        list-mode="image"
+                    >
+                    </checkout-benefits>
+                </div>
+            </div>
+
+            <div class="mp-checkout-pro-tip">
+                <p><?= esc_html($checkout_benefits_tip) ?></p>
+            </div>
 
             <div class="mp-checkout-pro-redirect">
                 <checkout-redirect-v2

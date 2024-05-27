@@ -62,6 +62,7 @@ class CreditsGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+        $this->setDefaultTooltip();
     }
 
     /**
@@ -86,6 +87,8 @@ class CreditsGateway extends AbstractGateway
         }
 
         parent::init_form_fields();
+
+        $currentTooltipOption = $this->mercadopago->hooks->options->getGatewayOption($this, 'tooltip_selection', 1);
 
         $this->form_fields = array_merge($this->form_fields, [
             'header' => [
@@ -112,7 +115,6 @@ class CreditsGateway extends AbstractGateway
                 'title'        => $this->adminTranslations['enabled_title'],
                 'subtitle'     => $this->adminTranslations['enabled_subtitle'],
                 'default'      => 'no',
-                'after_toggle' => $this->getCheckoutVisualization(),
                 'descriptions' => [
                     'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
                     'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
@@ -126,6 +128,7 @@ class CreditsGateway extends AbstractGateway
                 'desc_tip'    => $this->adminTranslations['title_desc_tip'],
                 'class'       => 'limit-title-max-length',
             ],
+            'checkout_visualization' => $this->getCheckoutVisualization(),
             'currency_conversion' => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['currency_conversion_title'],
@@ -141,11 +144,26 @@ class CreditsGateway extends AbstractGateway
                 'title'        => $this->adminTranslations['credits_banner_title'],
                 'subtitle'     => $this->adminTranslations['credits_banner_subtitle'],
                 'default'      => 'no',
-                'after_toggle' => $this->getCreditsInfoTemplate(),
                 'descriptions' => [
                     'enabled'  => $this->adminTranslations['credits_banner_descriptions_enabled'],
                     'disabled' => $this->adminTranslations['credits_banner_descriptions_disabled'],
                 ],
+            ],
+            'tooltip_section' => [
+                'type'  => 'title',
+                'title' => "",
+            ],
+            'tooltip_selection' => [
+                'type'  => 'mp_tooltip_selection',
+                'tooltip_component_title'           => $this->adminTranslations['tooltip_component_title'],
+                'tooltip_component_desc'            => $this->adminTranslations['tooltip_component_desc'],
+                'tooltip_component_example'         => $this->adminTranslations['tooltip_component_example'],
+                'tooltip_component_option1'         => $this->adminTranslations[$this->getTooltipKeyByID(1)],
+                'tooltip_component_option2'         => $this->adminTranslations[$this->getTooltipKeyByID(2)],
+                'tooltip_component_option3'         => $this->adminTranslations[$this->getTooltipKeyByID(3)],
+                'tooltip_component_option4'         => $this->adminTranslations[$this->getTooltipKeyByID(4)],
+                'tooltip_component_current_option'  => $this->adminTranslations[$this->getTooltipKeyByID($currentTooltipOption)],
+                'after_toggle'                      => $this->getCreditsInfoTemplate(),
             ],
             'advanced_configuration_title' => [
                 'type'  => 'title',
@@ -170,7 +188,7 @@ class CreditsGateway extends AbstractGateway
                 'text_with_link' => $this->adminTranslations['support_link_text_with_link'],
                 'text_after_link'    => $this->adminTranslations['support_link_text_after_link'],
                 'support_link'    => $this->links['docs_support_faq'],
-            ],
+            ]
         ]);
     }
 
@@ -220,6 +238,7 @@ class CreditsGateway extends AbstractGateway
             'test_mode_link_src'               => $this->links['docs_integration_test'],
             'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
             'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
+            'checkout_benefits_tip'            => $this->storeTranslations['checkout_benefits_tip'],
             'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
             'checkout_redirect_src'            => $checkoutRedirectSrc,
             'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
@@ -304,20 +323,18 @@ class CreditsGateway extends AbstractGateway
      *
      * @return string
      */
-    private function getCheckoutVisualization(): string
+    private function getCheckoutVisualization(): array
     {
         $siteId = strtoupper($this->mercadopago->sellerConfig->getSiteId());
 
-        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
-            'admin/components/credits-checkout-example.php',
-            [
-                'title'     => $this->adminTranslations['enabled_toggle_title'],
-                'subtitle'  => $this->adminTranslations['enabled_toggle_subtitle'],
-                'footer'    => $this->adminTranslations['enabled_toggle_footer'],
-                'pill_text' => $this->adminTranslations['enabled_toggle_pill_text'],
-                'image'     => $this->getCreditsPreviewImage($siteId),
-            ]
-        );
+        return [
+            'type'              => 'mp_credits_checkout_example',
+            'title'     => $this->adminTranslations['enabled_toggle_title'],
+            'subtitle'  => $this->adminTranslations['enabled_toggle_subtitle'],
+            'footer'    => $this->adminTranslations['enabled_toggle_footer'],
+            'pill_text' => $this->adminTranslations['enabled_toggle_pill_text'],
+            'image'     => $this->getCreditsPreviewImage($siteId),
+        ];
     }
 
     /**
@@ -418,9 +435,30 @@ class CreditsGateway extends AbstractGateway
     private function getBenefits(): array
     {
         return [
-            $this->storeTranslations['checkout_benefits_1'],
-            $this->storeTranslations['checkout_benefits_2'],
-            $this->storeTranslations['checkout_benefits_3'],
+            [
+                'title'    => $this->storeTranslations['checkout_benefits_installments_title'],
+                'subtitle' => $this->storeTranslations['checkout_benefits_installments_subtitle'],
+                'image'    => [
+                    'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/cellphone-installments', '.png', true),
+                    'alt' => $this->storeTranslations['checkout_benefits_installments_alt'],
+                ],
+            ],
+            [
+                'title'    => $this->storeTranslations['checkout_benefits_confirm_title'],
+                'subtitle' => $this->storeTranslations['checkout_benefits_confirm_subtitle'],
+                'image'    => [
+                    'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/confirm-payment', '.png', true),
+                    'alt' => $this->storeTranslations['checkout_benefits_confirm_alt'],
+                ],
+            ],
+            [
+                'title'    => $this->storeTranslations['checkout_benefits_payment_title'],
+                'subtitle' => $this->storeTranslations['checkout_benefits_payment_subtitle'],
+                'image'    => [
+                    'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/calendar-payment', '.png', true),
+                    'alt' => $this->storeTranslations['checkout_benefits_payment_alt'],
+                ],
+            ]
         ];
     }
 
@@ -446,21 +484,19 @@ class CreditsGateway extends AbstractGateway
 
             $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/products');
 
+            $tooltipId = $this->mercadopago->hooks->options->getGatewayOption($this, 'tooltip_selection');
             $this->mercadopago->hooks->template->getWoocommerceTemplate(
                 'public/products/credits-modal.php',
                 [
-                    'banner_title'           => $this->storeTranslations['banner_title'],
-                    'banner_title_bold'      => $this->storeTranslations['banner_title_bold'],
-                    'banner_title_end'       => $this->storeTranslations['banner_title_end'],
-                    'banner_link'            => $this->storeTranslations['banner_link'],
+                    'tooltip_html'           => $this->storeTranslations[$this->getTooltipKeyByID($tooltipId)],
+                    'tooltip_link'           => $this->storeTranslations['tooltip_link'],
                     'modal_title'            => $this->storeTranslations['modal_title'],
-                    'modal_subtitle'         => $this->storeTranslations['modal_subtitle'],
                     'modal_step_1'           => $this->storeTranslations['modal_step_1'],
                     'modal_step_2'           => $this->storeTranslations['modal_step_2'],
                     'modal_step_3'           => $this->storeTranslations['modal_step_3'],
                     'modal_footer'           => $this->storeTranslations['modal_footer'],
                     'modal_footer_link'      => $this->storeTranslations['modal_footer_link'],
-                    'modal_footer_end'       => $this->storeTranslations['modal_footer_end'],
+                    'modal_footer_init'       => $this->storeTranslations['modal_footer_init'],
                     'modal_footer_help_link' => $this->links['credits_faq_link'],
                 ]
             );
@@ -474,5 +510,23 @@ class CreditsGateway extends AbstractGateway
     {
         $this->mercadopago->hooks->options->setGatewayOption($this, 'enabled', 'yes');
         $this->mercadopago->hooks->options->setGatewayOption($this, 'credits_banner', 'yes');
+    }
+
+    /**
+     * Get the key to access tooltip translation
+     */
+    public function getTooltipKeyByID(int $id): string
+    {
+        return "tooltip_component_option" . (string) $id;
+    }
+
+    /**
+     * Set a default option for Tooltip
+     */
+    private function setDefaultTooltip(): void
+    {
+        if (empty($this->mercadopago->hooks->options->getGatewayOption($this, 'tooltip_selection'))) {
+            $this->mercadopago->hooks->options->setGatewayOption($this, 'tooltip_selection', 1);
+        }
     }
 }

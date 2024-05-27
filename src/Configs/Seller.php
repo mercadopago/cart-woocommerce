@@ -79,10 +79,6 @@ class Seller
      */
     private const CHECKOUT_PAYMENT_METHOD_PIX = '_mp_payment_methods_pix';
 
-    /**
-     * @const
-     */
-    private const ALL_PAYMENT_METHODS = '_all_payment_methods_v0';
 
     /**
      * @const
@@ -436,7 +432,7 @@ class Seller
      */
     public function getAllPaymentMethods()
     {
-        return $this->options->get(self::ALL_PAYMENT_METHODS, '');
+        return $this->options->get(self::CHECKOUT_BASIC_PAYMENT_METHODS, '');
     }
 
     /**
@@ -452,11 +448,10 @@ class Seller
         $exPaymentOptions = $this->getAllPaymentMethods();
 
         if (!empty($exPaymentOptions)) {
-            $options = explode(',', $exPaymentOptions);
-
-            foreach ($options as $option) {
-                if ($this->options->getGatewayOption($gateway, "ex_payments_$option", 'yes') === 'no') {
-                    $exPayments[] = $option;
+            foreach ($exPaymentOptions as $exPaymentOption) {
+                $paymentId = $exPaymentOption['id'];
+                if ($this->options->getGatewayOption($gateway, "ex_payments_$paymentId", 'yes') === 'no') {
+                    $exPayments[] = $paymentId;
                 }
             }
         }
