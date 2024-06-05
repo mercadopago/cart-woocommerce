@@ -287,13 +287,9 @@ class Scripts
      */
     public function registerPaymentBlockScript(string $name, string $file, string $version, array $deps = [], array $variables = []): void
     {
-        if (method_exists('WC_Blocks_Utils', 'has_block_in_page')) {
-            if (WC_Blocks_Utils::has_block_in_page(wc_get_page_id('checkout'), 'woocommerce/checkout')) {
-                wp_register_script($name, $file, $deps, $version, true);
-                if ($variables) {
-                    wp_localize_script($name, $name . self::SUFFIX, $variables);
-                }
-            }
+        wp_register_script($name, $file, $deps, $version, true);
+        if ($variables) {
+            wp_localize_script($name, $name . self::SUFFIX, $variables);
         }
     }
 

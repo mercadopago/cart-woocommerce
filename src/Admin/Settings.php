@@ -678,7 +678,7 @@ class Settings
         } catch (\Exception $e) {
             $this->logs->file->error('Mercado pago gave error to download log files: ' . $e->getMessage(), __CLASS__);
             http_response_code(500);
-            header("Location: " . admin_url("admin.php?page=wc-status&tab=logs"));
+            wp_safe_redirect(admin_url("admin.php?page=wc-status&tab=logs"));
             exit;
         }
     }

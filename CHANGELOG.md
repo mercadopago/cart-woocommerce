@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.5.1] - 2024-06-05
+### Fixed:
+- Addressed a problem where one could not change the layout to use woocommerce blocks feature, causing even some pages that use blocks beeing unable to load properly.
+- Addressed a vulnerability from prior releases that permitted authenticated attackers to access server configuration details from the seller host, ensuring enhanced security measures in the logs download endpoint.
+
 ## [7.5.0] - 2024-05-14
 ### Added:
 - Enhanced visual experience: Based on user feedback, we've refined the Credits checkout experience to make it more visually appealing and user-friendly. The modal now provides clearer information, payment methods are displayed more informatively, and tooltips are less intrusive within the store layout.
@@ -13,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support Component: we've added a parameter to the support access link via the plugin's admin so that we can have metrics on the source of support access
 ### Fixed:
 - Payment method selection bug: We've addressed a bug in the checkout pro process that prevented the selected payment methods from being respected. This ensures that buyers can consistently use their preferred payment options.
-
 
 ## [7.4.0] - 2024-04-25
 ### Added:
