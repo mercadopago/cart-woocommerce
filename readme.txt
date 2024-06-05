@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 7.5.0
+Stable tag: 7.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,12 +136,8 @@ Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks
 
 == Changelog ==
 
-*Added:
-- Enhanced visual experience: Based on user feedback, we've refined the Credits checkout experience to make it more visually appealing and user-friendly. The modal now provides clearer information, payment methods are displayed more informatively, and tooltips are less intrusive within the store layout.
-*Changed:
-- Configurable tooltip text: We've introduced a new setting in the Credits checkout that allows sellers to customize the text displayed in the Credits tooltip. This empowers sellers to tailor the checkout experience to their specific brand and messaging.
-- Support Component: we've added a parameter to the support access link via the plugin's admin so that we can have metrics on the source of support access
 *Fixed:
-- Payment method selection bug: We've addressed a bug in the checkout pro process that prevented the selected payment methods from being respected. This ensures that buyers can consistently use their preferred payment options.
+- Addressed a problem where one could not change the layout to use woocommerce blocks feature, causing even some pages that use blocks beeing unable to load properly.
+- Addressed a vulnerability from prior releases that permitted authenticated attackers to access server configuration details from the seller host, ensuring enhanced security measures in the logs download endpoint.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

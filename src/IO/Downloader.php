@@ -97,13 +97,21 @@ class Downloader
     private function singleFileDownload(array $selectedFile): void
     {
         $filename = reset($selectedFile);
+
+        if (!$this->validateFilename($filename)) {
+            throw new \Exception('attempt to download the file ' . $filename . 'on ' .  __METHOD__);
+        }
+
         $file_path = WP_CONTENT_DIR . '/uploads/wc-logs/' . $filename;
+
         if (file_exists($file_path) && is_readable($file_path)) {
-            header('Content-Type: application/octet-stream');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Type: application/octet-stream');
             header('Content-Length: ' . filesize($file_path));
             readfile($file_path);
             exit;
+        } else {
+            throw new \Exception('error to download log file ' . __METHOD__);
         }
     }
 
@@ -116,21 +124,61 @@ class Downloader
     {
         $zip = new \ZipArchive();
         $temp_file = tempnam(sys_get_temp_dir(), 'logs_');
+
         if ($zip->open($temp_file, \ZipArchive::CREATE) === true) {
             foreach ($selectedFiles as $filename) {
+                if (!$this->validateFilename($filename)) {
+                    continue;
+                }
+
                 $file_path = WP_CONTENT_DIR . '/uploads/wc-logs/' . $filename;
+
                 if (file_exists($file_path) && is_readable($file_path)) {
                     $zip->addFile($file_path, $filename);
                 }
             }
             $zip->close();
 
-            header('Content-Type: application/zip');
             header('Content-Disposition: attachment; filename="mercado-pago-logs.zip"');
+            header('Content-Type: application/zip');
             header('Content-Length: ' . filesize($temp_file));
             readfile($temp_file);
             unlink($temp_file);
             exit;
+        } else {
+            throw new \Exception('error to download log files ' . __METHOD__);
         }
+    }
+
+    /**
+     * Validates a filename to prevent path traversal attempts and ensure expected format.
+     *
+     * @param string $filename The filename to be validated
+     *
+     * @return bool True if the filename is valid, false otherwise
+     */
+    private function validateFilename(string $filename): bool
+    {
+        return $this->hasAllowedExtension($filename) &&
+            $this->hasNoDisallowedCharacters($filename) &&
+            $this->containsExpectedTerms($filename);
+    }
+
+    private function hasAllowedExtension(string $filename): bool
+    {
+        $allowed_pattern = '/\.log$/';
+        return (bool)preg_match($allowed_pattern, $filename);
+    }
+
+    private function hasNoDisallowedCharacters(string $filename): bool
+    {
+        $disallowed = array('..', '/', '\\', '.php', '.ini', '.exe', '.bat', '.sh', '.js', '.py', '.pl', '.sql', '.mdb', '.sqlite', '.zip', '.tar', '.gz', '.htaccess');
+        return empty(array_intersect($disallowed, array($filename)));
+    }
+
+    private function containsExpectedTerms(string $filename): bool
+    {
+        $allowed_pattern = '/mercadopago|MercadoPago|fatal-errors/';
+        return (bool)preg_match($allowed_pattern, $filename);
     }
 }

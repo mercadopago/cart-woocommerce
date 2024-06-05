@@ -1,6 +1,11 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.5.1 (05/06/2024) =
+*Fixed:
+- Addressed a problem where one could not change the layout to use woocommerce blocks feature, causing even some pages that use blocks beeing unable to load properly.
+- Addressed a vulnerability from prior releases that permitted authenticated attackers to access server configuration details from the seller host, ensuring enhanced security measures in the logs download endpoint.
+
 = v7.5.0 (14/05/2024) =
 *Added:
 - Enhanced visual experience: Based on user feedback, we've refined the Credits checkout experience to make it more visually appealing and user-friendly. The modal now provides clearer information, payment methods are displayed more informatively, and tooltips are less intrusive within the store layout.
