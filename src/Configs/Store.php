@@ -59,6 +59,11 @@ class Store
     /**
      * @const
      */
+    private const CRON_SYNC_MODE = '_mp_cron_sync_mode';
+
+    /**
+     * @const
+     */
     private const DISMISSED_REVIEW_NOTICE = '_mp_dismiss_review';
 
     /**
@@ -292,6 +297,22 @@ class Store
     public function setCustomDomainOptions(string $customDomainOptions): void
     {
         $this->options->set(self::CUSTOM_DOMAIN_OPTIONS, $customDomainOptions);
+    }
+
+    /**
+     * @return string
+     */
+    public function getCronSyncMode(): string
+    {
+        return $this->options->get(self::CRON_SYNC_MODE, 'no');
+    }
+
+    /**
+     * @param string $cronSyncMode
+     */
+    public function setCronSyncMode(string $cronSyncMode): void
+    {
+        $this->options->set(self::CRON_SYNC_MODE, $cronSyncMode);
     }
 
     /**

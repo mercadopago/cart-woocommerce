@@ -1,7 +1,7 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "7.5.1",
+  "version": "7.6.1",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -12,8 +12,6 @@
     "build:js": "node -e 'require(\"./main.js\").minifyFiles(\"js\")'",
     "build:css": "node -e 'require(\"./main.js\").minifyFiles(\"css\")'",
     "build:webpack": "wp-scripts build assets/js/blocks/**.js",
-    "php:fix": "composer phpcbf",
-    "php:lint": "composer phpcs",
     "js:lint": "jshint",
     "pot": "node -e 'require(\"./main.js\").generatePotFiles()'",
     "prebuild:narciso": "sh packages/narciso/bin/pre-assets.sh",

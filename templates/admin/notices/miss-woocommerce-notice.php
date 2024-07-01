@@ -6,6 +6,7 @@
  * @var string $installLink
  * @var string $missWoocommerceAction
  * @var array $translations
+ * @var array $allowedHtmlTags
  *
  * @see \MercadoPago\Woocommerce\WoocommerceMercadoPago
  */
@@ -23,20 +24,20 @@ if (!defined('ABSPATH')) {
         </div>
 
         <div class="mp-right-alert">
-            <p><?= $translations['miss_woocommerce'] ?></p>
+            <p><?= wp_kses($translations['miss_woocommerce'], $allowedHtmlTags) ?></p>
 
             <p>
                 <?php if ($missWoocommerceAction === 'active') : ?>
                     <a class="button button-primary" href="<?= esc_html($activateLink) ?>">
-                        <?= $translations['activate_woocommerce'] ?>
+                        <?= wp_kses($translations['activate_woocommerce'], $allowedHtmlTags) ?>
                     </a>
                 <?php elseif ($missWoocommerceAction === 'install') : ?>
                     <a class="button button-primary" href="<?= esc_html($installLink) ?>">
-                        <?= $translations['install_woocommerce'] ?>
+                        <?= wp_kses($translations['install_woocommerce'], $allowedHtmlTags) ?>
                     </a>
                 <?php else : ?>
                     <a class="button button-primary" href="https://wordpress.org/plugins/woocommerce/">
-                        <?= $translations['see_woocommerce'] ?>
+                        <?= wp_kses($translations['see_woocommerce'], $allowedHtmlTags) ?>
                     </a>
                 <?php endif; ?>
             </p>

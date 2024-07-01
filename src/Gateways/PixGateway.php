@@ -194,7 +194,8 @@ class PixGateway extends AbstractGateway
         $order    = wc_get_order($order_id);
         try {
             parent::process_payment($order_id);
-            $checkout = Form::sanitizeFromData($_POST);
+
+            $checkout = Form::sanitizedPostData();
 
             if (isset($_POST['wc-woo-mercado-pago-pix-new-payment-method'])) {
                 $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
@@ -215,38 +216,9 @@ class PixGateway extends AbstractGateway
             $response          = $this->transaction->createPayment();
 
             if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
-
-                $this->handleWithRejectPayment($response);
-
-                if (
-                    $response['status'] === 'pending' && (
-                        $response['status_detail'] === 'pending_waiting_payment' ||
-                        $response['status_detail'] === 'pending_waiting_transfer'
-                    )
-                ) {
-                    $this->mercadopago->helpers->cart->emptyCart();
-
-                    $this->mercadopago->hooks->order->setPixMetadata($this, $order, $response);
-                    $this->mercadopago->hooks->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
-
-                    $urlReceived = $order->get_checkout_order_received_url();
-
-                    $description = "
-                        <div style='text-align: justify;'>
-                            <p>{$this->storeTranslations['congrats_title']}</p>
-                            <small>{$this->storeTranslations['congrats_subtitle']}</small>
-                        </div>
-                    ";
-
-                    $this->mercadopago->hooks->order->addOrderNote($order, $description, 1);
-
-                    return [
-                        'result'   => 'success',
-                        'redirect' => $urlReceived,
-                    ];
-                }
+                return $this->verifyPixPaymentResponse($response, $order);
             }
+
             throw new ResponseStatusException('exception : Unable to process payment on ' . __METHOD__);
         } catch (\Exception $e) {
             return $this->processReturnFail(
@@ -257,6 +229,50 @@ class PixGateway extends AbstractGateway
                 true
             );
         }
+    }
+
+    /**
+     * Verify and returns response for pix payment
+     *
+     * @param $response
+     * @param $order
+     *
+     * @return array
+     */
+    private function verifyPixPaymentResponse($response, $order): array
+    {
+        $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
+
+        $this->handleWithRejectPayment($response);
+
+        if (
+            $response['status'] === 'pending' && (
+            $response['status_detail'] === 'pending_waiting_payment' ||
+            $response['status_detail'] === 'pending_waiting_transfer'
+            )
+        ) {
+            $this->mercadopago->helpers->cart->emptyCart();
+
+            $this->mercadopago->hooks->order->setPixMetadata($this, $order, $response);
+            $this->mercadopago->hooks->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
+
+            $urlReceived = $order->get_checkout_order_received_url();
+
+            $description = "
+                <div style='text-align: justify;'>
+                <p>{$this->storeTranslations['congrats_title']}</p>
+                <small>{$this->storeTranslations['congrats_subtitle']}</small>
+                </div>
+            ";
+
+            $this->mercadopago->hooks->order->addOrderNote($order, $description, 1);
+
+            return [
+                'result'   => 'success',
+                'redirect' => $urlReceived,
+            ];
+        }
+        throw new ResponseStatusException('exception : Unable to process payment on ' . __METHOD__);
     }
 
     /**
@@ -433,7 +449,7 @@ class PixGateway extends AbstractGateway
      */
     public function generatePixImage(): void
     {
-        $orderId = Form::sanitizeTextFromGet('id');
+        $orderId = Form::sanitizedGetData('id');
         if (!$orderId) {
             $this->mercadopago->helpers->images->getErrorImage();
         }

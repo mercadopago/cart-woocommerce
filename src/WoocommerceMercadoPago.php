@@ -16,12 +16,13 @@ use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\Strings;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -32,7 +33,7 @@ class WoocommerceMercadoPago
     /**
      * @const
      */
-    private const PLUGIN_VERSION = '7.5.1';
+    private const PLUGIN_VERSION = '7.6.1';
 
     /**
      * @const
@@ -488,6 +489,8 @@ class WoocommerceMercadoPago
         add_action(
             'admin_notices',
             function () {
+                $strings = new Strings();
+                $allowedHtmlTags = $strings->getAllowedHtmlTags();
                 $isInstalled = false;
                 $currentUserCanInstallPlugins = current_user_can('install_plugins');
 

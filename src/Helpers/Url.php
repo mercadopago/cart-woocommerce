@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use MercadoPago\Woocommerce\Helpers\Form;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -80,7 +82,7 @@ final class Url
      */
     public function getCurrentPage(): string
     {
-        return isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+        return isset($_GET['page']) ? Form::sanitizedGetData('page') : '';
     }
 
     /**
@@ -90,7 +92,7 @@ final class Url
      */
     public function getCurrentSection(): string
     {
-        return isset($_GET['section']) ? sanitize_text_field($_GET['section']) : '';
+        return isset($_GET['section']) ? Form::sanitizedGetData('section') : '';
     }
 
     /**
@@ -100,7 +102,7 @@ final class Url
      */
     public function getCurrentTab(): string
     {
-        return isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : '';
+        return isset($_GET['tab']) ? Form::sanitizedGetData('tab') : '';
     }
 
     /**
@@ -110,7 +112,7 @@ final class Url
      */
     public function getCurrentUrl(): string
     {
-        return isset($_SERVER['REQUEST_URI']) ? sanitize_text_field($_SERVER['REQUEST_URI']) : '';
+        return isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
     }
 
     /**
@@ -130,7 +132,7 @@ final class Url
      */
     public function getServerAddress(): string
     {
-        return isset($_SERVER['SERVER_ADDR']) ? sanitize_text_field($_SERVER['SERVER_ADDR']) : '127.0.0.1';
+        return isset($_SERVER['SERVER_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['SERVER_ADDR'])) : '127.0.0.1';
     }
 
     /**

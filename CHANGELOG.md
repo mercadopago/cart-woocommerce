@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.1] - 2024-06-26
+### Fix:
+- Addressed an funnel metrics issue 
+
+## [7.6.0] - 2024-06-26
+### Added:
+- Integration with [WooCommerce QIT](https://qit.woo.com/docs/). QIT is a testing platform for WordPress Plugins and Themes developed by WooCommerce, allowing developers to run a series of managed tests out-of-the-box. 
+- Implementation of a fallback using WP-cron to resolve the issue of stores' orders remaining in pending status. This feature prevents orders from getting stuck in the pending process by actively updating passive orders, ensuring smoother order management.
+### Changed:
+- Incorporated code quality enhancements based on QIT recommendations.
+
 ## [7.5.1] - 2024-06-05
 ### Fixed:
 - Addressed a problem where one could not change the layout to use woocommerce blocks feature, causing even some pages that use blocks beeing unable to load properly.

@@ -6,7 +6,7 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 
 if (!defined('ABSPATH')) {

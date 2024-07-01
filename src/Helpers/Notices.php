@@ -383,7 +383,7 @@ class Notices
      */
     public function reviewNoticeDismiss(): void
     {
-        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizedPostData('nonce'));
         $this->currentUser->validateUserNeededPermissions();
 
         $this->store->setDismissedReviewNotice(1);
@@ -395,7 +395,7 @@ class Notices
      */
     public function savedCardsDismiss(): void
     {
-        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizedPostData('nonce'));
         $this->currentUser->validateUserNeededPermissions();
 
         $this->store->setDismissedSavedCardsNotice(1);

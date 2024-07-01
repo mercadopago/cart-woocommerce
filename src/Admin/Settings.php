@@ -10,12 +10,14 @@ use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
 use MercadoPago\Woocommerce\Helpers\Session;
+use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Hooks\Endpoints;
+use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Scripts;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\IO\Downloader;
 use MercadoPago\Woocommerce\Funnel\Funnel;
@@ -50,6 +52,11 @@ class Settings
      * @var Links
      */
     private $links;
+
+    /**
+     * @var Order
+     */
+    private $order;
 
     /**
      * @var Plugin
@@ -112,11 +119,17 @@ class Settings
     private $funnel;
 
     /**
+     * @var Strings
+     */
+    private $strings;
+
+    /**
      * Settings constructor
      *
      * @param Admin $admin
      * @param Endpoints $endpoints
      * @param Links $links
+     * @param Order $order
      * @param Plugin $plugin
      * @param Scripts $scripts
      * @param Seller $seller
@@ -129,11 +142,13 @@ class Settings
      * @param Logs $logs
      * @param Downloader $downloader
      * @param Funnel $funnel
+     * @param Strings $strings
      */
     public function __construct(
         Admin $admin,
         Endpoints $endpoints,
         Links $links,
+        Order $order,
         Plugin $plugin,
         Scripts $scripts,
         Seller $seller,
@@ -145,11 +160,13 @@ class Settings
         Session $session,
         Logs $logs,
         Downloader $downloader,
-        Funnel $funnel
+        Funnel $funnel,
+        Strings $strings
     ) {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
         $this->links        = $links;
+        $this->order        = $order;
         $this->plugin       = $plugin;
         $this->scripts      = $scripts;
         $this->seller       = $seller;
@@ -162,6 +179,7 @@ class Settings
         $this->logs         = $logs;
         $this->downloader   = $downloader;
         $this->funnel       = $funnel;
+        $this->strings      = $strings;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -177,6 +195,10 @@ class Settings
             $this->seller->updatePaymentMethods();
             $this->seller->updatePaymentMethodsBySiteId();
             $this->funnel->updateStepPluginMode();
+        });
+
+        $this->plugin->registerOnPluginStoreInfoUpdate(function () {
+            $this->order->toggleSyncPendingStatusOrdersCron($this->store->getCronSyncMode());
         });
     }
 
@@ -306,6 +328,7 @@ class Settings
         $gatewaysTranslations    = $this->translations->gatewaysSettings;
         $testModeTranslations    = $this->translations->testModeSettings;
         $supportTranslations     = $this->translations->supportSettings;
+        $allowedHtmlTags         = $this->strings->getAllowedHtmlTags();
 
         $publicKeyProd   = $this->seller->getCredentialsPublicKeyProd();
         $accessTokenProd = $this->seller->getCredentialsAccessTokenProd();
@@ -319,6 +342,7 @@ class Settings
         $customDomainOptions = $this->store->getCustomDomainOptions();
         $integratorId        = $this->store->getIntegratorId();
         $debugMode           = $this->store->getDebugMode();
+        $cronSyncMode        = $this->store->getCronSyncMode();
 
         $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
         $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
@@ -471,8 +495,8 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $isTest    = Form::sanitizeTextFromPost('is_test');
-        $publicKey = Form::sanitizeTextFromPost('public_key');
+        $isTest    = Form::sanitizedPostData('is_test');
+        $publicKey = Form::sanitizedPostData('public_key');
 
         $validateCredentialsResponse = $this->seller->validatePublicKey($publicKey);
 
@@ -495,8 +519,8 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $isTest      = Form::sanitizeTextFromPost('is_test');
-        $accessToken = Form::sanitizeTextFromPost('access_token');
+        $isTest      = Form::sanitizedPostData('is_test');
+        $accessToken = Form::sanitizedPostData('access_token');
 
         $validateCredentialsResponse = $this->seller->validateAccessToken($accessToken);
 
@@ -520,33 +544,30 @@ class Settings
         try {
             $this->validateAjaxNonce();
 
-            $publicKeyProd   = Form::sanitizeTextFromPost('public_key_prod');
-            $accessTokenProd = Form::sanitizeTextFromPost('access_token_prod');
-            $publicKeyTest   = Form::sanitizeTextFromPost('public_key_test');
-            $accessTokenTest = Form::sanitizeTextFromPost('access_token_test');
+            $publicKeyProd   = Form::sanitizedPostData('public_key_prod');
+            $accessTokenProd = Form::sanitizedPostData('access_token_prod');
+            $publicKeyTest   = Form::sanitizedPostData('public_key_test');
+            $accessTokenTest = Form::sanitizedPostData('access_token_test');
 
             $validatePublicKeyProd   = $this->seller->validatePublicKey($publicKeyProd);
             $validateAccessTokenProd = $this->seller->validateAccessToken($accessTokenProd);
             $validatePublicKeyTest   = $this->seller->validatePublicKey($publicKeyTest);
             $validateAccessTokenTest = $this->seller->validateAccessToken($accessTokenTest);
 
+            $validateAccessTokenProdData = $validateAccessTokenProd['data'];
+
             if (
                 $validatePublicKeyProd['status'] === 200 &&
                 $validateAccessTokenProd['status'] === 200 &&
                 $validatePublicKeyProd['data']['is_test'] === false &&
-                $validateAccessTokenProd['data']['is_test'] === false
+                $validateAccessTokenProdData['is_test'] === false
             ) {
                 $this->seller->setCredentialsPublicKeyProd($publicKeyProd);
                 $this->seller->setCredentialsAccessTokenProd($accessTokenProd);
-                $this->seller->setHomologValidate($validateAccessTokenProd['data']['homologated']);
-                $this->seller->setClientId($validateAccessTokenProd['data']['client_id']);
+                $this->seller->setHomologValidate($validateAccessTokenProdData['homologated']);
+                $this->seller->setClientId($validateAccessTokenProdData['client_id']);
 
-                $sellerInfo = $this->seller->getSellerInfo($accessTokenProd);
-                if ($sellerInfo['status'] === 200) {
-                    $this->store->setCheckoutCountry($sellerInfo['data']['site_id']);
-                    $this->seller->setSiteId($sellerInfo['data']['site_id']);
-                    $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
-                }
+                $this->setStoreAndSellerInfo($accessTokenProd);
 
                 if (
                     (empty($publicKeyTest) && empty($accessTokenTest)) || (
@@ -559,21 +580,7 @@ class Settings
                     $this->seller->setCredentialsPublicKeyTest($publicKeyTest);
                     $this->seller->setCredentialsAccessTokenTest($accessTokenTest);
 
-                    if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
-                        $this->store->setCheckboxCheckoutTestMode('no');
-                        $this->plugin->executeUpdateCredentialAction();
-
-                        $response = [
-                            'type'      => 'alert',
-                            'message'   => $this->translations->updateCredentials['no_test_mode_title'],
-                            'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
-                            'test_mode' => 'no',
-                        ];
-                        wp_send_json_error($response);
-                    } else {
-                        $this->plugin->executeUpdateCredentialAction();
-                        wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
-                    }
+                    $this->verifyAndUpdateCredentials($publicKeyTest, $accessTokenTest);
                 }
             }
 
@@ -604,13 +611,14 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $storeId              = Form::sanitizeTextFromPost('store_category_id');
-        $storeName            = Form::sanitizeTextFromPost('store_identificator');
-        $storeCategory        = Form::sanitizeTextFromPost('store_categories');
-        $customDomain         = Form::sanitizeTextFromPost('store_url_ipn');
-        $customDomainOptions  = Form::sanitizeTextFromPost('store_url_ipn_options');
-        $integratorId         = Form::sanitizeTextFromPost('store_integrator_id');
-        $debugMode            = Form::sanitizeTextFromPost('store_debug_mode');
+        $storeId              = Form::sanitizedPostData('store_category_id');
+        $storeName            = Form::sanitizedPostData('store_identificator');
+        $storeCategory        = Form::sanitizedPostData('store_categories');
+        $customDomain         = Form::sanitizedPostData('store_url_ipn');
+        $customDomainOptions  = Form::sanitizedPostData('store_url_ipn_options');
+        $integratorId         = Form::sanitizedPostData('store_integrator_id');
+        $debugMode            = Form::sanitizedPostData('store_debug_mode');
+        $cronSyncMode         = Form::sanitizedPostData('store_cron_config');
 
         $this->store->setStoreId($storeId);
         $this->store->setStoreName($storeName);
@@ -619,6 +627,7 @@ class Settings
         $this->store->setCustomDomainOptions($customDomainOptions);
         $this->store->setIntegratorId($integratorId);
         $this->store->setDebugMode($debugMode);
+        $this->store->setCronSyncMode($cronSyncMode);
 
         $this->plugin->executeUpdateStoreInfoAction();
 
@@ -634,8 +643,8 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $checkoutTestMode    = Form::sanitizeTextFromPost('input_mode_value');
-        $verifyAlertTestMode = Form::sanitizeTextFromPost('input_verify_alert_test_mode');
+        $checkoutTestMode    = Form::sanitizedPostData('input_mode_value');
+        $verifyAlertTestMode = Form::sanitizedPostData('input_verify_alert_test_mode');
 
         $validateCheckoutTestMode = ($checkoutTestMode === 'yes');
 
@@ -667,7 +676,7 @@ class Settings
      */
     private function validateAjaxNonce(): void
     {
-        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+        $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizedPostData('nonce'));
         $this->currentUser->validateUserNeededPermissions();
     }
 
@@ -680,6 +689,46 @@ class Settings
             http_response_code(500);
             wp_safe_redirect(admin_url("admin.php?page=wc-status&tab=logs"));
             exit;
+        }
+    }
+
+    /**
+     * Set store and seller information
+     *
+     * @return void
+     */
+    private function setStoreAndSellerInfo(string $accessToken = null): void
+    {
+        $sellerInfo = $this->seller->getSellerInfo($accessToken);
+        $siteId = $sellerInfo['data']['site_id'];
+        if ($sellerInfo['status'] === 200) {
+            $this->store->setCheckoutCountry($siteId);
+            $this->seller->setSiteId($siteId);
+            $this->seller->setTestUser(in_array('test_user', $sellerInfo['data']['tags'], true));
+        }
+    }
+
+    /**
+     * Verify test mode and update credentials
+     *
+     * @return void
+     */
+    private function verifyAndUpdateCredentials(string $publicKeyTest = null, string $accessTokenTest = null): void
+    {
+        if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
+            $this->store->setCheckboxCheckoutTestMode('no');
+            $this->plugin->executeUpdateCredentialAction();
+
+            $response = [
+                'type'      => 'alert',
+                'message'   => $this->translations->updateCredentials['no_test_mode_title'],
+                'subtitle'  => $this->translations->updateCredentials['no_test_mode_subtitle'],
+                'test_mode' => 'no',
+            ];
+            wp_send_json_error($response);
+        } else {
+            $this->plugin->executeUpdateCredentialAction();
+            wp_send_json_success($this->translations->updateCredentials['credentials_updated']);
         }
     }
 }

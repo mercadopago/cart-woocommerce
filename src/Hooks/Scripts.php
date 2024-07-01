@@ -5,7 +5,7 @@ namespace MercadoPago\Woocommerce\Hooks;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Configs\Seller;
-use WC_Blocks_Utils;
+use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
 
 if (!defined('ABSPATH')) {
     exit;

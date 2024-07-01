@@ -5,7 +5,7 @@ namespace MercadoPago\Woocommerce\Configs;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Helpers\Device;
 
 if (!defined('ABSPATH')) {
@@ -761,11 +761,9 @@ class Seller
             $headers = [];
             $uri     = '/plugins-credentials-wrapper/credentials';
 
-            if ($accessToken && !$publicKey) {
+            if ($accessToken) {
                 $headers[] = 'Authorization: Bearer ' . $accessToken;
-            }
-
-            if ($publicKey && !$accessToken) {
+            } elseif ($publicKey) {
                 $uri = $uri . '?public_key=' . $publicKey;
             }
 

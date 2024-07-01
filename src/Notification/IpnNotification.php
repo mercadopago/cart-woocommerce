@@ -7,7 +7,7 @@ use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Requester;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 

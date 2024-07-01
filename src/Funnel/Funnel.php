@@ -7,23 +7,10 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 
 class Funnel
 {
-    /**
-     * Defines on datadog that a event was successfull
-     *
-     * @const
-     */
-    private const EVENT_TYPE_SUCCESS = 'success';
-
-    /**
-     * Defines on datadog that a event was a failure
-     *
-     * @const
-     */
-    private const EVENT_TYPE_ERROR = 'error';
-
     /**
      * @var Sdk
      */
@@ -50,6 +37,11 @@ class Funnel
     private $gateways;
 
     /**
+     * @var Datadog
+     */
+    private $datadog;
+
+    /**
      * Funnel constructor
      *
      * @param Store $store
@@ -64,12 +56,13 @@ class Funnel
         $this->seller   = $seller;
         $this->country  = $country;
         $this->gateways = $gateways;
+        $this->datadog  = Datadog::getInstance();
     }
 
     public function getInstallationId(): void
     {
-        try {
-            if ($this->validateStartFunnel()) {
+        if ($this->validateStartFunnel()) {
+            $this->runWithTreatment(function () {
                 $createSellerFunnelBase = $this->sdk->getCreateSellerFunnelBaseInstance();
                 $createSellerFunnelBase->platform_id = MP_PLATFORM_ID;
                 $createSellerFunnelBase->shop_url = site_url();
@@ -79,18 +72,14 @@ class Funnel
                 $this->store->setInstallationId($response->id);
                 $this->store->setInstallationKey($response->cpp_token);
                 $this->store->setExecuteActivate('no');
-
-                $this->sendDatadogEvent(self::EVENT_TYPE_SUCCESS);
-            }
-        } catch (\Exception $e) {
-            $this->sendDatadogEvent(self::EVENT_TYPE_ERROR, $e->getMessage());
+            });
         }
     }
 
     public function updateStepCredentials(): void
     {
-        try {
-            if ($this->isInstallationId()) {
+        if ($this->isInstallationId()) {
+            $this->runWithTreatment(function () {
                 $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
                 $updateSellerFunnelBase->id = $this->store->getInstallationId();
                 $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
@@ -100,11 +89,7 @@ class Funnel
                 $updateSellerFunnelBase->cust_id = $this->seller->getCustIdFromAT();
                 $updateSellerFunnelBase->site_id = $this->country->countryToSiteId($this->country->getPluginDefaultCountry());
                 $updateSellerFunnelBase->update();
-
-                $this->sendDatadogEvent(self::EVENT_TYPE_SUCCESS);
-            }
-        } catch (\Exception $e) {
-            $this->sendDatadogEvent(self::EVENT_TYPE_ERROR, $e->getMessage());
+            });
         }
     }
 
@@ -115,87 +100,67 @@ class Funnel
      */
     public function updateStepPaymentMethods(): void
     {
-        try {
-            if ($this->isInstallationId()) {
+        if ($this->isInstallationId()) {
+            $this->runWithTreatment(function () {
                 $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
                 $updateSellerFunnelBase->id = $this->store->getInstallationId();
                 $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
                 $updateSellerFunnelBase->accepted_payments = $this->gateways->getEnabledPaymentGateways();
                 $updateSellerFunnelBase->update();
-
-                $this->sendDatadogEvent(self::EVENT_TYPE_SUCCESS);
-            }
-        } catch (\Exception $e) {
-            $this->sendDatadogEvent(self::EVENT_TYPE_ERROR, $e->getMessage());
+            });
         }
     }
 
     public function updateStepPluginMode(): void
     {
-        try {
-            if ($this->isInstallationId()) {
+        if ($this->isInstallationId()) {
+            $this->runWithTreatment(function () {
                 $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
                 $updateSellerFunnelBase->id = $this->store->getInstallationId();
                 $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
                 $updateSellerFunnelBase->plugin_mode = $this->getPluginMode();
                 $updateSellerFunnelBase->update();
-
-                $this->sendDatadogEvent(self::EVENT_TYPE_SUCCESS);
-            }
-        } catch (\Exception $e) {
-            $this->sendDatadogEvent(self::EVENT_TYPE_ERROR, $e->getMessage());
+            });
         }
     }
 
     public function updateStepUninstall(): void
     {
-        try {
-            if ($this->isInstallationId()) {
+        if ($this->isInstallationId()) {
+            $this->runWithTreatment(function () {
                 $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
                 $updateSellerFunnelBase->id = $this->store->getInstallationId();
                 $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
                 $updateSellerFunnelBase->is_deleted = true;
                 $updateSellerFunnelBase->update();
-
-                $this->sendDatadogEvent(self::EVENT_TYPE_SUCCESS);
-            }
-        } catch (\Exception $e) {
-            $this->sendDatadogEvent(self::EVENT_TYPE_ERROR, $e->getMessage());
+            });
         }
     }
 
     public function updateStepDisable(): void
     {
-        try {
-            if ($this->isInstallationId()) {
+        if ($this->isInstallationId()) {
+            $this->runWithTreatment(function () {
                 $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
                 $updateSellerFunnelBase->id = $this->store->getInstallationId();
                 $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
                 $updateSellerFunnelBase->is_disabled = true;
                 $updateSellerFunnelBase->update();
-
-                $this->sendDatadogEvent(self::EVENT_TYPE_SUCCESS);
-            }
-        } catch (\Exception $e) {
-            $this->sendDatadogEvent(self::EVENT_TYPE_ERROR, $e->getMessage());
+            });
         }
     }
 
     public function updateStepActivate(): void
     {
-        try {
-            if ($this->isInstallationId()) {
+        if ($this->isInstallationId()) {
+            $this->runWithTreatment(function () {
                 $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
                 $updateSellerFunnelBase->id = $this->store->getInstallationId();
                 $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
                 $updateSellerFunnelBase->is_disabled = false;
                 $updateSellerFunnelBase->update();
                 $this->store->setExecuteActivate('no');
-
-                $this->sendDatadogEvent(self::EVENT_TYPE_SUCCESS);
-            }
-        } catch (\Exception $e) {
-            $this->sendDatadogEvent(self::EVENT_TYPE_ERROR, $e->getMessage());
+            });
         }
     }
 
@@ -222,24 +187,24 @@ class Funnel
         return $GLOBALS['woocommerce']->version ? $GLOBALS['woocommerce']->version : "";
     }
 
-    private function sendDatadogEvent(string $event_type, string $message = null): void
+    private function runWithTreatment($callback)
     {
         try {
-            $datadogEvent = $this->sdk->getDatadogEventInstance();
+            $callback();
 
-            if (!\is_null($message)) {
-                $datadogEvent->message = $message;
-            }
-
-            $datadogEvent->value = $event_type;
-            $datadogEvent->plugin_version = MP_VERSION;
-            $datadogEvent->platform->name = MP_PLATFORM_NAME;
-            $datadogEvent->platform->version = $this->getWoocommerceVersion();
-            $datadogEvent->platform->url = site_url();
-
-            $datadogEvent->register(array("team" => "smb", "event_type" => "funnel"));
-        } catch (\Exception $e) {
-            return;
+            $this->sendSuccessEvent();
+        } catch (\Exception $ex) {
+            $this->sendErrorEvent($ex->getMessage());
         }
+    }
+
+    private function sendSuccessEvent()
+    {
+        $this->datadog->sendEvent('funnel', 'success');
+    }
+
+    private function sendErrorEvent(string $message)
+    {
+        $this->datadog->sendEvent('funnel', 'error', $message);
     }
 }

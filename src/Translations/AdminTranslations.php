@@ -345,7 +345,9 @@ class AdminTranslations
             'helper_category_store'         => __('Select "Other categories" if you do not find the appropriate category.', 'woocommerce-mercadopago'),
             'helper_integrator_link'        => __('request it now.', 'woocommerce-mercadopago'),
             'helper_url'                    => $helperUrl,
-            'helper_integrator'             => $helperIntegrator
+            'helper_integrator'             => $helperIntegrator,
+            'title_cron_config'             => __('Order tracking', 'woocommerce-mercadopago'),
+            'subtitle_cron_config'          => __('We will keep your Mercado Pago orders updated every hour. We recommend activating this option only in the event of automatic order update failures.', 'woocommerce-mercadopago'),
         ];
     }
 

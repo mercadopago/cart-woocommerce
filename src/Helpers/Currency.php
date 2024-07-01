@@ -5,7 +5,7 @@ namespace MercadoPago\Woocommerce\Helpers;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
