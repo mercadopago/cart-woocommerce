@@ -154,7 +154,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     public function saveOrderPaymentsId(string $orderId)
     {
         $order = wc_get_order($orderId);
-        $paymentIds = Form::sanitizeTextFromGet('payment_id');
+        $paymentIds = Form::sanitizedGetData('payment_id');
 
         if ($paymentIds) {
             $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, explode(',', $paymentIds));
@@ -352,7 +352,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
      */
     public function webhook(): void
     {
-        $data = Form::sanitizeFromData($_GET);
+        $data = Form::sanitizedGetData();
 
         $notificationFactory = new NotificationFactory();
         $notificationHandler = $notificationFactory->createNotificationHandler($this, $data);
@@ -702,6 +702,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
                 'enabled'            => $this->mercadopago->hooks->options->getGatewayOption($this, $key . '_checkbox'),
                 'custom_attributes'  => $this->get_custom_attribute_html($settings),
                 'settings'           => $settings,
+                'allowedHtmlTags'    => $this->mercadopago->helpers->strings->getAllowedHtmlTags(),
             ]
         );
     }

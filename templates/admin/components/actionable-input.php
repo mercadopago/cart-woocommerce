@@ -7,6 +7,7 @@
  * @var string $enabled
  * @var string $custom_attributes
  * @var array $settings
+ * @var array $allowedHtmlTags
  *
  * @see \MercadoPago\Woocommerce\Gateways\AbstractGateway
  */
@@ -41,7 +42,7 @@ if (!defined('ABSPATH')) {
                     style="<?= esc_attr(isset($settings['css'])); ?>"
                     value="<?= esc_attr($field_value); ?>"
                     placeholder="<?= esc_attr(isset($settings['placeholder'])); ?>"
-                    <?= $custom_attributes ?>
+                    <?= wp_kses($custom_attributes, $allowedHtmlTags) ?>
                 />
                 <br/>
                 <label for="<?= esc_attr($field_key_checkbox); ?>">

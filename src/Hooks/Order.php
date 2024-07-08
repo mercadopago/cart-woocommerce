@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Cron;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Nonce;
@@ -18,7 +19,8 @@ use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -82,6 +84,11 @@ class Order
     private $endpoints;
 
     /**
+     * @var Cron
+     */
+    private $cron;
+
+    /**
      * @var CurrentUser
      */
     private $currentUser;
@@ -97,11 +104,16 @@ class Order
     private $logs;
 
     /**
+     * @var Datadog
+     */
+    private $datadog;
+
+    /**
      * @const
      */
     private const NONCE_ID = 'MP_ORDER_NONCE';
 
-          /**
+    /**
      * Order constructor
      *
      * @param Template $template
@@ -115,6 +127,7 @@ class Order
      * @param Url $url
      * @param Nonce $nonce
      * @param Endpoints $endpoints
+     * @param Cron $cron
      * @param CurrentUser $currentUser
      * @param Requester $requester
      * @param Logs $logs
@@ -131,6 +144,7 @@ class Order
         Url $url,
         Nonce $nonce,
         Endpoints $endpoints,
+        Cron $cron,
         CurrentUser $currentUser,
         Requester $requester,
         Logs $logs
@@ -146,11 +160,14 @@ class Order
         $this->url               = $url;
         $this->nonce             = $nonce;
         $this->endpoints         = $endpoints;
+        $this->cron              = $cron;
         $this->currentUser       = $currentUser;
         $this->requester         = $requester;
         $this->logs              = $logs;
+        $this->datadog           = Datadog::getInstance();
 
         $this->registerStatusSyncMetaBox();
+        $this->registerSyncPendingStatusOrdersAction();
         $this->endpoints->registerAjaxEndpoint('mp_sync_payment_status', [$this, 'paymentStatusSync']);
     }
 
@@ -305,16 +322,12 @@ class Order
     public function paymentStatusSync(): void
     {
         try {
-            $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizeTextFromPost('nonce'));
+            $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizedPostData('nonce'));
             $this->currentUser->validateUserNeededPermissions();
 
-            $order       = wc_get_order(Form::sanitizeTextFromPost('order_id'));
-            $paymentData = $this->getLastPaymentInfo($order);
-
-            if (!$paymentData) {
-                throw new Exception('Couldn\'t find payment');
-            }
-            $this->orderStatus->processStatus($paymentData['status'], (array) $paymentData, $order, $this->orderMetadata->getUsedGatewayData($order));
+            $orderId = Form::sanitizedPostData('order_id');
+            $order = wc_get_order($orderId);
+            $this->syncOrderStatus($order);
 
             wp_send_json_success(
                 $this->adminTranslations->statusSync['response_success']
@@ -330,6 +343,82 @@ class Order
                 500
             );
         }
+    }
+
+    /**
+     * Syncs the order in woocommerce to mercadopago
+     *
+     * @param \WC_Order $order
+     *
+     * @return void
+     */
+    public function syncOrderStatus(\WC_Order $order): void
+    {
+        $paymentData = $this->getLastPaymentInfo($order);
+        if (!$paymentData) {
+            throw new Exception('Couldn\'t find payment');
+        }
+
+        $this->orderStatus->processStatus($paymentData['status'], (array) $paymentData, $order, $this->orderMetadata->getUsedGatewayData($order));
+    }
+
+    /**
+     * Register action that sync orders with pending status with corresponding status in mercadopago
+     *
+     * @return void
+     */
+    public function registerSyncPendingStatusOrdersAction(): void
+    {
+        add_action('mercadopago_sync_pending_status_order_action', function () {
+            try {
+                $orders = wc_get_orders(array(
+                    'limit'    => -1,
+                    'status'   => 'pending',
+                    'meta_query' => array(
+                        array(
+                            'key' => 'is_production_mode',
+                            'compare' => 'EXISTS'
+                        ),
+                        array(
+                            'key' => 'blocks_payment',
+                            'compare' => 'EXISTS'
+                        )
+                    )
+                ));
+
+                foreach ($orders as $order) {
+                    $this->syncOrderStatus($order);
+                }
+
+                $this->sendEventOnAction('success');
+            } catch (\Exception $ex) {
+                $error_message = "Unable to update batch of orders on action got error: {$ex->getMessage()}";
+
+                $this->logs->file->error(
+                    $error_message,
+                    __CLASS__
+                );
+                $this->sendEventOnAction('error', $error_message);
+            }
+        });
+    }
+
+    /**
+     * Register/Unregister cron job that sync pending orders
+     *
+     * @return void
+     */
+    public function toggleSyncPendingStatusOrdersCron(string $enabled): void
+    {
+        $action = 'mercadopago_sync_pending_status_order_action';
+
+        if ($enabled == 'yes') {
+            $this->cron->registerScheduledEvent('hourly', $action);
+        } else {
+            $this->cron->unregisterScheduledEvent($action);
+        }
+
+        $this->sendEventOnToggle($enabled);
     }
 
     /**
@@ -453,5 +542,21 @@ class Order
         $this->orderMetadata->setPixOnData($order, 1);
 
         $order->save();
+    }
+
+    /**
+     * Send an datadog event inside the sync order status action on fail and success
+     */
+    private function sendEventOnAction($value, $message = null)
+    {
+        $this->datadog->sendEvent('order_sync_status_action', $value, $message);
+    }
+
+    /**
+     * Send an datadog event when an seller toggles (activating or deactivating) the cron button
+     */
+    private function sendEventOnToggle($value)
+    {
+        $this->datadog->sendEvent('order_toggle_cron', $value);
     }
 }

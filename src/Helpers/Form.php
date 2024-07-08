@@ -9,40 +9,52 @@ if (!defined('ABSPATH')) {
 final class Form
 {
     /**
-     * Get data from $_POST method with sanitize for text field
+     * Sanitizes $_GET object or otherwise sanitizes an $_GET[$key] object/data
      *
      * @param string $key
      *
-     * @return string
+     * @return object|array|string
      */
-    public static function sanitizeTextFromPost(string $key): string
+    public static function sanitizedGetData(string $key = "")
     {
-        return sanitize_text_field($_POST[$key] ?? null);
+        $data = filter_input_array(INPUT_GET, FILTER_SANITIZE_SPECIAL_CHARS);
+        if ($key != "") {
+            $data = $data[$key];
+        }
+
+        return self::sanitizedData($data);
     }
 
     /**
-     * Get data from $_GET method with sanitize for text field
+     * Sanitizes $_POST object or otherwise sanitizes an $_POST[$key] object/data
      *
      * @param string $key
      *
-     * @return string
+     * @return object|array|string
      */
-    public static function sanitizeTextFromGet(string $key): string
+    public static function sanitizedPostData(string $key = "")
     {
-        return sanitize_text_field($_GET[$key] ?? null);
+        $data = sanitize_post($_POST);
+        if ($key != "") {
+            $data = $data[$key];
+        }
+
+        return self::sanitizedData($data);
     }
 
     /**
-     * Get data and sanitize for text field
+     * @param object|array|string $data
      *
-     * @param mixed $data
-     *
-     * @return mixed
+     * @return object|array|string
      */
-    public static function sanitizeFromData($data)
+    private static function sanitizedData($data)
     {
-        return map_deep($data, function ($value) {
-            return sanitize_text_field($value ?? null);
-        });
+        if (is_object($data) || is_array($data)) {
+            return map_deep($data, function ($value) {
+                return sanitize_text_field($value ?? null);
+            });
+        }
+
+        return sanitize_text_field($data ?? null);
     }
 }

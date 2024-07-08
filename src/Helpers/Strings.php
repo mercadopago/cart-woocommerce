@@ -32,10 +32,10 @@ final class Strings
     public function sanitizeAndTruncateText(string $text, int $limit = 80): string
     {
         if (strlen($text) > $limit) {
-            return sanitize_file_name(html_entity_decode(substr($text, 0, $limit))) . '...';
+            return sanitize_file_name(html_entity_decode(substr($text, 0, $limit), \ENT_COMPAT)) . '...';
         }
 
-        return sanitize_file_name(html_entity_decode($text));
+        return sanitize_file_name(html_entity_decode($text, \ENT_COMPAT));
     }
 
     /**
@@ -65,5 +65,29 @@ final class Strings
             return $matches[0];
         }
         return $defaultNumber;
+    }
+
+    /**
+     * Get list of html tags allowed to be used
+     *
+     * @return array
+     */
+    public function getAllowedHtmlTags(): array
+    {
+        return array(
+            'br' => array(),
+            'b'  => array(),
+            'a'  => array(
+                'href'   => array(),
+                'target' => array(),
+                'class'  => array(),
+                'id'     => array()
+            ),
+            'span' => array(
+                'id'      => array(),
+                'class'   => array(),
+                'onclick' => array()
+            )
+        );
     }
 }

@@ -19,6 +19,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Endpoints\CheckoutCustom;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\Cron;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Gateways;
@@ -41,9 +42,9 @@ use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Hooks\Template;
-use MercadoPago\Woocommerce\Logs\Logs;
-use MercadoPago\Woocommerce\Logs\Transports\File;
-use MercadoPago\Woocommerce\Logs\Transports\Remote;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
+use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
 use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
@@ -185,6 +186,11 @@ class Dependencies
      * @var CreditsEnabled
      */
     public $creditsEnabledHelper;
+
+    /**
+     * @var Cron
+     */
+    public $cronHelper;
 
     /**
      * @var Currency
@@ -335,6 +341,7 @@ class Dependencies
         $this->gatewayHook             = $this->setGateway();
         $this->nonceHelper             = $this->setNonce();
         $this->orderStatus             = $this->setOrderStatus();
+        $this->cronHelper              = $this->setCronHelper();
         $this->currentUserHelper       = $this->setCurrentUser();
         $this->orderHook               = $this->setOrder();
         $this->noticesHelper           = $this->setNotices();
@@ -469,6 +476,14 @@ class Dependencies
     }
 
     /**
+     * @return Cron
+     */
+    private function setCronHelper(): Cron
+    {
+        return new Cron($this->logs);
+    }
+
+    /**
      * @return CurrentUser
      */
     private function setCurrentUser(): CurrentUser
@@ -517,6 +532,7 @@ class Dependencies
             $this->urlHelper,
             $this->nonceHelper,
             $this->endpointsHook,
+            $this->cronHelper,
             $this->currentUserHelper,
             $this->requesterHelper,
             $this->logs
@@ -576,6 +592,7 @@ class Dependencies
             $this->adminHook,
             $this->endpointsHook,
             $this->linksHelper,
+            $this->orderHook,
             $this->pluginHook,
             $this->scriptsHook,
             $this->sellerConfig,
@@ -587,7 +604,8 @@ class Dependencies
             $this->sessionHelper,
             $this->logs,
             $this->downloader,
-            $this->funnel
+            $this->funnel,
+            $this->stringsHelper
         );
     }
 

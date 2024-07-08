@@ -283,14 +283,13 @@ class PseGateway extends AbstractGateway
         try {
             parent::process_payment($order_id);
 
-            $checkout = Form::sanitizeFromData($_POST['mercadopago_pse']);
+            $checkout = Form::sanitizedPostData('mercadopago_pse');
 
             if (isset($_POST['mercadopago_pse'])) {
-                $checkout = Form::sanitizeFromData($_POST['mercadopago_pse']);
+                $checkout = Form::sanitizedPostData('mercadopago_pse');
                 $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
             } else {
-                // Blocks data arrives in a different way
-                $checkout = $this->processBlocksCheckoutData('mercadopago_pse', Form::sanitizeFromData($_POST));
+                $checkout = $this->processBlocksCheckoutData('mercadopago_pse', Form::sanitizedPostData());
                 $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
             }
             $this->validateRulesPse($checkout);

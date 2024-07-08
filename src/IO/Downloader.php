@@ -2,8 +2,9 @@
 
 namespace MercadoPago\Woocommerce\IO;
 
-use MercadoPago\Woocommerce\IO\LogFile;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Entities\Files\Log as LogFile;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Helpers\Form;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -79,7 +80,7 @@ class Downloader
     public function downloadLog(): void
     {
         if (isset($_GET['files'])) {
-            $selectedFiles = array_map('sanitize_text_field', (array)$_GET['files']);
+            $selectedFiles = Form::sanitizedGetData('files');
             $numFiles = count($selectedFiles);
             if ($numFiles === 1) {
                 $this->singleFileDownload($selectedFiles);

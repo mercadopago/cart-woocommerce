@@ -388,16 +388,7 @@ class CustomGateway extends AbstractGateway
         $order = wc_get_order($order_id);
 
         try {
-            $checkout = [];
-
-            if (isset($_POST['mercadopago_custom'])) {
-                $checkout = Form::sanitizeFromData($_POST['mercadopago_custom']);
-                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
-            } else {
-                // Blocks data arrives in a different way
-                $checkout = $this->processBlocksCheckoutData('mercadopago_custom', Form::sanitizeFromData($_POST));
-                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
-            }
+            $checkout = $this->getCheckoutMercadopagoCustom($order);
 
             parent::process_payment($order_id);
 
@@ -442,6 +433,28 @@ class CustomGateway extends AbstractGateway
                 true
             );
         }
+    }
+
+    /**
+     * Get checkout mercadopago custom
+     *
+     * @param $order
+     *
+     * @return array
+     */
+    private function getCheckoutMercadopagoCustom($order): array
+    {
+        $checkout = [];
+
+        if (isset($_POST['mercadopago_custom'])) {
+            $checkout = Form::sanitizedPostData('mercadopago_custom');
+            $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
+        } else {
+            $checkout = $this->processBlocksCheckoutData('mercadopago_custom', Form::sanitizedPostData());
+            $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
+        }
+
+        return $checkout;
     }
 
     /**
@@ -630,7 +643,7 @@ class CustomGateway extends AbstractGateway
      *
      * @return array
      */
-    private function handleResponseStatus($order, $response, $checkout): array
+    private function handleResponseStatus($order, $response): array
     {
         try {
             if (is_array($response) && array_key_exists('status', $response)) {

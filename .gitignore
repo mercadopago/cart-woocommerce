@@ -8,5 +8,8 @@ coverage
 /.vscode/
 /vendor/
 /node_modules/
+/code_analysis
 
 woocommerce-mercadopago.zip
+
+qit-env.json

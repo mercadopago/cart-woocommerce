@@ -3,7 +3,7 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Hooks\Admin;
-use MercadoPago\Woocommerce\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Gateways\CreditsGateway;
 use MercadoPago\Woocommerce\Gateways\BasicGateway;

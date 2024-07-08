@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @var string $package
- * @see \MercadoPago\Woocommerce\Packages
+ * @var string $path
+ * @see \MercadoPago\Woocommerce\Startup
  */
 
 if (!defined('ABSPATH')) {
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 <div class="notice notice-error">
     <p>
-        <b>Missing the Mercado Pago <code> <?= esc_html($package) ?></code> package.</b>
+        <b>Missing the Mercado Pago <code> <?= esc_html($path) ?></code> package.</b>
     </p>
     <p>Your installation of Mercado Pago is incomplete.</p>
 </div>

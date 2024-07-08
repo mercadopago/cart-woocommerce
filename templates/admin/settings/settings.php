@@ -19,6 +19,7 @@
  * @var string $customDomainOptions
  * @var string $integratorId
  * @var string $debugMode
+ * @var string $cronSyncMode
  * @var string $checkboxCheckoutTestMode
  * @var string $checkboxCheckoutProductionMode
  * @var string $phpVersion
@@ -31,6 +32,7 @@
  * @var array $categories
  *
  * @var array $pluginLogs
+ * @var array $allowedHtmlTags
  *
  * @see \MercadoPago\Woocommerce\Admin\Settings
  */
@@ -54,26 +56,26 @@ if (!defined('ABSPATH')) {
         <div class="mp-settings-header-img"></div>
         <div class="mp-settings-header-logo"></div>
         <hr class="mp-settings-header-hr" />
-        <p class="mp-settings-header-title"><?= $headerTranslations['title_header'] ?></p>
+        <p class="mp-settings-header-title"><?= wp_kses($headerTranslations['title_header'], $allowedHtmlTags) ?></p>
     </div>
 
     <div class="mp-settings-requirements">
         <div class="mp-container">
             <div class="mp-block mp-block-requirements mp-settings-margin-right">
                 <p class="mp-settings-font-color mp-settings-title-font-size">
-                    <?= $headerTranslations['title_requirements'] ?>
+                    <?= wp_kses($headerTranslations['title_requirements'], $allowedHtmlTags) ?>
                 </p>
                 <div class="mp-inner-container">
                     <div>
                         <p class="mp-settings-font-color mp-settings-subtitle-font-size">
-                            <?= $headerTranslations['ssl'] ?>
+                            <?= wp_kses($headerTranslations['ssl'], $allowedHtmlTags) ?>
                         </p>
                         <label class="mp-settings-icon-info mp-settings-tooltip">
                             <span class="mp-settings-tooltip-text">
                                 <p class="mp-settings-subtitle-font-size">
-                                    <b><?= $headerTranslations['ssl'] ?></b>
+                                    <b><?= wp_kses($headerTranslations['ssl'], $allowedHtmlTags) ?></b>
                                 </p>
-                                <?= $headerTranslations['description_ssl'] ?>
+                                <?= wp_kses($headerTranslations['description_ssl'], $allowedHtmlTags) ?>
                             </span>
                         </label>
                     </div>
@@ -86,14 +88,14 @@ if (!defined('ABSPATH')) {
                 <div class="mp-inner-container">
                     <div>
                         <p class="mp-settings-font-color mp-settings-subtitle-font-size">
-                            <?= $headerTranslations['gd_extension'] ?>
+                            <?= wp_kses($headerTranslations['gd_extension'], $allowedHtmlTags) ?>
                         </p>
                         <label class="mp-settings-icon-info mp-settings-tooltip">
                             <span class="mp-settings-tooltip-text">
                                 <p class="mp-settings-subtitle-font-size">
-                                    <b><?= $headerTranslations['gd_extension'] ?></b>
+                                    <b><?= wp_kses($headerTranslations['gd_extension'], $allowedHtmlTags) ?></b>
                                 </p>
-                                <?= $headerTranslations['description_gd_extension'] ?>
+                                <?= wp_kses($headerTranslations['description_gd_extension'], $allowedHtmlTags) ?>
                             </span>
                         </label>
                     </div>
@@ -106,14 +108,14 @@ if (!defined('ABSPATH')) {
                 <div class="mp-inner-container">
                     <div>
                         <p class="mp-settings-font-color mp-settings-subtitle-font-size">
-                            <?= $headerTranslations['curl'] ?>
+                            <?= wp_kses($headerTranslations['curl'], $allowedHtmlTags) ?>
                         </p>
                         <label class="mp-settings-icon-info mp-settings-tooltip">
                             <span class="mp-settings-tooltip-text">
                                 <p class="mp-settings-subtitle-font-size">
-                                    <b><?= $headerTranslations['curl'] ?></b>
+                                    <b><?= wp_kses($headerTranslations['curl'], $allowedHtmlTags) ?></b>
                                 </p>
-                                <?= $headerTranslations['description_curl'] ?>
+                                <?= wp_kses($headerTranslations['description_curl'], $allowedHtmlTags) ?>
                             </span>
                         </label>
                     </div>
@@ -127,16 +129,16 @@ if (!defined('ABSPATH')) {
                 <div class="mp-inner-container-settings">
                     <div>
                         <p class="mp-settings-font-color mp-settings-title-font-size">
-                            <?= $headerTranslations['title_installments'] ?>
+                            <?= wp_kses($headerTranslations['title_installments'], $allowedHtmlTags) ?>
                         </p>
                         <p class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color">
-                            <?= $headerTranslations['description_installments'] ?>
+                            <?= wp_kses($headerTranslations['description_installments'], $allowedHtmlTags) ?>
                         </p>
                     </div>
                     <div>
-                        <a target="_blank" href="<?= $links['mercadopago_costs'] ?>">
+                        <a target="_blank" href="<?= wp_kses($links['mercadopago_costs'], $allowedHtmlTags) ?>">
                             <button class="mp-button mp-button-small" id="mp-set-installments-button">
-                                <?= $headerTranslations['button_installments'] ?>
+                                <?= wp_kses($headerTranslations['button_installments'], $allowedHtmlTags) ?>
                             </button>
                         </a>
                     </div>
@@ -147,16 +149,16 @@ if (!defined('ABSPATH')) {
                 <div class="mp-inner-container-settings">
                     <div>
                         <p class="mp-settings-font-color mp-settings-title-font-size">
-                            <?= $headerTranslations['title_questions'] ?>
+                            <?= wp_kses($headerTranslations['title_questions'], $allowedHtmlTags) ?>
                         </p>
                         <p class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color">
-                            <?= $headerTranslations['description_questions'] ?>
+                            <?= wp_kses($headerTranslations['description_questions'], $allowedHtmlTags) ?>
                         </p>
                     </div>
                     <div>
-                        <a target="_blank" href="<?= $links['docs_integration_introduction'] ?>">
+                        <a target="_blank" href="<?= wp_kses($links['docs_integration_introduction'], $allowedHtmlTags) ?>">
                             <button id="mp-plugin-guide-button" class="mp-button mp-button-small mp-button-light-blue">
-                                <?= $headerTranslations['button_questions'] ?>
+                                <?= wp_kses($headerTranslations['button_questions'], $allowedHtmlTags) ?>
                             </button>
                         </a>
                     </div>
@@ -171,7 +173,7 @@ if (!defined('ABSPATH')) {
         <div id="mp-settings-step-one" class="mp-settings-title-align">
             <div class="mp-settings-title-container">
                 <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right">
-                    <?= $credentialsTranslations['title_credentials'] ?>
+                    <?= wp_kses($credentialsTranslations['title_credentials'], $allowedHtmlTags) ?>
                 </span>
                 <img class="mp-settings-margin-left mp-settings-margin-right" id="mp-settings-icon-credentials">
             </div>
@@ -183,11 +185,11 @@ if (!defined('ABSPATH')) {
         <div id="mp-step-1" class="mp-settings-block-align-top" style="display: none;">
             <div>
                 <p class="mp-settings-subtitle-font-size mp-settings-title-color">
-                    <?= $credentialsTranslations['first_text_subtitle_credentials'] ?>
-                    <a id="mp-get-credentials-link" class="mp-settings-blue-text" target="_blank" href="<?= $links['mercadopago_credentials'] ?>">
-                        <?= $credentialsTranslations['text_link_credentials'] ?>
+                    <?= wp_kses($credentialsTranslations['first_text_subtitle_credentials'], $allowedHtmlTags) ?>
+                    <a id="mp-get-credentials-link" class="mp-settings-blue-text" target="_blank" href="<?= wp_kses($links['mercadopago_credentials'], $allowedHtmlTags) ?>">
+                        <?= wp_kses($credentialsTranslations['text_link_credentials'], $allowedHtmlTags) ?>
                     </a>
-                    <?= $credentialsTranslations['second_text_subtitle_credentials'] ?>
+                    <?= wp_kses($credentialsTranslations['second_text_subtitle_credentials'], $allowedHtmlTags) ?>
                 </p>
             </div>
             <div class="mp-message-credentials"></div>
@@ -197,53 +199,53 @@ if (!defined('ABSPATH')) {
             <div class="mp-container">
                 <div class="mp-block mp-block-flex mp-settings-margin-right">
                     <p class="mp-settings-title-font-size">
-                        <b><?= $credentialsTranslations['title_credentials_prod'] ?></b>
+                        <b><?= wp_kses($credentialsTranslations['title_credentials_prod'], $allowedHtmlTags) ?></b>
                     </p>
                     <p class="mp-settings-label mp-settings-title-color mp-settings-margin-bottom">
-                        <?= $credentialsTranslations['subtitle_credentials_prod'] ?>
+                        <?= wp_kses($credentialsTranslations['subtitle_credentials_prod'], $allowedHtmlTags) ?>
                     </p>
 
                     <fieldset class="mp-settings-fieldset">
                         <label for="mp-public-key-prod" class="mp-settings-label mp-settings-font-color">
-                            <?= $credentialsTranslations['public_key'] ?> <span style="color: red;">&nbsp;*</span>
+                            <?= wp_kses($credentialsTranslations['public_key'], $allowedHtmlTags) ?> <span style="color: red;">&nbsp;*</span>
                         </label>
-                        <input type="text" id="mp-public-key-prod" class="mp-settings-input" value="<?= $publicKeyProd ?>" placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>" />
+                        <input type="text" id="mp-public-key-prod" class="mp-settings-input" value="<?= wp_kses($publicKeyProd, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($credentialsTranslations['placeholder_public_key'], $allowedHtmlTags) ?>" />
                     </fieldset>
 
                     <fieldset>
                         <label for="mp-access-token-prod" class="mp-settings-label mp-settings-font-color">
-                            <?= $credentialsTranslations['access_token'] ?> <span style="color: red;">&nbsp;*</span>
+                            <?= wp_kses($credentialsTranslations['access_token'], $allowedHtmlTags) ?> <span style="color: red;">&nbsp;*</span>
                         </label>
-                        <input type="text" id="mp-access-token-prod" class="mp-settings-input" value="<?= $accessTokenProd ?>" placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>" />
+                        <input type="text" id="mp-access-token-prod" class="mp-settings-input" value="<?= wp_kses($accessTokenProd, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($credentialsTranslations['placeholder_access_token'], $allowedHtmlTags) ?>" />
                     </fieldset>
                 </div>
 
                 <div class="mp-block mp-block-flex mp-settings-margin-left">
                     <p class="mp-settings-title-font-size">
-                        <b><?= $credentialsTranslations['title_credentials_test'] ?></b>
+                        <b><?= wp_kses($credentialsTranslations['title_credentials_test'], $allowedHtmlTags) ?></b>
                     </p>
                     <p class="mp-settings-label mp-settings-title-color mp-settings-margin-bottom">
-                        <?= $credentialsTranslations['subtitle_credentials_test'] ?>
+                        <?= wp_kses($credentialsTranslations['subtitle_credentials_test'], $allowedHtmlTags) ?>
                     </p>
 
                     <fieldset class="mp-settings-fieldset">
                         <label for="mp-public-key-test" class="mp-settings-label mp-settings-font-color">
-                            <?= $credentialsTranslations['public_key'] ?>
+                            <?= wp_kses($credentialsTranslations['public_key'], $allowedHtmlTags) ?>
                         </label>
-                        <input type="text" id="mp-public-key-test" class="mp-settings-input" value="<?= $publicKeyTest ?>" placeholder="<?= $credentialsTranslations['placeholder_public_key'] ?>" />
+                        <input type="text" id="mp-public-key-test" class="mp-settings-input" value="<?= wp_kses($publicKeyTest, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($credentialsTranslations['placeholder_public_key'], $allowedHtmlTags) ?>" />
                     </fieldset>
 
                     <fieldset>
                         <label for="mp-access-token-test" class="mp-settings-label mp-settings-font-color">
-                            <?= $credentialsTranslations['access_token'] ?>
+                            <?= wp_kses($credentialsTranslations['access_token'], $allowedHtmlTags) ?>
                         </label>
-                        <input type="text" id="mp-access-token-test" class="mp-settings-input" value="<?= $accessTokenTest ?>" placeholder="<?= $credentialsTranslations['placeholder_access_token'] ?>" />
+                        <input type="text" id="mp-access-token-test" class="mp-settings-input" value="<?= wp_kses($accessTokenTest, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($credentialsTranslations['placeholder_access_token'], $allowedHtmlTags) ?>" />
                     </fieldset>
                 </div>
             </div>
 
             <button class="mp-button mp-button-large" id="mp-btn-credentials">
-                <?= $credentialsTranslations['button_credentials'] ?>
+                <?= wp_kses($credentialsTranslations['button_credentials'], $allowedHtmlTags) ?>
             </button>
         </div>
     </div>
@@ -253,7 +255,7 @@ if (!defined('ABSPATH')) {
     <div class="mp-settings-credentials">
         <div id="mp-settings-step-two" class="mp-settings-title-align">
             <div class="mp-settings-title-container">
-                <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right"><?= $storeTranslations['title_store'] ?></span>
+                <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right"><?= wp_kses($storeTranslations['title_store'], $allowedHtmlTags) ?></span>
                 <img class="mp-settings-margin-left mp-settings-margin-right" id="mp-settings-icon-store" />
             </div>
             <div class="mp-settings-title-container mp-settings-margin-left">
@@ -263,40 +265,40 @@ if (!defined('ABSPATH')) {
 
         <div id="mp-step-2" class="mp-message-store mp-settings-block-align-top" style="display: none;">
             <p class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color">
-                <?= $storeTranslations['subtitle_store'] ?>
+                <?= wp_kses($storeTranslations['subtitle_store'], $allowedHtmlTags) ?>
             </p>
             <div class="mp-heading-store mp-container mp-settings-flex-start" id="block-two">
                 <div class="mp-block mp-block-flex mp-settings-margin-right mp-settings-choose-mode">
                     <div>
                         <p class="mp-settings-title-font-size">
-                            <b><?= $storeTranslations['title_info_store'] ?></b>
+                            <b><?= wp_kses($storeTranslations['title_info_store'], $allowedHtmlTags) ?></b>
                         </p>
                     </div>
                     <div class="mp-settings-standard-margin">
                         <fieldset>
                             <label for="mp-store-identification" class="mp-settings-label mp-settings-font-color">
-                                <?= $storeTranslations['subtitle_name_store'] ?>
+                                <?= wp_kses($storeTranslations['subtitle_name_store'], $allowedHtmlTags) ?>
                             </label>
-                            <input type="text" id="mp-store-identification" class="mp-settings-input" value="<?= $storeName ?>" placeholder="<?= $storeTranslations['placeholder_name_store'] ?>" />
+                            <input type="text" id="mp-store-identification" class="mp-settings-input" value="<?= wp_kses($storeName, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($storeTranslations['placeholder_name_store'], $allowedHtmlTags) ?>" />
                         </fieldset>
-                        <span class="mp-settings-helper"><?= $storeTranslations['helper_name_store'] ?></span>
+                        <span class="mp-settings-helper"><?= wp_kses($storeTranslations['helper_name_store'], $allowedHtmlTags) ?></span>
                     </div>
 
                     <div class="mp-settings-standard-margin">
                         <fieldset>
                             <label for="mp-store-category-id" class="mp-settings-label mp-settings-font-color">
-                                <?= $storeTranslations['subtitle_activities_store'] ?>
+                                <?= wp_kses($storeTranslations['subtitle_activities_store'], $allowedHtmlTags) ?>
                             </label>
-                            <input type="text" id="mp-store-category-id" class="mp-settings-input" value="<?= $storeId ?>" placeholder="<?= $storeTranslations['placeholder_activities_store'] ?>" />
+                            <input type="text" id="mp-store-category-id" class="mp-settings-input" value="<?= wp_kses($storeId, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($storeTranslations['placeholder_activities_store'], $allowedHtmlTags) ?>" />
                         </fieldset>
-                        <span class="mp-settings-helper"><?= $storeTranslations['helper_activities_store'] ?></span>
+                        <span class="mp-settings-helper"><?= wp_kses($storeTranslations['helper_activities_store'], $allowedHtmlTags) ?></span>
                     </div>
 
                     <div class="mp-settings-standard-margin">
                         <label for="mp-store-categories" class="mp-settings-label mp-container mp-settings-font-color">
-                            <?= $storeTranslations['subtitle_category_store'] ?>
+                            <?= wp_kses($storeTranslations['subtitle_category_store'], $allowedHtmlTags) ?>
                         </label>
-                        <select name="<?= $storeTranslations['placeholder_category_store'] ?>" class="mp-settings-select" id="mp-store-categories">
+                        <select name="<?= wp_kses($storeTranslations['placeholder_category_store'], $allowedHtmlTags) ?>" class="mp-settings-select" id="mp-store-categories">
                             <?php
                             foreach ($categories as $category) {
                                 echo ('
@@ -307,47 +309,47 @@ if (!defined('ABSPATH')) {
                             }
                             ?>
                         </select>
-                        <span class="mp-settings-helper"><?= $storeTranslations['helper_category_store'] ?></span>
+                        <span class="mp-settings-helper"><?= wp_kses($storeTranslations['helper_category_store'], $allowedHtmlTags) ?></span>
                     </div>
                 </div>
 
                 <div class="mp-block mp-block-flex mp-block-manual mp-settings-margin-left">
                     <div>
                         <p class="mp-settings-title-font-size">
-                            <b><?= $storeTranslations['title_advanced_store'] ?></b>
+                            <b><?= wp_kses($storeTranslations['title_advanced_store'], $allowedHtmlTags) ?></b>
                         </p>
                     </div>
                     <p class="mp-settings-subtitle-font-size mp-settings-title-color">
-                        <?= $storeTranslations['subtitle_advanced_store'] ?>
+                        <?= wp_kses($storeTranslations['subtitle_advanced_store'], $allowedHtmlTags) ?>
                     </p>
 
                     <div>
                         <p class="mp-settings-blue-text" id="mp-advanced-options">
-                            <?= $storeTranslations['accordion_advanced_store_show'] ?>
+                            <?= wp_kses($storeTranslations['accordion_advanced_store_show'], $allowedHtmlTags) ?>
                         </p>
 
                         <div class="mp-settings-advanced-options" style="display:none">
                             <div class="mp-settings-standard-margin">
                                 <fieldset>
                                     <label for="mp-store-url-ipn" class="mp-settings-label mp-settings-font-color">
-                                        <?= $storeTranslations['subtitle_url'] ?>
+                                        <?= wp_kses($storeTranslations['subtitle_url'], $allowedHtmlTags) ?>
                                     </label>
-                                    <input type="text" id="mp-store-url-ipn" class="mp-settings-input" value="<?= $customDomain ?>" placeholder="<?= $storeTranslations['placeholder_url'] ?>" />
+                                    <input type="text" id="mp-store-url-ipn" class="mp-settings-input" value="<?= wp_kses($customDomain, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($storeTranslations['placeholder_url'], $allowedHtmlTags) ?>" />
                                     <div>
                                         <input type="checkbox" id="mp-store-url-ipn-options" <?= checked($customDomainOptions, 'yes'); ?> />
                                         <label for="mp-store-url-ipn-options" class="mp-settings-checkbox-options"><?php echo esc_html($storeTranslations['options_url']); ?></label>
                                     </div>
-                                    <span class="mp-settings-helper"><?= $storeTranslations['helper_url'] ?></span>
+                                    <span class="mp-settings-helper"><?= wp_kses($storeTranslations['helper_url'], $allowedHtmlTags) ?></span>
                                 </fieldset>
                             </div>
 
                             <div class="mp-settings-standard-margin">
                                 <fieldset>
                                     <label for="mp-store-integrator-id" class="mp-settings-label mp-settings-font-color">
-                                        <?= $storeTranslations['subtitle_integrator'] ?>
+                                        <?= wp_kses($storeTranslations['subtitle_integrator'], $allowedHtmlTags) ?>
                                     </label>
-                                    <input type="text" id="mp-store-integrator-id" class="mp-settings-input" value="<?= $integratorId ?>" placeholder="<?= $storeTranslations['placeholder_integrator'] ?>" />
-                                    <span class="mp-settings-helper"><?= $storeTranslations['helper_integrator'] ?></span>
+                                    <input type="text" id="mp-store-integrator-id" class="mp-settings-input" value="<?= wp_kses($integratorId, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($storeTranslations['placeholder_integrator'], $allowedHtmlTags) ?>" />
+                                    <span class="mp-settings-helper"><?= wp_kses($storeTranslations['helper_integrator'], $allowedHtmlTags) ?></span>
                                 </fieldset>
                             </div>
 
@@ -360,19 +362,38 @@ if (!defined('ABSPATH')) {
                                 </div>
                                 <label for="mp-store-debug-mode">
                                     <span class="mp-settings-subtitle-font-size mp-settings-debug mp-settings-font-color">
-                                        <?= $storeTranslations['title_debug'] ?>
+                                        <?= wp_kses($storeTranslations['title_debug'], $allowedHtmlTags) ?>
                                     </span>
                                     <br />
                                     <span class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color mp-settings-debug">
-                                        <?= $storeTranslations['subtitle_debug'] ?>
+                                        <?= wp_kses($storeTranslations['subtitle_debug'], $allowedHtmlTags) ?>
                                     </span>
                                 </label>
                             </div>
+
+                            <div style="margin-top: 20px;" class="mp-container" id="mp-cron-config">
+                                <div>
+                                    <label class="mp-settings-switch">
+                                        <input id="mp-store-cron-config" type="checkbox" value="yes" <?= checked($cronSyncMode, 'yes'); ?> />
+                                        <span class="mp-settings-slider mp-settings-round"></span>
+                                    </label>
+                                </div>
+                                <label for="mp-store-cron-config">
+                                    <span class="mp-settings-subtitle-font-size mp-settings-debug mp-settings-font-color">
+                                        <?= wp_kses($storeTranslations['title_cron_config'], $allowedHtmlTags) ?>
+                                    </span>
+                                    <br />
+                                    <span class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color mp-settings-debug">
+                                        <?= wp_kses($storeTranslations['subtitle_cron_config'], $allowedHtmlTags) ?>
+                                    </span>
+                                </label>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
-            <button class="mp-button mp-button-large" id="mp-store-info-save"><?= $storeTranslations['button_store'] ?></button>
+            <button class="mp-button mp-button-large" id="mp-store-info-save"><?= wp_kses($storeTranslations['button_store'], $allowedHtmlTags) ?></button>
         </div>
     </div>
 
@@ -382,7 +403,7 @@ if (!defined('ABSPATH')) {
         <div id="mp-settings-step-three" class="mp-settings-title-align">
             <div class="mp-settings-title-container">
                 <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right">
-                    <?= $gatewaysTranslations['title_payments'] ?>
+                    <?= wp_kses($gatewaysTranslations['title_payments'], $allowedHtmlTags) ?>
                 </span>
                 <img class="mp-settings-margin-left mp-settings-margin-right" id="mp-settings-icon-payment">
             </div>
@@ -393,10 +414,10 @@ if (!defined('ABSPATH')) {
         </div>
         <div id="mp-step-3" class="mp-settings-block-align-top" style="display: none;">
             <p id="mp-payment" class="mp-settings-subtitle-font-size mp-settings-title-color">
-                <?= $gatewaysTranslations['subtitle_payments'] ?>
+                <?= wp_kses($gatewaysTranslations['subtitle_payments'], $allowedHtmlTags) ?>
             </p>
             <button id="mp-payment-method-continue" class="mp-button mp-button-large">
-                <?= $gatewaysTranslations['button_payment'] ?>
+                <?= wp_kses($gatewaysTranslations['button_payment'], $allowedHtmlTags) ?>
             </button>
         </div>
     </div>
@@ -408,14 +429,14 @@ if (!defined('ABSPATH')) {
             <div class="mp-settings-title-container">
                 <div class="mp-align-items-center">
                     <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right">
-                        <?= $testModeTranslations['title_test_mode'] ?>
+                        <?= wp_kses($testModeTranslations['title_test_mode'], $allowedHtmlTags) ?>
                     </span>
                     <div id="mp-mode-badge" class="mp-settings-margin-left mp-settings-margin-right <?= $testMode ? 'mp-settings-test-mode-alert' : 'mp-settings-prod-mode-alert' ?>">
                         <span id="mp-mode-badge-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
-                            <?= $testModeTranslations['badge_test'] ?>
+                            <?= wp_kses($testModeTranslations['badge_test'], $allowedHtmlTags) ?>
                         </span>
                         <span id="mp-mode-badge-prod" style="display: <?= $testMode ? 'none' : 'block' ?>">
-                            <?= $testModeTranslations['badge_mode'] ?>
+                            <?= wp_kses($testModeTranslations['badge_mode'], $allowedHtmlTags) ?>
                         </span>
                     </div>
                 </div>
@@ -428,14 +449,14 @@ if (!defined('ABSPATH')) {
 
         <div id="mp-step-4" class="mp-message-test-mode mp-settings-block-align-top" style="display: none;">
             <p class="mp-heading-test-mode mp-settings-subtitle-font-size mp-settings-title-color">
-                <?= $testModeTranslations['subtitle_test_mode'] ?>
+                <?= wp_kses($testModeTranslations['subtitle_test_mode'], $allowedHtmlTags) ?>
             </p>
 
             <div class="mp-container">
                 <div class="mp-block mp-settings-choose-mode">
                     <div>
                         <p class="mp-settings-title-font-size">
-                            <b><?= $testModeTranslations['title_mode'] ?></b>
+                            <b><?= wp_kses($testModeTranslations['title_mode'], $allowedHtmlTags) ?></b>
                         </p>
                     </div>
 
@@ -445,14 +466,14 @@ if (!defined('ABSPATH')) {
                         </div>
                         <label for="mp-settings-testmode-test">
                             <span class="mp-settings-subtitle-font-size mp-settings-font-color">
-                                <?= $testModeTranslations['title_test'] ?>
+                                <?= wp_kses($testModeTranslations['title_test'], $allowedHtmlTags) ?>
                             </span>
                             <br />
                             <span class="mp-settings-subtitle-font-size mp-settings-title-color">
-                                <?= $testModeTranslations['subtitle_test'] ?>
+                                <?= wp_kses($testModeTranslations['subtitle_test'], $allowedHtmlTags) ?>
                                 <span>
-                                    <a id="mp-test-mode-rules-link" class="mp-settings-blue-text" target="_blank" href="<?= $links['docs_integration_test'] ?>">
-                                        <?= $testModeTranslations['subtitle_test_link'] ?>
+                                    <a id="mp-test-mode-rules-link" class="mp-settings-blue-text" target="_blank" href="<?= wp_kses($links['docs_integration_test'], $allowedHtmlTags) ?>">
+                                        <?= wp_kses($testModeTranslations['subtitle_test_link'], $allowedHtmlTags) ?>
                                     </a>
                         </label>
                     </div>
@@ -463,11 +484,11 @@ if (!defined('ABSPATH')) {
                         </div>
                         <label for="mp-settings-testmode-prod">
                             <span class="mp-settings-subtitle-font-size mp-settings-font-color">
-                                <?= $testModeTranslations['title_prod'] ?>
+                                <?= wp_kses($testModeTranslations['title_prod'], $allowedHtmlTags) ?>
                             </span>
                             <br />
                             <span class="mp-settings-subtitle-font-size mp-settings-title-color">
-                                <?= $testModeTranslations['subtitle_prod'] ?>
+                                <?= wp_kses($testModeTranslations['subtitle_prod'], $allowedHtmlTags) ?>
                             </span>
                         </label>
                     </div>
@@ -482,10 +503,10 @@ if (!defined('ABSPATH')) {
                             <div class="mp-settings-mode-warning">
                                 <div class="mp-settings-margin-left">
                                     <div class="mp-settings-alert-mode-title">
-                                        <span id="mp-text-badge"><?= $testModeTranslations['title_alert_test'] ?></span>
+                                        <span id="mp-text-badge"><?= wp_kses($testModeTranslations['title_alert_test'], $allowedHtmlTags) ?></span>
                                     </div>
                                     <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
-                                        <span id="mp-helper-test-error"><?= $testModeTranslations['test_credentials_helper'] ?></span>
+                                        <span id="mp-helper-test-error"><?= wp_kses($testModeTranslations['test_credentials_helper'], $allowedHtmlTags) ?></span>
                                     </div>
                                 </div>
                             </div>
@@ -503,19 +524,19 @@ if (!defined('ABSPATH')) {
                                 <div class="mp-settings-margin-left">
                                     <div class="mp-settings-alert-mode-title">
                                         <span id="mp-title-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>">
-                                            <span id="mp-text-badge" class="mp-display-block"> <?= $testModeTranslations['title_message_prod'] ?></span>
+                                            <span id="mp-text-badge" class="mp-display-block"> <?= wp_kses($testModeTranslations['title_message_prod'], $allowedHtmlTags) ?></span>
                                         </span>
                                         <span id="mp-title-helper-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
-                                            <span id="mp-text-badge" class="mp-display-block"><?= $testModeTranslations['title_message_test'] ?></span>
+                                            <span id="mp-text-badge" class="mp-display-block"><?= wp_kses($testModeTranslations['title_message_test'], $allowedHtmlTags) ?></span>
                                         </span>
                                     </div>
 
                                     <div id="mp-helper-badge-div" class="mp-settings-alert-mode-body mp-settings-font-color">
-                                        <span id="mp-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>"><?= $testModeTranslations['subtitle_message_prod'] ?></span>
+                                        <span id="mp-helper-prod" style="display: <?= $testMode ? 'none' : 'block' ?>"><?= wp_kses($testModeTranslations['subtitle_message_prod'], $allowedHtmlTags) ?></span>
                                         <span id="mp-helper-test" style="display: <?= $testMode ? 'block' : 'none' ?>">
-                                            <span><?= $testModeTranslations['subtitle_test_one'] ?></span><br />
-                                            <span><?= $testModeTranslations['subtitle_test_two'] ?></span><br />
-                                            <span><?= $testModeTranslations['subtitle_test_three'] ?></span>
+                                            <span><?= wp_kses($testModeTranslations['subtitle_test_one'], $allowedHtmlTags) ?></span><br />
+                                            <span><?= wp_kses($testModeTranslations['subtitle_test_two'], $allowedHtmlTags) ?></span><br />
+                                            <span><?= wp_kses($testModeTranslations['subtitle_test_three'], $allowedHtmlTags) ?></span>
                                         </span>
                                     </div>
                                 </div>
@@ -526,7 +547,7 @@ if (!defined('ABSPATH')) {
             </div>
 
             <button class="mp-button mp-button-large" id="mp-store-mode-save">
-                <?= $testModeTranslations['button_test_mode'] ?>
+                <?= wp_kses($testModeTranslations['button_test_mode'], $allowedHtmlTags) ?>
             </button>
         </div>
     </div>
@@ -535,7 +556,7 @@ if (!defined('ABSPATH')) {
         <div id="mp-settings-support" class="mp-settings-title-align">
 
             <div class="mp-settings-title-container">
-                <span class="mp-settings-support-title"> <?= $supportTranslations['support_title'] ?></span>
+                <span class="mp-settings-support-title"> <?= wp_kses($supportTranslations['support_title'], $allowedHtmlTags) ?></span>
             </div>
 
             <div class="mp-settings-title-container mp-settings-margin-left">
@@ -545,19 +566,19 @@ if (!defined('ABSPATH')) {
 
         <div class="mp-settings-support-content" style="display: none;">
             <hr class="mp-settings-hr-support">
-            <p><?= $supportTranslations['support_faqs_url'] ?></p>
-            <p id="mp-settings-support-how-to"><b><?= $supportTranslations['support_how_to'] ?></b></p>
-            <p><?= $supportTranslations['support_step_one'] ?></p>
-            <p><?= $supportTranslations['support_step_two'] ?></p>
-            <p><?= $supportTranslations['support_step_three'] ?></p>
+            <p><?= wp_kses($supportTranslations['support_faqs_url'], $allowedHtmlTags) ?></p>
+            <p id="mp-settings-support-how-to"><b><?= wp_kses($supportTranslations['support_how_to'], $allowedHtmlTags) ?></b></p>
+            <p><?= wp_kses($supportTranslations['support_step_one'], $allowedHtmlTags) ?></p>
+            <p><?= wp_kses($supportTranslations['support_step_two'], $allowedHtmlTags) ?></p>
+            <p><?= wp_kses($supportTranslations['support_step_three'], $allowedHtmlTags) ?></p>
             <table class="mp-settings-support-content-table">
                 <tr>
                     <th>PHP Version</th>
                     <th>WordPress Version</th>
                 </tr>
                 <tr>
-                    <td><?= $supportTranslations['support_version'] ?> <?= $phpVersion ?></td>
-                    <td><?= $supportTranslations['support_version'] ?> <?= $wpVersion ?></td>
+                    <td><?= wp_kses($supportTranslations['support_version'], $allowedHtmlTags) ?> <?= wp_kses($phpVersion, $allowedHtmlTags) ?></td>
+                    <td><?= wp_kses($supportTranslations['support_version'], $allowedHtmlTags) ?> <?= wp_kses($wpVersion, $allowedHtmlTags) ?></td>
                 </tr>
                 <tr>
                 </tr>
@@ -568,13 +589,13 @@ if (!defined('ABSPATH')) {
                     <th>Plugin Version</th>
                 </tr>
                 <tr>
-                    <td><?= $supportTranslations['support_version'] ?> <?= $wcVersion ?></td>
-                    <td><?= $supportTranslations['support_version'] ?> <?= $pluginVersion ?></td>
+                    <td><?= wp_kses($supportTranslations['support_version'], $allowedHtmlTags) ?> <?= wp_kses($wcVersion, $allowedHtmlTags) ?></td>
+                    <td><?= wp_kses($supportTranslations['support_version'], $allowedHtmlTags) ?> <?= wp_kses($pluginVersion, $allowedHtmlTags) ?></td>
                 </tr>
                 <tr>
                 </tr>
             </table>
-            <p><?= $supportTranslations['support_step_four'] ?></p>
+            <p><?= wp_kses($supportTranslations['support_step_four'], $allowedHtmlTags) ?></p>
         </div>
 
     </div>
@@ -584,33 +605,33 @@ if (!defined('ABSPATH')) {
         <!-- Modal content -->
         <div class="mp-settings-support-modal-content">
             <span class="mp-settings-close" onclick="closeSupportModal()">&times;</span>
-            <p class="mp-settings-modal-title"><?= $supportTranslations['support_modal_title'] ?></p>
+            <p class="mp-settings-modal-title"><?= wp_kses($supportTranslations['support_modal_title'], $allowedHtmlTags) ?></p>
             <?php if (!empty($pluginLogs)) : ?>
-                <p class="mp-settings-modal-desc"><?= $supportTranslations['support_modal_desc'] ?></p>
+                <p class="mp-settings-modal-desc"><?= wp_kses($supportTranslations['support_modal_desc'], $allowedHtmlTags) ?></p>
                 <table class="mp-settings-modal-table">
                     <thead>
                         <tr>
                             <th class="mp-settings-modal-table-header small-cell"><input type="checkbox" id="selectAllCheckbox"></th>
-                            <th class="mp-settings-modal-table-header"><?= $supportTranslations['support_modal_table_header_2'] ?></th>
-                            <th class="mp-settings-modal-table-header"><?= $supportTranslations['support_modal_table_header_3'] ?></th>
+                            <th class="mp-settings-modal-table-header"><?= wp_kses($supportTranslations['support_modal_table_header_2'], $allowedHtmlTags) ?></th>
+                            <th class="mp-settings-modal-table-header"><?= wp_kses($supportTranslations['support_modal_table_header_3'], $allowedHtmlTags) ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($pluginLogs as $logFile) : ?>
                             <tr class="mp-settings-modal-table-row">
-                                <td class="mp-settings-modal-table-cell small-cell"><input type="checkbox" name="selected_files[]" value="<?php echo $logFile->fileFullName; ?>"></td>
-                                <td class="mp-settings-modal-table-cell"><?php echo $logFile->fileName ?></td>
-                                <td class="mp-settings-modal-table-cell"><?php echo $logFile->fileDate ?></td>
+                                <td class="mp-settings-modal-table-cell small-cell"><input type="checkbox" name="selected_files[]" value="<?php echo wp_kses($logFile->fileFullName, $allowedHtmlTags); ?>"></td>
+                                <td class="mp-settings-modal-table-cell"><?php echo wp_kses($logFile->fileName, $allowedHtmlTags) ?></td>
+                                <td class="mp-settings-modal-table-cell"><?php echo wp_kses($logFile->fileDate, $allowedHtmlTags) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-                <button id="downloadSelected" class="mp-button mp-button-small" disabled><?= $supportTranslations['support_modal_download_btn'] ?></button>
+                <button id="downloadSelected" class="mp-button mp-button-small" disabled><?= wp_kses($supportTranslations['support_modal_download_btn'], $allowedHtmlTags) ?></button>
                 <div class="mp-settings-button-group">
                     <div id="mp-pagination" class="mp-settings-pagination"></div>
                 </div>
             <?php else : ?>
-                <p class="mp-settings-modal-desc"><?= $supportTranslations['support_modal_no_content'] ?></p>
+                <p class="mp-settings-modal-desc"><?= wp_kses($supportTranslations['support_modal_no_content'], $allowedHtmlTags) ?></p>
             <?php endif; ?>
         </div>
 
