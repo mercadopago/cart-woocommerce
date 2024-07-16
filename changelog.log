@@ -1,6 +1,13 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.6.2 (26/06/2024) =
+* Added:
+- Added validation on user permissions to download plugin logs.
+- Increased plugin wordpress tested version to the latest available.
+* Fix:
+- Addressed an issue where discount and commission calculations were not being shown correctly on order details.
+
 = v7.6.1 (26/06/2024) =
 * Fix:
 - Addressed an funnel metrics issue

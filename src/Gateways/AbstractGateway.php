@@ -329,15 +329,17 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
         $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this)::ID);
 
         if ($this->discount != 0) {
+            $percentage = Numbers::getPercentageFromParcialValue((float) $discount, (float) $order->get_total());
             $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
-            $feeText     = $this->getFeeText($translation, 'discount', $discount);
+            $feeText     = $this->getFeeText($translation, $percentage, $discount);
 
             $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
         }
 
         if ($this->commission != 0) {
+            $percentage = Numbers::getPercentageFromParcialValue((float) $comission, (float) $order->get_total());
             $translation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
-            $feeText     = $this->getFeeText($translation, 'commission', $commission);
+            $feeText     = $this->getFeeText($translation, $percentage, $commission);
 
             $this->mercadopago->orderMetadata->setCommissionData($order, $feeText);
         }

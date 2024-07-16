@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.2] - 2024-07-16
+### Added:
+- Added validation on user permissions to download plugin logs.
+- Increased plugin wordpress tested version to the latest available.
+### Fix:
+- Addressed an issue where discount and commission calculations were not being shown correctly on order details.
+
 ## [7.6.1] - 2024-06-26
 ### Fix:
 - Addressed an funnel metrics issue 
