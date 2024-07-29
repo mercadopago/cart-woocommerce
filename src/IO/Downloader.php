@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\IO;
 use MercadoPago\Woocommerce\Entities\Files\Log as LogFile;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Helpers\CurrentUser;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -23,9 +24,14 @@ class Downloader
 
     public $pluginLogs;
 
+    /**
+     * @var CurrentUser
+     */
+    private $currentUser;
 
-    public function __construct(Logs $logs)
+    public function __construct(Logs $logs, CurrentUser $currentUser)
     {
+        $this->currentUser  = $currentUser;
         $this->logs     = $logs;
         $this->pluginLogs = $this->getNameOfFileLogs();
     }
@@ -99,7 +105,7 @@ class Downloader
     {
         $filename = reset($selectedFile);
 
-        if (!$this->validateFilename($filename)) {
+        if (!$this->validatesDownloadSecurity($filename)) {
             throw new \Exception('attempt to download the file ' . $filename . 'on ' .  __METHOD__);
         }
 
@@ -128,7 +134,7 @@ class Downloader
 
         if ($zip->open($temp_file, \ZipArchive::CREATE) === true) {
             foreach ($selectedFiles as $filename) {
-                if (!$this->validateFilename($filename)) {
+                if (!$this->validatesDownloadSecurity($filename)) {
                     continue;
                 }
 
@@ -152,14 +158,16 @@ class Downloader
     }
 
     /**
-     * Validates a filename to prevent path traversal attempts and ensure expected format.
+     * Validates a filename and user permissions to prevent path traversal attempts and ensure expected format.
      *
      * @param string $filename The filename to be validated
      *
      * @return bool True if the filename is valid, false otherwise
      */
-    private function validateFilename(string $filename): bool
+    private function validatesDownloadSecurity(string $filename): bool
     {
+        $this->currentUser->validateUserNeededPermissions();
+
         return $this->hasAllowedExtension($filename) &&
             $this->hasNoDisallowedCharacters($filename) &&
             $this->containsExpectedTerms($filename);
@@ -168,7 +176,7 @@ class Downloader
     private function hasAllowedExtension(string $filename): bool
     {
         $allowed_pattern = '/\.log$/';
-        return (bool)preg_match($allowed_pattern, $filename);
+        return  (bool)preg_match($allowed_pattern, $filename);
     }
 
     private function hasNoDisallowedCharacters(string $filename): bool

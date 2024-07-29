@@ -21,7 +21,7 @@ const CheckoutPage = {
     this.setBackground('fcCardNumberContainer', 'url(' + secureThumbnail + ') 98% 50% no-repeat #fff');
     document
       .querySelector(CheckoutElements.fcCardNumberContainer)
-      .style.setProperty('background-size', 'auto 32px', 'important');
+      .style.setProperty('background-size', 'auto', 'important');
   },
 
   findContainerField(field) {
@@ -337,7 +337,7 @@ const CheckoutPage = {
   },
 
   getBankInterestDisclaimerCountries(siteId) {
-    return siteId === 'mlc' || siteId === 'mco' || siteId === 'mpe';
+    return siteId.toUpperCase() === 'MLC' || siteId.toUpperCase() === 'MCO' || siteId.toUpperCase() === 'MPE';
   },
 
   getInstallments(response, bankInterestDisclaimer) {
