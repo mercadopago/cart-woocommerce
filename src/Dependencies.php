@@ -327,7 +327,6 @@ class Dependencies
         $this->requesterHelper         = $this->setRequester();
         $this->storeConfig             = $this->setStore();
         $this->logs                    = $this->setLogs();
-        $this->downloader              = $this->setDownloader();
         $this->sellerConfig            = $this->setSeller();
         $this->countryHelper           = $this->setCountry();
         $this->urlHelper               = $this->setUrl();
@@ -347,6 +346,7 @@ class Dependencies
         $this->noticesHelper           = $this->setNotices();
         $this->metadataConfig          = $this->setMetadataConfig();
         $this->currencyHelper          = $this->setCurrency();
+        $this->downloader              = $this->setDownloader();
         $this->settings                = $this->setSettings();
         $this->creditsEnabledHelper    = $this->setCreditsEnabled();
         $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
@@ -704,6 +704,6 @@ class Dependencies
 
     private function setDownloader(): Downloader
     {
-        return new Downloader($this->logs);
+        return new Downloader($this->logs, $this->currentUserHelper);
     }
 }

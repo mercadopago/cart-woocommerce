@@ -76,4 +76,20 @@ final class Numbers
 
         return self::format($value * $ratio * 100) / 100;
     }
+
+    /**
+     * Returns the percentage of parcialValue on the sum with the paid value
+     *
+     * @param float $parcialValue
+     * @param float $paidValue
+     *
+     * @return float
+     */
+    public static function getPercentageFromParcialValue(float $parcialValue, $paidValue)
+    {
+        $total = $paidValue + $parcialValue;
+        $percentage = ($parcialValue / $total) * 100;
+
+        return self::format($percentage);
+    }
 }
