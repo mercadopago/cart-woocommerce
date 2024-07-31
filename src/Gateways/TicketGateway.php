@@ -255,7 +255,7 @@ class TicketGateway extends AbstractGateway
         $address        .= (!empty($address2) ? ' - ' . $address2 : '');
         $country         = $this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_country', true);
         $address        .= (!empty($country) ? ' - ' . $country : '');
-
+        $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return [
             'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
             'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
@@ -270,15 +270,15 @@ class TicketGateway extends AbstractGateway
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'amount'                           => $this->getAmount(),
             'payment_methods'                  => $this->getPaymentMethods(),
             'site_id'                          => $this->mercadopago->sellerConfig->getSiteId(),
             'payer_email'                      => esc_js($loggedUserEmail),
-            'currency_ratio'                   => $this->mercadopago->helpers->currency->getRatio($this),
             'woocommerce_currency'             => get_woocommerce_currency(),
             'account_currency'                 => $this->mercadopago->helpers->country->getCountryConfigs(),
             'febraban'                         => $this->getFebrabanInfo($currentUser, $address),
-            'fee_title'                        => $this->getFeeTitle(),
+            'amount'                           => $amountAndCurrencyRatio['amount'],
+            'currency_ratio'                   => $amountAndCurrencyRatio['currencyRatio'],
+            'message_error_amount'             => $this->storeTranslations['message_error_amount'],
         ];
     }
 

@@ -167,6 +167,7 @@ class PixGateway extends AbstractGateway
      */
     public function getPaymentFieldsParams(): array
     {
+        $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return [
             'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
             'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
@@ -178,7 +179,8 @@ class PixGateway extends AbstractGateway
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'fee_title'                        => $this->getFeeTitle(),
+            'amount'                           => $amountAndCurrencyRatio['amount'],
+            'message_error_amount'             => $this->storeTranslations['message_error_amount'],
         ];
     }
 

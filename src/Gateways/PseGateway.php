@@ -243,7 +243,7 @@ class PseGateway extends AbstractGateway
     {
         $currentUser     = $this->mercadopago->helpers->currentUser->getCurrentUser();
         $loggedUserEmail = ($currentUser->ID != 0) ? $currentUser->user_email : null;
-
+        $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return ['test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
             'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
             'test_mode_description'            => $this->storeTranslations['test_mode_description'],
@@ -253,13 +253,11 @@ class PseGateway extends AbstractGateway
             'input_document_helper'            => $this->storeTranslations['input_document_helper'],
             'pse_text_label'                   => $this->storeTranslations['pse_text_label'],
             'input_table_button'               => $this->storeTranslations['input_table_button'],
-            'amount'                           => $this->getAmount(),
             'site_id'                          => $this->mercadopago->sellerConfig->getSiteId(),
             'payer_email'                      => esc_js($loggedUserEmail),
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'currency_ratio'                   => $this->mercadopago->helpers->currency->getRatio($this),
             'woocommerce_currency'             => get_woocommerce_currency(),
             'account_currency'                 => $this->mercadopago->helpers->country->getCountryConfigs(),
             'financial_institutions'           => json_encode($this->getFinancialInstitutions()),
@@ -267,6 +265,9 @@ class PseGateway extends AbstractGateway
             'financial_institutions_label'     => $this->storeTranslations['financial_institutions_label'],
             'financial_institutions_helper'    => $this->storeTranslations['financial_institutions_helper'],
             'financial_placeholder'            => $this->storeTranslations['financial_placeholder'],
+            'amount'                           => $amountAndCurrencyRatio['amount'],
+            'currency_ratio'                   => $amountAndCurrencyRatio['currencyRatio'],
+            'message_error_amount'             => $this->storeTranslations['message_error_amount'],
         ];
     }
 

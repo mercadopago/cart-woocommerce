@@ -92,7 +92,13 @@ const Content = (props) => {
     terms_and_conditions_link_text,
     terms_and_conditions_link_src,
     test_mode,
+    amount,
+    message_error_amount,
   } = settings.params;
+
+  if (amount == null) {
+    return (<><p className={'alert-message'}>{message_error_amount}</p></>);
+  }
 
   return (
     <div className="mp-checkout-container">

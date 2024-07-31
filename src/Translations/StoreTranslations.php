@@ -107,6 +107,8 @@ class StoreTranslations
             'store_discount'     => __('Discount provided by store', 'woocommerce-mercadopago'),
             'cart_discount'      => __('Mercado Pago Discount', 'woocommerce-mercadopago'),
             'cart_commission'    => __('Mercado Pago Commission', 'woocommerce-mercadopago'),
+            'message_error_amount'    => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
+
         ];
     }
 
@@ -146,6 +148,8 @@ class StoreTranslations
             'terms_and_conditions_link_text'                  => __('Terms and conditions', 'woocommerce-mercadopago'),
             'pay_with_mp_title'                               => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
             'cancel_url_text'                                 => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
+            'message_error_amount'                            => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
+
         ];
     }
 
@@ -182,7 +186,8 @@ class StoreTranslations
             'modal_step_3'                              => __('Choose the amount of installments that best suit you and you’re all set!', 'woocommerce-mercadopago'),
             'modal_footer'                              => __('Any Questions? Check our ', 'woocommerce-mercadopago'),
             'modal_footer_link'                         => __('Help', 'woocommerce-mercadopago'),
-            'modal_footer_init'                         => __('Credit subject to approval.', 'woocommerce-mercadopago')
+            'modal_footer_init'                         => __('Credit subject to approval.', 'woocommerce-mercadopago'),
+            'message_error_amount'                      => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
         ];
         $this->creditsCheckout = array_merge($this->creditsCheckout, $this->setCreditsTooltipTranslations());
     }
@@ -270,7 +275,7 @@ class StoreTranslations
             'cvv_text'                                            => __('digits', 'woocommerce-mercadopago'),
             'installment_obs_fee'                                 => __('No fee', 'woocommerce-mercadopago'),
             'installment_button'                                  => __('More options', 'woocommerce-mercadopago'),
-            'bank_interest_text'                                  => __('If interest is applicable, it will be charged by your bank.', 'woocommerce-mercadopago'),
+            'bank_interest_text'                                  => __('The interest rate is applied and charged by your bank.', 'woocommerce-mercadopago'),
             'interest_text'                                       => __('Interest', 'woocommerce-mercadopago'),
             'input_helper_message_invalid_type'                   => __('Card number is required', 'woocommerce-mercadopago'),
             'input_helper_message_invalid_length'                 => __('Card number invalid', 'woocommerce-mercadopago'),
@@ -286,6 +291,7 @@ class StoreTranslations
             'text_installments'                                   => __('installments of', 'woocommerce-mercadopago'),
             'wallet_button_order_receipt_title'                   => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
             'cancel_url_text'                                     => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
+            'message_error_amount'                                => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -320,6 +326,8 @@ class StoreTranslations
             'congrats_title'                   => __('Mercado Pago: Now you just need to pay with Pix to finalize your purchase.', 'woocommerce-mercadopago'),
             'congrats_subtitle'                => __('Scan the QR code below or copy and paste the code into your bank\'s application.', 'woocommerce-mercadopago'),
             'expiration_30_minutes'            => __('30 minutes', 'woocommerce-mercadopago'),
+            'message_error_amount'             => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
+
         ];
     }
 
@@ -371,6 +379,8 @@ class StoreTranslations
             'congrats_title'                   => __('To print the ticket again click', 'woocommerce-mercadopago'),
             'congrats_subtitle'                => __('here', 'woocommerce-mercadopago'),
             'customer_not_paid'                => __('Mercado Pago: The customer has not paid yet.', 'woocommerce-mercadopago'),
+            'message_error_amount'             => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
+
         ];
     }
 
@@ -397,6 +407,8 @@ class StoreTranslations
             'customer_not_paid'                => __('Mercado Pago: The customer has not paid yet.', 'woocommerce-mercadopago'),
             'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
             'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'message_error_amount'             => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
+
         ];
     }
 

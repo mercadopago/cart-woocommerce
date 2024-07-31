@@ -333,6 +333,7 @@ class CustomGateway extends AbstractGateway
      */
     public function getPaymentFieldsParams(): array
     {
+        $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return [
             'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
             'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
@@ -370,9 +371,9 @@ class CustomGateway extends AbstractGateway
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'amount'                           => $this->getAmount(),
-            'currency_ratio'                   => $this->mercadopago->helpers->currency->getRatio($this),
-            'fee_title'                        => $this->getFeeTitle(),
+            'amount'                           => $amountAndCurrencyRatio['amount'],
+            'currency_ratio'                   => $amountAndCurrencyRatio['currencyRatio'],
+            'message_error_amount'             => $this->storeTranslations['message_error_amount'],
         ];
     }
 

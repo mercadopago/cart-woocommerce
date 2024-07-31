@@ -95,7 +95,13 @@ const Content = (props) => {
     financial_institutions_label,
     financial_institutions_helper,
     financial_placeholder,
+    message_error_amount,
+
   } = settings.params;
+
+  if (amount == null) {
+    return (<><p className={'alert-message'}>{message_error_amount}</p></>);
+  }
 
   const ref = useRef(null);
 

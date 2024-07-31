@@ -883,4 +883,23 @@ abstract class AbstractGateway extends \WC_Payment_Gateway implements MercadoPag
     {
         return $this->links['admin_settings_page'];
     }
+
+    protected function getAmountAndCurrency(): array
+    {
+        $currencyRatio = 0;
+        $amount = null;
+        try {
+            $currencyRatio = $this->mercadopago->helpers->currency->getRatio($this);
+            $amount = $this->getAmount();
+        } catch (\Exception $e) {
+            $this->mercadopago->logs->file->warning(
+                "Mercado pago gave error to call getRatio: {$e->getMessage()}",
+                self::LOG_SOURCE
+            );
+        }
+        return [
+            'currencyRatio' => $currencyRatio,
+            'amount' => $amount,
+        ];
+    }
 }
