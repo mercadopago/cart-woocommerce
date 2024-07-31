@@ -87,7 +87,13 @@ const Content = (props) => {
     terms_and_conditions_link_src,
     amount,
     currency_ratio,
+    message_error_amount,
   } = settings.params;
+
+
+  if (amount == null) {
+    return (<><p  className={'alert-message'}>{message_error_amount}</p></>);
+  }
 
   const ref = useRef(null);
   const [checkoutType, setCheckoutType] = useState('custom');
@@ -455,6 +461,7 @@ const Content = (props) => {
           value={checkoutType}
         />
       </div>
+      
     </div>
   );
 };

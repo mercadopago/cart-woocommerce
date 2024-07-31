@@ -225,22 +225,12 @@ final class Currency
     private function loadRatio(): float
     {
         $response = $this->getCurrencyConversion();
-
-        try {
-            if ($response['status'] !== 200) {
-                throw new \Exception(json_encode($response['data']));
-            }
-
-            if (isset($response['data']['ratio']) && $response['data']['ratio'] > 0) {
-                return $response['data']['ratio'];
-            }
-        } catch (\Exception $e) {
-            $this->logs->file->error(
-                "Mercado pago gave error to get currency value: {$e->getMessage()}",
-                __CLASS__
-            );
+        if ($response['status'] !== 200) {
+            throw new \Exception(json_encode($response['data']));
         }
-
+        if (isset($response['data']['ratio']) && $response['data']['ratio'] > 0) {
+            return $response['data']['ratio'];
+        }
         return self::DEFAULT_RATIO;
     }
 

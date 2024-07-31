@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.6.4 (31/07/2024) =
+* Fixed:
+- Prevents payment from being created if the currency conversion system fails.
+
 = v7.6.3 (29/07/2024) =
 * Fixed:
 - Fix the size of the card logos at checkout.
