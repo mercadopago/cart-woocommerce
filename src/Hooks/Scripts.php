@@ -5,7 +5,6 @@ namespace MercadoPago\Woocommerce\Hooks;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Configs\Seller;
-use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -13,35 +12,17 @@ if (!defined('ABSPATH')) {
 
 class Scripts
 {
-    /**
-     * @const
-     */
     private const SUFFIX = '_params';
 
-    /**
-     * @const
-     */
     private const MELIDATA_SCRIPT_NAME = 'mercadopago_melidata';
 
-    /**
-     * @const
-     */
     private const CARONTE_SCRIPT_NAME = 'wc_mercadopago';
 
-    /**
-     * @const
-     */
     private const NOTICES_SCRIPT_NAME = 'wc_mercadopago_notices';
 
-    /**
-     * @var Url
-     */
-    private $url;
+    private Url $url;
 
-    /**
-     * @var Seller
-     */
-    private $seller;
+    private Seller $seller;
 
     /**
      * Scripts constructor

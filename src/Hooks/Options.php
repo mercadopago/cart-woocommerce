@@ -10,9 +10,6 @@ if (!defined('ABSPATH')) {
 
 class Options
 {
-    /**
-     * @const
-     */
     public const COMMON_CONFIGS = [
         '_mp_public_key_test',
         '_mp_access_token_test',

@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use Exception;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Transactions\PseTransaction;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
@@ -37,6 +38,7 @@ class PseGateway extends AbstractGateway
 
     /**
      * PseGateway constructor
+     * @throws Exception
      */
     public function __construct()
     {
@@ -284,8 +286,6 @@ class PseGateway extends AbstractGateway
         try {
             parent::process_payment($order_id);
 
-            $checkout = Form::sanitizedPostData('mercadopago_pse');
-
             if (isset($_POST['mercadopago_pse'])) {
                 $checkout = Form::sanitizedPostData('mercadopago_pse');
                 $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
@@ -322,11 +322,11 @@ class PseGateway extends AbstractGateway
                     new ResponseStatusException('exception : Invalid status or status_detail on ' . __METHOD__),
                     $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                     self::LOG_SOURCE,
-                    (array)$response
+                    $response
                 );
             }
             throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
                 $e->getMessage(),
@@ -371,21 +371,22 @@ class PseGateway extends AbstractGateway
     {
         // Rules for pse MCO
         if (
-            ($checkout['site_id'] === 'MCO' && (
-                (empty($checkout['doc_number']) || !isset($checkout['doc_number']))
-                || (empty($checkout['doc_type']) || !isset($checkout['doc_type']))
-                || (empty($checkout['person_type']) || !isset($checkout['person_type']))
-                || (empty($checkout['bank']) || !isset($checkout['bank']))
-                || (strcmp($checkout['person_type'], 'individual') != 0  && strcmp($checkout['person_type'], 'association') != 0 )
-            ))
+            $checkout['site_id'] === 'MCO' && (
+                empty($checkout['doc_number']) ||
+                empty($checkout['doc_type']) ||
+                empty($checkout['person_type']) ||
+                empty($checkout['bank']) ||
+                !in_array($checkout['person_type'], ['individual', 'association'])
+            )
         ) {
             return $this->processReturnFail(
-                new \Exception('Unable to process payment on ' . __METHOD__),
+                new Exception('Unable to process payment on ' . __METHOD__),
                 $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                 self::LOG_SOURCE,
                 (array)$checkout,
                 true
             );
         }
+        return true;
     }
 }

@@ -2,8 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Libraries\Metrics;
 
+use Exception;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Libraries\Singleton\Singleton;
+
+use function is_null;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -11,13 +14,11 @@ if (!defined('ABSPATH')) {
 
 class Datadog extends Singleton
 {
-    /**
-     * @var Sdk
-     */
     private Sdk $sdk;
 
     public function __construct()
     {
+        parent::__construct();
         $this->sdk = new Sdk();
     }
 
@@ -26,7 +27,7 @@ class Datadog extends Singleton
         try {
             $datadogEvent = $this->sdk->getDatadogEventInstance();
 
-            if (!\is_null($message)) {
+            if (! is_null($message)) {
                 $datadogEvent->message = $message;
             }
 
@@ -37,13 +38,13 @@ class Datadog extends Singleton
             $datadogEvent->platform->url = site_url();
 
             $datadogEvent->register(array("team" => "smb", "event_type" => $event_type));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return;
         }
     }
 
     private function getWoocommerceVersion(): string
     {
-        return $GLOBALS['woocommerce']->version ? $GLOBALS['woocommerce']->version : "";
+        return $GLOBALS['woocommerce']->version ?? "";
     }
 }

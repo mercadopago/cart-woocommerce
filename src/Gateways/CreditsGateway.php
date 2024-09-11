@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use Exception;
 use MercadoPago\Woocommerce\Transactions\CreditsTransaction;
 
 if (!defined('ABSPATH')) {
@@ -32,6 +33,7 @@ class CreditsGateway extends AbstractGateway
 
     /**
      * CreditsGateway constructor
+     * @throws Exception
      */
     public function __construct()
     {
@@ -289,7 +291,7 @@ class CreditsGateway extends AbstractGateway
                 'result'   => 'success',
                 'redirect' => $this->mercadopago->storeConfig->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
                 $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
@@ -323,7 +325,7 @@ class CreditsGateway extends AbstractGateway
     /**
      * Example Banner Credits Admin
      *
-     * @return string
+     * @return array
      */
     private function getCheckoutVisualization(): array
     {
@@ -519,7 +521,7 @@ class CreditsGateway extends AbstractGateway
      */
     public function getTooltipKeyByID(int $id): string
     {
-        return "tooltip_component_option" . (string) $id;
+        return "tooltip_component_option" . $id;
     }
 
     /**

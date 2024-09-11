@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Notification;
 
+use Exception;
 use MercadoPago\PP\Sdk\Entity\Notification\Notification;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Configs\Seller;
@@ -12,6 +13,7 @@ use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use WC_Order;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -19,15 +21,9 @@ if (!defined('ABSPATH')) {
 
 class CoreNotification extends AbstractNotification
 {
-    /**
-     * @var WoocommerceMercadoPago
-     */
-    protected $mercadopago;
+    protected WoocommerceMercadoPago $mercadopago;
 
-    /**
-     * @var Notification
-     */
-    protected $sdkNotification;
+    protected Notification $sdkNotification;
 
     /**
      * CoreNotification constructor
@@ -82,7 +78,7 @@ class CoreNotification extends AbstractNotification
             ]);
 
             $this->handleSuccessfulRequest($notificationEntity->toArray());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logs->file->error($e->getMessage(), __CLASS__, $data);
             $this->setResponse(500, $e->getMessage());
         }
@@ -112,7 +108,7 @@ class CoreNotification extends AbstractNotification
             );
 
             $this->processStatus($processedStatus, $order, $data);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->setResponse(422, $e->getMessage());
             $this->logs->file->error($e->getMessage(), __CLASS__, $data);
         }
@@ -121,12 +117,12 @@ class CoreNotification extends AbstractNotification
     /**
      * Process status
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param mixed $data
      *
      * @return string
      */
-    public function getProcessedStatus(\WC_Order $order, $data): string
+    public function getProcessedStatus(WC_Order $order, $data): string
     {
         $status = $data['status'];
 

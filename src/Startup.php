@@ -26,7 +26,7 @@ class Startup
     ];
 
     /**
-     * Verify if plugin has it's packages and autoloader file
+     * Verify if plugin has its packages and autoloader file
      *
      * @return bool
      */
@@ -79,7 +79,7 @@ class Startup
      *
      * @return void
      */
-    protected static function missingNotice(string $type, $path): void
+    protected static function missingNotice(string $type, string $path): void
     {
         add_action('admin_notices', function () use ($type, $path) {
             switch ($type) {

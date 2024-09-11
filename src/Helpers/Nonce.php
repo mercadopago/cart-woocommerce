@@ -11,17 +11,9 @@ if (!defined('ABSPATH')) {
 
 final class Nonce
 {
-    /**
-     * @var Logs
-     */
-    private $logs;
+    private Logs $logs;
 
-    /**
-     * Store
-     *
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
     /**
      * Is debug mode

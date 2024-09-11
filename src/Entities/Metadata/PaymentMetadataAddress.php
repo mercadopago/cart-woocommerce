@@ -8,28 +8,13 @@ if (!defined('ABSPATH')) {
 
 class PaymentMetadataAddress
 {
-    /**
-     * @var string
-     */
-    public $zip_code;
+    public string $zip_code;
 
-    /**
-     * @var string
-     */
-    public $street_name;
+    public string $street_name;
 
-    /**
-     * @var string
-     */
-    public $city_name;
+    public string $city_name;
 
-    /**
-     * @var string
-     */
-    public $state_name;
+    public string $state_name;
 
-    /**
-     * @var string
-     */
-    public $country_name;
+    public string $country_name;
 }

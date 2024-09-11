@@ -26,90 +26,39 @@ if (!defined('ABSPATH')) {
 
 class Helpers
 {
-    /**
-     * @var Actions
-     */
-    public $actions;
+    public Actions $actions;
 
-    /**
-     * @var Cache
-     */
-    public $cache;
+    public Cache $cache;
 
-    /**
-     * @var Cart
-     */
-    public $cart;
+    public Cart $cart;
 
-    /**
-     * @var Country
-     */
-    public $country;
+    public Country $country;
 
-    /**
-     * @var CreditsEnabled
-     */
-    public $creditsEnabled;
+    public CreditsEnabled $creditsEnabled;
 
-    /**
-     * @var Currency
-     */
-    public $currency;
+    public Currency $currency;
 
-    /**
-     * @var CurrentUser
-     */
-    public $currentUser;
+    public CurrentUser $currentUser;
 
-    /**
-     * @var Gateways
-     */
-    public $gateways;
+    public Gateways $gateways;
 
-    /**
-     * @var Images
-     */
-    public $images;
+    public Images $images;
 
-    /**
-     * @var Links
-     */
-    public $links;
+    public Links $links;
 
-    /**
-     * @var Nonce
-     */
-    public $nonce;
+    public Nonce $nonce;
 
-    /**
-     * @var Notices
-     */
-    public $notices;
+    public Notices $notices;
 
-    /**
-     * @var PaymentMethods
-     */
-    public $paymentMethods;
+    public PaymentMethods $paymentMethods;
 
-    /**
-     * @var Requester
-     */
-    public $requester;
+    public Requester $requester;
 
-    /**
-     * @var Session
-     */
-    public $session;
+    public Session $session;
 
-    /**
-     * @var Strings
-     */
-    public $strings;
+    public Strings $strings;
 
-    /**
-     * @var Url
-     */
-    public $url;
+    public Url $url;
 
     public function __construct(
         Actions $actions,

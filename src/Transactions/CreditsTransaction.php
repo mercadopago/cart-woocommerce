@@ -2,23 +2,24 @@
 
 namespace MercadoPago\Woocommerce\Transactions;
 
+use Exception;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
+use WC_Order;
 
 class CreditsTransaction extends AbstractPreferenceTransaction
 {
-    /**
-     * @const
-     */
     public const ID = 'credits';
 
     /**
      * Credits Transaction constructor
      *
      * @param AbstractGateway $gateway
-     * @param \WC_Order $order
+     * @param WC_Order $order
+     *
+     * @throws Exception
      */
-    public function __construct(AbstractGateway $gateway, \WC_Order $order)
+    public function __construct(AbstractGateway $gateway, WC_Order $order)
     {
         parent::__construct($gateway, $order);
 

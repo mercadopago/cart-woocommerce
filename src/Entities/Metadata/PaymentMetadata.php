@@ -8,98 +8,41 @@ if (!defined('ABSPATH')) {
 
 class PaymentMetadata
 {
-    /**
-     * @var string
-     */
-    public $platform;
+    public string $platform;
 
-    /**
-     * @var string
-     */
-    public $platform_version;
+    public string $platform_version;
 
-    /**
-     * @var string
-     */
-    public $module_version;
+    public string $module_version;
 
-    /**
-     * @var string
-     */
-    public $php_version;
+    public string $php_version;
 
-    /**
-     * @var string
-     */
-    public $site_id;
+    public string $site_id;
 
-    /**
-     * @var string
-     */
-    public $sponsor_id;
+    public string $sponsor_id;
 
-    /**
-     * @var string
-     */
-    public $collector;
+    public string $collector;
 
-    /**
-     * @var string
-     */
-    public $test_mode;
+    public string $test_mode;
 
-    /**
-     * @var string
-     */
-    public $details;
+    public string $details;
 
-    /**
-     * @var string
-     */
-    public $settings;
+    public array $settings;
 
-    /**
-     * @var string
-     */
-    public $seller_website;
+    public string $seller_website;
 
-    /**
-     * @var string
-     */
-    public $checkout;
+    public string $checkout;
 
-    /**
-     * @var string
-     */
-    public $checkout_type;
+    public string $checkout_type;
 
-    /**
-     * @var string
-     */
-    public $payment_option_id;
+    public string $payment_option_id;
 
-    /**
-     * @var PaymentMetadataAddress
-     */
-    public $billing_address;
+    public PaymentMetadataAddress $billing_address;
 
-    /**
-     * @var PaymentMetadataUser
-     */
-    public $user;
+    public PaymentMetadataUser $user;
 
-    /**
-     * @var PaymentMetadataCpp
-     */
-    public $cpp_extra;
+    public PaymentMetadataCpp $cpp_extra;
 
-    /**
-     * @var string
-     */
-    public $blocks_payment;
+    public string $blocks_payment;
 
-    /**
-     * @var bool
-     */
-    public $auto_update;
+    public bool $auto_update;
 }

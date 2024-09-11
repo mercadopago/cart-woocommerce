@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use Exception;
 use MercadoPago\PP\Sdk\HttpClient\HttpClientInterface;
 use MercadoPago\PP\Sdk\HttpClient\Response;
 
@@ -11,15 +12,9 @@ if (!defined('ABSPATH')) {
 
 final class Requester
 {
-    /**
-     * @const
-     */
     public const BASEURL_MP = 'https://api.mercadopago.com';
 
-    /**
-     * @var HttpClientInterface
-     */
-    private $httpClient;
+    private HttpClientInterface $httpClient;
 
     /**
      * Requester constructor
@@ -36,7 +31,7 @@ final class Requester
      * @param array $headers
      *
      * @return Response
-     * @throws \Exception
+     * @throws Exception
      */
     public function get(string $uri, array $headers = []): Response
     {
@@ -49,7 +44,7 @@ final class Requester
      * @param array $body
      *
      * @return Response
-     * @throws \Exception
+     * @throws Exception
      */
     public function post(string $uri, array $headers = [], array $body = []): Response
     {
@@ -62,7 +57,7 @@ final class Requester
      * @param array $body
      *
      * @return Response
-     * @throws \Exception
+     * @throws Exception
      */
     public function put(string $uri, array $headers = [], array $body = []): Response
     {

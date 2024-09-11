@@ -10,10 +10,7 @@ if (!defined('ABSPATH')) {
 
 class Metadata
 {
-    /**
-     * @var Options
-     */
-    private $options;
+    private Options $options;
 
     /**
      * MetadataSettings constructor

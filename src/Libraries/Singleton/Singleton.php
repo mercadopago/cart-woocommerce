@@ -2,13 +2,15 @@
 
 namespace MercadoPago\Woocommerce\Libraries\Singleton;
 
+use Exception;
+
 if (!defined('ABSPATH')) {
     exit;
 }
 
 class Singleton
 {
-    private static $instances = [];
+    private static array $instances = [];
 
     protected function __construct()
     {
@@ -18,9 +20,12 @@ class Singleton
     {
     }
 
+    /**
+     * @throws Exception
+     */
     public function __wakeup()
     {
-        throw new \Exception("Cannot unserialize singleton");
+        throw new Exception("Cannot unserialize singleton");
     }
 
     /**

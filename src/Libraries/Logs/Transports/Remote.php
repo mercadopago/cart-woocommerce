@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Libraries\Logs\Transports;
 
+use Exception;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Interfaces\LogInterface;
@@ -13,25 +14,13 @@ if (!defined('ABSPATH')) {
 
 class Remote implements LogInterface
 {
-    /**
-     * @const
-     */
     private const METRIC_NAME_PREFIX = 'MP_WOO_PE_LOG_';
 
-    /**
-     * @var bool
-     */
-    private $debugMode;
+    private bool $debugMode;
 
-    /**
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
-    /**
-     * @var Requester
-     */
-    private $requester;
+    private Requester $requester;
 
     /**
      * Remote Logs constructor
@@ -166,7 +155,7 @@ class Remote implements LogInterface
             ];
 
             $this->requester->post($requestUrl, $headers, $body);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return;
         }
     }

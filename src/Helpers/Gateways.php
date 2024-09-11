@@ -10,12 +10,7 @@ if (!defined('ABSPATH')) {
 
 final class Gateways
 {
-    /**
-     * Store
-     *
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
     /**
      * Gateways constructor
@@ -28,7 +23,7 @@ final class Gateways
     }
 
     /**
-     * Determines if there are currently enabled payment gatways
+     * Determines if there are currently enabled payment gateways
      *
      * @return array
      */

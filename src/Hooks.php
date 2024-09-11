@@ -22,70 +22,31 @@ if (!defined('ABSPATH')) {
 
 class Hooks
 {
-    /**
-     * @var Admin
-     */
-    public $admin;
+    public Admin $admin;
 
-    /**
-     * @var Blocks
-     */
-    public $blocks;
+    public Blocks $blocks;
 
-    /**
-     * @var Cart
-     */
-    public $cart;
+    public Cart $cart;
 
-    /**
-     * @var Checkout
-     */
-    public $checkout;
+    public Checkout $checkout;
 
-    /**
-     * @var Endpoints
-     */
-    public $endpoints;
+    public Endpoints $endpoints;
 
-    /**
-     * @var Gateway
-     */
-    public $gateway;
+    public Gateway $gateway;
 
-    /**
-     * @var Options
-     */
-    public $options;
+    public Options $options;
 
-    /**
-     * @var Order
-     */
-    public $order;
+    public Order $order;
 
-    /**
-     * @var OrderMeta
-     */
-    public $orderMeta;
+    public OrderMeta $orderMeta;
 
-    /**
-     * @var Plugin
-     */
-    public $plugin;
+    public Plugin $plugin;
 
-    /**
-     * @var Product
-     */
-    public $product;
+    public Product $product;
 
-    /**
-     * @var Scripts
-     */
-    public $scripts;
+    public Scripts $scripts;
 
-    /**
-     * @var Template
-     */
-    public $template;
+    public Template $template;
 
     public function __construct(
         Admin $admin,

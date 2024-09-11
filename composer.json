@@ -41,7 +41,7 @@
     "qit:env-down": "./vendor/bin/qit env:down"
   },
   "require": {
-    "php": ">=7.2"
+    "php": ">=7.4"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "^3.7",

@@ -8,10 +8,7 @@ if (!defined('ABSPATH')) {
 
 class Template
 {
-    /**
-     * @var String
-     */
-    public $path;
+    public string $path;
 
     /**
      * Template constructor

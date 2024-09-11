@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Transactions;
 
+use Exception;
 use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
 use MercadoPago\PP\Sdk\Sdk;
@@ -15,18 +16,15 @@ use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataAddress;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataUser;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataCpp;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use WC_Order;
+use WC_Order_Item;
+use WC_Order_Item_Product;
 
 abstract class AbstractTransaction
 {
-    /**
-     * @var WoocommerceMercadoPago
-     */
-    protected $mercadopago;
+    protected WoocommerceMercadoPago $mercadopago;
 
-    /**
-     * @var Sdk
-     */
-    protected $sdk;
+    protected Sdk $sdk;
 
     /**
      * Transaction
@@ -35,57 +33,30 @@ abstract class AbstractTransaction
      */
     protected $transaction;
 
-    /**
-     * Gateway
-     *
-     * @var AbstractGateway
-     */
-    protected $gateway;
+    protected AbstractGateway $gateway;
 
-    /**
-     * Order
-     *
-     * @var \WC_Order
-     */
-    protected $order;
+    protected WC_Order $order;
 
-    /**
-     * Checkout data
-     *
-     * @var array
-     */
-    protected $checkout = null;
+    protected ?array $checkout = null;
 
-    /**
-     * Country configs
-     *
-     * @var array
-     */
-    protected $countryConfigs;
+    protected array $countryConfigs;
 
-    /**
-     * @var float
-     */
-    protected $ratio;
+    protected float $ratio;
 
-    /**
-     * @var float
-     */
-    protected $orderTotal;
+    protected float $orderTotal;
 
-    /**
-     * @var array
-     */
-    protected $listOfItems;
+    protected array $listOfItems;
 
     /**
      * Abstract Transaction constructor
      *
      * @param AbstractGateway $gateway
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param array|null $checkout
+     *
+     * @throws Exception
      */
-    public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout = null)
+    public function __construct(AbstractGateway $gateway, WC_Order $order, array $checkout = null)
     {
         global $mercadopago;
 
@@ -183,9 +154,7 @@ abstract class AbstractTransaction
      */
     public function getBinaryMode(): bool
     {
-        $binaryMode = $this->gateway
-            ? $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'binary_mode', 'no')
-            : 'no';
+        $binaryMode = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'binary_mode', 'no');
 
         return $binaryMode !== 'no';
     }
@@ -368,11 +337,11 @@ abstract class AbstractTransaction
     /**
      * Get item amount
      *
-     * @param \WC_Order_Item|\WC_Order_Item_Product $item
+     * @param WC_Order_Item|WC_Order_Item_Product $item
      *
      * @return float
      */
-    public function getItemAmount(\WC_Order_Item $item): float
+    public function getItemAmount(WC_Order_Item $item): float
     {
         $lineAmount = $item->get_total() + $item->get_total_tax();
         return Numbers::calculateByCurrency($this->countryConfigs['currency'], $lineAmount, $this->ratio);

@@ -2,9 +2,12 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use Exception;
 use MercadoPago\Woocommerce\Blocks\AbstractBlock;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+use WC_Cart;
+use WooCommerce;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -12,30 +15,15 @@ if (!defined('ABSPATH')) {
 
 final class Cart
 {
-    /**
-     * @var \WooCommerce
-     */
-    protected $woocommerce;
+    protected WooCommerce $woocommerce;
 
-    /**
-     * @var Country
-     */
-    protected $country;
+    protected Country $country;
 
-    /**
-     * @var Currency
-     */
-    protected $currency;
+    protected Currency $currency;
 
-    /**
-     * @var Session
-     */
-    protected $session;
+    protected Session $session;
 
-    /**
-     * @var StoreTranslations
-     */
-    protected $storeTranslations;
+    protected StoreTranslations $storeTranslations;
 
     /**
      * @param Country $country
@@ -61,9 +49,9 @@ final class Cart
     /**
      * Get WC_Cart
      *
-     * @return \WC_Cart|null
+     * @return WC_Cart|null
      */
-    public function getCart(): ?\WC_Cart
+    public function getCart(): ?WC_Cart
     {
         return $this->woocommerce->cart;
     }
@@ -115,8 +103,10 @@ final class Cart
      * Calculate WC_Cart subtotal with plugin discount
      *
      * @param AbstractGateway $gateway
+     * @param bool $toConvert
      *
      * @return float
+     * @throws Exception
      */
     public function calculateSubtotalWithDiscount(AbstractGateway $gateway, bool $toConvert = true): float
     {
@@ -135,8 +125,10 @@ final class Cart
      * Calculate WC_Cart subtotal with plugin commission
      *
      * @param AbstractGateway $gateway
+     * @param bool $toConvert
      *
      * @return float
+     * @throws Exception
      */
     public function calculateSubtotalWithCommission(AbstractGateway $gateway, bool $toConvert = true): float
     {
@@ -157,6 +149,7 @@ final class Cart
      * @param AbstractGateway $gateway
      *
      * @return float
+     * @throws Exception
      */
     public function calculateTotalWithDiscountAndCommission(AbstractGateway $gateway): float
     {
@@ -173,6 +166,7 @@ final class Cart
      * @param AbstractGateway $gateway
      *
      * @return void
+     * @throws Exception
      */
     public function addDiscountOnFees(AbstractGateway $gateway): void
     {
@@ -190,6 +184,7 @@ final class Cart
      * @param AbstractGateway $gateway
      *
      * @return void
+     * @throws Exception
      */
     public function addCommissionOnFees(AbstractGateway $gateway): void
     {
@@ -207,6 +202,7 @@ final class Cart
      * @param AbstractGateway $gateway
      *
      * @return void
+     * @throws Exception
      */
     public function addDiscountAndCommissionOnFees(AbstractGateway $gateway)
     {
@@ -224,6 +220,7 @@ final class Cart
      * @param AbstractGateway $gateway
      *
      * @return void
+     * @throws Exception
      */
     public function addDiscountAndCommissionOnFeesFromBlocks(AbstractGateway $gateway)
     {

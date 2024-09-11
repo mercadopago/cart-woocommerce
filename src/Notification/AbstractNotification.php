@@ -2,12 +2,15 @@
 
 namespace MercadoPago\Woocommerce\Notification;
 
+use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use WC_Order;
+use WC_Order_Refund;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -15,30 +18,15 @@ if (!defined('ABSPATH')) {
 
 abstract class AbstractNotification implements NotificationInterface
 {
-    /**
-     * @var MercadoPagoGatewayInterface
-     */
-    public $gateway;
+    public MercadoPagoGatewayInterface $gateway;
 
-    /**
-     * @var Logs
-     */
-    public $logs;
+    public Logs $logs;
 
-    /**
-     * @var OrderStatus
-     */
-    public $orderStatus;
+    public OrderStatus $orderStatus;
 
-    /**
-     * @var Seller
-     */
-    public $seller;
+    public Seller $seller;
 
-    /**
-     * @var Store
-     */
-    public $store;
+    public Store $store;
 
     /**
      * AbstractNotification constructor
@@ -80,7 +68,7 @@ abstract class AbstractNotification implements NotificationInterface
      *
      * @param mixed $data
      *
-     * @return bool|\WC_Order|\WC_Order_Refund
+     * @return bool|WC_Order|WC_Order_Refund
      */
     public function handleSuccessfulRequest($data)
     {
@@ -119,13 +107,13 @@ abstract class AbstractNotification implements NotificationInterface
      * Process order status
      *
      * @param string $processedStatus
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param mixed $data
      *
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
-    public function processStatus(string $processedStatus, \WC_Order $order, $data): void
+    public function processStatus(string $processedStatus, WC_Order $order, $data): void
     {
         $this->orderStatus->processStatus($processedStatus, $data, $order, get_class($this->gateway));
     }
@@ -133,13 +121,13 @@ abstract class AbstractNotification implements NotificationInterface
     /**
      * Update order meta
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param string $key
      * @param mixed $value
      *
      * @return void
      */
-    public function updateMeta(\WC_Order $order, string $key, $value): void
+    public function updateMeta(WC_Order $order, string $key, $value): void
     {
             $order->update_meta_data($key, $value);
     }

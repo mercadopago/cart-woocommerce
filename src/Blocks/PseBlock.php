@@ -8,14 +8,8 @@ if (!defined('ABSPATH')) {
 
 class PseBlock extends AbstractBlock
 {
-    /**
-     * @var string
-     */
     protected $scriptName = 'pse';
 
-    /**
-     * @var string
-     */
     protected $name = 'woo-mercado-pago-pse';
 
     /**

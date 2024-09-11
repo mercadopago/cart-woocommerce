@@ -14,50 +14,23 @@ if (!defined('ABSPATH')) {
 
 class Notices
 {
-    /**
-     * @var Scripts
-     */
-    private $scripts;
+    private Scripts $scripts;
 
-    /**
-     * @var AdminTranslations
-     */
-    private $translations;
+    private AdminTranslations $translations;
 
-    /**
-     * @var Url
-     */
-    private $url;
+    private Url $url;
 
-    /**
-     * @var array
-     */
-    private $links;
+    private array $links;
 
-    /**
-     * @var CurrentUser
-     */
-    private $currentUser;
+    private CurrentUser $currentUser;
 
-    /**
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
-    /**
-     * @var Nonce
-     */
-    private $nonce;
+    private Nonce $nonce;
 
-    /**
-     * @var Endpoints
-     */
-    private $endpoints;
+    private Endpoints $endpoints;
 
-    /**
-     * @var Seller
-     */
-    private $sellerConfig;
+    private Seller $sellerConfig;
 
     /**
      * @const
@@ -104,7 +77,7 @@ class Notices
         $this->insertDismissibleNotices();
         $this->endpoints->registerAjaxEndpoint('mp_review_notice_dismiss', [$this, 'reviewNoticeDismiss']);
         $this->endpoints->registerAjaxEndpoint('mp_saved_cards_notice_dismiss', [$this, 'savedCardsDismiss']);
-        add_action('woocommerce_order_status_processing', [$this, 'checkOrderCompleted'], 10, 1);
+        add_action('woocommerce_order_status_processing', [$this, 'checkOrderCompleted']);
     }
 
     /**

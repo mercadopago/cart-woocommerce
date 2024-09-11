@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Endpoints;
 
+use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Session;
@@ -15,35 +16,17 @@ if (!defined('ABSPATH')) {
 
 class CheckoutCustom
 {
-    /**
-     * @var Endpoints
-     */
-    public $endpoints;
+    public Endpoints $endpoints;
 
-    /**
-     * @var Logs
-     */
-    public $logs;
+    public Logs $logs;
 
-    /**
-     * @var Requester
-     */
-    public $requester;
+    public Requester $requester;
 
-    /**
-     * @var Session
-     */
-    public $session;
+    public Session $session;
 
-    /**
-     * @var Seller
-     */
-    public $seller;
+    public Seller $seller;
 
-      /**
-     * @var array
-     */
-    private $threeDsTranslations;
+    private array $threeDsTranslations;
 
     /**
      *
@@ -98,7 +81,7 @@ class CheckoutCustom
                     '3ds_creq' => $this->session->getSession('mp_3ds_creq'),
                 ],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logs->file->error('3DS session error: ' . $e->getMessage(), __CLASS__);
             wp_send_json_error([
                 'result' => 'failure',
@@ -144,7 +127,7 @@ class CheckoutCustom
                     ],
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logs->file->error('3DS session error: ' . $e->getMessage(), __CLASS__);
 
             wp_send_json_error([

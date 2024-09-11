@@ -85,7 +85,7 @@ final class Numbers
      *
      * @return float
      */
-    public static function getPercentageFromParcialValue(float $parcialValue, $paidValue)
+    public static function getPercentageFromParcialValue(float $parcialValue, float $paidValue): float
     {
         $total = $paidValue + $parcialValue;
         $percentage = ($parcialValue / $total) * 100;

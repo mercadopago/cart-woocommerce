@@ -8,30 +8,15 @@ if (!defined('ABSPATH')) {
 
 final class Links
 {
-    /**
-     * @const
-     */
     private const MP_URL = 'https://www.mercadopago.com';
 
-    /**
-     * @const
-     */
     private const MP_URL_PREFIX = 'https://www.mercadopago';
 
-    /**
-     * @const
-     */
     private const MP_DEVELOPERS_URL = 'https://developers.mercadopago.com';
 
-    /**
-     * @var Country
-     */
-    private $country;
+    private Country $country;
 
-    /**
-     * @var Url
-     */
-    private $url;
+    private Url $url;
 
     /**
      * Links constructor

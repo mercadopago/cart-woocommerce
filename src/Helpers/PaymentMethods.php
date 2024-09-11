@@ -10,15 +10,9 @@ if (!defined('ABSPATH')) {
 
 final class PaymentMethods
 {
-    /**
-     * @const
-     */
     private const SEPARATOR = '_';
 
-    /**
-     * @var Url
-     */
-    private $url;
+    private Url $url;
 
     /**
      * Url constructor

@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use WP_User;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -11,17 +12,9 @@ if (!defined('ABSPATH')) {
 
 final class CurrentUser
 {
-    /**
-     * @var Logs
-     */
-    private $logs;
+    private Logs $logs;
 
-    /**
-     * Store
-     *
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
     /**
      * Is debug mode
@@ -56,9 +49,9 @@ final class CurrentUser
     /**
      * Get WP current user
      *
-     * @return \WP_User
+     * @return WP_User
      */
-    public function getCurrentUser(): \WP_User
+    public function getCurrentUser(): WP_User
     {
         return wp_get_current_user();
     }
@@ -76,7 +69,7 @@ final class CurrentUser
     /**
      * Retrieves current user info
      *
-     * @return  \WP_User|false
+     * @return  WP_User|false
      */
     public function getCurrentUserData()
     {

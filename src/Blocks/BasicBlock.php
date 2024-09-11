@@ -8,14 +8,8 @@ if (!defined('ABSPATH')) {
 
 class BasicBlock extends AbstractBlock
 {
-    /**
-     * @var string
-     */
     protected $scriptName = 'basic';
 
-    /**
-     * @var string
-     */
     protected $name = 'woo-mercado-pago-basic';
 
     /**

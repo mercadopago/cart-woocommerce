@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use Exception;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 
 if (!defined('ABSPATH')) {
@@ -10,10 +11,7 @@ if (!defined('ABSPATH')) {
 
 class Cron
 {
-    /**
-     * @var Logs
-     */
-    public $logs;
+    public Logs $logs;
 
     /**
      * Cron helper constructor
@@ -28,6 +26,9 @@ class Cron
     /**
      * Register an scheduled event
      *
+     * @param string $periodicy
+     * @param $hook
+     *
      * @return void
      */
     public function registerScheduledEvent(string $periodicy, $hook): void
@@ -36,9 +37,9 @@ class Cron
             if (!wp_next_scheduled($hook)) {
                 wp_schedule_event(time(), $periodicy, $hook);
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $this->logs->file->error(
-                "Unable to register event {$hook}, got error: {$ex->getMessage()}",
+                "Unable to register event $hook, got error: {$ex->getMessage()}",
                 __CLASS__
             );
         }
@@ -46,6 +47,8 @@ class Cron
 
     /**
      * Unregister an scheduled event
+     *
+     * @param string $hook
      *
      * @return void
      */
@@ -56,9 +59,9 @@ class Cron
             if ($timestamp) {
                 wp_unschedule_event($timestamp, $hook);
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $this->logs->file->error(
-                "Unable to unregister event {$hook}, got error: {$ex->getMessage()}",
+                "Unable to unregister event $hook, got error: {$ex->getMessage()}",
                 __CLASS__
             );
         }
@@ -66,6 +69,9 @@ class Cron
 
     /**
      * Alter an scheduled event
+     *
+     * @param string $periodicy
+     * @param $hook
      *
      * @return void
      */
@@ -75,9 +81,9 @@ class Cron
             if (wp_next_scheduled($hook)) {
                 wp_reschedule_event(time(), $periodicy, $hook);
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $this->logs->file->error(
-                "Unable to alter event periodicy on hook {$hook}, got error: {$ex->getMessage()}",
+                "Unable to alter event periodicy on hook $hook, got error: {$ex->getMessage()}",
                 __CLASS__
             );
         }

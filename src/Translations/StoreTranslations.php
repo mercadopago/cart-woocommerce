@@ -10,65 +10,31 @@ if (!defined('ABSPATH')) {
 
 class StoreTranslations
 {
-    /**
-     * @var array
-     */
-    public $commonCheckout = [];
+    public array $commonCheckout = [];
 
-    /**
-     * @var array
-     */
-    public $basicCheckout = [];
+    public array $basicCheckout = [];
 
-    /**
-     * @var array
-     */
-    public $creditsCheckout = [];
+    public array $creditsCheckout = [];
 
-    /**
-     * @var array
-     */
-    public $customCheckout = [];
+    public array $customCheckout = [];
 
-    /**
-     * @var array
-     */
-    public $pixCheckout = [];
+    public array $pixCheckout = [];
 
-    /**
-     * @var array
-     */
-    public $ticketCheckout = [];
+    public array $ticketCheckout = [];
 
-    /**
-     * @var array
-     */
-    public $pseCheckout = [];
+    public array $pseCheckout = [];
 
-    /**
-     * @var array
-     */
-    public $orderStatus = [];
+    public array $yapeCheckout = [];
 
-    /**
-     * @var array
-     */
-    public $commonMessages = [];
+    public array $orderStatus = [];
 
-    /**
-     * @var array
-     */
-    public $buyerRefusedMessages = [];
+    public array $commonMessages = [];
 
-    /**
-     * @var array
-     */
-    public $threeDsTranslations;
+    public array $buyerRefusedMessages = [];
 
-    /**
-     * @var array
-     */
-    public $links;
+    public array $threeDsTranslations;
+
+    public array $links;
 
     /**
      * Translations constructor
@@ -86,6 +52,7 @@ class StoreTranslations
         $this->setTicketCheckoutTranslations();
         $this->setPixCheckoutTranslations();
         $this->setPseCheckoutTranslations();
+        $this->setYapeCheckoutTranslations();
         $this->setOrderStatusTranslations();
         $this->setCommonMessagesTranslations();
         $this->setbuyerRefusedMessagesTranslations();
@@ -336,6 +303,34 @@ class StoreTranslations
      *
      * @return void
      */
+    private function setYapeCheckoutTranslations(): void
+    {
+        $this->yapeCheckout = [
+            'test_mode_title'                  => __('Yape in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_link_text'              => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'test_mode_description'            => __('You can test the flow to generate a code, but you cannot finalize the payment.', 'woocommerce-mercadopago'),
+            'test_mode_link_text'              => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'terms_and_conditions_description' => __('By continuing, you agree with our', 'woocommerce-mercadopago'),
+            'yape_input_field_label'           => __('Cell phone linked to Yape', 'woocommerce-mercadopago'),
+            'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'checkout_notice_message'          => __('Verify in Yape that the option "Compra por internet" is activated and that the daily limit is enough.', 'woocommerce-mercadopago'),
+            'yape_title'                       => __('Pay with Yape in a few minutes', 'woocommerce-mercadopago'),
+            'yape_subtitle'                    => __('Fill out the following details and confirm your purchase.', 'woocommerce-mercadopago'),
+            'input_code_label'                 => __('Approval code', 'woocommerce-mercadopago'),
+            'footer_text'                      => __('Processed by Mercado Pago', 'woocommerce-mercadopago'),
+            'yape_tooltip_text'                => __('The code is available in the Yape app menu.', 'woocommerce-mercadopago'),
+            'yape_input_code_error_message1'    => __('Enter the entire number..', 'woocommerce-mercadopago'),
+            'yape_input_code_error_message2'    => __('Fill out this field.', 'woocommerce-mercadopago'),
+            'yape_phone_number_error_message1'  => __('Enter the entire number.', 'woocommerce-mercadopago'),
+            'yape_phone_number_error_message2'  => __('Fill out this field.', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Set pix checkout translations
+     *
+     * @return void
+     */
     private function setOrderStatusTranslations(): void
     {
         $this->orderStatus = [
@@ -473,6 +468,11 @@ class StoreTranslations
             'buyer_rejected_by_bank'                        => __('<strong>The card issuing bank declined the payment</strong><br>We recommended paying with another payment method or contact your bank.', 'woocommerce-mercadopago'),
             'buyer_cc_rejected_blacklist'                   => __('<strong>For safety reasons, the card issuing bank declined the payment</strong><br>We recommended paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
             'buyer_default'                                 => __('<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.', 'woocommerce-mercadopago'),
+            'buyer_yape_default'                            => __('<strong>Yape declined your payment</strong><br>Your payment could not be processed. Please try again or choose another payment method.', 'woocommerce-mercadopago'),
+            'buyer_yape_cc_rejected_call_for_authorize'     => __('<strong>Yape declined your payment</strong><br>Your payment could not be processed. You can contact Yape to find out why or try again with this or another payment method.', 'woocommerce-mercadopago'),
+            'buyer_yape_cc_unsupported_unsupported'         => __('<strong>Yape declined your payment</strong><br>Your payment was rejected because something went wrong. We recommend trying again or paying with another method.', 'woocommerce-mercadopago'),
+            'buyer_yape_cc_amount_rate_limit_exceeded'      => __('<strong>Yape declined your payment</strong><br>This payment exceeds your daily limit for online purchases with Yape. We recommend paying with another method or trying again tomorrow.', 'woocommerce-mercadopago'),
+            'buyer_yape_cc_rejected_max_attempts'           => __('<strong>Yape declined your payment</strong><br>After three incorrect approval codes, the payment can\'t be done with Yape for your safety. Pay with another method or try again in 24 hours.', 'woocommerce-mercadopago'),
         ];
     }
 

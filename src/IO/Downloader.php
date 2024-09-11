@@ -2,10 +2,12 @@
 
 namespace MercadoPago\Woocommerce\IO;
 
+use Exception;
 use MercadoPago\Woocommerce\Entities\Files\Log as LogFile;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
+use ZipArchive;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -13,21 +15,11 @@ if (!defined('ABSPATH')) {
 
 class Downloader
 {
-    /**
-     * @var Logs
-     */
-    private $logs;
+    private Logs $logs;
 
-    /**
-     * @var array
-     */
+    public array $pluginLogs;
 
-    public $pluginLogs;
-
-    /**
-     * @var CurrentUser
-     */
-    private $currentUser;
+    private CurrentUser $currentUser;
 
     public function __construct(Logs $logs, CurrentUser $currentUser)
     {
@@ -69,7 +61,7 @@ class Downloader
             usort($selectedLogFiles, function ($a, $b) {
                 return strtotime($b->fileDate) - strtotime($a->fileDate);
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logs->file->warning(
                 "Mercado pago gave error to get log files names: {$e->getMessage()}",
                 __CLASS__
@@ -82,6 +74,7 @@ class Downloader
      * Handles log downloads.
      *
      * @return void
+     * @throws Exception
      */
     public function downloadLog(): void
     {
@@ -99,14 +92,17 @@ class Downloader
     /**
      * downloads a single file
      *
+     * @param array $selectedFile
+     *
      * @return void
+     * @throws Exception
      */
     private function singleFileDownload(array $selectedFile): void
     {
         $filename = reset($selectedFile);
 
         if (!$this->validatesDownloadSecurity($filename)) {
-            throw new \Exception('attempt to download the file ' . $filename . 'on ' .  __METHOD__);
+            throw new Exception('attempt to download the file ' . $filename . 'on ' .  __METHOD__);
         }
 
         $file_path = WP_CONTENT_DIR . '/uploads/wc-logs/' . $filename;
@@ -118,21 +114,24 @@ class Downloader
             readfile($file_path);
             exit;
         } else {
-            throw new \Exception('error to download log file ' . __METHOD__);
+            throw new Exception('error to download log file ' . __METHOD__);
         }
     }
 
     /**
      * downloads multiple files
      *
+     * @param array $selectedFiles
+     *
      * @return void
+     * @throws Exception
      */
     private function multipleFileDownload(array $selectedFiles): void
     {
-        $zip = new \ZipArchive();
+        $zip = new ZipArchive();
         $temp_file = tempnam(sys_get_temp_dir(), 'logs_');
 
-        if ($zip->open($temp_file, \ZipArchive::CREATE) === true) {
+        if ($zip->open($temp_file, ZipArchive::CREATE) === true) {
             foreach ($selectedFiles as $filename) {
                 if (!$this->validatesDownloadSecurity($filename)) {
                     continue;
@@ -153,7 +152,7 @@ class Downloader
             unlink($temp_file);
             exit;
         } else {
-            throw new \Exception('error to download log files ' . __METHOD__);
+            throw new Exception('error to download log files ' . __METHOD__);
         }
     }
 

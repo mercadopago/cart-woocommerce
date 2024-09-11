@@ -8,18 +8,9 @@ if (!defined('ABSPATH')) {
 
 class Log
 {
-    /**
-     * @var string
-     */
-    public $fileName;
+    public string $fileName;
 
-    /**
-     * @var string
-     */
-    public $fileDate;
+    public string $fileDate;
 
-    /**
-     * @var string
-     */
-    public $fileFullName;
+    public string $fileFullName;
 }

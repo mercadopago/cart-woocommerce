@@ -10,6 +10,7 @@
   color: rgb(0 0 0 / 90%) !important;
   padding-bottom: 4px !important;
   height: 30px;
+  padding-left: 6px !important;
 }
 
 .mp-input-label b {

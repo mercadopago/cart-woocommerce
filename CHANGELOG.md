@@ -5,12 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.7.0] - 2024-09-11
+
+### Added
+- **New payment method:** Implemented Yape Gateway, now available for transactions in Peru.
+
+### Changed
+- **Optimized packaging:** Reduced the number of assets included in the plugin's zip package to improve performance and download time.
+- **Code enhancement:** The code has been refactored to follow PHP 7.4 best practices by adopting Typed Properties, improving clarity and safety.
+
+### Fixed
+- **cardForm issue resolved:** Fixed the error that appeared in the console during the loading of the `cardForm` script used in the Checkout API for cards. The loading process is now handled more efficiently, eliminating the issue.
+
 ## [7.6.4] - 2024-07-31
-### Fix:
+### Fixed:
 - Prevents payment from being created if the currency conversion system fails.
 
 ## [7.6.3] - 2024-07-29
-### Fix:
+### Fixed:
 - Fix the size of the card logos at checkout.
 - Fix the problem of not showing the disclaimer about card fees for some countries.
 
@@ -18,11 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added:
 - Added validation on user permissions to download plugin logs.
 - Increased plugin wordpress tested version to the latest available.
-### Fix:
+### Fixed:
 - Addressed an issue where discount and commission calculations were not being shown correctly on order details.
 
 ## [7.6.1] - 2024-06-26
-### Fix:
+### Fixed:
 - Addressed an funnel metrics issue 
 
 ## [7.6.0] - 2024-06-26

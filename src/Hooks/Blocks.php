@@ -11,7 +11,6 @@ class Blocks
     /**
      * Register cart block update event
      *
-     * @param string $namespace
      * @param mixed $callback
      *
      * @return void
