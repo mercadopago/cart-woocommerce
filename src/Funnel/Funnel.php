@@ -2,44 +2,28 @@
 
 namespace MercadoPago\Woocommerce\Funnel;
 
+use Exception;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
+use MercadoPago\Woocommerce\Libraries\Singleton\Singleton;
 
 class Funnel
 {
-    /**
-     * @var Sdk
-     */
-    private $sdk;
+    private Sdk $sdk;
 
-    /**
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
-    /**
-     * @var Seller
-     */
-    private $seller;
+    private Seller $seller;
 
-    /**
-     * @var Country
-     */
-    private $country;
+    private Country $country;
 
-    /**
-     * @var Gateways
-     */
-    private $gateways;
+    private Gateways $gateways;
 
-    /**
-     * @var Datadog
-     */
-    private $datadog;
+    private Singleton $datadog;
 
     /**
      * Funnel constructor
@@ -94,8 +78,6 @@ class Funnel
     }
 
     /**
-     * @param string $paymentMethod
-     *
      * @return void
      */
     public function updateStepPaymentMethods(): void
@@ -184,7 +166,7 @@ class Funnel
 
     private function getWoocommerceVersion(): string
     {
-        return $GLOBALS['woocommerce']->version ? $GLOBALS['woocommerce']->version : "";
+        return $GLOBALS['woocommerce']->version ?? "";
     }
 
     private function runWithTreatment($callback)
@@ -193,7 +175,7 @@ class Funnel
             $callback();
 
             $this->sendSuccessEvent();
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $this->sendErrorEvent($ex->getMessage());
         }
     }

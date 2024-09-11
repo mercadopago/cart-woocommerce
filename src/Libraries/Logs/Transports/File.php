@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Libraries\Logs\Transports;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Interfaces\LogInterface;
 use MercadoPago\Woocommerce\Libraries\Logs\LogLevels;
+use WC_Logger;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -12,25 +13,13 @@ if (!defined('ABSPATH')) {
 
 class File implements LogInterface
 {
-    /**
-     * @const
-     */
     private const ENCODE_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
 
-    /**
-     * @var \WC_Logger
-     */
-    private $logger;
+    private WC_Logger $logger;
 
-    /**
-     * @var bool
-     */
-    private $debugMode;
+    private bool $debugMode;
 
-    /**
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
     /**
      * File Logs constructor

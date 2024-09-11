@@ -6,12 +6,12 @@
   color: #f23d4f;
   display: none;
   align-items: center;
-  font-weight: 400 !important;
+  font-weight: 500 !important;
 }
 
 .mp-helper .mp-helper-icon {
-  width: 15px !important;
-  height: 15px;
+  width: 12px !important;
+  height: 12px !important;
   background: #f23d4f;
   border-radius: 12px;
   color: #fff;
@@ -19,4 +19,5 @@
   align-items: center;
   justify-content: center;
   margin: 0 4px;
+  font-size: 10px;
 }

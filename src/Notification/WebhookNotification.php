@@ -2,12 +2,14 @@
 
 namespace MercadoPago\Woocommerce\Notification;
 
+use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use WC_Order;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -15,10 +17,7 @@ if (!defined('ABSPATH')) {
 
 class WebhookNotification extends AbstractNotification
 {
-    /**
-     * @var Requester
-     */
-    public $requester;
+    public Requester $requester;
 
     /**
      * WebhookNotification constructor
@@ -49,7 +48,7 @@ class WebhookNotification extends AbstractNotification
      * @param $data
      *
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function handleReceivedNotification($data): void
     {
@@ -111,7 +110,7 @@ class WebhookNotification extends AbstractNotification
 
             $this->processStatus($processedStatus, $order, $data);
             $this->setResponse(200, 'Webhook Notification Successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->setResponse(422, $e->getMessage());
             $this->logs->file->error($e->getMessage(), __CLASS__);
         }
@@ -120,12 +119,12 @@ class WebhookNotification extends AbstractNotification
     /**
      * Process status
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param mixed $data
      *
      * @return string
      */
-    public function getProcessedStatus(\WC_Order $order, $data): string
+    public function getProcessedStatus(WC_Order $order, $data): string
     {
         $status        = $data['status'] ?? 'pending';
         $total_paid    = $data['transaction_details']['total_paid_amount'] ?? 0.00;

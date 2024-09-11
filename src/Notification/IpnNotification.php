@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Notification;
 
+use Exception;
 use MercadoPago\PP\Sdk\Common\AbstractCollection;
 use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\Woocommerce\Configs\Seller;
@@ -10,6 +11,7 @@ use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use WC_Order;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -17,10 +19,7 @@ if (!defined('ABSPATH')) {
 
 class IpnNotification extends AbstractNotification
 {
-    /**
-     * @var Requester
-     */
-    public $requester;
+    public Requester $requester;
 
     /**
      * IpnNotification constructor
@@ -51,7 +50,7 @@ class IpnNotification extends AbstractNotification
      * @param $data
      *
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function handleReceivedNotification($data): void
     {
@@ -117,7 +116,7 @@ class IpnNotification extends AbstractNotification
 
             $this->processStatus($processedStatus, $order, $data);
             $this->setResponse(200, 'Notification IPN Successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->setResponse(422, $e->getMessage());
             $this->logs->file->error($e->getMessage(), __CLASS__, $data);
         }
@@ -126,13 +125,13 @@ class IpnNotification extends AbstractNotification
     /**
      * Process status
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param $data
      *
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
-    public function getProcessedStatus(\WC_Order $order, $data): string
+    public function getProcessedStatus(WC_Order $order, $data): string
     {
         $status   = 'pending';
         $payments = $data['payments'];
@@ -213,7 +212,7 @@ class IpnNotification extends AbstractNotification
      * @param string $id
      *
      * @return AbstractCollection|AbstractEntity|object|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function getPaymentInfo(string $id)
     {

@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use Exception;
 use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
@@ -37,6 +38,7 @@ class CustomGateway extends AbstractGateway
 
     /**
      * CustomGateway constructor
+     * @throws Exception
      */
     public function __construct()
     {
@@ -420,12 +422,12 @@ class CustomGateway extends AbstractGateway
 
                         $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
 
-                        return $this->handleResponseStatus($order, $response, $checkout);
+                        return $this->handleResponseStatus($order, $response);
                     }
 
                     throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
                 $e->getMessage(),
@@ -445,8 +447,6 @@ class CustomGateway extends AbstractGateway
      */
     private function getCheckoutMercadopagoCustom($order): array
     {
-        $checkout = [];
-
         if (isset($_POST['mercadopago_custom'])) {
             $checkout = Form::sanitizedPostData('mercadopago_custom');
             $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
@@ -554,7 +554,7 @@ class CustomGateway extends AbstractGateway
      * @param $orderId
      *
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function renderOrderForm($orderId): void
     {
@@ -589,7 +589,7 @@ class CustomGateway extends AbstractGateway
         $installmentAmount = $this->mercadopago->orderMetadata->getTransactionDetailsMeta($order);
         $transactionAmount = Numbers::makesValueSafe($this->mercadopago->orderMetadata->getTransactionAmountMeta($order));
         $totalPaidAmount   = Numbers::makesValueSafe($this->mercadopago->orderMetadata->getTotalPaidAmountMeta($order));
-        $totalDiffCost     = (float) $totalPaidAmount - (float) $transactionAmount;
+        $totalDiffCost     = $totalPaidAmount - $transactionAmount;
 
         if ($totalDiffCost > 0) {
             $this->mercadopago->hooks->template->getWoocommerceTemplate(
@@ -640,7 +640,6 @@ class CustomGateway extends AbstractGateway
      *
      * @param $order
      * @param $response
-     * @param $checkout
      *
      * @return array
      */
@@ -685,7 +684,7 @@ class CustomGateway extends AbstractGateway
                                 'three_ds_flow'    => true,
                                 'last_four_digits' =>  $lastFourDigits,
                                 'redirect'         => false,
-                                'messages'         => '<script>load3DSFlow(' . $lastFourDigits . ');</script>',
+                                'messages'         => '<script>load3DSFlow(' . $lastFourDigits . ')</script>',
                             ];
 
                             if ($this->isOrderPayPage()) {
@@ -718,14 +717,15 @@ class CustomGateway extends AbstractGateway
                         }
 
                         $this->handleWithRejectPayment($response);
-                        // Fall-through intentional - throw RejectedPaymentException for 'rejected' case.
+                        break;
+                    // Fall-through intentional - throw RejectedPaymentException for 'rejected' case.
 
                     default:
                         break;
                 }
             }
             throw new ResponseStatusException('exception: Response status not mapped on ' . __METHOD__);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
                 $e->getMessage(),

@@ -136,11 +136,6 @@ const Content = (props) => {
   }, [props.billing.cartTotal.value]);
 
   useEffect(() => {
-    if (cardFormMounted) {
-      cardForm.unmount();
-    }
-    initCardForm();
-
     const unsubscribe = onPaymentSetup(async () => {
       const cardholderName = document.querySelector('#form-checkout__cardholderName');
       const cardholderNameErrorMessage = document.querySelector('#mp-card-holder-name-helper');

@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use Exception;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Url;
@@ -14,45 +15,21 @@ if (!defined('ABSPATH')) {
 
 class Gateway
 {
-    /**
-     * @const
-     */
     public const GATEWAY_ICON_FILTER = 'woo_mercado_pago_icon';
 
-    /**
-     * @var Options
-     */
-    private $options;
+    private Options $options;
 
-    /**
-     * @var Template
-     */
-    private $template;
+    private Template $template;
 
-    /**
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
-    /**
-     * @var Checkout
-     */
-    private $checkout;
+    private Checkout $checkout;
 
-    /**
-     * @var StoreTranslations
-     */
-    private $translations;
+    private StoreTranslations $translations;
 
-    /**
-     * @var Url
-     */
-    private $url;
+    private Url $url;
 
-    /**
-     * @var Funnel
-     */
-    private $funnel;
+    private Funnel $funnel;
 
     /**
      * Gateway constructor
@@ -98,17 +75,17 @@ class Gateway
     /**
      * Register gateway on Woocommerce if it is valid
      *
-     * @param string $gateway
+     * @param string $gatewayClass
      *
      * @return void
      */
-    public function registerGateway(string $gateway): void
+    public function registerGateway(string $gatewayClass): void
     {
-        if ($gateway::isAvailable()) {
-            $this->store->addAvailablePaymentGateway($gateway);
+        if (call_user_func([$gatewayClass, 'isAvailable'])) {
+            $this->store->addAvailablePaymentGateway($gatewayClass);
 
-            add_filter('woocommerce_payment_gateways', function ($methods) use ($gateway) {
-                $methods[] = $gateway;
+            add_filter('woocommerce_payment_gateways', function ($methods) use ($gatewayClass) {
+                $methods[] = $gatewayClass;
                 return $methods;
             });
         }
@@ -120,6 +97,7 @@ class Gateway
      * @param AbstractGateway $gateway
      *
      * @return void
+     * @throws Exception
      */
     public function registerGatewayTitle(AbstractGateway $gateway): void
     {
@@ -333,9 +311,9 @@ class Gateway
      *
      * @return string
      */
-    public function getGatewayIcon(string $iconName): string
+    public function getGatewayIcon(string $iconName, string $fileExtension = '.png'): string
     {
-        $path = $this->url->getPluginFileUrl("assets/images/icons/$iconName", '.png', true);
+        $path = $this->url->getPluginFileUrl("assets/images/icons/$iconName", $fileExtension, true);
         return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 

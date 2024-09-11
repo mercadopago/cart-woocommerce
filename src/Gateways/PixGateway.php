@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use Exception;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Helpers\Form;
@@ -41,6 +42,7 @@ class PixGateway extends AbstractGateway
 
     /**
      * PixGateway constructor
+     * @throws Exception
      */
     public function __construct()
     {
@@ -207,7 +209,7 @@ class PixGateway extends AbstractGateway
 
             if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
                 return $this->processReturnFail(
-                    new \Exception('Email not valid on ' . __METHOD__),
+                    new Exception('Email not valid on ' . __METHOD__),
                     $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
                     self::LOG_SOURCE,
                     (array) $order
@@ -222,7 +224,7 @@ class PixGateway extends AbstractGateway
             }
 
             throw new ResponseStatusException('exception : Unable to process payment on ' . __METHOD__);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
                 $e->getMessage(),
@@ -240,6 +242,8 @@ class PixGateway extends AbstractGateway
      * @param $order
      *
      * @return array
+     * @throws RejectedPaymentException
+     * @throws ResponseStatusException
      */
     private function verifyPixPaymentResponse($response, $order): array
     {

@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use const ENT_COMPAT;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -32,10 +34,10 @@ final class Strings
     public function sanitizeAndTruncateText(string $text, int $limit = 80): string
     {
         if (strlen($text) > $limit) {
-            return sanitize_file_name(html_entity_decode(substr($text, 0, $limit), \ENT_COMPAT)) . '...';
+            return sanitize_file_name(html_entity_decode(substr($text, 0, $limit), ENT_COMPAT)) . '...';
         }
 
-        return sanitize_file_name(html_entity_decode($text, \ENT_COMPAT));
+        return sanitize_file_name(html_entity_decode($text, ENT_COMPAT));
     }
 
     /**
@@ -56,7 +58,7 @@ final class Strings
         return $expected === $current;
     }
 
-    public function getStreetNumberInFullAddress(string $fullAddress, string $defaultNumber)
+    public function getStreetNumberInFullAddress(string $fullAddress, string $defaultNumber): string
     {
         $pattern = '/\b\d+[A-Za-z]*\b/';
         preg_match($pattern, $fullAddress, $matches);

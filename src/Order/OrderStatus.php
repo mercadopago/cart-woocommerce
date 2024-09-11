@@ -2,7 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Order;
 
+use Exception;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+use WC_Order;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -10,15 +12,9 @@ if (!defined('ABSPATH')) {
 
 final class OrderStatus
 {
-    /**
-     * @var array
-     */
-    private $translations;
+    private array $translations;
 
-    /**
-     * @var array
-     */
-    private $commonMessages;
+    private array $commonMessages;
 
     /**
      * Order constructor
@@ -32,13 +28,13 @@ final class OrderStatus
     /**
      * Set order status from/to
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param string $fromStatus
      * @param string $toStatus
      *
      * @return void
      */
-    public function setOrderStatus(\WC_Order $order, string $fromStatus, string $toStatus): void
+    public function setOrderStatus(WC_Order $order, string $fromStatus, string $toStatus): void
     {
         if ($order->get_status() === $fromStatus) {
             $order->set_status($toStatus);
@@ -66,17 +62,17 @@ final class OrderStatus
      *
      * @param string $processedStatus
      * @param array $data
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param string $usedGateway
      *
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
-    public function processStatus(string $processedStatus, array $data, \WC_Order $order, string $usedGateway): void
+    public function processStatus(string $processedStatus, array $data, WC_Order $order, string $usedGateway): void
     {
         switch ($processedStatus) {
             case 'approved':
-                $this->approvedFlow($data, $order, $usedGateway);
+                $this->approvedFlow($data, $order);
                 break;
             case 'pending':
                 $this->pendingFlow($data, $order, $usedGateway);
@@ -100,7 +96,7 @@ final class OrderStatus
                 $this->chargedBackFlow($order);
                 break;
             default:
-                throw new \Exception('Process Status - Invalid Status: ' . $processedStatus);
+                throw new Exception('Process Status - Invalid Status: ' . $processedStatus);
         }
     }
 
@@ -108,12 +104,11 @@ final class OrderStatus
      * Rule of approved payment
      *
      * @param array $data
-     * @param \WC_Order $order
-     * @param string $usedGateway
+     * @param WC_Order $order
      *
      * @return void
      */
-    private function approvedFlow(array $data, \WC_Order $order, string $usedGateway): void
+    private function approvedFlow(array $data, WC_Order $order): void
     {
         if (isset($data['status_detail']) && $data['status_detail'] === 'partially_refunded') {
             return;
@@ -144,12 +139,12 @@ final class OrderStatus
      * Rule of pending
      *
      * @param array $data
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param string $usedGateway
      *
      * @return void
      */
-    private function pendingFlow(array $data, \WC_Order $order, string $usedGateway): void
+    private function pendingFlow(array $data, WC_Order $order, string $usedGateway): void
     {
         if ($this->canUpdateOrderStatus($order)) {
             $order->update_status(self::mapMpStatusToWoocommerceStatus('pending'));
@@ -190,11 +185,11 @@ final class OrderStatus
      * Rule of In Process
      *
      * @param array $data
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return void
      */
-    private function inProcessFlow(array $data, \WC_Order $order): void
+    private function inProcessFlow(array $data, WC_Order $order): void
     {
         if ($this->canUpdateOrderStatus($order)) {
             $order->update_status(
@@ -210,11 +205,11 @@ final class OrderStatus
      * Rule of Rejected
      *
      * @param array $data
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return void
      */
-    private function rejectedFlow(array $data, \WC_Order $order): void
+    private function rejectedFlow(array $data, WC_Order $order): void
     {
         if ($this->canUpdateOrderStatus($order)) {
             $order->update_status(
@@ -229,11 +224,13 @@ final class OrderStatus
     /**
      * Rule of Refunded
      *
-     * @param \WC_Order $order
+     * @param array $data
+     * @param WC_Order $order
      *
      * @return void
+     * @throws Exception
      */
-    private function refundedFlow(array $data, \WC_Order $order): void
+    private function refundedFlow(array $data, WC_Order $order): void
     {
         if ($this->isPartialRefund($data)) {
             $refund_amount = floatval($data['total_refunded']);
@@ -256,11 +253,11 @@ final class OrderStatus
      * Rule of Cancelled
      *
      * @param array $data
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return void
      */
-    private function cancelledFlow(array $data, \WC_Order $order): void
+    private function cancelledFlow(array $data, WC_Order $order): void
     {
         if ($this->canUpdateOrderStatus($order)) {
             $order->update_status(
@@ -275,11 +272,11 @@ final class OrderStatus
     /**
      * Rule of In mediation
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return void
      */
-    private function inMediationFlow(\WC_Order $order): void
+    private function inMediationFlow(WC_Order $order): void
     {
         $order->update_status(self::mapMpStatusToWoocommerceStatus('inmediation'));
         $order->add_order_note('Mercado Pago: ' . $this->translations['in_mediation']);
@@ -288,11 +285,11 @@ final class OrderStatus
     /**
      * Rule of Charged back
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return void
      */
-    private function chargedBackFlow(\WC_Order $order): void
+    private function chargedBackFlow(WC_Order $order): void
     {
         $order->update_status(self::mapMpStatusToWoocommerceStatus('chargedback'));
         $order->add_order_note('Mercado Pago: ' . $this->translations['charged_back']);
@@ -326,11 +323,11 @@ final class OrderStatus
     /**
      * Can update order status?
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return bool
      */
-    protected function canUpdateOrderStatus(\WC_Order $order): bool
+    protected function canUpdateOrderStatus(WC_Order $order): bool
     {
         return method_exists($order, 'get_status') &&
             $order->get_status() !== 'completed' &&
@@ -341,12 +338,12 @@ final class OrderStatus
      * Validate Order Note by Type
      *
      * @param array $data
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param string $status
      *
      * @return void
      */
-    protected function validateOrderNoteType(array $data, \WC_Order $order, string $status): void
+    protected function validateOrderNoteType(array $data, WC_Order $order, string $status): void
     {
         $paymentId = $data['id'];
 

@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 7.6.4
+Stable tag: 7.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,8 +135,15 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
 == Changelog ==
+= v7.7.0 (11/09/2024) =
+* Added
+- New payment method: Implemented Yape Gateway, now available for transactions in Peru.
 
-* Fix:
-- Prevents payment from being created if the currency conversion system fails.
+* Changed
+- Optimized packaging: Reduced the number of assets included in the plugin's zip package to improve performance and download time.
+- Code enhancement: The code has been refactored to follow PHP 7.4 best practices by adopting Typed Properties, improving clarity and safety.
+
+* Fixed
+- cardForm issue resolved: Fixed the error that appeared in the console during the loading of the `cardForm` script used in the Checkout API for cards. The loading process is now handled more efficiently, eliminating the issue.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use Exception;
 use MercadoPago\Woocommerce\Hooks\Admin;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Hooks\Options;
@@ -14,30 +15,15 @@ if (!defined('ABSPATH')) {
 
 class CreditsEnabled
 {
-    /**
-     * @const
-     */
     private const CREDITS_ACTIVATION_NEEDED = 'mercadopago_credits_activation_needed';
 
-    /**
-     * @const
-     */
     private const ALREADY_ENABLE_BY_DEFAULT = 'mercadopago_already_enabled_by_default';
 
-    /**
-     * @var Admin
-     */
-    private $admin;
+    private Admin $admin;
 
-    /**
-     * @var Logs
-     */
-    private $logs;
+    private Logs $logs;
 
-    /**
-     * @var Options
-     */
-    private $options;
+    private Options $options;
 
     /**
      * CreditsEnabled constructor
@@ -101,7 +87,7 @@ class CreditsEnabled
 
                 $this->logs->file->info('Credits was activated automatically', __METHOD__);
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $this->logs->file->error(
                 "Mercado pago gave error to enable Credits: {$ex->getMessage()}",
                 __CLASS__

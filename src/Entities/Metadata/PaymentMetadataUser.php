@@ -8,18 +8,9 @@ if (!defined('ABSPATH')) {
 
 class PaymentMetadataUser
 {
-    /**
-     * @var string
-     */
-    public $registered_user;
+    public ?string $registered_user = null;
 
-    /**
-     * @var string
-     */
-    public $user_email;
+    public ?string $user_email = null;
 
-    /**
-     * @var string
-     */
-    public $user_registration_date;
+    public ?string $user_registration_date = null;
 }

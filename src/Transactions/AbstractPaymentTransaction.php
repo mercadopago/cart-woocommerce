@@ -2,15 +2,18 @@
 
 namespace MercadoPago\Woocommerce\Transactions;
 
+use Exception;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Numbers;
+use WC_Order;
 
 abstract class AbstractPaymentTransaction extends AbstractTransaction
 {
     /**
      * Payment Transaction constructor
+     * @throws Exception
      */
-    public function __construct(AbstractGateway $gateway, \WC_Order $order, array $checkout)
+    public function __construct(AbstractGateway $gateway, WC_Order $order, array $checkout)
     {
         parent::__construct($gateway, $order, $checkout);
 
@@ -28,7 +31,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
      * Create Payment
      *
      * @return string|array
-     * @throws \Exception
+     * @throws Exception
      */
     public function createPayment()
     {

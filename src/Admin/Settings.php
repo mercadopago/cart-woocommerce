@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Admin;
 
+use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Categories;
@@ -28,100 +29,55 @@ if (!defined('ABSPATH')) {
 
 class Settings
 {
-    /**
-     * @const
-     */
     private const PRIORITY_ON_MENU = 90;
 
-    /**
-     * @const
-     */
     private const NONCE_ID = 'mp_settings_nonce';
 
-    /**
-     * @var Admin
-     */
-    private $admin;
+    private Admin $admin;
 
-    /**
-     * @var Endpoints
-     */
-    private $endpoints;
+    private Endpoints $endpoints;
 
-    /**
-     * @var Links
-     */
-    private $links;
+    private Links $links;
 
-    /**
-     * @var Order
-     */
-    private $order;
+    private Order $order;
 
-    /**
-     * @var Plugin
-     */
-    private $plugin;
 
-    /**
-     * @var Scripts
-     */
-    private $scripts;
+    private Plugin $plugin;
 
-    /**
-     * @var Seller
-     */
-    private $seller;
 
-    /**
-     * @var Store
-     */
-    private $store;
+    private Scripts $scripts;
 
-    /**
-     * @var AdminTranslations
-     */
-    private $translations;
+    private Seller $seller;
 
-    /**
-     * @var Url
-     */
-    private $url;
 
-    /**
-     * @var Nonce
-     */
-    private $nonce;
+    private Store $store;
 
-    /**
-     * @var CurrentUser
-     */
-    private $currentUser;
 
-    /**
-     * @var Session
-     */
-    private $session;
+    private AdminTranslations $translations;
 
-    /**
-     * @var Logs
-     */
-    private $logs;
 
-    /**
-     * @var Downloader
-     */
-    private $downloader;
+    private Url $url;
 
-    /**
-     * @var Funnel
-     */
-    private $funnel;
 
-    /**
-     * @var Strings
-     */
-    private $strings;
+    private Nonce $nonce;
+
+
+    private CurrentUser $currentUser;
+
+
+    private Session $session;
+
+
+    private Logs $logs;
+
+
+    private Downloader $downloader;
+
+
+    private Funnel $funnel;
+
+
+    private Strings $strings;
 
     /**
      * Settings constructor
@@ -352,10 +308,10 @@ class Settings
         $categories = Categories::getCategories();
         $pluginLogs = $this->downloader->pluginLogs;
 
-        $phpVersion = phpversion() ? phpversion() : "";
-        $wpVersion = $GLOBALS['wp_version'] ? $GLOBALS['wp_version'] : "";
-        $wcVersion = $GLOBALS['woocommerce']->version ? $GLOBALS['woocommerce']->version : "";
-        $pluginVersion = MP_VERSION ? MP_VERSION : "";
+        $phpVersion = phpversion() ?? "";
+        $wpVersion = $GLOBALS['wp_version'] ?? "";
+        $wcVersion = $GLOBALS['woocommerce']->version ?? "";
+        $pluginVersion = MP_VERSION ??  "";
 
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
@@ -413,7 +369,7 @@ class Settings
             }
 
             wp_send_json_success($payment_gateway_properties);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logs->file->error(
                 "Mercado pago gave error in mercadopagoPaymentMethods: {$e->getMessage()}",
                 __CLASS__
@@ -594,7 +550,7 @@ class Settings
             ];
 
             wp_send_json_error($response);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logs->file->error(
                 "Mercado pago gave error in update option credentials: {$e->getMessage()}",
                 __CLASS__
@@ -684,7 +640,7 @@ class Settings
     {
         try {
             $this->downloader->downloadLog();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logs->file->error('Mercado pago gave error to download log files: ' . $e->getMessage(), __CLASS__);
             http_response_code(500);
             wp_safe_redirect(admin_url("admin.php?page=wc-status&tab=logs"));
@@ -694,6 +650,8 @@ class Settings
 
     /**
      * Set store and seller information
+     *
+     * @param string|null $accessToken
      *
      * @return void
      */
@@ -710,6 +668,9 @@ class Settings
 
     /**
      * Verify test mode and update credentials
+     *
+     * @param string|null $publicKeyTest
+     * @param string|null $accessTokenTest
      *
      * @return void
      */

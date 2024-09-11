@@ -2,7 +2,9 @@
 
 namespace MercadoPago\Woocommerce\Transactions;
 
+use Exception;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use WC_Order;
 
 abstract class AbstractPreferenceTransaction extends AbstractTransaction
 {
@@ -10,9 +12,11 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      * Preference Transaction constructor
      *
      * @param AbstractGateway $gateway
-     * @param \WC_Order $order
+     * @param WC_Order $order
+     *
+     * @throws Exception
      */
-    public function __construct(AbstractGateway $gateway, \WC_Order $order)
+    public function __construct(AbstractGateway $gateway, WC_Order $order)
     {
         parent::__construct($gateway, $order);
 
@@ -33,7 +37,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
      * Create preference
      *
      * @return array|bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function createPreference()
     {

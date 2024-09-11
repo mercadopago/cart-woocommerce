@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use Exception;
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 
 if (!defined('ABSPATH')) {
@@ -32,6 +33,7 @@ class BasicGateway extends AbstractGateway
 
     /**
      * BasicGateway constructor
+     * @throws Exception
      */
     public function __construct()
     {
@@ -346,7 +348,7 @@ class BasicGateway extends AbstractGateway
                 'result'   => 'success',
                 'redirect' => $this->mercadopago->storeConfig->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
                 $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
@@ -404,50 +406,66 @@ class BasicGateway extends AbstractGateway
      */
     private function generateExPaymentsFields(): array
     {
-        $paymentList = [
+        $exPaymentsFields = [
             'type'                 => 'mp_checkbox_list',
             'title'                => $this->adminTranslations['ex_payments_title'],
             'description'          => $this->adminTranslations['ex_payments_description'],
-            'payment_method_types' => [
-                'credit_card' => [
-                    'list'  => [],
-                    'label' => $this->adminTranslations['ex_payments_type_credit_card_label'],
-                ],
-                'debit_card' => [
-                    'list'  => [],
-                    'label' => $this->adminTranslations['ex_payments_type_debit_card_label'],
-                ],
-                'other' => [
-                    'list'  => [],
-                    'label' => $this->adminTranslations['ex_payments_type_other_label'],
-                ],
+            'payment_method_types' => $this->setupPaymentMethodTypesList(),
+        ];
+
+        return $exPaymentsFields;
+    }
+
+    /**
+     * Mounts the payment method types list for CHO-PRO config page
+     *
+     * @return array
+     */
+    private function setupPaymentMethodTypesList(): array
+    {
+        $sellerPaymentMethods = $this->mercadopago->hooks->options->get('_checkout_payments_methods');
+        if (empty($sellerPaymentMethods)) {
+            return [];
+        }
+
+        $paymentMethodTypesList = [
+            'credit_card' => [
+                'list'  => [],
+                'label' => $this->adminTranslations['ex_payments_type_credit_card_label'],
+            ],
+            'debit_card' => [
+                'list'  => [],
+                'label' => $this->adminTranslations['ex_payments_type_debit_card_label'],
+            ],
+            'other' => [
+                'list'  => [],
+                'label' => $this->adminTranslations['ex_payments_type_other_label'],
             ],
         ];
 
-        $allPayments = $this->mercadopago->hooks->options->get('_checkout_payments_methods');
+        foreach ($sellerPaymentMethods as $paymentMethod) {
+            // We use it to put yape in other because it is not a card payment method,
+            // and at the beginning of the list because UX said so.
+            if (in_array($paymentMethod['name'], ["yape"])) {
+                array_unshift($paymentMethodTypesList['other']['list'], $this->serializePaymentMethod($paymentMethod));
+                break;
+            }
 
-        if (empty($allPayments)) {
-            return $paymentList;
-        }
-
-        foreach ($allPayments as $paymentMethod) {
             switch ($paymentMethod['type']) {
                 case 'credit_card':
-                    $paymentList['payment_method_types']['credit_card']['list'][] = $this->serializePaymentMethod($paymentMethod);
+                    $paymentMethodTypesList['credit_card']['list'][] = $this->serializePaymentMethod($paymentMethod);
                     break;
-
                 case 'debit_card':
                 case 'prepaid_card':
-                    $paymentList['payment_method_types']['debit_card']['list'][] = $this->serializePaymentMethod($paymentMethod);
+                    $paymentMethodTypesList['debit_card']['list'][] = $this->serializePaymentMethod($paymentMethod);
                     break;
-
                 default:
-                    $paymentList['payment_method_types']['other']['list'][] = $this->serializePaymentMethod($paymentMethod);
+                    $paymentMethodTypesList['other']['list'][] = $this->serializePaymentMethod($paymentMethod);
                     break;
             }
         }
 
-        return $paymentList;
+        return $paymentMethodTypesList;
     }
 
     /**
@@ -462,7 +480,7 @@ class BasicGateway extends AbstractGateway
         return [
             'id'        => 'ex_payments_' . $paymentMethod['id'],
             'type'      => 'checkbox',
-            'label'     => $paymentMethod['name'],
+            'label'     => ucfirst($paymentMethod['name']),
             'value'     => $this->mercadopago->hooks->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
             'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
         ];
@@ -591,7 +609,7 @@ class BasicGateway extends AbstractGateway
      * Render order form
      *
      * @param $order_id
-     * @throws \Exception
+     * @throws Exception
      */
     public function renderOrderForm($order_id): void
     {

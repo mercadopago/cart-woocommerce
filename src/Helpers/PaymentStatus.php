@@ -25,9 +25,9 @@ final class PaymentStatus
             'in_mediation' => 'pending',
             'rejected'     => 'rejected',
             'canceled'     => 'rejected',
+            'generic'      => 'rejected',
             'refunded'     => 'refunded',
-            'charged_back' => 'charged_back',
-            'generic'      => 'rejected'
+            'charged_back' => 'charged_back'
         ];
 
         return array_key_exists($paymentStatus, $paymentStatusMap)

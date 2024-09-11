@@ -4,35 +4,16 @@ namespace MercadoPago\Woocommerce\Hooks;
 
 class Plugin
 {
-    /**
-     * @const
-     */
     public const UPDATE_CREDENTIALS_ACTION = 'mercadopago_plugin_credentials_updated';
 
-    /**
-     * @const
-     */
     public const UPDATE_STORE_INFO_ACTION = 'mercadopago_plugin_store_info_updated';
 
-    /**
-     * @const
-     */
     public const UPDATE_TEST_MODE_ACTION = 'mercadopago_plugin_test_mode_updated';
 
-    /**
-     * @const
-     */
     public const LOADED_PLUGIN_ACTION = 'mercadopago_main_plugin_loaded';
 
-    /**
-     * @const
-     */
     public const ENABLE_CREDITS_ACTION = 'mp_enable_credits_action';
 
-
-    /**
-     * @const
-     */
     public const EXECUTE_ACTIVATE_PLUGIN = 'mp_execute_activate';
 
     /**

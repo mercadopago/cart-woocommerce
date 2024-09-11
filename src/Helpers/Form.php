@@ -15,13 +15,12 @@ final class Form
      *
      * @return object|array|string
      */
-    public static function sanitizedGetData(string $key = "")
+    public static function sanitizedGetData(?string $key = null)
     {
         $data = filter_input_array(INPUT_GET, FILTER_SANITIZE_SPECIAL_CHARS);
-        if ($key != "") {
-            $data = $data[$key];
+        if (isset($key)) {
+            $data = $data[$key] ?? null;
         }
-
         return self::sanitizedData($data);
     }
 

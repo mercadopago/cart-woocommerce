@@ -8,13 +8,7 @@ if (!defined('ABSPATH')) {
 
 class PaymentMetadataCpp
 {
-    /**
-     * @var string
-     */
-    public $platform_version;
+    public string $platform_version;
 
-    /**
-     * @var string
-     */
-    public $module_version;
+    public string $module_version;
 }

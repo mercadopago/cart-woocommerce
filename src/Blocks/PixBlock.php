@@ -8,14 +8,8 @@ if (!defined('ABSPATH')) {
 
 class PixBlock extends AbstractBlock
 {
-    /**
-     * @var string
-     */
     protected $scriptName = 'pix';
 
-    /**
-     * @var string
-     */
     protected $name = 'woo-mercado-pago-pix';
 
     /**

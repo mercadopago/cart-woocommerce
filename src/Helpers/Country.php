@@ -10,80 +10,35 @@ if (!defined('ABSPATH')) {
 
 final class Country
 {
-    /**
-     * @const
-     */
     public const SITE_ID_MLA = 'MLA';
 
-    /**
-     * @const
-     */
     public const SITE_ID_MLB = 'MLB';
 
-    /**
-     * @const
-     */
     public const SITE_ID_MLM = 'MLM';
 
-    /**
-     * @const
-     */
     public const SITE_ID_MLC = 'MLC';
 
-    /**
-     * @const
-     */
     public const SITE_ID_MLU = 'MLU';
 
-    /**
-     * @const
-     */
     public const SITE_ID_MCO = 'MCO';
 
-    /**
-     * @const
-     */
     public const SITE_ID_MPE = 'MPE';
 
-    /**
-     * @const
-     */
     public const COUNTRY_SUFFIX_MLA = 'AR';
 
-    /**
-     * @const
-     */
     public const COUNTRY_SUFFIX_MLB = 'BR';
 
-    /**
-     * @const
-     */
     public const COUNTRY_SUFFIX_MLM = 'MX';
 
-    /**
-     * @const
-     */
     public const COUNTRY_SUFFIX_MLC = 'CL';
 
-    /**
-     * @const
-     */
     public const COUNTRY_SUFFIX_MLU = 'UY';
 
-    /**
-     * @const
-     */
     public const COUNTRY_SUFFIX_MCO = 'CO';
 
-    /**
-     * @const
-     */
     public const COUNTRY_SUFFIX_MPE = 'PE';
 
-    /**
-     * @var Seller
-     */
-    private $seller;
+    private Seller $seller;
 
     /**
      * Country constructor
@@ -365,6 +320,7 @@ final class Country
             ],
             'PE' => [
                 'MercadoPago\Woocommerce\Gateways\CustomGateway',
+                'MercadoPago\Woocommerce\Gateways\YapeGateway',
                 'MercadoPago\Woocommerce\Gateways\TicketGateway',
                 'MercadoPago\Woocommerce\Gateways\BasicGateway',
             ],

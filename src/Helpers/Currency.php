@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
@@ -14,65 +15,29 @@ if (!defined('ABSPATH')) {
 
 final class Currency
 {
-    /**
-     * @const
-     */
     private const CURRENCY_CONVERSION = 'currency_conversion';
 
-    /**
-     * @const
-     */
     private const DEFAULT_RATIO = 1;
 
-    /**
-     * @var array
-     */
-    private $ratios = [];
+    private array $ratios = [];
 
-    /**
-     * @var array
-     */
-    private $translations;
+    private array $translations;
 
-    /**
-     * @var Cache
-     */
-    private $cache;
+    private Cache $cache;
 
-    /**
-     * @var Country
-     */
-    private $country;
+    private Country $country;
 
-    /**
-     * @var Logs
-     */
-    private $logs;
+    private Logs $logs;
 
-    /**
-     * @var Notices
-     */
-    private $notices;
+    private Notices $notices;
 
-    /**
-     * @var Requester
-     */
-    private $requester;
+    private Requester $requester;
 
-    /**
-     * @var Seller
-     */
-    private $seller;
+    private Seller $seller;
 
-    /**
-     * @var Options
-     */
-    private $options;
+    private Options $options;
 
-    /**
-     * @var Url
-     */
-    private $url;
+    private Url $url;
 
     /**
      * Currency constructor
@@ -145,6 +110,7 @@ final class Currency
      * @param AbstractGateway $gateway
      *
      * @return float
+     * @throws Exception
      */
     public function getRatio(AbstractGateway $gateway): float
     {
@@ -221,12 +187,13 @@ final class Currency
      * Load ratio
      *
      * @return float
+     * @throws Exception
      */
     private function loadRatio(): float
     {
         $response = $this->getCurrencyConversion();
         if ($response['status'] !== 200) {
-            throw new \Exception(json_encode($response['data']));
+            throw new Exception(json_encode($response['data']));
         }
         if (isset($response['data']['ratio']) && $response['data']['ratio'] > 0) {
             return $response['data']['ratio'];
@@ -265,7 +232,7 @@ final class Currency
             $this->cache->setCache($key, $serializedResponse);
 
             return $serializedResponse;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 'data'   => null,
                 'status' => 500,

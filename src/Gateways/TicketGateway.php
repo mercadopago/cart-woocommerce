@@ -2,10 +2,13 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use Exception;
 use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
+use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Transactions\TicketTransaction;
+use WP_User;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -37,6 +40,7 @@ class TicketGateway extends AbstractGateway
 
     /**
      * TicketGateway constructor
+     * @throws Exception
      */
     public function __construct()
     {
@@ -316,7 +320,7 @@ class TicketGateway extends AbstractGateway
                 }
             }
             throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
                 $e->getMessage(),
@@ -336,8 +340,6 @@ class TicketGateway extends AbstractGateway
      */
     private function getCheckoutMercadopagoTicket($order): array
     {
-        $checkout = [];
-
         if (isset($_POST['mercadopago_ticket'])) {
             $checkout = Form::sanitizedPostData('mercadopago_ticket');
             $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
@@ -354,8 +356,10 @@ class TicketGateway extends AbstractGateway
      *
      * @param $response
      * @param $order
+     * @param $order_id
      *
      * @return array
+     * @throws RejectedPaymentException
      */
     private function verifyTicketPaymentResponse($response, $order, $order_id): array
     {
@@ -466,6 +470,8 @@ class TicketGateway extends AbstractGateway
     /**
      * Get Mercado Pago Icon
      *
+     * @param bool $adminVersion
+     *
      * @return string
      */
     private function getCheckoutIcon(bool $adminVersion = false): string
@@ -505,12 +511,12 @@ class TicketGateway extends AbstractGateway
     /**
      * Get Febraban info
      *
-     * @param \WP_User $currentUser
+     * @param WP_User $currentUser
      * @param string $address
      *
      * @return array
      */
-    public function getFebrabanInfo(\WP_User $currentUser, string $address): array
+    public function getFebrabanInfo(WP_User $currentUser, string $address): array
     {
         if ($currentUser->ID != 0) {
             return [
@@ -545,12 +551,12 @@ class TicketGateway extends AbstractGateway
      *
      * @return ?array
      */
-    public function validateRulesForSiteId($checkout)
+    public function validateRulesForSiteId($checkout): ?array
     {
         // Rules for ticket MLB
         if ($checkout['site_id'] === 'MLB' && empty($checkout['doc_number'])) {
             return $this->processReturnFail(
-                new \Exception('Document is required on ' . __METHOD__),
+                new Exception('Document is required on ' . __METHOD__),
                 $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                 self::LOG_SOURCE
             );
@@ -559,7 +565,7 @@ class TicketGateway extends AbstractGateway
         // Rules for effective MLU
         if ($checkout['site_id'] === 'MLU' && (empty($checkout['doc_number']) || empty($checkout['doc_type']))) {
             return $this->processReturnFail(
-                new \Exception('Document is required on ' . __METHOD__),
+                new Exception('Document is required on ' . __METHOD__),
                 $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                 self::LOG_SOURCE
             );

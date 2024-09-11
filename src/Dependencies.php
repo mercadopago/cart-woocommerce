@@ -50,6 +50,7 @@ use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\IO\Downloader;
+use WooCommerce;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -57,246 +58,101 @@ if (!defined('ABSPATH')) {
 
 class Dependencies
 {
-    /**
-     * @var \WooCommerce
-     */
-    public $woocommerce;
+    public WooCommerce $woocommerce;
 
-    /**
-     * @var Hooks
-     */
-    public $hooks;
+    public Hooks $hooks;
 
-    /**
-     * @var Helpers
-     */
-    public $helpers;
+    public Helpers $helpers;
 
-    /**
-     * @var Settings
-     */
-    public $settings;
+    public Settings $settings;
 
-    /**
-     * @var Metadata
-     */
-    public $metadataConfig;
+    public Metadata $metadataConfig;
 
-    /**
-     * @var Seller
-     */
-    public $sellerConfig;
+    public Seller $sellerConfig;
 
-    /**
-     * @var Store
-     */
-    public $storeConfig;
+    public Store $storeConfig;
 
-    /**
-     * @var CheckoutCustom
-     */
-    public $checkoutCustomEndpoints;
+    public CheckoutCustom $checkoutCustomEndpoints;
 
-    /**
-     * @var Admin
-     */
-    public $adminHook;
+    public Admin $adminHook;
 
-    /**
-     * @var Blocks
-     */
-    public $blocksHook;
+    public Blocks $blocksHook;
 
-    /**
-     * @var Hooks\Cart
-     */
-    public $cartHook;
+    public Hooks\Cart $cartHook;
 
-    /**
-     * @var Checkout
-     */
-    public $checkoutHook;
+    public Checkout $checkoutHook;
 
-    /**
-     * @var Endpoints
-     */
-    public $endpointsHook;
+    public Endpoints $endpointsHook;
 
-    /**
-     * @var Gateway
-     */
-    public $gatewayHook;
+    public Gateway $gatewayHook;
 
-    /**
-     * @var Options
-     */
-    public $optionsHook;
+    public Options $optionsHook;
 
-    /**
-     * @var Order
-     */
-    public $orderHook;
+    public Order $orderHook;
 
-    /**
-     * @var OrderMeta
-     */
-    public $orderMetaHook;
+    public OrderMeta $orderMetaHook;
 
-    /**
-     * @var Plugin
-     */
-    public $pluginHook;
+    public Plugin $pluginHook;
 
-    /**
-     * @var Product
-     */
-    public $productHook;
+    public Product $productHook;
 
-    /**
-     * @var Scripts
-     */
-    public $scriptsHook;
+    public Scripts $scriptsHook;
 
-    /**
-     * @var Template
-     */
-    public $templateHook;
+    public Template $templateHook;
 
-    /**
-     * @var Actions
-     */
-    public $actionsHelper;
+    public Actions $actionsHelper;
 
-    /**
-     * @var Cache
-     */
-    public $cacheHelper;
+    public Cache $cacheHelper;
 
-    /**
-     * @var Cart
-     */
-    public $cartHelper;
+    public Cart $cartHelper;
 
-    /**
-     * @var Country
-     */
-    public $countryHelper;
+    public Country $countryHelper;
 
-    /**
-     * @var CreditsEnabled
-     */
-    public $creditsEnabledHelper;
+    public CreditsEnabled $creditsEnabledHelper;
 
-    /**
-     * @var Cron
-     */
-    public $cronHelper;
+    public Cron $cronHelper;
 
-    /**
-     * @var Currency
-     */
-    public $currencyHelper;
+    public Currency $currencyHelper;
 
-    /**
-     * @var CurrentUser
-     */
-    public $currentUserHelper;
+    public CurrentUser $currentUserHelper;
 
-    /**
-     * @var Gateways
-     */
-    public $gatewaysHelper;
+    public Gateways $gatewaysHelper;
 
-    /**
-     * @var Images
-     */
-    public $imagesHelper;
+    public Images $imagesHelper;
 
-    /**
-     * @var Links
-     */
-    public $linksHelper;
+    public Links $linksHelper;
 
-    /**
-     * @var Nonce
-     */
-    public $nonceHelper;
+    public Nonce $nonceHelper;
 
-    /**
-     * @var Notices
-     */
-    public $noticesHelper;
+    public Notices $noticesHelper;
 
-    /**
-     * @var PaymentMethods
-     */
-    public $paymentMethodsHelper;
+    public PaymentMethods $paymentMethodsHelper;
 
-    /**
-     * @var Requester
-     */
-    public $requesterHelper;
+    public Requester $requesterHelper;
 
-    /**
-     * @var Session
-     */
-    public $sessionHelper;
+    public Session $sessionHelper;
 
-    /**
-     * @var Strings
-     */
-    public $stringsHelper;
+    public Strings $stringsHelper;
 
-    /**
-     * @var Url
-     */
-    public $urlHelper;
+    public Url $urlHelper;
 
-    /**
-     * @var Logs
-     */
-    public $logs;
+    public Logs $logs;
 
-    /**
-     * @var OrderBilling
-     */
-    public $orderBilling;
+    public OrderBilling $orderBilling;
 
-    /**
-     * @var OrderMetadata
-     */
-    public $orderMetadata;
+    public OrderMetadata $orderMetadata;
 
-    /**
-     * @var OrderShipping
-     */
-    public $orderShipping;
+    public OrderShipping $orderShipping;
 
-    /**
-     * @var OrderStatus
-     */
-    public $orderStatus;
+    public OrderStatus $orderStatus;
 
-    /**
-     * @var AdminTranslations
-     */
-    public $adminTranslations;
+    public AdminTranslations $adminTranslations;
 
-    /**
-     * @var StoreTranslations
-     */
-    public $storeTranslations;
+    public StoreTranslations $storeTranslations;
 
+    public Downloader $downloader;
 
-    /**
-     * @var Downloader
-     */
-    public $downloader;
-
-    /**
-     * @var Funnel
-     */
-    public $funnel;
+    public Funnel $funnel;
 
     /**
      * Dependencies constructor

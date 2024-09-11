@@ -11,115 +11,49 @@ if (!defined('ABSPATH')) {
 
 class Store
 {
-    /**
-     * @const
-     */
     private const STORE_ID = '_mp_store_identificator';
 
-    /**
-     * @const
-     */
     private const STORE_NAME = 'mp_statement_descriptor';
 
-    /**
-     * @const
-     */
     private const STORE_CATEGORY = '_mp_category_id';
 
-    /**
-     * @const
-     */
     private const CHECKOUT_COUNTRY = 'checkout_country';
 
-    /**
-     * @const
-     */
     private const WOOCOMMERCE_COUNTRY = 'woocommerce_default_country';
 
-    /**
-     * @const
-     */
     private const INTEGRATOR_ID = '_mp_integrator_id';
 
-    /**
-     * @const
-     */
     private const CUSTOM_DOMAIN = '_mp_custom_domain';
 
-    /**
-     * @const
-     */
     private const CUSTOM_DOMAIN_OPTIONS = '_mp_custom_domain_options';
 
-    /**
-     * @const
-     */
     private const DEBUG_MODE = '_mp_debug_mode';
 
-    /**
-     * @const
-     */
     private const CRON_SYNC_MODE = '_mp_cron_sync_mode';
 
-    /**
-     * @const
-     */
     private const DISMISSED_REVIEW_NOTICE = '_mp_dismiss_review';
 
-    /**
-     * @const
-     */
     private const ANY_ORDER_COMPLETED = '_mp_any_order_completed';
 
-    /**
-     * @const
-     */
     private const DISMISSED_SAVED_CARDS_NOTICE = '_mp_dismiss_saved_cards_notice';
 
-    /**
-     * @const
-     */
     private const CHECKBOX_CHECKOUT_PRODUCTION_MODE = 'checkbox_checkout_production_mode';
 
-    /**
-     * @const
-     */
     private const CHECKBOX_CHECKOUT_TEST_MODE = 'checkbox_checkout_test_mode';
 
-    /**
-     * @const
-     */
     private const GATEWAY_TITLE = 'title';
 
-    /**
-     * @const
-     */
     private const CHECKOUT_EXPIRATION_DATE_PIX = 'expiration_date';
 
-    /**
-     * @const
-     */
     private const INSTALLATION_ID = '_mp_installation_id';
 
-    /**
-     * @const
-     */
     private const INSTALLATION_KEY = '_mp_installation_key';
 
-    /**
-     * @const
-     */
     private const EXECUTE_ACTIVATED_PLUGIN = '_mp_execute_activate';
 
-    /**
-     * @const
-     */
-    private $availablePaymentGateways = [];
+    private array $availablePaymentGateways = [];
 
-    /**
-     * @var Options
-     */
-    private $options;
+    private Options $options;
 
     /**
      * Store constructor

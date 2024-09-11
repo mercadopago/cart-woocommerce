@@ -11,15 +11,9 @@ if (!defined('ABSPATH')) {
 
 class Logs
 {
-    /**
-     * @var File
-     */
-    public $file;
+    public File $file;
 
-    /**
-     * @var Remote
-     */
-    public $remote;
+    public Remote $remote;
 
     /**
      * Logs constructor

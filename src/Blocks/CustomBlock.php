@@ -8,14 +8,8 @@ if (!defined('ABSPATH')) {
 
 class CustomBlock extends AbstractBlock
 {
-    /**
-     * @var string
-     */
     protected $scriptName = 'custom';
 
-    /**
-     * @var string
-     */
     protected $name = 'woo-mercado-pago-custom';
 
     /**

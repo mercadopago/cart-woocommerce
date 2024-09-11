@@ -2,18 +2,13 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
-use MercadoPago\Woocommerce\Helpers\Form;
-
 if (!defined('ABSPATH')) {
     exit;
 }
 
 final class Url
 {
-    /**
-     * @var Strings
-     */
-    private $strings;
+    private Strings $strings;
 
     /**
      * Url constructor

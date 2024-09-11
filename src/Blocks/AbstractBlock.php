@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use Exception;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoPaymentBlockInterface;
@@ -14,60 +15,30 @@ if (!defined('ABSPATH')) {
 
 abstract class AbstractBlock extends AbstractPaymentMethodType implements MercadoPagoPaymentBlockInterface
 {
-    /**
-     * @const
-     */
     public const ACTION_SESSION_KEY = 'mercadopago_blocks_action';
 
-    /**
-     * @const
-     */
     public const GATEWAY_SESSION_KEY = 'mercadopago_blocks_gateway';
 
-    /**
-     * @const
-     */
     public const CHOSEN_PM_SESSION_KEY = 'chosen_payment_method';
 
-    /**
-     * @const
-     */
     public const UPDATE_CART_NAMESPACE = 'mercadopago_blocks_update_cart';
 
-    /**
-     * @var string
-     */
     protected $name = '';
 
-    /**
-     * @var string
-     */
     protected $scriptName = '';
 
-    /**
-     * @var array
-     */
     protected $settings = [];
 
-    /**
-     * @var WoocommerceMercadoPago
-     */
-    protected $mercadopago;
+    protected WoocommerceMercadoPago $mercadopago;
 
     /**
-     * @var MercadoPagoGatewayInterface
+     * @var MercadoPagoGatewayInterface|null
      */
     protected $gateway;
 
-    /**
-     * @var array
-     */
-    protected $links;
+    protected array $links;
 
-    /**
-     * @var object
-     */
-    protected $storeTranslations;
+    protected array $storeTranslations;
 
     /**
      * AbstractBlock constructor
@@ -143,7 +114,6 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
 
         $this->gateway->registerCheckoutScripts();
         $this->mercadopago->hooks->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps);
-        $this->gateway->registerCheckoutScripts();
         return [$scriptName];
     }
 
@@ -182,7 +152,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
         $payment_gateways_class = WC()->payment_gateways();
         $payment_gateways       = $payment_gateways_class->payment_gateways();
 
-        return isset($payment_gateways[$this->name]) ? $payment_gateways[$this->name] : null;
+        return $payment_gateways[ $this->name ] ?? null;
     }
 
     /**
@@ -221,6 +191,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
      * Register plugin and commission to WC_Cart fees
      *
      * @return void
+     * @throws Exception
      */
     public function registerDiscountAndCommissionFeesOnCart()
     {

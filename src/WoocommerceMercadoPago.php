@@ -10,6 +10,7 @@ use MercadoPago\Woocommerce\Blocks\CreditsBlock;
 use MercadoPago\Woocommerce\Blocks\PixBlock;
 use MercadoPago\Woocommerce\Blocks\TicketBlock;
 use MercadoPago\Woocommerce\Blocks\PseBlock;
+use MercadoPago\Woocommerce\Blocks\YapeBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Order\OrderBilling;
@@ -23,6 +24,7 @@ use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Strings;
+use WooCommerce;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -30,125 +32,53 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    /**
-     * @const
-     */
-    private const PLUGIN_VERSION = '7.6.4';
+    private const PLUGIN_VERSION = '7.7.0';
 
-    /**
-     * @const
-     */
     private const PLUGIN_MIN_PHP = '7.4';
 
-    /**
-     * @const
-     */
     private const PLATFORM_ID = 'bo2hnr2ic4p001kbgpt0';
 
-    /**
-     * @const
-     */
     private const PRODUCT_ID_DESKTOP = 'BT7OF5FEOO6G01NJK3QG';
 
-    /**
-     * @const
-     */
     private const PRODUCT_ID_MOBILE  = 'BT7OFH09QS3001K5A0H0';
 
-    /**
-     * @const
-     */
     private const PLATFORM_NAME = 'woocommerce';
 
-    /**
-     * @const
-     */
     private const TICKET_TIME_EXPIRATION = 3;
 
-    /**
-     * @const
-     */
     private const PLUGIN_NAME = 'woocommerce-mercadopago/woocommerce-mercadopago.php';
 
-    /**
-     * @var \WooCommerce
-     */
-    public $woocommerce;
+    public WooCommerce $woocommerce;
 
-    /**
-     * @var Hooks
-     */
-    public $hooks;
+    public Hooks $hooks;
 
-    /**
-     * @var Helpers
-     */
-    public $helpers;
+    public Helpers $helpers;
 
-    /**
-     * @var Settings
-     */
-    public $settings;
+    public Settings $settings;
 
-    /**
-     * @var Metadata
-     */
-    public $metadataConfig;
+    public Metadata $metadataConfig;
 
-    /**
-     * @var Seller
-     */
-    public $sellerConfig;
+    public Seller $sellerConfig;
 
-    /**
-     * @var Store
-     */
-    public $storeConfig;
+    public Store $storeConfig;
 
-    /**
-     * @var Logs
-     */
-    public $logs;
+    public Logs $logs;
 
-    /**
-     * @var OrderBilling
-     */
-    public $orderBilling;
+    public OrderBilling $orderBilling;
 
-    /**
-     * @var OrderMetadata
-     */
-    public $orderMetadata;
+    public OrderMetadata $orderMetadata;
 
-    /**
-     * @var OrderShipping
-     */
-    public $orderShipping;
+    public OrderShipping $orderShipping;
 
-    /**
-     * @var OrderStatus
-     */
-    public $orderStatus;
+    public OrderStatus $orderStatus;
 
-    /**
-     * @var AdminTranslations
-     */
-    public $adminTranslations;
+    public AdminTranslations $adminTranslations;
 
-    /**
-     * @var StoreTranslations
-     */
-    public $storeTranslations;
+    public StoreTranslations $storeTranslations;
 
-    /**
-     * @var Funnel
-     */
-    public static $funnel;
+    public static Funnel $funnel;
 
-    /**
-     * @var Country
-     */
-    public $country;
+    public Country $country;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -219,6 +149,7 @@ class WoocommerceMercadoPago
                     $payment_method_registry->register(new PixBlock());
                     $payment_method_registry->register(new TicketBlock());
                     $payment_method_registry->register(new PseBlock());
+                    $payment_method_registry->register(new YapeBlock());
                 }
             );
         }
@@ -419,7 +350,7 @@ class WoocommerceMercadoPago
      */
     public function verifyCountryForTranslationsNotice(): void
     {
-        $this->helpers->notices->adminNoticeError($this->adminTranslations->notices['missing_translation'], true);
+        $this->helpers->notices->adminNoticeError($this->adminTranslations->notices['missing_translation']);
     }
 
     /**

@@ -6,6 +6,7 @@ use Exception;
 use MercadoPago\PP\Sdk\Common\AbstractCollection;
 use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Libraries\Singleton\Singleton;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
@@ -21,6 +22,8 @@ use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
+use WC_Order;
+use WP_Post;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -28,85 +31,37 @@ if (!defined('ABSPATH')) {
 
 class Order
 {
-    /**
-     * @var Template
-     */
-    private $template;
+    private Template $template;
 
-    /**
-     * @var OrderMetadata
-     */
-    private $orderMetadata;
+    private OrderMetadata $orderMetadata;
 
-    /**
-     * @var OrderStatus
-     */
-    private $orderStatus;
+    private OrderStatus $orderStatus;
 
-    /**
-     * @var StoreTranslations
-     */
-    private $storeTranslations;
+    private StoreTranslations $storeTranslations;
 
-    /**
-     * @var AdminTranslations
-     */
-    private $adminTranslations;
+    private AdminTranslations $adminTranslations;
 
-    /**
-     * @var Store
-     */
-    private $store;
+    private Store $store;
 
-    /**
-     * @var Seller
-     */
-    private $seller;
+    private Seller $seller;
 
-    /**
-     * @var Scripts
-     */
-    private $scripts;
+    private Scripts $scripts;
 
-    /**
-     * @var Url
-     */
-    private $url;
+    private Url $url;
 
-    /**
-     * @var Nonce
-     */
-    private $nonce;
+    private Nonce $nonce;
 
-    /**
-     * @var Endpoints
-     */
-    private $endpoints;
+    private Endpoints $endpoints;
 
-    /**
-     * @var Cron
-     */
-    private $cron;
+    private Cron $cron;
 
-    /**
-     * @var CurrentUser
-     */
-    private $currentUser;
+    private CurrentUser $currentUser;
 
-    /**
-     * @var Requester
-     */
-    private $requester;
+    private Requester $requester;
 
-    /**
-     * @var Logs
-     */
-    private $logs;
+    private Logs $logs;
 
-    /**
-     * @var Datadog
-     */
-    private $datadog;
+    private Singleton $datadog;
 
     /**
      * @const
@@ -177,7 +132,7 @@ class Order
     private function registerStatusSyncMetabox(): void
     {
         $this->registerMetaBox(function ($postOrOrderObject) {
-            $order = ($postOrOrderObject instanceof \WP_Post) ? wc_get_order($postOrOrderObject->ID) : $postOrOrderObject;
+            $order = ($postOrOrderObject instanceof WP_Post) ? wc_get_order($postOrOrderObject->ID) : $postOrOrderObject;
 
             if (!$order || !$this->getLastPaymentInfo($order)) {
                 return;
@@ -206,9 +161,9 @@ class Order
     /**
      * Load the Status Sync Metabox script and style
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      */
-    private function loadScripts(\WC_Order $order): void
+    private function loadScripts(WC_Order $order): void
     {
         $this->scripts->registerStoreScript(
             'mp_payment_status_sync',
@@ -228,11 +183,11 @@ class Order
     /**
      * Get the data to be renreded on the Status Sync Metabox
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return array
      */
-    private function getMetaboxData(\WC_Order $order): array
+    private function getMetaboxData(WC_Order $order): array
     {
         $paymentInfo  = $this->getLastPaymentInfo($order);
 
@@ -292,11 +247,11 @@ class Order
     /**
      * Get the last order payment info
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return bool|AbstractCollection|AbstractEntity|object
      */
-    private function getLastPaymentInfo(\WC_Order $order)
+    private function getLastPaymentInfo(WC_Order $order)
     {
         try {
             $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
@@ -310,7 +265,7 @@ class Order
             $response = $this->requester->get("/v1/payments/$lastPaymentId", $headers);
 
             return $response->getData();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
     }
@@ -332,7 +287,7 @@ class Order
             wp_send_json_success(
                 $this->adminTranslations->statusSync['response_success']
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logs->file->error(
                 "Mercado pago gave error in payment status Sync: {$e->getMessage()}",
                 __CLASS__
@@ -348,11 +303,12 @@ class Order
     /**
      * Syncs the order in woocommerce to mercadopago
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      *
      * @return void
+     * @throws Exception
      */
-    public function syncOrderStatus(\WC_Order $order): void
+    public function syncOrderStatus(WC_Order $order): void
     {
         $paymentData = $this->getLastPaymentInfo($order);
         if (!$paymentData) {
@@ -391,7 +347,7 @@ class Order
                 }
 
                 $this->sendEventOnAction('success');
-            } catch (\Exception $ex) {
+            } catch (Exception $ex) {
                 $error_message = "Unable to update batch of orders on action got error: {$ex->getMessage()}";
 
                 $this->logs->file->error(
@@ -405,6 +361,8 @@ class Order
 
     /**
      * Register/Unregister cron job that sync pending orders
+     *
+     * @param string $enabled
      *
      * @return void
      */
@@ -490,14 +448,14 @@ class Order
     /**
      * Add order note
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param string $description
      * @param int $isCustomerNote
      * @param bool $addedByUser
      *
      * @return void
      */
-    public function addOrderNote(\WC_Order $order, string $description, int $isCustomerNote = 0, bool $addedByUser = false)
+    public function addOrderNote(WC_Order $order, string $description, int $isCustomerNote = 0, bool $addedByUser = false)
     {
         $order->add_order_note($description, $isCustomerNote, $addedByUser);
     }
@@ -505,12 +463,12 @@ class Order
     /**
      * Set ticket metadata in the order
      *
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param $data
      *
      * @return void
      */
-    public function setTicketMetadata(\WC_Order $order, $data): void
+    public function setTicketMetadata(WC_Order $order, $data): void
     {
         $externalResourceUrl = $data['transaction_details']['external_resource_url'];
         $this->orderMetadata->setTicketTransactionDetailsData($order, $externalResourceUrl);
@@ -521,12 +479,12 @@ class Order
      * Set pix metadata in the order
      *
      * @param AbstractGateway $gateway
-     * @param \WC_Order $order
+     * @param WC_Order $order
      * @param $data
      *
      * @return void
      */
-    public function setPixMetadata(AbstractGateway $gateway, \WC_Order $order, $data): void
+    public function setPixMetadata(AbstractGateway $gateway, WC_Order $order, $data): void
     {
         $transactionAmount = $data['transaction_amount'];
         $qrCodeBase64      = $data['point_of_interaction']['transaction_data']['qr_code_base64'];
