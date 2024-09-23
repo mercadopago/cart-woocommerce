@@ -226,12 +226,17 @@ class CreditsGateway extends AbstractGateway
      */
     public function getPaymentFieldsParams(): array
     {
-        $checkoutBenefitsItems = $this->getBenefits();
         $checkoutRedirectSrc   = $this->mercadopago->helpers->url->getPluginFileUrl(
-            'assets/images/checkouts/basic/cho-pro-redirect-v2',
+            'assets/images/icons/icon-mp-nobg',
             '.png',
             true
         );
+        $blocksRowIconSrc   = $this->mercadopago->helpers->url->getPluginFileUrl(
+            'assets/images/icons/icon-mp-admin',
+            '.png',
+            true
+        );
+
         $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return [
             'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
@@ -240,11 +245,18 @@ class CreditsGateway extends AbstractGateway
             'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
             'test_mode_link_src'               => $this->links['docs_integration_test'],
             'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
-            'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
-            'checkout_benefits_tip'            => $this->storeTranslations['checkout_benefits_tip'],
-            'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
+            'checkout_benefits_items'          => wp_json_encode(
+                [
+                    $this->storeTranslations['checkout_step_one'],
+                    $this->storeTranslations['checkout_step_two'],
+                    $this->storeTranslations['checkout_step_three'],
+                ]
+            ),
+            'checkout_redirect_title'          => $this->storeTranslations['checkout_redirect_title'],
+            'checkout_redirect_description'    => $this->storeTranslations['checkout_redirect_description'],
             'checkout_redirect_src'            => $checkoutRedirectSrc,
             'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
+            'checkout_blocks_row_image_src'    => $blocksRowIconSrc,
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
@@ -332,7 +344,7 @@ class CreditsGateway extends AbstractGateway
         $siteId = strtoupper($this->mercadopago->sellerConfig->getSiteId());
 
         return [
-            'type'              => 'mp_credits_checkout_example',
+            'type'      => 'mp_credits_checkout_example',
             'title'     => $this->adminTranslations['enabled_toggle_title'],
             'subtitle'  => $this->adminTranslations['enabled_toggle_subtitle'],
             'footer'    => $this->adminTranslations['enabled_toggle_footer'],
@@ -351,16 +363,16 @@ class CreditsGateway extends AbstractGateway
     private function getCreditsPreviewImage($siteId): string
     {
         $siteIds = [
-            'MLA' => 'MLA_',
-            'MLB' => 'MLB_',
-            'MLM' => 'MLM_',
+            'MLA' => 'es_',
+            'MLB' => 'pt_',
+            'MLM' => 'es_',
         ];
 
         $prefix = $siteIds[$siteId] ?? '';
 
         return $this->mercadopago->helpers->url->getPluginFileUrl(
             'assets/images/checkouts/credits/' . $prefix . 'checkout_preview',
-            '.jpg',
+            '.png',
             true
         );
     }
@@ -417,9 +429,9 @@ class CreditsGateway extends AbstractGateway
     private function getCreditsGifPath(string $siteId, string $view): string
     {
         $siteIds = [
-            'MLA' => 'MLA_',
-            'MLB' => 'MLB_',
-            'MLM' => 'MLM_',
+            'MLA' => 'es_',
+            'MLB' => 'pt_',
+            'MLM' => 'es_',
         ];
 
         $prefix = $siteIds[$siteId] ?? '';
@@ -429,41 +441,6 @@ class CreditsGateway extends AbstractGateway
             '.gif',
             true
         );
-    }
-
-    /**
-     * Get benefits items
-     *
-     * @return array
-     */
-    private function getBenefits(): array
-    {
-        return [
-            [
-                'title'    => $this->storeTranslations['checkout_benefits_installments_title'],
-                'subtitle' => $this->storeTranslations['checkout_benefits_installments_subtitle'],
-                'image'    => [
-                    'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/cellphone-installments', '.png', true),
-                    'alt' => $this->storeTranslations['checkout_benefits_installments_alt'],
-                ],
-            ],
-            [
-                'title'    => $this->storeTranslations['checkout_benefits_confirm_title'],
-                'subtitle' => $this->storeTranslations['checkout_benefits_confirm_subtitle'],
-                'image'    => [
-                    'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/confirm-payment', '.png', true),
-                    'alt' => $this->storeTranslations['checkout_benefits_confirm_alt'],
-                ],
-            ],
-            [
-                'title'    => $this->storeTranslations['checkout_benefits_payment_title'],
-                'subtitle' => $this->storeTranslations['checkout_benefits_payment_subtitle'],
-                'image'    => [
-                    'src' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/calendar-payment', '.png', true),
-                    'alt' => $this->storeTranslations['checkout_benefits_payment_alt'],
-                ],
-            ]
-        ];
     }
 
     /**

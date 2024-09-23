@@ -39,7 +39,7 @@ class CheckoutBenefits extends HTMLElement {
     const items = JSON.parse(this.getAttribute('items'));
 
     const list = document.createElement('div');
-    list.classList.add('mp-checkout-benefits-list');
+    list.classList.add('mp-checkout-benefits-container-list');
 
     items.forEach((item, index) => {
       list.appendChild(this.createItem(item, index));

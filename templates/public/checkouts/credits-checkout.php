@@ -8,8 +8,8 @@
  * @var string $test_mode_link_src
  * @var string $checkout_benefits_title
  * @var string $checkout_benefits_items
- * @var string $checkout_benefits_tip
- * @var string $checkout_redirect_text
+ * @var string $checkout_redirect_title
+ * @var string $checkout_redirect_description
  * @var string $checkout_redirect_src
  * @var string $checkout_redirect_alt
  * @var string $terms_and_conditions_description
@@ -33,10 +33,10 @@ if (!defined('ABSPATH')) {
             <?= esc_html($message_error_amount) ?>
         </p>
     <?php else : ?> 
-        <div class="mp-checkout-pro-container">
-            <div class="mp-checkout-pro-content">
+        <div class="mp-checkout-credits-container">
+            <div class="mp-checkout-credits-content">
                 <?php if ($test_mode) : ?>
-                    <div class="mp-checkout-pro-test-mode">
+                    <div class="mp-checkout-credits-test-mode">
                         <test-mode
                             title="<?= esc_html($test_mode_title) ?>"
                             description="<?= esc_html($test_mode_description) ?>"
@@ -48,31 +48,27 @@ if (!defined('ABSPATH')) {
                 <?php endif; ?>
 
                 <div class="mp-credits-checkout-benefits">
-                    <div class="mp-checkout-pro-checkout-benefits">
-                        <checkout-benefits
-                            title="<?= esc_html($checkout_benefits_title) ?>"
-                            title-align="center"
-                            items="<?= esc_html($checkout_benefits_items) ?>"
-                            list-mode="image"
-                        >
-                        </checkout-benefits>
-                    </div>
+                    <checkout-benefits-list
+                        title="<?= esc_html($checkout_benefits_title) ?>"
+                        title-align="left"
+                        items="<?= esc_html($checkout_benefits_items) ?>"
+                        list-mode="count"
+                    >
+                    </checkout-benefits-list>
                 </div>
 
-                <div class="mp-checkout-pro-tip">
-                    <p><?= esc_html($checkout_benefits_tip) ?></p>
-                </div>
-
-                <div class="mp-checkout-pro-redirect">
-                    <checkout-redirect-v2
-                        text="<?= esc_html($checkout_redirect_text) ?>"
+                <div class="mp-checkout-credits-redirect">
+                    <checkout-redirect-v3
+                        title="<?= esc_html($checkout_redirect_title) ?>"
+                        description="<?= esc_html($checkout_redirect_description) ?>"
                         src="<?= esc_html($checkout_redirect_src) ?>"
                         alt="<?= esc_html($checkout_redirect_alt) ?>"
                     >
-                    </checkout-redirect-v2>
+                    </checkout-redirect-v3>
                 </div>
             </div>
         </div>
+
         <div class="mp-checkout-pro-terms-and-conditions">
             <terms-and-conditions
                 description="<?= esc_html($terms_and_conditions_description) ?>"

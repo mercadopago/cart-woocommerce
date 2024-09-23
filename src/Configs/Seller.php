@@ -407,7 +407,7 @@ class Seller
      * @param string|null $accessToken
      *
      */
-    public function updatePaymentMethods(string $publicKey = null, string $accessToken = null): void
+    public function updatePaymentMethods(?string $publicKey = null, ?string $accessToken = null): void
     {
         if ($publicKey === null) {
             $publicKey = $this->getCredentialsPublicKey();
@@ -440,7 +440,7 @@ class Seller
      * @param string|null $siteId
      *
      */
-    public function updatePaymentMethodsBySiteId(string $siteId = null): void
+    public function updatePaymentMethodsBySiteId(?string $siteId = null): void
     {
         if ($siteId === null) {
             $siteId = $this->getSiteId();
@@ -689,7 +689,7 @@ class Seller
      *
      * @return array
      */
-    private function validateCredentials(string $accessToken = null, string $publicKey = null): array
+    private function validateCredentials(?string $accessToken = null, ?string $publicKey = null): array
     {
         try {
             $key   = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
@@ -737,7 +737,7 @@ class Seller
      *
      * @return array
      */
-    private function getPaymentMethods(string $publicKey = null, string $accessToken = null): array
+    private function getPaymentMethods(?string $publicKey = null, ?string $accessToken = null): array
     {
         try {
             $key       = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);

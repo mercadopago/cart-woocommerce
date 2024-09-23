@@ -11,6 +11,8 @@
 
     <rule ref="WordPress.Security.ValidatedSanitizedInput" />
 
+    <rule ref="PHPCompatibility" />
+
     <!-- Exclude paths -->
     <exclude-pattern>**/*.js</exclude-pattern>
     <exclude-pattern>**/*.css</exclude-pattern>

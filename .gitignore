@@ -1,5 +1,5 @@
 .DS_Store
-.phpunit.result.cache
+*.cache
 
 clover.xml
 coverage

@@ -56,7 +56,7 @@ abstract class AbstractTransaction
      *
      * @throws Exception
      */
-    public function __construct(AbstractGateway $gateway, WC_Order $order, array $checkout = null)
+    public function __construct(AbstractGateway $gateway, WC_Order $order, ?array $checkout = null)
     {
         global $mercadopago;
 
