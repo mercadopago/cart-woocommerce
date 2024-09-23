@@ -7,16 +7,17 @@ import { getSetting } from '@woocommerce/settings';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
 
 import TestMode from './components/TestMode';
-import ChoRedirectV2 from './components/ChoRedirectV2';
-import CheckoutBenefits from './components/CheckoutBenefits';
+import CheckoutRedirectV3 from './components/CheckoutRedirectV3';
+import CheckoutBenefitsList from './components/CheckoutBenefitsList';
 import TermsAndConditions from './components/TermsAndConditions';
+import RowImageSelect from './components/RowImageSelect';
 import sendMetric from "./helpers/metrics.helper";
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-credits';
 
 const settings = getSetting(`woo-mercado-pago-credits_data`, {});
-const defaultLabel = decodeEntities(settings.title) || 'Checkout Creditss';
+const defaultLabel = decodeEntities(settings.title) || 'Checkout Credits';
 
 const updateCart = (props) => {
   const { extensionCartUpdate } = wc.blocksCheckout;
@@ -62,13 +63,15 @@ const updateCart = (props) => {
 
 };
 
-const Label = (props) => {
-  const { PaymentMethodLabel } = props.components;
-
+const Label = () => {
   const feeTitle = decodeEntities(settings?.params?.fee_title || '');
   const text = `${defaultLabel} ${feeTitle}`;
 
-  return <PaymentMethodLabel text={text} />;
+  return (
+    <RowImageSelect
+      text={text}
+      imgSrc={settings.params.checkout_blocks_row_image_src}/>
+  );
 };
 
 const Content = (props) => {
@@ -81,8 +84,8 @@ const Content = (props) => {
     test_mode_link_src,
     checkout_benefits_title,
     checkout_benefits_items,
-    checkout_benefits_tip,
-    checkout_redirect_text,
+    checkout_redirect_title,
+    checkout_redirect_description,
     checkout_redirect_src,
     checkout_redirect_alt,
     terms_and_conditions_description,
@@ -99,8 +102,8 @@ const Content = (props) => {
   
   return (
     <div className="mp-checkout-container">
-      <div className="mp-checkout-pro-container">
-        <div className="mp-checkout-pro-content">
+      <div className="mp-checkout-credits-container">
+        <div className="mp-checkout-credits-content">
           {test_mode ? (
             <TestMode
               title={test_mode_title}
@@ -111,19 +114,20 @@ const Content = (props) => {
           ) : null}
 
           <div class="mp-credits-checkout-benefits">
-            <CheckoutBenefits
+            <CheckoutBenefitsList
               title={checkout_benefits_title}
               items={checkout_benefits_items}
-              titleAlign="center"
-              listMode="image"
+              titleAlign="left"
             />
           </div>
 
-          <div class="mp-checkout-pro-tip">
-              <p>{checkout_benefits_tip}</p>
+          <div class="mp-checkout-credits-redirect">
+            <CheckoutRedirectV3
+              title={checkout_redirect_title}
+              description={checkout_redirect_description}
+              src={checkout_redirect_src}
+              alt={checkout_redirect_alt} />
           </div>
-
-          <ChoRedirectV2 text={checkout_redirect_text} src={checkout_redirect_src} alt={checkout_redirect_alt} />
         </div>
       </div>
 

@@ -3,8 +3,8 @@
 build:
 	./bin/create-release-zip.sh
 
+watch:
+	npm run watch:release
+
 release:
 	./bin/setup-release.sh
-
-sync:
-	./bin/sync-sdk.sh $(tag)

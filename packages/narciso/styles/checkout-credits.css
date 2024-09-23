@@ -1,6 +1,42 @@
+.mp-checkout-pro-terms-and-conditions {
+    align-items: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    padding-top: 16px !important;
+    text-align: center !important;
+}
+
+.mp-checkout-credits-container {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
+.mp-checkout-credits-content {
+    background-color: #fff !important;
+}
+
+.mp-checkout-credits-test-mode {
+    padding: 0 0 25px !important;
+}
+
+.mp-checkout-credits-redirect {
+    margin-top: 24px !important;
+}
+
+.mp-credits-checkout-benefits {
+    padding: 16px 40px !important;
+}
+
 .mp-credits-checkout-benefits img {
     width: 50px !important;
     height: 50px !important;
     max-width: 50px !important;
     max-height: 50px !important;
+}
+
+@media (max-width: 768px) {
+    .mp-credits-checkout-benefits {
+        padding: 16px 20px !important;
+    }
 }

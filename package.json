@@ -1,11 +1,14 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "7.7.0",
+  "version": "7.8.0",
   "main": "main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/mercadopago/cart-woocommerce"
+  },
+  "engines": {
+    "node": "^14.0.0"
   },
   "scripts": {
     "build": "npm run build:narciso && npm run build:js && npm run build:css && npm run build:webpack",
@@ -16,12 +19,15 @@
     "pot": "node -e 'require(\"./main.js\").generatePotFiles()'",
     "prebuild:narciso": "sh packages/narciso/bin/pre-assets.sh",
     "postbuild:narciso": "sh packages/narciso/bin/post-assets.sh",
-    "build:narciso": "webpack --mode=production --config narciso.webpack.config.js"
+    "build:narciso": "webpack --mode=production --config narciso.webpack.config.js",
+    "watch": "SHELL=/bin/sh chokidar assets packages/narciso -i **/**.min.* -i assets/images -c 'npm run build' --initial",
+    "watch:release": "SHELL=/bin/sh chokidar . -i woocommerce-mercadopago.zip -c 'make build'"
   },
   "devDependencies": {
     "@woocommerce/dependency-extraction-webpack-plugin": "^2.2.0",
     "@woocommerce/eslint-plugin": "^2.2.0",
     "@wordpress/scripts": "^26.16.0",
+    "chokidar-cli": "^3.0.0",
     "css-minimizer-webpack-plugin": "^5.0.1",
     "jshint": "^2.13.5",
     "minify": "^7.2.2",

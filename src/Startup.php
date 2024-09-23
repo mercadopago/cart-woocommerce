@@ -9,30 +9,13 @@ if (!defined('ABSPATH')) {
 class Startup
 {
     /**
-     * Defines package missing notice type
-     */
-    protected const PACKAGE_TYPE = "package";
-
-    /**
-     * Defines autoload missing notice type
-     */
-    protected const AUTOLOAD_TYPE = "autoload";
-
-    /**
-     * Defines needed project packages
-     */
-    protected static array $packages = [
-        'sdk/'
-    ];
-
-    /**
      * Verify if plugin has its packages and autoloader file
      *
      * @return bool
      */
     public static function available(): bool
     {
-        return self::haveAutoload() && self::havePackages();
+        return self::haveAutoload();
     }
 
     /**
@@ -42,54 +25,13 @@ class Startup
      */
     protected static function haveAutoload(): bool
     {
-        $file = dirname(__FILE__) . '/../vendor/autoload.php';
+        $file = dirname(__DIR__) . '/vendor/autoload.php';
 
-        if (!is_file($file) && !is_readable($file)) {
-            self::missingNotice(self::AUTOLOAD_TYPE, $file);
-            return false;
+        if (is_file($file) && is_readable($file)) {
+            return true;
         }
 
-        return true;
-    }
-
-    /**
-     * Check's if packages folder exists
-     *
-     * @return bool
-     */
-    protected static function havePackages(): bool
-    {
-        foreach (self::$packages as $package) {
-            $package = dirname(__FILE__) . '/../packages/' . $package;
-
-            if (!is_dir($package)) {
-                self::missingNotice(self::PACKAGE_TYPE, $package);
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Show missing notice for package's and autoload
-     *
-     * @param string $type
-     * @param string $path
-     *
-     * @return void
-     */
-    protected static function missingNotice(string $type, string $path): void
-    {
-        add_action('admin_notices', function () use ($type, $path) {
-            switch ($type) {
-                case self::PACKAGE_TYPE:
-                    include dirname(__FILE__) . '/../templates/admin/notices/miss-package.php';
-                    break;
-                case self::AUTOLOAD_TYPE:
-                    include dirname(__FILE__) . '/../templates/admin/notices/miss-autoload.php';
-                    break;
-            }
-        });
+        add_action('admin_notices', fn() => $file && include __DIR__ . '/../templates/admin/notices/miss-autoload.php');
+        return false;
     }
 }

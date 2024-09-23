@@ -42,10 +42,10 @@ if (!defined('ABSPATH')) {
                     </div>
 
                     <div class="mp-credits-modal-titles">
-                        <div>
+                        <div class="mp-credits-modal-brand-title">
                             <span><?php echo esc_html($modal_title); ?></span>
                         </div>
-                        <div>
+                        <div class="mp-credits-modal-info">
                             <div class="mp-credits-modal-how-to-use">
                                 <div>
                                     <div class="mp-credits-modal-step-circle"><div class="mp-step-mark">1</div></div>

@@ -655,7 +655,7 @@ class Settings
      *
      * @return void
      */
-    private function setStoreAndSellerInfo(string $accessToken = null): void
+    private function setStoreAndSellerInfo(?string $accessToken = null): void
     {
         $sellerInfo = $this->seller->getSellerInfo($accessToken);
         $siteId = $sellerInfo['data']['site_id'];
@@ -674,7 +674,7 @@ class Settings
      *
      * @return void
      */
-    private function verifyAndUpdateCredentials(string $publicKeyTest = null, string $accessTokenTest = null): void
+    private function verifyAndUpdateCredentials(?string $publicKeyTest = null, ?string $accessTokenTest = null): void
     {
         if (empty($publicKeyTest) && empty($accessTokenTest) && $this->store->getCheckboxCheckoutTestMode() === 'yes') {
             $this->store->setCheckboxCheckoutTestMode('no');

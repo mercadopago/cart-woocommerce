@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.8.0] - 2024-09-23
+
+### Changed
+- **Rebranded and revamped the CreditsGateway**, improving overall user experience and aligning the visual identity with our updated brand guidelines, making it more intuitive and modern.
+- **Compressed several images without losing quality**, which reduces the plugin bundle size and leads to faster download and installation times, improving performance without sacrificing visual fidelity.
+- **Removed implicit nullable parameter marking** and replaced it with explicit nullable types, enhancing code clarity and reducing potential bugs related to type handling, thus improving code reliability.
+
+### Fixed
+- **Corrected the support component's link URL**, ensuring users are directed to the appropriate help resources without encountering broken or incorrect links, improving support accessibility.
+
+
 ## [7.7.0] - 2024-09-11
 
 ### Added

@@ -65,6 +65,15 @@
   justify-content: center;
 }
 
+.mp-credits-modal-brand-title {
+  display: flex;
+  justify-content: center;
+}
+
+.mp-credits-modal-brand-title > span {
+  width: 300px !important;
+}
+
 .mp-credits-modal-step-circle {
   width: 26px;
   height: 26px;
@@ -97,7 +106,13 @@
   line-height: 18px;
 }
 
+.mp-credits-modal-info {
+  display: flex;
+  justify-content: center;
+}
+
 .mp-credits-modal-how-to-use {
+  width: 85%;
   display: flex;
   flex-direction: column;
   padding-top: 24px;
@@ -112,7 +127,7 @@
 
 .mp-credits-modal-container-content {
   display: flex;
-  width: 480px;
+  width: 450px;
   padding: 32px;
   flex-direction: column;
   align-items: flex-end;
@@ -249,6 +264,10 @@
     margin-top: 18px !important;
     width: 195px !important;
     height: 122px !important;
+  }
+
+  .mp-credits-modal-how-to-use {
+    width: 75%;
   }
 
   .mp-credits-modal-container-content {
