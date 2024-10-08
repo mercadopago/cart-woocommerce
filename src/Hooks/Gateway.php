@@ -313,7 +313,7 @@ class Gateway
      */
     public function getGatewayIcon(string $iconName, string $fileExtension = '.png'): string
     {
-        $path = $this->url->getPluginFileUrl("assets/images/icons/$iconName", $fileExtension, true);
+        $path = $this->url->getImageAsset('icons/' . $iconName, $fileExtension);
         return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 

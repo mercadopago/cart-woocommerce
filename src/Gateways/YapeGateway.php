@@ -192,7 +192,7 @@ class YapeGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_yape_checkout',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/yape/mp-yape-checkout', '.js'),
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/yape/mp-yape-checkout'),
             [
                 'public_key' => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
             ]
@@ -234,9 +234,9 @@ class YapeGateway extends AbstractGateway
             'footer_text'                      => $this->storeTranslations['footer_text'],
             'test_mode_link_src'               => $this->links['docs_integration_test'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'input_code_icon'                  => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/yape/yape-tooltip-icon', '.svg', true),
-            'checkout_notice_icon_one'         => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/yape/checkout-notice-icon', '.png', true),
-            'checkout_notice_icon_two'         => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/yape/mp-transparent-icon', '.svg', true),
+            'input_code_icon'                  => $this->mercadopago->helpers->url->getImageAsset('checkouts/yape/yape-tooltip-icon', '.svg'),
+            'checkout_notice_icon_one'         => $this->mercadopago->helpers->url->getImageAsset('checkouts/yape/checkout-notice-icon'),
+            'checkout_notice_icon_two'         => $this->mercadopago->helpers->url->getImageAsset('checkouts/yape/mp-transparent-icon', '.svg'),
             'yape_tooltip_text'                 => $this->storeTranslations['yape_tooltip_text'],
             'yape_input_code_error_message1'    => $this->storeTranslations['yape_input_code_error_message1'],
             'yape_input_code_error_message2'    => $this->storeTranslations['yape_input_code_error_message2'],

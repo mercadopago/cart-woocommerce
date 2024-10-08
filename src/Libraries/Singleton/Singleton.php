@@ -31,9 +31,9 @@ class Singleton
     /**
      * The method you use to get the Singleton's instance.
      *
-     * @return Singleton Returns the subclass extending from Singleton class
+     * @return static subclass extending from Singleton class
      */
-    public static function getInstance(): Singleton
+    public static function getInstance()
     {
         $subclass = static::class;
         if (!isset(self::$instances[$subclass])) {

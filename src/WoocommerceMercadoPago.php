@@ -32,7 +32,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '7.8.0';
+    private const PLUGIN_VERSION = '7.8.1';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -216,6 +216,9 @@ class WoocommerceMercadoPago
         if ($this->storeConfig->getExecuteActivate()) {
             $this->hooks->plugin->executeActivatePluginAction();
         }
+        if ($this->storeConfig->getExecuteAfterPluginUpdate()) {
+            $this->afterPluginUpdate();
+        }
     }
 
     /**
@@ -230,12 +233,20 @@ class WoocommerceMercadoPago
 
     /**
      * Function hook active plugin
-     *
-     * @return void
      */
-    public function activatePlugin()
+    public function activatePlugin(): void
     {
-        self::$funnel->isInstallationId() ? self::$funnel->updateStepActivate() : self::$funnel->getInstallationId();
+        $after = fn() => $this->storeConfig->setExecuteActivate(false);
+
+        self::$funnel->created() ? self::$funnel->updateStepActivate($after) : self::$funnel->create($after);
+    }
+
+    /**
+     * Function hook after plugin update
+     */
+    public function afterPluginUpdate(): void
+    {
+        self::$funnel->updateStepPluginVersion(fn() => $this->storeConfig->setExecuteAfterPluginUpdate(false));
     }
 
     /**

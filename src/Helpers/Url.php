@@ -21,16 +21,6 @@ final class Url
     }
 
     /**
-     * Get suffix
-     *
-     * @return string
-     */
-    public function getSuffix(): string
-    {
-        return defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-    }
-
-    /**
      * Get plugin file url
      *
      * @param string $path
@@ -45,29 +35,46 @@ final class Url
             '%s%s%s%s',
             trailingslashit(rtrim(plugin_dir_url(plugin_dir_path(__FILE__)), '/src')),
             $path,
-            $ignoreSuffix ? '' : $this->getSuffix(),
+            $ignoreSuffix ? '' : '.min',
             $extension
         );
     }
 
     /**
-     * Get plugin file path
+     * Get plugin css asset file url
      *
-     * @param string $path
-     * @param string $extension
-     * @param bool $ignoreSuffix
+     * @param string $fileName
      *
      * @return string
      */
-    public function getPluginFilePath(string $path, string $extension, bool $ignoreSuffix = false): string
+    public function getCssAsset(string $fileName): string
     {
-        return sprintf(
-            '%s%s%s%s',
-            untrailingslashit(plugin_dir_path(__FILE__)),
-            "/../../$path",
-            $ignoreSuffix ? '' : $this->getSuffix(),
-            $extension
-        );
+        return $this->getPluginFileUrl('assets/css/' . $fileName, '.css');
+    }
+
+    /**
+     * Get plugin js asset file url
+     *
+     * @param string $fileName
+     *
+     * @return string
+     */
+    public function getJsAsset(string $fileName): string
+    {
+        return $this->getPluginFileUrl('assets/js/' . $fileName, '.js');
+    }
+
+    /**
+     * Get plugin image asset file url
+     *
+     * @param string $fileName
+     * @param string $extension
+     *
+     * @return string
+     */
+    public function getImageAsset(string $fileName, string $extension = '.png'): string
+    {
+        return $this->getPluginFileUrl('assets/images/' . $fileName, $extension, true);
     }
 
     /**

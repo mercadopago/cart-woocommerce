@@ -126,7 +126,7 @@ final class PaymentMethods
     {
         if (CreditsGateway::isAvailable()) {
             $paymentMethods[] = [
-                'src' => $this->url->getPluginFileUrl('assets/images/icons/icon-credits', '.png', true),
+                'src' => $this->url->getImageAsset('icons/icon-credits'),
                 'alt' => 'Credits image'
             ];
         }

@@ -208,12 +208,12 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     {
         $this->mercadopago->hooks->scripts->registerAdminScript(
             'wc_mercadopago_admin_components',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/admin/mp-admin-configs', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('admin/mp-admin-configs')
         );
 
         $this->mercadopago->hooks->scripts->registerAdminStyle(
             'wc_mercadopago_admin_components',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
+            $this->mercadopago->helpers->url->getCssAsset('admin/mp-admin-configs')
         );
     }
 
@@ -226,17 +226,17 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     {
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_checkout_components',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/mp-plugins-components', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-plugins-components')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutStyle(
             'wc_mercadopago_checkout_components',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/checkouts/mp-plugins-components', '.css')
+            $this->mercadopago->helpers->url->getCssAsset('checkouts/mp-plugins-components')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_checkout_update',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/mp-checkout-update', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-checkout-update')
         );
     }
 
