@@ -51,6 +51,8 @@ class Store
 
     private const EXECUTE_ACTIVATED_PLUGIN = '_mp_execute_activate';
 
+    private const EXECUTE_AFTER_UPDATE = '_mp_execute_after_update';
+
     private array $availablePaymentGateways = [];
 
     private Options $options;
@@ -333,15 +335,25 @@ class Store
      */
     public function getExecuteActivate(): bool
     {
-        return $this->options->get(self::EXECUTE_ACTIVATED_PLUGIN, '') === 'yes';
+        return (bool) $this->options->get(self::EXECUTE_ACTIVATED_PLUGIN);
     }
 
     /**
      * @param string $execute
      */
-    public function setExecuteActivate(string $execute): void
+    public function setExecuteActivate(bool $execute): void
     {
-        $this->options->set(self::EXECUTE_ACTIVATED_PLUGIN, $execute);
+        $this->options->set(self::EXECUTE_ACTIVATED_PLUGIN, (int) $execute);
+    }
+
+    public function getExecuteAfterPluginUpdate(): bool
+    {
+        return (bool) $this->options->get(self::EXECUTE_AFTER_UPDATE);
+    }
+
+    public function setExecuteAfterPluginUpdate(bool $execute): void
+    {
+        $this->options->set(self::EXECUTE_AFTER_UPDATE, (int) $execute);
     }
 
     /**

@@ -90,7 +90,7 @@ class Notices
         if (is_admin()) {
             $this->scripts->registerAdminStyle(
                 'woocommerce-mercadopago-admin-notice-css',
-                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-notices', '.css')
+                $this->url->getCssAsset('admin/mp-admin-notices')
             );
         }
     }
@@ -105,7 +105,7 @@ class Notices
         if (is_admin()) {
             $this->scripts->registerAdminScript(
                 'woocommerce_mercadopago_admin_notice_js',
-                $this->url->getPluginFileUrl('assets/js/admin/mp-admin-notices', '.js'),
+                $this->url->getJsAsset('admin/mp-admin-notices'),
                 [
                     'nonce' => $this->nonce->generateNonce(self::NONCE_ID)
                 ]
@@ -146,7 +146,7 @@ class Notices
             add_action(
                 'admin_notices',
                 function () {
-                    $cardIcon   = $this->url->getPluginFileUrl('assets/images/icons/icon-mp-card', '.png', true);
+                    $cardIcon   = $this->url->getImageAsset('icons/icon-mp-card');
                     $title      = $this->translations->notices['saved_cards_title'];
                     $subtitle   = $this->translations->notices['saved_cards_subtitle'];
                     $buttonText = $this->translations->notices['saved_cards_button'];
@@ -247,7 +247,7 @@ class Notices
         add_action(
             'admin_notices',
             function () {
-                $miniLogo = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
+                $miniLogo = $this->url->getImageAsset('minilogo');
                 $message  = $this->translations->notices['miss_pix_text'];
                 $textLink = $this->translations->notices['miss_pix_link'];
                 $urlLink  = $this->links['mercadopago_pix_config'];
@@ -271,7 +271,7 @@ class Notices
         add_action(
             'admin_notices',
             function () use ($message, $type, $dismiss) {
-                $minilogo = $this->url->getPluginFileUrl('assets/images/minilogo', '.png', true);
+                $minilogo = $this->url->getImageAsset('minilogo');
                 $isDismissible = $dismiss ? 'is-dismissible' : '';
 
                 include dirname(__FILE__) . '/../../templates/admin/notices/generic-notice.php';
@@ -398,7 +398,7 @@ class Notices
         add_action(
             'admin_notices',
             function () {
-                $minilogo = $this->url->getPluginFileUrl('assets/images/icons/icon-feedback-info', '.png', true);
+                $minilogo = $this->url->getImageAsset('icons/icon-feedback-info');
                 $title = $this->translations->notices['action_feedback_title'];
                 $subtitle = $this->translations->notices['action_feedback_subtitle'];
 

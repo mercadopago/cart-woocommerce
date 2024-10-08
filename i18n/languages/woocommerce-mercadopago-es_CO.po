@@ -13,7 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #: ../../src/WoocommerceMercadoPago.php:430,
 #: ../../src/Translations/AdminTranslations.php:109
@@ -1008,7 +1008,7 @@ msgstr "“Hasta 12 pagos sin tarjeta con Mercado Pago” está"
 
 #: ../../src/Translations/AdminTranslations.php:469
 msgid "Installments without cards through Mercado Pago"
-msgstr "Pagos sin tarjeta de Mercado Pago"
+msgstr "Pagos sin Tarjeta de Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:470,
 #: ../../src/Translations/AdminTranslations.php:472
@@ -1078,7 +1078,7 @@ msgid ""
 "Activate this promotional banner to offer the option of paying in "
 "installments without cards through Mercado Pago within product pages."
 msgstr ""
-"Activa este banner promocional para ofrecer la opción “Pagos sin tarjeta de "
+"Activa este banner promocional para ofrecer la opción “Pagos sin Tarjeta de "
 "Mercado Pago” dentro de la página de tus productos."
 
 #: ../../src/Translations/AdminTranslations.php:498
@@ -1109,7 +1109,7 @@ msgstr "A continuación verás cómo aparecerá el banner para tus clientes:"
 #: ../../src/Translations/AdminTranslations.php:512
 msgid "Choose how to promote “Pagos sin Tarjeta de Mercado Pago” on your store"
 msgstr ""
-"Elige como promocionar en tu tienda “Pagos sin tarjeta de Mercado Pago”"
+"Elige como promocionar en tu tienda “Pagos sin Tarjeta de Mercado Pago”"
 
 #: ../../src/Translations/AdminTranslations.php:513
 msgid ""
@@ -2530,7 +2530,7 @@ msgstr "de tu Línea de Crédito y"
 
 #: ../../src/Translations/StoreTranslations.php:165
 msgid "choose the number of installments"
-msgstr "selecciona la cantidad de pagos."
+msgstr "selecciona la cantidad de pagos"
 
 #: ../../src/Translations/StoreTranslations.php:170
 msgid "Confirm your payment,"

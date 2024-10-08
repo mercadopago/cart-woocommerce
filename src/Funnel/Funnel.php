@@ -3,13 +3,13 @@
 namespace MercadoPago\Woocommerce\Funnel;
 
 use Exception;
+use MercadoPago\PP\Sdk\Common\Constants;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
-use MercadoPago\Woocommerce\Libraries\Singleton\Singleton;
 
 class Funnel
 {
@@ -23,7 +23,7 @@ class Funnel
 
     private Gateways $gateways;
 
-    private Singleton $datadog;
+    private Datadog $datadog;
 
     /**
      * Funnel constructor
@@ -43,120 +43,118 @@ class Funnel
         $this->datadog  = Datadog::getInstance();
     }
 
-    public function getInstallationId(): void
+    /**
+     * Create seller funnel
+     */
+    public function create(?\Closure $after = null): void
     {
-        if ($this->validateStartFunnel()) {
-            $this->runWithTreatment(function () {
-                $createSellerFunnelBase = $this->sdk->getCreateSellerFunnelBaseInstance();
-                $createSellerFunnelBase->platform_id = MP_PLATFORM_ID;
-                $createSellerFunnelBase->shop_url = site_url();
-                $createSellerFunnelBase->platform_version = $this->getWoocommerceVersion();
-                $createSellerFunnelBase->plugin_version = MP_VERSION;
-                $response = $createSellerFunnelBase->save();
-                $this->store->setInstallationId($response->id);
-                $this->store->setInstallationKey($response->cpp_token);
-                $this->store->setExecuteActivate('no');
-            });
+        if (!$this->canCreate()) {
+            return;
         }
+
+        $this->runWithTreatment(function () use ($after) {
+            $createSellerFunnelBase = $this->sdk->getCreateSellerFunnelBaseInstance();
+            $createSellerFunnelBase->platform_id = MP_PLATFORM_ID;
+            $createSellerFunnelBase->shop_url = site_url();
+            $createSellerFunnelBase->platform_version = $this->getWoocommerceVersion();
+            $createSellerFunnelBase->plugin_version = MP_VERSION;
+            $response = $createSellerFunnelBase->save();
+            $this->store->setInstallationId($response->id);
+            $this->store->setInstallationKey($response->cpp_token);
+
+            if (isset($after)) {
+                $after();
+            }
+        });
     }
 
-    public function updateStepCredentials(): void
+    public function created(): bool
     {
-        if ($this->isInstallationId()) {
-            $this->runWithTreatment(function () {
-                $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
-                $updateSellerFunnelBase->id = $this->store->getInstallationId();
-                $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
-                $updateSellerFunnelBase->is_added_production_credential = !empty($this->seller->getCredentialsAccessTokenProd());
-                $updateSellerFunnelBase->is_added_test_credential = !empty($this->seller->getCredentialsAccessTokenTest());
-                $updateSellerFunnelBase->plugin_mode = $this->getPluginMode();
-                $updateSellerFunnelBase->cust_id = $this->seller->getCustIdFromAT();
-                $updateSellerFunnelBase->site_id = $this->country->countryToSiteId($this->country->getPluginDefaultCountry());
-                $updateSellerFunnelBase->update();
-            });
-        }
+        return !empty($this->store->getInstallationId())
+            && !empty($this->store->getInstallationKey());
+    }
+
+    public function updateStepCredentials(?\Closure $after = null): void
+    {
+        $this->update([
+            'is_added_production_credential' => !empty($this->seller->getCredentialsAccessTokenProd()),
+            'is_added_test_credential'       => !empty($this->seller->getCredentialsAccessTokenTest()),
+            'plugin_mode'                    => $this->getPluginMode(),
+            'cust_id'                        => $this->seller->getCustIdFromAT(),
+            'site_id'                        => $this->country->countryToSiteId($this->country->getPluginDefaultCountry()),
+        ], $after);
     }
 
     /**
      * @return void
      */
-    public function updateStepPaymentMethods(): void
+    public function updateStepPaymentMethods(?\Closure $after = null): void
     {
-        if ($this->isInstallationId()) {
-            $this->runWithTreatment(function () {
-                $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
-                $updateSellerFunnelBase->id = $this->store->getInstallationId();
-                $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
-                $updateSellerFunnelBase->accepted_payments = $this->gateways->getEnabledPaymentGateways();
-                $updateSellerFunnelBase->update();
-            });
+        $this->update(['accepted_payments' => $this->gateways->getEnabledPaymentGateways()], $after);
+    }
+
+    public function updateStepPluginMode(?\Closure $after = null): void
+    {
+        $this->update(['plugin_mode' => $this->getPluginMode()], $after);
+    }
+
+    public function updateStepUninstall(?\Closure $after = null): void
+    {
+        $this->update(['is_deleted' => true], $after);
+    }
+
+    public function updateStepDisable(?\Closure $after = null): void
+    {
+        $this->update(['is_disabled' => true], $after);
+    }
+
+    public function updateStepActivate(?\Closure $after = null): void
+    {
+        $this->update(['is_disabled' => false], $after);
+    }
+
+    public function updateStepPluginVersion(?\Closure $after = null): void
+    {
+        $this->update(['plugin_version' => MP_VERSION], $after);
+    }
+
+    /**
+     * Update seller funnel using the given attributes
+     *
+     * @param array $attrs Funnel attribute values map
+     * @param \Closure $after Function to run after funnel updated, inside treatment
+     */
+    private function update(array $attrs, ?\Closure $after = null): void
+    {
+        if (!$this->created()) {
+            return;
         }
+
+        $attrs = array_merge($attrs, [
+            'id' => $this->store->getInstallationId(),
+            'cpp_token' => $this->store->getInstallationKey(),
+        ]);
+
+        $this->runWithTreatment(function () use ($attrs, $after) {
+            $updateSellerFunnelBase = $this->getUpdateSellerFunnelBaseInstance();
+
+            foreach ($attrs as $attr => $value) {
+                $updateSellerFunnelBase->$attr = $value;
+            }
+
+            $updateSellerFunnelBase->update();
+
+            if (isset($after)) {
+                $after();
+            }
+        });
     }
 
-    public function updateStepPluginMode(): void
+    private function canCreate(): bool
     {
-        if ($this->isInstallationId()) {
-            $this->runWithTreatment(function () {
-                $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
-                $updateSellerFunnelBase->id = $this->store->getInstallationId();
-                $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
-                $updateSellerFunnelBase->plugin_mode = $this->getPluginMode();
-                $updateSellerFunnelBase->update();
-            });
-        }
-    }
-
-    public function updateStepUninstall(): void
-    {
-        if ($this->isInstallationId()) {
-            $this->runWithTreatment(function () {
-                $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
-                $updateSellerFunnelBase->id = $this->store->getInstallationId();
-                $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
-                $updateSellerFunnelBase->is_deleted = true;
-                $updateSellerFunnelBase->update();
-            });
-        }
-    }
-
-    public function updateStepDisable(): void
-    {
-        if ($this->isInstallationId()) {
-            $this->runWithTreatment(function () {
-                $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
-                $updateSellerFunnelBase->id = $this->store->getInstallationId();
-                $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
-                $updateSellerFunnelBase->is_disabled = true;
-                $updateSellerFunnelBase->update();
-            });
-        }
-    }
-
-    public function updateStepActivate(): void
-    {
-        if ($this->isInstallationId()) {
-            $this->runWithTreatment(function () {
-                $updateSellerFunnelBase = $this->sdk->getUpdateSellerFunnelBaseInstance();
-                $updateSellerFunnelBase->id = $this->store->getInstallationId();
-                $updateSellerFunnelBase->cpp_token = $this->store->getInstallationKey();
-                $updateSellerFunnelBase->is_disabled = false;
-                $updateSellerFunnelBase->update();
-                $this->store->setExecuteActivate('no');
-            });
-        }
-    }
-
-    public function isInstallationId(): bool
-    {
-        return !empty($this->store->getInstallationId())
-        && !empty($this->store->getInstallationKey());
-    }
-
-    private function validateStartFunnel(): bool
-    {
-        return empty($this->seller->getCredentialsAccessTokenProd()) &&
-            !$this->isInstallationId() &&
-            empty($this->gateways->getEnabledPaymentGateways());
+        return !$this->created()
+            && empty($this->seller->getCredentialsAccessTokenProd())
+            && empty($this->gateways->getEnabledPaymentGateways());
     }
 
     private function getPluginMode(): string
@@ -169,23 +167,29 @@ class Funnel
         return $GLOBALS['woocommerce']->version ?? "";
     }
 
-    private function runWithTreatment($callback)
+    private function getUpdateSellerFunnelBaseInstance(): UpdateSellerFunnelBase
+    {
+        return $this->sdk->getEntityInstance(UpdateSellerFunnelBase::class, Constants::BASEURL_MP);
+    }
+
+    private function runWithTreatment(\Closure $callback): void
     {
         try {
             $callback();
 
             $this->sendSuccessEvent();
         } catch (Exception $ex) {
+            $GLOBALS['mercadopago']->logs->file->error(sprintf("Error on %s\n%s", __METHOD__, $ex), __CLASS__);
             $this->sendErrorEvent($ex->getMessage());
         }
     }
 
-    private function sendSuccessEvent()
+    private function sendSuccessEvent(): void
     {
         $this->datadog->sendEvent('funnel', 'success');
     }
 
-    private function sendErrorEvent(string $message)
+    private function sendErrorEvent(string $message): void
     {
         $this->datadog->sendEvent('funnel', 'error', $message);
     }

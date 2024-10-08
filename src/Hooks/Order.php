@@ -167,7 +167,7 @@ class Order
     {
         $this->scripts->registerStoreScript(
             'mp_payment_status_sync',
-            $this->url->getPluginFileUrl('assets/js/admin/order/payment-status-sync', '.js'),
+            $this->url->getJsAsset('admin/order/payment-status-sync'),
             [
                 'order_id' => $order->get_id(),
                 'nonce' => $this->nonce->generateNonce(self::NONCE_ID),
@@ -176,7 +176,7 @@ class Order
 
         $this->scripts->registerStoreStyle(
             'mp_payment_status_sync',
-            $this->url->getPluginFileUrl('assets/css/admin/order/payment-status-sync', '.css')
+            $this->url->getCssAsset('admin/order/payment-status-sync')
         );
     }
 
@@ -204,7 +204,7 @@ class Order
             case 'success':
                 return [
                     'card_title'        => $this->adminTranslations->statusSync['card_title'],
-                    'img_src'           => $this->url->getPluginFileUrl('assets/images/icons/icon-success', '.png', true),
+                    'img_src'           => $this->url->getImageAsset('icons/icon-success'),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
                     'link'              => 'https://www.mercadopago.com',
@@ -216,7 +216,7 @@ class Order
             case 'pending':
                 return [
                     'card_title'        => $this->adminTranslations->statusSync['card_title'],
-                    'img_src'           => $this->url->getPluginFileUrl('assets/images/icons/icon-alert', '.png', true),
+                    'img_src'           => $this->url->getImageAsset('icons/icon-alert'),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
                     'link'              => 'https://www.mercadopago.com',
@@ -230,7 +230,7 @@ class Order
             case 'charged_back':
                 return [
                     'card_title'        => $this->adminTranslations->statusSync['card_title'],
-                    'img_src'           => $this->url->getPluginFileUrl('assets/images/icons/icon-warning', '.png', true),
+                    'img_src'           => $this->url->getImageAsset('icons/icon-warning'),
                     'alert_title'       => $cardContent['alert_title'],
                     'alert_description' => $cardContent['description'],
                     'link'              => $this->adminTranslations->links['reasons_refusals'],

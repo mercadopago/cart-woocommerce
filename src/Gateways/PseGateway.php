@@ -203,17 +203,17 @@ class PseGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_pse_page',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-page', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/pse/mp-pse-page')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_pse_elements',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-elements', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/pse/mp-pse-elements')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_pse_checkout',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/pse/mp-pse-checkout', '.js'),
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/pse/mp-pse-checkout'),
             [
                 'financial_placeholder' => $this->storeTranslations ['financial_placeholder'],
             ]

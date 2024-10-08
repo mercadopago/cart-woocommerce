@@ -1,6 +1,18 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.8.1 (07/10/2024) =
+* Added:
+- Silence is golden directive implemented to enhance security for WordPress sites.
+
+* Changed:
+- Modified the way asset's are loaded into the store.
+- Sending new field to get the plugin version from the stores to improve onboarding.
+
+* Fixed:
+- Resolved issues with loading minified CSS and JS files in debugging environments.
+- Refined translations for ES-all languages.
+
 = v7.8.0 (23/09/2024) =
 * Changed:
 - Rebranded and revamped the CreditsGateway, improving overall user experience and aligning the visual identity with our updated brand guidelines, making it more intuitive and modern.

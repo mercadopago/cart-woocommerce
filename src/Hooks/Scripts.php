@@ -136,7 +136,7 @@ class Scripts
     {
         global $woocommerce;
 
-        $file      = $this->url->getPluginFileUrl('assets/js/notices/notices-client', '.js');
+        $file      = $this->url->getJsAsset('notices/notices-client');
         $variables = [
             'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
             'container'        => '#wpbody-content',
@@ -189,7 +189,7 @@ class Scripts
     {
         global $woocommerce;
 
-        $file      = $this->url->getPluginFileUrl('assets/js/caronte/caronte-client', '.js');
+        $file      = $this->url->getJsAsset('caronte/caronte-client');
         $variables = [
             'locale'                => get_locale(),
             'site_id'               => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
@@ -239,7 +239,7 @@ class Scripts
     {
         global $woocommerce;
 
-        $file      = $this->url->getPluginFileUrl('assets/js/melidata/melidata-client', '.js');
+        $file      = $this->url->getJsAsset('melidata/melidata-client');
         $variables = [
             'type'             => $type,
             'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,

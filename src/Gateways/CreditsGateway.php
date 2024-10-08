@@ -226,16 +226,8 @@ class CreditsGateway extends AbstractGateway
      */
     public function getPaymentFieldsParams(): array
     {
-        $checkoutRedirectSrc   = $this->mercadopago->helpers->url->getPluginFileUrl(
-            'assets/images/icons/icon-mp-nobg',
-            '.png',
-            true
-        );
-        $blocksRowIconSrc   = $this->mercadopago->helpers->url->getPluginFileUrl(
-            'assets/images/icons/icon-mp-admin',
-            '.png',
-            true
-        );
+        $checkoutRedirectSrc   = $this->mercadopago->helpers->url->getImageAsset('icons/icon-mp-nobg');
+        $blocksRowIconSrc   = $this->mercadopago->helpers->url->getImageAsset('icons/icon-mp-admin');
 
         $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return [
@@ -369,12 +361,7 @@ class CreditsGateway extends AbstractGateway
         ];
 
         $prefix = $siteIds[$siteId] ?? '';
-
-        return $this->mercadopago->helpers->url->getPluginFileUrl(
-            'assets/images/checkouts/credits/' . $prefix . 'checkout_preview',
-            '.png',
-            true
-        );
+        return $this->mercadopago->helpers->url->getImageAsset('checkouts/credits/' . $prefix . 'checkout_preview');
     }
 
     /**
@@ -388,17 +375,17 @@ class CreditsGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerCreditsAdminStyle(
             'mp_info_admin_credits_style',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/admin/credits/example-info', '.css')
+            $this->mercadopago->helpers->url->getCssAsset('admin/credits/example-info')
         );
 
         $this->mercadopago->hooks->scripts->registerCreditsAdminScript(
             'mp_info_admin_credits_script',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/admin/credits/example-info', '.js'),
+            $this->mercadopago->helpers->url->getJsAsset('admin/credits/example-info'),
             [
-                'computerBlueIcon'  => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/desktop-blue-icon', '.png', true),
-                'computerGrayIcon'  => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/desktop-gray-icon', '.png', true),
-                'cellphoneBlueIcon' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/cellphone-blue-icon', '.png', true),
-                'cellphoneGrayIcon' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/credits/cellphone-gray-icon', '.png', true),
+                'computerBlueIcon'  => $this->mercadopago->helpers->url->getImageAsset('checkouts/credits/desktop-blue-icon'),
+                'computerGrayIcon'  => $this->mercadopago->helpers->url->getImageAsset('checkouts/credits/desktop-gray-icon'),
+                'cellphoneBlueIcon' => $this->mercadopago->helpers->url->getImageAsset('checkouts/credits/cellphone-blue-icon'),
+                'cellphoneGrayIcon' => $this->mercadopago->helpers->url->getImageAsset('checkouts/credits/cellphone-gray-icon'),
                 'viewMobile'        => $this->getCreditsGifPath($siteId, 'mobile'),
                 'viewDesktop'       => $this->getCreditsGifPath($siteId, 'desktop'),
                 'footerDesktop'     => $this->adminTranslations['credits_banner_desktop'],
@@ -436,10 +423,9 @@ class CreditsGateway extends AbstractGateway
 
         $prefix = $siteIds[$siteId] ?? '';
 
-        return $this->mercadopago->helpers->url->getPluginFileUrl(
-            'assets/images/checkouts/credits/' . $prefix . 'view_' . $view,
+        return $this->mercadopago->helpers->url->getImageAsset(
+            'checkouts/credits/' . $prefix . 'view_' . $view,
             '.gif',
-            true
         );
     }
 
@@ -455,12 +441,12 @@ class CreditsGateway extends AbstractGateway
         if ($gatewayAvailable && $gatewayEnabled && $bannerEnabled) {
             $this->mercadopago->hooks->scripts->registerStoreStyle(
                 'mp-credits-modal-style',
-                $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/products/credits-modal', '.css')
+                $this->mercadopago->helpers->url->getCssAsset('products/credits-modal')
             );
 
             $this->mercadopago->hooks->scripts->registerStoreScript(
                 'mp-credits-modal-js',
-                $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/products/credits-modal', '.js')
+                $this->mercadopago->helpers->url->getJsAsset('products/credits-modal')
             );
 
             $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/products');

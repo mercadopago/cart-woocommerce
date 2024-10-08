@@ -177,7 +177,7 @@ class PixGateway extends AbstractGateway
             'pix_template_title'               => $this->storeTranslations['pix_template_title'],
             'pix_template_subtitle'            => $this->storeTranslations['pix_template_subtitle'],
             'pix_template_alt'                 => $this->storeTranslations['pix_template_alt'],
-            'pix_template_src'                 => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/pix/pix', '.png', true),
+            'pix_template_src'                 => $this->mercadopago->helpers->url->getImageAsset('checkouts/pix/pix'),
             'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
             'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
@@ -515,7 +515,7 @@ class PixGateway extends AbstractGateway
 
             $this->mercadopago->hooks->scripts->registerStoreStyle(
                 'mp_pix_image',
-                $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/public/mp-pix-image', '.css')
+                $this->mercadopago->helpers->url->getCssAsset('public/mp-pix-image')
             );
 
             $this->mercadopago->hooks->template->getWoocommerceTemplate(
@@ -554,13 +554,13 @@ class PixGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerStoreStyle(
             'mp_pix_thankyou',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/css/public/mp-pix-thankyou', '.css')
+            $this->mercadopago->helpers->url->getCssAsset('public/mp-pix-thankyou')
         );
 
         $this->mercadopago->hooks->template->getWoocommerceTemplate(
             'public/order/pix-order-received.php',
             [
-                'img_pix'             => $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/checkouts/pix/pix', '.png', true),
+                'img_pix'             => $this->mercadopago->helpers->url->getImageAsset('checkouts/pix/pix'),
                 'amount'              => Numbers::formatWithCurrencySymbol($this->countryConfigs['currency_symbol'], $transactionAmount),
                 'qr_base64'           => $qrCodeBase64,
                 'title_purchase_pix'  => $this->storeTranslations['title_purchase_pix'],

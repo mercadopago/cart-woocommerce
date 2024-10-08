@@ -239,7 +239,7 @@ class CustomGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_security_session',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/custom/session', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/session')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
@@ -249,17 +249,17 @@ class CustomGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_custom_page',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-page', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/mp-custom-page')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_custom_elements',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-elements', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/mp-custom-elements')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_custom_checkout',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/custom/mp-custom-checkout', '.js'),
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/mp-custom-checkout'),
             [
                 'public_key'        => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
                 'intl'              => $this->countryConfigs['intl'],
@@ -343,15 +343,15 @@ class CustomGateway extends AbstractGateway
             'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
             'test_mode_link_src'               => $this->links['docs_integration_test'],
             'wallet_button'                    => $this->mercadopago->hooks->options->getGatewayOption($this, 'wallet_button', 'yes'),
-            'wallet_button_image'              => $this->mercadopago->helpers->url->getPluginFileUrl("assets/images/icons/icon-logos", '.png', true),
+            'wallet_button_image'              => $this->mercadopago->helpers->url->getImageAsset('icons/icon-logos'),
             'wallet_button_title'              => $this->storeTranslations['wallet_button_title'],
             'wallet_button_description'        => $this->storeTranslations['wallet_button_description'],
             'wallet_button_button_text'        => $this->storeTranslations['wallet_button_button_text'],
-            'available_payments_title_icon'    => $this->mercadopago->helpers->url->getPluginFileUrl("assets/images/icons/icon-purple-card", '.png', true),
+            'available_payments_title_icon'    => $this->mercadopago->helpers->url->getImageAsset('icons/icon-purple-card'),
             'available_payments_title'         => $this->storeTranslations['available_payments_title'],
-            'available_payments_image'         => $this->mercadopago->helpers->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-down", '.png', true),
-            'available_payments_chevron_up'    => $this->mercadopago->helpers->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-up", '.png', true),
-            'available_payments_chevron_down'  => $this->mercadopago->helpers->url->getPluginFileUrl("assets/images/checkouts/custom/chevron-down", '.png', true),
+            'available_payments_image'         => $this->mercadopago->helpers->url->getImageAsset('checkouts/custom/chevron-down'),
+            'available_payments_chevron_up'    => $this->mercadopago->helpers->url->getImageAsset('checkouts/custom/chevron-up'),
+            'available_payments_chevron_down'  => $this->mercadopago->helpers->url->getImageAsset('checkouts/custom/chevron-down'),
             'payment_methods_items'            => wp_json_encode($this->getPaymentMethodsContent()),
             'payment_methods_promotion_link'   => $this->links['mercadopago_debts'],
             'payment_methods_promotion_text'   => $this->storeTranslations['payment_methods_promotion_text'],
@@ -489,10 +489,8 @@ class CustomGateway extends AbstractGateway
             $locale = 'en';
         }
 
-        return $this->mercadopago->helpers->url->getPluginFileUrl(
-            "assets/images/gateways/wallet-button/preview-$locale",
-            '.png',
-            true
+        return $this->mercadopago->helpers->url->getImageAsset(
+            'gateways/wallet-button/preview-' . $locale,
         );
     }
 

@@ -178,17 +178,17 @@ class Settings
         if ($this->canLoadScriptsAndStyles()) {
             $this->scripts->registerAdminStyle(
                 'mercadopago_settings_admin_css',
-                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-settings', '.css')
+                $this->url->getCssAsset('admin/mp-admin-settings')
             );
 
             $this->scripts->registerAdminStyle(
                 'mercadopago_admin_configs_css',
-                $this->url->getPluginFileUrl('assets/css/admin/mp-admin-configs', '.css')
+                $this->url->getCssAsset('admin/mp-admin-configs')
             );
 
             $this->scripts->registerAdminScript(
                 'mercadopago_settings_admin_js',
-                $this->url->getPluginFileUrl('assets/js/admin/mp-admin-settings', '.js'),
+                $this->url->getJsAsset('admin/mp-admin-settings'),
                 [
                     'nonce'              => $this->nonce->generateNonce(self::NONCE_ID),
                     'show_advanced_text' => $this->translations->storeSettings['accordion_advanced_store_show'],

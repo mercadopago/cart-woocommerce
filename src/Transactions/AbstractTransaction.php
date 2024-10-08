@@ -358,7 +358,7 @@ abstract class AbstractTransaction
     {
         return is_object($product) && method_exists($product, 'get_image_id')
             ? wp_get_attachment_url($product->get_image_id())
-            : $this->mercadopago->helpers->url->getPluginFileUrl('assets/images/gateways/all/blue-cart', '.png', true);
+            : $this->mercadopago->helpers->url->getImageAsset('gateways/all/blue-cart');
     }
 
     /**

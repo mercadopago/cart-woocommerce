@@ -215,17 +215,17 @@ class TicketGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_ticket_page',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-page', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/ticket/mp-ticket-page')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_ticket_elements',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-elements', '.js')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/ticket/mp-ticket-elements')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_ticket_checkout',
-            $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/checkouts/ticket/mp-ticket-checkout', '.js'),
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/ticket/mp-ticket-checkout'),
             [
                 'site_id' => $this->countryConfigs['site_id'],
             ]
