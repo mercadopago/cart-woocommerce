@@ -12,7 +12,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
+          php-version: '8.3'
           coverage: none
           tools: composer, cs2pr
 
@@ -33,4 +33,4 @@ jobs:
         run: composer install --prefer-dist --no-suggest --no-progress
 
       - name: Detect coding standard violations
-        run: vendor/bin/phpcs -q --report=checkstyle --standard=phpcs.xml includes templates woocommerce-mercadopago.php | cs2pr --graceful-warnings
+        run: vendor/bin/phpcs -q --report=checkstyle --standard=phpcs.xml src assets templates woocommerce-mercadopago.php | cs2pr --graceful-warnings

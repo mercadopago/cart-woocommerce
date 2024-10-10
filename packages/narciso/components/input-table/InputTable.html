@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" type="text/css" href="../../assets/css/mp-plugins-components.css" />
+        <title>Input Table</title>
+    </head>
+    <body>
+        <input-table
+            name="installments"
+            button-name="more options"
+            bank-interest-text="If interest is applicable, it will be charged by your bank."
+            columns='[
+                {
+                    "id": "visa",
+                    "value": "visa",
+                    "rowText": "1x R$ 150,00",
+                    "rowObs": "R$ 150,00",
+                    "highlight": "true",
+                    "dataRate": "CFT_0,00%|TEA_0,00%"
+                },
+                {
+                    "id": "master",
+                    "value": "master",
+                    "rowText": "2x R$ 80,00",
+                    "rowObs": "R$ 160,00",
+                    "highlight": "true"
+                },
+                {
+                    "id": "elo",
+                    "value": "elo",
+                    "rowText": "3x R$ 70,00",
+                    "rowObs": "R$ 210,00 + Interest"
+                },
+                {
+                    "id": "visa2",
+                    "value": "visa",
+                    "rowText": "4x R$ 150,00",
+                    "rowObs": "R$ 150,00 + Interest"
+                },
+                {
+                    "id": "master2",
+                    "value": "master",
+                    "rowText": "5x R$ 80,00",
+                    "rowObs": "R$ 160,00 + Interest"
+                },
+                {
+                    "id": "elo2",
+                    "value": "elo",
+                    "rowText": "6x R$ 70,00",
+                    "rowObs": "R$ 210,00"
+                },
+                {
+                    "id": "visa3",
+                    "value": "visa",
+                    "rowText": "7x R$ 150,00",
+                    "rowObs": "R$ 150,00"
+                },
+                {
+                    "id": "master4",
+                    "value": "master",
+                    "rowText": "8x R$ 80,00",
+                    "rowObs": "R$ 160,00"
+                },
+                {
+                    "id": "elo5",
+                    "value": "elo",
+                    "rowText": "9x R$ 70,00",
+                    "rowObs": "R$ 210,00"
+                },
+                {
+                    "id": "elo6",
+                    "value": "elo",
+                    "rowText": "10x R$ 70,00",
+                    "rowObs": "R$ 210,00"
+                },
+                {
+                    "id": "elo7",
+                    "value": "elo",
+                    "rowText": "11x R$ 70,00",
+                    "rowObs": "R$ 210,00"
+                }
+            ]'
+        >
+        </input-table>
+
+        <script src="../../assets/js/mp-plugins-components.js"></script>
+    </body>
+</html>

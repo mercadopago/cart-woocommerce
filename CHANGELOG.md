@@ -5,6 +5,224 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.8.1] - 2024-10-07
+
+### Added
+- **Silence is golden** directive implemented to enhance security for WordPress sites.
+- **Sending new field to get the plugin version** from the stores on funnel to improve onboarding.
+
+### Changed
+- **Modified the way asset's are loaded into the store.**
+
+### Fixed
+- **Resolved issues with loading minified CSS and JS files** in debugging environments.
+- **Refined translations for ES-all** languages.
+
+## [7.8.0] - 2024-09-23
+
+### Changed
+- **Rebranded and revamped the CreditsGateway**, improving overall user experience and aligning the visual identity with our updated brand guidelines, making it more intuitive and modern.
+- **Compressed several images without losing quality**, which reduces the plugin bundle size and leads to faster download and installation times, improving performance without sacrificing visual fidelity.
+- **Removed implicit nullable parameter marking** and replaced it with explicit nullable types, enhancing code clarity and reducing potential bugs related to type handling, thus improving code reliability.
+
+### Fixed
+- **Corrected the support component's link URL**, ensuring users are directed to the appropriate help resources without encountering broken or incorrect links, improving support accessibility.
+
+
+## [7.7.0] - 2024-09-11
+
+### Added
+- **New payment method:** Implemented Yape Gateway, now available for transactions in Peru.
+
+### Changed
+- **Optimized packaging:** Reduced the number of assets included in the plugin's zip package to improve performance and download time.
+- **Code enhancement:** The code has been refactored to follow PHP 7.4 best practices by adopting Typed Properties, improving clarity and safety.
+
+### Fixed
+- **cardForm issue resolved:** Fixed the error that appeared in the console during the loading of the `cardForm` script used in the Checkout API for cards. The loading process is now handled more efficiently, eliminating the issue.
+
+## [7.6.4] - 2024-07-31
+### Fixed:
+- Prevents payment from being created if the currency conversion system fails.
+
+## [7.6.3] - 2024-07-29
+### Fixed:
+- Fix the size of the card logos at checkout.
+- Fix the problem of not showing the disclaimer about card fees for some countries.
+
+## [7.6.2] - 2024-07-16
+### Added:
+- Added validation on user permissions to download plugin logs.
+- Increased plugin wordpress tested version to the latest available.
+### Fixed:
+- Addressed an issue where discount and commission calculations were not being shown correctly on order details.
+
+## [7.6.1] - 2024-06-26
+### Fixed:
+- Addressed an funnel metrics issue 
+
+## [7.6.0] - 2024-06-26
+### Added:
+- Integration with [WooCommerce QIT](https://qit.woo.com/docs/). QIT is a testing platform for WordPress Plugins and Themes developed by WooCommerce, allowing developers to run a series of managed tests out-of-the-box. 
+- Implementation of a fallback using WP-cron to resolve the issue of stores' orders remaining in pending status. This feature prevents orders from getting stuck in the pending process by actively updating passive orders, ensuring smoother order management.
+### Changed:
+- Incorporated code quality enhancements based on QIT recommendations.
+
+## [7.5.1] - 2024-06-05
+### Fixed:
+- Addressed a problem where one could not change the layout to use woocommerce blocks feature, causing even some pages that use blocks beeing unable to load properly.
+- Addressed a vulnerability from prior releases that permitted authenticated attackers to access server configuration details from the seller host, ensuring enhanced security measures in the logs download endpoint.
+
+## [7.5.0] - 2024-05-14
+### Added:
+- Enhanced visual experience: Based on user feedback, we've refined the Credits checkout experience to make it more visually appealing and user-friendly. The modal now provides clearer information, payment methods are displayed more informatively, and tooltips are less intrusive within the store layout.
+### Changed:
+- Configurable tooltip text: We've introduced a new setting in the Credits checkout that allows sellers to customize the text displayed in the Credits tooltip. This empowers sellers to tailor the checkout experience to their specific brand and messaging.
+- Support Component: we've added a parameter to the support access link via the plugin's admin so that we can have metrics on the source of support access
+### Fixed:
+- Payment method selection bug: We've addressed a bug in the checkout pro process that prevented the selected payment methods from being respected. This ensures that buyers can consistently use their preferred payment options.
+
+## [7.4.0] - 2024-04-25
+### Added:
+- A system has been implemented to collect metrics for new sellers, with the aim of facilitating the onboarding of these first-time users. These metrics will allow us to generate ideas for improving the relationship between the plugin and the seller during the onboarding process.
+### Other improvements:
+- Updated dependencies (PHP SDK).
+
+## [7.3.5] - 2024-04-17
+### Fixed:
+- Checked field on checkout now validated.
+- Rollback SDK dependency.
+
+## [7.3.4] - 2024-04-15
+### Fixed:
+- Thankyou page redirect for PIX and Ticket Payments working again.
+- Prevents type error on checkout screen due to amount values.
+- Removed console error message when custom checkout is not enabled.
+
+## [7.3.3] - 2024-04-11
+### Changed:
+- Our latest plugin update (version 7.3.2) aimed to optimize script loading during checkout using the woocommerce_before_checkout_form and woocommerce_blocks_enqueue_checkout_block_scripts_before hooks. However, to ensure compatibility with a wider range of themes, this functionality has been temporarily disabled. We're actively exploring solutions to achieve optimal script loading across all themes and will implement them in a future update.
+
+## [7.3.2] - 2024-04-11
+### Added:
+- Added session_id to payment creation request header to improve approval rates.
+
+### Changed:
+- Checkout Credits component text has been adjusted.
+
+### Fixed:
+- Checkout scripts now load only at checkout time, improving overall store performance.
+- Partial refunds made through Mercado Pago are now correctly recognized as partial refunds on the platform.
+- The IP address issue for some PSE checkout payments in Colombia has been fixed.
+- 3DS flow requests for stores running in a directory now work correctly and stores using the domain root still working.
+- The Undefined Array Key Method error that occurred for some sellers when they had not configured the checkout pro method (modal or redirect) has been fixed.
+- The pix copy-paste button has been fixed.
+
+### Other improvements:
+- General code improvements and optimizations.
+- Updated dependencies (PHP SDK).
+
+## [7.3.1] - 2024-03-25
+### Changed
+- Person type update for PSE
+- Improve the layout of the admin buttons
+- Adjusting the translation of checkout pro for Spanish-speaking countries
+
+## [7.3.0] - 2024-03-20
+### Added
+- A warning has been added to inform you that activation was successful and that you now need to enter your credentials when activating plugins.
+- We have implemented new display rules and improved the layout of the component that requests ratings for the plugin.
+- We've added a link to frequently asked questions at the end of each gateway's configuration.
+- We've implemented a new support component at the bottom of the plugin's configuration screen. Here you will find information on how to open a ticket.
+### Changed
+- We've changed the layout of the notice for filling in credentials.
+- We've changed the title of the plugin on the administration screen.
+- The payment methods have been renamed and are now sorted according to country.
+- We have made adjustments to the hierarchy of titles on the administration screen, as well as to its content, including titles and supplementary texts. 
+- For step 1, we have replaced the secondary credential query button with a text-link.
+### Fixed
+- We've solve the problem when the getPaymentMethodsByGatewayOption function returned an stdClass instead of an array when using json_decode.
+
+## [7.2.1] - 2024-02-15
+### Added
+- We have added a warning banner for when the language configured in worpress does not have the translation in our plugin.
+### Changed
+- Improvements have been made to the readme and changelog files so that the markdown makes more sense to our users.
+- Now our plugin constructs the URLs for the assets using the absolute path instead of the relative path.
+- Prevent block scripts from loading on admin screens and do not load block scripts in checkouts that do not use Checkout Blocks.
+- We've reduced the size of the metadata sent in the payment.
+### Fixed
+- We've fixed the currency conversion calculation.
+
+## [7.2.0] - 2024-02-01
+### Added
+- Introducing Mercado PSE as a new payment method for our users in Colombia.
+- Enhanced user experience with the inclusion of informative error messages in case of payment rejection.
+### Changed
+- Improved layout of the button for consulting reasons for refusal on the order details screen
+### Fixed
+- Addressed an issue where error messages were not displaying during the submission process, affecting custom, credit, and ticket transactions. Now, users can expect a smoother and more transparent payment experience.
+- Error message did not appear in submit, custom credit and ticket.
+- Enables the sending of alphanumeric data to the field, holder's document.
+
+## [7.1.1] - 2024-01-15
+### Fixed
+- Resolved issue where the cart inaccurately displayed discount and commission information.
+- Addressed TypeError occurring when attempting to open orders in the admin panel.
+
+## [7.1.0] - 2024-01-11
+### Added
+- Added compatibility with Woocommerce Blocks, providing a seamless integration for an enriched user experience. Explore the possibilities with [WooCommerce Blocks Documentation](https://woo.com/document/woocommerce-blocks/) for detailed information and advanced features.
+### Fixed:
+- Resolved an issue preventing the modification of checkout names.
+- Resolved an issue that prevented checkout pro in modal mode from working
+
+## [7.0.6] - 2023-12-11
+### Fixed
+- Addressed a bug where the store discount code was erroneously applied twice. This fix ensures a smoother checkout experience by resolving the double discount issue.
+
+## [7.0.5] - 2023-12-08
+### Fixed
+- Resolved issues related to discounts and commission calculations, ensuring accurate and reliable results.
+- Resolved implementation of instance logs for Seller and Order classes, providing comprehensive tracking and transparency into their respective functionalities.
+
+### Changed
+- Enhanced the return value of Metadata getSettings for improved clarity and usability.
+- Improved validation of 3D Secure (3DS) fields to facilitate smoother payment processing.
+- Conducted a comprehensive review and refinement of checkout items calculation methods to optimize performance and accuracy.
+
+## [7.0.4] - 2023-12-06
+### Changed
+- Enhanced the notification_url for improved functionality.
+- Improved the sanitization of checkout URLs for a more secure experience.
+- Updated the initial hook from wc_loaded to plugins_loaded for better integration.
+
+### Fixed
+- Ensured the consistent rendering of Pix QR codes on the thank-you page.
+- Removed unnecessary sanitization from get_checkout_order_received_url for smoother processing.
+
+## [7.0.3] - 2023-12-05
+### Fixed
+- Addressed and resolved the issue with Checkout PRO Modal dependency loading for improved efficiency and smoother functionality.
+
+## [7.0.2] - 2023-12-05
+### Fixed
+- Credits are now enabled by default, streamlining the search for available countries.
+- Resolved status sync rendering issues, ensuring seamless compatibility.
+
+## [7.0.1] - 2023-12-05
+### Fixed
+- Corrected the issue related to shipping rate values not displaying correctly on transparent checkouts. Now, the accurate shipping rates will be transparently presented for a more seamless checkout experience.
+
+## [7.0.0] - 2023-12-04
+### Changed
+- Conducted a comprehensive overhaul of the entire plugin, implementing full refactoring for improved code quality and maintainability. Our code has fewer branches, which increases maintainability. This refactoring is designed to improve the quality of feature releases and provide developer users with a greater understanding of the code.
+- Elevated the functionality and user experience of the additional information node within the plugin by enriching the payment metadata with additional details, strategically aimed at boosting the payment approval rate.
+### Fixed
+- Consolidated logging behavior in STEP 2 by ensuring that logs are recorded only when the corresponding toggle in the admin( STEP 2 ) is activated. Previously, the plugin recorded logs irrespective of the toggle's status, but with this fix, the toggle now functions correctly.
+### Added
+- Integrating 3DS 2.0  (3-D Secure Authentication 2.0) technology. This advancement enables the authentication of transactions involving credit and debit cards in e-commerce scenarios, ensuring that the person making the purchase is genuinely the cardholder or has authorized access to the cardholder's accounts for completing the payment. To learn more about integrating 3DS with Mercado Pago, visit the [Mercado Pago DevSite](https://www.mercadopago.com.br/developers/pt/docs/checkout-api/how-tos/integrate-3ds).
+
 ## [6.9.3] - 2023-07-13
 ### Fixed
 - Updated the link to obtain credentials on the developer site
@@ -65,12 +283,12 @@ fix pix renderization
 
 ### Added
 - Add new fields in update-metadata
-	- Cho Pro will add the fields: ```installments, transaction_details, total_paid_amount, transaction_amount, last_four_digits, e o  payment_type```
-	- Cho Custom will add the fields: ```payment_type e last_four_digits```
-	- In future release, all metadata field prefixed with "mp_" will be removed
+    - Cho Pro will add the fields: ```installments, transaction_details, total_paid_amount, transaction_amount, last_four_digits, e o  payment_type```
+    - Cho Custom will add the fields: ```payment_type e last_four_digits```
+    - In future release, all metadata field prefixed with "mp_" will be removed
 
-- Add security js client and retrive session id from MP_DEVICE_SESSION_ID 
-	- this improvement will increase the credit card approval rate
+- Add security js client and retrive session id from MP_DEVICE_SESSION_ID
+    - this improvement will increase the credit card approval rate
 
 ### Changed
 - Interest attached to the order total
@@ -588,27 +806,27 @@ fix pix renderization
 
 - Updated plugin name from "WooCommerce Mercado Pago" to "Mercado Pago payments for WooCommerce".
 - [PLUG-459]
-  - Fixed credential issue when the plugin is upgraded from version 3.x.x to 4xx. Unable to save empty credential.
-  - Fixed issue to validate credential when checkout is active. The same problem occurs when removing the enabled checkout credential.
-  - Fixed error: Undefined index: MLA in WC_WooMercadoPago_Credentials.php on line 163.
-  - Fixed error: Call to a member function analytics_save_settings() in WC_WooMercadoPago_Hook_Abstract.php on line 68. Has affected users that cleared the credential and filled new credential production.
-  - Fixed load of WC_WooMercadoPago_Module.php file.
-  - Fixed error Uncaught Error: Call to a member function homologValidate().
-  - Fixed error Undefined index: section in WC_WooMercadoPago_PaymentAbstract.php on line 303. Affected users who did not have homologous accounts
-  - Fixed issue to validate credential when checkout is active. The same problem occurs when removing the enabled checkout credential.
-  - Fixed issue to calculate commission and discount.
-  - Fixed issue on methadata.
-  - Fixed Layout of checkout custom input.
-  - Fixed translation of Modo Producción, Habilitá and definí
+    - Fixed credential issue when the plugin is upgraded from version 3.x.x to 4xx. Unable to save empty credential.
+    - Fixed issue to validate credential when checkout is active. The same problem occurs when removing the enabled checkout credential.
+    - Fixed error: Undefined index: MLA in WC_WooMercadoPago_Credentials.php on line 163.
+    - Fixed error: Call to a member function analytics_save_settings() in WC_WooMercadoPago_Hook_Abstract.php on line 68. Has affected users that cleared the credential and filled new credential production.
+    - Fixed load of WC_WooMercadoPago_Module.php file.
+    - Fixed error Uncaught Error: Call to a member function homologValidate().
+    - Fixed error Undefined index: section in WC_WooMercadoPago_PaymentAbstract.php on line 303. Affected users who did not have homologous accounts
+    - Fixed issue to validate credential when checkout is active. The same problem occurs when removing the enabled checkout credential.
+    - Fixed issue to calculate commission and discount.
+    - Fixed issue on methadata.
+    - Fixed Layout of checkout custom input.
+    - Fixed translation of Modo Producción, Habilitá and definí
 - [PLUG-459-2] Refactored Javascript code for custom checkout Debit and credit card. Performance improvement, reduced number of SDK calls. Fixed validation errors. Javascript code refactored to the order review page. Removed select from mexico payment method.
 - [PLUG-462]
-  - Fixed Uncaught Error call to a member function update_status() in WC_WooMercadoPago_Notification_Abstract.php. Handle Mercado Pago Notification Failures and Exceptions.
-  - Fixed Uncaught Error call to a member function update_status() in WC_WooMercadoPago_Notification_Abstract.php. Handle Mercado Pago Notification Failures and Exceptions.
+    - Fixed Uncaught Error call to a member function update_status() in WC_WooMercadoPago_Notification_Abstract.php. Handle Mercado Pago Notification Failures and Exceptions.
+    - Fixed Uncaught Error call to a member function update_status() in WC_WooMercadoPago_Notification_Abstract.php. Handle Mercado Pago Notification Failures and Exceptions.
 - [PLUG-463]
-  - Remove Mercado Creditos from Custom CHO OFF.
-  - Fix PT-BR debit card translation on admin.
-  - Fix PT-BR debit card translation on checkout.
-  - Remove "One Step Checkout" from CHO Custom Off.
+    - Remove Mercado Creditos from Custom CHO OFF.
+    - Fix PT-BR debit card translation on admin.
+    - Fix PT-BR debit card translation on checkout.
+    - Remove "One Step Checkout" from CHO Custom Off.
 - [PLUG-466] Removed feature and support to Mercado Envios shipping. Before install the plugin verify if your store has another method of shipping configured.
 - [PLUG-470] Fixed issue to check if WooCommerce plugin is installed
 - [PLUG-455] Curl Validation.

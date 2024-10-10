@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="InputDocument.css">
+        <link rel="stylesheet" href="../input-helper/InputHelper.css">
+        <link rel="stylesheet" href="../input-label/InputLabel.css">
+        <title>Input Document</title>
+    </head>
+    <body>
+        <input-document
+        label-message = 'Documento'
+        helper-message = 'Documento Inválido'
+        input-name = 'docNumber'
+        input-data-checkout='docNumber'
+        select-name = 'docType'
+        select-data-checkout='docType'
+        flag-error = 'docNumberError'
+        documents = '["CPF","CNPJ","CI","Outro"]'
+        validate = true
+        ></input-document>
+    </body>
+    <script src='InputDocument.js'></script>
+    <script src='../input-helper/InputHelper.js'></script>
+    <script src='../input-label/InputLabel.js'></script>
+</html>
