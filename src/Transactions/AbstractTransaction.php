@@ -45,7 +45,7 @@ abstract class AbstractTransaction
 
     protected float $orderTotal;
 
-    protected array $listOfItems;
+    protected array $listOfItems = [];
 
     /**
      * Abstract Transaction constructor
