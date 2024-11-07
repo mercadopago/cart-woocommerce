@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.8.2 (07/11/2024) =
+* Fixed:
+- Initializing array for transaction listItems to fix acessing not initialized property.
+
 = v7.8.1 (07/10/2024) =
 * Added:
 - Silence is golden directive implemented to enhance security for WordPress sites.
