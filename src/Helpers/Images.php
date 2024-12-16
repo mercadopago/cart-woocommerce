@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Images
+class Images
 {
     /**
      * Get base 64 image

@@ -441,13 +441,25 @@ class AdminTranslations
      */
     private function setCreditsGatewaySettingsTranslations(): void
     {
-        $descriptionEnabled = sprintf(
+        $gatewayDescriptionEnabled = sprintf(
+            '%s <b>%s</b>.',
+            __('“Installments without cards through Mercado Pago” is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
+        );
+
+        $gatewayDescriptionDisabled = sprintf(
+            '%s <b>%s</b>.',
+            __('“Installments without cards through Mercado Pago” is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
+        );
+
+        $bannerDescriptionEnabled = sprintf(
             '%s <b>%s</b>.',
             __('“Up to 12 installments without cards through Mercado Pago” is', 'woocommerce-mercadopago'),
             __('enabled', 'woocommerce-mercadopago')
         );
 
-        $descriptionDisabled = sprintf(
+        $bannerDescriptionDisabled = sprintf(
             '%s <b>%s</b>.',
             __('“Up to 12 installments without cards through Mercado Pago” is', 'woocommerce-mercadopago'),
             __('disabled', 'woocommerce-mercadopago')
@@ -477,8 +489,8 @@ class AdminTranslations
             'card_settings_button_text'                 => __('Go to Settings', 'woocommerce-mercadopago'),
             'enabled_title'                             => __('Activate the installments without cards in the checkout', 'woocommerce-mercadopago'),
             'enabled_subtitle'                          => __('Activate this feature to reach more buyers. It will be available in your store\'s checkout.', 'woocommerce-mercadopago'),
-            'enabled_descriptions_enabled'              => $descriptionEnabled,
-            'enabled_descriptions_disabled'             => $descriptionDisabled,
+            'enabled_descriptions_enabled'              => $gatewayDescriptionEnabled,
+            'enabled_descriptions_disabled'             => $gatewayDescriptionDisabled,
             'enabled_toggle_title'                      => __('Checkout visualization', 'woocommerce-mercadopago'),
             'enabled_toggle_subtitle'                   => __('Check below how this feature will be displayed to your customers:', 'woocommerce-mercadopago'),
             'enabled_toggle_footer'                     => __('Checkout Preview', 'woocommerce-mercadopago'),
@@ -493,8 +505,8 @@ class AdminTranslations
             'currency_conversion_descriptions_disabled' => $currencyConversionDescriptionsDisabled,
             'credits_banner_title'                      => __('Promote the payment of your products with Mercado Pago', 'woocommerce-mercadopago'),
             'credits_banner_subtitle'                   => __('Activate this promotional banner to offer the option of paying in installments without cards through Mercado Pago within product pages.', 'woocommerce-mercadopago'),
-            'credits_banner_descriptions_enabled'       => $descriptionEnabled,
-            'credits_banner_descriptions_disabled'      => $descriptionDisabled,
+            'credits_banner_descriptions_enabled'       => $bannerDescriptionEnabled,
+            'credits_banner_descriptions_disabled'      => $bannerDescriptionDisabled,
             'credits_banner_desktop'                    => __('Banner on the product page | Computer version', 'woocommerce-mercadopago'),
             'credits_banner_cellphone'                  => __('Banner on the product page | Cellphone version', 'woocommerce-mercadopago'),
             'credits_banner_toggle_computer'            => __('Computer', 'woocommerce-mercadopago'),

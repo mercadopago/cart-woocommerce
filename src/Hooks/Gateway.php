@@ -306,14 +306,10 @@ class Gateway
 
     /**
      * Get gateway icon
-     *
-     * @param string $iconName
-     *
-     * @return string
      */
-    public function getGatewayIcon(string $iconName, string $fileExtension = '.png'): string
+    public function getGatewayIcon(string $iconName): string
     {
-        $path = $this->url->getImageAsset('icons/' . $iconName, $fileExtension);
+        $path = $this->url->getImageAsset("icons/$iconName");
         return apply_filters(self::GATEWAY_ICON_FILTER, $path);
     }
 

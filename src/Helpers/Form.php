@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Form
+class Form
 {
     /**
      * Sanitizes $_GET object or otherwise sanitizes an $_GET[$key] object/data

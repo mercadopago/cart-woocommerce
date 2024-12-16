@@ -24,7 +24,9 @@ Welcome to the readme for Mercado Pago Payment Gateway Plugin. This guide is int
 
 8.  [Contributing](#contributing)
 
-9.  [Support and Issues](#support-and-issues)
+9.  [Running Tests](#running-tests)
+
+10.  [Support and Issues](#support-and-issues)
 
   
 
@@ -114,7 +116,45 @@ class ExamplePaymentTransaction extends AbstractPaymentTransaction {
 In this example, the `ExamplePaymentTransaction` class extends the payment transaction functionality and can be customized as needed.
 
 You can see more on the github wiki page.
- 
+
+## Running Tests
+
+This project uses [PHPUnit](https://phpunit.de/) for automated testing and generating code coverage reports. Follow the instructions below to run tests and generate coverage reports.
+
+### Requirements
+
+Ensure that all dependencies are installed by running:
+
+```bash
+composer install 
+```
+
+### Test Commands
+
+To run all project tests and generate HTML code coverage reports, you can use the pre-configured commands in `composer.json`.
+
+- Run all tests:
+
+    ```bash
+    composer phpunit
+    ```
+    This command will execute all tests in the project and display results in the terminal.
+
+- Run a specific test file:
+    ```bash
+    composer phpunit-file path/to/your/testfile.php
+    ```
+    This command allows you to focus on a single test file, which is useful for development and debugging.
+
+ ### Code Coverage Reports
+ After running the tests, a coverage directory will be generated in the project root, containing the reports in HTML format. You can view the reports by opening coverage/index.html in a browser.
+
+ ### How to mock Wordpress
+
+ To mock WordPress functions and classes in your unit tests, you can use the `WP_Mock` library. It simplifies the creation of mocks and stubs for WordPress functions, allowing you to test your code in isolation.
+
+For more information, refer to the [WP_Mock documentation](https://wp-mock.gitbook.io/documentation).
+
 ## Support and Issues
 
   

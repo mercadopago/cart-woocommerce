@@ -1,3 +1,7 @@
+.mp-test-mode-container {
+  padding: 0 0 25px !important
+}
+
 .mp-test-mode-card {
   display: flex !important;
   flex-direction: column !important;

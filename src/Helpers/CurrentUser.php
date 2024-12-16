@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class CurrentUser
+class CurrentUser
 {
     private Logs $logs;
 

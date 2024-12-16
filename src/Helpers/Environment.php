@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Environment
+class Environment
 {
     public const WP_ENVIRONMENT_TYPE_LOCAL = 'local';
     public const WP_ENVIRONMENT_TYPE_DEVELOPMENT = 'development';

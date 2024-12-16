@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.9.0] - 2024-12-16
+### Added
+- The plugin now explicitly declares its dependency on WooCommerce.
+- The ticket row for Brazil now requires the billing address from your customers due to regulatory reasons.
+### Fixed
+- Improved the reusability of some classes in the codebase.
+- Removed unused code from styles, scripts, and PHP files.
+- Removed certain images from the plugin and now access them via MercadoLibre's CDN.
+- Eliminated unused files from the MercadoPago SDK in the release build.
+- Adjusted default credits row name in MLB.
+### Changed
+- Added a check to ensure wp_query is present before calling is_checkout.
+- A warning is now shown when there is an error with installments on card form.
+- Combined Spanish translations into a single file.
+- Reduced the package size by 6MB (from 7.2mb to 1.2mb).
+- GIFs are now loaded from URLs instead of local files in the admin panel.
+
+## [7.8.2] - 2024-11-07
+### Fixed
+- **Initializing array for transaction listItems** to fix acessing not initialized property.
+
 ## [7.8.1] - 2024-10-07
 
 ### Added

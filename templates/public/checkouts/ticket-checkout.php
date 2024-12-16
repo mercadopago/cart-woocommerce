@@ -1,5 +1,7 @@
 <?php
 
+use MercadoPago\Woocommerce\Helpers\Template;
+
 /**
  * @var bool $test_mode
  * @var string $test_mode_title
@@ -8,7 +10,9 @@
  * @var string $test_mode_link_src
  * @var string $site_id
  * @var string $input_document_label
- * @var string $input_document_helper
+ * @var string $input_document_helper_empty
+ * @var string $input_document_helper_invalid
+ * @var string $input_document_helper_wrong
  * @var string $ticket_text_label
  * @var string $input_table_button
  * @var string $payment_methods
@@ -30,9 +34,7 @@ if (!defined('ABSPATH')) {
 
 <div class='mp-checkout-container'>
     <?php if ($amount === null) : ?>
-        <p style="color: red; font-weight: bold;">
-            <?= esc_html($message_error_amount) ?>
-        </p>
+        <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?> 
         <div class="mp-checkout-ticket-container">
             <div class="mp-checkout-ticket-content">
@@ -51,27 +53,14 @@ if (!defined('ABSPATH')) {
                     <div class="mp-checkout-ticket-input-document">
                         <input-document
                             label-message="<?= esc_html($input_document_label); ?>"
-                            helper-message="<?= esc_html($input_document_helper); ?>"
+                            helper-invalid="<?= esc_html($input_document_helper_invalid); ?>"
+                            helper-empty="<?= esc_html($input_document_helper_empty); ?>"
+                            helper-wrong="<?= esc_html($input_document_helper_wrong); ?>"
                             input-name='mercadopago_ticket[doc_number]'
                             select-name='mercadopago_ticket[doc_type]'
                             select-id='doc_type'
                             flag-error='mercadopago_ticket[docNumberError]'
                             documents='["CI","OTRO"]'
-                            validate=true>
-                        </input-document>
-                    </div>
-                <?php endif; ?>
-
-                <?php if ($site_id === 'MLB') : ?>
-                    <div class="mp-checkout-ticket-input-document">
-                        <input-document
-                            label-message="<?= esc_html($input_document_label); ?> "
-                            helper-message="<?= esc_html($input_document_helper); ?>"
-                            input-name='mercadopago_ticket[doc_number]'
-                            select-name='mercadopago_ticket[doc_type]'
-                            select-id='doc_type'
-                            flag-error='mercadopago_ticket[docNumberError]'
-                            documents='["CPF","CNPJ"]'
                             validate=true>
                         </input-document>
                     </div>
@@ -93,6 +82,10 @@ if (!defined('ABSPATH')) {
                     input-id="mp-payment-method-helper"
                     id="payment-method-helper">
                 </input-helper>
+
+                <?php if ($site_id === 'MLB') : ?>
+                    <?php Template::render('public/checkouts/ticket-address-container', $args); ?>
+                <?php endif; ?>
 
                 <!-- NOT DELETE LOADING-->
                 <div id="mp-box-loading"></div>

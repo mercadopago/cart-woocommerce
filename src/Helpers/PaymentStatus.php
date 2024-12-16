@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class PaymentStatus
+class PaymentStatus
 {
     /**
      * Get Status Type

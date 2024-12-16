@@ -3,6 +3,7 @@
 
 clover.xml
 coverage
+coverage.xml
 
 /.idea/
 /.vscode/
@@ -13,3 +14,5 @@ coverage
 woocommerce-mercadopago.zip
 
 qit-env.yml
+
+.env
