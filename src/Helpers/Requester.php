@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Requester
+class Requester
 {
     public const BASEURL_MP = 'https://api.mercadopago.com';
 

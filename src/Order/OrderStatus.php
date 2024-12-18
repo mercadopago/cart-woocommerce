@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class OrderStatus
+class OrderStatus
 {
     private array $translations;
 

@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Url
+class Url
 {
     private Strings $strings;
 
@@ -29,15 +29,9 @@ final class Url
      *
      * @return string
      */
-    public function getPluginFileUrl(string $path, string $extension, bool $ignoreSuffix = false): string
+    public function getPluginFileUrl(string $path): string
     {
-        return sprintf(
-            '%s%s%s%s',
-            trailingslashit(rtrim(plugin_dir_url(plugin_dir_path(__FILE__)), '/src')),
-            $path,
-            $ignoreSuffix ? '' : '.min',
-            $extension
-        );
+        return plugins_url($path, MP_PLUGIN_FILE);
     }
 
     /**
@@ -49,7 +43,7 @@ final class Url
      */
     public function getCssAsset(string $fileName): string
     {
-        return $this->getPluginFileUrl('assets/css/' . $fileName, '.css');
+        return $this->getPluginFileUrl("assets/css/$fileName.min.css");
     }
 
     /**
@@ -61,20 +55,15 @@ final class Url
      */
     public function getJsAsset(string $fileName): string
     {
-        return $this->getPluginFileUrl('assets/js/' . $fileName, '.js');
+        return $this->getPluginFileUrl("assets/js/$fileName.min.js");
     }
 
     /**
      * Get plugin image asset file url
-     *
-     * @param string $fileName
-     * @param string $extension
-     *
-     * @return string
      */
-    public function getImageAsset(string $fileName, string $extension = '.png'): string
+    public function getImageAsset(string $fileName): string
     {
-        return $this->getPluginFileUrl('assets/images/' . $fileName, $extension, true);
+        return $this->getPluginFileUrl('assets/images/' . Paths::addExtension($fileName, 'png')) . '?ver=' . $this->assetVersion();
     }
 
     /**
@@ -240,5 +229,13 @@ final class Url
     public function validateGetVar(string $expectedVar): bool
     {
         return isset($_GET[$expectedVar]);
+    }
+
+    /**
+     * Version to be used on asset urls
+     */
+    public function assetVersion(): string
+    {
+        return Arrays::filterJoin([MP_VERSION, Environment::isDevelopmentEnvironment() ? time() : false], '.');
     }
 }

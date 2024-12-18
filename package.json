@@ -1,7 +1,7 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "7.8.1",
+  "version": "7.9.1",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -21,8 +21,10 @@
     "prebuild:narciso": "sh packages/narciso/bin/pre-assets.sh",
     "postbuild:narciso": "sh packages/narciso/bin/post-assets.sh",
     "build:narciso": "webpack --mode=production --config narciso.webpack.config.js",
-    "watch": "SHELL=/bin/sh chokidar assets packages/narciso -i **/**.min.* -i assets/images -c 'npm run build' --initial",
-    "watch:release": "SHELL=/bin/sh chokidar . -i woocommerce-mercadopago.zip -c 'make build'"
+    "watch:build": "SHELL=/bin/sh chokidar assets packages/narciso -i **/**.min.* -i assets/images -c 'npm run build' --initial",
+    "watch:release": "SHELL=/bin/sh chokidar . -i woocommerce-mercadopago.zip -c 'make build'",
+    "watch:logs": "SHELL=/bin/sh chokidar /var/www/html/wp-content/uploads/wc-logs /var/www/html/wp-content/debug.log -c 'cp /var/www/html/wp-content/uploads/wc-logs/*.log /var/www/html/wp-content/debug.log /var/www/html/wp-content/plugins/woocommerce-mercadopago/logs' --initial",
+    "watch:make-mo": "SHELL=/bin/sh chokidar i18n/languages/*.po -c 'wp --allow-root i18n make-mo i18n/languages i18n/languages'"
   },
   "devDependencies": {
     "@woocommerce/dependency-extraction-webpack-plugin": "^2.2.0",

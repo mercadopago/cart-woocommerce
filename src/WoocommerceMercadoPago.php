@@ -13,6 +13,7 @@ use MercadoPago\Woocommerce\Blocks\PseBlock;
 use MercadoPago\Woocommerce\Blocks\YapeBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Funnel\Funnel;
+use MercadoPago\Woocommerce\Helpers\Paths;
 use MercadoPago\Woocommerce\Order\OrderBilling;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
@@ -32,7 +33,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '7.8.1';
+    private const PLUGIN_VERSION = '7.9.1';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -76,7 +77,7 @@ class WoocommerceMercadoPago
 
     public StoreTranslations $storeTranslations;
 
-    public static Funnel $funnel;
+    public Funnel $funnel;
 
     public Country $country;
 
@@ -97,12 +98,10 @@ class WoocommerceMercadoPago
      */
     public function loadPluginTextDomain(): void
     {
-        $textDomain           = 'woocommerce-mercadopago';
-        $locale               = apply_filters('plugin_locale', get_locale(), $textDomain);
-        $originalLanguageFile = dirname(__FILE__) . '/../i18n/languages/woocommerce-mercadopago-' . $locale . '.mo';
-
+        $textDomain = $this->pluginMetadata('text-domain');
         unload_textdomain($textDomain);
-        load_textdomain($textDomain, $originalLanguageFile);
+        $locale = explode('_', apply_filters('plugin_locale', get_locale(), $textDomain))[0];
+        load_textdomain($textDomain, Paths::basePath(Paths::join($this->pluginMetadata('domain-path'), "woocommerce-mercadopago-$locale.mo")));
     }
 
     /**
@@ -228,7 +227,7 @@ class WoocommerceMercadoPago
      */
     public function disablePlugin()
     {
-        self::$funnel->updateStepDisable();
+        $this->funnel->updateStepDisable();
     }
 
     /**
@@ -238,7 +237,7 @@ class WoocommerceMercadoPago
     {
         $after = fn() => $this->storeConfig->setExecuteActivate(false);
 
-        self::$funnel->created() ? self::$funnel->updateStepActivate($after) : self::$funnel->create($after);
+        $this->funnel->created() ? $this->funnel->updateStepActivate($after) : $this->funnel->create($after);
     }
 
     /**
@@ -246,7 +245,7 @@ class WoocommerceMercadoPago
      */
     public function afterPluginUpdate(): void
     {
-        self::$funnel->updateStepPluginVersion(fn() => $this->storeConfig->setExecuteAfterPluginUpdate(false));
+        $this->funnel->updateStepPluginVersion(fn() => $this->storeConfig->setExecuteAfterPluginUpdate(false));
     }
 
     /**
@@ -291,7 +290,7 @@ class WoocommerceMercadoPago
         // Country
         $this->country = $dependencies->countryHelper;
 
-        self::$funnel = $dependencies->funnel;
+        $this->funnel = $dependencies->funnel;
     }
 
     /**
@@ -475,5 +474,56 @@ class WoocommerceMercadoPago
                 include dirname(__FILE__) . '/../templates/admin/notices/miss-woocommerce-notice.php';
             }
         );
+    }
+
+    /**
+     * Plugin file metadata
+     *
+     * Metadata map:
+     * ```
+     * [
+     *     'name'             => 'Plugin Name',
+     *     'uri'              => 'Plugin URI',
+     *     'description'      => 'Description',
+     *     'version'          => 'Version',
+     *     'author'           => 'Author',
+     *     'author-uri'       => 'Author URI',
+     *     'text-domain'      => 'Text Domain',
+     *     'domain-path'      => 'Domain Path',
+     *     'network'          => 'Network',
+     *     'min-wp'           => 'Requires at least',
+     *     'min-wc'           => 'WC requires at least',
+     *     'min-php'          => 'Requires PHP',
+     *     'tested-wc'        => 'WC tested up to',
+     *     'update-uri'       => 'Update URI',
+     *     'required-plugins' => 'Requires Plugins',
+     * ]
+     * ```
+     *
+     * @param string $key metadata desired element key
+     *
+     * @return string|string[] all data or just $key element value
+     */
+    public function pluginMetadata(?string $key = null)
+    {
+        $data = get_file_data(MP_PLUGIN_FILE, [
+            'name' => 'Plugin Name',
+            'uri' => 'Plugin URI',
+            'description' => 'Description',
+            'version' => 'Version',
+            'author' => 'Author',
+            'author-uri' => 'Author URI',
+            'text-domain' => 'Text Domain',
+            'domain-path' => 'Domain Path',
+            'network' => 'Network',
+            'min-wp' => 'Requires at least',
+            'min-wc' => 'WC requires at least',
+            'min-php' => 'Requires PHP',
+            'tested-wc' => 'WC tested up to',
+            'update-uri' => 'Update URI',
+            'required-plugins' => 'Requires Plugins',
+        ]);
+
+        return isset($key) ? $data[$key] : $data;
     }
 }

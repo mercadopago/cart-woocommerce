@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Arrays
+class Arrays
 {
     /**
      * Filter array elements then join them.

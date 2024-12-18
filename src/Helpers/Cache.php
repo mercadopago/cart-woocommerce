@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Cache
+class Cache
 {
     /**
      * Get cache on database
@@ -29,7 +29,7 @@ final class Cache
      *
      * @return void
      */
-    public function setCache(string $key, $value, int $ttl = MINUTE_IN_SECONDS)
+    public function setCache(string $key, $value, int $ttl = 60)
     {
         set_transient(sha1($key), $value, $ttl);
     }

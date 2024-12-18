@@ -2,9 +2,9 @@
 Contributors:
 Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
-Tested up to: 6.6
+Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 7.8.1
+Stable tag: 7.9.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,17 +134,10 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-== Changelog ==
-= v7.8.1 (07/10/2024) =
-* Added:
-- Silence is golden directive implemented to enhance security for WordPress sites.
-
-* Changed:
-- Modified the way asset's are loaded into the store.
-- Sending new field to get the plugin version from the stores to improve onboarding.
-
+= v7.9.1 (17/12/2024) =
 * Fixed:
-- Resolved issues with loading minified CSS and JS files in debugging environments.
-- Refined translations for ES-all languages.
+- The number input on the ticket row now takes precedence over the "no number" button.
+- On checkout, some users were unable to select the payment method on the ticket row; this issue has been fixed.
+- Due to compatibility issues with the latest WooCommerce releases, we've updated the method by which we check and load scripts and styles.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

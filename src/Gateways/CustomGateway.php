@@ -311,6 +311,12 @@ class CustomGateway extends AbstractGateway
                     'tooltip_frame'          => $this->mercadopago->storeTranslations->threeDsTranslations['tooltip_3ds_frame'],
                     'message_close'          => $this->mercadopago->storeTranslations->threeDsTranslations['message_3ds_declined'],
                 ],
+                'error_messages' => [
+                    'default' => $this->storeTranslations['default_error_message'],
+                    'installments' => [
+                        'invalid amount' => $this->storeTranslations['installments_error_invalid_amount'],
+                    ],
+                ],
             ]
         );
     }
@@ -366,7 +372,9 @@ class CustomGateway extends AbstractGateway
             'card_security_code_input_label'   => $this->storeTranslations['card_security_code_input_label'],
             'card_security_code_input_helper'  => $this->storeTranslations['card_security_code_input_helper'],
             'card_document_input_label'        => $this->storeTranslations['card_document_input_label'],
-            'card_document_input_helper'       => $this->storeTranslations['card_document_input_helper'],
+            'card_input_document_helper_empty'   => $this->storeTranslations['card_document_input_helper_empty'],
+            'card_input_document_helper_invalid' => $this->storeTranslations['card_document_input_helper_invalid'],
+            'card_input_document_helper_wrong'   => $this->storeTranslations['card_document_input_helper_wrong'],
             'card_installments_title'          => $this->storeTranslations['card_installments_title'],
             'card_issuer_input_label'          => $this->storeTranslations['card_issuer_input_label'],
             'card_installments_input_helper'   => $this->storeTranslations['card_installments_input_helper'],

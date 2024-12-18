@@ -3,8 +3,7 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use Exception;
-use MercadoPago\PP\Sdk\Entity\Payment\Payment;
-use MercadoPago\PP\Sdk\Entity\Preference\Preference;
+use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -25,15 +24,6 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     public string $iconAdmin;
 
-    protected WoocommerceMercadoPago $mercadopago;
-
-    /**
-     * Transaction
-     *
-     * @var Payment|Preference
-     */
-    protected $transaction;
-
     public int $commission;
 
     public int $discount;
@@ -42,15 +32,23 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     public string $checkoutCountry;
 
-    protected array $adminTranslations;
+    public array $adminTranslations;
 
-    protected array $storeTranslations;
+    public array $storeTranslations;
 
     protected float $ratio;
 
     protected array $countryConfigs;
 
     protected array $links;
+
+    public WoocommerceMercadoPago $mercadopago;
+
+    /**
+     *
+     * @var AbstractEntity
+     */
+    public $transaction;
 
     /**
      * Abstract Gateway constructor
@@ -344,8 +342,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      */
     public function canCheckoutLoadScriptsAndStyles(): bool
     {
-        return $this->mercadopago->hooks->checkout->isCheckout() &&
-               $this->mercadopago->hooks->gateway->isEnabled($this) &&
+        return $this->mercadopago->hooks->gateway->isEnabled($this) &&
                ! $this->mercadopago->helpers->url->validateQueryVar('order-received');
     }
 
@@ -842,7 +839,14 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         return $this->links['admin_settings_page'];
     }
 
-    protected function getAmountAndCurrency(): array
+    /**
+     * Get amount and currency
+     *
+     * @param string $key 'amount' or 'currency' to get just one value
+     *
+     * @return array|float|null
+     */
+    protected function getAmountAndCurrency(?string $key = null)
     {
         $currencyRatio = 0;
         $amount        = null;

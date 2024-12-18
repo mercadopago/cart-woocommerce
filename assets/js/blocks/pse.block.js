@@ -82,7 +82,9 @@ const Content = (props) => {
     test_mode_link_text,
     test_mode_link_src,
     input_document_label,
-    input_document_helper,
+    input_document_helper_empty,
+    input_document_helper_invalid,
+    input_document_helper_wrong,
     pse_text_label,
     person_type_label,
     amount,
@@ -110,7 +112,9 @@ const Content = (props) => {
 
   let inputDocumentConfig = {
     labelMessage: input_document_label,
-    helperMessage: input_document_helper,
+    helperInvalid: input_document_helper_invalid,
+    helperEmpty: input_document_helper_empty,
+    helperWrong: input_document_helper_wrong,
     validate: 'true',
     selectId: 'doc_type',
     flagError: 'mercadopago_pse[docNumberError]',

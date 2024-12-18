@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class NotificationType
+class NotificationType
 {
     /**
      * Get Status Type

@@ -228,6 +228,7 @@ class TicketGateway extends AbstractGateway
             $this->mercadopago->helpers->url->getJsAsset('checkouts/ticket/mp-ticket-checkout'),
             [
                 'site_id' => $this->countryConfigs['site_id'],
+                'error_messages' => $this->getPaymentFieldsErrorMessages(),
             ]
         );
     }
@@ -249,40 +250,86 @@ class TicketGateway extends AbstractGateway
      * Get Payment Fields params
      *
      * @return array
+     *
+     * @codeCoverageIgnore
      */
     public function getPaymentFieldsParams(): array
     {
-        $currentUser     = $this->mercadopago->helpers->currentUser->getCurrentUser();
-        $loggedUserEmail = ($currentUser->ID != 0) ? $currentUser->user_email : null;
-        $address         = $this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_address_1', true);
-        $address2        = $this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_address_2', true);
-        $address        .= (!empty($address2) ? ' - ' . $address2 : '');
-        $country         = $this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_country', true);
-        $address        .= (!empty($country) ? ' - ' . $country : '');
         $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return [
-            'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
-            'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
-            'test_mode_description'            => $this->storeTranslations['test_mode_description'],
-            'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
-            'test_mode_link_src'               => $this->links['docs_integration_test'],
-            'input_document_label'             => $this->storeTranslations['input_document_label'],
-            'input_document_helper'            => $this->storeTranslations['input_document_helper'],
-            'ticket_text_label'                => $this->storeTranslations['ticket_text_label'],
-            'input_table_button'               => $this->storeTranslations['input_table_button'],
-            'input_helper_label'               => $this->storeTranslations['input_helper_label'],
-            'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
-            'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-            'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'payment_methods'                  => $this->getPaymentMethods(),
-            'site_id'                          => $this->mercadopago->sellerConfig->getSiteId(),
-            'payer_email'                      => esc_js($loggedUserEmail),
-            'woocommerce_currency'             => get_woocommerce_currency(),
-            'account_currency'                 => $this->mercadopago->helpers->country->getCountryConfigs(),
-            'febraban'                         => $this->getFebrabanInfo($currentUser, $address),
-            'amount'                           => $amountAndCurrencyRatio['amount'],
-            'currency_ratio'                   => $amountAndCurrencyRatio['currencyRatio'],
-            'message_error_amount'             => $this->storeTranslations['message_error_amount'],
+            'test_mode'                               => $this->mercadopago->storeConfig->isTestMode(),
+            'test_mode_title'                         => $this->storeTranslations['test_mode_title'],
+            'test_mode_description'                   => $this->storeTranslations['test_mode_description'],
+            'test_mode_link_text'                     => $this->storeTranslations['test_mode_link_text'],
+            'test_mode_link_src'                      => $this->links['docs_integration_test'],
+            'input_document_label'                    => $this->storeTranslations['input_document_label'],
+            'input_document_helper_empty'             => $this->storeTranslations['input_document_helper_empty'],
+            'input_document_helper_invalid'           => $this->storeTranslations['input_document_helper_invalid'],
+            'input_document_helper_wrong'             => $this->storeTranslations['input_document_helper_wrong'],
+            'ticket_text_label'                       => $this->storeTranslations['ticket_text_label'],
+            'input_table_button'                      => $this->storeTranslations['input_table_button'],
+            'input_helper_label'                      => $this->storeTranslations['input_helper_label'],
+            'terms_and_conditions_description'        => $this->storeTranslations['terms_and_conditions_description'],
+            'terms_and_conditions_link_text'          => $this->storeTranslations['terms_and_conditions_link_text'],
+            'terms_and_conditions_link_src'           => $this->links['mercadopago_terms_and_conditions'],
+            'payment_methods'                         => $this->getPaymentMethods(),
+            'mlb_states'                              => $this->getMLBStatesForAddressFields(),
+            'site_id'                                 => $this->mercadopago->sellerConfig->getSiteId(),
+            'amount'                                  => $amountAndCurrencyRatio['amount'],
+            'currency_ratio'                          => $amountAndCurrencyRatio['currencyRatio'],
+            'message_error_amount'                    => $this->storeTranslations['message_error_amount'],
+            'billing_data_title'                      => $this->storeTranslations['billing_data_title'],
+            'billing_data_checkbox_label'             => $this->storeTranslations['billing_data_checkbox_label'],
+            'billing_data_postalcode_label'           => $this->storeTranslations['billing_data_postalcode_label'],
+            'billing_data_postalcode_placeholder'     => $this->storeTranslations['billing_data_postalcode_placeholder'],
+            'billing_data_postalcode_error_empty'     => $this->storeTranslations['billing_data_postalcode_error_empty'],
+            'billing_data_postalcode_error_partial'   => $this->storeTranslations['billing_data_postalcode_error_partial'],
+            'billing_data_postalcode_error_invalid'   => $this->storeTranslations['billing_data_postalcode_error_invalid'],
+            'billing_data_state_label'                => $this->storeTranslations['billing_data_state_label'],
+            'billing_data_state_placeholder'          => $this->storeTranslations['billing_data_state_placeholder'],
+            'billing_data_state_error_unselected'     => $this->storeTranslations['billing_data_state_error_unselected'],
+            'billing_data_city_label'                 => $this->storeTranslations['billing_data_city_label'],
+            'billing_data_city_placeholder'           => $this->storeTranslations['billing_data_city_placeholder'],
+            'billing_data_city_error_empty'           => $this->storeTranslations['billing_data_city_error_empty'],
+            'billing_data_city_error_invalid'         => $this->storeTranslations['billing_data_city_error_invalid'],
+            'billing_data_neighborhood_label'         => $this->storeTranslations['billing_data_neighborhood_label'],
+            'billing_data_neighborhood_placeholder'   => $this->storeTranslations['billing_data_neighborhood_placeholder'],
+            'billing_data_neighborhood_error_empty'   => $this->storeTranslations['billing_data_neighborhood_error_empty'],
+            'billing_data_neighborhood_error_invalid' => $this->storeTranslations['billing_data_neighborhood_error_invalid'],
+            'billing_data_address_label'              => $this->storeTranslations['billing_data_address_label'],
+            'billing_data_address_placeholder'        => $this->storeTranslations['billing_data_address_placeholder'],
+            'billing_data_address_error_empty'        => $this->storeTranslations['billing_data_address_error_empty'],
+            'billing_data_address_error_invalid'      => $this->storeTranslations['billing_data_address_error_invalid'],
+            'billing_data_address_comp_label'         => $this->storeTranslations['billing_data_address_comp_label'],
+            'billing_data_address_comp_placeholder'   => $this->storeTranslations['billing_data_address_comp_placeholder'],
+            'billing_data_number_label'               => $this->storeTranslations['billing_data_number_label'],
+            'billing_data_number_placeholder'         => $this->storeTranslations['billing_data_number_placeholder'],
+            'billing_data_number_toggle_label'        => $this->storeTranslations['billing_data_number_toggle_label'],
+            'billing_data_number_error_empty'         => $this->storeTranslations['billing_data_number_error_empty'],
+            'billing_data_number_error_invalid'       => $this->storeTranslations['billing_data_number_error_invalid'],
+        ];
+    }
+
+    /**
+     * Get Payment Fields error messages
+     *
+     * @return array
+     */
+    public function getPaymentFieldsErrorMessages(): array
+    {
+        return [
+            'postalcode_error_empty'     => $this->storeTranslations['billing_data_postalcode_error_empty'],
+            'postalcode_error_partial'   => $this->storeTranslations['billing_data_postalcode_error_partial'],
+            'postalcode_error_invalid'   => $this->storeTranslations['billing_data_postalcode_error_invalid'],
+            'state_error_unselected'     => $this->storeTranslations['billing_data_state_error_unselected'],
+            'city_error_empty'           => $this->storeTranslations['billing_data_city_error_empty'],
+            'city_error_invalid'         => $this->storeTranslations['billing_data_city_error_invalid'],
+            'neighborhood_error_empty'   => $this->storeTranslations['billing_data_neighborhood_error_empty'],
+            'neighborhood_error_invalid' => $this->storeTranslations['billing_data_neighborhood_error_invalid'],
+            'address_error_empty'        => $this->storeTranslations['billing_data_address_error_empty'],
+            'address_error_invalid'      => $this->storeTranslations['billing_data_address_error_invalid'],
+            'number_error_empty'         => $this->storeTranslations['billing_data_number_error_empty'],
+            'number_error_invalid'       => $this->storeTranslations['billing_data_number_error_invalid'],
         ];
     }
 
@@ -509,41 +556,6 @@ class TicketGateway extends AbstractGateway
     }
 
     /**
-     * Get Febraban info
-     *
-     * @param WP_User $currentUser
-     * @param string $address
-     *
-     * @return array
-     */
-    public function getFebrabanInfo(WP_User $currentUser, string $address): array
-    {
-        if ($currentUser->ID != 0) {
-            return [
-                'firstname' => esc_js($currentUser->user_firstname),
-                'lastname'  => esc_js($currentUser->user_lastname),
-                'address'   => esc_js($address),
-                'city'      => esc_js($this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_city', true)),
-                'state'     => esc_js($this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_state', true)),
-                'zipcode'   => esc_js($this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_postcode', true)),
-                'docNumber' => '',
-                'number'    => '',
-            ];
-        }
-
-        return [
-            'firstname' => '',
-            'lastname'  => '',
-            'address'   => '',
-            'city'      => '',
-            'state'     => '',
-            'zipcode'   => '',
-            'docNumber' => '',
-            'number'    => '',
-        ];
-    }
-
-    /**
      * Validate POST data and return the errors found.
      * Returns null if there is no errors.
      *
@@ -572,6 +584,39 @@ class TicketGateway extends AbstractGateway
         }
 
         return null;
+    }
+
+    public function getMLBStatesForAddressFields(): array
+    {
+        return [
+            'AC' => 'Acre',
+            'AL' => 'Alagoas',
+            'AP' => 'Amapá',
+            'AM' => 'Amazonas',
+            'BA' => 'Bahia',
+            'CE' => 'Ceará',
+            'DF' => 'Distrito Federal',
+            'ES' => 'Espirito Santo',
+            'GO' => 'Goiás',
+            'MA' => 'Maranhão',
+            'MS' => 'Mato Grosso do Sul',
+            'MT' => 'Mato Grosso',
+            'MG' => 'Minas Gerais',
+            'PA' => 'Pará',
+            'PB' => 'Paraíba',
+            'PR' => 'Paraná',
+            'PE' => 'Pernambuco',
+            'PI' => 'Piauí',
+            'RJ' => 'Rio de Janeiro',
+            'RN' => 'Rio Grande do Norte',
+            'RS' => 'Rio Grande do Sul',
+            'RO' => 'Rondônia',
+            'RR' => 'Roraima',
+            'SC' => 'Santa Catarina',
+            'SP' => 'São Paulo',
+            'SE' => 'Sergipe',
+            'TO' => 'Tocantins',
+        ];
     }
 
     /**

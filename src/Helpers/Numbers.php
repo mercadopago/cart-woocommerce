@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Numbers
+class Numbers
 {
     /**
      * Format value
