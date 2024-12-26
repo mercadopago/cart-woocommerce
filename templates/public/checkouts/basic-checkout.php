@@ -1,5 +1,7 @@
 <?php
 
+use MercadoPago\Woocommerce\Helpers\Template;
+
 /**
  * @var bool $test_mode
  * @var string $test_mode_title
@@ -30,9 +32,7 @@ if (!defined('ABSPATH')) {
 
 <div class='mp-checkout-container'>
     <?php if ($amount === null) : ?>
-        <p style="color: red; font-weight: bold;">
-            <?= esc_html($message_error_amount) ?>
-        </p>
+        <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?> 
         <div class="mp-checkout-pro-container">
         <div class="mp-checkout-pro-content">

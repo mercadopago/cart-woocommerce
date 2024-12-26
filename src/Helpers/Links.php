@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Links
+class Links
 {
     private const MP_URL = 'https://www.mercadopago.com';
 

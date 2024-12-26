@@ -78,7 +78,9 @@ const Content = (props) => {
     card_security_code_input_label,
     card_security_code_input_helper,
     card_document_input_label,
-    card_document_input_helper,
+    card_input_document_helper_invalid,
+    card_input_document_helper_empty,
+    card_input_document_helper_wrong,
     card_installments_title,
     card_issuer_input_label,
     card_installments_input_helper,
@@ -249,7 +251,7 @@ const Content = (props) => {
       <div className={'mp-checkout-container'}>
         <div className={'mp-checkout-custom-container'}>
           {test_mode ? (
-            <div className={'mp-checkout-pro-test-mode'}>
+            <div className={'mp-test-mode-container'}>
               <TestMode
                 title={test_mode_title}
                 description={test_mode_description}
@@ -369,7 +371,9 @@ const Content = (props) => {
               <div id={'mp-doc-div'} className={'mp-checkout-custom-input-document'} style={{ display: 'none' }}>
                 <InputDocument
                   labelMessage={card_document_input_label}
-                  helperMessage={card_document_input_helper}
+                  helperInvalid={card_input_document_helper_invalid}
+                  helperEmpty={card_input_document_helper_empty}
+                  helperWrong={card_input_document_helper_wrong}
                   inputName={'identificationNumber'}
                   hiddenId={'form-checkout__identificationNumber'}
                   inputDataCheckout={'docNumber'}

@@ -276,6 +276,11 @@ class Scripts
         }
     }
 
+    public function registerPaymentBlockStyle(string $name, string $file): void
+    {
+        add_action('enqueue_block_assets', fn() => $this->registerStyle($name, $file));
+    }
+
     /**
      * Register styles
      *
@@ -286,7 +291,7 @@ class Scripts
      */
     private function registerStyle(string $name, string $file): void
     {
-        wp_register_style($name, $file, false, $this->assetVersion());
+        wp_register_style($name, $file, [], $this->url->assetVersion());
         wp_enqueue_style($name);
     }
 
@@ -301,18 +306,10 @@ class Scripts
      */
     private function registerScript(string $name, string $file, array $variables = []): void
     {
-        wp_enqueue_script($name, $file, [], $this->assetVersion(), true);
+        wp_enqueue_script($name, $file, [], $this->url->assetVersion(), true);
 
         if ($variables) {
             wp_localize_script($name, $name . self::SUFFIX, $variables);
         }
-    }
-
-    /**
-     * Determines the version value to be used on scripts / styles
-     **/
-    private function assetVersion(): string
-    {
-        return Arrays::filterJoin([MP_VERSION, Environment::isDevelopmentEnvironment() ? time() : false], '.');
     }
 }

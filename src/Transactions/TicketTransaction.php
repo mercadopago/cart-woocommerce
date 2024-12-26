@@ -31,7 +31,10 @@ class TicketTransaction extends AbstractPaymentTransaction
 
         $this->paymentMethodId = $this->checkout['payment_method_id'];
         $this->paymentPlaceId  = $this->mercadopago->helpers->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
-        $this->paymentMethodId = $this->mercadopago->helpers->paymentMethods->getPaymentMethodId($this->paymentMethodId);
+        if ($this->countryConfigs['site_id'] !== 'MPE') {
+            $this->paymentMethodId = $this->mercadopago->helpers->paymentMethods->getPaymentMethodId($this->paymentMethodId);
+        }
+
 
         $this->transaction->installments = 1;
         $this->transaction->payment_method_id  = $this->paymentMethodId;
@@ -103,12 +106,29 @@ class TicketTransaction extends AbstractPaymentTransaction
     {
         parent::setPayerTransaction();
 
-        $payer    = $this->transaction->payer;
-        $currency = $this->countryConfigs['currency'];
-
-        if ($currency === 'BRL' || $currency === 'UYU') {
-            $payer->identification->type   = $this->checkout['doc_type'];
-            $payer->identification->number = $this->checkout['doc_number'];
+        if ($this->countryConfigs['site_id'] === 'MLB' || $this->countryConfigs['site_id'] === 'MLU') {
+            $this->setPayerIdentificationInfo();
         }
+        if ($this->countryConfigs['site_id'] === 'MLB') {
+            $this->setPayerAddressInfoFromCheckout();
+        }
+    }
+
+    private function setPayerIdentificationInfo(): void
+    {
+        $this->transaction->payer->identification->type   = $this->checkout['doc_type'];
+        $this->transaction->payer->identification->number = $this->checkout['doc_number'];
+    }
+
+    private function setPayerAddressInfoFromCheckout(): void
+    {
+        $streetNumber = $this->checkout['address_street_number'] ?: 'S/N';
+
+        $this->transaction->payer->address->city          = $this->transaction->additional_info->payer->address->city          = $this->checkout['address_city'];
+        $this->transaction->payer->address->federal_unit  = $this->transaction->additional_info->payer->address->federal_unit  = $this->checkout['address_federal_unit'];
+        $this->transaction->payer->address->zip_code      = $this->transaction->additional_info->payer->address->zip_code      = $this->checkout['address_zip_code'];
+        $this->transaction->payer->address->street_name   = $this->transaction->additional_info->payer->address->street_name   = $this->checkout['address_street_name'];
+        $this->transaction->payer->address->neighborhood  = $this->transaction->additional_info->payer->address->neighborhood  = $this->checkout['address_neighborhood'];
+        $this->transaction->payer->address->street_number = $this->transaction->additional_info->payer->address->street_number = $streetNumber;
     }
 }

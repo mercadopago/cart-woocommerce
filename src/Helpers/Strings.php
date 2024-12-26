@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Strings
+class Strings
 {
     /**
      * Fix url ampersand
@@ -91,5 +91,15 @@ final class Strings
                 'onclick' => array()
             )
         );
+    }
+
+    /**
+     * Get the portion of $string before the first occurrence of $search
+     *
+     * @return string before portion or $string case $search not found
+     */
+    public static function before(string $string, string $search): string
+    {
+        return $search === '' ? $string : explode($search, $string, 2)[0];
     }
 }

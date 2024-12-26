@@ -1,6 +1,8 @@
 const InputDocument = ({
   labelMessage,
-  helperMessage,
+  helperInvalid,
+  helperEmpty,
+  helperWrong,
   inputName,
   hiddenId,
   inputDataCheckout,
@@ -14,7 +16,9 @@ const InputDocument = ({
   <div className="mp-checkout-ticket-input-document">
     <input-document
       label-message={labelMessage}
-      helper-message={helperMessage}
+      helper-invalid={helperInvalid}
+      helper-empty={helperEmpty}
+      helper-wrong={helperWrong}
       input-name={inputName}
       hidden-id={hiddenId}
       input-data-checkout={inputDataCheckout}

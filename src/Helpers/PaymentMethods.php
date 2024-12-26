@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class PaymentMethods
+class PaymentMethods
 {
     private const SEPARATOR = '_';
 

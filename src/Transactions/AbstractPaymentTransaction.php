@@ -55,11 +55,15 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
         $payer->email                  = $this->mercadopago->orderBilling->getEmail($this->order);
         $payer->first_name             = $this->mercadopago->orderBilling->getFirstName($this->order);
         $payer->last_name              = $this->mercadopago->orderBilling->getLastName($this->order);
-        $payer->address->city          = $this->mercadopago->orderBilling->getCity($this->order);
-        $payer->address->federal_unit  = $this->mercadopago->orderBilling->getState($this->order);
-        $payer->address->zip_code      = $this->mercadopago->orderBilling->getZipcode($this->order);
-        $payer->address->street_name   = $this->mercadopago->orderBilling->getFullAddress($this->order);
-        $payer->address->street_number = '';
-        $payer->address->neighborhood  = '';
+
+        $this->setPayerAddressInfo();
+    }
+
+    private function setPayerAddressInfo(): void
+    {
+        $this->transaction->payer->address->city          = $this->mercadopago->orderBilling->getCity($this->order);
+        $this->transaction->payer->address->federal_unit  = $this->mercadopago->orderBilling->getState($this->order);
+        $this->transaction->payer->address->zip_code      = $this->mercadopago->orderBilling->getZipcode($this->order);
+        $this->transaction->payer->address->street_name   = $this->mercadopago->orderBilling->getFullAddress($this->order);
     }
 }

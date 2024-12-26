@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Blocks;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use Exception;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Paths;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoPaymentBlockInterface;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -100,20 +101,16 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
         }
 
         $scriptName = sprintf('wc_mercadopago_%s_blocks', $this->scriptName);
-        $scriptPath = $this->mercadopago->helpers->url->getPluginFileUrl("build/$this->scriptName.block", '.js', true);
-        $assetPath  = $this->mercadopago->helpers->url->getPluginFileUrl("build/$this->scriptName.block.asset", '.php', true);
-
-        $version = '';
-        $deps    = [];
-
-        if (file_exists($assetPath)) {
-            $asset   = require $assetPath;
-            $version = $asset['version'] ?? '';
-            $deps    = $asset['dependencies'] ?? [];
-        }
+        $scriptPath = $this->mercadopago->helpers->url->getPluginFileUrl("build/$this->scriptName.block.js");
+        $assetPath  = Paths::buildPath("$this->scriptName.block.asset.php");
+        $asset      = file_exists($assetPath) ? require $assetPath : [];
 
         $this->gateway->registerCheckoutScripts();
-        $this->mercadopago->hooks->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $version, $deps);
+        $this->mercadopago->hooks->scripts->registerPaymentBlockStyle(
+            'wc_mercadopago_checkout_components',
+            $this->mercadopago->helpers->url->getCssAsset('checkouts/mp-plugins-components')
+        );
+        $this->mercadopago->hooks->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $asset['version'] ?? '', $asset['dependencies'] ?? []);
         return [$scriptName];
     }
 

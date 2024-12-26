@@ -343,7 +343,16 @@ class Order
                 ));
 
                 foreach ($orders as $order) {
-                    $this->syncOrderStatus($order);
+                    try {
+                        $this->syncOrderStatus($order);
+                    } catch (Exception $ex) {
+                        $error_message = "Unable to update order {$order->get_id()} on action got error: {$ex->getMessage()}";
+
+                        $this->logs->file->error(
+                            $error_message,
+                            __CLASS__
+                        );
+                    }
                 }
 
                 $this->sendEventOnAction('success');

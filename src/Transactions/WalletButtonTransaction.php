@@ -28,13 +28,22 @@ class WalletButtonTransaction extends AbstractPreferenceTransaction
     }
 
     /**
+     * Bind to parent getInternalMetadata method to be able to mock it on tests
+     * @return PaymentMetadata
+     */
+    protected function getInternalMetadataStoreAndSellerInfo(): PaymentMetadata
+    {
+        return parent::getInternalMetadata();
+    }
+
+    /**
      * Get internal metadata
      *
      * @return PaymentMetadata
      */
     public function getInternalMetadata(): PaymentMetadata
     {
-        $internalMetadata = parent::getInternalMetadata();
+        $internalMetadata = $this->getInternalMetadataStoreAndSellerInfo();
 
         $internalMetadata->checkout      = 'pro';
         $internalMetadata->checkout_type = self::ID;

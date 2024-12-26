@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Actions
+class Actions
 {
     /**
      * Register action when gateway is not called on page

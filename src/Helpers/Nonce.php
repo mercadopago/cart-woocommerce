@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Nonce
+class Nonce
 {
     private Logs $logs;
 
