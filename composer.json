@@ -38,7 +38,9 @@
     "qit:api": "./vendor/bin/qit run:woo-api woocommerce-mercadopago --zip woocommerce-mercadopago.zip",
     "qit:env-up": "./vendor/bin/qit --woo=8.9.0 env:up",
     "qit:env-down": "./vendor/bin/qit env:down",
-    "fix-cs": "./vendor/bin/php-cs-fixer fix"
+    "fix-cs": "./vendor/bin/php-cs-fixer fix",
+    "phpunit": "./vendor/bin/phpunit",
+    "phpunit-file": "./vendor/bin/phpunit --"
   },
   "require": {
     "php": ">=7.4",
@@ -51,7 +53,10 @@
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
     "wp-coding-standards/wpcs": "^2.2.1",
     "phpcompatibility/php-compatibility": "dev-develop",
-    "friendsofphp/php-cs-fixer": "^3.64"
+    "friendsofphp/php-cs-fixer": "^3.64",
+    "phpunit/phpunit": "^9.6",
+    "10up/wp_mock": "^1.0",
+    "php-stubs/woocommerce-stubs": "^9.3"
   },
   "config": {
     "allow-plugins": {

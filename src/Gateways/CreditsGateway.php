@@ -406,27 +406,29 @@ class CreditsGateway extends AbstractGateway
     }
 
     /**
-     * Get gif image path for mercado credits demonstration
+     * Get gif image url for mercado credits demonstration
      *
      * @param string $siteId
      * @param string $view
      *
      * @return string
      */
-    private function getCreditsGifPath(string $siteId, string $view): string
+    public function getCreditsGifPath(string $siteId, string $view): string
     {
-        $siteIds = [
-            'MLA' => 'es_',
-            'MLB' => 'pt_',
-            'MLM' => 'es_',
+        $gifPaths = [
+        'mobile' => [
+            'MLA' => 'https://http2.mlstatic.com/storage/cpp/static-files/fbc84a19-acb6-44be-9ad6-f7a6d974a8ce.gif',
+            'MLM' => 'https://http2.mlstatic.com/storage/cpp/static-files/fbc84a19-acb6-44be-9ad6-f7a6d974a8ce.gif',
+            'MLB' => 'https://http2.mlstatic.com/storage/cpp/static-files/a2ddea09-7982-44e0-861c-46e12eb5c3e3.gif',
+        ],
+        'desktop' => [
+            'MLA' => 'https://http2.mlstatic.com/storage/cpp/static-files/800e0db6-538c-493f-90b5-e2388af13387.gif',
+            'MLM' => 'https://http2.mlstatic.com/storage/cpp/static-files/800e0db6-538c-493f-90b5-e2388af13387.gif',
+            'MLB' => 'https://http2.mlstatic.com/storage/cpp/static-files/f428a107-17b0-4ce8-9867-5204e550ec12.gif',
+        ],
         ];
 
-        $prefix = $siteIds[$siteId] ?? '';
-
-        return $this->mercadopago->helpers->url->getImageAsset(
-            'checkouts/credits/' . $prefix . 'view_' . $view,
-            '.gif',
-        );
+        return $gifPaths[$view][$siteId] ?? 'https://http2.mlstatic.com/storage/cpp/static-files/117d6be1-9f0a-466d-8d85-66f376d698cb.gif';
     }
 
     /**

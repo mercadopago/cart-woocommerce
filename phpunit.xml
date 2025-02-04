@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    bootstrap="tests/bootstrap.php"
+    backupGlobals="false"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+    convertDeprecationsToExceptions="true"
+    verbose="true">
+    <testsuites>
+        <testsuite name="default">
+            <directory suffix="Test.php">tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage cacheDirectory=".phpunit.cache/code-coverage">
+        <include>
+            <directory suffix=".php">src/Gateways</directory>
+            <directory suffix=".php">src/Transactions</directory>
+            <directory suffix=".php">src/Exceptions</directory>
+            <directory suffix=".php">src/Helpers</directory>
+            <directory suffix=".php">src/Order</directory>
+            <directory suffix=".php">src/Notification</directory>
+        </include>
+        <report>
+            <html outputDirectory="coverage"/>
+        </report>
+    </coverage>
+</phpunit>

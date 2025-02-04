@@ -1,5 +1,7 @@
 <?php
 
+use MercadoPago\Woocommerce\Helpers\Template;
+
 /**
  * @var bool $test_mode
  * @var string $test_mode
@@ -31,7 +33,9 @@
  * @var string $card_security_code_input_label
  * @var string $card_security_code_input_helper
  * @var string $card_document_input_label
- * @var string $card_document_input_helper
+ * @var string $card_input_document_helper_empty
+ * @var string $card_input_document_helper_invalid
+ * @var string $card_input_document_helper_wrong
  * @var string $card_installments_title
  * @var string $card_issuer_input_label
  * @var string $card_installments_input_helper
@@ -55,13 +59,11 @@ if (!defined('ABSPATH')) {
 </div>
 <div class='mp-checkout-container'>
     <?php if ($amount === null) : ?>
-        <p style="color: red; font-weight: bold;">
-            <?= esc_html($message_error_amount) ?>
-        </p>
+        <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?> 
         <div class='mp-checkout-custom-container'>
             <?php if ($test_mode) : ?>
-                <div class="mp-checkout-pro-test-mode">
+                <div class="mp-test-mode-container">
                     <test-mode
                         title="<?= esc_html($test_mode_title) ?>"
                         description="<?= esc_html($test_mode_description) ?>"
@@ -218,7 +220,9 @@ if (!defined('ABSPATH')) {
                     <div id="mp-doc-div" class="mp-checkout-custom-input-document" style="display: none;">
                         <input-document
                             label-message="<?= esc_html($card_document_input_label); ?>"
-                            helper-message="<?= esc_html($card_document_input_helper); ?>"
+                            helper-invalid="<?= esc_html($card_input_document_helper_invalid); ?>"
+                            helper-empty="<?= esc_html($card_input_document_helper_empty); ?>"
+                            helper-wrong="<?= esc_html($card_input_document_helper_wrong); ?>"
                             input-name="identificationNumber"
                             hidden-id="form-checkout__identificationNumber"
                             input-data-checkout="doc_number"

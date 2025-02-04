@@ -42,6 +42,8 @@ class OrderMetadata
 
     private const BLOCKS_PAYMENT = 'blocks_payment';
 
+    private const SYNC_CRON_ERROR = 'mp_sync_order_error_count';
+
     private OrderMeta $orderMeta;
 
     /**
@@ -362,11 +364,11 @@ class OrderMetadata
         $totalPaidAmount   = (float) $data['transaction_details']['total_paid_amount'];
         $transactionAmount = (float) $data['transaction_amount'];
 
-         $this->setInstallmentsData($order, $installments);
-         $this->setTransactionDetailsData($order, $installmentAmount);
-         $this->setTransactionAmountData($order, $transactionAmount);
-         $this->setTotalPaidAmountData($order, $totalPaidAmount);
-         $this->updatePaymentsOrderMetadata($order, [$data['id']]);
+        $this->setInstallmentsData($order, $installments);
+        $this->setTransactionDetailsData($order, $installmentAmount);
+        $this->setTransactionAmountData($order, $transactionAmount);
+        $this->setTotalPaidAmountData($order, $totalPaidAmount);
+        $this->updatePaymentsOrderMetadata($order, [$data['id']]);
 
         $order->save();
     }
@@ -421,5 +423,30 @@ class OrderMetadata
     public function getPaymentBlocks(WC_Order $order)
     {
         return $this->orderMeta->get($order, self::BLOCKS_PAYMENT);
+    }
+
+    private function getSyncCronErrorCountValue(WC_Order $order): int
+    {
+        $errorCount = $this->orderMeta->get($order, self::SYNC_CRON_ERROR);
+        if ($errorCount === null || empty($errorCount)) {
+            return 0;
+        }
+        return $errorCount;
+    }
+
+    public function incrementSyncCronErrorCount(WC_Order $order): void
+    {
+        $errorCount = $this->getSyncCronErrorCountValue($order);
+        if ($errorCount === 0) {
+            $this->orderMeta->add($order, self::SYNC_CRON_ERROR, 1);
+        } else {
+            $this->orderMeta->update($order, self::SYNC_CRON_ERROR, (int) $errorCount + 1);
+        }
+        $order->save();
+    }
+
+    public function getSyncCronErrorCount(WC_Order $order): int
+    {
+        return $this->getSyncCronErrorCountValue($order);
     }
 }

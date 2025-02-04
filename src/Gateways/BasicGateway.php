@@ -323,17 +323,9 @@ class BasicGateway extends AbstractGateway
     {
         $order             = wc_get_order($order_id);
         try {
-            parent::process_payment($order_id);
+            $this->saveOrderMetadata($order);
 
-            if (isset($_POST['wc-woo-mercado-pago-basic-new-payment-method'])) {
-                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
-            } else {
-                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
-            }
-
-            $this->transaction = new BasicTransaction($this, $order);
-            $method            = $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect');
-
+            $method = $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect');
             if ($method === 'modal') {
                 $this->mercadopago->logs->file->info('Preparing to render Checkout Pro view.', self::LOG_SOURCE);
                 return [
@@ -342,8 +334,9 @@ class BasicGateway extends AbstractGateway
                 ];
             }
 
-            $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
+            $this->transaction = new BasicTransaction($this, $order);
             $preference = $this->transaction->createPreference();
+            $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
             return [
                 'result'   => 'success',
                 'redirect' => $this->mercadopago->storeConfig->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
@@ -356,6 +349,24 @@ class BasicGateway extends AbstractGateway
                 (array) $order,
                 true
             );
+        }
+    }
+
+    /**
+     * Save order metadata
+     *
+     * @param $order
+     *
+     * @return void
+     */
+    protected function saveOrderMetadata($order): void
+    {
+        parent::process_payment($order->get_id());
+
+        if (isset($_POST['wc-woo-mercado-pago-basic-new-payment-method'])) {
+            $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
+        } else {
+            $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
         }
     }
 
