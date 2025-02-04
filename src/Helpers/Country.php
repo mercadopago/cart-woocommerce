@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Country
+class Country
 {
     public const SITE_ID_MLA = 'MLA';
 

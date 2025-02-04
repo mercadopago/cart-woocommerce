@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Categories
+class Categories
 {
     /**
      * Get all store categories

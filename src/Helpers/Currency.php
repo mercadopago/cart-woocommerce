@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Currency
+class Currency
 {
     private const CURRENCY_CONVERSION = 'currency_conversion';
 

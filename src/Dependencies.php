@@ -207,7 +207,6 @@ class Dependencies
         $this->creditsEnabledHelper    = $this->setCreditsEnabled();
         $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
         $this->cartHelper              = $this->setCart();
-        $this->funnel                  = $this->setFunnel();
 
         $this->hooks   = $this->setHooks();
         $this->helpers = $this->setHelpers();

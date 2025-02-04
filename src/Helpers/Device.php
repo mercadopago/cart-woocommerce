@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Device
+class Device
 {
     /**
      * Verify if device is mobile

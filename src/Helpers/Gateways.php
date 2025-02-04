@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Gateways
+class Gateways
 {
     private Store $store;
 

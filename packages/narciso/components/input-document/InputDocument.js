@@ -14,7 +14,7 @@ class InputDocument extends HTMLElement {
     inputDocument.setAttribute('data-cy', 'input-document-container');
 
     const label = this.createLabel(this.getAttribute('label-message'));
-    const helper = this.createHelper(this.getAttribute('helper-message'));
+    const helper = this.createHelper(this.getAttribute('helper-empty'));
     const hidden = this.createHiddenField(this.getAttribute('hidden-id'));
     const input = this.createInput(helper, hidden);
 
@@ -136,16 +136,19 @@ class InputDocument extends HTMLElement {
     return verticalLine;
   }
 
-  isValidCPF(cpf) {
+  isValidCPF(cpf, helper) {
     if (typeof cpf !== 'string') {
       return false;
     }
 
     cpf = cpf.replace(/[\s.-]*/gim, '');
 
+    if (!cpf || cpf.length === 0) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
+      return false;
+    }
+
     if (
-      !cpf ||
-      cpf.length !== 11 ||
       cpf === '00000000000' ||
       cpf === '11111111111' ||
       cpf === '22222222222' ||
@@ -157,6 +160,17 @@ class InputDocument extends HTMLElement {
       cpf === '88888888888' ||
       cpf === '99999999999'
     ) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
+      return false;
+    }
+
+    if (parseInt(cpf, 10) === 0) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
+      return false;
+    }
+
+    if (!cpf || cpf.length !== 11) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-invalid'));
       return false;
     }
 
@@ -174,6 +188,7 @@ class InputDocument extends HTMLElement {
     }
 
     if (resto !== parseInt(cpf.substring(9, 10))) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
       return false;
     }
 
@@ -190,20 +205,18 @@ class InputDocument extends HTMLElement {
     }
 
     if (resto !== parseInt(cpf.substring(10, 11))) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
       return false;
     }
 
     return true;
   }
 
-  isValidCNPJ(cnpj) {
+  isValidCNPJ(cnpj, helper) {
     cnpj = cnpj.replace(/[^\d]+/g, '');
 
     if (cnpj === '') {
-      return false;
-    }
-
-    if (cnpj.length !== 14) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
       return false;
     }
 
@@ -220,6 +233,17 @@ class InputDocument extends HTMLElement {
       cnpj === '88888888888888' ||
       cnpj === '99999999999999'
     ) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
+      return false;
+    }
+
+    if (parseInt(cnpj, 10) === 0) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
+      return false;
+    }
+
+    if (cnpj.length !== 14) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-invalid'));
       return false;
     }
 
@@ -243,6 +267,7 @@ class InputDocument extends HTMLElement {
     let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
 
     if (resultado !== Number(digitos.charAt(0))) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
       return false;
     }
 
@@ -262,13 +287,19 @@ class InputDocument extends HTMLElement {
     resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
 
     if (resultado !== Number(digitos.charAt(1))) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
       return false;
     }
 
     return true;
   }
 
-  isValidCI(ci) {
+  isValidCI(ci, helper) {
+    if (typeof ci !== 'string' || ci.length === 0) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
+      return false;
+    }
+
     let x = 0;
     let y = 0;
     let docCI = 0;
@@ -290,19 +321,39 @@ class InputDocument extends HTMLElement {
       docCI = 10 - (x % 10);
     }
 
-    return dig === docCI.toString();
+    if (dig !== docCI.toString()) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
+      return false;
+    } else {
+      return true;
+    }
   }
 
-  isValidCC(cc) {
-    return ((typeof cc === 'string') && cc.length > 0) ;
+  isValidCC(cc, helper) {
+    if (typeof cc !== 'string' || cc.length === 0) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
+      return false;
+    } else {
+      return true;
+    }
   }
 
-  isValidCE(ce) {
-    return ((typeof ce === 'string') && ce.length > 0) ;
+  isValidCE(ce, helper) {
+    if (typeof ce !== 'string' || ce.length === 0) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
+      return false;
+    } else {
+      return true;
+    }
   }
 
-  isValidNIT(nit) {
-    return ((typeof nit === 'string') && nit.length > 0) ;
+  isValidNIT(nit, helper) {
+    if (typeof nit !== 'string' || nit.length === 0) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   setMaskInputDocument(select, input, hidden) {
@@ -350,18 +401,19 @@ class InputDocument extends HTMLElement {
       component.classList.add('mp-focus');
       component.classList.remove('mp-error');
       helper.firstElementChild.style.display = 'none';
+      input.setAttribute('name', this.getAttribute('input-name'));
     });
 
     input.addEventListener('focusout', () => {
       component.classList.remove('mp-focus');
 
       const validateDocument = {
-        CPF: (value) => this.isValidCPF(value),
-        CNPJ: (value) => this.isValidCNPJ(value),
-        CI: (value) => this.isValidCI(value),
-        CC: (value) => this.isValidCC(value),
-        CE: (value) => this.isValidCE(value),
-        NIT: (value) => this.isValidNIT(value),
+        CPF: (value) => this.isValidCPF(value, helper),
+        CNPJ: (value) => this.isValidCNPJ(value, helper),
+        CI: (value) => this.isValidCI(value, helper),
+        CC: (value) => this.isValidCC(value, helper),
+        CE: (value) => this.isValidCE(value, helper),
+        NIT: (value) => this.isValidNIT(value, helper),
       };
 
       if (typeof validateDocument[select.value] !== 'undefined') {
@@ -378,6 +430,11 @@ class InputDocument extends HTMLElement {
     });
 
     return input;
+  }
+
+  updateHelperErrorMessage(helper, message) {
+    helper.setAttribute('message', message);
+    helper.querySelector('.mp-helper-message').innerHTML = message;
   }
 
   createHelper(helperMessage) {

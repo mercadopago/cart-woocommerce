@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Cart
+class Cart
 {
     protected WooCommerce $woocommerce;
 

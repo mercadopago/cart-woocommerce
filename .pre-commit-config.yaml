@@ -1,26 +1,25 @@
 repos:
   # Websec hook is MANDATORY, DO NOT comment it.
-  - repo: git@github.com-emu:melisource/fury_websec-git-hooks
+  - repo: git@github.com:melisource/fury_websec-git-hooks
     rev: v2.0.0
     hooks:
       - id: pre_commit_hook
-        stages: [commit]
+        stages: [ commit ]
       - id: post_commit_hook
-        stages: [post-commit]
+        stages: [ post-commit ]
 
-  - repo: git@github.com-emu:melisource/fury_datasec-git-hooks.git
-    rev: 1.2.0
+  - repo: git@github.com:melisource/fury_datasec-git-hooks
+    rev: 1.2.2
     hooks:
       - id: pre_commit_hook
-        stages: [commit]
-        verbose: true
+        stages: [ pre-commit ]
       - id: post_commit_hook
-        stages: [post-commit]
+        stages: [ post-commit ]
 
   - repo: local
     hooks:
       - id: add-index
         name: Add index.php
-        stages: [pre-commit]
+        stages: [ pre-commit ]
         language: script
         entry: ./bin/add-index.sh

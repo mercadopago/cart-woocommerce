@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-final class Date
+class Date
 {
     /**
      * Get now date
