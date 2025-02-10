@@ -131,11 +131,11 @@ class Remote implements LogInterface
             $requestUrl = '/v1/plugins/melidata/errors';
             $platform_uri = "";
 
-            if (isset($_SERVER['HTTP_HOST'])) {
+            if (isset($_SERVER['HTTP_HOST'])) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $platform_uri .= sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST']));
             }
 
-            if (isset($_SERVER['REQUEST_URI'])) {
+            if (isset($_SERVER['REQUEST_URI'])) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $platform_uri .= sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']));
             }
 
