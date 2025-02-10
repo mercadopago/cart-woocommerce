@@ -535,9 +535,9 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         $total = $this->mercadopago->helpers->cart->calculateTotalWithDiscountAndCommission($this);
 
         if ($this->mercadopago->helpers->url->validateGetVar('pay_for_order')) {
-            $orderId = Form::sanitizedGetData('order-pay');
+            $orderId = sanitize_key(get_query_var('order-pay'));
             $currentOrder = wc_get_order($orderId);
-            $total = (float)$currentOrder->get_total();
+            $total = (float) $currentOrder->get_total();
         }
 
         return $total;
