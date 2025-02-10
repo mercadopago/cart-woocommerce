@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.9.4 (10/02/2025) =
+* Fixed:
+- Resolved an issue where stores with a permanent link configuration different from the default could cause errors on order payment links.
+
 = v7.9.3 (04/02/2025) =
 * Fixed:
 - Fixed translations for ticket in ES language.

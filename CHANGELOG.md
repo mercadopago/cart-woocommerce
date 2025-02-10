@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.9.4] - 2025-02-10
+### Fixed
+- Resolved an issue where stores with a permanent link configuration different from the default could cause errors on order payment links.
+
 ## [7.9.3] - 2025-02-04
 ### Fixed
 - Fixed translations for ticket in ES language.
