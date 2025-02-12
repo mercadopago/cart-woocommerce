@@ -118,6 +118,7 @@ class OrderStatus
 
         if ($status === 'pending' || $status === 'on-hold' || $status === 'failed') {
             $order->add_order_note('Mercado Pago: ' . $this->translations['payment_approved']);
+            $order->add_order_note('Mercado Pago: ' . $this->translations['payment_approved'], 1);
 
             $payment_completed_status = apply_filters(
                 'woocommerce_payment_complete_order_status',
