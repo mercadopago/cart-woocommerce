@@ -380,17 +380,17 @@ class Order
      *
      * @return void
      */
-    public function toggleSyncPendingStatusOrdersCron(string $enabled): void
+    public function selectSyncPendingStatusOrdersCron(string $value): void
     {
         $action = 'mercadopago_sync_pending_status_order_action';
 
-        if ($enabled == 'yes') {
-            $this->cron->registerScheduledEvent('hourly', $action);
+        if ($value !== 'no') {
+            $this->cron->registerScheduledEvent($value, $action);
         } else {
             $this->cron->unregisterScheduledEvent($action);
         }
 
-        $this->sendEventOnToggle($enabled);
+        $this->sendEventOnSelect($value);
     }
 
     /**
@@ -527,7 +527,7 @@ class Order
     /**
      * Send an datadog event when an seller toggles (activating or deactivating) the cron button
      */
-    private function sendEventOnToggle($value)
+    private function sendEventOnSelect($value)
     {
         $this->datadog->sendEvent('order_toggle_cron', $value);
     }

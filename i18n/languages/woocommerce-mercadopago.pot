@@ -421,8 +421,8 @@ msgid "Order tracking"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:287
-msgid "We will keep your Mercado Pago orders updated every hour. We recommend activating this option only in the event of automatic order update failures."
-msgstr ""
+msgid "Keep your Mercado Pago orders updated by selecting the desired frequency. We recommend enabling this option only in the event of automatic order update failures."
+msgstr "Mantenha seus pedidos do Mercado Pago atualizados ao selecionar a frequência desejada. Recomendamos ativar essa opção apenas em caso de falhas nas atualizações automáticas dos pedidos."
 
 #: ../../src/Translations/AdminTranslations.php:299
 msgid "3. Activate and set up payment methods"

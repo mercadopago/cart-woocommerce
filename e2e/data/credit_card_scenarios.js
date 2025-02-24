@@ -12,6 +12,11 @@ const APPROVED = {
     code: CVV_LENGTH_THREE,
     date: "12/30"
   },
+  visa: {
+    number: process.env.CC_VISA,
+    code: CVV_LENGTH_THREE,
+    date: "12/27"
+  },
   form: {
     name: "APRO",
     docType: process.env.DOC_TYPE,
@@ -49,5 +54,4 @@ const EMPTY_FIELDS ={
   }
 }
 
-const scenarios = {APPROVED, REJECTED, PENDING, EMPTY_FIELDS};
-export default scenarios;
+export default {APPROVED, REJECTED, PENDING, EMPTY_FIELDS};

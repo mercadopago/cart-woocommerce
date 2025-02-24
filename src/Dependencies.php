@@ -19,6 +19,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Endpoints\CheckoutCustom;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\Intervals;
 use MercadoPago\Woocommerce\Helpers\Cron;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
@@ -154,6 +155,8 @@ class Dependencies
 
     public Funnel $funnel;
 
+    public Intervals $intervalsHelper;
+
     /**
      * Dependencies constructor
      */
@@ -203,13 +206,13 @@ class Dependencies
         $this->metadataConfig          = $this->setMetadataConfig();
         $this->currencyHelper          = $this->setCurrency();
         $this->downloader              = $this->setDownloader();
+        $this->intervalsHelper         = $this->setIntervals();
         $this->settings                = $this->setSettings();
         $this->creditsEnabledHelper    = $this->setCreditsEnabled();
         $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
         $this->cartHelper              = $this->setCart();
-
-        $this->hooks   = $this->setHooks();
-        $this->helpers = $this->setHelpers();
+        $this->hooks                   = $this->setHooks();
+        $this->helpers                 = $this->setHelpers();
     }
 
     /**
@@ -371,6 +374,14 @@ class Dependencies
     }
 
     /**
+     * @return Intervals
+     */
+    private function setIntervals(): Intervals
+    {
+        return new Intervals($this->adminTranslations);
+    }
+
+    /**
      * @return Order
      */
     private function setOrder(): Order
@@ -460,7 +471,8 @@ class Dependencies
             $this->logs,
             $this->downloader,
             $this->funnel,
-            $this->stringsHelper
+            $this->stringsHelper,
+            $this->intervalsHelper
         );
     }
 
@@ -553,7 +565,8 @@ class Dependencies
             $this->requesterHelper,
             $this->sessionHelper,
             $this->stringsHelper,
-            $this->urlHelper
+            $this->urlHelper,
+            $this->intervalsHelper
         );
     }
 

@@ -80,7 +80,9 @@ class Scripts
     public function registerCheckoutStyle(string $name, string $file): void
     {
         add_action('wp_enqueue_scripts', function () use ($name, $file) {
-            $this->registerStyle($name, $file);
+            if ($this->isPaymentsRelatedPage()) {
+                $this->registerStyle($name, $file);
+            }
         });
     }
 
@@ -96,8 +98,21 @@ class Scripts
     public function registerCheckoutScript(string $name, string $file, array $variables = []): void
     {
         add_action('wp_enqueue_scripts', function () use ($name, $file, $variables) {
-            $this->registerScript($name, $file, $variables);
+            if ($this->isPaymentsRelatedPage()) {
+                $this->registerScript($name, $file, $variables);
+            }
         });
+    }
+
+    /**
+     * Returns if the user is on a payments related page
+     *
+     * @return bool
+     */
+    private function isPaymentsRelatedPage(): bool
+    {
+        return is_view_order_page() || is_cart() || is_order_received_page() || is_checkout_pay_page() ||
+            is_add_payment_method_page() || is_checkout() || get_query_var('order-pay');
     }
 
     /**

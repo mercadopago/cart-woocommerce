@@ -21,8 +21,37 @@ class Cron
     public function __construct(Logs $logs)
     {
         $this->logs = $logs;
+        $this->registerCustomIntervals();
     }
 
+    /**
+     * Register custom intervals
+     *
+     * @return void
+     */
+    public function registerCustomIntervals(): void
+    {
+        add_filter('cron_schedules', function ($schedules) {
+            $schedules['5minutes'] = array(
+                'interval' => 300,
+                'display'  => __('Every 5 minutes')
+            );
+            $schedules['10minutes'] = array(
+                'interval' => 600,
+                'display'  => __('Every 10 minutes')
+            );
+            $schedules['15minutes'] = array(
+                'interval' => 900,
+                'display'  => __('Every 15 minutes')
+            );
+            $schedules['30minutes'] = array(
+                'interval' => 1800,
+                'display'  => __('Every 30 minutes')
+            );
+
+            return $schedules;
+        });
+    }
     /**
      * Register an scheduled event
      *
@@ -34,9 +63,7 @@ class Cron
     public function registerScheduledEvent(string $periodicy, $hook): void
     {
         try {
-            if (!wp_next_scheduled($hook)) {
-                wp_schedule_event(time(), $periodicy, $hook);
-            }
+            wp_schedule_event(time(), $periodicy, $hook);
         } catch (Exception $ex) {
             $this->logs->file->error(
                 "Unable to register event $hook, got error: {$ex->getMessage()}",
@@ -62,28 +89,6 @@ class Cron
         } catch (Exception $ex) {
             $this->logs->file->error(
                 "Unable to unregister event $hook, got error: {$ex->getMessage()}",
-                __CLASS__
-            );
-        }
-    }
-
-    /**
-     * Alter an scheduled event
-     *
-     * @param string $periodicy
-     * @param $hook
-     *
-     * @return void
-     */
-    public function alterScheduledEvent(string $periodicy, $hook): void
-    {
-        try {
-            if (wp_next_scheduled($hook)) {
-                wp_reschedule_event(time(), $periodicy, $hook);
-            }
-        } catch (Exception $ex) {
-            $this->logs->file->error(
-                "Unable to alter event periodicy on hook $hook, got error: {$ex->getMessage()}",
                 __CLASS__
             );
         }

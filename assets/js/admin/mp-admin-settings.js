@@ -622,7 +622,7 @@ function mpUpdateStoreInformation() {
             store_integrator_id: document.getElementById('mp-store-integrator-id').value,
             store_identificator: document.getElementById('mp-store-identification').value,
             store_debug_mode: document.querySelector('#mp-store-debug-mode:checked')?.value,
-            store_cron_config: document.querySelector('#mp-store-cron-config:checked')?.value,
+            store_cron_config: document.getElementById('mp-store-cron-config')?.value,
             action: 'mp_update_store_information',
             nonce: mercadopago_settings_admin_js_params.nonce,
           },

@@ -1,0 +1,10 @@
+parameters:
+  level: 5 # Adjust based on strictness
+  paths:
+    - src # Adjust based on your plugin structure
+  ignoreErrors:
+    - '#Function .* not found#'
+    - '#Class .* not found#'
+  scanFiles:
+    - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+    - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php

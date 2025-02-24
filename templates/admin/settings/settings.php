@@ -30,6 +30,7 @@
  * @var array $links
  * @var bool  $testMode
  * @var array $categories
+ * @var array $intervals
  *
  * @var array $pluginLogs
  * @var array $allowedHtmlTags
@@ -353,6 +354,28 @@ if (!defined('ABSPATH')) {
                                 </fieldset>
                             </div>
 
+                            <div class="mp-container-order">
+                                <label for="mp-store-cron-config" class="mp-settings-subtitle-font-size mp-settings-debug mp-settings-font-color mp-settings-label">
+                                    <?= wp_kses($storeTranslations['title_cron_config'], $allowedHtmlTags) ?>
+                                </label>
+                                <select class="mp-settings-select" id="mp-store-cron-config">
+                                    <?php
+                                    foreach ($intervals as $interval) {
+                                            echo ('
+                                                    <option value="' . esc_attr($interval['id']) . '"' . (esc_attr($cronSyncMode) === esc_attr($interval['id']) ? 'selected' : '') . '>
+                                                    ' . esc_attr($interval['description']) . '
+                                                    </option>
+                                                ');
+                                    }
+                                    ?>
+                                </select>
+                                <label for="mp-store-cron-config">
+                                    <span class="mp-settings-helper">
+                                        <?= wp_kses($storeTranslations['subtitle_cron_config'], $allowedHtmlTags) ?>
+                                    </span>
+                                </label>
+                                </br>
+                            </div>
                             <div class="mp-container">
                                 <div>
                                     <label class="mp-settings-switch">
@@ -370,25 +393,6 @@ if (!defined('ABSPATH')) {
                                     </span>
                                 </label>
                             </div>
-
-                            <div style="margin-top: 20px;" class="mp-container" id="mp-cron-config">
-                                <div>
-                                    <label class="mp-settings-switch">
-                                        <input id="mp-store-cron-config" type="checkbox" value="yes" <?= checked($cronSyncMode, 'yes'); ?> />
-                                        <span class="mp-settings-slider mp-settings-round"></span>
-                                    </label>
-                                </div>
-                                <label for="mp-store-cron-config">
-                                    <span class="mp-settings-subtitle-font-size mp-settings-debug mp-settings-font-color">
-                                        <?= wp_kses($storeTranslations['title_cron_config'], $allowedHtmlTags) ?>
-                                    </span>
-                                    <br />
-                                    <span class="mp-settings-font-color mp-settings-subtitle-font-size mp-settings-title-color mp-settings-debug">
-                                        <?= wp_kses($storeTranslations['subtitle_cron_config'], $allowedHtmlTags) ?>
-                                    </span>
-                                </label>
-                            </div>
-
                         </div>
                     </div>
                 </div>

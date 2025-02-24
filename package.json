@@ -1,14 +1,14 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "7.9.4",
+  "version": "7.10.0",
   "main": "main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/mercadopago/cart-woocommerce"
   },
   "engines": {
-    "node": "^14.0.0"
+    "node": "^20.0.0"
   },
   "scripts": {
     "build": "npm run build:narciso && npm run build:js && npm run build:css && npm run build:webpack",
@@ -16,25 +16,26 @@
     "build:css": "node -e 'require(\"./main.js\").minifyFiles(\"css\")'",
     "build:webpack": "wp-scripts build assets/js/blocks/**.js",
     "postbuild:webpack": "cp index.php build",
-    "js:lint": "jshint",
+    "lint": "eslint assets/**/*.js",
+    "lint:fix": "eslint assets/**/*.js --fix",
     "pot": "node -e 'require(\"./main.js\").generatePotFiles()'",
-    "prebuild:narciso": "sh packages/narciso/bin/pre-assets.sh",
-    "postbuild:narciso": "sh packages/narciso/bin/post-assets.sh",
-    "build:narciso": "webpack --mode=production --config narciso.webpack.config.js",
+    "build:narciso": "bash ./packages/narciso/bin/pre-assets.sh && webpack --mode=production --config narciso.webpack.config.js && bash ./packages/narciso/bin/post-assets.sh",
     "watch:build": "SHELL=/bin/sh chokidar assets packages/narciso -i **/**.min.* -i assets/images -c 'npm run build' --initial",
     "watch:release": "SHELL=/bin/sh chokidar . -i woocommerce-mercadopago.zip -c 'make build'",
     "watch:logs": "SHELL=/bin/sh chokidar /var/www/html/wp-content/uploads/wc-logs /var/www/html/wp-content/debug.log -c 'cp /var/www/html/wp-content/uploads/wc-logs/*.log /var/www/html/wp-content/debug.log /var/www/html/wp-content/plugins/woocommerce-mercadopago/logs' --initial",
     "watch:make-mo": "SHELL=/bin/sh chokidar i18n/languages/*.po -c 'wp --allow-root i18n make-mo i18n/languages i18n/languages'"
   },
   "devDependencies": {
-    "@woocommerce/dependency-extraction-webpack-plugin": "^2.2.0",
-    "@woocommerce/eslint-plugin": "^2.2.0",
-    "@wordpress/scripts": "^26.16.0",
+    "@eslint/js": "^9.20.0",
+    "@woocommerce/dependency-extraction-webpack-plugin": "^3.1.0",
+    "@woocommerce/eslint-plugin": "^2.3.0",
+    "@wordpress/scripts": "^30.11.0",
     "chokidar-cli": "^3.0.0",
-    "css-minimizer-webpack-plugin": "^5.0.1",
-    "jshint": "^2.13.5",
+    "css-minimizer-webpack-plugin": "^7.0.0",
+    "eslint": "^8.57.1",
+    "globals": "^15.15.0",
     "minify": "^7.2.2",
-    "webpack-cli": "^5.1.4",
+    "webpack-cli": "^6.0.1",
     "wp-pot": "^1.10.2"
   }
 }
