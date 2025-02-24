@@ -284,7 +284,14 @@ class AdminTranslations
             'helper_url'                    => $helperUrl,
             'helper_integrator'             => $helperIntegrator,
             'title_cron_config'             => __('Order tracking', 'woocommerce-mercadopago'),
-            'subtitle_cron_config'          => __('We will keep your Mercado Pago orders updated every hour. We recommend activating this option only in the event of automatic order update failures.', 'woocommerce-mercadopago'),
+            'subtitle_cron_config'          => __('Keep your Mercado Pago orders updated by selecting the desired frequency. We recommend enabling this option only in the event of automatic order update failures.', 'woocommerce-mercadopago'),
+            'fisrt_option_cron_config'      => __('Disable', 'woocommerce-mercadopago'),
+            'second_option_cron_config'     => __('Every 5 minutes', 'woocommerce-mercadopago'),
+            'third_option_cron_config'      => __('Every 10 minutes', 'woocommerce-mercadopago'),
+            'fourth_option_cron_config'     => __('Every 15 minutes', 'woocommerce-mercadopago'),
+            'fifth_option_cron_config'      => __('Every 30 minutes', 'woocommerce-mercadopago'),
+            'sixth_option_cron_config'      => __('Every 1 hour', 'woocommerce-mercadopago'),
+            'select_sync_cron_config '      => __('Select', 'woocommerce-mercadopago'),
         ];
     }
 

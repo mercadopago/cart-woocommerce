@@ -41,5 +41,4 @@ const EMPTY_FIELDS ={
   }
 }
 
-const scenarios = {APPROVED, REJECTED, PENDING, EMPTY_FIELDS};
-export default scenarios;
+export default {APPROVED, REJECTED, PENDING, EMPTY_FIELDS};

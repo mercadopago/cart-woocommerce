@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use PHPUnit\Framework\TestCase;
 use Mockery;
 use WP_Mock;
+use WC_Order;
 
 class OrderStatusTest extends TestCase
 {
@@ -20,9 +21,19 @@ class OrderStatusTest extends TestCase
 
         $this->storeTranslationsMock = Mockery::mock(StoreTranslations::class);
         $this->storeTranslationsMock->orderStatus = [
+            'payment_approved' => 'Payment Approved',
             'cho_approved' => 'Payment Approved',
             'cho_pending' => 'Payment Pending',
-            'cho_default' => 'Default Message'
+            'cho_default' => 'Default Message',
+            'in_process' => 'In Process',
+            'rejected' => 'Rejected',
+            'refunded' => 'Refunded',
+            'partial_refunded' => 'Partially Refunded',
+            'cancelled' => 'Cancelled',
+            'in_mediation' => 'In Mediation',
+            'charged_back' => 'Charged Back',
+            'validate_order_1' => 'Validate Order 1',
+            'validate_order_2' => 'Validate Order 2'
         ];
         $this->storeTranslationsMock->commonMessages = [
             'cho_approved' => 'Payment Approved',
@@ -72,5 +83,50 @@ class OrderStatusTest extends TestCase
 
         $status = $this->orderStatus->mapMpStatusToWoocommerceStatus('chargedback');
         $this->assertEquals('refunded', $status);
+    }
+
+    public function testInMediationFlow_AddsOrderNotesAndUpdatesStatus(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_status')
+            ->andReturn('pending');
+        $orderMock->shouldReceive('update_status')
+            ->with('on-hold');
+        $orderMock->shouldReceive('add_order_note')
+            ->with('Mercado Pago: In Mediation');
+
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('inMediationFlow');
+        $method->setAccessible(true);
+
+        $method->invoke($this->orderStatus, $orderMock);
+
+        $this->assertTrue(true);
+    }
+
+    public function testChargedBackFlow_AddsOrderNotesAndUpdatesStatus(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_status')
+            ->andReturn('pending');
+        $orderMock->shouldReceive('update_status')
+            ->with('refunded');
+        $orderMock->shouldReceive('add_order_note')
+            ->with('Mercado Pago: Charged Back');
+
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('chargedBackFlow');
+        $method->setAccessible(true);
+
+        $method->invoke($this->orderStatus, $orderMock);
+
+        $this->assertTrue(true);
+    }
+
+    public function testMapMpStatusPendingToWoocommerceStatus()
+    {
+        $mpStatusWoo = new OrderStatus($this->storeTranslationsMock);
+        $result = $mpStatusWoo->mapMpStatusToWoocommerceStatus('pending');
+        $this->assertEquals('pending', $result);
     }
 }

@@ -310,6 +310,10 @@
   line-height: 18px;
 }
 
+.mp-container-order{
+  margin-bottom: 1.5em;
+}
+
 .mp-settings-helper {
   font-family: sans-serif;
   position: static;

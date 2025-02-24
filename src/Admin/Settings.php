@@ -6,6 +6,7 @@ use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Categories;
+use MercadoPago\Woocommerce\Helpers\Intervals;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Links;
@@ -79,6 +80,9 @@ class Settings
 
     private Strings $strings;
 
+
+    private Intervals $interval;
+
     /**
      * Settings constructor
      *
@@ -99,6 +103,7 @@ class Settings
      * @param Downloader $downloader
      * @param Funnel $funnel
      * @param Strings $strings
+     * @param Intervals $intervals
      */
     public function __construct(
         Admin $admin,
@@ -117,7 +122,8 @@ class Settings
         Logs $logs,
         Downloader $downloader,
         Funnel $funnel,
-        Strings $strings
+        Strings $strings,
+        Intervals $intervals
     ) {
         $this->admin        = $admin;
         $this->endpoints    = $endpoints;
@@ -136,6 +142,7 @@ class Settings
         $this->downloader   = $downloader;
         $this->funnel       = $funnel;
         $this->strings      = $strings;
+        $this->intervals    = $intervals;
 
         $this->loadMenu();
         $this->loadScriptsAndStyles();
@@ -154,7 +161,7 @@ class Settings
         });
 
         $this->plugin->registerOnPluginStoreInfoUpdate(function () {
-            $this->order->toggleSyncPendingStatusOrdersCron($this->store->getCronSyncMode());
+            $this->order->selectSyncPendingStatusOrdersCron($this->store->getCronSyncMode());
         });
     }
 
@@ -294,11 +301,11 @@ class Settings
         $storeId             = $this->store->getStoreId();
         $storeName           = $this->store->getStoreName();
         $storeCategory       = $this->store->getStoreCategory('others');
+        $cronSyncMode        = $this->store->getCronSyncMode();
         $customDomain        = $this->store->getCustomDomain();
         $customDomainOptions = $this->store->getCustomDomainOptions();
         $integratorId        = $this->store->getIntegratorId();
         $debugMode           = $this->store->getDebugMode();
-        $cronSyncMode        = $this->store->getCronSyncMode();
 
         $checkboxCheckoutTestMode       = $this->store->getCheckboxCheckoutTestMode();
         $checkboxCheckoutProductionMode = $this->store->getCheckboxCheckoutProductionMode();
@@ -306,13 +313,12 @@ class Settings
         $links      = $this->links->getLinks();
         $testMode   = ($checkboxCheckoutTestMode === 'yes');
         $categories = Categories::getCategories();
+        $intervals  = $this->intervals->getIntervals();
         $pluginLogs = $this->downloader->pluginLogs;
-
         $phpVersion = phpversion() ?? "";
-        $wpVersion = $GLOBALS['wp_version'] ?? "";
-        $wcVersion = $GLOBALS['woocommerce']->version ?? "";
+        $wpVersion  = $GLOBALS['wp_version'] ?? "";
+        $wcVersion  = $GLOBALS['woocommerce']->version ?? "";
         $pluginVersion = MP_VERSION ??  "";
-
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }

@@ -16,3 +16,5 @@ woocommerce-mercadopago.zip
 qit-env.yml
 
 .env
+
+phpstan-baseline.neon

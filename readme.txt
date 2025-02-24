@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 7.9.4
+Stable tag: 7.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,8 +134,13 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v7.9.4 (10/02/2025) =
+= v7.10.0 (24/02/2025) =
 * Fixed:
-- Resolved an issue where stores with a permanent link configuration different from the default could cause errors on order payment links.
+- We have adjusted the translations from Wallet Button to Checkout Custom.
+* Added:
+- Adds the approved payment note for the buyer.
+- Adds validation to load scripts only on checkout-related pages.
+* Changed:
+- We have changed the way the notification cron works to allow the seller to choose the best time to run.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

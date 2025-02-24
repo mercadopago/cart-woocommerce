@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.10.0] - 2025-02-24
+### Fixed:
+- We have adjusted the translations from Wallet Button to Checkout Custom.
+### Added:
+- Adds the approved payment note for the buyer.
+- Adds validation to load scripts only on checkout-related pages.
+### Changed:
+- We have changed the way the notification cron works to allow the seller to choose the best time to run.
+
 ## [7.9.4] - 2025-02-10
 ### Fixed
 - Resolved an issue where stores with a permanent link configuration different from the default could cause errors on order payment links.

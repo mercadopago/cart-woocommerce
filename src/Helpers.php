@@ -19,6 +19,7 @@ use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Helpers\Intervals;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -60,6 +61,8 @@ class Helpers
 
     public Url $url;
 
+    public Intervals $intervals;
+
     public function __construct(
         Actions $actions,
         Cache $cache,
@@ -77,7 +80,8 @@ class Helpers
         Requester $requester,
         Session $session,
         Strings $strings,
-        Url $url
+        Url $url,
+        Intervals $intervals
     ) {
         $this->actions        = $actions;
         $this->cache          = $cache;
@@ -96,5 +100,6 @@ class Helpers
         $this->session        = $session;
         $this->strings        = $strings;
         $this->url            = $url;
+        $this->intervals      = $intervals;
     }
 }

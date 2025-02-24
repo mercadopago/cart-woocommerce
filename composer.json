@@ -27,6 +27,8 @@
   "scripts": {
     "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml src assets templates woocommerce-mercadopago.php",
     "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml src assets templates woocommerce-mercadopago.php",
+    "phpstan": "./vendor/bin/phpstan analyse src --memory-limit=1G --generate-baseline=phpstan-baseline.neon",
+    "rector": "./vendor/bin/rector process",
     "metrics": "./vendor/bin/phpmetrics src --report-html=./code_analysis",
     "metrics:path": "./vendor/bin/phpmetrics --report-html=./code_analysis -d",
     "qit:con": "./vendor/bin/qit connect",
@@ -36,8 +38,6 @@
     "qit:comp": "./vendor/bin/qit run:phpcompatibility woocommerce-mercadopago --zip woocommerce-mercadopago.zip",
     "qit:sec": "./vendor/bin/qit run:security woocommerce-mercadopago --zip woocommerce-mercadopago.zip",
     "qit:api": "./vendor/bin/qit run:woo-api woocommerce-mercadopago --zip woocommerce-mercadopago.zip",
-    "qit:env-up": "./vendor/bin/qit --woo=8.9.0 env:up",
-    "qit:env-down": "./vendor/bin/qit env:down",
     "fix-cs": "./vendor/bin/php-cs-fixer fix",
     "phpunit": "./vendor/bin/phpunit",
     "phpunit-file": "./vendor/bin/phpunit --"
@@ -56,12 +56,18 @@
     "friendsofphp/php-cs-fixer": "^3.64",
     "phpunit/phpunit": "^9.6",
     "10up/wp_mock": "^1.0",
-    "php-stubs/woocommerce-stubs": "^9.3"
+    "phpstan/phpstan": "^2.1",
+    "rector/rector": "^2.0",
+    "php-stubs/woocommerce-stubs": "^9.5",
+    "php-stubs/wordpress-stubs": "^6.7"
   },
   "config": {
     "allow-plugins": {
       "phpstan/extension-installer": true,
       "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "platform": {
+      "php": "7.4.33"
     }
   }
 }
