@@ -11,7 +11,6 @@ import ChoRedirectV2 from './components/ChoRedirectV2';
 import PaymentMethodsV2 from './components/PaymentMethodsV2';
 import TermsAndConditions from './components/TermsAndConditions';
 import TestMode from './components/TestMode';
-import sendMetric from "./helpers/metrics.helper"
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-basic';

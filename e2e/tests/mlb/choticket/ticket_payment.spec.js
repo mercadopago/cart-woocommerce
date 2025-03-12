@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { mlb } from "../../../data/meli_sites";
-import fillStepsToCheckout from "../../../flows/fill_steps_to_checkout";
+import { fillStepsToCheckout } from "../../../flows/fill_steps_to_checkout";
 import payWithInvoice from "../../../flows/mlb/pay_with_invoice";
 
 const{ url, guestUserMLB } = mlb;

@@ -12,6 +12,11 @@ const APPROVED = {
     code: CVV_LENGTH_THREE,
     date: "12/30"
   },
+  masterMCO: {
+    number: process.env.CC_MASTER_MCO,
+    code: CVV_LENGTH_THREE,
+    date: "12/30"
+  },
   visa: {
     number: process.env.CC_VISA,
     code: CVV_LENGTH_THREE,
@@ -19,8 +24,23 @@ const APPROVED = {
   },
   form: {
     name: "APRO",
-    docType: process.env.DOC_TYPE,
-    docNumber: process.env.DOC_NUMBER
+    docType: process.env.DOC_TYPE_OUTRO,
+    docNumber: process.env.DOC_NUMBER_OUTRO
+  },
+  formMLB: {
+    name: "APRO",
+    docType: process.env.DOC_TYPE_MLB,
+    docNumber: process.env.DOC_NUMBER_MLB
+  },
+  formMLA: {
+    name: "APRO",
+    docType: process.env.DOC_TYPE_MLA,
+    docNumber: process.env.DOC_NUMBER_MLA
+  },
+  formMCO: {
+    name: "APRO",
+    docType: process.env.DOC_TYPE_MCO,
+    docNumber: process.env.DOC_NUMBER_MCO
   }
 }
 
@@ -29,6 +49,18 @@ const REJECTED = {
   form: {
     ...APPROVED.form,
     name: "OTHE"
+  },
+  formMLB: {
+    ...APPROVED.formMLB,
+    name: "OTHE"
+  },
+  formMLA: {
+    ...APPROVED.formMLA,
+    name: "OTHE",
+  },
+  formMCO: {
+    ...APPROVED.formMCO,
+    name: "OTHE",
   }
 }
 
@@ -37,6 +69,18 @@ const PENDING = {
   form: {
     ...APPROVED.form,
     name: "CONT"
+  },
+  formMLB: {
+    ...APPROVED.formMLB,
+    name: "CONT"
+  },
+  formMLA: {
+    ...APPROVED.formMLA,
+    name: "CONT",
+  },
+  formMCO: {
+    ...APPROVED.formMCO,
+    name: "CONT",
   }
 }
 
@@ -49,8 +93,23 @@ const EMPTY_FIELDS ={
   },
   form: {
     name: "",
-    docType: process.env.DOC_TYPE,
+    docType: process.env.DOC_TYPE_OUTRO,
     docNumber: ""
+  },
+  formMLB: {
+    name: "",
+    docType: process.env.DOC_TYPE_MLB,
+    docNumber: ""
+  },
+  formMLA: {
+    name: "",
+    docType: process.env.DOC_TYPE_MLA,
+    docNumber: ""
+  },
+  formMCO: {
+    name: "",
+    docType: process.env.DOC_TYPE_MCO,
+    name: "",
   }
 }
 

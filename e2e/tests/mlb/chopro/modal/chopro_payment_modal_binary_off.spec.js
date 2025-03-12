@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { mlb } from "../../../../data/meli_sites";
-import fillStepsToCheckout from "../../../../flows/fill_steps_to_checkout";
-import {choproModal} from "../../../../flows/mlb/pay_with_cho_pro";
+import { fillStepsToCheckout } from "../../../../flows/fill_steps_to_checkout";
+import { choproModal } from "../../../../flows/mlb/pay_with_cho_pro";
 
 const{ url, credit_card_scenarios, guestUserMLB } = mlb;
 const { APPROVED, REJECTED, PENDING } = credit_card_scenarios;
@@ -10,7 +10,7 @@ test('test sucessfull payment with chopro, payment must be approved and success 
     const modal = page.locator('#mercadopago-checkout').contentFrame();
 
     await fillStepsToCheckout(page, url, guestUserMLB);
-    await choproModal(page, APPROVED.master, APPROVED.form);
+    await choproModal(page, APPROVED.master, APPROVED.formMLB);
 
     const returnButton = modal.locator('#group_button_back_congrats');
     await expect(returnButton).toBeVisible();
@@ -25,7 +25,7 @@ test('test rejected payment with chopro, change payment method, other payment op
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproModal(page, REJECTED.master, REJECTED.form);
+  await choproModal(page, REJECTED.master, REJECTED.formMLB);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   await expect(changePaymentMethod).toBeVisible();
@@ -39,7 +39,7 @@ test('test rejected payment with chopro modal, close button clicked, cancelled o
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproModal(page, REJECTED.master, REJECTED.form);
+  await choproModal(page, REJECTED.master, REJECTED.formMLB);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   const cancelPayment = modal.locator('#mp-close-btn');
@@ -61,7 +61,7 @@ test('test pending payment with chopro, binary must be off, payment must be appr
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproModal(page, PENDING.master, PENDING.form);
+  await choproModal(page, PENDING.master, PENDING.formMLB);
 
   const returnButton = modal.locator('#button');
   await expect(returnButton).toBeVisible();

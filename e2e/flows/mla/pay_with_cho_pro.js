@@ -13,12 +13,12 @@ export const choproModal = async function(page, card, form) {
 }
 
 async function selectChoProAndRedirect(page) {
-  await page.getByLabel('Pay with the payment method you prefer').check();
+  await page.getByLabel('Your saved cards or money available in Mercado Pago').check();
   await page.getByRole('button', { name: 'Place Order' }).click();
 }
 
 async function selectCreditCardAndFillData(page, card, form) {
-  await page.waitForTimeout(5000);
+  await page.waitForLoadState();
   await page.locator('#other-options').getByRole('button', { name: 'Tarjeta de crédito' }).click();
   await page.waitForTimeout(2000);
   await page.frameLocator('iframe[name="cardNumber"]').locator('[name="cardNumber"]').fill(card.number);

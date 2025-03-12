@@ -216,6 +216,8 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     }
 
     /**
+     * @codeCoverageIgnore
+     *
      * Register checkout scripts
      *
      * @return void
@@ -235,6 +237,19 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_checkout_update',
             $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-checkout-update')
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_checkout_metrics',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-checkout-metrics'),
+            [
+                'theme'             => get_stylesheet(),
+                'location'          => '/checkout',
+                'plugin_version'    => MP_VERSION,
+                'platform_version'  => $this->mercadopago->woocommerce->version,
+                'site_id'           => $this->countryConfigs['site_id'],
+                'currency'          => $this->countryConfigs['currency'],
+            ]
         );
     }
 

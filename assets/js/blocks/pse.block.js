@@ -9,9 +9,7 @@ import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers
 import InputDocument from './components/InputDocument';
 import TermsAndConditions from './components/TermsAndConditions';
 import TestMode from './components/TestMode';
-import sendMetric from "./helpers/metrics.helper";
 import InputSelect from './components/InputSelect';
-
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-pse';
@@ -146,7 +144,7 @@ const Content = (props) => {
 
       let financialData = document.querySelector('#mercadopago_pse\\[bank\\]');
       let financialHelpers =  document.querySelector('.mp-checkout-pse-bank').querySelector('input-helper > div');
-      if (financialData.value === '' || {financial_placeholder} === financialData.value ) {
+      if (financialData.value === '' || financial_placeholder === financialData.value ) {
         setInputDisplayStyle(financialHelpers, 'flex');
       }
 
