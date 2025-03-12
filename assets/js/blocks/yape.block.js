@@ -14,7 +14,6 @@ import TestMode from './components/TestMode';
 import InputField from './components/InputField';
 import InputCode from './components/InputCode';
 import CheckoutNotice from './components/CheckoutNotice';
-import sendMetric from './helpers/metrics.helper';
 
 const targetName = 'mp_checkout_blocks';
 const paymentMethodName = 'woo-mercado-pago-yape';

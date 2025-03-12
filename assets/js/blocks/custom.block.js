@@ -12,7 +12,6 @@ import InputLabel from './components/InputLabel';
 import PaymentMethods from './components/PaymentMethods';
 import TermsAndConditions from './components/TermsAndConditions';
 import TestMode from './components/TestMode';
-import sendMetric from "./helpers/metrics.helper";
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-custom';

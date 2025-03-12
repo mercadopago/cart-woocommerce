@@ -1,15 +1,15 @@
 import { test, expect } from "@playwright/test";
 import { mla } from "../../../../data/meli_sites";
-import fillStepsToCheckout from "../../../../flows/fill_steps_to_checkout";
-import {choproModal} from "../../../../flows/mla/pay_with_cho_pro";
+import { fillStepsToCheckout } from "../../../../flows/fill_steps_to_checkout";
+import { choproModal } from "../../../../flows/mla/pay_with_cho_pro";
 
-const{ url, credit_card_scenarios, guestUserROLA } = mla;
+const{ url, credit_card_scenarios, guestUserDefault } = mla;
 const { APPROVED, REJECTED, PENDING } = credit_card_scenarios;
 
 test('test sucessfull payment with chopro, payment must be approved and success page must be shown', async ({page}) => {
     const modal = page.locator('#mercadopago-checkout').contentFrame();
 
-    await fillStepsToCheckout(page, url, guestUserROLA);
+    await fillStepsToCheckout(page, url, guestUserDefault);
     await choproModal(page, APPROVED.master, APPROVED.form);
 
     const returnButton = modal.locator('#group_button_back_congrats');
@@ -24,7 +24,7 @@ test('test sucessfull payment with chopro, payment must be approved and success 
 test('test rejected payment with chopro, change payment method, other payment options must be shown', async ({page}) => {
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
-  await fillStepsToCheckout(page, url, guestUserROLA);
+  await fillStepsToCheckout(page, url, guestUserDefault);
   await choproModal(page, REJECTED.master, REJECTED.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
@@ -38,7 +38,7 @@ test('test rejected payment with chopro, change payment method, other payment op
 test('test rejected payment with chopro modal, close button clicked, cancelled order message must be shown', async ({page}) => {
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
-  await fillStepsToCheckout(page, url, guestUserROLA);
+  await fillStepsToCheckout(page, url, guestUserDefault);
   await choproModal(page, REJECTED.master, REJECTED.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
@@ -60,7 +60,7 @@ test('test rejected payment with chopro modal, close button clicked, cancelled o
 test('test pending payment with chopro, binary must be off, payment must be approved and success page must be shown', async ({page}) => {
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
-  await fillStepsToCheckout(page, url, guestUserROLA);
+  await fillStepsToCheckout(page, url, guestUserDefault);
   await choproModal(page, PENDING.master, PENDING.form);
 
   const returnButton = modal.locator('#button');

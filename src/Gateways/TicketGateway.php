@@ -642,4 +642,17 @@ class TicketGateway extends AbstractGateway
             ]
         );
     }
+
+    /**
+     * Verify if the gateway is available by checking if there are any payment methods registered
+     * @return bool
+     */
+    public static function isAvailable(): bool
+    {
+        global $mercadopago;
+
+        $paymentMethods = $mercadopago->sellerConfig->getCheckoutTicketPaymentMethods();
+        $isAvailable = !empty($paymentMethods);
+        return $isAvailable;
+    }
 }

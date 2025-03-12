@@ -11,7 +11,6 @@ import CheckoutRedirectV3 from './components/CheckoutRedirectV3';
 import CheckoutBenefitsList from './components/CheckoutBenefitsList';
 import TermsAndConditions from './components/TermsAndConditions';
 import RowImageSelect from './components/RowImageSelect';
-import sendMetric from "./helpers/metrics.helper";
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-credits';

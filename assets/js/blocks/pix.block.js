@@ -9,7 +9,6 @@ import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers
 import TestMode from './components/TestMode';
 import PixTemplate from './components/PixTemplate';
 import TermsAndConditions from './components/TermsAndConditions';
-import sendMetric from "./helpers/metrics.helper";
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-pix';

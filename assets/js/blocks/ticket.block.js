@@ -6,8 +6,6 @@ import { useEffect } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
 
-import sendMetric from "./helpers/metrics.helper";
-
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-ticket';
 

@@ -6,8 +6,23 @@ const APPROVED = {
   },
   form: {
     name: "APRO",
-    docType: process.env.DOC_TYPE,
-    docNumber: process.env.DOC_NUMBER
+    docType: process.env.DOC_TYPE_OUTRO,
+    docNumber: process.env.DOC_NUMBER_OUTRO
+  },
+  formMLB: {
+    name: "APRO",
+    docType: process.env.DOC_TYPE_MLB,
+    docNumber: process.env.DOC_NUMBER_MLB
+  },
+  formMLA: {
+    name: "APRO",
+    docType: process.env.DOC_TYPE_MLA,
+    docNumber: process.env.DOC_NUMBER_MLA
+  },
+  formMCO: {
+    name: "APRO",
+    docType: process.env.DOC_TYPE_MCO,
+    docNumber: process.env.DOC_NUMBER_MCO
   }
 }
 
@@ -16,7 +31,16 @@ const REJECTED = {
   form: {
     ...APPROVED.form,
     name: "OTHE"
-  }
+  },
+  formMLA: {
+    name: "OTHE",
+    docType: process.env.DOC_TYPE_MLA,
+    docNumber: process.env.DOC_NUMBER_MLA
+  },
+  form: {
+    ...APPROVED.formMCO,
+    name: "OTHE"
+  },
 }
 
 const PENDING = {
@@ -24,7 +48,16 @@ const PENDING = {
   form: {
     ...APPROVED.form,
     name: "CONT"
-  }
+  },
+  formMLA: {
+    name: "CONT",
+    docType: process.env.DOC_TYPE_MLA,
+    docNumber: process.env.DOC_NUMBER_MLA
+  },
+  form: {
+    ...APPROVED.formMCO,
+    name: "CONT"
+  },
 }
 
 // form fields doctType and docNumber only appear when card number is filled
@@ -36,9 +69,24 @@ const EMPTY_FIELDS ={
   },
   form: {
     name: "",
-    docType: process.env.DOC_TYPE,
+    docType: process.env.DOC_TYPE_OUTRO,
     docNumber: ""
-  }
+  },
+  formMLB: {
+    name: "",
+    docType: process.env.DOC_TYPE_MLB,
+    docNumber: ""
+  },
+  formMLA: {
+    name: "",
+    docType: process.env.DOC_TYPE_MLA,
+    docNumber: ""
+  },
+  form: {
+    name: "",
+    docType: process.env.DOC_TYPE_MCO,
+    docNumber: ""
+  },
 }
 
 export default {APPROVED, REJECTED, PENDING, EMPTY_FIELDS};

@@ -93,4 +93,27 @@ class TicketGatewayTest extends TestCase
         $result = $gateway->getPaymentFieldsErrorMessages();
         $this->assertEquals($expectedMessages, $result);
     }
+
+    public function testIsAvailableReturnsTrue()
+    {
+        global $mercadopago;
+
+        $mercadopago = Mockery::mock();
+        $mercadopago->sellerConfig = Mockery::mock();
+
+        $mercadopago->sellerConfig->shouldReceive('getCheckoutTicketPaymentMethods')->andReturn(['method1', 'method2']);
+        $this->assertTrue(TicketGateway::isAvailable());
+    }
+
+    public function testIsAvailableReturnsFalse()
+    {
+        global $mercadopago;
+
+        $mercadopago = Mockery::mock();
+        $mercadopago->sellerConfig = Mockery::mock();
+
+        $mercadopago->sellerConfig->shouldReceive('getCheckoutTicketPaymentMethods')->andReturn([]);
+        $this->assertFalse(TicketGateway::isAvailable());
+    }
+
 }

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { mlb } from "../../../../data/meli_sites";
-import fillStepsToCheckout from "../../../../flows/fill_steps_to_checkout";
-import {choproModal} from "../../../../flows/mlb/pay_with_cho_pro";
+import { fillStepsToCheckout } from "../../../../flows/fill_steps_to_checkout";
+import { choproModal } from "../../../../flows/mlb/pay_with_cho_pro";
 
 const{ url, credit_card_scenarios, guestUserMLB } = mlb;
 const { PENDING } = credit_card_scenarios;
@@ -10,7 +10,7 @@ test('test pending payment with chopro, binary must be on, other payment options
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproModal(page, PENDING.master, PENDING.form);
+  await choproModal(page, PENDING.master, PENDING.formMLB);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   await expect(changePaymentMethod).toBeVisible();
@@ -24,7 +24,7 @@ test('test pending payment with chopro modal - binary must be on, close button c
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproModal(page, PENDING.master, PENDING.form);
+  await choproModal(page, PENDING.master, PENDING.formMLB);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   const cancelPayment = modal.locator('#mp-close-btn');

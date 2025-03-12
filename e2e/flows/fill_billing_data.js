@@ -1,8 +1,9 @@
 export default async function(page, user) {
-  await page.waitForTimeout(3000);
-  await page.locator('#email').fill(user.email);
+  await page.waitForLoadState();
 
   // user
+  await page.waitForTimeout(400);
+  await page.locator('#email').fill(user.email);
   await page.locator('#billing-first_name').fill(user.firstName);
   await page.locator('#billing-last_name').fill(user.lastName);
 
