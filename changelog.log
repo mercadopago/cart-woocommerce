@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.10.2 (13/03/2025) =
+* Fixed:
+- Changed misspelled property name in the Settings class to ensure correct declaration.
+
 = v7.10.1 (12/03/2025) =
 * Fixed:
 - Adjusted the way we send metrics to our server ensuring that is not necessary to have Checkout API enabled to do so.

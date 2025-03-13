@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 7.10.1
+Stable tag: 7.10.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,10 +134,8 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v7.10.1 (12/03/2025) =
+= v7.10.2 (13/03/2025) =
 * Fixed:
-- Adjusted the way we send metrics to our server ensuring that is not necessary to have Checkout API enabled to do so.
-- sendMetric function now is agnostic to checkout type (both classic and blocks).
-- Added validation to prevent checkout off from being shown to seller and buyer when there’s no payment methods related to this gateway.
+- Changed misspelled property name in the Settings class to ensure correct declaration.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).
