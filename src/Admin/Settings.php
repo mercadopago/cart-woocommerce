@@ -81,7 +81,7 @@ class Settings
     private Strings $strings;
 
 
-    private Intervals $interval;
+    private Intervals $intervals;
 
     /**
      * Settings constructor
