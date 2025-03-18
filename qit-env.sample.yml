@@ -1,6 +1,0 @@
-wp: 6.5.5
-php_version: 8.3
-themes:
-  - storefront
-# plugins:
-#   - really-simple-ssl
