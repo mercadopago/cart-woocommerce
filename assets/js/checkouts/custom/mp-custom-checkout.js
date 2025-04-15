@@ -82,6 +82,10 @@ function createToken() {
  * Init cardForm
  */
 function initCardForm(amount = getAmount()) {
+  const checkoutFormElement = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
+
+  if (checkoutFormElement) checkoutFormElement.setAttribute('id', window.mpFormId);
+
   const mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key);
 
   return new Promise((resolve, reject) => {

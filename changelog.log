@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v7.10.3 (15/04/2025) =
+* Fixed:
+- Ensure that checkout form element have correct ID.
+
 = v7.10.2 (13/03/2025) =
 * Fixed:
 - Changed misspelled property name in the Settings class to ensure correct declaration.
