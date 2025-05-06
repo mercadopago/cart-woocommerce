@@ -106,6 +106,7 @@ class CustomGateway extends AbstractGateway
                 'description' => $this->adminTranslations['header_description'],
             ],
             'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
+            'card_invalid_credentials' => $this->getCredentialExpiredNotice(),
             'card_settings' => [
                 'type'  => 'mp_card_info',
                 'value' => [
@@ -239,7 +240,7 @@ class CustomGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_security_session',
-            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/session')
+            $this->mercadopago->helpers->url->getJsAsset('session')
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(

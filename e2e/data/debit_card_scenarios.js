@@ -1,92 +1,100 @@
-const APPROVED = {
-  elo: {
-    number: process.env.CC_MASTER,
-    code: '123',
-    date: "11/25"
+import generateCardScenarios from "./generate_card_scenarios";
+
+const MLC = generateCardScenarios({
+  master: {
+    number: process.env.DC_MASTER_MLC,
   },
   form: {
-    name: "APRO",
-    docType: process.env.DOC_TYPE_OUTRO,
-    docNumber: process.env.DOC_NUMBER_OUTRO
+    docType: process.env.DOC_TYPE_MLC,
+    docNumber: process.env.DOC_NUMBER_MLC
+  }
+});
+
+const MPE = generateCardScenarios({
+  master: {
+    number: process.env.DC_MASTER_MPE,
   },
-  formMLB: {
-    name: "APRO",
-    docType: process.env.DOC_TYPE_MLB,
-    docNumber: process.env.DOC_NUMBER_MLB
+  form: {
+    docType: process.env.DOC_TYPE_MPE,
+    docNumber: process.env.DOC_NUMBER_MPE
+  }
+});
+
+const MLA = generateCardScenarios({
+  master: {
+    number: process.env.DC_MASTER,
   },
-  formMLA: {
-    name: "APRO",
+  amex: {
+    number: process.env.DC_AMEX,
+  },
+  visa: {
+    number: process.env.DC_VISA,
+  },
+  form: {
     docType: process.env.DOC_TYPE_MLA,
     docNumber: process.env.DOC_NUMBER_MLA
+  }
+});
+
+const MCO = generateCardScenarios({
+  master: {
+    number: process.env.DC_MASTER_MCO,
   },
-  formMCO: {
-    name: "APRO",
+  amex: {
+    number: process.env.DC_AMEX_MCO,
+  },
+  visa: {
+    number: process.env.DC_VISA,
+  },
+  form: {
     docType: process.env.DOC_TYPE_MCO,
     docNumber: process.env.DOC_NUMBER_MCO
   }
-}
+});
 
-const REJECTED = {
-  ...APPROVED,
-  form: {
-    ...APPROVED.form,
-    name: "OTHE"
+const MLB = generateCardScenarios({
+  master: {
+    number: process.env.DC_MASTER,
   },
-  formMLA: {
-    name: "OTHE",
-    docType: process.env.DOC_TYPE_MLA,
-    docNumber: process.env.DOC_NUMBER_MLA
+  amex: {
+    number: process.env.DC_AMEX,
   },
-  form: {
-    ...APPROVED.formMCO,
-    name: "OTHE"
+  visa: {
+    number: process.env.DC_VISA,
   },
-}
-
-const PENDING = {
-  ...APPROVED,
-  form: {
-    ...APPROVED.form,
-    name: "CONT"
-  },
-  formMLA: {
-    name: "CONT",
-    docType: process.env.DOC_TYPE_MLA,
-    docNumber: process.env.DOC_NUMBER_MLA
-  },
-  form: {
-    ...APPROVED.formMCO,
-    name: "CONT"
-  },
-}
-
-// form fields doctType and docNumber only appear when card number is filled
-const EMPTY_FIELDS ={
   elo: {
-    ...APPROVED.elo,
-    code: "",
-    date: "",
+    number: process.env.DC_ELO,
   },
   form: {
-    name: "",
-    docType: process.env.DOC_TYPE_OUTRO,
-    docNumber: ""
-  },
-  formMLB: {
-    name: "",
     docType: process.env.DOC_TYPE_MLB,
-    docNumber: ""
-  },
-  formMLA: {
-    name: "",
-    docType: process.env.DOC_TYPE_MLA,
-    docNumber: ""
+    docNumber: process.env.DOC_NUMBER_MLB
+  }
+});
+
+const MLU = generateCardScenarios({
+  master: {
+    number: process.env.DC_MASTER,
   },
   form: {
-    name: "",
-    docType: process.env.DOC_TYPE_MCO,
-    docNumber: ""
-  },
-}
+    docType: process.env.DOC_TYPE_MLU,
+    docNumber: process.env.DOC_NUMBER_MLU
+  }
+});
 
-export default {APPROVED, REJECTED, PENDING, EMPTY_FIELDS};
+const OUTRO = generateCardScenarios({
+  master: {
+    number: process.env.DC_MASTER,
+  },
+  amex: {
+    number: process.env.DC_AMEX,
+  },
+  visa: {
+    number: process.env.DC_VISA,
+  },
+  form: {
+    docType: process.env.DOC_TYPE_OUTRO,
+    docNumber: process.env.DOC_NUMBER_OUTRO
+  }
+});
+
+export default { MLC, MPE, MLA, MCO, MLB, MLU, OUTRO };

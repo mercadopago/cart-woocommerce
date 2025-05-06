@@ -6,7 +6,7 @@ import {
   cho_pro_modal_login,
   cho_pro_modal_logged,
   return_to_congrats_page
-} from '../../../../flows/cho_pro/mlm/pay_with_cho_pro.spec';
+} from '../../../../flows/mlm/pay_with_cho_pro';
 
 const { url, loggedUserMLM } = mlm;
 

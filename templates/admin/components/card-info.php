@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
             <a class="mp-button-payments-a" target="<?= esc_html($settings['value']['target']); ?>"
                href="<?= esc_html($settings['value']['button_url']); ?>">
                 <button type="button"
-                        class="mp-button-payments"><?= esc_html($settings['value']['button_text']); ?></button>
+                        id="mp-button-payments-update-link" class="mp-button-payments"><?= esc_html($settings['value']['button_text']); ?></button>
             </a>
         </div>
     </div>

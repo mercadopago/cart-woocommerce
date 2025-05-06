@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Configs;
 
 use Exception;
+use MercadoPago\Woocommerce\Endpoints\IntegrationWebhook;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
@@ -45,6 +46,10 @@ class Seller
 
     private const AUTO_UPDATE_PLUGINS = 'auto_update_plugins';
 
+    private const STATUS = 'status';
+
+    private const DEVICE_FINGERPRINT = "_mp_device_fingerprint";
+
     private Cache $cache;
 
     private Options $options;
@@ -64,8 +69,13 @@ class Seller
      * @param Store $store
      * @param Logs $logs
      */
-    public function __construct(Cache $cache, Options $options, Requester $requester, Store $store, Logs $logs)
-    {
+    public function __construct(
+        Cache $cache,
+        Options $options,
+        Requester $requester,
+        Store $store,
+        Logs $logs
+    ) {
         $this->cache     = $cache;
         $this->options   = $options;
         $this->requester = $requester;
@@ -204,7 +214,7 @@ class Seller
     /**
      * @return bool
      */
-    public function getTestUser(): bool
+    private function getTestUser(): bool
     {
         return $this->options->get(self::TEST_USER);
     }
@@ -368,12 +378,49 @@ class Seller
         $this->options->set(self::CHECKOUT_PAYMENT_METHOD_PIX, $checkoutPaymentMethodsPix);
     }
 
+    public function setDeviceFingerprint(string $deviceFingerprint): void
+    {
+        $this->options->set(self::DEVICE_FINGERPRINT, $deviceFingerprint);
+    }
+
+    public function getDeviceFingerprint(): string
+    {
+        return $this->options->get(self::DEVICE_FINGERPRINT, '');
+    }
+
     /**
      * @return mixed
      */
     public function getAllPaymentMethods()
     {
         return $this->options->get(self::CHECKOUT_BASIC_PAYMENT_METHODS, '');
+    }
+
+    public function getSellerData(): array
+    {
+        $key   = sprintf('%sat%s', __FUNCTION__, $this->getCredentialsAccessToken());
+        $cache = $this->cache->getCache($key);
+        if ($cache) {
+            return $cache;
+        }
+
+        $sellerInfo = $this->getSellerInfo($this->getCredentialsAccessToken());
+        if ($sellerInfo['status'] !== 200) {
+            return ['status' => 'error'];
+        }
+
+        $response = [
+            'status'   => 'success',
+            'data'     => [
+                'nickname' => $sellerInfo['data']['nickname'],
+                'app_name' => $sellerInfo['data']['app_name'] ? $sellerInfo['data']['app_name'] : $sellerInfo['data']['client_id'],
+                'email'    => $sellerInfo['data']['email'],
+            ],
+        ];
+
+        $this->cache->setCache($key, $response, 86400);
+
+        return $response;
     }
 
     /**
@@ -636,18 +683,42 @@ class Seller
                 return $cache;
             }
 
-            $uri     = '/users/me';
             $headers = ['Authorization: Bearer ' . $accessToken];
+            $appIdUri = '/plugins-credentials-wrapper/credentials';
+            $appDataUri = '/applications/';
+            $userDataUri    = '/users/me';
 
-            $response           = $this->requester->get($uri, $headers);
-            $serializedResponse = [
-                'data'   => $response->getData(),
-                'status' => $response->getStatus(),
+            $userDataResponse = $this->requester->get($userDataUri, $headers);
+            $userDataSerializedResponse = [
+                'data'   => $userDataResponse->getData(),
+                'status' => $userDataResponse->getStatus(),
             ];
 
-            $this->cache->setCache($key, $serializedResponse);
+            $appIdResponse = $this->requester->get($appIdUri, $headers);
+            $appIdSerializedResponse = [
+                'data'   => $appIdResponse->getData(),
+                'status' => $appIdResponse->getStatus(),
+            ];
 
-            return $serializedResponse;
+            if ($appIdSerializedResponse['status'] === 200) {
+                $appDataUri = $appDataUri . $appIdSerializedResponse['data']['client_id'];
+
+                $userDataSerializedResponse['data']['client_id'] =  $appIdSerializedResponse['data']['client_id'];
+
+                $appNameResponse =          $this->requester->get($appDataUri, $headers);
+                $appNameSerializedResponse = [
+                    'data'   => $appNameResponse->getData(),
+                    'status' => $appNameResponse->getStatus(),
+                ];
+
+                if ($appNameSerializedResponse['status'] === 200) {
+                    $userDataSerializedResponse['data']['app_name'] =  $appNameSerializedResponse['data']['name'];
+                }
+            }
+
+            $this->cache->setCache($key, $userDataSerializedResponse);
+
+            return $userDataSerializedResponse;
         } catch (Exception $e) {
             $this->logs->file->error(
                 "Mercado pago gave error to get seller info: {$e->getMessage()}",
@@ -662,23 +733,22 @@ class Seller
     }
 
     /**
-     * @param string $publicKey
+     * Validate if public is expired
      *
-     * @return array
+     * This call ever get the last update if the public key is expired
+     *
+     * @param string|null $publicKey
+     *
+     * @return bool
      */
-    public function validatePublicKey(string $publicKey): array
+    public function isExpiredPublicKey($publicKey): bool
     {
-        return $this->validateCredentials(null, $publicKey);
-    }
+        $response           = $this->requester->get(
+            '/plugins-credentials-wrapper/credentials?public_key=' . $publicKey,
+            []
+        );
 
-    /**
-     * @param string $accessToken
-     *
-     * @return array
-     */
-    public function validateAccessToken(string $accessToken): array
-    {
-        return $this->validateCredentials($accessToken);
+        return $response->getStatus() === 401;
     }
 
     /**
@@ -689,7 +759,7 @@ class Seller
      *
      * @return array
      */
-    private function validateCredentials(?string $accessToken = null, ?string $publicKey = null): array
+    public function validateCredentials(?string $accessToken = null, ?string $publicKey = null): array
     {
         try {
             $key   = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
@@ -830,6 +900,29 @@ class Seller
             ];
         }
     }
+
+    public function getIntegrationLoginUrl(string $siteId): array
+    {
+        [$code_challenge] = $this->store->setCodeChallengeAndVerifier();
+
+        $requestUrl = '/ppcore/prod/configurations-api/onboarding/v1/integration';
+        $headers = [
+            'X-Platform-Id: ' . MP_PLATFORM_ID,
+            'Content-Type: application/json',
+            'X-Device-Fingerprint: ' . $this->getDeviceFingerprint()
+        ];
+        $body = [
+            "external_reference" => $this->store->getStoreId(),
+            "code_challenge" => $code_challenge,
+            "callback_url" => WC()->api_request_url(IntegrationWebhook::WEBHOOK_ENDPOINT),
+            "store_url" => site_url(),
+            "site_id" => $siteId,
+        ];
+
+        $response = $this->requester->post($requestUrl, $headers, $body);
+        return [$response->getStatus(), $response->getData()];
+    }
+
     /**
      * Get auto update mode
      *

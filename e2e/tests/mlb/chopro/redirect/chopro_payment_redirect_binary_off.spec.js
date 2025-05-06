@@ -8,7 +8,7 @@ const { APPROVED, REJECTED, PENDING } = credit_card_scenarios;
 
 test('test sucessfull payment with chopro, payment must be approved and success page must be shown', async ({page}) => {
     await fillStepsToCheckout(page, url, guestUserMLB);
-    await choproRedirect(page, APPROVED.master, APPROVED.formMLB);
+    await choproRedirect(page, APPROVED.master, APPROVED.form);
 
     const returnButton = page.locator('#group_button_back_congrats');
     await expect(returnButton).toBeVisible();
@@ -21,7 +21,7 @@ test('test sucessfull payment with chopro, payment must be approved and success 
 
 test('test rejected payment with chopro, payment must be rejected and decline message must be shown', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproRedirect(page, REJECTED.master, REJECTED.formMLB);
+  await choproRedirect(page, REJECTED.master, REJECTED.form);
 
   const returnButton = page.locator('.group-back-url a');
   await expect(returnButton).toBeVisible();
@@ -35,7 +35,7 @@ test('test rejected payment with chopro, payment must be rejected and decline me
 
 test('test pending payment with chopro, binary must be off, payment must be approved and success page must be shown', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproRedirect(page, PENDING.master, PENDING.formMLB);
+  await choproRedirect(page, PENDING.master, PENDING.form);
 
   const returnButton = page.locator('#button');
   await expect(returnButton).toBeVisible();

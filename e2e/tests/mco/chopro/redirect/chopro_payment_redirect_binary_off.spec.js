@@ -8,7 +8,7 @@ const { APPROVED, REJECTED, PENDING } = credit_card_scenarios;
 
 test('Given a guest user, When they complete a successful payment with chopro, Should show the success page', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproRedirect(page, APPROVED.masterMCO, APPROVED.formMCO);
+  await choproRedirect(page, APPROVED.masterMCO, APPROVED.form);
 
   const returnButton = page.locator('#group_button_back_congrats');
   await expect(returnButton).toBeVisible();
@@ -21,7 +21,7 @@ test('Given a guest user, When they complete a successful payment with chopro, S
 
 test('Given a guest user, When their payment with chopro is rejected, Should show the decline message', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproRedirect(page, REJECTED.masterMCO, REJECTED.formMCO);
+  await choproRedirect(page, REJECTED.masterMCO, REJECTED.form);
 
   const returnButton = page.locator('.group-back-url a');
   await expect(returnButton).toBeVisible();
@@ -34,7 +34,7 @@ test('Given a guest user, When their payment with chopro is rejected, Should sho
 
 test('Given a guest user, When their payment with chopro is rejected, Should show other payment options', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproRedirect(page, REJECTED.masterMCO, REJECTED.formMCO);
+  await choproRedirect(page, REJECTED.masterMCO, REJECTED.form);
 
   const changePaymentMethod = page.locator('#group_card_ui').getByRole('button', { name: 'Pagar con otro medio' });
   await expect(changePaymentMethod).toBeVisible();
@@ -47,7 +47,7 @@ test('Given a guest user, When their payment with chopro is rejected, Should sho
 
 test('Given a guest user, When their payment with chopro is pending and binary is off, Should show the success page', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproRedirect(page, PENDING.masterMCO, PENDING.formMCO);
+  await choproRedirect(page, PENDING.masterMCO, PENDING.form);
 
   const returnButton = page.locator('#button');
   await expect(returnButton).toBeVisible();

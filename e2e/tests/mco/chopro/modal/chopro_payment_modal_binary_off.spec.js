@@ -10,7 +10,7 @@ test('Given a guest user, When they complete a successful payment with chopro, S
     const modal = page.locator('#mercadopago-checkout').contentFrame();
 
     await fillStepsToCheckout(page, url, guestUserDefault);
-    await choproModal(page, APPROVED.masterMCO, APPROVED.formMCO);
+    await choproModal(page, APPROVED.masterMCO, APPROVED.form);
 
     const returnButton = modal.locator('#group_button_back_congrats');
     await expect(returnButton).toBeVisible();
@@ -25,7 +25,7 @@ test('Given a guest user, When their payment with chopro is rejected, Should sho
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproModal(page, REJECTED.masterMCO, REJECTED.formMCO);
+  await choproModal(page, REJECTED.masterMCO, REJECTED.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   await expect(changePaymentMethod).toBeVisible();
@@ -39,7 +39,7 @@ test('Given a guest user, When their payment with chopro is rejected and they cl
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproModal(page, REJECTED.masterMCO, REJECTED.formMCO);
+  await choproModal(page, REJECTED.masterMCO, REJECTED.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   const cancelPayment = modal.locator('#mp-close-btn');
@@ -61,7 +61,7 @@ test('Given a guest user, When their payment with chopro is pending and binary i
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproModal(page, PENDING.masterMCO, PENDING.formMCO);
+  await choproModal(page, PENDING.masterMCO, PENDING.form);
 
   const returnButton = modal.locator('#button');
   await expect(returnButton).toBeVisible();

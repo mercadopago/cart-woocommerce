@@ -2,10 +2,11 @@ export default async function(page, user) {
   await page.waitForLoadState();
 
   // user
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(2000);
   await page.locator('#email').fill(user.email);
   await page.locator('#billing-first_name').fill(user.firstName);
   await page.locator('#billing-last_name').fill(user.lastName);
+  await page.waitForTimeout(400);
 
   // address
   await page.locator('#billing-country').selectOption(user.address.countryId);
@@ -16,4 +17,5 @@ export default async function(page, user) {
 
   // phone
   await page.locator('#billing-phone').fill(user.phone);
+  await page.waitForTimeout(400);
 }

@@ -81,7 +81,7 @@ class Funnel
             'is_added_test_credential'       => !empty($this->seller->getCredentialsAccessTokenTest()),
             'plugin_mode'                    => $this->getPluginMode(),
             'cust_id'                        => $this->seller->getCustIdFromAT(),
-            'site_id'                        => $this->country->countryToSiteId($this->country->getPluginDefaultCountry()),
+            'site_id'                        => $this->country::countryToSiteId($this->country->getPluginDefaultCountry()),
         ], $after);
     }
 

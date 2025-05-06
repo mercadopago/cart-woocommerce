@@ -53,6 +53,12 @@ class Store
 
     private const EXECUTE_AFTER_UPDATE = '_mp_execute_after_update';
 
+    private const CODE_VERIFIER = "_mp_integration_code_verifier";
+
+    private const CODE_CHALLENGE = "_mp_integration_code_challenge";
+
+    private const INTEGRATION_ID = "_mp_integration_id";
+
     private array $availablePaymentGateways = [];
 
     private Options $options;
@@ -81,14 +87,6 @@ class Store
     public function isProductionMode(): bool
     {
         return $this->getCheckboxCheckoutTestMode() !== 'yes';
-    }
-
-    /**
-     * @return string
-     */
-    public function getTestMode(): string
-    {
-        return $this->getCheckboxCheckoutTestMode();
     }
 
     /**
@@ -168,23 +166,6 @@ class Store
     public function setCheckoutCountry(string $checkoutCountry): void
     {
         $this->options->set(self::CHECKOUT_COUNTRY, $checkoutCountry);
-    }
-
-    /**
-     * @param string $default
-     * @return string
-     */
-    public function getWoocommerceCountry(string $default = ''): string
-    {
-        return $this->options->get(self::WOOCOMMERCE_COUNTRY, $default);
-    }
-
-    /**
-     * @param string $woocommerceCountry
-     */
-    public function setWoocommerceCountry(string $woocommerceCountry): void
-    {
-        $this->options->set(self::WOOCOMMERCE_COUNTRY, $woocommerceCountry);
     }
 
     /**
@@ -442,5 +423,41 @@ class Store
     public function getCheckoutDateExpirationPix(AbstractGateway $gateway, string $default): string
     {
         return $this->options->getGatewayOption($gateway, self::CHECKOUT_EXPIRATION_DATE_PIX, $default);
+    }
+
+    public function setIntegrationId(string $integrationId): void
+    {
+        $this->options->set(self::INTEGRATION_ID, $integrationId);
+    }
+
+    public function getIntegrationId(): string
+    {
+        return $this->options->get(self::INTEGRATION_ID, '');
+    }
+
+    public function setCodeChallengeAndVerifier(): array
+    {
+        $code_verifier = rtrim(strtr(base64_encode(random_bytes(64)), '+/', '-_'), '=');
+        $code_challenge = base64_encode(hash('sha256', $code_verifier));
+
+        $this->options->set(self::CODE_VERIFIER, $code_verifier);
+        $this->options->set(self::CODE_CHALLENGE, $code_challenge);
+
+        return [$code_challenge, $code_verifier];
+    }
+
+    public function getCodeChallenge(): string
+    {
+        return $this->options->get(self::CODE_CHALLENGE, '');
+    }
+
+    public function getCodeVerifier(): string
+    {
+        return $this->options->get(self::CODE_VERIFIER, '');
+    }
+
+    public function setCodeChallenge(string $codeChallenge): void
+    {
+        $this->options->set(self::CODE_CHALLENGE, $codeChallenge);
     }
 }

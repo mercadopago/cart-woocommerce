@@ -10,7 +10,7 @@ test('Given a guest user, When their payment with chopro is pending and binary i
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproModal(page, PENDING.masterMCO, PENDING.formMCO);
+  await choproModal(page, PENDING.masterMCO, PENDING.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   await expect(changePaymentMethod).toBeVisible();
@@ -24,7 +24,7 @@ test('Given a guest user, When their payment with chopro is pending and binary i
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproModal(page, PENDING.masterMCO, PENDING.formMCO);
+  await choproModal(page, PENDING.masterMCO, PENDING.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   const cancelPayment = modal.locator('#mp-close-btn');

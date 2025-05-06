@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.0.0 (06/05/2025) =
+* Added:
+- Includes new onboarding functionality, to automate credentials insertion.
+
 = v7.10.3 (15/04/2025) =
 * Fixed:
 - Ensure that checkout form element have correct ID.

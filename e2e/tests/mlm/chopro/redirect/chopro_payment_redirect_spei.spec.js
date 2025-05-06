@@ -7,7 +7,7 @@ import {
   cho_pro_redirect_guest,
   cho_pro_redirect_logged,
   return_to_congrats_page
-} from '../../../../flows/cho_pro/mlm/pay_with_cho_pro.spec';
+} from '../../../../flows/mlm/pay_with_cho_pro';
 
 const { url, guestUserMLM, loggedUserMLM } = mlm;
 

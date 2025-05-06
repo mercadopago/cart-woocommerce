@@ -6,9 +6,11 @@ use MercadoPago\PP\Sdk\HttpClient\HttpClient;
 use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Endpoints\IntegrationWebhook;
 use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Cart;
+use MercadoPago\Woocommerce\Helpers\I18n;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Hooks\Blocks;
@@ -19,6 +21,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Endpoints\CheckoutCustom;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\CredentialsStates;
 use MercadoPago\Woocommerce\Helpers\Intervals;
 use MercadoPago\Woocommerce\Helpers\Cron;
 use MercadoPago\Woocommerce\Helpers\Currency;
@@ -109,6 +112,8 @@ class Dependencies
 
     public Country $countryHelper;
 
+    public CredentialsStates $credentialsStatesHelper;
+
     public CreditsEnabled $creditsEnabledHelper;
 
     public Cron $cronHelper;
@@ -157,6 +162,8 @@ class Dependencies
 
     public Intervals $intervalsHelper;
 
+    public IntegrationWebhook $integrationWebhook;
+
     /**
      * Dependencies constructor
      */
@@ -194,6 +201,7 @@ class Dependencies
         $this->scriptsHook             = $this->setScripts();
         $this->adminTranslations       = $this->setAdminTranslations();
         $this->storeTranslations       = $this->setStoreTranslations();
+        $this->credentialsStatesHelper = $this->setCredentialsStatesHelper();
         $this->gatewaysHelper          = $this->setGatewaysHelper();
         $this->funnel                  = $this->setFunnel();
         $this->gatewayHook             = $this->setGateway();
@@ -211,8 +219,11 @@ class Dependencies
         $this->creditsEnabledHelper    = $this->setCreditsEnabled();
         $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
         $this->cartHelper              = $this->setCart();
+        $this->integrationWebhook      = $this->setIntegrationWebhook();
         $this->hooks                   = $this->setHooks();
         $this->helpers                 = $this->setHelpers();
+
+        I18n::boot($this->adminTranslations, $this->storeTranslations);
     }
 
     /**
@@ -467,11 +478,11 @@ class Dependencies
             $this->urlHelper,
             $this->nonceHelper,
             $this->currentUserHelper,
-            $this->sessionHelper,
             $this->logs,
             $this->downloader,
             $this->funnel,
             $this->stringsHelper,
+            $this->credentialsStatesHelper,
             $this->intervalsHelper
         );
     }
@@ -553,6 +564,7 @@ class Dependencies
             $this->cacheHelper,
             $this->cartHelper,
             $this->countryHelper,
+            $this->credentialsStatesHelper,
             $this->creditsEnabledHelper,
             $this->currencyHelper,
             $this->currentUserHelper,
@@ -573,5 +585,25 @@ class Dependencies
     private function setDownloader(): Downloader
     {
         return new Downloader($this->logs, $this->currentUserHelper);
+    }
+
+    private function setIntegrationWebhook(): IntegrationWebhook
+    {
+        return new IntegrationWebhook(
+            $this->sellerConfig,
+            $this->storeConfig,
+            $this->requesterHelper,
+            $this->endpointsHook,
+            $this->logs,
+            $this->pluginHook
+        );
+    }
+
+    private function setCredentialsStatesHelper(): CredentialsStates
+    {
+        return new CredentialsStates(
+            $this->adminTranslations,
+            $this->sellerConfig
+        );
     }
 }

@@ -102,6 +102,7 @@ class BasicGateway extends AbstractGateway
                 'description' => $this->adminTranslations['header_description'],
             ],
             'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
+            'card_invalid_credentials' => $this->getCredentialExpiredNotice(),
             'card_settings' => [
                 'type'  => 'mp_card_info',
                 'value' => [

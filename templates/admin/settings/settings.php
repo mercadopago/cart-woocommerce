@@ -1,5 +1,7 @@
 <?php
 
+use MercadoPago\Woocommerce\Helpers\Template;
+
 /**
  * @var array $headerTranslations
  * @var array $credentialsTranslations
@@ -8,6 +10,7 @@
  * @var array $testModeTranslations
  * @var array $supportTranslations
  *
+ * @var string $automaticCredentialsTemplate
  * @var string $publicKeyProd
  * @var string $accessTokenProd
  * @var string $publicKeyTest
@@ -34,6 +37,7 @@
  *
  * @var array $pluginLogs
  * @var array $allowedHtmlTags
+ * @var array $credentialsState
  *
  * @see \MercadoPago\Woocommerce\Admin\Settings
  */
@@ -176,78 +180,49 @@ if (!defined('ABSPATH')) {
                 <span class="mp-settings-font-color mp-settings-title-blocks mp-settings-margin-right">
                     <?= wp_kses($credentialsTranslations['title_credentials'], $allowedHtmlTags) ?>
                 </span>
-                <img class="mp-settings-margin-left mp-settings-margin-right" id="mp-settings-icon-credentials">
+                <img class="mp-settings-margin-left mp-settings-margin-right <?= $credentialsState['credentials_state'] === 'linked' ? 'mp-settings-icon-success' : 'mp-settings-icon-warning' ?>"
+                    id="mp-settings-icon-credentials">
             </div>
             <div class="mp-settings-title-container mp-settings-margin-left">
-                <img class="mp-settings-icon-open" id="mp-credentials-arrow-up">
+                <img aria-hidden="true" class="mp-settings-icon-open" id="mp-credentials-arrow-up">
             </div>
         </div>
 
         <div id="mp-step-1" class="mp-settings-block-align-top" style="display: none;">
-            <div>
-                <p class="mp-settings-subtitle-font-size mp-settings-title-color">
-                    <?= wp_kses($credentialsTranslations['first_text_subtitle_credentials'], $allowedHtmlTags) ?>
-                    <a id="mp-get-credentials-link" class="mp-settings-blue-text" target="_blank" href="<?= wp_kses($links['mercadopago_credentials'], $allowedHtmlTags) ?>">
-                        <?= wp_kses($credentialsTranslations['text_link_credentials'], $allowedHtmlTags) ?>
-                    </a>
-                    <?= wp_kses($credentialsTranslations['second_text_subtitle_credentials'], $allowedHtmlTags) ?>
-                </p>
-            </div>
             <div class="mp-message-credentials"></div>
 
             <div id="msg-info-credentials"></div>
 
-            <div class="mp-container">
-                <div class="mp-block mp-block-flex mp-settings-margin-right">
-                    <p class="mp-settings-title-font-size">
-                        <b><?= wp_kses($credentialsTranslations['title_credentials_prod'], $allowedHtmlTags) ?></b>
-                    </p>
-                    <p class="mp-settings-label mp-settings-title-color mp-settings-margin-bottom">
-                        <?= wp_kses($credentialsTranslations['subtitle_credentials_prod'], $allowedHtmlTags) ?>
-                    </p>
-
-                    <fieldset class="mp-settings-fieldset">
-                        <label for="mp-public-key-prod" class="mp-settings-label mp-settings-font-color">
-                            <?= wp_kses($credentialsTranslations['public_key'], $allowedHtmlTags) ?> <span style="color: red;">&nbsp;*</span>
-                        </label>
-                        <input type="text" id="mp-public-key-prod" class="mp-settings-input" value="<?= wp_kses($publicKeyProd, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($credentialsTranslations['placeholder_public_key'], $allowedHtmlTags) ?>" />
-                    </fieldset>
-
-                    <fieldset>
-                        <label for="mp-access-token-prod" class="mp-settings-label mp-settings-font-color">
-                            <?= wp_kses($credentialsTranslations['access_token'], $allowedHtmlTags) ?> <span style="color: red;">&nbsp;*</span>
-                        </label>
-                        <input type="text" id="mp-access-token-prod" class="mp-settings-input" value="<?= wp_kses($accessTokenProd, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($credentialsTranslations['placeholder_access_token'], $allowedHtmlTags) ?>" />
-                    </fieldset>
-                </div>
-
-                <div class="mp-block mp-block-flex mp-settings-margin-left">
-                    <p class="mp-settings-title-font-size">
-                        <b><?= wp_kses($credentialsTranslations['title_credentials_test'], $allowedHtmlTags) ?></b>
-                    </p>
-                    <p class="mp-settings-label mp-settings-title-color mp-settings-margin-bottom">
-                        <?= wp_kses($credentialsTranslations['subtitle_credentials_test'], $allowedHtmlTags) ?>
-                    </p>
-
-                    <fieldset class="mp-settings-fieldset">
-                        <label for="mp-public-key-test" class="mp-settings-label mp-settings-font-color">
-                            <?= wp_kses($credentialsTranslations['public_key'], $allowedHtmlTags) ?>
-                        </label>
-                        <input type="text" id="mp-public-key-test" class="mp-settings-input" value="<?= wp_kses($publicKeyTest, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($credentialsTranslations['placeholder_public_key'], $allowedHtmlTags) ?>" />
-                    </fieldset>
-
-                    <fieldset>
-                        <label for="mp-access-token-test" class="mp-settings-label mp-settings-font-color">
-                            <?= wp_kses($credentialsTranslations['access_token'], $allowedHtmlTags) ?>
-                        </label>
-                        <input type="text" id="mp-access-token-test" class="mp-settings-input" value="<?= wp_kses($accessTokenTest, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($credentialsTranslations['placeholder_access_token'], $allowedHtmlTags) ?>" />
-                    </fieldset>
-                </div>
+            <div class="mp-settings-auto-content" id="auto-credentials-container">
+                <?php
+                    Template::render('admin/settings/credentials-component', [
+                        'credentialsState' => $credentialsState,
+                        'allowedHtmlTags' => $allowedHtmlTags,
+                    ]);
+                    ?>
             </div>
 
-            <button class="mp-button mp-button-large" id="mp-btn-credentials">
-                <?= wp_kses($credentialsTranslations['button_credentials'], $allowedHtmlTags) ?>
-            </button>
+            <div class="mp-credentials-link-modal" id="mp-credentials-modal">
+                <?php
+                    Template::render('admin/settings/credentials-consult-component', [
+                        'credentialsState' => $credentialsState,
+                        'allowedHtmlTags' => $allowedHtmlTags,
+                        'publicKeyProd' => $publicKeyProd,
+                        'accessTokenProd' => $accessTokenProd,
+                        'publicKeyTest' => $publicKeyTest,
+                        'accessTokenTest' => $accessTokenTest,
+                        'credentialsTranslations' => $credentialsTranslations,
+                        'credentialsLinkComponents' => $credentialsLinkComponents,
+                        'links' => $links,
+                    ]);
+                    ?>
+            </div>
+
+            <?php if ($credentialsState['credentials_state'] == 'linked') : ?>
+                <button class="mp-button mp-button-large" id="mp-btn-credentials">
+                    <?= wp_kses($credentialsTranslations['button_credentials'], $allowedHtmlTags) ?>
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -646,7 +621,7 @@ if (!defined('ABSPATH')) {
 <script>
     const downloadBtn = document.getElementById('downloadSelected');
     const checkboxes2 = document.querySelectorAll('input[name="selected_files[]"]');
-    const allCheckbox = document.getElementById('selectAllCheckbox')
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     downloadBtn.addEventListener('click', function() {
         const selectedFiles = [];
         checkboxes2.forEach((cb) => {
@@ -655,7 +630,7 @@ if (!defined('ABSPATH')) {
                 cb.checked = false;
             }
         });
-        allCheckbox.checked = false;
+        selectAllCheckbox.checked = false;
         if (selectedFiles.length > 0) {
             const url = "<?php echo esc_url(admin_url('admin-ajax.php')); ?>";
             const params = new URLSearchParams();

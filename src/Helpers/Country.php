@@ -81,7 +81,7 @@ class Country
      *
      * @return string
      */
-    public function countryToSiteId($country): string
+    public static function countryToSiteId($country): string
     {
         $countryToSiteId = [
             self::SITE_ID_MLA => self::COUNTRY_SUFFIX_MLA,
@@ -146,7 +146,7 @@ class Country
      *
      * @return string
      */
-    public function getWoocommerceDefaultCountry(): string
+    public static function getWoocommerceDefaultCountry(): string
     {
         $wcCountry = get_option('woocommerce_default_country', '');
 
@@ -157,6 +157,12 @@ class Country
         return $wcCountry;
     }
 
+    public static function getWoocommerceCountryAsMercadoPagoSiteId()
+    {
+        $country = self::getWoocommerceDefaultCountry();
+        return self::countryToSiteId($country);
+    }
+
     /**
      * Get Plugin default country
      *
@@ -165,7 +171,7 @@ class Country
     public function getPluginDefaultCountry(): string
     {
         $siteId  = $this->seller->getSiteId();
-        $country = $this->getWoocommerceDefaultCountry();
+        $country = self::getWoocommerceDefaultCountry();
 
         if ($siteId) {
             $country = $this->siteIdToCountry($siteId);

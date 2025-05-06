@@ -10,7 +10,7 @@ test('test pending payment with chopro, binary must be on, other payment options
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproModal(page, PENDING.master, PENDING.formMLB);
+  await choproModal(page, PENDING.master, PENDING.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   await expect(changePaymentMethod).toBeVisible();
@@ -24,7 +24,7 @@ test('test pending payment with chopro modal - binary must be on, close button c
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproModal(page, PENDING.master, PENDING.formMLB);
+  await choproModal(page, PENDING.master, PENDING.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
   const cancelPayment = modal.locator('#mp-close-btn');
