@@ -8,7 +8,7 @@ const { PENDING } = credit_card_scenarios;
 
 test('test pending payment with chopro, binary must be on, payment must be rejected and decline message must be shown', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await choproRedirect(page, PENDING.master, PENDING.formMLB);
+  await choproRedirect(page, PENDING.master, PENDING.form);
 
   const returnButton = page.locator('.group-back-url a');
   await expect(returnButton).toBeVisible();

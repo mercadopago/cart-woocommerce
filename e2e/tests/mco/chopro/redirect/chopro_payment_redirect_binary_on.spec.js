@@ -8,7 +8,7 @@ const { PENDING } = credit_card_scenarios;
 
 test('Given a guest user, When their payment with chopro is pending and binary is on, Should show the decline message', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproRedirect(page, PENDING.masterMCO, PENDING.formMCO);
+  await choproRedirect(page, PENDING.masterMCO, PENDING.form);
 
   const returnButton = page.locator('.group-back-url a');
   await expect(returnButton).toBeVisible();
@@ -21,7 +21,7 @@ test('Given a guest user, When their payment with chopro is pending and binary i
 
 test('Given a guest user, When their payment with chopro is pending and binary is on, Should show other payment options', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserDefault);
-  await choproRedirect(page, PENDING.masterMCO, PENDING.formMCO);
+  await choproRedirect(page, PENDING.masterMCO, PENDING.form);
 
   const changePaymentMethod = page.locator('#group_card_ui').getByRole('button', { name: 'Pagar con otro medio' });
   await expect(changePaymentMethod).toBeVisible();

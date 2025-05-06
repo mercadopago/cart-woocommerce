@@ -1,116 +1,115 @@
-const CVV_LENGTH_THREE = '123';
-const CVV_LENGTH_FOUR = '1234';
+import generateCardScenarios from "./generate_card_scenarios";
 
-const APPROVED = {
-  amex: {
-    number: process.env.CC_AMEX,
-    code: CVV_LENGTH_FOUR,
-    date: "12/30"
-  },
+const MLC = generateCardScenarios({
   master: {
-    number: process.env.CC_MASTER,
-    code: CVV_LENGTH_THREE,
-    date: "12/30"
+    number: process.env.CC_MASTER_MLC,
   },
-  masterMCO: {
-    number: process.env.CC_MASTER_MCO,
-    code: CVV_LENGTH_THREE,
-    date: "12/30"
+  amex: {
+    number: process.env.CC_AMEX_MLC,
   },
   visa: {
     number: process.env.CC_VISA,
-    code: CVV_LENGTH_THREE,
-    date: "12/27"
   },
   form: {
-    name: "APRO",
-    docType: process.env.DOC_TYPE_OUTRO,
-    docNumber: process.env.DOC_NUMBER_OUTRO
+    docType: process.env.DOC_TYPE_MLC,
+    docNumber: process.env.DOC_NUMBER_MLC
+  }
+});
+
+const MPE = generateCardScenarios({
+  master: {
+    number: process.env.CC_MASTER_MPE,
   },
-  formMLB: {
-    name: "APRO",
-    docType: process.env.DOC_TYPE_MLB,
-    docNumber: process.env.DOC_NUMBER_MLB
+  amex: {
+    number: process.env.CC_AMEX_MPE,
   },
-  formMLA: {
-    name: "APRO",
+  visa: {
+    number: process.env.CC_VISA,
+  },
+  form: {
+    docType: process.env.DOC_TYPE_MPE,
+    docNumber: process.env.DOC_NUMBER_MPE
+  }
+});
+
+const MLA = generateCardScenarios({
+  master: {
+    number: process.env.CC_MASTER,
+  },
+  amex: {
+    number: process.env.CC_AMEX,
+  },
+  visa: {
+    number: process.env.CC_VISA,
+  },
+  form: {
     docType: process.env.DOC_TYPE_MLA,
     docNumber: process.env.DOC_NUMBER_MLA
+  }
+});
+
+const MCO = generateCardScenarios({
+  master: {
+    number: process.env.CC_MASTER_MCO,
   },
-  formMCO: {
-    name: "APRO",
+  amex: {
+    number: process.env.CC_AMEX_MCO,
+  },
+  visa: {
+    number: process.env.CC_VISA,
+  },
+  form: {
     docType: process.env.DOC_TYPE_MCO,
     docNumber: process.env.DOC_NUMBER_MCO
   }
-}
+});
 
-const REJECTED = {
-  ...APPROVED,
-  form: {
-    ...APPROVED.form,
-    name: "OTHE"
-  },
-  formMLB: {
-    ...APPROVED.formMLB,
-    name: "OTHE"
-  },
-  formMLA: {
-    ...APPROVED.formMLA,
-    name: "OTHE",
-  },
-  formMCO: {
-    ...APPROVED.formMCO,
-    name: "OTHE",
-  }
-}
-
-const PENDING = {
-  ...APPROVED,
-  form: {
-    ...APPROVED.form,
-    name: "CONT"
-  },
-  formMLB: {
-    ...APPROVED.formMLB,
-    name: "CONT"
-  },
-  formMLA: {
-    ...APPROVED.formMLA,
-    name: "CONT",
-  },
-  formMCO: {
-    ...APPROVED.formMCO,
-    name: "CONT",
-  }
-}
-
-// form fields doctType and docNumber only appear when card number is filled
-const EMPTY_FIELDS ={
+const MLB = generateCardScenarios({
   master: {
-    ...APPROVED.master,
-    code: "",
-    date: "",
+    number: process.env.CC_MASTER,
+  },
+  amex: {
+    number: process.env.CC_AMEX,
+  },
+  visa: {
+    number: process.env.CC_VISA,
   },
   form: {
-    name: "",
-    docType: process.env.DOC_TYPE_OUTRO,
-    docNumber: ""
-  },
-  formMLB: {
-    name: "",
     docType: process.env.DOC_TYPE_MLB,
-    docNumber: ""
-  },
-  formMLA: {
-    name: "",
-    docType: process.env.DOC_TYPE_MLA,
-    docNumber: ""
-  },
-  formMCO: {
-    name: "",
-    docType: process.env.DOC_TYPE_MCO,
-    name: "",
+    docNumber: process.env.DOC_NUMBER_MLB
   }
-}
+});
 
-export default {APPROVED, REJECTED, PENDING, EMPTY_FIELDS};
+const MLU = generateCardScenarios({
+  master: {
+    number: process.env.CC_MASTER_MLU,
+  },
+  visa: {
+    number: process.env.CC_VISA_MLU,
+  },
+  amex: {
+    number: process.env.CC_AMEX,
+  },
+  form: {
+    docType: process.env.DOC_TYPE_MLU,
+    docNumber: process.env.DOC_NUMBER_MLU
+  }
+});
+
+const OUTRO = generateCardScenarios({
+  master: {
+    number: process.env.CC_MASTER,
+  },
+  amex: {
+    number: process.env.CC_AMEX,
+  },
+  visa: {
+    number: process.env.CC_VISA,
+  },
+  form: {
+    docType: process.env.DOC_TYPE_OUTRO,
+    docNumber: process.env.DOC_NUMBER_OUTRO
+  }
+});
+
+export default { MLC, MPE, MLA, MCO, MLB, MLU, OUTRO };

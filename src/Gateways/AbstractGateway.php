@@ -888,4 +888,36 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             'amount'        => $amount,
         ];
     }
+
+    /**
+     * If the seller has valid credentials, it returns an array of an empty $form_fields field.
+     * If not, then it returns a warning to inform the seller must update their credentials to be able to sell.
+     *
+     * @return array
+     */
+    protected function getCredentialExpiredNotice(): array
+    {
+        $publicKeyProd = $this->mercadopago->sellerConfig->getCredentialsPublicKeyProd();
+
+        if (!$this->mercadopago->sellerConfig->isExpiredPublicKey($publicKeyProd)) {
+            return [
+                'type'  => 'title',
+                'value' => '',
+            ];
+        }
+
+        return [
+            'type'  => 'mp_card_info',
+            'value' => [
+                'title'       => $this->mercadopago->adminTranslations->credentialsSettings['title_invalid_credentials'],
+                'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['subtitle_invalid_credentials'],
+                'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['button_invalid_credentials'],
+                'button_url'  => $this->links['admin_settings_page'],
+                'icon'        => 'mp-icon-badge-warning',
+                'color_card'  => 'mp-alert-color-error',
+                'size_card'   => 'mp-card-body-size',
+                'target'      => '_blank',
+            ]
+        ];
+    }
 }

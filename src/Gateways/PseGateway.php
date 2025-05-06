@@ -99,6 +99,7 @@ class PseGateway extends AbstractGateway
                 'description' => $this->adminTranslations['header_description'],
             ],
             'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
+            'card_invalid_credentials' => $this->getCredentialExpiredNotice(),
             'card_settings'  => [
                 'type'  => 'mp_card_info',
                 'value' => [
@@ -360,7 +361,7 @@ class PseGateway extends AbstractGateway
         global $mercadopago;
 
         $siteId  = $mercadopago->sellerConfig->getSiteId();
-        $country = $mercadopago->helpers->country->getWoocommerceDefaultCountry();
+        $country = $mercadopago->helpers->country::getWoocommerceDefaultCountry();
 
         if ($siteId === 'MCO' || ($siteId === '' && $country === 'CO')) {
             return true;

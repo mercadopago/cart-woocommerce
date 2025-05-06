@@ -9,7 +9,7 @@ const { APPROVED, PENDING, REJECTED, EMPTY_FIELDS } = credit_card_scenarios;
 test('test successful payment as guest with master, payment must be approved and success page must be shown', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserMLB);
 
-  await payWithCard(page, APPROVED.master, APPROVED.formMLB);
+  await payWithCard(page, APPROVED.master, APPROVED.form);
 
   await expect(page.locator('#main')).toHaveText(/Order received/i);
 });
@@ -18,7 +18,7 @@ test('test successful payment as guest with amex, payment must be approved and s
 
   await fillStepsToCheckout(page, url, guestUserMLB);
 
-  await payWithCard(page, APPROVED.amex, APPROVED.formMLB);
+  await payWithCard(page, APPROVED.amex, APPROVED.form);
 
   await expect(page.locator('#main')).toHaveText(/Order received/i);
 });
@@ -27,7 +27,7 @@ test('test pending payment as guest with master - binary must be off, payment mu
 
   await fillStepsToCheckout(page, url, guestUserMLB);
 
-  await payWithCard(page, PENDING.master, PENDING.formMLB);
+  await payWithCard(page, PENDING.master, PENDING.form);
 
   await expect(page.locator('#main')).toHaveText(/Order received/i);
 });
@@ -36,7 +36,7 @@ test('test pending payment as guest with amex - binary must be off, payment must
 
   await fillStepsToCheckout(page, url, guestUserMLB);
 
-  await payWithCard(page, APPROVED.amex, APPROVED.formMLB);
+  await payWithCard(page, APPROVED.amex, APPROVED.form);
 
   await expect(page.locator('#main')).toHaveText(/Order received/i);
 });
@@ -45,7 +45,7 @@ test('test with filled card but other fields empty - master, it must show help i
 
   await fillStepsToCheckout(page, url, guestUserMLB);
 
-  await payWithCard(page, EMPTY_FIELDS.master, EMPTY_FIELDS.formMLB);
+  await payWithCard(page, EMPTY_FIELDS.master, EMPTY_FIELDS.form);
 
   const cardHolderHelper = page.locator('#mp-card-holder-div input-helper');
   const installmentsHelper = page.locator('#mp-installments-helper');
@@ -69,7 +69,7 @@ test('test payment rejected by other reasons - amex, payment must be rejected an
 
   await fillStepsToCheckout(page, url, guestUserMLB);
 
-  await payWithCard(page, REJECTED.amex, REJECTED.formMLB);
+  await payWithCard(page, REJECTED.amex, REJECTED.form);
 
   await expect(page.locator('div.wc-block-components-notices .wc-block-store-notice')).toHaveText(/The card issuing bank declined the payment/i);
 });

@@ -15,7 +15,7 @@ export const choproModal = async function(page, card, form) {
 
 async function selectChoProAndRedirect(page) {
   await page.getByRole('radio', { name: 'Your saved cards or money' }).check();
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(3000);
   await page.getByRole('button', { name: 'Place Order' }).click();
 }
 
@@ -24,14 +24,14 @@ async function selectCreditCardAndFillData(page, card, form) {
   await page.locator('#other-options').getByRole('button', { name: 'Cartão de crédito' }).click();
   await page.waitForLoadState();
   await page.frameLocator('iframe[name="cardNumber"]').locator('[name="cardNumber"]').fill(card.number);
-  await page.locator('#cardholderName').fill(form.name);
+  await page.locator('#fullname').fill(form.name);
   await page.frameLocator('iframe[name="expirationDate"]').locator('[name="expirationDate"]').fill(card.date);
 
   await page.waitForLoadState();
   await page.frameLocator('iframe[name="securityCode"]').locator('[name="securityCode"]').fill(card.code);
-  await page.locator('#cardholderIdentificationNumber-dropdown').click();
-  await page.getByTestId('popper').getByText('CPF').click();
-  await page.locator('#cardholderIdentificationNumber').fill(form.docNumber);
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.waitForLoadState();
+  await page.locator('#number').fill(form.docNumber);
 }
 
 async function mpInstallmentsAndPaymentFlow(page){

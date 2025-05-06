@@ -44,6 +44,8 @@ class AdminTranslations
 
     public array $configurationTips = [];
 
+    public array $credentialsLinkComponents = [];
+
     public array $validateCredentials = [];
 
     public array $updateCredentials = [];
@@ -53,6 +55,8 @@ class AdminTranslations
     public array $currency = [];
 
     public array $statusSync = [];
+
+    public array $countries = [];
 
     public array $links;
 
@@ -82,11 +86,13 @@ class AdminTranslations
         $this->setYapeGatewaySettingsTranslations();
         $this->setTestModeSettingsTranslations();
         $this->setConfigurationTipsTranslations();
+        $this->setCredentialsLinkComponentsTranslations();
         $this->setUpdateCredentialsTranslations();
         $this->setValidateCredentialsTranslations();
         $this->setUpdateStoreTranslations();
         $this->setCurrencyTranslations();
         $this->setStatusSyncTranslations();
+        $this->setCountriesTranslations();
     }
 
     /**
@@ -213,22 +219,29 @@ class AdminTranslations
         $this->credentialsSettings = [
             'public_key'                        => __('Public Key', 'woocommerce-mercadopago'),
             'access_token'                      => __('Access Token', 'woocommerce-mercadopago'),
-            'title_credentials'                 => __('1. Enter your credentials to integrate your store with Mercado Pago', 'woocommerce-mercadopago'),
+            'close_modal'                       => __('Close', 'woocommerce-mercadopago'),
+            'title_credentials'                 => __('1. Link your store to a Mercado Pago account', 'woocommerce-mercadopago'),
+            'linked_account'                    => __('Linked account', 'woocommerce-mercadopago'),
+            'more_information'                  => __('For more information, check the', 'woocommerce-mercadopago'),
             'title_credentials_prod'            => __('Production credentials', 'woocommerce-mercadopago'),
             'title_credentials_test'            => __('Test credentials', 'woocommerce-mercadopago'),
             'first_text_subtitle_credentials'   => __('To start selling, ', 'woocommerce-mercadopago'),
             'second_text_subtitle_credentials'  => __('in the fields below. If you don’t have credentials yet, you’ll have to create them from this link.', 'woocommerce-mercadopago'),
             'subtitle_credentials_test'         => __('Enable Mercado Pago checkouts for test purchases in the store.', 'woocommerce-mercadopago'),
             'subtitle_credentials_prod'         => __('Enable Mercado Pago checkouts to receive real payments in the store.', 'woocommerce-mercadopago'),
-            'placeholder_public_key'            => __('Paste your Public Key here', 'woocommerce-mercadopago'),
-            'placeholder_access_token'          => __('Paste your Access Token here', 'woocommerce-mercadopago'),
-            'button_credentials'                => __('Save and continue', 'woocommerce-mercadopago'),
+            'placeholder_credentials'           => __('Paste the key here', 'woocommerce-mercadopago'),
+            'show_access_token'                 => __('Show Access Token', 'woocommerce-mercadopago'),
+            'hide_access_token'                 => __('Hide Access Token', 'woocommerce-mercadopago'),
+            'button_credentials'                => __('Continue', 'woocommerce-mercadopago'),
             'card_info_subtitle'                => __('You have to enter your production credentials to start selling with Mercado Pago.', 'woocommerce-mercadopago'),
             'card_info_button_text'             => __('Enter credentials', 'woocommerce-mercadopago'),
             'card_homolog_title'                => __('Activate your credentials to be able to sell', 'woocommerce-mercadopago'),
             'card_homolog_subtitle'             => __('Credentials are codes that you must enter to enable sales. Go below on Activate Credentials. On the next screen, use again the Activate Credentials button and fill in the fields with the requested information.', 'woocommerce-mercadopago'),
             'card_homolog_button_text'          => __('Activate credentials', 'woocommerce-mercadopago'),
-            'text_link_credentials'             => __('copy and paste your production credentials ', 'woocommerce-mercadopago')
+            'text_link_credentials'             => __('copy and paste your production credentials ', 'woocommerce-mercadopago'),
+            'title_invalid_credentials'         => __('Your WooCommerce store can’t receive payments', 'woocommerce-mercadopago'),
+            'subtitle_invalid_credentials'      => __('To start selling again, update your store’s link to Mercado Pago.', 'woocommerce-mercadopago'),
+            'button_invalid_credentials'        => __('Update link', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -1037,8 +1050,62 @@ class AdminTranslations
             'invalid_store_tips'       => __('Store business fields could not be validated', 'woocommerce-mercadopago'),
             'valid_payment_tips'       => __('At least one payment method is enabled', 'woocommerce-mercadopago'),
             'invalid_payment_tips'     => __('No payment method enabled', 'woocommerce-mercadopago'),
-            'valid_credentials_tips'   => __('Credentials fields are valid', 'woocommerce-mercadopago'),
-            'invalid_credentials_tips' => __('Credentials fields could not be validated', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Set credentials link components translations
+     *
+     * @return void
+     */
+    private function setCredentialsLinkComponentsTranslations(): void
+    {
+        $this->credentialsLinkComponents = [
+            'initial_title'                         => __('We’ll take you to Mercado Pago to choose the account where you’ll receive the money from your sales', 'woocommerce-mercadopago'),
+            'initial_description'                   => __('It will only take a few minutes.', 'woocommerce-mercadopago'),
+            'initial_button'                        => __('Start linking', 'woocommerce-mercadopago'),
+            'linked_title'                          => __('Well done! You linked your Mercado Pago account to receive the money from your sales', 'woocommerce-mercadopago'),
+            'linked_description'                    => __('Now, finish setting up the sections below to start selling.', 'woocommerce-mercadopago'),
+            'linked_store_name'                     => __('Store name', 'woocommerce-mercadopago'),
+            'linked_store_contact'                  => __('Store contact', 'woocommerce-mercadopago'),
+            'linked_account'                        => __('Linked account', 'woocommerce-mercadopago'),
+            'linked_button'                         => __('Switch account', 'woocommerce-mercadopago'),
+            'linked_more_info'                      => __('For more information, check the', 'woocommerce-mercadopago'),
+            'linked_data'                           => __('linking process details', 'woocommerce-mercadopago'),
+            'failed_title'                          => __('We’re sorry. It wasn’t possible to link your store to a Mercado Pago account', 'woocommerce-mercadopago'),
+            'failed_description'                    => __('Try linking it again to receive the money from your sales.', 'woocommerce-mercadopago'),
+            'failed_button'                         => __('Try again', 'woocommerce-mercadopago'),
+            'update_title'                          => __('Update your store’s link to Mercado Pago', 'woocommerce-mercadopago'),
+            'update_description'                    => __('This action is necessary to keep receiving payments in your store as usual.', 'woocommerce-mercadopago'),
+            'update_button'                         => __('Update link', 'woocommerce-mercadopago'),
+            'link_updated_title'                    => __('You updated your Mercado Pago account to receive the money from your sales', 'woocommerce-mercadopago'),
+            'link_updated_description'              => __('Keep selling as usual.', 'woocommerce-mercadopago'),
+            'previously_linked_title'               => __('You linked your Mercado Pago account to receive the money from your sales', 'woocommerce-mercadopago'),
+            'previously_linked_description'         => __('If you haven’t done so yet, finish setting up the sections below to start selling.', 'woocommerce-mercadopago'),
+            'linked_failed_to_load_store_name'      => __('Something went wrong', 'woocommerce-mercadopago'),
+            'linked_failed_to_load_store_contact'   => __('It wasn’t possible to upload your details.', 'woocommerce-mercadopago'),
+            'could_not_validate_link_title'         => __('We can’t display your credentials at the moment', 'woocommerce-mercadopago'),
+            'could_not_validate_link_description'   => __('Please try again in a few minutes.', 'woocommerce-mercadopago'),
+            'credentials_modal_title'               => __('Linking process details', 'woocommerce-mercadopago'),
+            'credentials_modal_description'         => __('During the linking process, an app is created to identify your store within Mercado Pago and your credentials (authentication keys) are generated. These enable you to receive payments or run tests in your checkout.', 'woocommerce-mercadopago'),
+            'credentials_modal_app_name'            => __('App name', 'woocommerce-mercadopago'),
+            'credentials_modal_title_prod'          => __('Production credentials', 'woocommerce-mercadopago'),
+            'credentials_modal_subtitle_prod'       => __('These enable the checkout to receive real payments in your store.', 'woocommerce-mercadopago'),
+            'credentials_modal_title_test'          => __('Testing credentials', 'woocommerce-mercadopago'),
+            'credentials_modal_subtitle_test'       => __('These enable you to simulate payments in the checkout or run tests.', 'woocommerce-mercadopago'),
+            'credentials_modal_subtitle_empty_test' => __('Test credentials allow you to simulate payments or run tests at checkout. Find and copy them from the', 'woocommerce-mercadopago'),
+            'credentials_modal_footer_text'         => __('Are you a developer? Access the', 'woocommerce-mercadopago'),
+            'credentials_modal_dashboard_link'      => __('Developer Dashboard', 'woocommerce-mercadopago'),
+            'change_country'                        => __('Change country', 'woocommerce-mercadopago'),
+            'button_store_credentials'              => __('Store', 'woocommerce-mercadopago'),
+            'select_country'                        => [
+                'title'       => __('Before linking, select your store’s location', 'woocommerce-mercadopago'),
+                'description' => __('In which country is your Mercado Pago account registered?', 'woocommerce-mercadopago'),
+                'placeholder' => __('Select a country', 'woocommerce-mercadopago'),
+                'empty_error' => __('Select a country to proceed.', 'woocommerce-mercadopago'),
+                'success'     => __('You selected {{country}} as the country for your store.', 'woocommerce-mercadopago'),
+                'continue'    => __('Continue', 'woocommerce-mercadopago'),
+            ]
         ];
     }
 
@@ -1065,13 +1132,15 @@ class AdminTranslations
     private function setUpdateCredentialsTranslations(): void
     {
         $this->updateCredentials = [
-            'credentials_updated'              => __('Credentials were updated', 'woocommerce-mercadopago'),
-            'no_test_mode_title'               => __('Your store has exited Test Mode and is making real sales in Production Mode.', 'woocommerce-mercadopago'),
-            'no_test_mode_subtitle'            => __('To test the store, re-enter both test credentials.', 'woocommerce-mercadopago'),
-            'invalid_credentials_title'        => __('Invalid credentials', 'woocommerce-mercadopago'),
-            'invalid_credentials_subtitle'     => __('See our manual to learn', 'woocommerce-mercadopago'),
-            'invalid_credentials_link_message' => __('how to enter the credentials the right way.', 'woocommerce-mercadopago'),
-            'for_test_mode'                    => __(' for test mode', 'woocommerce-mercadopago'),
+            'credentials_updated'                           => __('You saved your credentials.', 'woocommerce-mercadopago'),
+            'no_test_mode_title'                            => __('Your store has exited Test Mode and is making real sales in Production Mode.', 'woocommerce-mercadopago'),
+            'no_test_mode_subtitle'                         => __('To test the store, re-enter both test credentials.', 'woocommerce-mercadopago'),
+            'invalid_credentials'                           => __('Something went wrong. Please paste your key again.', 'woocommerce-mercadopago'),
+            'invalid_credentials_empty'                     => __('Fill out this field.', 'woocommerce-mercadopago'),
+            'invalid_credentials_not_test'                  => __('This is a production key, please paste a test key instead.', 'woocommerce-mercadopago'),
+            'invalid_credentials_not_same_client_id'        => __('Enter the test key that appears in the application created for this store.', 'woocommerce-mercadopago'),
+            'invalid_credentials_title'                     => __('Invalid credentials', 'woocommerce-mercadopago'),
+            'for_test_mode'                                 => __(' for test mode', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -1315,6 +1384,19 @@ class AdminTranslations
             'support_modal_next_page'          =>  __('Next Page', 'woocommerce-mercadopago'),
             'support_modal_prev_page'          =>  __('Previous page', 'woocommerce-mercadopago'),
             'support_modal_no_content'         =>  __('The plugin has not yet recorded any logs in your store.', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    private function setCountriesTranslations(): void
+    {
+        $this->countries = [
+            'MLA' => __('Argentina', 'woocommerce-mercadopago'),
+            'MLB' => __('Brazil', 'woocommerce-mercadopago'),
+            'MLC' => __('Chile', 'woocommerce-mercadopago'),
+            'MCO' => __('Colombia', 'woocommerce-mercadopago'),
+            'MLM' => __('Mexico', 'woocommerce-mercadopago'),
+            'MPE' => __('Peru', 'woocommerce-mercadopago'),
+            'MLU' => __('Uruguay', 'woocommerce-mercadopago'),
         ];
     }
 }

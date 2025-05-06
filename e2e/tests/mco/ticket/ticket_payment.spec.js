@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { mco } from '../../../data/meli_sites';
-import { fillStepsToCheckoutMulti } from '../../../flows/fill_steps_to_checkout';
+import { fillStepsToCheckout } from '../../../flows/fill_steps_to_checkout';
 import payWithInvoice from '../../../flows/mco/pay_with_invoice';
 
 const { url, guestUserMCO } = mco;
 
 test('test successful payment with invoice', async ({ page }) => {
-    await fillStepsToCheckoutMulti(page, url, guestUserMCO, '40');
+    await fillStepsToCheckout(page, url, guestUserMCO);
     await payWithInvoice(page);
     
     await expect(page.locator('#submit-payment')).toContainText('Print ticket');
@@ -15,7 +15,7 @@ test('test successful payment with invoice', async ({ page }) => {
 });
 
 test('test invoice invalid amount', async ({ page }) => {
-    await fillStepsToCheckoutMulti(page, url, guestUserMCO, '1');
+    await fillStepsToCheckout(page, url, guestUserMCO);
     await payWithInvoice(page, guestUserMCO);
     
     await expect(page.locator('div').filter({ hasText: /^Invalid transaction_amount$/ }).nth(1)).toBeVisible();

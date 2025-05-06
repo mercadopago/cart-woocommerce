@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Cart;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\CredentialsStates;
 use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
@@ -27,6 +28,8 @@ if (!defined('ABSPATH')) {
 
 class Helpers
 {
+    private static $instance;
+
     public Actions $actions;
 
     public Cache $cache;
@@ -34,6 +37,8 @@ class Helpers
     public Cart $cart;
 
     public Country $country;
+
+    public CredentialsStates $credentialsStates;
 
     public CreditsEnabled $creditsEnabled;
 
@@ -68,6 +73,7 @@ class Helpers
         Cache $cache,
         Cart $cart,
         Country $country,
+        CredentialsStates $credentialsStates,
         CreditsEnabled $creditsEnabled,
         Currency $currency,
         CurrentUser $currentUser,
@@ -83,23 +89,44 @@ class Helpers
         Url $url,
         Intervals $intervals
     ) {
-        $this->actions        = $actions;
-        $this->cache          = $cache;
-        $this->cart           = $cart;
-        $this->country        = $country;
-        $this->creditsEnabled = $creditsEnabled;
-        $this->currency       = $currency;
-        $this->currentUser    = $currentUser;
-        $this->gateways       = $gateways;
-        $this->images         = $images;
-        $this->links          = $links;
-        $this->nonce          = $nonce;
-        $this->notices        = $notices;
-        $this->paymentMethods = $paymentMethods;
-        $this->requester      = $requester;
-        $this->session        = $session;
-        $this->strings        = $strings;
-        $this->url            = $url;
-        $this->intervals      = $intervals;
+        $this->actions              = $actions;
+        $this->cache                = $cache;
+        $this->cart                 = $cart;
+        $this->country              = $country;
+        $this->credentialsStates    = $credentialsStates;
+        $this->creditsEnabled       = $creditsEnabled;
+        $this->currency             = $currency;
+        $this->currentUser          = $currentUser;
+        $this->gateways             = $gateways;
+        $this->images               = $images;
+        $this->links                = $links;
+        $this->nonce                = $nonce;
+        $this->notices              = $notices;
+        $this->paymentMethods       = $paymentMethods;
+        $this->requester            = $requester;
+        $this->session              = $session;
+        $this->strings              = $strings;
+        $this->url                  = $url;
+        $this->intervals            = $intervals;
+
+        static::$instance = $this;
+    }
+
+    /**
+     * Get a helper
+     *
+     * Example:
+     * ```php
+     *  // Returns MercadoPago\Woocommerce\Helpers\Url instance
+     *  Helpers::get('url');
+     * ```
+     */
+    public static function get(string $helper)
+    {
+        if (!static::$instance) {
+            throw new \UnexpectedValueException("Helpers instance not defined");
+        }
+
+        return static::$instance->$helper;
     }
 }

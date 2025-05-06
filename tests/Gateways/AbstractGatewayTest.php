@@ -3,9 +3,11 @@
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
 use PHPUnit\Framework\TestCase;
+use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
+use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 use MercadoPago\Woocommerce\Helpers;
 use Mockery;
@@ -17,10 +19,20 @@ use WP_Mock;
  */
 class AbstractGatewayTest extends TestCase
 {
+    private $sellerConfigMock;
+    private $mercadopagoMock;
+    private $adminTranslationsMock;
+    private $gateway;
+
     public function setUp(): void
     {
         WoocommerceMock::setupClassMocks();
         WP_Mock::setUp();
+
+        $this->mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
+        $this->sellerConfigMock = Mockery::mock(Seller::class);
+        $this->adminTranslationsMock = Mockery::mock(AdminTranslations::class);
+        $this->gateway = Mockery::mock(AbstractGateway::class)->makePartial();
     }
 
     public function tearDown(): void
@@ -113,5 +125,77 @@ class AbstractGatewayTest extends TestCase
         $result = $gateway->process_payment(1);
         $this->assertEquals($result, []);
         $this->assertIsArray($result);
+    }
+
+    public function testValidCredentialsReturnEmptyNotice()
+    {
+
+        $this->mercadopagoMock->sellerConfig = $this->sellerConfigMock;
+        $this->mercadopagoMock->adminTranslations = $this->adminTranslationsMock;
+
+        $this->sellerConfigMock->shouldReceive('getCredentialsPublicKeyProd')
+        ->once()
+        ->andReturn('test_public_key');
+
+        $this->sellerConfigMock->shouldReceive('isExpiredPublicKey')
+            ->once()
+            ->with('test_public_key')
+            ->andReturn(false);
+
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $result = $this->gateway->getCredentialExpiredNotice();
+
+        $this->assertEquals(['type' => 'title', 'value' => ''], $result);
+    }
+
+    public function testReturnsNoticeForExpiredCredentials()
+    {
+        $this->mercadopagoMock->sellerConfig = $this->sellerConfigMock;
+        $this->mercadopagoMock->adminTranslations = $this->adminTranslationsMock;
+
+        $this->sellerConfigMock->shouldReceive('getCredentialsPublicKeyProd')
+        ->once()
+        ->andReturn('test_public_key');
+
+        $this->sellerConfigMock->shouldReceive('isExpiredPublicKey')
+            ->once()
+            ->with('test_public_key')
+            ->andReturn(true);
+
+        $this->adminTranslationsMock->credentialsSettings = [
+            'title_invalid_credentials' => 'Invalid Credentials',
+            'subtitle_invalid_credentials' => 'Please update your credentials.',
+            'button_invalid_credentials' => 'Update Credentials'
+        ];
+
+        $linksMock = [
+            'admin_settings_page' => 'http://localhost.com/settings'
+        ];
+
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $reflection = new \ReflectionClass($this->gateway);
+        $property = $reflection->getProperty('links');
+        $property->setAccessible(true);
+        $property->setValue($this->gateway, $linksMock);
+
+        $result = $this->gateway->getCredentialExpiredNotice();
+
+        $expected = [
+            'type'  => 'mp_card_info',
+            'value' => [
+                'title'       => 'Invalid Credentials',
+                'subtitle'    => 'Please update your credentials.',
+                'button_text' => 'Update Credentials',
+                'button_url'  => 'http://localhost.com/settings',
+                'icon'        => 'mp-icon-badge-warning',
+                'color_card'  => 'mp-alert-color-error',
+                'size_card'   => 'mp-card-body-size',
+                'target'      => '_blank',
+            ]
+        ];
+
+        $this->assertEquals($expected, $result);
     }
 }

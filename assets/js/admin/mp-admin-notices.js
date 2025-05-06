@@ -1,4 +1,4 @@
-/* globals ajaxurl, woocommerce_mercadopago_admin_notice_js_params */
+/* globals jQuery, ajaxurl, woocommerce_mercadopago_admin_notice_js_params */
 jQuery(document).ready(function ($) {
   $(document).on('click', '.mp-rating-notice', function () {
     $.post(ajaxurl, {

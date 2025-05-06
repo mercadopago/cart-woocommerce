@@ -8,7 +8,7 @@ const { PENDING } = credit_card_scenarios;
 
 test('test pending payment as guest with master, payment must be rejected and decline message must be shown', async ({page}) => {
   await fillStepsToCheckout(page, url, guestUserMLB);
-  await payWithCard(page, PENDING.master, PENDING.formMLB);
+  await payWithCard(page, PENDING.master, PENDING.form);
 
   await expect(page.locator('div.wc-block-components-notices .wc-block-store-notice')).toHaveText(/The card issuing bank declined the payment/i);
 });

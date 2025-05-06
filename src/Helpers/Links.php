@@ -87,7 +87,7 @@ class Links
             'mercadopago_home'                 => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/home',
             'mercadopago_costs'                => self::MP_URL_PREFIX . $countryConfig['suffix_url'] . '/costs-section',
             'mercadopago_test_user'            => self::MP_URL . '/developers/panel/test-users',
-            'mercadopago_credentials'          => self::MP_URL_PREFIX . $countryConfig['suffix_url'] .  '/settings/account/credentials',
+            'mercadopago_credentials'          => self::MP_URL_PREFIX . $countryConfig['suffix_url'] .  '/developers/panel/app',
             'mercadopago_developers'           => self::MP_DEVELOPERS_URL,
             'mercadopago_pix'                  => self::MP_URL_PREFIX . '.com.br/ferramentas-para-vender/aceitar-pix',
             'mercadopago_debts'                => self::MP_URL_PREFIX . '.com.ar/cuotas',
