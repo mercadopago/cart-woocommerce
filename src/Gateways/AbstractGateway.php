@@ -897,27 +897,44 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      */
     protected function getCredentialExpiredNotice(): array
     {
-        $publicKeyProd = $this->mercadopago->sellerConfig->getCredentialsPublicKeyProd();
+        $result = [
+            'type'  => 'title',
+            'value' => '',
+        ];
 
-        if (!$this->mercadopago->sellerConfig->isExpiredPublicKey($publicKeyProd)) {
-            return [
-                'type'  => 'title',
-                'value' => '',
+        if (
+            !$this->mercadopago->hooks->admin->isAdmin() ||
+            !$this->mercadopago->helpers->url->validatePage('wc-settings') ||
+            !$this->mercadopago->helpers->url->validateSection($this->id)
+        ) {
+            return $result;
+        }
+
+        $cached_result = get_transient('mp_credentials_expired_result');
+        if ($cached_result !== false) {
+            return $cached_result;
+        }
+
+        $publicKeyProd = $this->mercadopago->sellerConfig->getCredentialsPublicKeyProd();
+        $result = [];
+
+        if ($this->mercadopago->sellerConfig->isExpiredPublicKey($publicKeyProd)) {
+            $result = [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->mercadopago->adminTranslations->credentialsSettings['title_invalid_credentials'],
+                    'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['subtitle_invalid_credentials'],
+                    'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['button_invalid_credentials'],
+                    'button_url'  => $this->links['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-warning',
+                    'color_card'  => 'mp-alert-color-error',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_blank',
+                ]
             ];
         }
 
-        return [
-            'type'  => 'mp_card_info',
-            'value' => [
-                'title'       => $this->mercadopago->adminTranslations->credentialsSettings['title_invalid_credentials'],
-                'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['subtitle_invalid_credentials'],
-                'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['button_invalid_credentials'],
-                'button_url'  => $this->links['admin_settings_page'],
-                'icon'        => 'mp-icon-badge-warning',
-                'color_card'  => 'mp-alert-color-error',
-                'size_card'   => 'mp-card-body-size',
-                'target'      => '_blank',
-            ]
-        ];
+        set_transient('mp_credentials_expired_result', $result, HOUR_IN_SECONDS);
+        return $result;
     }
 }
