@@ -934,7 +934,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             ];
         }
 
-        set_transient('mp_credentials_expired_result', $result, HOUR_IN_SECONDS);
+        set_transient('mp_credentials_expired_result', $result, 3600);
         return $result;
     }
 }

@@ -133,27 +133,38 @@ class AbstractGatewayTest extends TestCase
         $this->mercadopagoMock->sellerConfig = $this->sellerConfigMock;
         $this->mercadopagoMock->adminTranslations = $this->adminTranslationsMock;
 
-        $this->sellerConfigMock->shouldReceive('getCredentialsPublicKeyProd')
+        $this->mercadopagoMock->hooks->admin->shouldReceive('isAdmin')
         ->once()
-        ->andReturn('test_public_key');
+        ->andReturn(false);
 
-        $this->sellerConfigMock->shouldReceive('isExpiredPublicKey')
-            ->once()
-            ->with('test_public_key')
-            ->andReturn(false);
-
+        $this->gateway->id = 'test_gateway';
         $this->gateway->mercadopago = $this->mercadopagoMock;
 
         $result = $this->gateway->getCredentialExpiredNotice();
-
         $this->assertEquals(['type' => 'title', 'value' => ''], $result);
     }
 
-    public function testReturnsNoticeForExpiredCredentials()
+    public function testReturnsNoticeForExpiredCredentialsNoCache()
     {
         $this->mercadopagoMock->sellerConfig = $this->sellerConfigMock;
         $this->mercadopagoMock->adminTranslations = $this->adminTranslationsMock;
 
+        $this->mercadopagoMock->hooks->admin->shouldReceive('isAdmin')
+        ->once()
+        ->andReturn(true);
+
+        $this->mercadopagoMock->helpers->url->shouldReceive('validatePage')
+        ->once()
+        ->andReturn(true);
+
+        $this->mercadopagoMock->helpers->url->shouldReceive('validateSection')
+        ->once()
+        ->andReturn(true);
+
+        WP_Mock::userFunction('get_transient')
+        ->once()
+        ->andReturn(false);
+
         $this->sellerConfigMock->shouldReceive('getCredentialsPublicKeyProd')
         ->once()
         ->andReturn('test_public_key');
@@ -161,6 +172,10 @@ class AbstractGatewayTest extends TestCase
         $this->sellerConfigMock->shouldReceive('isExpiredPublicKey')
             ->once()
             ->with('test_public_key')
+            ->andReturn(true);
+
+        WP_Mock::userFunction('set_transient')
+            ->once()
             ->andReturn(true);
 
         $this->adminTranslationsMock->credentialsSettings = [
@@ -180,6 +195,7 @@ class AbstractGatewayTest extends TestCase
         $property->setAccessible(true);
         $property->setValue($this->gateway, $linksMock);
 
+        $this->gateway->id = 'test_gateway';
         $result = $this->gateway->getCredentialExpiredNotice();
 
         $expected = [
@@ -196,6 +212,48 @@ class AbstractGatewayTest extends TestCase
             ]
         ];
 
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testReturnsNoticeForExpiredCredentialsWithCache()
+    {
+        $this->mercadopagoMock->sellerConfig = $this->sellerConfigMock;
+        $this->mercadopagoMock->adminTranslations = $this->adminTranslationsMock;
+
+        $this->mercadopagoMock->hooks->admin->shouldReceive('isAdmin')
+        ->once()
+        ->andReturn(true);
+
+        $this->mercadopagoMock->helpers->url->shouldReceive('validatePage')
+        ->once()
+        ->andReturn(true);
+
+        $this->mercadopagoMock->helpers->url->shouldReceive('validateSection')
+        ->once()
+        ->andReturn(true);
+
+        $expected = [
+            'type'  => 'mp_card_info',
+            'value' => [
+                'title'       => 'Invalid Credentials',
+                'subtitle'    => 'Please update your credentials.',
+                'button_text' => 'Update Credentials',
+                'button_url'  => 'http://localhost.com/settings',
+                'icon'        => 'mp-icon-badge-warning',
+                'color_card'  => 'mp-alert-color-error',
+                'size_card'   => 'mp-card-body-size',
+                'target'      => '_blank',
+            ]
+        ];
+
+        WP_Mock::userFunction('get_transient')
+        ->once()
+        ->andReturn($expected);
+
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $this->gateway->id = 'test_gateway';
+        $result = $this->gateway->getCredentialExpiredNotice();
         $this->assertEquals($expected, $result);
     }
 }
