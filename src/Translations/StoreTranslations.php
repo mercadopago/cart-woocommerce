@@ -67,15 +67,16 @@ class StoreTranslations
     private function setCommonCheckoutTranslations(): void
     {
         $this->commonCheckout = [
-            'discount_title'     => __('discount of', 'woocommerce-mercadopago'),
-            'fee_title'          => __('fee of', 'woocommerce-mercadopago'),
-            'text_concatenation' => __('and', 'woocommerce-mercadopago'),
-            'shipping_title'     => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
-            'store_discount'     => __('Discount provided by store', 'woocommerce-mercadopago'),
-            'cart_discount'      => __('Mercado Pago Discount', 'woocommerce-mercadopago'),
-            'cart_commission'    => __('Mercado Pago Commission', 'woocommerce-mercadopago'),
-            'message_error_amount'    => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
-
+            'discount_title'                   => __('discount of', 'woocommerce-mercadopago'),
+            'fee_title'                        => __('fee of', 'woocommerce-mercadopago'),
+            'text_concatenation'               => __('and', 'woocommerce-mercadopago'),
+            'shipping_title'                   => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
+            'store_discount'                   => __('Discount provided by store', 'woocommerce-mercadopago'),
+            'cart_discount'                    => __('Mercado Pago Discount', 'woocommerce-mercadopago'),
+            'cart_commission'                  => __('Mercado Pago Commission', 'woocommerce-mercadopago'),
+            'currency_conversion_error'        => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
+            'terms_and_conditions_description' => __('By continuing, you agree to our', 'woocommerce-mercadopago'),
+            'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -87,36 +88,17 @@ class StoreTranslations
     private function setBasicCheckoutTranslations(): void
     {
         $this->basicCheckout = [
-            'test_mode_title'                                 => __('Checkout Pro in Test Mode', 'woocommerce-mercadopago'),
-            'test_mode_description'                           => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
-            'test_mode_link_text'                             => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
-            'checkout_benefits_title'                         => __('Log in to Mercado Pago and earn benefits', 'woocommerce-mercadopago'),
-            'checkout_benefits_title_phone'                   => __('Easy login', 'woocommerce-mercadopago'),
-            'checkout_benefits_subtitle_phone'                => __('Log in with the same email and password you use in Mercado Libre.', 'woocommerce-mercadopago'),
-            'checkout_benefits_alt_phone'                     => __('Blue phone image', 'woocommerce-mercadopago'),
-            'checkout_benefits_title_wallet'                  => __('Quick payments', 'woocommerce-mercadopago'),
-            'checkout_benefits_subtitle_wallet'               => __('Use your saved cards, Pix or available balance.', 'woocommerce-mercadopago'),
-            'checkout_benefits_subtitle_wallet_2'             => __('Use your available Mercado Pago Wallet balance or saved cards.', 'woocommerce-mercadopago'),
-            'checkout_benefits_subtitle_wallet_3'             => __('Use your available money or saved cards.', 'woocommerce-mercadopago'),
-            'checkout_benefits_alt_wallet'                    => __('Blue wallet image', 'woocommerce-mercadopago'),
-            'checkout_benefits_title_protection'              => __('Protected purchases', 'woocommerce-mercadopago'),
-            'checkout_benefits_title_protection_2'            => __('Reliable purchases', 'woocommerce-mercadopago'),
-            'checkout_benefits_subtitle_protection'           => __('Get your money back in case you don\'t receive your product.', 'woocommerce-mercadopago'),
-            'checkout_benefits_subtitle_protection_2'         => __('Get help if you have a problem with your purchase.', 'woocommerce-mercadopago'),
-            'checkout_benefits_alt_protection'                => __('Blue protection image', 'woocommerce-mercadopago'),
-            'checkout_benefits_title_phone_installments'      => __('Installments option', 'woocommerce-mercadopago'),
-            'checkout_benefits_subtitle_phone_installments'   => __('Pay with or without a credit card.', 'woocommerce-mercadopago'),
-            'checkout_benefits_subtitle_phone_installments_2' => __('Interest-free installments with selected banks.', 'woocommerce-mercadopago'),
-            'checkout_benefits_alt_phone_installments'        => __('Blue phone installments image', 'woocommerce-mercadopago'),
-            'payment_methods_title'                           => __('Available payment methods', 'woocommerce-mercadopago'),
-            'checkout_redirect_text'                          => __('By continuing, you will be taken to Mercado Pago to safely complete your purchase.', 'woocommerce-mercadopago'),
-            'checkout_redirect_alt'                           => __('Checkout Pro redirect info image', 'woocommerce-mercadopago'),
-            'terms_and_conditions_description'                => __('By continuing, you agree to our', 'woocommerce-mercadopago'),
-            'terms_and_conditions_link_text'                  => __('Terms and conditions', 'woocommerce-mercadopago'),
-            'pay_with_mp_title'                               => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
-            'cancel_url_text'                                 => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
-            'message_error_amount'                            => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
-
+            'test_mode_title'            => __('Checkout Pro in Test Mode', 'woocommerce-mercadopago'),
+            'test_mode_description'      => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
+            'test_mode_link_text'        => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
+            'pay_with_mp_title'          => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
+            'cancel_url_text'            => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
+            'benefits_title'             => __('Discover how practical Mercado&nbspPago is', 'woocommerce-mercadopago'),
+            'first_benefit_description'  => __('<b>Pay with your saved cards</b> or account money without filling out personal details.', 'woocommerce-mercadopago'),
+            'second_benefit_description' => __('<b>Buy safely</b> with your preferred payment method.', 'woocommerce-mercadopago'),
+            'redirect_title'             => __('We\'ll take you to Mercado&nbspPago', 'woocommerce-mercadopago'),
+            'redirect_description'       => __('If you don\'t have an account, you can use your email.', 'woocommerce-mercadopago'),
+            'account_money'              => __('Account money', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -234,9 +216,8 @@ class StoreTranslations
             'test_mode_title'                                     => __('Checkout Custom in Test Mode', 'woocommerce-mercadopago'),
             'test_mode_description'                               => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
             'test_mode_link_text'                                 => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
-            'wallet_button_title'                                 => __('Pay with saved cards', 'woocommerce-mercadopago'),
-            'wallet_button_description'                           => __('Do you have a Mercado Libre account? Then use the same email and password to pay faster with Mercado Pago.', 'woocommerce-mercadopago'),
-            'wallet_button_button_text'                           => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
+            'wallet_button_title'                                 => __('Pay with your saved cards', 'woocommerce-mercadopago'),
+            'wallet_button_description'                           => __('Access Mercado Pago and pay faster without filling out forms.', 'woocommerce-mercadopago'),
             'available_payments_title'                            => __('With which card can you pay?', 'woocommerce-mercadopago'),
             'available_payments_image'                            => __('See current promotions', 'woocommerce-mercadopago'),
             'available_payments_credit_card_title'                => __('Credit cards', 'woocommerce-mercadopago'),

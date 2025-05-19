@@ -33,7 +33,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     protected WoocommerceMercadoPago $mercadopago;
 
     /**
-     * @var MercadoPagoGatewayInterface|null
+     * @var MercadoPagoGatewayInterface|AbstractGateway|null
      */
     protected $gateway;
 

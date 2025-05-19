@@ -39,7 +39,7 @@ class OrderMetadataTest extends TestCase
         $this->assertEquals('test_gateway', $result);
     }
 
-    public function testGetIsProductionModeData() 
+    public function testGetIsProductionModeData()
     {
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'is_production_mode')->andReturn(true);
         $result = $this->orderMetadata->getIsProductionModeData($this->orderMock);
@@ -135,5 +135,42 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'blocks_payment')->andReturn('blocked');
         $result = $this->orderMetadata->getPaymentBlocks($this->orderMock);
         $this->assertEquals('blocked', $result);
+    }
+
+    public function testGetSyncCronErrorCountValueReturnsZeroWhenErrorCountIsNull()
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn(null);
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'getSyncCronErrorCountValue', [$this->orderMock]);
+        $this->assertEquals(0, $result);
+    }
+
+    public function testGetSyncCronErrorCountValueReturnsZeroWhenErrorCountIsEmpty()
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn('');
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'getSyncCronErrorCountValue', [$this->orderMock]);
+        $this->assertEquals(0, $result);
+    }
+
+    public function testGetSyncCronErrorCountValueReturnsErrorCountWhenNotEmpty()
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn(3);
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'getSyncCronErrorCountValue', [$this->orderMock]);
+        $this->assertEquals(3, $result);
+    }
+
+    /**
+     * Helper method to invoke private or protected methods for testing.
+     *
+     * @param object $object
+     * @param string $methodName
+     * @param array $parameters
+     * @return mixed
+     */
+    private function invokePrivateMethod(object $object, string $methodName, array $parameters = [])
+    {
+        $reflection = new \ReflectionClass($object);
+        $method = $reflection->getMethod($methodName);
+        $method->setAccessible(true);
+        return $method->invokeArgs($object, $parameters);
     }
 }

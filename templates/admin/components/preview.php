@@ -16,5 +16,5 @@ if (!defined('ABSPATH')) {
     <p class="description">
         <?= esc_html($settings['description']); ?>
     </p>
-    <img src="<?= esc_url($settings['url']); ?>" alt="Preview image">
+    <img class="mp-preview-image" src="<?= esc_url($settings['url']); ?>" alt="Preview image">
 </div>

@@ -5,6 +5,7 @@ import { getSetting } from '@woocommerce/settings';
 import { useEffect } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
+import RowImageSelect from './components/RowImageSelect';
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-ticket';
@@ -57,13 +58,15 @@ const updateCart = (props) => {
 
 };
 
-const Label = (props) => {
-  const { PaymentMethodLabel } = props.components;
-
+const Label = () => {
   const feeTitle = decodeEntities(settings?.params?.fee_title || '');
   const text = `${defaultLabel} ${feeTitle}`;
 
-  return <PaymentMethodLabel text={text} />;
+  return (
+    <RowImageSelect
+      text={text}
+      imgSrc={settings.params.icon}/>
+  );
 };
 
 const Content = (props) => {
@@ -92,7 +95,7 @@ const Content = (props) => {
         'mercadopago_ticket[amount]': document.getElementsByName('mercadopago_ticket[amount]')[0].value,
         'mercadopago_ticket[doc_type]': document.getElementsByName('mercadopago_ticket[doc_type]')[0]?.value,
         'mercadopago_ticket[doc_number]':
-          document.getElementsByName('mercadopago_ticket[doc_number]')[0]?.value ?? 
+          document.getElementsByName('mercadopago_ticket[doc_number]')[0]?.value ??
           document.getElementsByName('mercadopago_ticket[docNumberError]')[0]?.value,
       };
 

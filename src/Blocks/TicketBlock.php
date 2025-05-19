@@ -35,6 +35,7 @@ class TicketBlock extends AbstractBlock
                 'public/checkouts/ticket-checkout',
                 $this->gateway->getPaymentFieldsParams()
             ),
+            'icon' => $this->gateway->icon
         ];
     }
 }

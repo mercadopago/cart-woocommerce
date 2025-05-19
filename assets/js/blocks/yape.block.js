@@ -14,6 +14,7 @@ import TestMode from './components/TestMode';
 import InputField from './components/InputField';
 import InputCode from './components/InputCode';
 import CheckoutNotice from './components/CheckoutNotice';
+import RowImageSelect from './components/RowImageSelect';
 
 const targetName = 'mp_checkout_blocks';
 const paymentMethodName = 'woo-mercado-pago-yape';
@@ -66,13 +67,16 @@ const updateCart = (props) => {
 };
 
 
-const Label = (props) => {
-  const { PaymentMethodLabel } = props.components;
+const Label = () => {
 
   const feeTitle = decodeEntities(settings?.params?.fee_title || '');
   const text = `${defaultLabel} ${feeTitle}`;
 
-  return <PaymentMethodLabel text={text} />;
+  return (
+    <RowImageSelect
+      text={text}
+      imgSrc={settings.params.checkout_blocks_row_image_src}/>
+  );
 };
 
 const Content = (props) => {

@@ -15,6 +15,7 @@ use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataAddress;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataUser;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataCpp;
+use MercadoPago\Woocommerce\Entities\Metadata\ThemeMetadata;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use WC_Order;
 use WC_Order_Item;
@@ -186,6 +187,7 @@ abstract class AbstractTransaction
         $user             = $this->mercadopago->helpers->currentUser->getCurrentUser();
         $userId           = $user->ID;
         $userRegistration = $user->user_registered;
+        $theme_metadata = $this->mercadopago->storeConfig->wpGetThemeNameAndVersion();
 
         $metadata = new PaymentMetadata();
         $metadata->platform                      = MP_PLATFORM_ID;
@@ -214,6 +216,9 @@ abstract class AbstractTransaction
         $metadata->blocks_payment                = $this->mercadopago->orderMetadata->getPaymentBlocks($this->order);
         $metadata->settings                      = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
         $metadata->auto_update                   = $this->mercadopago->sellerConfig->isAutoUpdate();
+        $metadata->theme                         = new ThemeMetadata();
+        $metadata->theme->theme_name             = $theme_metadata['theme_name'];
+        $metadata->theme->theme_version          = $theme_metadata['theme_version'];
         return $metadata;
     }
 

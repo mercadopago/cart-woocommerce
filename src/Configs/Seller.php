@@ -937,4 +937,34 @@ class Seller
         }
         return false;
     }
+
+    /**
+     * Get the credentials validation
+     *
+     * @return bool
+     */
+    public function isValidCredential(): bool
+    {
+        $publicKeyProd   = $this->getCredentialsPublicKeyProd();
+        $accessTokenProd = $this->getCredentialsAccessTokenProd();
+        $publicKeyTest   = $this->getCredentialsPublicKeyTest();
+        $accessTokenTest = $this->getCredentialsAccessTokenTest();
+
+        if (empty($publicKeyProd) || empty($accessTokenProd)) {
+            return false;
+        }
+
+        $prodCredentialsValidation = $this->validateCredentials($accessTokenProd, $publicKeyProd);
+        if (!isset($prodCredentialsValidation[self::STATUS]) || $prodCredentialsValidation[self::STATUS] !== 200) {
+            return false;
+        }
+
+        //If the test credential is empty, we do not validate it
+        if (empty($publicKeyTest) || empty($accessTokenTest)) {
+            return true;
+        }
+
+        $testCredentialsValidation = $this->validateCredentials($accessTokenTest, $publicKeyTest);
+        return isset($testCredentialsValidation[self::STATUS]) && $testCredentialsValidation[self::STATUS] === 200;
+    }
 }

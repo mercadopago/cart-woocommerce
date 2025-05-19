@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.1.0] - 2025-05-19
+### Changed
+- Updated the Mercado Pago branding across all checkouts, admin panel, and success pages.
+### Fixed
+- Enhanced translation loading for greater consistency across languages.
+- Improved compatibility when updating other plugins with Mercado Pago active.
+- Optimized saving of payment settings, including better support for environments with PHP debug enabled.
+### Added
+- Added Appearance theme data to metadata
+
 ## [8.0.1] - 2025-05-08
 ### Fixed
 - Improved the way we handle the credentials validation to avoid unnecessary requests.

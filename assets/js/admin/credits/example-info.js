@@ -6,17 +6,12 @@
     let gifImg = document.querySelector('#gif-image')
     let exampleFooter = document.querySelector('#credits-info-example-gif-footer')
 
-    let btnFirst = document.querySelector('#btn-first')
-    let btnSecond = document.querySelector('#btn-second')
-
     if (blueBadgeArr.length > 0) {
         verify()
 
         function verify() {
 
             if (blueBadgeArr[0].classList.contains('selected')) {
-                btnFirst.classList.add('credits-info-blue-color')
-                btnSecond.classList.remove('credits-info-blue-color')
                 iconImg[0].setAttribute('src', mp_info_admin_credits_script_params.computerBlueIcon)
                 iconImg[1].setAttribute('src', mp_info_admin_credits_script_params.cellphoneGrayIcon)
                 gifImg.setAttribute('src', mp_info_admin_credits_script_params.viewDesktop)
@@ -24,8 +19,6 @@
                 return
             }
             if (blueBadgeArr[1].classList.contains('selected')) {
-                btnSecond.classList.add('credits-info-blue-color')
-                btnFirst.classList.remove('credits-info-blue-color')
                 iconImg[1].setAttribute('src', mp_info_admin_credits_script_params.cellphoneBlueIcon)
                 iconImg[0].setAttribute('src', mp_info_admin_credits_script_params.computerGrayIcon)
                 gifImg.setAttribute('src', mp_info_admin_credits_script_params.viewMobile)

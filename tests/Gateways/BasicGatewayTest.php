@@ -180,4 +180,10 @@ class BasicGatewayTest extends TestCase
         $result = $gateway->renderOrderForm(1);
         $this->assertNull($result);
     }
+
+    public function testGetCheckoutName(): void
+    {
+        $gateway = Mockery::mock(BasicGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->assertSame($gateway->getCheckoutName(), 'checkout-basic');
+    }
 }

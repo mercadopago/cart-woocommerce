@@ -9,6 +9,7 @@ import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers
 import TestMode from './components/TestMode';
 import PixTemplate from './components/PixTemplate';
 import TermsAndConditions from './components/TermsAndConditions';
+import RowImageSelect from './components/RowImageSelect';
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-pix';
@@ -63,13 +64,15 @@ const updateCart = (props) => {
 
 };
 
-const Label = (props) => {
-  const { PaymentMethodLabel } = props.components;
-
+const Label = () => {
   const feeTitle = decodeEntities(settings?.params?.fee_title || '');
   const text = `${defaultLabel} ${feeTitle}`;
 
-  return <PaymentMethodLabel text={text} />;
+  return (
+    <RowImageSelect
+      text={text}
+      imgSrc={settings.params.icon}/>
+  );
 };
 
 const Content = (props) => {
@@ -93,7 +96,7 @@ const Content = (props) => {
   if (amount == null) {
     return (<><p className={'alert-message'}>{message_error_amount}</p></>);
   }
-  
+
   return (
     <div className="mp-checkout-container">
       <div className="mp-checkout-pix-container">

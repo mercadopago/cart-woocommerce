@@ -53,7 +53,7 @@
   flex-grow: 0;
 }
 
-.credits-info-example-blue-badge {
+.credits-info-example-badge {
   height: auto;
   width: 4px;
   border-radius: 6px;
@@ -152,13 +152,13 @@
   flex: 2;
 }
 
-.credits-info-blue-color {
-  background: #009ee3;
-  color: #009ee3;
+.selected {
+  color: var(--andes-accent-color);
 }
 
-.selected {
-  color: #009ee3;
+.selected .credits-info-example-badge {
+  background: var(--andes-accent-color);
+  color: var(--andes-accent-color);
 }
 
 .credits-info-example-text {
@@ -181,10 +181,10 @@
 }
 
 .credits-info-example-preview-pill {
-  padding: 3px 8px 2px;
-  background-color: rgba(71, 154, 209, 0.1);
+  padding: 4.5px 8px;
+  background: var(--andes-blue-ml-100);
   border: none;
-  color: rgba(0, 158, 227, 1);
+  color: var(--andes-accent-color);
   text-align: center;
   text-decoration: none;
   display: inline-block;
@@ -193,6 +193,10 @@
   width: fit-content;
   align-self: flex-end;
   margin: 0 0 24px 0 !important;
+  font-family: var(--primary-font-family);
+  font-weight: 600;
+  font-size: 12px !important;
+  line-height: 15px;
 }
 
 .credits-info-example-preview-footer {
@@ -268,8 +272,21 @@
   background: #fff;
 }
 
+.mp-tooltip-sample-image-container img {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.mp-tooltip-sample-image-container .learn-more {
+  color: var(--andes-accent-color) !important;
+}
+
 .credits-tooltip-selection-options-container {
   margin-top: 16px;
+}
+
+.credits-tooltip-selection-options-container input[type=radio]:checked::before{
+  background-color: var(--andes-accent-color);
 }
 
 .credits-tooltip-selection-options-container label {

@@ -13,6 +13,9 @@
     setHide();
     setTitleInputMaxLength();
     setTitleDescriptionStyle();
+    setSaveButtonStyle();
+    setSelectStyle();
+    setCheckboxStyle();
     handleMultipleCheckboxes();
     makeCollapsibleAdvancedConfig();
   }
@@ -48,6 +51,30 @@
         label[j].children[0].children[0].classList.add('mp-field-text-subtitle');
       }
     }
+  }
+
+  function setSaveButtonStyle() {
+    document
+      .querySelectorAll('.woocommerce-save-button')
+      .forEach(
+        btn => btn.classList.add(`mp-primary-button`)
+      );
+  }
+
+  function setSelectStyle() {
+    document
+      .querySelectorAll('.woocommerce table.form-table select')
+      .forEach(
+        el => el.classList.add(`mp-select`)
+      );
+  }
+
+  function setCheckboxStyle() {
+    document
+      .querySelectorAll('.woocommerce table.form-table input[type=checkbox]')
+      .forEach(
+        el => el.classList.add(`mp-checkbox`)
+      );
   }
 
   function setHide() {

@@ -210,7 +210,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         );
 
         $this->mercadopago->hooks->scripts->registerAdminStyle(
-            'wc_mercadopago_admin_components',
+            'mercadopago_admin_configs_css',
             $this->mercadopago->helpers->url->getCssAsset('admin/mp-admin-configs')
         );
     }
@@ -224,6 +224,11 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      */
     public function registerCheckoutScripts(): void
     {
+        $this->mercadopago->hooks->scripts->registerCheckoutStyle(
+            'mercadopago_vars_css',
+            $this->mercadopago->helpers->url->getCssAsset('public/mp-vars')
+        );
+
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_checkout_components',
             $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-plugins-components')
@@ -475,7 +480,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      */
     public function getCheckoutName(): string
     {
-        return self::CHECKOUT_NAME;
+        return static::CHECKOUT_NAME;
     }
 
     /**
@@ -767,27 +772,6 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     }
 
     /**
-     * Generating credits checkout example component
-     *
-     * @param string $key
-     * @param array $settings
-     *
-     * @return string
-     */
-    public function generate_mp_credits_checkout_example_html(string $key, array $settings): string
-    {
-        return $this->mercadopago->hooks->template->getWoocommerceTemplateHtml(
-            'admin/components/credits-checkout-example.php',
-            [
-                'field_key'   => $this->get_field_key($key),
-                'field_value' => null,
-                'settings'    => $settings,
-            ]
-        );
-    }
-
-
-    /**
      * Update Option
      *
      * @param string $key key.
@@ -883,9 +867,36 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             );
         }
 
+        return $key ? $$key : compact('currencyRatio', 'amount');
+    }
+
+    /**
+     * If the seller has valid credentials, it returns an array of an empty $form_fields field.
+     * If not, then it returns a warning to inform the seller must update their credentials to be able to sell.
+     *
+     * @return array
+     */
+    protected function getCredentialValidationNoticeOrHidden(): array
+    {
+        if ($this->mercadopago->sellerConfig->isValidCredential()) {
+            return [
+                'type'  => 'title',
+                'value' => '',
+            ];
+        }
+
         return [
-            'currencyRatio' => $currencyRatio,
-            'amount'        => $amount,
+            'type'  => 'mp_card_info',
+            'value' => [
+                'title'       => $this->mercadopago->adminTranslations->credentialsSettings['title_invalid_credentials'],
+                'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['subtitle_invalid_credentials'],
+                'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['button_invalid_credentials'],
+                'button_url'  => $this->links['admin_settings_page'],
+                'icon'        => 'mp-icon-badge-warning',
+                'color_card'  => 'mp-alert-color-error',
+                'size_card'   => 'mp-card-body-size',
+                'target'      => '_blank',
+            ]
         ];
     }
 
@@ -911,12 +922,11 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         }
 
         $cached_result = get_transient('mp_credentials_expired_result');
-        if ($cached_result !== false) {
+        if ($cached_result !== false && !empty($cached_result)) {
             return $cached_result;
         }
 
         $publicKeyProd = $this->mercadopago->sellerConfig->getCredentialsPublicKeyProd();
-        $result = [];
 
         if ($this->mercadopago->sellerConfig->isExpiredPublicKey($publicKeyProd)) {
             $result = [
@@ -934,7 +944,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             ];
         }
 
-        set_transient('mp_credentials_expired_result', $result, HOUR_IN_SECONDS);
+        set_transient('mp_credentials_expired_result', $result, 3600);
         return $result;
     }
 }

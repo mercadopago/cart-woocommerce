@@ -34,8 +34,8 @@ class YapeGateway extends AbstractGateway
         $this->storeTranslations = $this->mercadopago->storeTranslations->yapeCheckout;
 
         $this->id        = self::ID;
-        $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-yape.svg');
-        $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-yape.svg');
+        $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-yape');
+        $this->iconAdmin = $this->icon;
         $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
         $this->init_form_fields();
@@ -243,6 +243,7 @@ class YapeGateway extends AbstractGateway
             'yape_input_code_error_message2'    => $this->storeTranslations['yape_input_code_error_message2'],
             'yape_phone_number_error_message1'  => $this->storeTranslations['yape_phone_number_error_message1'],
             'yape_phone_number_error_message2'  => $this->storeTranslations['yape_phone_number_error_message2'],
+            'checkout_blocks_row_image_src'    => $this->icon,
         ];
     }
 

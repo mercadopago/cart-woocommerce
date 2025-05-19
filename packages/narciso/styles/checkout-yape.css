@@ -30,6 +30,11 @@
   margin-top: 24px;
   flex-wrap: wrap;
   margin-bottom: 24px !important;
+  max-width: inherit;
+}
+
+.mp-checkout-yape-inputs input-field {
+  width: 100% !important;
 }
 
 .mp-checkout-yape-terms-and-conditions {

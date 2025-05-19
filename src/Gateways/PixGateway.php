@@ -52,8 +52,8 @@ class PixGateway extends AbstractGateway
         $this->storeTranslations = $this->mercadopago->storeTranslations->pixCheckout;
 
         $this->id        = self::ID;
-        $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pix-blue');
-        $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pix-blue-admin');
+        $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pix');
+        $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pix-admin');
         $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
         $this->init_form_fields();
@@ -183,6 +183,7 @@ class PixGateway extends AbstractGateway
             'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
             'amount'                           => $amountAndCurrencyRatio['amount'],
             'message_error_amount'             => $this->storeTranslations['message_error_amount'],
+            'icon'                             => $this->icon,
         ];
     }
 

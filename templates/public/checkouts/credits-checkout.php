@@ -29,56 +29,7 @@ if (!defined('ABSPATH')) {
 
 ?>
 
-<div class='mp-checkout-container'>
-    <?php if ($amount === null) : ?>
-        <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
-    <?php else : ?> 
-        <div class="mp-checkout-credits-container">
-            <div class="mp-checkout-credits-content">
-                <?php if ($test_mode) : ?>
-                    <div class="mp-checkout-credits-test-mode">
-                        <test-mode
-                            title="<?= esc_html($test_mode_title) ?>"
-                            description="<?= esc_html($test_mode_description) ?>"
-                            link-text="<?= esc_html($test_mode_link_text) ?>"
-                            link-src="<?= esc_html($test_mode_link_src) ?>"
-                        >
-                        </test-mode>
-                    </div>
-                <?php endif; ?>
-
-                <div class="mp-credits-checkout-benefits">
-                    <checkout-benefits-list
-                        title="<?= esc_html($checkout_benefits_title) ?>"
-                        title-align="left"
-                        items="<?= esc_html($checkout_benefits_items) ?>"
-                        list-mode="count"
-                    >
-                    </checkout-benefits-list>
-                </div>
-
-                <div class="mp-checkout-credits-redirect">
-                    <checkout-redirect-v3
-                        title="<?= esc_html($checkout_redirect_title) ?>"
-                        description="<?= esc_html($checkout_redirect_description) ?>"
-                        src="<?= esc_html($checkout_redirect_src) ?>"
-                        alt="<?= esc_html($checkout_redirect_alt) ?>"
-                    >
-                    </checkout-redirect-v3>
-                </div>
-            </div>
-        </div>
-
-        <div class="mp-checkout-credits-terms-and-conditions">
-            <terms-and-conditions
-                description="<?= esc_html($terms_and_conditions_description) ?>"
-                link-text="<?= esc_html($terms_and_conditions_link_text) ?>"
-                link-src="<?= esc_html($terms_and_conditions_link_src) ?>"
-            >
-            </terms-and-conditions>
-        </div>
-    <?php endif; ?>         
-</div>
+<?php Template::render('public/checkouts/credits-checkout-container', $args) ?>
 
 <script type="text/javascript">
     if (document.getElementById("payment_method_woo-mercado-pago-custom")) {

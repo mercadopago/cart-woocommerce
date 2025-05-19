@@ -157,7 +157,7 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-billing-text {
 
 .mp-checkout-ticket-billing-input-number input:focus {
     outline: none !important;
-    border: none !important; /* Prevent the border from appearing */   
+    border: none !important; /* Prevent the border from appearing */
 }
 
 .mp-checkout-ticket-billing-number-toggle-checkbox {
@@ -183,4 +183,11 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-billing-text {
     width: auto !important;
     border: 0px !important;
     margin: 0 !important;
+}
+
+@media screen and (max-width: 524px) {
+    .mp-checkout-ticket-billing-input-row {
+      display: flex !important;
+      flex-wrap: wrap !important;
+    }
 }

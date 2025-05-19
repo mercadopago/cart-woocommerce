@@ -13,7 +13,6 @@ use MercadoPago\Woocommerce\Helpers\Template;
  * @var string $wallet_button_image
  * @var string $wallet_button_title
  * @var string $wallet_button_description
- * @var string $wallet_button_button_text
  * @var string $available_payments_title_icon
  * @var string $available_payments_title
  * @var string $available_payments_image
@@ -60,23 +59,20 @@ if (!defined('ABSPATH')) {
 <div class='mp-checkout-container'>
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
-    <?php else : ?> 
+    <?php else : ?>
         <div class='mp-checkout-custom-container'>
             <?php if ($test_mode) : ?>
-                <div class="mp-test-mode-container">
-                    <test-mode
-                        title="<?= esc_html($test_mode_title) ?>"
-                        description="<?= esc_html($test_mode_description) ?>"
-                        link-text="<?= esc_html($test_mode_link_text) ?>"
-                        link-src="<?= esc_html($test_mode_link_src) ?>"
-                    >
-                    </test-mode>
-                </div>
+                <test-mode
+                    title="<?= esc_html($test_mode_title) ?>"
+                    description="<?= esc_html($test_mode_description) ?>"
+                    link-text="<?= esc_html($test_mode_link_text) ?>"
+                    link-src="<?= esc_html($test_mode_link_src) ?>"
+                >
+                </test-mode>
             <?php endif; ?>
 
             <?php if ($wallet_button === 'yes') : ?>
                 <div class='mp-wallet-button-container'>
-                    <img src="<?= esc_url($wallet_button_image); ?>">
 
                     <div class='mp-wallet-button-title'>
                         <span><?= esc_html($wallet_button_title); ?></span>
@@ -88,7 +84,7 @@ if (!defined('ABSPATH')) {
 
                     <div class='mp-wallet-button-button'>
                         <button id="mp-wallet-button" onclick="submitWalletButton(event)">
-                            <?= esc_html($wallet_button_button_text); ?>
+                            <img src="<?= esc_url($wallet_button_image); ?>">
                         </button>
                     </div>
                 </div>
@@ -290,11 +286,11 @@ if (!defined('ABSPATH')) {
                     </terms-and-conditions>
                 </div>
             </div>
-        
-        
+
+
         </div>
     <?php endif; ?>
-    
+
 </div>
 
 <div id="mercadopago-utilities" style="display:none;">

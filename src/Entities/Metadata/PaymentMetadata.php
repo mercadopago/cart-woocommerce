@@ -45,4 +45,6 @@ class PaymentMetadata
     public string $blocks_payment;
 
     public bool $auto_update;
+
+    public ThemeMetadata $theme;
 }

@@ -54,7 +54,7 @@ class CheckoutNotice extends HTMLElement {
         padding: 12px !important;
         background-color: #f7f7f7 !important;
         border-radius: 8px !important;
-        border-left: 4px solid #009ee3 !important;
+        border-left: 4px solid var(--andes-accent-color) !important;
         margin-bottom: 16px !important;
       }
 

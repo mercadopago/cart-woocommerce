@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 8.0.1
+Stable tag: 8.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,8 +134,15 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.0.1 (08/05/2025) =
+= v8.1.0 (19/05/2025) =
+* Changed:
+- Updated the Mercado Pago branding across all checkouts, admin panel, and success pages.
 * Fixed:
-- Improved the way we handle the credentials validation to avoid unnecessary requests.
+- Translations load function
+- Error to update other plugins with Mercado Pago active
+- Error to save payment settings with PHP debug activated
+* Added:
+- Added Appearance theme data to metadata
+
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

@@ -10,6 +10,7 @@ import InputDocument from './components/InputDocument';
 import TermsAndConditions from './components/TermsAndConditions';
 import TestMode from './components/TestMode';
 import InputSelect from './components/InputSelect';
+import RowImageSelect from './components/RowImageSelect';
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-pse';
@@ -68,7 +69,12 @@ const Label = (props) => {
   const feeTitle = decodeEntities(settings?.params?.fee_title || '');
   const text = `${defaultLabel} ${feeTitle}`;
 
-  return <PaymentMethodLabel text={text} />;
+  return (
+      <RowImageSelect
+        text={text}
+        imgSrc={settings.params.checkout_blocks_row_image_src}/>
+  );
+
 };
 
 const Content = (props) => {

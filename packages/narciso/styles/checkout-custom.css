@@ -90,6 +90,10 @@
     padding: 24px 16px !important
 }
 
+.mp-checkout-custom-container iframe{
+  max-width: 100% !important;
+}
+
 .mp-checkout-custom-test-mode {
     padding-bottom: 32px !important
 }
@@ -117,19 +121,11 @@
     line-height: 20px !important
 }
 
-.mp-wallet-button-container img {
-    float: none !important;
-    margin: 0 !important;
-    max-height: 100% !important;
-    max-width: 100% !important;
-    padding-bottom: 16px !important;
-    position: inherit !important
-}
-
 .mp-wallet-button-container .mp-wallet-button-title span {
     color: #000000e5 !important;
-    font-size: 16px !important;
-    padding-left: 8px !important
+    font-size: 18px !important;
+    padding-left: 8px !important;
+    text-align: center;
 }
 
 .mp-wallet-button-container .mp-wallet-button-description {
@@ -139,7 +135,8 @@
     font-weight: 400 !important;
     line-height: 18px !important;
     margin: 8px 0 16px !important;
-    text-align: center
+    text-align: center;
+    max-width: 377px;
 }
 
 .mp-wallet-button-container .mp-wallet-button-button button,
@@ -149,11 +146,16 @@
     font-style: normal !important
 }
 
+.mp-wallet-button-button {
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+}
+
 .mp-wallet-button-container .mp-wallet-button-button button {
-    background: #009ee3 !important;
-    border: none !important;
-    border-radius: 4px !important;
-    color: #fff !important;
+    background: var(--andes-brand-color);
+    border: 1px solid #AB9300 !important;
+    border-radius: 6px !important;
     cursor: pointer !important;
     display: flex !important;
     flex-direction: row !important;
@@ -161,15 +163,21 @@
     font-weight: 700 !important;
     justify-content: center !important;
     line-height: 16px !important;
-    padding: 8px 12px !important;
+    padding: 10px 12px !important;
     text-align: center !important;
-    transition: all .3ms ease-in-out !important
+    transition: all .3ms ease-in-out !important;
+    max-width: 377px;
+    width: 100%;
+    height: 48px;
 }
 
 .mp-wallet-button-container .mp-wallet-button-button button:hover {
-    background-color: #007eb5 !important;
-    color: #fff !important;
-    transition: all .3ms ease-in-out !important
+    background-color: #FBD100;
+}
+
+.mp-wallet-button-container .mp-wallet-button-button button:focus {
+    box-shadow: 0px 0px 0px 2px #FFFFFF, 0px 0px 0px 3px #2968C8, 0px 0px 0px 5px rgba(65, 137, 230, 0.3);
+    outline: none !important;
 }
 
 .mp-checkout-custom-available-payments {
@@ -191,7 +199,7 @@
 
 .mp-checkout-custom-available-payments .mp-checkout-custom-available-payments-header .mp-checkout-custom-available-payments-title {
     align-items: center !important;
-    color: #7f54b3 !important;
+    color: #3483FA !important;
     display: flex;
     font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
     font-size: 14px !important;
@@ -202,7 +210,7 @@
 }
 
 .mp-checkout-custom-available-payments-text {
-    color: #7f54b3 !important;
+    color: #3483FA !important;
     font-size: 14px !important
 }
 
@@ -312,7 +320,7 @@ form div div .mp-checkout-custom-card-form-title {
 
 .spinner-card-form {
     border: 4px solid rgba(0, 0, 255, .1) !important;
-    border-top: 4px solid #009ee3 !important;
+    border-top: 4px solid var(--andes-accent-color) !important;
     border-radius: 50% !important;
     width: 40px !important;
     height: 40px !important;
@@ -321,7 +329,7 @@ form div div .mp-checkout-custom-card-form-title {
 
 .mp-spinner-3ds {
     border: 4px solid rgba(0, 0, 255, .1);
-    border-top: 4px solid #009ee3;
+    border-top: 4px solid var(--andes-accent-color);
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -415,12 +423,12 @@ form div div .mp-checkout-custom-card-form-title {
 
 .mp-alert-color-success {
     width: 6px;
-    background: #009ee3;
+    background: var(--andes-accent-color);
     border-radius: 6px 0 0 6px;
 }
 
 .mp-icon-badge-info {
-    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAA6lBMVEUAAAAAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMBnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuMAnuP///9MYiCLAAAATHRSTlMAABJBe7HX7/6wAy9+xgE3nukBHInqG0bLyQRq62sIf/b3+/nhWyAfqQKSjrUH812FQkCE9dXYUhXw1BTTwQq/CcDWr80QPeNFafzKW/JxxwAAAAFiS0dETYBoIGUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAHdElNRQfmCwkODC587ENtAAAB+ElEQVRIx5WWaV/iMBDGEwptbcsCCnSphdb7WI/dFcFjVVw8Vs33/zxO2p+CzBO6fV7O5J9jMpmJEDNJrYpVrdmOq5Tr2CtVq5IZBRQ5PD+o68Efcp164HuYIOu3RrOlmFrNxipAyLTW7iioTrvLCDKE35VRvXCBkDJaj9USxf1onpBykKRqqTaSwYyg+ZNNVaDN5HMN2t56WjSe1uh/nIPOGxePp3OEOUDx5PHZ2t7e4rHqaoLuq81c9s7u3o7NzG26QQIa7L46lk4gi9sbGvCabKb9Aw0c7DNH0yPA5/lzmO/1B3O0fAICHo+jY73C8RH3BFJU6tx8cqqB0xPuqVeE5aCQ//z1+ywGDscSVVchpfju3aqoqVKqCRvah+fnQ+gYCQeaxxcX4xHyXAp0hOFYR2mMjuEKNM3VtQau/yAfBG5u9U3f3kAAbeluooHJPdwSOvS9GXBgWJcAf8VKOWAKU8MMUGqg5DMDlHwovc0ApTd6QGYgwE/UCGRPFBQBI5AVAVBmHh51Lj0+LNrzMgMKmfOkgScWv6yQEdHtsT35nuezHeWlEhfj5+n0edEW//us3rK/oQqVvshZg/iPhvKaRPMtaJAUrJEmk69NLurHy8bHL9FiG5Vhzzz+LUSNulumsWfEapmvQ/nPyfz3Z3SZf39q4PvzDpPK5SX4V3wiAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIyLTExLTA5VDE0OjEyOjQyKzAwOjAwxiqBfAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMi0xMS0wOVQxNDoxMjo0MiswMDowMLd3OcAAAAAASUVORK5CYII=) 100% 50% no-repeat transparent;
+    background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iOCIgZmlsbD0iIzM0ODNGQSIvPgo8cGF0aCBkPSJNNy44ODU0NCA1LjQ0MTU0QzguMzYwNjMgNS40NDE1NCA4Ljc0NTg1IDUuMDU2MzEgOC43NDU4NSA0LjU4MTEyQzguNzQ1ODUgNC4xMDU5MiA4LjM2MDYzIDMuNzIwNyA3Ljg4NTQ0IDMuNzIwN0M3LjQxMDI0IDMuNzIwNyA3LjAyNTAyIDQuMTA1OTIgNy4wMjUwMiA0LjU4MTEyQzcuMDI1MDIgNS4wNTYzMSA3LjQxMDI0IDUuNDQxNTQgNy44ODU0NCA1LjQ0MTU0WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTEwLjI2MDkgMTEuMTQ0NlYxMi4xNDQ2SDUuODAyNzNWMTEuMTQ0Nkg3LjI3MTI4VjcuNDI2NTdINi4xNjA5NFY2LjQyNjU3SDguNzI5NjFWMTEuMTQ0NkgxMC4yNjA5WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==') 100% 50% no-repeat transparent;
     background-size: 18px;
     width: 24px;
     height: 18px;
