@@ -460,4 +460,47 @@ class Store
     {
         $this->options->set(self::CODE_CHALLENGE, $codeChallenge);
     }
+
+    /**
+     * @param string $stylesheet
+     * @param string $theme_root
+     *
+     * @return array<string>
+     */
+    public function wpGetThemeNameAndVersion($stylesheet = '', $theme_root = ''): array
+    {
+        global $wp_theme_directories;
+        define('THEME_NAME_MP', 'Name');
+        define('THEME_VERSION_MP', 'Version');
+
+        if (empty($stylesheet)) {
+            $stylesheet = get_stylesheet();
+        }
+
+        if (empty($theme_root)) {
+            $theme_root = get_raw_theme_root($stylesheet);
+            if (false === $theme_root) {
+                $theme_root = WP_CONTENT_DIR . '/themes';
+            } elseif (! in_array($theme_root, (array) $wp_theme_directories, true)) {
+                $theme_root = WP_CONTENT_DIR . $theme_root;
+            }
+        }
+
+        $theme_data = $this->createWpThemeInstance($stylesheet, $theme_root);
+
+        $theme_metadata = ['theme_name' => $theme_data->get(THEME_NAME_MP), 'theme_version' => $theme_data->get(THEME_VERSION_MP)];
+
+        return $theme_metadata;
+    }
+
+    /**
+     * @param string $stylesheet
+     * @param string $theme_root
+     *
+     * @return \WP_Theme
+     */
+    public function createWpThemeInstance($stylesheet = '', $theme_root = ''): \WP_Theme
+    {
+        return new \WP_Theme($stylesheet, $theme_root);
+    }
 }

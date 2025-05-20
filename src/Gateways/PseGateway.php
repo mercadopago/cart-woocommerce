@@ -47,10 +47,10 @@ class PseGateway extends AbstractGateway
         $this->adminTranslations = $this->mercadopago->adminTranslations->pseGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->pseCheckout;
 
-        $this->id    = self::ID;
-        $this->icon  = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pse');
-        $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pse');
-        $this->title = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->id        = self::ID;
+        $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-pse');
+        $this->iconAdmin = $this->icon;
+        $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
         $this->init_form_fields();
         $this->payment_scripts($this->id);
@@ -247,7 +247,9 @@ class PseGateway extends AbstractGateway
         $currentUser     = $this->mercadopago->helpers->currentUser->getCurrentUser();
         $loggedUserEmail = ($currentUser->ID != 0) ? $currentUser->user_email : null;
         $amountAndCurrencyRatio = $this->getAmountAndCurrency();
-        return ['test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
+        return [
+            'checkout_blocks_row_image_src'    => $this->icon,
+            'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
             'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
             'test_mode_description'            => $this->storeTranslations['test_mode_description'],
             'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],

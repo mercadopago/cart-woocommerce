@@ -6,20 +6,21 @@ repos:
       - id: pre_commit_hook
         stages: [ pre-commit ]
       - id: post_commit_hook
-        stages: [ post-commit ]
+        stages: [post-commit]
 
   - repo: git@github.com:melisource/fury_datasec-git-hooks
     rev: 1.2.2
     hooks:
       - id: pre_commit_hook
-        stages: [ pre-commit ]
+        stages: [commit]
       - id: post_commit_hook
-        stages: [ post-commit ]
+        stages: [post-commit]
 
+  # DO NOT REMOVE.
   - repo: local
     hooks:
       - id: add-index
         name: Add index.php
-        stages: [ pre-commit ]
+        stages: [pre-commit]
         language: script
         entry: ./bin/add-index.sh

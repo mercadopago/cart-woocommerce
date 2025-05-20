@@ -116,4 +116,36 @@ class TicketGatewayTest extends TestCase
         $this->assertFalse(TicketGateway::isAvailable());
     }
 
+    public function testBuildPaycashPaymentString()
+    {
+        $storeTranslationsMock = [
+            'paycash_concatenator' => ' e ',
+        ];
+
+        $paymentMethodsMock = [
+            [
+                'id' => 'paycash',
+                'payment_places' => [
+                    ['name' => 'Place 1'],
+                    ['name' => 'Place 2'],
+                    ['name' => 'Place 3'],
+                ],
+            ],
+        ];
+
+        $sellerConfigMock = Mockery::mock(\MercadoPago\Woocommerce\Configs\Seller::class);
+        $sellerConfigMock->shouldReceive('getCheckoutTicketPaymentMethods')
+            ->andReturn($paymentMethodsMock);
+
+        $mercadopagoMock = Mockery::mock(\MercadoPago\Woocommerce\WoocommerceMercadoPago::class);
+        $mercadopagoMock->sellerConfig = $sellerConfigMock;
+
+        $gateway = Mockery::mock(TicketGateway::class)->makePartial();
+        $gateway->mercadopago = $mercadopagoMock;
+        $gateway->storeTranslations = $storeTranslationsMock;
+
+        $result = $gateway->buildPaycashPaymentString();
+
+        $this->assertEquals('Place 1, Place 2 e Place 3', $result);
+    }
 }

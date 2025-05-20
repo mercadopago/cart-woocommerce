@@ -89,6 +89,11 @@ class Notices
     {
         if (is_admin()) {
             $this->scripts->registerAdminStyle(
+                'mercadopago_vars_css',
+                $this->url->getCssAsset('public/mp-vars')
+            );
+
+            $this->scripts->registerAdminStyle(
                 'woocommerce-mercadopago-admin-notice-css',
                 $this->url->getCssAsset('admin/mp-admin-notices')
             );
@@ -180,10 +185,7 @@ class Notices
      */
     public function shouldShowNoticesForSettingsSection(): bool
     {
-        return is_admin() &&
-            (
-                $this->url->validatePage('mercadopago-settings')
-            );
+        return is_admin() && $this->url->validatePage('mercadopago-settings');
     }
 
     /**

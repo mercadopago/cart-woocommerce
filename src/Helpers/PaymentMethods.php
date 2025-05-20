@@ -114,23 +114,4 @@ class PaymentMethods
 
         return $treatedPaymentMethods;
     }
-
-    /**
-     * Treat basic payment methods
-     *
-     * @param array $paymentMethods
-     *
-     * @return array
-     */
-    public function treatBasicPaymentMethods(array $paymentMethods): array
-    {
-        if (CreditsGateway::isAvailable()) {
-            $paymentMethods[] = [
-                'src' => $this->url->getImageAsset('icons/icon-credits'),
-                'alt' => 'Credits image'
-            ];
-        }
-
-        return $paymentMethods;
-    }
 }

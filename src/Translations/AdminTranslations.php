@@ -383,7 +383,7 @@ class AdminTranslations
         );
 
         $this->basicGatewaySettings = [
-            'gateway_title'                             => __('Your saved cards or money available in Mercado Pago', 'woocommerce-mercadopago'),
+            'gateway_title'                             => __('Mercado Pago', 'woocommerce-mercadopago'),
             'gateway_description'                       => __('Your clients finalize their payments in Mercado Pago.', 'woocommerce-mercadopago'),
             'gateway_method_title'                      => __('Mercado Pago - Checkout Pro', 'woocommerce-mercadopago'),
             'gateway_method_description'                => __('Your clients finalize their payments in Mercado Pago.', 'woocommerce-mercadopago'),
@@ -398,7 +398,7 @@ class AdminTranslations
             'enabled_descriptions_disabled'             => $enabledDescriptionsDisabled,
             'title_title'                               => __('Title in the store Checkout', 'woocommerce-mercadopago'),
             'title_description'                         => __('Change the display text in Checkout, maximum characters: 85', 'woocommerce-mercadopago'),
-            'title_default'                             => __('Your saved cards or money available in Mercado Pago', 'woocommerce-mercadopago'),
+            'title_default'                             => __('Mercado Pago', 'woocommerce-mercadopago'),
             'title_desc_tip'                            => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
             'currency_conversion_title'                 => __('Convert Currency', 'woocommerce-mercadopago'),
             'currency_conversion_subtitle'              => __('Activate this option so that the value of the currency set in WooCommerce is compatible with the value of the currency you use in Mercado Pago.', 'woocommerce-mercadopago'),
@@ -498,7 +498,7 @@ class AdminTranslations
         );
 
         $this->creditsGatewaySettings = [
-            'gateway_title'                             => __('Installments without cards through Mercado Pago', 'woocommerce-mercadopago'),
+            'gateway_title'                             => __('Payments without a Mercado Pago card', 'woocommerce-mercadopago'),
             'gateway_description'                       => __('Your customers finish their payments on Mercado Pago.', 'woocommerce-mercadopago'),
             'gateway_method_title'                      => __('Mercado Pago - Checkout Pro', 'woocommerce-mercadopago'),
             'gateway_method_description'                => __('Your customers finish their payments on Mercado Pago.', 'woocommerce-mercadopago'),

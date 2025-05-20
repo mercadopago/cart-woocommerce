@@ -4,23 +4,12 @@ use MercadoPago\Woocommerce\Helpers\Template;
 
 /**
  * @var bool $test_mode
- * @var string $test_mode_title
- * @var string $test_mode_description
- * @var string $test_mode_link_text
- * @var string $test_mode_link_src
- * @var string $checkout_benefits_title
- * @var string $checkout_benefits_items
- * @var string $payment_methods_title
- * @var string $payment_methods_methods
- * @var string $method
- * @var string $checkout_redirect_text
- * @var string $checkout_redirect_src
- * @var string $checkout_redirect_alt
- * @var string $terms_and_conditions_description
- * @var string $terms_and_conditions_link_text
- * @var string $terms_and_conditions_link_src
- * @var string $amount
- * @var string $message_error_amount
+ * @var array $i18n
+ * @var string $site_id
+ * @var array $payment_methods
+ * @var ?float $amount
+ * @var \MercadoPago\Woocommerce\Helpers\Url $url
+ *
  * @see \MercadoPago\Woocommerce\Gateways\BasicGateway
  */
 
@@ -30,64 +19,7 @@ if (!defined('ABSPATH')) {
 
 ?>
 
-<div class='mp-checkout-container'>
-    <?php if ($amount === null) : ?>
-        <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
-    <?php else : ?> 
-        <div class="mp-checkout-pro-container">
-        <div class="mp-checkout-pro-content">
-            <?php if ($test_mode) : ?>
-                <div class="mp-checkout-pro-test-mode">
-                    <test-mode
-                        title="<?= esc_html($test_mode_title) ?>"
-                        description="<?= esc_html($test_mode_description) ?>"
-                        link-text="<?= esc_html($test_mode_link_text) ?>"
-                        link-src="<?= esc_html($test_mode_link_src) ?>"
-                    >
-                    </test-mode>
-                </div>
-            <?php endif; ?>
-
-            <div class="mp-checkout-pro-checkout-benefits">
-                <checkout-benefits
-                    title="<?= esc_html($checkout_benefits_title) ?>"
-                    title-align="center"
-                    items="<?= esc_html($checkout_benefits_items) ?>"
-                    list-mode="image"
-                >
-                </checkout-benefits>
-            </div>
-
-            <div class="mp-checkout-pro-payment-methods">
-                <payment-methods-v2
-                    title="<?= esc_html($payment_methods_title) ?>"
-                    methods="<?= esc_html($payment_methods_methods) ?>"
-                >
-                </payment-methods-v2>
-            </div>
-
-            <?php if ($method === 'redirect') : ?>
-                <div class="mp-checkout-pro-redirect">
-                    <checkout-redirect-v2
-                        text="<?= esc_html($checkout_redirect_text) ?>"
-                        src="<?= esc_html($checkout_redirect_src) ?>"
-                        alt="<?= esc_html($checkout_redirect_alt) ?>"
-                    >
-                    </checkout-redirect-v2>
-                </div>
-            <?php endif; ?>
-        </div>
-        </div>
-        <div class="mp-checkout-pro-terms-and-conditions">
-            <terms-and-conditions
-                description="<?= esc_html($terms_and_conditions_description) ?>"
-                link-text="<?= esc_html($terms_and_conditions_link_text) ?>"
-                link-src="<?= esc_html($terms_and_conditions_link_src) ?>"
-            >
-            </terms-and-conditions>
-        </div>
-    <?php endif; ?>
-</div>
+<?php Template::render('public/checkouts/basic-checkout-container', $args) ?>
 
 <script type="text/javascript">
     if (document.getElementById("payment_method_woo-mercado-pago-custom")) {

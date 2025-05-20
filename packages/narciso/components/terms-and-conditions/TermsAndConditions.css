@@ -14,11 +14,11 @@
   font-weight: normal !important;
   font-size: 14px !important;
   line-height: 18px !important;
-  color: #7f54b3 !important;
+  color: var(--andes-accent-color) !important;
   text-decoration: none !important;
 }
 
 .mp-terms-and-conditions-link:hover {
-  color: #7249a5 !important;
+  color: #3483FA !important;
   transition: all 0.3ms !important;
 }

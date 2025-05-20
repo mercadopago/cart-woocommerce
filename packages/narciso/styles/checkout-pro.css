@@ -1,3 +1,111 @@
+#mp-checkout-pro-label img {
+    width: 32px;
+    height: 32px;
+    max-height: 32px;
+}
+
+.mp-checkout-pro-container img {
+    margin: 0 !important;
+}
+
+div.mp-test-mode-container-pro {
+    padding: 24px 16px 0 !important;
+}
+
+.mp-checkout-pro-content {
+    padding: 40px !important;
+    background: rgba(255, 255, 255, 1);
+}
+
+.mp-checkout-pro-benefits-title {
+    color: rgba(0, 0, 0, 0.9);
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    line-height: 22px !important;
+    text-align: center;
+}
+
+.mp-checkout-pro-benefits {
+    display: flex;
+    gap: 24px;
+    padding: 32px 0 !important;
+    justify-content: center;
+}
+
+.mp-checkout-pro-benefit {
+    display: flex;
+    flex: 1;
+}
+
+img.mp-checkout-pro-benefit-icon {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 8px !important;
+}
+
+.mp-checkout-pro-benefit-description,
+.mp-checkout-pro-benefit-description b {
+    text-align: left;
+    color: rgba(0, 0, 0, 0.55);
+    font-size: 14px !important;
+    line-height: 18px !important;
+}
+
+.mp-checkout-pro-benefit-description {
+    font-weight: 400 !important;
+}
+
+.mp-checkout-pro-benefit-description b {
+    font-weight: 600 !important;
+}
+
+.mp-checkout-pro-payment-methods {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+img.mp-checkout-pro-payment-method-icon {
+    padding: 0 4px !important;
+    box-shadow: inset 0px 0px 0px 1px rgba(229, 229, 229, 1) !important;
+    border-radius: 4px;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+.mp-checkout-pro-redirect {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 40px !important;
+    background: rgba(245, 245, 245, 1);
+    margin: 0 16px 16px !important;
+}
+
+.mp-checkout-pro-redirect-title {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 15px !important;
+    display: flex;
+    align-items: center;
+    color: rgba(0, 0, 0, 0.55);
+    text-transform: none;
+}
+
+img.mp-checkout-pro-redirect-icon {
+    width: 20px !important;
+    margin-right: 8px !important;
+}
+
+.mp-checkout-pro-redirect-description {
+    font-weight: 400 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    color: rgba(0, 0, 0, 0.55);
+}
+
 .mp-checkout-pro-terms-and-conditions {
     align-items: center !important;
     display: flex !important;
@@ -6,56 +114,21 @@
     text-align: center !important
 }
 
-.mp-checkout-pro-container {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important
-}
-
-.mp-checkout-pro-content {
-    background-color: #fff !important;
-    padding: 24px 16px !important
-}
-
-.mp-checkout-pro-test-mode {
-    padding: 0 0 25px !important
-}
-
-.mp-checkout-pro-payment-methods {
-    padding-top: 24px !important
-}
-
-.mp-checkout-pro-redirect {
-    margin-top: 24px !important
-}
-
-.mp-checkout-pro-content {
-    padding: 24px 16px 8px !important
-}
-
-.mp-checkout-pro-payment-methods {
-    padding-top: 32px !important
-}
-
-.mp-checkout-pro-tip p{
-    font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
-    font-style: normal !important;
-    font-weight: 400 !important;
-    font-size: 12px !important;
-    line-height: 15px !important;
-    color: rgba(0, 0, 0, 0.55) !important;
-}
-
-@media only screen and (max-width: 545px) {
-    .mp-checkout-pro-tip {
-        margin-top: 24px !important;
-        text-align: center !important;
+@media only screen and (max-width: 768px) {
+    .mp-checkout-pro-content {
+        padding: 40px 20px !important;
     }
-}
 
-@media only screen and (min-width: 545px) {
-    .mp-checkout-pro-tip {
-        margin-top: 24px !important;
-        padding-left: 24px !important;
+    .mp-checkout-pro-benefits-title {
+        text-align: left;
+    }
+
+    .mp-checkout-pro-benefits {
+        flex-direction: column;
+    }
+
+    .mp-checkout-pro-redirect {
+        padding: 16px 20px !important;
+        align-items: start;
     }
 }

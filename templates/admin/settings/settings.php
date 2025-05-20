@@ -60,7 +60,6 @@ if (!defined('ABSPATH')) {
     <div class="mp-settings-header">
         <div class="mp-settings-header-img"></div>
         <div class="mp-settings-header-logo"></div>
-        <hr class="mp-settings-header-hr" />
         <p class="mp-settings-header-title"><?= wp_kses($headerTranslations['title_header'], $allowedHtmlTags) ?></p>
     </div>
 
@@ -312,7 +311,7 @@ if (!defined('ABSPATH')) {
                                     </label>
                                     <input type="text" id="mp-store-url-ipn" class="mp-settings-input" value="<?= wp_kses($customDomain, $allowedHtmlTags) ?>" placeholder="<?= wp_kses($storeTranslations['placeholder_url'], $allowedHtmlTags) ?>" />
                                     <div>
-                                        <input type="checkbox" id="mp-store-url-ipn-options" <?= checked($customDomainOptions, 'yes'); ?> />
+                                        <input type="checkbox" class="mp-settings-select-checkbox" id="mp-store-url-ipn-options" <?= checked($customDomainOptions, 'yes'); ?> />
                                         <label for="mp-store-url-ipn-options" class="mp-settings-checkbox-options"><?php echo esc_html($storeTranslations['options_url']); ?></label>
                                     </div>
                                     <span class="mp-settings-helper"><?= wp_kses($storeTranslations['helper_url'], $allowedHtmlTags) ?></span>
@@ -590,7 +589,7 @@ if (!defined('ABSPATH')) {
                 <table class="mp-settings-modal-table">
                     <thead>
                         <tr>
-                            <th class="mp-settings-modal-table-header small-cell"><input type="checkbox" id="selectAllCheckbox"></th>
+                            <th class="mp-settings-modal-table-header small-cell"><input type="checkbox" class="mp-settings-select-checkbox" id="selectAllCheckbox"></th>
                             <th class="mp-settings-modal-table-header"><?= wp_kses($supportTranslations['support_modal_table_header_2'], $allowedHtmlTags) ?></th>
                             <th class="mp-settings-modal-table-header"><?= wp_kses($supportTranslations['support_modal_table_header_3'], $allowedHtmlTags) ?></th>
                         </tr>
@@ -598,7 +597,7 @@ if (!defined('ABSPATH')) {
                     <tbody>
                         <?php foreach ($pluginLogs as $logFile) : ?>
                             <tr class="mp-settings-modal-table-row">
-                                <td class="mp-settings-modal-table-cell small-cell"><input type="checkbox" name="selected_files[]" value="<?php echo wp_kses($logFile->fileFullName, $allowedHtmlTags); ?>"></td>
+                                <td class="mp-settings-modal-table-cell small-cell"><input type="checkbox" class="mp-settings-select-checkbox" name="selected_files[]" value="<?php echo wp_kses($logFile->fileFullName, $allowedHtmlTags); ?>"></td>
                                 <td class="mp-settings-modal-table-cell"><?php echo wp_kses($logFile->fileName, $allowedHtmlTags) ?></td>
                                 <td class="mp-settings-modal-table-cell"><?php echo wp_kses($logFile->fileDate, $allowedHtmlTags) ?></td>
                             </tr>

@@ -12,6 +12,7 @@ import InputLabel from './components/InputLabel';
 import PaymentMethods from './components/PaymentMethods';
 import TermsAndConditions from './components/TermsAndConditions';
 import TestMode from './components/TestMode';
+import RowImageSelect from './components/RowImageSelect';
 
 const targetName = "mp_checkout_blocks";
 const paymentMethodName = 'woo-mercado-pago-custom';
@@ -37,13 +38,16 @@ const updateCart = (props) => {
   }, [onPaymentSetup]);
 };
 
-const Label = (props) => {
-  const { PaymentMethodLabel } = props.components;
+const Label = () => {
 
   const feeTitle = decodeEntities(settings?.params?.fee_title || '');
   const text = `${defaultLabel} ${feeTitle}`;
 
-  return <PaymentMethodLabel text={text} />;
+  return (
+    <RowImageSelect
+      text={text}
+      imgSrc={settings.params.checkout_blocks_row_image_src}/>
+  );
 };
 
 const Content = (props) => {
@@ -59,7 +63,6 @@ const Content = (props) => {
     wallet_button_image,
     wallet_button_title,
     wallet_button_description,
-    wallet_button_button_text,
     available_payments_title_icon,
     available_payments_title,
     available_payments_image,
@@ -250,19 +253,16 @@ const Content = (props) => {
       <div className={'mp-checkout-container'}>
         <div className={'mp-checkout-custom-container'}>
           {test_mode ? (
-            <div className={'mp-test-mode-container'}>
-              <TestMode
-                title={test_mode_title}
-                description={test_mode_description}
-                linkText={test_mode_link_text}
-                linkSrc={test_mode_link_src}
-              />
-            </div>
+            <TestMode
+              title={test_mode_title}
+              description={test_mode_description}
+              linkText={test_mode_link_text}
+              linkSrc={test_mode_link_src}
+            />
           ) : null}
 
           {wallet_button === 'yes' ? (
             <div className={'mp-wallet-button-container'}>
-              <img src={wallet_button_image} />
 
               <div className={'mp-wallet-button-title'}>
                 <span>{wallet_button_title}</span>
@@ -272,7 +272,7 @@ const Content = (props) => {
 
               <div className={'mp-wallet-button-button'}>
                 <button id={'mp-wallet-button'} type={'button'} onClick={submitWalletButton}>
-                  {wallet_button_button_text}
+                  <img src={wallet_button_image} />
                 </button>
               </div>
             </div>
@@ -459,7 +459,7 @@ const Content = (props) => {
           value={checkoutType}
         />
       </div>
-      
+
     </div>
   );
 };

@@ -44,7 +44,7 @@ class BasicGateway extends AbstractGateway
 
         $this->id        = self::ID;
         $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-mp');
-        $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-mp-admin');
+        $this->iconAdmin = $this->icon;
         $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
 
         $this->init_form_fields();
@@ -66,16 +66,6 @@ class BasicGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
-    }
-
-    /**
-     * Get checkout name
-     *
-     * @return string
-     */
-    public function getCheckoutName(): string
-    {
-        return self::CHECKOUT_NAME;
     }
 
     /**
@@ -287,29 +277,15 @@ class BasicGateway extends AbstractGateway
      */
     public function getPaymentFieldsParams(): array
     {
-        $checkoutBenefitsItems = $this->getBenefits();
-        $paymentMethods        = $this->getPaymentMethods();
-        $paymentMethodsTitle   = count($paymentMethods) != 0 ? $this->storeTranslations['payment_methods_title'] : '';
-        $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return [
-            'test_mode'                        => $this->mercadopago->storeConfig->isTestMode(),
-            'test_mode_title'                  => $this->storeTranslations['test_mode_title'],
-            'test_mode_description'            => $this->storeTranslations['test_mode_description'],
-            'test_mode_link_text'              => $this->storeTranslations['test_mode_link_text'],
-            'test_mode_link_src'               => $this->links['docs_integration_test'],
-            'checkout_benefits_title'          => $this->storeTranslations['checkout_benefits_title'],
-            'checkout_benefits_items'          => wp_json_encode($checkoutBenefitsItems),
-            'payment_methods_title'            => $paymentMethodsTitle,
-            'payment_methods_methods'          => wp_json_encode($paymentMethods),
-            'method'                           => $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect'),
-            'checkout_redirect_text'           => $this->storeTranslations['checkout_redirect_text'],
-            'checkout_redirect_src'            => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/cho-pro-redirect-v2'),
-            'checkout_redirect_alt'            => $this->storeTranslations['checkout_redirect_alt'],
-            'terms_and_conditions_description' => $this->storeTranslations['terms_and_conditions_description'],
-            'terms_and_conditions_link_text'   => $this->storeTranslations['terms_and_conditions_link_text'],
-            'terms_and_conditions_link_src'    => $this->links['mercadopago_terms_and_conditions'],
-            'amount'                           => $amountAndCurrencyRatio['amount'],
-            'message_error_amount'             => $this->storeTranslations['message_error_amount'],
+            'url'             => $this->mercadopago->helpers->url,
+            'i18n'            => array_merge($this->mercadopago->storeTranslations->commonCheckout, $this->storeTranslations),
+            'links'           => $this->links,
+            'method'          => $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect'),
+            'amount'          => $this->getAmountAndCurrency('amount'),
+            'site_id'         => $this->countryConfigs['site_id'],
+            'test_mode'       => $this->mercadopago->storeConfig->isTestMode(),
+            'payment_methods' => $this->getPaymentMethods(),
         ];
     }
 
@@ -396,19 +372,48 @@ class BasicGateway extends AbstractGateway
      */
     private function getPaymentMethods(): array
     {
-        $activePaymentMethods  = [];
-        $paymentMethodsOptions = $this->mercadopago->sellerConfig->getCheckoutBasicPaymentMethods();
+        $options = [
+            'MLM' => [
+                'visa',
+                'master',
+                'amex',
+                'oxxo',
+                'clabe',
+                'bancomer',
+                'account-money',
+            ],
+            'MLU' => [
+                'visa',
+                'oca',
+                'master',
+                'amex',
+                'lider',
+                'account-money',
+            ],
+            'MLB' => [
+                'pix',
+                'master',
+                'visa',
+                'elo',
+                'amex',
+                'hipercard',
+                'account-money',
+            ],
+            'ROLA' => [
+                'visa',
+                'master',
+                'amex',
+                'naranja',
+                'maestro',
+                'cabal',
+                'account-money',
+            ],
+        ];
 
-        foreach ($paymentMethodsOptions as $paymentMethodsOption) {
-            if ($this->mercadopago->hooks->options->getGatewayOption($this, $paymentMethodsOption['config']) === 'yes') {
-                $activePaymentMethods[] = [
-                    'src' => $paymentMethodsOption['image'],
-                    'alt' => $paymentMethodsOption['id']
-                ];
-            }
-        }
-
-        return $this->mercadopago->helpers->paymentMethods->treatBasicPaymentMethods($activePaymentMethods);
+        return array_filter(
+            $options[$this->countryConfigs['site_id']] ?? $options['ROLA'],
+            fn($method): bool => in_array($method, ['pix', 'account-money']) || $this->mercadopago->hooks->options->getGatewayOption($this, "ex_payments_$method") === 'yes'
+        );
     }
 
     /**
@@ -496,125 +501,6 @@ class BasicGateway extends AbstractGateway
             'value'     => $this->mercadopago->hooks->options->getGatewayOption($this, 'ex_payments_' . $paymentMethod['id'], 'yes'),
             'field_key' => $this->get_field_key('ex_payments_' . $paymentMethod['id']),
         ];
-    }
-
-    /**
-     * Get benefits items
-     *
-     * @return array
-     */
-    private function getBenefits(): array
-    {
-        $benefits = [
-            'MLB' => [
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-phone'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
-                    ],
-                ],
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-wallet'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
-                    ],
-                ],
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_protection'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-protection'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
-                    ],
-                ]
-            ],
-            'MLM' => [
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-phone', '.png', true),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
-                    ]
-                ],
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_2'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-wallet'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
-                    ]
-                ],
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_protection'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-protection'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
-                    ]
-                ]
-            ],
-            'MLA' => [
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_3'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-wallet'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
-                    ]
-                ],
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_phone_installments'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone_installments'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-phone-installments'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_phone_installments'],
-                    ]
-                ],
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_protection_2'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_protection_2'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-protection'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_protection'],
-                    ]
-                ]
-            ],
-            'ROLA' => [
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_phone'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-phone'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_phone'],
-                    ]
-                ],
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_wallet'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_wallet_3'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-wallet'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_wallet'],
-                    ]
-                ],
-                [
-                    'title'    => $this->storeTranslations['checkout_benefits_title_phone_installments'],
-                    'subtitle' => $this->storeTranslations['checkout_benefits_subtitle_phone_installments_2'],
-                    'image'    => [
-                        'src' => $this->mercadopago->helpers->url->getImageAsset('checkouts/basic/blue-phone-installments'),
-                        'alt' => $this->storeTranslations['checkout_benefits_alt_phone_installments'],
-                    ]
-                ]
-            ],
-        ];
-
-        $site = $this->mercadopago->sellerConfig->getSiteId();
-
-        return array_key_exists($site, $benefits) ? $benefits[$site] : $benefits['ROLA'];
     }
 
     /**

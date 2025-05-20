@@ -6,10 +6,6 @@ import { decodeEntities } from '@wordpress/html-entities';
 import { getSetting } from '@woocommerce/settings';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
 
-import TestMode from './components/TestMode';
-import CheckoutRedirectV3 from './components/CheckoutRedirectV3';
-import CheckoutBenefitsList from './components/CheckoutBenefitsList';
-import TermsAndConditions from './components/TermsAndConditions';
 import RowImageSelect from './components/RowImageSelect';
 
 const targetName = "mp_checkout_blocks";
@@ -69,74 +65,17 @@ const Label = () => {
   return (
     <RowImageSelect
       text={text}
-      imgSrc={settings.params.checkout_blocks_row_image_src}/>
+      imgSrc={settings.params.icon}/>
   );
 };
 
 const Content = (props) => {
   updateCart(props);
 
-  const {
-    test_mode_title,
-    test_mode_description,
-    test_mode_link_text,
-    test_mode_link_src,
-    checkout_benefits_title,
-    checkout_benefits_items,
-    checkout_redirect_title,
-    checkout_redirect_description,
-    checkout_redirect_src,
-    checkout_redirect_alt,
-    terms_and_conditions_description,
-    terms_and_conditions_link_text,
-    terms_and_conditions_link_src,
-    test_mode,
-    amount,
-    message_error_amount,
-  } = settings.params;
-
-  if (amount == null) {
-    return (<><p className={'alert-message'}>{message_error_amount}</p></>);
-  }
-  
   return (
-    <div className="mp-checkout-container">
-      <div className="mp-checkout-credits-container">
-        <div className="mp-checkout-credits-content">
-          {test_mode ? (
-            <TestMode
-              title={test_mode_title}
-              description={test_mode_description}
-              linkText={test_mode_link_text}
-              linkSrc={test_mode_link_src}
-            />
-          ) : null}
-
-          <div class="mp-credits-checkout-benefits">
-            <CheckoutBenefitsList
-              title={checkout_benefits_title}
-              items={checkout_benefits_items}
-              titleAlign="left"
-            />
-          </div>
-
-          <div class="mp-checkout-credits-redirect">
-            <CheckoutRedirectV3
-              title={checkout_redirect_title}
-              description={checkout_redirect_description}
-              src={checkout_redirect_src}
-              alt={checkout_redirect_alt} />
-          </div>
-        </div>
-      </div>
-
-      <TermsAndConditions
-        description={terms_and_conditions_description}
-        linkText={terms_and_conditions_link_text}
-        linkSrc={terms_and_conditions_link_src}
-      />
-    </div>
+    <div dangerouslySetInnerHTML={{ __html: settings.params.content }} />
   );
+
 };
 
 const mercadopagoPaymentMethod = {

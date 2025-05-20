@@ -70,7 +70,7 @@ class Links
             'docs_integration_config'       => $baseLink . '/docs/woocommerce/integration-configuration',
             'docs_integration_introduction' => $baseLink . '/docs/woocommerce/introduction',
             'reasons_refusals'              => $baseLink . '/docs/woocommerce/reasons-refusals',
-            'docs_support_faq'              => $baseLink . '/support/26097',
+            'docs_support_faq'              => $baseLink . '/support/36045',
         ];
     }
 

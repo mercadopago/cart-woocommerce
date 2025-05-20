@@ -279,6 +279,7 @@ class TicketGateway extends AbstractGateway
             'amount'                                  => $amountAndCurrencyRatio['amount'],
             'currency_ratio'                          => $amountAndCurrencyRatio['currencyRatio'],
             'message_error_amount'                    => $this->storeTranslations['message_error_amount'],
+            'icon'                                    => $this->iconAdmin,
             'billing_data_title'                      => $this->storeTranslations['billing_data_title'],
             'billing_data_checkbox_label'             => $this->storeTranslations['billing_data_checkbox_label'],
             'billing_data_postalcode_label'           => $this->storeTranslations['billing_data_postalcode_label'],

@@ -193,6 +193,11 @@ class Settings
     {
         if ($this->canLoadScriptsAndStyles()) {
             $this->scripts->registerAdminStyle(
+                'mercadopago_vars_css',
+                $this->url->getCssAsset('public/mp-vars')
+            );
+
+            $this->scripts->registerAdminStyle(
                 'mercadopago_settings_admin_css',
                 $this->url->getCssAsset('admin/mp-admin-settings')
             );

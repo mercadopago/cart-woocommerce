@@ -61,16 +61,14 @@ if (!defined('ABSPATH')) {
         </p>
     </div>
 
-    <div class="mp-col-md-12 mp_store_link">
-        <p class="">
-            <a href=<?= esc_html($link_url_one) ?> target="_blank"><?= esc_html($button_about_pix) ?></a>
-        </p>
+    <div class="mp-col-md-12">
+        <a href=<?= esc_html($link_url_one) ?> target="_blank" class="components-button is-secondary mp-secondary-button"><?= esc_html($button_about_pix) ?></a>
     </div>
 
     <div class="mp-col-md-12 mp-pb-10">
         <p class="mp-text-observation mp-gray-text">
             <?= esc_html($observation_three) ?>
-            <a href=<?= esc_html($link_url_two) ?> target="_blank"><?= esc_html($link_title_one) ?></a>
+            <a href=<?= esc_html($link_url_two) ?> target="_blank" class="mp-settings-blue-text"><?= esc_html($link_title_one) ?></a>
         </p>
     </div>
 

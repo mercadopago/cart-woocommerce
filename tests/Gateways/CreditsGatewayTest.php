@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\CreditsGateway;
 use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
-use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 use Mockery;
 use WP_Mock;
 
@@ -26,39 +25,79 @@ class CreditsGatewayTest extends TestCase
     public function testGetCreditsGifPathMobileMLA()
     {
         $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
-        $result = $gateway->getCreditsGifPath('MLA', 'mobile');
-        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/fbc84a19-acb6-44be-9ad6-f7a6d974a8ce.gif', $result);
+        $result = $gateway->getCreditsGifMobilePath('MLA');
+        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/a91b365a-73dc-461a-9f3f-f8b3329ae5d2.gif', $result);
     }
 
     public function testGetCreditsGifPathMobileMLB()
     {
         $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
 
-        $result = $gateway->getCreditsGifPath('MLB', 'mobile');
-        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/a2ddea09-7982-44e0-861c-46e12eb5c3e3.gif', $result);
+        $result = $gateway->getCreditsGifMobilePath('MLB');
+        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/8bcbd873-6ec3-45eb-bccf-47bdcd9af255.gif', $result);
     }
 
     public function testGetCreditsGifPathDesktopMLA()
     {
         $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
 
-        $result = $gateway->getCreditsGifPath('MLA', 'desktop');
-        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/800e0db6-538c-493f-90b5-e2388af13387.gif', $result);
+        $result = $gateway->getCreditsGifDesktopPath('MLA');
+        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/e6af4c4b-bede-4a6a-8711-b3d19fe423e3.gif', $result);
     }
 
     public function testGetCreditsGifPathDesktopMLB()
     {
         $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
 
-        $result = $gateway->getCreditsGifPath('MLB', 'desktop');
-        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/f428a107-17b0-4ce8-9867-5204e550ec12.gif', $result);
+        $result = $gateway->getCreditsGifDesktopPath('MLB');
+        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/8afbe775-e8c3-4fa1-b013-ab7f079872b7.gif', $result);
     }
 
     public function testGetCreditsGifPathDefault()
     {
         $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
 
-        $result = $gateway->getCreditsGifPath('UNKNOWN', 'desktop');
-        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/117d6be1-9f0a-466d-8d85-66f376d698cb.gif', $result);
+        $result = $gateway->getCreditsGifDesktopPath('UNKNOWN');
+        $this->assertEquals('https://http2.mlstatic.com/storage/cpp/static-files/e6af4c4b-bede-4a6a-8711-b3d19fe423e3.gif', $result);
+    }
+
+    public function testGetCheckoutName(): void
+    {
+        $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->assertSame($gateway->getCheckoutName(), 'checkout-credits');
+    }
+
+    public function testValidateFields(): void
+    {
+        $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->assertSame($gateway->validate_fields(), true);
+    }
+
+    public function testGetSiteId(): void
+    {
+        $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $gateway->mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
+        $gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('test');
+
+        $this->assertEquals($gateway->getSiteId(), 'TEST');
+    }
+
+    public function testGenerateMpCreditsCheckoutExampleHtml(): void
+    {
+        $gateway = Mockery::mock(CreditsGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
+
+        $gateway
+            ->shouldReceive('get_field_key')
+            ->andReturn('test');
+
+        defined('MP_PLUGIN_FILE') || define('MP_PLUGIN_FILE', dirname(__DIR__) . 'woocommerce-mercadopago.php');
+
+        $result = 'test';
+
+        WP_Mock::userFunction('wc_get_template_html')->andReturn($result);
+
+        $this->assertEquals($gateway->generate_mp_credits_checkout_example_html('key', []), $result);
     }
 }

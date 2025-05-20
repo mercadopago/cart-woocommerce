@@ -222,7 +222,7 @@ class InputCode extends HTMLElement {
 
       .mp-yape-code-input {
         width: 38px !important;
-        height: 53px !important;
+        height: 48px !important;
         text-align: center !important;
         font-size: 24px !important;
         border: 1px solid #ccc !important;
@@ -231,6 +231,7 @@ class InputCode extends HTMLElement {
         line-height: 20px !important;
         font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
         font-weight: 400 !important;
+        box-sizing: border-box;
       }
 
       .mp-yape-code-input:nth-child(4) {
@@ -238,11 +239,28 @@ class InputCode extends HTMLElement {
       }
 
       .mp-input-code-focus {
-        border: 1px solid #7f54b3 !important;
+        border: 1px solid var(--andes-accent-color) !important;
       }
 
       .mp-input-code-error {
         border: 1px solid #f23d4f !important;
+      }
+
+      @media screen and (max-width: 375px) {
+        .mp-yape-input-container {
+          flex-direction: row !important;
+          gap: 2px !important;
+        }
+
+        .mp-checkout-yape-container {
+          padding: 24px 0!important;
+        }
+      }
+
+      @media only screen and (min-width: 376px) and (max-width: 480px) {
+        .mp-checkout-yape-container {
+          padding: 24px 0!important;
+        }
       }
     `;
     this.appendChild(style);

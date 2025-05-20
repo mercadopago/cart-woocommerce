@@ -2,7 +2,41 @@
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Hooks\Options;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 
+if (!class_exists('WP_Theme')) {
+    class WP_Theme {
+        private $headers;
+        private $headers_sanitized;
+
+        public function __construct( ) {
+            $this->headers =  array( 'headers'=> array('Name' => 'Test Theme', 'Version' => '1.0.0') ) ;
+        }
+
+        public function cache_get( $headers ) {
+            return $this->headers[ $headers ];
+        }
+
+        public function get( $header ) {
+            if ( ! isset( $this->headers_sanitized ) ) {
+                $this->headers_sanitized = $this->cache_get( 'headers' );
+                if ( ! is_array( $this->headers_sanitized ) ) {
+                    $this->headers_sanitized = array();
+                }
+            }
+
+            if ( isset( $this->headers_sanitized[ $header ] ) ) {
+                return $this->headers_sanitized[ $header ];
+            }
+
+            return $this->headers_sanitized[ $header ];
+        }
+    }
+}
+
+if (!class_exists('WC_Payment_Gateway')) {
+    class WC_Payment_Gateway {}
+}
 
 class StoreTest extends TestCase
 {
@@ -63,5 +97,47 @@ class StoreTest extends TestCase
             ->willReturn($expectedCodeVerifier);
 
         $this->assertEquals($expectedCodeVerifier, $this->store->getCodeVerifier());
+    }
+
+    public function testWpGetThemeNameAndVersion(): void
+    {
+        $stylesheet = 'test-theme';
+        $themeRoot = '/path/to/themes';
+        $expectedThemeName = 'Test Theme';
+        $expectedThemeVersion = '1.0.0';
+
+        global $wp_theme_directories;
+        $wp_theme_directories = [$themeRoot];
+
+        WP_Mock::userFunction('get_stylesheet', [
+            'return' => $stylesheet,
+        ]);
+
+        WP_Mock::userFunction('get_raw_theme_root', [
+            'args' => [$stylesheet],
+            'return' => $themeRoot,
+        ]);
+
+        $store = new Store($this->options);
+
+        $result = $store->wpGetThemeNameAndVersion($stylesheet, $themeRoot);
+
+        $this->assertEquals(['theme_name' => $expectedThemeName, 'theme_version' => $expectedThemeVersion], $result);
+    }
+
+    public function testGetGatewayTitle(): void
+    {
+        $gatewayMock = $this->createMock(AbstractGateway::class);
+        $defaultTitle = 'Default Gateway Title';
+        $expectedTitle = 'Custom Gateway Title';
+
+        $this->options->expects($this->once())
+            ->method('getGatewayOption')
+            ->with($this->equalTo($gatewayMock), $this->equalTo('title'), $this->equalTo($defaultTitle))
+            ->willReturn($expectedTitle);
+
+        $result = $this->store->getGatewayTitle($gatewayMock, $defaultTitle);
+
+        $this->assertEquals($expectedTitle, $result);
     }
 }
