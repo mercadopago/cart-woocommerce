@@ -92,7 +92,7 @@ class StoreTranslations
             'test_mode_description'      => __('Use Mercado Pago\'s payment methods without real charges. ', 'woocommerce-mercadopago'),
             'test_mode_link_text'        => __('See the rules for the test mode.', 'woocommerce-mercadopago'),
             'pay_with_mp_title'          => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
-            'cancel_url_text'            => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
+            'cancel_url_text'            => __('Cancel order', 'woocommerce-mercadopago'),
             'benefits_title'             => __('Discover how practical Mercado&nbspPago is', 'woocommerce-mercadopago'),
             'first_benefit_description'  => __('<b>Pay with your saved cards</b> or account money without filling out personal details.', 'woocommerce-mercadopago'),
             'second_benefit_description' => __('<b>Buy safely</b> with your preferred payment method.', 'woocommerce-mercadopago'),
@@ -265,7 +265,7 @@ class StoreTranslations
             'title_installment_total'                             => __('Total with installments', 'woocommerce-mercadopago'),
             'text_installments'                                   => __('installments of', 'woocommerce-mercadopago'),
             'wallet_button_order_receipt_title'                   => __('Pay with Mercado Pago', 'woocommerce-mercadopago'),
-            'cancel_url_text'                                     => __('Cancel &amp; Clear Cart', 'woocommerce-mercadopago'),
+            'cancel_url_text'                                     => __('Cancel order', 'woocommerce-mercadopago'),
             'message_error_amount'                                => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
             'installments_error_invalid_amount'                   => __('This amount does not allow payments by credit card, we recommend paying with another method or changing the contents of your cart.', 'woocommerce-mercadopago'),
             'default_error_message'                               => __('Something went wrong, we recommend trying again or paying with another method.', 'woocommerce-mercadopago')

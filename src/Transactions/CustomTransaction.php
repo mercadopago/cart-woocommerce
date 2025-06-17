@@ -29,6 +29,7 @@ class CustomTransaction extends AbstractPaymentTransaction
         $this->transaction->three_d_secure_mode = 'optional';
 
         $this->setTokenTransaction();
+        $this->setPayerIdentificationInfo();
     }
 
     /**
@@ -63,6 +64,20 @@ class CustomTransaction extends AbstractPaymentTransaction
             if (isset($this->checkout['issuer'])) {
                 $this->transaction->issuer_id = $this->checkout['issuer'];
             }
+        }
+    }
+
+    /**
+     * Set payer identification info
+     * Implementation similar to TicketTransaction
+     *
+     * @return void
+     */
+    private function setPayerIdentificationInfo(): void
+    {
+        if (!empty($this->checkout['doc_type']) && !empty($this->checkout['doc_number'])) {
+            $this->transaction->payer->identification->type   = $this->checkout['doc_type'];
+            $this->transaction->payer->identification->number = $this->checkout['doc_number'];
         }
     }
 }

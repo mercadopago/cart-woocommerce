@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Mercado Pago payments for WooCommerce\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-"
 "mercadopago\n"
-"POT-Creation-Date: 2025-05-16 21:50+0000\n"
+"POT-Creation-Date: 2025-06-02 18:49+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -137,7 +137,9 @@ msgstr "Medios de pagos"
 msgid "Plugin manual"
 msgstr "Manual del plugin"
 
-#: ../../src/Translations/AdminTranslations.php:154
+#: ../../src/Translations/AdminTranslations.php:154,
+#: ../../src/Translations/StoreTranslations.php:95,
+#: ../../src/Translations/StoreTranslations.php:268
 msgid "Cancel order"
 msgstr "Cancelar orden"
 
@@ -2654,11 +2656,6 @@ msgstr "Consulte las reglas para el modo test."
 #: ../../src/Translations/StoreTranslations.php:267
 msgid "Pay with Mercado Pago"
 msgstr "Pagar con Mercado Pago"
-
-#: ../../src/Translations/StoreTranslations.php:95,
-#: ../../src/Translations/StoreTranslations.php:268
-msgid "Cancel &amp; Clear Cart"
-msgstr "Cancelar &amp; Limpiar carrito"
 
 #: ../../src/Translations/StoreTranslations.php:96
 msgid "Discover how practical Mercado&nbspPago is"

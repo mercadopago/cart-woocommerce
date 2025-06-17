@@ -176,6 +176,17 @@ const Content = (props) => {
         }
       });
 
+      const docTypeSelect = document.querySelector('#form-checkout__identificationType');
+      const docNumberInput = document.querySelector('#form-checkout__identificationNumber');
+      
+      if (docTypeSelect && docTypeSelect.value) {
+        paymentMethodData['mercadopago_custom[doc_type]'] = docTypeSelect.value;
+      }
+      
+      if (docNumberInput && docNumberInput.value) {
+        paymentMethodData['mercadopago_custom[doc_number]'] = docNumberInput.value;
+      }
+
       // asserting that next submit will be "custom", unless the submitWalletButton function is fired
       setCheckoutType('custom');
 

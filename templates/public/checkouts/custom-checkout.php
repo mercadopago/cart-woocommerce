@@ -303,6 +303,8 @@ if (!defined('ABSPATH')) {
     <input type="hidden" id="cardTokenId" name="mercadopago_custom[token]"/>
     <input type="hidden" id="cardInstallments" name="mercadopago_custom[installments]"/>
     <input type="hidden" id="mpCardSessionId" name="mercadopago_custom[session_id]" />
+    <input type="hidden" id="payerDocNumber" name="mercadopago_custom[doc_number]" />
+    <input type="hidden" id="payerDocType" name="mercadopago_custom[doc_type]" />
 </div>
 
 <script type="text/javascript">
