@@ -25,10 +25,7 @@ function formatCurrency(value, currency) {
     throw new Error('Invalid input');
   }
   const formattedValue = (value / Math.pow(10, currency.minorUnit)).toFixed(currency.minorUnit);
-  const parts = formattedValue.split('.');
-  const integerPart = parts[0]
-  const decimalPart = parts[1];
-  return `${integerPart}.${decimalPart}`;
+  return formattedValue.split('.').join('.');
 }
 
 function handleCartTotalChange(value, currency){

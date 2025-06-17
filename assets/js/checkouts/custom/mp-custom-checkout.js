@@ -29,6 +29,7 @@ function mercadoPagoFormHandler() {
   }
 
   setMercadoPagoSessionId();
+  setPayerIdentificationInfo();
 
   if (mercado_pago_submit) {
     return true;
@@ -45,6 +46,33 @@ function mercadoPagoFormHandler() {
   }
 
   return false;
+}
+
+/**
+ * Set payer identification info to hidden inputs
+ * Replicates the same functionality from block mode
+ * 
+ * This function ensures that document type and number values are properly
+ * synchronized between the visible form inputs and hidden inputs that are
+ * sent to the server. This provides consistency between classic and block
+ * checkout modes for the payer identification data.
+ * 
+ * @see custom.block.js - Similar functionality for block mode
+ */
+function setPayerIdentificationInfo() {
+  const documentElements = [
+    { selector: '#form-checkout__identificationType', hiddenInputId: '#payerDocType' },
+    { selector: '#form-checkout__identificationNumber', hiddenInputId: '#payerDocNumber' }
+  ];
+
+  documentElements.forEach(({ selector, hiddenInputId }) => {
+    const element = document.querySelector(selector);
+    const hiddenInput = document.querySelector(hiddenInputId);
+    
+    if (element && hiddenInput && element.value) {
+      hiddenInput.value = element.value;
+    }
+  });
 }
 
 // Create a new token
@@ -335,6 +363,17 @@ function setCardFormLoadInterval() {
 function handleCardFormLoad() {
   initCardForm()
     .then(() => {
+      const $docTypeInput = document.querySelector("#form-checkout__identificationType");
+      const $docNumberInput = document.querySelector("#form-checkout__identificationNumber");
+      
+      if ($docTypeInput) {
+        $docTypeInput.addEventListener('change', setPayerIdentificationInfo);
+      }
+      
+      if ($docNumberInput) {
+        $docNumberInput.addEventListener('change', setPayerIdentificationInfo);
+      }
+      
       sendMetric('MP_CARDFORM_SUCCESS', 'Security fields loaded', threedsTarget);
     })
     .catch((error) => {
@@ -637,6 +676,7 @@ jQuery(document).on('updated_checkout', function () {
     }
 
     handleCardFormLoad();
+    setPayerIdentificationInfo();
     return;
   }
 });

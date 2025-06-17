@@ -214,15 +214,15 @@
   background: var(--All-andes-blue-ml-150, rgba(65, 137, 230, 0.15));
   text-align: center;
   font-family: "Proxima Nova";
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 16px;
 }
 
 .components-button.is-secondary.mp-secondary-button:hover:not(:disabled) {
   background: rgba(65, 137, 230, 0.2);
-  color: #fff;
+  box-shadow: unset;
 }
 
 /* .mp-select {
@@ -597,4 +597,5 @@ input[type=checkbox].mp-checkbox:focus {
 h3.mp-small-text {
   color: #646970 !important;
   font-size: 14px !important;
+  font-weight: 400 !important;
 }

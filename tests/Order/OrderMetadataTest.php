@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use Mockery;
 use WP_Mock;
+use WC_Order;
 
 class OrderMetadataTest extends TestCase
 {
@@ -156,6 +157,103 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn(3);
         $result = $this->invokePrivateMethod($this->orderMetadata, 'getSyncCronErrorCountValue', [$this->orderMock]);
         $this->assertEquals(3, $result);
+    }
+
+    public function testUpdatePaymentsOrderMetadata()
+    {
+        // Arrange
+        $paymentData = [
+            'id' => '123456789',
+            'date_created' => '2024-03-20T10:00:00.000-04:00'
+        ];
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('_Mercado_Pago_Payment_IDs', Mockery::any())
+            ->andReturn('');
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('PAYMENT_ID: DATE', true)
+            ->andReturn('','123456789: 2024-03-20T10:00:00.000-04:00');
+        $this->orderMock->shouldReceive('add_meta_data')
+            ->with('_Mercado_Pago_Payment_IDs', '123456789', false)
+            ->once();
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('PAYMENT_ID: DATE', '123456789: 2024-03-20T10:00:00.000-04:00')
+            ->once();
+        $this->orderMock->shouldReceive('save')
+            ->once()
+            ->andReturn(true);
+
+        $orderMeta = new \MercadoPago\Woocommerce\Hooks\OrderMeta();
+        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta);
+
+        // Act
+        $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
+
+        // Assert
+        $this->assertTrue(true);
+    }
+
+    public function testUpdatePaymentsOrderMetadataWithExistingPayments()
+    {
+        // Arrange
+        $paymentData = [
+            'id' => '987654321',
+            'date_created' => '2024-03-21T10:00:00.000-04:00'
+        ];
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('_Mercado_Pago_Payment_IDs', Mockery::any())
+            ->andReturn('123456789');
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('PAYMENT_ID: DATE', Mockery::any())
+            ->andReturn('123456789: 2024-03-20T10:00:00.000-04:00', "123456789: 2024-03-20T10:00:00.000-04:00,\n987654321: 2024-03-21T10:00:00.000-04:00");
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('_Mercado_Pago_Payment_IDs', Mockery::any())
+            ->once();
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('PAYMENT_ID: DATE', "123456789: 2024-03-20T10:00:00.000-04:00,\n987654321: 2024-03-21T10:00:00.000-04:00")
+            ->once();
+        $this->orderMock->shouldReceive('save')->twice();
+
+        $orderMeta = new \MercadoPago\Woocommerce\Hooks\OrderMeta();
+        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta);
+
+        // Act
+        $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
+
+        // Assert
+        $this->assertTrue(true);
+    }
+
+    public function testUpdatePaymentsOrderMetadataWithInvalidPaymentFormat()
+    {
+        // Arrange
+        $paymentData = [
+            'id' => '987654321',
+            'date_created' => '2024-03-21T10:00:00.000-04:00'
+        ];
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('_Mercado_Pago_Payment_IDs', Mockery::any())
+            ->andReturn('');
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('PAYMENT_ID: DATE', Mockery::any())
+            ->andReturn('invalid_format', 'invalid_format' . ",\n" . '987654321: 2024-03-21T10:00:00.000-04:00');
+        $this->orderMock->shouldReceive('add_meta_data')
+            ->with('_Mercado_Pago_Payment_IDs', '987654321', false)
+            ->once();
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('PAYMENT_ID: DATE', 'invalid_format' . ",\n" . '987654321: 2024-03-21T10:00:00.000-04:00')
+            ->once();
+        $this->orderMock->shouldReceive('save')
+            ->once()
+            ->andReturn(true);
+
+        $orderMeta = new \MercadoPago\Woocommerce\Hooks\OrderMeta();
+        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta);
+
+        // Act
+        $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
+
+        // Assert
+        $this->assertTrue(true);
     }
 
     /**

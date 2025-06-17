@@ -837,13 +837,23 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     }
 
     /**
-     * Get url setting
+     * Get url admin settings page
+     *
+     * @return string
+     */
+    public function get_connection_url(): string
+    {
+        return $this->links['admin_settings_page'];
+    }
+
+    /**
+     * Get url payment method settings page
      *
      * @return string
      */
     public function get_settings_url(): string
     {
-        return $this->links['admin_settings_page'];
+        return admin_url('admin.php?page=wc-settings&tab=checkout&section=' . strtolower($this->id));
     }
 
     /**

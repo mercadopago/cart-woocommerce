@@ -346,4 +346,100 @@ class AbstractGatewayTest extends TestCase
 
         $this->assertEquals($expected, $result);
     }
+
+    public function testGetConnectionUrl()
+    {
+        $linksMock = [
+            'admin_settings_page' => 'http://localhost.com/wp-admin/admin.php?page=mercadopago-settings'
+        ];
+
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $reflection = new \ReflectionClass($this->gateway);
+        $property = $reflection->getProperty('links');
+        $property->setAccessible(true);
+        $property->setValue($this->gateway, $linksMock);
+
+        $result = $this->gateway->get_connection_url();
+
+        $this->assertEquals('http://localhost.com/wp-admin/admin.php?page=mercadopago-settings', $result);
+    }
+
+    public function testGetSettingsUrl()
+    {
+        WP_Mock::userFunction('admin_url')
+            ->once()
+            ->with('admin.php?page=wc-settings&tab=checkout&section=woo-mercado-pago-basic')
+            ->andReturn('http://localhost.com/wp-admin/admin.php?page=wc-settings&tab=checkout&section=woo-mercado-pago-basic');
+
+        $this->gateway->id = 'woo-mercado-pago-basic';
+
+        $result = $this->gateway->get_settings_url();
+
+        $this->assertEquals('http://localhost.com/wp-admin/admin.php?page=wc-settings&tab=checkout&section=woo-mercado-pago-basic', $result);
+    }
+
+    public function testGetConnectionUrlWithDifferentUrls()
+    {
+        $linksMock = [
+            'admin_settings_page' => 'https://localhost.com/wp-admin/custom-page-mercadopago'
+        ];
+
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $reflection = new \ReflectionClass($this->gateway);
+        $property = $reflection->getProperty('links');
+        $property->setAccessible(true);
+        $property->setValue($this->gateway, $linksMock);
+
+        $result = $this->gateway->get_connection_url();
+
+        $this->assertEquals('https://localhost.com/wp-admin/custom-page-mercadopago', $result);
+        $this->assertIsString($result);
+    }
+
+    public function testGetConnectionUrlWithEmptyLinks()
+    {
+        $linksMock = [
+            'admin_settings_page' => ''
+        ];
+
+        $reflection = new \ReflectionClass($this->gateway);
+        $property = $reflection->getProperty('links');
+        $property->setAccessible(true);
+        $property->setValue($this->gateway, $linksMock);
+
+        $result = $this->gateway->get_connection_url();
+
+        $this->assertEquals('', $result);
+        $this->assertIsString($result);
+    }
+
+    public function testGetSettingsUrlWithUppercaseId()
+    {
+        WP_Mock::userFunction('admin_url')
+            ->once()
+            ->with('admin.php?page=wc-settings&tab=checkout&section=woo-mercado-pago-custom')
+            ->andReturn('http://localhost.com/wp-admin/admin.php?page=wc-settings&tab=checkout&section=woo-mercado-pago-custom');
+
+        $this->gateway->id = 'WOO-MERCADO-PAGO-CUSTOM';
+
+        $result = $this->gateway->get_settings_url();
+
+        $this->assertEquals('http://localhost.com/wp-admin/admin.php?page=wc-settings&tab=checkout&section=woo-mercado-pago-custom', $result);
+    }
+
+    public function testGetSettingsUrlWithMixedCaseId()
+    {
+        WP_Mock::userFunction('admin_url')
+            ->once()
+            ->with('admin.php?page=wc-settings&tab=checkout&section=test_gateway_123')
+            ->andReturn('http://localhost.com/wp-admin/admin.php?page=wc-settings&tab=checkout&section=test_gateway_123');
+
+        $this->gateway->id = 'Test_Gateway_123';
+
+        $result = $this->gateway->get_settings_url();
+
+        $this->assertEquals('http://localhost.com/wp-admin/admin.php?page=wc-settings&tab=checkout&section=test_gateway_123', $result);
+    }
 }

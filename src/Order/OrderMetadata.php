@@ -30,6 +30,8 @@ class OrderMetadata
 
     private const PAYMENTS_IDS = '_Mercado_Pago_Payment_IDs';
 
+    private const PAYMENT_DETAILS = 'PAYMENT_ID: DATE';
+
     private const TICKET_TRANSACTION_DETAILS = '_transaction_details_ticket';
 
     private const MP_PIX_QR_BASE_64 = 'mp_pix_qr_base64';
@@ -158,7 +160,7 @@ class OrderMetadata
      */
     public function setInstallmentsData(WC_Order $order, $value): void
     {
-        $this->orderMeta->add($order, self::MP_INSTALLMENTS, $value);
+        $this->orderMeta->update($order, self::MP_INSTALLMENTS, $value);
     }
 
     /**
@@ -179,7 +181,7 @@ class OrderMetadata
      */
     public function setTransactionDetailsData(WC_Order $order, string $value): void
     {
-        $this->orderMeta->add($order, self::MP_TRANSACTION_DETAILS, $value);
+        $this->orderMeta->update($order, self::MP_TRANSACTION_DETAILS, $value);
     }
 
     /**
@@ -200,7 +202,7 @@ class OrderMetadata
      */
     public function setTransactionAmountData(WC_Order $order, $value): void
     {
-        $this->orderMeta->add($order, self::MP_TRANSACTION_AMOUNT, $value);
+        $this->orderMeta->update($order, self::MP_TRANSACTION_AMOUNT, $value);
     }
 
     /**
@@ -221,7 +223,7 @@ class OrderMetadata
      */
     public function setTotalPaidAmountData(WC_Order $order, $value): void
     {
-        $this->orderMeta->add($order, self::MP_TOTAL_PAID_AMOUNT, $value);
+        $this->orderMeta->update($order, self::MP_TOTAL_PAID_AMOUNT, $value);
     }
 
     /**
@@ -368,7 +370,7 @@ class OrderMetadata
         $this->setTransactionDetailsData($order, $installmentAmount);
         $this->setTransactionAmountData($order, $transactionAmount);
         $this->setTotalPaidAmountData($order, $totalPaidAmount);
-        $this->updatePaymentsOrderMetadata($order, [$data['id']]);
+        $this->updatePaymentsOrderMetadata($order, $data);
 
         $order->save();
     }
@@ -377,27 +379,141 @@ class OrderMetadata
      * Update an order's payments metadata
      *
      * @param WC_Order $order
-     * @param array $paymentsId
+     * @param array $paymentData
      *
      * @return void
      */
-    public function updatePaymentsOrderMetadata(WC_Order $order, array $paymentsId)
+    public function updatePaymentsOrderMetadata(WC_Order $order, array $paymentData): void
+    {
+        $this->initializePaymentMetadata($order, $paymentData);
+        $this->updatePaymentDetails($order, $paymentData);
+        $this->updateLatestPaymentId($order);
+    }
+
+    /**
+     * Initialize payment metadata if not exists
+     *
+     * @param WC_Order $order
+     * @param array $paymentData
+     *
+     * @return void
+     */
+    private function initializePaymentMetadata(WC_Order $order, array $paymentData): void
     {
         $paymentsIdMetadata = $this->getPaymentsIdMeta($order);
 
         if (empty($paymentsIdMetadata)) {
-            $this->setPaymentsIdData($order, implode(', ', $paymentsId));
+            $this->setPaymentsIdData($order, $paymentData['id']);
+        }
+    }
+
+    /**
+     * Update payment details with new payment information
+     *
+     * @param WC_Order $order
+     * @param array $paymentData
+     *
+     * @return void
+     */
+    private function updatePaymentDetails(WC_Order $order, array $paymentData): void
+    {
+        $paymentDetailKey = self::PAYMENT_DETAILS;
+        $paymentDetailValue = $this->formatPaymentDetail($paymentData);
+        $existingMetadata = $this->orderMeta->get($order, $paymentDetailKey);
+
+        if (!empty($existingMetadata)) {
+            $paymentDetailValue = $existingMetadata . ",\n" . $paymentDetailValue;
         }
 
-        foreach ($paymentsId as $paymentId) {
-            $date                  = Date::getNowDate('Y-m-d H:i:s');
-            $paymentDetailKey      = "Mercado Pago - Payment $paymentId";
-            $paymentDetailMetadata = $this->orderMeta->get($order, $paymentDetailKey);
+        if (!empty($paymentDetailValue)) {
+            $this->orderMeta->update($order, $paymentDetailKey, $paymentDetailValue);
+        }
+    }
 
-            if (empty($paymentDetailMetadata)) {
-                $this->orderMeta->update($order, $paymentDetailKey, "[Date $date]");
+    /**
+     * Format payment detail string
+     *
+     * @param array $paymentData
+     *
+     * @return string
+     */
+    private function formatPaymentDetail(array $paymentData): string
+    {
+        if (empty($paymentData['id']) || empty($paymentData['date_created'])) {
+            return '';
+        }
+
+        return "{$paymentData['id']}: {$paymentData['date_created']}";
+    }
+
+    /**
+     * Update the latest payment ID in metadata
+     *
+     * @param WC_Order $order
+     *
+     * @return void
+     */
+    private function updateLatestPaymentId(WC_Order $order): void
+    {
+        $paymentDetails = $this->getPaymentDetails($order);
+
+        if (count($paymentDetails) <= 1) {
+            return;
+        }
+
+        $latestPayment = $this->findLatestPayment($paymentDetails);
+
+        if ($latestPayment !== null) {
+            $this->orderMeta->update($order, self::PAYMENTS_IDS, $latestPayment);
+        }
+    }
+
+    /**
+     * Get payment details from metadata
+     *
+     * @param WC_Order $order
+     *
+     * @return array
+     */
+    private function getPaymentDetails(WC_Order $order): array
+    {
+        $paymentDetailKey = self::PAYMENT_DETAILS;
+        $paymentDetailValue = $this->orderMeta->get($order, $paymentDetailKey);
+
+        return explode(",\n", $paymentDetailValue);
+    }
+
+    /**
+     * Find the latest payment based on date
+     *
+     * @param array $paymentDetails
+     *
+     * @return string|null
+     */
+    private function findLatestPayment(array $paymentDetails): ?string
+    {
+        if (empty($paymentDetails)) {
+            return '';
+        }
+
+        $latestPayment = '';
+        $latestDate = '';
+        foreach ($paymentDetails as $payment) {
+            $parts = explode(': ', $payment);
+            if (count($parts) !== 2) {
+                error_log('Mercado Pago: Failed to get previous payments. Invalid format: ' . $payment);
+                return null;
+            }
+
+            [$id, $date] = $parts;
+
+            if (empty($latestDate) || strtotime($date) > strtotime($latestDate)) {
+                $latestDate = $date;
+                $latestPayment = $id;
             }
         }
+
+        return $latestPayment;
     }
 
     /**

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.1.1] - 2025-06-06
+### Changed:
+- Changed colors of Pix payment method in checkout, success page and admin.
+- Changed cancel order button text.
+- Updated the get_settings_url function to target the settings for each payment
+### Fixed:
+- Fixed error when not using decimal points in currency
+- Fixed payment information update on retry after rejected
+- Fixed text styles and color in admin
+- Fixed document identification fields not being populated for credit card transactions
+### Added:
+- Added function for directing the admin page in onboarding
+
 ## [8.1.0] - 2025-05-19
 ### Changed
 - Updated the Mercado Pago branding across all checkouts, admin panel, and success pages.
