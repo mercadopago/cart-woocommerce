@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 8.1.1
+Stable tag: 8.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,17 +134,8 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.1.1 (06/06/2025) =
-* Changed:
-- Changed colors of Pix payment method in checkout, success page and admin.
-- Changed cancel order button text.
-- Updated the get_settings_url function to target the settings for each payment
-* Fixed:
-- Fixed error when not using decimal points in currency
-- Fixed payment information update on retry after rejected
-- Fixed text styles and color in admin
-- Fixed document identification fields not being populated for credit card transactions
+= v8.1.2 (23/06/2025) =
 * Added:
-- Added function for directing the admin page in onboarding
+- Show update link button when credentials api returns status 401
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

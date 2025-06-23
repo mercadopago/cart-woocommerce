@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.1.2 (23/06/2025) =
+* Added:
+- Show update link button when credentials api returns status 401
+
 = v8.1.1 (06/06/2025) =
 * Changed:
 - Changed colors of Pix payment method in checkout, success page and admin.
