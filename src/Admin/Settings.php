@@ -482,6 +482,11 @@ class Settings
             }
 
             $testCredentialsValidation = $this->seller->validateCredentials($accessTokenTest, $publicKeyTest);
+
+            if ($testCredentialsValidation[self::STATUS] == 401) {
+                return CredentialsStates::UNAUTHORIZED_ACCESS_TOKEN;
+            }
+
             if ($testCredentialsValidation[self::STATUS] !== 200) {
                 return self::COULD_NOT_VALIDATE_LINK;
             }

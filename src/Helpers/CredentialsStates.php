@@ -21,6 +21,8 @@ class CredentialsStates
 
     private const COULD_NOT_VALIDATE_LINK = 'could_not_validate_link';
 
+    public const UNAUTHORIZED_ACCESS_TOKEN = 'unauthorized_access_token';
+
     private const LINKED_NO_TEST_CREDENTIALS = 'linked_no_test_credentials';
 
     private const PREVIOUSLY_LINKED = 'previously_linked';
@@ -49,6 +51,8 @@ class CredentialsStates
 
     private const BUTTON = 'button';
 
+    private const SECONDARY_BUTTON = 'secondary_button';
+
     private const MORE_INFO = 'more_info';
 
     private const LINKED_DATA = 'linked_data';
@@ -64,6 +68,8 @@ class CredentialsStates
     private const NOT_LINKED = 'not_linked';
 
     private const FAILED = 'failed';
+
+    private const UNAUTHORIZED = 'unauthorized';
 
     private const UPDATE = 'update';
 
@@ -237,7 +243,8 @@ class CredentialsStates
         $notLinkedStatuses = [
             self::NOT_LINKED_FAILED,
             self::EXPIRED,
-            self::COULD_NOT_VALIDATE_LINK
+            self::COULD_NOT_VALIDATE_LINK,
+            self::UNAUTHORIZED_ACCESS_TOKEN,
         ];
 
         if (in_array($linkStatus, $notLinkedStatuses)) {
@@ -269,6 +276,17 @@ class CredentialsStates
                         self::TITLE             => $this->adminTranslations->credentialsLinkComponents[self::COULD_NOT_VALIDATE_LINK_TITLE],
                         self::DESCRIPTION       => $this->adminTranslations->credentialsLinkComponents[self::COULD_NOT_VALIDATE_LINK_DESCRIPTION],
                         self::BUTTON            => $this->adminTranslations->credentialsLinkComponents[self::FAILED_BUTTON]
+                    ];
+                    break;
+
+                case self::UNAUTHORIZED_ACCESS_TOKEN:
+                    $response = [
+                        self::CREDENTIALS_STATE => self::NOT_LINKED,
+                        self::TYPE              => self::UNAUTHORIZED,
+                        self::TITLE             => $this->adminTranslations->credentialsLinkComponents[self::COULD_NOT_VALIDATE_LINK_TITLE],
+                        self::DESCRIPTION       => $this->adminTranslations->credentialsLinkComponents[self::COULD_NOT_VALIDATE_LINK_DESCRIPTION],
+                        self::BUTTON            => $this->adminTranslations->credentialsLinkComponents[self::FAILED_BUTTON],
+                        self::SECONDARY_BUTTON  => $this->adminTranslations->credentialsLinkComponents[self::UPDATE_BUTTON]
                     ];
                     break;
             }

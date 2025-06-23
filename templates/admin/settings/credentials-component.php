@@ -99,9 +99,17 @@ $i18n = I18n::get('admin.credentialsLinkComponents');
                 <span class="mp-settings-auto-description mp-settings-subtitle-font-size">
                     <?= wp_kses($credentialsState['description'], $allowedHtmlTags) ?>
                 </span>
-                <button class="mp-button mp-button-large" id="<?php echo $credentialsState['type'] === 'failed' ? "mp-integration-auth-failed" : "mp-integration-auth-login-update" ?>">
-                    <?= wp_kses($credentialsState['button'], $allowedHtmlTags) ?>
-                </button>
+                <div>
+                    <button class="mp-button mp-button-large" id="<?php echo $credentialsState['type'] === 'update' ? "mp-integration-auth-login-update" : "mp-integration-auth-failed" ?>">
+                        <?= wp_kses($credentialsState['button'], $allowedHtmlTags) ?>
+                    </button>
+                    <?php if (isset($credentialsState['secondary_button'])) : ?>
+                        <button class="mp-button mp-button-large mp-button-light-blue"
+                            id="<?php echo $credentialsState['type'] === 'unauthorized' ? "mp-integration-auth-login-update" : "" ?>">
+                            <?= wp_kses($credentialsState['secondary_button'], $allowedHtmlTags) ?>
+                        </button>
+                    <?php endif ?>
+                </div>
             </div>
         </div>
     <?php endif ?>

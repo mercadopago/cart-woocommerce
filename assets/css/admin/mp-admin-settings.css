@@ -383,7 +383,8 @@
   background-size: contain;
 }
 
-.mp-settings-failed-img {
+.mp-settings-failed-img,
+.mp-settings-unauthorized-img {
   background: url("../../images/settings/auto-cred-failed.png") transparent no-repeat;
   background-size: contain;
 }
