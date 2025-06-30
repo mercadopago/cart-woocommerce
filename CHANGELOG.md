@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.2.0] - 2025-06-30
+### Changed:
+- Implement consistent Optional Chaining in setHide function
+- Eliminate unnecessary temporary variables and improve consistency
+- Maintain 100% functional compatibility with WooCommerce
+- Changed the Notification route to accept payload as object or as string.
+- Changed titles of the Mercado Pagos`s payment methods in the Woocommerce settings page.
+### Fixed:
+- Improve WooCommerce 9.8.4+ compatibility in collapsible advanced config.
+- Add robust null checks and defensive programming.
+- Implement early return validation - Add new admin styling functions.
+
 ## [8.1.2] - 2025-06-23
 ### Added:
 - Show update link button when credentials api returns status 401

@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.1.2';
+    private const PLUGIN_VERSION = '8.2.0';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -99,7 +99,13 @@ class WoocommerceMercadoPago
     {
         $textDomain = $this->pluginMetadata('text-domain');
         unload_textdomain($textDomain);
-        $locale = explode('_', apply_filters('plugin_locale', get_locale(), $textDomain))[0];
+
+        $location_splitted = explode('_', apply_filters('plugin_locale', get_locale(), $textDomain));
+
+        $locale = $location_splitted[0];
+        $country = $location_splitted[1] ?? '';
+        $locale = in_array($country, ['MX']) ? $locale . '_' . $country : $locale;
+
         load_textdomain($textDomain, Paths::basePath(Paths::join($this->pluginMetadata('domain-path'), "woocommerce-mercadopago-$locale.mo")));
     }
 

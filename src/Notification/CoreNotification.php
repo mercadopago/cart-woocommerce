@@ -3,16 +3,9 @@
 namespace MercadoPago\Woocommerce\Notification;
 
 use Exception;
-use MercadoPago\PP\Sdk\Entity\Notification\Notification;
 use MercadoPago\PP\Sdk\Sdk;
-use MercadoPago\Woocommerce\Configs\Seller;
-use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
-use MercadoPago\Woocommerce\Libraries\Logs\Logs;
-use MercadoPago\Woocommerce\Order\OrderStatus;
-use MercadoPago\Woocommerce\WoocommerceMercadoPago;
-use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -21,29 +14,30 @@ if (!defined('ABSPATH')) {
 
 class CoreNotification extends AbstractNotification
 {
-    protected WoocommerceMercadoPago $mercadopago;
-
-    protected Notification $sdkNotification;
-
     /**
-     * CoreNotification constructor
+     * Get Notification Id
      *
-     * @param MercadoPagoGatewayInterface $gateway
-     * @param Logs $logs
-     * @param OrderStatus $orderStatus
-     * @param Seller $seller
-     * @param Store $store
+     * @return string
      */
-    public function __construct(
-        MercadoPagoGatewayInterface $gateway,
-        Logs $logs,
-        OrderStatus $orderStatus,
-        Seller $seller,
-        Store $store
-    ) {
-        parent::__construct($gateway, $logs, $orderStatus, $seller, $store);
+    public function getNotificationId()
+    {
+        $body = json_decode(file_get_contents('php://input'));
 
-        $this->sdkNotification = $this->getSdkInstance()->getNotificationInstance();
+        // For both Core and Bifrost. Core sends a complete object, but Bifrost sends only a string with the notification id
+        if (is_object($body)) {
+            return $body->notification_id;
+        }
+
+        return $body;
+    }
+    /**
+     * Validate if ID is in the format P-12345 or M-12345 (or any number of digits)
+     *
+     * @return string
+     */
+    public function validateNotificationId($notification_id)
+    {
+        return preg_match('/^[PM]-\\d+$/', $notification_id) === 1;
     }
 
     /**
@@ -70,10 +64,18 @@ class CoreNotification extends AbstractNotification
     {
         parent::handleReceivedNotification($data);
 
-        $notification_id = json_decode(file_get_contents('php://input'));
+        $sdkNotification = $this->getSdkInstance()->getNotificationInstance();
+        $notification_id = $this->getNotificationId();
+
+        if (!$this->validateNotificationId($notification_id)) {
+            $message = 'Invalid notification id';
+            $this->logs->file->error($message, __CLASS__, $data);
+            $this->setResponse(400, $message);
+            return;
+        }
 
         try {
-            $notificationEntity = $this->sdkNotification->read([
+            $notificationEntity = $sdkNotification->read([
                 'id' => $notification_id
             ]);
 
