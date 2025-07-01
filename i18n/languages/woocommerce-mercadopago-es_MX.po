@@ -7,7 +7,7 @@ msgstr ""
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
-"Language: es_AR\n"
+"Language: es_MX\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1086,7 +1086,7 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:503
 msgid "Mercado Pago - Checkout Pro Pagos sin Tarjeta"
-msgstr "Mercado Pago - Checkout Pro Cuotas sin Tarjeta"
+msgstr "Mercado Pago - Checkout Pro Meses sin Tarjeta"
 
 #: ../../src/Translations/AdminTranslations.php:505
 msgid "Up to 12 installments without cards through Mercado Pago"
@@ -1244,8 +1244,10 @@ msgstr "Los pagos a través de la cuenta de Mercado Pago están"
 
 #: ../../src/Translations/AdminTranslations.php:648,
 #: ../../src/Translations/AdminTranslations.php:663
+#, fuzzy
+#| msgid "Credit or debit card"
 msgid "Credit and debit cards"
-msgstr "Tarjetas de crédito o débito"
+msgstr "Tarjeta de crédito o débito"
 
 #: ../../src/Translations/AdminTranslations.php:649,
 #: ../../src/Translations/AdminTranslations.php:651,
@@ -2823,8 +2825,6 @@ msgid "Up to 12 installments"
 msgstr "Hasta 12 cuotas"
 
 #: ../../src/Translations/StoreTranslations.php:225
-#, fuzzy
-#| msgid "Debit Cards"
 msgid "Debit cards"
 msgstr "Tarjetas de débito"
 
@@ -2900,7 +2900,7 @@ msgstr "mm/aa"
 
 #: ../../src/Translations/StoreTranslations.php:247
 msgid "Installments"
-msgstr "Cuotas"
+msgstr "Meses"
 
 #: ../../src/Translations/StoreTranslations.php:248
 msgid "on the back"
@@ -2933,7 +2933,7 @@ msgstr "Si hay intereses, los aplicará y cobrará tu banco."
 #, fuzzy
 #| msgid "interest free"
 msgid "Interest"
-msgstr "sin interés"
+msgstr "sin intereses"
 
 #: ../../src/Translations/StoreTranslations.php:255
 msgid "Card number is required"
@@ -3693,13 +3693,16 @@ msgstr ""
 #~ msgstr "Pagos sin salir de tu tienda con nuestro checkout personalizable"
 
 #~ msgid "Mercado Pago - Checkout Pro Installments without Cards"
-#~ msgstr "Mercado Pago - Checkout Pro Cuotas sin Tarjeta"
+#~ msgstr "Mercado Pago - Checkout Pro Meses sin Tarjeta"
 
 #~ msgid "Transparent Checkout for credit or debit cards is"
 #~ msgstr "El Checkout Transparente para tarjeta de crédito o débito está"
 
 #~ msgid "Transparent Checkout | Credit or debit card"
 #~ msgstr "Checkout API | Tarjeta de crédito o débito"
+
+#~ msgid "Cancel &amp; Clear Cart"
+#~ msgstr "Cancelar &amp; Limpiar carrito"
 
 #~ msgid "Select an option"
 #~ msgstr "Selecciona una opción"
@@ -3717,7 +3720,7 @@ msgstr ""
 #~ msgstr "Nueva tarjeta"
 
 #~ msgid "Account Money"
-#~ msgstr "Dinero disponible en Mercado Pago"
+#~ msgstr "Saldo en Mercado Pago Wallet"
 
 #~ msgid "installments"
 #~ msgstr "intereses"

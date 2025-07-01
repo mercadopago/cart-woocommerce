@@ -78,20 +78,22 @@
   }
 
   function setHide() {
-    document.querySelector('.wc-admin-breadcrumb').style.display = 'none';
+    document.querySelector('.wc-admin-breadcrumb')?.style.setProperty('display', 'none');
 
-    if (document.querySelector('.mp-header-logo')) {
-      document.querySelector('.mp-header-logo').style.display = 'none';
+    const mpHeaderLogo = document.querySelector('.mp-header-logo');
+    if (mpHeaderLogo) {
+      mpHeaderLogo.style.display = 'none';
     } else {
-      const pElement = document.querySelectorAll('#mainform > p:not(.submit)');
-      pElement[0] ? (pElement[0].style.display = 'none') : null;
+      document.querySelectorAll('#mainform > p:not(.submit)')[0]?.style.setProperty('display', 'none');
     }
 
     const mainFormH2 = document.querySelector('#mainform > h2');
-    mainFormH2.classList.length === 0 ? (mainFormH2.style.display = 'none') : null;
+    if (mainFormH2?.classList.length === 0) {
+      mainFormH2.style.display = 'none';
+    }
 
     document.querySelectorAll('.mp-hidden-field-description').forEach((element) => {
-      element.closest('tr').style.display = 'none';
+      element.closest?.('tr')?.style.setProperty('display', 'none');
     });
   }
 
@@ -135,12 +137,19 @@
 
     const collapseTable = document.querySelector(
       '[id^="woocommerce_woo-mercado-pago"][id$="advanced_configuration_description"]'
-    ).nextElementSibling;
+    )?.nextElementSibling;
 
+    // Complete early return - verify ALL elements exist before making ANY changes
+    if (!collapseTitle || !collapseDescription || !collapseTable) {
+      return;
+    }
+
+    // Apply styles - all elements verified to exist
     collapseTitle.style.cursor = "pointer";
     collapseDescription.style.display = "none";
     collapseTable.style.display = "none";
 
+    // Add collapsible buttons
     collapseTitle.innerHTML += makeCollapsibleOptions(
       "header_plus",
       "header_less"
@@ -148,6 +157,11 @@
 
     const headerPlus = document.querySelector("#header_plus");
     const headerLess = document.querySelector("#header_less");
+
+    // Final verification for dynamically created elements
+    if (!headerPlus || !headerLess) {
+      return;
+    }
 
     collapseTitle.onclick = function () {
       if (collapseTable.style.display === "none") {

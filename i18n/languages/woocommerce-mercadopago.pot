@@ -7,7 +7,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Mercado Pago Developers <woocommerce.dev@mercadopago.com>\n"
-"POT-Creation-Date: 2025-06-02 18:49+0000\n"
+"POT-Creation-Date: 2025-06-25 20:42+0000\n"
 "Project-Id-Version: undefined\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -16,19 +16,19 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../src/WoocommerceMercadoPago.php:440, ../../src/Translations/AdminTranslations.php:115
+#: ../../src/WoocommerceMercadoPago.php:446, ../../src/Translations/AdminTranslations.php:115
 msgid "Activate WooCommerce"
 msgstr ""
 
-#: ../../src/WoocommerceMercadoPago.php:441, ../../src/Translations/AdminTranslations.php:116
+#: ../../src/WoocommerceMercadoPago.php:447, ../../src/Translations/AdminTranslations.php:116
 msgid "Install WooCommerce"
 msgstr ""
 
-#: ../../src/WoocommerceMercadoPago.php:442, ../../src/Translations/AdminTranslations.php:117
+#: ../../src/WoocommerceMercadoPago.php:448, ../../src/Translations/AdminTranslations.php:117
 msgid "See WooCommerce"
 msgstr ""
 
-#: ../../src/WoocommerceMercadoPago.php:444, ../../src/Translations/AdminTranslations.php:106
+#: ../../src/WoocommerceMercadoPago.php:450, ../../src/Translations/AdminTranslations.php:106
 msgid "The Mercado Pago module needs an active version of %s in order to work!"
 msgstr ""
 
@@ -548,7 +548,7 @@ msgstr ""
 msgid "Your clients finalize their payments in Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:388, ../../src/Translations/AdminTranslations.php:503
+#: ../../src/Translations/AdminTranslations.php:388
 msgid "Mercado Pago - Checkout Pro"
 msgstr ""
 
@@ -777,7 +777,11 @@ msgid "Payments without a Mercado Pago card"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:502, ../../src/Translations/AdminTranslations.php:504
-msgid "Your customers finish their payments on Mercado Pago."
+msgid "Your customers finish their payments on Mercado Pago with a credit line."
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:503
+msgid "Mercado Pago - Checkout Pro Pagos sin Tarjeta"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:505
@@ -912,11 +916,11 @@ msgstr ""
 msgid "Credit and debit cards"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:649, ../../src/Translations/AdminTranslations.php:651, ../../src/Translations/AdminTranslations.php:714, ../../src/Translations/AdminTranslations.php:776, ../../src/Translations/AdminTranslations.php:856, ../../src/Translations/AdminTranslations.php:858
-msgid "Payments without leaving your store with our customizable checkout"
+#: ../../src/Translations/AdminTranslations.php:649, ../../src/Translations/AdminTranslations.php:651, ../../src/Translations/AdminTranslations.php:714, ../../src/Translations/AdminTranslations.php:776, ../../src/Translations/AdminTranslations.php:856, ../../src/Translations/AdminTranslations.php:858, ../../src/Translations/AdminTranslations.php:949, ../../src/Translations/AdminTranslations.php:951
+msgid "Payments without leaving your store with our customizable checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:650, ../../src/Translations/AdminTranslations.php:715, ../../src/Translations/AdminTranslations.php:777, ../../src/Translations/AdminTranslations.php:857, ../../src/Translations/AdminTranslations.php:950
+#: ../../src/Translations/AdminTranslations.php:650
 msgid "Mercado Pago - Checkout API"
 msgstr ""
 
@@ -966,6 +970,10 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:713, ../../src/Translations/AdminTranslations.php:727
 msgid "Invoice"
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:715
+msgid "Mercado Pago - Checkout API Invoice"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:716
@@ -1036,6 +1044,10 @@ msgstr ""
 msgid "PSE"
 msgstr ""
 
+#: ../../src/Translations/AdminTranslations.php:777
+msgid "Mercado Pago - Checkout API PSE"
+msgstr ""
+
 #: ../../src/Translations/AdminTranslations.php:778
 msgid "Transparent Checkout PSE"
 msgstr ""
@@ -1078,6 +1090,10 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:855, ../../src/Translations/AdminTranslations.php:870
 msgid "Pix"
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:857
+msgid "Mercado Pago - Checkout API Pix"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:859
@@ -1204,8 +1220,8 @@ msgstr ""
 msgid "Yape"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:949, ../../src/Translations/AdminTranslations.php:951
-msgid "Payments without leaving your store with our customizable checkout."
+#: ../../src/Translations/AdminTranslations.php:950
+msgid "Mercado Pago - Checkout API Yape"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:952
