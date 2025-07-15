@@ -43,5 +43,5 @@ async function fillInstallmentsAndAdditionalInfo(page, form) {
 
 async function placeOrder(page){
   // place order
-  await page.getByRole('button', { name: 'Place Order' }).click();
+  await page.locator('.wc-block-components-checkout-place-order-button').click();
 }

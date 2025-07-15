@@ -1,0 +1,265 @@
+:root {
+    --andes-white: #fff;
+    --andes-black: #000;
+    --andes-blue-500: #3483fa;
+    --andes-error-red: #cc1818;
+    --woocommerce-primary: #7f54b3;
+    --andes-gray-900: rgba(0,0,0,0.9);
+    --andes-gray-550: rgba(0,0,0,0.55);
+    --andes-gray-250: rgba(0,0,0,0.25);
+    --andes-gray-040-solid: #f5f5f5;
+    --andes-spacing-4: 4px;
+    --andes-spacing-6: 6px;
+    --andes-spacing-8: 8px;
+    --andes-spacing-12: 12px;
+    --andes-spacing-15: 15px;
+    --andes-spacing-16: 16px;
+    --andes-spacing-48: 48px;
+    --andes-font-size-13: 13px;
+    --andes-font-size-14: 14px;
+    --andes-font-size-16: 16px;
+    --andes-font-style: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+    --andes-radius-06: 6px;
+    --andes-shadow-open: 0 2px 8px 0 rgba(0,0,0,0.15);
+}
+
+.andes-dropdown {
+    position: relative !important;
+    font-family: var(--andes-font-style) !important;
+    font-size: var(--andes-font-size-16) !important;
+    width: 100% !important;
+    min-height: 70px !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.andes-dropdown__label {
+    font-size: var(--andes-font-size-14) !important;
+    color: var(--andes-gray-900) !important;
+    display: block !important;
+    font-weight: 400 !important;
+    text-align: left !important;
+    padding: 0px 0px 4px 6px !important;
+    margin: 0 !important;
+}
+
+.andes-dropdown__wrapper {
+    position: relative !important;
+}
+
+.andes-dropdown__trigger {
+    width: 100% !important;
+    min-height: var(--andes-spacing-48) !important;
+    position: relative !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    font-size: var(--andes-font-size-16) !important;
+    line-height: 20px !important;
+    text-align: left !important;
+    color: var(--andes-gray-900) !important;
+    background-color: var(--andes-white) !important;
+    border: none !important;
+    border-radius: var(--andes-radius-06) !important;
+    box-shadow: 0 0 0 1px var(--andes-gray-250) !important;
+    cursor: pointer !important;
+    transition: box-shadow 0.2s, color 0.2s !important;
+    outline: none !important;
+    font-weight: 400 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.andes-dropdown__trigger:focus {
+    box-shadow: 0 0 0 2px var(--woocommerce-primary) !important;
+    outline: 2px solid #3483FA !important;
+}
+
+.andes-dropdown--open .andes-dropdown__trigger {
+    box-shadow: var(--andes-shadow-open), 0 0 0 2px var(--woocommerce-primary) !important;
+}
+
+.andes-dropdown--error .andes-dropdown__trigger {
+    box-shadow: 0 0 0 1px var(--andes-error-red) inset !important;
+}
+
+.andes-dropdown--error .andes-dropdown__trigger:focus {
+    box-shadow: 0 0 0 2px var(--andes-error-red) inset !important;
+}
+
+.andes-dropdown--error.andes-dropdown--open .andes-dropdown__trigger {
+    box-shadow: var(--andes-shadow-open), 0 0 0 1px var(--andes-error-red) inset !important;
+}
+
+.andes-dropdown--error.andes-dropdown--open .andes-dropdown__trigger:focus {
+    box-shadow: var(--andes-shadow-open), 0 0 0 2px var(--andes-error-red) inset !important;
+}
+
+.andes-dropdown__selected-text {
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    width: 100% !important;
+    text-align: left !important;
+    color: var(--andes-gray-900) !important;
+    font-family: var(--andes-font-style) !important;
+    font-size: var(--andes-font-size-16) !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    line-height: 22px !important; /* 125% */
+    padding-left: 12px !important;
+}
+
+.andes-dropdown__trigger[data-placeholder="true"] .andes-dropdown__selected-text {
+    color: var(--andes-gray-550) !important;
+    font-weight: 400 !important;
+}
+
+.andes-dropdown__arrow {
+    position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) rotate(0deg) !important;
+    width: 20px !important;
+    height: 20px !important;
+    pointer-events: none !important;
+    transition: transform 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: url("data:image/svg+xml,%3Csvg width='13' height='8' viewBox='0 0 13 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.70204 0.755972L6.49767 5.5516L11.2983 0.750977L12.1468 1.5995L6.49767 7.24866L0.853516 1.6045L1.70204 0.755972Z' fill='rgba(0,0,0,0.9)'/%3E%3C/svg%3E") center center no-repeat !important;
+}
+
+.andes-dropdown--error .andes-dropdown__arrow {
+    background: url("data:image/svg+xml,%3Csvg width='13' height='8' viewBox='0 0 13 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.70204 0.755972L6.49767 5.5516L11.2983 0.750977L12.1468 1.5995L6.49767 7.24866L0.853516 1.6045L1.70204 0.755972Z' fill='rgba(204,24,24,1)'/%3E%3C/svg%3E") center center no-repeat !important;
+}
+
+.andes-dropdown--open .andes-dropdown__arrow {
+    transform: translateY(-50%) rotate(180deg) !important;
+}
+
+.andes-dropdown__menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: -4px !important;
+    width: calc(100% + 8px) !important;
+    margin-top: 6px !important;
+    background-color: var(--andes-white) !important;
+    border-radius: var(--andes-radius-06) !important;
+    box-shadow: var(--andes-shadow-open) !important;
+    z-index: 100000 !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    border: none !important;
+    max-height: 264px !important;
+    overflow-y: auto !important;
+}
+
+.andes-dropdown__items {
+    padding: 0px 0px 0px 2px !important;
+    margin: 0 !important;
+}
+
+.andes-dropdown__item {
+    box-sizing: border-box !important;
+    height: var(--andes-spacing-48) !important;
+    min-height: var(--andes-spacing-48) !important;
+    max-height: var(--andes-spacing-48) !important;
+    line-height: var(--andes-spacing-48) !important;
+    padding: 0 12px !important;
+    color: var(--andes-gray-900) !important;
+    font-size: var(--andes-font-size-16) !important;
+    cursor: pointer !important;
+    border-left: 2px solid transparent !important;
+    font-weight: 400 !important;
+    background: none !important;
+    transition: background 0.2s, color 0.2s, border-color 0.2s !important;
+    outline: none !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.andes-dropdown__item--selected {
+    border-left: 2px solid var(--woocommerce-primary) !important;
+    border-radius: 2px !important;
+    color: var(--woocommerce-primary) !important;
+    font-weight: 600 !important;
+    background-color: var(--andes-white) !important;
+}
+
+.andes-dropdown__item--focused {
+    background-color: var(--andes-gray-040-solid) !important;
+    color: var(--andes-gray-900) !important;
+    font-weight: 400 !important;
+}
+
+.andes-dropdown__item--selected.andes-dropdown__item--focused {
+    font-weight: 600 !important;
+    color: var(--woocommerce-primary) !important;
+}
+
+.andes-dropdown__item--selected.andes-dropdown__item:hover {
+    font-weight: 600 !important;
+    color: var(--woocommerce-primary) !important;
+}
+
+.andes-dropdown__item:hover,
+.andes-dropdown__item--focused {
+    background-color: var(--andes-gray-040-solid) !important;
+}
+
+.andes-dropdown__item--disabled {
+    color: var(--andes-gray-250) !important;
+    cursor: not-allowed !important;
+    background: none !important;
+}
+
+.andes-dropdown__helper {
+    display: none !important;
+    margin-top: var(--andes-spacing-4) !important;
+    color: var(--andes-error-red) !important;
+    font-size: var(--andes-font-size-13) !important;
+    font-weight: 400 !important;
+    text-align: left !important;
+}
+
+.andes-dropdown--error .andes-dropdown__helper,
+.andes-dropdown__trigger:focus + .andes-dropdown__helper {
+    display: block !important;
+}
+
+.andes-dropdown--error .andes-dropdown__label {
+    color: var(--andes-error-red) !important;
+}
+
+.andes-dropdown--disabled .andes-dropdown__trigger {
+    cursor: default !important;
+    color: var(--andes-gray-250) !important;
+    background-color: var(--andes-gray-040-solid) !important;
+    box-shadow: none !important;
+}
+
+.andes-dropdown--disabled .andes-dropdown__label {
+    color: var(--andes-gray-250) !important;
+}
+
+.andes-dropdown--disabled .andes-dropdown__item {
+    color: var(--andes-gray-250) !important;
+    cursor: not-allowed !important;
+}
+
+.andes-dropdown__tax-info {
+    line-height: 18px !important;
+    font-size: 13px !important;
+    color: var(--andes-gray-550) !important;
+    font-weight: 400 !important;
+    padding: 0px 4px !important;
+}
+
+.andes-dropdown__tax-info b {
+    font-weight: 600 !important;
+}

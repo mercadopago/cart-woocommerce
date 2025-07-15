@@ -28,12 +28,19 @@ function formatCurrency(value, currency) {
   return formattedValue.split('.').join('.');
 }
 
-function handleCartTotalChange(value, currency){
-  if (cardFormMounted) {
-    cardForm.unmount();
+async function handleCartTotalChange(value, currency) {
+  while (!window.mpCustomCheckoutHandler) {
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
-  initCardForm(formatCurrency(value, currency));
+  const mpCustomCheckoutHandler = window.mpCustomCheckoutHandler;
+  const isSubmitting = !!document.querySelector('.wc-block-components-spinner');
+
+  if (mpCustomCheckoutHandler.cardForm.formMounted && !isSubmitting) {
+    mpCustomCheckoutHandler.cardForm.form.unmount();
+  }
+  const updatedAmount = formatCurrency(value, currency);
+
+  mpCustomCheckoutHandler.cardForm.initCardForm(updatedAmount);
 }
 
 export { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission };
-

@@ -138,6 +138,171 @@ class OrderMetadataTest extends TestCase
         $this->assertEquals('blocked', $result);
     }
 
+    public function testSetUsedGatewayData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, '_used_gateway', 'test_gateway')->once();
+        $this->orderMetadata->setUsedGatewayData($this->orderMock, 'test_gateway');
+        $this->assertTrue(true);
+    }
+
+    public function testSetIsProductionModeData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'is_production_mode', true)->once();
+        $this->orderMetadata->setIsProductionModeData($this->orderMock, true);
+        $this->assertTrue(true);
+    }
+
+    public function testSetDiscountData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'Mercado Pago: discount', 10)->once();
+        $this->orderMetadata->setDiscountData($this->orderMock, 10);
+        $this->assertTrue(true);
+    }
+
+    public function testSetCommissionData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'Mercado Pago: commission', 5)->once();
+        $this->orderMetadata->setCommissionData($this->orderMock, 5);
+        $this->assertTrue(true);
+    }
+
+    public function testSetInstallmentsData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_installments', 12)->once();
+        $this->orderMetadata->setInstallmentsData($this->orderMock, 12);
+        $this->assertTrue(true);
+    }
+
+    public function testSetTransactionDetailsData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_details', 'details')->once();
+        $this->orderMetadata->setTransactionDetailsData($this->orderMock, 'details');
+        $this->assertTrue(true);
+    }
+
+    public function testSetTransactionAmountData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_amount', 100.00)->once();
+        $this->orderMetadata->setTransactionAmountData($this->orderMock, 100.00);
+        $this->assertTrue(true);
+    }
+
+    public function testSetTotalPaidAmountData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_total_paid_amount', 95.00)->once();
+        $this->orderMetadata->setTotalPaidAmountData($this->orderMock, 95.00);
+        $this->assertTrue(true);
+    }
+
+    public function testSetPaymentsIdData()
+    {
+        $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->once();
+        $this->orderMetadata->setPaymentsIdData($this->orderMock, '123');
+        $this->assertTrue(true);
+    }
+
+    public function testSetTicketTransactionDetailsData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, '_transaction_details_ticket', 'ticket_details')->once();
+        $this->orderMetadata->setTicketTransactionDetailsData($this->orderMock, 'ticket_details');
+        $this->assertTrue(true);
+    }
+
+    public function testSetPixQrBase64Data()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_pix_qr_base64', 'base64string')->once();
+        $this->orderMetadata->setPixQrBase64Data($this->orderMock, 'base64string');
+        $this->assertTrue(true);
+    }
+
+    public function testSetPixQrCodeData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_pix_qr_code', 'qrcode')->once();
+        $this->orderMetadata->setPixQrCodeData($this->orderMock, 'qrcode');
+        $this->assertTrue(true);
+    }
+
+    public function testSetPixExpirationDateData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'checkout_pix_date_expiration', '2023-12-31')->once();
+        $this->orderMetadata->setPixExpirationDateData($this->orderMock, '2023-12-31');
+        $this->assertTrue(true);
+    }
+
+    public function testSetPixOnData()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'pix_on', true)->once();
+        $this->orderMetadata->setPixOnData($this->orderMock, true);
+        $this->assertTrue(true);
+    }
+
+    public function testMarkPaymentAsBlocks()
+    {
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'blocks_payment', 'blocked')->once();
+        $this->orderMetadata->markPaymentAsBlocks($this->orderMock, 'blocked');
+        $this->assertTrue(true);
+    }
+
+    public function testSetCustomMetadata()
+    {
+        $data = [
+            'installments' => 12,
+            'transaction_details' => [
+                'installment_amount' => 100.00,
+                'total_paid_amount' => 1200.00
+            ],
+            'transaction_amount' => 1200.00,
+            'id' => '123',
+            'date_created' => '2024-03-20T10:00:00.000-04:00'
+        ];
+
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_installments', 12.0)->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_details', 100.0)->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_amount', 1200.0)->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_total_paid_amount', 1200.0)->once();
+        
+        // Mock the updatePaymentsOrderMetadata method calls
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)->andReturn(null);
+        $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->once();
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'PAYMENT_ID: DATE')->andReturn('', '123: 2024-03-20T10:00:00.000-04:00');
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'PAYMENT_ID: DATE', '123: 2024-03-20T10:00:00.000-04:00')->once();
+        
+        $this->orderMock->shouldReceive('save')->once();
+        
+        $this->orderMetadata->setCustomMetadata($this->orderMock, $data);
+        $this->assertTrue(true);
+    }
+
+    public function testSetSupertokenMetadata()
+    {
+        $data = [
+            'installments' => 12,
+            'transaction_details' => [
+                'installment_amount' => 100.00,
+                'total_paid_amount' => 1200.00
+            ],
+            'transaction_amount' => 1200.00,
+            'id' => '123'
+        ];
+
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_installments', 12.0)->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_details', 100.0)->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_amount', 1200.0)->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_total_paid_amount', 1200.0)->once();
+        
+        // Mock the updatePaymentsOrderMetadata method calls - setSupertokenMetadata passes ['id' => $data['id']] 
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)->andReturn(null);
+        $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->once();
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'PAYMENT_ID: DATE')->andReturn('');
+        // formatPaymentDetail will return empty string because no date_created exists in ['id' => '123']
+        // No update to PAYMENT_ID: DATE since paymentDetailValue will be empty
+        
+        $this->orderMock->shouldReceive('save')->once();
+        
+        $this->orderMetadata->setSupertokenMetadata($this->orderMock, $data);
+        $this->assertTrue(true);
+    }
+
     public function testGetSyncCronErrorCountValueReturnsZeroWhenErrorCountIsNull()
     {
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn(null);
@@ -171,7 +336,7 @@ class OrderMetadataTest extends TestCase
             ->andReturn('');
         $this->orderMock->shouldReceive('get_meta')
             ->with('PAYMENT_ID: DATE', true)
-            ->andReturn('','123456789: 2024-03-20T10:00:00.000-04:00');
+            ->andReturn('', '123456789: 2024-03-20T10:00:00.000-04:00');
         $this->orderMock->shouldReceive('add_meta_data')
             ->with('_Mercado_Pago_Payment_IDs', '123456789', false)
             ->once();
@@ -254,6 +419,147 @@ class OrderMetadataTest extends TestCase
 
         // Assert
         $this->assertTrue(true);
+    }
+    public function testUpdatePaymentsOrderMetadataWithFeeDetails()
+    {
+        // Arrange
+        $paymentData = [
+            'id' => '123456789',
+            'date_created' => '2024-03-20T10:00:00.000-04:00',
+            'fee_details' => [
+                [
+                    'type' => 'mercadopago_fee',
+                    'amount' => 3.3
+                ],
+                [
+                    'type' => 'mercadopago_commission',
+                    'amount' => 1.5
+                ]
+            ]
+        ];
+
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)
+            ->andReturn('');
+
+        $this->orderMetaMock->shouldReceive('add')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123456789')
+            ->once();
+
+        // Mock expectations for updatePaymentDetails
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('');
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE', '123456789: 2024-03-20T10:00:00.000-04:00')
+            ->once();
+
+        // Mock expectations for updateLatestPaymentId
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('123456789: 2024-03-20T10:00:00.000-04:00');
+
+        // Mock expectations for addFeeDetails
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, 'mercadopago_fee', 3.3)
+            ->once();
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, 'mercadopago_commission', 1.5)
+            ->once();
+
+        // Act
+        $this->orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
+
+        // Assert
+        $this->assertTrue(true); // Mockery will verify all expectations
+    }
+
+    public function testUpdatePaymentsOrderMetadataWithoutFeeDetails()
+    {
+        // Arrange
+        $paymentData = [
+            'id' => '123456789',
+            'date_created' => '2024-03-20T10:00:00.000-04:00'
+            // No fee_details key
+        ];
+
+        // Mock expectations for initializePaymentMetadata
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)
+            ->andReturn('');
+
+        $this->orderMetaMock->shouldReceive('add')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123456789')
+            ->once();
+
+        // Mock expectations for updatePaymentDetails
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('');
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE', '123456789: 2024-03-20T10:00:00.000-04:00')
+            ->once();
+
+        // Mock expectations for updateLatestPaymentId
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('123456789: 2024-03-20T10:00:00.000-04:00');
+
+        // No expectations for addFeeDetails since fee_details is not present
+
+        // Act
+        $this->orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
+
+        // Assert
+        $this->assertTrue(true); // Mockery will verify all expectations
+    }
+
+    public function testUpdatePaymentsOrderMetadataWithInvalidFeeDetails()
+    {
+        // Arrange
+        $paymentData = [
+            'id' => '123456789',
+            'date_created' => '2024-03-20T10:00:00.000-04:00',
+            'fee_details' => [
+                [
+                    'testA' => 'mercadopago_fee',
+                    'testB' => 3.3
+                ]
+            ]
+        ];
+
+        // Mock expectations for initializePaymentMetadata
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)
+            ->andReturn('');
+
+        $this->orderMetaMock->shouldReceive('add')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123456789')
+            ->once();
+
+        // Mock expectations for updatePaymentDetails
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('');
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE', '123456789: 2024-03-20T10:00:00.000-04:00')
+            ->once();
+
+        // Mock expectations for updateLatestPaymentId
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('123456789: 2024-03-20T10:00:00.000-04:00');
+
+        // No expectations for addFeeDetails since fee_details is not present
+
+        // Act
+        $this->orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
+
+        // Assert
+        $this->assertTrue(true); // Mockery will verify all expectations
     }
 
     /**

@@ -69,7 +69,7 @@ if (!defined('ABSPATH')) {
                 maxlength="9"
                 required
             />
-            <input-helper input-id="form-checkout__address_zip_code_error" message="" isvisible="false" />
+            <input-helper type="error" input-id="form-checkout__address_zip_code_error" message="" isvisible="false" />
         </div>
         <div class="mp-checkout-ticket-billing-input-column">
             <label for="form-checkout__address_federal_unit"><?= esc_html($billing_data_state_label); ?> <b style="color: red;">*</b></label>
@@ -85,7 +85,7 @@ if (!defined('ABSPATH')) {
                     <option value="<?= esc_html($key); ?>"><?= esc_html($state); ?></option>
                 <?php } ?>
             </select>
-            <input-helper input-id="form-checkout__address_federal_unit_error" message="" isvisible="false" />
+            <input-helper type="error" input-id="form-checkout__address_federal_unit_error" message="" isvisible="false" />
         </div>
     </div>
     <div class="mp-checkout-ticket-billing-input-row">
@@ -99,7 +99,7 @@ if (!defined('ABSPATH')) {
                 data-checkout='address_city'
                 required
             />
-            <input-helper input-id="form-checkout__address_city_error" message="" isvisible="false" />
+            <input-helper type="error" input-id="form-checkout__address_city_error" message="" isvisible="false" />
         </div>
         <div class="mp-checkout-ticket-billing-input-column">
             <label for="form-checkout__address_neighborhood"><?= esc_html($billing_data_neighborhood_label); ?> <b style="color: red;">*</b></label>
@@ -111,7 +111,7 @@ if (!defined('ABSPATH')) {
                 data-checkout='address_neighborhood'
                 required
             />
-            <input-helper input-id="form-checkout__address_neighborhood_error" message="" isvisible="false" />
+            <input-helper type="error" input-id="form-checkout__address_neighborhood_error" message="" isvisible="false" />
         </div>
     </div>
     <div class="mp-checkout-ticket-billing-input-row">
@@ -125,7 +125,7 @@ if (!defined('ABSPATH')) {
                 data-checkout='address_street_name'
                 required
             />
-            <input-helper input-id="form-checkout__address_street_name_error" message="" isvisible="false" />
+            <input-helper type="error" input-id="form-checkout__address_street_name_error" message="" isvisible="false" />
         </div>
     </div>
     <div class="mp-checkout-ticket-billing-input-row">
@@ -144,7 +144,7 @@ if (!defined('ABSPATH')) {
                     <input type="checkbox" id="form-checkout__address_number_toggle" />
                 </div>
             </div>
-            <input-helper input-id="form-checkout__address_street_number_error" message="" isvisible="false" />
+            <input-helper type="error" input-id="form-checkout__address_street_number_error" message="" isvisible="false" />
         </div>
         <div class="mp-checkout-ticket-billing-input-column">
             <label for="form-checkout__address_complement"><?= esc_html($billing_data_address_comp_label); ?></label>

@@ -3,13 +3,13 @@ import { mlb } from "../../../../data/meli_sites";
 import { fillStepsToCheckout } from "../../../../flows/fill_steps_to_checkout";
 import { choproModal } from "../../../../flows/mlb/pay_with_cho_pro";
 
-const{ url, credit_card_scenarios, guestUserMLB } = mlb;
+const{ shop_url, credit_card_scenarios, guestUserMLB } = mlb;
 const { PENDING } = credit_card_scenarios;
 
 test('test pending payment with chopro, binary must be on, other payment options must be show on change payment method', async ({page}) => {
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
-  await fillStepsToCheckout(page, url, guestUserMLB);
+  await fillStepsToCheckout(page, shop_url, guestUserMLB);
   await choproModal(page, PENDING.master, PENDING.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
@@ -23,7 +23,7 @@ test('test pending payment with chopro, binary must be on, other payment options
 test('test pending payment with chopro modal - binary must be on, close button clicked, modal must be closed and order canceled message must be shown', async ({page}) => {
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
-  await fillStepsToCheckout(page, url, guestUserMLB);
+  await fillStepsToCheckout(page, shop_url, guestUserMLB);
   await choproModal(page, PENDING.master, PENDING.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');

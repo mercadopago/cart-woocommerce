@@ -84,7 +84,7 @@ class InputSelect extends HTMLElement {
     helper.setAttribute('isVisible', false);
     helper.setAttribute('message', this.getAttribute('helper-message'));
     helper.setAttribute('input-id', 'mp-doc-number-helper');
-
+    helper.setAttribute('type', 'message');
     return helper;
 }
 

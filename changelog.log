@@ -1,6 +1,11 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.3.0 (16/07/2025) =
+* Added:
+- Add Mercado Pago saved card flow
+- Show Mercado Pago fees in order metadata
+
 = v8.2.0 (30/06/2025) =
 * Changed
 - Implement consistent Optional Chaining in setHide function

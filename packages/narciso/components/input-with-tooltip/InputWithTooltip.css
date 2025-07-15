@@ -1,0 +1,274 @@
+.mp-input-with-tooltip-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: 6px;
+  color: #000000E5;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif !important;
+  margin-left: 6px;
+}
+
+.mp-input-with-tooltip-input-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #fff;
+  border: 1px solid #bfbfbf;
+  border-radius: 0.375em;
+  height: 48px;
+  width: 100%;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif !important;
+}
+
+.mp-input-with-tooltip-input-container:focus-within {
+  border-color: #1976d2;
+}
+
+.mp-input-with-tooltip-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  background: transparent;
+  color: #222;
+  margin: 14px 12px;
+  font-family: inherit;
+  outline: none !important;
+  height: 100%;
+  width: 100%;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif !important;
+}
+
+.mp-input-with-tooltip-input::placeholder {
+  color: #737373 !important;
+}
+
+.mp-input-with-tooltip-input::placeholder {
+  color: #b0b0b0;
+  opacity: 1;
+  font-size: 16px;
+}
+
+.mp-input-with-tooltip-tooltip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #3483FA;
+  color: #3483FA !important;
+  font-size: 16px;
+  margin-right: 12px;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+  padding: 9px;
+  font-family: sans-serif !important;
+  font-weight: 500 !important;
+  user-select: none;
+}
+
+.mp-input-with-tooltip-tooltip-icon:focus {
+  box-shadow: 0 0 0 2px #90caf9;
+}
+
+.mp-input-with-tooltip-tooltip-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  color: #222;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px 0 rgba(60, 60, 60, 0.15);
+  padding: 15px;
+  font-weight: 400;
+  z-index: 10;
+  border: 1px solid #e0e0e0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mp-input-with-tooltip-tooltip-content.show {
+  display: block;
+}
+
+/* Tooltip positions */
+.mp-input-with-tooltip-tooltip-right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(1.2rem);
+  min-width: 220px;
+  position: absolute;
+}
+
+.mp-input-with-tooltip-tooltip-right::before {
+  /* Triângulo branco */
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 13px solid #fff;
+  z-index: 2;
+}
+
+.mp-input-with-tooltip-tooltip-right::after {
+  /* Sombra */
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  transform: translateY(-50%) translateX(-2px);
+  width: 0;
+  height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-right: 16px solid rgba(60,60,60,0.12);
+  filter: blur(2px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mp-input-with-tooltip-tooltip-left {
+  top: 50%;
+  left: 0;
+  transform: translateX(-110%) translateY(-50%);
+  min-width: 220px;
+  position: absolute;
+}
+
+.mp-input-with-tooltip-tooltip-left::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 99%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 13px solid #fff;
+  z-index: 2;
+}
+
+.mp-input-with-tooltip-tooltip-left::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 99%;
+  transform: translateY(-50%) translateX(2px);
+  width: 0;
+  height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-left: 16px solid rgba(60,60,60,0.12);
+  filter: blur(2px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mp-input-with-tooltip-tooltip-top {
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%) translateY(-1.2rem);
+  min-width: 220px;
+  position: absolute;
+}
+
+.mp-input-with-tooltip-tooltip-top::before {
+  /* Triângulo branco */
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 13px solid #fff;
+  z-index: 2;
+}
+
+.mp-input-with-tooltip-tooltip-top::after {
+  /* Sombra */
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -15px;
+  transform: translateX(-50%) translateY(2px);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 16px solid rgba(60,60,60,0.12);
+  filter: blur(2px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mp-input-with-tooltip-tooltip-bottom {
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%) translateY(1.2rem);
+  min-width: 220px;
+  position: absolute;
+}
+
+.mp-input-with-tooltip-tooltip-bottom::before {
+  /* Triângulo branco */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  transform: translateX(-50%) rotate(180deg);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 13px solid #fff;
+  z-index: 2;
+}
+
+.mp-input-with-tooltip-tooltip-bottom::after {
+  /* Sombra */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -13px;
+  transform: translateX(-50%) translateY(-2px) rotate(180deg);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 16px solid rgba(60,60,60,0.12);
+  filter: blur(2px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mp-input-with-tooltip-helper-error {
+  color: #e53935;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif !important;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+}
+
+.mp-input-with-tooltip-input-container.error {
+  border-color: #e53935 !important;
+}
+
+.mp-input-with-tooltip-label.error {
+  color: #e53935 !important;
+}

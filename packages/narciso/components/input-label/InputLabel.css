@@ -5,11 +5,8 @@
   font-weight: normal !important;
   font-size: 14px !important;
   line-height: 18px !important;
-  display: flex;
-  align-items: flex-end !important;
   color: rgb(0 0 0 / 90%) !important;
   padding-bottom: 4px !important;
-  height: 30px;
   padding-left: 6px !important;
 }
 

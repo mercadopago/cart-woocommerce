@@ -1,10 +1,10 @@
-export default async function(page, form) {
+export default async function(page) {
   await page.waitForLoadState();
-  await page.getByLabel('Pix').check();
+  await page.locator('#radio-control-wc-payment-method-options-woo-mercado-pago-pix').check();
 
   // place order
   await page.waitForTimeout(3000);
-  await page.locator('.wc-block-components-checkout-place-order-button', { hasText: 'Place Order' }).click();
+  await page.locator('.wc-block-components-checkout-place-order-button').click();
 
   await page.waitForLoadState();
 }

@@ -596,13 +596,25 @@ class AdminTranslations
      */
     private function setCustomGatewaySettingsTranslations(): void
     {
-        $enabledDescriptionsEnabled = sprintf(
+        $enabledDescriptionsEnabledAll = sprintf(
+            '%s <b>%s</b>.',
+            __('Transparent Checkout for credit or debit cards is', 'woocommerce-mercadopago'),
+            __('enabled', 'woocommerce-mercadopago')
+        );
+
+        $enabledDescriptionsDisabledAll = sprintf(
+            '%s <b>%s</b>.',
+            __('Transparent Checkout for credit or debit cards is', 'woocommerce-mercadopago'),
+            __('disabled', 'woocommerce-mercadopago')
+        );
+
+        $enabledDescriptionsEnabledMLB = sprintf(
             '%s <b>%s</b>.',
             __('Transparent Checkout for credit cards is', 'woocommerce-mercadopago'),
             __('enabled', 'woocommerce-mercadopago')
         );
 
-        $enabledDescriptionsDisabled = sprintf(
+        $enabledDescriptionsDisabledMLB = sprintf(
             '%s <b>%s</b>.',
             __('Transparent Checkout for credit cards is', 'woocommerce-mercadopago'),
             __('disabled', 'woocommerce-mercadopago')
@@ -645,22 +657,25 @@ class AdminTranslations
         );
 
         $this->customGatewaySettings = [
-            'gateway_title'                             => __('Credit and debit cards', 'woocommerce-mercadopago'),
-            'gateway_description'                       => __('Payments without leaving your store with our customizable checkout.', 'woocommerce-mercadopago'),
+            'gateway_title_ALL'                         => __('Credit or debit card', 'woocommerce-mercadopago'),
+            'gateway_title_MLB'                         => __('Credit card', 'woocommerce-mercadopago'),
+            'gateway_description'                       => __('Payments without leaving your store with our customizable checkout', 'woocommerce-mercadopago'),
             'gateway_method_title'                      => __('Mercado Pago - Checkout API', 'woocommerce-mercadopago'),
-            'gateway_method_description'                => __('Payments without leaving your store with our customizable checkout.', 'woocommerce-mercadopago'),
-            'header_title'                              => __('Transparent Checkout | Credit card', 'woocommerce-mercadopago'),
+            'gateway_method_description'                => __('Payments without leaving your store with our customizable checkout', 'woocommerce-mercadopago'),
+            'header_title_ALL'                          => __('Transparent Checkout | Credit or debit card', 'woocommerce-mercadopago'),
+            'header_title_MLB'                          => __('Transparent Checkout | Credit card', 'woocommerce-mercadopago'),
             'header_description'                        => __('With the Transparent Checkout, you can sell inside your store environment, without redirection and with the security from Mercado Pago.', 'woocommerce-mercadopago'),
             'card_settings_title'                       => __('Mercado Pago Plugin general settings', 'woocommerce-mercadopago'),
             'card_settings_subtitle'                    => __('Set the deadlines and fees, test your store or access the Plugin manual.', 'woocommerce-mercadopago'),
             'card_settings_button_text'                 => __('Go to Settings', 'woocommerce-mercadopago'),
             'enabled_title'                             => __('Enable the checkout', 'woocommerce-mercadopago'),
             'enabled_subtitle'                          => __('By disabling it, you will disable all credit cards payments from Mercado Pago Transparent Checkout.', 'woocommerce-mercadopago'),
-            'enabled_descriptions_enabled'              => $enabledDescriptionsEnabled,
-            'enabled_descriptions_disabled'             => $enabledDescriptionsDisabled,
+            'enabled_descriptions_enabled_ALL'          => $enabledDescriptionsEnabledAll,
+            'enabled_descriptions_disabled_ALL'         => $enabledDescriptionsDisabledAll,
+            'enabled_descriptions_enabled_MLB'          => $enabledDescriptionsEnabledMLB,
+            'enabled_descriptions_disabled_MLB'         => $enabledDescriptionsDisabledMLB,
             'title_title'                               => __('Title in the store Checkout', 'woocommerce-mercadopago'),
             'title_description'                         => __('Change the display text in Checkout, maximum characters: 85', 'woocommerce-mercadopago'),
-            'title_default'                             => __('Credit and debit cards', 'woocommerce-mercadopago'),
             'title_desc_tip'                            => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
             'card_info_fees_title'                      => __('Installments Fees', 'woocommerce-mercadopago'),
             'card_info_fees_subtitle'                   => __('Set installment fees and whether they will be charged from the store or from the buyer.', 'woocommerce-mercadopago'),

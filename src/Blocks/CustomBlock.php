@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Blocks;
 
+use MercadoPago\Woocommerce\Helpers\Template;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -28,6 +30,12 @@ class CustomBlock extends AbstractBlock
      */
     public function getScriptParams(): array
     {
-        return $this->gateway->getPaymentFieldsParams();
+        return [
+            'content' => Template::html(
+                'public/checkouts/custom-checkout',
+                $this->gateway->getPaymentFieldsParams()
+            ),
+            'icon' => $this->gateway->icon,
+        ];
     }
 }

@@ -277,9 +277,9 @@ class CheckoutTicketPageController {
   showError(element, errorContainer, message) {
     element.classList.remove('mp-checkout-andes-input');
     element.classList.add('mp-checkout-andes-input-error');
-    const errorMessageElement = errorContainer.querySelector('.mp-helper-message');
-    if (errorMessageElement) {
-      errorMessageElement.textContent = message;
+    const errorHelperMessage = errorContainer.childNodes[1];
+    if (errorHelperMessage) {
+      errorHelperMessage.textContent = message;
     }
     errorContainer.style.display = 'flex';
   }

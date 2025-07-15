@@ -275,6 +275,7 @@ class InputCode extends HTMLElement {
   createHelper() {
     const helper = document.createElement('input-helper');
     helper.setAttribute('isVisible', false);
+    helper.setAttribute('type', 'error');
     helper.setAttribute('message', 'error');
     helper.setAttribute('input-id', 'helper-approval-code');
     return helper;

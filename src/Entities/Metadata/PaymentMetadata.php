@@ -46,5 +46,7 @@ class PaymentMetadata
 
     public bool $auto_update;
 
+    public string $supertoken_mode;
+
     public ThemeMetadata $theme;
 }

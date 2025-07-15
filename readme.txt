@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 8.2.0
+Stable tag: 8.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,16 +134,9 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.2.0 (30/06/2025) =
-* Changed
-- Implement consistent Optional Chaining in setHide function
-- Eliminate unnecessary temporary variables and improve consistency
-- Maintain 100% functional compatibility with WooCommerce
-- Changed the Notification route to accept payload as object or as string.
-- Changed titles of the Mercado Pagos`s payment methods in the Woocommerce settings page.
-* Fixed
-- Improve WooCommerce 9.8.4+ compatibility in collapsible advanced config.
-- Add robust null checks and defensive programming.
-- Implement early return validation - Add new admin styling functions.
+= v8.3.0 (16/07/2025) =
+* Added:
+- Add Mercado Pago saved card flow
+- Show Mercado Pago fees in order metadata
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).
