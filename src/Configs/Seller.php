@@ -262,10 +262,10 @@ class Seller
     /**
      * @return string
      */
-    public function getCustIdFromAT(): string
+    public function getCustIdFromAT(): ?string
     {
         preg_match('/(\d+)$/', $this->getCredentialsAccessToken(), $matches);
-        return $matches[0];
+        return $matches[0] ?? null;
     }
 
     /**
@@ -921,6 +921,54 @@ class Seller
 
         $response = $this->requester->post($requestUrl, $headers, $body);
         return [$response->getStatus(), $response->getData()];
+    }
+
+    /**
+     * Get Payment Methods Thumbnails
+     *
+     * @return array
+     */
+    public function getPaymentMethodsThumbnails(): array
+    {
+        try {
+            $accessToken = $this->getCredentialsAccessToken();
+            if (empty($accessToken)) {
+                return [];
+            }
+
+            $key   = sprintf('%spk%s', __FUNCTION__, $accessToken);
+            $cache = $this->cache->getCache($key);
+            if ($cache) {
+                return $cache;
+            }
+
+            $productId = Device::getDeviceProductId();
+            $uri = '/v1/asgard/payment-methods';
+            $headers = [
+                'Authorization: Bearer ' . $accessToken,
+                'X-Platform-Id: ' . MP_PLATFORM_ID,
+                'X-Product-Id: ' . $productId,
+            ];
+            $response = $this->requester->get($uri, $headers);
+
+            if ($response->getStatus() != 200 && $response->getStatus() != 201) {
+                throw new Exception(json_encode($response->getData()));
+            }
+
+            $paymentMethodsThumbnails = [];
+            foreach ($response->getData() as $paymentMethod) {
+                $paymentMethodsThumbnails[$paymentMethod['id']] = $paymentMethod['thumbnail'];
+            }
+
+            $this->cache->setCache($key, $paymentMethodsThumbnails, 3600);
+            return $paymentMethodsThumbnails;
+        } catch (Exception $e) {
+            $this->logs->file->error(
+                "Mercado pago gave error to get payment methods thumbnails: {$e->getMessage()}",
+                __CLASS__
+            );
+            return [];
+        }
     }
 
     /**

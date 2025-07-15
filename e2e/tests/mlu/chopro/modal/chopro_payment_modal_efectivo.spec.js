@@ -3,10 +3,10 @@ import { mlu } from '../../../../data/meli_sites';
 import { fillStepsToCheckout } from '../../../../flows/fill_steps_to_checkout';
 import { returnToCongratsPageModal, payChoproModalLoggedEfectivo, payChoProModalGuestEfectivo } from '../../../../flows/mlu/pay_with_cho_pro';
 
-const { url, loggedUserMLU, guestUser } = mlu;
+const { shop_url, loggedUserMLU, guestUser } = mlu;
 
 test('test efectivo payment abitab with approved status and logged in user', async ({ page }) => {
-  await fillStepsToCheckout(page, url, loggedUserMLU);
+  await fillStepsToCheckout(page, shop_url, loggedUserMLU);
   await payChoproModalLoggedEfectivo(page, loggedUserMLU, loggedUserMLU.document, 'Efectivo', 'Abitab');
   await returnToCongratsPageModal(page);
 
@@ -15,7 +15,7 @@ test('test efectivo payment abitab with approved status and logged in user', asy
 });
 
 test('test efectivo payment redpagos with approved status and logged in user', async ({ page }) => {
-  await fillStepsToCheckout(page, url, loggedUserMLU);
+  await fillStepsToCheckout(page, shop_url, loggedUserMLU);
   await payChoproModalLoggedEfectivo(page, loggedUserMLU, loggedUserMLU.document, 'Efectivo', 'Redpagos');
   await returnToCongratsPageModal(page);
 
@@ -24,7 +24,7 @@ test('test efectivo payment redpagos with approved status and logged in user', a
 });
 
 test('test efectivo payment abitab with approved and guest user', async ({ page }) => {
-  await fillStepsToCheckout(page, url, guestUser);
+  await fillStepsToCheckout(page, shop_url, guestUser);
   await payChoProModalGuestEfectivo(page, guestUser.document, 'Efectivo', 'Abitab');
   await returnToCongratsPageModal(page);
 
@@ -33,7 +33,7 @@ test('test efectivo payment abitab with approved and guest user', async ({ page 
 });
 
 test('test efectivo payment redpagos with approved and guest user', async ({ page }) => {
-  await fillStepsToCheckout(page, url, guestUser);
+  await fillStepsToCheckout(page, shop_url, guestUser);
   await payChoProModalGuestEfectivo(page, guestUser.document, 'Efectivo', 'Redpagos');
   await returnToCongratsPageModal(page);
 

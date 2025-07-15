@@ -1,6 +1,7 @@
-const InputHelper = ({ isVisible, message, inputId, id, dataMain }) => (
+const InputHelper = ({ isVisible, type, message, inputId, id, dataMain }) => (
   <input-helper
     isVisible={isVisible}
+    type={type}
     message={message}
     input-id={inputId}
     id={id}

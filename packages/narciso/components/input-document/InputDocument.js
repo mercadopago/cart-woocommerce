@@ -441,6 +441,7 @@ class InputDocument extends HTMLElement {
     const helper = document.createElement('input-helper');
 
     helper.setAttribute('isVisible', false);
+    helper.setAttribute('type', 'error');
     helper.setAttribute('message', helperMessage);
     helper.setAttribute('input-id', 'mp-doc-number-helper');
 

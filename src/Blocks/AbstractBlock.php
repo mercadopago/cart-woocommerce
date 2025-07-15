@@ -111,6 +111,9 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             $this->mercadopago->helpers->url->getCssAsset('checkouts/mp-plugins-components')
         );
         $this->mercadopago->hooks->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $asset['version'] ?? '', $asset['dependencies'] ?? []);
+
+        $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/checkout');
+
         return [$scriptName];
     }
 

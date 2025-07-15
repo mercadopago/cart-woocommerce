@@ -91,6 +91,7 @@ class InputField extends HTMLElement {
     const helper = document.createElement('input-helper');
 
     helper.setAttribute('isVisible', 'false');
+    helper.setAttribute('type', 'error');
     helper.setAttribute('message', 'error');
     helper.setAttribute('input-id', 'helper-input-field');
 

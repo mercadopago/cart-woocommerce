@@ -3,11 +3,11 @@ import { mco } from "../../../../data/meli_sites";
 import { fillStepsToCheckout } from "../../../../flows/fill_steps_to_checkout";
 import { choproRedirect } from "../../../../flows/mco/pay_with_cho_pro";
 
-const { url, credit_card_scenarios, guestUserDefault } = mco;
+const { shop_url, credit_card_scenarios, guestUserDefault } = mco;
 const { PENDING } = credit_card_scenarios;
 
 test('Given a guest user, When their payment with chopro is pending and binary is on, Should show the decline message', async ({page}) => {
-  await fillStepsToCheckout(page, url, guestUserDefault);
+  await fillStepsToCheckout(page, shop_url, guestUserDefault);
   await choproRedirect(page, PENDING.masterMCO, PENDING.form);
 
   const returnButton = page.locator('.group-back-url a');
@@ -20,7 +20,7 @@ test('Given a guest user, When their payment with chopro is pending and binary i
 })
 
 test('Given a guest user, When their payment with chopro is pending and binary is on, Should show other payment options', async ({page}) => {
-  await fillStepsToCheckout(page, url, guestUserDefault);
+  await fillStepsToCheckout(page, shop_url, guestUserDefault);
   await choproRedirect(page, PENDING.masterMCO, PENDING.form);
 
   const changePaymentMethod = page.locator('#group_card_ui').getByRole('button', { name: 'Pagar con otro medio' });

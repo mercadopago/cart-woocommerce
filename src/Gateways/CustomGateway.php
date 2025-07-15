@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
+use MercadoPago\Woocommerce\Transactions\SupertokenTransaction;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 
@@ -50,7 +51,9 @@ class CustomGateway extends AbstractGateway
         $this->id        = self::ID;
         $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-custom');
         $this->iconAdmin = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-custom-admin');
-        $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+
+        $gatewayTitle    = $this->mercadopago->sellerConfig->getSiteId() === 'MLB' ? $this->adminTranslations['gateway_title_MLB'] : $this->adminTranslations['gateway_title_ALL'];
+        $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $gatewayTitle);
 
         $this->init_form_fields();
         $this->payment_scripts($this->id);
@@ -58,8 +61,8 @@ class CustomGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->discount           = $this->getActionableValue('gateway_discount', 0);
-        $this->commission         = $this->getActionableValue('commission', 0);
+        $this->discount           = (int) $this->getActionableValue('gateway_discount', 0);
+        $this->commission         = (int) $this->getActionableValue('commission', 0);
 
         $this->mercadopago->hooks->gateway->registerUpdateOptions($this);
         $this->mercadopago->hooks->gateway->registerGatewayTitle($this);
@@ -102,7 +105,7 @@ class CustomGateway extends AbstractGateway
         $this->form_fields = array_merge($this->form_fields, [
             'header' => [
                 'type'        => 'mp_config_title',
-                'title'       => $this->adminTranslations['header_title'],
+                'title'       => $this->mercadopago->sellerConfig->getSiteId() === 'MLB' ? $this->adminTranslations['header_title_MLB'] : $this->adminTranslations['header_title_ALL'],
                 'description' => $this->adminTranslations['header_description'],
             ],
             'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
@@ -126,15 +129,15 @@ class CustomGateway extends AbstractGateway
                 'subtitle'     => $this->adminTranslations['enabled_subtitle'],
                 'default'      => 'no',
                 'descriptions' => [
-                    'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
-                    'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
+                    'enabled'  => $this->mercadopago->sellerConfig->getSiteId() === 'MLB' ? $this->adminTranslations['enabled_descriptions_enabled_MLB'] : $this->adminTranslations['enabled_descriptions_enabled_ALL'],
+                    'disabled' => $this->mercadopago->sellerConfig->getSiteId() === 'MLB' ? $this->adminTranslations['enabled_descriptions_disabled_MLB'] : $this->adminTranslations['enabled_descriptions_disabled_ALL'],
                 ],
             ],
             'title' => [
                 'type'        => 'text',
                 'title'       => $this->adminTranslations['title_title'],
                 'description' => $this->adminTranslations['title_description'],
-                'default'     => $this->adminTranslations['title_default'],
+                'default'     => $this->title,
                 'desc_tip'    => $this->adminTranslations['title_desc_tip'],
                 'class'       => 'limit-title-max-length',
             ],
@@ -229,6 +232,14 @@ class CustomGateway extends AbstractGateway
         }
     }
 
+    public function registerCheckoutStyle()
+    {
+        $this->mercadopago->hooks->scripts->registerCheckoutStyle(
+            'wc_mercadopago_supertoken_payment_methods',
+            $this->mercadopago->helpers->url->getCssAsset('checkouts/super-token/super-token-payment-methods'),
+        );
+    }
+
     /**
      * Register checkout scripts
      *
@@ -237,6 +248,8 @@ class CustomGateway extends AbstractGateway
     public function registerCheckoutScripts(): void
     {
         parent::registerCheckoutScripts();
+
+        $this->registerCheckoutStyle();
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_security_session',
@@ -249,8 +262,32 @@ class CustomGateway extends AbstractGateway
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_custom_card_form',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/entities/card-form'),
+            [
+                'security_code_placeholder_text_3_digits' => $this->storeTranslations['security_code_placeholder_text_3_digits'],
+            ]
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_custom_three_ds_handler',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/entities/three-ds-handler')
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_custom_event_handler',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/entities/event-handler')
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_custom_page',
-            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/mp-custom-page')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/mp-custom-page'),
+            [
+                'security_code_placeholder_text_3_digits' => $this->storeTranslations['security_code_placeholder_text_3_digits'],
+                'security_code_placeholder_text_4_digits' => $this->storeTranslations['security_code_placeholder_text_4_digits'],
+                'security_code_tooltip_text_3_digits' => $this->storeTranslations['security_code_tooltip_text_3_digits'],
+                'security_code_tooltip_text_4_digits' => $this->storeTranslations['security_code_tooltip_text_4_digits'],
+            ]
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
@@ -263,6 +300,7 @@ class CustomGateway extends AbstractGateway
             $this->mercadopago->helpers->url->getJsAsset('checkouts/custom/mp-custom-checkout'),
             [
                 'public_key'        => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
+                'locale'            => $this->storeTranslations['locale'],
                 'intl'              => $this->countryConfigs['intl'],
                 'site_id'           => $this->countryConfigs['site_id'],
                 'currency'          => $this->countryConfigs['currency'],
@@ -270,19 +308,14 @@ class CustomGateway extends AbstractGateway
                 'location'          => '/checkout',
                 'plugin_version'    => MP_VERSION,
                 'platform_version'  => $this->mercadopago->woocommerce->version,
-                'cvvText'           => $this->storeTranslations['cvv_text'],
-                'installmentObsFee' => $this->storeTranslations['installment_obs_fee'],
-                'installmentButton' => $this->storeTranslations['installment_button'],
-                'bankInterestText'  => $this->storeTranslations['bank_interest_text'],
-                'interestText'      => $this->storeTranslations['interest_text'],
                 'placeholders' => [
                     'issuer'             => $this->storeTranslations['placeholders_issuer'],
                     'installments'       => $this->storeTranslations['placeholders_installments'],
                     'cardExpirationDate' => $this->storeTranslations['placeholders_card_expiration_date'],
+                    'cardholderName'     => $this->storeTranslations['placeholders_cardholder_name'],
                 ],
-                'cvvHint' => [
-                    'back'  => $this->storeTranslations['cvv_hint_back'],
-                    'front' => $this->storeTranslations['cvv_hint_front'],
+                'input_title' => [
+                    'installments' => $this->storeTranslations['card_installments_label'],
                 ],
                 'input_helper_message' => [
                     'cardNumber' => [
@@ -301,7 +334,13 @@ class CustomGateway extends AbstractGateway
                     'securityCode' => [
                         'invalid_type'   => $this->storeTranslations['input_helper_message_security_code_invalid_type'],
                         'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
-                    ]
+                    ],
+                    'installments' => [
+                        'required' => $this->storeTranslations['installments_required'],
+                        'interest_free_option_text' => $this->storeTranslations['interest_free_part_two_text'],
+                        'bank_interest_hint_text' => $this->storeTranslations['card_installments_interest_text'],
+                        'bank_interest_option_text' => $this->storeTranslations['installments_text']
+                    ],
                 ],
                 'threeDsText' => [
                     'title_loading'          => $this->mercadopago->storeTranslations->threeDsTranslations['title_loading_3ds_frame'],
@@ -318,6 +357,113 @@ class CustomGateway extends AbstractGateway
                         'invalid amount' => $this->storeTranslations['installments_error_invalid_amount'],
                     ],
                 ],
+            ]
+        );
+
+        $this->registerSuperTokenScripts();
+    }
+
+    /**
+     * Register all super token scripts
+     *
+     * @return void
+     */
+    public function registerSuperTokenScripts()
+    {
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken_sdk_instance',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/super-token-sdk-instance'),
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken_debounce',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/debounce'),
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken_email_listener',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/email-listener'),
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken_metrics',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/super-token-metrics'),
+            [
+                'plugin_version'    => MP_VERSION,
+                'platform_version'  => $this->mercadopago->woocommerce->version,
+                'site_id'           => $this->countryConfigs['site_id'],
+                'location'          => '/checkout',
+                'theme'             => get_stylesheet(),
+                'cust_id'           => $this->mercadopago->sellerConfig->getCustIdFromAT(),
+            ]
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken_trigger_handler',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/super-token-trigger-handler'),
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken_payment_methods',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/super-token-payment-methods'),
+            [
+                'yellow_wallet_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-yellow-wallet'),
+                'white_card_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-white-card'),
+                'payment_methods_order' => $this->mercadopago->hooks->options->getGatewayOption($this, 'payment_methods_order', 'cards_first'),
+                'payment_methods_thumbnails' => $this->mercadopago->sellerConfig->getPaymentMethodsThumbnails(),
+                'intl'              => $this->countryConfigs['intl'],
+                'site_id'           => $this->countryConfigs['site_id'],
+                'currency'          => $this->countryConfigs['currency'],
+                'payment_methods_list_text' => $this->storeTranslations['payment_methods_list_text'],
+                'last_digits_text' => $this->storeTranslations['last_digits_text'],
+                'new_card_text' => $this->storeTranslations['new_card_text'],
+                'account_money_text' => $this->storeTranslations['account_money_text'],
+                'account_money_invested_text' => $this->storeTranslations['account_money_invested_text'],
+                'interest_free_part_one_text' => $this->storeTranslations['interest_free_part_one_text'],
+                'interest_free_part_two_text' => $this->storeTranslations['interest_free_part_two_text'],
+                'security_code_input_title_text' => $this->storeTranslations['security_code_input_title_text'],
+                'security_code_placeholder_text_3_digits' => $this->storeTranslations['security_code_placeholder_text_3_digits'],
+                'security_code_placeholder_text_4_digits' => $this->storeTranslations['security_code_placeholder_text_4_digits'],
+                'security_code_tooltip_text_3_digits' => $this->storeTranslations['security_code_tooltip_text_3_digits'],
+                'security_code_tooltip_text_4_digits' => $this->storeTranslations['security_code_tooltip_text_4_digits'],
+                'security_code_error_message_text' => $this->storeTranslations['security_code_error_message_text'],
+                'input_title' => [
+                    'installments' => $this->storeTranslations['card_installments_label'],
+                ],
+                'placeholders' => [
+                    'issuer'             => $this->storeTranslations['placeholders_issuer'],
+                    'installments'       => $this->storeTranslations['placeholders_installments'],
+                    'cardExpirationDate' => $this->storeTranslations['placeholders_card_expiration_date'],
+                ],
+                'input_helper_message' => [
+                    'installments' => [
+                        'required' => $this->storeTranslations['installments_required'],
+                        'interest_free_option_text' => $this->storeTranslations['interest_free_part_two_text'],
+                        'bank_interest_hint_text' => $this->storeTranslations['card_installments_interest_text'],
+                        'bank_interest_option_text' => $this->storeTranslations['installments_text']
+                    ],
+                    'securityCode' => [
+                        'invalid_type'   => $this->storeTranslations['input_helper_message_security_code_invalid_type'],
+                        'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
+                    ],
+                ],
+                'mercado_pago_card_name' => $this->storeTranslations['mercado_pago_card_name'],
+            ]
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken_authenticator',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/super-token-authenticator'),
+            [
+                'platform_id' => MP_PLATFORM_ID,
+            ]
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/mp-super-token'),
+            [
+                'public_key' => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
             ]
         );
     }
@@ -344,47 +490,34 @@ class CustomGateway extends AbstractGateway
     {
         $amountAndCurrencyRatio = $this->getAmountAndCurrency();
         return [
-            'test_mode'                          => $this->mercadopago->storeConfig->isTestMode(),
-            'test_mode_title'                    => $this->storeTranslations['test_mode_title'],
-            'test_mode_description'              => $this->storeTranslations['test_mode_description'],
-            'test_mode_link_text'                => $this->storeTranslations['test_mode_link_text'],
-            'test_mode_link_src'                 => $this->links['docs_integration_test'],
-            'wallet_button'                      => $this->mercadopago->hooks->options->getGatewayOption($this, 'wallet_button', 'yes'),
-            'wallet_button_image'                => $this->mercadopago->helpers->url->getImageAsset('gateways/wallet-button/logo.svg'),
-            'wallet_button_title'                => $this->storeTranslations['wallet_button_title'],
-            'wallet_button_description'          => $this->storeTranslations['wallet_button_description'],
-            'available_payments_title_icon'      => $this->mercadopago->helpers->url->getImageAsset('icons/icon-blue-card'),
-            'available_payments_title'           => $this->storeTranslations['available_payments_title'],
-            'available_payments_image'           => $this->mercadopago->helpers->url->getImageAsset('checkouts/custom/chevron-down'),
-            'available_payments_chevron_up'      => $this->mercadopago->helpers->url->getImageAsset('checkouts/custom/chevron-up'),
-            'available_payments_chevron_down'    => $this->mercadopago->helpers->url->getImageAsset('checkouts/custom/chevron-down'),
-            'payment_methods_items'              => wp_json_encode($this->getPaymentMethodsContent()),
-            'payment_methods_promotion_link'     => $this->links['mercadopago_debts'],
-            'payment_methods_promotion_text'     => $this->storeTranslations['payment_methods_promotion_text'],
-            'site_id'                            => $this->mercadopago->sellerConfig->getSiteId() ?: $this->mercadopago->helpers->country::SITE_ID_MLA,
-            'card_form_title'                    => $this->storeTranslations['card_form_title'],
-            'card_number_input_label'            => $this->storeTranslations['card_number_input_label'],
-            'card_number_input_helper'           => $this->storeTranslations['card_number_input_helper'],
-            'card_holder_name_input_label'       => $this->storeTranslations['card_holder_name_input_label'],
-            'card_holder_name_input_helper'      => $this->storeTranslations['card_holder_name_input_helper'],
-            'card_expiration_input_label'        => $this->storeTranslations['card_expiration_input_label'],
-            'card_expiration_input_helper'       => $this->storeTranslations['card_expiration_input_helper'],
-            'card_security_code_input_label'     => $this->storeTranslations['card_security_code_input_label'],
-            'card_security_code_input_helper'    => $this->storeTranslations['card_security_code_input_helper'],
-            'card_document_input_label'          => $this->storeTranslations['card_document_input_label'],
-            'card_input_document_helper_empty'   => $this->storeTranslations['card_document_input_helper_empty'],
-            'card_input_document_helper_invalid' => $this->storeTranslations['card_document_input_helper_invalid'],
-            'card_input_document_helper_wrong'   => $this->storeTranslations['card_document_input_helper_wrong'],
-            'card_installments_title'            => $this->storeTranslations['card_installments_title'],
-            'card_issuer_input_label'            => $this->storeTranslations['card_issuer_input_label'],
-            'card_installments_input_helper'     => $this->storeTranslations['card_installments_input_helper'],
-            'terms_and_conditions_description'   => $this->storeTranslations['terms_and_conditions_description'],
-            'terms_and_conditions_link_text'     => $this->storeTranslations['terms_and_conditions_link_text'],
-            'terms_and_conditions_link_src'      => $this->links['mercadopago_terms_and_conditions'],
-            'amount'                             => $amountAndCurrencyRatio['amount'],
-            'currency_ratio'                     => $amountAndCurrencyRatio['currencyRatio'],
-            'message_error_amount'               => $this->storeTranslations['message_error_amount'],
-            'checkout_blocks_row_image_src'      => $this->icon,
+            'test_mode'                               => $this->mercadopago->storeConfig->isTestMode(),
+            'test_mode_title'                         => $this->storeTranslations['test_mode_title'],
+            'test_mode_description'                   => $this->storeTranslations['test_mode_description'],
+            'test_mode_link_text'                     => $this->storeTranslations['test_mode_link_text'],
+            'test_mode_link_src'                      => $this->links['docs_integration_test'],
+            'wallet_button'                           => $this->mercadopago->hooks->options->getGatewayOption($this, 'wallet_button', 'yes'),
+            'wallet_button_image'                     => $this->mercadopago->helpers->url->getImageAsset('gateways/wallet-button/logo.svg'),
+            'wallet_button_title'                     => $this->storeTranslations['wallet_button_title'],
+            'wallet_button_description'               => $this->storeTranslations['wallet_button_description'],
+            'site_id'                                 => $this->mercadopago->sellerConfig->getSiteId() ?: $this->mercadopago->helpers->country::SITE_ID_MLA,
+            'card_number_input_label'                 => $this->storeTranslations['card_number_input_label'],
+            'card_number_input_helper'                => $this->storeTranslations['card_number_input_helper'],
+            'card_holder_name_input_label'            => $this->storeTranslations['card_holder_name_input_label'],
+            'card_holder_name_input_helper'           => $this->storeTranslations['card_holder_name_input_helper'],
+            'card_expiration_input_label'             => $this->storeTranslations['card_expiration_input_label'],
+            'card_expiration_input_helper'            => $this->storeTranslations['card_expiration_input_helper'],
+            'card_security_code_input_label'          => $this->storeTranslations['card_security_code_input_label'],
+            'card_security_code_input_helper'         => $this->storeTranslations['card_security_code_input_helper'],
+            'card_document_input_label'               => $this->storeTranslations['card_document_input_label'],
+            'card_input_document_helper_empty'        => $this->storeTranslations['card_document_input_helper_empty'],
+            'card_input_document_helper_invalid'      => $this->storeTranslations['card_document_input_helper_invalid'],
+            'card_input_document_helper_wrong'        => $this->storeTranslations['card_document_input_helper_wrong'],
+            'card_issuer_input_label'                 => $this->storeTranslations['card_issuer_input_label'],
+            'amount'                                  => $amountAndCurrencyRatio['amount'],
+            'currency_ratio'                          => $amountAndCurrencyRatio['currencyRatio'],
+            'message_error_amount'                    => $this->storeTranslations['message_error_amount'],
+            'security_code_tooltip_text_3_digits'     => $this->storeTranslations['security_code_tooltip_text_3_digits'],
+            'placeholders_cardholder_name'            => $this->storeTranslations['placeholders_cardholder_name'],
         ];
     }
 
@@ -400,7 +533,7 @@ class CustomGateway extends AbstractGateway
         $order = wc_get_order($order_id);
 
         try {
-            $checkout = $this->getCheckoutMercadopagoCustom($order);
+            $checkout = $this->getCheckoutFormData($order);
 
             parent::process_payment($order_id);
 
@@ -417,6 +550,26 @@ class CustomGateway extends AbstractGateway
                         ),
                     ];
 
+                case 'super_token':
+                    $this->mercadopago->logs->file->info('Preparing to get response of custom super token checkout', self::LOG_SOURCE);
+                    if (
+                        !empty($checkout['token']) &&
+                        !empty($checkout['amount']) &&
+                        !empty($checkout['payment_method_id']) &&
+                        !empty($checkout['payment_type_id'])
+                    ) {
+                        if ($checkout['payment_type_id'] === 'credit_card' && (empty($checkout['installments']) || $checkout['installments'] <= 0)) {
+                            throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
+                        }
+                        $this->transaction = new SupertokenTransaction($this, $order, $checkout);
+                        $response          = $this->transaction->createPayment();
+
+                        $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response);
+                        return $this->handleResponseStatus($order, $response);
+                    }
+
+                    throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
+
                 default:
                     $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
 
@@ -430,7 +583,6 @@ class CustomGateway extends AbstractGateway
                         $response          = $this->transaction->createPayment();
 
                         $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
-
                         return $this->handleResponseStatus($order, $response);
                     }
 
@@ -454,7 +606,7 @@ class CustomGateway extends AbstractGateway
      *
      * @return array
      */
-    private function getCheckoutMercadopagoCustom($order): array
+    private function getCheckoutFormData($order): array
     {
         if (isset($_POST['mercadopago_custom'])) {
             $checkout = Form::sanitizedPostData('mercadopago_custom');
@@ -501,58 +653,6 @@ class CustomGateway extends AbstractGateway
         return $this->mercadopago->helpers->url->getImageAsset(
             'gateways/wallet-button/preview-' . $locale,
         );
-    }
-
-    /**
-     * Get payment methods to fill in the available payments content
-     *
-     * @return array
-     */
-    private function getPaymentMethodsContent(): array
-    {
-        $debitCard      = [];
-        $creditCard     = [];
-        $paymentMethods = [];
-        $cards          = $this->mercadopago->sellerConfig->getCheckoutBasicPaymentMethods();
-
-        foreach ($cards as $card) {
-            switch ($card['type']) {
-                case 'credit_card':
-                    $creditCard[] = [
-                        'src' => $card['image'],
-                        'alt' => $card['name'],
-                    ];
-                    break;
-
-                case 'debit_card':
-                case 'prepaid_card':
-                    $debitCard[] = [
-                        'src' => $card['image'],
-                        'alt' => $card['name'],
-                    ];
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        if (count($creditCard) != 0) {
-            $paymentMethods[] = [
-                'title'           => $this->storeTranslations['available_payments_credit_card_title'],
-                'label'           => $this->storeTranslations['available_payments_credit_card_label'],
-                'payment_methods' => $creditCard,
-            ];
-        }
-
-        if (count($debitCard) != 0) {
-            $paymentMethods[] = [
-                'title'           => $this->storeTranslations['available_payments_debit_card_title'],
-                'payment_methods' => $debitCard,
-            ];
-        }
-
-        return $paymentMethods;
     }
 
     /**
@@ -691,7 +791,7 @@ class CustomGateway extends AbstractGateway
                                 'three_ds_flow'    => true,
                                 'last_four_digits' =>  $lastFourDigits,
                                 'redirect'         => false,
-                                'messages'         => '<script>load3DSFlow(' . $lastFourDigits . ')</script>',
+                                'messages'         => '<script>window.mpCustomCheckoutHandler.threeDSHandler.load3DSFlow(' . $lastFourDigits . ')</script>',
                             ];
 
                             if ($this->isOrderPayPage()) {

@@ -8,10 +8,10 @@ import {
   return_to_congrats_page
 } from '../../../../flows/mlm/pay_with_cho_pro';
 
-const { url, loggedUserMLM } = mlm;
+const { shop_url, loggedUserMLM } = mlm;
 
 test('test payment with account money', async ({ page }) => {
-  await fillStepsToCheckout(page, url, loggedUserMLM);
+  await fillStepsToCheckout(page, shop_url, loggedUserMLM);
   await select_cho_pro(page);
   await cho_pro_modal_login(page, loggedUserMLM);
   await cho_pro_modal_logged(page, 'Dinero disponible en Mercado');

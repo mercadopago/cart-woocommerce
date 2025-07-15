@@ -388,6 +388,7 @@ class OrderMetadata
         $this->initializePaymentMetadata($order, $paymentData);
         $this->updatePaymentDetails($order, $paymentData);
         $this->updateLatestPaymentId($order);
+        $this->addFeeDetails($order, $paymentData);
     }
 
     /**
@@ -469,6 +470,33 @@ class OrderMetadata
     }
 
     /**
+     * Add fee details to the order metadata
+     *
+     * @param WC_Order $order
+     * @param array $paymentData
+     *
+     * @example mercadopago_fee: 3.3
+     *
+     * @return void
+     */
+    private function addFeeDetails(WC_Order $order, array $paymentData): void
+    {
+        $feeDetails = $paymentData['fee_details'] ?? [];
+
+        if (empty($feeDetails)) {
+            return;
+        }
+
+        foreach ($feeDetails as $feeDetail) {
+            if (is_array($feeDetail) && isset($feeDetail['type'], $feeDetail['amount'])) {
+                $this->orderMeta->update($order, $feeDetail['type'], $feeDetail['amount']);
+            } else {
+                error_log('Mercado Pago: Invalid fee detail format: ' . json_encode($feeDetail));
+            }
+        }
+    }
+
+    /**
      * Get payment details from metadata
      *
      * @param WC_Order $order
@@ -514,6 +542,33 @@ class OrderMetadata
         }
 
         return $latestPayment;
+    }
+
+    /**
+     * Set supertoken metadata in the order
+     *
+     * @param WC_Order $order
+     * @param mixed $data
+     *
+     * @return void
+     */
+    public function setSupertokenMetadata(WC_Order $order, $data): void
+    {
+        if (isset($data['installments']) && isset($data['transaction_details']['installment_amount']) && $data['transaction_details']['installment_amount'] > 0) {
+            $installments      = (float) $data['installments'];
+            $installmentAmount = (float) $data['transaction_details']['installment_amount'];
+
+            $this->setInstallmentsData($order, $installments);
+            $this->setTransactionDetailsData($order, $installmentAmount);
+        }
+
+        $totalPaidAmount   = (float) $data['transaction_details']['total_paid_amount'];
+        $transactionAmount = (float) $data['transaction_amount'];
+
+        $this->setTransactionAmountData($order, $transactionAmount);
+        $this->setTotalPaidAmountData($order, $totalPaidAmount);
+        $this->updatePaymentsOrderMetadata($order, ['id' => $data['id']]);
+        $order->save();
     }
 
     /**

@@ -9,10 +9,10 @@ import {
   return_to_congrats_page
 } from '../../../../flows/mlm/pay_with_cho_pro';
 
-const { url, guestUserMLM, loggedUserMLM } = mlm;
+const { shop_url, guestUserMLM, loggedUserMLM } = mlm;
 
 test('test SPEI payment with guest user', async ({ page }) => {
-  await fillStepsToCheckout(page, url, guestUserMLM);
+  await fillStepsToCheckout(page, shop_url, guestUserMLM);
   await select_cho_pro(page);
   await cho_pro_redirect_guest(page, 'Transferencia SPEI Desde tu banca en línea.');
   await page.waitForTimeout(1000);
@@ -21,7 +21,7 @@ test('test SPEI payment with guest user', async ({ page }) => {
 });
 
 test('test SPEI payment with logged user', async ({ page }) => {
-  await fillStepsToCheckout(page, url, loggedUserMLM);
+  await fillStepsToCheckout(page, shop_url, loggedUserMLM);
   await select_cho_pro(page);
   await cho_pro_redirect_login(page, loggedUserMLM);
   await cho_pro_redirect_logged(page, 'Transferencia SPEI Desde tu banca en línea.');

@@ -3,13 +3,13 @@ import { mco } from "../../../../data/meli_sites";
 import { fillStepsToCheckout } from "../../../../flows/fill_steps_to_checkout";
 import { choproModal } from "../../../../flows/mco/pay_with_cho_pro";
 
-const { url, credit_card_scenarios, guestUserDefault } = mco;
+const { shop_url, credit_card_scenarios, guestUserDefault } = mco;
 const { PENDING } = credit_card_scenarios;
 
 test('Given a guest user, When their payment with chopro is pending and binary is on, Should show other payment options on change payment method', async ({page}) => {
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
-  await fillStepsToCheckout(page, url, guestUserDefault);
+  await fillStepsToCheckout(page, shop_url, guestUserDefault);
   await choproModal(page, PENDING.masterMCO, PENDING.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');
@@ -23,7 +23,7 @@ test('Given a guest user, When their payment with chopro is pending and binary i
 test('Given a guest user, When their payment with chopro is pending and binary is on and they close the modal, Should show the cancelled order message', async ({page}) => {
   const modal = page.locator('#mercadopago-checkout').contentFrame();
 
-  await fillStepsToCheckout(page, url, guestUserDefault);
+  await fillStepsToCheckout(page, shop_url, guestUserDefault);
   await choproModal(page, PENDING.masterMCO, PENDING.form);
 
   const changePaymentMethod = modal.locator('#change_payment_method');

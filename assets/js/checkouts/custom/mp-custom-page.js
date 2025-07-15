@@ -1,6 +1,8 @@
-/* globals wc_mercadopago_custom_checkout_params, CheckoutElements, cardForm */
+/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_page_params CheckoutElements */
 
 const CheckoutPage = {
+  installmentsEnabled: false,
+
   setElementDisplay(element, operator) {
     document.querySelector(CheckoutElements[element]).style.display = operator;
   },
@@ -9,14 +11,17 @@ const CheckoutPage = {
     document.querySelector(CheckoutElements[element]).innerHTML = text;
   },
 
-  setValue(element, value) {
+  // Public method
+  setValueOn(element, value) {
     document.querySelector(CheckoutElements[element]).value = value;
   },
 
+  // Public method
   setBackground(element, background) {
     document.querySelector(CheckoutElements[element]).style.setProperty('background', background, 'important');
   },
 
+  // Public method
   setImageCard(secureThumbnail) {
     this.setBackground('fcCardNumberContainer', 'url(' + secureThumbnail + ') 98% 50% no-repeat #fff');
     document
@@ -24,12 +29,14 @@ const CheckoutPage = {
       .style.setProperty('background-size', 'auto', 'important');
   },
 
+  // Public method
   findContainerField(field) {
     let id = field === 'cardholderName' ? `#form-checkout__${field}` : `#form-checkout__${field}-container`;
 
     return Object.keys(CheckoutElements).find((key) => CheckoutElements[key] === id);
   },
 
+  // Public method
   setDisplayOfError(elementName, operator, className, checkoutSelector = 'customContent') {
     let checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
     let element = checkoutContent.querySelector(CheckoutElements[elementName]);
@@ -43,6 +50,7 @@ const CheckoutPage = {
     }
   },
 
+  // Public method
   setDisplayOfInputHelper(elementName, operator, checkoutSelector = 'customContent') {
     let checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
     let divInputHelper = checkoutContent.querySelector(`input-helper[input-id=${elementName}-helper]`);
@@ -53,19 +61,39 @@ const CheckoutPage = {
     }
   },
 
-  setCvvHint(securityCode) {
-    var cvvText = wc_mercadopago_custom_checkout_params.cvvText;
-    cvvText = `${securityCode.length} ${cvvText} `;
-    cvvText += this.cvvLocationTranslate(securityCode.card_location);
-    this.setText('mpSecurityCodeInfo', cvvText);
+  // Public method
+  setDisplayOfInputHelperMessage(elementName, message, checkoutSelector = 'customContent') {
+    let checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
+    let divInputHelper = checkoutContent.querySelector(`input-helper[input-id=${elementName}-helper]`);
+
+    if (divInputHelper) {
+      let inputHelperMessage = divInputHelper.querySelector('div').childNodes[1];
+      inputHelperMessage.innerHTML = message;
+    }
   },
 
-  cvvLocationTranslate(location) {
-    let cvvFront = wc_mercadopago_custom_checkout_params.cvvHint['front'];
-    let cvvBack = wc_mercadopago_custom_checkout_params.cvvHint['back'];
-    return location === 'back' ? cvvBack : cvvFront;
+  setCvvConfig(securityCode) {
+    this.setCvvHint(securityCode.length);
+    this.changeCvvPlaceHolder(securityCode.length);
   },
 
+  changeCvvPlaceHolder(cvvLength) {
+    if (cvvLength === 3) {
+      window.mpCustomCheckoutHandler.cardForm.form.update('securityCode', { placeholder: wc_mercadopago_custom_page_params.security_code_placeholder_text_3_digits });
+    } else {
+      window.mpCustomCheckoutHandler.cardForm.form.update('securityCode', { placeholder: wc_mercadopago_custom_page_params.security_code_placeholder_text_4_digits });
+    }
+  },
+
+  setCvvHint(cvvLength) {
+    if (cvvLength === 3) {
+      document.querySelector(CheckoutElements.mpSecurityCodeInfo).setAttribute('data-tooltip', wc_mercadopago_custom_page_params.security_code_tooltip_text_3_digits);
+    } else {
+      document.querySelector(CheckoutElements.mpSecurityCodeInfo).setAttribute('data-tooltip', wc_mercadopago_custom_page_params.security_code_tooltip_text_4_digits);
+    }
+  },
+
+  // Public method
   additionalInfoHandler(additionalInfoNeeded) {
     if (additionalInfoNeeded.cardholder_name) {
       this.setElementDisplay('fcCardholderName', 'block');
@@ -90,32 +118,6 @@ const CheckoutPage = {
     return wc_mercadopago_custom_checkout_params.site_id;
   },
 
-  changeCvvPlaceHolder(cvvLength) {
-    let text = '';
-
-    for (let index = 0; index < cvvLength; index++) {
-      text += index + 1;
-    }
-
-    cardForm.update('securityCode', { placeholder: text });
-  },
-
-  clearTax() {
-    this.setElementDisplay('mpInputTaxCft', 'none');
-    this.setText('mpTaxCftText', '');
-    this.setText('mpTaxTeaText', '');
-  },
-
-  installment_amount(paymentTypeId) {
-    let element = document.querySelector(CheckoutElements.fcInstallments);
-
-    if (paymentTypeId === 'debit_card') {
-      element.setAttribute('disabled', 'disabled');
-    } else {
-      element.removeAttribute('disabled');
-    }
-  },
-
   formatCurrency(value) {
     const formatter = new Intl.NumberFormat(wc_mercadopago_custom_checkout_params.intl, {
       currency: wc_mercadopago_custom_checkout_params.currency,
@@ -123,9 +125,16 @@ const CheckoutPage = {
       currencyDisplay: 'narrowSymbol',
     });
 
-    return formatter.format(value);
+    let formattedValue = formatter.format(value);
+
+    if (this.getCountry() === 'MLM') {
+      formattedValue = formattedValue.replace(/^(\D+)/, '$1 ');
+    }
+
+    return formattedValue;
   },
 
+  // Public method
   inputHelperName(field) {
     let inputHelperName = {
       cardNumber: CheckoutElements.mpCardNumber,
@@ -138,82 +147,20 @@ const CheckoutPage = {
     return inputHelperName[field];
   },
 
+  // Public method
   removeAdditionFields() {
     this.setElementDisplay('mpDocumentContainer', 'none');
-    this.setElementDisplay('mpInstallments', 'none');
+    this.setElementDisplay('mpInstallmentsCard', 'none');
     this.setElementDisplay('mpIssuerContainer', 'none');
-    this.setDisplayOfInputHelper('installments', 'none');
-    this.setValue('cardInstallments', '');
+    this.setValueOn('cardInstallments', '');
   },
 
-  clearInstallmentsComponent() {
-    const selectorInstallments = document.querySelector(CheckoutElements.mpInstallmentsContainer);
-
-    selectorInstallments.classList.remove(CheckoutElements.mpInstallmentsContainer);
-
-    if (selectorInstallments.firstElementChild) {
-      selectorInstallments.removeChild(selectorInstallments.firstElementChild);
-    }
-  },
-
-  showInstallmentsComponent(child) {
-    const selectorInstallments = document.querySelector(CheckoutElements.mpInstallmentsContainer);
-
-    selectorInstallments.classList.add(CheckoutElements.mpInstallmentsContainer);
-
-    selectorInstallments.appendChild(child);
-  },
-
+  // Public method
   getHelperMessage(field) {
     let query = 'input-helper[input-id=' + this.inputHelperName(field) + '-helper]';
     let divInputHelper = document.querySelector(query);
-
-    return divInputHelper.querySelector('div[class=mp-helper-message]');
-  },
-
-  argentinaResolution(payerCosts) {
-    let dataInput = '';
-
-    if (this.getCountry() === 'MLA') {
-      for (let l = 0; l < payerCosts.length; l++) {
-        if (payerCosts[l].indexOf('CFT_') !== -1) {
-          dataInput = payerCosts[l];
-        }
-      }
-    }
-
-    return dataInput;
-  },
-
-  hideErrors() {
-    let customContent = document.querySelector('.mp-checkout-custom-container');
-    let inputHelpers = customContent.querySelectorAll('input-helper');
-
-    inputHelpers.forEach((inputHelper) => {
-      inputHelper.querySelector('div').style.display = 'none';
-    });
-  },
-
-  clearInputs() {
-    this.hideErrors();
-    this.setBackground('fcCardNumberContainer', 'no-repeat #fff');
-    this.setValue('fcCardholderName', '');
-    this.setDisplayOfError('fcCardholderName', 'removed', 'mp-error');
-
-    this.setValue('fcCardExpirationDateContainer', '');
-    this.setDisplayOfError('fcCardExpirationDateContainer', 'removed', 'mp-error');
-
-    this.setValue('fcSecurityNumberContainer', '');
-    this.setDisplayOfError('fcSecurityNumberContainer', 'removed', 'mp-error');
-
-    this.setValue('fcIdentificationNumber', '');
-    this.setElementDisplay('mpDocumentContainer', 'none');
-    this.setDisplayOfError('fcIdentificationNumberContainer', 'removed', 'mp-error');
-
-    this.clearInstallmentsComponent();
-    this.setElementDisplay('mpInstallments', 'none');
-
-    document.querySelector('input[data-cy=input-document]').value = '';
+    let helper = divInputHelper.querySelector('div[class=mp-helper]');
+    return helper.childNodes[1];
   },
 
   verifyDocument() {
@@ -233,6 +180,7 @@ const CheckoutPage = {
     return inputHelper.querySelector('div').style.display !== 'flex';
   },
 
+  // Public method
   loadAdditionalInfo(sdkAdditionalInfoNeeded) {
     const additionalInfoNeeded = {
       issuer: false,
@@ -261,147 +209,241 @@ const CheckoutPage = {
     return additionalInfoNeeded;
   },
 
-  verifyInstallments() {
-    if (document.querySelector(CheckoutElements.cardInstallments).value === '') {
-      CheckoutPage.setDisplayOfError('fcInputTableContainer', 'add', 'mp-error');
-      this.setDisplayOfInputHelper('mp-installments', 'flex');
-      return false;
+  // Public method
+  clearInstallmentsComponent() {
+    const selectorInstallments = document.querySelector(CheckoutElements.mpInstallmentsContainer);
+
+    selectorInstallments.classList.remove(CheckoutElements.mpInstallmentsContainer);
+
+    if (selectorInstallments.firstElementChild) {
+      selectorInstallments.removeChild(selectorInstallments.firstElementChild);
     }
-
-    CheckoutPage.setDisplayOfError('fcInputTableContainer', 'remove', 'mp-error');
-    this.setDisplayOfInputHelper('mp-installments', 'none');
-
-    return true;
   },
 
-  validateInputsCreateToken() {
-    let isInstallmentsValid = this.verifyInstallments();
-    let isDocumentValid = this.verifyDocument();
+  showInstallmentsComponent(child) {
+    const selectorInstallments = document.querySelector(CheckoutElements.mpInstallmentsContainer);
 
-    return isInstallmentsValid && isDocumentValid;
+    selectorInstallments.classList.add(CheckoutElements.mpInstallmentsContainer);
+
+    selectorInstallments.appendChild(child);
   },
 
-  showTaxes() {
-    let choCustomContent = document.querySelector('.mp-checkout-custom-container');
+  shouldEnableInstallmentsComponent(paymentTypeId) {
+    if (paymentTypeId === 'debit_card') {
+      this.clearInstallmentsComponent();
+      this.installmentsEnabled = false;
+      return;
+    }
+    this.installmentsEnabled = true;
+  },
 
-    const selectorInstallments = choCustomContent.querySelectorAll(CheckoutElements.mpInputRadio);
+  hideErrors() {
+    let customContent = document.querySelector('.mp-checkout-custom-container');
+    let inputHelpers = customContent.querySelectorAll('input-helper');
 
-    let tax = null;
-    let display = 'block';
-
-    selectorInstallments.forEach((installment) => {
-      if (installment.checked) {
-        tax = installment.getAttribute('datarate');
-      }
+    inputHelpers.forEach((inputHelper) => {
+      inputHelper.querySelector('div').style.display = 'none';
     });
-
-    let cft = '';
-    let tea = '';
-
-    if (tax != null) {
-      const tax_split = tax.split('|');
-
-      cft = tax_split[0].replace('_', ' ');
-      tea = tax_split[1].replace('_', ' ');
-
-      if (cft === 'CFT 0,00%' && tea === 'TEA 0,00%') {
-        display = 'none';
-        cft = '';
-        tea = '';
-      }
-    }
-
-    document.querySelector(CheckoutElements.mpInputTaxCft).style.display = display;
-    document.querySelector(CheckoutElements.mpTaxCftText).innerHTML = cft;
-    document.querySelector(CheckoutElements.mpTaxTeaText).innerHTML = tea;
   },
 
-  setupTaxEvents() {
-    const choCustomContent = document.querySelector(CheckoutElements.customContent);
-    const taxesElements = choCustomContent.getElementsByClassName('mp-input-table-label');
+  // Public method
+  clearInputs() {
+    this.hideErrors();
+    this.setBackground('fcCardNumberContainer', 'no-repeat #fff');
+    this.setValueOn('fcCardholderName', '');
+    this.setDisplayOfError('fcCardholderName', 'removed', 'mp-error');
 
-    for (var i = 0; i < taxesElements.length; i++) {
-      let installmentValue = taxesElements[i].getElementsByTagName('input')[0].value;
+    this.setValueOn('fcCardExpirationDateContainer', '');
+    this.setDisplayOfError('fcCardExpirationDateContainer', 'removed', 'mp-error');
 
-      if (wc_mercadopago_custom_checkout_params.site_id === 'mla') {
-        taxesElements[i].addEventListener('click', this.showTaxes);
-      }
+    this.setValueOn('fcSecurityNumberContainer', '');
+    this.setDisplayOfError('fcSecurityNumberContainer', 'removed', 'mp-error');
 
-      taxesElements[i].addEventListener('click', () => {
-        CheckoutPage.setDisplayOfError('fcInputTableContainer', 'remove', 'mp-error');
-        this.setDisplayOfInputHelper('mp-installments', 'none');
-        this.setValue('fcInstallments', installmentValue);
-        this.setValue('cardInstallments', installmentValue);
-      });
-    }
+    this.setValueOn('fcIdentificationNumber', '');
+    this.setElementDisplay('mpDocumentContainer', 'none');
+    this.setDisplayOfError('fcIdentificationNumberContainer', 'removed', 'mp-error');
+
+    this.clearInstallmentsComponent();
+    this.setElementDisplay('mpInstallmentsCard', 'none');
+
+    document.querySelector('input[data-cy=input-document]').value = '';
   },
 
-  getBankInterestDisclaimerCountries(siteId) {
+  needsBankInterestDisclaimer() {
+    const siteId = this.getCountry();
     return siteId.toUpperCase() === 'MLC' || siteId.toUpperCase() === 'MCO' || siteId.toUpperCase() === 'MPE';
   },
 
-  getInstallments(response, bankInterestDisclaimer) {
+  getInstallments(response) {
     let payerCosts = [];
     const installments = [];
 
     this.clearInstallmentsComponent();
-    payerCosts = response.payer_costs;
+    payerCosts = this.getCountry() === 'MCO' ? response.payer_costs.slice(0, Math.min(6, response.payer_costs.length)) : response.payer_costs;
     if (payerCosts) {
-      this.setElementDisplay('mpInstallments', 'block');
+      this.setElementDisplay('mpInstallmentsCard', 'block');
     }
 
-    for (let j = 0; j < payerCosts.length; j++) {
-      const installment = payerCosts[j].installments;
-      const installmentRate = payerCosts[j].installment_rate === 0;
-      const installmentRateCollector = payerCosts[j].installment_rate_collector.includes('MERCADOPAGO');
-      const installmentTotalAmount = this.formatCurrency(payerCosts[j].total_amount);
+    payerCosts.forEach((payerCost) => {
+      const installment = payerCost.installments;
+      const installmentAmount = this.formatCurrency(payerCost.installment_amount);
+      const installmentRate = payerCost.installment_rate !== 0;
+      const totalAmount = this.formatCurrency(payerCost.total_amount);
 
-      const backInterestText = bankInterestDisclaimer
-        ? `${installmentTotalAmount} + ${wc_mercadopago_custom_checkout_params.interestText}`
-        : installmentTotalAmount;
+      let title = `${installment.toString()}x `;
 
-      installments.push({
-        id: `installment-${installment}`,
-        value: installment,
-        highlight: installmentRate && installmentRateCollector ? 'true' : '',
-        dataRate: this.argentinaResolution(payerCosts[j].labels),
-        rowText: payerCosts[j].recommended_message.split('(')[0],
-        rowObs:
-          installmentRate && installmentRateCollector
-            ? wc_mercadopago_custom_checkout_params.installmentObsFee
-            : backInterestText,
-      });
-    }
+      if (installment == 1) {
+        title += totalAmount;
+      } else if (this.needsBankInterestDisclaimer()) {
+        title += `${installmentAmount} (${totalAmount}) + ${wc_mercadopago_custom_checkout_params.input_helper_message.installments.bank_interest_option_text}`;
+      } else if (installmentRate) {
+        title += `${installmentAmount} (${totalAmount})`;
+      } else {
+        title += `${installmentAmount} ${wc_mercadopago_custom_checkout_params.input_helper_message.installments.interest_free_option_text}`;
+      }
+
+      const item = {
+        value: installment.toString(),
+        title: title,
+      };
+
+      if (this.getCountry() === 'MLA' && payerCost.labels) {
+        const taxInfo = this.parseTaxInfo(payerCost.labels);
+        if (taxInfo) {
+          item.taxInfo = taxInfo;
+        }
+      }
+
+      installments.push(item);
+    });
 
     return installments;
   },
 
-  setChangeEventOnInstallments(siteId, response) {
-    const bankInterestDisclaimer = this.getBankInterestDisclaimerCountries(siteId);
-    const installments = this.getInstallments(response, bankInterestDisclaimer);
+  parseTaxInfo(labels) {
+    if (!labels || !Array.isArray(labels)) return null;
 
-    const inputTable = document.createElement('input-table');
-    inputTable.setAttribute('name', 'mp-installments');
-    inputTable.setAttribute('button-name', wc_mercadopago_custom_checkout_params.installmentButton);
-    inputTable.setAttribute('columns', JSON.stringify(installments));
+    const taxInfo = {
+      cft: '0,00',
+      tna: '0,00',
+      tea: '0,00'
+    };
 
-    if (bankInterestDisclaimer) {
-      inputTable.setAttribute('bank-interest-text', wc_mercadopago_custom_checkout_params.bankInterestText);
-    }
+    const validateAndCleanNumberFromLabel = (value) => {
+      if (!value) return null;
+      const cleaned = value.replace('%', '').trim();
+      const numberPattern = /^\d+([,.]\d+)?$/;
+      return numberPattern.test(cleaned) ? cleaned : null;
+    };
 
-    this.setElementDisplay('mpInstallments', 'block');
-    this.showInstallmentsComponent(inputTable);
-    this.setupTaxEvents();
+    labels.forEach(label => {
+      if (typeof label !== 'string') return;
 
-    let customContent = document.querySelector('.mp-checkout-custom-container');
-    customContent.querySelector('#more-options').addEventListener('click', () => {
-      setTimeout(() => {
-        this.setupTaxEvents();
-      }, 300);
+      const parts = label.split('|');
+      parts.forEach(part => {
+        if (part.includes('CFT_')) {
+          const splitResult = part.split('CFT_');
+          if (splitResult.length > 1 && splitResult[1]) {
+            const validatedValue = validateAndCleanNumberFromLabel(splitResult[1]);
+            if (validatedValue) {
+              taxInfo.cft = validatedValue;
+            }
+          }
+        } else if (part.includes('TEA_')) {
+          const splitResult = part.split('TEA_');
+          if (splitResult.length > 1 && splitResult[1]) {
+            const validatedValue = validateAndCleanNumberFromLabel(splitResult[1]);
+            if (validatedValue) {
+              taxInfo.tea = validatedValue;
+            }
+          }
+        } else if (part.includes('TNA_')) {
+          const splitResult = part.split('TNA_');
+          if (splitResult.length > 1 && splitResult[1]) {
+            const validatedValue = validateAndCleanNumberFromLabel(splitResult[1]);
+            if (validatedValue) {
+              taxInfo.tna = validatedValue;
+            }
+          }
+        }
+      });
     });
 
-    if (siteId === 'mla') {
-      this.clearTax();
+    return taxInfo;
+  },
+
+  verifyInstallmentsContainer() {
+    try {
+      const installmentsContainer = document.querySelector(CheckoutElements.mpInstallmentsContainer);
+      if (installmentsContainer) {
+        if (installmentsContainer.firstElementChild) {
+          installmentsContainer.firstElementChild.state.hasInteracted = true;
+          return installmentsContainer.firstElementChild.validate();
+        }
+      }
+    } catch (error) {
+      console.error('Error verifying installments container', error);
+      return false;
     }
+  },
+
+  verifyCardholderName() {
+    const cardholderNameInput = document.querySelector(CheckoutElements.fcCardholderName);
+    const cardholderNameHelper = document.querySelector('#mp-card-holder-name-helper');
+    
+    if (!cardholderNameInput) {
+      return true;
+    }
+
+    const isValid = cardholderNameInput.value && cardholderNameInput.value.trim().length > 0;
+    if (!isValid) {
+      if (cardholderNameHelper) {
+        cardholderNameHelper.style.display = 'flex';
+      }
+      this.setDisplayOfError('fcCardholderName', 'add', 'mp-error');
+    } else {
+      if (cardholderNameHelper) {
+        cardholderNameHelper.style.display = 'none';
+      }
+      this.setDisplayOfError('fcCardholderName', 'remove', 'mp-error');
+    }
+
+    return isValid;
+  },
+
+  // Public method
+  setChangeEventOnInstallments(response) {
+    this.clearInstallmentsComponent();
+    const installments = this.getInstallments(response);
+    const sdkSelect = document.getElementById('form-checkout__installments');
+
+    if (!this.installmentsEnabled) {
+      CheckoutPage.setValueOn('cardInstallments', '1');
+      sdkSelect.value = '1';
+      return;
+    }
+
+    const andesDropdown = document.createElement('andes-dropdown');
+    andesDropdown.setAttribute('id', CheckoutElements.mpInstallments);
+    andesDropdown.setAttribute('label', wc_mercadopago_custom_checkout_params.input_title.installments);
+    andesDropdown.setAttribute('placeholder', wc_mercadopago_custom_checkout_params.placeholders['installments']);
+    andesDropdown.setAttribute('items', JSON.stringify(installments));
+    andesDropdown.setAttribute('required-message', wc_mercadopago_custom_checkout_params.input_helper_message.installments.required);
+    andesDropdown.setAttribute('site-id', this.getCountry());
+    
+    if (this.needsBankInterestDisclaimer()) {
+      andesDropdown.setAttribute('hint', wc_mercadopago_custom_checkout_params.input_helper_message.installments.bank_interest_hint_text);
+    }
+
+    andesDropdown.addEventListener('change', (event) => {
+      const selectedItem = event.detail;
+      if (selectedItem) {
+        this.setValueOn('cardInstallments', selectedItem.value);
+        sdkSelect.value = selectedItem.value;
+      }
+    });
+
+    this.showInstallmentsComponent(andesDropdown);
+    this.setElementDisplay('mpInstallmentsCard', 'block');
   },
 };

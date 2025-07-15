@@ -11,10 +11,10 @@ import {
   return_to_congrats_page
 } from '../../../../flows/mlm/pay_with_cho_pro';
 
-const { url, guestUserMLM, loggedUserMLM } = mlm;
+const { shop_url, guestUserMLM, loggedUserMLM } = mlm;
 
 test('test efecty 7-eleven payment with guest user', async ({ page }) => {
-  await fillStepsToCheckout(page, url, guestUserMLM);
+  await fillStepsToCheckout(page, shop_url, guestUserMLM);
   await select_cho_pro(page);
   await page.waitForTimeout(1000);
   await wait_redirect_page_load(page);
@@ -28,7 +28,7 @@ test('test efecty 7-eleven payment with guest user', async ({ page }) => {
 });
 
 test('test efecty 7-Eleven payment with logged user', async ({ page }) => {
-  await fillStepsToCheckout(page, url, loggedUserMLM);
+  await fillStepsToCheckout(page, shop_url, loggedUserMLM);
   await select_cho_pro(page);
   await page.waitForTimeout(1000);
   await wait_redirect_page_load(page);

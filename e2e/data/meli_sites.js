@@ -19,7 +19,7 @@ import {
 } from './buyer_data';
 
 export const mla = {
-  url: process.env.STORE_URL,
+  shop_url: process.env.SHOP_URL,
   credit_card_scenarios: credit_card_scenarios.MLA,
   debit_card_scenarios: debit_card_scenarios.MLA,
   guestUserDefault,
@@ -28,7 +28,7 @@ export const mla = {
 };
 
 export const mlb = {
-  url: process.env.STORE_URL,
+  shop_url: process.env.SHOP_URL,
   credit_card_scenarios: credit_card_scenarios.MLB,
   debit_card_scenarios: debit_card_scenarios.MLB,
   guestUserMLB,
@@ -36,7 +36,7 @@ export const mlb = {
 };
 
 export const mco = {
-  url: process.env.STORE_URL,
+  shop_url: process.env.SHOP_URL,
   credit_card_scenarios: credit_card_scenarios.MCO,
   debit_card_scenarios: debit_card_scenarios.MCO,
   pseUserMCO,
@@ -45,7 +45,7 @@ export const mco = {
 };
 
 export const mpe = {
-  url: process.env.STORE_URL,
+  shop_url: process.env.SHOP_URL,
   countryId: "PE",
   credit_card_scenarios: credit_card_scenarios.MPE,
   debit_card_scenarios: debit_card_scenarios.MPE,
@@ -53,7 +53,7 @@ export const mpe = {
 };
 
 export const mlm = {
-  url: process.env.STORE_URL,
+  shop_url: process.env.SHOP_URL,
   credit_card_scenarios: credit_card_scenarios.MLM,
   debit_card_scenarios: debit_card_scenarios.MLM,
   guestUserMLM,
@@ -63,7 +63,7 @@ export const mlm = {
 };
 
 export const mlc = {
-  url: process.env.STORE_URL,
+  shop_url: process.env.SHOP_URL,
   credit_card_scenarios: credit_card_scenarios.MLC,
   debit_card_scenarios: debit_card_scenarios.MLC,
   guestUserDefault,
@@ -71,7 +71,7 @@ export const mlc = {
 };
 
 export const mlu = {
-  url: process.env.STORE_URL,
+  shop_url: process.env.SHOP_URL,
   guestUser: guestUserMLU,
   loggedUserMLU,
   credit_card_scenarios: credit_card_scenarios.MLU,

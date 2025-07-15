@@ -4,7 +4,6 @@ use MercadoPago\Woocommerce\Helpers\Template;
 
 /**
  * @var bool $test_mode
- * @var string $test_mode
  * @var string $test_mode_title
  * @var string $test_mode_description
  * @var string $test_mode_link_text
@@ -13,20 +12,12 @@ use MercadoPago\Woocommerce\Helpers\Template;
  * @var string $wallet_button_image
  * @var string $wallet_button_title
  * @var string $wallet_button_description
- * @var string $available_payments_title_icon
- * @var string $available_payments_title
- * @var string $available_payments_image
- * @var string $available_payments_chevron_up
- * @var string $available_payments_chevron_down
- * @var string $payment_methods_items
- * @var string $payment_methods_promotion_link
- * @var string $payment_methods_promotion_text
  * @var string $site_id
- * @var string $card_form_title
  * @var string $card_number_input_label
  * @var string $card_number_input_helper
  * @var string $card_holder_name_input_label
  * @var string $card_holder_name_input_helper
+ * @var string $placeholders_cardholder_name
  * @var string $card_expiration_input_label
  * @var string $card_expiration_input_helper
  * @var string $card_security_code_input_label
@@ -35,15 +26,11 @@ use MercadoPago\Woocommerce\Helpers\Template;
  * @var string $card_input_document_helper_empty
  * @var string $card_input_document_helper_invalid
  * @var string $card_input_document_helper_wrong
- * @var string $card_installments_title
  * @var string $card_issuer_input_label
- * @var string $card_installments_input_helper
- * @var string $terms_and_conditions_description
- * @var string $terms_and_conditions_link_text
- * @var string $terms_and_conditions_link_src
  * @var string $amount
  * @var string $currency_ratio
  * @var string $message_error_amount
+ * @var string $security_code_tooltip_text_3_digits
  *
  * @see \MercadoPago\Woocommerce\Gateways\CustomGateway
  */
@@ -91,44 +78,7 @@ if (!defined('ABSPATH')) {
             <?php endif; ?>
 
             <div id="mp-custom-checkout-form-container">
-                <div class='mp-checkout-custom-available-payments'>
-                    <div class='mp-checkout-custom-available-payments-header'>
-                        <div class="mp-checkout-custom-available-payments-title">
-                            <img src="<?= esc_url($available_payments_title_icon); ?>" class='mp-icon'>
-                            <p class="mp-checkout-custom-available-payments-text">
-                                <?= esc_html($available_payments_title); ?>
-                            </p>
-                        </div>
-
-                        <img
-                            src="<?= esc_url($available_payments_image); ?>"
-                            class='mp-checkout-custom-available-payments-collapsible'
-                        />
-                    </div>
-
-                    <div class='mp-checkout-custom-available-payments-content'>
-                        <payment-methods methods='<?= esc_html($payment_methods_items); ?>'></payment-methods>
-
-                        <?php if ($site_id === 'MLA') : ?>
-                            <span id="mp_promotion_link"> | </span>
-                            <a
-                                href='<?= esc_url($payment_methods_promotion_link); ?>'
-                                id="mp_checkout_link"
-                                class="mp-checkout-link mp-pl-10"
-                                target="_blank"
-                            >
-                                <?= esc_html($payment_methods_promotion_text); ?>
-                            </a>
-                        <?php endif; ?>
-                        <hr>
-                    </div>
-                </div>
-
                 <div class='mp-checkout-custom-card-form'>
-                    <p class='mp-checkout-custom-card-form-title'>
-                        <?= esc_html($card_form_title); ?>
-                    </p>
-
                     <div class='mp-checkout-custom-card-row'>
                         <input-label
                             isOptinal=false
@@ -141,6 +91,7 @@ if (!defined('ABSPATH')) {
 
                         <input-helper
                             isVisible=false
+                            type="error"
                             message="<?= esc_html($card_number_input_helper); ?>"
                             input-id="mp-card-number-helper"
                         >
@@ -156,7 +107,7 @@ if (!defined('ABSPATH')) {
 
                         <input
                             class="mp-checkout-custom-card-input mp-card-holder-name"
-                            placeholder="Ex.: María López"
+                            placeholder="<?= esc_html($placeholders_cardholder_name); ?>"
                             id="form-checkout__cardholderName"
                             name="mp-card-holder-name"
                             data-checkout="cardholderName"
@@ -164,6 +115,7 @@ if (!defined('ABSPATH')) {
 
                         <input-helper
                             isVisible=false
+                            type="error"
                             message="<?= esc_html($card_holder_name_input_helper); ?>"
                             input-id="mp-card-holder-name-helper"
                             data-main="mp-card-holder-name"
@@ -187,6 +139,7 @@ if (!defined('ABSPATH')) {
 
                             <input-helper
                                 isVisible=false
+                                type="error"
                                 message="<?= esc_html($card_expiration_input_helper); ?>"
                                 input-id="mp-expiration-date-helper"
                             >
@@ -200,13 +153,21 @@ if (!defined('ABSPATH')) {
                             >
                             </input-label>
 
-                            <div id="form-checkout__securityCode-container" class="mp-checkout-custom-card-input"></div>
-
-                            <p id="mp-security-code-info" class="mp-checkout-custom-info-text"></p>
+                            <div class="mp-checkout-custom-security-code-container">
+                                <div id="form-checkout__securityCode-container" class="mp-checkout-custom-security-code-input"></div>
+                                <span
+                                    id="mp-security-code-info"
+                                    tabindex="0"
+                                    aria-label="<?= esc_html($security_code_tooltip_text_3_digits); ?>"
+                                    class="mp-checkout-custom-security-code-tooltip"
+                                    role="tooltip"
+                                    data-tooltip="<?= esc_html($security_code_tooltip_text_3_digits); ?>"
+                                >?</span>
+                            </div>
 
                             <input-helper
                                 isVisible=false
-                                message="<?= esc_html($card_security_code_input_helper); ?>"
+                                type="error"
                                 input-id="mp-security-code-helper"
                             >
                             </input-helper>
@@ -231,12 +192,8 @@ if (!defined('ABSPATH')) {
                     </div>
                 </div>
 
-                <div id="mp-checkout-custom-installments" class="mp-checkout-custom-installments-display-none">
-                    <p class='mp-checkout-custom-card-form-title'>
-                        <?= esc_html($card_installments_title); ?>
-                    </p>
-
-                    <div id="mp-checkout-custom-issuers-container" class="mp-checkout-custom-issuers-container">
+                <div id="mp-checkout-custom-installments-card" class="mp-checkout-custom-installments-display-none">
+                    <div id="mp-checkout-custom-issuers-container" class="mp-checkout-custom-issuers-container-display-none">
                         <div class='mp-checkout-custom-card-row'>
                             <input-label
                                 isOptinal=false
@@ -253,13 +210,6 @@ if (!defined('ABSPATH')) {
 
                     <div id="mp-checkout-custom-installments-container" class="mp-checkout-custom-installments-container"></div>
 
-                    <input-helper
-                        isVisible=false
-                        message="<?= esc_html($card_installments_input_helper); ?>"
-                        input-id="mp-installments-helper"
-                    >
-                    </input-helper>
-
                     <select
                         style="display: none;"
                         data-checkout="installments"
@@ -268,29 +218,10 @@ if (!defined('ABSPATH')) {
                         class="mp-input-select-select"
                     >
                     </select>
-
-                    <div id="mp-checkout-custom-box-input-tax-cft">
-                        <div id="mp-checkout-custom-box-input-tax-tea">
-                            <div id="mp-checkout-custom-tax-tea-text"></div>
-                        </div>
-                        <div id="mp-checkout-custom-tax-cft-text"></div>
-                    </div>
-                </div>
-
-                <div class="mp-checkout-custom-terms-and-conditions">
-                    <terms-and-conditions
-                        description="<?= esc_html($terms_and_conditions_description) ?>"
-                        link-text="<?= esc_html($terms_and_conditions_link_text) ?>"
-                        link-src="<?= esc_html($terms_and_conditions_link_src) ?>"
-                    >
-                    </terms-and-conditions>
                 </div>
             </div>
-
-
         </div>
     <?php endif; ?>
-
 </div>
 
 <div id="mercadopago-utilities" style="display:none;">
@@ -303,6 +234,7 @@ if (!defined('ABSPATH')) {
     <input type="hidden" id="cardTokenId" name="mercadopago_custom[token]"/>
     <input type="hidden" id="cardInstallments" name="mercadopago_custom[installments]"/>
     <input type="hidden" id="mpCardSessionId" name="mercadopago_custom[session_id]" />
+    <input type="hidden" id="paymentTypeId" name="mercadopago_custom[payment_type_id]"/>
     <input type="hidden" id="payerDocNumber" name="mercadopago_custom[doc_number]" />
     <input type="hidden" id="payerDocType" name="mercadopago_custom[doc_type]" />
 </div>
@@ -313,24 +245,5 @@ if (!defined('ABSPATH')) {
         jQuery('#mp_checkout_type').val('wallet_button');
         jQuery('form.checkout, form#order_review').submit();
     }
-
-    var availablePayment = document.getElementsByClassName('mp-checkout-custom-available-payments')[0];
-    var collapsible = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-header')[0];
-
-    collapsible.addEventListener("click", function() {
-        const icon = collapsible.getElementsByClassName('mp-checkout-custom-available-payments-collapsible')[0];
-        const content = availablePayment.getElementsByClassName('mp-checkout-custom-available-payments-content')[0];
-
-        if (content.style.maxHeight) {
-            content.style.maxHeight = null;
-            content.style.padding = "0px";
-            icon.src = "<?= esc_url($available_payments_chevron_down); ?>";
-        } else {
-            let hg = content.scrollHeight + 15 + "px";
-            content.style.setProperty("max-height", hg, "important");
-            content.style.setProperty("padding", "24px 0px 0px", "important");
-            icon.src = "<?= esc_url($available_payments_chevron_up); ?>";
-        }
-    });
 </script>
 
