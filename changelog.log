@@ -1,6 +1,13 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.3.1 (16/07/2025) =
+* Changed
+- Do not display taxes in Argentina when data is not obtained
+- Style adjustments to the saved card flow display
+* Fixed
+- Fix crash when selecting item in dropdown component on iPhone
+
 = v8.3.0 (16/07/2025) =
 * Added:
 - Add Mercado Pago saved card flow
