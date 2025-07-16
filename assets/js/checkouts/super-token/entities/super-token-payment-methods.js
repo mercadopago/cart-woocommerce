@@ -462,9 +462,9 @@ class MPSuperTokenPaymentMethods {
         if (!labels || !Array.isArray(labels)) return null;
 
         const taxInfo = {
-            cft: '0,00',
-            tna: '0,00',
-            tea: '0,00'
+            cft: null,
+            tna: null,
+            tea: null
         };
 
         const validateAndCleanNumberFromLabel = (value) => {

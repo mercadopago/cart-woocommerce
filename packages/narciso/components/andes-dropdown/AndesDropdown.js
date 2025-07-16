@@ -19,6 +19,18 @@ class AndesDropdown extends HTMLElement {
     connectedCallback() {
       this.build();
     }
+
+    isIOS() {
+      // Modern approach using userAgentData
+      if (navigator.userAgentData?.platform) {
+          return ['iOS'].includes(navigator.userAgentData.platform);
+      }
+  
+      // Fallback for older browsers
+      const userAgent = navigator.userAgent;
+      return /iPad|iPhone|iPod/.test(userAgent) || 
+         (userAgent.includes("Mac") && "ontouchend" in document);
+    }
   
     attributeChangedCallback(name, oldValue, newValue) {
       if (oldValue === newValue) return;
@@ -212,6 +224,13 @@ class AndesDropdown extends HTMLElement {
             this.state.focusedIndex = idx;
             this.renderItems();
           });
+
+          if (this.isIOS()) {
+            itemElement.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.selectItem(item, idx);
+              });
+            }
         }
   
         this.itemsContainer.appendChild(itemElement);
@@ -451,8 +470,27 @@ class AndesDropdown extends HTMLElement {
 
         // Only show tax info for credit cards with 2 or more installments
         if (installmentNumber >= 2) {
-          this.taxInfo.innerHTML = `<b>CFTEA: ${cft}%</b> - TNA: ${tna}% - TEA: ${tea}%. Tasa fija.`;
+          const taxes = [];
+
+          if (cft) {
+            taxes.push(`<b>CFTEA: ${cft}%</b>`);
+          }
+
+          if (tna) {
+            taxes.push(`TNA: ${tna}%`);
+          }
+          
+          if (tea) {
+            taxes.push(`TEA: ${tea}%`);
+          }
+
+          if (!taxes.length) {
+            this.taxInfo.style.display = 'none';
+            return;
+          }
+          
           this.taxInfo.style.display = 'block';
+          this.taxInfo.innerHTML = taxes.join(' - ').concat('. Tasa fija.');
         } else {
           this.taxInfo.style.display = 'none';
         }

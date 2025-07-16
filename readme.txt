@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 8.3.0
+Stable tag: 8.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,9 +134,11 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.3.0 (16/07/2025) =
-* Added:
-- Add Mercado Pago saved card flow
-- Show Mercado Pago fees in order metadata
+= v8.3.1 (16/07/2025) =
+* Changed
+- Do not display taxes in Argentina when data is not obtained
+- Style adjustments to the saved card flow display
+* Fixed
+- Fix crash when selecting item in dropdown component on iPhone
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

@@ -86,6 +86,7 @@
 }
 
 .mp-super-token-payment-method__last-four-digits {
+    display: flex;
     align-items: center;
 }
 
@@ -160,7 +161,7 @@
     align-items: center;
     color: #00A650 !important;
     font-weight: 600 !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
     border-radius: 8px;
     background-color: #00a6501a;
     height: 16px !important;
