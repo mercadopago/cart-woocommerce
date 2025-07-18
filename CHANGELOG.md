@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.3.3] - 2025-07-18
+### Fixed
+- Fix loading issue in custom checkout
+- Ensure new card form in saved card flow does not have clickable areas
+
 ## [8.3.2] - 2025-07-18
 ### Added
 - Add checkout type to order custom fields

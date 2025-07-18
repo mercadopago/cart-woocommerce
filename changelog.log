@@ -1,6 +1,11 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.3.3 (18/07/2025) =
+* Fixed
+- Fix loading issue in custom checkout
+- Ensure new card form in saved card flow does not have clickable areas
+
 = v8.3.2 (18/07/2025) =
 * Added
 - Add checkout type to order custom fields
