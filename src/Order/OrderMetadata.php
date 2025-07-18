@@ -46,6 +46,10 @@ class OrderMetadata
 
     private const SYNC_CRON_ERROR = 'mp_sync_order_error_count';
 
+    private const CHECKOUT_TYPE = 'checkout_type';
+
+    private const CHECKOUT = 'checkout';
+
     private OrderMeta $orderMeta;
 
     /**
@@ -549,10 +553,11 @@ class OrderMetadata
      *
      * @param WC_Order $order
      * @param mixed $data
+     * @param mixed $transactionMetadata
      *
      * @return void
      */
-    public function setSupertokenMetadata(WC_Order $order, $data): void
+    public function setSupertokenMetadata(WC_Order $order, $data, $transactionMetadata): void
     {
         if (isset($data['installments']) && isset($data['transaction_details']['installment_amount']) && $data['transaction_details']['installment_amount'] > 0) {
             $installments      = (float) $data['installments'];
@@ -568,7 +573,22 @@ class OrderMetadata
         $this->setTransactionAmountData($order, $transactionAmount);
         $this->setTotalPaidAmountData($order, $totalPaidAmount);
         $this->updatePaymentsOrderMetadata($order, ['id' => $data['id']]);
+        $this->setCheckoutDetails($order, $transactionMetadata);
         $order->save();
+    }
+
+    /**
+     * Set checkout details in the order
+     *
+     * @param WC_Order $order
+     * @param mixed $transactionMetadata
+     *
+     * @return void
+     */
+    private function setCheckoutDetails(WC_Order $order, $transactionMetadata): void
+    {
+        $this->orderMeta->update($order, self::CHECKOUT, $transactionMetadata->checkout);
+        $this->orderMeta->update($order, self::CHECKOUT_TYPE, $transactionMetadata->checkout_type);
     }
 
     /**
