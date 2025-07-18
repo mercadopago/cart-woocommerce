@@ -10,6 +10,7 @@ class MPSuperTokenPaymentMethods {
     CHECKOUT_CUSTOM_CONTAINER_SELECTOR = '.mp-checkout-custom-container';
     CHECKOUT_CONTAINER_SELECTOR = '.mp-checkout-container';
     CHECKOUT_TYPE_SELECTOR = '#mp_checkout_type';
+    CLICKABLE_AREA_STARTS_ID = 'mp-super-token-clickable-area';
     COLOMBIA_ACCRONYM = 'MCO';
     MEXICO_ACCRONYM = 'MLM';
     SUPER_TOKEN_STYLES = {
@@ -124,6 +125,15 @@ class MPSuperTokenPaymentMethods {
 
     paymentMethodsAreRendered() {
         return !!document.querySelector(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD}`);
+    }
+
+    removeClickableAreas() {
+        const clickableAreas = document.querySelectorAll(`[id^=${this.CLICKABLE_AREA_STARTS_ID}]`);
+
+        clickableAreas.forEach((clickableArea) => {
+            clickableArea.firstChild.style.pointerEvents = 'auto';
+            clickableArea.replaceWith(clickableArea.firstChild);
+        });
     }
 
     async getAccountPaymentMethods(token) {
@@ -299,6 +309,7 @@ class MPSuperTokenPaymentMethods {
             return;
         }
 
+        this.removeClickableAreas();
         this.storeActivePaymentMethod({ id: this.NEW_CARD_TYPE });
         this.deselectAllPaymentMethods();
         this.hideAllPaymentMethodDetails();

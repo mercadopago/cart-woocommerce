@@ -151,8 +151,11 @@ class MPSuperTokenTriggerHandler {
     }
 
     resetCustomCheckout() {
-        this.mpSuperTokenPaymentMethods.unmountCardForm();
-        this.mpSuperTokenPaymentMethods.mountCardForm();
+        if (this.mpSuperTokenPaymentMethods.hasStoredPaymentMethods()) {
+            this.mpSuperTokenPaymentMethods.unmountCardForm();
+            this.mpSuperTokenPaymentMethods.mountCardForm();
+        }
+
         this.resetFlow();
         this.loadSuperToken(this.getAmount());
         document.querySelector(this.mpSuperTokenPaymentMethods.CHECKOUT_CONTAINER_SELECTOR).style.height = 'auto';
