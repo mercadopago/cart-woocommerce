@@ -289,6 +289,8 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_details', 100.0)->once();
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_amount', 1200.0)->once();
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_total_paid_amount', 1200.0)->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'checkout', 'custom')->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'checkout_type', 'super_token')->once();
         
         // Mock the updatePaymentsOrderMetadata method calls - setSupertokenMetadata passes ['id' => $data['id']] 
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)->andReturn(null);
@@ -299,7 +301,7 @@ class OrderMetadataTest extends TestCase
         
         $this->orderMock->shouldReceive('save')->once();
         
-        $this->orderMetadata->setSupertokenMetadata($this->orderMock, $data);
+        $this->orderMetadata->setSupertokenMetadata($this->orderMock, $data, (object) ['checkout' => 'custom', 'checkout_type' => 'super_token']);
         $this->assertTrue(true);
     }
 

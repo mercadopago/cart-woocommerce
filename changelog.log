@@ -1,6 +1,12 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.3.2 (18/07/2025) =
+* Added
+- Add checkout type to order custom fields
+* Changed
+- Consolidate additional_info items to single item when is Mercado Pago saved card flow
+
 = v8.3.1 (16/07/2025) =
 * Changed
 - Do not display taxes in Argentina when data is not obtained

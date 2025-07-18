@@ -564,7 +564,7 @@ class CustomGateway extends AbstractGateway
                         $this->transaction = new SupertokenTransaction($this, $order, $checkout);
                         $response          = $this->transaction->createPayment();
 
-                        $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response);
+                        $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response, $this->transaction->getInternalMetadata());
                         return $this->handleResponseStatus($order, $response);
                     }
 
