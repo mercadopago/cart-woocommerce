@@ -309,7 +309,8 @@ class StoreTranslations
             'congrats_subtitle'                => __('Scan the QR code below or copy and paste the code into your bank\'s application.', 'woocommerce-mercadopago'),
             'expiration_30_minutes'            => __('30 minutes', 'woocommerce-mercadopago'),
             'message_error_amount'             => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
-
+            'approved_template_title'          => __('Payment Approved', 'woocommerce-mercadopago'),
+            'approved_template_description'    => __('Your payment with PIX has been successfully approved.', 'woocommerce-mercadopago'),
         ];
     }
 

@@ -189,10 +189,10 @@ class Dependencies
         $this->stringsHelper           = new Strings();
         $this->orderBilling            = new OrderBilling();
         $this->orderShipping           = new OrderShipping();
-        $this->orderMetadata           = $this->setOrderMetadata();
         $this->requesterHelper         = $this->setRequester();
         $this->storeConfig             = $this->setStore();
         $this->logs                    = $this->setLogs();
+        $this->orderMetadata           = $this->setOrderMetadata();
         $this->sellerConfig            = $this->setSeller();
         $this->countryHelper           = $this->setCountry();
         $this->urlHelper               = $this->setUrl();
@@ -231,7 +231,7 @@ class Dependencies
      */
     private function setOrderMetadata(): OrderMetadata
     {
-        return new OrderMetadata($this->orderMetaHook);
+        return new OrderMetadata($this->orderMetaHook, $this->logs);
     }
 
     /**
@@ -341,7 +341,13 @@ class Dependencies
      */
     private function setOrderStatus(): OrderStatus
     {
-        return new OrderStatus($this->storeTranslations);
+        return new OrderStatus(
+            $this->storeTranslations,
+            $this->orderMetadata,
+            $this->sellerConfig,
+            $this->requesterHelper,
+            $this->logs
+        );
     }
 
     /**

@@ -1,4 +1,5 @@
-/* globals wc_mercadopago_custom_checkout_params, woocommerce_params */
+/* globals wc_mercadopago_custom_checkout_params, woocommerce_params, jQuery, CheckoutPage */
+// eslint-disable-next-line no-unused-vars
 class MPThreeDSHandler {
     constructor() {
         this.threedsTarget = 'mp_custom_checkout_security_fields_client';
@@ -212,7 +213,7 @@ class MPThreeDSHandler {
 
     addErrorAlert(message) {
         this.removeElementsByClass('woocommerce-NoticeGroup-checkout');
-        jQuery(mpCheckoutForm).prepend(`
+        jQuery('form[name=checkout]').prepend(`
             <div class="woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout">
                 <ul class="woocommerce-error" role="alert">
                     <li>${message}<li>

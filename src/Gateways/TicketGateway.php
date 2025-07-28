@@ -412,7 +412,7 @@ class TicketGateway extends AbstractGateway
      */
     private function verifyTicketPaymentResponse($response, $order, $order_id): array
     {
-        $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
+        $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, ['id' => $response]);
 
         $this->handleWithRejectPayment($response);
 

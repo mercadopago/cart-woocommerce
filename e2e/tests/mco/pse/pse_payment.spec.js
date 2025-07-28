@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { mco } from '../../../data/meli_sites';
 import { fillStepsToCheckout } from '../../../flows/fill_steps_to_checkout';
-import payWithPse from '../../../flows/mco/pay_with_pse';
+import payWithPse from '../../../flows/pse';
 
 const { shop_url, pseUserMCO } = mco;
 

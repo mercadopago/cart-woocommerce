@@ -58,8 +58,7 @@
     "10up/wp_mock": "^1.0",
     "phpstan/phpstan": "^2.1",
     "rector/rector": "^2.0",
-    "php-stubs/woocommerce-stubs": "^9.5",
-    "php-stubs/wordpress-stubs": "^6.7"
+    "php-stubs/woocommerce-stubs": "^9.5"
   },
   "config": {
     "allow-plugins": {

@@ -6,6 +6,9 @@ use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
+use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
 use Mockery;
 use WP_Mock;
 use WC_Order;
@@ -16,6 +19,8 @@ class OrderMetadataTest extends TestCase
 
     private \WC_Order $orderMock;
 
+    private Logs $logsMock;
+
     private OrderMetadata $orderMetadata;
 
     public function setUp(): void
@@ -25,11 +30,33 @@ class OrderMetadataTest extends TestCase
 
         $this->orderMetaMock = Mockery::mock(OrderMeta::class);
         $this->orderMock = Mockery::mock('WC_Order');
-        $this->orderMetadata = new OrderMetadata($this->orderMetaMock);
+        
+        $this->logsMock = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+        $this->logsMock->file = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\File');
+        $this->logsMock->remote = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote');
+        
+        $this->logsMock->file->shouldReceive('error')->andReturn(null)->byDefault();
+        
+        $this->orderMetadata = new OrderMetadata($this->orderMetaMock, $this->logsMock);
+    }
+
+    /**
+     * Helper method to create a properly configured logs mock
+     */
+    private function createLogsMock(): Logs
+    {
+        $logsMock = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+        $logsMock->file = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\File');
+        $logsMock->remote = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote');
+        
+        $logsMock->file->shouldReceive('error')->andReturn(null)->byDefault();
+        
+        return $logsMock;
     }
 
     public function tearDown(): void
     {
+        WP_Mock::tearDown();
         Mockery::close();
     }
 
@@ -260,15 +287,19 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_details', 100.0)->once();
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_amount', 1200.0)->once();
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_total_paid_amount', 1200.0)->once();
-        
-        // Mock the updatePaymentsOrderMetadata method calls
+
+                // Mock the updatePaymentsOrderMetadata method calls
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)->andReturn(null);
-        $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->once();
+        $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->twice();
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'PAYMENT_ID: DATE')->andReturn('', '123: 2024-03-20T10:00:00.000-04:00');
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'PAYMENT_ID: DATE', '123: 2024-03-20T10:00:00.000-04:00')->once();
-        
+
+        // Mock the setMercadoPagoPaymentId method calls
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'Mercado Pago - Payment 123')->andReturn(null);
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'Mercado Pago - Payment 123', Mockery::any())->once();
+
         $this->orderMock->shouldReceive('save')->once();
-        
+
         $this->orderMetadata->setCustomMetadata($this->orderMock, $data);
         $this->assertTrue(true);
     }
@@ -289,19 +320,31 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_details', 100.0)->once();
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_amount', 1200.0)->once();
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_total_paid_amount', 1200.0)->once();
-        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'checkout', 'custom')->once();
-        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'checkout_type', 'super_token')->once();
-        
-        // Mock the updatePaymentsOrderMetadata method calls - setSupertokenMetadata passes ['id' => $data['id']] 
+
+
+        // Mock the updatePaymentsOrderMetadata method calls - setSupertokenMetadata passes ['id' => $data['id']]
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)->andReturn(null);
-        $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->once();
+        $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->twice();
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'PAYMENT_ID: DATE')->andReturn('');
         // formatPaymentDetail will return empty string because no date_created exists in ['id' => '123']
         // No update to PAYMENT_ID: DATE since paymentDetailValue will be empty
-        
+
+        // Mock the setMercadoPagoPaymentId method calls
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'Mercado Pago - Payment 123')->andReturn(null);
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'Mercado Pago - Payment 123', Mockery::any())->once();
+
+        // Mock the setCheckoutDetails method calls
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'checkout', 'test_checkout')->once();
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'checkout_type', 'test_checkout_type')->once();
+
         $this->orderMock->shouldReceive('save')->once();
-        
-        $this->orderMetadata->setSupertokenMetadata($this->orderMock, $data, (object) ['checkout' => 'custom', 'checkout_type' => 'super_token']);
+
+        // Mock the transactionMetadata object
+        $transactionMetadata = Mockery::mock();
+        $transactionMetadata->checkout = 'test_checkout';
+        $transactionMetadata->checkout_type = 'test_checkout_type';
+
+        $this->orderMetadata->setSupertokenMetadata($this->orderMock, $data, $transactionMetadata);
         $this->assertTrue(true);
     }
 
@@ -341,16 +384,26 @@ class OrderMetadataTest extends TestCase
             ->andReturn('', '123456789: 2024-03-20T10:00:00.000-04:00');
         $this->orderMock->shouldReceive('add_meta_data')
             ->with('_Mercado_Pago_Payment_IDs', '123456789', false)
-            ->once();
+            ->twice();
         $this->orderMock->shouldReceive('update_meta_data')
             ->with('PAYMENT_ID: DATE', '123456789: 2024-03-20T10:00:00.000-04:00')
             ->once();
+
+        // Mock the setMercadoPagoPaymentId method calls
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123456789', true)
+            ->andReturn(null);
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('Mercado Pago - Payment 123456789', Mockery::any())
+            ->once();
+
         $this->orderMock->shouldReceive('save')
-            ->once()
+            ->twice()
             ->andReturn(true);
 
         $orderMeta = new \MercadoPago\Woocommerce\Hooks\OrderMeta();
-        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta);
+        $logsMock = $this->createLogsMock();
+        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta, $logsMock);
 
         // Act
         $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
@@ -378,10 +431,20 @@ class OrderMetadataTest extends TestCase
         $this->orderMock->shouldReceive('update_meta_data')
             ->with('PAYMENT_ID: DATE', "123456789: 2024-03-20T10:00:00.000-04:00,\n987654321: 2024-03-21T10:00:00.000-04:00")
             ->once();
-        $this->orderMock->shouldReceive('save')->twice();
+
+        // Mock the setMercadoPagoPaymentId method calls
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 987654321', true)
+            ->andReturn(null);
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('Mercado Pago - Payment 987654321', Mockery::any())
+            ->once();
+
+        $this->orderMock->shouldReceive('save')->times(3);
 
         $orderMeta = new \MercadoPago\Woocommerce\Hooks\OrderMeta();
-        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta);
+        $logsMock = $this->createLogsMock();
+        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta, $logsMock);
 
         // Act
         $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
@@ -405,16 +468,26 @@ class OrderMetadataTest extends TestCase
             ->andReturn('invalid_format', 'invalid_format' . ",\n" . '987654321: 2024-03-21T10:00:00.000-04:00');
         $this->orderMock->shouldReceive('add_meta_data')
             ->with('_Mercado_Pago_Payment_IDs', '987654321', false)
-            ->once();
+            ->twice();
         $this->orderMock->shouldReceive('update_meta_data')
             ->with('PAYMENT_ID: DATE', 'invalid_format' . ",\n" . '987654321: 2024-03-21T10:00:00.000-04:00')
             ->once();
+
+        // Mock the setMercadoPagoPaymentId method calls
+        $this->orderMock->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 987654321', true)
+            ->andReturn(null);
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('Mercado Pago - Payment 987654321', Mockery::any())
+            ->once();
+
         $this->orderMock->shouldReceive('save')
-            ->once()
+            ->twice()
             ->andReturn(true);
 
         $orderMeta = new \MercadoPago\Woocommerce\Hooks\OrderMeta();
-        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta);
+        $logsMock = $this->createLogsMock();
+        $orderMetadata = new \MercadoPago\Woocommerce\Order\OrderMetadata($orderMeta, $logsMock);
 
         // Act
         $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
@@ -446,7 +519,7 @@ class OrderMetadataTest extends TestCase
 
         $this->orderMetaMock->shouldReceive('add')
             ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123456789')
-            ->once();
+            ->twice();
 
         // Mock expectations for updatePaymentDetails
         $this->orderMetaMock->shouldReceive('get')
@@ -468,6 +541,14 @@ class OrderMetadataTest extends TestCase
             ->once();
         $this->orderMetaMock->shouldReceive('update')
             ->with($this->orderMock, 'mercadopago_commission', 1.5)
+            ->once();
+
+        // Mock the setMercadoPagoPaymentId method calls
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'Mercado Pago - Payment 123456789')
+            ->andReturn(null);
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, 'Mercado Pago - Payment 123456789', Mockery::any())
             ->once();
 
         // Act
@@ -493,7 +574,7 @@ class OrderMetadataTest extends TestCase
 
         $this->orderMetaMock->shouldReceive('add')
             ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123456789')
-            ->once();
+            ->twice();
 
         // Mock expectations for updatePaymentDetails
         $this->orderMetaMock->shouldReceive('get')
@@ -508,6 +589,14 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('get')
             ->with($this->orderMock, 'PAYMENT_ID: DATE')
             ->andReturn('123456789: 2024-03-20T10:00:00.000-04:00');
+
+        // Mock the setMercadoPagoPaymentId method calls
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'Mercado Pago - Payment 123456789')
+            ->andReturn(null);
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, 'Mercado Pago - Payment 123456789', Mockery::any())
+            ->once();
 
         // No expectations for addFeeDetails since fee_details is not present
 
@@ -539,7 +628,7 @@ class OrderMetadataTest extends TestCase
 
         $this->orderMetaMock->shouldReceive('add')
             ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123456789')
-            ->once();
+            ->twice();
 
         // Mock expectations for updatePaymentDetails
         $this->orderMetaMock->shouldReceive('get')
@@ -554,6 +643,14 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('get')
             ->with($this->orderMock, 'PAYMENT_ID: DATE')
             ->andReturn('123456789: 2024-03-20T10:00:00.000-04:00');
+
+        // Mock the setMercadoPagoPaymentId method calls
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'Mercado Pago - Payment 123456789')
+            ->andReturn(null);
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, 'Mercado Pago - Payment 123456789', Mockery::any())
+            ->once();
 
         // No expectations for addFeeDetails since fee_details is not present
 
@@ -578,5 +675,75 @@ class OrderMetadataTest extends TestCase
         $method = $reflection->getMethod($methodName);
         $method->setAccessible(true);
         return $method->invokeArgs($object, $parameters);
+    }
+
+    /**
+     * Test extractPaymentId with associative array containing valid id
+     */
+    public function testExtractPaymentIdWithValidAssociativeArray()
+    {
+        $paymentData = ['id' => '123456789', 'date_created' => '2024-03-20T10:00:00.000-04:00'];
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'extractPaymentId', [$paymentData]);
+        $this->assertEquals('123456789', $result);
+    }
+
+    /**
+     * Test extractPaymentId with associative array containing numeric id
+     */
+    public function testExtractPaymentIdWithNumericIdInAssociativeArray()
+    {
+        $paymentData = ['id' => 987654321, 'status' => 'approved'];
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'extractPaymentId', [$paymentData]);
+        $this->assertEquals('987654321', $result);
+    }
+
+    /**
+     * Test extractPaymentId with indexed array containing valid numeric id
+     */
+    public function testExtractPaymentIdWithValidIndexedArray()
+    {
+        $paymentData = ['123456789'];
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'extractPaymentId', [$paymentData]);
+        $this->assertEquals('123456789', $result);
+    }
+
+    /**
+     * Test extractPaymentId with associative array containing empty/null id
+     */
+    public function testExtractPaymentIdWithEmptyIdInAssociativeArray()
+    {
+        $paymentData = ['id' => '', 'date_created' => '2024-03-20T10:00:00.000-04:00'];
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'extractPaymentId', [$paymentData]);
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test extractPaymentId with indexed array containing non-numeric value
+     */
+    public function testExtractPaymentIdWithNonNumericValueInIndexedArray()
+    {
+        $paymentData = ['invalid_id'];
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'extractPaymentId', [$paymentData]);
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test extractPaymentId with empty array
+     */
+    public function testExtractPaymentIdWithEmptyArray()
+    {
+        $paymentData = [];
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'extractPaymentId', [$paymentData]);
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test extractPaymentId with mixed array prioritizes associative id key
+     */
+    public function testExtractPaymentIdWithMixedArray()
+    {
+        $paymentData = ['id' => '123456789', 0 => 'some_value', 'status' => 'approved'];
+        $result = $this->invokePrivateMethod($this->orderMetadata, 'extractPaymentId', [$paymentData]);
+        $this->assertEquals('123456789', $result);
     }
 }

@@ -9,6 +9,7 @@ use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Helpers;
+use MercadoPago\Woocommerce\Exceptions\RefundException;
 use Mockery;
 use WP_Mock;
 
@@ -441,5 +442,92 @@ class AbstractGatewayTest extends TestCase
         $result = $this->gateway->get_settings_url();
 
         $this->assertEquals('http://localhost.com/wp-admin/admin.php?page=wc-settings&tab=checkout&section=test_gateway_123', $result);
+    }
+
+    public function testProcessRefundWithNoPermissionException()
+    {
+        $order = Mockery::mock('WC_Order');
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(123)
+            ->andReturn($order);
+
+        $mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
+
+        $refundHandlerMock = Mockery::mock('overload:MercadoPago\Woocommerce\Refund\RefundHandler');
+        $refundHandlerMock->shouldReceive('processRefund')
+            ->once()
+            ->with(100.00, '')
+            ->andThrow(new \Exception(RefundException::TYPE_NO_PERMISSION));
+
+        $gateway = Mockery::mock(AbstractGateway::class)
+            ->makePartial()
+            ->shouldAllowMockingProtectedMethods();
+
+        $gateway->mercadopago = $mercadopago;
+
+        $result = $gateway->process_refund(123, 100.00, '');
+
+        $this->assertInstanceOf('WP_Error', $result);
+        $this->assertEquals('refund_error', $result->get_error_code());
+        $this->assertEquals('You do not have permission to process a refund. Please check your access to the site and try again.', $result->get_error_message());
+    }
+
+    public function testProcessRefundWithNotSupportedException()
+    {
+        $order = Mockery::mock('WC_Order');
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(789)
+            ->andReturn($order);
+
+        $mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
+
+        $refundHandlerMock = Mockery::mock('overload:MercadoPago\Woocommerce\Refund\RefundHandler');
+        $refundHandlerMock->shouldReceive('processRefund')
+            ->once()
+            ->with(75.00, '')
+            ->andThrow(new \Exception(RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED));
+
+        $gateway = Mockery::mock(AbstractGateway::class)
+            ->makePartial()
+            ->shouldAllowMockingProtectedMethods();
+
+        $gateway->mercadopago = $mercadopago;
+
+        $result = $gateway->process_refund(789, 75.00, '');
+
+        $this->assertInstanceOf('WP_Error', $result);
+        $this->assertEquals('refund_error', $result->get_error_code());
+        $this->assertEquals('This payment was made using Fast Pay with Mercado Pago and does not yet support refunds through the WooCommerce order page. Please process the refund directly from your Mercado Pago payment details page.', $result->get_error_message());
+    }
+
+    public function testProcessRefundWithUnknownException()
+    {
+        $order = Mockery::mock('WC_Order');
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(456)
+            ->andReturn($order);
+
+        $mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
+
+        $refundHandlerMock = Mockery::mock('overload:MercadoPago\Woocommerce\Refund\RefundHandler');
+        $refundHandlerMock->shouldReceive('processRefund')
+            ->once()
+            ->with(50.00, '')
+            ->andThrow(new \Exception('some_other_error'));
+
+        $gateway = Mockery::mock(AbstractGateway::class)
+            ->makePartial()
+            ->shouldAllowMockingProtectedMethods();
+
+        $gateway->mercadopago = $mercadopago;
+
+        $result = $gateway->process_refund(456, 50.00, '');
+
+        $this->assertInstanceOf('WP_Error', $result);
+        $this->assertEquals('refund_error', $result->get_error_code());
+        $this->assertEquals('Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.', $result->get_error_message());
     }
 }

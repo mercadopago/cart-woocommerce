@@ -220,17 +220,16 @@ class AndesDropdown extends HTMLElement {
             this.selectItem(item, idx);
           });
   
-          itemElement.addEventListener('mouseenter', () => {
+          itemElement.addEventListener('mouseenter', (e) => {
             this.state.focusedIndex = idx;
+
+            if (this.isIOS()) {
+              // Timeout to avoid the item being selected when the user is scrolling
+              setTimeout(() => this.selectItem(item, idx), 300);
+            }
+
             this.renderItems();
           });
-
-          if (this.isIOS()) {
-            itemElement.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.selectItem(item, idx);
-              });
-            }
         }
   
         this.itemsContainer.appendChild(itemElement);

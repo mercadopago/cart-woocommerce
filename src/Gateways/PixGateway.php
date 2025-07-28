@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
+use MercadoPago\Woocommerce\Hooks\OrderMeta;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -15,6 +16,11 @@ if (!defined('ABSPATH')) {
 
 class PixGateway extends AbstractGateway
 {
+    /**
+     * @var OrderMeta
+     */
+    public $orderMeta;
+
     /**
      * @const
      */
@@ -39,6 +45,16 @@ class PixGateway extends AbstractGateway
      * @const
      */
     public const PIX_IMAGE_ENDPOINT = 'mp_pix_image';
+
+    /**
+     * @const
+     */
+    public const PIX_PAYMENT_STATUS_ENDPOINT = 'mp_pix_payment_status';
+
+    /**
+     * @const
+     */
+    public const PIX_STATUS_NONCE = 'mp_pix_polling_nonce';
 
     /**
      * PixGateway constructor
@@ -75,10 +91,12 @@ class PixGateway extends AbstractGateway
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::PIX_IMAGE_ENDPOINT, [$this, 'generatePixImage']);
-
+        $this->mercadopago->hooks->endpoints->registerWCAjaxEndpoint(self::PIX_PAYMENT_STATUS_ENDPOINT, [$this, 'checkPixPaymentStatus']);
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+
+        $this->orderMeta = new OrderMeta();
     }
 
     /**
@@ -248,7 +266,7 @@ class PixGateway extends AbstractGateway
      */
     private function verifyPixPaymentResponse($response, $order): array
     {
-        $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
+        $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, ['id' => $response['id']]);
 
         $this->handleWithRejectPayment($response);
 
@@ -259,7 +277,6 @@ class PixGateway extends AbstractGateway
             )
         ) {
             $this->mercadopago->helpers->cart->emptyCart();
-
             $this->mercadopago->hooks->order->setPixMetadata($this, $order, $response);
             $this->mercadopago->hooks->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
 
@@ -532,6 +549,14 @@ class PixGateway extends AbstractGateway
         }
     }
 
+    public function registerApprovedPaymentStyles(): void
+    {
+        $this->mercadopago->hooks->scripts->registerStoreStyle(
+            'mp_pix_appproved',
+            $this->mercadopago->helpers->url->getCssAsset('public/mp-pix-approved')
+        );
+    }
+
     /**
      * Render thank you page
      *
@@ -540,6 +565,14 @@ class PixGateway extends AbstractGateway
     public function renderThankYouPage($order_id): void
     {
         $order = wc_get_order($order_id);
+
+        $isPixPaymentApproved = $this->orderMeta->get($order, 'pix_payment_approved');
+
+        // to avoid pix steps exibition on page reloads
+        if ($isPixPaymentApproved) {
+            $this->renderPixPaymentApprovedTemplate();
+            return;
+        }
 
         $transactionAmount = (float) $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
         $transactionAmount = Numbers::format($transactionAmount);
@@ -558,6 +591,8 @@ class PixGateway extends AbstractGateway
             'mp_pix_thankyou',
             $this->mercadopago->helpers->url->getCssAsset('public/mp-pix-thankyou')
         );
+
+        $this->registerPixPoolingScript($order);
 
         $this->mercadopago->hooks->template->getWoocommerceTemplate(
             'public/order/pix-order-received.php',
@@ -580,5 +615,225 @@ class PixGateway extends AbstractGateway
                 'text_button'         => $this->storeTranslations['text_button'],
             ]
         );
+    }
+
+    /**
+     * Register pooling script
+     * @param WC_Order $order
+     */
+    public function registerPixPoolingScript($order): void
+    {
+        if ($order->get_status() === 'pending') {
+            $scriptUrl = $this->mercadopago->helpers->url->getJsAsset('checkouts/pix/mp-pix-pooling');
+            $this->mercadopago->hooks->scripts->registerStoreScript(
+                'wc_mercadopago_pix_pooling',
+                $scriptUrl,
+                [
+                    'order_id' => $order->get_id(),
+                    'ajax_url' => \WC_AJAX::get_endpoint(self::PIX_PAYMENT_STATUS_ENDPOINT),
+                    'nonce' => wp_create_nonce(self::PIX_STATUS_NONCE)
+                ]
+            );
+        }
+    }
+
+    /**
+     * Render PIX payment approved template
+     *
+     * @param WC_Order $order
+     * @param array $paymentData
+     *
+     * @return void
+     */
+    public function renderPixPaymentApprovedTemplate(): void
+    {
+        $this->registerApprovedPaymentStyles();
+        // to do add texts to array
+        $this->mercadopago->hooks->template->getWoocommerceTemplate(
+            'public/order/pix-payment-approved.php',
+            [
+                'approved_template_title' => $this->storeTranslations['approved_template_title'],
+                'approved_template_description' => $this->storeTranslations['approved_template_description'],
+            ]
+        );
+    }
+
+    /**
+     * Check PIX payment status via AJAX
+     *
+     * @return void
+     */
+    public function checkPixPaymentStatus(): void
+    {
+        try {
+            $this->validateNonce();
+            $order = $this->getOrderFromRequest();
+            $paymentId = $this->getPaymentIdFromOrder($order);
+            $paymentData = $this->fetchPaymentData($paymentId);
+            $status = $paymentData['status'] ?? null;
+
+            $this->handlePaymentStatus($status, $paymentData, $order);
+        } catch (Exception $e) {
+            throw new ResponseStatusException('Unable to check pix payment status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Validate nonce for security
+     *
+     * @return void
+     * @throws Exception
+     */
+    private function validateNonce(): void
+    {
+        $nonce = Form::sanitizedPostData('nonce');
+        if (!wp_verify_nonce($nonce, self::PIX_STATUS_NONCE)) {
+            wp_send_json_error(['message' => 'Invalid nonce'], 403);
+            throw new Exception('Invalid nonce');
+        }
+    }
+
+    /**
+     * Get order from request data
+     *
+     * @return \WC_Order
+     * @throws Exception
+     */
+    private function getOrderFromRequest(): \WC_Order
+    {
+        $orderId = Form::sanitizedPostData('order_id');
+        $order = wc_get_order($orderId);
+
+        if (!$order) {
+            wp_send_json_error(['message' => 'Order not found'], 404);
+            throw new Exception('Order not found');
+        }
+
+        return $order;
+    }
+
+    /**
+     * Get payment ID from order metadata
+     *
+     * @param \WC_Order $order
+     * @return string
+     * @throws Exception
+     */
+    private function getPaymentIdFromOrder(\WC_Order $order): string
+    {
+        $paymentIds = $this->mercadopago->orderMetadata->getPaymentsIdMeta($order);
+
+        if (empty($paymentIds)) {
+            wp_send_json_error(['message' => 'No payment ID found'], 404);
+            throw new Exception('No payment ID found');
+        }
+
+        return explode(',', $paymentIds)[0];
+    }
+
+    /**
+     * Fetch payment data from MercadoPago API
+     *
+     * @param string $paymentId
+     * @return array
+     * @throws Exception
+     */
+    private function fetchPaymentData(string $paymentId): array
+    {
+        $headers = ['Authorization: Bearer ' . $this->mercadopago->sellerConfig->getCredentialsAccessToken()];
+        $response = $this->mercadopago->helpers->requester->get("/v1/payments/$paymentId", $headers);
+
+        if ($response->getStatus() !== 200) {
+            wp_send_json_error(['message' => 'Failed to get payment status'], 500);
+            throw new Exception('Failed to get payment status');
+        }
+
+        $paymentData = $response->getData();
+
+        if (is_object($paymentData)) {
+            $paymentData = (array) $paymentData;
+        } elseif (!is_array($paymentData)) {
+            $paymentData = [];
+        }
+
+        return $paymentData;
+    }
+
+    /**
+     * Handle different payment statuses
+     *
+     * @param string|null $status
+     * @param array $paymentData
+     * @param \WC_Order $order
+     * @return void
+     */
+    private function handlePaymentStatus(?string $status, array $paymentData, \WC_Order $order): void
+    {
+        switch ($status) {
+            case 'approved':
+                $this->handleApprovedPayment($order, $paymentData);
+                break;
+            case 'pending':
+                $this->handlePendingPayment();
+                break;
+            default:
+                $this->handleOtherStatus($status);
+                break;
+        }
+    }
+
+    /**
+     * Handle approved payment status
+     *
+     * @param \WC_Order $order
+     * @param array $paymentData
+     * @return void
+     */
+    private function handleApprovedPayment(\WC_Order $order, array $paymentData): void
+    {
+        $paymentAlreadyProcessed = $this->orderMeta->get($order, 'pix_payment_approved');
+
+        if ($paymentAlreadyProcessed) {
+            wp_send_json_success([
+                'status' => 'approved',
+                'message' => 'Payment has already been processed',
+            ]);
+            return;
+        }
+
+        $this->mercadopago->orderStatus->processStatus('approved', $paymentData, $order, self::WEBHOOK_API_NAME);
+        $this->orderMeta->update($order, 'pix_payment_approved', true);
+
+        wp_send_json_success([
+            'status' => 'approved',
+            'message' => 'Payment successfully approved',
+        ]);
+    }
+
+    /**
+     * Handle pending payment status
+     *
+     * @return void
+     */
+    private function handlePendingPayment(): void
+    {
+        wp_send_json_success([
+            'status' => 'pending',
+            'message' => 'Payment pending'
+        ]);
+    }
+
+    /**
+     * Handle other payment statuses
+     *
+     * @param string|null $status
+     * @return void
+     */
+    private function handleOtherStatus(?string $status): void
+    {
+        wp_send_json_success([
+            'status' => $status,
+            'message' => 'Payment status: ' . $status
+        ]);
     }
 }

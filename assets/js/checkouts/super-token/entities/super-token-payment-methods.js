@@ -534,7 +534,7 @@ class MPSuperTokenPaymentMethods {
     }
 
     addDropdownEventListener(dropdownElement) {
-        dropdownElement.addEventListener('mp-open-dropdown', () => {
+        dropdownElement?.addEventListener('mp-open-dropdown', () => {
             const checkoutContainer = document.querySelector(this.CHECKOUT_CUSTOM_CONTAINER_SELECTOR)
 
             if (!checkoutContainer) {
@@ -544,7 +544,7 @@ class MPSuperTokenPaymentMethods {
             checkoutContainer.style.zIndex = '9999 !important';
         });
 
-        dropdownElement.addEventListener('mp-close-dropdown', () => {
+        dropdownElement?.addEventListener('mp-close-dropdown', () => {
             const checkoutContainer = document.querySelector(this.CHECKOUT_CUSTOM_CONTAINER_SELECTOR)
 
             if (!checkoutContainer) {
@@ -601,16 +601,18 @@ class MPSuperTokenPaymentMethods {
     }
 
     buildCreditCardDetailsInnerHTML(paymentMethod) {
-        if (!this.isCreditCard(paymentMethod)) {
+        if (!this.isCreditCard(paymentMethod) && !this.isDebitCard(paymentMethod)) {
             return '';
         }
 
-        const installments = this.normalizeInstallments(paymentMethod.installments);
+        const section = document.createElement('section');
+        section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS);
+        section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
 
-        return `
-            <section
-                class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS} ${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE}"
-            >
+        if (this.isCreditCard(paymentMethod)) {
+            const installments = this.normalizeInstallments(paymentMethod.installments);
+
+            section.innerHTML = `
                 <andes-dropdown
                     label="${this.INSTALLMENTS_INPUT_TITLE}"
                     placeholder="${this.INSTALLMENTS_PLACEHOLDER}"
@@ -619,9 +621,12 @@ class MPSuperTokenPaymentMethods {
                     site-id="${this.getSiteId()}"
                     ${this.needsBankInterestDisclaimer() ? `hint="${this.INSTALLMENTS_HINT_TEXT}"` : ''}
                 ></andes-dropdown>
-                ${this.buildSecurityCodeInnerHTML(paymentMethod)}
-            </section>
-        `
+            `;
+        }
+
+        section.innerHTML += this.buildSecurityCodeInnerHTML(paymentMethod);
+
+        return section.outerHTML;
     }
 
     mountCardForm() {
@@ -657,7 +662,13 @@ class MPSuperTokenPaymentMethods {
         return this.amount;
     }
 
-    async updateSecurityCode(paymentMethod) {
+    async updateSecurityCode() {
+        const paymentMethod = this.activePaymentMethod;
+
+        if (!paymentMethod || !this.securityCodeIsRequired(paymentMethod?.security_code_settings)) {
+            return;
+        }
+
         try {
             const { card_id } = await this.mpSdkInstance.getCardId(this.getSuperToken(), paymentMethod.token);
 
@@ -738,7 +749,6 @@ class MPSuperTokenPaymentMethods {
                     .on('validityChange', (e) => {
                         if (e.errorMessages.length === 0) {
                             this.toggleSecurityCodeErrorMessage('', paymentMethod);
-                            return this.updateSecurityCode(paymentMethod);
                         }
 
                         const errorMessage = e.errorMessages[0].cause;

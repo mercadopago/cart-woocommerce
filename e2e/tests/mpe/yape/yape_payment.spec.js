@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { mpe } from "../../../data/meli_sites";
 import { fillStepsToCheckout } from "../../../flows/fill_steps_to_checkout";
-import payWithYape from "../../../flows/mpe/pay_with_yape";
+import payWithYape from "../../../flows/yape";
 
 const { shop_url, guestUser } = mpe;
 

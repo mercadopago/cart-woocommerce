@@ -304,7 +304,7 @@ class PseGateway extends AbstractGateway
             $response = $this->transaction->createPayment();
 
             if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, [$response['id']]);
+                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, ['id' => $response]);
                 $this->handleWithRejectPayment($response);
                 if (
                     $response['status'] === 'pending' &&

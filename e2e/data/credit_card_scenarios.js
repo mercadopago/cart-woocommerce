@@ -96,6 +96,12 @@ const MLU = generateCardScenarios({
   }
 });
 
+const MLM = generateCardScenarios({
+  master: {
+    number: process.env.CC_MASTER_MLM,
+  }
+});
+
 const OUTRO = generateCardScenarios({
   master: {
     number: process.env.CC_MASTER,
@@ -112,4 +118,4 @@ const OUTRO = generateCardScenarios({
   }
 });
 
-export default { MLC, MPE, MLA, MCO, MLB, MLU, OUTRO };
+export default { MLC, MPE, MLA, MCO, MLB, MLU, MLM, OUTRO };

@@ -1,6 +1,14 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.4.0 (24/07/2025) =
+* Added
+- Refund functionality to orders
+- Polling functionality for payments with PIX
+- Compatibility to PHP v8.4
+* Fixed
+- Installments dropdown component
+
 = v8.3.3 (18/07/2025) =
 * Fixed
 - Fix loading issue in custom checkout

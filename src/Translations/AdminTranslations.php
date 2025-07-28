@@ -58,6 +58,8 @@ class AdminTranslations
 
     public array $countries = [];
 
+    public array $refund = [];
+
     public array $links;
 
     /**
@@ -93,6 +95,7 @@ class AdminTranslations
         $this->setCurrencyTranslations();
         $this->setStatusSyncTranslations();
         $this->setCountriesTranslations();
+        $this->setRefundTranslations();
     }
 
     /**
@@ -1412,6 +1415,26 @@ class AdminTranslations
             'MLM' => __('Mexico', 'woocommerce-mercadopago'),
             'MPE' => __('Peru', 'woocommerce-mercadopago'),
             'MLU' => __('Uruguay', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    private function setRefundTranslations(): void
+    {
+        $this->refund = [
+            'amount_must_be_positive'   => __('The amount entered for the refund must be greater than zero. Please enter the amount you need to refund.', 'woocommerce-mercadopago'),
+            'forbidden'                 => __('Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.', 'woocommerce-mercadopago'),
+            'insufficient_funds'        => __('You do not have sufficient balance in your account. To make the refund, please deposit money in your account.', 'woocommerce-mercadopago'),
+            'internal_server_error'     => __('Something went wrong. The refund could not be processed at this time. Please try again later.', 'woocommerce-mercadopago'),
+            'invalid_payment_status'    => __('You can only refund a payment that has already been approved. Please wait for approval and try again.', 'woocommerce-mercadopago'),
+            'invalid_refund_amount'     => __('The requested refund amount is greater than the total amount of the order. Please check the amount and try again.', 'woocommerce-mercadopago'),
+            'invalid_request'           => __('Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.', 'woocommerce-mercadopago'),
+            'no_permission'             => __('You do not have permission to process a refund. Please check your access to the site and try again.', 'woocommerce-mercadopago'),
+            'not_found'                 => __('The refund could not be processed. Please try again or contact the Mercado Pago support team.', 'woocommerce-mercadopago'),
+            'payment_not_found'         => __('The refund could not be processed. Please try again or contact the Mercado Pago support team.', 'woocommerce-mercadopago'),
+            'payment_too_old'           => __('This payment is too old to be refunded. If you need help, please contact the Mercado Pago support team.', 'woocommerce-mercadopago'),
+            'unauthorized'              => __('Your access credentials are incorrect or have expired. Please renew your credentials in the Mercado Pago settings and try again.', 'woocommerce-mercadopago'),
+            'unknown_error'             => __('Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.', 'woocommerce-mercadopago'),
+            'supertoken_not_supported'  => __('This payment was made using Fast Pay with Mercado Pago and does not yet support refunds through the WooCommerce order page. Please process the refund directly from your Mercado Pago payment details page.', 'woocommerce-mercadopago'),
         ];
     }
 }
