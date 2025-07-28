@@ -371,11 +371,6 @@ class CustomGateway extends AbstractGateway
     public function registerSuperTokenScripts()
     {
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
-            'wc_mercadopago_supertoken_sdk_instance',
-            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/super-token-sdk-instance'),
-        );
-
-        $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_supertoken_debounce',
             $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/debounce'),
         );

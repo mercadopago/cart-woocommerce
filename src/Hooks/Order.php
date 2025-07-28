@@ -189,7 +189,12 @@ class Order
      */
     private function getMetaboxData(WC_Order $order): array
     {
-        $paymentInfo  = $this->getLastPaymentInfo($order);
+        try {
+            $paymentInfo  = $this->getLastPaymentInfo($order);
+        } catch (Exception $e) {
+            $this->logs->file->error('Mercado Pago: Error getting payment info for metabox: ' . $e->getMessage(), __CLASS__);
+            return [];
+        }
 
         $isCreditCard      = $paymentInfo['payment_type_id'] === 'credit_card';
         $paymentStatusType = PaymentStatus::getStatusType($paymentInfo['status']);
@@ -199,6 +204,25 @@ class Order
             $paymentInfo['status_detail'],
             $isCreditCard
         );
+
+        try {
+            $paymentsData = $this->orderStatus->getPaymentsData($order);
+        } catch (Exception $e) {
+            $this->logs->file->error('Mercado Pago: Error getting payments data for metabox: ' . $e->getMessage(), __CLASS__);
+            return [];
+        }
+
+        if ($this->hasMultiplePayments($paymentsData) && $this->hasRefundedPayments($paymentsData)) {
+            $refundedStatusDetail = $this->orderStatus->getRefundedStatusDetail($paymentsData);
+
+            $paymentStatusType = PaymentStatus::getStatusType($refundedStatusDetail['title']);
+
+            $cardContent = PaymentStatus::getCardDescription(
+                $this->adminTranslations->statusSync,
+                $refundedStatusDetail['description'],
+                $isCreditCard
+            );
+        }
 
         switch ($paymentStatusType) {
             case 'success':
@@ -254,20 +278,56 @@ class Order
     private function getLastPaymentInfo(WC_Order $order)
     {
         try {
-            $paymentsIds   = explode(',', $this->orderMetadata->getPaymentsIdMeta($order));
-            $lastPaymentId = trim(end($paymentsIds));
-
-            if (!$lastPaymentId) {
+            $paymentsData = $this->orderStatus->getPaymentsData($order);
+            if (empty($paymentsData)) {
                 return false;
             }
 
-            $headers  = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
-            $response = $this->requester->get("/v1/payments/$lastPaymentId", $headers);
+            $data = end($paymentsData);
 
-            return $response->getData();
+            if (
+                count($paymentsData) === 1 &&
+                isset($data['status'], $data['status_detail']) &&
+                $data['status'] === 'refunded' &&
+                $data['status_detail'] === 'by_admin'
+            ) {
+                $data['status_detail'] = 'refunded';
+            }
+
+            return $data;
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Check if the order has multiple payments
+     *
+     * @param array $paymentsData
+     *
+     * @return bool
+     */
+    private function hasMultiplePayments(array $paymentsData): bool
+    {
+        return count($paymentsData) > 1;
+    }
+
+    /**
+     * Check if the order has refunded payments
+     *
+     * @param array $paymentsData
+     *
+     * @return bool
+     */
+    private function hasRefundedPayments(array $paymentsData): bool
+    {
+        foreach ($paymentsData as $payment) {
+            if (($payment['status'] === 'refunded') || ($payment['status_detail'] === 'partially_refunded')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -306,13 +366,12 @@ class Order
      * @param WC_Order $order
      *
      * @return void
-     * @throws Exception
      */
     public function syncOrderStatus(WC_Order $order): void
     {
-        $paymentData = $this->getLastPaymentInfo($order);
-        if (!$paymentData) {
-            throw new Exception('Couldn\'t find payment');
+        if (!$paymentData = $this->getLastPaymentInfo($order)) {
+            $this->logs->file->error('Mercado Pago: Error getting payment info for sync order status', __CLASS__);
+            return;
         }
 
         $this->orderStatus->processStatus($paymentData['status'], (array) $paymentData, $order, $this->orderMetadata->getUsedGatewayData($order));

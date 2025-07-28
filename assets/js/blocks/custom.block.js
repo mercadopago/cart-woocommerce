@@ -62,11 +62,15 @@ const Content = (props) => {
           if (!window.mpSuperTokenPaymentMethods) {
             return { type: emitResponse.responseTypes.ERROR };
           }
+
           if (!window.mpSuperTokenPaymentMethods.isSelectedPaymentMethodValid()) {
             window.mpSuperTokenPaymentMethods.forceShowValidationErrors();
             window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
             return { type: emitResponse.responseTypes.ERROR };
           }
+
+          window.mpSuperTokenPaymentMethods.updateSecurityCode();
+
           break;
         case 'wallet_button':
           break;

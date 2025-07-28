@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Order;
 
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -30,6 +31,8 @@ class OrderMetadata
 
     private const PAYMENTS_IDS = '_Mercado_Pago_Payment_IDs';
 
+    private const MERCADOPAGO_PAYMENT = 'Mercado Pago - Payment';
+
     private const PAYMENT_DETAILS = 'PAYMENT_ID: DATE';
 
     private const TICKET_TRANSACTION_DETAILS = '_transaction_details_ticket';
@@ -52,14 +55,18 @@ class OrderMetadata
 
     private OrderMeta $orderMeta;
 
+    private Logs $logs;
+
     /**
      * Metadata constructor
      *
      * @param OrderMeta $orderMeta
+     * @param Logs $logs
      */
-    public function __construct(OrderMeta $orderMeta)
+    public function __construct(OrderMeta $orderMeta, Logs $logs)
     {
         $this->orderMeta = $orderMeta;
+        $this->logs = $logs;
     }
 
     /**
@@ -365,10 +372,10 @@ class OrderMetadata
      */
     public function setCustomMetadata(WC_Order $order, $data): void
     {
-        $installments      = (float) $data['installments'];
-        $installmentAmount = (float) $data['transaction_details']['installment_amount'];
-        $totalPaidAmount   = (float) $data['transaction_details']['total_paid_amount'];
-        $transactionAmount = (float) $data['transaction_amount'];
+        $installments = isset($data['installments']) ? (float) $data['installments'] : 0.0;
+        $installmentAmount = isset($data['transaction_details']['installment_amount']) ? (float) $data['transaction_details']['installment_amount'] : 0.0;
+        $totalPaidAmount = isset($data['transaction_details']['total_paid_amount']) ? (float) $data['transaction_details']['total_paid_amount'] : 0.0;
+        $transactionAmount = isset($data['transaction_amount']) ? (float) $data['transaction_amount'] : 0.0;
 
         $this->setInstallmentsData($order, $installments);
         $this->setTransactionDetailsData($order, $installmentAmount);
@@ -393,6 +400,36 @@ class OrderMetadata
         $this->updatePaymentDetails($order, $paymentData);
         $this->updateLatestPaymentId($order);
         $this->addFeeDetails($order, $paymentData);
+        $this->setMercadoPagoPaymentId($order, [$paymentData['id']]);
+    }
+
+    /**
+     * Set payment id in the order
+     *
+     * @param WC_Order $order
+     * @param array $paymentsId [1234567890]
+     *
+     * @example Mercado Pago - Payment 1234567890
+     *
+     * @return void
+     */
+    public function setMercadoPagoPaymentId(WC_Order $order, array $paymentsId)
+    {
+        $paymentsIdMetadata = $this->getPaymentsIdMeta($order);
+
+        if (empty($paymentsIdMetadata)) {
+            $this->setPaymentsIdData($order, implode(', ', $paymentsId));
+        }
+
+        foreach ($paymentsId as $paymentId) {
+            $date                  = Date::getNowDate('Y-m-d H:i:s');
+            $paymentDetailKey      = self::MERCADOPAGO_PAYMENT . " $paymentId";
+            $paymentDetailMetadata = $this->orderMeta->get($order, $paymentDetailKey);
+
+            if (empty($paymentDetailMetadata)) {
+                $this->orderMeta->update($order, $paymentDetailKey, "[Date $date]");
+            }
+        }
     }
 
     /**
@@ -408,8 +445,35 @@ class OrderMetadata
         $paymentsIdMetadata = $this->getPaymentsIdMeta($order);
 
         if (empty($paymentsIdMetadata)) {
-            $this->setPaymentsIdData($order, $paymentData['id']);
+            $paymentId = $this->extractPaymentId($paymentData);
+            if (!empty($paymentId)) {
+                $this->setPaymentsIdData($order, $paymentId);
+            }
         }
+    }
+
+    /**
+     * Extract payment ID from payment data array safely
+     *
+     * Handles both associative arrays ['id' => '123'] and indexed arrays ['123']
+     *
+     * @param array $paymentData
+     *
+     * @return string|null
+     */
+    private function extractPaymentId(array $paymentData): ?string
+    {
+        if (isset($paymentData['id']) && !empty($paymentData['id'])) {
+            return (string) $paymentData['id'];
+        }
+
+        if (isset($paymentData[0]) && !empty($paymentData[0]) && is_numeric($paymentData[0])) {
+            return (string) $paymentData[0];
+        }
+
+        $this->logs->file->error('Invalid payment data format in extractPaymentId', 'OrderMetadata', $paymentData);
+
+        return null;
     }
 
     /**
@@ -444,11 +508,14 @@ class OrderMetadata
      */
     private function formatPaymentDetail(array $paymentData): string
     {
-        if (empty($paymentData['id']) || empty($paymentData['date_created'])) {
+        $paymentId = $paymentData['id'] ?? null;
+        $dateCreated = $paymentData['date_created'] ?? null;
+
+        if (empty($paymentId) || empty($dateCreated)) {
             return '';
         }
 
-        return "{$paymentData['id']}: {$paymentData['date_created']}";
+        return "{$paymentId}: {$dateCreated}";
     }
 
     /**
@@ -495,7 +562,7 @@ class OrderMetadata
             if (is_array($feeDetail) && isset($feeDetail['type'], $feeDetail['amount'])) {
                 $this->orderMeta->update($order, $feeDetail['type'], $feeDetail['amount']);
             } else {
-                error_log('Mercado Pago: Invalid fee detail format: ' . json_encode($feeDetail));
+                $this->logs->file->error('Invalid fee detail format', 'OrderMetadata', $feeDetail);
             }
         }
     }
@@ -533,7 +600,7 @@ class OrderMetadata
         foreach ($paymentDetails as $payment) {
             $parts = explode(': ', $payment);
             if (count($parts) !== 2) {
-                error_log('Mercado Pago: Failed to get previous payments. Invalid format: ' . $payment);
+                $this->logs->file->error('Failed to get previous payments. Invalid format', 'OrderMetadata', ['payment' => $payment]);
                 return null;
             }
 

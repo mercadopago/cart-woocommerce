@@ -5,6 +5,7 @@ clover.xml
 coverage
 coverage.xml
 
+.cursor/
 /.idea/
 /.vscode/
 /vendor/
@@ -16,6 +17,7 @@ woocommerce-mercadopago.zip
 qit-env.yml
 
 .env
+requirements.md
 
 phpstan-baseline.neon
 

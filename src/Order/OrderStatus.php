@@ -3,7 +3,10 @@
 namespace MercadoPago\Woocommerce\Order;
 
 use Exception;
+use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -16,13 +19,30 @@ class OrderStatus
 
     private array $commonMessages;
 
+    private OrderMetadata $orderMetadata;
+
+    private Seller $seller;
+
+    private Requester $requester;
+
+    private Logs $logs;
+
     /**
      * Order constructor
      */
-    public function __construct(StoreTranslations $storeTranslations)
-    {
+    public function __construct(
+        StoreTranslations $storeTranslations,
+        OrderMetadata $orderMetadata,
+        Seller $seller,
+        Requester $requester,
+        Logs $logs
+    ) {
         $this->translations   = $storeTranslations->orderStatus;
         $this->commonMessages = $storeTranslations->commonMessages;
+        $this->orderMetadata  = $orderMetadata;
+        $this->seller         = $seller;
+        $this->requester      = $requester;
+        $this->logs           = $logs;
     }
 
     /**
@@ -233,14 +253,35 @@ class OrderStatus
      */
     private function refundedFlow(array $data, WC_Order $order): void
     {
-        if ($this->isPartialRefund($data)) {
-            $refund_amount = floatval($data['total_refunded']);
-            wc_create_refund(array(
-                'amount'   => $refund_amount,
-                'reason'   => $this->translations['refunded'],
-                'order_id' => $order->get_id(),
-            ));
-            $order->add_order_note('Mercado Pago: ' . $this->translations['partial_refunded'] . $refund_amount);
+        // Validation for notification, the sync button does not yet query the notification API
+        if (!$this->isNotification($data)) {
+            return;
+        }
+
+        try {
+            if ($this->isPartialRefund($data, $order)) {
+                $refundId = $data['current_refund']['id'];
+
+                // Find refund by ID in refunds_notifying array
+                $refund = array_filter($data['refunds_notifying'], function ($item) use ($refundId) {
+                    return isset($item['id']) && $item['id'] == $refundId;
+                });
+                $refund = reset($refund);
+                if ($refund === false) {
+                    throw new Exception('Refund not found for the given refund ID: ' . $refundId);
+                }
+                $refundAmount = floatval($refund['amount']);
+
+                wc_create_refund(array(
+                    'amount'   => $refundAmount,
+                    'reason'   => $this->translations['refunded'],
+                    'order_id' => $order->get_id(),
+                ));
+                $order->add_order_note('Mercado Pago: ' . $this->translations['partial_refunded'] . $refundAmount);
+                return;
+            }
+        } catch (Exception $e) {
+            $this->logs->file->error('Mercado Pago: Error processing refund validation: ' . $e->getMessage(), __CLASS__);
             return;
         }
 
@@ -368,8 +409,93 @@ class OrderStatus
      *
      * @return bool
      */
-    private function isPartialRefund(array $data): bool
+    private function isPartialRefund(array $data, WC_Order $order): bool
     {
-        return $data['transaction_amount'] !== $data['total_refunded'] && $data['total_refunded'] !== 0;
+        if ($this->isMerchantOrder($data)) {
+            $paymentsData = $this->getPaymentsData($order);
+            $refundedStatusDetail = $this->getRefundedStatusDetail($paymentsData);
+
+            return $refundedStatusDetail['description'] === 'partially_refunded';
+        }
+
+        return $order->get_total() !== $data['transaction_amount_refunded'] && $data['transaction_amount_refunded'] !== 0;
+    }
+
+    /**
+     * Check if the data is a notification
+     *
+     * @param array $data
+     *
+     * @return bool
+     */
+    private function isNotification(array $data): bool
+    {
+        return isset($data['notification_id']);
+    }
+
+    /**
+     * Check if the data is a merchant order
+     *
+     * @param array $data
+     *
+     * @return bool
+     */
+    private function isMerchantOrder(array $data): bool
+    {
+        return isset($data['transaction_type']) && $data['transaction_type'] === 'merchant_order';
+    }
+
+    /**
+     * Get the data of the payments
+     *
+     * @param WC_Order $order
+     *
+     * @return array
+     */
+    public function getPaymentsData(WC_Order $order): array
+    {
+        $result = [];
+
+        $paymentsIds = array_filter(array_map(
+            'trim',
+            explode(',', $this->orderMetadata->getPaymentsIdMeta($order))
+        ));
+
+        $headers = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+
+        foreach ($paymentsIds as $paymentId) {
+            $response = $this->requester->get("/v1/payments/$paymentId", $headers);
+            if ($response->getStatus() != 200 && $response->getStatus() != 201) {
+                throw new Exception(json_encode($response->getData()));
+            }
+
+            $result[] = $response->getData();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get the status detail of the refunded payments for consolidated status
+     *
+     * @param array $paymentsData
+     *
+     * @return array
+     */
+    public function getRefundedStatusDetail(array $paymentsData): array
+    {
+        foreach ($paymentsData as $payment) {
+            if (in_array('approved', [$payment['status'], $payment['status_detail']])) {
+                return [
+                    'title' => 'approved',
+                    'description' => 'partially_refunded',
+                ];
+            }
+        }
+
+        return [
+            'title' => 'refunded',
+            'description' => 'refunded',
+        ];
     }
 }

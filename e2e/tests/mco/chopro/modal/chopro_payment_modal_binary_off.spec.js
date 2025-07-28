@@ -1,73 +1,46 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
 import { mco } from "../../../../data/meli_sites";
-import { fillStepsToCheckout } from "../../../../flows/fill_steps_to_checkout";
-import { choproModal } from "../../../../flows/mco/pay_with_cho_pro";
+import { modalCancelOrderTest, modalRejectAndChangeMethodTest, modalSuccessfulPaymentTest, modalSuccessfulPendingPaymentTest } from "../../../../flows/chopro";
 
-const{ shop_url, credit_card_scenarios, guestUserDefault } = mco;
+const { shop_url, credit_card_scenarios, guestUserDefault } = mco;
 const { APPROVED, REJECTED, PENDING } = credit_card_scenarios;
 
-test('Given a guest user, When they complete a successful payment with chopro, Should show the success page', async ({page}) => {
-    const modal = page.locator('#mercadopago-checkout').contentFrame();
-
-    await fillStepsToCheckout(page, shop_url, guestUserDefault);
-    await choproModal(page, APPROVED.masterMCO, APPROVED.form);
-
-    const returnButton = modal.locator('#group_button_back_congrats');
-    await expect(returnButton).toBeVisible();
-
-    returnButton.click();
-
-    await page.waitForTimeout(3000);
-    await expect(page.locator('#main')).toHaveText(/Order number:/i);
+test('Given a guest user, When they complete a successful payment with chopro, Should show the success page', async ({ page }) => {
+  await modalSuccessfulPaymentTest({
+    page,
+    url: shop_url,
+    user: guestUserDefault,
+    card: APPROVED.master,
+    form: APPROVED.form
+  });
 })
 
-test('Given a guest user, When their payment with chopro is rejected, Should show other payment options', async ({page}) => {
-  const modal = page.locator('#mercadopago-checkout').contentFrame();
-
-  await fillStepsToCheckout(page, shop_url, guestUserDefault);
-  await choproModal(page, REJECTED.masterMCO, REJECTED.form);
-
-  const changePaymentMethod = modal.locator('#change_payment_method');
-  await expect(changePaymentMethod).toBeVisible();
-  await changePaymentMethod.click();
-
-  await page.waitForTimeout(3000);
-  await expect(modal.locator('#root-app')).toHaveText(/¿Cómo quieres pagar?/i);
+test('Given a guest user, When their payment with chopro is rejected, Should show other payment options', async ({ page }) => {
+  await modalRejectAndChangeMethodTest({
+    page,
+    url: shop_url,
+    user: guestUserDefault,
+    card: REJECTED.master,
+    form: REJECTED.form
+  });
 })
 
-test('Given a guest user, When their payment with chopro is rejected and they close the modal, Should show the cancelled order message', async ({page}) => {
-  const modal = page.locator('#mercadopago-checkout').contentFrame();
-
-  await fillStepsToCheckout(page, shop_url, guestUserDefault);
-  await choproModal(page, REJECTED.masterMCO, REJECTED.form);
-
-  const changePaymentMethod = modal.locator('#change_payment_method');
-  const cancelPayment = modal.locator('#mp-close-btn');
-
-  await expect(changePaymentMethod).toBeVisible();
-  await cancelPayment.click();
-
-  await page.waitForTimeout(3000);
-
-  const closeAndCancel = modal.locator('.fullscreen-message__content').getByRole('button', { name: 'Cancelar pago' });
-  await expect(closeAndCancel).toBeVisible();
-  await closeAndCancel.click();
-
-  await page.waitForTimeout(3000);
-  await expect(page.locator('.woocommerce-info')).toHaveText(/Your order was cancelled./i);
+test('Given a guest user, When their payment with chopro is rejected and they close the modal, Should show the cancelled order message', async ({ page }) => {
+  await modalCancelOrderTest({
+    page,
+    url: shop_url,
+    user: guestUserDefault,
+    card: REJECTED.master,
+    form: REJECTED.form
+  });
 })
 
-test('Given a guest user, When their payment with chopro is pending and binary is off, Should show the success page', async ({page}) => {
-  const modal = page.locator('#mercadopago-checkout').contentFrame();
-
-  await fillStepsToCheckout(page, shop_url, guestUserDefault);
-  await choproModal(page, PENDING.masterMCO, PENDING.form);
-
-  const returnButton = modal.locator('#button');
-  await expect(returnButton).toBeVisible();
-
-  returnButton.click();
-
-  await page.waitForTimeout(3000);
-  await expect(page.locator('#main')).toHaveText(/Order number:/i);
+test('Given a guest user, When their payment with chopro is pending and binary is off, Should show the success page', async ({ page }) => {
+  await modalSuccessfulPendingPaymentTest({
+    page,
+    url: shop_url,
+    user: guestUserDefault,
+    card: PENDING.master,
+    form: PENDING.form
+  });
 })

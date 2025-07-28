@@ -43,6 +43,8 @@ class MPEventHandler {
                 return false;
             }
 
+            window.mpSuperTokenPaymentMethods.updateSecurityCode();
+
             return true;
         }
 

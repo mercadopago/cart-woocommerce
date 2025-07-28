@@ -11,5 +11,5 @@ test('Given guest user with master credit card, When payment is pending and bina
 });
 
 test('Given guest user with visa debit card, When payment is pending and binary is on, Should show decline message', async ({page}) => {
-  await rejectedPaymentTest(page, shop_url, guestUserMCO, DEBIT_PENDING.visaMCO, DEBIT_PENDING.form);
+  await rejectedPaymentTest(page, shop_url, guestUserMCO, DEBIT_PENDING.visa, DEBIT_PENDING.form);
 });

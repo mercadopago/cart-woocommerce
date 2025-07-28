@@ -33,6 +33,8 @@ const GUEST_USER_CONFIGS = {
   },
   MCO: {
     email: process.env.USER_MCO,
+    documentType: process.env.DOC_TYPE_MCO,
+    document: process.env.DOC_NUMBER_MCO,
   },
   MPE: {
     mpUserAccount: process.env.USER_MPE,

@@ -108,6 +108,7 @@
     font-weight: 400 !important;
     line-height: 22px !important; /* 125% */
     padding-left: 12px !important;
+    overflow: hidden !important;
 }
 
 .andes-dropdown__trigger[data-placeholder="true"] .andes-dropdown__selected-text {
@@ -177,10 +178,13 @@
     outline: none !important;
     text-align: left !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
     text-overflow: ellipsis !important;
     display: flex !important;
     align-items: center !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
 }
 
 .andes-dropdown__item--selected {

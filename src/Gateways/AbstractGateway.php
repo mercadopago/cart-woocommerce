@@ -11,6 +11,8 @@ use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Notification\NotificationFactory;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use WC_Payment_Gateway;
+use MercadoPago\Woocommerce\Helpers\RefundStatusCodes;
+use MercadoPago\Woocommerce\Exceptions\RefundException;
 
 abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
@@ -101,7 +103,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         $paymentIds = Form::sanitizedGetData('payment_id');
 
         if ($paymentIds) {
-            $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, explode(',', $paymentIds));
+            $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, ['id' => $paymentIds]);
 
             return;
         }
@@ -956,5 +958,42 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
         set_transient('mp_credentials_expired_result', $result, 3600);
         return $result;
+    }
+
+    /**
+     * Process refund
+     *
+     * @param int $order_id
+     * @param float|null $amount
+     * @param string $reason
+     * @return bool|WP_Error
+     */
+    public function process_refund($order_id, $amount = null, $reason = '')
+    {
+        try {
+            $order = wc_get_order($order_id);
+
+            $refundHandler = new \MercadoPago\Woocommerce\Refund\RefundHandler(
+                $this->mercadopago->helpers->requester,
+                $order,
+                $this->mercadopago
+            );
+
+            $refundHandler->processRefund($amount, $reason);
+
+            return true;
+        } catch (RefundException $e) {
+            $responseData = $e->getResponseData();
+            $refundStatusCodes = new RefundStatusCodes($this->mercadopago->adminTranslations);
+            $userMessage = $refundStatusCodes->getUserMessage($e->getHttpStatusCode() ?? 0, $responseData);
+
+            return new \WP_Error('refund_error', $userMessage);
+        } catch (Exception $e) {
+            return new \WP_Error(
+                'refund_error',
+                $this->mercadopago->adminTranslations->refund[$e->getMessage()]
+                ?? $this->mercadopago->adminTranslations->refund['unknown_error']
+            );
+        }
     }
 }
