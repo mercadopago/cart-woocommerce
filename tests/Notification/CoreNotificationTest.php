@@ -422,8 +422,6 @@ class CoreNotificationTest extends TestCase
             'return' => false,
         ]);
 
-        defined('MP_PLATFORM_ID') || define('MP_PLATFORM_ID', 'platform-id-teste');
-        defined('MP_PRODUCT_ID_DESKTOP') || define('MP_PRODUCT_ID_DESKTOP', 'product-id-desktop-teste');
         defined('MP_PRODUCT_ID_MOBILE') || define('MP_PRODUCT_ID_MOBILE', 'product-id-mobile-teste');
 
         $this->store->shouldReceive('getIntegratorId')->andReturn('integrator-id-teste');

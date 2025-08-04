@@ -203,8 +203,8 @@ class MercadoPagoMock
 
     private static function setMocksForStoreTranslations($mockTranslations)
     {
-        $mockTranslations->commonMessages = array();
-        $mockTranslations->buyerRefusedMessages = array();
+        $mockTranslations->commonMessages = [];
+        $mockTranslations->buyerRefusedMessages = [];
         $mockTranslations->commonMessages['invalid_users'] = 'error';
         $mockTranslations->commonMessages['invalid_operators'] = 'error';
         $mockTranslations->buyerRefusedMessages['buyer_default'] = 'error';

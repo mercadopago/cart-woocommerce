@@ -297,7 +297,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         $isProductionMode = $this->mercadopago->storeConfig->getProductionMode();
 
         $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
-        $this->mercadopago->orderMetadata->setUsedGatewayData($order, get_class($this)::ID);
+        $this->mercadopago->orderMetadata->setUsedGatewayData($order, static::ID);
 
         if ($this->discount != 0) {
             $percentage  = Numbers::getPercentageFromParcialValue($discount, $order->get_total());

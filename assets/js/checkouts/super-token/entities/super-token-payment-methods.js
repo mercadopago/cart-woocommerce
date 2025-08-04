@@ -349,6 +349,10 @@ class MPSuperTokenPaymentMethods {
         return paymentMethod?.type === this.ACCOUNT_MONEY_TYPE;
     }
 
+    isPrepaidCard(paymentMethod) {
+        return paymentMethod?.type === this.PREPAID_CARD_TYPE;
+    }
+
     isMercadoPagoCard(paymentMethod) {
         return paymentMethod?.type === this.PREPAID_CARD_TYPE && paymentMethod?.issuer?.name?.toLowerCase()?.includes('mercado pago');
     }
@@ -601,7 +605,7 @@ class MPSuperTokenPaymentMethods {
     }
 
     buildCreditCardDetailsInnerHTML(paymentMethod) {
-        if (!this.isCreditCard(paymentMethod) && !this.isDebitCard(paymentMethod)) {
+        if (!this.isCreditCard(paymentMethod) && !this.isDebitCard(paymentMethod) && !this.isPrepaidCard(paymentMethod)) {
             return '';
         }
 
@@ -713,7 +717,7 @@ class MPSuperTokenPaymentMethods {
     }
 
     mountSecurityCodeField(paymentMethod) {
-        if (!this.isCreditCard(paymentMethod) || !this.securityCodeIsRequired(paymentMethod?.security_code_settings)) {
+        if (!this.securityCodeIsRequired(paymentMethod?.security_code_settings)) {
             return;
         }
 
@@ -880,8 +884,8 @@ class MPSuperTokenPaymentMethods {
 
     reorderAccountPaymentMethods(accountPaymentMethods) {
         const MAX_CREDIT_CARDS = 3;
-
-        const cardOptions = accountPaymentMethods.filter(pm => this.isCreditCard(pm) || this.isDebitCard(pm));
+        
+        const cardOptions = accountPaymentMethods.filter(pm => this.isCreditCard(pm) || this.isDebitCard(pm) || this.isPrepaidCard(pm));
         const accountMoneyOption = accountPaymentMethods.find(pm => this.isAccountMoney(pm));
 
         const limitedCardsOptions = cardOptions.slice(0, MAX_CREDIT_CARDS);
@@ -903,6 +907,10 @@ class MPSuperTokenPaymentMethods {
 
             if (this.isMercadoPagoCard(paymentMethod)) {
                 paymentMethod.name = this.MERCADO_PAGO_CARD_NAME;
+            }
+
+            if (this.isPrepaidCard(paymentMethod)) {
+                paymentMethod.thumbnail = this.PAYMENT_METHODS_THUMBNAILS[paymentMethod.id] || this.WHITE_CARD_PATH;
             }
 
             if (this.isCreditCard(paymentMethod) || this.isDebitCard(paymentMethod)) {
@@ -995,7 +1003,7 @@ class MPSuperTokenPaymentMethods {
 
     isSelectedPaymentMethodValid() {
         try {
-            if (this.isAccountMoney(this.activePaymentMethod) || this.isDebitCard(this.activePaymentMethod)) {
+            if (this.isAccountMoney(this.activePaymentMethod) || this.isDebitCard(this.activePaymentMethod) || this.isPrepaidCard(this.activePaymentMethod)) {
                 return true;
             }
 

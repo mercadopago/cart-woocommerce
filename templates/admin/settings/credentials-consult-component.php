@@ -42,7 +42,7 @@ if (!defined('ABSPATH')) {
                 <?= wp_kses($credentialsLinkComponents['credentials_modal_app_name'], $allowedHtmlTags) ?>
             </h2>
             <p class="mp-block-description mp-settings-subtitle-font-size mp-settings-font-color">
-                <?= wp_kses($credentialsState['app_name'], $allowedHtmlTags) ?>
+                <?= wp_kses($credentialsState['app_name'] ?? '', $allowedHtmlTags) ?>
             </p>
         </header>
         <section class="mp-credentials-data">
