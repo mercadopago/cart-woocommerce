@@ -1,6 +1,13 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.4.1 (04/08/2025) =
+* Changed
+- Changes to support prepaid cards in the flow of cards saved in Mercado Pago
+* Fixed
+- Validation if app_name exists before using it in the logs
+- Fixed logo selector and description field hiding prevention in WooCommerce 9.8.5+
+
 = v8.4.0 (24/07/2025) =
 * Added
 - Refund functionality to orders

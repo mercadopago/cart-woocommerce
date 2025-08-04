@@ -51,11 +51,6 @@ class RefundHandlerTest extends TestCase
             'return' => 'https://test.com'
         ]);
 
-        // Define MP_PLATFORM_ID constant if not already defined
-        if (!defined('MP_PLATFORM_ID')) {
-            define('MP_PLATFORM_ID', 'WOOCOMMERCE_MP_TEST');
-        }
-
         // Define MP_VERSION constant if not already defined
         if (!defined('MP_VERSION')) {
             define('MP_VERSION', '8.2.0');
@@ -64,11 +59,6 @@ class RefundHandlerTest extends TestCase
         // Define MP_PLATFORM_NAME constant if not already defined
         if (!defined('MP_PLATFORM_NAME')) {
             define('MP_PLATFORM_NAME', 'woocommerce');
-        }
-
-        // Define product ID constants if not already defined
-        if (!defined('MP_PRODUCT_ID_DESKTOP')) {
-            define('MP_PRODUCT_ID_DESKTOP', 'BT7OF5FEOO6G01NJK3QG');
         }
 
         if (!defined('MP_PRODUCT_ID_MOBILE')) {

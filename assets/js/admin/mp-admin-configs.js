@@ -80,16 +80,15 @@
   function setHide() {
     document.querySelector('.wc-admin-breadcrumb')?.style.setProperty('display', 'none');
 
-    const mpHeaderLogo = document.querySelector('.mp-header-logo');
+    const mpHeaderLogo = document.querySelector('.mp-settings-header-logo');
     if (mpHeaderLogo) {
       mpHeaderLogo.style.display = 'none';
     } else {
-      document.querySelectorAll('#mainform > p:not(.submit)')[0]?.style.setProperty('display', 'none');
-    }
-
-    const mainFormH2 = document.querySelector('#mainform > h2');
-    if (mainFormH2?.classList.length === 0) {
-      mainFormH2.style.display = 'none';
+      const mainFormH2 = document.querySelector('#mainform > h2');
+      if (mainFormH2?.classList.length === 0) {
+        mainFormH2.style.display = 'none';
+        document.querySelectorAll('#mainform > p:not(.submit)')[0]?.style.setProperty('display', 'none');
+      }
     }
 
     document.querySelectorAll('.mp-hidden-field-description').forEach((element) => {
