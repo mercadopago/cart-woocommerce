@@ -8,7 +8,6 @@ use stdClass;
 
 class ActionsTest extends TestCase
 {
-
     public $actions;
 
     public function setUp(): void

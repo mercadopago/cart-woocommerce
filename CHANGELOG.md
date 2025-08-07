@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.4.2] - 2025-08-07
+### Fixed
+- Sync CardForm ID with checkout context for pay-for-order compatibility
+- Fast pay saved card texts responsiveness
+
 ## [8.4.1] - 2025-08-04
 ### Changed
 - Changes to support prepaid cards in the flow of cards saved in Mercado Pago

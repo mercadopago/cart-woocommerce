@@ -20,6 +20,8 @@ use PHPUnit\Framework\TestCase;
  */
 class CoreNotificationTest extends TestCase
 {
+    use WoocommerceMock;
+
     private MercadoPagoGatewayInterface $gateway;
     private Logs $logs;
     private OrderStatus $orderStatus;
@@ -31,8 +33,7 @@ class CoreNotificationTest extends TestCase
 
     public function setUp(): void
     {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+        $this->woocommerceSetUp();
 
         // Mock WordPress wp_is_mobile function
         WP_Mock::userFunction('wp_is_mobile', [
@@ -49,12 +50,6 @@ class CoreNotificationTest extends TestCase
         }
 
         // Define necessary constants
-        if (!defined('MP_PLATFORM_ID')) {
-            define('MP_PLATFORM_ID', 'WOOCOMMERCE_MP_TEST');
-        }
-        if (!defined('MP_PRODUCT_ID_DESKTOP')) {
-            define('MP_PRODUCT_ID_DESKTOP', 'WOOCOMMERCE_MP_TEST_DESKTOP');
-        }
         if (!defined('MP_PRODUCT_ID_MOBILE')) {
             define('MP_PRODUCT_ID_MOBILE', 'WOOCOMMERCE_MP_TEST_MOBILE');
         }
@@ -89,14 +84,8 @@ class CoreNotificationTest extends TestCase
             $this->seller,
             $this->store
         );
-
     }
 
-    public function tearDown(): void
-    {
-        Mockery::close();
-        WP_Mock::tearDown();
-    }
 
     public function testUpdatePaymentDetailsWithCreditCardPayment()
     {

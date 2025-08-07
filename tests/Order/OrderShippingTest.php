@@ -6,26 +6,21 @@ use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Order\OrderShipping;
 use Mockery;
-use WP_Mock;
 
 class OrderShippingTest extends TestCase
 {
+    use WoocommerceMock;
+
     private \WC_Order $orderMock;
 
     private OrderShipping $orderShipping;
 
     public function setUp(): void
     {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+        $this->woocommerceSetUp();
 
         $this->orderMock = Mockery::mock('WC_Order');
         $this->orderShipping = new OrderShipping();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
     }
 
     public function testGetFirstName()

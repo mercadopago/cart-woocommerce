@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\YapeGateway;
 use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use Mockery;
-use WP_Mock;
 
 /**
  * @runTestsInSeparateProcesses
@@ -14,16 +13,7 @@ use WP_Mock;
  */
 class YapeGatewayTest extends TestCase
 {
-    public function setUp(): void
-    {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use WoocommerceMock;
 
     public function testGetCheckoutName()
     {

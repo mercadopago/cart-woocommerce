@@ -19,7 +19,7 @@ use Mockery;
 
 class SdkMock
 {
-    static function getPreferenceEntityMock()
+    public static function getPreferenceEntityMock()
     {
         $mock = Mockery::mock(Preference::class)->makePartial();
         $mock->payment_methods = Mockery::mock(PaymentMethod::class);
@@ -30,10 +30,10 @@ class SdkMock
         $mock->payer = Mockery::mock(PreferencePayer::class);
         $mock->shipments = Mockery::mock(Shipment::class);
         $mock->tracks = Mockery::mock(TrackList::class);
-        return $mock;        
+        return $mock;
     }
 
-    static function getPaymentEntityMock()
+    public static function getPaymentEntityMock()
     {
         $mock = Mockery::mock(Payment::class)->makePartial();
         $mock->payer = Mockery::mock(PaymentPayer::class);

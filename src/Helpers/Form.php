@@ -27,18 +27,13 @@ class Form
     /**
      * Sanitizes $_POST object or otherwise sanitizes an $_POST[$key] object/data
      *
-     * @param string $key
-     *
      * @return object|array|string
      */
-    public static function sanitizedPostData(string $key = "")
+    public static function sanitizedPostData(?string $key = null)
     {
         $data = sanitize_post($_POST);
-        if ($key != "") {
-            $data = $data[$key];
-        }
 
-        return self::sanitizedData($data);
+        return self::sanitizedData(isset($key) ? $data[$key] : $data);
     }
 
     /**

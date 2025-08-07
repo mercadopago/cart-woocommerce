@@ -7,7 +7,6 @@ use MercadoPago\Woocommerce\Helpers\Arrays;
 
 class ArraysTest extends TestCase
 {
-    // Test filterJoin with default callback (removing empty elements)
     public function testFilterJoinWithDefaultCallback()
     {
         $array = ['a', '', 'b', null, 'c', false, 'd'];
@@ -19,7 +18,6 @@ class ArraysTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    // Test filterJoin with custom callback
     public function testFilterJoinWithCustomCallback()
     {
         $array = ['a', 'b', 'c', 'd'];
@@ -32,7 +30,6 @@ class ArraysTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    // Test filterJoin with ARRAY_FILTER_USE_KEY mode
     public function testFilterJoinWithUseKeyMode()
     {
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
@@ -45,7 +42,6 @@ class ArraysTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    // Test filterJoin with ARRAY_FILTER_USE_BOTH mode
     public function testFilterJoinWithUseBothMode()
     {
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
@@ -56,5 +52,19 @@ class ArraysTest extends TestCase
         $result = Arrays::filterJoin($array, $separator, $callback, ARRAY_FILTER_USE_BOTH);
 
         $this->assertEquals($expected, $result);
+    }
+
+    public function testAny()
+    {
+        $this->assertTrue(Arrays::any(['a', 'b'], fn($element) => $element == 'a'));
+        $this->assertFalse(Arrays::any(['a', 'b'], fn($element) => $element == 'y'));
+    }
+
+    public function testAnyEmpty()
+    {
+        $this->assertFalse(Arrays::anyEmpty(['a', 'b']));
+        $this->assertTrue(Arrays::anyEmpty(['a', '']));
+        $this->assertTrue(Arrays::anyEmpty(['a', false]));
+        $this->assertTrue(Arrays::anyEmpty(['a', 0]));
     }
 }

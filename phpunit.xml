@@ -8,6 +8,10 @@
 	convertWarningsToExceptions="true"
     convertDeprecationsToExceptions="true"
     verbose="true">
+    <php>
+        <env name="PHPUNIT_TEST" value="true"/>
+    </php>
+
     <testsuites>
         <testsuite name="default">
             <directory suffix="Test.php">tests</directory>
@@ -24,7 +28,7 @@
             <directory suffix=".php">src/Notification</directory>
         </include>
         <report>
-            <html outputDirectory="coverage"/>
+            <text outputFile="php://stdout" showOnlySummary="true"/>
         </report>
     </coverage>
 </phpunit>

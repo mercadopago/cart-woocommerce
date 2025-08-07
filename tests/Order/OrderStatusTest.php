@@ -74,7 +74,6 @@ class OrderStatusTest extends TestCase
 
     public function tearDown(): void
     {
-        Mockery::close();
         WP_Mock::tearDown();
     }
 
@@ -270,7 +269,7 @@ class OrderStatusTest extends TestCase
             ['id' => '123', 'status' => 'approved', 'status_detail' => 'accredited'],
             ['id' => '456', 'status' => 'refunded', 'status_detail' => 'refunded']
         ];
-        
+
         $result = $this->orderStatus->getRefundedStatusDetail($paymentsDataWithApproved);
         $expected = ['title' => 'approved', 'description' => 'partially_refunded'];
         $this->assertEquals($expected, $result);
@@ -279,7 +278,7 @@ class OrderStatusTest extends TestCase
             ['id' => '123', 'status' => 'approved', 'status_detail' => 'partially_refunded'],
             ['id' => '456', 'status' => 'refunded', 'status_detail' => 'refunded']
         ];
-        
+
         $result = $this->orderStatus->getRefundedStatusDetail($paymentsDataWithPartiallyRefunded);
         $expected = ['title' => 'approved', 'description' => 'partially_refunded'];
         $this->assertEquals($expected, $result);
@@ -288,7 +287,7 @@ class OrderStatusTest extends TestCase
             ['id' => '123', 'status' => 'refunded', 'status_detail' => 'refunded'],
             ['id' => '456', 'status' => 'refunded', 'status_detail' => 'by_admin']
         ];
-        
+
         $result = $this->orderStatus->getRefundedStatusDetail($paymentsDataWithoutApproved);
         $expected = ['title' => 'refunded', 'description' => 'refunded'];
         $this->assertEquals($expected, $result);
@@ -302,7 +301,7 @@ class OrderStatusTest extends TestCase
     public function testGetPaymentsDataSuccessfulResponse(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
-        
+
         $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
             ->with($orderMock)
             ->andReturn('123,456');
@@ -319,13 +318,13 @@ class OrderStatusTest extends TestCase
         foreach ($paymentIds as $index => $paymentId) {
             $responseMocks[$index] = Mockery::mock(Response::class);
             $responseMocks[$index]->shouldReceive('getStatus')->andReturn(200);
-            
+
             $data = [
                 'id' => $paymentId,
                 'status' => $statuses[$index],
                 'status_detail' => $statusDetails[$index]
             ];
-            
+
             $responseMocks[$index]->shouldReceive('getData')->andReturn($data);
             $expectedData[] = $data;
 
@@ -343,7 +342,7 @@ class OrderStatusTest extends TestCase
         $this->expectException(\Exception::class);
 
         $orderMock = Mockery::mock(WC_Order::class);
-        
+
         $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
             ->with($orderMock)
             ->andReturn('123');
@@ -365,7 +364,7 @@ class OrderStatusTest extends TestCase
     public function testGetPaymentsDataEmptyPaymentIds(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
-        
+
         $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
             ->with($orderMock)
             ->andReturn('');
@@ -380,7 +379,7 @@ class OrderStatusTest extends TestCase
     public function testGetPaymentsDataHandlesWhitespace(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
-        
+
         $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
             ->with($orderMock)
             ->andReturn(' 123 , 456 , ');

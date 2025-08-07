@@ -2,10 +2,13 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
+use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Traits\AssertArraySchema;
+use MercadoPago\Woocommerce\Tests\Traits\SetNotAccessibleProperties;
+use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Helpers;
@@ -19,25 +22,26 @@ use WP_Mock;
  */
 class AbstractGatewayTest extends TestCase
 {
+    use GatewayMock;
+    use SetNotAccessibleProperties;
+    use AssertArraySchema;
+
     private $sellerConfigMock;
     private $mercadopagoMock;
     private $adminTranslationsMock;
+    /**
+     * @var \Mockery\MockInterface|AbstractGateway
+     */
     private $gateway;
 
     public function setUp(): void
     {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+        $this->woocommerceSetUp();
 
         $this->mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
         $this->sellerConfigMock = Mockery::mock(Seller::class);
         $this->adminTranslationsMock = Mockery::mock(AdminTranslations::class);
         $this->gateway = Mockery::mock(AbstractGateway::class)->makePartial();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
     }
 
     public function testProcessPayment()
@@ -529,5 +533,179 @@ class AbstractGatewayTest extends TestCase
         $this->assertInstanceOf('WP_Error', $result);
         $this->assertEquals('refund_error', $result->get_error_code());
         $this->assertEquals('Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.', $result->get_error_message());
+    }
+
+    /**
+     * @testWith [true, true, false, false]
+     *           [true, true, false, true]
+     *           [false, false, false, false]
+     */
+    public function testFormFieldsHeaderSection(bool $homologValidate, bool $canCheckCredentials, bool $isCredentialsCached, bool $isCredentialsExpired)
+    {
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+        $this->gateway->mercadopago->sellerConfig
+            ->expects()
+            ->getHomologValidate()
+            ->andReturn($homologValidate);
+
+        $this->gateway->adminTranslations = MercadoPagoMock::mockTranslations([
+            'header_title',
+            'header_description',
+            'card_settings_title',
+            'card_settings_subtitle',
+            'card_settings_button_text',
+            'enabled_title',
+            'enabled_subtitle',
+            'enabled_descriptions_enabled',
+            'enabled_descriptions_disabled',
+            'title_title',
+            'title_description',
+            'title_default',
+            'title_desc_tip',
+        ]);
+
+        $this->mockGatewayLinks([
+            'admin_settings_page'
+        ]);
+
+        $this->gateway->mercadopago->adminTranslations->credentialsSettings = MercadoPagoMock::mockTranslations([
+            'card_homolog_title',
+            'card_homolog_subtitle',
+            'card_homolog_button_text',
+            'title_invalid_credentials',
+            'subtitle_invalid_credentials',
+            'button_invalid_credentials',
+        ]);
+
+        $credentialNotice = [
+            'type' => IsType::TYPE_STRING,
+            'value' => IsType::TYPE_STRING,
+        ];
+
+        if ($canCheckCredentials) {
+            $this->gateway->id = 'abstract';
+            $this->gateway->mercadopago->hooks->admin
+                ->expects()
+                ->isAdmin()
+                ->andReturn(true);
+
+            $this->gateway->mercadopago->helpers->url
+                ->expects()
+                ->validatePage('wc-settings')
+                ->andReturn(true)
+                ->getMock()
+                ->expects()
+                ->validateSection($this->gateway->id)
+                ->andReturn(true);
+
+            $getTransientMock = WP_Mock::userFunction('get_transient')
+                ->with('mp_credentials_expired_result');
+
+            if ($isCredentialsCached) {
+                $getTransientMock->andReturn($credentialNotice);
+            } else {
+                $getTransientMock->andReturn([]);
+
+                $this->gateway->mercadopago->sellerConfig
+                    ->expects()
+                    ->getCredentialsPublicKeyProd()
+                    ->andReturn($publicKey = random()->uuid());
+
+                $this->gateway->mercadopago->sellerConfig
+                    ->expects()
+                    ->isExpiredPublicKey($publicKey)
+                    ->andReturn($isCredentialsExpired);
+
+                if ($isCredentialsExpired) {
+                    $credentialNotice = [
+                        'type' => IsType::TYPE_STRING,
+                        'value' => [
+                            'title' => IsType::TYPE_STRING,
+                            'subtitle' => IsType::TYPE_STRING,
+                            'button_text' => IsType::TYPE_STRING,
+                            'button_url' => IsType::TYPE_STRING,
+                            'icon' => IsType::TYPE_STRING,
+                            'color_card' => IsType::TYPE_STRING,
+                            'size_card' => IsType::TYPE_STRING,
+                            'target' => IsType::TYPE_STRING,
+                        ]
+                    ];
+                }
+
+                WP_Mock::userFunction('set_transient')
+                    ->with('mp_credentials_expired_result', Mockery::type('array'), 3600);
+            }
+        } else {
+            $this->gateway->mercadopago->hooks->admin
+                ->expects()
+                ->isAdmin()
+                ->andReturn(false);
+
+            $credentialNotice = [
+                'type' => IsType::TYPE_STRING,
+                'value' => IsType::TYPE_STRING,
+            ];
+        }
+
+        $this->assertArraySchema(
+            [
+                'header' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'description' => IsType::TYPE_STRING,
+                ],
+                'card_homolog_validate' => $homologValidate
+                    ? [
+                        'type' => IsType::TYPE_STRING,
+                        'value' => IsType::TYPE_STRING,
+                    ]
+                    : [
+                        'type' => IsType::TYPE_STRING,
+                        'value' => [
+                            'title' => IsType::TYPE_STRING,
+                            'subtitle' => IsType::TYPE_STRING,
+                            'button_text' => IsType::TYPE_STRING,
+                            'button_url' => IsType::TYPE_STRING,
+                            'icon' => IsType::TYPE_STRING,
+                            'color_card' => IsType::TYPE_STRING,
+                            'size_card' => IsType::TYPE_STRING,
+                            'target' => IsType::TYPE_STRING,
+                        ]
+                    ],
+                'card_invalid_credentials' => $credentialNotice,
+                'card_settings' => [
+                    'type' => IsType::TYPE_STRING,
+                    'value' => [
+                        'title' => IsType::TYPE_STRING,
+                        'subtitle' => IsType::TYPE_STRING,
+                        'button_text' => IsType::TYPE_STRING,
+                        'button_url' => IsType::TYPE_STRING,
+                        'icon' => IsType::TYPE_STRING,
+                        'color_card' => IsType::TYPE_STRING,
+                        'size_card' => IsType::TYPE_STRING,
+                        'target' => IsType::TYPE_STRING,
+                    ],
+                ],
+                'enabled' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'subtitle' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'descriptions' => [
+                        'enabled' => IsType::TYPE_STRING,
+                        'disabled' => IsType::TYPE_STRING,
+                    ],
+                ],
+                'title' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'description' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'desc_tip' => IsType::TYPE_STRING,
+                    'class' => IsType::TYPE_STRING,
+                ],
+            ],
+            $this->gateway->formFieldsHeaderSection()
+        );
     }
 }

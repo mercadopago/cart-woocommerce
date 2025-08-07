@@ -2,230 +2,330 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
+use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
+use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
+use MercadoPago\Woocommerce\Tests\Traits\AssertArraySchema;
+use MercadoPago\Woocommerce\Tests\Traits\SetNotAccessibleProperties;
+use MercadoPago\Woocommerce\Transactions\PixTransaction;
+use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\PixGateway;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
-use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use Mockery;
-use WP_Mock;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class PixGatewayTest extends TestCase
 {
-    public function setUp(): void
+    use GatewayMock;
+    use SetNotAccessibleProperties;
+    use AssertArraySchema;
+
+    private string $gatewayClass = PixGateway::class;
+
+    /**
+     * @var \Mockery\MockInterface|PixGateway
+     */
+    private $gateway;
+
+    public function testGetCheckoutName(): void
     {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+        $this->assertEquals('checkout-pix', $this->gateway->getCheckoutName());
     }
 
-    public function tearDown(): void
+    public function processPaymentMock(?bool $isBlocks = null): void
     {
-        Mockery::close();
-    }
+        $isBlocks ??= random()->boolean();
 
-    public function testGetCheckoutName()
+        $this->abstractGatewayProcessPaymentMock($isBlocks);
+
+        Mockery::mock('alias:' . Form::class)
+            ->expects()
+            ->sanitizedPostData()
+            ->andReturn([]);
+
+        $_POST['wc-woo-mercado-pago-pix-new-payment-method'] = $isBlocks ? 1 : null;
+    }
+    /**
+     * @testWith [true, "pending_waiting_payment"]
+     *           [false, "pending_waiting_transfer"]
+     */
+    public function testProcessPaymentSuccess(bool $isBlocks, string $statusDetail): void
     {
-        $gateway = Mockery::mock(PixGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
-        $result = $gateway->getCheckoutName();
-        $this->assertEquals('checkout-pix', $result);
-    }
+        $this->processPaymentMock($isBlocks);
 
-   public function testPaymentScripts()
-   {
-        $id = 'woo-mercado-pago-pix';
+        $this->order
+            ->expects()
+            ->get_billing_email()
+            ->andReturn(random()->email());
 
-        $pixGatewayMock = Mockery::mock(PixGateway::class)->makePartial();
-        $mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-        $pixGatewayMock->mercadopago = $mercadopagoMock;
+        Mockery::mock('overload:' . PixTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn($response = [
+                'id' => random()->uuid(),
+                'status' => 'pending',
+                'status_detail' => $statusDetail
+            ]);
 
-        $this->assertTrue(method_exists($pixGatewayMock, 'payment_scripts'));
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response['id']]);
 
-        $pixGatewayMock->shouldReceive('canAdminLoadScriptsAndStyles')
-            ->once()
-            ->with($id)
-            ->andReturn(false);
-        $pixGatewayMock->shouldReceive('canCheckoutLoadScriptsAndStyles')
-            ->once()
-            ->andReturn(true);
-        $pixGatewayMock->shouldReceive('registerCheckoutScripts')
-            ->once()
-            ->andReturn(null);
+        $this->gateway
+            ->expects()
+            ->handleWithRejectPayment($response);
 
-        // Use reflection to call the payment_scripts method
-        $reflection = new \ReflectionClass($pixGatewayMock);
-        $method = $reflection->getMethod('payment_scripts');
-        $method->setAccessible(true);
+        $this->gateway->mercadopago->helpers->cart
+            ->expects()
+            ->emptyCart();
 
-        // Call the method using reflection
-        $method->invoke($pixGatewayMock, $id);
-   }
-
-    public function testPaymentScriptsDoesNotRegisterCheckoutScriptsWhenNotAllowed()
-    {
-        $id = 'woo-mercado-pago-pix';
-
-        $pixGatewayMock = Mockery::mock(PixGateway::class)->makePartial();
-        $mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-        $pixGatewayMock->mercadopago = $mercadopagoMock;
-        $this->assertTrue(method_exists($pixGatewayMock, 'payment_scripts'));
-
-        $pixGatewayMock->shouldReceive('canAdminLoadScriptsAndStyles')
-            ->once()
-            ->with($id)
-            ->andReturn(false);
-        $pixGatewayMock->shouldReceive('canCheckoutLoadScriptsAndStyles')
-            ->once()
-            ->andReturn(false);
-        $pixGatewayMock->shouldReceive('registerCheckoutScripts')
-            ->never();
-
-        $reflection = new \ReflectionClass($pixGatewayMock);
-        $method = $reflection->getMethod('payment_scripts');
-        $method->setAccessible(true);
-        $method->invoke($pixGatewayMock, $id);
-    }
-
-
-    public function testInitFormFieldsWithValidConditionsPopulatesFormFields() {
-
-        $mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-        $pixGatewayMock = Mockery::mock(PixGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
-        $pixGatewayMock->mercadopago = $mercadopagoMock;
-
-        // Set up the required adminTranslations keys for pixGatewaySettings
-        $pixGatewaySettings = [
-            'header_title' => 'Transparent Checkout | Pix',
-            'header_description' => 'With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago.',
-            'card_settings_title' => 'Mercado Pago plugin general settings',
-            'card_settings_subtitle' => 'Set the deadlines and fees, test your store or access the Plugin manual.',
-            'card_settings_button_text' => 'Go to Settings',
-            'enabled_title' => 'Enable the checkout',
-            'enabled_subtitle' => 'By disabling it, you will disable all Pix payments from Mercado Pago Transparent Checkout.',
-            'enabled_descriptions_enabled' => 'The transparent checkout for Pix payment is enabled.',
-            'enabled_descriptions_disabled' => 'The transparent checkout for Pix payment is disabled.',
-            'title_title' => 'Title in the store Checkout',
-            'title_description' => 'Title that the customer sees during the checkout.',
-            'title_default' => 'Pix',
-            'title_desc_tip' => 'Title that the customer sees during the checkout.',
-            'expiration_date_title' => 'Pix expiration time',
-            'expiration_date_description' => 'Time in which the Pix payment will expire.',
-            'expiration_date_options_15_minutes' => '15 minutes',
-            'expiration_date_options_30_minutes' => '30 minutes',
-            'expiration_date_options_60_minutes' => '60 minutes',
-            'expiration_date_options_12_hours' => '12 hours',
-            'expiration_date_options_24_hours' => '24 hours',
-            'expiration_date_options_2_days' => '2 days',
-            'expiration_date_options_3_days' => '3 days',
-            'expiration_date_options_4_days' => '4 days',
-            'expiration_date_options_5_days' => '5 days',
-            'expiration_date_options_6_days' => '6 days',
-            'expiration_date_options_7_days' => '7 days',
-            'currency_conversion_title' => 'Currency conversion',
-            'currency_conversion_subtitle' => 'Enable currency conversion for this payment method.',
-            'currency_conversion_descriptions_enabled' => 'Currency conversion is enabled.',
-            'currency_conversion_descriptions_disabled' => 'Currency conversion is disabled.',
-            'card_info_title' => 'Pix payment method',
-            'card_info_subtitle' => 'Learn more about Pix payments.',
-            'card_info_button_text' => 'Learn more',
-            'advanced_configuration_title' => 'Advanced configuration',
-            'advanced_configuration_subtitle' => 'Configure additional options for this payment method.',
-            'support_link_bold_text' => 'Need help?',
-            'support_link_text_before_link' => 'Check our',
-            'support_link_text_with_link' => 'documentation',
-            'support_link_text_after_link' => 'or contact our support team.',
-            'steps_title' => 'How to activate Pix',
-            'steps_step_one_text' => 'Step 1: Access your Mercado Pago account',
-            'steps_step_two_text' => 'Step 2: Configure your Pix keys',
-            'steps_step_three_text' => 'Step 3: Activate Pix in your store',
-            'steps_observation_one' => 'Observation 1',
-            'steps_observation_two' => 'Observation 2',
-            'steps_button_about_pix' => 'Learn more about Pix',
-            'steps_observation_three' => 'Observation 3',
-            'steps_link_title_one' => 'Mercado Pago Pix',
-        ];
-
-        $pixGatewayMock->adminTranslations = $pixGatewaySettings;
-
-        // Set up the links property that is required by AbstractGateway using reflection
-        $reflection = new \ReflectionClass($pixGatewayMock);
-        $linksProperty = $reflection->getProperty('links');
-        $linksProperty->setAccessible(true);
-        $linksProperty->setValue($pixGatewayMock, [
-            'admin_settings_page' => 'http://localhost.com/settings',
-            'mercadopago_pix' => 'https://www.mercadopago.com.br/pix',
-            'mercadopago_support' => 'https://www.mercadopago.com.br/support',
-            'docs_support_faq' => 'https://developers.mercadopago.com.br/docs',
+        $this->gateway->storeTranslations = MercadoPagoMock::mockTranslations([
+            'customer_not_paid',
+            'congrats_title',
+            'congrats_subtitle',
         ]);
 
-        $pixGatewayMock->shouldReceive('getHomologValidateNoticeOrHidden')
-            ->once()
-            ->andReturn([
-                'type'  => 'mp_card_info',
-                'value' => [
-                    'title'       => 'Test Pix',
-                    'subtitle'    => 'Testing pix gateway configuration',
-                    'button_text' => 'Press and pay',
-                    'button_url'  => 'https://www.mercadopago.com.br',
-                    'icon'        => 'mp-icon-badge-warning',
-                    'color_card'  => 'mp-alert-color-alert',
-                    'size_card'   => 'mp-card-body-size-homolog',
-                    'target'      => '_blank'
-                ]
+        $this->gateway->mercadopago->hooks->order
+            ->expects()
+            ->setPixMetadata($this->gateway, $this->order, $response)
+            ->getMock()
+            ->expects()
+            ->addOrderNote($this->order, $this->gateway->storeTranslations['customer_not_paid'])
+            ->getMock()
+            ->expects()
+            ->addOrderNote(
+                $this->order,
+                both(containsString($this->gateway->storeTranslations['congrats_title']))
+                    ->andAlso(containsString($this->gateway->storeTranslations['congrats_subtitle'])),
+                1
+            );
+
+        $this->order
+            ->expects()
+            ->get_checkout_order_received_url()
+            ->andReturn($redirect = random()->url());
+
+        $this->assertEquals(
+            [
+                'result' => 'success',
+                'redirect' => $redirect,
+            ],
+            $this->gateway->process_payment(1)
+        );
+    }
+
+    public function testProcessPaymentInvalidEmail(): void
+    {
+        $this->processPaymentMock();
+
+        $this->order
+            ->expects()
+            ->get_billing_email()
+            ->andReturn('invalid');
+
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages = [
+            'buyer_default' => random()->text(20)
+        ];
+
+        $this->gateway
+            ->expects()
+            ->processReturnFail(
+                Mockery::type(\Exception::class),
+                $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+                PixGateway::LOG_SOURCE,
+                Mockery::type('array')
+            )->andReturn($expected = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
             ]);
 
-        $pixGatewayMock->shouldReceive('getCredentialExpiredNotice')
-            ->once()
-            ->andReturn([
-                'type'  => 'mp_card_info',
-                'value' => ''
+        $this->assertEquals($expected, $this->gateway->process_payment(1));
+    }
+
+    public function testProcessPaymentFail(): void
+    {
+        $this->processPaymentMock();
+
+        $this->order
+            ->expects()
+            ->get_billing_email()
+            ->andReturn(random()->email());
+
+        Mockery::mock('overload:' . PixTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn([]);
+
+        $this->gateway
+            ->expects()
+            ->processReturnFail(
+                Mockery::type(ResponseStatusException::class),
+                Mockery::type('string'),
+                PixGateway::LOG_SOURCE,
+                Mockery::type('array'),
+                true
+            )->andReturn($expected = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'mock',
             ]);
 
-        $pixGatewayMock->shouldReceive('getCommissionField')
-            ->once()
-            ->andReturn([
-                'commission_title' => [
-                    'title' => 'Comissão do Gateway',
-                    'type' => 'title',
-                    'description' => 'Configure a comissão para este método de pagamento.'
-                ]
-            ]);
+        $this->assertEquals($expected, $this->gateway->process_payment(1));
+    }
 
-        $pixGatewayMock->shouldReceive('getDiscountField')
-            ->once()
-            ->andReturn([
-                'discount_title' => [
-                    'title' => 'Desconto do Gateway',
-                    'type' => 'title',
-                    'description' => 'Configure o desconto para este método de pagamento.'
-                ]
-            ]);
+    public function testSellerWithPixFields(): void
+    {
+        $this->gateway->adminTranslations = MercadoPagoMock::mockTranslations([
+            'expiration_date_title',
+            'expiration_date_description',
+            'expiration_date_options_15_minutes',
+            'expiration_date_options_30_minutes',
+            'expiration_date_options_60_minutes',
+            'expiration_date_options_12_hours',
+            'expiration_date_options_24_hours',
+            'expiration_date_options_2_days',
+            'expiration_date_options_3_days',
+            'expiration_date_options_4_days',
+            'expiration_date_options_5_days',
+            'expiration_date_options_6_days',
+            'expiration_date_options_7_days',
+            'currency_conversion_title',
+            'currency_conversion_subtitle',
+            'currency_conversion_descriptions_enabled',
+            'currency_conversion_descriptions_disabled',
+            'card_info_title',
+            'card_info_subtitle',
+            'card_info_button_text',
+            'advanced_configuration_title',
+            'advanced_configuration_subtitle',
+        ]);
 
-        $storeConfigMock = Mockery::mock(\MercadoPago\Woocommerce\Configs\Store::class);
-        $storeConfigMock->shouldReceive('getCheckoutCountry')
-            ->andReturn('BR');
-        $pixGatewayMock->mercadopago->storeConfig = $storeConfigMock;
-        $sellerConfigMock = Mockery::mock(\MercadoPago\Woocommerce\Configs\Seller::class);
-        $sellerConfigMock->shouldReceive('getCredentialsPublicKey')
-            ->andReturn('APP_USR-0000000000-0000-0000-0000-000000000000');
-        $sellerConfigMock->shouldReceive('getCredentialsAccessToken')
-            ->andReturn('APP_USR-0000000000-0000-0000-0000-000000000000');
-        $sellerConfigMock->shouldReceive('getCheckoutPixPaymentMethods')
-            ->andReturn(['pix']);
-        $pixGatewayMock->mercadopago->sellerConfig = $sellerConfigMock;
+        $this->mockGatewayLinks([
+            'mercadopago_pix'
+        ]);
 
-        // Use reflection to call the init_form_fields method
-        $reflection = new \ReflectionClass($pixGatewayMock);
-        $method = $reflection->getMethod('init_form_fields');
-        $method->setAccessible(true);
-        $method->invoke($pixGatewayMock);
+        $this->assertArraySchema(
+            [
+                'expiration_date' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'description' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'options' => [
+                        '15 minutes' => IsType::TYPE_STRING,
+                        '30 minutes' => IsType::TYPE_STRING,
+                        '60 minutes' => IsType::TYPE_STRING,
+                        '12 hours' => IsType::TYPE_STRING,
+                        '24 hours' => IsType::TYPE_STRING,
+                        '2 days' => IsType::TYPE_STRING,
+                        '3 days' => IsType::TYPE_STRING,
+                        '4 days' => IsType::TYPE_STRING,
+                        '5 days' => IsType::TYPE_STRING,
+                        '6 days' => IsType::TYPE_STRING,
+                        '7 days' => IsType::TYPE_STRING,
+                    ]
+                ],
+                'currency_conversion' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'subtitle' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'descriptions' => [
+                        'enabled' => IsType::TYPE_STRING,
+                        'disabled' => IsType::TYPE_STRING,
+                    ],
+                ],
+                'card_info_helper' => [
+                    'type' => IsType::TYPE_STRING,
+                    'value' => IsType::TYPE_STRING,
+                ],
+                'card_info' => [
+                    'type' => IsType::TYPE_STRING,
+                    'value' => [
+                        'title' => IsType::TYPE_STRING,
+                        'subtitle' => IsType::TYPE_STRING,
+                        'button_text' => IsType::TYPE_STRING,
+                        'button_url' => IsType::TYPE_STRING,
+                        'icon' => IsType::TYPE_STRING,
+                        'color_card' => IsType::TYPE_STRING,
+                        'size_card' => IsType::TYPE_STRING,
+                        'target' => IsType::TYPE_STRING,
+                    ]
+                ],
+                'advanced_configuration_title' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'class' => IsType::TYPE_STRING,
+                ],
+                'advanced_configuration_description' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'class' => IsType::TYPE_STRING,
+                ],
+            ],
+            $this->gateway->formFieldsMainSection()
+        );
+    }
 
-        $this->assertArrayHasKey('enabled', $pixGatewayMock->form_fields);
-        $this->assertArrayHasKey('discount_title', $pixGatewayMock->form_fields['gateway_discount']);
-        $this->assertArrayHasKey('title', $pixGatewayMock->form_fields['header']);
-        $this->assertArrayHasKey('15 minutes', $pixGatewayMock->form_fields['expiration_date']['options']);
+    /**
+     * @testWith [true]
+     *           [false]
+     */
+    public function testSellerWithoutPixFields(bool $isPixSection): void
+    {
+        $this->gateway->expects()->sellerHavePix()->andReturn(false);
+
+        $this->gateway->id = PixGateway::ID;
+
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->getCurrentSection()
+            ->andReturn($isPixSection ? PixGateway::ID : '');
+
+        if ($isPixSection) {
+            $this->gateway->mercadopago->helpers->notices
+                ->expects()
+                ->adminNoticeMissPix();
+        }
+
+        $this->gateway->mercadopago->hooks->template
+            ->expects()
+            ->getWoocommerceTemplateHtml(Mockery::type('string'), Mockery::type('array'));
+
+        $this->gateway->adminTranslations = MercadoPagoMock::mockTranslations([
+            'steps_title',
+            'steps_step_one_text',
+            'steps_step_two_text',
+            'steps_step_three_text',
+            'steps_observation_one',
+            'steps_observation_two',
+            'steps_button_about_pix',
+            'steps_observation_three',
+            'steps_link_title_one',
+            'header_title',
+            'header_description'
+        ]);
+
+        $this->mockGatewayLinks([
+            'mercadopago_pix',
+            'mercadopago_support'
+        ]);
+
+        $this->assertArraySchema(
+            [
+                'header' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'description' => IsType::TYPE_STRING,
+                ],
+                'steps_content' => [
+                    'title' => IsType::TYPE_STRING,
+                    'type' => IsType::TYPE_STRING,
+                    'class' => IsType::TYPE_STRING,
+                ],
+            ],
+            $this->gateway->formFields()
+        );
     }
 }

@@ -10,7 +10,6 @@ use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Gateways\BasicGateway;
 use Mockery;
-use WP_Mock;
 
 /**
  * @runTestsInSeparateProcesses
@@ -18,16 +17,7 @@ use WP_Mock;
  */
 class BasicTransactionTest extends TestCase
 {
-    public function setUp(): void
-    {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use WoocommerceMock;
 
     public function testGetInternalMetadata()
     {

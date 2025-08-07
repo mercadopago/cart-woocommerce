@@ -6,26 +6,21 @@ use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Order\OrderBilling;
 use Mockery;
-use WP_Mock;
 
 class OrderBillingTest extends TestCase
 {
+    use WoocommerceMock;
+
     private \WC_Order $orderMock;
 
     private OrderBilling $orderBilling;
 
     public function setUp(): void
     {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+        $this->woocommerceSetUp();
 
         $this->orderMock = Mockery::mock('WC_Order');
         $this->orderBilling = new OrderBilling();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
     }
 
     public function testGetFirstName()
@@ -40,7 +35,7 @@ class OrderBillingTest extends TestCase
         $this->assertEquals('Doe', $this->orderBilling->getLastName($this->orderMock));
     }
 
-    public function testGetLastNameFromFirstName() 
+    public function testGetLastNameFromFirstName()
     {
         $this->orderMock->shouldReceive('get_billing_last_name')->andReturn('');
         $this->orderMock->shouldReceive('get_billing_first_name')->andReturn('John Doe');
@@ -66,7 +61,7 @@ class OrderBillingTest extends TestCase
         $this->orderMock->shouldReceive('get_billing_city')->andReturn('City');
         $this->orderMock->shouldReceive('get_billing_state')->andReturn('State');
         $this->orderMock->shouldReceive('get_billing_country')->andReturn('Country');
-        
+
         $expected = "Street 123 / Apt 4B - City - State - Country";
         $this->assertEquals($expected, $this->orderBilling->getFullAddress($this->orderMock));
     }
