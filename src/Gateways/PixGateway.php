@@ -109,62 +109,21 @@ class PixGateway extends AbstractGateway
         return self::CHECKOUT_NAME;
     }
 
-    /**
-     * Init form fields for checkout configuration
-     *
-     * @return void
-     */
-    public function init_form_fields(): void
+    public function formFields(): array
     {
-        if ($this->addMissingCredentialsNoticeAsFormField()) {
-            return;
-        }
-
-        parent::init_form_fields();
-
-        if (
-            !empty($this->mercadopago->storeConfig->getCheckoutCountry()) &&
-            !empty($this->mercadopago->sellerConfig->getCredentialsPublicKey()) &&
-            !empty($this->mercadopago->sellerConfig->getCredentialsAccessToken())
-        ) {
-            $paymentMethodPix = $this->mercadopago->sellerConfig->getCheckoutPixPaymentMethods();
-
-            if (empty($paymentMethodPix)) {
-                $this->form_fields = array_merge($this->form_fields, $this->sellerWithoutPixFields());
-                return;
-            }
-
-            $this->form_fields = array_merge($this->form_fields, $this->sellerWithPixFields());
-            $this->form_fields = array_merge(
-                $this->form_fields,
-                [
-                'split_section' => [
-                    'type'  => 'title',
-                    'title' => "",
-                ],
-                'support_link' => [
-                    'type'  => 'mp_support_link',
-                    'bold_text'    => $this->adminTranslations['support_link_bold_text'],
-                    'text_before_link'    => $this->adminTranslations['support_link_text_before_link'],
-                    'text_with_link' => $this->adminTranslations['support_link_text_with_link'],
-                    'text_after_link'    => $this->adminTranslations['support_link_text_after_link'],
-                    'support_link'    => $this->links['docs_support_faq'],
-                ],
-                ]
-            );
-        }
+        return $this->sellerHavePix()
+            ? parent::formFields()
+            : $this->sellerWithoutPixFields();
     }
 
-    /**
-     * Added gateway scripts
-     *
-     * @param string $gatewaySection
-     *
-     * @return void
-     */
-    public function payment_scripts(string $gatewaySection): void
+    public function formFieldsMainSection(): array
     {
-        parent::payment_scripts($gatewaySection);
+        return $this->sellerWithPixFields();
+    }
+
+    public function sellerHavePix(): bool
+    {
+        return !empty($this->mercadopago->sellerConfig->getCheckoutPixPaymentMethods());
     }
 
     /**
@@ -271,10 +230,8 @@ class PixGateway extends AbstractGateway
         $this->handleWithRejectPayment($response);
 
         if (
-            $response['status'] === 'pending' && (
-            $response['status_detail'] === 'pending_waiting_payment' ||
-            $response['status_detail'] === 'pending_waiting_transfer'
-            )
+            $response['status'] === 'pending' &&
+            in_array($response['status_detail'], ['pending_waiting_payment', 'pending_waiting_transfer'])
         ) {
             $this->mercadopago->helpers->cart->emptyCart();
             $this->mercadopago->hooks->order->setPixMetadata($this, $order, $response);
@@ -323,47 +280,9 @@ class PixGateway extends AbstractGateway
      *
      * @return array
      */
-    public function sellerWithPixFields(): array
+    private function sellerWithPixFields(): array
     {
         return [
-            'header' => [
-                'type'        => 'mp_config_title',
-                'title'       => $this->adminTranslations['header_title'],
-                'description' => $this->adminTranslations['header_description'],
-            ],
-            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
-            'card_invalid_credentials' => $this->getCredentialExpiredNotice(),
-            'card_settings'  => [
-                'type'  => 'mp_card_info',
-                'value' => [
-                    'title'       => $this->adminTranslations['card_settings_title'],
-                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
-                    'button_text' => $this->adminTranslations['card_settings_button_text'],
-                    'button_url'  => $this->links['admin_settings_page'],
-                    'icon'        => 'mp-icon-badge-info',
-                    'color_card'  => 'mp-alert-color-success',
-                    'size_card'   => 'mp-card-body-size',
-                    'target'      => '_self',
-                ],
-            ],
-            'enabled' => [
-                'type'         => 'mp_toggle_switch',
-                'title'        => $this->adminTranslations['enabled_title'],
-                'subtitle'     => $this->adminTranslations['enabled_subtitle'],
-                'default'      => 'no',
-                'descriptions' => [
-                    'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
-                    'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
-                ],
-            ],
-            'title' => [
-                'type'        => 'text',
-                'title'       => $this->adminTranslations['title_title'],
-                'description' => $this->adminTranslations['title_description'],
-                'default'     => $this->adminTranslations['title_default'],
-                'desc_tip'    => $this->adminTranslations['title_desc_tip'],
-                'class'       => 'limit-title-max-length',
-            ],
             'expiration_date' => [
                 'type'        => 'select',
                 'title'       => $this->adminTranslations['expiration_date_title'],
@@ -420,8 +339,6 @@ class PixGateway extends AbstractGateway
                 'title' => $this->adminTranslations['advanced_configuration_subtitle'],
                 'class' => 'mp-small-text',
             ],
-            'gateway_discount' => $this->getDiscountField(),
-            'commission'       => $this->getCommissionField(),
         ];
     }
 
@@ -430,7 +347,7 @@ class PixGateway extends AbstractGateway
      *
      * @return array
      */
-    public function sellerWithoutPixFields(): array
+    private function sellerWithoutPixFields(): array
     {
         if ($this->mercadopago->helpers->url->getCurrentSection() == $this->id) {
             $this->mercadopago->helpers->notices->adminNoticeMissPix();

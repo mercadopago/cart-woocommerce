@@ -5,7 +5,6 @@ namespace MercadoPago\Woocommerce\Tests\Helpers;
 use WP_Mock;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
-use MercadoPago\Woocommerce\Helpers\Date;
 
 class PaymentMetadataTest extends TestCase
 {

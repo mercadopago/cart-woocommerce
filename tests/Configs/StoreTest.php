@@ -1,41 +1,48 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 
 if (!class_exists('WP_Theme')) {
-    class WP_Theme {
+    class WP_Theme
+    {
         private $headers;
         private $headers_sanitized;
 
-        public function __construct( ) {
-            $this->headers =  array( 'headers'=> array('Name' => 'Test Theme', 'Version' => '1.0.0') ) ;
+        public function __construct()
+        {
+            $this->headers = array('headers' => array('Name' => 'Test Theme', 'Version' => '1.0.0'));
         }
 
-        public function cache_get( $headers ) {
-            return $this->headers[ $headers ];
+        public function cache_get($headers)
+        {
+            return $this->headers[$headers];
         }
 
-        public function get( $header ) {
-            if ( ! isset( $this->headers_sanitized ) ) {
-                $this->headers_sanitized = $this->cache_get( 'headers' );
-                if ( ! is_array( $this->headers_sanitized ) ) {
+        public function get($header)
+        {
+            if (!isset($this->headers_sanitized)) {
+                $this->headers_sanitized = $this->cache_get('headers');
+                if (!is_array($this->headers_sanitized)) {
                     $this->headers_sanitized = array();
                 }
             }
 
-            if ( isset( $this->headers_sanitized[ $header ] ) ) {
-                return $this->headers_sanitized[ $header ];
+            if (isset($this->headers_sanitized[$header])) {
+                return $this->headers_sanitized[$header];
             }
 
-            return $this->headers_sanitized[ $header ];
+            return $this->headers_sanitized[$header];
         }
     }
 }
 
 if (!class_exists('WC_Payment_Gateway')) {
-    class WC_Payment_Gateway {}
+    class WC_Payment_Gateway
+    {
+    }
 }
 
 class StoreTest extends TestCase

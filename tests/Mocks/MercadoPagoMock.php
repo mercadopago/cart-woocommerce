@@ -55,7 +55,7 @@ use Mockery;
 
 class MercadoPagoMock
 {
-    static function getWoocommerceMercadoPagoMock(): WoocommerceMercadoPago
+    public static function getWoocommerceMercadoPagoMock(): WoocommerceMercadoPago
     {
         $mock = Mockery::mock(WoocommerceMercadoPago::class);
         $mock->woocommerce = Mockery::mock('WooCommerce');
@@ -208,5 +208,15 @@ class MercadoPagoMock
         $mockTranslations->commonMessages['invalid_users'] = 'error';
         $mockTranslations->commonMessages['invalid_operators'] = 'error';
         $mockTranslations->buyerRefusedMessages['buyer_default'] = 'error';
+    }
+
+    public static function mockTranslations(array $keys): array
+    {
+        return static::fillArray($keys, random()->text(20));
+    }
+
+    public static function fillArray(array $keys, $value): array
+    {
+        return array_combine($keys, array_fill(0, count($keys), $value));
     }
 }

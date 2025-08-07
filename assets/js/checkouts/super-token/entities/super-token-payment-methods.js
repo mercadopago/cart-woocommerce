@@ -794,15 +794,15 @@ class MPSuperTokenPaymentMethods {
                             : ''
                         }
                     </article>
+                    ${lastFourDigits
+                        ? `
+                            <section class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LAST_FOUR_DIGITS}">
+                                <span>**** ${lastFourDigits}</span>
+                            </section>
+                        `
+                        : ''
+                    }
                 </section>
-                ${lastFourDigits
-                    ? `
-                        <section class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LAST_FOUR_DIGITS}">
-                            <span>**** ${lastFourDigits}</span>
-                        </section>
-                    `
-                    : ''
-                }
             </section>
             ${this.buildCreditCardDetailsInnerHTML(paymentMethod)}
         `;

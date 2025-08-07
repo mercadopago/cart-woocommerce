@@ -89,58 +89,27 @@ class CustomGateway extends AbstractGateway
         return self::CHECKOUT_NAME;
     }
 
-    /**
-     * Init form fields for checkout configuration
-     *
-     * @return void
-     */
-    public function init_form_fields(): void
+    public function formFieldsHeaderSection(): array
     {
-        if ($this->addMissingCredentialsNoticeAsFormField()) {
-            return;
-        }
-
-        parent::init_form_fields();
-
-        $this->form_fields = array_merge($this->form_fields, [
+        return array_replace_recursive(parent::formFieldsHeaderSection(), [
             'header' => [
-                'type'        => 'mp_config_title',
-                'title'       => $this->mercadopago->sellerConfig->getSiteId() === 'MLB' ? $this->adminTranslations['header_title_MLB'] : $this->adminTranslations['header_title_ALL'],
-                'description' => $this->adminTranslations['header_description'],
-            ],
-            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
-            'card_invalid_credentials' => $this->getCredentialExpiredNotice(),
-            'card_settings' => [
-                'type'  => 'mp_card_info',
-                'value' => [
-                    'title'       => $this->adminTranslations['card_settings_title'],
-                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
-                    'button_text' => $this->adminTranslations['card_settings_button_text'],
-                    'button_url'  => $this->links['admin_settings_page'],
-                    'icon'        => 'mp-icon-badge-info',
-                    'color_card'  => 'mp-alert-color-success',
-                    'size_card'   => 'mp-card-body-size',
-                    'target'      => '_self',
-                ],
+                'title' => $this->mercadopago->sellerConfig->getSiteId() === 'MLB' ? $this->adminTranslations['header_title_MLB'] : $this->adminTranslations['header_title_ALL'],
             ],
             'enabled' => [
-                'type'         => 'mp_toggle_switch',
-                'title'        => $this->adminTranslations['enabled_title'],
-                'subtitle'     => $this->adminTranslations['enabled_subtitle'],
-                'default'      => 'no',
                 'descriptions' => [
                     'enabled'  => $this->mercadopago->sellerConfig->getSiteId() === 'MLB' ? $this->adminTranslations['enabled_descriptions_enabled_MLB'] : $this->adminTranslations['enabled_descriptions_enabled_ALL'],
                     'disabled' => $this->mercadopago->sellerConfig->getSiteId() === 'MLB' ? $this->adminTranslations['enabled_descriptions_disabled_MLB'] : $this->adminTranslations['enabled_descriptions_disabled_ALL'],
                 ],
             ],
             'title' => [
-                'type'        => 'text',
-                'title'       => $this->adminTranslations['title_title'],
-                'description' => $this->adminTranslations['title_description'],
-                'default'     => $this->title,
-                'desc_tip'    => $this->adminTranslations['title_desc_tip'],
-                'class'       => 'limit-title-max-length',
+                'default' => $this->title,
             ],
+        ]);
+    }
+
+    public function formFieldsMainSection(): array
+    {
+        return [
             'card_info_helper' => [
                 'type'  => 'title',
                 'value' => '',
@@ -199,21 +168,7 @@ class CustomGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
                 ],
             ],
-            'gateway_discount' => $this->getDiscountField(),
-            'commission'       => $this->getCommissionField(),
-            'split_section' => [
-                'type'  => 'title',
-                'title' => "",
-            ],
-            'support_link' => [
-                'type'  => 'mp_support_link',
-                'bold_text'    => $this->adminTranslations['support_link_bold_text'],
-                'text_before_link'    => $this->adminTranslations['support_link_text_before_link'],
-                'text_with_link' => $this->adminTranslations['support_link_text_with_link'],
-                'text_after_link'    => $this->adminTranslations['support_link_text_after_link'],
-                'support_link'    => $this->links['docs_support_faq'],
-            ],
-        ]);
+        ];
     }
 
     /**
@@ -551,11 +506,9 @@ class CustomGateway extends AbstractGateway
                         !empty($checkout['token']) &&
                         !empty($checkout['amount']) &&
                         !empty($checkout['payment_method_id']) &&
-                        !empty($checkout['payment_type_id'])
+                        !empty($checkout['payment_type_id']) &&
+                        ($checkout['payment_type_id'] != 'credit_card' || (!empty($checkout['installments']) && $checkout['installments'] > 0))
                     ) {
-                        if ($checkout['payment_type_id'] === 'credit_card' && (empty($checkout['installments']) || $checkout['installments'] <= 0)) {
-                            throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
-                        }
                         $this->transaction = new SupertokenTransaction($this, $order, $checkout);
                         $response          = $this->transaction->createPayment();
 
@@ -722,8 +675,12 @@ class CustomGateway extends AbstractGateway
         if (!headers_sent()) {
             header('Content-Type: application/json;');
         }
+
         echo wp_json_encode($return);
-        die();
+
+        if (!$_ENV['PHPUNIT_TEST'] ?? false) {
+            die();
+        }
     }
 
     /**
@@ -745,10 +702,10 @@ class CustomGateway extends AbstractGateway
      *
      * @return array
      */
-    private function handleResponseStatus($order, $response): array
+    private function handleResponseStatus($order, array $response): array
     {
         try {
-            if (is_array($response) && array_key_exists('status', $response)) {
+            if (array_key_exists('status', $response)) {
                 switch ($response['status']) {
                     case 'approved':
                         $this->mercadopago->helpers->cart->emptyCart();
@@ -772,9 +729,7 @@ class CustomGateway extends AbstractGateway
 
                     case 'pending':
                     case 'in_process':
-                        $statusDetail = $response['status_detail'];
-
-                        if ($statusDetail === 'pending_challenge') {
+                        if ($response['status_detail'] === 'pending_challenge') {
                             $this->mercadopago->helpers->session->setSession('mp_3ds_url', $response['three_ds_info']['external_resource_url']);
                             $this->mercadopago->helpers->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
                             $this->mercadopago->helpers->session->setSession('mp_order_id', $order->ID);
@@ -812,10 +767,12 @@ class CustomGateway extends AbstractGateway
                         return $return;
 
                     case 'rejected':
-                        $errorMessage = $this->getRejectedPaymentErrorMessage($response['status_detail']);
-
                         if ($this->isOrderPayPage()) {
-                            $this->handlePayForOrderRequest(array('result'   => 'fail', 'messages'  => $errorMessage));
+                            $this->handlePayForOrderRequest([
+                                'result'   => 'fail',
+                                'messages' => $this->getRejectedPaymentErrorMessage($response['status_detail'])
+                            ]);
+                            return []; // Case $_ENV['PHPUNIT_TEST'] == true
                         }
 
                         $this->handleWithRejectPayment($response);

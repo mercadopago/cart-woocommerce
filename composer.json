@@ -26,7 +26,7 @@
   },
   "scripts": {
     "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml src assets templates woocommerce-mercadopago.php",
-    "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml src assets templates woocommerce-mercadopago.php",
+    "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml src assets templates woocommerce-mercadopago.php tests",
     "phpstan": "./vendor/bin/phpstan analyse src --memory-limit=1G --generate-baseline=phpstan-baseline.neon",
     "rector": "./vendor/bin/rector process",
     "metrics": "./vendor/bin/phpmetrics src --report-html=./code_analysis",
@@ -40,7 +40,9 @@
     "qit:api": "./vendor/bin/qit run:woo-api woocommerce-mercadopago --zip woocommerce-mercadopago.zip",
     "fix-cs": "./vendor/bin/php-cs-fixer fix",
     "phpunit": "./vendor/bin/phpunit",
-    "phpunit-file": "./vendor/bin/phpunit --"
+    "phpunit-file": "./vendor/bin/phpunit --",
+    "test": "./vendor/bin/phpunit",
+    "test:coverage": "XDEBUG_MODE=coverage ./vendor/bin/phpunit"
   },
   "require": {
     "php": ">=7.4",
@@ -55,10 +57,11 @@
     "phpcompatibility/php-compatibility": "dev-develop",
     "friendsofphp/php-cs-fixer": "^3.64",
     "phpunit/phpunit": "^9.6",
-    "10up/wp_mock": "^1.0",
+    "10up/wp_mock": "^1.1",
     "phpstan/phpstan": "^2.1",
     "rector/rector": "^2.0",
-    "php-stubs/woocommerce-stubs": "^9.5"
+    "php-stubs/woocommerce-stubs": "^9.5",
+    "fakerphp/faker": "^1.24"
   },
   "config": {
     "allow-plugins": {

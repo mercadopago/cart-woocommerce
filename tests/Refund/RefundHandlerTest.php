@@ -18,6 +18,8 @@ use WP_Mock;
  */
 class RefundHandlerTest extends TestCase
 {
+    use WoocommerceMock;
+
     private RefundHandler $refundHandler;
     private Requester $requester;
     private $order;
@@ -26,8 +28,7 @@ class RefundHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+        $this->woocommerceSetUp();
 
         // Mock WordPress sanitize_text_field function
         WP_Mock::userFunction('sanitize_text_field', [
@@ -70,17 +71,8 @@ class RefundHandlerTest extends TestCase
         $this->mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
         $this->sellerConfig = $this->mercadopagoMock->sellerConfig;
 
-        global $mercadopago;
-        $mercadopago = $this->mercadopagoMock;
-
         $this->refundHandler = new RefundHandler($this->requester, $this->order, $this->mercadopagoMock);
     }
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-    }
-
 
     /**
      * Helper method to mock Datadog with success expectation
@@ -458,7 +450,7 @@ class RefundHandlerTest extends TestCase
             ->once()
             ->andReturn($accessToken);
 
-        $responseObject = (object)[
+        $responseObject = (object) [
             'id' => 'refund_789',
             'amount' => 100.00
         ];

@@ -4,6 +4,7 @@
     gap: 8px;
     padding: 16px !important;
     background-color: #f9f9f9 !important;
+    width: 100%;
 }
 
 .mp-super-token-payment-methods-list input:focus::-webkit-input-placeholder {
@@ -39,6 +40,7 @@
     user-select: none;
     background-color: white;
     border: 1px solid #e5e5e5;
+    width: 100%;
 }
 
 .mp-super-token-payment-method__selected {
@@ -94,6 +96,7 @@
     font-weight: 600;
     text-align: right;
     width: max-content;
+    white-space: nowrap;
 }
 
 .mp-super-token-payment-method__accordion {
@@ -109,7 +112,7 @@
 }
 
 .mp-super-token-payment-method__thumbnail {
-    width: 32px !important;
+    min-width: 32px !important;
     height: 24px !important;
     display: flex !important;
     justify-content: center !important;
@@ -154,6 +157,13 @@
     flex-direction: column;
     justify-content: center;
     gap: 4px;
+    width: 80%;
+}
+
+.mp-super-token-payment-method__title {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
 }
 
 .mp-super-token-payment-method__value-prop {
@@ -166,8 +176,11 @@
     background-color: #00a6501a;
     height: 16px !important;
     padding: 0 6px;
-    width: fit-content;
+    width: min-content !important;
+    max-width: 100% !important;
     white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .mp-box-shadow-none {
@@ -179,12 +192,20 @@
     justify-content: space-between;
     align-items: center;
     gap: 10px;
+    width: 100%;
 }
 
 .mp-super-token-payment-method__header > section:first-child {
     display: flex !important;
     gap: 12px !important;
     align-items: center !important;
+    width: 100% !important;
+    container-type: inline-size;
+    container-name: payment-method-header;
+}
+
+.mp-super-token-payment-method__header > section:first-child:has(*:nth-child(3):last-child) {
+    justify-content: space-between !important;
 }
 
 .mp-super-token-payment-method__details {
@@ -342,5 +363,33 @@
     .mp-super-token-security-code-tooltip:hover::before {
         left: 25%;
         transform: translateX(-50%);
+    }
+}
+
+@container payment-method-header (max-width: 600px) {
+    .mp-super-token-payment-method__content {
+        width: 70%;
+    }
+}
+
+@container payment-method-header (max-width: 400px) {
+    .mp-super-token-payment-method__content {
+        width: 65%;
+    }
+}
+
+@container payment-method-header (max-width: 300px) {
+    .mp-super-token-payment-method__content {
+        width: 45%;
+    }
+}
+
+@container payment-method-header (max-width: 200px) {
+    .mp-super-token-payment-method__content {
+        width: 20%;
+    }
+
+    .mp-super-token-payment-method__title {
+        white-space: nowrap;
     }
 }

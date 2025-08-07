@@ -16,16 +16,7 @@ use WP_Mock;
  */
 class BasicGatewayTest extends TestCase
 {
-    public function setUp(): void
-    {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use WoocommerceMock;
 
     public function testProcessPaymentModal()
     {
@@ -82,7 +73,7 @@ class BasicGatewayTest extends TestCase
             ->with($order)
             ->andReturn([]);
 
-        $basicTransactionMock = Mockery::mock('overload:'.BasicTransaction::class);
+        $basicTransactionMock = Mockery::mock('overload:' . BasicTransaction::class);
         $basicTransactionMock->shouldReceive('createPreference')
             ->andReturn([
                 'init_point' => 'http://localhost',
@@ -120,7 +111,7 @@ class BasicGatewayTest extends TestCase
             ->with($order)
             ->andReturn([]);
 
-        $basicTransactionMock = Mockery::mock('overload:'.BasicTransaction::class);
+        $basicTransactionMock = Mockery::mock('overload:' . BasicTransaction::class);
         $basicTransactionMock->shouldReceive('createPreference')
             ->andThrow(new \Exception('new exception'));
 
@@ -157,21 +148,20 @@ class BasicGatewayTest extends TestCase
             ->andReturn($publicKey);
         $mercadopagoMock->hooks->template->shouldReceive('getWoocommerceTemplate')
             ->once()
-            ->with('public/receipt/preference-modal.php',
-                [
-                    'public_key'          => $publicKey,
-                    'preference_id'       => $preferenceId,
-                    'pay_with_mp_title'   => $payWithMpTitle,
-                    'cancel_url'          => $cancelOrderUrl,
-                    'cancel_url_text'     => $cancelUrlText,
-                ])
+            ->with('public/receipt/preference-modal.php', [
+                'public_key'          => $publicKey,
+                'preference_id'       => $preferenceId,
+                'pay_with_mp_title'   => $payWithMpTitle,
+                'cancel_url'          => $cancelOrderUrl,
+                'cancel_url_text'     => $cancelUrlText,
+            ])
             ->andReturn('template');
         $gateway->mercadopago = $mercadopagoMock;
         $gateway->storeTranslations = array();
         $gateway->storeTranslations['pay_with_mp_title'] = $payWithMpTitle;
         $gateway->storeTranslations['cancel_url_text'] = $cancelUrlText;
 
-        $basicTransactionMock = Mockery::mock('overload:'.BasicTransaction::class);
+        $basicTransactionMock = Mockery::mock('overload:' . BasicTransaction::class);
         $basicTransactionMock->shouldReceive('createPreference')
             ->andReturn([
                 'id' => $preferenceId,

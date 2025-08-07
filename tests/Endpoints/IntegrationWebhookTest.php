@@ -23,19 +23,15 @@ use MercadoPago\PP\Sdk\HttpClient\Response;
  */
 class IntegrationWebhookTest extends TestCase
 {
+    use WoocommerceMock;
+
     public function setUp(): void
     {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+        $this->woocommerceSetUp();
 
         WP_Mock::userFunction('admin_url', [
             'return' => 'url'
         ]);
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
     }
 
     public function testWebhookHandlerWithoutIntegrationId(): void

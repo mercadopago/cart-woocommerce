@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
+use Closure;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -23,5 +25,28 @@ class Arrays
     public static function filterJoin(array $array, string $separator = " ", ?callable $callback = null, int $mode = 0): string
     {
         return join($separator, array_filter($array, $callback ?? fn($element) => !!$element, $mode));
+    }
+
+    /**
+     * Checks if any element in $array satisfies a given condition.
+     *
+     * @param \Closure $callback function(mixed $element): bool
+     */
+    public static function any(array $array, Closure $callback): bool
+    {
+        foreach ($array as $element) {
+            if ($callback($element)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if $array contains any empty element
+     */
+    public static function anyEmpty(array $array): bool
+    {
+        return static::any($array, fn($element): bool => empty($element));
     }
 }

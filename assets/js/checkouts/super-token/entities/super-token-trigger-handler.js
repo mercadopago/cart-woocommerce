@@ -141,6 +141,9 @@ class MPSuperTokenTriggerHandler {
         this.removeClickableAreas();
 
         const buyerEmail = this.wcBuyerEmail || this.wcEmailListener.getEmail();
+        if (!buyerEmail) {
+            return;
+        }
 
         this.mpSuperTokenAuthenticator.authenticate(this.currentAmount, buyerEmail);
     }

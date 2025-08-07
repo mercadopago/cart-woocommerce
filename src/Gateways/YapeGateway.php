@@ -68,58 +68,9 @@ class YapeGateway extends AbstractGateway
         return self::CHECKOUT_NAME;
     }
 
-    /**
-     * Init form fields for checkout configuration
-     *
-     * @return void
-     */
-    public function init_form_fields(): void
+    public function formFieldsMainSection(): array
     {
-        if ($this->addMissingCredentialsNoticeAsFormField()) {
-            return;
-        }
-
-        parent::init_form_fields();
-
-        $this->form_fields = array_merge($this->form_fields, [
-            'header' => [
-                'type'        => 'mp_config_title',
-                'title'       => $this->adminTranslations['header_title'],
-                'description' => $this->adminTranslations['header_description'],
-            ],
-            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
-            'card_invalid_credentials' => $this->getCredentialExpiredNotice(),
-            'card_settings' => [
-                'type'  => 'mp_card_info',
-                'value' => [
-                    'title'       => $this->adminTranslations['card_settings_title'],
-                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'],
-                    'button_text' => $this->adminTranslations['card_settings_button_text'],
-                    'button_url'  => $this->links['admin_settings_page'],
-                    'icon'        => 'mp-icon-badge-info',
-                    'color_card'  => 'mp-alert-color-success',
-                    'size_card'   => 'mp-card-body-size',
-                    'target'      => '_self',
-                ],
-            ],
-            'enabled' => [
-                'type'         => 'mp_toggle_switch',
-                'title'        => $this->adminTranslations['enabled_title'],
-                'subtitle'     => $this->adminTranslations['enabled_subtitle'],
-                'default'      => 'no',
-                'descriptions' => [
-                    'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'],
-                    'disabled' => $this->adminTranslations['enabled_descriptions_disabled'],
-                ],
-            ],
-            'title' => [
-                'type'        => 'text',
-                'title'       => $this->adminTranslations['title_title'],
-                'description' => $this->adminTranslations['title_description'],
-                'default'     => $this->adminTranslations['title_default'],
-                'desc_tip'    => $this->adminTranslations['title_desc_tip'],
-                'class'       => 'limit-title-max-length',
-            ],
+        return [
             'card_info_helper' => [
                 'type'  => 'title',
                 'value' => '',
@@ -144,21 +95,7 @@ class YapeGateway extends AbstractGateway
                 'title' => $this->adminTranslations['advanced_configuration_subtitle'],
                 'class' => 'mp-small-text',
             ],
-            'gateway_discount' => $this->getDiscountField(),
-            'commission'       => $this->getCommissionField(),
-            'split_section' => [
-                'type'  => 'title',
-                'title' => "",
-            ],
-            'support_link' => [
-                'type'  => 'mp_support_link',
-                'bold_text'    => $this->adminTranslations['support_link_bold_text'],
-                'text_before_link'    => $this->adminTranslations['support_link_text_before_link'],
-                'text_with_link' => $this->adminTranslations['support_link_text_with_link'],
-                'text_after_link'    => $this->adminTranslations['support_link_text_after_link'],
-                'support_link'    => $this->links['docs_support_faq'],
-            ],
-        ]);
+        ];
     }
 
     /**

@@ -7,7 +7,6 @@ use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use Mockery;
-use WP_Mock;
 
 /**
  * @runTestsInSeparateProcesses
@@ -15,16 +14,7 @@ use WP_Mock;
  */
 class CustomTransactionTest extends TestCase
 {
-    public function setUp(): void
-    {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use WoocommerceMock;
 
     public function testConstantIdValue()
     {
@@ -49,7 +39,7 @@ class CustomTransactionTest extends TestCase
 
         $custom = Mockery::mock(CustomTransaction::class)->makePartial()->shouldAllowMockingProtectedMethods();
         $custom->transaction = $transaction;
-        
+
         // Use reflection to set protected property
         $reflection = new \ReflectionClass($custom);
         $checkoutProperty = $reflection->getProperty('checkout');
@@ -78,7 +68,7 @@ class CustomTransactionTest extends TestCase
 
         $custom = Mockery::mock(CustomTransaction::class)->makePartial()->shouldAllowMockingProtectedMethods();
         $custom->transaction = $transaction;
-        
+
         // Use reflection to set protected property
         $reflection = new \ReflectionClass($custom);
         $checkoutProperty = $reflection->getProperty('checkout');
@@ -106,7 +96,7 @@ class CustomTransactionTest extends TestCase
 
         $custom = Mockery::mock(CustomTransaction::class)->makePartial()->shouldAllowMockingProtectedMethods();
         $custom->transaction = $transaction;
-        
+
         // Use reflection to set protected property
         $reflection = new \ReflectionClass($custom);
         $checkoutProperty = $reflection->getProperty('checkout');
@@ -135,7 +125,7 @@ class CustomTransactionTest extends TestCase
 
         $custom = Mockery::mock(CustomTransaction::class)->makePartial()->shouldAllowMockingProtectedMethods();
         $custom->transaction = $transaction;
-        
+
         // Use reflection to set protected property
         $reflection = new \ReflectionClass($custom);
         $checkoutProperty = $reflection->getProperty('checkout');
@@ -164,7 +154,7 @@ class CustomTransactionTest extends TestCase
 
         $custom = Mockery::mock(CustomTransaction::class)->makePartial()->shouldAllowMockingProtectedMethods();
         $custom->transaction = $transaction;
-        
+
         // Use reflection to set protected property
         $reflection = new \ReflectionClass($custom);
         $checkoutProperty = $reflection->getProperty('checkout');
@@ -182,7 +172,7 @@ class CustomTransactionTest extends TestCase
 
     public function testSetPayerIdentificationInfoLogicWithValidData()
     {
-        // Arrange - Test the setPayerIdentificationInfo logic 
+        // Arrange - Test the setPayerIdentificationInfo logic
         $checkout = [
             'doc_type' => 'CPF',
             'doc_number' => '12345678901'

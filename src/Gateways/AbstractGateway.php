@@ -3,13 +3,14 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use Exception;
-use MercadoPago\PP\Sdk\Common\AbstractEntity;
+use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Notification\NotificationFactory;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
+use Mockery\Exception\MockeryExceptionInterface;
 use WC_Payment_Gateway;
 use MercadoPago\Woocommerce\Helpers\RefundStatusCodes;
 use MercadoPago\Woocommerce\Exceptions\RefundException;
@@ -46,10 +47,6 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     public WoocommerceMercadoPago $mercadopago;
 
-    /**
-     *
-     * @var AbstractEntity
-     */
     public $transaction;
 
     /**
@@ -112,43 +109,138 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     /**
      * Init form fields for checkout configuration
-     *
-     * @return void
      */
     public function init_form_fields(): void
     {
-        $this->form_fields = [];
+        $this->form_fields = $this->isMissingCredentials()
+            ? $this->missingCredentialsFormFieldNotice()
+            : $this->formFields();
     }
 
-    /**
-     * Add a "missing credentials" notice into the $form_fields array if there ir no credentials configured.
-     * Returns true when the notice is added to the array, and false otherwise.
-     *
-     * @return bool
-     */
-    protected function addMissingCredentialsNoticeAsFormField(): bool
+    public function formFields(): array
     {
-        if (empty($this->mercadopago->sellerConfig->getCredentialsPublicKey()) || empty($this->mercadopago->sellerConfig->getCredentialsAccessToken())) {
-            $this->form_fields = [
-                'card_info_validate' => [
-                    'type'  => 'mp_card_info',
-                    'value' => [
-                        'title'       => '',
-                        'subtitle'    => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
-                        'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
-                        'button_url'  => $this->links['admin_settings_page'],
-                        'icon'        => 'mp-icon-badge-warning',
-                        'color_card'  => 'mp-alert-color-error',
-                        'size_card'   => 'mp-card-body-size',
-                        'target'      => '_self',
-                    ]
+        return array_merge(
+            $this->formFieldsHeaderSection(),
+            $this->formFieldsMainSection(),
+            $this->formFieldsFooterSection()
+        );
+    }
+
+    public function formFieldsHeaderSection(): array
+    {
+        return [
+            'header' => [
+                'type'        => 'mp_config_title',
+                'title'       => $this->adminTranslations['header_title'] ?? null,
+                'description' => $this->adminTranslations['header_description'] ?? null,
+            ],
+            'card_homolog_validate' => $this->getHomologValidateNoticeOrHidden(),
+            'card_invalid_credentials' => $this->getCredentialExpiredNotice(),
+            'card_settings' => [
+                'type'  => 'mp_card_info',
+                'value' => [
+                    'title'       => $this->adminTranslations['card_settings_title'] ?? null,
+                    'subtitle'    => $this->adminTranslations['card_settings_subtitle'] ?? null,
+                    'button_text' => $this->adminTranslations['card_settings_button_text'] ?? null,
+                    'button_url'  => $this->links['admin_settings_page'],
+                    'icon'        => 'mp-icon-badge-info',
+                    'color_card'  => 'mp-alert-color-success',
+                    'size_card'   => 'mp-card-body-size',
+                    'target'      => '_self',
+                ],
+            ],
+            'enabled' => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['enabled_title'] ?? null,
+                'subtitle'     => $this->adminTranslations['enabled_subtitle'] ?? null,
+                'default'      => 'no',
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'] ?? null,
+                    'disabled' => $this->adminTranslations['enabled_descriptions_disabled'] ?? null,
+                ],
+            ],
+            'title' => [
+                'type'        => 'text',
+                'title'       => $this->adminTranslations['title_title'] ?? null,
+                'description' => $this->adminTranslations['title_description'] ?? null,
+                'default'     => $this->adminTranslations['title_default'] ?? null,
+                'desc_tip'    => $this->adminTranslations['title_desc_tip'] ?? null,
+                'class'       => 'limit-title-max-length',
+            ],
+        ];
+    }
+
+    abstract public function formFieldsMainSection(): array;
+
+    public function formFieldsFooterSection(): array
+    {
+        return [
+            'gateway_discount' => [
+                'type' => 'mp_actionable_input',
+                'title' => $this->adminTranslations['discount_title'] ?? null,
+                'input_type' => 'number',
+                'description' => $this->adminTranslations['discount_description'] ?? null,
+                'checkbox_label' => $this->adminTranslations['discount_checkbox_label'] ?? null,
+                'default' => '0',
+                'custom_attributes' => [
+                    'step' => '0.01',
+                    'min' => '0',
+                    'max' => '99',
+                ],
+            ],
+            'commission' => [
+                'type' => 'mp_actionable_input',
+                'title' => $this->adminTranslations['commission_title'] ?? null,
+                'input_type' => 'number',
+                'description' => $this->adminTranslations['commission_description'] ?? null,
+                'checkbox_label' => $this->adminTranslations['commission_checkbox_label'] ?? null,
+                'default' => '0',
+                'custom_attributes' => [
+                    'step' => '0.01',
+                    'min' => '0',
+                    'max' => '99',
+                ],
+            ],
+            'split_section' => [
+                'type' => 'title',
+                'title' => '',
+            ],
+            'support_link' => [
+                'type' => 'mp_support_link',
+                'bold_text' => $this->adminTranslations['support_link_bold_text'] ?? null,
+                'text_before_link' => $this->adminTranslations['support_link_text_before_link'] ?? null,
+                'text_with_link' => $this->adminTranslations['support_link_text_with_link'] ?? null,
+                'text_after_link' => $this->adminTranslations['support_link_text_after_link'] ?? null,
+                'support_link' => $this->links['docs_support_faq'],
+            ],
+        ];
+    }
+
+    protected function isMissingCredentials(): bool
+    {
+        return Arrays::anyEmpty([
+            $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
+            $this->mercadopago->sellerConfig->getCredentialsAccessToken()
+        ]);
+    }
+
+    protected function missingCredentialsFormFieldNotice(): array
+    {
+        return [
+            'card_info_validate' => [
+                'type' => 'mp_card_info',
+                'value' => [
+                    'title' => '',
+                    'subtitle' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_subtitle'],
+                    'button_text' => $this->mercadopago->adminTranslations->credentialsSettings['card_info_button_text'],
+                    'button_url' => $this->links['admin_settings_page'],
+                    'icon' => 'mp-icon-badge-warning',
+                    'color_card' => 'mp-alert-color-error',
+                    'size_card' => 'mp-card-body-size',
+                    'target' => '_self',
                 ]
-            ];
-
-            return true;
-        }
-
-        return false;
+            ]
+        ];
     }
 
     /**
@@ -434,6 +526,10 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      */
     public function processReturnFail(Exception $e, string $message, string $source, array $context = [], bool $notice = false): array
     {
+        if ($e instanceof MockeryExceptionInterface) {
+            throw $e;
+        }
+
         $this->mercadopago->logs->file->error('Message: ' . $e->getMessage() . ' \n\n\n' . 'Stackstrace: ' . $e->getTraceAsString() . ' \n\n\n', $source, $context);
 
         $errorMessages = [
@@ -563,50 +659,6 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         }
 
         return $total;
-    }
-
-    /**
-     * Get discount config field
-     *
-     * @return array
-     */
-    public function getDiscountField(): array
-    {
-        return [
-            'type'              => 'mp_actionable_input',
-            'title'             => $this->adminTranslations['discount_title'],
-            'input_type'        => 'number',
-            'description'       => $this->adminTranslations['discount_description'],
-            'checkbox_label'    => $this->adminTranslations['discount_checkbox_label'],
-            'default'           => '0',
-            'custom_attributes' => [
-                'step' => '0.01',
-                'min'  => '0',
-                'max'  => '99',
-            ],
-        ];
-    }
-
-    /**
-     * Get commission config field
-     *
-     * @return array
-     */
-    public function getCommissionField(): array
-    {
-        return [
-            'type'              => 'mp_actionable_input',
-            'title'             => $this->adminTranslations['commission_title'],
-            'input_type'        => 'number',
-            'description'       => $this->adminTranslations['commission_description'],
-            'checkbox_label'    => $this->adminTranslations['commission_checkbox_label'],
-            'default'           => '0',
-            'custom_attributes' => [
-                'step' => '0.01',
-                'min'  => '0',
-                'max'  => '99',
-            ],
-        ];
     }
 
     /**

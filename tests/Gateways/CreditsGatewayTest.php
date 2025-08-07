@@ -2,34 +2,24 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
+use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
 use MercadoPago\Woocommerce\Transactions\CreditsTransaction;
 use Mockery\Exception\BadMethodCallException;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\CreditsGateway;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
-use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use Mockery;
 use WP_Mock;
 
 class CreditsGatewayTest extends TestCase
 {
-    private CreditsGateway $gateway;
+    use GatewayMock;
 
-    public function setUp(): void
-    {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+    private string $gatewayClass = CreditsGateway::class;
 
-        $this->gateway = Mockery::mock(CreditsGateway::class)
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
-        $this->gateway->mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
-    }
+    /**
+     * @var \Mockery\MockInterface|CreditsGateway
+     */
+    private $gateway;
 
     /**
      * @testWith ["MLA", "https://http2.mlstatic.com/storage/cpp/static-files/a91b365a-73dc-461a-9f3f-f8b3329ae5d2.gif"]
@@ -67,53 +57,16 @@ class CreditsGatewayTest extends TestCase
      */
     public function testProcessPaymentSuccess(bool $isBlocks, bool $isTestMode)
     {
-        $order = Mockery::mock('WC_Order');
-
-        WP_Mock::userFunction('wc_get_order')
-            ->twice()
-            ->with(1)
-            ->andReturn($order);
-
-        $this->gateway->mercadopago->helpers->cart
-            ->expects()
-            ->calculateSubtotalWithDiscount($this->gateway)
-            ->andReturn($this->gateway->discount = 0);
-
-        $this->gateway->mercadopago->helpers->cart
-            ->expects()
-            ->calculateSubtotalWithCommission($this->gateway)
-            ->andReturn($this->gateway->commission = 0);
-
-        $productionMode = $isTestMode ? 'no' : 'yes';
-
-        $this->gateway->mercadopago->storeConfig
-            ->expects()
-            ->getProductionMode()
-            ->andReturn($productionMode);
-
-        $this->gateway->mercadopago->orderMetadata
-            ->expects()
-            ->setIsProductionModeData($order, $productionMode)
-            ->andReturnSelf();
-
-        $this->gateway->mercadopago->orderMetadata
-            ->expects()
-            ->setUsedGatewayData($order, 'woo-mercado-pago-credits')
-            ->andReturnSelf();
+        $this->abstractGatewayProcessPaymentMock($isBlocks, $isTestMode);
 
         $_POST['wc-woo-mercado-pago-credits-new-payment-method'] = $isBlocks ? 1 : null;
-
-        $this->gateway->mercadopago->orderMetadata
-            ->expects()
-            ->markPaymentAsBlocks($order, $isBlocks ? 'yes' : 'no')
-            ->andReturnSelf();
 
         Mockery::mock('overload:' . CreditsTransaction::class)
             ->expects()
             ->createPreference()
             ->andReturn($redirect = [
-                'init_point' => 'http://prodmode',
-                'sandbox_init_point' => 'http://testmode',
+                'init_point' => random()->url(),
+                'sandbox_init_point' => random()->url(),
             ]);
 
         $this->gateway->mercadopago->storeConfig

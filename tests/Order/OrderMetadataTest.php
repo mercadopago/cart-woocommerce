@@ -7,14 +7,13 @@ use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
-use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
-use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
 use Mockery;
-use WP_Mock;
 use WC_Order;
 
 class OrderMetadataTest extends TestCase
 {
+    use WoocommerceMock;
+
     private OrderMeta $orderMetaMock;
 
     private \WC_Order $orderMock;
@@ -25,18 +24,17 @@ class OrderMetadataTest extends TestCase
 
     public function setUp(): void
     {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
+        $this->woocommerceSetUp();
 
         $this->orderMetaMock = Mockery::mock(OrderMeta::class);
         $this->orderMock = Mockery::mock('WC_Order');
-        
+
         $this->logsMock = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
         $this->logsMock->file = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\File');
         $this->logsMock->remote = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote');
-        
+
         $this->logsMock->file->shouldReceive('error')->andReturn(null)->byDefault();
-        
+
         $this->orderMetadata = new OrderMetadata($this->orderMetaMock, $this->logsMock);
     }
 
@@ -48,16 +46,10 @@ class OrderMetadataTest extends TestCase
         $logsMock = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
         $logsMock->file = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\File');
         $logsMock->remote = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote');
-        
-        $logsMock->file->shouldReceive('error')->andReturn(null)->byDefault();
-        
-        return $logsMock;
-    }
 
-    public function tearDown(): void
-    {
-        WP_Mock::tearDown();
-        Mockery::close();
+        $logsMock->file->shouldReceive('error')->andReturn(null)->byDefault();
+
+        return $logsMock;
     }
 
     public function testGetUsedGatewayData()
@@ -288,7 +280,7 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_amount', 1200.0)->once();
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_total_paid_amount', 1200.0)->once();
 
-                // Mock the updatePaymentsOrderMetadata method calls
+        // Mock the updatePaymentsOrderMetadata method calls
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', true)->andReturn(null);
         $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->twice();
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'PAYMENT_ID: DATE')->andReturn('', '123: 2024-03-20T10:00:00.000-04:00');

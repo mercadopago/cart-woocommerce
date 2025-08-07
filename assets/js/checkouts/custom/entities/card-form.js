@@ -14,9 +14,6 @@ class MPCardForm {
             this.createLoadSpinner();
         }
 
-        const checkoutFormElement = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
-        if (checkoutFormElement) checkoutFormElement.setAttribute('id', this.mpFormId);
-
         const mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key, {
             locale: wc_mercadopago_custom_checkout_params.locale,
         });
@@ -56,9 +53,6 @@ class MPCardForm {
             cardholderName: {
                 id: 'form-checkout__cardholderName',
                 placeholder: wc_mercadopago_custom_checkout_params.placeholders['cardholderName'],
-                style: {
-                    height: '48px',
-                },
             },
             cardExpirationDate: {
                 id: 'form-checkout__expirationDate-container',

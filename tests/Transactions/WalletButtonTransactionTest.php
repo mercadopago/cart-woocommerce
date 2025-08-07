@@ -7,7 +7,6 @@ use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use Mockery;
-use WP_Mock;
 
 /**
  * @runTestsInSeparateProcesses
@@ -15,16 +14,7 @@ use WP_Mock;
  */
 class WalletButtonTransactionTest extends TestCase
 {
-    public function setUp(): void
-    {
-        WoocommerceMock::setupClassMocks();
-        WP_Mock::setUp();
-    }
-
-    public function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use WoocommerceMock;
 
     public function testGetInternalMetadata()
     {

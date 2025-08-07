@@ -37,3 +37,8 @@ if (!class_exists('WP_Error')) {
         }
     }
 }
+
+function random()
+{
+    return Faker\Factory::create();
+}
