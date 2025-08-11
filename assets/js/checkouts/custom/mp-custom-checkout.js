@@ -3,7 +3,8 @@
 class MPCustomCheckoutHandler {
   static FORM_SELECTORS = {
     CLASSIC: 'form[name=checkout]',
-    BLOCKS: '.wc-block-components-form.wc-block-checkout__form'
+    BLOCKS: '.wc-block-components-form.wc-block-checkout__form',
+    ORDER_REVIEW: 'form#order_review',
   };
 
   static FORM_IDS = {
@@ -20,8 +21,8 @@ class MPCustomCheckoutHandler {
     this.init();
   }
 
-  init() {
-    this.setupFormConfiguration();
+  async init() {
+    await this.setupFormConfiguration();
 
     if (!this.eventHandler.triggeredPaymentMethodSelectedEvent) {
       jQuery('body').trigger('payment_method_selected');
@@ -30,38 +31,67 @@ class MPCustomCheckoutHandler {
     this.eventHandler.bindEvents();
   }
 
-  setupFormConfiguration() {
-    const formConfig = this.getFormConfig();
-    
-    if (formConfig.element) {
-      formConfig.element.id = formConfig.formId;
-    }
+  async setupFormConfiguration() {
+    try {
+      const formConfig = await this.getFormConfig();
+      
+      if (formConfig.element) {
+        formConfig.element.id = formConfig.formId;
+      }
 
-    this.syncFormIds(formConfig.formId);
+      this.syncFormIds(formConfig.formId);
+    } catch (error) {
+      console.error('Failed to configure checkout form:', error);
+    }
   }
 
   getFormConfig() {
-    const classicForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.CLASSIC);
-    const blocksForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.BLOCKS);
+    return new Promise((resolve, reject) => {
+      const maxTries = 10;
+      const intervalMs = 500;
+      let tries = 0;
 
-    if (classicForm) {
-      return {
-        element: classicForm,
-        formId: MPCustomCheckoutHandler.FORM_IDS.CLASSIC_CHECKOUT,
+      const tryFindForm = () => {
+        tries++;
+
+        const classicForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.CLASSIC);
+        const blocksForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.BLOCKS);
+        const orderReviewForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.ORDER_REVIEW);
+
+        if (classicForm) {
+          resolve({
+            element: classicForm,
+            formId: MPCustomCheckoutHandler.FORM_IDS.CLASSIC_CHECKOUT,
+          });
+          return;
+        }
+
+        if (blocksForm) {
+          resolve({
+            element: blocksForm,
+            formId: MPCustomCheckoutHandler.FORM_IDS.BLOCKS_CHECKOUT,
+          });
+          return;
+        }
+
+        if (orderReviewForm) {
+          resolve({
+            element: orderReviewForm,
+            formId: MPCustomCheckoutHandler.FORM_IDS.PAY_FOR_ORDER,
+          });
+          return;
+        }
+
+        if (tries >= maxTries) {
+          reject(new Error(`No checkout form found after ${maxTries} attempts`));
+          return;
+        }
+
+        setTimeout(tryFindForm, intervalMs);
       };
-    }
 
-    if (blocksForm) {
-      return {
-        element: blocksForm,
-        formId: MPCustomCheckoutHandler.FORM_IDS.BLOCKS_CHECKOUT,
-      };
-    }
-
-    return {
-      element: null,
-      formId: MPCustomCheckoutHandler.FORM_IDS.PAY_FOR_ORDER,
-    };
+      tryFindForm();
+    });
   }
 
   syncFormIds(formId) {

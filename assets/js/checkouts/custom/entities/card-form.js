@@ -14,14 +14,16 @@ class MPCardForm {
             this.createLoadSpinner();
         }
 
-        const mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key, {
-            locale: wc_mercadopago_custom_checkout_params.locale,
-        });
+        if (!window.mpSdkInstance) {
+            const mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key, {
+                locale: wc_mercadopago_custom_checkout_params.locale,
+            });
 
-        window.mpSdkInstance = mp;
+            window.mpSdkInstance = mp;
+        }
 
         return new Promise((resolve, reject) => {
-            this.form = mp.cardForm({
+            this.form = window.mpSdkInstance.cardForm({
                 amount: amount,
                 iframe: true,
                 form: this.getCardFormConfig(),
