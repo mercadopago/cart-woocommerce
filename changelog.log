@@ -1,6 +1,16 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.4.4 (11/08/2025) =
+* Fixed
+- Does not block payment if email is not filled in
+
+= v8.4.3 (11/08/2025) =
+* Changed
+- Ensure that it uses the same SDK instance in transparent checkout
+* Fixed
+- Prevents clickable areas from being removed when the fast pay flow is not fully loaded
+
 = v8.4.2 (07/08/2025) =
 * Fixed
 - Sync CardForm ID with checkout context for pay-for-order compatibility

@@ -14,6 +14,7 @@ class MPSuperTokenTriggerHandler {
     wcBuyerEmail = null;
     currentAmount = null;
     isAlreadyListeningForm = false;
+    isAuthenticating = false;
 
     // Dependencies
     mpSuperTokenAuthenticator = null;
@@ -28,6 +29,7 @@ class MPSuperTokenTriggerHandler {
 
     reset() {
         this.removeClickableAreas();
+        this.isAuthenticating = false;
     }
 
     amountHasChanged() {
@@ -138,14 +140,24 @@ class MPSuperTokenTriggerHandler {
     }
 
     onTrigger() {
-        this.removeClickableAreas();
-
-        const buyerEmail = this.wcBuyerEmail || this.wcEmailListener.getEmail();
-        if (!buyerEmail) {
+        if (this.isAuthenticating) {
             return;
         }
 
-        this.mpSuperTokenAuthenticator.authenticate(this.currentAmount, buyerEmail);
+        this.isAuthenticating = true;
+
+        const buyerEmail = this.wcBuyerEmail || this.wcEmailListener.getEmail();
+        if (!buyerEmail) {
+            this.isAuthenticating = false;
+            this.removeClickableAreas();
+            return;
+        }
+
+        this.mpSuperTokenAuthenticator.authenticate(this.currentAmount, buyerEmail)
+            .finally(() => {
+                this.isAuthenticating = false;
+                this.removeClickableAreas();
+            });
     }
 
     resetFlow() {
@@ -167,9 +179,8 @@ class MPSuperTokenTriggerHandler {
     resetSuperTokenOnError() {
         if (document.querySelector('#mp_checkout_type')?.value === 'super_token') {
             console.log('Resetting ST flow due to checkout error');
-
             this.resetCustomCheckout();
-
+            this.isAuthenticating = false;
             document.querySelector('#mp_checkout_type').value = '';
         }
     }
