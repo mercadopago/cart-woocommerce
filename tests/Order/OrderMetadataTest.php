@@ -24,8 +24,6 @@ class OrderMetadataTest extends TestCase
 
     public function setUp(): void
     {
-        $this->woocommerceSetUp();
-
         $this->orderMetaMock = Mockery::mock(OrderMeta::class);
         $this->orderMock = Mockery::mock('WC_Order');
 

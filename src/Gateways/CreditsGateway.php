@@ -20,11 +20,6 @@ class CreditsGateway extends AbstractGateway
     /**
      * @const
      */
-    public const CHECKOUT_NAME = 'checkout-credits';
-
-    /**
-     * @const
-     */
     public const WEBHOOK_API_NAME = 'WC_WooMercadoPago_Credits_Gateway';
 
     /**
@@ -66,6 +61,11 @@ class CreditsGateway extends AbstractGateway
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
         $this->setDefaultTooltip();
+    }
+
+    public function getCheckoutName(): string
+    {
+        return 'checkout-credits';
     }
 
     public function formFieldsMainSection(): array
@@ -186,19 +186,9 @@ class CreditsGateway extends AbstractGateway
         return true;
     }
 
-    /**
-     * Process payment and create woocommerce order
-     *
-     * @param $order_id
-     *
-     * @return array
-     */
-    public function process_payment($order_id): array
+    public function proccessPaymentInternal($order): array
     {
-        $order              = wc_get_order($order_id);
         try {
-            parent::process_payment($order_id);
-
             $this->mercadopago->orderMetadata->markPaymentAsBlocks(
                 $order,
                 isset($_POST['wc-woo-mercado-pago-credits-new-payment-method']) ? "yes" : "no"
@@ -214,7 +204,6 @@ class CreditsGateway extends AbstractGateway
                 'redirect' => $this->mercadopago->storeConfig->isTestMode() ? $preference['sandbox_init_point'] : $preference['init_point'],
             ];
         } catch (Exception $e) {
-            // CRIAR process_payment_internal E MOVER PARA ABSTRACT GATEWAY
             return $this->processReturnFail(
                 $e,
                 $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],

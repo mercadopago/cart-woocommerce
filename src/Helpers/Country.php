@@ -3,6 +3,13 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Gateways\BasicGateway;
+use MercadoPago\Woocommerce\Gateways\CreditsGateway;
+use MercadoPago\Woocommerce\Gateways\CustomGateway;
+use MercadoPago\Woocommerce\Gateways\PixGateway;
+use MercadoPago\Woocommerce\Gateways\PseGateway;
+use MercadoPago\Woocommerce\Gateways\TicketGateway;
+use MercadoPago\Woocommerce\Gateways\YapeGateway;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -24,19 +31,19 @@ class Country
 
     public const SITE_ID_MPE = 'MPE';
 
-    public const COUNTRY_SUFFIX_MLA = 'AR';
+    public const COUNTRY_CODE_MLA = 'AR';
 
-    public const COUNTRY_SUFFIX_MLB = 'BR';
+    public const COUNTRY_CODE_MLB = 'BR';
 
-    public const COUNTRY_SUFFIX_MLM = 'MX';
+    public const COUNTRY_CODE_MLM = 'MX';
 
-    public const COUNTRY_SUFFIX_MLC = 'CL';
+    public const COUNTRY_CODE_MLC = 'CL';
 
-    public const COUNTRY_SUFFIX_MLU = 'UY';
+    public const COUNTRY_CODE_MLU = 'UY';
 
-    public const COUNTRY_SUFFIX_MCO = 'CO';
+    public const COUNTRY_CODE_MCO = 'CO';
 
-    public const COUNTRY_SUFFIX_MPE = 'PE';
+    public const COUNTRY_CODE_MPE = 'PE';
 
     private Seller $seller;
 
@@ -52,51 +59,36 @@ class Country
 
     /**
      * Convert Mercado Pago site_id to Woocommerce country
-     *
-     * @param $siteId
-     *
-     * @return string
      */
-    public function siteIdToCountry($siteId): string
+    public static function siteIdToCountry(string $siteId): string
     {
-        $siteIdToCountry = [
-            self::SITE_ID_MLA => self::COUNTRY_SUFFIX_MLA,
-            self::SITE_ID_MLB => self::COUNTRY_SUFFIX_MLB,
-            self::SITE_ID_MLM => self::COUNTRY_SUFFIX_MLM,
-            self::SITE_ID_MLC => self::COUNTRY_SUFFIX_MLC,
-            self::SITE_ID_MLU => self::COUNTRY_SUFFIX_MLU,
-            self::SITE_ID_MCO => self::COUNTRY_SUFFIX_MCO,
-            self::SITE_ID_MPE => self::COUNTRY_SUFFIX_MPE,
-        ];
-
-        return array_key_exists($siteId, $siteIdToCountry)
-            ? $siteIdToCountry[$siteId]
-            : $siteIdToCountry[self::SITE_ID_MLA];
+        // TODO(PHP8.2): Use match
+        return [
+            self::SITE_ID_MLA => self::COUNTRY_CODE_MLA,
+            self::SITE_ID_MLB => self::COUNTRY_CODE_MLB,
+            self::SITE_ID_MLM => self::COUNTRY_CODE_MLM,
+            self::SITE_ID_MLC => self::COUNTRY_CODE_MLC,
+            self::SITE_ID_MLU => self::COUNTRY_CODE_MLU,
+            self::SITE_ID_MCO => self::COUNTRY_CODE_MCO,
+            self::SITE_ID_MPE => self::COUNTRY_CODE_MPE,
+        ][$siteId] ?? self::COUNTRY_CODE_MLA;
     }
 
     /**
      * Convert Mercado Pago country to siteId
-     *
-     * @param $country
-     *
-     * @return string
      */
-    public static function countryToSiteId($country): string
+    public static function countryToSiteId(string $country): string
     {
-        $countryToSiteId = [
-            self::SITE_ID_MLA => self::COUNTRY_SUFFIX_MLA,
-            self::COUNTRY_SUFFIX_MLA => self::SITE_ID_MLA,
-            self::COUNTRY_SUFFIX_MLB => self::SITE_ID_MLB,
-            self::COUNTRY_SUFFIX_MLM => self::SITE_ID_MLM,
-            self::COUNTRY_SUFFIX_MLC => self::SITE_ID_MLC,
-            self::COUNTRY_SUFFIX_MLU => self::SITE_ID_MLU,
-            self::COUNTRY_SUFFIX_MCO => self::SITE_ID_MCO,
-            self::COUNTRY_SUFFIX_MPE => self::SITE_ID_MPE,
-        ];
-
-        return array_key_exists($country, $countryToSiteId)
-            ? $countryToSiteId[$country]
-            : '';
+        // TODO(PHP8.2): Use match
+        return [
+            self::COUNTRY_CODE_MLA => self::SITE_ID_MLA,
+            self::COUNTRY_CODE_MLB => self::SITE_ID_MLB,
+            self::COUNTRY_CODE_MLM => self::SITE_ID_MLM,
+            self::COUNTRY_CODE_MLC => self::SITE_ID_MLC,
+            self::COUNTRY_CODE_MLU => self::SITE_ID_MLU,
+            self::COUNTRY_CODE_MCO => self::SITE_ID_MCO,
+            self::COUNTRY_CODE_MPE => self::SITE_ID_MPE,
+        ][$country] ?? '';
     }
 
     /**
@@ -116,7 +108,7 @@ class Country
      */
     private function getLanguagesSupportedByPlugin(): array
     {
-        return array(
+        return [
             'es_AR',
             'es_CL',
             'es_CO',
@@ -126,7 +118,7 @@ class Country
             'pt_BR',
             'en_US',
             'es_ES'
-        );
+        ];
     }
 
     /**
@@ -157,12 +149,6 @@ class Country
         return $wcCountry;
     }
 
-    public static function getWoocommerceCountryAsMercadoPagoSiteId()
-    {
-        $country = self::getWoocommerceDefaultCountry();
-        return self::countryToSiteId($country);
-    }
-
     /**
      * Get Plugin default country
      *
@@ -171,13 +157,12 @@ class Country
     public function getPluginDefaultCountry(): string
     {
         $siteId  = $this->seller->getSiteId();
-        $country = self::getWoocommerceDefaultCountry();
 
         if ($siteId) {
-            $country = $this->siteIdToCountry($siteId);
+            return self::siteIdToCountry($siteId);
         }
 
-        return $country;
+        return self::getWoocommerceDefaultCountry();
     }
 
     /**
@@ -187,22 +172,9 @@ class Country
      */
     public function getCountryConfigs(): array
     {
-        $countrySuffix = $this->getPluginDefaultCountry();
-
-        $configs = [
-            self::COUNTRY_SUFFIX_MLA => [
-                'site_id'              => self::SITE_ID_MLA,
-                'sponsor_id'           => 208682286,
-                'currency'             => 'ARS',
-                'zip_code'             => '3039',
-                'currency_symbol'      => '$',
-                'intl'                 => 'es-AR',
-                'translate'            => 'es',
-                'suffix_url'           => '.com.ar',
-                'help'                 => '/ayuda',
-                'terms_and_conditions' => '/terminos-y-politicas_194',
-            ],
-            self::COUNTRY_SUFFIX_MLB => [
+        // TODO(PHP8.2): Use match
+        return [
+            self::COUNTRY_CODE_MLB => [
                 'site_id'              => self::SITE_ID_MLB,
                 'sponsor_id'           => 208686191,
                 'currency'             => 'BRL',
@@ -214,7 +186,7 @@ class Country
                 'help'                 => '/ajuda',
                 'terms_and_conditions' => '/termos-e-politicas_194',
             ],
-            self::COUNTRY_SUFFIX_MLC => [
+            self::COUNTRY_CODE_MLC => [
                 'site_id'              => self::SITE_ID_MLC,
                 'sponsor_id'           => 208690789,
                 'currency'             => 'CLP',
@@ -226,7 +198,7 @@ class Country
                 'help'                 => '/ayuda',
                 'terms_and_conditions' => '/terminos-y-politicas_194',
             ],
-            self::COUNTRY_SUFFIX_MCO => [
+            self::COUNTRY_CODE_MCO => [
                 'site_id'              => self::SITE_ID_MCO,
                 'sponsor_id'           => 208687643,
                 'currency'             => 'COP',
@@ -238,7 +210,7 @@ class Country
                 'help'                 => '/ayuda',
                 'terms_and_conditions' => '/terminos-y-politicas_194',
             ],
-            self::COUNTRY_SUFFIX_MLM => [
+            self::COUNTRY_CODE_MLM => [
                 'site_id'              => self::SITE_ID_MLM,
                 'sponsor_id'           => 208692380,
                 'currency'             => 'MXN',
@@ -250,7 +222,7 @@ class Country
                 'help'                 => '/ayuda',
                 'terms_and_conditions' => '/terminos-y-politicas_194',
             ],
-            self::COUNTRY_SUFFIX_MPE => [
+            self::COUNTRY_CODE_MPE => [
                 'site_id'              => self::SITE_ID_MPE,
                 'sponsor_id'           => 216998692,
                 'currency'             => 'PEN',
@@ -262,7 +234,7 @@ class Country
                 'help'                 => '/ayuda',
                 'terms_and_conditions' => '/terminos-y-politicas_194',
             ],
-            self::COUNTRY_SUFFIX_MLU => [
+            self::COUNTRY_CODE_MLU => [
                 'site_id'              => self::SITE_ID_MLU,
                 'sponsor_id'           => 243692679,
                 'currency'             => 'UYU',
@@ -274,71 +246,72 @@ class Country
                 'help'                 => '/ayuda',
                 'terms_and_conditions' => '/terminos-y-politicas_194',
             ]
+        ][$this->getPluginDefaultCountry()] ?? [
+            'site_id'              => self::SITE_ID_MLA,
+            'sponsor_id'           => 208682286,
+            'currency'             => 'ARS',
+            'zip_code'             => '3039',
+            'currency_symbol'      => '$',
+            'intl'                 => 'es-AR',
+            'translate'            => 'es',
+            'suffix_url'           => '.com.ar',
+            'help'                 => '/ayuda',
+            'terms_and_conditions' => '/terminos-y-politicas_194',
         ];
-
-        return array_key_exists($countrySuffix, $configs)
-            ? $configs[$countrySuffix]
-            : $configs[self::COUNTRY_SUFFIX_MLA];
     }
 
-    /**
-     * Country Gateways
-     *
-     * @return array
-     */
-    public function getOrderGatewayForCountry(): array
+    public function getGatewayOrder(): array
     {
-        $gatewayOrder = [
-            'BR' => [
-                'MercadoPago\Woocommerce\Gateways\CustomGateway',
-                'MercadoPago\Woocommerce\Gateways\PixGateway',
-                'MercadoPago\Woocommerce\Gateways\TicketGateway',
-                'MercadoPago\Woocommerce\Gateways\BasicGateway',
-                'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+        // TODO(PHP8.2): Use match
+        return [
+            static::COUNTRY_CODE_MLB => [
+                CustomGateway::class,
+                PixGateway::class,
+                TicketGateway::class,
+                BasicGateway::class,
+                CreditsGateway::class,
             ],
-            'AR' => [
-                'MercadoPago\Woocommerce\Gateways\BasicGateway',
-                'MercadoPago\Woocommerce\Gateways\CustomGateway',
-                'MercadoPago\Woocommerce\Gateways\TicketGateway',
-                'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+            static::COUNTRY_CODE_MLA => [
+                BasicGateway::class,
+                CustomGateway::class,
+                TicketGateway::class,
+                CreditsGateway::class,
             ],
-            'UY' => [
-                'MercadoPago\Woocommerce\Gateways\BasicGateway',
-                'MercadoPago\Woocommerce\Gateways\CustomGateway',
-                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+            static::COUNTRY_CODE_MLU => [
+                BasicGateway::class,
+                CustomGateway::class,
+                TicketGateway::class,
             ],
-            'CL' => [
-                'MercadoPago\Woocommerce\Gateways\BasicGateway',
-                'MercadoPago\Woocommerce\Gateways\CustomGateway',
-                'MercadoPago\Woocommerce\Gateways\TicketGateway',
+            static::COUNTRY_CODE_MLC => [
+                BasicGateway::class,
+                CustomGateway::class,
+                TicketGateway::class,
             ],
-            'MX' => [
-                'MercadoPago\Woocommerce\Gateways\BasicGateway',
-                'MercadoPago\Woocommerce\Gateways\CustomGateway',
-                'MercadoPago\Woocommerce\Gateways\TicketGateway',
-                'MercadoPago\Woocommerce\Gateways\CreditsGateway',
+            static::COUNTRY_CODE_MLM => [
+                BasicGateway::class,
+                CustomGateway::class,
+                TicketGateway::class,
+                CreditsGateway::class,
             ],
-            'CO' => [
-                'MercadoPago\Woocommerce\Gateways\BasicGateway',
-                'MercadoPago\Woocommerce\Gateways\CustomGateway',
-                'MercadoPago\Woocommerce\Gateways\TicketGateway',
-                'MercadoPago\Woocommerce\Gateways\PseGateway',
+            static::COUNTRY_CODE_MCO => [
+                BasicGateway::class,
+                CustomGateway::class,
+                TicketGateway::class,
+                PseGateway::class,
             ],
-            'PE' => [
-                'MercadoPago\Woocommerce\Gateways\CustomGateway',
-                'MercadoPago\Woocommerce\Gateways\YapeGateway',
-                'MercadoPago\Woocommerce\Gateways\TicketGateway',
-                'MercadoPago\Woocommerce\Gateways\BasicGateway',
+            static::COUNTRY_CODE_MPE => [
+                CustomGateway::class,
+                YapeGateway::class,
+                TicketGateway::class,
+                BasicGateway::class,
             ],
-        ];
-
-        return $gatewayOrder[$this-> getPluginDefaultCountry()] ?? [ //default gateways and orders
-            'MercadoPago\Woocommerce\Gateways\BasicGateway',
-            'MercadoPago\Woocommerce\Gateways\CustomGateway',
-            'MercadoPago\Woocommerce\Gateways\CreditsGateway',
-            'MercadoPago\Woocommerce\Gateways\PixGateway',
-            'MercadoPago\Woocommerce\Gateways\PseGateway',
-            'MercadoPago\Woocommerce\Gateways\TicketGateway',
+        ][$this->getPluginDefaultCountry()] ?? [ //default gateways and orders
+            BasicGateway::class,
+            CustomGateway::class,
+            CreditsGateway::class,
+            PixGateway::class,
+            PseGateway::class,
+            TicketGateway::class,
         ];
     }
 }

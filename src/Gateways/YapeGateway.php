@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Gateways;
 use Exception;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
+use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Transactions\YapeTransaction;
 
@@ -15,8 +16,6 @@ if (!defined('ABSPATH')) {
 class YapeGateway extends AbstractGateway
 {
     public const ID = 'woo-mercado-pago-yape';
-
-    public const CHECKOUT_NAME = 'checkout-yape';
 
     public const WEBHOOK_API_NAME = 'WC_WooMercadoPago_Yape_Gateway';
 
@@ -58,14 +57,9 @@ class YapeGateway extends AbstractGateway
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
     }
 
-    /**
-     * Get checkout name
-     *
-     * @return string
-     */
     public function getCheckoutName(): string
     {
-        return self::CHECKOUT_NAME;
+        return 'checkout-yape';
     }
 
     public function formFieldsMainSection(): array
@@ -96,22 +90,6 @@ class YapeGateway extends AbstractGateway
                 'class' => 'mp-small-text',
             ],
         ];
-    }
-
-    /**
-     * Added gateway scripts
-     *
-     * @param string $gatewaySection
-     *
-     * @return void
-     */
-    public function payment_scripts(string $gatewaySection): void
-    {
-        parent::payment_scripts($gatewaySection);
-
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->registerCheckoutScripts();
-        }
     }
 
     /**
@@ -184,35 +162,15 @@ class YapeGateway extends AbstractGateway
         ];
     }
 
-    /**
-     * Process payment and create woocommerce order
-     *
-     * @param $order_id
-     *
-     * @return array
-     */
-    public function process_payment($order_id): array
+    public function proccessPaymentInternal($order): array
     {
-        $order = wc_get_order($order_id);
+        $checkout          = $this->getCheckoutMercadopagoYape($order);
+        $this->transaction = new YapeTransaction($this, $order, $checkout);
+        $response          = $this->transaction->createPayment();
 
-        try {
-            parent::process_payment($order_id);
-            $checkout = $this->getCheckoutMercadopagoYape($order);
-            $this->transaction = new YapeTransaction($this, $order, $checkout);
-            $response          = $this->transaction->createPayment();
+        $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
 
-            $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
-
-            return $this->handleResponseStatus($order, $response);
-        } catch (Exception $e) {
-            return $this->processReturnFail(
-                $e,
-                $e->getMessage(),
-                self::LOG_SOURCE,
-                (array) $order,
-                true
-            );
-        }
+        return $this->handleResponseStatus($order, $response);
     }
 
     /**
@@ -224,7 +182,6 @@ class YapeGateway extends AbstractGateway
      */
     private function getCheckoutMercadopagoYape($order): array
     {
-
         if (isset($_POST['mercadopago_yape'])) {
             $checkout = Form::sanitizedPostData('mercadopago_yape');
             $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
@@ -264,7 +221,6 @@ class YapeGateway extends AbstractGateway
                         'redirect' => $urlReceived,
                     ];
                 case 'pending':
-                    // no break
                 case 'in_process':
                     $this->mercadopago->helpers->cart->emptyCart();
 
@@ -293,11 +249,7 @@ class YapeGateway extends AbstractGateway
     public static function isAvailable(): bool
     {
         global $mercadopago;
-
-        $siteId  = $mercadopago->sellerConfig->getSiteId();
-        $country = $mercadopago->helpers->country::getWoocommerceDefaultCountry();
-
-        return $siteId === 'MPE' || ($siteId === '' && $country === 'PE');
+        return $mercadopago->helpers->country->getPluginDefaultCountry() === Country::COUNTRY_CODE_MPE;
     }
 
     public function getRejectedPaymentErrorMessage(string $statusDetail): string

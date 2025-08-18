@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.4.5] - 2025-08-18
+### Fixed
+- Changed the error message when closing the modal in the fast payments flow
+- Obtained logged-in users emails as a fallback in the fast payments flow
+- Text and translation corrections in the fast payments flow
+- Responsiveness improvements in the fast payments flow
+- Check if `downloadSelected` button exists before using it
+
 ## [8.4.4] - 2025-08-11
 ### Fixed
 - Does not block payment if email is not filled in

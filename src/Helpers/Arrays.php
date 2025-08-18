@@ -44,9 +44,26 @@ class Arrays
 
     /**
      * Checks if $array contains any empty element
+     *
+     * @param ?array $keys Array of specific keys to check. If null, checks all elements
      */
-    public static function anyEmpty(array $array): bool
+    public static function anyEmpty(array $array, ?array $keys = null): bool
     {
+        if (isset($keys)) {
+            $array = static::only($array, $keys);
+            return array_diff_key(array_flip($keys), $array) || static::anyEmpty($array);
+        }
         return static::any($array, fn($element): bool => empty($element));
+    }
+
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * Returns a new array containing only the specified key(s) from $array.
+     *
+     * @param array|mixed $keys One or multiple keys
+     */
+    public static function only(array $array, $keys): array
+    {
+        return array_intersect_key($array, array_flip((array) $keys));
     }
 }

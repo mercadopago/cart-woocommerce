@@ -33,8 +33,6 @@ class CoreNotificationTest extends TestCase
 
     public function setUp(): void
     {
-        $this->woocommerceSetUp();
-
         // Mock WordPress wp_is_mobile function
         WP_Mock::userFunction('wp_is_mobile', [
             'return' => false

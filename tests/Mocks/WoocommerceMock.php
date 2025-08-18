@@ -7,19 +7,10 @@ use WP_Mock;
 
 trait WoocommerceMock
 {
-    public function setUp(): void
-    {
-        // All content on woocommerceSetUp() to simplify extending setUp()
-        $this->woocommerceSetUp();
-    }
-
-    public function tearDown(): void
-    {
-        // All content on woocommerceTearDown() to simplify extending tearDown()
-        $this->woocommerceTearDown();
-    }
-
-    private function woocommerceSetUp(): void
+    /**
+     * @before
+     */
+    public function woocommerceSetUp(): void
     {
         WP_Mock::setUp();
 
@@ -36,7 +27,10 @@ trait WoocommerceMock
         Mockery::mock('WC_Order_Item_Shipping');
     }
 
-    private function woocommerceTearDown()
+    /**
+     * @after
+     */
+    public function woocommerceTearDown()
     {
         WP_Mock::tearDown();
     }

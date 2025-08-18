@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Translations;
 
+use ArrayAccess;
 use MercadoPago\Woocommerce\Helpers\Links;
 
 if (!defined('ABSPATH')) {
@@ -10,29 +11,77 @@ if (!defined('ABSPATH')) {
 
 class StoreTranslations
 {
-    public array $commonCheckout = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $commonCheckout = [];
 
-    public array $basicCheckout = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $basicCheckout = [];
 
-    public array $creditsCheckout = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $creditsCheckout = [];
 
-    public array $customCheckout = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $customCheckout = [];
 
-    public array $pixCheckout = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $pixCheckout = [];
 
-    public array $ticketCheckout = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $ticketCheckout = [];
 
-    public array $pseCheckout = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $pseCheckout = [];
 
-    public array $yapeCheckout = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $yapeCheckout = [];
 
-    public array $orderStatus = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $orderStatus = [];
 
-    public array $commonMessages = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $commonMessages = [];
 
-    public array $buyerRefusedMessages = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $buyerRefusedMessages = [];
 
-    public array $threeDsTranslations;
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $threeDsTranslations;
 
     public array $links;
 
@@ -262,7 +311,7 @@ class StoreTranslations
             'account_money_text'                                  => __('Account Money', 'woocommerce-mercadopago'),
             'account_money_invested_text'                         => __('Account Money Invested', 'woocommerce-mercadopago'),
             'interest_free_part_one_text'                         => __('Up to', 'woocommerce-mercadopago'),
-            'interest_free_part_two_text'                         => __('interest-free installments', 'woocommerce-mercadopago'),
+            'interest_free_part_two_text'                         => _x('interest-free installments', 'frontend checkout display', 'woocommerce-mercadopago'),
             'installments_text'                                   => __('installments', 'woocommerce-mercadopago'),
             'installments_required'                               => __('Select an option.', 'woocommerce-mercadopago'),
             'security_code_input_title_text'                      => __('Security code', 'woocommerce-mercadopago'),
@@ -273,6 +322,7 @@ class StoreTranslations
             'security_code_error_message_text'                    => __('Security code is required', 'woocommerce-mercadopago'),
             'placeholders_cardholder_name'                        => __('E.g.: María López', 'woocommerce-mercadopago'),
             'mercado_pago_card_name'                              => __('Mercado Pago Prepaid Card', 'woocommerce-mercadopago'),
+            'card_number_validation_error'                        => __('Invalid card number. Please check the information provided.', 'woocommerce-mercadopago'),
             'locale'                                              => __('en-US', 'woocommerce-mercadopago'),
         ];
     }

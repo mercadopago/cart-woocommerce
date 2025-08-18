@@ -16,26 +16,33 @@ trait GatewayMock
      */
     private $order;
 
-    public function setUp(): void
+    /**
+     * @before
+     */
+    public function gatewaySetup()
     {
-        // All content on gatewaySetup() to simplify extending setUp()
-        $this->gatewaySetup();
-    }
-
-    private function gatewaySetup()
-    {
-        $this->woocommerceSetUp();
-
         $this->gateway = Mockery::mock($this->gatewayClass)->makePartial();
         $this->gateway->mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
+        MercadoPagoMock::mockTranslations($this->gateway, ['storeTranslations', 'adminTranslations']);
+        $this->setNotAccessibleProperty($this->gateway, 'links', new ArrayMock(fn() => random()->url()));
+    }
+
+    private function processPaymentInternalMock(bool $isBlocks): void
+    {
+        $this->order = Mockery::mock(\WC_Order::class);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->markPaymentAsBlocks($this->order, $isBlocks ? 'yes' : 'no')
+            ->andReturnSelf();
     }
 
     private function abstractGatewayProcessPaymentMock(bool $isBlocks, bool $isTestMode = false): void
     {
-        $this->order = Mockery::mock('WC_Order');
+        $this->processPaymentInternalMock($isBlocks);
 
         WP_Mock::userFunction('wc_get_order')
-            ->twice()
+            ->once()
             ->with(1)
             ->andReturn($this->order);
 
@@ -48,11 +55,6 @@ trait GatewayMock
             ->expects()
             ->calculateSubtotalWithCommission($this->gateway)
             ->andReturn($this->gateway->commission = 0);
-
-        $this->gateway->mercadopago->orderMetadata
-            ->expects()
-            ->markPaymentAsBlocks($this->order, $isBlocks ? 'yes' : 'no')
-            ->andReturnSelf();
 
         $productionMode = $isTestMode ? 'no' : 'yes';
 
@@ -70,10 +72,5 @@ trait GatewayMock
             ->expects()
             ->setUsedGatewayData($this->order, $this->gatewayClass::ID)
             ->andReturnSelf();
-    }
-
-    private function mockGatewayLinks(array $keys)
-    {
-        $this->setNotAccessibleProperty($this->gateway, 'links', MercadoPagoMock::fillArray($keys, random()->url()));
     }
 }

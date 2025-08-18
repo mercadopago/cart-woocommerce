@@ -28,8 +28,6 @@ class RefundHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->woocommerceSetUp();
-
         // Mock WordPress sanitize_text_field function
         WP_Mock::userFunction('sanitize_text_field', [
             'return' => function ($text) {

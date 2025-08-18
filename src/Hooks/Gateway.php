@@ -81,7 +81,7 @@ class Gateway
      */
     public function registerGateway(string $gatewayClass): void
     {
-        if (call_user_func([$gatewayClass, 'isAvailable'])) {
+        if ($gatewayClass::isAvailable()) {
             $this->store->addAvailablePaymentGateway($gatewayClass);
 
             add_filter('woocommerce_payment_gateways', function ($methods) use ($gatewayClass) {

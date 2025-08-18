@@ -91,8 +91,8 @@ class CreditsGatewayTest extends TestCase
             ->expects()
             ->processReturnFail(
                 Mockery::type(BadMethodCallException::class),
-                'error',
-                'MercadoPago_CreditsGateway',
+                Mockery::type('string'),
+                CreditsGateway::LOG_SOURCE,
                 [],
                 true
             )->andReturn($return = [

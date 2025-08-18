@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.4.4';
+    private const PLUGIN_VERSION = '8.4.5';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -97,7 +97,7 @@ class WoocommerceMercadoPago
      */
     public function loadPluginTextDomain(): void
     {
-        $textDomain = $this->pluginMetadata('text-domain');
+        $textDomain = $this->pluginMetadata('TextDomain');
         unload_textdomain($textDomain);
 
         $location_splitted = explode('_', apply_filters('plugin_locale', get_locale(), $textDomain));
@@ -106,7 +106,7 @@ class WoocommerceMercadoPago
         $country = $location_splitted[1] ?? '';
         $locale = in_array($country, ['MX']) ? $locale . '_' . $country : $locale;
 
-        load_textdomain($textDomain, Paths::basePath(Paths::join($this->pluginMetadata('domain-path'), "woocommerce-mercadopago-$locale.mo")));
+        load_textdomain($textDomain, Paths::basePath(Paths::join($this->pluginMetadata('DomainPath'), "woocommerce-mercadopago-$locale.mo")));
     }
 
     /**
@@ -131,8 +131,7 @@ class WoocommerceMercadoPago
      */
     public function registerGateways(): void
     {
-        $gatewaysForCountry = $this->country->getOrderGatewayForCountry();
-        foreach ($gatewaysForCountry as $gateway) {
+        foreach ($this->country->getGatewayOrder() as $gateway) {
             $this->hooks->gateway->registerGateway($gateway);
         }
     }
@@ -485,26 +484,7 @@ class WoocommerceMercadoPago
     /**
      * Plugin file metadata
      *
-     * Metadata map:
-     * ```
-     * [
-     *     'name'             => 'Plugin Name',
-     *     'uri'              => 'Plugin URI',
-     *     'description'      => 'Description',
-     *     'version'          => 'Version',
-     *     'author'           => 'Author',
-     *     'author-uri'       => 'Author URI',
-     *     'text-domain'      => 'Text Domain',
-     *     'domain-path'      => 'Domain Path',
-     *     'network'          => 'Network',
-     *     'min-wp'           => 'Requires at least',
-     *     'min-wc'           => 'WC requires at least',
-     *     'min-php'          => 'Requires PHP',
-     *     'tested-wc'        => 'WC tested up to',
-     *     'update-uri'       => 'Update URI',
-     *     'required-plugins' => 'Requires Plugins',
-     * ]
-     * ```
+     * @see get_plugin_data()
      *
      * @param string $key metadata desired element key
      *
@@ -512,24 +492,8 @@ class WoocommerceMercadoPago
      */
     public function pluginMetadata(?string $key = null)
     {
-        $data = get_file_data(MP_PLUGIN_FILE, [
-            'name' => 'Plugin Name',
-            'uri' => 'Plugin URI',
-            'description' => 'Description',
-            'version' => 'Version',
-            'author' => 'Author',
-            'author-uri' => 'Author URI',
-            'text-domain' => 'Text Domain',
-            'domain-path' => 'Domain Path',
-            'network' => 'Network',
-            'min-wp' => 'Requires at least',
-            'min-wc' => 'WC requires at least',
-            'min-php' => 'Requires PHP',
-            'tested-wc' => 'WC tested up to',
-            'update-uri' => 'Update URI',
-            'required-plugins' => 'Requires Plugins',
-        ]);
-
+        static $data;
+        $data ??= get_plugin_data(MP_PLUGIN_FILE, false, false);
         return isset($key) ? $data[$key] : $data;
     }
 }

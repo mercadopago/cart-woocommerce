@@ -19,11 +19,6 @@ class BasicGateway extends AbstractGateway
     /**
      * @const
      */
-    public const CHECKOUT_NAME = 'checkout-basic';
-
-    /**
-     * @const
-     */
     public const WEBHOOK_API_NAME = 'WC_WooMercadoPago_Basic_Gateway';
 
     /**
@@ -66,6 +61,11 @@ class BasicGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+    }
+
+    public function getCheckoutName(): string
+    {
+        return 'checkout-basic';
     }
 
     public function formFieldsMainSection(): array
@@ -164,22 +164,6 @@ class BasicGateway extends AbstractGateway
     }
 
     /**
-     * Added gateway scripts
-     *
-     * @param string $gatewaySection
-     *
-     * @return void
-     */
-    public function payment_scripts(string $gatewaySection): void
-    {
-        parent::payment_scripts($gatewaySection);
-
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->registerCheckoutScripts();
-        }
-    }
-
-    /**
      * Register checkout scripts
      *
      * @return void
@@ -226,18 +210,13 @@ class BasicGateway extends AbstractGateway
         ];
     }
 
-    /**
-     * Process payment and create woocommerce order
-     *
-     * @param $order_id
-     *
-     * @return array
-     */
-    public function process_payment($order_id): array
+    public function proccessPaymentInternal($order): array
     {
-        $order             = wc_get_order($order_id);
         try {
-            $this->saveOrderMetadata($order);
+            $this->mercadopago->orderMetadata->markPaymentAsBlocks(
+                $order,
+                isset($_POST['wc-woo-mercado-pago-basic-new-payment-method']) ? "yes" : "no"
+            );
 
             $method = $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect');
             if ($method === 'modal') {
@@ -263,24 +242,6 @@ class BasicGateway extends AbstractGateway
                 (array) $order,
                 true
             );
-        }
-    }
-
-    /**
-     * Save order metadata
-     *
-     * @param $order
-     *
-     * @return void
-     */
-    protected function saveOrderMetadata($order): void
-    {
-        parent::process_payment($order->get_id());
-
-        if (isset($_POST['wc-woo-mercado-pago-basic-new-payment-method'])) {
-            $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
-        } else {
-            $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
         }
     }
 

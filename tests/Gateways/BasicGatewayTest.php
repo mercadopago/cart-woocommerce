@@ -2,9 +2,10 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
+use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use Mockery\Exception\BadMethodCallException;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\BasicGateway;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 use Mockery;
@@ -16,70 +17,67 @@ use WP_Mock;
  */
 class BasicGatewayTest extends TestCase
 {
-    use WoocommerceMock;
+    use GatewayMock;
 
-    public function testProcessPaymentModal()
+    private string $gatewayClass = BasicGateway::class;
+
+    /**
+     * @var \Mockery\MockInterface|BasicGateway
+     */
+    private $gateway;
+
+    private function processPaymentMock(bool $isBlocks): void
     {
-        $gateway = Mockery::mock(BasicGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->abstractGatewayProcessPaymentMock($isBlocks);
 
-        $order = Mockery::mock('WC_Order');
-        $order->shouldReceive('get_checkout_payment_url')
+        $_POST['wc-woo-mercado-pago-basic-new-payment-method'] = $isBlocks ? 1 : null;
+    }
+
+    /**
+     * @testWith [true]
+     *           [false]
+     */
+    public function testProcessPaymentModal(bool $isBlocks)
+    {
+        $this->processPaymentMock($isBlocks);
+
+        $this->order->shouldReceive('get_checkout_payment_url')
             ->once()
             ->andReturn('http://localhost');
-        WP_Mock::userFunction('wc_get_order')
-            ->once()
-            ->with(1)
-            ->andReturn($order);
 
-        $mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-        $mercadopagoMock->hooks->options->shouldReceive('getGatewayOption')
+        $this->gateway->mercadopago->hooks->options->shouldReceive('getGatewayOption')
             ->once()
             ->andReturn('modal');
-        $gateway->mercadopago = $mercadopagoMock;
 
-        $gateway->shouldReceive('saveOrderMetadata')
-            ->once()
-            ->with($order)
-            ->andReturn([]);
-
-        $result = $gateway->process_payment(1);
+        $result = $this->gateway->process_payment(1);
         $this->assertEquals([
             'result' => 'success',
             'redirect' => 'http://localhost',
         ], $result);
     }
 
-    public function testProcessPaymentRedirect()
+    /**
+     * @testWith [true]
+     *           [false]
+     */
+    public function testProcessPaymentRedirect(bool $isBlocks)
     {
-        $gateway = Mockery::mock(BasicGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        $this->processPaymentMock($isBlocks);
 
-        $order = Mockery::mock('WC_Order');
-        WP_Mock::userFunction('wc_get_order')
-            ->once()
-            ->with(1)
-            ->andReturn($order);
-
-        $mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-        $mercadopagoMock->hooks->options->shouldReceive('getGatewayOption')
+        $this->gateway->mercadopago->hooks->options->shouldReceive('getGatewayOption')
             ->once()
             ->andReturn('redirect');
-        $mercadopagoMock->storeConfig->shouldReceive('isTestMode')
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')
             ->once()
             ->andReturn(false);
-        $gateway->mercadopago = $mercadopagoMock;
 
-        $gateway->shouldReceive('saveOrderMetadata')
-            ->once()
-            ->with($order)
-            ->andReturn([]);
-
-        $basicTransactionMock = Mockery::mock('overload:' . BasicTransaction::class);
-        $basicTransactionMock->shouldReceive('createPreference')
+        Mockery::mock('overload:' . BasicTransaction::class)
+            ->shouldReceive('createPreference')
             ->andReturn([
                 'init_point' => 'http://localhost',
             ]);
 
-        $result = $gateway->process_payment(1);
+        $result = $this->gateway->process_payment(1);
         $this->assertEquals([
             'result' => 'success',
             'redirect' => 'http://localhost',
@@ -88,39 +86,26 @@ class BasicGatewayTest extends TestCase
 
     public function testProcessPaymentFail()
     {
-        $gateway = Mockery::mock(BasicGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
+        WP_Mock::userFunction('wc_get_order');
 
-        $order = Mockery::mock('WC_Order');
-        WP_Mock::userFunction('wc_get_order')
-            ->once()
-            ->with(1)
-            ->andReturn($order);
+        $this->gateway
+            ->expects()
+            ->processReturnFail(
+                Mockery::type(BadMethodCallException::class),
+                Mockery::type('string'),
+                BasicGateway::LOG_SOURCE,
+                [],
+                true
+            )->andReturn($return = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'error',
+            ]);
 
-        $mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-        $mercadopagoMock->hooks->options->shouldReceive('getGatewayOption')
-            ->once()
-            ->andReturn('redirect');
-        $mercadopagoMock->helpers->notices->shouldReceive('storeNotice')
-            ->once()
-            ->with('error', 'error')
-            ->andReturn(null);
-        $gateway->mercadopago = $mercadopagoMock;
-
-        $gateway->shouldReceive('saveOrderMetadata')
-            ->once()
-            ->with($order)
-            ->andReturn([]);
-
-        $basicTransactionMock = Mockery::mock('overload:' . BasicTransaction::class);
-        $basicTransactionMock->shouldReceive('createPreference')
-            ->andThrow(new \Exception('new exception'));
-
-        $result = $gateway->process_payment(1);
-        $this->assertEquals([
-            'result' => 'fail',
-            'redirect' => '',
-            'message' => 'error'
-        ], $result);
+        $this->assertEquals(
+            $return,
+            $this->gateway->process_payment(1)
+        );
     }
 
     public function testRenderOrderForm()

@@ -27,8 +27,6 @@ class IntegrationWebhookTest extends TestCase
 
     public function setUp(): void
     {
-        $this->woocommerceSetUp();
-
         WP_Mock::userFunction('admin_url', [
             'return' => 'url'
         ]);
