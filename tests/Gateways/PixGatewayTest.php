@@ -6,7 +6,7 @@ use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
-use MercadoPago\Woocommerce\Tests\Traits\AssertArraySchema;
+use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
 use MercadoPago\Woocommerce\Tests\Traits\SetNotAccessibleProperties;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
 use PHPUnit\Framework\Constraint\IsType;
@@ -18,7 +18,7 @@ class PixGatewayTest extends TestCase
 {
     use GatewayMock;
     use SetNotAccessibleProperties;
-    use AssertArraySchema;
+    use AssertArrayMap;
 
     private string $gatewayClass = PixGateway::class;
 
@@ -45,6 +45,7 @@ class PixGatewayTest extends TestCase
 
         $_POST['wc-woo-mercado-pago-pix-new-payment-method'] = $isBlocks ? 1 : null;
     }
+
     /**
      * @testWith [true, "pending_waiting_payment"]
      *           [false, "pending_waiting_transfer"]
@@ -78,12 +79,6 @@ class PixGatewayTest extends TestCase
         $this->gateway->mercadopago->helpers->cart
             ->expects()
             ->emptyCart();
-
-        $this->gateway->storeTranslations = MercadoPagoMock::mockTranslations([
-            'customer_not_paid',
-            'congrats_title',
-            'congrats_subtitle',
-        ]);
 
         $this->gateway->mercadopago->hooks->order
             ->expects()
@@ -124,7 +119,7 @@ class PixGatewayTest extends TestCase
             ->andReturn('invalid');
 
         $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages = [
-            'buyer_default' => random()->text(20)
+            'buyer_default' => random()->word()
         ];
 
         $this->gateway
@@ -176,36 +171,7 @@ class PixGatewayTest extends TestCase
 
     public function testSellerWithPixFields(): void
     {
-        $this->gateway->adminTranslations = MercadoPagoMock::mockTranslations([
-            'expiration_date_title',
-            'expiration_date_description',
-            'expiration_date_options_15_minutes',
-            'expiration_date_options_30_minutes',
-            'expiration_date_options_60_minutes',
-            'expiration_date_options_12_hours',
-            'expiration_date_options_24_hours',
-            'expiration_date_options_2_days',
-            'expiration_date_options_3_days',
-            'expiration_date_options_4_days',
-            'expiration_date_options_5_days',
-            'expiration_date_options_6_days',
-            'expiration_date_options_7_days',
-            'currency_conversion_title',
-            'currency_conversion_subtitle',
-            'currency_conversion_descriptions_enabled',
-            'currency_conversion_descriptions_disabled',
-            'card_info_title',
-            'card_info_subtitle',
-            'card_info_button_text',
-            'advanced_configuration_title',
-            'advanced_configuration_subtitle',
-        ]);
-
-        $this->mockGatewayLinks([
-            'mercadopago_pix'
-        ]);
-
-        $this->assertArraySchema(
+        $this->assertArrayMap(
             [
                 'expiration_date' => [
                     'type' => IsType::TYPE_STRING,
@@ -293,26 +259,7 @@ class PixGatewayTest extends TestCase
             ->expects()
             ->getWoocommerceTemplateHtml(Mockery::type('string'), Mockery::type('array'));
 
-        $this->gateway->adminTranslations = MercadoPagoMock::mockTranslations([
-            'steps_title',
-            'steps_step_one_text',
-            'steps_step_two_text',
-            'steps_step_three_text',
-            'steps_observation_one',
-            'steps_observation_two',
-            'steps_button_about_pix',
-            'steps_observation_three',
-            'steps_link_title_one',
-            'header_title',
-            'header_description'
-        ]);
-
-        $this->mockGatewayLinks([
-            'mercadopago_pix',
-            'mercadopago_support'
-        ]);
-
-        $this->assertArraySchema(
+        $this->assertArrayMap(
             [
                 'header' => [
                     'type' => IsType::TYPE_STRING,

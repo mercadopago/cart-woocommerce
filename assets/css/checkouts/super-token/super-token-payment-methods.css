@@ -41,6 +41,7 @@
     background-color: white;
     border: 1px solid #e5e5e5;
     width: 100%;
+    margin: 0 !important;
 }
 
 .mp-super-token-payment-method__selected {
@@ -380,16 +381,13 @@
 
 @container payment-method-header (max-width: 300px) {
     .mp-super-token-payment-method__content {
-        width: 45%;
+        width: 100%;
     }
 }
 
-@container payment-method-header (max-width: 200px) {
-    .mp-super-token-payment-method__content {
-        width: 20%;
+/* TODO: Aguardando permissão de UX para remover o valor prop */
+/* @container payment-method-header (max-width: 255px) {
+    .mp-super-token-payment-method__value-prop {
+        display: none;
     }
-
-    .mp-super-token-payment-method__title {
-        white-space: nowrap;
-    }
-}
+} */

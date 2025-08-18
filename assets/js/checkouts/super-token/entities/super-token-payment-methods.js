@@ -178,6 +178,11 @@ class MPSuperTokenPaymentMethods {
 
     removePaymentMethodsListClasses() {
         const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
+        const checkoutContainer = customCheckoutEntireElement?.querySelector(this.CHECKOUT_CONTAINER_SELECTOR);
+
+        if (checkoutContainer) {
+            checkoutContainer.style.height = 'auto';
+        }
 
         customCheckoutEntireElement?.parentElement?.classList.remove(this.SUPER_TOKEN_STYLES.REMOVE_BOX_SHADOW);
         customCheckoutEntireElement?.classList.remove(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LIST);
@@ -755,7 +760,7 @@ class MPSuperTokenPaymentMethods {
                             this.toggleSecurityCodeErrorMessage('', paymentMethod);
                         }
 
-                        const errorMessage = e.errorMessages[0].cause;
+                        const errorMessage = e.errorMessages[0]?.cause ?? '';
 
                         this.toggleSecurityCodeErrorMessage(errorMessage, paymentMethod);
                     })

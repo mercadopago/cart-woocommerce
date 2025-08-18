@@ -53,7 +53,7 @@
     min-height: var(--andes-spacing-48) !important;
     position: relative !important;
     display: flex !important;
-    justify-content: flex-end !important;
+    justify-content: flex-start !important;
     align-items: center !important;
     font-size: var(--andes-font-size-16) !important;
     line-height: 20px !important;
@@ -109,6 +109,10 @@
     line-height: 22px !important; /* 125% */
     padding-left: 12px !important;
     overflow: hidden !important;
+    /* Limita a largura máxima do texto de acordo com o tamanho renderizado da tela */
+    max-width: 60vw !important;
+    /* Evita sobrescrita em temas com text-transform: uppercase */
+    text-transform: none !important;
 }
 
 .andes-dropdown__trigger[data-placeholder="true"] .andes-dropdown__selected-text {

@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Gateways;
 
 use Exception;
 use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
+use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
@@ -21,11 +22,6 @@ class CustomGateway extends AbstractGateway
      * @const
      */
     public const ID = 'woo-mercado-pago-custom';
-
-    /**
-     * @const
-     */
-    public const CHECKOUT_NAME = 'checkout-custom';
 
     /**
      * @const
@@ -79,14 +75,9 @@ class CustomGateway extends AbstractGateway
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
     }
 
-    /**
-     * Get checkout name
-     *
-     * @return string
-     */
     public function getCheckoutName(): string
     {
-        return self::CHECKOUT_NAME;
+        return 'checkout-custom';
     }
 
     public function formFieldsHeaderSection(): array
@@ -169,22 +160,6 @@ class CustomGateway extends AbstractGateway
                 ],
             ],
         ];
-    }
-
-    /**
-     * Added gateway scripts
-     *
-     * @param string $gatewaySection
-     *
-     * @return void
-     */
-    public function payment_scripts(string $gatewaySection): void
-    {
-        parent::payment_scripts($gatewaySection);
-
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->registerCheckoutScripts();
-        }
     }
 
     public function registerCheckoutStyle()
@@ -351,6 +326,9 @@ class CustomGateway extends AbstractGateway
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_supertoken_trigger_handler',
             $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/super-token-trigger-handler'),
+            [
+                'current_user_email' => wp_get_current_user()->user_email ?? '',
+            ]
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
@@ -471,79 +449,62 @@ class CustomGateway extends AbstractGateway
         ];
     }
 
-    /**
-     * Process payment and create woocommerce order
-     *
-     * @param $order_id
-     *
-     * @return array
-     */
-    public function process_payment($order_id): array
+    public function proccessPaymentInternal($order): array
     {
-        $order = wc_get_order($order_id);
+        $checkout = $this->getCheckoutFormData($order);
 
-        try {
-            $checkout = $this->getCheckoutFormData($order);
+        switch ($checkout['checkout_type']) {
+            case 'wallet_button':
+                $this->mercadopago->logs->file->info('Preparing to render wallet button checkout', self::LOG_SOURCE);
 
-            parent::process_payment($order_id);
+                return [
+                    'result'   => 'success',
+                    'redirect' => $this->mercadopago->helpers->url->setQueryVar(
+                        'wallet_button',
+                        'autoOpen',
+                        $order->get_checkout_payment_url(true)
+                    ),
+                ];
 
-            switch ($checkout['checkout_type']) {
-                case 'wallet_button':
-                    $this->mercadopago->logs->file->info('Preparing to render wallet button checkout', self::LOG_SOURCE);
+            case 'super_token':
+                $this->mercadopago->logs->file->info('Preparing to get response of custom super token checkout', self::LOG_SOURCE);
+                if (
+                    !Arrays::anyEmpty($checkout, [
+                        'token',
+                        'amount',
+                        'payment_method_id',
+                        'payment_type_id',
+                    ])
+                    && ($checkout['payment_type_id'] != 'credit_card' || (!empty($checkout['installments']) && $checkout['installments'] > 0))
+                ) {
+                    $this->transaction = new SupertokenTransaction($this, $order, $checkout);
+                    $response          = $this->transaction->createPayment();
 
-                    return [
-                        'result'   => 'success',
-                        'redirect' => $this->mercadopago->helpers->url->setQueryVar(
-                            'wallet_button',
-                            'autoOpen',
-                            $order->get_checkout_payment_url(true)
-                        ),
-                    ];
+                    $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response, $this->transaction->getInternalMetadata());
+                    return $this->handleResponseStatus($order, $response);
+                }
 
-                case 'super_token':
-                    $this->mercadopago->logs->file->info('Preparing to get response of custom super token checkout', self::LOG_SOURCE);
-                    if (
-                        !empty($checkout['token']) &&
-                        !empty($checkout['amount']) &&
-                        !empty($checkout['payment_method_id']) &&
-                        !empty($checkout['payment_type_id']) &&
-                        ($checkout['payment_type_id'] != 'credit_card' || (!empty($checkout['installments']) && $checkout['installments'] > 0))
-                    ) {
-                        $this->transaction = new SupertokenTransaction($this, $order, $checkout);
-                        $response          = $this->transaction->createPayment();
+                throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
 
-                        $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response, $this->transaction->getInternalMetadata());
-                        return $this->handleResponseStatus($order, $response);
-                    }
+            default:
+                $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
 
-                    throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
+                if (
+                    !Arrays::anyEmpty($checkout, [
+                        'token',
+                        'amount',
+                        'payment_method_id',
+                        'installments',
+                    ]) && $checkout['installments'] !== -1
+                ) {
+                    $this->transaction = new CustomTransaction($this, $order, $checkout);
+                    $response          = $this->transaction->createPayment();
 
-                default:
-                    $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
+                    $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
+                    return $this->handleResponseStatus($order, $response);
+                }
 
-                    if (
-                        !empty($checkout['token']) &&
-                        !empty($checkout['amount']) &&
-                        !empty($checkout['payment_method_id']) &&
-                        !empty($checkout['installments']) && $checkout['installments'] !== -1
-                    ) {
-                        $this->transaction = new CustomTransaction($this, $order, $checkout);
-                        $response          = $this->transaction->createPayment();
-
-                        $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
-                        return $this->handleResponseStatus($order, $response);
-                    }
-
-                    throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
-            }
-        } catch (Exception $e) {
-            return $this->processReturnFail(
-                $e,
-                $e->getMessage(),
-                self::LOG_SOURCE,
-                (array) $order,
-                true
-            );
+                throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
         }
     }
 

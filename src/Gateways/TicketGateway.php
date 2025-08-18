@@ -6,9 +6,9 @@ use Exception;
 use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
+use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Transactions\TicketTransaction;
-use WP_User;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -22,11 +22,6 @@ class TicketGateway extends AbstractGateway
      * @const
      */
     public const ID = 'woo-mercado-pago-ticket';
-
-    /**
-     * @const
-     */
-    public const CHECKOUT_NAME = 'checkout-ticket';
 
     /**
      * @const
@@ -73,14 +68,9 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
     }
 
-    /**
-     * Get checkout name
-     *
-     * @return string
-     */
     public function getCheckoutName(): string
     {
-        return self::CHECKOUT_NAME;
+        return 'checkout-ticket';
     }
 
     public function formFieldsMainSection(): array
@@ -124,22 +114,6 @@ class TicketGateway extends AbstractGateway
                 ],
             ],
         ];
-    }
-
-    /**
-     * Added gateway scripts
-     *
-     * @param string $gatewaySection
-     *
-     * @return void
-     */
-    public function payment_scripts(string $gatewaySection): void
-    {
-        parent::payment_scripts($gatewaySection);
-
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->registerCheckoutScripts();
-        }
     }
 
     /**
@@ -211,7 +185,7 @@ class TicketGateway extends AbstractGateway
             'terms_and_conditions_link_text'          => $this->storeTranslations['terms_and_conditions_link_text'],
             'terms_and_conditions_link_src'           => $this->links['mercadopago_terms_and_conditions'],
             'payment_methods'                         => $this->getPaymentMethods(),
-            'mlb_states'                              => $this->getMLBStatesForAddressFields(),
+            'mlb_states'                              => $this->getMLBStates(),
             'site_id'                                 => $this->mercadopago->sellerConfig->getSiteId(),
             'amount'                                  => $amountAndCurrencyRatio['amount'],
             'currency_ratio'                          => $amountAndCurrencyRatio['currencyRatio'],
@@ -272,49 +246,30 @@ class TicketGateway extends AbstractGateway
         ];
     }
 
-    /**
-     * Process payment and create woocommerce order
-     *
-     * @param $order_id
-     *
-     * @return array
-     */
-    public function process_payment($order_id): array
+    public function proccessPaymentInternal($order): array
     {
-        $order = wc_get_order($order_id);
+        $checkout = $this->getCheckoutMercadopagoTicket($order);
 
-        try {
-            $checkout = $this->getCheckoutMercadopagoTicket($order);
+        if (
+            !Arrays::anyEmpty($checkout, [
+                'amount',
+                'payment_method_id',
+            ])
+        ) {
+            $invalidCheckoutError = $this->validateCheckout($checkout);
 
-            parent::process_payment($order_id);
-
-            if (
-                !empty($checkout['amount']) &&
-                !empty($checkout['payment_method_id'])
-            ) {
-                $siteIdRulesErrors = $this->validateRulesForSiteId($checkout);
-
-                if ($siteIdRulesErrors !== null) {
-                    return $siteIdRulesErrors;
-                }
-
-                $this->transaction = new TicketTransaction($this, $order, $checkout);
-                $response          = $this->transaction->createPayment();
-
-                if (is_array($response) && array_key_exists('status', $response)) {
-                    return $this->verifyTicketPaymentResponse($response, $order, $order_id);
-                }
+            if ($invalidCheckoutError) {
+                return $invalidCheckoutError;
             }
-            throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
-        } catch (Exception $e) {
-            return $this->processReturnFail(
-                $e,
-                $e->getMessage(),
-                self::LOG_SOURCE,
-                (array) $order,
-                true
-            );
+
+            $this->transaction = new TicketTransaction($this, $order, $checkout);
+            $response          = $this->transaction->createPayment();
+
+            if (is_array($response) && array_key_exists('status', $response)) {
+                return $this->verifyTicketPaymentResponse($response, $order, $order->get_id());
+            }
         }
+        throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
     }
 
     /**
@@ -354,10 +309,8 @@ class TicketGateway extends AbstractGateway
         $this->handleWithRejectPayment($response);
 
         if (
-            $response['status'] === 'pending' && (
-                $response['status_detail'] === 'pending_waiting_payment' ||
-                $response['status_detail'] ===  'pending_waiting_transfer'
-            )
+            $response['status'] === 'pending' &&
+            in_array($response['status_detail'], ['pending_waiting_payment', 'pending_waiting_transfer'])
         ) {
             $this->mercadopago->helpers->cart->emptyCart();
 
@@ -497,12 +450,8 @@ class TicketGateway extends AbstractGateway
     /**
      * Validate POST data and return the errors found.
      * Returns null if there is no errors.
-     *
-     * @param $checkout
-     *
-     * @return ?array
      */
-    public function validateRulesForSiteId($checkout): ?array
+    private function validateCheckout($checkout): ?array
     {
         // Rules for ticket MLB
         if ($checkout['site_id'] === 'MLB' && empty($checkout['doc_number'])) {
@@ -514,7 +463,7 @@ class TicketGateway extends AbstractGateway
         }
 
         // Rules for effective MLU
-        if ($checkout['site_id'] === 'MLU' && (empty($checkout['doc_number']) || empty($checkout['doc_type']))) {
+        if ($checkout['site_id'] === 'MLU' && Arrays::anyEmpty($checkout, ['doc_number', 'doc_type'])) {
             return $this->processReturnFail(
                 new Exception('Document is required on ' . __METHOD__),
                 $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
@@ -525,7 +474,7 @@ class TicketGateway extends AbstractGateway
         return null;
     }
 
-    public function getMLBStatesForAddressFields(): array
+    public function getMLBStates(): array
     {
         return [
             'AC' => 'Acre',

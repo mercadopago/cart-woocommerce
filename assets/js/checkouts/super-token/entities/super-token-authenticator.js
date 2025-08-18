@@ -25,8 +25,8 @@ class MPSuperTokenAuthenticator {
         return this.amountUsed;
     }
 
-    isUserModalClosure(error) {
-        return error?.errorCode === 'NO_BOTTOMSHEET_CONFIRMATION';
+    isUserClosedModalError(error) {
+        return error?.errorCode === 'NO_USER_CONFIRMATION';
     }
 
     storeUserClosedModal() {
@@ -80,7 +80,7 @@ class MPSuperTokenAuthenticator {
 
             await this.renderAccountPaymentMethods(token);
         } catch (error) {
-            if (this.isUserModalClosure(error)) {
+            if (this.isUserClosedModalError(error)) {
                 this.storeUserClosedModal();
             }
 

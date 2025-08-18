@@ -621,7 +621,7 @@ if (!defined('ABSPATH')) {
     const downloadBtn = document.getElementById('downloadSelected');
     const checkboxes2 = document.querySelectorAll('input[name="selected_files[]"]');
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    downloadBtn.addEventListener('click', function() {
+    downloadBtn?.addEventListener('click', function() {
         const selectedFiles = [];
         checkboxes2.forEach((cb) => {
             if (cb.checked) {

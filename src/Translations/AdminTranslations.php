@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Translations;
 
+use ArrayAccess;
 use MercadoPago\Woocommerce\Helpers\Links;
 
 if (!defined('ABSPATH')) {
@@ -10,55 +11,155 @@ if (!defined('ABSPATH')) {
 
 class AdminTranslations
 {
-    public array $notices = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $notices = [];
 
-    public array $plugin = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $plugin = [];
 
-    public array $order = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $order = [];
 
-    public array $headerSettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $headerSettings = [];
 
-    public array $credentialsSettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $credentialsSettings = [];
 
-    public array $supportSettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $supportSettings = [];
 
-    public array $storeSettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $storeSettings = [];
 
-    public array $gatewaysSettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $gatewaysSettings = [];
 
-    public array $basicGatewaySettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $basicGatewaySettings = [];
 
-    public array $creditsGatewaySettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $creditsGatewaySettings = [];
 
-    public array $customGatewaySettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $customGatewaySettings = [];
 
-    public array $ticketGatewaySettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $ticketGatewaySettings = [];
 
-    public array $pseGatewaySettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $pseGatewaySettings = [];
 
-    public array $pixGatewaySettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $pixGatewaySettings = [];
 
-    public array $yapeGatewaySettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $yapeGatewaySettings = [];
 
-    public array $testModeSettings = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $testModeSettings = [];
 
-    public array $configurationTips = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $configurationTips = [];
 
-    public array $credentialsLinkComponents = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $credentialsLinkComponents = [];
 
-    public array $validateCredentials = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $validateCredentials = [];
 
-    public array $updateCredentials = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $updateCredentials = [];
 
-    public array $updateStore = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $updateStore = [];
 
-    public array $currency = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $currency = [];
 
-    public array $statusSync = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $statusSync = [];
 
-    public array $countries = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $countries = [];
 
-    public array $refund = [];
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $refund = [];
 
     public array $links;
 
@@ -187,7 +288,7 @@ class AdminTranslations
             __('Choose', 'woocommerce-mercadopago'),
             __('when you want to receive the money', 'woocommerce-mercadopago'),
             __('from your sales and if you want to offer', 'woocommerce-mercadopago'),
-            __('interest-free installments', 'woocommerce-mercadopago'),
+            _x('interest-free installments', 'admin settings description', 'woocommerce-mercadopago'),
             __('to your clients.', 'woocommerce-mercadopago')
         );
 

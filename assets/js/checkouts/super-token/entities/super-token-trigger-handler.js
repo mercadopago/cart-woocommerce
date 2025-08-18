@@ -1,3 +1,4 @@
+/* globals wc_mercadopago_supertoken_trigger_handler_params */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenTriggerHandler {
     CUSTOM_CHECKOUT_BLOCKS_RADIO_SELECTOR = '[value=woo-mercado-pago-custom]';
@@ -9,6 +10,7 @@ class MPSuperTokenTriggerHandler {
     CARD_HOLDER_NAME_FIELD_ID = 'form-checkout__cardholderName';
     EXPIRATION_DATE_FIELD_ID = 'form-checkout__expirationDate-container';
     SECURITY_CODE_FIELD_ID = 'form-checkout__securityCode-container';
+    CURRENT_USER_EMAIL = wc_mercadopago_supertoken_trigger_handler_params.current_user_email;
 
     // Attributes
     wcBuyerEmail = null;
@@ -146,7 +148,7 @@ class MPSuperTokenTriggerHandler {
 
         this.isAuthenticating = true;
 
-        const buyerEmail = this.wcBuyerEmail || this.wcEmailListener.getEmail();
+        const buyerEmail = this.wcBuyerEmail || this.wcEmailListener.getEmail() || this.CURRENT_USER_EMAIL;
         if (!buyerEmail) {
             this.isAuthenticating = false;
             this.removeClickableAreas();
@@ -173,12 +175,10 @@ class MPSuperTokenTriggerHandler {
 
         this.resetFlow();
         this.loadSuperToken(this.getAmount());
-        document.querySelector(this.mpSuperTokenPaymentMethods.CHECKOUT_CONTAINER_SELECTOR).style.height = 'auto';
     }
 
     resetSuperTokenOnError() {
         if (document.querySelector('#mp_checkout_type')?.value === 'super_token') {
-            console.log('Resetting ST flow due to checkout error');
             this.resetCustomCheckout();
             this.isAuthenticating = false;
             document.querySelector('#mp_checkout_type').value = '';

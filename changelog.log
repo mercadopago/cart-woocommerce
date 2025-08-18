@@ -1,6 +1,14 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.4.5 (18/08/2025) =
+* Fixed
+- Changed the error message when closing the modal in the fast payments flow
+- Obtained logged-in users emails as a fallback in the fast payments flow
+- Text and translation corrections in the fast payments flow
+- Responsiveness improvements in the fast payments flow
+- Check if `downloadSelected` button exists before using it
+
 = v8.4.4 (11/08/2025) =
 * Fixed
 - Does not block payment if email is not filled in

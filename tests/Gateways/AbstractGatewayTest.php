@@ -3,55 +3,45 @@
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
 use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
-use MercadoPago\Woocommerce\Tests\Traits\AssertArraySchema;
+use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
 use MercadoPago\Woocommerce\Tests\Traits\SetNotAccessibleProperties;
+use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
-use MercadoPago\Woocommerce\Helpers;
 use MercadoPago\Woocommerce\Exceptions\RefundException;
 use Mockery;
 use WP_Mock;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class AbstractGatewayTest extends TestCase
 {
     use GatewayMock;
     use SetNotAccessibleProperties;
-    use AssertArraySchema;
+    use AssertArrayMap;
 
     private $sellerConfigMock;
     private $mercadopagoMock;
     private $adminTranslationsMock;
+    private $gatewayClass = AbstractGateway::class;
+
+    // TODO(PHP8.2): Change type hint from phpdoc to native
     /**
-     * @var \Mockery\MockInterface|AbstractGateway
+     * @var MockInterface|AbstractGateway
      */
     private $gateway;
 
     public function setUp(): void
     {
-        $this->woocommerceSetUp();
-
         $this->mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
         $this->sellerConfigMock = Mockery::mock(Seller::class);
         $this->adminTranslationsMock = Mockery::mock(AdminTranslations::class);
-        $this->gateway = Mockery::mock(AbstractGateway::class)->makePartial();
     }
 
     public function testProcessPayment()
     {
-        $mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-
-        $gateway = Mockery::mock(AbstractGateway::class)
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
-
         $order = Mockery::mock('WC_Order');
         WP_Mock::userFunction('wc_get_order')
             ->once()
@@ -64,82 +54,79 @@ class AbstractGatewayTest extends TestCase
         $order->shouldReceive('get_total')
             ->andReturn($orderTotal);
 
-        $cartHelper = Mockery::mock(Helpers::class);
-
         $discountValue = 10;
-        $mercadopagoMock->helpers->cart->shouldReceive('calculateSubtotalWithDiscount')
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithDiscount')
             ->once()
-            ->with($gateway)
+            ->with($this->gateway)
             ->andReturn($discountValue);
 
         $comissionValue = 1;
-        $mercadopagoMock->helpers->cart->shouldReceive('calculateSubtotalWithCommission')
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithCommission')
             ->once()
-            ->with($gateway)
+            ->with($this->gateway)
             ->andReturn($comissionValue);
 
         $productionMode = 'yes';
 
-        $mercadopagoMock->storeConfig->shouldReceive('getProductionMode')
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getProductionMode')
             ->once()
             ->andReturn($productionMode);
 
-        $mercadopagoMock->orderMetadata->shouldReceive('setIsProductionModeData')
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setIsProductionModeData')
             ->once()
             ->with($order, $productionMode)
             ->andReturnSelf();
 
-        $mercadopagoMock->orderMetadata->shouldReceive('setUsedGatewayData')
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setUsedGatewayData')
             ->once()
             ->with($order, '')
             ->andReturnSelf();
 
-        $gateway->mercadopago = $mercadopagoMock;
+        $this->gateway->mercadopago = $this->gateway->mercadopago;
 
-        $gateway->discount = $discountValue;
+        $this->gateway->discount = $discountValue;
 
         $text = 'discount of';
-        $mercadopagoMock->storeTranslations->commonCheckout['discount_title'] = $text;
+        $this->gateway->mercadopago->storeTranslations->commonCheckout['discount_title'] = $text;
 
         $currencySymbol = '$';
-        $mercadopagoMock->helpers->currency->shouldReceive('getCurrencySymbol')
+        $this->gateway->mercadopago->helpers->currency->shouldReceive('getCurrencySymbol')
             ->once()
             ->andReturn($currencySymbol);
 
-        $mercadopagoMock->orderMetadata->shouldReceive('setDiscountData')
-        ->once()
-        ->with($order, 'discount of 9.09% = $ 10,00')
-        ->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setDiscountData')
+            ->once()
+            ->with($order, 'discount of 9.09% = $ 10,00')
+            ->andReturnSelf();
 
-        $gateway->commission = $comissionValue;
+        $this->gateway->commission = $comissionValue;
 
         $text = 'fee of';
-        $mercadopagoMock->storeTranslations->commonCheckout['fee_title'] = $text;
+        $this->gateway->mercadopago->storeTranslations->commonCheckout['fee_title'] = $text;
 
         $currencySymbol = '$';
-        $mercadopagoMock->helpers->currency->shouldReceive('getCurrencySymbol')
+        $this->gateway->mercadopago->helpers->currency->shouldReceive('getCurrencySymbol')
             ->once()
             ->andReturn($currencySymbol);
 
-        $mercadopagoMock->orderMetadata->shouldReceive('setCommissionData')
-        ->once()
-        ->with($order, "fee of 0.99% = $ 1,00")
-        ->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setCommissionData')
+            ->once()
+            ->with($order, "fee of 0.99% = $ 1,00")
+            ->andReturnSelf();
 
-        $result = $gateway->process_payment(1);
-        $this->assertEquals($result, []);
-        $this->assertIsArray($result);
+        $this->gateway->expects()->proccessPaymentInternal($order)->andReturn($result = []);
+
+        $this->assertSame($result, $this->gateway->process_payment(1));
     }
 
     public function testValidCredentialsReturnEmptyNotice()
     {
-
         $this->mercadopagoMock->sellerConfig = $this->sellerConfigMock;
         $this->mercadopagoMock->adminTranslations = $this->adminTranslationsMock;
 
         $this->mercadopagoMock->hooks->admin->shouldReceive('isAdmin')
-        ->once()
-        ->andReturn(false);
+            ->once()
+            ->andReturn(false);
 
         $this->gateway->id = 'test_gateway';
         $this->gateway->mercadopago = $this->mercadopagoMock;
@@ -154,24 +141,24 @@ class AbstractGatewayTest extends TestCase
         $this->mercadopagoMock->adminTranslations = $this->adminTranslationsMock;
 
         $this->mercadopagoMock->hooks->admin->shouldReceive('isAdmin')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $this->mercadopagoMock->helpers->url->shouldReceive('validatePage')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $this->mercadopagoMock->helpers->url->shouldReceive('validateSection')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         WP_Mock::userFunction('get_transient')
-        ->once()
-        ->andReturn(false);
+            ->once()
+            ->andReturn(false);
 
         $this->sellerConfigMock->shouldReceive('getCredentialsPublicKeyProd')
-        ->once()
-        ->andReturn('test_public_key');
+            ->once()
+            ->andReturn('test_public_key');
 
         $this->sellerConfigMock->shouldReceive('isExpiredPublicKey')
             ->once()
@@ -225,16 +212,16 @@ class AbstractGatewayTest extends TestCase
         $this->mercadopagoMock->adminTranslations = $this->adminTranslationsMock;
 
         $this->mercadopagoMock->hooks->admin->shouldReceive('isAdmin')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $this->mercadopagoMock->helpers->url->shouldReceive('validatePage')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $this->mercadopagoMock->helpers->url->shouldReceive('validateSection')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $expected = [
             'type'  => 'mp_card_info',
@@ -251,8 +238,8 @@ class AbstractGatewayTest extends TestCase
         ];
 
         WP_Mock::userFunction('get_transient')
-        ->once()
-        ->andReturn($expected);
+            ->once()
+            ->andReturn($expected);
 
         $this->gateway->mercadopago = $this->mercadopagoMock;
 
@@ -315,34 +302,34 @@ class AbstractGatewayTest extends TestCase
         $this->mercadopagoMock->sellerConfig = $this->sellerConfigMock;
 
         $this->mercadopagoMock->hooks->admin->shouldReceive('isAdmin')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $this->mercadopagoMock->helpers->url->shouldReceive('validatePage')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $this->mercadopagoMock->helpers->url->shouldReceive('validateSection')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $this->sellerConfigMock->shouldReceive('getCredentialsPublicKeyProd')
-        ->once()
-        ->andReturn('test_public_key');
+            ->once()
+            ->andReturn('test_public_key');
 
         $this->sellerConfigMock->shouldReceive('isExpiredPublicKey')
-        ->once()
-        ->with('test_public_key')
-        ->andReturn(false);
+            ->once()
+            ->with('test_public_key')
+            ->andReturn(false);
 
         WP_Mock::userFunction('get_transient')
-        ->once()
-        ->with('mp_credentials_expired_result')
-        ->andReturn([]);
+            ->once()
+            ->with('mp_credentials_expired_result')
+            ->andReturn([]);
 
         WP_Mock::userFunction('set_transient')
-        ->once()
-        ->andReturn(true);
+            ->once()
+            ->andReturn(true);
 
         $expected = ['type' => 'title', 'value' => ''];
 
@@ -456,25 +443,17 @@ class AbstractGatewayTest extends TestCase
             ->with(123)
             ->andReturn($order);
 
-        $mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-
         $refundHandlerMock = Mockery::mock('overload:MercadoPago\Woocommerce\Refund\RefundHandler');
         $refundHandlerMock->shouldReceive('processRefund')
             ->once()
             ->with(100.00, '')
             ->andThrow(new \Exception(RefundException::TYPE_NO_PERMISSION));
 
-        $gateway = Mockery::mock(AbstractGateway::class)
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
-
-        $gateway->mercadopago = $mercadopago;
-
-        $result = $gateway->process_refund(123, 100.00, '');
+        $result = $this->gateway->process_refund(123, 100.00, '');
 
         $this->assertInstanceOf('WP_Error', $result);
         $this->assertEquals('refund_error', $result->get_error_code());
-        $this->assertEquals('You do not have permission to process a refund. Please check your access to the site and try again.', $result->get_error_message());
+        $this->assertEquals($this->gateway->mercadopago->adminTranslations->refund[RefundException::TYPE_NO_PERMISSION], $result->get_error_message());
     }
 
     public function testProcessRefundWithNotSupportedException()
@@ -485,25 +464,18 @@ class AbstractGatewayTest extends TestCase
             ->with(789)
             ->andReturn($order);
 
-        $mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-
         $refundHandlerMock = Mockery::mock('overload:MercadoPago\Woocommerce\Refund\RefundHandler');
         $refundHandlerMock->shouldReceive('processRefund')
             ->once()
             ->with(75.00, '')
             ->andThrow(new \Exception(RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED));
 
-        $gateway = Mockery::mock(AbstractGateway::class)
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
 
-        $gateway->mercadopago = $mercadopago;
-
-        $result = $gateway->process_refund(789, 75.00, '');
+        $result = $this->gateway->process_refund(789, 75.00, '');
 
         $this->assertInstanceOf('WP_Error', $result);
         $this->assertEquals('refund_error', $result->get_error_code());
-        $this->assertEquals('This payment was made using Fast Pay with Mercado Pago and does not yet support refunds through the WooCommerce order page. Please process the refund directly from your Mercado Pago payment details page.', $result->get_error_message());
+        $this->assertEquals($this->gateway->mercadopago->adminTranslations->refund[RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED], $result->get_error_message());
     }
 
     public function testProcessRefundWithUnknownException()
@@ -522,17 +494,13 @@ class AbstractGatewayTest extends TestCase
             ->with(50.00, '')
             ->andThrow(new \Exception('some_other_error'));
 
-        $gateway = Mockery::mock(AbstractGateway::class)
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
+        $this->gateway->mercadopago->adminTranslations->refund->except('some_other_error');
 
-        $gateway->mercadopago = $mercadopago;
-
-        $result = $gateway->process_refund(456, 50.00, '');
+        $result = $this->gateway->process_refund(456, 50.00, '');
 
         $this->assertInstanceOf('WP_Error', $result);
         $this->assertEquals('refund_error', $result->get_error_code());
-        $this->assertEquals('Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.', $result->get_error_message());
+        $this->assertEquals($this->gateway->mercadopago->adminTranslations->refund['unknown_error'], $result->get_error_message());
     }
 
     /**
@@ -542,40 +510,10 @@ class AbstractGatewayTest extends TestCase
      */
     public function testFormFieldsHeaderSection(bool $homologValidate, bool $canCheckCredentials, bool $isCredentialsCached, bool $isCredentialsExpired)
     {
-        $this->gateway->mercadopago = $this->mercadopagoMock;
         $this->gateway->mercadopago->sellerConfig
             ->expects()
             ->getHomologValidate()
             ->andReturn($homologValidate);
-
-        $this->gateway->adminTranslations = MercadoPagoMock::mockTranslations([
-            'header_title',
-            'header_description',
-            'card_settings_title',
-            'card_settings_subtitle',
-            'card_settings_button_text',
-            'enabled_title',
-            'enabled_subtitle',
-            'enabled_descriptions_enabled',
-            'enabled_descriptions_disabled',
-            'title_title',
-            'title_description',
-            'title_default',
-            'title_desc_tip',
-        ]);
-
-        $this->mockGatewayLinks([
-            'admin_settings_page'
-        ]);
-
-        $this->gateway->mercadopago->adminTranslations->credentialsSettings = MercadoPagoMock::mockTranslations([
-            'card_homolog_title',
-            'card_homolog_subtitle',
-            'card_homolog_button_text',
-            'title_invalid_credentials',
-            'subtitle_invalid_credentials',
-            'button_invalid_credentials',
-        ]);
 
         $credentialNotice = [
             'type' => IsType::TYPE_STRING,
@@ -647,7 +585,7 @@ class AbstractGatewayTest extends TestCase
             ];
         }
 
-        $this->assertArraySchema(
+        $this->assertArrayMap(
             [
                 'header' => [
                     'type' => IsType::TYPE_STRING,
@@ -707,5 +645,83 @@ class AbstractGatewayTest extends TestCase
             ],
             $this->gateway->formFieldsHeaderSection()
         );
+    }
+
+    public function testFormFieldsFooterSection()
+    {
+        $this->assertArrayMap(
+            [
+                'gateway_discount' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'input_type' => IsType::TYPE_STRING,
+                    'description' => IsType::TYPE_STRING,
+                    'checkbox_label' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'custom_attributes' => [
+                        'step' => IsType::TYPE_STRING,
+                        'min' => IsType::TYPE_STRING,
+                        'max' => IsType::TYPE_STRING,
+                    ],
+                ],
+                'commission' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'input_type' => IsType::TYPE_STRING,
+                    'description' => IsType::TYPE_STRING,
+                    'checkbox_label' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'custom_attributes' => [
+                        'step' => IsType::TYPE_STRING,
+                        'min' => IsType::TYPE_STRING,
+                        'max' => IsType::TYPE_STRING,
+                    ],
+                ],
+                'split_section' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                ],
+                'support_link' => [
+                    'type' => IsType::TYPE_STRING,
+                    'bold_text' => IsType::TYPE_STRING,
+                    'text_before_link' => IsType::TYPE_STRING,
+                    'text_with_link' => IsType::TYPE_STRING,
+                    'text_after_link' => IsType::TYPE_STRING,
+                    'support_link' => IsType::TYPE_STRING,
+                ],
+            ],
+            $this->gateway->formFieldsFooterSection()
+        );
+    }
+
+    /**
+     * Test processReturnFail method with card number validation error
+     *
+     * @return void
+     */
+    public function testProcessReturnFailWithCardNumberValidationError()
+    {
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $this->mercadopagoMock->storeTranslations->customCheckout = [
+            'card_number_validation_error' => 'Invalid card number. Please check the information provided.'
+        ];
+
+        $this->mercadopagoMock->helpers->notices->shouldReceive('storeNotice')->once();
+
+        $exception = Mockery::mock(\Exception::class);
+        $exception->shouldReceive('getMessage')->andReturn('Invalid card_number_validation error occurred');
+
+        $result = $this->gateway->processReturnFail(
+            $exception,
+            'Invalid card_number_validation error occurred',
+            'test_source',
+            [],
+            true
+        );
+
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertEquals('Invalid card number. Please check the information provided.', $result['message']);
     }
 }

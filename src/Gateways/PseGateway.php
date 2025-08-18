@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use Exception;
+use MercadoPago\Woocommerce\Helpers\Arrays;
+use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Transactions\PseTransaction;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
@@ -20,11 +22,6 @@ class PseGateway extends AbstractGateway
      * @const
      */
     public const ID = 'woo-mercado-pago-pse';
-
-    /**
-     * @const
-     */
-    public const CHECKOUT_NAME = 'checkout-pse';
 
     /**
      * @const
@@ -70,14 +67,9 @@ class PseGateway extends AbstractGateway
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
     }
 
-    /**
-     * Get checkout name
-     *
-     * @return string
-     */
     public function getCheckoutName(): string
     {
-        return self::CHECKOUT_NAME;
+        return 'checkout-pse';
     }
 
     public function formFieldsMainSection(): array
@@ -114,21 +106,6 @@ class PseGateway extends AbstractGateway
                 ],
             ],
         ];
-    }
-
-    /**
-     * Added gateway scripts
-     *
-     * @param string $gatewaySection
-     *
-     * @return void
-     */
-    public function payment_scripts(string $gatewaySection): void
-    {
-        parent::payment_scripts($gatewaySection);
-        if ($this->canCheckoutLoadScriptsAndStyles()) {
-            $this->registerCheckoutScripts();
-        }
     }
 
     /**
@@ -216,68 +193,57 @@ class PseGateway extends AbstractGateway
         ];
     }
 
-    /**
-     * Process payment and create woocommerce order
-     *
-     * @param $order_id
-     *
-     * @return array
-     */
-    public function process_payment($order_id): array
+    public function proccessPaymentInternal($order): array
     {
-        $order    = wc_get_order($order_id);
-        try {
-            parent::process_payment($order_id);
+        if (isset($_POST['mercadopago_pse'])) {
+            $checkout = Form::sanitizedPostData('mercadopago_pse');
+            $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
+        } else {
+            $checkout = $this->processBlocksCheckoutData('mercadopago_pse', Form::sanitizedPostData());
+            $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
+        }
 
-            if (isset($_POST['mercadopago_pse'])) {
-                $checkout = Form::sanitizedPostData('mercadopago_pse');
-                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
-            } else {
-                $checkout = $this->processBlocksCheckoutData('mercadopago_pse', Form::sanitizedPostData());
-                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
-            }
-            $this->validateRulesPse($checkout);
-            $this->transaction = new PseTransaction($this, $order, $checkout);
-
-            $response = $this->transaction->createPayment();
-
-            if (is_array($response) && array_key_exists('status', $response)) {
-                $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, ['id' => $response]);
-                $this->handleWithRejectPayment($response);
-                if (
-                    $response['status'] === 'pending' &&
-                    (
-                        $response['status_detail'] === 'pending_waiting_payment' ||
-                        $response['status_detail'] ===  'pending_waiting_transfer' )
-                ) {
-                    $this->mercadopago->woocommerce->cart->empty_cart();
-
-                    if ($this->mercadopago->hooks->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
-                            wc_reduce_stock_levels($order_id);
-                    }
-                    $this->mercadopago->hooks->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
-                    return [
-                            'result'   => 'success',
-                            'redirect' => $response['transaction_details']['external_resource_url'],
-                        ];
-                }
-                return $this->processReturnFail(
-                    new ResponseStatusException('exception : Invalid status or status_detail on ' . __METHOD__),
-                    $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                    self::LOG_SOURCE,
-                    $response
-                );
-            }
-            throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
-        } catch (Exception $e) {
+        if (!$this->isCheckoutValid($checkout)) {
             return $this->processReturnFail(
-                $e,
-                $e->getMessage(),
+                new InvalidCheckoutDataException(),
+                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
                 self::LOG_SOURCE,
-                (array)$order,
+                $checkout,
                 true
             );
         }
+
+        $this->transaction = new PseTransaction($this, $order, $checkout);
+
+        $response = $this->transaction->createPayment();
+
+        if (is_array($response) && array_key_exists('status', $response)) {
+            $this->mercadopago->orderMetadata->updatePaymentsOrderMetadata($order, ['id' => $response]);
+            $this->handleWithRejectPayment($response);
+            if (
+                $response['status'] === 'pending' &&
+                in_array($response['status_detail'], ['pending_waiting_payment', 'pending_waiting_transfer'])
+            ) {
+                $this->mercadopago->woocommerce->cart->empty_cart();
+
+                if ($this->mercadopago->hooks->options->getGatewayOption($this, 'stock_reduce_mode', 'no') === 'yes') {
+                    wc_reduce_stock_levels($order->get_id());
+                }
+                $this->mercadopago->hooks->order->addOrderNote($order, $this->storeTranslations['customer_not_paid']);
+                return [
+                    'result'   => 'success',
+                    'redirect' => $response['transaction_details']['external_resource_url'],
+                ];
+            }
+            return $this->processReturnFail(
+                new ResponseStatusException('exception : Invalid status or status_detail on ' . __METHOD__),
+                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                self::LOG_SOURCE,
+                $response
+            );
+        }
+
+        throw new InvalidCheckoutDataException('exception : Unable to process payment on ' . __METHOD__);
     }
 
     /**
@@ -299,37 +265,19 @@ class PseGateway extends AbstractGateway
     public static function isAvailable(): bool
     {
         global $mercadopago;
-
-        $siteId  = $mercadopago->sellerConfig->getSiteId();
-        $country = $mercadopago->helpers->country::getWoocommerceDefaultCountry();
-
-        if ($siteId === 'MCO' || ($siteId === '' && $country === 'CO')) {
-            return true;
-        }
-
-        return false;
+        return $mercadopago->helpers->country->getPluginDefaultCountry() === Country::COUNTRY_CODE_MCO;
     }
 
-    public function validateRulesPse($checkout)
+    private function isCheckoutValid(array $checkout): bool
     {
-        // Rules for pse MCO
-        if (
-            $checkout['site_id'] === 'MCO' && (
-                empty($checkout['doc_number']) ||
-                empty($checkout['doc_type']) ||
-                empty($checkout['person_type']) ||
-                empty($checkout['bank']) ||
-                !in_array($checkout['person_type'], ['individual', 'association'])
-            )
-        ) {
-            return $this->processReturnFail(
-                new Exception('Unable to process payment on ' . __METHOD__),
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
-                self::LOG_SOURCE,
-                (array)$checkout,
-                true
-            );
-        }
-        return true;
+        return !Arrays::anyEmpty($checkout, [
+                'site_id',
+                'doc_number',
+                'doc_type',
+                'person_type',
+                'bank',
+            ])
+            && $checkout['site_id'] === 'MCO'
+            && in_array($checkout['person_type'], ['individual', 'association']);
     }
 }

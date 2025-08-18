@@ -212,10 +212,15 @@ msgstr "quando quer receber o dinheiro"
 msgid "from your sales and if you want to offer"
 msgstr "das vendas e se quer oferecer"
 
-#: ../../src/Translations/AdminTranslations.php:190,
-#: ../../src/Translations/StoreTranslations.php:265
+#: ../../src/Translations/AdminTranslations.php:291
+msgctxt "admin settings description"
 msgid "interest-free installments"
 msgstr "parcelamento sem acréscimos"
+
+#: ../../src/Translations/StoreTranslations.php:314
+msgctxt "frontend checkout display"
+msgid "interest-free installments"
+msgstr "sem acréscimo"
 
 #: ../../src/Translations/AdminTranslations.php:191
 msgid "to your clients."
@@ -2937,7 +2942,7 @@ msgstr "Dado obrigatório"
 
 #: ../../src/Translations/StoreTranslations.php:223
 msgid "Holder name as it appears on the card"
-msgstr "Nome do titular como aparece no cartão"
+msgstr "Nome do titular"
 
 #: ../../src/Translations/StoreTranslations.php:225
 msgid "Expiration"
@@ -3066,7 +3071,11 @@ msgstr ""
 "Algo deu errado, recomendamos que você tente novamente ou pague com outro "
 "meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:259
+#: ../../src/Translations/StoreTranslations.php:276
+msgid "Invalid card number. Please check the information provided."
+msgstr "Número do cartão inválido. Verifique os dados informados."
+
+#: ../../src/Translations/StoreTranslations.php:260
 msgid "Saved payment methods"
 msgstr "Meios de pagamento do Mercado Pago"
 

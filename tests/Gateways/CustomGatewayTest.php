@@ -167,6 +167,10 @@ class CustomGatewayTest extends TestCase
 
             case 'rejected':
                 if ($isOrderPayPage) {
+                    $this->gateway
+                        ->expects()
+                        ->getRejectedPaymentErrorMessage($response['status_detail'])
+                        ->andReturn('error');
                     return [
                         'result' => 'fail',
                         'messages' => 'error'
@@ -174,9 +178,13 @@ class CustomGatewayTest extends TestCase
                 }
                 $this->gateway
                     ->expects()
+                    ->handleWithRejectPayment($response)
+                    ->andThrow(RejectedPaymentException::class)
+                    ->getMock()
+                    ->expects()
                     ->processReturnFail(
                         Mockery::type(RejectedPaymentException::class),
-                        $response['status_detail'],
+                        Mockery::type('string'),
                         CustomGateway::LOG_SOURCE,
                         $response,
                         true

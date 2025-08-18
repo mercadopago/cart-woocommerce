@@ -2,23 +2,237 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
+use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
+use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
+use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
+use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Transactions\PseTransaction;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\PseGateway;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use Mockery;
+use WP_Mock;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class PseGatewayTest extends TestCase
 {
-    use WoocommerceMock;
+    use GatewayMock;
 
-    public function testGetCheckoutName()
+    private string $gatewayClass = PseGateway::class;
+
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var \Mockery\MockInterface|PseGateway
+     */
+    private $gateway;
+
+    private function processPaymentMock(bool $isBlocks, array $checkout): void
     {
-        $gateway = Mockery::mock(PseGateway::class)->makePartial()->shouldAllowMockingProtectedMethods();
-        $result = $gateway->getCheckoutName();
-        $this->assertEquals('checkout-pse', $result);
+        $this->processPaymentInternalMock($isBlocks);
+
+        $checkout = array_merge([
+            'site_id' => Country::SITE_ID_MCO,
+            'doc_number' => '123456789',
+            'doc_type' => 'otro',
+            'person_type' => random()->randomElement(['individual', 'association']),
+            'bank' => 'bank',
+        ], $checkout);
+
+        if ($isBlocks) {
+            Mockery::mock('alias:' . Form::class)
+                ->expects()
+                ->sanitizedPostData()
+                ->andReturn([]);
+            $this->gateway
+                ->expects()
+                ->processBlocksCheckoutData('mercadopago_pse', [])
+                ->andReturn($checkout);
+            $_POST['mercadopago_pse'] = null;
+        } else {
+            Mockery::mock('alias:' . Form::class)
+                ->expects()
+                ->sanitizedPostData('mercadopago_pse')
+                ->andReturn($checkout);
+            $_POST['mercadopago_pse'] = 1;
+        }
+    }
+
+    public function testGetCheckoutName(): void
+    {
+        $this->assertEquals('checkout-pse', $this->gateway->getCheckoutName());
+    }
+
+    /**
+     * @testWith [true, "individual", "pending_waiting_payment", "no"]
+     *           [false, "association", "pending_waiting_transfer", "yes"]
+     */
+    public function testProcessPaymentSuccess(bool $isBlocks, string $personType, string $statusDetail, string $stockReduceMode): void
+    {
+        $this->processPaymentMock($isBlocks, [
+            'person_type' => $personType,
+        ]);
+
+        Mockery::mock('overload:' . PseTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn($response = [
+                'status' => 'pending',
+                'status_detail' => $statusDetail,
+                'transaction_details' => [
+                    'external_resource_url' => random()->url()
+                ]
+            ]);
+
+        $this->gateway->mercadopago->woocommerce->cart->expects()->empty_cart();
+
+        $this->gateway->mercadopago->hooks->options
+            ->expects()
+            ->getGatewayOption($this->gateway, 'stock_reduce_mode', 'no')
+            ->andReturn($stockReduceMode);
+
+        $this->gateway->mercadopago->hooks->order
+            ->expects()
+            ->addOrderNote($this->order, $this->gateway->storeTranslations['customer_not_paid']);
+
+        if ($stockReduceMode === 'yes') {
+            $this->order->expects()->get_id();
+            WP_Mock::userFunction('wc_reduce_stock_levels')->with(null);
+        }
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+
+        $this->assertEquals(
+            [
+                'result' => 'success',
+                'redirect' => $response['transaction_details']['external_resource_url'],
+            ],
+            $this->gateway->proccessPaymentInternal($this->order)
+        );
+    }
+
+    /**
+     * @testWith [true, {"site_id": ""}]
+     *           [false, {"doc_number": ""}]
+     *           [false, {"doc_type": ""}]
+     *           [false, {"person_type": ""}]
+     *           [false, {"bank": ""}]
+     *           [true, {"site_id": "MLB"}]
+     *           [true, {"person_type": "error"}]
+     */
+    public function testProccessPaymentInvalidCheckout(bool $isBlocks, array $checkout)
+    {
+        $this->processPaymentMock($isBlocks, $checkout);
+
+        $this->gateway
+            ->expects()
+            ->processReturnFail(
+                Mockery::type(InvalidCheckoutDataException::class),
+                $this->gateway->mercadopago->storeTranslations->commonMessages['cho_form_error'] = random()->word(),
+                PseGateway::LOG_SOURCE,
+                Mockery::type('array'),
+                true
+            )
+            ->andReturn($expected = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'error',
+            ]);
+
+        $this->assertEquals(
+            $expected,
+            $this->gateway->proccessPaymentInternal($this->order)
+        );
+    }
+
+    /**
+     * @testWith [true, "individual"]
+     *           [false, "association"]
+     */
+    public function testProccessPaymentRejected(bool $isBlocks, string $personType)
+    {
+        $this->processPaymentMock($isBlocks, [
+            'person_type' => $personType,
+        ]);
+
+        Mockery::mock('overload:' . PseTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn($response = [
+                'status' => 'rejected',
+            ]);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+
+        $this->gateway
+            ->expects()
+            ->handleWithRejectPayment($response)
+            ->andThrow(RejectedPaymentException::class);
+
+        $this->expectException(RejectedPaymentException::class);
+
+        $this->gateway->proccessPaymentInternal($this->order);
+    }
+
+    /**
+     * @testWith [true, "individual", {"status": "error", "status_detail": "pending_waiting_payment"}]
+     *           [false, "association", {"status": "pending", "status_detail": "error"}]
+     */
+    public function testProccessPaymentInvalidStatus(bool $isBlocks, string $personType, array $response)
+    {
+        $this->processPaymentMock($isBlocks, [
+            'person_type' => $personType,
+        ]);
+
+        Mockery::mock('overload:' . PseTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn($response);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+
+        $this->gateway
+            ->expects()
+            ->processReturnFail(
+                Mockery::type(ResponseStatusException::class),
+                $this->gateway->mercadopago->storeTranslations->commonMessages['cho_form_error'] = random()->word(),
+                PseGateway::LOG_SOURCE,
+                $response
+            )
+            ->andReturn($expected = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'error',
+            ]);
+
+        $this->assertEquals(
+            $expected,
+            $this->gateway->proccessPaymentInternal($this->order)
+        );
+    }
+
+    /**
+     * @testWith [true, "individual"]
+     *           [false, "association"]
+     */
+    public function testProccessPaymentUnableProccess(bool $isBlocks, string $personType)
+    {
+        $this->processPaymentMock($isBlocks, [
+            'person_type' => $personType,
+        ]);
+
+        Mockery::mock('overload:' . PseTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn([]);
+
+        $this->expectException(InvalidCheckoutDataException::class);
+
+        $this->gateway->proccessPaymentInternal($this->order);
     }
 }

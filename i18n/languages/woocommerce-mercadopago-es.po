@@ -213,8 +213,13 @@ msgstr "cuándo quieres recibir el dinero"
 msgid "from your sales and if you want to offer"
 msgstr "de las ventas y si quieres ofrecer"
 
-#: ../../src/Translations/AdminTranslations.php:190,
-#: ../../src/Translations/StoreTranslations.php:265
+#: ../../src/Translations/AdminTranslations.php:291
+msgctxt "admin settings description"
+msgid "interest-free installments"
+msgstr "cuotas sin interés"
+
+#: ../../src/Translations/StoreTranslations.php:314
+msgctxt "frontend checkout display"
 msgid "interest-free installments"
 msgstr "cuotas sin interés"
 
@@ -3057,6 +3062,10 @@ msgid ""
 msgstr ""
 "Hubo un error, recomendamos intentar nuevamente o pagar con otro medio de "
 "pago."
+
+#: ../../src/Translations/StoreTranslations.php:276
+msgid "Invalid card number. Please check the information provided."
+msgstr "Número de tarjeta inválido. Verifica la información proporcionada."
 
 #: ../../src/Translations/StoreTranslations.php:259
 msgid "Saved payment methods"

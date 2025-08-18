@@ -59,6 +59,7 @@ class MercadoPagoMock
     {
         $mock = Mockery::mock(WoocommerceMercadoPago::class);
         $mock->woocommerce = Mockery::mock('WooCommerce');
+        $mock->woocommerce->cart = Mockery::mock('WC_Cart');
 
         // Hooks mocks
         $mock->hooks = Mockery::mock(Hooks::class);
@@ -151,9 +152,49 @@ class MercadoPagoMock
         $mock->orderBilling = Mockery::mock(OrderBilling::class);
         $mock->orderStatus = Mockery::mock(OrderStatus::class);
         $mock->adminTranslations = Mockery::mock(AdminTranslations::class);
-        self::setMocksForAdminTranslations($mock->adminTranslations);
+        static::mockTranslations($mock->adminTranslations, [
+            'notices',
+            'plugin',
+            'order',
+            'headerSettings',
+            'credentialsSettings',
+            'supportSettings',
+            'storeSettings',
+            'gatewaysSettings',
+            'basicGatewaySettings',
+            'creditsGatewaySettings',
+            'customGatewaySettings',
+            'ticketGatewaySettings',
+            'pseGatewaySettings',
+            'pixGatewaySettings',
+            'yapeGatewaySettings',
+            'testModeSettings',
+            'configurationTips',
+            'credentialsLinkComponents',
+            'validateCredentials',
+            'updateCredentials',
+            'updateStore',
+            'currency',
+            'statusSync',
+            'countries',
+            'refund',
+        ]);
+        $mock->adminTranslations->credentialsLinkComponents['select_country'] = ArrayMock::mockTranslations();
         $mock->storeTranslations = Mockery::mock(StoreTranslations::class);
-        self::setMocksForStoreTranslations($mock->storeTranslations);
+        static::mockTranslations($mock->storeTranslations, [
+            'commonCheckout',
+            'basicCheckout',
+            'creditsCheckout',
+            'customCheckout',
+            'pixCheckout',
+            'ticketCheckout',
+            'pseCheckout',
+            'yapeCheckout',
+            'orderStatus',
+            'commonMessages',
+            'buyerRefusedMessages',
+            'threeDsTranslations',
+        ]);
 
         return $mock;
     }
@@ -181,42 +222,10 @@ class MercadoPagoMock
             ->andReturn(null);
     }
 
-    private static function setMocksForAdminTranslations($mockTranslations)
+    public static function mockTranslations($object, $props): void
     {
-        $mockTranslations->refund = [
-            'amount_must_be_positive'   => 'The amount entered for the refund must be greater than zero. Please enter the amount you need to refund.',
-            'forbidden'                 => 'Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.',
-            'insufficient_funds'        => 'You do not have sufficient balance in your account. To make the refund, please deposit money in your account.',
-            'internal_server_error'     => 'Something went wrong. The refund could not be processed at this time. Please try again later.',
-            'invalid_payment_status'    => 'You can only refund a payment that has already been approved. Please wait for approval and try again.',
-            'invalid_refund_amount'     => 'The requested refund amount is greater than the total amount of the order. Please check the amount and try again.',
-            'invalid_request'           => 'Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.',
-            'no_permission'             => 'You do not have permission to process a refund. Please check your access to the site and try again.',
-            'not_found'                 => 'The refund could not be processed. Please try again or contact the Mercado Pago support team.',
-            'supertoken_not_supported'  => 'This payment was made using Fast Pay with Mercado Pago and does not yet support refunds through the WooCommerce order page. Please process the refund directly from your Mercado Pago payment details page.',
-            'payment_not_found'         => 'The refund could not be processed. Please try again or contact the Mercado Pago support team.',
-            'payment_too_old'           => 'This payment is too old to be refunded. If you need help, please contact the Mercado Pago support team.',
-            'unauthorized'              => 'Your access credentials are incorrect or have expired. Please renew your credentials in the Mercado Pago settings and try again.',
-            'unknown_error'             => 'Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.',
-        ];
-    }
-
-    private static function setMocksForStoreTranslations($mockTranslations)
-    {
-        $mockTranslations->commonMessages = [];
-        $mockTranslations->buyerRefusedMessages = [];
-        $mockTranslations->commonMessages['invalid_users'] = 'error';
-        $mockTranslations->commonMessages['invalid_operators'] = 'error';
-        $mockTranslations->buyerRefusedMessages['buyer_default'] = 'error';
-    }
-
-    public static function mockTranslations(array $keys): array
-    {
-        return static::fillArray($keys, random()->text(20));
-    }
-
-    public static function fillArray(array $keys, $value): array
-    {
-        return array_combine($keys, array_fill(0, count($keys), $value));
+        foreach ((array) $props as $prop) {
+            $object->$prop = ArrayMock::mockTranslations();
+        }
     }
 }

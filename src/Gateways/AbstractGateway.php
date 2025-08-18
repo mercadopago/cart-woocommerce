@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Gateways;
 
+use ArrayAccess;
 use Exception;
 use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Form;
@@ -14,12 +15,11 @@ use Mockery\Exception\MockeryExceptionInterface;
 use WC_Payment_Gateway;
 use MercadoPago\Woocommerce\Helpers\RefundStatusCodes;
 use MercadoPago\Woocommerce\Exceptions\RefundException;
+use WP_Error;
 
 abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPagoGatewayInterface
 {
     public const ID = '';
-
-    public const CHECKOUT_NAME = '';
 
     public const WEBHOOK_API_NAME = '';
 
@@ -35,15 +35,27 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     public string $checkoutCountry;
 
-    public array $adminTranslations;
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $adminTranslations;
 
-    public array $storeTranslations;
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    public $storeTranslations;
 
     protected float $ratio;
 
     protected array $countryConfigs;
 
-    protected array $links;
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var array|ArrayAccess
+     */
+    protected $links;
 
     public WoocommerceMercadoPago $mercadopago;
 
@@ -71,6 +83,8 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         $this->loadResearchComponent();
         $this->loadMelidataStoreScripts();
     }
+
+    abstract public function getCheckoutName(): string;
 
     /**
      * Process blocks checkout data
@@ -381,34 +395,51 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      */
     public function process_payment($order_id): array
     {
-        $order = wc_get_order($order_id);
+        try {
+            $order = wc_get_order($order_id);
 
-        $discount   = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
-        $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
+            $discount   = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
+            $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
 
-        $isProductionMode = $this->mercadopago->storeConfig->getProductionMode();
+            $isProductionMode = $this->mercadopago->storeConfig->getProductionMode();
 
-        $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
-        $this->mercadopago->orderMetadata->setUsedGatewayData($order, static::ID);
+            $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
+            $this->mercadopago->orderMetadata->setUsedGatewayData($order, static::ID);
 
-        if ($this->discount != 0) {
-            $percentage  = Numbers::getPercentageFromParcialValue($discount, $order->get_total());
-            $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
-            $feeText     = $this->getFeeText($translation, $percentage, $discount);
+            if ($this->discount != 0) {
+                $percentage  = Numbers::getPercentageFromParcialValue($discount, $order->get_total());
+                $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
+                $feeText     = $this->getFeeText($translation, $percentage, $discount);
 
-            $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
+                $this->mercadopago->orderMetadata->setDiscountData($order, $feeText);
+            }
+
+            if ($this->commission != 0) {
+                $percentage  = Numbers::getPercentageFromParcialValue($commission, $order->get_total());
+                $translation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
+                $feeText     = $this->getFeeText($translation, $percentage, $commission);
+
+                $this->mercadopago->orderMetadata->setCommissionData($order, $feeText);
+            }
+
+            return $this->proccessPaymentInternal($order);
+        } catch (Exception $e) {
+            return $this->processReturnFail(
+                $e,
+                $e->getMessage(),
+                static::LOG_SOURCE,
+                (array) $order ?? [],
+                true
+            );
         }
-
-        if ($this->commission != 0) {
-            $percentage  = Numbers::getPercentageFromParcialValue($commission, $order->get_total());
-            $translation = $this->mercadopago->storeTranslations->commonCheckout['fee_title'];
-            $feeText     = $this->getFeeText($translation, $percentage, $commission);
-
-            $this->mercadopago->orderMetadata->setCommissionData($order, $feeText);
-        }
-
-        return [];
     }
+
+    /**
+     * Process order payment
+     *
+     * @param \WC_Order|\WC_Order_Refund $order
+     */
+    abstract public function proccessPaymentInternal($order): array;
 
     /**
      * Receive gateway webhook notifications
@@ -530,7 +561,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             throw $e;
         }
 
-        $this->mercadopago->logs->file->error('Message: ' . $e->getMessage() . ' \n\n\n' . 'Stackstrace: ' . $e->getTraceAsString() . ' \n\n\n', $source, $context);
+        $this->mercadopago->logs->file->error("Message: {$e->getMessage()} \n\n\nStacktrace: {$e->getTraceAsString()} \n\n\n", $source, $context);
 
         $errorMessages = [
             "Invalid test user email"          => $this->mercadopago->storeTranslations->commonMessages['invalid_users'],
@@ -538,6 +569,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             "Invalid operators users involved" => $this->mercadopago->storeTranslations->commonMessages['invalid_operators'],
             "exception"                        => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
             "400"                              => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+            "Invalid card_number_validation"   => $this->mercadopago->storeTranslations->customCheckout['card_number_validation_error'],
         ];
 
         foreach ($errorMessages as $keyword => $replacement) {
@@ -569,16 +601,6 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         if ($this->mercadopago->hooks->checkout->isCheckout()) {
             $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFees($this);
         }
-    }
-
-    /**
-     * Get checkout name
-     *
-     * @return string
-     */
-    public function getCheckoutName(): string
-    {
-        return static::CHECKOUT_NAME;
     }
 
     /**
@@ -1039,12 +1061,12 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             $refundStatusCodes = new RefundStatusCodes($this->mercadopago->adminTranslations);
             $userMessage = $refundStatusCodes->getUserMessage($e->getHttpStatusCode() ?? 0, $responseData);
 
-            return new \WP_Error('refund_error', $userMessage);
+            return new WP_Error('refund_error', $userMessage);
         } catch (Exception $e) {
-            return new \WP_Error(
+            return new WP_Error(
                 'refund_error',
-                $this->mercadopago->adminTranslations->refund[$e->getMessage()]
-                ?? $this->mercadopago->adminTranslations->refund['unknown_error']
+                $this->mercadopago->adminTranslations->refund[$e->getMessage()] ??
+                $this->mercadopago->adminTranslations->refund['unknown_error']
             );
         }
     }

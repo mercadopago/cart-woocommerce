@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Gateways;
 use Exception;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
+use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
@@ -25,11 +26,6 @@ class PixGateway extends AbstractGateway
      * @const
      */
     public const ID = 'woo-mercado-pago-pix';
-
-    /**
-     * @const
-     */
-    public const CHECKOUT_NAME = 'checkout-pix';
 
     /**
      * @const
@@ -99,14 +95,9 @@ class PixGateway extends AbstractGateway
         $this->orderMeta = new OrderMeta();
     }
 
-    /**
-     * Get checkout name
-     *
-     * @return string
-     */
     public function getCheckoutName(): string
     {
-        return self::CHECKOUT_NAME;
+        return 'checkout-pix';
     }
 
     public function formFields(): array
@@ -164,53 +155,32 @@ class PixGateway extends AbstractGateway
         ];
     }
 
-    /**
-     * Process payment and create woocommerce order
-     *
-     * @param $order_id
-     *
-     * @return array
-     */
-    public function process_payment($order_id): array
+    public function proccessPaymentInternal($order): array
     {
-        $order    = wc_get_order($order_id);
-        try {
-            parent::process_payment($order_id);
+        $checkout = Form::sanitizedPostData();
 
-            $checkout = Form::sanitizedPostData();
+        $this->mercadopago->orderMetadata->markPaymentAsBlocks(
+            $order,
+            isset($_POST['wc-woo-mercado-pago-pix-new-payment-method']) ? "yes" : "no"
+        );
 
-            if (isset($_POST['wc-woo-mercado-pago-pix-new-payment-method'])) {
-                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "yes");
-            } else {
-                $this->mercadopago->orderMetadata->markPaymentAsBlocks($order, "no");
-            }
-
-            if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
-                return $this->processReturnFail(
-                    new Exception('Email not valid on ' . __METHOD__),
-                    $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
-                    self::LOG_SOURCE,
-                    (array) $order
-                );
-            }
-
-            $this->transaction = new PixTransaction($this, $order, $checkout);
-            $response          = $this->transaction->createPayment();
-
-            if (is_array($response) && array_key_exists('status', $response)) {
-                return $this->verifyPixPaymentResponse($response, $order);
-            }
-
-            throw new ResponseStatusException('exception : Unable to process payment on ' . __METHOD__);
-        } catch (Exception $e) {
+        if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
             return $this->processReturnFail(
-                $e,
-                $e->getMessage(),
+                new Exception('Email not valid on ' . __METHOD__),
+                $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
                 self::LOG_SOURCE,
-                (array) $order,
-                true
+                (array) $order
             );
         }
+
+        $this->transaction = new PixTransaction($this, $order, $checkout);
+        $response          = $this->transaction->createPayment();
+
+        if (is_array($response) && array_key_exists('status', $response)) {
+            return $this->verifyPixPaymentResponse($response, $order);
+        }
+
+        throw new ResponseStatusException('exception : Unable to process payment on ' . __METHOD__);
     }
 
     /**
@@ -264,15 +234,7 @@ class PixGateway extends AbstractGateway
     public static function isAvailable(): bool
     {
         global $mercadopago;
-
-        $siteId  = $mercadopago->sellerConfig->getSiteId();
-        $country = $mercadopago->helpers->country::getWoocommerceDefaultCountry();
-
-        if ($siteId === 'MLB' || ($siteId === '' && $country === 'BR')) {
-            return true;
-        }
-
-        return false;
+        return $mercadopago->helpers->country->getPluginDefaultCountry() === Country::COUNTRY_CODE_MLB;
     }
 
     /**

@@ -2,20 +2,33 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
+use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
+use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
+use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
+use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Transactions\TicketTransaction;
+use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\TicketGateway;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use Mockery;
+use WP_Mock;
 
 class TicketGatewayTest extends TestCase
 {
-    use WoocommerceMock;
+    use GatewayMock;
 
-    public function testGetMLBStatesForAddressFields()
+    private string $gatewayClass = TicketGateway::class;
+
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var MockInterface|TicketGateway
+     */
+    private $gateway;
+
+    public function testGetMLBStates()
     {
-        $gateway = Mockery::mock(TicketGateway::class)->makePartial();
-
-        $result = $gateway->getMLBStatesForAddressFields();
         $this->assertEquals([
             'AC' => 'Acre',
             'AL' => 'Alagoas',
@@ -44,44 +57,25 @@ class TicketGatewayTest extends TestCase
             'SP' => 'São Paulo',
             'SE' => 'Sergipe',
             'TO' => 'Tocantins',
-        ], $result);
+        ], $this->gateway->getMLBStates());
     }
 
     public function testGetPaymentFieldsErrorMessages()
     {
-        $gateway = Mockery::mock(TicketGateway::class)->makePartial();
-        $expectedMessages = [
-            'postalcode_error_empty'     => '1',
-            'postalcode_error_partial'   => '2',
-            'postalcode_error_invalid'   => '3',
-            'state_error_unselected'     => '4',
-            'city_error_empty'           => '5',
-            'city_error_invalid'         => '6',
-            'neighborhood_error_empty'   => '7',
-            'neighborhood_error_invalid' => '8',
-            'address_error_empty'        => '9',
-            'address_error_invalid'      => '10',
-            'number_error_empty'         => '11',
-            'number_error_invalid'       => '12',
-        ];
-
-        $gateway->storeTranslations = [
-            'billing_data_postalcode_error_empty'     => '1',
-            'billing_data_postalcode_error_partial'   => '2',
-            'billing_data_postalcode_error_invalid'   => '3',
-            'billing_data_state_error_unselected'     => '4',
-            'billing_data_city_error_empty'           => '5',
-            'billing_data_city_error_invalid'         => '6',
-            'billing_data_neighborhood_error_empty'   => '7',
-            'billing_data_neighborhood_error_invalid' => '8',
-            'billing_data_address_error_empty'        => '9',
-            'billing_data_address_error_invalid'      => '10',
-            'billing_data_number_error_empty'         => '11',
-            'billing_data_number_error_invalid'       => '12',
-        ];
-
-        $result = $gateway->getPaymentFieldsErrorMessages();
-        $this->assertEquals($expectedMessages, $result);
+        $this->assertEquals([
+            'postalcode_error_empty' => $this->gateway->storeTranslations['billing_data_postalcode_error_empty'],
+            'postalcode_error_partial' => $this->gateway->storeTranslations['billing_data_postalcode_error_partial'],
+            'postalcode_error_invalid' => $this->gateway->storeTranslations['billing_data_postalcode_error_invalid'],
+            'state_error_unselected' => $this->gateway->storeTranslations['billing_data_state_error_unselected'],
+            'city_error_empty' => $this->gateway->storeTranslations['billing_data_city_error_empty'],
+            'city_error_invalid' => $this->gateway->storeTranslations['billing_data_city_error_invalid'],
+            'neighborhood_error_empty' => $this->gateway->storeTranslations['billing_data_neighborhood_error_empty'],
+            'neighborhood_error_invalid' => $this->gateway->storeTranslations['billing_data_neighborhood_error_invalid'],
+            'address_error_empty' => $this->gateway->storeTranslations['billing_data_address_error_empty'],
+            'address_error_invalid' => $this->gateway->storeTranslations['billing_data_address_error_invalid'],
+            'number_error_empty' => $this->gateway->storeTranslations['billing_data_number_error_empty'],
+            'number_error_invalid' => $this->gateway->storeTranslations['billing_data_number_error_invalid'],
+        ], $this->gateway->getPaymentFieldsErrorMessages());
     }
 
     public function testIsAvailableReturnsTrue()
@@ -108,34 +102,260 @@ class TicketGatewayTest extends TestCase
 
     public function testBuildPaycashPaymentString()
     {
-        $storeTranslationsMock = [
-            'paycash_concatenator' => ' e ',
-        ];
-
-        $paymentMethodsMock = [
-            [
-                'id' => 'paycash',
-                'payment_places' => [
-                    ['name' => 'Place 1'],
-                    ['name' => 'Place 2'],
-                    ['name' => 'Place 3'],
+        $this->gateway->mercadopago->sellerConfig = Mockery::mock(Seller::class)
+            ->shouldReceive('getCheckoutTicketPaymentMethods')
+            ->andReturn([
+                [
+                    'id' => 'paycash',
+                    'payment_places' => [
+                        ['name' => 'Place 1'],
+                        ['name' => 'Place 2'],
+                        ['name' => 'Place 3'],
+                    ],
                 ],
+                [
+                    'id' => random()->word(),
+                    'payment_places' => [
+                        ['name' => 'Place A'],
+                        ['name' => 'Place B'],
+                        ['name' => 'Place C'],
+                    ],
+                ],
+            ])
+            ->getMock();
+
+        $this->assertEquals(
+            "Place 1, Place 2{$this->gateway->storeTranslations['paycash_concatenator']}Place 3",
+            $this->gateway->buildPaycashPaymentString()
+        );
+    }
+
+    private function processPaymentMock(bool $isBlocks, array $checkout): void
+    {
+        $this->processPaymentInternalMock($isBlocks);
+
+        $checkout = array_merge([
+            'amount' => random()->numberBetween(1),
+            'payment_method_id' => random()->creditCardType(),
+        ], $checkout);
+
+        if ($isBlocks) {
+            $_POST['mercadopago_ticket'] = null;
+            Mockery::mock('alias:' . Form::class)
+                ->expects()
+                ->sanitizedPostData()
+                ->andReturn([]);
+            $this->gateway
+                ->expects()
+                ->processBlocksCheckoutData('mercadopago_ticket', [])
+                ->andReturn($checkout);
+        } else {
+            $_POST['mercadopago_ticket'] = 1;
+            Mockery::mock('alias:' . Form::class)
+                ->expects()
+                ->sanitizedPostData('mercadopago_ticket')
+                ->andReturn($checkout);
+        }
+    }
+
+    /**
+     * @testWith [true, {"site_id": "MLB", "doc_number": "1234567909"}, {"status_detail": "pending_waiting_payment", "payment_type_id": "bank_transfer"}, "no"]
+     *           [false, {"site_id": "MLU", "doc_number": "1234567909", "doc_type": "otro"}, {"status_detail": "pending_waiting_transfer", "payment_type_id": "fake"}, "yes"]
+     */
+    public function testProcessPaymentInternalSuccess(bool $isBlocks, array $checkout, array $response, string $stockReduceMode): void
+    {
+        $this->processPaymentMock($isBlocks, $checkout);
+
+        if ($response['payment_type_id'] !== 'bank_transfer') {
+            $response['transaction_details'] = [
+                'external_resource_url' => random()->url()
+            ];
+
+            $this->gateway->mercadopago->hooks->order
+                ->expects()
+                ->addOrderNote(
+                    $this->order,
+                    allOf(
+                        containsString($this->gateway->storeTranslations['congrats_title']),
+                        containsString($response['transaction_details']['external_resource_url']),
+                        containsString($this->gateway->storeTranslations['congrats_subtitle'])
+                    ),
+                    1
+                );
+        }
+
+        Mockery::mock('overload:' . TicketTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn(
+                $response = array_merge([
+                    'status' => 'pending'
+                ], $response)
+            );
+
+        $this->order->expects()->get_id();
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+
+        $this->gateway
+            ->expects()
+            ->handleWithRejectPayment($response);
+
+        $this->gateway->mercadopago->helpers->cart
+            ->expects()
+            ->emptyCart();
+
+        $this->gateway->mercadopago->hooks->options
+            ->expects()
+            ->getGatewayOption($this->gateway, 'stock_reduce_mode', 'no')
+            ->andReturn($stockReduceMode);
+
+        if ($stockReduceMode === 'yes') {
+            WP_Mock::userFunction('wc_reduce_stock_levels')->with(null);
+        }
+
+        $this->gateway->mercadopago->hooks->order
+            ->expects()
+            ->setTicketMetadata($this->order, $response)
+            ->getMock()
+            ->expects()
+            ->addOrderNote($this->order, $this->gateway->storeTranslations['customer_not_paid']);
+
+        $this->order
+            ->expects()
+            ->get_checkout_order_received_url()
+            ->andReturn($redirect = random()->url());
+
+        $this->assertEquals(
+            [
+                'result' => 'success',
+                'redirect' => $redirect,
             ],
-        ];
+            $this->gateway->proccessPaymentInternal($this->order)
+        );
+    }
 
-        $sellerConfigMock = Mockery::mock(\MercadoPago\Woocommerce\Configs\Seller::class);
-        $sellerConfigMock->shouldReceive('getCheckoutTicketPaymentMethods')
-            ->andReturn($paymentMethodsMock);
+    /**
+     * @testWith [true, {"amount": null}, false]
+     *           [false, {"payment_method_id": null}, false]
+     *           [true, {"site_id": "MLB", "doc_number": "1234567909"}, true]
+     */
+    public function testProcessPaymentInternalInvalidCheckoutDataException(bool $isBlocks, array $checkout, bool $mockTransaction): void
+    {
+        $this->processPaymentMock($isBlocks, $checkout);
 
-        $mercadopagoMock = Mockery::mock(\MercadoPago\Woocommerce\WoocommerceMercadoPago::class);
-        $mercadopagoMock->sellerConfig = $sellerConfigMock;
+        if ($mockTransaction) {
+            Mockery::mock('overload:' . TicketTransaction::class)
+                ->expects()
+                ->createPayment()
+                ->andReturn([]);
+        }
 
-        $gateway = Mockery::mock(TicketGateway::class)->makePartial();
-        $gateway->mercadopago = $mercadopagoMock;
-        $gateway->storeTranslations = $storeTranslationsMock;
+        $this->expectException(InvalidCheckoutDataException::class);
 
-        $result = $gateway->buildPaycashPaymentString();
+        $this->gateway->proccessPaymentInternal($this->order);
+    }
 
-        $this->assertEquals('Place 1, Place 2 e Place 3', $result);
+    /**
+     * @testWith [true, {"site_id": "MLB"}]
+     *           [false, {"site_id": "MLU"}]
+     *           [true, {"site_id": "MLU", "doc_number": "1234567909"}]
+     *           [false, {"site_id": "MLU", "doc_type": "otro"}]
+     */
+    public function testProcessPaymentInternalInvalidCheckout(bool $isBlocks, array $checkout): void
+    {
+        $this->processPaymentMock($isBlocks, $checkout);
+
+        $this->gateway->mercadopago->storeTranslations->commonMessages['cho_form_error'] = random()->word();
+
+        $this->gateway
+            ->expects()
+            ->processReturnFail(
+                Mockery::type(\Exception::class),
+                $this->gateway->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                TicketGateway::LOG_SOURCE
+            )->andReturn($return = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'error',
+            ]);
+
+        $this->assertEquals($return, $this->gateway->proccessPaymentInternal($this->order));
+    }
+
+    /**
+     * @testWith [true]
+     *           [false]
+     */
+    public function testProcessPaymentInternalRejected(bool $isBlocks): void
+    {
+        $this->processPaymentMock($isBlocks, [
+            "site_id" => "MLB",
+            "doc_number" => "1234567909"
+        ]);
+
+        Mockery::mock('overload:' . TicketTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn($response = [
+                'status' => 'rejected',
+            ]);
+
+        $this->order->expects()->get_id();
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+
+        $this->gateway
+            ->expects()
+            ->handleWithRejectPayment($response)
+            ->andThrow(RejectedPaymentException::class);
+
+        $this->expectException(RejectedPaymentException::class);
+
+        $this->gateway->proccessPaymentInternal($this->order);
+    }
+
+    /**
+     * @testWith [true, {"status": "fake"}]
+     *           [false, {"status": "pending", "status_detail": "fake"}]
+     */
+    public function testProcessPaymentInternalInvalidStatus(bool $isBlocks, array $response): void
+    {
+        $this->processPaymentMock($isBlocks, [
+            "site_id" => "MLB",
+            "doc_number" => "1234567909"
+        ]);
+
+        Mockery::mock('overload:' . TicketTransaction::class)
+            ->expects()
+            ->createPayment()
+            ->andReturn($response);
+
+        $this->order->expects()->get_id();
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'] = random()->word();
+
+        $this->gateway
+            ->expects()
+            ->processReturnFail(
+                Mockery::type(ResponseStatusException::class),
+                $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+                TicketGateway::LOG_SOURCE,
+                $response
+            )->andReturn($return = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'error',
+            ]);
+
+        $this->assertEquals($return, $this->gateway->proccessPaymentInternal($this->order));
     }
 }

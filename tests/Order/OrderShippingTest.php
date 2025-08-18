@@ -17,8 +17,6 @@ class OrderShippingTest extends TestCase
 
     public function setUp(): void
     {
-        $this->woocommerceSetUp();
-
         $this->orderMock = Mockery::mock('WC_Order');
         $this->orderShipping = new OrderShipping();
     }
