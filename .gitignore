@@ -22,5 +22,4 @@ requirements.md
 phpstan-baseline.neon
 
 # SSL certificates (local dev)
-scripts/ssl/localhost.pem
-scripts/ssl/localhost-key.pem
+*.pem

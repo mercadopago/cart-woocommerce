@@ -44,15 +44,12 @@ class MPSuperTokenPaymentMethods {
     LAST_DIGITS_TEXT = wc_mercadopago_supertoken_payment_methods_params.last_digits_text;
     NEW_CARD_TEXT = wc_mercadopago_supertoken_payment_methods_params.new_card_text;
     ACCOUNT_MONEY_TEXT = wc_mercadopago_supertoken_payment_methods_params.account_money_text;
-    ACCOUNT_MONEY_INVESTED_TEXT = wc_mercadopago_supertoken_payment_methods_params.account_money_invested_text;
     INTEREST_FREE_PART_ONE_TEXT = wc_mercadopago_supertoken_payment_methods_params.interest_free_part_one_text;
     INTEREST_FREE_PART_TWO_TEXT = wc_mercadopago_supertoken_payment_methods_params.interest_free_part_two_text;
-    BANK_INTEREST_OPTION_TEXT = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.installments.bank_interest_option_text;
     BANK_INTEREST_HINT_TEXT = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.installments.bank_interest_hint_text;
     INSTALLMENTS_INPUT_TITLE = wc_mercadopago_supertoken_payment_methods_params.input_title.installments;
     INSTALLMENTS_PLACEHOLDER = wc_mercadopago_supertoken_payment_methods_params.placeholders.installments;
     INSTALLMENTS_REQUIRED_MESSAGE = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.installments.required;
-    INSTALLMENTS_HINT_TEXT = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.installments.hint;
     INSTALLMENTS_INTEREST_FREE_OPTION_TEXT = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.installments.interest_free_option_text;
     SECURITY_CODE_INPUT_TITLE_TEXT = wc_mercadopago_supertoken_payment_methods_params.security_code_input_title_text;
     SECURITY_CODE_PLACEHOLDER_TEXT_3_DIGITS = wc_mercadopago_supertoken_payment_methods_params.security_code_placeholder_text_3_digits;
@@ -377,13 +374,13 @@ class MPSuperTokenPaymentMethods {
 
         if (this.userHasAccountMoney(accountMoneyPaymentMethod)) {
             if (this.userHasAccountMoneyInvested(accountMoneyPaymentMethod)) {
-                return this.ACCOUNT_MONEY_TEXT.concat(` + ${this.ACCOUNT_MONEY_INVESTED_TEXT}`);
+                return 'Saldo en Mercado Pago Wallet + Generando ganancias en GBM';
             }
 
-            return this.ACCOUNT_MONEY_TEXT;
+            return 'Saldo en Mercado Pago Wallet';
         }
 
-        return this.ACCOUNT_MONEY_INVESTED_TEXT;
+        return 'Saldo generando ganancias en GBM a través de Mercado Pago';
     }
 
     numberOfInstallmentsWithoutFee(paymentMethod) {
@@ -391,7 +388,7 @@ class MPSuperTokenPaymentMethods {
             return 0;
         }
 
-        const installmentsWithoutFee = paymentMethod.installments.filter(installment => installment.installment_rate === 0);
+        const installmentsWithoutFee = paymentMethod.installments.filter(installment => installment.installment_rate === 0 && installment.installment_rate_collector.includes('MERCADOPAGO'));
         return installmentsWithoutFee[installmentsWithoutFee.length - 1].installments;
     }
 
@@ -433,21 +430,19 @@ class MPSuperTokenPaymentMethods {
         const installmentNumber = installment.installments;
         const installmentAmount = this.formatCurrency(installment.installment_amount);
         const installmentRate = installment.installment_rate !== 0;
+        const installmentRateThirdParty = installment.installment_rate_collector.includes('THIRD_PARTY');
         const totalAmount = this.formatCurrency(installment.total_amount);
-        const bankInterestDisclaimer = this.needsBankInterestDisclaimer()
-            ? ` + ${this.BANK_INTEREST_OPTION_TEXT}`
-            : '';
 
         if (installmentNumber === 1) {
             return `${installmentNumber}x ${totalAmount}`;
         }
 
-        if (installmentRate && !bankInterestDisclaimer) {
+        if (installmentRate) {
             return `${installmentNumber}x ${installmentAmount} (${totalAmount})`;
         }
 
-        if (bankInterestDisclaimer) {
-            return `${installmentNumber}x ${installmentAmount} (${totalAmount})${bankInterestDisclaimer}`;
+        if (this.needsBankInterestDisclaimer() && installmentRateThirdParty && !installmentRate) {
+            return `${installmentNumber}x ${installmentAmount} (${totalAmount})*`;
         }
 
         return `${installmentNumber}x ${installmentAmount} ${this.INSTALLMENTS_INTEREST_FREE_OPTION_TEXT}`;
@@ -628,7 +623,7 @@ class MPSuperTokenPaymentMethods {
                     required-message="${this.INSTALLMENTS_REQUIRED_MESSAGE}"
                     items='${JSON.stringify(installments)}'
                     site-id="${this.getSiteId()}"
-                    ${this.needsBankInterestDisclaimer() ? `hint="${this.INSTALLMENTS_HINT_TEXT}"` : ''}
+                    ${this.needsBankInterestDisclaimer() ? `hint="*${this.BANK_INTEREST_HINT_TEXT}"` : ''}
                 ></andes-dropdown>
             `;
         }
@@ -953,7 +948,17 @@ class MPSuperTokenPaymentMethods {
             );
         });
 
-        customCheckoutEntireElement.focus();
+        // we select the first payment method or the first accordion because the div element will be already focused
+        const firstPaymentMethod = customCheckoutEntireElement.querySelector('article');
+        if (firstPaymentMethod) {
+            firstPaymentMethod.focus();
+            return;
+        }
+
+        const firstAccordion = customCheckoutEntireElement.querySelector('section');
+        if (firstAccordion) {
+            firstAccordion.focus();
+        }
     }
 
     forceSecurityCodeValidation(paymentMethod) {

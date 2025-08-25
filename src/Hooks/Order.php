@@ -3,8 +3,6 @@
 namespace MercadoPago\Woocommerce\Hooks;
 
 use Exception;
-use MercadoPago\PP\Sdk\Common\AbstractCollection;
-use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Libraries\Singleton\Singleton;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
@@ -190,33 +188,26 @@ class Order
     private function getMetaboxData(WC_Order $order): array
     {
         try {
-            $paymentInfo  = $this->getLastPaymentInfo($order);
-        } catch (Exception $e) {
-            $this->logs->file->error('Mercado Pago: Error getting payment info for metabox: ' . $e->getMessage(), __CLASS__);
-            return [];
-        }
-
-        $isCreditCard      = $paymentInfo['payment_type_id'] === 'credit_card';
-        $paymentStatusType = PaymentStatus::getStatusType($paymentInfo['status']);
-
-        $cardContent = PaymentStatus::getCardDescription(
-            $this->adminTranslations->statusSync,
-            $paymentInfo['status_detail'],
-            $isCreditCard
-        );
-
-        try {
-            $paymentsData = $this->orderStatus->getPaymentsData($order);
+            $lastPayment = $this->getLastPaymentInfo($order);
+            $allPaymentsData = $this->orderStatus->getAllPaymentsData($order);
         } catch (Exception $e) {
             $this->logs->file->error('Mercado Pago: Error getting payments data for metabox: ' . $e->getMessage(), __CLASS__);
             return [];
         }
 
-        if ($this->hasMultiplePayments($paymentsData) && $this->hasRefundedPayments($paymentsData)) {
-            $refundedStatusDetail = $this->orderStatus->getRefundedStatusDetail($paymentsData);
+        $isCreditCard = $lastPayment['payment_type_id'] === 'credit_card';
+        $paymentStatusType = PaymentStatus::getStatusType($lastPayment['status']);
+
+        $cardContent = PaymentStatus::getCardDescription(
+            $this->adminTranslations->statusSync,
+            $lastPayment['status_detail'],
+            $isCreditCard
+        );
+
+        if ($this->hasMultiplePayments($allPaymentsData) && $this->hasRefundedPayments($allPaymentsData)) {
+            $refundedStatusDetail = $this->orderStatus->getRefundedStatusDetail($allPaymentsData);
 
             $paymentStatusType = PaymentStatus::getStatusType($refundedStatusDetail['title']);
-
             $cardContent = PaymentStatus::getCardDescription(
                 $this->adminTranslations->statusSync,
                 $refundedStatusDetail['description'],
@@ -273,12 +264,12 @@ class Order
      *
      * @param WC_Order $order
      *
-     * @return bool|AbstractCollection|AbstractEntity|object
+     * @return array|false
      */
     private function getLastPaymentInfo(WC_Order $order)
     {
         try {
-            $paymentsData = $this->orderStatus->getPaymentsData($order);
+            $paymentsData = $this->orderStatus->getAllPaymentsData($order);
             if (empty($paymentsData)) {
                 return false;
             }
@@ -343,6 +334,7 @@ class Order
             $orderId = Form::sanitizedPostData('order_id');
             $order = wc_get_order($orderId);
             $this->syncOrderStatus($order);
+            $this->orderMetadata->updateOrderCustomFieldsAfterSync($order, $this->orderStatus->getAllPaymentsData($order));
 
             wp_send_json_success(
                 $this->adminTranslations->statusSync['response_success']
@@ -369,12 +361,29 @@ class Order
      */
     public function syncOrderStatus(WC_Order $order): void
     {
-        if (!$paymentData = $this->getLastPaymentInfo($order)) {
-            $this->logs->file->error('Mercado Pago: Error getting payment info for sync order status', __CLASS__);
-            return;
-        }
+        try {
+            $notification = $this->orderStatus->getLastNotification($order);
+            $notification = reset($notification);
 
-        $this->orderStatus->processStatus($paymentData['status'], (array) $paymentData, $order, $this->orderMetadata->getUsedGatewayData($order));
+            if (empty($notification)) {
+                $this->logs->file->error('Mercado Pago: Error getting notification info for sync order status', __CLASS__);
+                return;
+            }
+
+            /* Dev Internal Note: The sync button works with all payment flows, but is particularly useful
+             * for orders made with Checkout API or Checkout Pro - credit and debit cards,
+             * where approved payment triggers the internal notification flow.
+             */
+
+            $this->orderStatus->processStatus(
+                $notification['status'],
+                (array) $notification,
+                $order,
+                $this->orderMetadata->getUsedGatewayData($order)
+            );
+        } catch (Exception $e) {
+            $this->logs->file->error('Mercado Pago: Error in sync order status: ' . $e->getMessage(), __CLASS__);
+        }
     }
 
     /**

@@ -38,7 +38,8 @@ if (!class_exists('WP_Error')) {
     }
 }
 
-function random()
+function random(string $locale = "pt_BR")
 {
-    return Faker\Factory::create();
+    static $faker;
+    return $faker ??= Faker\Factory::create($locale);
 }

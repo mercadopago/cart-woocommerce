@@ -67,26 +67,44 @@ class ArraysTest extends TestCase
         $this->assertTrue(Arrays::anyEmpty(['a', false]));
         $this->assertTrue(Arrays::anyEmpty(['a', 0]));
 
-        $sample = ['a' => 1, 'b' => true, 'c' => false, 'd' => ''];
+        $array = ['a' => 1, 'b' => true, 'c' => false, 'd' => ''];
 
-        $this->assertFalse(Arrays::anyEmpty($sample, ['a', 'b']));
-        $this->assertFalse(Arrays::anyEmpty($sample, ['b', 'a']));
-        $this->assertFalse(Arrays::anyEmpty($sample, ['b']));
-        $this->assertTrue(Arrays::anyEmpty($sample, ['c', 'b', 'a']));
-        $this->assertTrue(Arrays::anyEmpty($sample, ['a', 'c']));
-        $this->assertTrue(Arrays::anyEmpty($sample, ['b', 'd']));
-        $this->assertTrue(Arrays::anyEmpty($sample, ['a', 'e']));
-        $this->assertTrue(Arrays::anyEmpty($sample, ['e']));
+        $this->assertFalse(Arrays::anyEmpty($array, ['a', 'b']));
+        $this->assertFalse(Arrays::anyEmpty($array, ['b', 'a']));
+        $this->assertFalse(Arrays::anyEmpty($array, ['b']));
+        $this->assertTrue(Arrays::anyEmpty($array, ['c', 'b', 'a']));
+        $this->assertTrue(Arrays::anyEmpty($array, ['a', 'c']));
+        $this->assertTrue(Arrays::anyEmpty($array, ['b', 'd']));
+        $this->assertTrue(Arrays::anyEmpty($array, ['a', 'e']));
+        $this->assertTrue(Arrays::anyEmpty($array, ['e']));
     }
 
     public function testOnly()
     {
-        $sample = ['a' => 1, 'b' => true, 'c' => false, 'd' => ''];
+        $array = ['a' => 1, 'b' => true, 'c' => false, 'd' => ''];
 
-        $this->assertEquals(['a' => 1, 'b' => true], Arrays::only($sample, ['a', 'b']));
-        $this->assertEquals(['b' => true, 'd' => ''], Arrays::only($sample, ['b', 'd']));
-        $this->assertEquals(['b' => true], Arrays::only($sample, 'b'));
-        $this->assertEquals([], Arrays::only($sample, 'e'));
-        $this->assertEquals([], Arrays::only($sample, ['e']));
+        $this->assertEquals(['a' => 1, 'b' => true], Arrays::only($array, ['a', 'b']));
+        $this->assertEquals(['b' => true, 'd' => ''], Arrays::only($array, ['b', 'd']));
+        $this->assertEquals(['b' => true], Arrays::only($array, 'b'));
+        $this->assertEquals([], Arrays::only($array, 'e'));
+        $this->assertEquals([], Arrays::only($array, ['e']));
+    }
+
+    public function testExcept()
+    {
+        $array = ['a' => 1, 'b' => true, 'c' => false, 'd' => ''];
+
+        $this->assertEquals(['a' => 1, 'b' => true], Arrays::except($array, ['c', 'd']));
+        $this->assertEquals(['a' => 1, 'c' => false], Arrays::except($array, ['b', 'd']));
+        $this->assertEquals(['a' => 1, 'c' => false, 'd' => ''], Arrays::except($array, ['x', 'b']));
+        $this->assertEquals($array, Arrays::except($array, []));
+        $this->assertEquals([], Arrays::except($array, ['a', 'b', 'c', 'd']));
+    }
+
+    public function testLast()
+    {
+        $this->assertEquals(3, Arrays::last([1, 2, 3]));
+        $this->assertEquals('c', Arrays::last(['a', 'b', 'c']));
+        $this->assertEquals('a', Arrays::last(['a']));
     }
 }

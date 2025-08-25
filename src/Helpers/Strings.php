@@ -102,4 +102,12 @@ class Strings
     {
         return $search === '' ? $string : explode($search, $string, 2)[0];
     }
+
+    /**
+     * Check if $string contains $search
+     */
+    public static function contains(string $string, string $search): bool
+    {
+        return strrpos($string, $search) !== false;
+    }
 }

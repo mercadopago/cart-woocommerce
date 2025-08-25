@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 8.4.5
+Stable tag: 8.4.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,12 +134,14 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.4.5 (18/08/2025) =
+= v8.4.6 (25/08/2025) =
 * Fixed
-- Changed the error message when closing the modal in the fast payments flow
-- Obtained logged-in users emails as a fallback in the fast payments flow
 - Text and translation corrections in the fast payments flow
 - Responsiveness improvements in the fast payments flow
-- Check if `downloadSelected` button exists before using it
+- Fixed payment ID storage errors in custom fields metadata for Ticket and PSE payments
+- Fixed sync button functionality for refund scenarios failing to update order information via notification API
+* Changed
+- Changed installments selector for bank interests hint
+- Changed installments options for correctly translated texts on installments without fee
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

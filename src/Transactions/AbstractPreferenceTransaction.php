@@ -20,7 +20,7 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     {
         parent::__construct($gateway, $order);
 
-        $this->transaction = $this->sdk->getPreferenceInstance();
+        $this->transaction = $this->getSdk()->getPreferenceInstance();
 
         $this->setCommonTransaction();
         $this->setPayerTransaction();
@@ -36,14 +36,13 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     /**
      * Create preference
      *
-     * @return array|bool
+     * @return array
      * @throws Exception
      */
     public function createPreference()
     {
-        $preference = $this->getTransaction('Preference');
-
-        $data = $preference->save();
+        $this->logTransactionPayload();
+        $data = $this->transaction->save();
         $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
 
         return $data;

@@ -267,9 +267,8 @@ class CustomGateway extends AbstractGateway
                     ],
                     'installments' => [
                         'required' => $this->storeTranslations['installments_required'],
-                        'interest_free_option_text' => $this->storeTranslations['interest_free_part_two_text'],
+                        'interest_free_option_text' => $this->storeTranslations['interest_free_option_text'],
                         'bank_interest_hint_text' => $this->storeTranslations['card_installments_interest_text'],
-                        'bank_interest_option_text' => $this->storeTranslations['installments_text']
                     ],
                 ],
                 'threeDsText' => [
@@ -346,9 +345,9 @@ class CustomGateway extends AbstractGateway
                 'last_digits_text' => $this->storeTranslations['last_digits_text'],
                 'new_card_text' => $this->storeTranslations['new_card_text'],
                 'account_money_text' => $this->storeTranslations['account_money_text'],
-                'account_money_invested_text' => $this->storeTranslations['account_money_invested_text'],
                 'interest_free_part_one_text' => $this->storeTranslations['interest_free_part_one_text'],
                 'interest_free_part_two_text' => $this->storeTranslations['interest_free_part_two_text'],
+                'interest_free_option_text' => $this->storeTranslations['interest_free_option_text'],
                 'security_code_input_title_text' => $this->storeTranslations['security_code_input_title_text'],
                 'security_code_placeholder_text_3_digits' => $this->storeTranslations['security_code_placeholder_text_3_digits'],
                 'security_code_placeholder_text_4_digits' => $this->storeTranslations['security_code_placeholder_text_4_digits'],
@@ -366,9 +365,8 @@ class CustomGateway extends AbstractGateway
                 'input_helper_message' => [
                     'installments' => [
                         'required' => $this->storeTranslations['installments_required'],
-                        'interest_free_option_text' => $this->storeTranslations['interest_free_part_two_text'],
+                        'interest_free_option_text' => $this->storeTranslations['interest_free_option_text'],
                         'bank_interest_hint_text' => $this->storeTranslations['card_installments_interest_text'],
-                        'bank_interest_option_text' => $this->storeTranslations['installments_text']
                     ],
                     'securityCode' => [
                         'invalid_type'   => $this->storeTranslations['input_helper_message_security_code_invalid_type'],

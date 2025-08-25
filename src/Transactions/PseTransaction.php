@@ -24,9 +24,8 @@ class PseTransaction extends AbstractPaymentTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->transaction->payment_method_id          = self::ID;
-        $this->transaction->installments               = 1;
-        $this->transaction->external_reference = $this->getExternalReference();
+        $this->transaction->payment_method_id = self::ID;
+        $this->transaction->installments      = 1;
         $this->setPayerTransaction();
         $this->setPsePropertiesTransaction();
     }

@@ -7,6 +7,7 @@ use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Numbers;
@@ -16,16 +17,17 @@ use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataAddress;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataUser;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataCpp;
 use MercadoPago\Woocommerce\Entities\Metadata\ThemeMetadata;
+use MercadoPago\Woocommerce\Helpers\Strings;
+use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use WC_Order;
-use WC_Order_Item;
 use WC_Order_Item_Product;
 
 abstract class AbstractTransaction
 {
     public WoocommerceMercadoPago $mercadopago;
 
-    public Sdk $sdk;
+    private Sdk $sdk;
 
     /**
      * Transaction
@@ -65,7 +67,6 @@ abstract class AbstractTransaction
         $this->order       = $order;
         $this->gateway     = $gateway;
         $this->checkout    = $checkout;
-        $this->sdk         = $this->getSdkInstance();
 
         $this->ratio          = $this->mercadopago->helpers->currency->getRatio($gateway);
         $this->countryConfigs = $this->mercadopago->helpers->country->getCountryConfigs();
@@ -73,34 +74,23 @@ abstract class AbstractTransaction
         $this->orderTotal     = 0;
     }
 
-    /**
-     * Get SDK instance
-     */
-    public function getSdkInstance(): Sdk
+    public function getSdk(): Sdk
     {
-        $accessToken  = $this->mercadopago->sellerConfig->getCredentialsAccessToken();
-        $platformId   = MP_PLATFORM_ID;
-        $productId    = Device::getDeviceProductId();
-        $integratorId = $this->mercadopago->storeConfig->getIntegratorId();
-
-        return new Sdk($accessToken, $platformId, $productId, $integratorId);
+        return $this->sdk ??= new Sdk(
+            $this->mercadopago->sellerConfig->getCredentialsAccessToken(),
+            MP_PLATFORM_ID,
+            Device::getDeviceProductId(),
+            $this->mercadopago->storeConfig->getIntegratorId()
+        );
     }
 
-    /**
-     * Get transaction
-     *
-     * @param string $transactionType
-     *
-     * @return Payment|Preference
-     */
-    public function getTransaction(string $transactionType)
+    public function logTransactionPayload(): void
     {
-        $transactionClone = clone $this->transaction;
-
-        unset($transactionClone->token);
-        $this->mercadopago->logs->file->info("$transactionType payload", $this->gateway::LOG_SOURCE, $transactionClone);
-
-        return $this->transaction;
+        $this->mercadopago->logs->file->info(
+            Arrays::last(explode('\\', get_class($this->transaction))) . ' payload',
+            $this->gateway::LOG_SOURCE,
+            Arrays::except($this->transaction->toArray(), ['token'])
+        );
     }
 
     /**
@@ -112,7 +102,7 @@ abstract class AbstractTransaction
     {
         $this->transaction->binary_mode          = $this->getBinaryMode();
         $this->transaction->external_reference   = $this->getExternalReference();
-        $this->transaction->notification_url      = $this->getNotificationUrl();
+        $this->transaction->notification_url     = $this->getNotificationUrl();
         $this->transaction->metadata             = (array) $this->getInternalMetadata();
         $this->transaction->statement_descriptor = $this->mercadopago->storeConfig->getStoreName('Mercado Pago');
     }
@@ -128,19 +118,16 @@ abstract class AbstractTransaction
         $customDomainOptions = $this->mercadopago->storeConfig->getCustomDomainOptions();
 
         if (
-            !empty($customDomain) && (
-            strrpos($customDomain, 'localhost') === false ||
-            filter_var($customDomain, FILTER_VALIDATE_URL) === false
-            )
+            !empty($customDomain) &&
+            !Strings::contains($customDomain, 'localhost') &&
+            Url::isValid($customDomain)
         ) {
-            if ($customDomainOptions === 'yes') {
-                return $customDomain . '?wc-api=' . $this->gateway::WEBHOOK_API_NAME . '&source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME);
-            } else {
-                return $customDomain;
-            }
+            return $customDomainOptions === 'yes'
+                ? $customDomain . '?wc-api=' . $this->gateway::WEBHOOK_API_NAME . '&source_news=' . NotificationType::getNotificationType($this->gateway::WEBHOOK_API_NAME)
+                : $customDomain;
         }
 
-        if (empty($customDomain) && !strrpos(get_site_url(), 'localhost')) {
+        if (empty($customDomain) && !Strings::contains(get_site_url(), 'localhost')) {
             $notificationUrl  = $this->mercadopago->woocommerce->api_request_url($this->gateway::WEBHOOK_API_NAME);
             $urlJoinCharacter = preg_match('#/wc-api/#', $notificationUrl) ? '?' : '&';
 
@@ -248,6 +235,7 @@ abstract class AbstractTransaction
      */
     public function setItemsTransaction($items): void
     {
+        /** @var WC_Order_Item_Product $item */
         foreach ($this->order->get_items() as $item) {
             $product  = $item->get_product();
             $quantity = $item->get_quantity();
@@ -255,7 +243,11 @@ abstract class AbstractTransaction
             $title = $product->get_name();
             $title = "$title x $quantity";
 
-            $amount = $this->getItemAmount($item);
+            $amount = Numbers::calculateByCurrency(
+                $this->countryConfigs['currency'],
+                $item->get_total() + $item->get_total_tax(),
+                $this->ratio
+            );
 
             $this->orderTotal   += $amount;
             $this->listOfItems[] = $title;
@@ -264,7 +256,7 @@ abstract class AbstractTransaction
                 'id'          => $item->get_product_id(),
                 'title'       => $title,
                 'description' => $this->mercadopago->helpers->strings->sanitizeAndTruncateText($product->get_description()),
-                'picture_url' => $this->getItemImage($product),
+                'picture_url' => wp_get_attachment_url($product->get_image_id()),
                 'category_id' => $this->mercadopago->storeConfig->getStoreCategory('others'),
                 'unit_price'  => $amount,
                 'currency_id' => $this->countryConfigs['currency'],
@@ -337,33 +329,6 @@ abstract class AbstractTransaction
 
             $items->add($item);
         }
-    }
-
-    /**
-     * Get item amount
-     *
-     * @param WC_Order_Item|WC_Order_Item_Product $item
-     *
-     * @return float
-     */
-    public function getItemAmount(WC_Order_Item $item): float
-    {
-        $lineAmount = $item->get_total() + $item->get_total_tax();
-        return Numbers::calculateByCurrency($this->countryConfigs['currency'], $lineAmount, $this->ratio);
-    }
-
-    /**
-     * Get item image
-     *
-     * @param mixed $product
-     *
-     * @return string
-     */
-    public function getItemImage($product): string
-    {
-        return is_object($product) && method_exists($product, 'get_image_id')
-            ? wp_get_attachment_url($product->get_image_id())
-            : $this->mercadopago->helpers->url->getImageAsset('gateways/all/blue-cart');
     }
 
     /**

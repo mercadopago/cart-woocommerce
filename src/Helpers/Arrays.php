@@ -60,10 +60,28 @@ class Arrays
     /**
      * Returns a new array containing only the specified key(s) from $array.
      *
-     * @param array|mixed $keys One or multiple keys
+     * @param array|mixed $keys The key(s) to filter from $array
      */
     public static function only(array $array, $keys): array
     {
         return array_intersect_key($array, array_flip((array) $keys));
+    }
+
+    /**
+     * Returns a new array containing all $array elements except the specified by $keys.
+     *
+     * @param string|array $keys The key(s) to exclude from $array
+     */
+    public static function except(array $array, $keys): array
+    {
+        return static::only($array, array_diff(array_keys($array), $keys));
+    }
+
+    /**
+     * Returns $array last element.
+     */
+    public static function last(array $array)
+    {
+        return end($array);
     }
 }

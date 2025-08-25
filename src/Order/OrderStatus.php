@@ -27,6 +27,9 @@ class OrderStatus
 
     private Logs $logs;
 
+    private const PAYMENTS_ENDPOINT = '/v1/payments/';
+    private const NOTIFICATION_ENDPOINT = '/v1/asgard/notification/';
+
     /**
      * Order constructor
      */
@@ -253,24 +256,40 @@ class OrderStatus
      */
     private function refundedFlow(array $data, WC_Order $order): void
     {
-        // Validation for notification, the sync button does not yet query the notification API
         if (!$this->isNotification($data)) {
             return;
         }
 
         try {
-            if ($this->isPartialRefund($data, $order)) {
-                $refundId = $data['current_refund']['id'];
+            $paymentsData = $this->getAllPaymentsData($order);
+            $refundStatus = $this->getRefundedStatusDetail($paymentsData);
 
-                // Find refund by ID in refunds_notifying array
-                $refund = array_filter($data['refunds_notifying'], function ($item) use ($refundId) {
-                    return isset($item['id']) && $item['id'] == $refundId;
-                });
-                $refund = reset($refund);
-                if ($refund === false) {
-                    throw new Exception('Refund not found for the given refund ID: ' . $refundId);
+            if ($refundStatus['description'] === 'partially_refunded') {
+                if ($this->refundAlreadyProcessed($order, $paymentsData)) {
+                    $this->logs->file->info('Mercado Pago: Refund already processed, skipping...', __CLASS__);
+                    return;
                 }
-                $refundAmount = floatval($refund['amount']);
+
+                $refundAmount = 0;
+
+                if (isset($data['current_refund']['id'])) {
+                    $refundId = $data['current_refund']['id'];
+
+                    $refund = array_filter($data['refunds_notifying'], function ($item) use ($refundId) {
+                        return isset($item['id']) && $item['id'] == $refundId;
+                    });
+                    $refund = reset($refund);
+                    if ($refund === false) {
+                        throw new Exception('Refund not found for the given refund ID: ' . $refundId);
+                    }
+                    $refundAmount = floatval($refund['amount']);
+                } else {
+                    $refundAmount = $this->getUnprocessedRefundAmount($order, $paymentsData);
+                    if ($refundAmount <= 0) {
+                        $this->logs->file->info('Mercado Pago: No unprocessed refund amount found, skipping...', __CLASS__);
+                        return;
+                    }
+                }
 
                 wc_create_refund(array(
                     'amount'   => $refundAmount,
@@ -403,25 +422,6 @@ class OrderStatus
     }
 
     /**
-     * Check if refund is partial
-     *
-     * @param array $data
-     *
-     * @return bool
-     */
-    private function isPartialRefund(array $data, WC_Order $order): bool
-    {
-        if ($this->isMerchantOrder($data)) {
-            $paymentsData = $this->getPaymentsData($order);
-            $refundedStatusDetail = $this->getRefundedStatusDetail($paymentsData);
-
-            return $refundedStatusDetail['description'] === 'partially_refunded';
-        }
-
-        return $order->get_total() !== $data['transaction_amount_refunded'] && $data['transaction_amount_refunded'] !== 0;
-    }
-
-    /**
      * Check if the data is a notification
      *
      * @param array $data
@@ -431,48 +431,6 @@ class OrderStatus
     private function isNotification(array $data): bool
     {
         return isset($data['notification_id']);
-    }
-
-    /**
-     * Check if the data is a merchant order
-     *
-     * @param array $data
-     *
-     * @return bool
-     */
-    private function isMerchantOrder(array $data): bool
-    {
-        return isset($data['transaction_type']) && $data['transaction_type'] === 'merchant_order';
-    }
-
-    /**
-     * Get the data of the payments
-     *
-     * @param WC_Order $order
-     *
-     * @return array
-     */
-    public function getPaymentsData(WC_Order $order): array
-    {
-        $result = [];
-
-        $paymentsIds = array_filter(array_map(
-            'trim',
-            explode(',', $this->orderMetadata->getPaymentsIdMeta($order))
-        ));
-
-        $headers = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
-
-        foreach ($paymentsIds as $paymentId) {
-            $response = $this->requester->get("/v1/payments/$paymentId", $headers);
-            if ($response->getStatus() != 200 && $response->getStatus() != 201) {
-                throw new Exception(json_encode($response->getData()));
-            }
-
-            $result[] = $response->getData();
-        }
-
-        return $result;
     }
 
     /**
@@ -497,5 +455,162 @@ class OrderStatus
             'title' => 'refunded',
             'description' => 'refunded',
         ];
+    }
+
+    /**
+     * Check if refund was already processed in WooCommerce
+     *
+     * @param WC_Order $order
+     * @param array $paymentsData - Array of payment data from getAllPaymentsData()
+     *
+     * @return bool
+     */
+    private function refundAlreadyProcessed(WC_Order $order, array $paymentsData): bool
+    {
+        $totalRefundedWC = (float) $order->get_total_refunded();
+        $totalRefundedMP = $this->calculateTotalRefunded($paymentsData);
+
+        return $totalRefundedMP <= $totalRefundedWC;
+    }
+
+    /**
+     * Get amount of unprocessed refunds
+     *
+     * @param WC_Order $order
+     * @param array $paymentsData - Array of payment data from getAllPaymentsData()
+     *
+     * @return float
+     */
+    private function getUnprocessedRefundAmount(WC_Order $order, array $paymentsData): float
+    {
+        $totalRefundedMP = $this->calculateTotalRefunded($paymentsData);
+        $totalRefundedWC = (float) $order->get_total_refunded();
+
+        $unprocessedAmount = $totalRefundedMP - $totalRefundedWC;
+
+        $this->logs->file->info(
+            sprintf(
+                'Mercado Pago: Refund comparison - MP: %s, WC: %s, Unprocessed: %s',
+                $totalRefundedMP,
+                $totalRefundedWC,
+                $unprocessedAmount
+            ),
+            __CLASS__
+        );
+
+        return max(0, $unprocessedAmount);
+    }
+
+    /**
+     * Get all payments data from order
+     *
+     * @param WC_Order $order
+     *
+     * @return array
+     */
+    public function getAllPaymentsData(WC_Order $order): array
+    {
+        $result = [];
+        $paymentsIds = array_filter(array_map(
+            'trim',
+            explode(',', $this->orderMetadata->getPaymentsIdMeta($order))
+        ));
+
+        $headers = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+
+        foreach ($paymentsIds as $paymentId) {
+            $response = $this->requester->get(self::PAYMENTS_ENDPOINT . $paymentId, $headers);
+            if ($response->getStatus() != 200 && $response->getStatus() != 201) {
+                throw new Exception(json_encode($response->getData()));
+            }
+
+            $result[] = $response->getData();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Calculate total refunded from payments data array
+     *
+     * @param array $paymentsData - Array of payment data from getAllPaymentsData()
+     *
+     * @return float
+     */
+    private function calculateTotalRefunded(array $paymentsData): float
+    {
+        $totalRefunded = 0;
+
+        foreach ($paymentsData as $payment) {
+            $totalRefunded += (float) ($payment['transaction_amount_refunded'] ?? 0);
+        }
+
+        return $totalRefunded;
+    }
+
+    /**
+     * Get the last merchant's payment notification data or last payment's notification data
+     *
+     * @param WC_Order $order
+     * @return array
+     * @throws Exception
+     */
+    public function getLastNotification(WC_Order $order): array
+    {
+        $result = [];
+
+        $paymentsIds = array_filter(array_map(
+            'trim',
+            explode(',', $this->orderMetadata->getPaymentsIdMeta($order))
+        ));
+
+        $headers = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+
+        try {
+            $lastPaymentId = end($paymentsIds);
+            $notificationId = $this->getNotificationId($lastPaymentId, $headers);
+            $response = $this->requester->get(self::NOTIFICATION_ENDPOINT . $notificationId["id"], $headers);
+
+            if ($response->getStatus() != 200 && $response->getStatus() != 201) {
+                throw new Exception(json_encode($response->getData()));
+            }
+
+            $result[] = $response->getData();
+
+            return $result;
+        } catch (Exception $e) {
+            $this->logs->file->error('Mercado Pago: Error getting last notification: ' . $e->getMessage(), __CLASS__);
+            return [];
+        }
+    }
+
+    /**
+     * Get notification id from payment or merchant order ID
+     *
+     * @param string $paymentId
+     * @param array $headers
+     *
+     * @return array
+     */
+    public function getNotificationId(string $paymentId, array $headers): array
+    {
+        $response = $this->requester->get(self::PAYMENTS_ENDPOINT . $paymentId, $headers);
+
+        if ($response->getStatus() != 200 && $response->getStatus() != 201) {
+            throw new Exception(json_encode($response->getData()));
+        }
+
+        $paymentData = $response->getData();
+
+        if (!isset($paymentData["notification_url"]) || empty($paymentData["notification_url"])) {
+            throw new Exception("Notification URL not found for payment ID: $paymentId");
+        }
+
+        if (strpos($paymentData["notification_url"], "merchant-order-notification") !== false) {
+            $orderId = $paymentData["order"]["id"];
+            return ["id" => "M-$orderId", "type" => "merchant_order"];
+        }
+
+        return ["id" => "P-$paymentId", "type" => "payment"];
     }
 }

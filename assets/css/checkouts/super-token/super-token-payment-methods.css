@@ -4,7 +4,14 @@
     gap: 8px;
     padding: 16px !important;
     background-color: #f9f9f9 !important;
-    width: 100%;
+}
+
+.payment_box.mp-super-token-payment-methods-list {
+    background-color: #f9f9f9 !important;
+}
+
+.mp-super-token-payment-methods-list .mp-checkout-custom-container {
+    background-color: #f9f9f9 !important;
 }
 
 .mp-super-token-payment-methods-list input:focus::-webkit-input-placeholder {
@@ -40,7 +47,6 @@
     user-select: none;
     background-color: white;
     border: 1px solid #e5e5e5;
-    width: 100%;
     margin: 0 !important;
 }
 
@@ -48,7 +54,7 @@
     border: 2px solid #3483FA !important;
 }
 
-.mp-super-token-payment-method__selected span:not(.mp-checkout-custom-security-code-tooltip) {
+.mp-super-token-payment-method__selected span:not(.mp-checkout-custom-security-code-tooltip):not(.andes-dropdown__selected-text) {
     font-weight: 600 !important;
 }
 

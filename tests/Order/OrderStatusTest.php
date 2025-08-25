@@ -161,7 +161,33 @@ class OrderStatusTest extends TestCase
         $orderMock = Mockery::mock(WC_Order::class);
         $orderMock->shouldReceive('get_total')->andReturn(100.0);
         $orderMock->shouldReceive('get_id')->andReturn(123);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
         $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: Partially Refunded: 25.5');
+
+        $paymentsData = [
+            [
+                'id' => 'payment_123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 25.5
+            ]
+        ];
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('payment_123');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+            ->andReturn('access_token_123');
+
+        $responseMock = Mockery::mock(Response::class);
+        $responseMock->shouldReceive('getStatus')->andReturn(200);
+        $responseMock->shouldReceive('getData')->andReturn($paymentsData[0]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/payment_123', ['Authorization: Bearer access_token_123'])
+            ->andReturn($responseMock);
 
         $data = [
             'notification_id' => 'notification_123',
@@ -195,7 +221,33 @@ class OrderStatusTest extends TestCase
         $orderMock = Mockery::mock(WC_Order::class);
         $orderMock->shouldReceive('get_total')->andReturn(100.0);
         $orderMock->shouldReceive('get_id')->andReturn(123);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
         $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: Partially Refunded: 50.75');
+
+        $paymentsData = [
+            [
+                'id' => 'payment_123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 50.75
+            ]
+        ];
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('payment_123');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+            ->andReturn('access_token_123');
+
+        $responseMock = Mockery::mock(Response::class);
+        $responseMock->shouldReceive('getStatus')->andReturn(200);
+        $responseMock->shouldReceive('getData')->andReturn($paymentsData[0]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/payment_123', ['Authorization: Bearer access_token_123'])
+            ->andReturn($responseMock);
 
         $data = [
             'notification_id' => 'notification_123',
@@ -226,41 +278,40 @@ class OrderStatusTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testIsPartialRefundPaymentsAllScenarios(): void
+    public function testGetRefundedStatusDetailBasedOnPaymentStatus(): void
     {
-        $reflection = new \ReflectionClass($this->orderStatus);
-        $method = $reflection->getMethod('isPartialRefund');
-        $method->setAccessible(true);
-
-        $orderMock1 = Mockery::mock(WC_Order::class);
-        $orderMock1->shouldReceive('get_total')->andReturn(100.0);
-        $data1 = [
-            'transaction_amount' => 100.0,
-            'transaction_amount_refunded' => 100.0,
-            'total_refunded' => 50.0
+        $paymentsData1 = [
+            [
+                'status' => 'refunded',
+                'status_detail' => 'refunded',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 100.0
+            ]
         ];
-        $result1 = $method->invoke($this->orderStatus, $data1, $orderMock1);
-        $this->assertFalse($result1);
+        $result1 = $this->orderStatus->getRefundedStatusDetail($paymentsData1);
+        $this->assertEquals(['title' => 'refunded', 'description' => 'refunded'], $result1);
 
-        $orderMock2 = Mockery::mock(WC_Order::class);
-        $orderMock2->shouldReceive('get_total')->andReturn(100.0);
-        $data2 = [
-            'transaction_amount' => 100.0,
-            'total_refunded' => 100.0,
-            'transaction_amount_refunded' => 0
+        $paymentsData2 = [
+            [
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 0
+            ]
         ];
-        $result2 = $method->invoke($this->orderStatus, $data2, $orderMock2);
-        $this->assertFalse($result2);
+        $result2 = $this->orderStatus->getRefundedStatusDetail($paymentsData2);
+        $this->assertEquals(['title' => 'approved', 'description' => 'partially_refunded'], $result2);
 
-        $orderMock3 = Mockery::mock(WC_Order::class);
-        $orderMock3->shouldReceive('get_total')->andReturn(100.0);
-        $data3 = [
-            'transaction_amount' => 100.0,
-            'total_refunded' => 50.0,
-            'transaction_amount_refunded' => 50.0
+        $paymentsData3 = [
+            [
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 50.0
+            ]
         ];
-        $result3 = $method->invoke($this->orderStatus, $data3, $orderMock3);
-        $this->assertTrue($result3);
+        $result3 = $this->orderStatus->getRefundedStatusDetail($paymentsData3);
+        $this->assertEquals(['title' => 'approved', 'description' => 'partially_refunded'], $result3);
     }
 
     public function testGetRefundedStatusDetailVariousPaymentStatuses(): void
@@ -333,7 +384,7 @@ class OrderStatusTest extends TestCase
                 ->andReturn($responseMocks[$index]);
         }
 
-        $result = $this->orderStatus->getPaymentsData($orderMock);
+        $result = $this->orderStatus->getAllPaymentsData($orderMock);
         $this->assertEquals($expectedData, $result);
     }
 
@@ -358,7 +409,7 @@ class OrderStatusTest extends TestCase
             ->with('/v1/payments/123', ['Authorization: Bearer access_token_123'])
             ->andReturn($responseMock);
 
-        $this->orderStatus->getPaymentsData($orderMock);
+        $this->orderStatus->getAllPaymentsData($orderMock);
     }
 
     public function testGetPaymentsDataEmptyPaymentIds(): void
@@ -372,7 +423,7 @@ class OrderStatusTest extends TestCase
         $this->sellerMock->shouldReceive('getCredentialsAccessToken')
             ->andReturn('access_token_123');
 
-        $result = $this->orderStatus->getPaymentsData($orderMock);
+        $result = $this->orderStatus->getAllPaymentsData($orderMock);
         $this->assertEquals([], $result);
     }
 
@@ -403,7 +454,7 @@ class OrderStatusTest extends TestCase
             ->with('/v1/payments/456', ['Authorization: Bearer access_token_123'])
             ->andReturn($responseMock2);
 
-        $result = $this->orderStatus->getPaymentsData($orderMock);
+        $result = $this->orderStatus->getAllPaymentsData($orderMock);
 
         $expected = [
             ['id' => '123', 'status' => 'approved'],
@@ -413,173 +464,96 @@ class OrderStatusTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testIsPartialRefundMerchantOrderOneRefund(): void
-    {
-        $orderMock = Mockery::mock(WC_Order::class);
-        $data = ['transaction_type' => 'merchant_order'];
 
+    public function testGetRefundedStatusDetailMerchantOrderOneRefund(): void
+    {
         $paymentsData = [
-            ['id' => '123', 'status' => 'approved', 'status_detail' => 'accredited'],
-            ['id' => '456', 'status' => 'refunded', 'status_detail' => 'refunded']
+            [
+                'id' => '123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 0.0
+            ],
+            [
+                'id' => '456',
+                'status' => 'refunded',
+                'status_detail' => 'refunded',
+                'transaction_amount' => 50.0,
+                'transaction_amount_refunded' => 50.0
+            ]
         ];
 
-        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
-            ->with($orderMock)
-            ->andReturn('123,456');
-
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
-            ->andReturn('access_token_123');
-
-        $responseMock1 = Mockery::mock(Response::class);
-        $responseMock1->shouldReceive('getStatus')->andReturn(200);
-        $responseMock1->shouldReceive('getData')->andReturn($paymentsData[0]);
-
-        $responseMock2 = Mockery::mock(Response::class);
-        $responseMock2->shouldReceive('getStatus')->andReturn(200);
-        $responseMock2->shouldReceive('getData')->andReturn($paymentsData[1]);
-
-        $this->requesterMock->shouldReceive('get')
-            ->with('/v1/payments/123', ['Authorization: Bearer access_token_123'])
-            ->andReturn($responseMock1);
-
-        $this->requesterMock->shouldReceive('get')
-            ->with('/v1/payments/456', ['Authorization: Bearer access_token_123'])
-            ->andReturn($responseMock2);
-
-        $reflection = new \ReflectionClass($this->orderStatus);
-        $method = $reflection->getMethod('isPartialRefund');
-        $method->setAccessible(true);
-
-        $result = $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue($result);
+        $result = $this->orderStatus->getRefundedStatusDetail($paymentsData);
+        $expected = ['title' => 'approved', 'description' => 'partially_refunded'];
+        $this->assertEquals($expected, $result);
     }
 
-    public function testIsPartialRefundMerchantOrderMultiplePartialRefunds(): void
+    public function testGetRefundedStatusDetailMerchantOrderMultiplePartialRefunds(): void
     {
-        $orderMock = Mockery::mock(WC_Order::class);
-        $data = ['transaction_type' => 'merchant_order'];
-
         $paymentsData = [
-            ['id' => '123', 'status' => 'approved', 'status_detail' => 'partially_refunded'],
-            ['id' => '456', 'status' => 'refunded', 'status_detail' => 'partially_refunded']
+            [
+                'id' => '123',
+                'status' => 'approved',
+                'status_detail' => 'partially_refunded',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 25.0
+            ],
+            [
+                'id' => '456',
+                'status' => 'approved',
+                'status_detail' => 'partially_refunded',
+                'transaction_amount' => 50.0,
+                'transaction_amount_refunded' => 30.0
+            ]
         ];
 
-        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
-            ->with($orderMock)
-            ->andReturn('123,456');
-
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
-            ->andReturn('access_token_123');
-
-        $responseMock1 = Mockery::mock(Response::class);
-        $responseMock1->shouldReceive('getStatus')->andReturn(200);
-        $responseMock1->shouldReceive('getData')->andReturn($paymentsData[0]);
-
-        $responseMock2 = Mockery::mock(Response::class);
-        $responseMock2->shouldReceive('getStatus')->andReturn(200);
-        $responseMock2->shouldReceive('getData')->andReturn($paymentsData[1]);
-
-        $this->requesterMock->shouldReceive('get')
-            ->with('/v1/payments/123', ['Authorization: Bearer access_token_123'])
-            ->andReturn($responseMock1);
-
-        $this->requesterMock->shouldReceive('get')
-            ->with('/v1/payments/456', ['Authorization: Bearer access_token_123'])
-            ->andReturn($responseMock2);
-
-        $reflection = new \ReflectionClass($this->orderStatus);
-        $method = $reflection->getMethod('isPartialRefund');
-        $method->setAccessible(true);
-
-        $result = $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue($result);
+        $result = $this->orderStatus->getRefundedStatusDetail($paymentsData);
+        $expected = ['title' => 'approved', 'description' => 'partially_refunded'];
+        $this->assertEquals($expected, $result);
     }
 
-    public function testIsPartialRefundMerchantOrderMixedRefundStatuses(): void
+    public function testGetRefundedStatusDetailMerchantOrderMixedRefundStatuses(): void
     {
-        $orderMock = Mockery::mock(WC_Order::class);
-        $data = ['transaction_type' => 'merchant_order'];
-
         $paymentsData = [
-            ['id' => '123', 'status' => 'approved', 'status_detail' => 'partially_refunded'],
-            ['id' => '456', 'status' => 'refunded', 'status_detail' => 'refunded']
+            [
+                'id' => '123',
+                'status' => 'approved',
+                'status_detail' => 'partially_refunded',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 25.0
+            ],
+            [
+                'id' => '456',
+                'status' => 'refunded',
+                'status_detail' => 'refunded',
+                'transaction_amount' => 50.0,
+                'transaction_amount_refunded' => 50.0
+            ]
         ];
 
-        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
-            ->with($orderMock)
-            ->andReturn('123,456');
-
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
-            ->andReturn('access_token_123');
-
-        $responseMock1 = Mockery::mock(Response::class);
-        $responseMock1->shouldReceive('getStatus')->andReturn(200);
-        $responseMock1->shouldReceive('getData')->andReturn($paymentsData[0]);
-
-        $responseMock2 = Mockery::mock(Response::class);
-        $responseMock2->shouldReceive('getStatus')->andReturn(200);
-        $responseMock2->shouldReceive('getData')->andReturn($paymentsData[1]);
-
-        $this->requesterMock->shouldReceive('get')
-            ->with('/v1/payments/123', ['Authorization: Bearer access_token_123'])
-            ->andReturn($responseMock1);
-
-        $this->requesterMock->shouldReceive('get')
-            ->with('/v1/payments/456', ['Authorization: Bearer access_token_123'])
-            ->andReturn($responseMock2);
-
-        $reflection = new \ReflectionClass($this->orderStatus);
-        $method = $reflection->getMethod('isPartialRefund');
-        $method->setAccessible(true);
-
-        $result = $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue($result);
+        $result = $this->orderStatus->getRefundedStatusDetail($paymentsData);
+        $expected = ['title' => 'approved', 'description' => 'partially_refunded'];
+        $this->assertEquals($expected, $result);
     }
 
-    public function testIsPartialRefundMerchantOrderFullRefund(): void
+    public function testGetRefundedStatusDetailMerchantOrderFullRefund(): void
     {
-        $orderMock = Mockery::mock(WC_Order::class);
-        $data = ['transaction_type' => 'merchant_order'];
-
         $paymentsData = [
             ['id' => '123', 'status' => 'refunded', 'status_detail' => 'refunded'],
             ['id' => '456', 'status' => 'refunded', 'status_detail' => 'by_admin']
         ];
 
-        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
-            ->with($orderMock)
-            ->andReturn('123,456');
-
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
-            ->andReturn('access_token_123');
-
-        $responseMock1 = Mockery::mock(Response::class);
-        $responseMock1->shouldReceive('getStatus')->andReturn(200);
-        $responseMock1->shouldReceive('getData')->andReturn($paymentsData[0]);
-
-        $responseMock2 = Mockery::mock(Response::class);
-        $responseMock2->shouldReceive('getStatus')->andReturn(200);
-        $responseMock2->shouldReceive('getData')->andReturn($paymentsData[1]);
-
-        $this->requesterMock->shouldReceive('get')
-            ->with('/v1/payments/123', ['Authorization: Bearer access_token_123'])
-            ->andReturn($responseMock1);
-
-        $this->requesterMock->shouldReceive('get')
-            ->with('/v1/payments/456', ['Authorization: Bearer access_token_123'])
-            ->andReturn($responseMock2);
-
-        $reflection = new \ReflectionClass($this->orderStatus);
-        $method = $reflection->getMethod('isPartialRefund');
-        $method->setAccessible(true);
-
-        $result = $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertFalse($result);
+        $result = $this->orderStatus->getRefundedStatusDetail($paymentsData);
+        $expected = ['title' => 'refunded', 'description' => 'refunded'];
+        $this->assertEquals($expected, $result);
     }
 
-    public function testIsPartialRefundMerchantOrderApiError(): void
+    public function testRefundedFlowApiError(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
+
         $data = [
             'notification_id' => 'notification_123',
             'transaction_type' => 'merchant_order'
@@ -611,5 +585,248 @@ class OrderStatusTest extends TestCase
 
         $method->invoke($this->orderStatus, $data, $orderMock);
         $this->assertTrue(true);
+    }
+
+    public function testCalculateTotalRefundedWithMultiplePayments(): void
+    {
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('calculateTotalRefunded');
+        $method->setAccessible(true);
+
+        $paymentsData = [
+            ['transaction_amount_refunded' => 25.50],
+            ['transaction_amount_refunded' => 10.25],
+            ['transaction_amount_refunded' => 5.00]
+        ];
+        $result = $method->invoke($this->orderStatus, $paymentsData);
+        $this->assertEquals(40.75, $result);
+
+        $paymentsDataNoRefunds = [
+            ['transaction_amount_refunded' => 0],
+            ['transaction_amount_refunded' => 0]
+        ];
+        $result = $method->invoke($this->orderStatus, $paymentsDataNoRefunds);
+        $this->assertEquals(0.0, $result);
+
+        $result = $method->invoke($this->orderStatus, []);
+        $this->assertEquals(0.0, $result);
+
+        $paymentsDataMissingField = [
+            ['transaction_amount_refunded' => 15.00],
+            ['id' => 'payment_2']
+        ];
+        $result = $method->invoke($this->orderStatus, $paymentsDataMissingField);
+        $this->assertEquals(15.00, $result);
+    }
+
+    public function testRefundAlreadyProcessedLogic(): void
+    {
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('refundAlreadyProcessed');
+        $method->setAccessible(true);
+
+        $orderMock1 = Mockery::mock(WC_Order::class);
+        $orderMock1->shouldReceive('get_total_refunded')->andReturn(50.0);
+        $paymentsData = [
+            ['transaction_amount_refunded' => 25.0],
+            ['transaction_amount_refunded' => 20.0]
+        ];
+        $result = $method->invoke($this->orderStatus, $orderMock1, $paymentsData);
+        $this->assertTrue($result, 'Should return true when MP refunded (45.0) <= WC refunded (50.0)');
+
+        $orderMock2 = Mockery::mock(WC_Order::class);
+        $orderMock2->shouldReceive('get_total_refunded')->andReturn(45.0);
+        $result = $method->invoke($this->orderStatus, $orderMock2, $paymentsData);
+        $this->assertTrue($result, 'Should return true when MP refunded (45.0) = WC refunded (45.0)');
+
+        $orderMock3 = Mockery::mock(WC_Order::class);
+        $orderMock3->shouldReceive('get_total_refunded')->andReturn(40.0);
+        $result = $method->invoke($this->orderStatus, $orderMock3, $paymentsData);
+        $this->assertFalse($result, 'Should return false when MP refunded (45.0) > WC refunded (40.0)');
+
+        $orderMock4 = Mockery::mock(WC_Order::class);
+        $orderMock4->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $paymentsDataNoRefunds = [
+            ['transaction_amount_refunded' => 0],
+            ['transaction_amount_refunded' => 0]
+        ];
+        $result = $method->invoke($this->orderStatus, $orderMock4, $paymentsDataNoRefunds);
+        $this->assertTrue($result, 'Should return true when no refunds exist');
+
+        $orderMock5 = Mockery::mock(WC_Order::class);
+        $orderMock5->shouldReceive('get_total_refunded')->andReturn(10.0);
+        $paymentsDataHighRefund = [
+            ['transaction_amount_refunded' => 35.0],
+            ['transaction_amount_refunded' => 25.0]
+        ];
+        $result = $method->invoke($this->orderStatus, $orderMock5, $paymentsDataHighRefund);
+        $this->assertFalse($result, 'Should return false when MP refunded (60.0) > WC refunded (10.0)');
+    }
+
+    public function testGetUnprocessedRefundAmountCalculations(): void
+    {
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('getUnprocessedRefundAmount');
+        $method->setAccessible(true);
+
+        $orderMock1 = Mockery::mock(WC_Order::class);
+        $orderMock1->shouldReceive('get_total_refunded')->andReturn(25.0);
+        $paymentsData = [
+            ['transaction_amount_refunded' => 30.0],
+            ['transaction_amount_refunded' => 20.0]
+        ];
+        $result = $method->invoke($this->orderStatus, $orderMock1, $paymentsData);
+        $this->assertEquals(25.0, $result);
+
+        $orderMock2 = Mockery::mock(WC_Order::class);
+        $orderMock2->shouldReceive('get_total_refunded')->andReturn(60.0);
+        $result = $method->invoke($this->orderStatus, $orderMock2, $paymentsData);
+        $this->assertEquals(0.0, $result);
+
+        $orderMock3 = Mockery::mock(WC_Order::class);
+        $orderMock3->shouldReceive('get_total_refunded')->andReturn(50.0);
+        $result = $method->invoke($this->orderStatus, $orderMock3, $paymentsData);
+        $this->assertEquals(0.0, $result);
+
+        $orderMock4 = Mockery::mock(WC_Order::class);
+        $orderMock4->shouldReceive('get_total_refunded')->andReturn(10.25);
+        $paymentsDataDecimals = [
+            ['transaction_amount_refunded' => 15.75],
+            ['transaction_amount_refunded' => 8.50]
+        ];
+        $result = $method->invoke($this->orderStatus, $orderMock4, $paymentsDataDecimals);
+        $this->assertEquals(14.0, $result);
+    }
+
+    public function testGetAllPaymentsDataErrorHandling(): void
+    {
+        $orderMock1 = Mockery::mock(WC_Order::class);
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock1)
+            ->andReturn('');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+            ->andReturn('access_token_test');
+
+        $result = $this->orderStatus->getAllPaymentsData($orderMock1);
+        $this->assertEquals([], $result);
+
+        $this->expectException(\Exception::class);
+
+        $orderMock2 = Mockery::mock(WC_Order::class);
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock2)
+            ->andReturn('INVALID_PAYMENT');
+
+        $responseMock = Mockery::mock(Response::class);
+        $responseMock->shouldReceive('getStatus')->andReturn(404);
+        $responseMock->shouldReceive('getData')->andReturn(['error' => 'Payment not found']);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/INVALID_PAYMENT', ['Authorization: Bearer access_token_test'])
+            ->andReturn($responseMock);
+
+        $this->orderStatus->getAllPaymentsData($orderMock2);
+    }
+
+    public function testGetLastNotificationMerchantOrderHandling(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('PAY_123,PAY_456');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+            ->andReturn('access_token_test');
+
+        $paymentResponse = Mockery::mock(Response::class);
+        $paymentResponse->shouldReceive('getStatus')->andReturn(200);
+        $paymentResponse->shouldReceive('getData')->andReturn([
+            'notification_url' => 'https://api.mercadopago.com/merchant-order-notification/12345',
+            'order' => ['id' => 'ORDER_789']
+        ]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/PAY_456', ['Authorization: Bearer access_token_test'])
+            ->andReturn($paymentResponse);
+
+        $notificationData = [
+            'id' => 'M-ORDER_789',
+            'type' => 'merchant_order',
+            'status' => 'approved'
+        ];
+        $notificationResponse = Mockery::mock(Response::class);
+        $notificationResponse->shouldReceive('getStatus')->andReturn(200);
+        $notificationResponse->shouldReceive('getData')->andReturn($notificationData);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/asgard/notification/M-ORDER_789', ['Authorization: Bearer access_token_test'])
+            ->andReturn($notificationResponse);
+
+        $result = $this->orderStatus->getLastNotification($orderMock);
+        $this->assertEquals([$notificationData], $result);
+        $this->assertCount(1, $result);
+    }
+
+    public function testGetLastNotificationErrorHandling(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('PAY_INVALID');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+            ->andReturn('access_token_test');
+
+        $paymentResponse = Mockery::mock(Response::class);
+        $paymentResponse->shouldReceive('getStatus')->andReturn(200);
+        $paymentResponse->shouldReceive('getData')->andReturn([
+            'notification_url' => '',
+            'order' => ['id' => 'ORDER_123']
+        ]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/PAY_INVALID', ['Authorization: Bearer access_token_test'])
+            ->andReturn($paymentResponse);
+
+        $fileMock = $this->logsMock->file;
+        $fileMock->shouldReceive('error')
+            ->with('Mercado Pago: Error getting last notification: Notification URL not found for payment ID: PAY_INVALID', 'MercadoPago\Woocommerce\Order\OrderStatus')
+            ->once();
+
+        $result = $this->orderStatus->getLastNotification($orderMock);
+        $this->assertEquals([], $result);
+    }
+
+    public function testGetLastNotificationApiError(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('PAY_API_ERROR');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+            ->andReturn('access_token_test');
+
+        $paymentResponse = Mockery::mock(Response::class);
+        $paymentResponse->shouldReceive('getStatus')->andReturn(404);
+        $paymentResponse->shouldReceive('getData')->andReturn(['error' => 'Payment not found']);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/PAY_API_ERROR', ['Authorization: Bearer access_token_test'])
+            ->andReturn($paymentResponse);
+
+        $fileMock = $this->logsMock->file;
+        $fileMock->shouldReceive('error')
+            ->with('Mercado Pago: Error getting last notification: {"error":"Payment not found"}', 'MercadoPago\Woocommerce\Order\OrderStatus')
+            ->once();
+
+        $result = $this->orderStatus->getLastNotification($orderMock);
+        $this->assertEquals([], $result);
     }
 }
