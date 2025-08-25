@@ -2,14 +2,14 @@
 
 namespace MercadoPago\Woocommerce\Tests\Mocks;
 
-use MercadoPago\Woocommerce\Tests\Traits\SetNotAccessibleProperties;
+use MercadoPago\Woocommerce\Tests\Traits\SetNotAccessibleProperty;
 use Mockery;
 use WP_Mock;
 
 trait GatewayMock
 {
     use WoocommerceMock;
-    use SetNotAccessibleProperties;
+    use SetNotAccessibleProperty;
 
     /**
      * @var Mockery\MockInterface|\WC_Order

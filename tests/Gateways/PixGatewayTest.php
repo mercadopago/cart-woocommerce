@@ -5,9 +5,7 @@ namespace MercadoPago\Woocommerce\Tests\Gateways;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
-use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
-use MercadoPago\Woocommerce\Tests\Traits\SetNotAccessibleProperties;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +15,6 @@ use Mockery;
 class PixGatewayTest extends TestCase
 {
     use GatewayMock;
-    use SetNotAccessibleProperties;
     use AssertArrayMap;
 
     private string $gatewayClass = PixGateway::class;

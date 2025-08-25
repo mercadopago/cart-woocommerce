@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Order;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -706,5 +707,43 @@ class OrderMetadata
     public function getSyncCronErrorCount(WC_Order $order): int
     {
         return $this->getSyncCronErrorCountValue($order);
+    }
+
+    public function updateOrderCustomFieldsAfterSync(WC_Order $order, array $paymentsData): void
+    {
+        $paymentIds = array_column($paymentsData, 'id');
+        $this->setPaymentsIdData($order, PaymentMetadata::joinPaymentIds($paymentIds));
+
+        foreach ($paymentsData as $payment) {
+            $metaPrefix = 'Mercado Pago - ' . $payment['id'];
+
+            $mappedPayment = [
+                'total_amount' => $payment['transaction_amount'] ?? 0,
+                'payment_type_id' => $payment['payment_type_id'] ?? '',
+                'payment_method_id' => $payment['payment_method_id'] ?? '',
+                'paid_amount' => $payment['transaction_details']['total_paid_amount'] ?? 0,
+                'coupon_amount' => $payment['coupon_amount'] ?? 0,
+                'refunded_amount' => $payment['transaction_amount_refunded'] ?? 0,
+            ];
+
+            if (strpos($mappedPayment['payment_type_id'], 'card') !== false) {
+                $this->orderMeta->update($order, $metaPrefix . PaymentMetadata::INSTALLMENTS_META_SUFFIX, $payment['installments'] ?? 0);
+                $this->orderMeta->update($order, $metaPrefix . PaymentMetadata::INSTALLMENT_AMOUNT_META_SUFFIX, $payment['transaction_details']['installment_amount'] ?? 0);
+                $this->orderMeta->update($order, $metaPrefix . PaymentMetadata::TRANSACTION_AMOUNT_META_SUFFIX, $payment['transaction_amount'] ?? 0);
+                $this->orderMeta->update($order, $metaPrefix . PaymentMetadata::TOTAL_PAID_AMOUNT_META_SUFFIX, $payment['transaction_details']['total_paid_amount'] ?? 0);
+
+                if (isset($payment['card']) && !empty($payment['card']['last_four_digits'])) {
+                    $this->orderMeta->update($order, $metaPrefix . PaymentMetadata::CARD_LAST_FOUR_DIGITS_META_SUFFIX, $payment['card']['last_four_digits']);
+                }
+            }
+
+            $this->orderMeta->update(
+                $order,
+                PaymentMetadata::getPaymentMetaKey($payment['id']),
+                PaymentMetadata::formatPaymentMetadata($mappedPayment, $mappedPayment['refunded_amount'])
+            );
+        }
+
+        $order->save();
     }
 }

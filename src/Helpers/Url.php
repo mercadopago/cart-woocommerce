@@ -238,4 +238,12 @@ class Url
     {
         return Arrays::filterJoin([MP_VERSION, Environment::isDevelopmentEnvironment() ? time() : false], '.');
     }
+
+    /**
+     * Check if $url is valid a URL
+     */
+    public static function isValid(string $url): bool
+    {
+        return filter_var($url, FILTER_VALIDATE_URL) !== false;
+    }
 }

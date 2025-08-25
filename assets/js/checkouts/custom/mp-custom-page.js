@@ -288,16 +288,17 @@ const CheckoutPage = {
       const installment = payerCost.installments;
       const installmentAmount = this.formatCurrency(payerCost.installment_amount);
       const installmentRate = payerCost.installment_rate !== 0;
+      const installmentRateThirdParty = payerCost.installment_rate_collector.includes('THIRD_PARTY');
       const totalAmount = this.formatCurrency(payerCost.total_amount);
 
       let title = `${installment.toString()}x `;
 
       if (installment == 1) {
         title += totalAmount;
-      } else if (this.needsBankInterestDisclaimer()) {
-        title += `${installmentAmount} (${totalAmount}) + ${wc_mercadopago_custom_checkout_params.input_helper_message.installments.bank_interest_option_text}`;
       } else if (installmentRate) {
         title += `${installmentAmount} (${totalAmount})`;
+      } else if (this.needsBankInterestDisclaimer() && installmentRateThirdParty && !installmentRate) {
+        title += `${installmentAmount} (${totalAmount})*`;
       } else {
         title += `${installmentAmount} ${wc_mercadopago_custom_checkout_params.input_helper_message.installments.interest_free_option_text}`;
       }
@@ -432,7 +433,7 @@ const CheckoutPage = {
     andesDropdown.setAttribute('site-id', this.getCountry());
     
     if (this.needsBankInterestDisclaimer()) {
-      andesDropdown.setAttribute('hint', wc_mercadopago_custom_checkout_params.input_helper_message.installments.bank_interest_hint_text);
+      andesDropdown.setAttribute('hint', '*' + wc_mercadopago_custom_checkout_params.input_helper_message.installments.bank_interest_hint_text);
     }
 
     andesDropdown.addEventListener('change', (event) => {

@@ -4,7 +4,6 @@ namespace MercadoPago\Woocommerce\Tests\Gateways;
 
 use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
-use MercadoPago\Woocommerce\Tests\Traits\SetNotAccessibleProperties;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +18,6 @@ use WP_Mock;
 class AbstractGatewayTest extends TestCase
 {
     use GatewayMock;
-    use SetNotAccessibleProperties;
     use AssertArrayMap;
 
     private $sellerConfigMock;

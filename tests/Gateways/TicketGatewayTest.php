@@ -189,6 +189,7 @@ class TicketGatewayTest extends TestCase
             ->createPayment()
             ->andReturn(
                 $response = array_merge([
+                    'id' => random()->uuid(),
                     'status' => 'pending'
                 ], $response)
             );
@@ -197,7 +198,7 @@ class TicketGatewayTest extends TestCase
 
         $this->gateway->mercadopago->orderMetadata
             ->expects()
-            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response['id']]);
 
         $this->gateway
             ->expects()
@@ -300,6 +301,7 @@ class TicketGatewayTest extends TestCase
             ->expects()
             ->createPayment()
             ->andReturn($response = [
+                'id' => random()->uuid(),
                 'status' => 'rejected',
             ]);
 
@@ -307,7 +309,7 @@ class TicketGatewayTest extends TestCase
 
         $this->gateway->mercadopago->orderMetadata
             ->expects()
-            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response['id']]);
 
         $this->gateway
             ->expects()
@@ -320,8 +322,8 @@ class TicketGatewayTest extends TestCase
     }
 
     /**
-     * @testWith [true, {"status": "fake"}]
-     *           [false, {"status": "pending", "status_detail": "fake"}]
+     * @testWith [true, {"id": "PAY_123", "status": "fake"}]
+     *           [false, {"id": "PAY_123", "status": "pending", "status_detail": "fake"}]
      */
     public function testProcessPaymentInternalInvalidStatus(bool $isBlocks, array $response): void
     {
@@ -339,7 +341,7 @@ class TicketGatewayTest extends TestCase
 
         $this->gateway->mercadopago->orderMetadata
             ->expects()
-            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response['id']]);
 
         $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'] = random()->word();
 

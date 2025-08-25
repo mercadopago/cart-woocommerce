@@ -736,4 +736,186 @@ class OrderMetadataTest extends TestCase
         $result = $this->invokePrivateMethod($this->orderMetadata, 'extractPaymentId', [$paymentData]);
         $this->assertEquals('123456789', $result);
     }
+
+    /**
+     * Test updateOrderCustomFieldsAfterSync with single card payment
+     */
+    public function testUpdateOrderCustomFieldsAfterSyncSinglePayment(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('save')->once();
+
+        $paymentsData = [
+            [
+                'id' => 'PAY_123',
+                'transaction_amount' => 100.0,
+                'payment_type_id' => 'credit_card',
+                'payment_method_id' => 'visa',
+                'coupon_amount' => 5.0,
+                'installments' => 3,
+                'transaction_details' => [
+                    'total_paid_amount' => 95.0,
+                    'installment_amount' => 31.67
+                ],
+                'card' => [
+                    'last_four_digits' => '1234'
+                ],
+                'transaction_amount_refunded' => 10.0
+            ]
+        ];
+
+        $this->orderMetaMock->shouldReceive('add')
+            ->with($order, '_Mercado_Pago_Payment_IDs', 'PAY_123')
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - installments', 3)
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - installment_amount', 31.67)
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - transaction_amount', 100.0)
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - total_paid_amount', 95.0)
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - card_last_four_digits', '1234')
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - Payment PAY_123', Mockery::pattern('/\[Date.*\]\/\[Amount 100\]\/\[Payment Type credit_card\]\/\[Payment Method visa\]\/\[Paid 95\]\/\[Coupon 5\]\/\[Refund 10\]/'))
+            ->once();
+
+        $this->orderMetadata->updateOrderCustomFieldsAfterSync($order, $paymentsData);
+
+        $this->assertTrue(true, 'updateOrderCustomFieldsAfterSync completed successfully for single payment');
+    }
+
+    /**
+     * Test updateOrderCustomFieldsAfterSync with multiple cards payments
+     */
+    public function testUpdateOrderCustomFieldsAfterSyncMultiplePayments(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('save')->once();
+
+        $paymentsData = [
+            [
+                'id' => 'PAY_123',
+                'transaction_amount' => 50.0,
+                'payment_type_id' => 'credit_card',
+                'payment_method_id' => 'visa',
+                'coupon_amount' => 0,
+                'installments' => 1,
+                'transaction_details' => [
+                    'total_paid_amount' => 50.0,
+                    'installment_amount' => 50.0
+                ],
+                'card' => [
+                    'last_four_digits' => '1234'
+                ],
+                'transaction_amount_refunded' => 0
+            ],
+            [
+                'id' => 'PAY_456',
+                'transaction_amount' => 75.0,
+                'payment_type_id' => 'ticket',
+                'payment_method_id' => 'bolbradesco',
+                'coupon_amount' => 5.0,
+                'transaction_details' => [
+                    'total_paid_amount' => 70.0,
+                ],
+                'transaction_amount_refunded' => 25.0
+            ]
+        ];
+
+        $this->orderMetaMock->shouldReceive('add')
+            ->with($order, '_Mercado_Pago_Payment_IDs', 'PAY_123, PAY_456')
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - installments', 1)
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - installment_amount', 50.0)
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - transaction_amount', 50.0)
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - total_paid_amount', 50.0)
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - PAY_123 - card_last_four_digits', '1234')
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - Payment PAY_123', Mockery::pattern('/\[Date.*\]\/\[Amount 50\]\/\[Payment Type credit_card\]\/\[Payment Method visa\]\/\[Paid 50\]\/\[Coupon 0\]\/\[Refund 0\]/'))
+            ->once();
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - Payment PAY_456', Mockery::pattern('/\[Date.*\]\/\[Amount 75\]\/\[Payment Type ticket\]\/\[Payment Method bolbradesco\]\/\[Paid 70\]\/\[Coupon 5\]\/\[Refund 25\]/'))
+            ->once();
+
+        $this->orderMetadata->updateOrderCustomFieldsAfterSync($order, $paymentsData);
+
+        $this->assertCount(2, $paymentsData, 'Should process exactly 2 payments');
+        $this->assertEquals('PAY_123', $paymentsData[0]['id'], 'First payment ID should be PAY_123');
+        $this->assertEquals('PAY_456', $paymentsData[1]['id'], 'Second payment ID should be PAY_456');
+    }
+
+    /**
+     * Test updateOrderCustomFieldsAfterSync with non-card payment (no card metadata)
+     */
+    public function testUpdateOrderCustomFieldsAfterSyncNonCardPayment(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('save')->once();
+
+        $paymentsData = [
+            [
+                'id' => 'PAY_TICKET_789',
+                'transaction_amount' => 200.0,
+                'payment_type_id' => 'ticket',
+                'payment_method_id' => 'bolbradesco',
+                'coupon_amount' => 10.0,
+                'transaction_details' => [
+                    'total_paid_amount' => 190.0,
+                ],
+                'transaction_amount_refunded' => 50.0
+            ]
+        ];
+
+        $this->orderMetaMock->shouldReceive('add')
+            ->with($order, '_Mercado_Pago_Payment_IDs', 'PAY_TICKET_789')
+            ->once();
+
+        $this->orderMetaMock->shouldNotReceive('update')
+            ->with($order, Mockery::pattern('/.*installments.*/'), Mockery::any());
+
+        $this->orderMetaMock->shouldNotReceive('update')
+            ->with($order, Mockery::pattern('/.*installment_amount.*/'), Mockery::any());
+
+        $this->orderMetaMock->shouldNotReceive('update')
+            ->with($order, Mockery::pattern('/.*card_last_four_digits.*/'), Mockery::any());
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($order, 'Mercado Pago - Payment PAY_TICKET_789', Mockery::pattern('/\[Date.*\]\/\[Amount 200\]\/\[Payment Type ticket\]\/\[Payment Method bolbradesco\]\/\[Paid 190\]\/\[Coupon 10\]\/\[Refund 50\]/'))
+            ->once();
+
+        $this->orderMetadata->updateOrderCustomFieldsAfterSync($order, $paymentsData);
+
+        $this->assertEquals('ticket', $paymentsData[0]['payment_type_id'], 'Should be a non-card payment type');
+        $this->assertStringNotContainsString('card', $paymentsData[0]['payment_type_id'], 'Payment type should not contain "card"');
+    }
 }

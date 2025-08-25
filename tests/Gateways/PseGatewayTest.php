@@ -76,6 +76,7 @@ class PseGatewayTest extends TestCase
             ->expects()
             ->createPayment()
             ->andReturn($response = [
+                'id' => random()->uuid(),
                 'status' => 'pending',
                 'status_detail' => $statusDetail,
                 'transaction_details' => [
@@ -101,7 +102,7 @@ class PseGatewayTest extends TestCase
 
         $this->gateway->mercadopago->orderMetadata
             ->expects()
-            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response['id']]);
 
         $this->assertEquals(
             [
@@ -160,12 +161,13 @@ class PseGatewayTest extends TestCase
             ->expects()
             ->createPayment()
             ->andReturn($response = [
+                'id' => random()->uuid(),
                 'status' => 'rejected',
             ]);
 
         $this->gateway->mercadopago->orderMetadata
             ->expects()
-            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response['id']]);
 
         $this->gateway
             ->expects()
@@ -178,8 +180,8 @@ class PseGatewayTest extends TestCase
     }
 
     /**
-     * @testWith [true, "individual", {"status": "error", "status_detail": "pending_waiting_payment"}]
-     *           [false, "association", {"status": "pending", "status_detail": "error"}]
+     * @testWith [true, "individual", {"id": "PAY_123", "status": "error", "status_detail": "pending_waiting_payment"}]
+     *           [false, "association", {"id": "PAY_123", "status": "pending", "status_detail": "error"}]
      */
     public function testProccessPaymentInvalidStatus(bool $isBlocks, string $personType, array $response)
     {
@@ -194,7 +196,7 @@ class PseGatewayTest extends TestCase
 
         $this->gateway->mercadopago->orderMetadata
             ->expects()
-            ->updatePaymentsOrderMetadata($this->order, ['id' => $response]);
+            ->updatePaymentsOrderMetadata($this->order, ['id' => $response['id']]);
 
         $this->gateway
             ->expects()

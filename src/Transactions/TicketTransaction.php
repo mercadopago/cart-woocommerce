@@ -38,7 +38,6 @@ class TicketTransaction extends AbstractPaymentTransaction
 
         $this->transaction->installments = 1;
         $this->transaction->payment_method_id  = $this->paymentMethodId;
-        $this->transaction->external_reference = $this->getExternalReference();
         $this->transaction->date_of_expiration = $this->getExpirationDate();
 
         $this->setWebpayPropertiesTransaction();

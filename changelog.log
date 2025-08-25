@@ -1,6 +1,16 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.4.6 (25/08/2025) =
+* Fixed
+- Text and translation corrections in the fast payments flow
+- Responsiveness improvements in the fast payments flow
+- Fixed payment ID storage errors in custom fields metadata for Ticket and PSE payments
+- Fixed sync button functionality for refund scenarios failing to update order information via notification API
+* Changed
+- Changed installments selector for bank interests hint
+- Changed installments options for correctly translated texts on installments without fee
+
 = v8.4.5 (18/08/2025) =
 * Fixed
 - Changed the error message when closing the modal in the fast payments flow

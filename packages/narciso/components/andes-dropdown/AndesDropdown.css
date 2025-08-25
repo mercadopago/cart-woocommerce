@@ -99,7 +99,7 @@
 .andes-dropdown__selected-text {
     white-space: nowrap !important;
     text-overflow: ellipsis !important;
-    width: 100% !important;
+    width: 85% !important;
     text-align: left !important;
     color: var(--andes-gray-900) !important;
     font-family: var(--andes-font-style) !important;

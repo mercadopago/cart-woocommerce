@@ -6,10 +6,10 @@ use Closure;
 
 /**
  * Mock implementation of ArrayAccess for testing.
- * 
+ *
  * Provides a lazy-loading array mock that generates values on-demand
  * using a closure generator.
- * 
+ *
  */
 class ArrayMock implements \ArrayAccess
 {
@@ -25,14 +25,14 @@ class ArrayMock implements \ArrayAccess
 
     /**
      * Array of keys that are allowed to be generated.
-     * 
+     *
      * When set, only these keys will return generated values.
      */
     private array $only;
 
     /**
      * Array of keys that are excluded from generation.
-     * 
+     *
      * When set, these keys will only return explicitly set values.
      */
     private array $except;
@@ -47,10 +47,10 @@ class ArrayMock implements \ArrayAccess
 
     /**
      * Restrict generation to only specified keys.
-     * 
+     *
      * When this method is called, only the specified keys will return generated
      * values. All other keys will return their explicitly set values.
-     * 
+     *
      * @param mixed ...$only Keys that are allowed to generate values.
      * @throws \Exception When $except is already set.
      */
@@ -65,10 +65,10 @@ class ArrayMock implements \ArrayAccess
 
     /**
      * Exclude specified keys from generation.
-     * 
+     *
      * When this method is called, the specified keys will only return their
      * explicitly set values.
-     * 
+     *
      * @param mixed ...$except Keys that are excluded from generation.
      * @throws \Exception When $only is already set.
      */
@@ -83,7 +83,7 @@ class ArrayMock implements \ArrayAccess
 
     /**
      * Get a key value.
-     * 
+     *
      * If the key doesn't exist in the internal array and is allowed to be generated,
      * a new value will be generated using the generator closure.
      */
@@ -102,7 +102,7 @@ class ArrayMock implements \ArrayAccess
 
     /**
      * Check if an key exists.
-     * 
+     *
      * @return bool True if the key is set or is allowed to be generated.
      */
     public function offsetExists($key): bool

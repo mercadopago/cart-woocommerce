@@ -188,6 +188,11 @@
     outline: 0 !important
 }
 
+.mp-checkout-custom-card-input:focus::placeholder {
+    transition: none !important;
+    opacity: 1 !important;
+}
+
 .mp-checkout-custom-card-input-iframe {
     border: 1px solid rgba(0, 0, 0, .25) !important;
     border-radius: 6px !important
