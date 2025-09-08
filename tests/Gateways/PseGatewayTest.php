@@ -7,7 +7,7 @@ use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Form;
-use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Transactions\PseTransaction;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\PseGateway;

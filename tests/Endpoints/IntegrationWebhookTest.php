@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Endpoints;
 
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
+use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Endpoints\IntegrationWebhook;
 use Mockery;

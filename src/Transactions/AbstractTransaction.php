@@ -112,7 +112,7 @@ abstract class AbstractTransaction
      *
      * @return string|void
      */
-    private function getNotificationUrl()
+    protected function getNotificationUrl()
     {
         $customDomain        = $this->mercadopago->storeConfig->getCustomDomain();
         $customDomainOptions = $this->mercadopago->storeConfig->getCustomDomainOptions();
@@ -164,39 +164,29 @@ abstract class AbstractTransaction
      */
     public function getInternalMetadata(): PaymentMetadata
     {
-        $seller  = $this->mercadopago->sellerConfig->getCollectorId();
-        $siteId  = $this->mercadopago->sellerConfig->getSiteId();
-        $siteUrl = $this->mercadopago->hooks->options->get('siteurl');
-
-        $zipCode = $this->mercadopago->orderBilling->getZipcode($this->order);
-        $zipCode = str_replace('-', '', $zipCode);
-
-        $user             = $this->mercadopago->helpers->currentUser->getCurrentUser();
-        $userId           = $user->ID;
-        $userRegistration = $user->user_registered;
-        $theme_metadata = $this->mercadopago->storeConfig->wpGetThemeNameAndVersion();
-
-        $metadata = new PaymentMetadata();
+        $user                                    = $this->mercadopago->helpers->currentUser->getCurrentUser();
+        $theme                                   = wp_get_theme();
+        $metadata                                = new PaymentMetadata();
         $metadata->platform                      = MP_PLATFORM_ID;
         $metadata->platform_version              = $this->mercadopago->woocommerce->version;
         $metadata->module_version                = MP_VERSION;
         $metadata->php_version                   = PHP_VERSION;
-        $metadata->site_id                       = strtolower($siteId);
+        $metadata->site_id                       = strtolower($this->mercadopago->sellerConfig->getSiteId());
         $metadata->sponsor_id                    = $this->countryConfigs['sponsor_id'];
-        $metadata->collector                     = $seller;
+        $metadata->collector                     = $this->mercadopago->sellerConfig->getCollectorId();
         $metadata->test_mode                     = $this->mercadopago->storeConfig->isTestMode();
         $metadata->details                       = '';
-        $metadata->seller_website                = $siteUrl;
+        $metadata->seller_website                = $this->mercadopago->hooks->options->get('siteurl');
         $metadata->billing_address               = new PaymentMetadataAddress();
-        $metadata->billing_address->zip_code     = $zipCode;
+        $metadata->billing_address->zip_code     = str_replace('-', '', $this->mercadopago->orderBilling->getZipcode($this->order));
         $metadata->billing_address->street_name  = $this->mercadopago->orderBilling->getAddress1($this->order);
         $metadata->billing_address->city_name    = $this->mercadopago->orderBilling->getCity($this->order);
         $metadata->billing_address->state_name   = $this->mercadopago->orderBilling->getState($this->order);
         $metadata->billing_address->country_name = $this->mercadopago->orderBilling->getCountry($this->order);
         $metadata->user                          = new PaymentMetadataUser();
-        $metadata->user->registered_user         = $userId ? 'yes' : 'no';
-        $metadata->user->user_email              = $userId ? $user->user_email : null;
-        $metadata->user->user_registration_date  = $userId ? Date::formatGmDate($userRegistration) : null;
+        $metadata->user->registered_user         = $user->exists() ? 'yes' : 'no';
+        $metadata->user->user_email              = $user->exists() ? $user->user_email : null;
+        $metadata->user->user_registration_date  = $user->exists() ? Date::formatGmDate($user->user_registered) : null;
         $metadata->cpp_extra                     = new PaymentMetadataCpp();
         $metadata->cpp_extra->platform_version   = $this->mercadopago->woocommerce->version;
         $metadata->cpp_extra->module_version     = MP_VERSION;
@@ -204,10 +194,18 @@ abstract class AbstractTransaction
         $metadata->settings                      = $this->mercadopago->metadataConfig->getGatewaySettings($this->gateway::ID);
         $metadata->auto_update                   = $this->mercadopago->sellerConfig->isAutoUpdate();
         $metadata->theme                         = new ThemeMetadata();
-        $metadata->theme->theme_name             = $theme_metadata['theme_name'];
-        $metadata->theme->theme_version          = $theme_metadata['theme_version'];
+        $metadata->theme->theme_name             = $theme->get('Name');
+        $metadata->theme->theme_version          = $theme->get('Version');
+
+        $this->extendInternalMetadata($metadata);
+
         return $metadata;
     }
+
+    /**
+     * Extends internal metadata with payment-specific data.
+     */
+    abstract public function extendInternalMetadata(PaymentMetadata $internalMetadata): void;
 
     /**
      * Set additional shipments information

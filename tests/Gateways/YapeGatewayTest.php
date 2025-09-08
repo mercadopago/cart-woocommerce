@@ -5,7 +5,7 @@ namespace MercadoPago\Woocommerce\Tests\Gateways;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
-use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Transactions\YapeTransaction;
 use Mockery;
 use Mockery\MockInterface;

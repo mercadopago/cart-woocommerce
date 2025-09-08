@@ -155,12 +155,11 @@
     margin: 0 !important;
 }
 
-.row-image-select img,
-.wc_payment_method > label > img {
+.row-image-select img, .payment_method_woo-mercado-pago-basic>label>img {
     height: 32px !important;
     max-height: 32px !important;
-    width: 32px !important;
     max-width: 32px !important;
+    width: 32px !important;
 }
 
 .row-image-select img {

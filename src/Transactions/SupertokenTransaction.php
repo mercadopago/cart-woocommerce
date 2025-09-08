@@ -38,19 +38,10 @@ class SupertokenTransaction extends AbstractPaymentTransaction
         $this->paymentTypeId = $this->checkout['payment_type_id'];
     }
 
-    /**
-     * Get internal metadata
-     *
-     * @return PaymentMetadata
-     */
-    public function getInternalMetadata(): PaymentMetadata
+    public function extendInternalMetadata(PaymentMetadata $internalMetadata): void
     {
-        $internalMetadata = parent::getInternalMetadata();
-
         $internalMetadata->checkout = 'custom';
         $internalMetadata->checkout_type = self::ID;
-
-        return $internalMetadata;
     }
 
     /**

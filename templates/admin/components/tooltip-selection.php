@@ -27,7 +27,7 @@ $currentOption = $settings['i18n']["tooltip_component_option{$settings['current_
 <div class="credits-tooltip-selection-sample-container">
     <p><?= esc_html($settings['i18n']['tooltip_component_example']) ?></p>
     <div class="mp-tooltip-sample-image-container">
-        <img alt="Mercado Pago Mini Logo" src="<?= $settings['icon'] ?>" />
+        <img alt="Mercado Pago Mini Logo" src="<?= esc_url($settings['icon']) ?>" />
         <span id="selected-option"><?= esc_html($currentOption) ?></span>
     </div>
 </div>

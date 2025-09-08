@@ -637,7 +637,7 @@ class CustomGateway extends AbstractGateway
 
         echo wp_json_encode($return);
 
-        if (!$_ENV['PHPUNIT_TEST'] ?? false) {
+        if (!getenv('PHPUNIT_TEST')) {
             die();
         }
     }

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.4.7] - 2025-09-08
+### Fixed
+- Adopting code style fixes according to QIT (Quality Insights Toolkit)
+- Fixed visual conflict in checkout screen image styles
+- Fix to check access to fast payments flow when email is updated
+- Optimizing the fast payment flow during trigger
+
 ## [8.4.6] - 2025-08-25
 ### Fixed
 - Text and translation corrections in the fast payments flow

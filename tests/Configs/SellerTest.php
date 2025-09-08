@@ -4,7 +4,7 @@ namespace MercadoPago\Woocommerce\Tests\Configs;
 
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Configs\Seller;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
+use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use Mockery;
 
 /**

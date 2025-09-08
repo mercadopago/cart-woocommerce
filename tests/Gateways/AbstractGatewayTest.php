@@ -2,7 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
-use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Refund\RefundHandler;
+use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
@@ -11,8 +12,8 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
-use MercadoPago\Woocommerce\Exceptions\RefundException;
 use Mockery;
+use WP_Error;
 use WP_Mock;
 
 class AbstractGatewayTest extends TestCase
@@ -433,72 +434,29 @@ class AbstractGatewayTest extends TestCase
         $this->assertEquals('http://localhost.com/wp-admin/admin.php?page=wc-settings&tab=checkout&section=test_gateway_123', $result);
     }
 
-    public function testProcessRefundWithNoPermissionException()
+    /**
+     * @testWith ["no_permission"]
+     *           ["supertoken_not_supported"]
+     *           ["some_other_error", "unknown_error"]
+     */
+    public function testProcessRefundError(string $type, string $message = null)
     {
-        $order = Mockery::mock('WC_Order');
-        WP_Mock::userFunction('wc_get_order')
-            ->once()
-            ->with(123)
-            ->andReturn($order);
+        WP_Mock::userFunction('wc_get_order')->once();
 
-        $refundHandlerMock = Mockery::mock('overload:MercadoPago\Woocommerce\Refund\RefundHandler');
-        $refundHandlerMock->shouldReceive('processRefund')
+        Mockery::mock('overload:' . RefundHandler::class)
+            ->shouldReceive('processRefund')
             ->once()
             ->with(100.00, '')
-            ->andThrow(new \Exception(RefundException::TYPE_NO_PERMISSION));
-
-        $result = $this->gateway->process_refund(123, 100.00, '');
-
-        $this->assertInstanceOf('WP_Error', $result);
-        $this->assertEquals('refund_error', $result->get_error_code());
-        $this->assertEquals($this->gateway->mercadopago->adminTranslations->refund[RefundException::TYPE_NO_PERMISSION], $result->get_error_message());
-    }
-
-    public function testProcessRefundWithNotSupportedException()
-    {
-        $order = Mockery::mock('WC_Order');
-        WP_Mock::userFunction('wc_get_order')
-            ->once()
-            ->with(789)
-            ->andReturn($order);
-
-        $refundHandlerMock = Mockery::mock('overload:MercadoPago\Woocommerce\Refund\RefundHandler');
-        $refundHandlerMock->shouldReceive('processRefund')
-            ->once()
-            ->with(75.00, '')
-            ->andThrow(new \Exception(RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED));
-
-
-        $result = $this->gateway->process_refund(789, 75.00, '');
-
-        $this->assertInstanceOf('WP_Error', $result);
-        $this->assertEquals('refund_error', $result->get_error_code());
-        $this->assertEquals($this->gateway->mercadopago->adminTranslations->refund[RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED], $result->get_error_message());
-    }
-
-    public function testProcessRefundWithUnknownException()
-    {
-        $order = Mockery::mock('WC_Order');
-        WP_Mock::userFunction('wc_get_order')
-            ->once()
-            ->with(456)
-            ->andReturn($order);
-
-        $mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-
-        $refundHandlerMock = Mockery::mock('overload:MercadoPago\Woocommerce\Refund\RefundHandler');
-        $refundHandlerMock->shouldReceive('processRefund')
-            ->once()
-            ->with(50.00, '')
-            ->andThrow(new \Exception('some_other_error'));
+            ->andThrow(new \Exception($type));
 
         $this->gateway->mercadopago->adminTranslations->refund->except('some_other_error');
 
-        $result = $this->gateway->process_refund(456, 50.00, '');
+        Mockery::mock('overload:' . WP_Error::class)
+            ->shouldReceive('__construct')
+            ->once()
+            ->with('refund_error', $this->gateway->mercadopago->adminTranslations->refund[$message ?? $type]);
 
-        $this->assertInstanceOf('WP_Error', $result);
-        $this->assertEquals('refund_error', $result->get_error_code());
-        $this->assertEquals($this->gateway->mercadopago->adminTranslations->refund['unknown_error'], $result->get_error_message());
+        $this->assertInstanceOf(WP_Error::class, $this->gateway->process_refund(123, 100.00, ''));
     }
 
     /**

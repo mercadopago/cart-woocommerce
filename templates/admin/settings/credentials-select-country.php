@@ -28,32 +28,32 @@ $current_site_id ??= null;
         </div>
         <div class="mp-settings-auto-credentials-create">
             <h1 class="mp-settings-auto-title">
-                <?= $i18n['title'] ?>
+                <?= wp_kses_post($i18n['title']) ?>
             </h1>
             <span class="mp-settings-auto-description mp-settings-subtitle-font-size">
-                <?= $i18n['description'] ?>
+                <?= wp_kses_post($i18n['description']) ?>
             </span>
             <div class="mp-input-group">
                 <div id="mp-credentials-country-select" class="mp-select" aria-expanded="false">
-                    <input type="hidden" id="mp-credentials-country" value="<?= $current_site_id ?>">
-                    <button role="button" aria-label="<?= $i18n['placeholder'] ?>">
-                        <?= I18n::get('admin.countries')[$current_site_id] ?? $i18n['placeholder'] ?>
+                    <input type="hidden" id="mp-credentials-country" value="<?= esc_attr($current_site_id) ?>">
+                    <button role="button" aria-label="<?= esc_attr($i18n['placeholder']) ?>">
+                        <?= wp_kses_post(I18n::get('admin.countries')[$current_site_id] ?? $i18n['placeholder']) ?>
                     </button>
                     <ul role="list" class="mp-hidden" tabindex="-1">
                         <?php foreach (I18n::get('admin.countries') as $siteId => $country) : ?>
-                            <li role="option" data-value="<?= $siteId ?>" aria-selected="<?= $siteId === $current_site_id ? 'true' : 'false' ?>">
+                            <li role="option" data-value="<?= esc_attr($siteId) ?>" aria-selected="<?= esc_attr($siteId === $current_site_id ? 'true' : 'false') ?>">
                                 <div class="mp-select-pipe"></div>
-                                <?= $country ?>
+                                <?= wp_kses_post($country) ?>
                             </li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
-                <div class="mp-error-msg" tabindex="-1" aria-label="<?= $i18n['empty_error'] ?>">
-                    <img src="<?= Helpers::get('url')->getImageAsset('settings/error.svg') ?>" alt="">
-                    <?= $i18n['empty_error'] ?>
+                <div class="mp-error-msg" tabindex="-1" aria-label="<?= esc_attr($i18n['empty_error']) ?>">
+                    <img src="<?= esc_url(Helpers::get('url')->getImageAsset('settings/error.svg')) ?>" alt="">
+                    <?= wp_kses_post($i18n['empty_error']) ?>
                 </div>
-                <button type="button" id="mp-button-country" class="mp-button mp-button-large" <?= $switch_account ? 'data-switch-account="true"' : "data-next='#$next' data-success='{$i18n['success']}'" ?>>
-                    <?= $i18n['continue'] ?>
+                <button type="button" id="mp-button-country" class="mp-button mp-button-large" <?= $switch_account ? 'data-switch-account="true"' : 'data-next="' . esc_attr('#' . $next) . '" data-success="' . esc_attr($i18n['success']) . '"' ?>>
+                    <?= wp_kses_post($i18n['continue']) ?>
                 </button>
 
             </div>

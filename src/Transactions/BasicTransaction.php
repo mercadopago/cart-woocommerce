@@ -26,28 +26,10 @@ class BasicTransaction extends AbstractPreferenceTransaction
         $this->setPaymentMethodsTransaction();
     }
 
-    /**
-     * Bind to parent getInternalMetadata method to be able to mock it on tests
-     * @return PaymentMetadata
-     */
-    protected function getInternalMetadataStoreAndSellerInfo(): PaymentMetadata
+    public function extendInternalMetadata(PaymentMetadata $internalMetadata): void
     {
-        return parent::getInternalMetadata();
-    }
-
-    /**
-     * Get internal metadata
-     *
-     * @return PaymentMetadata
-     */
-    public function getInternalMetadata(): PaymentMetadata
-    {
-        $internalMetadata = $this->getInternalMetadataStoreAndSellerInfo();
-
         $internalMetadata->checkout      = 'smart';
         $internalMetadata->checkout_type = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'method', 'redirect');
-
-        return $internalMetadata;
     }
 
     /**

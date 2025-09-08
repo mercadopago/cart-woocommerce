@@ -21,17 +21,17 @@ trait AssertArrayMap
      *
      * ```php
      * use PHPUnit\Framework\Constraint\IsType;
-     * use PHPUnit\Framework\Constraint\IsEqual;
+     * use PHPUnit\Framework\Constraint\IsEmpty;
      *
      * $this->assertArrayMap([
      *     'expiration_date' => [
      *         'description' => IsType::TYPE_STRING,
-     *         'default' => IsType::TYPE_INT,
+     *         'default' => new IsEmpty(),
      *     ],
      *     'currency_conversion' => [
      *         'descriptions' => [
-     *             'enabled' => new IsEqual('lorem'),
-     *             'disabled' => new IsEqual('ipsum'),
+     *             'enabled' => $this->equalTo('lorem'),
+     *             'disabled' => $this->equalTo('ipsum'),
      *         ],
      *     ],
      * ], $actual);

@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
-use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Transactions\CreditsTransaction;
 use Mockery\Exception\BadMethodCallException;
 use PHPUnit\Framework\TestCase;

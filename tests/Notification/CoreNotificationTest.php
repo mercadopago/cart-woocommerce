@@ -10,7 +10,7 @@ use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Notification\CoreNotification;
 use MercadoPago\Woocommerce\Order\OrderStatus;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
+use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use MercadoPago\PP\Sdk\Sdk;
 use PHPUnit\Framework\TestCase;
 
@@ -51,9 +51,6 @@ class CoreNotificationTest extends TestCase
         if (!defined('MP_PRODUCT_ID_MOBILE')) {
             define('MP_PRODUCT_ID_MOBILE', 'WOOCOMMERCE_MP_TEST_MOBILE');
         }
-        if (!defined('MP_VERSION')) {
-            define('MP_VERSION', '8.2.0');
-        }
         if (!defined('MP_PLATFORM_NAME')) {
             define('MP_PLATFORM_NAME', 'woocommerce');
         }
@@ -84,13 +81,11 @@ class CoreNotificationTest extends TestCase
         );
     }
 
-
+    /**
+     * @doesNotPerformAssertions
+     */
     public function testUpdatePaymentDetailsWithCreditCardPayment()
     {
-        $order = Mockery::mock('WC_Order');
-        $order->shouldReceive('get_meta')->andReturn('');
-        $order->shouldReceive('update_meta_data')->andReturn(true);
-
         $data = [
             'payments_details' => [
                 [
@@ -106,10 +101,16 @@ class CoreNotificationTest extends TestCase
                 ]
             ]
         ];
-
-        $this->coreNotification->updatePaymentDetails($order, $data);
-
-        $this->assertTrue(true);
+        // NÃO POSSUI NENHUM EXPECT
+        $this->coreNotification->updatePaymentDetails(
+            Mockery::mock('WC_Order')
+                ->shouldReceive('get_meta')
+                ->andReturn('')
+                ->shouldReceive('update_meta_data')
+                ->andReturn(true)
+                ->getMock(),
+            $data
+        );
     }
 
     public function testUpdatePaymentDetailsWithPixPayment()

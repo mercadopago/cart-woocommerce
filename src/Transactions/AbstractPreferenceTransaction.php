@@ -2,20 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Transactions;
 
-use Exception;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use WC_Order;
 
 abstract class AbstractPreferenceTransaction extends AbstractTransaction
 {
-    /**
-     * Preference Transaction constructor
-     *
-     * @param AbstractGateway $gateway
-     * @param WC_Order $order
-     *
-     * @throws Exception
-     */
     public function __construct(AbstractGateway $gateway, WC_Order $order)
     {
         parent::__construct($gateway, $order);
@@ -33,12 +24,6 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         $this->setAdditionalInfoTransaction();
     }
 
-    /**
-     * Create preference
-     *
-     * @return array
-     * @throws Exception
-     */
     public function createPreference()
     {
         $this->logTransactionPayload();
@@ -48,11 +33,6 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         return $data;
     }
 
-    /**
-     * Set common transaction
-     *
-     * @return void
-     */
     public function setCommonTransaction(): void
     {
         parent::setCommonTransaction();
@@ -65,15 +45,9 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         }
     }
 
-    /**
-     * Set payer
-     *
-     * @return void
-     */
     public function setPayerTransaction(): void
     {
-        $payer = $this->transaction->payer;
-
+        $payer                       = $this->transaction->payer;
         $payer->email                = $this->mercadopago->orderBilling->getEmail($this->order);
         $payer->name                 = $this->mercadopago->orderBilling->getFirstName($this->order);
         $payer->surname              = $this->mercadopago->orderBilling->getLastName($this->order);
@@ -82,35 +56,23 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
         $payer->address->street_name = $this->mercadopago->orderBilling->getFullAddress($this->order);
     }
 
-    /**
-     * Set back URLs
-     *
-     * @return void
-     */
     public function setBackUrlsTransaction(): void
     {
-        $successUrl = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'success_url');
-        $failureUrl = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'failure_url');
-        $pendingUrl = $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'pending_url');
+        $sanitizeFallback = fn(string $fallback) => $this->mercadopago->helpers->strings->fixUrlAmpersand(esc_url($fallback));
 
-        $this->transaction->back_urls->success = empty($successUrl)
-            ? $this->mercadopago->helpers->strings->fixUrlAmpersand(esc_url($this->gateway->get_return_url($this->order)))
-            : $successUrl;
+        $this->transaction->back_urls->success =
+            $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'success_url') ?:
+            $sanitizeFallback($this->gateway->get_return_url($this->order));
 
-        $this->transaction->back_urls->failure = empty($failureUrl)
-            ? $this->mercadopago->helpers->strings->fixUrlAmpersand(esc_url($this->order->get_cancel_order_url()))
-            : $failureUrl;
+        $this->transaction->back_urls->failure =
+            $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'failure_url') ?:
+            $sanitizeFallback($this->order->get_cancel_order_url());
 
-        $this->transaction->back_urls->pending = empty($pendingUrl)
-            ? $this->mercadopago->helpers->strings->fixUrlAmpersand(esc_url($this->gateway->get_return_url($this->order)))
-            : $pendingUrl;
+        $this->transaction->back_urls->pending =
+            $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'pending_url') ?:
+            $sanitizeFallback($this->gateway->get_return_url($this->order));
     }
 
-    /**
-     * Set auto return
-     *
-     * @return void
-     */
     public function setAutoReturnTransaction(): void
     {
         if ($this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'auto_return') === 'yes') {

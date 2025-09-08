@@ -43,7 +43,7 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
     {
         $this->logTransactionPayload();
         if (!empty($this->checkout['session_id'])) {
-            $this->transaction->__set('session_id', $this->checkout['session_id']);
+            $this->transaction->session_id = $this->checkout['session_id'];
         }
         $data = $this->transaction->save();
         $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);

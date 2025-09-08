@@ -1,12 +1,13 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Tests\Gateways;
+namespace MercadoPago\Woocommerce\Tests\Transactions;
 
+use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
+use Mockery\MockInterface;
+use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Transactions\CreditsTransaction;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
-use Mockery;
 
 /**
  * @runTestsInSeparateProcesses
@@ -14,18 +15,25 @@ use Mockery;
  */
 class CreditsTransactionTest extends TestCase
 {
-    use WoocommerceMock;
+    use TransactionMock;
 
-    public function testGetInternalMetadata()
+    private string $transactionClass = CreditsTransaction::class;
+
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var MockInterface|CreditsTransaction
+     */
+    private $transaction;
+
+    public function testExtendInternalMetadata(): void
     {
-        $expectedPaymentMetadata = new PaymentMetadata();
-        $expectedPaymentMetadata->checkout = 'pro';
-        $expectedPaymentMetadata->checkout_type = 'credits';
+        $this->transaction->extendInternalMetadata(
+            $metadata = new PaymentMetadata()
+        );
 
-        $credits = Mockery::mock(CreditsTransaction::class)->makePartial()->shouldAllowMockingProtectedMethods();
-        $credits->shouldReceive('getInternalMetadataStoreAndSellerInfo')->andReturn(new PaymentMetadata());
-
-        $result = $credits->getInternalMetadata();
-        $this->assertEquals($expectedPaymentMetadata, $result);
+        $this->assertObjectSchema([
+            'checkout' => IsType::TYPE_STRING,
+            'checkout_type' => $this->equalTo(CreditsTransaction::ID)
+        ], $metadata);
     }
 }

@@ -2,8 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Transactions;
 
-use Exception;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Gateways\TicketGateway;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use WC_Order;
@@ -12,100 +12,52 @@ class TicketTransaction extends AbstractPaymentTransaction
 {
     public const ID = 'ticket';
 
-    private string $paymentMethodId;
-
-    private string $paymentPlaceId;
-
     /**
-     * Ticket Transaction constructor
-     *
-     * @param AbstractGateway $gateway
-     * @param WC_Order $order
-     * @param array $checkout
-     *
-     * @throws Exception
+     * @var TicketGateway
      */
+    public AbstractGateway $gateway;
+
     public function __construct(AbstractGateway $gateway, WC_Order $order, array $checkout)
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->paymentMethodId = $this->checkout['payment_method_id'];
-        $this->paymentPlaceId  = $this->mercadopago->helpers->paymentMethods->getPaymentPlaceId($this->paymentMethodId);
-        if ($this->countryConfigs['site_id'] !== 'MPE') {
-            $this->paymentMethodId = $this->mercadopago->helpers->paymentMethods->getPaymentMethodId($this->paymentMethodId);
-        }
-
-
-        $this->transaction->installments = 1;
-        $this->transaction->payment_method_id  = $this->paymentMethodId;
-        $this->transaction->date_of_expiration = $this->getExpirationDate();
+        $this->transaction->installments       = 1;
+        $this->transaction->date_of_expiration = Date::sumToNowDate($this->gateway->getCheckoutExpirationDate() . ' days');
+        $this->transaction->payment_method_id  = $this->countryConfigs['site_id'] === 'MPE'
+            ? $this->checkout['payment_method_id']
+            : $this->mercadopago->helpers->paymentMethods->getPaymentMethodId($this->checkout['payment_method_id']);
 
         $this->setWebpayPropertiesTransaction();
-        $this->setPayerTransaction();
+        $this->updatePayerTransaction();
     }
 
-    /**
-     * Get internal metadata
-     *
-     * @return PaymentMetadata
-     */
-    public function getInternalMetadata(): PaymentMetadata
+    public function extendInternalMetadata(PaymentMetadata $internalMetadata): void
     {
-        $internalMetadata = parent::getInternalMetadata();
-
         $internalMetadata->checkout      = 'custom';
         $internalMetadata->checkout_type = self::ID;
-
-        if (!empty($this->paymentPlaceId)) {
-            $internalMetadata->payment_option_id = $this->paymentPlaceId;
+        $paymentPlaceId                  = $this->mercadopago->helpers->paymentMethods->getPaymentPlaceId($this->checkout['payment_method_id']);
+        if (!empty($paymentPlaceId)) {
+            $internalMetadata->payment_option_id = $paymentPlaceId;
         }
-
-        return $internalMetadata;
     }
 
-    /**
-     * Set webpay properties transaction
-     *
-     * @return void
-     */
     public function setWebpayPropertiesTransaction(): void
     {
-        if ($this->checkout['payment_method_id'] === 'webpay') {
-            $this->transaction->transaction_details->financial_institution = '1234';
-            $this->transaction->callback_url                               = get_site_url();
-            $this->transaction->additional_info->ip_address                = '127.0.0.1';
-            $this->transaction->payer->identification->type                = 'RUT';
-            $this->transaction->payer->identification->number              = '0';
-            $this->transaction->payer->entity_type                         = 'individual';
+        if ($this->checkout['payment_method_id'] !== 'webpay') {
+            return;
         }
+
+        $this->transaction->transaction_details->financial_institution = '1234';
+        $this->transaction->callback_url                               = get_site_url();
+        $this->transaction->additional_info->ip_address                = '127.0.0.1';
+        $this->transaction->payer->identification->type                = 'RUT';
+        $this->transaction->payer->identification->number              = '0';
+        $this->transaction->payer->entity_type                         = 'individual';
     }
 
-    /**
-     * Get expiration date
-     *
-     * @return string
-     */
-    public function getExpirationDate(): string
+    public function updatePayerTransaction(): void
     {
-        $expirationDate = $this->mercadopago->hooks->options->getGatewayOption(
-            $this->gateway,
-            'date_expiration',
-            MP_TICKET_DATE_EXPIRATION
-        );
-
-        return Date::sumToNowDate($expirationDate . ' days');
-    }
-
-    /**
-     * Set payer transaction
-     *
-     * @return void
-     */
-    public function setPayerTransaction(): void
-    {
-        parent::setPayerTransaction();
-
-        if ($this->countryConfigs['site_id'] === 'MLB' || $this->countryConfigs['site_id'] === 'MLU') {
+        if (in_array($this->countryConfigs['site_id'], ['MLB', 'MLU'])) {
             $this->setPayerIdentificationInfo();
         }
         if ($this->countryConfigs['site_id'] === 'MLB') {
@@ -121,13 +73,18 @@ class TicketTransaction extends AbstractPaymentTransaction
 
     private function setPayerAddressInfoFromCheckout(): void
     {
-        $streetNumber = $this->checkout['address_street_number'] ?: 'S/N';
-
-        $this->transaction->payer->address->city          = $this->transaction->additional_info->payer->address->city          = $this->checkout['address_city'];
-        $this->transaction->payer->address->federal_unit  = $this->transaction->additional_info->payer->address->federal_unit  = $this->checkout['address_federal_unit'];
-        $this->transaction->payer->address->zip_code      = $this->transaction->additional_info->payer->address->zip_code      = $this->checkout['address_zip_code'];
-        $this->transaction->payer->address->street_name   = $this->transaction->additional_info->payer->address->street_name   = $this->checkout['address_street_name'];
-        $this->transaction->payer->address->neighborhood  = $this->transaction->additional_info->payer->address->neighborhood  = $this->checkout['address_neighborhood'];
-        $this->transaction->payer->address->street_number = $this->transaction->additional_info->payer->address->street_number = $streetNumber;
+        foreach (
+            [
+            $this->transaction->payer->address,
+            $this->transaction->additional_info->payer->address
+            ] as $address
+        ) {
+            $address->city          = $this->checkout['address_city'];
+            $address->federal_unit  = $this->checkout['address_federal_unit'];
+            $address->zip_code      = $this->checkout['address_zip_code'];
+            $address->street_name   = $this->checkout['address_street_name'];
+            $address->neighborhood  = $this->checkout['address_neighborhood'];
+            $address->street_number = $this->checkout['address_street_number'] ?: 'S/N';
+        }
     }
 }

@@ -34,7 +34,7 @@ $i18n = I18n::get('admin.credentialsLinkComponents');
         </div>
         <div class="mp-settings-auto-divider"></div>
         <div class="mp-settings-auto-credentials-consult">
-            <section class="mp-settings-auto-linked-store <?= $credentialsState['type']?>">
+            <section class="mp-settings-auto-linked-store <?= esc_attr($credentialsState['type'])?>">
                 <?php if ($credentialsState['linked_account'] == 'error') { ?>
                     <div class="linked-store-img-warning"></div>
                 <?php } else { ?>

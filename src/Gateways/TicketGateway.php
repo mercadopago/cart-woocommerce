@@ -16,6 +16,9 @@ if (!defined('ABSPATH')) {
 
 class TicketGateway extends AbstractGateway
 {
+    protected const CHECKOUT_EXPIRATION_DATE_OPTION = 'date_expiration';
+    protected const CHECKOUT_EXPIRATION_DATE_DEFAULT = '3';
+
     /**
      * ID
      *
@@ -87,11 +90,11 @@ class TicketGateway extends AbstractGateway
                 ],
             ],
             'type_payments'   => $this->generateExPaymentsFields(),
-            'date_expiration' => [
+            static::CHECKOUT_EXPIRATION_DATE_OPTION => [
                 'title'       => $this->adminTranslations['date_expiration_title'],
                 'type'        => 'number',
                 'description' => $this->adminTranslations['date_expiration_description'],
-                'default'     => MP_TICKET_DATE_EXPIRATION,
+                'default'     => static::CHECKOUT_EXPIRATION_DATE_DEFAULT,
             ],
             'advanced_configuration_title' => [
                 'type'  => 'title',
@@ -542,5 +545,13 @@ class TicketGateway extends AbstractGateway
         $paymentMethods = $mercadopago->sellerConfig->getCheckoutTicketPaymentMethods();
         $isAvailable = !empty($paymentMethods);
         return $isAvailable;
+    }
+
+    /**
+     * Gets expiration date option
+     */
+    public function getCheckoutExpirationDate(): string
+    {
+        return $this->get_option(static::CHECKOUT_EXPIRATION_DATE_OPTION, static::CHECKOUT_EXPIRATION_DATE_DEFAULT);
     }
 }
