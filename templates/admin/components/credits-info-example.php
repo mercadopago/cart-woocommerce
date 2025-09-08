@@ -51,7 +51,7 @@ if (!defined('ABSPATH')) {
     </div>
     <div class="credits-info-example-gif-container">
         <div class="credits-info-example-gif">
-            <img id="gif-image" alt="example" src="<?= $viewDesktop ?>">
+            <img id="gif-image" alt="example" src="<?= esc_url($viewDesktop) ?>">
         </div>
         <p id="credits-info-example-gif-footer">
         <?php echo esc_html($footer); ?>

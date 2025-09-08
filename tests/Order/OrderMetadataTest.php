@@ -3,7 +3,7 @@
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
 use PHPUnit\Framework\TestCase;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
+use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;

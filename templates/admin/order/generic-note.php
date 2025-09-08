@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 
 <tr>
     <td class="label">
-        <?= wc_help_tip($tip) ?>
+        <?= wp_kses_post(wc_help_tip($tip)) ?>
         <?= esc_html($title) ?>
     </td>
 

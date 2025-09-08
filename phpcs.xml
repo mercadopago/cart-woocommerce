@@ -10,6 +10,8 @@
     </rule>
 
     <rule ref="WordPress.Security.ValidatedSanitizedInput" />
+    <rule ref="WordPress.Security.EscapeOutput.OutputNotEscaped" />
+    <rule ref="WordPress.Security.ValidatedSanitizedInput.InputNotSanitized" />
 
     <rule ref="PHPCompatibility" />
 

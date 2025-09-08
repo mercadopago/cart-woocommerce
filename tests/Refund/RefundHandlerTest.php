@@ -5,7 +5,7 @@ namespace MercadoPago\Woocommerce\Tests\Refund;
 use MercadoPago\PP\Sdk\HttpClient\Response;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Refund\RefundHandler;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
+use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Exceptions\RefundException;
 use PHPUnit\Framework\TestCase;

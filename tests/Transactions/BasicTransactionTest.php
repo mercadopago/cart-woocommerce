@@ -1,9 +1,11 @@
 <?php
 
-namespace MercadoPago\Woocommerce\Tests\Gateways;
+namespace MercadoPago\Woocommerce\Tests\Transactions;
 
+use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
+use Mockery\MockInterface;
+use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
-use MercadoPago\Woocommerce\Tests\Mocks\WoocommerceMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Tests\Mocks\SdkMock;
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
@@ -11,32 +13,33 @@ use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Gateways\BasicGateway;
 use Mockery;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class BasicTransactionTest extends TestCase
 {
-    use WoocommerceMock;
+    use TransactionMock;
 
-    public function testGetInternalMetadata()
+    private string $transactionClass = BasicTransaction::class;
+
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @var MockInterface|BasicTransaction
+     */
+    private $transaction;
+
+    public function testExtendInternalMetadata(): void
     {
-        $expectedPaymentMetadata = new PaymentMetadata();
-        $expectedPaymentMetadata->checkout = 'smart';
-        $expectedPaymentMetadata->checkout_type = 'redirect';
+        $this->transaction->mercadopago->hooks->options
+            ->expects()
+            ->getGatewayOption($this->transaction->gateway, 'method', 'redirect')
+            ->andReturn($method = random()->word());
 
-        $basic = Mockery::mock(BasicTransaction::class)->makePartial()->shouldAllowMockingProtectedMethods();
-        $basic->shouldReceive('getInternalMetadataStoreAndSellerInfo')->andReturn(new PaymentMetadata());
+        $this->transaction->extendInternalMetadata(
+            $metadata = new PaymentMetadata()
+        );
 
-        $mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
-        $mercadopagoMock->hooks->options->shouldReceive('getGatewayOption')->andReturn('redirect');
-        $basic->mercadopago = $mercadopagoMock;
-
-        $basic->transaction = SdkMock::getPreferenceEntityMock();
-        $basic->gateway = Mockery::mock(BasicGateway::class)->makePartial();
-
-        $result = $basic->getInternalMetadata();
-        $this->assertEquals($expectedPaymentMetadata, $result);
+        $this->assertObjectSchema([
+            'checkout' => IsType::TYPE_STRING,
+            'checkout_type' => $this->equalTo($method)
+        ], $metadata);
     }
 
     public function testSetInstallmentsTransaction()

@@ -22,23 +22,23 @@ $nextPanelId = 'mp-settings-credentials-start-panel';
 
 <?php Template::render('admin/settings/credentials-select-country', ['next' => $nextPanelId]); ?>
 
-<div id="<?= $nextPanelId ?>" class="mp-hidden">
+<div id="<?= esc_attr($nextPanelId) ?>" class="mp-hidden">
     <div class="mp-settings-auto-credentials auto-credentials-create-link mp-block">
         <div class="mp-settings-initial-img mp-settings-auto-img-size">
         </div>
         <div class="mp-settings-auto-credentials-create">
             <h1 class="mp-settings-auto-title">
-                <?= $i18n['initial_title'] ?>
+                <?= wp_kses_post($i18n['initial_title']) ?>
             </h1>
             <span class="mp-settings-auto-description mp-settings-subtitle-font-size">
-                <?= $i18n['initial_description'] ?>
+                <?= wp_kses_post($i18n['initial_description']) ?>
             </span>
             <div>
                 <button class="mp-button mp-button-large mp-button-light-blue" id="mp-credentials-change-country">
-                    <?= $i18n['change_country'] ?>
+                    <?= wp_kses_post($i18n['change_country']) ?>
                 </button>
                 <button class="mp-button mp-button-large" id="mp-integration-auth-login">
-                    <?= $i18n['initial_button'] ?>
+                    <?= wp_kses_post($i18n['initial_button']) ?>
                 </button>
             </div>
         </div>

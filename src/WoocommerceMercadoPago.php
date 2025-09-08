@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.4.6';
+    private const PLUGIN_VERSION = '8.4.7';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -44,8 +44,6 @@ class WoocommerceMercadoPago
     private const PRODUCT_ID_MOBILE  = 'BT7OFH09QS3001K5A0H0';
 
     private const PLATFORM_NAME = 'woocommerce';
-
-    private const TICKET_TIME_EXPIRATION = 3;
 
     private const PLUGIN_NAME = 'woocommerce-mercadopago/woocommerce-mercadopago.php';
 
@@ -396,7 +394,6 @@ class WoocommerceMercadoPago
         $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
         $this->define('MP_PRODUCT_ID_DESKTOP', self::PRODUCT_ID_DESKTOP);
         $this->define('MP_PRODUCT_ID_MOBILE', self::PRODUCT_ID_MOBILE);
-        $this->define('MP_TICKET_DATE_EXPIRATION', self::TICKET_TIME_EXPIRATION);
     }
 
     /**

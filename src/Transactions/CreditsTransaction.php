@@ -26,27 +26,9 @@ class CreditsTransaction extends AbstractPreferenceTransaction
         $this->transaction->purpose = 'onboarding_credits';
     }
 
-    /**
-     * Bind to parent getInternalMetadata method to be able to mock it on tests
-     * @return PaymentMetadata
-     */
-    protected function getInternalMetadataStoreAndSellerInfo(): PaymentMetadata
+    public function extendInternalMetadata(PaymentMetadata $internalMetadata): void
     {
-        return parent::getInternalMetadata();
-    }
-
-    /**
-     * Get internal metadata
-     *
-     * @return PaymentMetadata
-     */
-    public function getInternalMetadata(): PaymentMetadata
-    {
-        $internalMetadata = $this->getInternalMetadataStoreAndSellerInfo();
-
         $internalMetadata->checkout      = 'pro';
         $internalMetadata->checkout_type = self::ID;
-
-        return $internalMetadata;
     }
 }

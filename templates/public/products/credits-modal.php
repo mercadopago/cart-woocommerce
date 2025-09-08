@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 ?>
 
 <div id="tooltipComponent" class="mp-credits-tooltip-container">
-    <img alt="mp-logo-hand-shake" class="mp-credits-tooltip-icon" src="<?= $icon ?>">
+    <img alt="mp-logo-hand-shake" class="mp-credits-tooltip-icon" src="<?= esc_url($icon) ?>">
     <div class="mp-credits-tooltip-text">
         <span><?php echo wp_kses_post($tooltip_html); ?></span>
         <span class="mp-credits-tooltip-link"><a id="mp-open-modal"><?php echo esc_html($tooltip_link); ?></a></span>

@@ -1,6 +1,13 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.4.7 (08/09/2025) =
+* Fixed
+- Adopting code style fixes according to QIT (Quality Insights Toolkit)
+- Fixed visual conflict in checkout screen image styles
+- Fix to check access to fast payments flow when email is updated
+- Optimizing the fast payment flow during trigger
+
 = v8.4.6 (25/08/2025) =
 * Fixed
 - Text and translation corrections in the fast payments flow

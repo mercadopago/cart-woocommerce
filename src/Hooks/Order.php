@@ -4,10 +4,10 @@ namespace MercadoPago\Woocommerce\Hooks;
 
 use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Gateways\PixGateway;
 use MercadoPago\Woocommerce\Libraries\Singleton\Singleton;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Store;
-use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Cron;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Form;
@@ -557,28 +557,16 @@ class Order
         $order->save();
     }
 
-    /**
-     * Set pix metadata in the order
-     *
-     * @param AbstractGateway $gateway
-     * @param WC_Order $order
-     * @param $data
-     *
-     * @return void
-     */
-    public function setPixMetadata(AbstractGateway $gateway, WC_Order $order, $data): void
+    public function setPixMetadata(PixGateway $gateway, WC_Order $order, $data): void
     {
         $transactionAmount = $data['transaction_amount'];
         $qrCodeBase64      = $data['point_of_interaction']['transaction_data']['qr_code_base64'];
         $qrCode            = $data['point_of_interaction']['transaction_data']['qr_code'];
-        $defaultValue      = $this->storeTranslations->pixCheckout['expiration_30_minutes'];
-        $expiration        = $this->store->getCheckoutDateExpirationPix($gateway, $defaultValue);
 
         $this->orderMetadata->setTransactionAmountData($order, $transactionAmount);
         $this->orderMetadata->setPixQrBase64Data($order, $qrCodeBase64);
         $this->orderMetadata->setPixQrCodeData($order, $qrCode);
-        $this->orderMetadata->setPixExpirationDateData($order, $expiration);
-        $this->orderMetadata->setPixExpirationDateData($order, $expiration);
+        $this->orderMetadata->setPixExpirationDateData($order, $gateway->getCheckoutExpirationDate());
         $this->orderMetadata->setPixOnData($order, 1);
 
         $order->save();

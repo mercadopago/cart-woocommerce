@@ -17,6 +17,9 @@ if (!defined('ABSPATH')) {
 
 class PixGateway extends AbstractGateway
 {
+    protected const CHECKOUT_EXPIRATION_DATE_OPTION = 'expiration_date';
+    protected const CHECKOUT_EXPIRATION_DATE_DEFAULT = '30 minutes';
+
     /**
      * @var OrderMeta
      */
@@ -76,7 +79,6 @@ class PixGateway extends AbstractGateway
         $this->method_description = $this->adminTranslations['gateway_method_description'];
         $this->discount           = $this->getActionableValue('gateway_discount', 0);
         $this->commission         = $this->getActionableValue('commission', 0);
-        $this->expirationDate     = (int) $this->mercadopago->storeConfig->getCheckoutDateExpirationPix($this, '1');
 
         $this->mercadopago->hooks->gateway->registerUpdateOptions($this);
         $this->mercadopago->hooks->gateway->registerGatewayTitle($this);
@@ -245,11 +247,11 @@ class PixGateway extends AbstractGateway
     private function sellerWithPixFields(): array
     {
         return [
-            'expiration_date' => [
+            static::CHECKOUT_EXPIRATION_DATE_OPTION => [
                 'type'        => 'select',
                 'title'       => $this->adminTranslations['expiration_date_title'],
                 'description' => $this->adminTranslations['expiration_date_description'],
-                'default'     => '30 minutes',
+                'default'     => static::CHECKOUT_EXPIRATION_DATE_DEFAULT,
                 'options'     => [
                     '15 minutes' => $this->adminTranslations['expiration_date_options_15_minutes'],
                     '30 minutes' => $this->adminTranslations['expiration_date_options_30_minutes'],
@@ -456,9 +458,6 @@ class PixGateway extends AbstractGateway
         $transactionAmount = (float) $this->mercadopago->orderMetadata->getTransactionAmountMeta($order);
         $transactionAmount = Numbers::format($transactionAmount);
 
-        $defaultValue      = $this->storeTranslations['expiration_30_minutes'];
-        $expirationOption  = $this->mercadopago->storeConfig->getCheckoutDateExpirationPix($this, $defaultValue);
-
         $qrCode       = $this->mercadopago->orderMetadata->getPixQrCodeMeta($order);
         $qrCodeBase64 = $this->mercadopago->orderMetadata->getPixQrBase64Meta($order);
 
@@ -488,7 +487,7 @@ class PixGateway extends AbstractGateway
                 'text_amount'         => $this->storeTranslations['text_amount'],
                 'text_scan_qr'        => $this->storeTranslations['text_scan_qr'],
                 'text_time_qr_one'    => $this->storeTranslations['expiration_date_text'],
-                'qr_date_expiration'  => $expirationOption,
+                'qr_date_expiration'  => $this->getCheckoutExpirationDate(),
                 'text_description_qr' => $this->storeTranslations['text_description_qr'],
                 'qr_code'             => $qrCode,
                 'text_button'         => $this->storeTranslations['text_button'],
@@ -714,5 +713,13 @@ class PixGateway extends AbstractGateway
             'status' => $status,
             'message' => 'Payment status: ' . $status
         ]);
+    }
+
+    /**
+     * Gets expiration date option
+     */
+    public function getCheckoutExpirationDate(): string
+    {
+        return $this->get_option(static::CHECKOUT_EXPIRATION_DATE_OPTION, static::CHECKOUT_EXPIRATION_DATE_DEFAULT);
     }
 }

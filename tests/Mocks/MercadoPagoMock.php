@@ -52,10 +52,15 @@ use MercadoPago\Woocommerce\IO\Downloader;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
 use Mockery;
+use Mockery\MockInterface;
 
 class MercadoPagoMock
 {
-    public static function getWoocommerceMercadoPagoMock(): WoocommerceMercadoPago
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
+     * @return MockInterface|WoocommerceMercadoPago
+     */
+    public static function getWoocommerceMercadoPagoMock()
     {
         $mock = Mockery::mock(WoocommerceMercadoPago::class);
         $mock->woocommerce = Mockery::mock('WooCommerce');

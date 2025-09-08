@@ -5,7 +5,7 @@ class MPSuperTokenTriggerHandler {
     CUSTOM_CHECKOUT_CLASSIC_RADIO_SELECTOR = '#payment_method_woo-mercado-pago-custom';
     CUSTOM_CHECKOUT_CLASSIC_SELECTOR = '.payment_method_woo-mercado-pago-custom';
     CUSTOM_CHECKOUT_CONTAINER_ID = 'mp-custom-checkout-form-container';
-    CLICKABLE_AREA_STARTS_ID = 'mp-super-token-clickable-area';
+    CLICKABLE_AREA_CLASS = 'mp-super-token-clickable-area';
     CARD_NUMBER_FIELD_ID = 'form-checkout__cardNumber-container';
     CARD_HOLDER_NAME_FIELD_ID = 'form-checkout__cardholderName';
     EXPIRATION_DATE_FIELD_ID = 'form-checkout__expirationDate-container';
@@ -95,7 +95,7 @@ class MPSuperTokenTriggerHandler {
     }
 
     alreadyHasClickableArea() {
-        return !!document.querySelector(`[id^=${this.CLICKABLE_AREA_STARTS_ID}]`);
+        return !!document.querySelector(`.${this.CLICKABLE_AREA_CLASS}`);
     }
 
     shouldCreateClickableArea() {
@@ -116,33 +116,29 @@ class MPSuperTokenTriggerHandler {
     }
 
     createClickableArea(element) {
-        const clickableArea = document.createElement('div');
+        const clickableArea = element.parentElement;
 
-        clickableArea.id = this.CLICKABLE_AREA_STARTS_ID + element.id;
         clickableArea.addEventListener('click', this.onTrigger.bind(this), { once: true });
+        clickableArea.classList.add(this.CLICKABLE_AREA_CLASS);
 
         element.style.pointerEvents = 'none';
-
-        if (element.id.includes('holderName')) {
-            element.style.width = '100%';
-            element.style.boxSizing = 'border-box !important';
-        }
-
-        element.parentNode.replaceChild(clickableArea, element);
-        clickableArea.appendChild(element);
+        element.classList.add('mp-pointer-events-none');
     }
 
     removeClickableAreas() {
-        const clickableAreas = document.querySelectorAll(`[id^=${this.CLICKABLE_AREA_STARTS_ID}]`);
+        const clickableAreas = document.querySelectorAll(`.${this.CLICKABLE_AREA_CLASS}`);
 
         clickableAreas.forEach((clickableArea) => {
-            clickableArea.firstChild.style.pointerEvents = 'auto';
-            clickableArea.replaceWith(clickableArea.firstChild);
+            const input = clickableArea.querySelector('.mp-pointer-events-none');
+            input.style.pointerEvents = 'auto';
+            input.classList.remove('mp-pointer-events-none');
+            clickableArea.classList.remove(this.CLICKABLE_AREA_CLASS);
+            clickableArea.removeEventListener('click', this.onTrigger.bind(this));
         });
     }
 
     onTrigger() {
-        if (this.isAuthenticating) {
+        if (this.isAuthenticating || !this.alreadyHasClickableArea()) {
             return;
         }
 
@@ -164,6 +160,7 @@ class MPSuperTokenTriggerHandler {
 
     resetFlow() {
         this.reset();
+        this.mpSuperTokenAuthenticator.reset();
         this.mpSuperTokenPaymentMethods.reset();
     }
 
@@ -214,20 +211,20 @@ class MPSuperTokenTriggerHandler {
 
         if (!this.isAlreadyListeningForm) {
             this.wcEmailListener.onEmailChange(async (email, isValid) => {
-                if (this.isDifferentEmail(email) && this.wcBuyerEmail != null) {
-                    this.wcBuyerEmail = email;
-                    this.resetCustomCheckout();
+                if (!isValid || !currentAmount) {
                     return;
                 }
 
+                if (this.isDifferentEmail(email) && this.wcBuyerEmail != null) {
+                    this.resetCustomCheckout();
+                }
+                
                 this.wcBuyerEmail = email;
 
-                if (isValid && currentAmount) {
-                    const canUseSuperToken = await this.mpSuperTokenAuthenticator.canUseSuperTokenFlow(currentAmount, email);
+                const canUseSuperToken = await this.mpSuperTokenAuthenticator.canUseSuperTokenFlow(currentAmount, email);
 
-                    if (!canUseSuperToken) {
-                        this.removeClickableAreas();
-                    }
+                if (!canUseSuperToken) {
+                    this.removeClickableAreas();
                 }
             });
             

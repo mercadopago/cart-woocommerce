@@ -7,7 +7,7 @@ use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
-use MercadoPago\Woocommerce\Tests\Mocks\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Transactions\TicketTransaction;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
@@ -359,5 +359,14 @@ class TicketGatewayTest extends TestCase
             ]);
 
         $this->assertEquals($return, $this->gateway->proccessPaymentInternal($this->order));
+    }
+
+    public function testGetCheckoutExpirationDate()
+    {
+        $this->gateway
+            ->expects('get_option')
+            ->andReturn($expected = random()->randomNumber(1));
+
+        $this->assertEquals($expected, $this->gateway->getCheckoutExpirationDate());
     }
 }

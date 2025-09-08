@@ -21,6 +21,10 @@ class MPSuperTokenAuthenticator {
         this.mpSuperTokenMetrics = mpSuperTokenMetrics;
     }
 
+    reset() {
+        this.ableToUseSuperToken = null;
+    }
+
     getAmountUsed() {
         return this.amountUsed;
     }

@@ -51,9 +51,9 @@
   "require-dev": {
     "squizlabs/php_codesniffer": "^3.7",
     "phpmetrics/phpmetrics": "^2.8",
-    "woocommerce/qit-cli": "^0.5.3",
+    "woocommerce/qit-cli": "^0.10.0",
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-    "wp-coding-standards/wpcs": "^2.2.1",
+    "wp-coding-standards/wpcs": "^3.0",
     "phpcompatibility/php-compatibility": "dev-develop",
     "friendsofphp/php-cs-fixer": "^3.64",
     "phpunit/phpunit": "^9.6",
