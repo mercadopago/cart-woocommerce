@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.5.0] - 2025-09-17
+### Changed
+- Wallet Button text update
+- Behavior change when clicking on Wallet Button to use fast payments flow when active
+### Fixed
+- When the data does not come as a notification array, transform it into an array
+
 ## [8.4.7] - 2025-09-08
 ### Fixed
 - Adopting code style fixes according to QIT (Quality Insights Toolkit)

@@ -8,10 +8,13 @@ use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
+use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
+use MercadoPago\Woocommerce\Notification\NotificationFactory;
+use MercadoPago\Woocommerce\Notification\NotificationHandler;
 use Mockery;
 use WP_Error;
 use WP_Mock;
@@ -679,5 +682,66 @@ class AbstractGatewayTest extends TestCase
         $this->assertEquals('fail', $result['result']);
         $this->assertEquals('', $result['redirect']);
         $this->assertEquals('Invalid card number. Please check the information provided.', $result['message']);
+    }
+
+    /**
+     * Test webhook method with array data
+     *
+     * @return void
+     */
+    public function testWebhookWithArrayData()
+    {
+        $data = ['source_news' => 'webhooks', 'notification_id' => '123456789'];
+        
+        Mockery::mock('alias:' . Form::class)
+            ->expects()
+            ->sanitizedGetData()
+            ->andReturn($data);
+        
+        $notificationHandlerMock = Mockery::mock(NotificationHandler::class);
+        $notificationHandlerMock->shouldReceive('handleReceivedNotification')
+            ->once()
+            ->with($data);
+        
+        $notificationFactoryMock = Mockery::mock('overload:' . NotificationFactory::class);
+        $notificationFactoryMock->shouldReceive('createNotificationHandler')
+            ->once()
+            ->with(Mockery::type(AbstractGateway::class), $data)
+            ->andReturn($notificationHandlerMock);
+        
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+        
+        $this->gateway->webhook();
+    }
+
+    /**
+     * Test webhook method with non-array data
+     *
+     * @return void
+     */
+    public function testWebhookWithNonArrayData()
+    {
+        $data = '';
+        $expectedArrayData = [$data];
+        
+        Mockery::mock('alias:' . Form::class)
+            ->expects()
+            ->sanitizedGetData()
+            ->andReturn($data);
+        
+        $notificationHandlerMock = Mockery::mock(NotificationHandler::class);
+        $notificationHandlerMock->shouldReceive('handleReceivedNotification')
+            ->once()
+            ->with($expectedArrayData);
+        
+        $notificationFactoryMock = Mockery::mock('overload:' . NotificationFactory::class);
+        $notificationFactoryMock->shouldReceive('createNotificationHandler')
+            ->once()
+            ->with(Mockery::type(AbstractGateway::class), $expectedArrayData)
+            ->andReturn($notificationHandlerMock);
+        
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+        
+        $this->gateway->webhook();
     }
 }

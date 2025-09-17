@@ -90,6 +90,10 @@ class MPEventHandler {
     }
 
     setMercadoPagoSessionId() {
+        if (typeof MP_DEVICE_SESSION_ID === 'undefined' || !MP_DEVICE_SESSION_ID) {
+            return;
+        }
+
         try {
             document.querySelector('#mpCardSessionId').value = MP_DEVICE_SESSION_ID;
         } catch (e) {

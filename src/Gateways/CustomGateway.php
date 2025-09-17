@@ -424,7 +424,6 @@ class CustomGateway extends AbstractGateway
             'wallet_button'                           => $this->mercadopago->hooks->options->getGatewayOption($this, 'wallet_button', 'yes'),
             'wallet_button_image'                     => $this->mercadopago->helpers->url->getImageAsset('gateways/wallet-button/logo.svg'),
             'wallet_button_title'                     => $this->storeTranslations['wallet_button_title'],
-            'wallet_button_description'               => $this->storeTranslations['wallet_button_description'],
             'site_id'                                 => $this->mercadopago->sellerConfig->getSiteId() ?: $this->mercadopago->helpers->country::SITE_ID_MLA,
             'card_number_input_label'                 => $this->storeTranslations['card_number_input_label'],
             'card_number_input_helper'                => $this->storeTranslations['card_number_input_helper'],
@@ -551,11 +550,7 @@ class CustomGateway extends AbstractGateway
      */
     private function getWalletButtonPreviewUrl(): string
     {
-        $locale = substr(strtolower(get_locale()), 0, 2);
-
-        if ($locale !== 'pt' && $locale !== 'es') {
-            $locale = 'en';
-        }
+        $locale = strtolower($this->storeTranslations['locale']);
 
         return $this->mercadopago->helpers->url->getImageAsset(
             'gateways/wallet-button/preview-' . $locale,

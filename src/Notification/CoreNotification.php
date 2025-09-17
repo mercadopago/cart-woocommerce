@@ -6,6 +6,7 @@ use Exception;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
+use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use WC_Order;
@@ -43,7 +44,7 @@ class CoreNotification extends AbstractNotification
     /**
      * Get input from php://input
      *
-     * @return string
+     * @codeCoverageIgnore
      */
     protected function getInput(): string
     {
@@ -263,7 +264,7 @@ class CoreNotification extends AbstractNotification
         $status = $data['status'];
 
         if (!empty($data['payer']['email'])) {
-            $this->updateMeta($order, 'Buyer email', $data['payer']['email']);
+            $order->update_meta_data('Buyer email', $data['payer']['email']);
         }
 
         if (!empty($data['payments_details'])) {
@@ -290,8 +291,9 @@ class CoreNotification extends AbstractNotification
         foreach ($data['payments_details'] as $payment) {
             $payment_ids[] = $payment['id'];
 
-            $field = $order->get_meta(PaymentMetadata::getPaymentMetaKey($payment['id']));
-            $paymentData = PaymentMetadata::extractPaymentDataFromMeta($field);
+            $paymentData = PaymentMetadata::extractPaymentDataFromMeta(
+                $order->get_meta(PaymentMetadata::getPaymentMetaKey($payment['id']))
+            );
 
             $refundedAmount = $paymentData->refund ?? 0;
 
@@ -299,19 +301,20 @@ class CoreNotification extends AbstractNotification
                 $refundedAmount += $data['current_refund']['amount'];
             }
 
-            $this->updateMeta($order, PaymentMetadata::getPaymentMetaKey($payment['id']), PaymentMetadata::formatPaymentMetadata($payment, $refundedAmount));
+            $order->update_meta_data(PaymentMetadata::getPaymentMetaKey($payment['id']), PaymentMetadata::formatPaymentMetadata($payment, $refundedAmount));
 
-            if (strpos($payment['payment_type_id'], 'card') !== false) {
-                $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installments', $payment['payment_method_info']['installments']);
-                $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - installment_amount', $payment['payment_method_info']['installment_amount']);
-                $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - transaction_amount', $payment['total_amount']);
-                $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - total_paid_amount', $payment['paid_amount']);
-                $this->updateMeta($order, 'Mercado Pago - ' . $payment['id'] . ' - card_last_four_digits', $payment['payment_method_info']['last_four_digits']);
+            if (Strings::contains($payment['payment_type_id'], 'card')) {
+                $paymentMetaPrefix = "Mercado Pago - {$payment['id']} -";
+                $order->update_meta_data("$paymentMetaPrefix installments", $payment['payment_method_info']['installments']);
+                $order->update_meta_data("$paymentMetaPrefix installment_amount", $payment['payment_method_info']['installment_amount']);
+                $order->update_meta_data("$paymentMetaPrefix transaction_amount", $payment['total_amount']);
+                $order->update_meta_data("$paymentMetaPrefix total_paid_amount", $payment['paid_amount']);
+                $order->update_meta_data("$paymentMetaPrefix card_last_four_digits", $payment['payment_method_info']['last_four_digits']);
             }
         }
 
         if (!isset($data['refunds_notifying'])) {
-            $this->updateMeta($order, PaymentMetadata::PAYMENT_IDS_META_KEY, PaymentMetadata::joinPaymentIds($payment_ids));
+            $order->update_meta_data(PaymentMetadata::PAYMENT_IDS_META_KEY, PaymentMetadata::joinPaymentIds($payment_ids));
         }
     }
 

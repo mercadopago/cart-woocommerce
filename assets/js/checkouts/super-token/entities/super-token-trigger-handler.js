@@ -1,15 +1,19 @@
-/* globals wc_mercadopago_supertoken_trigger_handler_params */
+/* globals wc_mercadopago_supertoken_trigger_handler_params, jQuery */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenTriggerHandler {
     CUSTOM_CHECKOUT_BLOCKS_RADIO_SELECTOR = '[value=woo-mercado-pago-custom]';
     CUSTOM_CHECKOUT_CLASSIC_RADIO_SELECTOR = '#payment_method_woo-mercado-pago-custom';
     CUSTOM_CHECKOUT_CLASSIC_SELECTOR = '.payment_method_woo-mercado-pago-custom';
+    FORM_CHECKOUT_SELECTOR = 'form.checkout, form#order_review';
+    CHECKOUT_TYPE_SELECTOR = '#mp_checkout_type';
+    WALLET_BUTTON_CONTAINER_SELECTOR = '.mp-wallet-button-container';
     CUSTOM_CHECKOUT_CONTAINER_ID = 'mp-custom-checkout-form-container';
     CLICKABLE_AREA_CLASS = 'mp-super-token-clickable-area';
     CARD_NUMBER_FIELD_ID = 'form-checkout__cardNumber-container';
     CARD_HOLDER_NAME_FIELD_ID = 'form-checkout__cardholderName';
     EXPIRATION_DATE_FIELD_ID = 'form-checkout__expirationDate-container';
     SECURITY_CODE_FIELD_ID = 'form-checkout__securityCode-container';
+    WALLET_BUTTON_OPTION_VALUE = 'wallet_button';
     CURRENT_USER_EMAIL = wc_mercadopago_supertoken_trigger_handler_params.current_user_email;
 
     // Attributes
@@ -32,6 +36,14 @@ class MPSuperTokenTriggerHandler {
     reset() {
         this.removeClickableAreas();
         this.isAuthenticating = false;
+    }
+
+    walletButtonIsActive() {
+        return !!document.querySelector(this.WALLET_BUTTON_CONTAINER_SELECTOR);
+    }
+
+    getBuyerEmail() {
+        return this.wcBuyerEmail || this.wcEmailListener.getEmail() || this.CURRENT_USER_EMAIL;
     }
 
     amountHasChanged() {
@@ -99,7 +111,7 @@ class MPSuperTokenTriggerHandler {
     }
 
     shouldCreateClickableArea() {
-        return this.customCheckoutIsActive() && !this.alreadyHasClickableArea();
+        return this.customCheckoutIsActive() && !this.alreadyHasClickableArea() && !this.walletButtonIsActive();
     }
 
     getMercadoPagoCustomCheckoutContainerElement() {
@@ -144,7 +156,7 @@ class MPSuperTokenTriggerHandler {
 
         this.isAuthenticating = true;
 
-        const buyerEmail = this.wcBuyerEmail || this.wcEmailListener.getEmail() || this.CURRENT_USER_EMAIL;
+        const buyerEmail = this.getBuyerEmail();
         if (!buyerEmail) {
             this.isAuthenticating = false;
             this.removeClickableAreas();
@@ -155,6 +167,30 @@ class MPSuperTokenTriggerHandler {
             .finally(() => {
                 this.isAuthenticating = false;
                 this.removeClickableAreas();
+            });
+    }
+
+    onTriggerWalletButton() {
+        const useWalletButtonFlow = () => {
+            jQuery(this.CHECKOUT_TYPE_SELECTOR).val(this.WALLET_BUTTON_OPTION_VALUE);
+            jQuery(this.FORM_CHECKOUT_SELECTOR).submit();
+        }
+
+        const buyerEmail = this.getBuyerEmail();
+
+        if (!buyerEmail) {
+            useWalletButtonFlow();
+            return;
+        }
+
+        if (this.mpSuperTokenAuthenticator.emailAlreadyVerified() && !this.mpSuperTokenAuthenticator.isAbleToUseSuperToken()) {
+            useWalletButtonFlow();
+            return;
+        }
+
+        this.mpSuperTokenAuthenticator.authenticate(this.currentAmount, buyerEmail, { confirmationLocation: 'app' })
+            .catch(() => {
+                useWalletButtonFlow();
             });
     }
 

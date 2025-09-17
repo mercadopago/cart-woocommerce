@@ -450,6 +450,10 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     {
         $data = Form::sanitizedGetData();
 
+        if (!is_array($data)) {
+            $data = [$data];
+        }
+
         $notificationFactory = new NotificationFactory();
         $notificationHandler = $notificationFactory->createNotificationHandler($this, $data);
 
