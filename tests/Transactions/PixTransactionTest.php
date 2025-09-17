@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 class PixTransactionTest extends TestCase
 {
     use TransactionMock;
+    use MockeryPHPUnitIntegration;
 
     private string $transactionClass = PixTransaction::class;
 
@@ -40,7 +42,6 @@ class PixTransactionTest extends TestCase
     }
 
     /**
-     * @doesNotPerformAssertions
      * @testWith ["1"]
      *           ["30 minutes"]
      */

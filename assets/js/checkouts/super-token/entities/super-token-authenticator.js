@@ -25,6 +25,14 @@ class MPSuperTokenAuthenticator {
         this.ableToUseSuperToken = null;
     }
 
+    isAbleToUseSuperToken() {
+        return this.ableToUseSuperToken === true;
+    }
+
+    emailAlreadyVerified() {
+        return this.ableToUseSuperToken !== null;
+    }
+
     getAmountUsed() {
         return this.amountUsed;
     }
@@ -78,9 +86,9 @@ class MPSuperTokenAuthenticator {
         }
     }
 
-    async showAuthenticator(authenticator) {
+    async showAuthenticator(authenticator, showOptions = null) {
         try {
-            const token = await authenticator.show();
+            const token = await authenticator.show(showOptions);
 
             await this.renderAccountPaymentMethods(token);
         } catch (error) {
@@ -92,13 +100,13 @@ class MPSuperTokenAuthenticator {
         }
     }
 
-    async authenticate(amount, buyerEmail) {
+    async authenticate(amount, buyerEmail, showOptions = null) {
         if (this.ableToUseSuperToken === false) return;
 
         const authenticator = await this.buildAuthenticator(amount, buyerEmail);
 
         this.mpSuperTokenMetrics.canUseSuperToken(true);
 
-        await this.showAuthenticator(authenticator);
+        await this.showAuthenticator(authenticator, showOptions);
     }
 }

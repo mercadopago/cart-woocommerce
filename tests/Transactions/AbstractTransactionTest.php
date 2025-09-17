@@ -12,6 +12,7 @@ use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
 use MercadoPago\Woocommerce\Transactions\AbstractTransaction;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use WP_Mock;
@@ -21,6 +22,7 @@ use WP_User;
 class AbstractTransactionTest extends TestCase
 {
     use TransactionMock;
+    use MockeryPHPUnitIntegration;
 
     private string $transactionClass = AbstractTransaction::class;
 
@@ -33,7 +35,6 @@ class AbstractTransactionTest extends TestCase
     /**
      * @runInSeparateProcess
      * @preserveGlobalState disabled
-     * @doesNotPerformAssertions
      */
     public function testLogTransactionPayload()
     {

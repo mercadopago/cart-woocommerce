@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 8.4.7
+Stable tag: 8.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,11 +134,11 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.4.7 (08/09/2025) =
+= v8.5.0 (17/09/2025) =
+* Changed
+- Wallet Button text update
+- Behavior change when clicking on Wallet Button to use fast payments flow when active
 * Fixed
-- Adopting code style fixes according to QIT (Quality Insights Toolkit)
-- Fixed visual conflict in checkout screen image styles
-- Fix to check access to fast payments flow when email is updated
-- Optimizing the fast payment flow during trigger
+- When the data does not come as a notification array, transform it into an array
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

@@ -2,8 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Tests\Notification;
 
+use MercadoPago\PP\Sdk\Sdk;
+use MercadoPago\Woocommerce\Helpers\Device;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
+use MercadoPago\Woocommerce\Helpers\Strings;
 use Mockery;
-use WP_Mock;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
@@ -11,8 +14,9 @@ use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Notification\CoreNotification;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
-use MercadoPago\PP\Sdk\Sdk;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
+use WC_Order;
 
 /**
  * @runTestsInSeparateProcesses
@@ -21,401 +25,212 @@ use PHPUnit\Framework\TestCase;
 class CoreNotificationTest extends TestCase
 {
     use WoocommerceMock;
+    use MockeryPHPUnitIntegration;
 
-    private MercadoPagoGatewayInterface $gateway;
-    private Logs $logs;
-    private OrderStatus $orderStatus;
-    private Seller $seller;
-    private Store $store;
-
-    public static $mockInput = null;
-    private $coreNotification;
+    private $notification;
 
     public function setUp(): void
     {
-        // Mock WordPress wp_is_mobile function
-        WP_Mock::userFunction('wp_is_mobile', [
-            'return' => false
-        ]);
-
-        WP_Mock::userFunction('site_url', [
-            'return' => 'https://test.com'
-        ]);
-
-        // Mock WooCommerce global
-        if (!isset($GLOBALS['woocommerce'])) {
-            $GLOBALS['woocommerce'] = (object) ['version' => '8.0.0'];
-        }
-
-        // Define necessary constants
-        if (!defined('MP_PRODUCT_ID_MOBILE')) {
-            define('MP_PRODUCT_ID_MOBILE', 'WOOCOMMERCE_MP_TEST_MOBILE');
-        }
-        if (!defined('MP_PLATFORM_NAME')) {
-            define('MP_PLATFORM_NAME', 'woocommerce');
-        }
-
-        // Mock dependencies
-        $this->gateway = Mockery::mock(MercadoPagoGatewayInterface::class);
-        $this->logs = Mockery::mock(Logs::class);
-        $this->logs->file = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
-        $this->logs->file->shouldReceive('info')->andReturn(true);
-        $this->logs->file->shouldReceive('error')->andReturn(true);
-        $this->logs->file->shouldReceive('debug')->andReturn(true);
-        $this->logs->file->shouldReceive('notice')->andReturn(true);
-        $this->logs->file->shouldReceive('warning')->andReturn(true);
-
-        $this->orderStatus = Mockery::mock(OrderStatus::class);
-        $this->seller = Mockery::mock(Seller::class);
-        $this->seller->shouldReceive('getCredentialsAccessToken')->andReturn('test_token');
-
-        $this->store = Mockery::mock(Store::class);
-        $this->store->shouldReceive('getIntegratorId')->andReturn('test_integrator');
-
-        $this->coreNotification = new CoreNotification(
-            $this->gateway,
-            $this->logs,
-            $this->orderStatus,
-            $this->seller,
-            $this->store
+        $this->notification = new CoreNotification(
+            Mockery::mock(MercadoPagoGatewayInterface::class),
+            Mockery::mock(Logs::class),
+            Mockery::mock(OrderStatus::class),
+            Mockery::mock(Seller::class),
+            Mockery::mock(Store::class)
         );
     }
 
     /**
-     * @doesNotPerformAssertions
+     * @testWith [[],[]]
+     *           [{"refunds_notifying": "fake"},{"payment_type_id": "creditcard", "payment_method_info": {"installments": 2, "installment_amount": 10, "last_four_digits": "1234"}, "total_amount":10, "paid_amount": 10}]
+     *           [{"current_refund": {"id": 1, "amount": 1}},{"refunds": {"1":{}}}]
      */
-    public function testUpdatePaymentDetailsWithCreditCardPayment()
+    public function testUpdatePaymentDetails(array $data, array $payment)
     {
-        $data = [
-            'payments_details' => [
-                [
-                    'id' => 'payment_123',
-                    'payment_type_id' => 'credit_card',
-                    'total_amount' => 100.00,
-                    'paid_amount' => 100.00,
-                    'payment_method_info' => [
-                        'installments' => 1,
-                        'installment_amount' => 100.00,
-                        'last_four_digits' => '1234'
-                    ]
-                ]
+        $data = array_merge([
+            "payments_details" => [
+                $payment = array_merge([
+                    "id" => random()->numberBetween(1),
+                    "payment_type_id" => random()->word()
+                ], $payment)
             ]
-        ];
-        // NÃO POSSUI NENHUM EXPECT
-        $this->coreNotification->updatePaymentDetails(
-            Mockery::mock('WC_Order')
-                ->shouldReceive('get_meta')
-                ->andReturn('')
-                ->shouldReceive('update_meta_data')
-                ->andReturn(true)
-                ->getMock(),
-            $data
-        );
-    }
+        ], $data);
 
-    public function testUpdatePaymentDetailsWithPixPayment()
-    {
-        $order = Mockery::mock('WC_Order');
-        $order->shouldReceive('get_meta')->andReturn('');
-        $order->shouldReceive('update_meta_data')->andReturn(true);
-
-        $data = [
-            'payments_details' => [
-                [
-                    'id' => 'payment_456',
-                    'payment_type_id' => 'pix',
-                    'total_amount' => 50.00,
-                    'paid_amount' => 50.00,
-                    'payment_method_info' => []
-                ]
-            ]
+        $paymentData = (object) [
+            "refund" => random()->optional()->numberBetween()
         ];
 
-        $this->coreNotification->updatePaymentDetails($order, $data);
+        $refundedAmount = $paymentData->refund ?? 0;
+        if (isset($data["current_refund"]) && isset($payment["refunds"][$data["current_refund"]["id"]])) {
+            $refundedAmount += $data["current_refund"]["amount"];
+        }
 
-        $this->assertTrue(true);
-    }
-
-    public function testUpdatePaymentDetailsWithRefundNotification()
-    {
-        $order = Mockery::mock('WC_Order');
-        $order->shouldReceive('get_meta')->andReturn('');
-        $order->shouldReceive('update_meta_data')->andReturn(true);
-
-        $data = [
-            'payments_details' => [
-                [
-                    'id' => 'payment_789',
-                    'payment_type_id' => 'credit_card',
-                    'total_amount' => 100.00,
-                    'paid_amount' => 100.00,
-                    'payment_method_info' => [
-                        'installments' => 1,
-                        'installment_amount' => 100.00,
-                        'last_four_digits' => '1234'
-                    ],
-                    'refunds' => [
-                        'refund_123' => [
-                            'amount' => 30.00,
-                            'status' => 'approved'
-                        ]
-                    ]
-                ]
-            ],
-            'current_refund' => [
-                'id' => 'refund_123',
-                'amount' => 30.00,
-                'status' => 'approved'
-            ],
-            'refunds_notifying' => [
-                [
-                    'id' => 'refund_123',
-                    'amount' => 30.00,
-                    'status' => 'approved'
-                ]
+        Mockery::getConfiguration()->setConstantsMap([
+            PaymentMetadata::class => [
+                'PAYMENT_IDS_META_KEY' => random()->word(),
             ]
-        ];
+        ]);
 
-        $this->coreNotification->updatePaymentDetails($order, $data);
+        $paymentMetadata = Mockery::mock("overload:" . PaymentMetadata::class)
+            ->expects()
+            ->getPaymentMetaKey($payment["id"])
+            ->andReturn("PaymentMetaKey")
+            ->getMock()
+            ->expects()
+            ->extractPaymentDataFromMeta(null)
+            ->andReturn($paymentData)
+            ->getMock()
+            ->expects()
+            ->formatPaymentMetadata($payment, $refundedAmount)
+            ->andReturn(["formatedPaymentMetadata"])
+            ->getMock();
 
-        $this->assertTrue(true);
-    }
+        $order = Mockery::mock(WC_Order::class)
+            ->expects()
+            ->get_meta("PaymentMetaKey")
+            ->getMock()
+            ->expects()
+            ->update_meta_data("PaymentMetaKey", ["formatedPaymentMetadata"])
+            ->getMock();
 
-    public function testUpdatePaymentDetailsWithPartialRefund()
-    {
-        $order = Mockery::mock('WC_Order');
-        $order->shouldReceive('get_meta')->andReturn('');
-        $order->shouldReceive('update_meta_data')->andReturn(true);
+        if (Strings::contains($payment["payment_type_id"], "card")) {
+            $order
+                ->expects()
+                ->update_meta_data(
+                    Mockery::pattern("/installments$/"),
+                    $payment["payment_method_info"]["installments"]
+                )
+                ->getMock()
+                ->expects()
+                ->update_meta_data(
+                    Mockery::pattern("/installment_amount$/"),
+                    $payment["payment_method_info"]["installment_amount"]
+                )
+                ->getMock()
+                ->expects()
+                ->update_meta_data(
+                    Mockery::pattern("/transaction_amount$/"),
+                    $payment["total_amount"]
+                )
+                ->getMock()
+                ->expects()
+                ->update_meta_data(
+                    Mockery::pattern("/total_paid_amount$/"),
+                    $payment["paid_amount"]
+                )
+                ->getMock()
+                ->expects()
+                ->update_meta_data(
+                    Mockery::pattern("/card_last_four_digits$/"),
+                    $payment["payment_method_info"]["last_four_digits"]
+                );
+        }
 
-        $data = [
-            'payments_details' => [
-                [
-                    'id' => 'payment_999',
-                    'payment_type_id' => 'pix',
-                    'total_amount' => 200.00,
-                    'paid_amount' => 200.00,
-                    'payment_method_info' => [],
-                    'refunds' => [
-                        'refund_456' => [
-                            'amount' => 50.00,
-                            'status' => 'approved'
-                        ]
-                    ]
-                ]
-            ],
-            'current_refund' => [
-                'id' => 'refund_456',
-                'amount' => 50.00,
-                'status' => 'approved'
-            ],
-            'refunds_notifying' => [
-                [
-                    'id' => 'refund_456',
-                    'amount' => 50.00,
-                    'status' => 'approved'
-                ]
-            ]
-        ];
+        if (!isset($data["refunds_notifying"])) {
+            $paymentMetadata
+                ->expects()
+                ->joinPaymentIds([$payment["id"]])
+                ->andReturn($payment["id"]);
+            $order
+                ->expects()
+                ->update_meta_data(PaymentMetadata::PAYMENT_IDS_META_KEY, $payment["id"]);
+        }
 
-        $this->coreNotification->updatePaymentDetails($order, $data);
-
-        $this->assertTrue(true);
-    }
-
-    public function testUpdatePaymentDetailsWithMultiplePayments()
-    {
-        $order = Mockery::mock('WC_Order');
-        $order->shouldReceive('get_meta')->andReturn('');
-        $order->shouldReceive('update_meta_data')->andReturn(true);
-
-        $data = [
-            'payments_details' => [
-                [
-                    'id' => 'payment_001',
-                    'payment_type_id' => 'credit_card',
-                    'total_amount' => 150.00,
-                    'paid_amount' => 150.00,
-                    'payment_method_info' => [
-                        'installments' => 3,
-                        'installment_amount' => 50.00,
-                        'last_four_digits' => '5678'
-                    ]
-                ],
-                [
-                    'id' => 'payment_002',
-                    'payment_type_id' => 'pix',
-                    'total_amount' => 75.00,
-                    'paid_amount' => 75.00,
-                    'payment_method_info' => []
-                ],
-                [
-                    'id' => 'payment_003',
-                    'payment_type_id' => 'debit_card',
-                    'total_amount' => 25.00,
-                    'paid_amount' => 25.00,
-                    'payment_method_info' => [
-                        'installments' => 1,
-                        'installment_amount' => 25.00,
-                        'last_four_digits' => '9012'
-                    ]
-                ]
-            ],
-            'current_refund' => [
-                'id' => '',
-                'amount' => 0
-            ]
-        ];
-
-        $this->coreNotification->updatePaymentDetails($order, $data);
-
-        $this->assertTrue(true);
-    }
-
-    public function testUpdatePaymentDetailsWithoutCurrentRefund()
-    {
-        $order = Mockery::mock('WC_Order');
-        $order->shouldReceive('get_meta')->andReturn('');
-        $order->shouldReceive('update_meta_data')->andReturn(true);
-
-        $data = [
-            'payments_details' => [
-                [
-                    'id' => 'payment_777',
-                    'payment_type_id' => 'credit_card',
-                    'total_amount' => 80.00,
-                    'paid_amount' => 80.00,
-                    'payment_method_info' => [
-                        'installments' => 2,
-                        'installment_amount' => 40.00,
-                        'last_four_digits' => '8888'
-                    ],
-                    'refunds' => [
-                        'refund_999' => [
-                            'amount' => 20.00,
-                            'status' => 'approved'
-                        ]
-                    ]
-                ]
-            ]
-        ];
-
-        $this->coreNotification->updatePaymentDetails($order, $data);
-
-        $this->assertTrue(true);
+        $this->notification->updatePaymentDetails($order, $data);
     }
 
     /**
-     * Test sendRefundSuccessMetric method calls Datadog correctly
+     * @testWith [{"notification_id": "P-67890"}]
+     *           ["P-67890"]
      */
-    public function testSendRefundSuccessMetric(): void
+    public function testGetNotificationId($input)
     {
-        // Arrange
-        $datadogMock = Mockery::mock('alias:\MercadoPago\Woocommerce\Libraries\Metrics\Datadog');
-        $datadogMock->shouldReceive('getInstance')
-            ->once()
-            ->andReturn($datadogMock);
+        $notification = Mockery::mock(CoreNotification::class)
+            ->shouldAllowMockingProtectedMethods()
+            ->makePartial()
+            ->expects()
+            ->getInput()
+            ->andReturn(json_encode($input))
+            ->getMock();
 
-        $datadogMock->shouldReceive('sendEvent')
-            ->once()
-            ->with('mp_refund_success', 'refund_success', 'origin_mercadopago');
-
-        $reflection = new \ReflectionClass($this->coreNotification);
-        $method = $reflection->getMethod('sendRefundSuccessMetric');
-        $method->setAccessible(true);
-
-        // Act
-        $method->invoke($this->coreNotification);
-
-        // Assert - handled by Mockery expectations
-        $this->assertTrue(true);
+        $this->assertEquals("P-67890", $notification->getNotificationId());
     }
 
     /**
-     * Test sendRefundErrorMetric method calls Datadog correctly
+     * @testWith ["P-12345", true]
+     *           ["M-12345", true]
+     *           ["12345", false]
+     *           ["P-12345-12345", false]
+     *           ["P12345", false]
+     *           ["P-ABCDE", false]
+     *           ["P-", false]
      */
-    public function testSendRefundErrorMetric(): void
+    public function testValidateNotificationId(string $id, bool $expected)
     {
-        // Arrange
-        $errorCode = 'validation_failed';
-        $errorMessage = 'Refund ID not found in notification';
-
-        $datadogMock = Mockery::mock('alias:\MercadoPago\Woocommerce\Libraries\Metrics\Datadog');
-        $datadogMock->shouldReceive('getInstance')
-            ->once()
-            ->andReturn($datadogMock);
-
-        $datadogMock->shouldReceive('sendEvent')
-            ->once()
-            ->with('mp_refund_error', $errorCode, $errorMessage);
-
-        $reflection = new \ReflectionClass($this->coreNotification);
-        $method = $reflection->getMethod('sendRefundErrorMetric');
-        $method->setAccessible(true);
-
-        // Act
-        $method->invoke($this->coreNotification, $errorCode, $errorMessage);
-
-        // Assert - handled by Mockery expectations
-        $this->assertTrue(true);
-    }
-
-    public function testGetNotificationIdWithString()
-    {
-        $mock = Mockery::mock(CoreNotification::class, [
-            $this->gateway,
-            $this->logs,
-            $this->orderStatus,
-            $this->seller,
-            $this->store
-        ])->makePartial()->shouldAllowMockingProtectedMethods();
-
-        $mock->shouldReceive('getInput')
-            ->andReturn(json_encode('P-12345'));
-
-        $result = $mock->getNotificationId();
-        $this->assertEquals('P-12345', $result);
-    }
-
-    public function testGetNotificationIdWithObject()
-    {
-        $mock = Mockery::mock(CoreNotification::class, [
-            $this->gateway,
-            $this->logs,
-            $this->orderStatus,
-            $this->seller,
-            $this->store
-        ])->makePartial()->shouldAllowMockingProtectedMethods();
-
-        $mock->shouldReceive('getInput')
-            ->andReturn(json_encode(['notification_id' => 'P-67890']));
-
-        $result = $mock->getNotificationId();
-        $this->assertEquals('P-67890', $result);
-    }
-
-    public function testValidateNotificationId()
-    {
-        $this->assertTrue($this->coreNotification->validateNotificationId('P-12345'));
-        $this->assertTrue($this->coreNotification->validateNotificationId('M-12345'));
-        $this->assertFalse($this->coreNotification->validateNotificationId('12345'));
-        $this->assertFalse($this->coreNotification->validateNotificationId('P-12345-12345'));
-        $this->assertFalse($this->coreNotification->validateNotificationId('P12345'));
-        $this->assertFalse($this->coreNotification->validateNotificationId('P-ABCDE'));
-        $this->assertFalse($this->coreNotification->validateNotificationId('P-'));
+        $this->assertEquals($expected, $this->notification->validateNotificationId($id));
     }
 
     public function testGetSdkInstance()
     {
-        WP_Mock::userFunction('wp_is_mobile', [
-            'return' => false,
-        ]);
+        $this->notification->seller
+            ->expects()
+            ->getCredentialsAccessToken()
+            ->andReturn(
+                $accessToken = random()->uuid()
+            );
 
-        defined('MP_PRODUCT_ID_MOBILE') || define('MP_PRODUCT_ID_MOBILE', 'product-id-mobile-teste');
+        Mockery::mock("alias:" . Device::class)
+            ->expects()
+            ->getDeviceProductId()
+            ->andReturn(
+                $productId = random()->uuid()
+            );
 
-        $this->store->shouldReceive('getIntegratorId')->andReturn('integrator-id-teste');
-        $this->seller->shouldReceive('getCredentialsAccessToken')->andReturn('access-token-teste');
+        $this->notification->store
+            ->expects()
+            ->getIntegratorId()
+            ->andReturn(
+                $integratorId = random()->uuid()
+            );
 
-        $this->coreNotification->getSdkInstance();
-        $this->assertInstanceOf(Sdk::class, $this->coreNotification->getSdkInstance());
+        Mockery::mock("overload:" . Sdk::class)
+            ->shouldReceive("__construct")
+            ->once()
+            ->with($accessToken, MP_PLATFORM_ID, $productId, $integratorId);
+
+        $this->assertInstanceOf(Sdk::class, $this->notification->getSdkInstance());
+    }
+
+    /**
+     * @testWith [[]]
+     *           [{"payer": {"email": "fake@fake"}}]
+     *           [{"payments_details": {"fake": "fake"}}]
+     */
+    public function testGetProcessedStatus(array $data): void
+    {
+        $data = array_merge([
+            'status' => random()->word()
+        ], $data);
+
+        $order = Mockery::mock(WC_Order::class)
+            ->expects()
+            ->save()
+            ->getMock();
+
+        if (!empty($data['payer']['email'])) {
+            $order
+                ->expects()
+                ->update_meta_data('Buyer email', $data['payer']['email']);
+        }
+
+        $notification = Mockery::mock(CoreNotification::class)->makePartial();
+
+        if (!empty($data['payments_details'])) {
+            $notification
+                ->expects()
+                ->updatePaymentDetails($order, $data);
+        }
+
+        $notification->getProcessedStatus($order, $data);
     }
 }
