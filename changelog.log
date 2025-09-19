@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.5.1 (19/09/2025) =
+* Fixed
+- Add new Wallet Button behavior on blocks checkout
+
 = v8.5.0 (17/09/2025) =
 * Changed
 - Wallet Button text update
