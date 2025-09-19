@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.5.2 (19/09/2025) =
+* Fixed
+- Register submitWalletButton function along with the php file on classic checkout
+
 = v8.5.1 (19/09/2025) =
 * Fixed
 - Add new Wallet Button behavior on blocks checkout
