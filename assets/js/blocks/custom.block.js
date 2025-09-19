@@ -1,5 +1,4 @@
 /* globals wc_mercadopago_custom_blocks_params */
-
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { getSetting } from '@woocommerce/settings';
 import { useEffect } from '@wordpress/element';
@@ -186,6 +185,12 @@ const Content = (props) => {
     if (walletButton) {
       walletButton.addEventListener('click', (event) => {
         event.preventDefault();
+
+        if (window.mpSuperTokenTriggerHandler) {
+          window.mpSuperTokenTriggerHandler.onTriggerWalletButton(onSubmit);
+          return;
+        }
+
         document.querySelector('#mp_checkout_type').value = 'wallet_button';
         onSubmit();
       });

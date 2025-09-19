@@ -170,9 +170,15 @@ class MPSuperTokenTriggerHandler {
             });
     }
 
-    onTriggerWalletButton() {
+    onTriggerWalletButton(customSubmitFallback = null) {
         const useWalletButtonFlow = () => {
             jQuery(this.CHECKOUT_TYPE_SELECTOR).val(this.WALLET_BUTTON_OPTION_VALUE);
+
+            if (customSubmitFallback) {
+                customSubmitFallback();
+                return;
+            }
+
             jQuery(this.FORM_CHECKOUT_SELECTOR).submit();
         }
 
