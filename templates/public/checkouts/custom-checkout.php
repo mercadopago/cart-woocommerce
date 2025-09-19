@@ -235,20 +235,17 @@ if (!defined('ABSPATH')) {
 </div>
 
 <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', () => {
-        const submitWalletButton = (event) => {
-            event.preventDefault();
-            
-            if (window.mpSuperTokenTriggerHandler) {
-                window.mpSuperTokenTriggerHandler.onTriggerWalletButton();
-                return;
-            }
-
-            jQuery('#mp_checkout_type').val('wallet_button');
-            jQuery('form.checkout, form#order_review').submit();
+    function submitWalletButton(event) {
+        event.preventDefault();
+        
+        if (window.mpSuperTokenTriggerHandler) {
+            window.mpSuperTokenTriggerHandler.onTriggerWalletButton();
+            return;
         }
 
-        document.getElementById('mp-wallet-button')?.addEventListener('click', submitWalletButton);
-    })
-</script>
+        jQuery('#mp_checkout_type').val('wallet_button');
+        jQuery('form.checkout, form#order_review').submit();
+    }
 
+    document.getElementById('mp-wallet-button')?.addEventListener('click', submitWalletButton);
+</script>
