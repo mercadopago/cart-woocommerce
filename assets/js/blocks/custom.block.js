@@ -68,7 +68,7 @@ const Content = (props) => {
             return { type: emitResponse.responseTypes.ERROR };
           }
 
-          window.mpSuperTokenPaymentMethods.updateSecurityCode();
+          await window.mpSuperTokenPaymentMethods.updateSecurityCode();
 
           break;
         case 'wallet_button':

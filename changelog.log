@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.5.3 (29/09/2025) =
+* Fixed
+- Wait for security code to be updated before submitting the form on fast payments flow
+
 = v8.5.2 (19/09/2025) =
 * Fixed
 - Register submitWalletButton function along with the php file on classic checkout
