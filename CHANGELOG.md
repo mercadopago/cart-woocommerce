@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.5.3] - 2025-09-29
+### Fixed
+- Wait for security code to be updated before submitting the form on fast payments flow
+
 ## [8.5.2] - 2025-09-19
 ### Fixed
 - Register submitWalletButton function along with the php file on classic checkout
