@@ -43,6 +43,7 @@ if (!defined('ABSPATH')) {
 
 <div class="mp-checkout-ticket-input-document">
     <input-document
+        input-id="mp-ticket-gateway-document-input"
         label-message="<?= esc_html($input_document_label); ?> "
         helper-invalid="<?= esc_html($input_document_helper_invalid); ?>"
         helper-empty="<?= esc_html($input_document_helper_empty); ?>"

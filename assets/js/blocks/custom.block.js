@@ -108,7 +108,7 @@ const Content = (props) => {
       return {
         type: emitResponse.responseTypes.SUCCESS,
         meta: {
-          paymentMethodData,
+          paymentMethodData: {...window.mpHiddenInputDataFromBlocksCheckout, ...paymentMethodData},
         },
       };
     });
@@ -157,6 +157,10 @@ const Content = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
+      if (typeof MPCheckoutErrorDispatcher !== 'undefined') {
+        MPCheckoutErrorDispatcher.dispatchEventWhenBlocksCheckoutErrorOccurred(checkoutResponse);
+      }
+
       window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError();
 
       const processingResponse = checkoutResponse.processingResponse;

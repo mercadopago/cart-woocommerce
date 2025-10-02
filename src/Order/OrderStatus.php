@@ -297,6 +297,7 @@ class OrderStatus
                     'order_id' => $order->get_id(),
                 ));
                 $order->add_order_note('Mercado Pago: ' . $this->translations['partial_refunded'] . $refundAmount);
+
                 return;
             }
         } catch (Exception $e) {

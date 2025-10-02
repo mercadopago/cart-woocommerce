@@ -49,4 +49,6 @@ class PaymentMetadata
     public string $supertoken_mode;
 
     public ThemeMetadata $theme;
+
+    public ?string $flow_id;
 }

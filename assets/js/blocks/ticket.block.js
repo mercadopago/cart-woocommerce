@@ -12,6 +12,7 @@ const paymentMethodName = 'woo-mercado-pago-ticket';
 
 const settings = getSetting(`woo-mercado-pago-ticket_data`, {});
 const defaultLabel = decodeEntities(settings.title) || 'Checkout Ticket';
+let hasInitialized = false;
 
 const updateCart = (props) => {
   const { extensionCartUpdate } = wc.blocksCheckout;
@@ -44,6 +45,10 @@ const updateCart = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
+      if (typeof MPCheckoutErrorDispatcher !== 'undefined') {
+        MPCheckoutErrorDispatcher.dispatchEventWhenBlocksCheckoutErrorOccurred(checkoutResponse);
+      }
+
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_TICKET_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);
       return {
@@ -84,6 +89,23 @@ const Content = (props) => {
     'address_neighborhood',
     'address_complement'
   ];
+
+  useEffect(() => {
+    if (!hasInitialized) {
+      if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+          MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+              document.getElementById("mp-ticket-gateway-document-input"),
+              "focusout",
+              "ticket_document_filled",
+              {
+                  dispatchOnlyIf: (e) => e?.target?.value.length
+              }
+          );
+      }
+
+      hasInitialized = true;
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onPaymentSetup(async () => {
@@ -143,7 +165,9 @@ const Content = (props) => {
       }
       return {
         type: hasErrorInForm ? emitResponse.responseTypes.ERROR : emitResponse.responseTypes.SUCCESS,
-        meta: { paymentMethodData },
+        meta: {
+          paymentMethodData: {...window.mpHiddenInputDataFromBlocksCheckout, ...paymentMethodData}
+        },
       };
     });
 

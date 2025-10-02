@@ -21,6 +21,7 @@ const paymentMethodName = 'woo-mercado-pago-yape';
 
 const settings = getSetting(`woo-mercado-pago-yape_data`, {});
 const defaultLabel = decodeEntities(settings.title) || 'Checkout Yape';
+let hasInitialized = false;
 
 const updateCart = (props) => {
   const { extensionCartUpdate } = wc.blocksCheckout;
@@ -52,6 +53,10 @@ const updateCart = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
+      if (typeof MPCheckoutErrorDispatcher !== 'undefined') {
+        MPCheckoutErrorDispatcher.dispatchEventWhenBlocksCheckoutErrorOccurred(checkoutResponse);
+      }
+
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric('MP_YAPE_BLOCKS_ERROR', processingResponse.paymentStatus, targetName);
       return {
@@ -114,6 +119,23 @@ const Content = (props) => {
 
   window.mpFormId = 'blocks_checkout_form';
   window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
+  
+  useEffect(() => {
+    if (!hasInitialized) {
+      if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+          MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+              document.getElementById("checkout__yapePhoneNumber"),
+              "focusout",
+              "yape_phone_number_filled",
+              {
+                  dispatchOnlyIf: (e) => e?.target?.value.length
+              }
+          );
+      }
+
+      hasInitialized = true;
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onPaymentSetup(async () => {
@@ -133,8 +155,12 @@ const Content = (props) => {
       };
 
       const paymentMethodData = {};
-      const mp = new MercadoPago(wc_mercadopago_yape_checkout_params.public_key);
-      const yape = mp.yape(yapeOptions);
+      if (!window.mpSdkInstance) {
+        const mp = new MercadoPago(wc_mercadopago_yape_checkout_params.public_key);
+
+        window.mpSdkInstance = mp;
+      }
+      const yape = window.mpSdkInstance.yape(yapeOptions);
 
       try {
         const yapeToken = await yape.create();
@@ -147,7 +173,7 @@ const Content = (props) => {
       return {
         type: emitResponse.responseTypes.SUCCESS,
         meta: {
-          paymentMethodData,
+          paymentMethodData: {...window.mpHiddenInputDataFromBlocksCheckout, ...paymentMethodData},
         },
       };
     });

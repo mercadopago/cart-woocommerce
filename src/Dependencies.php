@@ -298,7 +298,7 @@ class Dependencies
      */
     private function setScripts(): Scripts
     {
-        return new Scripts($this->urlHelper, $this->sellerConfig);
+        return new Scripts($this->urlHelper, $this->sellerConfig, $this->paymentMethodsHelper);
     }
 
     /**

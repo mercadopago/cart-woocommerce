@@ -66,6 +66,7 @@ if (! defined('ABSPATH')) {
                 </div>
                     <div class="mp-checkout-pse-input-document">
                         <input-document
+                            input-id="mp-pse-gateway-document-input"
                             label-message="<?= esc_html($input_document_label); ?>"
                             helper-invalid="<?= esc_html($input_document_helper_invalid); ?>"
                             helper-empty="<?= esc_html($input_document_helper_empty); ?>"
@@ -125,4 +126,14 @@ if (! defined('ABSPATH')) {
         });
     }
 
+    if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+        MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+            document.getElementById("mp-pse-gateway-document-input"),
+            "focusout",
+            "pse_document_filled",
+            {
+                dispatchOnlyIf: (e) => e?.target?.value.length
+            }
+        );
+    }
 </script>

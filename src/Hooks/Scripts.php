@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Hooks;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Helpers\PaymentMethods;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -24,16 +25,19 @@ class Scripts
 
     private Seller $seller;
 
+    private PaymentMethods $paymentMethods;
+
     /**
      * Scripts constructor
      *
      * @param Url $url
      * @param Seller $seller
      */
-    public function __construct(Url $url, Seller $seller)
+    public function __construct(Url $url, Seller $seller, PaymentMethods $paymentMethods)
     {
         $this->url    = $url;
         $this->seller = $seller;
+        $this->paymentMethods = $paymentMethods;
     }
 
     /**
@@ -253,6 +257,7 @@ class Scripts
         global $woocommerce;
 
         $file      = $this->url->getJsAsset('melidata/melidata-client');
+
         $variables = [
             'type'             => $type,
             'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
@@ -261,6 +266,13 @@ class Scripts
             'plugin_version'   => MP_VERSION,
             'platform_version' => $woocommerce->version,
         ];
+
+        if ($type == 'buyer') {
+            /**
+             * Params below used on melidata-client events, don't remove
+            */
+            $variables['payment_methods'] = $this->paymentMethods->getEnabledPaymentMethods();
+        }
 
         if ($type == 'seller') {
             $this->registerAdminScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);

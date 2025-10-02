@@ -18,20 +18,15 @@ if (!defined('ABSPATH')) {
 
 class CustomGateway extends AbstractGateway
 {
-    /**
-     * @const
-     */
     public const ID = 'woo-mercado-pago-custom';
 
-    /**
-     * @const
-     */
     public const WEBHOOK_API_NAME = 'WC_WooMercadoPago_Custom_Gateway';
 
-    /**
-     * @const
-     */
     public const LOG_SOURCE = 'MercadoPago_CustomGateway';
+
+    protected const WALLET_BUTTON_ENABLED_OPTION = 'wallet_button';
+
+    protected const WALLET_BUTTON_ENABLED_DEFAULT = 'yes';
 
     /**
      * CustomGateway constructor
@@ -40,6 +35,10 @@ class CustomGateway extends AbstractGateway
     public function __construct()
     {
         parent::__construct();
+
+        if (!$this->mercadopago->booted()) {
+            return;
+        }
 
         $this->adminTranslations = $this->mercadopago->adminTranslations->customGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->customCheckout;
@@ -128,11 +127,11 @@ class CustomGateway extends AbstractGateway
                     'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
                 ],
             ],
-            'wallet_button' => [
+            static::WALLET_BUTTON_ENABLED_OPTION => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['wallet_button_title'],
                 'subtitle'     => $this->adminTranslations['wallet_button_subtitle'],
-                'default'      => 'yes',
+                'default'      => static::WALLET_BUTTON_ENABLED_DEFAULT,
                 'after_toggle' => $this->getWalletButtonPreview(),
                 'descriptions' => [
                     'enabled'  => $this->adminTranslations['wallet_button_descriptions_enabled'],
@@ -421,7 +420,7 @@ class CustomGateway extends AbstractGateway
             'test_mode_description'                   => $this->storeTranslations['test_mode_description'],
             'test_mode_link_text'                     => $this->storeTranslations['test_mode_link_text'],
             'test_mode_link_src'                      => $this->links['docs_integration_test'],
-            'wallet_button'                           => $this->mercadopago->hooks->options->getGatewayOption($this, 'wallet_button', 'yes'),
+            'wallet_button_enabled'                   => $this->getWalletButtonEnabled(),
             'wallet_button_image'                     => $this->mercadopago->helpers->url->getImageAsset('gateways/wallet-button/logo.svg'),
             'wallet_button_title'                     => $this->storeTranslations['wallet_button_title'],
             'site_id'                                 => $this->mercadopago->sellerConfig->getSiteId() ?: $this->mercadopago->helpers->country::SITE_ID_MLA,
@@ -453,6 +452,20 @@ class CustomGateway extends AbstractGateway
         switch ($checkout['checkout_type']) {
             case 'wallet_button':
                 $this->mercadopago->logs->file->info('Preparing to render wallet button checkout', self::LOG_SOURCE);
+
+                // Store checkout session data for wallet button
+                $checkoutSessionData = [];
+                if (isset($_POST['mercadopago_checkout_session'])) {
+                    // Classic Checkout
+                    $checkoutSessionData = Form::sanitizedPostData('mercadopago_checkout_session');
+                } else {
+                    // Blocks Checkout
+                    $checkoutSessionData = $this->processBlocksCheckoutData('mercadopago_checkout_session', Form::sanitizedPostData());
+                }
+
+                if (!empty($checkoutSessionData)) {
+                    $this->mercadopago->helpers->session->setSession('mp_wallet_checkout_session_' . $order->get_id(), $checkoutSessionData);
+                }
 
                 return [
                     'result'   => 'success',
@@ -569,8 +582,18 @@ class CustomGateway extends AbstractGateway
     {
         if ($this->mercadopago->helpers->url->validateQueryVar('wallet_button')) {
             $order             = wc_get_order($orderId);
+            $checkoutSessionData = $this->mercadopago->helpers->session->getSession('mp_wallet_checkout_session_' . $orderId);
+
             $this->transaction = new WalletButtonTransaction($this, $order);
-            $preference        = $this->transaction->createPreference();
+
+            // Set checkout data if available
+            if (!empty($checkoutSessionData)) {
+                $this->transaction->setCheckoutData($checkoutSessionData);
+            }
+
+            $preference = $this->transaction->createPreference();
+
+            $this->mercadopago->helpers->session->deleteSession('mp_wallet_checkout_session_' . $orderId);
 
             $this->mercadopago->hooks->template->getWoocommerceTemplate(
                 'public/receipt/preference-modal.php',
@@ -788,5 +811,10 @@ class CustomGateway extends AbstractGateway
                 );
             }
         }
+    }
+
+    public function getWalletButtonEnabled(): bool
+    {
+        return $this->getEnabled() && $this->get_option(static::WALLET_BUTTON_ENABLED_OPTION, static::WALLET_BUTTON_ENABLED_DEFAULT) === "yes";
     }
 }

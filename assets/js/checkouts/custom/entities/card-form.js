@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery */
+/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher */
 // eslint-disable-next-line no-unused-vars
 class MPCardForm {
     TIMEOUT_TO_WAIT_CHECKOUT_AMOUNT_LOAD = 2500;
@@ -94,7 +94,18 @@ class MPCardForm {
 
     getCardFormCallbacks(resolve, reject) {
         return {
-            onReady: () => {
+            onReady: (fields) => {
+                if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+                    MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
+                        fields?.cardNumber,
+                        "blur",
+                        "card_number_filled",
+                        {
+                            isUsingCardForm: true,
+                        }
+                    )
+                }
+
                 if (this.shouldCreateLoadSpinner()) {
                     setTimeout(() => {
                         window.mpSuperTokenTriggerHandler?.loadSuperToken();
