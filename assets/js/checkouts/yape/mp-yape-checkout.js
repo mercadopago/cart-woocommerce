@@ -14,8 +14,13 @@ async function mercadoPagoFormHandlerYape() {
     phoneNumber: document.getElementById("checkout__yapePhoneNumber").value.replaceAll(' ', '')
   };
 
-  const mp = new MercadoPago(wc_mercadopago_yape_checkout_params.public_key);
-  const yape = mp.yape(yapeOptions);
+  if (!window.mpSdkInstance) {
+    const mp = new MercadoPago(wc_mercadopago_yape_checkout_params.public_key);
+
+    window.mpSdkInstance = mp;
+  }
+
+  const yape = window.mpSdkInstance.yape(yapeOptions);
 
   try {
     const yapeToken = await yape.create();

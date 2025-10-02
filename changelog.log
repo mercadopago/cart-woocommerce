@@ -1,6 +1,14 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.5.4 (02/10/2025) =
+* Fixed
+- Add status validation to prevent unnecessary metadata updates
+- Fixed location id in melidata tracks for admin pages
+- Fix order-pay form validation error with Checkout Transparent payment method
+* Added
+- Improve plugin checkout metrics
+
 = v8.5.3 (29/09/2025) =
 * Fixed
 - Wait for security code to be updated before submitting the form on fast payments flow

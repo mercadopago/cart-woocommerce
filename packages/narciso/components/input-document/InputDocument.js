@@ -389,6 +389,11 @@ class InputDocument extends HTMLElement {
 
   createDocument(component, select, helper) {
     const input = document.createElement('input');
+
+    if (this.getAttribute('input-id')) {
+      input.setAttribute('id', this.getAttribute('input-id'));
+    }
+
     input.setAttribute('name', this.getAttribute('input-name'));
     input.setAttribute('data-checkout', this.getAttribute('input-data-checkout'));
     input.setAttribute('data-cy', 'input-document');

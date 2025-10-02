@@ -52,6 +52,7 @@ if (!defined('ABSPATH')) {
                 <?php if ($site_id === 'MLU') : ?>
                     <div class="mp-checkout-ticket-input-document">
                         <input-document
+                            input-id="mp-ticket-gateway-document-input"
                             label-message="<?= esc_html($input_document_label); ?>"
                             helper-invalid="<?= esc_html($input_document_helper_invalid); ?>"
                             helper-empty="<?= esc_html($input_document_helper_empty); ?>"
@@ -118,5 +119,16 @@ if (!defined('ABSPATH')) {
         jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-ticket", function() {
             window.mpEventHandler.setCardFormLoadInterval();
         });
+    }
+
+    if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+        MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+            document.getElementById("mp-ticket-gateway-document-input"),
+            "focusout",
+            "ticket_document_filled",
+            {
+                dispatchOnlyIf: (e) => e?.target?.value.length
+            }
+        );
     }
 </script>

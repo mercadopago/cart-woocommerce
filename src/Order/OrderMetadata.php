@@ -746,4 +746,37 @@ class OrderMetadata
 
         $order->save();
     }
+
+    /**
+     * Check if metadata field exists
+     *
+     * @param WC_Order $order
+     * @param string $key
+     * @param string $value
+     *
+     * @return bool
+    */
+    public function hasMetadataField(WC_Order $order, string $key, string $value): bool
+    {
+        $existingMetadata = $order->get_meta($key);
+        return !empty($existingMetadata) && strpos($existingMetadata, $value) !== false;
+    }
+
+    /**
+     * Get metadata field value
+     *
+     * @param WC_Order $order
+     * @param string $key
+     * @param string $value
+     *
+     * @return string|false
+    */
+    public function getMetadataFieldValue(WC_Order $order, string $key, string $value)
+    {
+        $existingMetadata = $order->get_meta($key);
+        if (!empty($existingMetadata) && preg_match('/\[' . $value . ' ([0-9.]+)\]/', $existingMetadata, $matches)) {
+            return $matches[1];
+        }
+        return false;
+    }
 }

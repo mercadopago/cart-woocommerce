@@ -23,7 +23,12 @@ const updateCart = (props) => {
     addDiscountAndCommission(extensionCartUpdate, paymentMethodName);
 
     const unsubscribe = onPaymentSetup(() => {
-      return { type: emitResponse.responseTypes.SUCCESS };
+      return {
+        type: emitResponse.responseTypes.SUCCESS,
+        meta: {
+          paymentMethodData: {...window.mpHiddenInputDataFromBlocksCheckout},
+        },
+      };
     });
 
     return () => {
@@ -45,6 +50,10 @@ const updateCart = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
+      if (typeof MPCheckoutErrorDispatcher !== 'undefined') {
+        MPCheckoutErrorDispatcher.dispatchEventWhenBlocksCheckoutErrorOccurred(checkoutResponse);
+      }
+
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_BASIC_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);
       return {

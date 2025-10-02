@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+error_reporting(~E_DEPRECATED); // Ignore deprecated warnings
 define('ABSPATH', __DIR__ . '/');
 define('MP_PLATFORM_ID', 'WOOCOMMERCE_MP_TEST');
 define('MP_PRODUCT_ID_DESKTOP', 'WOOCOMMERCE_MP_TEST_DESKTOP');

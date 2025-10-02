@@ -17,6 +17,7 @@ const paymentMethodName = 'woo-mercado-pago-pse';
 
 const settings = getSetting(`woo-mercado-pago-pse_data`, {});
 const defaultLabel = decodeEntities(settings.title) || 'Checkout Pse';
+let hasInitialized = false;
 
 const updateCart = (props) => {
   const { extensionCartUpdate } = wc.blocksCheckout;
@@ -49,6 +50,10 @@ const updateCart = (props) => {
 
   useEffect(() => {
     const unsubscribe = onCheckoutFail(checkoutResponse => {
+      if (typeof MPCheckoutErrorDispatcher !== 'undefined') {
+        MPCheckoutErrorDispatcher.dispatchEventWhenBlocksCheckoutErrorOccurred(checkoutResponse);
+      }
+
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_PSE_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);
       return {
@@ -115,6 +120,7 @@ const Content = (props) => {
   const { onPaymentSetup } = eventRegistration;
 
   let inputDocumentConfig = {
+    inputId: 'mp-pse-gateway-document-input',
     labelMessage: input_document_label,
     helperInvalid: input_document_helper_invalid,
     helperEmpty: input_document_helper_empty,
@@ -126,6 +132,23 @@ const Content = (props) => {
     selectName: 'mercadopago_pse[docType]',
     documents: '["CC","CE","NIT"]',
   };
+
+  useEffect(() => {
+    if (!hasInitialized) {
+      if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+          MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+              document.getElementById("mp-pse-gateway-document-input"),
+              "focusout",
+              "pse_document_filled",
+              {
+                  dispatchOnlyIf: (e) => e?.target?.value.length
+              }
+          );
+      }
+
+      hasInitialized = true;
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onPaymentSetup(async () => {
@@ -167,7 +190,9 @@ const Content = (props) => {
 
       return {
         type: hasErrorInForm ? emitResponse.responseTypes.ERROR : emitResponse.responseTypes.SUCCESS,
-        meta: { paymentMethodData },
+        meta: {
+          paymentMethodData: {...window.mpHiddenInputDataFromBlocksCheckout, ...paymentMethodData},
+        },
       };
     });
 

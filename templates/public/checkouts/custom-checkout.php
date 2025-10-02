@@ -57,7 +57,7 @@ if (!defined('ABSPATH')) {
                 </test-mode>
             <?php endif; ?>
 
-            <?php if ($wallet_button === 'yes') : ?>
+            <?php if ($wallet_button_enabled) : ?>
                 <div class='mp-wallet-button-container'>
 
                     <div class='mp-wallet-button-title'>

@@ -11,10 +11,12 @@ const InputDocument = ({
   selectDataCheckout,
   flagError,
   documents,
-  validate
+  validate,
+  inputId = ''
 }) => (
   <div className="mp-checkout-ticket-input-document">
     <input-document
+      input-id={inputId}
       label-message={labelMessage}
       helper-invalid={helperInvalid}
       helper-empty={helperEmpty}

@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Helpers;
 
+use Closure;
 use WP_Mock;
 use Mockery;
 use Mockery\LegacyMockInterface;
@@ -82,5 +83,12 @@ class NoticesTest extends TestCase
         $this->isAdmin->andReturn(true);
         $this->url->shouldReceive('validatePage')->andReturn(true);
         $this->assertTrue($this->notices->shouldShowNoticesForSettingsSection());
+    }
+
+    public function testAdminNoticeError()
+    {
+        WP_Mock::expectActionAdded('admin_notices', Closure::class);
+
+        $this->assertNull($this->notices->adminNoticeError(random()->word()));
     }
 }

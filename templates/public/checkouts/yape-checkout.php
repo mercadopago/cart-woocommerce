@@ -83,3 +83,16 @@ if (! defined('ABSPATH')) {
 <div id="mercadopago-utilities" style="display:none;">
     <input type="hidden" id="yapeToken" name="mercadopago_yape[token]" />
 </div>
+
+<script type="text/javascript">
+    if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+        MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+            document.getElementById("checkout__yapePhoneNumber"),
+            "focusout",
+            "yape_phone_number_filled",
+            {
+                dispatchOnlyIf: (e) => e?.target?.value.length
+            }
+        );
+    }
+</script>

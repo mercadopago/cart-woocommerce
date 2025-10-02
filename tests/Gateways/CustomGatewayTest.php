@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Gateways\CustomGateway;
 use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
 use MercadoPago\Woocommerce\Transactions\SupertokenTransaction;
@@ -30,7 +31,7 @@ class CustomGatewayTest extends TestCase
         $this->assertSame($this->gateway->getCheckoutName(), 'checkout-custom');
     }
 
-    private function processPaymentMock(array $checkout, bool $isBlocks)
+    private function processPaymentMock(array $checkout, bool $isBlocks, bool $isWalletButton = false)
     {
         $this->abstractGatewayProcessPaymentMock($isBlocks);
         if ($isBlocks) {
@@ -38,22 +39,43 @@ class CustomGatewayTest extends TestCase
 
             $postData = [];
 
-            Mockery::mock('alias:' . Form::class)
-                ->expects()
-                ->sanitizedPostData()
-                ->andReturn($postData);
+            $formMock = Mockery::mock('alias:' . Form::class);
+            if ($isWalletButton) {
+                $formMock->expects()
+                    ->sanitizedPostData()
+                    ->twice() // Called for mercadopago_custom and mercadopago_checkout_session (processBlocksCheckoutData)
+                    ->andReturn($postData);
+            } else {
+                $formMock->expects()
+                    ->sanitizedPostData()
+                    ->once() // Only called for mercadopago_custom
+                    ->andReturn($postData);
+            }
 
             $this->gateway
                 ->expects()
                 ->processBlocksCheckoutData('mercadopago_custom', $postData)
                 ->andReturn($checkout);
+
+            if ($isWalletButton) {
+                $this->gateway
+                    ->expects()
+                    ->processBlocksCheckoutData('mercadopago_checkout_session', $postData)
+                    ->andReturn(['_mp_flow_id' => 'test-flow-id-123']);
+            }
         } else {
             $_POST['mercadopago_custom'] = [];
 
-            Mockery::mock('alias:' . Form::class)
-                ->expects()
+            $formMock = Mockery::mock('alias:' . Form::class);
+            $formMock->expects()
                 ->sanitizedPostData('mercadopago_custom')
                 ->andReturn($checkout);
+
+            if ($isWalletButton) {
+                $formMock->expects()
+                    ->sanitizedPostData('mercadopago_checkout_session')
+                    ->andReturn(['_mp_flow_id' => 'test-flow-id-123']);
+            }
         }
     }
 
@@ -65,9 +87,28 @@ class CustomGatewayTest extends TestCase
     {
         $this->processPaymentMock([
             'checkout_type' => 'wallet_button',
-        ], $isBlocks);
+        ], $isBlocks, true);
+
+        // Mock session helper for wallet button
+        $sessionHelper = Mockery::mock(Session::class);
+        $sessionHelper->expects()
+            ->setSession('mp_wallet_checkout_session_1', ['_mp_flow_id' => 'test-flow-id-123'])
+            ->once();
+
+        $this->gateway->mercadopago->helpers->session = $sessionHelper;
+
+        // For classic checkout, set $_POST data for wallet button
+        if (!$isBlocks) {
+            $_POST['mercadopago_checkout_session'] = ['_mp_flow_id' => 'test-flow-id-123'];
+        }
 
         $fakeUrl = random()->url();
+
+        $this->order
+            ->expects()
+            ->get_id()
+            ->once()
+            ->andReturn(1);
 
         $this->order
             ->expects()

@@ -918,4 +918,129 @@ class OrderMetadataTest extends TestCase
         $this->assertEquals('ticket', $paymentsData[0]['payment_type_id'], 'Should be a non-card payment type');
         $this->assertStringNotContainsString('card', $paymentsData[0]['payment_type_id'], 'Payment type should not contain "card"');
     }
+
+    /**
+     * Test hasMetadataField method returns true when field exists
+     */
+    public function testHasMetadataFieldReturnsTrueWhenFieldExists(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123')
+            ->andReturn('[Date 2025-09-23 21:40:56]/[Amount 18]/[Payment Type credit_card]/[Payment Method visa]/[Paid 18]/[Coupon 0]/[Refund 18]');
+
+        $fields = [
+            '[Date',
+            '[Amount',
+            '[Payment Type',
+            '[Payment Method',
+            '[Paid',
+            '[Coupon',
+            '[Refund'
+        ];
+        foreach ($fields as $field) {
+            $result = $this->orderMetadata->hasMetadataField($order, 'Mercado Pago - Payment 123', $field);
+            $this->assertTrue($result);
+        }
+    }
+
+    /**
+     * Test hasMetadataField method returns false when field does not exist
+     */
+    public function testHasMetadataFieldReturnsFalseWhenFieldDoesNotExist(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123')
+            ->andReturn('[Date 2024-01-15]');
+
+        $result = $this->orderMetadata->hasMetadataField($order, 'Mercado Pago - Payment 123', '[Refund');
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test hasMetadataField method returns false when metadata is empty
+     */
+    public function testHasMetadataFieldReturnsFalseWhenMetadataIsEmpty(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123')
+            ->andReturn('');
+
+        $result = $this->orderMetadata->hasMetadataField($order, 'Mercado Pago - Payment 123', '[Refund');
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test getMetadataFieldValue method returns correct value
+     */
+    public function testGetMetadataFieldValueReturnsCorrectValue(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123')
+            ->andReturn('[Date 2024-01-15]/[Amount 100]/[Refund 50.75]');
+
+        $result = $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Refund');
+        $this->assertEquals('50.75', $result);
+    }
+
+    /**
+     * Test getMetadataFieldValue method returns false when field not found
+     */
+    public function testGetMetadataFieldValueReturnsFalseWhenFieldNotFound(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123')
+            ->andReturn('[Date 2024-01-15]/[Amount 100]');
+
+        $result = $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Refund');
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test getMetadataFieldValue method returns false when metadata is empty
+     */
+    public function testGetMetadataFieldValueReturnsFalseWhenMetadataIsEmpty(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123')
+            ->andReturn('');
+
+        $result = $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Refund');
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test getMetadataFieldValue method returns correct value for different fields
+     */
+    public function testGetMetadataFieldValueWorksWithDifferentFields(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123')
+            ->andReturn('[Date 2025-09-23 21:40:56]/[Amount 100.50]/[Paid 90.25]/[Coupon 10.00]/[Refund 18]');
+
+        $this->assertEquals('100.50', $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Amount'));
+        $this->assertEquals('90.25', $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Paid'));
+        $this->assertEquals('10.00', $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Coupon'));
+        $this->assertEquals('18', $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Refund'));
+    }
+
+    /**
+     * Test getMetadataFieldValue method returns false for invalid format
+     */
+    public function testGetMetadataFieldValueReturnsFalseForInvalidFormat(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_meta')
+            ->with('Mercado Pago - Payment 123')
+            ->andReturn('[Amount abc]/[Paid 100]/[Coupon 10]/[Refund 18]');
+
+        $result = $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Amount');
+        $this->assertFalse($result);
+    }
 }

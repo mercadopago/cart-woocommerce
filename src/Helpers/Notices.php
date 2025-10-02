@@ -246,6 +246,12 @@ class Notices
      */
     public function adminNoticeMissPix(): void
     {
+        static $called = false;
+        if ($called) {
+            return;
+        }
+        $called = true;
+
         add_action(
             'admin_notices',
             function () {
@@ -270,6 +276,13 @@ class Notices
      */
     private function adminNotice(string $message, string $type, bool $dismiss): void
     {
+        static $called = [];
+        $hash = md5(json_encode(func_get_args()));
+        if ($called[$hash] ?? false) {
+            return;
+        }
+        $called[$hash] = true;
+
         add_action(
             'admin_notices',
             function () use ($message, $type, $dismiss) {

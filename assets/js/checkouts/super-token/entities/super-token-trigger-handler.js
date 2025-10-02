@@ -172,6 +172,8 @@ class MPSuperTokenTriggerHandler {
 
     onTriggerWalletButton(customSubmitFallback = null) {
         const useWalletButtonFlow = () => {
+            document.dispatchEvent(new CustomEvent('mp_wallet_button_submitted'));
+
             jQuery(this.CHECKOUT_TYPE_SELECTOR).val(this.WALLET_BUTTON_OPTION_VALUE);
 
             if (customSubmitFallback) {

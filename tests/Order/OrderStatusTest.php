@@ -829,4 +829,45 @@ class OrderStatusTest extends TestCase
         $result = $this->orderStatus->getLastNotification($orderMock);
         $this->assertEquals([], $result);
     }
+
+    /**
+     * Test processStatus executes without errors for valid statuses
+     */
+    public function testProcessStatusExecutesForValidStatuses(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $data = ['id' => '123'];
+        $usedGateway = 'test_gateway';
+
+        $orderMock->shouldReceive('get_status')->andReturn('pending');
+        $orderMock->shouldReceive('add_order_note');
+        $orderMock->shouldReceive('update_status');
+        $orderMock->shouldReceive('get_id')->andReturn(123);
+        $orderMock->shouldReceive('needs_processing')->andReturn(true);
+        $orderMock->shouldReceive('payment_complete');
+
+        $this->orderMetadataMock->shouldReceive('updateOrderCustomFieldsAfterSync');
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')->andReturn('');
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')->andReturn('test_token');
+        $this->requesterMock->shouldReceive('get')->andReturn(
+            Mockery::mock('MercadoPago\Woocommerce\IO\ApiResponse')
+                ->shouldReceive('getStatus')->andReturn(200)
+                ->shouldReceive('getData')->andReturn([])
+                ->getMock()
+        );
+
+        \WP_Mock::onFilter('woocommerce_payment_complete_order_status')
+            ->with('processing', 123, $orderMock)
+            ->reply('processing');
+
+        $validStatuses = [
+            'approved', 'pending', 'in_process', 'rejected',
+            'refunded', 'cancelled', 'in_mediation', 'charged_back'
+        ];
+
+        foreach ($validStatuses as $status) {
+            $this->orderStatus->processStatus($status, $data, $orderMock, $usedGateway);
+            $this->assertTrue(true);
+        }
+    }
 }

@@ -169,7 +169,9 @@ class MPEventHandler {
             event.preventDefault();
             return this.mercadoPagoFormHandler();
         } else {
-            this.cardForm.initCardForm();
+            if (this.cardForm.formMounted) {
+                this.cardForm.form.unmount();
+            }
         }
     }
 

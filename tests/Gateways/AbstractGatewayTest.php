@@ -692,26 +692,30 @@ class AbstractGatewayTest extends TestCase
     public function testWebhookWithArrayData()
     {
         $data = ['source_news' => 'webhooks', 'notification_id' => '123456789'];
-        
+
         Mockery::mock('alias:' . Form::class)
             ->expects()
             ->sanitizedGetData()
             ->andReturn($data);
-        
+
         $notificationHandlerMock = Mockery::mock(NotificationHandler::class);
         $notificationHandlerMock->shouldReceive('handleReceivedNotification')
             ->once()
             ->with($data);
-        
+
         $notificationFactoryMock = Mockery::mock('overload:' . NotificationFactory::class);
         $notificationFactoryMock->shouldReceive('createNotificationHandler')
             ->once()
             ->with(Mockery::type(AbstractGateway::class), $data)
             ->andReturn($notificationHandlerMock);
-        
+
         $this->gateway->mercadopago = $this->mercadopagoMock;
-        
-        $this->gateway->webhook();
+
+        // Execute webhook and verify it doesn't throw exceptions
+        $result = $this->gateway->webhook();
+
+        // Assert that webhook method completes successfully (returns void)
+        $this->assertNull($result);
     }
 
     /**
@@ -723,25 +727,46 @@ class AbstractGatewayTest extends TestCase
     {
         $data = '';
         $expectedArrayData = [$data];
-        
+
         Mockery::mock('alias:' . Form::class)
             ->expects()
             ->sanitizedGetData()
             ->andReturn($data);
-        
+
         $notificationHandlerMock = Mockery::mock(NotificationHandler::class);
         $notificationHandlerMock->shouldReceive('handleReceivedNotification')
             ->once()
             ->with($expectedArrayData);
-        
+
         $notificationFactoryMock = Mockery::mock('overload:' . NotificationFactory::class);
         $notificationFactoryMock->shouldReceive('createNotificationHandler')
             ->once()
             ->with(Mockery::type(AbstractGateway::class), $expectedArrayData)
             ->andReturn($notificationHandlerMock);
-        
+
         $this->gateway->mercadopago = $this->mercadopagoMock;
-        
-        $this->gateway->webhook();
+
+        // Execute webhook and verify it doesn't throw exceptions
+        $result = $this->gateway->webhook();
+
+        // Assert that webhook method completes successfully (returns void)
+        $this->assertNull($result);
+    }
+
+    /**
+     * @testWith [true, "yes"]
+     *           [false, "no"]
+     */
+    public function testGetEnabled(bool $expected, string $option)
+    {
+        $this->gateway
+            ->expects()
+            ->get_option('enabled', 'no')
+            ->andReturn($option);
+
+        $this->assertEquals(
+            $expected,
+            $this->gateway->getEnabled()
+        );
     }
 }

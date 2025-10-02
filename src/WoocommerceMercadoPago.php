@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.5.3';
+    private const PLUGIN_VERSION = '8.5.4';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -78,6 +78,8 @@ class WoocommerceMercadoPago
     public Funnel $funnel;
 
     public Country $country;
+
+    private static bool $booted = false;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -221,6 +223,12 @@ class WoocommerceMercadoPago
         if ($this->storeConfig->getExecuteAfterPluginUpdate()) {
             $this->afterPluginUpdate();
         }
+        static::$booted = true;
+    }
+
+    public function booted(): bool
+    {
+        return static::$booted;
     }
 
     /**

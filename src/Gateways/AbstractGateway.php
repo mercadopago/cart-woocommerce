@@ -25,6 +25,10 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     public const LOG_SOURCE = '';
 
+    protected const ENABLED_OPTION = 'enabled';
+
+    protected const ENABLED_DEFAULT = 'no';
+
     public string $iconAdmin;
 
     public int $commission;
@@ -70,6 +74,10 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         global $mercadopago;
 
         $this->mercadopago = $mercadopago;
+
+        if (!$this->mercadopago->booted()) {
+            return;
+        }
 
         $this->checkoutCountry = $this->mercadopago->storeConfig->getCheckoutCountry();
         $this->countryConfigs  = $this->mercadopago->helpers->country->getCountryConfigs();
@@ -163,11 +171,11 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
                     'target'      => '_self',
                 ],
             ],
-            'enabled' => [
+            static::ENABLED_OPTION => [
                 'type'         => 'mp_toggle_switch',
                 'title'        => $this->adminTranslations['enabled_title'] ?? null,
                 'subtitle'     => $this->adminTranslations['enabled_subtitle'] ?? null,
-                'default'      => 'no',
+                'default'      => static::ENABLED_DEFAULT,
                 'descriptions' => [
                     'enabled'  => $this->adminTranslations['enabled_descriptions_enabled'] ?? null,
                     'disabled' => $this->adminTranslations['enabled_descriptions_disabled'] ?? null,
@@ -335,6 +343,25 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         $this->mercadopago->hooks->scripts->registerCheckoutStyle(
             'mercadopago_vars_css',
             $this->mercadopago->helpers->url->getCssAsset('public/mp-vars')
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_checkout_error_dispatcher',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-checkout-error-dispatcher')
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_checkout_fields_dispatcher',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-checkout-fields-dispatcher')
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_checkout_session_data_register',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-checkout-session-data-register'),
+            [
+                'public_key' => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
+                'locale' => $this->mercadopago->storeTranslations->customCheckout['locale'],
+            ]
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
@@ -1073,5 +1100,10 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
                 $this->mercadopago->adminTranslations->refund['unknown_error']
             );
         }
+    }
+
+    public function getEnabled(): bool
+    {
+        return $this->get_option(static::ENABLED_OPTION, static::ENABLED_DEFAULT) === "yes";
     }
 }

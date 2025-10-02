@@ -334,7 +334,6 @@ class Order
             $orderId = Form::sanitizedPostData('order_id');
             $order = wc_get_order($orderId);
             $this->syncOrderStatus($order);
-            $this->orderMetadata->updateOrderCustomFieldsAfterSync($order, $this->orderStatus->getAllPaymentsData($order));
 
             wp_send_json_success(
                 $this->adminTranslations->statusSync['response_success']
@@ -375,6 +374,8 @@ class Order
              * where approved payment triggers the internal notification flow.
              */
 
+            $this->updateMetadataIfStatusChanged($order, $notification['status']);
+
             $this->orderStatus->processStatus(
                 $notification['status'],
                 (array) $notification,
@@ -383,6 +384,111 @@ class Order
             );
         } catch (Exception $e) {
             $this->logs->file->error('Mercado Pago: Error in sync order status: ' . $e->getMessage(), __CLASS__);
+        }
+    }
+
+    /**
+     * Check if refund metadata is up to date with payment refund amounts
+     *
+     * @param WC_Order $order
+     * @param array $paymentsData
+     * @return bool
+     */
+    private function isRefundMetadataUpToDate(WC_Order $order, array $paymentsData): bool
+    {
+        try {
+            foreach ($paymentsData as $payment) {
+                $paymentId = $payment['id'];
+                $paymentRefundAmount = (float) ($payment['transaction_amount_refunded'] ?? 0);
+                $paymentMetaKey = 'Mercado Pago - Payment ' . $paymentId;
+
+                if (!$this->orderMetadata->hasMetadataField($order, $paymentMetaKey, '[Refund')) {
+                    return false;
+                }
+
+                $fieldValue = $this->orderMetadata->getMetadataFieldValue($order, $paymentMetaKey, 'Refund');
+                if (!$fieldValue) {
+                    return false;
+                }
+
+                $metadataRefundAmount = (float) $fieldValue;
+
+                if (abs($paymentRefundAmount - $metadataRefundAmount) > 0) {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (Exception $e) {
+            $this->logs->file->error('Mercado Pago: Error checking refund metadata: ' . $e->getMessage(), __CLASS__);
+            return false;
+        }
+    }
+
+    /**
+     * Update order metadata if needed (create on first time, update only if status changed)
+     *
+     * @param WC_Order $order
+     * @param string $newStatus
+     * @return void
+     */
+    private function updateMetadataIfStatusChanged(WC_Order $order, string $newStatus): void
+    {
+        try {
+            $currentStatus = $order->get_status();
+
+            if ($currentStatus === 'completed' && $newStatus === 'approved') {
+                return;
+            }
+
+            $mappedNewStatus = $this->orderStatus->mapMpStatusToWoocommerceStatus($newStatus);
+
+            $paymentsData = $this->orderStatus->getAllPaymentsData($order);
+
+            if ($newStatus === 'refunded') {
+                $refundMetadataUpToDate = $this->isRefundMetadataUpToDate($order, $paymentsData);
+                if (!$refundMetadataUpToDate) {
+                    $this->orderMetadata->updateOrderCustomFieldsAfterSync($order, $paymentsData);
+                }
+                return;
+            }
+
+            $paymentMetadataComplete = false;
+
+            foreach ($paymentsData as $payment) {
+                $paymentMetaKey = 'Mercado Pago - Payment ' . $payment['id'];
+                $existingMetadata = $order->get_meta($paymentMetaKey);
+
+                if (!empty($existingMetadata)) {
+                    $requiredFields = [
+                        '[Amount',
+                        '[Payment Type',
+                        '[Payment Method',
+                        '[Paid',
+                        '[Coupon',
+                        '[Refund'
+                    ];
+
+                    $allFieldsPresent = true;
+                    foreach ($requiredFields as $field) {
+                        if (!$this->orderMetadata->hasMetadataField($order, $paymentMetaKey, $field)) {
+                            $allFieldsPresent = false;
+                            break;
+                        }
+                    }
+
+                    if ($allFieldsPresent) {
+                        $paymentMetadataComplete = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$paymentMetadataComplete || $currentStatus !== $mappedNewStatus) {
+                $this->orderMetadata->updateOrderCustomFieldsAfterSync($order, $paymentsData);
+            }
+        } catch (Exception $e) {
+            $this->logs->file->error('Mercado Pago: Error updating metadata if status changed: ' . $e->getMessage(), __CLASS__);
         }
     }
 

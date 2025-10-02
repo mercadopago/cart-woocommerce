@@ -32,6 +32,32 @@ class AbstractTransactionTest extends TestCase
      */
     private $transaction;
 
+    public function setUp(): void
+    {
+        WP_Mock::userFunction('sanitize_post', [
+            'return' => function ($data) {
+                return $data;
+            }
+        ]);
+
+        WP_Mock::userFunction('map_deep', [
+            'return' => function ($data, $callback) {
+                return is_array($data) ? array_map($callback, $data) : $callback($data);
+            }
+        ]);
+
+        WP_Mock::userFunction('sanitize_text_field', [
+            'return' => function ($text) {
+                return $text;
+            }
+        ]);
+    }
+
+    public function tearDown(): void
+    {
+        WP_Mock::tearDown();
+    }
+
     /**
      * @runInSeparateProcess
      * @preserveGlobalState disabled
@@ -142,6 +168,10 @@ class AbstractTransactionTest extends TestCase
      */
     public function testGetInternalMetadata(bool $userExists): void
     {
+        $mockFlowId = random()->uuid();
+
+        $_POST['mercadopago_checkout_session'] = ['_mp_flow_id' => $mockFlowId];
+
         $expected = [
             'platform' => MP_PLATFORM_ID,
             'platform_version' => $wcVersion = random()->semver(),
@@ -176,6 +206,7 @@ class AbstractTransactionTest extends TestCase
                 'theme_name' => random()->word(),
                 'theme_version' => random()->semver(),
             ],
+            'flow_id' => $mockFlowId,
         ];
 
         $this->transaction->mercadopago->woocommerce->version = $expected['platform_version'];
@@ -283,5 +314,120 @@ class AbstractTransactionTest extends TestCase
         $expected['billing_address']['zip_code'] = str_replace('-', '', $expected['billing_address']['zip_code']);
 
         $this->assertObjectEqualsArray($expected, $this->transaction->getInternalMetadata());
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSetCheckoutData(): void
+    {
+        $checkoutData = [
+            '_mp_flow_id' => 'test-flow-id-123',
+            'checkout_type' => 'wallet_button',
+            'additional_data' => 'test-data'
+        ];
+
+        // Mock the transaction object
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = [];
+
+        // Create a mock PaymentMetadata object
+        $mockMetadata = Mockery::mock(PaymentMetadata::class);
+        $mockMetadata->flow_id = 'test-flow-id-123';
+        $mockMetadata->platform = MP_PLATFORM_ID;
+        $mockMetadata->module_version = MP_VERSION;
+
+        $this->transaction
+            ->expects()
+            ->getInternalMetadata()
+            ->once()
+            ->andReturn($mockMetadata);
+
+        // Call setCheckoutData
+        $result = $this->transaction->setCheckoutData($checkoutData);
+
+        // Assert that it returns the same instance (fluent interface)
+        $this->assertSame($this->transaction, $result);
+
+        // Assert that metadata was recreated with new data (cast to array as per the method)
+        $expectedMetadataArray = (array) $mockMetadata;
+        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction->metadata);
+    }
+
+    /**
+     * Test that setCheckoutData properly calls getInternalMetadata and updates metadata
+     * 
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSetCheckoutDataCallsGetInternalMetadata(): void
+    {
+        $checkoutData = ['_mp_flow_id' => 'new-flow-id-456'];
+
+        // Mock the transaction object
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => 'old-flow-id'];
+
+        // Create a mock PaymentMetadata object with updated flow_id
+        $mockMetadata = Mockery::mock(PaymentMetadata::class);
+        $mockMetadata->flow_id = 'new-flow-id-456';
+        $mockMetadata->platform = MP_PLATFORM_ID;
+        $mockMetadata->module_version = MP_VERSION;
+
+        $this->transaction
+            ->expects()
+            ->getInternalMetadata()
+            ->once()
+            ->andReturn($mockMetadata);
+
+        // Call setCheckoutData
+        $result = $this->transaction->setCheckoutData($checkoutData);
+
+        // Assert that it returns the same instance (fluent interface)
+        $this->assertSame($this->transaction, $result);
+
+        // Assert that metadata was recreated with updated data
+        $expectedMetadataArray = (array) $mockMetadata;
+        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction->metadata);
+        $this->assertEquals('new-flow-id-456', $this->transaction->transaction->metadata['flow_id']);
+    }
+
+    /**
+     * Test that setCheckoutData works with empty checkout data
+     * 
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSetCheckoutDataWithEmptyData(): void
+    {
+        $checkoutData = [];
+
+        // Mock the transaction object
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = [];
+
+        // Create a mock PaymentMetadata object without flow_id
+        $mockMetadata = Mockery::mock(PaymentMetadata::class);
+        $mockMetadata->flow_id = null;
+        $mockMetadata->platform = MP_PLATFORM_ID;
+        $mockMetadata->module_version = MP_VERSION;
+
+        $this->transaction
+            ->expects()
+            ->getInternalMetadata()
+            ->once()
+            ->andReturn($mockMetadata);
+
+        // Call setCheckoutData
+        $result = $this->transaction->setCheckoutData($checkoutData);
+
+        // Assert that it returns the same instance (fluent interface)
+        $this->assertSame($this->transaction, $result);
+
+        // Assert that metadata was recreated
+        $expectedMetadataArray = (array) $mockMetadata;
+        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction->metadata);
+        $this->assertNull($this->transaction->transaction->metadata['flow_id']);
     }
 }

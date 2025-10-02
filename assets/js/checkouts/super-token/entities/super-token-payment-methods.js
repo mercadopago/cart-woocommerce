@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_supertoken_payment_methods_params, Intl */
+/* globals wc_mercadopago_supertoken_payment_methods_params, Intl, MPCheckoutFieldsDispatcher */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenPaymentMethods {
     SUPER_TOKEN_CHECKOUT_TYPE = 'super_token';
@@ -742,6 +742,17 @@ class MPSuperTokenPaymentMethods {
                     })
                     .on('validityChange', (e) => {
                         if (e.errorMessages.length === 0) {
+                            if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+                                MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                                    null,
+                                    "focusout",
+                                    "super_token_cvv_filled",
+                                    {
+                                        onlyDispatch: true
+                                    }
+                                );
+                            }
+
                             this.toggleSecurityCodeErrorMessage('', paymentMethod);
                         }
 

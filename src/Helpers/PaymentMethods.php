@@ -2,8 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
-use MercadoPago\Woocommerce\Gateways\CreditsGateway;
-
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -11,6 +9,8 @@ if (!defined('ABSPATH')) {
 class PaymentMethods
 {
     private const SEPARATOR = '_';
+
+    private array $enabledPaymentMethods = [];
 
     private Url $url;
 
@@ -76,6 +76,31 @@ class PaymentMethods
     public function getPaymentPlaceId($compositeId): string
     {
         return $this->parseCompositeId($compositeId)['payment_place_id'];
+    }
+
+    public function getEnabledPaymentMethods(): array
+    {
+        if (!empty($this->enabledPaymentMethods)) {
+            return $this->enabledPaymentMethods;
+        }
+
+        if (!function_exists('WC') || !method_exists(WC()->payment_gateways(), 'get_available_payment_gateways')) {
+            return [];
+        }
+
+        $paymentMethods = WC()->payment_gateways()->get_available_payment_gateways();
+
+        foreach ($paymentMethods as $paymentMethod) {
+            if ($paymentMethod->get_option('enabled') === 'yes') {
+                $this->enabledPaymentMethods[] = $paymentMethod->id;
+            }
+
+            if (is_callable([$paymentMethod, 'getWalletButtonEnabled']) && $paymentMethod->getWalletButtonEnabled()) {
+                $this->enabledPaymentMethods[] = 'woo-mercado-pago-wallet-button';
+            }
+        }
+
+        return $this->enabledPaymentMethods;
     }
 
     /**
