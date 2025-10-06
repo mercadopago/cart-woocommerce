@@ -240,6 +240,11 @@ class AbstractTransactionTest extends TestCase
 
         $order = $this->mockTransactionOrder();
 
+        // Mock get_id() specifically for this test
+        $order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
         $this->transaction->mercadopago->orderBilling
             ->expects()
             ->getZipcode($order)
@@ -311,6 +316,16 @@ class AbstractTransactionTest extends TestCase
             ->extendInternalMetadata(Mockery::type(PaymentMetadata::class))
             ->andReturnArg(0);
 
+        // Mock session helpers for flow_id
+        $this->transaction->mercadopago->helpers->session
+            ->expects()
+            ->getSession(Mockery::any())
+            ->andReturnNull();
+
+        $this->transaction->mercadopago->helpers->session
+            ->expects()
+            ->deleteSession(Mockery::any());
+
         $expected['billing_address']['zip_code'] = str_replace('-', '', $expected['billing_address']['zip_code']);
 
         $this->assertObjectEqualsArray($expected, $this->transaction->getInternalMetadata());
@@ -357,7 +372,7 @@ class AbstractTransactionTest extends TestCase
 
     /**
      * Test that setCheckoutData properly calls getInternalMetadata and updates metadata
-     * 
+     *
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */
@@ -395,7 +410,7 @@ class AbstractTransactionTest extends TestCase
 
     /**
      * Test that setCheckoutData works with empty checkout data
-     * 
+     *
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */

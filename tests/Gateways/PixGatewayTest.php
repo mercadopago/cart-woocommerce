@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
+use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +17,7 @@ class PixGatewayTest extends TestCase
 {
     use GatewayMock;
     use AssertArrayMap;
+    use FormMock;
 
     private string $gatewayClass = PixGateway::class;
 
@@ -35,10 +37,7 @@ class PixGatewayTest extends TestCase
 
         $this->abstractGatewayProcessPaymentMock($isBlocks);
 
-        Mockery::mock('alias:' . Form::class)
-            ->expects()
-            ->sanitizedPostData()
-            ->andReturn([]);
+        $this->mockFormSanitizedPostData([]);
 
         $_POST['wc-woo-mercado-pago-pix-new-payment-method'] = $isBlocks ? 1 : null;
     }
@@ -46,10 +45,17 @@ class PixGatewayTest extends TestCase
     /**
      * @testWith [true, "pending_waiting_payment"]
      *           [false, "pending_waiting_transfer"]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentSuccess(bool $isBlocks, string $statusDetail): void
     {
         $this->processPaymentMock($isBlocks);
+
+        // Mock get_id() specifically for this test
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
 
         $this->order
             ->expects()
@@ -106,9 +112,18 @@ class PixGatewayTest extends TestCase
         );
     }
 
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
     public function testProcessPaymentInvalidEmail(): void
     {
         $this->processPaymentMock();
+
+        // Mock get_id() specifically for this test
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
 
         $this->order
             ->expects()
@@ -135,9 +150,18 @@ class PixGatewayTest extends TestCase
         $this->assertEquals($expected, $this->gateway->process_payment(1));
     }
 
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
     public function testProcessPaymentFail(): void
     {
         $this->processPaymentMock();
+
+        // Mock get_id() specifically for this test
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
 
         $this->order
             ->expects()

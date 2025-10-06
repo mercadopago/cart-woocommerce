@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use MercadoPago\Woocommerce\Transactions\YapeTransaction;
 use Mockery;
 use Mockery\MockInterface;
@@ -15,6 +16,7 @@ use MercadoPago\Woocommerce\Gateways\YapeGateway;
 class YapeGatewayTest extends TestCase
 {
     use GatewayMock;
+    use FormMock;
 
     private string $gatewayClass = YapeGateway::class;
 
@@ -35,20 +37,14 @@ class YapeGatewayTest extends TestCase
 
         if ($isBlocks) {
             $_POST['mercadopago_yape'] = null;
-            Mockery::mock('alias:' . Form::class)
-                ->expects()
-                ->sanitizedPostData()
-                ->andReturn([]);
+            $this->mockFormSanitizedPostData([]);
             $this->gateway
                 ->expects()
                 ->processBlocksCheckoutData('mercadopago_yape', [])
                 ->andReturn([]);
         } else {
             $_POST['mercadopago_yape'] = 1;
-            Mockery::mock('alias:' . Form::class)
-                ->expects()
-                ->sanitizedPostData('mercadopago_yape')
-                ->andReturn([]);
+            $this->mockFormSanitizedPostData([], 'mercadopago_yape');
         }
 
         Mockery::mock('overload:' . YapeTransaction::class)
@@ -65,6 +61,8 @@ class YapeGatewayTest extends TestCase
      * @testWith [true, "approved"]
      *           [false, "pending"]
      *           [false, "in_process"]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentInternalSuccess(bool $isBlocks, string $status): void
     {
@@ -97,6 +95,8 @@ class YapeGatewayTest extends TestCase
     /**
      * @testWith [true]
      *           [false]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentInternalRejected(bool $isBlocks): void
     {
@@ -119,6 +119,8 @@ class YapeGatewayTest extends TestCase
     /**
      * @testWith [true]
      *           [false]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentInternalStatusNotMapped(bool $isBlocks): void
     {

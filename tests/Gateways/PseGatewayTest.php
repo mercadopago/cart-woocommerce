@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use MercadoPago\Woocommerce\Transactions\PseTransaction;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\PseGateway;
@@ -17,6 +18,7 @@ use WP_Mock;
 class PseGatewayTest extends TestCase
 {
     use GatewayMock;
+    use FormMock;
 
     private string $gatewayClass = PseGateway::class;
 
@@ -39,20 +41,14 @@ class PseGatewayTest extends TestCase
         ], $checkout);
 
         if ($isBlocks) {
-            Mockery::mock('alias:' . Form::class)
-                ->expects()
-                ->sanitizedPostData()
-                ->andReturn([]);
+            $this->mockFormSanitizedPostData([]);
             $this->gateway
                 ->expects()
                 ->processBlocksCheckoutData('mercadopago_pse', [])
                 ->andReturn($checkout);
             $_POST['mercadopago_pse'] = null;
         } else {
-            Mockery::mock('alias:' . Form::class)
-                ->expects()
-                ->sanitizedPostData('mercadopago_pse')
-                ->andReturn($checkout);
+            $this->mockFormSanitizedPostData($checkout, 'mercadopago_pse');
             $_POST['mercadopago_pse'] = 1;
         }
     }
@@ -65,6 +61,8 @@ class PseGatewayTest extends TestCase
     /**
      * @testWith [true, "individual", "pending_waiting_payment", "no"]
      *           [false, "association", "pending_waiting_transfer", "yes"]
+      * @runInSeparateProcess
+      * @preserveGlobalState disabled
      */
     public function testProcessPaymentSuccess(bool $isBlocks, string $personType, string $statusDetail, string $stockReduceMode): void
     {
@@ -121,6 +119,8 @@ class PseGatewayTest extends TestCase
      *           [false, {"bank": ""}]
      *           [true, {"site_id": "MLB"}]
      *           [true, {"person_type": "error"}]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProccessPaymentInvalidCheckout(bool $isBlocks, array $checkout)
     {
@@ -150,6 +150,8 @@ class PseGatewayTest extends TestCase
     /**
      * @testWith [true, "individual"]
      *           [false, "association"]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProccessPaymentRejected(bool $isBlocks, string $personType)
     {
@@ -182,6 +184,8 @@ class PseGatewayTest extends TestCase
     /**
      * @testWith [true, "individual", {"id": "PAY_123", "status": "error", "status_detail": "pending_waiting_payment"}]
      *           [false, "association", {"id": "PAY_123", "status": "pending", "status_detail": "error"}]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProccessPaymentInvalidStatus(bool $isBlocks, string $personType, array $response)
     {
@@ -221,6 +225,8 @@ class PseGatewayTest extends TestCase
     /**
      * @testWith [true, "individual"]
      *           [false, "association"]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProccessPaymentUnableProccess(bool $isBlocks, string $personType)
     {

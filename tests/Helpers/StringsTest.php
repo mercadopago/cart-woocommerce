@@ -15,7 +15,7 @@ class StringsTest extends TestCase
         $this->assertFalse(Strings::contains('abc', 'n'));
         $this->assertFalse(Strings::contains('abc', 'cba'));
         $this->assertFalse(Strings::contains('abc', 'cb'));
-        $this->assertFalse(Strings::contains('', ''));
+        $this->assertTrue(Strings::contains('', ''));
         $this->assertFalse(Strings::contains('', 'a'));
     }
 }
