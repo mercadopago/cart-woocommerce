@@ -108,6 +108,11 @@ class Strings
      */
     public static function contains(string $string, string $search): bool
     {
-        return strrpos($string, $search) !== false;
+        // Empty search string is considered to be contained in any string (including empty)
+        if ($search === '') {
+            return true;
+        }
+
+        return strpos($string, $search) !== false;
     }
 }

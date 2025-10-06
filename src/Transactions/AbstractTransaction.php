@@ -204,18 +204,25 @@ abstract class AbstractTransaction
         return $metadata;
     }
 
+    private function getAndDeleteCheckoutSessionDataOnHelperSessionByOrderId(string $orderId)
+    {
+        $checkoutSessionData = $this->mercadopago->helpers->session->getSession('mp_checkout_session_' . $orderId);
+
+        $this->mercadopago->helpers->session->deleteSession('mp_checkout_session_' . $orderId);
+
+        return $checkoutSessionData;
+    }
+
     private function getCheckoutSessionData()
     {
-        $mercado_pago_checkout_session = [];
+        $mercado_pago_checkout_session = $this->getAndDeleteCheckoutSessionDataOnHelperSessionByOrderId($this->order->get_id()) ?? [];
 
-        if ($this->checkout) {
-            $mercado_pago_checkout_session = $this->checkout;
-        } elseif (isset($_POST['mercadopago_checkout_session'])) {
+        if (isset($_POST['mercadopago_checkout_session'])) {
             // Classic Checkout
-            $mercado_pago_checkout_session = Form::sanitizedPostData('mercadopago_checkout_session');
+            $mercado_pago_checkout_session = array_merge($mercado_pago_checkout_session, Form::sanitizedPostData('mercadopago_checkout_session'));
         } else {
             // Blocks Checkout
-            $mercado_pago_checkout_session = $this->gateway->processBlocksCheckoutData('mercadopago_checkout_session', Form::sanitizedPostData());
+            $mercado_pago_checkout_session = array_merge($mercado_pago_checkout_session, $this->gateway->processBlocksCheckoutData('mercadopago_checkout_session', Form::sanitizedPostData()));
         }
 
         return $mercado_pago_checkout_session;

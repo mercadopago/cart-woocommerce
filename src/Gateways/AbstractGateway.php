@@ -412,6 +412,22 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         return true;
     }
 
+    public function setCheckoutSessionDataOnSessionHelperByOrderId(string $orderId)
+    {
+        $checkoutSessionData = [];
+        if (isset($_POST['mercadopago_checkout_session'])) {
+            // Classic Checkout
+            $checkoutSessionData = Form::sanitizedPostData('mercadopago_checkout_session');
+        } else {
+            // Blocks Checkout
+            $checkoutSessionData = $this->processBlocksCheckoutData('mercadopago_checkout_session', Form::sanitizedPostData());
+        }
+
+        if (!empty($checkoutSessionData)) {
+            $this->mercadopago->helpers->session->setSession('mp_checkout_session_' . $orderId, $checkoutSessionData);
+        }
+    }
+
     /**
      * Process payment and create woocommerce order
      *
@@ -448,6 +464,8 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
                 $this->mercadopago->orderMetadata->setCommissionData($order, $feeText);
             }
+
+            $this->setCheckoutSessionDataOnSessionHelperByOrderId($order->get_id());
 
             return $this->proccessPaymentInternal($order);
         } catch (Exception $e) {

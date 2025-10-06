@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
+use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use MercadoPago\Woocommerce\Transactions\TicketTransaction;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +19,7 @@ use WP_Mock;
 class TicketGatewayTest extends TestCase
 {
     use GatewayMock;
+    use FormMock;
 
     private string $gatewayClass = TicketGateway::class;
 
@@ -141,26 +143,22 @@ class TicketGatewayTest extends TestCase
 
         if ($isBlocks) {
             $_POST['mercadopago_ticket'] = null;
-            Mockery::mock('alias:' . Form::class)
-                ->expects()
-                ->sanitizedPostData()
-                ->andReturn([]);
+            $this->mockFormSanitizedPostData([]);
             $this->gateway
                 ->expects()
                 ->processBlocksCheckoutData('mercadopago_ticket', [])
                 ->andReturn($checkout);
         } else {
             $_POST['mercadopago_ticket'] = 1;
-            Mockery::mock('alias:' . Form::class)
-                ->expects()
-                ->sanitizedPostData('mercadopago_ticket')
-                ->andReturn($checkout);
+            $this->mockFormSanitizedPostData($checkout, 'mercadopago_ticket');
         }
     }
 
     /**
      * @testWith [true, {"site_id": "MLB", "doc_number": "1234567909"}, {"status_detail": "pending_waiting_payment", "payment_type_id": "bank_transfer"}, "no"]
      *           [false, {"site_id": "MLU", "doc_number": "1234567909", "doc_type": "otro"}, {"status_detail": "pending_waiting_transfer", "payment_type_id": "fake"}, "yes"]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentInternalSuccess(bool $isBlocks, array $checkout, array $response, string $stockReduceMode): void
     {
@@ -242,6 +240,8 @@ class TicketGatewayTest extends TestCase
      * @testWith [true, {"amount": null}, false]
      *           [false, {"payment_method_id": null}, false]
      *           [true, {"site_id": "MLB", "doc_number": "1234567909"}, true]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentInternalInvalidCheckoutDataException(bool $isBlocks, array $checkout, bool $mockTransaction): void
     {
@@ -264,6 +264,8 @@ class TicketGatewayTest extends TestCase
      *           [false, {"site_id": "MLU"}]
      *           [true, {"site_id": "MLU", "doc_number": "1234567909"}]
      *           [false, {"site_id": "MLU", "doc_type": "otro"}]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentInternalInvalidCheckout(bool $isBlocks, array $checkout): void
     {
@@ -289,6 +291,8 @@ class TicketGatewayTest extends TestCase
     /**
      * @testWith [true]
      *           [false]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentInternalRejected(bool $isBlocks): void
     {
@@ -324,6 +328,8 @@ class TicketGatewayTest extends TestCase
     /**
      * @testWith [true, {"id": "PAY_123", "status": "fake"}]
      *           [false, {"id": "PAY_123", "status": "pending", "status_detail": "fake"}]
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      */
     public function testProcessPaymentInternalInvalidStatus(bool $isBlocks, array $response): void
     {

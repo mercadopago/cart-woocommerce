@@ -24,7 +24,7 @@ const updateCart = (props) => {
 
     const unsubscribe = onPaymentSetup(() => {
       return {
-        type: emitResponse.responseTypes.SUCCESS.Content,
+        type: emitResponse.responseTypes.SUCCESS,
         meta: {
           paymentMethodData: {...window.mpHiddenInputDataFromBlocksCheckout},
         },

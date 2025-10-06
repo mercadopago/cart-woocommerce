@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Tests\Gateways;
 use MercadoPago\Woocommerce\Refund\RefundHandler;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
+use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
@@ -23,6 +24,7 @@ class AbstractGatewayTest extends TestCase
 {
     use GatewayMock;
     use AssertArrayMap;
+    use FormMock;
 
     private $sellerConfigMock;
     private $mercadopagoMock;
@@ -45,6 +47,12 @@ class AbstractGatewayTest extends TestCase
     public function testProcessPayment()
     {
         $order = Mockery::mock('WC_Order');
+
+        // Mock get_id() specifically for this test
+        $order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
         WP_Mock::userFunction('wc_get_order')
             ->once()
             ->with(1)
@@ -115,6 +123,26 @@ class AbstractGatewayTest extends TestCase
             ->once()
             ->with($order, "fee of 0.99% = $ 1,00")
             ->andReturnSelf();
+
+        $this->gateway->mercadopago->helpers->notices->shouldReceive('storeNotice')
+            ->andReturnNull();
+
+        // Mock WordPress functions to avoid errors
+        WP_Mock::userFunction('sanitize_post', [
+            'return' => function ($data) {
+                return $data;
+            }
+        ]);
+        WP_Mock::userFunction('map_deep', [
+            'return' => function ($data, $callback) {
+                return is_array($data) ? array_map($callback, $data) : $callback($data);
+            }
+        ]);
+        WP_Mock::userFunction('sanitize_text_field', [
+            'return' => function ($data) {
+                return $data;
+            }
+        ]);
 
         $this->gateway->expects()->proccessPaymentInternal($order)->andReturn($result = []);
 
@@ -687,16 +715,15 @@ class AbstractGatewayTest extends TestCase
     /**
      * Test webhook method with array data
      *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      * @return void
      */
     public function testWebhookWithArrayData()
     {
         $data = ['source_news' => 'webhooks', 'notification_id' => '123456789'];
 
-        Mockery::mock('alias:' . Form::class)
-            ->expects()
-            ->sanitizedGetData()
-            ->andReturn($data);
+        $this->mockFormSanitizedGetData($data);
 
         $notificationHandlerMock = Mockery::mock(NotificationHandler::class);
         $notificationHandlerMock->shouldReceive('handleReceivedNotification')
@@ -721,6 +748,8 @@ class AbstractGatewayTest extends TestCase
     /**
      * Test webhook method with non-array data
      *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
      * @return void
      */
     public function testWebhookWithNonArrayData()
@@ -728,10 +757,7 @@ class AbstractGatewayTest extends TestCase
         $data = '';
         $expectedArrayData = [$data];
 
-        Mockery::mock('alias:' . Form::class)
-            ->expects()
-            ->sanitizedGetData()
-            ->andReturn($data);
+        $this->mockFormSanitizedGetData($data);
 
         $notificationHandlerMock = Mockery::mock(NotificationHandler::class);
         $notificationHandlerMock->shouldReceive('handleReceivedNotification')
@@ -751,6 +777,109 @@ class AbstractGatewayTest extends TestCase
 
         // Assert that webhook method completes successfully (returns void)
         $this->assertNull($result);
+    }
+
+    /**
+     * Test setCheckoutSessionDataOnSessionHelperByOrderId with classic checkout
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     * @return void
+     */
+    public function testSetCheckoutSessionDataOnSessionHelperByOrderIdClassicCheckout()
+    {
+        $orderId = '123';
+        $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-456'];
+
+        // Mock classic checkout POST data
+        $_POST['mercadopago_checkout_session'] = $checkoutSessionData;
+
+        // Mock Form::sanitizedPostData
+        $this->mockFormSanitizedPostData($checkoutSessionData, 'mercadopago_checkout_session');
+
+        // Mock session helper
+        $this->gateway->mercadopago->helpers->session
+            ->expects()
+            ->setSession('mp_checkout_session_' . $orderId, $checkoutSessionData)
+            ->once();
+
+        $result = $this->gateway->setCheckoutSessionDataOnSessionHelperByOrderId($orderId);
+
+        // Assert method completes successfully (returns void)
+        $this->assertNull($result);
+
+        // Cleanup
+        unset($_POST['mercadopago_checkout_session']);
+    }
+
+    /**
+     * Test setCheckoutSessionDataOnSessionHelperByOrderId with blocks checkout
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     * @return void
+     */
+    public function testSetCheckoutSessionDataOnSessionHelperByOrderIdBlocksCheckout()
+    {
+        $orderId = '456';
+        $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-789'];
+        $postData = [];
+
+        // Mock blocks checkout (no mercadopago_checkout_session in $_POST)
+        unset($_POST['mercadopago_checkout_session']);
+
+        // Mock Form::sanitizedPostData without arguments
+        $this->mockFormSanitizedPostData($postData);
+
+        // Mock processBlocksCheckoutData
+        $this->gateway
+            ->expects()
+            ->processBlocksCheckoutData('mercadopago_checkout_session', $postData)
+            ->andReturn($checkoutSessionData);
+
+        // Mock session helper
+        $this->gateway->mercadopago->helpers->session
+            ->expects()
+            ->setSession('mp_checkout_session_' . $orderId, $checkoutSessionData)
+            ->once();
+
+        $result = $this->gateway->setCheckoutSessionDataOnSessionHelperByOrderId($orderId);
+
+        // Assert method completes successfully (returns void)
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test setCheckoutSessionDataOnSessionHelperByOrderId with empty data
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     * @return void
+     */
+    public function testSetCheckoutSessionDataOnSessionHelperByOrderIdWithEmptyData()
+    {
+        $orderId = '789';
+        $emptyData = [];
+
+        // Mock classic checkout with empty data
+        $_POST['mercadopago_checkout_session'] = $emptyData;
+
+        // Mock Form::sanitizedPostData
+        $this->mockFormSanitizedPostData($emptyData, 'mercadopago_checkout_session');
+
+        // Session helper should NOT be called when data is empty
+        $this->gateway->mercadopago->helpers->session
+            ->expects()
+            ->setSession(Mockery::any(), Mockery::any())
+            ->never();
+
+        $result = $this->gateway->setCheckoutSessionDataOnSessionHelperByOrderId($orderId);
+
+        // Assert method completes successfully (returns void)
+        $this->assertNull($result);
+
+        // Cleanup
+        unset($_POST['mercadopago_checkout_session']);
     }
 
     /**

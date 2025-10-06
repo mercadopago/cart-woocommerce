@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.5.5] - 2025-10-03
+### Fixed
+- Fix issue with checkout session data not being properly merged in blocks and classic checkout
+
 ## [8.5.4] - 2025-10-02
 ### Fixed
 - Add status validation to prevent unnecessary metadata updates

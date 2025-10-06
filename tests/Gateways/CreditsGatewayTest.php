@@ -59,7 +59,29 @@ class CreditsGatewayTest extends TestCase
     {
         $this->abstractGatewayProcessPaymentMock($isBlocks, $isTestMode);
 
+        // Mock get_id() specifically for this test
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
         $_POST['wc-woo-mercado-pago-credits-new-payment-method'] = $isBlocks ? 1 : null;
+
+        // Mock Form::sanitizedPostData() to avoid WordPress function errors
+        WP_Mock::userFunction('sanitize_post', [
+            'return' => function ($data) {
+                return $data;
+            }
+        ]);
+        WP_Mock::userFunction('map_deep', [
+            'return' => function ($data, $callback) {
+                return is_array($data) ? array_map($callback, $data) : $callback($data);
+            }
+        ]);
+        WP_Mock::userFunction('sanitize_text_field', [
+            'return' => function ($data) {
+                return $data;
+            }
+        ]);
 
         Mockery::mock('overload:' . CreditsTransaction::class)
             ->expects()
@@ -73,6 +95,9 @@ class CreditsGatewayTest extends TestCase
             ->expects()
             ->isTestMode()
             ->andReturn($isTestMode);
+
+        $this->gateway->mercadopago->helpers->notices->shouldReceive('storeNotice')
+            ->andReturnNull();
 
         $this->assertEquals(
             [

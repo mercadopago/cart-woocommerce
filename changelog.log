@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.5.5 (03/10/2025) =
+* Fixed
+- Fix issue with checkout session data not being properly merged in blocks and classic checkout
+
 = v8.5.4 (02/10/2025) =
 * Fixed
 - Add status validation to prevent unnecessary metadata updates

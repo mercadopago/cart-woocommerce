@@ -41,6 +41,11 @@ class BasicGatewayTest extends TestCase
     {
         $this->processPaymentMock($isBlocks);
 
+        // Mock get_id() specifically for this test
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
         $this->order->shouldReceive('get_checkout_payment_url')
             ->once()
             ->andReturn('http://localhost');
@@ -63,6 +68,11 @@ class BasicGatewayTest extends TestCase
     public function testProcessPaymentRedirect(bool $isBlocks)
     {
         $this->processPaymentMock($isBlocks);
+
+        // Mock get_id() specifically for this test
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
 
         $this->gateway->mercadopago->hooks->options->shouldReceive('getGatewayOption')
             ->once()

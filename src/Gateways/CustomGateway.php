@@ -453,20 +453,6 @@ class CustomGateway extends AbstractGateway
             case 'wallet_button':
                 $this->mercadopago->logs->file->info('Preparing to render wallet button checkout', self::LOG_SOURCE);
 
-                // Store checkout session data for wallet button
-                $checkoutSessionData = [];
-                if (isset($_POST['mercadopago_checkout_session'])) {
-                    // Classic Checkout
-                    $checkoutSessionData = Form::sanitizedPostData('mercadopago_checkout_session');
-                } else {
-                    // Blocks Checkout
-                    $checkoutSessionData = $this->processBlocksCheckoutData('mercadopago_checkout_session', Form::sanitizedPostData());
-                }
-
-                if (!empty($checkoutSessionData)) {
-                    $this->mercadopago->helpers->session->setSession('mp_wallet_checkout_session_' . $order->get_id(), $checkoutSessionData);
-                }
-
                 return [
                     'result'   => 'success',
                     'redirect' => $this->mercadopago->helpers->url->setQueryVar(
@@ -581,19 +567,11 @@ class CustomGateway extends AbstractGateway
     public function renderOrderForm($orderId): void
     {
         if ($this->mercadopago->helpers->url->validateQueryVar('wallet_button')) {
-            $order             = wc_get_order($orderId);
-            $checkoutSessionData = $this->mercadopago->helpers->session->getSession('mp_wallet_checkout_session_' . $orderId);
+            $order = wc_get_order($orderId);
 
             $this->transaction = new WalletButtonTransaction($this, $order);
 
-            // Set checkout data if available
-            if (!empty($checkoutSessionData)) {
-                $this->transaction->setCheckoutData($checkoutSessionData);
-            }
-
             $preference = $this->transaction->createPreference();
-
-            $this->mercadopago->helpers->session->deleteSession('mp_wallet_checkout_session_' . $orderId);
 
             $this->mercadopago->hooks->template->getWoocommerceTemplate(
                 'public/receipt/preference-modal.php',
