@@ -6,6 +6,10 @@
     padding: 24px 16px !important
 }
 
+.mp-checkout-ticket-container .mp-checkout-ticket-content .mp-test-mode-card {
+      margin-bottom: 24px !important
+}
+
 .mp-checkout-ticket-content {
     width: 100% !important
 }

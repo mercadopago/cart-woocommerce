@@ -27,15 +27,12 @@ $tabIndex = 1;
 
 <div class='mp-checkout-container'>
     <div class="mp-checkout-credits-container">
-        <div class="mp-checkout-credits-content">
             <?php if ($test_mode) : ?>
-                <div class="mp-checkout-credits-test-mode">
-                    <test-mode title="<?= esc_attr($i18n['test_mode_title']) ?>"
-                        description="<?= esc_attr($i18n['test_mode_description']) ?>"
-                        link-text="<?= esc_attr($i18n['test_mode_link_text']) ?>"
-                        link-src="<?= esc_url($test_mode_link_src) ?>">
-                    </test-mode>
-                </div>
+                <test-mode title="<?= esc_attr($i18n['test_mode_title']) ?>"
+                    description="<?= esc_attr($i18n['test_mode_description']) ?>"
+                    link-text="<?= esc_attr($i18n['test_mode_link_text']) ?>"
+                    link-src="<?= esc_url($test_mode_link_src) ?>">
+                </test-mode>
             <?php endif; ?>
 
             <div class="mp-credits-checkout-benefits">
@@ -72,6 +69,5 @@ $tabIndex = 1;
                     </p>
                 </div>
             </div>
-        </div>
     </div>
 </div>

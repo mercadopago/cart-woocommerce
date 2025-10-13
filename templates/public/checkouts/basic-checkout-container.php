@@ -26,15 +26,14 @@ if ($amount === null) {
 
 <div class='mp-checkout-container'>
     <div class="mp-checkout-pro-container">
+        <div class="mp-checkout-pro-content">
+
         <?php if ($test_mode) : ?>
-            <div class="mp-test-mode-container-pro">
                 <test-mode title="<?= esc_attr($i18n['test_mode_title']) ?>" description="<?= esc_attr($i18n['test_mode_description']) ?>"
                     link-text="<?= esc_attr($i18n['test_mode_link_text']) ?>" link-src="<?= esc_url($links['docs_integration_test']) ?>">
                 </test-mode>
-            </div>
         <?php endif ?>
 
-        <div class="mp-checkout-pro-content">
             <h4 class="mp-checkout-pro-benefits-title">
                 <?= wp_kses_post($i18n['benefits_title']) ?>
             </h4>
@@ -64,19 +63,18 @@ if ($amount === null) {
                         class="mp-checkout-pro-payment-method-icon">
                 <?php endforeach ?>
             </div>
+            <?php if ($method === 'redirect') : ?>
+                <div class="mp-checkout-pro-redirect">
+                    <p class="mp-checkout-pro-redirect-title">
+                        <img src="<?= esc_url($url->getImageAsset("checkouts/basic/redirect-logo.svg")) ?>"
+                            class="mp-checkout-pro-redirect-icon">
+                        <?= esc_html($i18n['redirect_title']) ?>
+                    </p>
+                    <p class="mp-checkout-pro-redirect-description">
+                        <?= esc_html($i18n['redirect_description']) ?>
+                    </p>
+                </div>
+            <?php endif ?>
         </div>
-
-        <?php if ($method === 'redirect') : ?>
-            <div class="mp-checkout-pro-redirect">
-                <p class="mp-checkout-pro-redirect-title">
-                    <img src="<?= esc_url($url->getImageAsset("checkouts/basic/redirect-logo.svg")) ?>"
-                        class="mp-checkout-pro-redirect-icon">
-                    <?= esc_html($i18n['redirect_title']) ?>
-                </p>
-                <p class="mp-checkout-pro-redirect-description">
-                    <?= esc_html($i18n['redirect_description']) ?>
-                </p>
-            </div>
-        <?php endif ?>
     </div>
 </div>

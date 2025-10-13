@@ -201,9 +201,6 @@ const Content = (props) => {
 
   return (
     <div className="mp-checkout-container">
-      <p className="mp-checkout-pse-text" data-cy="checkout-pse-text">
-        {pse_text_label}
-      </p>
       <div className="mp-checkout-pse-container">
         <div ref={ref} className="mp-checkout-pse-content">
           {test_mode ? (
@@ -214,6 +211,9 @@ const Content = (props) => {
               link-src={test_mode_link_src}
             />
           ) : null}
+          <p className="mp-checkout-pse-text" data-cy="checkout-pse-text">
+              {pse_text_label}
+          </p>
           <div className="mp-checkout-pse-person">
             <InputSelect name={'mercadopago_pse[person_type]'}
                          label={person_type_label}
@@ -237,15 +237,15 @@ const Content = (props) => {
             </InputSelect>
           </div>
           <div id="mp-box-loading"></div>
-        </div>
-      </div>
 
-      <TermsAndConditions
+          <TermsAndConditions
         description={terms_and_conditions_description}
         linkText={terms_and_conditions_link_text}
         linkSrc={terms_and_conditions_link_src}
         checkoutClass={'pse'}
       />
+        </div>
+      </div>
     </div>
   )
     ;

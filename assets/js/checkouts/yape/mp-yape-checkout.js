@@ -42,12 +42,25 @@ const getCodeValue = function() {
   return code;
 };
 
+const getForm = () => {
+  const checkoutForm = document.querySelector('form.checkout');
+  const orderReviewForm = document.querySelector('form#order_review');
+
+  return checkoutForm || orderReviewForm;
+};
+
 const isFormValid = () => {
+  const form = getForm();
+
+  if (!form) {
+    return false;
+  }
+
   document.getElementsByTagName('input-field')[0].validate();
   document.getElementsByTagName('input-code')[0].validate();
 
   return !Array
-    .from(document.querySelector('form.checkout').querySelectorAll('input-helper'))
+    .from(form.querySelectorAll('input-helper'))
     .some(item => item.querySelector('div').style.display !== 'none')
 };
 
@@ -71,7 +84,8 @@ jQuery('form.checkout').on('checkout_place_order_woo-mercado-pago-yape', (_event
 });
 
 // If payment fail, retry on next checkout page
-jQuery('form#order_review').submit(function (event) {
+jQuery('form#order_review').submit(async function (event) {
   event.preventDefault();
-  return mercadoPagoFormHandlerYape();
+  await mercadoPagoFormHandlerYape();
+  this.submit();
 });

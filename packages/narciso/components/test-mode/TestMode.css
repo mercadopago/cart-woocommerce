@@ -2,6 +2,10 @@
   padding: 0 0 25px !important
 }
 
+.mp-checkout-pse-test-mode {
+  padding-bottom: 24px !important;
+}
+
 .mp-test-mode-card {
   display: flex !important;
   flex-direction: column !important;
@@ -20,6 +24,7 @@
   justify-content: center !important;
   color: #fff !important;
   width: 16px !important;
+  min-width: 16px !important;
   height: 16px !important;
   margin-right: 16px !important;
   background: #f73 !important;

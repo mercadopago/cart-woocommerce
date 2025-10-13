@@ -17,10 +17,13 @@
 
 .mp-checkout-yape-content {
   width: 100% !important;
+  padding: 12px !important;
+  box-sizing: border-box !important;
 }
 
 .mp-checkout-yape-test-mode {
   padding: 0 0 5px !important;
+  margin-bottom: 24px !important;
 }
 
 .mp-checkout-yape-inputs {
@@ -72,3 +75,30 @@
   margin-top: 0;
   margin-bottom: 0;
 }
+
+.mp-checkout-yape-inputs
+.mp-yape-input-container {
+  display: flex !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+input.mp-yape-code-input {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+@media screen and (max-width: 480px) {
+  .mp-checkout-yape-inputs .mp-yape-input-container {
+    width: 100% !important;
+    display: flex !important;
+    gap: 1px !important;
+  }
+
+  input.mp-yape-code-input {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+

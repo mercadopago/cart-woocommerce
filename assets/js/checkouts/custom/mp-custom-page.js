@@ -375,6 +375,10 @@ const CheckoutPage = {
 
   verifyInstallmentsContainer() {
     try {
+      if (!this.installmentsEnabled) {
+        return true;
+      }
+
       const installmentsContainer = document.querySelector(CheckoutElements.mpInstallmentsContainer);
       if (installmentsContainer) {
         if (installmentsContainer.firstElementChild) {
