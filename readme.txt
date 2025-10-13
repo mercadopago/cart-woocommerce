@@ -134,8 +134,12 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.5.5 (03/10/2025) =
+= v8.5.6 (10/10/2025) =
 * Fixed
-- Fix issue with checkout session data not being properly merged in blocks and classic checkout
+- Fixed installments field validation during payment processing and improved error messages
+- Fixed address data field behavior in boleto payment
+- Fixed error when paying with Yape on the order payment page
+- Fixed Terms and Conditions link text in test mode message on Yape payment page
+- Fixed checkout template styles and structures to prevent breaks and inconsistencies in checkout display
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).
