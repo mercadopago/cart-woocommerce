@@ -375,19 +375,24 @@ class CheckoutTicketPageController {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+
+  let checkoutTicketPageController = null;
+
   const ticketFormLoadInterval = setInterval(function () {
     const checkoutTicketPaymentMethodElement = 
       document.getElementById('payment_method_woo-mercado-pago-ticket') ?? 
       document.getElementById('radio-control-wc-payment-method-options-woo-mercado-pago-ticket') ??
       document.querySelectorAll("input[value=woo-mercado-pago-ticket]")[0];
 
-    if (!checkoutTicketPaymentMethodElement) {
+    const checkboxUseShippingData = document.getElementById('form-checkout__address_checkbox');
+
+    if (checkoutTicketPaymentMethodElement && checkboxUseShippingData) {
+      checkoutTicketPageController = new CheckoutTicketPageController(wc_mercadopago_ticket_checkout_params);
+      // Define a global function for ticket.block.js to be able to call the addressFieldsFromTicketRowAreValid method
+      window.addressFieldsFromTicketRowAreValid = checkoutTicketPageController.addressFieldsFromTicketRowAreValid.bind(checkoutTicketPageController);
+
       clearInterval(ticketFormLoadInterval);
       return;
     }
-
-    const checkoutTicketPageController = new CheckoutTicketPageController(wc_mercadopago_ticket_checkout_params);
-    // Define a global function for ticket.block.js to be able to call the addressFieldsFromTicketRowAreValid method
-    window.addressFieldsFromTicketRowAreValid = checkoutTicketPageController.addressFieldsFromTicketRowAreValid.bind(checkoutTicketPageController);
   }, 1000);
 });

@@ -3749,7 +3749,7 @@ msgid ""
 "<strong>Your payment was declined because something went wrong</"
 "strong><br>We recommended trying again or paying with another method."
 msgstr ""
-"<strong>Tu pago fue rechazado porque hube un error</strong><br>Te "
+"<strong>Tu pago fue rechazado porque hubo un error</strong><br>Te "
 "recomendamos intentar nuevamente o pagar con otro medio de pago."
 
 #: ../../src/Translations/StoreTranslations.php:566

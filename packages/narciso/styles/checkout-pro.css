@@ -8,12 +8,20 @@
     margin: 0 !important;
 }
 
+.mp-checkout-pro-container .mp-test-mode-card {
+    margin-bottom: 24px !important
+}
+
+.mp-input-select-container {
+    padding-bottom: 24px !important;
+}
+
 div.mp-test-mode-container-pro {
     padding: 24px 16px 0 !important;
 }
 
 .mp-checkout-pro-content {
-    padding: 40px !important;
+    padding: 24px 16px !important;
     background: rgba(255, 255, 255, 1);
 }
 
@@ -64,6 +72,7 @@ img.mp-checkout-pro-benefit-icon {
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px;
+    padding-bottom: 40px !important;
 }
 
 img.mp-checkout-pro-payment-method-icon {
@@ -79,9 +88,8 @@ img.mp-checkout-pro-payment-method-icon {
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    padding: 16px 40px !important;
     background: rgba(245, 245, 245, 1);
-    margin: 0 16px 16px !important;
+    padding: 16px 40px !important;
 }
 
 .mp-checkout-pro-redirect-title {
@@ -116,7 +124,7 @@ img.mp-checkout-pro-redirect-icon {
 
 @media only screen and (max-width: 768px) {
     .mp-checkout-pro-content {
-        padding: 40px 20px !important;
+        padding: 24px 20px !important;
     }
 
     .mp-checkout-pro-benefits-title {

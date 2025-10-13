@@ -89,6 +89,14 @@ class MPEventHandler {
     }
 
     createToken() {
+        if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.verifyInstallmentsContainer === 'function') {
+            if (!CheckoutPage.verifyInstallmentsContainer()) {
+                this.cardForm.removeLoadSpinner();
+                return false;
+            }
+        }
+    
+        console.log('createToken');
         this.cardForm.form
             .createCardToken()
             .then((cardToken) => {

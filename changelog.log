@@ -1,6 +1,14 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.5.6 (10/10/2025) =
+* Fixed
+- Fix installments field validation during payment processing and enhanced error messaging
+- Fix the behavior of the address data field with ticket payment
+- Fix error to pay with Yape payment in Order Pay page
+- Fix the Terms and Conditions link text in the test mode message in the Yape payment page
+- Fix checkout template styles and structures changed to avoid breakages and inconsistencies in checkout display
+
 = v8.5.5 (03/10/2025) =
 * Fixed
 - Fix issue with checkout session data not being properly merged in blocks and classic checkout

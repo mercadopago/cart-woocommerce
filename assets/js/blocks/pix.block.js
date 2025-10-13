@@ -119,14 +119,13 @@ const Content = (props) => {
             linkSrc={pix_template_src}
           />
         </div>
-      </div>
-
       <TermsAndConditions
         description={terms_and_conditions_description}
         linkText={terms_and_conditions_link_text}
         linkSrc={terms_and_conditions_link_src}
         checkoutClass={'pix'}
       />
+      </div>
     </div>
   );
 };

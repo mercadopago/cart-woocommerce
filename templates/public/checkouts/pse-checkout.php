@@ -39,11 +39,8 @@ if (! defined('ABSPATH')) {
 <div class='mp-checkout-container'>
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
-    <?php else : ?> 
+    <?php else : ?>
         <div class="mp-checkout-pse-container">
-            <p class="mp-checkout-pse-text" data-cy="checkout-pse-text">
-                <?= esc_html($pse_text_label); ?>
-            </p>
             <div class="mp-checkout-pse-content">
                 <?php if ($test_mode) : ?>
                     <div class="mp-checkout-pse-test-mode">
@@ -55,6 +52,9 @@ if (! defined('ABSPATH')) {
                         </test-mode>
                     </div>
                 <?php endif; ?>
+                <p class="mp-checkout-pse-text" data-cy="checkout-pse-text">
+                <?= esc_html($pse_text_label); ?>
+                </p>
                 <div class="mp-checkout-pse-person">
                     <input-select
                         name="mercadopago_pse[person_type]"
@@ -64,21 +64,21 @@ if (! defined('ABSPATH')) {
                     >
                     </input-select>
                 </div>
-                    <div class="mp-checkout-pse-input-document">
-                        <input-document
-                            input-id="mp-pse-gateway-document-input"
-                            label-message="<?= esc_html($input_document_label); ?>"
-                            helper-invalid="<?= esc_html($input_document_helper_invalid); ?>"
-                            helper-empty="<?= esc_html($input_document_helper_empty); ?>"
-                            helper-wrong="<?= esc_html($input_document_helper_wrong); ?>"
-                            input-name='mercadopago_pse[doc_number]'
-                            select-name='mercadopago_pse[doc_type]'
-                            select-id='doc_type'
-                            flag-error='mercadopago_pse[docNumberError]'
-                            documents='["CC","CE","NIT"]'
-                            validate=true>
-                        </input-document>
-                    </div>
+                <div class="mp-checkout-pse-input-document">
+                    <input-document
+                        input-id="mp-pse-gateway-document-input"
+                        label-message="<?= esc_html($input_document_label); ?>"
+                        helper-invalid="<?= esc_html($input_document_helper_invalid); ?>"
+                        helper-empty="<?= esc_html($input_document_helper_empty); ?>"
+                        helper-wrong="<?= esc_html($input_document_helper_wrong); ?>"
+                        input-name='mercadopago_pse[doc_number]'
+                        select-name='mercadopago_pse[doc_type]'
+                        select-id='doc_type'
+                        flag-error='mercadopago_pse[docNumberError]'
+                        documents='["CC","CE","NIT"]'
+                        validate=true>
+                    </input-document>
+                </div>
                 <div class="mp-checkout-pse-bank">
                     <input-select
                         name="mercadopago_pse[bank]"
@@ -115,7 +115,7 @@ if (! defined('ABSPATH')) {
                     </terms-and-conditions>
                 </div>
         </div>
-    <?php endif; ?> 
+    <?php endif; ?>
 </div>
 <div>
 </div>

@@ -34,18 +34,17 @@ if (! defined('ABSPATH')) {
 <div class="mp-checkout-container">
     <div class="mp-checkout-yape-container">
         <div class="mp-checkout-yape-content">
-            <div class="mp-checkout-yape-test-mode">
                 <?php if ($test_mode) : ?>
                     <div class="mp-checkout-yape-test-mode">
                         <test-mode
                             title="<?= esc_html($test_mode_title) ?>"
-                            description="<?= esc_html($test_mode_description) ?>">
+                            description="<?= esc_html($test_mode_description) ?>"
                             link-text="<?= esc_html($terms_and_conditions_link_text) ?>"
                             link-src="<?= esc_html($terms_and_conditions_link_src) ?>">
                         </test-mode>
                     </div>
                 <?php endif; ?>
-            </div>
+
             <div class="mp-checkout-yape-title-container">
                 <h1 class="mp-checkout-yape-title"><?= esc_html($yape_title) ?></h1>
                 <p class="mp-checkout-yape-subtitle"><?= esc_html($yape_subtitle) ?></p>

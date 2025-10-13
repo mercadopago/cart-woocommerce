@@ -58,6 +58,7 @@ if (!defined('ABSPATH')) {
             <?php endif; ?>
 
             <?php if ($wallet_button_enabled) : ?>
+                <div class="mp-wallet-button-container-wrapper">
                 <div class='mp-wallet-button-container'>
 
                     <div class='mp-wallet-button-title'>
@@ -67,7 +68,8 @@ if (!defined('ABSPATH')) {
                     <div class='mp-wallet-button-button'>
                         <button id="mp-wallet-button">
                             <img src="<?= esc_url($wallet_button_image); ?>">
-                        </button>
+                            </button>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
@@ -237,7 +239,7 @@ if (!defined('ABSPATH')) {
 <script type="text/javascript">
     function submitWalletButton(event) {
         event.preventDefault();
-        
+
         if (window.mpSuperTokenTriggerHandler) {
             window.mpSuperTokenTriggerHandler.onTriggerWalletButton();
             return;

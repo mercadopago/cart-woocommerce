@@ -130,6 +130,7 @@
 .mp-input-document {
     border-radius: 8px !important;
     box-shadow: none !important;
+    margin-bottom: 24px !important;
     width: 100% !important
 }
 
@@ -155,13 +156,26 @@
     margin: 0 !important;
 }
 
-.row-image-select img, .payment_method_woo-mercado-pago-basic>label>img {
+.row-image-select img {
     height: 32px !important;
     max-height: 32px !important;
     max-width: 32px !important;
     width: 32px !important;
 }
 
+.payment_method_woo-mercado-pago-basic, .payment_method_woo-mercado-pago-ticket,
+.payment_method_woo-mercado-pago-custom, .payment_method_woo-mercado-pago-pix,
+.payment_method_woo-mercado-pago-yape, .payment_method_woo-mercado-pago-credits,
+.payment_method_woo-mercado-pago-pse {
+  label {
+    img {
+      height: 32px !important;
+      max-height: 32px !important;
+        max-width: 32px !important;
+        width: 32px !important;
+    }
+  }
+}
 .row-image-select img {
     margin-right: 8px;
     padding: 0;

@@ -61,7 +61,10 @@
     display: flex;
     flex-direction: column !important;
     justify-content: center !important;
-    padding: 12px !important;
+    padding: 24px 16px !important;
+}
+.mp-checkout-custom-container .mp-test-mode-card {
+    margin-bottom: 24px !important
 }
 
 .mp-checkout-custom-container iframe{
@@ -72,17 +75,26 @@
     padding-bottom: 32px !important
 }
 
+.mp-wallet-button-container-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px !important;
+  justify-content: center;
+  width: auto !important;
+}
+
 .mp-wallet-button-container {
-    align-items: center;
-    border: 1px solid rgba(0, 0, 0, .1) !important;
-    border-radius: 6px !important;
-    display: flex;
-    flex-direction: column !important;
-    height: auto !important;
-    padding: 24px 16px !important;
-    max-width: 416px !important;
-    width: 100% !important;
-    margin: auto auto 25px auto !important;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, .1) !important;
+  border-radius: 6px !important;
+  display: flex;
+  flex-direction: column !important;
+  height: auto !important;
+  padding: 24px 16px !important;
+  max-width: 416px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .mp-wallet-button-container .mp-wallet-button-title {

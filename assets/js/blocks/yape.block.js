@@ -119,7 +119,7 @@ const Content = (props) => {
 
   window.mpFormId = 'blocks_checkout_form';
   window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
-  
+
   useEffect(() => {
     if (!hasInitialized) {
       if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
@@ -188,7 +188,6 @@ const Content = (props) => {
       </div>
       <div className={'mp-checkout-yape-container'}>
         <div ref={ref} className={'mp-checkout-yape-content'}>
-          <div className={'mp-checkout-yape-test-mode'}>
             {test_mode ? (
               <TestMode
                 title={test_mode_title}
@@ -197,7 +196,6 @@ const Content = (props) => {
                 linkSrc={test_mode_link_src}
               />
             ) : null}
-          </div>
           <div className={'mp-checkout-yape-title-container'}>
             <h2 className={'mp-checkout-yape-title'}>{yape_title}</h2>
             <p className={'mp-checkout-yape-subtitle'}>{yape_subtitle}</p>

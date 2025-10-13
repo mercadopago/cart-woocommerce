@@ -82,6 +82,11 @@ const Content = (props) => {
             window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
             return { type: emitResponse.responseTypes.ERROR };
           }
+
+          if (typeof CheckoutPage !== 'undefined' && !CheckoutPage.verifyInstallmentsContainer()) {
+            window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
+            return { type: emitResponse.responseTypes.ERROR };
+          }
           break;
       }
 
