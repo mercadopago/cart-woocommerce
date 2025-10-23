@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Order;
 use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Helpers\Requester;
+use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use WC_Order;
@@ -271,6 +272,7 @@ class OrderStatus
                 }
 
                 $refundAmount = 0;
+                $refundRatio = (float) ($order->get_meta(OrderMetadata::CURRENCY_RATIO) ?? 1);
 
                 if (isset($data['current_refund']['id'])) {
                     $refundId = $data['current_refund']['id'];
@@ -282,7 +284,7 @@ class OrderStatus
                     if ($refund === false) {
                         throw new Exception('Refund not found for the given refund ID: ' . $refundId);
                     }
-                    $refundAmount = floatval($refund['amount']);
+                    $refundAmount = floatval($refund['amount'] / $refundRatio);
                 } else {
                     $refundAmount = $this->getUnprocessedRefundAmount($order, $paymentsData);
                     if ($refundAmount <= 0) {
@@ -296,7 +298,7 @@ class OrderStatus
                     'reason'   => $this->translations['refunded'],
                     'order_id' => $order->get_id(),
                 ));
-                $order->add_order_note('Mercado Pago: ' . $this->translations['partial_refunded'] . $refundAmount);
+                $order->add_order_note('Mercado Pago: ' . $this->translations['partial_refunded'] . Numbers::format($refundAmount));
 
                 return;
             }
@@ -469,7 +471,7 @@ class OrderStatus
     private function refundAlreadyProcessed(WC_Order $order, array $paymentsData): bool
     {
         $totalRefundedWC = (float) $order->get_total_refunded();
-        $totalRefundedMP = $this->calculateTotalRefunded($paymentsData);
+        $totalRefundedMP = $this->calculateTotalRefunded($paymentsData, $order);
 
         return $totalRefundedMP <= $totalRefundedWC;
     }
@@ -480,21 +482,25 @@ class OrderStatus
      * @param WC_Order $order
      * @param array $paymentsData - Array of payment data from getAllPaymentsData()
      *
-     * @return float
+     * @return float with currency ratio applied
      */
     private function getUnprocessedRefundAmount(WC_Order $order, array $paymentsData): float
     {
-        $totalRefundedMP = $this->calculateTotalRefunded($paymentsData);
+        $totalRefundedMP = $this->calculateTotalRefunded($paymentsData, $order);
         $totalRefundedWC = (float) $order->get_total_refunded();
+        $convertedTotalRefundedMP = $order->get_meta(OrderMetadata::CURRENCY_RATIO)
+            ? "(" . Numbers::format($totalRefundedMP * $order->get_meta(OrderMetadata::CURRENCY_RATIO)) . ")"
+            : "";
 
         $unprocessedAmount = $totalRefundedMP - $totalRefundedWC;
 
         $this->logs->file->info(
             sprintf(
-                'Mercado Pago: Refund comparison - MP: %s, WC: %s, Unprocessed: %s',
-                $totalRefundedMP,
-                $totalRefundedWC,
-                $unprocessedAmount
+                'Mercado Pago: Refund comparison - MP: %s%s, WC: %s, Unprocessed: %s',
+                Numbers::format($totalRefundedMP),
+                $convertedTotalRefundedMP,
+                Numbers::format($totalRefundedWC),
+                Numbers::format($unprocessedAmount)
             ),
             __CLASS__
         );
@@ -536,9 +542,9 @@ class OrderStatus
      *
      * @param array $paymentsData - Array of payment data from getAllPaymentsData()
      *
-     * @return float
+     * @return float with currency ratio applied
      */
-    private function calculateTotalRefunded(array $paymentsData): float
+    private function calculateTotalRefunded(array $paymentsData, WC_Order $order): float
     {
         $totalRefunded = 0;
 
@@ -546,7 +552,10 @@ class OrderStatus
             $totalRefunded += (float) ($payment['transaction_amount_refunded'] ?? 0);
         }
 
-        return $totalRefunded;
+        $currencyRatio = $order->get_meta(OrderMetadata::CURRENCY_RATIO);
+        $currencyRatio = (!empty($currencyRatio) && is_numeric($currencyRatio)) ? (float) $currencyRatio : 1;
+
+        return $totalRefunded / $currencyRatio;
     }
 
     /**

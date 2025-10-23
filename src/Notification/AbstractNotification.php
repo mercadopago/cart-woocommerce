@@ -58,50 +58,54 @@ abstract class AbstractNotification implements NotificationInterface
      *
      * @return void
      */
-    public function handleReceivedNotification($data): void
+    public function handleReceivedNotification($data)
     {
         $this->logs->file->info('Received data content', __CLASS__, $data);
     }
 
-    /**
-     * Process successful request
-     *
-     * @param mixed $data
-     *
-     * @return bool|WC_Order|WC_Order_Refund
-     */
-    public function handleSuccessfulRequest($data)
+    public function handleSuccessfulRequest($data): void
     {
-        $this->logs->file->info('Starting to process update...', __CLASS__);
+        try {
+            $this->logs->file->info('Starting to process update...', __CLASS__);
 
-        $order_key = $data['external_reference'];
+            $order_key = $data['external_reference'];
 
-        if (empty($order_key)) {
-            $message = 'external_reference not found';
-            $this->logs->file->error($message, __CLASS__, $data);
-            $this->setResponse(422, $message);
+            if (empty($order_key)) {
+                $message = 'external_reference not found';
+                $this->logs->file->error($message, __CLASS__, $data);
+                $this->setResponse(422, $message);
+            }
+
+            $invoice_prefix = get_option('_mp_store_identificator', 'WC-');
+            $id = (int) str_replace($invoice_prefix, '', $order_key);
+            $order = wc_get_order($id);
+
+            if (!$order) {
+                $message = 'Order is invalid';
+                $this->logs->file->error($message, __CLASS__, $data);
+                $this->setResponse(422, $message);
+            }
+
+            if ($order->get_id() !== $id) {
+                $message = 'Order error';
+                $this->logs->file->error($message, __CLASS__, $order);
+                $this->setResponse(422, $message);
+            }
+
+            $this->logs->file->info('Updating metadata and status with data', __CLASS__, $data);
+
+            $this->handleSuccessfulRequestInternal($data, $order);
+        } catch (Exception $e) {
+            $this->setResponse(422, $e->getMessage());
+            $this->logs->file->error($e->getMessage(), static::class, $data);
         }
-
-        $invoice_prefix = get_option('_mp_store_identificator', 'WC-');
-        $id             = (int) str_replace($invoice_prefix, '', $order_key);
-        $order          = wc_get_order($id);
-
-        if (!$order) {
-            $message = 'Order is invalid';
-            $this->logs->file->error($message, __CLASS__, $data);
-            $this->setResponse(422, $message);
-        }
-
-        if ($order->get_id() !== $id) {
-            $message = 'Order error';
-            $this->logs->file->error($message, __CLASS__, $order);
-            $this->setResponse(422, $message);
-        }
-
-        $this->logs->file->info('Updating metadata and status with data', __CLASS__, $data);
-
-        return $order;
     }
+
+    /**
+     * @param array $data
+     * @param WC_Order|WC_Order_Refund $order
+     **/
+    abstract public function handleSuccessfulRequestInternal($data, $order): void;
 
     /**
      * Process order status

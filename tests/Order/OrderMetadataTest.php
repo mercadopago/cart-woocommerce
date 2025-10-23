@@ -253,6 +253,62 @@ class OrderMetadataTest extends TestCase
         $this->assertTrue(true);
     }
 
+    /**
+     * Test setCurrencyRatioData method behavior
+     *
+     * GIVEN an order and a currency ratio value
+     * WHEN setCurrencyRatioData is called
+     * THEN it should update order metadata with currency ratio and save the order
+     */
+    public function testSetCurrencyRatioData()
+    {
+        // Given - Mock the order metadata update and save operations
+        $currencyRatio = 3.85;
+
+        $this->orderMetaMock
+            ->shouldReceive('update')
+            ->with($this->orderMock, '_currency_ratio', $currencyRatio)
+            ->once();
+
+        $this->orderMock
+            ->shouldReceive('save')
+            ->once();
+
+        // When - Call setCurrencyRatioData
+        $result = $this->orderMetadata->setCurrencyRatioData($this->orderMock, $currencyRatio);
+
+        // Then - Verify the method completes successfully
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test setCurrencyRatioData with different data types
+     *
+     * @testWith [1.0]
+     *           [2.5]
+     *           [0.5]
+     *           [10]
+     *           ["3.75"]
+     */
+    public function testSetCurrencyRatioDataWithDifferentTypes($ratioValue)
+    {
+        // Given - Mock the order metadata update and save operations
+        $this->orderMetaMock
+            ->shouldReceive('update')
+            ->with($this->orderMock, '_currency_ratio', $ratioValue)
+            ->once();
+
+        $this->orderMock
+            ->shouldReceive('save')
+            ->once();
+
+        // When - Call setCurrencyRatioData with different value types
+        $result = $this->orderMetadata->setCurrencyRatioData($this->orderMock, $ratioValue);
+
+        // Then - Verify the method handles different types correctly
+        $this->assertNull($result);
+    }
+
     public function testMarkPaymentAsBlocks()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'blocks_payment', 'blocked')->once();

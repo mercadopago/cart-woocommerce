@@ -49,6 +49,14 @@ class MPSuperTokenAuthenticator {
         return this.userClosedModal;
     }
 
+    storeAuthenticator(authenticator) {
+        this.authenticator = authenticator;
+    }
+
+    getStoredAuthenticator() {
+        return this.authenticator;
+    }
+
     async buildAuthenticator(amount, buyerEmail) {
         this.amountUsed = amount;
 
@@ -77,7 +85,7 @@ class MPSuperTokenAuthenticator {
             const accountPaymentMethods = await this.mpSuperTokenPaymentMethods.getAccountPaymentMethods(token);
 
             if (!accountPaymentMethods?.data.length) {
-                throw new Error('No payment methods found');
+                throw new Error('EMPTY_ACCOUNT_PAYMENT_METHODS');
             }
 
             this.mpSuperTokenPaymentMethods.renderAccountPaymentMethods(accountPaymentMethods.data, this.amountUsed);
@@ -108,5 +116,32 @@ class MPSuperTokenAuthenticator {
         this.mpSuperTokenMetrics.canUseSuperToken(true);
 
         await this.showAuthenticator(authenticator, showOptions);
+    }
+
+    async getPreloadedPaymentMethods(amount, buyerEmail) {
+        try {
+            const authenticator = await this.buildAuthenticator(amount, buyerEmail);
+            const preloadedPaymentMethods = await authenticator.getPreloadedPaymentMethods();
+
+            if (!preloadedPaymentMethods?.length) {
+                throw new Error('EMPTY_PRELOADED_PAYMENT_METHODS');
+            }
+
+            this.storeAuthenticator(authenticator);
+
+            return preloadedPaymentMethods;
+        } catch (error) {
+            this.mpSuperTokenMetrics.errorToGetPreloadedPaymentMethods(error);
+        }
+    }
+
+    async showAuthenticatorWithPreloadedPaymentMethods() {
+        try {
+            const token = await this.getStoredAuthenticator().show({ confirmationLocation: 'app', skipAllUserConfirmation: true });
+
+            await this.renderAccountPaymentMethods(token);
+        } catch (error) {
+            this.mpSuperTokenMetrics.errorToShowAuthenticator(error);
+        }
     }
 }

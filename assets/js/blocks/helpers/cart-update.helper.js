@@ -1,7 +1,7 @@
 const namespace = 'mercadopago_blocks_update_cart';
 
 const addDiscountAndCommission = (callback, paymentMethodName) => {
-  callback({
+  return callback({
     namespace,
     data: {
       action: 'add',
@@ -11,7 +11,7 @@ const addDiscountAndCommission = (callback, paymentMethodName) => {
 };
 
 const removeDiscountAndCommission = (callback, paymentMethodName) => {
-  callback({
+  return callback({
     namespace,
     data: {
       action: 'remove',
@@ -40,7 +40,7 @@ async function handleCartTotalChange(value, currency) {
   }
   const updatedAmount = formatCurrency(value, currency);
 
-  mpCustomCheckoutHandler.cardForm.initCardForm(updatedAmount);
+  await mpCustomCheckoutHandler.cardForm.initCardForm(updatedAmount);
 }
 
 export { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission };

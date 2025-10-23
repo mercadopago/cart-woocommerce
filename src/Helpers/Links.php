@@ -162,4 +162,17 @@ class Links
             'wordpress_review_link' => 'https://wordpress.org/support/plugin/woocommerce-mercadopago/reviews/?filter=5#new-post',
         ];
     }
+
+    public function getPrivacyPolicyLink(string $siteId): string
+    {
+        return [
+            'MLA' => 'https://www.mercadopago.com.ar/privacidad',
+            'MLB' => 'https://www.mercadopago.com.br/privacidade',
+            'MLM' => 'https://www.mercadopago.com.mx/privacidad',
+            'MLC' => 'https://www.mercadopago.cl/privacidad',
+            'MCO' => 'https://www.mercadopago.com.co/privacidad',
+            'MPE' => 'https://www.mercadopago.com.pe/privacidad',
+            'MLU' => 'https://www.mercadopago.com.uy/privacidad',
+        ][strtoupper($siteId)] ?? 'https://www.mercadopago.com/privacy';
+    }
 }

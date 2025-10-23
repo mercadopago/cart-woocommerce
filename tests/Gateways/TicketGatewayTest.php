@@ -277,7 +277,7 @@ class TicketGatewayTest extends TestCase
             ->expects()
             ->processReturnFail(
                 Mockery::type(\Exception::class),
-                $this->gateway->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                'cho_form_error',
                 TicketGateway::LOG_SOURCE
             )->andReturn($return = [
                 'result' => 'fail',
@@ -355,7 +355,7 @@ class TicketGatewayTest extends TestCase
             ->expects()
             ->processReturnFail(
                 Mockery::type(ResponseStatusException::class),
-                $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+                'buyer_default',
                 TicketGateway::LOG_SOURCE,
                 $response
             )->andReturn($return = [

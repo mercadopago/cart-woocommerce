@@ -145,7 +145,7 @@ class StoreTranslations
             'benefits_title'             => __('Discover how practical Mercado&nbsp;Pago is', 'woocommerce-mercadopago'),
             'first_benefit_description'  => __('<b>Pay with your saved cards</b> or account money without filling out personal details.', 'woocommerce-mercadopago'),
             'second_benefit_description' => __('<b>Buy safely</b> with your preferred payment method.', 'woocommerce-mercadopago'),
-            'redirect_title'             => __('We\'ll take you to Mercado&nbspPago', 'woocommerce-mercadopago'),
+            'redirect_title'             => __('We\'ll take you to Mercado&nbsp;Pago', 'woocommerce-mercadopago'),
             'redirect_description'       => __('If you don\'t have an account, you can use your email.', 'woocommerce-mercadopago'),
             'account_money'              => __('Account money', 'woocommerce-mercadopago'),
         ];
@@ -308,6 +308,10 @@ class StoreTranslations
             'last_digits_text'                                    => __('ending in', 'woocommerce-mercadopago'),
             'new_card_text'                                       => __('New card', 'woocommerce-mercadopago'),
             'account_money_text'                                  => __('Account Money', 'woocommerce-mercadopago'),
+            'account_money_wallet_with_investment_text'           => __('Balance in Mercado Pago Wallet + Generating returns in GBM', 'woocommerce-mercadopago'),
+            'account_money_wallet_text'                           => __('Balance in Mercado Pago Wallet', 'woocommerce-mercadopago'),
+            'account_money_investment_text'                       => __('Balance generating returns in GBM through Mercado Pago', 'woocommerce-mercadopago'),
+            'account_money_available_text'                        => __('Money available at Mercado Pago', 'woocommerce-mercadopago'),
             'interest_free_part_one_text'                         => __('Up to', 'woocommerce-mercadopago'),
             'interest_free_part_two_text'                         => _x('interest-free installments', 'frontend checkout display', 'woocommerce-mercadopago'),
             'interest_free_option_text'                           => _x('interest-free installments', 'installments without interest', 'woocommerce-mercadopago'),
@@ -323,6 +327,7 @@ class StoreTranslations
             'mercado_pago_card_name'                              => __('Mercado Pago Prepaid Card', 'woocommerce-mercadopago'),
             'card_number_validation_error'                        => __('Invalid card number. Please check the information provided.', 'woocommerce-mercadopago'),
             'locale'                                              => __('en-US', 'woocommerce-mercadopago'),
+            'mercadopago_privacy_policy'                          => __('Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.', 'woocommerce-mercadopago'),
         ];
     }
 

@@ -50,7 +50,7 @@ class WebhookNotification extends AbstractNotification
      * @return void
      * @throws Exception
      */
-    public function handleReceivedNotification($data): void
+    public function handleReceivedNotification($data)
     {
         parent::handleReceivedNotification($data);
 
@@ -61,13 +61,13 @@ class WebhookNotification extends AbstractNotification
             if (!isset($data['id']) || !isset($data['topic'])) {
                 $message = 'Mercado Pago request failure';
                 $this->logs->file->error($message, __CLASS__, $data);
-                $this->setResponse(422, $message);
+                return $this->setResponse(422, $message);
             }
         }
 
         if ($data['type'] !== 'payment') {
             $message = 'Mercado Pago Invalid Requisition';
-            $this->setResponse(422, $message);
+            return $this->setResponse(422, $message);
         }
 
         $payment_id = preg_replace('/\D/', '', $data['data_id']);
@@ -78,42 +78,28 @@ class WebhookNotification extends AbstractNotification
         if ($response->getStatus() !== 200) {
             $message = 'Error when processing received data';
             $this->logs->file->error($message, __CLASS__, (array) $response);
-            $this->setResponse(422, $message);
+            return $this->setResponse(422, $message);
         }
 
         $this->handleSuccessfulRequest($response->getData());
     }
 
-    /**
-     * Process success response
-     *
-     * @param mixed $data
-     *
-     * @return void
-     */
-    public function handleSuccessfulRequest($data): void
+    public function handleSuccessfulRequestInternal($data, $order): void
     {
-        try {
-            $order  = parent::handleSuccessfulRequest($data);
-            $oldOrderStatus  = $order->get_status();
-            $processedStatus = $this->getProcessedStatus($order, $data);
+        $oldOrderStatus = $order->get_status();
+        $processedStatus = $this->getProcessedStatus($order, $data);
 
-            $this->logs->file->info(
-                sprintf(
-                    'Changing order status from %s to %s',
-                    $oldOrderStatus,
-                    $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
-                ),
-                __CLASS__
-            );
+        $this->logs->file->info(
+            sprintf(
+                'Changing order status from %s to %s',
+                $oldOrderStatus,
+                $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
+            ),
+            __CLASS__
+        );
 
-
-            $this->processStatus($processedStatus, $order, $data);
-            $this->setResponse(200, 'Webhook Notification Successfully');
-        } catch (Exception $e) {
-            $this->setResponse(422, $e->getMessage());
-            $this->logs->file->error($e->getMessage(), __CLASS__);
-        }
+        $this->processStatus($processedStatus, $order, $data);
+        $this->setResponse(200, 'Webhook Notification Successfully');
     }
 
     /**

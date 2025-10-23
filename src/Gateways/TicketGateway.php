@@ -345,7 +345,7 @@ class TicketGateway extends AbstractGateway
 
         return $this->processReturnFail(
             new ResponseStatusException('exception : Invalid status or status_detail on ' . __METHOD__),
-            $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+            'buyer_default',
             self::LOG_SOURCE,
             $response
         );
@@ -460,7 +460,7 @@ class TicketGateway extends AbstractGateway
         if ($checkout['site_id'] === 'MLB' && empty($checkout['doc_number'])) {
             return $this->processReturnFail(
                 new Exception('Document is required on ' . __METHOD__),
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                'cho_form_error',
                 self::LOG_SOURCE
             );
         }
@@ -469,7 +469,7 @@ class TicketGateway extends AbstractGateway
         if ($checkout['site_id'] === 'MLU' && Arrays::anyEmpty($checkout, ['doc_number', 'doc_type'])) {
             return $this->processReturnFail(
                 new Exception('Document is required on ' . __METHOD__),
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                'cho_form_error',
                 self::LOG_SOURCE
             );
         }

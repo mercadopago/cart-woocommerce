@@ -29,6 +29,7 @@ class RefundHandler
     private const REFUND_ORIGIN_WOO = 'origin_woocommerce';
     private const CHECKOUT_TYPE = 'checkout_type';
     private const SUPER_TOKEN = 'super_token';
+    private const CURRENCY_RATIO = '_currency_ratio';
 
     private Requester $requester;
     private $order;
@@ -62,6 +63,10 @@ class RefundHandler
         $checkoutType = $this->order->get_meta(self::CHECKOUT_TYPE);
         if (!empty($checkoutType) && $checkoutType === self::SUPER_TOKEN) {
             throw new Exception(RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED);
+        }
+
+        if (!empty($this->order->get_meta($this->mercadopago->orderMetadata::CURRENCY_RATIO))) {
+            $amount = $amount * (float) $this->order->get_meta($this->mercadopago->orderMetadata::CURRENCY_RATIO);
         }
 
         try {

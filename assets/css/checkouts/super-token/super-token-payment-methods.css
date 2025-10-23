@@ -354,6 +354,42 @@
     margin: 0 !important;
 }
 
+.mp-super-token-payment-methods-list .mp-privacy-policy-footer {
+    padding: 16px !important;
+}
+
+.mp-payment-methods-header {
+    display: flex;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 16px 0 12px 0 !important
+}
+
+.mp-payment-methods-header span {
+    font-family: var(--primary-font-family);
+    color: var(--andes-text-color-primary);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+header.mp-payment-methods-header > img.mp-payment-methods-header-logo {
+    width: 32px !important;
+    height: 26px !important;
+    max-height: 26px !important;
+    min-height: 26px !important;
+    max-width: 32px !important;
+    min-width: 32px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+}
+
+.mp-super-token-payment-methods-list hr.mp-payment-methods-list-horizontal-row {
+    color: var(--andes-gray-color) !important;
+    margin: 0 0 8px 0 !important
+}
+
 @media screen and (max-width: 767px) {
     .mp-super-token-security-code-tooltip:hover::after {
         position: absolute;
@@ -390,10 +426,3 @@
         width: 100%;
     }
 }
-
-/* TODO: Aguardando permissão de UX para remover o valor prop */
-/* @container payment-method-header (max-width: 255px) {
-    .mp-super-token-payment-method__value-prop {
-        display: none;
-    }
-} */

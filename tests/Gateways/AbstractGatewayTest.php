@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Refund\RefundHandler;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
 use MercadoPago\Woocommerce\Tests\Traits\FormMock;
+use MercadoPago\Woocommerce\Tests\Mocks\ArrayMock;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
@@ -682,26 +683,101 @@ class AbstractGatewayTest extends TestCase
     }
 
     /**
-     * Test processReturnFail method with card number validation error
+     * Data provider for processReturnFail test cases
      *
-     * @return void
+     * @return array[]
      */
-    public function testProcessReturnFailWithCardNumberValidationError()
+    public function processReturnFailProvider(): array
+    {
+        $defaultMessage = 'Default buyer refused message';
+        $invalidUsersMessage = 'Invalid users message';
+        $invalidOperatorsMessage = 'Invalid operators message';
+        $cardValidationMessage = 'Card validation error message';
+        $choFormErrorMessage = 'Form validation error message';
+        $translations = [
+            'buyerRefusedMessages' => ['buyer_default' => $defaultMessage],
+            'commonMessages' => [
+                'invalid_users' => $invalidUsersMessage,
+                'invalid_operators' => $invalidOperatorsMessage,
+                'cho_form_error' => $choFormErrorMessage
+            ],
+            'customCheckout' => ['card_number_validation_error' => $cardValidationMessage]
+        ];
+
+        return [
+            'error_400' => [
+                'error_message' => '400',
+                'expected_message' => $defaultMessage,
+                'translations' => $translations
+            ],
+            'error_exception' => [
+                'error_message' => 'exception',
+                'expected_message' => $defaultMessage,
+                'translations' => $translations
+            ],
+            'invalid_test_user_email' => [
+                'error_message' => 'Invalid test user email',
+                'expected_message' => $invalidUsersMessage,
+                'translations' => $translations
+            ],
+            'invalid_users_involved' => [
+                'error_message' => 'Invalid users involved',
+                'expected_message' => $invalidUsersMessage,
+                'translations' => $translations
+            ],
+            'invalid_operators_users' => [
+                'error_message' => 'Invalid operators users involved',
+                'expected_message' => $invalidOperatorsMessage,
+                'translations' => $translations
+            ],
+            'invalid_card_validation' => [
+                'error_message' => 'Invalid card_number_validation',
+                'expected_message' => $cardValidationMessage,
+                'translations' => $translations
+            ],
+            'cho_form_error' => [
+                'error_message' => 'cho_form_error',
+                'expected_message' => $choFormErrorMessage,
+                'translations' => $translations
+            ],
+            'unknown_error' => [
+                'error_message' => 'Some unknown error message',
+                'expected_message' => $defaultMessage,
+                'translations' => $translations
+            ]
+        ];
+    }
+
+    /**
+     * Test processReturnFail with various error scenarios
+     *
+     * @dataProvider processReturnFailProvider
+     * @param string $error_message The error message to test
+     * @param string $expected_message The expected message in the result
+     * @param array $translations The translations to configure
+     */
+    public function testProcessReturnFail(string $error_message, string $expected_message, array $translations)
     {
         $this->gateway->mercadopago = $this->mercadopagoMock;
 
-        $this->mercadopagoMock->storeTranslations->customCheckout = [
-            'card_number_validation_error' => 'Invalid card number. Please check the information provided.'
-        ];
+        // Configure translations using the existing mock structure
+        foreach ($translations as $section => $messages) {
+            $this->mercadopagoMock->storeTranslations->$section = new ArrayMock(function () use ($messages) {
+                return current($messages);
+            });
+            foreach ($messages as $key => $value) {
+                $this->mercadopagoMock->storeTranslations->$section[$key] = $value;
+            }
+        }
 
         $this->mercadopagoMock->helpers->notices->shouldReceive('storeNotice')->once();
 
         $exception = Mockery::mock(\Exception::class);
-        $exception->shouldReceive('getMessage')->andReturn('Invalid card_number_validation error occurred');
+        $exception->shouldReceive('getMessage')->andReturn($error_message);
 
         $result = $this->gateway->processReturnFail(
             $exception,
-            'Invalid card_number_validation error occurred',
+            $error_message,
             'test_source',
             [],
             true
@@ -709,7 +785,7 @@ class AbstractGatewayTest extends TestCase
 
         $this->assertEquals('fail', $result['result']);
         $this->assertEquals('', $result['redirect']);
-        $this->assertEquals('Invalid card number. Please check the information provided.', $result['message']);
+        $this->assertEquals($expected_message, $result['message']);
     }
 
     /**
@@ -897,5 +973,250 @@ class AbstractGatewayTest extends TestCase
             $expected,
             $this->gateway->getEnabled()
         );
+    }
+
+    /**
+     * Test process payment behavior when currency conversion is enabled
+     *
+     * GIVEN a gateway with currency conversion enabled
+     * WHEN process_payment is called
+     * THEN it should calculate currency ratio and store it in order metadata
+     */
+    public function testProcessPaymentShouldSetCurrencyRatioWhenCurrencyConversionIsEnabled()
+    {
+        // Given - Setup basic order mock
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_id')->andReturn(1);
+        $order->shouldReceive('get_total')->andReturn(100.0);
+
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(1)
+            ->andReturn($order);
+
+        // Enable currency conversion in gateway settings
+        $this->gateway->settings['currency_conversion'] = 'yes';
+
+        // Mock basic dependencies
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithDiscount')->andReturn(0);
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithCommission')->andReturn(0);
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getProductionMode')->andReturn('yes');
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setIsProductionModeData')->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setUsedGatewayData')->andReturnSelf();
+
+        // Mock currency ratio calculation
+        $expectedRatio = 3.85;
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($this->gateway)
+            ->andReturn($expectedRatio);
+
+        // When - Currency ratio metadata should be set
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('setCurrencyRatioData')
+            ->once()
+            ->with($order, $expectedRatio)
+            ->andReturnSelf();
+
+        // Initialize gateway properties
+        $this->gateway->discount = 0;
+        $this->gateway->commission = 0;
+
+        // Mock WordPress functions
+        WP_Mock::userFunction('sanitize_post', ['return' => function ($data) {
+            return $data;
+        }]);
+        WP_Mock::userFunction('map_deep', ['return' => function ($data, $callback) {
+            return is_array($data) ? array_map($callback, $data) : $callback($data);
+        }]);
+        WP_Mock::userFunction('sanitize_text_field', ['return' => function ($data) {
+            return $data;
+        }]);
+
+        // Mock the internal payment processing
+        $expectedResult = ['result' => 'success', 'redirect' => 'test-url'];
+        $this->gateway->expects()->proccessPaymentInternal($order)->andReturn($expectedResult);
+
+        // When - Execute process_payment
+        $result = $this->gateway->process_payment(1);
+
+        // Then - Verify the expected result is returned
+        $this->assertSame($expectedResult, $result);
+    }
+
+    /**
+     * Test process payment behavior when currency conversion is disabled
+     *
+     * GIVEN a gateway with currency conversion disabled
+     * WHEN process_payment is called
+     * THEN it should NOT calculate currency ratio or store it in order metadata
+     */
+    public function testProcessPaymentShouldNotSetCurrencyRatioWhenCurrencyConversionIsDisabled()
+    {
+        // Given - Setup basic order mock
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_id')->andReturn(1);
+        $order->shouldReceive('get_total')->andReturn(100.0);
+
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(1)
+            ->andReturn($order);
+
+        // Currency conversion is disabled by default
+        $this->gateway->settings['currency_conversion'] = 'no';
+
+        // Mock basic dependencies
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithDiscount')->andReturn(0);
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithCommission')->andReturn(0);
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getProductionMode')->andReturn('yes');
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setIsProductionModeData')->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setUsedGatewayData')->andReturnSelf();
+
+        // When - Currency helper methods should NOT be called
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->never();
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('setCurrencyRatioData')
+            ->never();
+
+        // Initialize gateway properties
+        $this->gateway->discount = 0;
+        $this->gateway->commission = 0;
+
+        // Mock WordPress functions
+        WP_Mock::userFunction('sanitize_post', ['return' => function ($data) {
+            return $data;
+        }]);
+        WP_Mock::userFunction('map_deep', ['return' => function ($data, $callback) {
+            return is_array($data) ? array_map($callback, $data) : $callback($data);
+        }]);
+        WP_Mock::userFunction('sanitize_text_field', ['return' => function ($data) {
+            return $data;
+        }]);
+
+        // Mock the internal payment processing
+        $expectedResult = ['result' => 'success', 'redirect' => 'test-url'];
+        $this->gateway->expects()->proccessPaymentInternal($order)->andReturn($expectedResult);
+
+        // When - Execute process_payment
+        $result = $this->gateway->process_payment(1);
+
+        // Then - Verify the expected result is returned
+        $this->assertSame($expectedResult, $result);
+    }
+
+
+    /**
+     * Test process payment behavior when currency conversion returns invalid ratio
+     *
+     * GIVEN a gateway with currency conversion enabled
+     * AND currency helper returns zero or negative ratio
+     * WHEN process_payment is called
+     * THEN it should fail the payment and return error result
+     *
+     * @testWith [0]
+     *           [-1]
+     *           [0.0]
+     *           [-0.5]
+     */
+    public function testProcessPaymentShouldFailWhenCurrencyRatioIsInvalid($invalidRatio)
+    {
+        // Given - Setup basic order mock
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_id')->andReturn(1);
+        $order->shouldReceive('get_total')->andReturn(100.0);
+
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(1)
+            ->andReturn($order);
+
+        // Enable currency conversion in gateway settings
+        $this->gateway->settings['currency_conversion'] = 'yes';
+
+        // Mock basic dependencies
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithDiscount')->andReturn(0);
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithCommission')->andReturn(0);
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getProductionMode')->andReturn('yes');
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setIsProductionModeData')->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setUsedGatewayData')->andReturnSelf();
+
+        // When - Currency ratio calculation returns invalid value
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($this->gateway)
+            ->andReturn($invalidRatio);
+
+        // Mock notice storage for error handling
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with(Mockery::type('string'), 'error');
+
+        // When - Execute process_payment
+        $result = $this->gateway->process_payment(1);
+
+        // Then - Payment should fail due to invalid currency ratio
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertArrayHasKey('message', $result);
+    }
+
+    /**
+     * Test process payment behavior when currency conversion throws exception
+     *
+     * GIVEN a gateway with currency conversion enabled
+     * AND currency helper throws an exception during getRatio
+     * WHEN process_payment is called
+     * THEN it should fail the payment and return error result
+     */
+    public function testProcessPaymentShouldFailWhenCurrencyConversionThrowsException()
+    {
+        // Given - Setup basic order mock
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_id')->andReturn(1);
+        $order->shouldReceive('get_total')->andReturn(100.0);
+
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(1)
+            ->andReturn($order);
+
+        // Enable currency conversion in gateway settings
+        $this->gateway->settings['currency_conversion'] = 'yes';
+
+        // Mock basic dependencies
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithDiscount')->andReturn(0);
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithCommission')->andReturn(0);
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getProductionMode')->andReturn('yes');
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setIsProductionModeData')->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setUsedGatewayData')->andReturnSelf();
+
+        // When - Currency ratio calculation throws an exception
+        $exceptionMessage = 'Currency conversion API unavailable';
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($this->gateway)
+            ->andThrow(new \Exception($exceptionMessage));
+
+        // Mock notice storage for error handling
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with(Mockery::type('string'), 'error');
+
+        // When - Execute process_payment
+        $result = $this->gateway->process_payment(1);
+
+        // Then - Payment should fail due to currency conversion exception
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertArrayHasKey('message', $result);
     }
 }

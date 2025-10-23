@@ -5,7 +5,6 @@ export async function successfulPaymentTest(page, url, user, method = null) {
   await fillStepsToCheckout(page, url, user);
   await makePayment(page, user, method);
 
-  await expect(page.locator('#submit-payment')).toBeVisible();
   await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible();
 }
 

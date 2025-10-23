@@ -42,7 +42,21 @@ const GUEST_USER_CONFIGS = {
     documentType: process.env.DOC_TYPE_MPE,
     document: process.env.DOC_NUMBER_MPE,
   },
-  MLM: {},
+  MLM: {
+    email: process.env.GUEST_EMAIL,
+    firstName: "John",
+    lastName: "Doe",
+    address: {
+      street: "Rua das Flores",
+      number: "122",
+      countryId: "BR",
+      state: "SP",
+      city: "Assis",
+      neighborhood: "Jardim California",
+      zip: "82854644",
+      complement: "sem",
+    }
+  },
   MLU: {
     siteId: "MLU",
     documentType: process.env.DOC_TYPE_MLU,

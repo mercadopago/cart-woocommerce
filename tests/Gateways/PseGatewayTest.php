@@ -130,7 +130,7 @@ class PseGatewayTest extends TestCase
             ->expects()
             ->processReturnFail(
                 Mockery::type(InvalidCheckoutDataException::class),
-                $this->gateway->mercadopago->storeTranslations->commonMessages['cho_form_error'] = random()->word(),
+                'cho_form_error',
                 PseGateway::LOG_SOURCE,
                 Mockery::type('array'),
                 true
@@ -206,7 +206,7 @@ class PseGatewayTest extends TestCase
             ->expects()
             ->processReturnFail(
                 Mockery::type(ResponseStatusException::class),
-                $this->gateway->mercadopago->storeTranslations->commonMessages['cho_form_error'] = random()->word(),
+                'cho_form_error',
                 PseGateway::LOG_SOURCE,
                 $response
             )

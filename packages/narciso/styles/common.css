@@ -232,3 +232,7 @@
 .mp-checkout-andes-input-error:focus {
     border: 2px solid rgba(0, 0, 0, .25);
 }
+
+.mp-display-none {
+    display: none !important;
+}

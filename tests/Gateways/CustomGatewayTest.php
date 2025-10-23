@@ -723,8 +723,209 @@ class CustomGatewayTest extends TestCase
 
         // Verify transaction was created with correct parameters
         $this->assertInstanceOf(
-            WalletButtonTransaction::class, 
+            WalletButtonTransaction::class,
             $this->gateway->transaction
         );
+    }
+
+    /**
+     * Test that new account money translation keys are available in storeTranslations
+     *
+     * @return void
+     */
+    public function testAccountMoneyTranslationKeysAreAvailable()
+    {
+        // Mock the storeTranslations with the new keys
+        $this->gateway->storeTranslations = [
+            'account_money_text' => 'Account Money',
+            'account_money_wallet_with_investment_text' => 'Balance in Mercado Pago Wallet + Generating returns in GBM',
+            'account_money_wallet_text' => 'Balance in Mercado Pago Wallet',
+            'account_money_investment_text' => 'Balance generating returns in GBM through Mercado Pago',
+            'account_money_available_text' => 'Money available at Mercado Pago',
+        ];
+
+        // Verify that all new translation keys are present
+        $this->assertArrayHasKey('account_money_wallet_with_investment_text', $this->gateway->storeTranslations);
+        $this->assertArrayHasKey('account_money_wallet_text', $this->gateway->storeTranslations);
+        $this->assertArrayHasKey('account_money_investment_text', $this->gateway->storeTranslations);
+        $this->assertArrayHasKey('account_money_available_text', $this->gateway->storeTranslations);
+
+        // Verify the values are correct
+        $this->assertEquals('Balance in Mercado Pago Wallet + Generating returns in GBM', $this->gateway->storeTranslations['account_money_wallet_with_investment_text']);
+        $this->assertEquals('Balance in Mercado Pago Wallet', $this->gateway->storeTranslations['account_money_wallet_text']);
+        $this->assertEquals('Balance generating returns in GBM through Mercado Pago', $this->gateway->storeTranslations['account_money_investment_text']);
+        $this->assertEquals('Money available at Mercado Pago', $this->gateway->storeTranslations['account_money_available_text']);
+    }
+
+    /**
+     * Test getWalletButtonEnabled method when enabled
+     *
+     * @return void
+     */
+    public function testGetWalletButtonEnabledWhenEnabled()
+    {
+        $this->gateway->shouldReceive('getEnabled')->andReturn(true);
+        $this->gateway->shouldReceive('get_option')
+            ->with('wallet_button', 'yes')
+            ->andReturn('yes');
+
+        $result = $this->gateway->getWalletButtonEnabled();
+        $this->assertTrue($result);
+    }
+
+    /**
+     * Test getWalletButtonEnabled method when disabled
+     *
+     * @return void
+     */
+    public function testGetWalletButtonEnabledWhenDisabled()
+    {
+        $this->gateway->shouldReceive('getEnabled')->andReturn(false);
+
+        $result = $this->gateway->getWalletButtonEnabled();
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test getWalletButtonEnabled method when gateway enabled but wallet button disabled
+     *
+     * @return void
+     */
+    public function testGetWalletButtonEnabledWhenGatewayEnabledButWalletDisabled()
+    {
+        $this->gateway->shouldReceive('getEnabled')->andReturn(true);
+        $this->gateway->shouldReceive('get_option')
+            ->with('wallet_button', 'yes')
+            ->andReturn('no');
+
+        $result = $this->gateway->getWalletButtonEnabled();
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test getPaymentFieldsParams method
+     *
+     * @return void
+     */
+    public function testGetPaymentFieldsParams()
+    {
+        // Mock dependencies
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLB');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')
+            ->andReturn('test-image-url');
+
+        $this->gateway->mercadopago->helpers->country
+            ->shouldReceive('SITE_ID_MLA')
+            ->andReturn('MLA');
+
+        // Mock storeTranslations
+        $this->gateway->storeTranslations = [
+            'test_mode_title' => 'Test Mode',
+            'test_mode_description' => 'Test Description',
+            'test_mode_link_text' => 'Test Link',
+            'wallet_button_title' => 'Wallet Button',
+            'card_number_input_label' => 'Card Number',
+            'card_number_input_helper' => 'Card Helper',
+            'card_holder_name_input_label' => 'Card Holder',
+            'card_holder_name_input_helper' => 'Holder Helper',
+            'card_expiration_input_label' => 'Expiration',
+            'card_expiration_input_helper' => 'Expiration Helper',
+            'card_security_code_input_label' => 'Security Code',
+            'card_security_code_input_helper' => 'Security Helper',
+            'card_document_input_label' => 'Document',
+            'card_document_input_helper_empty' => 'Empty Document',
+            'card_document_input_helper_invalid' => 'Invalid Document',
+            'card_document_input_helper_wrong' => 'Wrong Document',
+            'card_issuer_input_label' => 'Issuer',
+            'message_error_amount' => 'Amount Error',
+            'security_code_tooltip_text_3_digits' => '3 Digits Tooltip',
+            'placeholders_cardholder_name' => 'Cardholder Name',
+            'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
+        ];
+
+        // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('getAmountAndCurrency')
+            ->andReturn(['amount' => 100, 'currencyRatio' => 1.0]);
+
+        // Mock getWalletButtonEnabled method
+        $this->gateway->shouldReceive('getWalletButtonEnabled')
+            ->andReturn(true);
+
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'site_id' => 'MLA'
+        ]);
+
+        $this->gateway->mercadopago->helpers->links
+            ->shouldReceive('getPrivacyPolicyLink')
+            ->andReturn('https://example.com/privacy-policy');
+
+        $params = $this->gateway->getPaymentFieldsParams();
+
+        $this->assertIsArray($params);
+        $this->assertArrayHasKey('test_mode', $params);
+        $this->assertArrayHasKey('wallet_button_enabled', $params);
+        $this->assertArrayHasKey('site_id', $params);
+        $this->assertArrayHasKey('amount', $params);
+        $this->assertArrayHasKey('currency_ratio', $params);
+    }
+
+    /**
+     * Test registerCheckoutStyle method
+     *
+     * @return void
+     */
+    public function testRegisterCheckoutStyle()
+    {
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')
+            ->with('checkouts/super-token/super-token-payment-methods')
+            ->andReturn('test-css-url');
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutStyle')
+            ->with('wc_mercadopago_supertoken_payment_methods', 'test-css-url')
+            ->once();
+
+        $this->gateway->registerCheckoutStyle();
+
+        // Verify the method was called
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test getWalletButtonPreview method
+     *
+     * @return void
+     */
+    public function testGetWalletButtonPreview()
+    {
+        $this->gateway->storeTranslations = [
+            'locale' => 'en-US'
+        ];
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')
+            ->with('gateways/wallet-button/preview-en-us')
+            ->andReturn('test-preview-url');
+
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplateHtml')
+            ->with('admin/components/preview.php', Mockery::type('array'))
+            ->andReturn('<div>Preview</div>');
+
+        $result = $this->gateway->getWalletButtonPreview();
+
+        $this->assertEquals('<div>Preview</div>', $result);
     }
 }

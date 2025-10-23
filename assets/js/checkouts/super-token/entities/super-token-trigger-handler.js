@@ -15,6 +15,7 @@ class MPSuperTokenTriggerHandler {
     SECURITY_CODE_FIELD_ID = 'form-checkout__securityCode-container';
     WALLET_BUTTON_OPTION_VALUE = 'wallet_button';
     CURRENT_USER_EMAIL = wc_mercadopago_supertoken_trigger_handler_params.current_user_email;
+    WALLET_BUTTON_ENABLED = wc_mercadopago_supertoken_trigger_handler_params.wallet_button_enabled;
 
     // Attributes
     wcBuyerEmail = null;
@@ -39,11 +40,13 @@ class MPSuperTokenTriggerHandler {
     }
 
     walletButtonIsActive() {
-        return !!document.querySelector(this.WALLET_BUTTON_CONTAINER_SELECTOR);
+        return this.WALLET_BUTTON_ENABLED
     }
 
     getBuyerEmail() {
-        return this.wcBuyerEmail || this.wcEmailListener.getEmail() || this.CURRENT_USER_EMAIL;
+        this.wcBuyerEmail = this.wcBuyerEmail || this.wcEmailListener.getEmail() || this.CURRENT_USER_EMAIL;
+
+        return this.wcBuyerEmail;
     }
 
     amountHasChanged() {
@@ -76,10 +79,28 @@ class MPSuperTokenTriggerHandler {
             return null;
         }
 
-        const amount = parseFloat(amountElement?.value?.replace(',', '.'));
-        const normalizedAmount = amount.toFixed(2);
+        return this.formatAmount(amountElement.value);
+    }
 
-        return String(normalizedAmount);
+    formatAmount(amount = '') {
+        const rawValue = amount?.replace(/[^\d.,]/g, '');
+        if (!rawValue) return null;
+
+        const lastCommaIndex = rawValue.lastIndexOf(',');
+        const lastDotIndex = rawValue.lastIndexOf('.');
+
+        const isEuropean = lastCommaIndex > lastDotIndex;
+        const normalizedValue = rawValue.replace(/[.,]/g, (match, offset) => {
+            if (isEuropean) {
+                return match === ',' ? '.' : '';
+            } else {
+                return match === '.' ? '.' : '';
+            }
+        });
+
+        const value = parseFloat(normalizedValue);
+
+        return isNaN(value) ? null : value.toFixed(2);
     }
 
     getCartTotalFromHTML() {
@@ -88,7 +109,7 @@ class MPSuperTokenTriggerHandler {
             return null;
         }
 
-        const cleaned = cartTotalElement.textContent.replace(/[^\d.,]/g, '');        
+        const cleaned = cartTotalElement.textContent.replace(/[^\d.,]/g, '');
         if (!/,\d{2}$/.test(cleaned)) {
             return null;
         }
@@ -196,7 +217,7 @@ class MPSuperTokenTriggerHandler {
             return;
         }
 
-        this.mpSuperTokenAuthenticator.authenticate(this.currentAmount, buyerEmail, { confirmationLocation: 'app' })
+        this.mpSuperTokenAuthenticator.authenticate(this.currentAmount, buyerEmail, { confirmationLocation: 'app', skipAllUserConfirmation: true })
             .catch(() => {
                 useWalletButtonFlow();
             });
@@ -209,13 +230,21 @@ class MPSuperTokenTriggerHandler {
     }
 
     resetCustomCheckout() {
+        window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
+
         if (this.mpSuperTokenPaymentMethods.hasStoredPaymentMethods()) {
             this.mpSuperTokenPaymentMethods.unmountCardForm();
             this.mpSuperTokenPaymentMethods.mountCardForm();
         }
-
+        
         this.resetFlow();
-        this.loadSuperToken(this.getAmount());
+        this.loadSuperToken(this.getAmount())
+            .finally(() => {
+                // Apenas para não remover o loader tão rápido
+                setTimeout(() => {
+                    window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
+                }, 500);
+            });
     }
 
     resetSuperTokenOnError() {
@@ -230,14 +259,35 @@ class MPSuperTokenTriggerHandler {
         return this.mpSuperTokenPaymentMethods.hasStoredPaymentMethods()
     }
 
+    onSelectPreloadedPaymentMethod = async (_paymentMethodElement, paymentMethod) => {
+        this.mpSuperTokenPaymentMethods.hidePaymentMethodsList();
+        window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
+        this.mpSuperTokenPaymentMethods.reset();
+        this.mpSuperTokenPaymentMethods.emitEventFromSelectPaymentMethod(paymentMethod);
+        this.mpSuperTokenPaymentMethods.storeSelectedPreloadedPaymentMethod(paymentMethod);
+        await this.mpSuperTokenAuthenticator.showAuthenticatorWithPreloadedPaymentMethods();
+        window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
+        this.mpSuperTokenPaymentMethods.showPaymentMethodsList();
+    }
+
+    async _loadSuperTokenPaymentMethodsPreview() {
+        const buyerEmail = this.getBuyerEmail();
+        if (!buyerEmail) return;
+
+        const preloadedPaymentMethods = await this.mpSuperTokenAuthenticator.getPreloadedPaymentMethods(this.currentAmount, buyerEmail);
+        if (!preloadedPaymentMethods || !preloadedPaymentMethods.length) return;
+
+        await this.mpSuperTokenPaymentMethods.renderPreloadedPaymentMethods(preloadedPaymentMethods, this.onSelectPreloadedPaymentMethod)
+    }
+
     async loadSuperToken(currentAmount = this.getAmount()) {
         if (this.mpSuperTokenAuthenticator.isUserClosedModal()) {
             return;
         }
 
-        this.currentAmount = currentAmount;
+        this.currentAmount = this.formatAmount(currentAmount);
 
-        if (this.amountHasChanged()) this.resetFlow();
+        if (this.amountHasChanged() && !this.walletButtonIsActive()) this.resetFlow();
 
         if (this.isSuperTokenPaymentMethodsLoaded()) {
             this.mpSuperTokenPaymentMethods.renderAccountPaymentMethods(
@@ -253,6 +303,10 @@ class MPSuperTokenTriggerHandler {
             });
         }
 
+        if (this.walletButtonIsActive()) {
+            await this._loadSuperTokenPaymentMethodsPreview();
+        }
+
         if (!this.isAlreadyListeningForm) {
             this.wcEmailListener.onEmailChange(async (email, isValid) => {
                 if (!isValid || !currentAmount) {
@@ -260,10 +314,11 @@ class MPSuperTokenTriggerHandler {
                 }
 
                 if (this.isDifferentEmail(email) && this.wcBuyerEmail != null) {
+                    this.wcBuyerEmail = email;
                     this.resetCustomCheckout();
                 }
-                
-                this.wcBuyerEmail = email;
+
+                if (this.walletButtonIsActive()) return;
 
                 const canUseSuperToken = await this.mpSuperTokenAuthenticator.canUseSuperTokenFlow(currentAmount, email);
 
@@ -271,7 +326,7 @@ class MPSuperTokenTriggerHandler {
                     this.removeClickableAreas();
                 }
             });
-            
+
             this.wcEmailListener.setupEmailChangeHandlers();
 
             this.isAlreadyListeningForm = true;

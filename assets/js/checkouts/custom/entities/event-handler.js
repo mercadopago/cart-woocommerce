@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-/* globals MP_DEVICE_SESSION_ID, jQuery */
+/* globals MP_DEVICE_SESSION_ID, jQuery, CheckoutPage */
 class MPEventHandler {
     constructor(cardForm, threeDSHandler) {
         this.cardForm = cardForm;
@@ -96,7 +96,6 @@ class MPEventHandler {
             }
         }
     
-        console.log('createToken');
         this.cardForm.form
             .createCardToken()
             .then((cardToken) => {
@@ -139,13 +138,18 @@ class MPEventHandler {
         }
     }
 
+    isCheckoutCustomPaymentMethodSelected() {
+        const checkoutCustomPaymentMethodElement = document.getElementById('payment_method_woo-mercado-pago-custom') || 
+            document.querySelector('input[value=woo-mercado-pago-custom]');
+
+        return checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked;
+    }
+
     setCardFormLoadInterval() {
         var cardFormInterval = setInterval(() => {
-            const checkoutCustomPaymentMethodElement = document.getElementById('payment_method_woo-mercado-pago-custom') || 
-                document.querySelector('input[value=woo-mercado-pago-custom]');
             const cardInput = document.getElementById('form-checkout__cardNumber-container');
 
-            if (!checkoutCustomPaymentMethodElement || !checkoutCustomPaymentMethodElement.checked) {
+            if (!this.isCheckoutCustomPaymentMethodSelected()) {
                 clearInterval(cardFormInterval);
                 return;
             }
@@ -164,16 +168,17 @@ class MPEventHandler {
     }
 
     handlePaymentMethodSelected() {
+        if (this.isCheckoutCustomPaymentMethodSelected()) {
+            this.cardForm.createLoadSpinner();
+        }
+
         if (!this.triggeredPaymentMethodSelectedEvent) {
             this.cardForm.initCardForm();
         }
     }
 
     handleOrderReviewSubmit(event) {
-        const selectPaymentMethod = document.getElementById('payment_method_woo-mercado-pago-custom') || 
-            document.querySelector('input[value=woo-mercado-pago-custom]');
-
-        if (selectPaymentMethod && selectPaymentMethod.checked) {
+        if (this.isCheckoutCustomPaymentMethodSelected()) {
             event.preventDefault();
             return this.mercadoPagoFormHandler();
         } else {
@@ -192,10 +197,7 @@ class MPEventHandler {
     }
 
     handleUpdatedCheckout() {
-        const checkoutCustomPaymentMethodElement = document.getElementById('payment_method_woo-mercado-pago-custom') || 
-            document.querySelector('input[value=woo-mercado-pago-custom]');
-
-        if (checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked) {
+        if (this.isCheckoutCustomPaymentMethodSelected()) {
             if (this.cardForm.formMounted) {
                 this.cardForm.form.unmount();
             }

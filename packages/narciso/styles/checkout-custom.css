@@ -29,7 +29,7 @@
 
 .mp-checkout-custom-installments-display-none {
     display: none;
-    margin-top: 32px !important;
+    margin-top: 14px !important;
 }
 
 .mp-checkout-custom-left-card-input {
@@ -95,6 +95,8 @@
   max-width: 416px !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  gap: 20px !important;
+  margin-bottom: 32px !important;
 }
 
 .mp-wallet-button-container .mp-wallet-button-title {
@@ -102,7 +104,6 @@
     color: rgba(0, 0, 0, .9) !important;
     display: flex !important;
     flex-direction: column !important;
-    margin-bottom: 20px !important;
 }
 
 .mp-wallet-button-container .mp-wallet-button-title span {
@@ -200,7 +201,7 @@
 }
 
 .mp-checkout-custom-load {
-    display: none;
+    display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 16px;
@@ -450,6 +451,23 @@
     border-top-color: white !important;
     margin-bottom: 2px !important;
     z-index: 11 !important;
+}
+
+.mp-privacy-policy-footer {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 15px !important;
+    text-align: center;
+    color: var(--andes-text-color-primary);
+    font-family: var(--primary-font-family);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mp-privacy-policy-footer a {
+    color: var(--andes-accent-color) !important;
+    text-decoration: none !important;
 }
 
 @media screen and (max-width: 767px) {

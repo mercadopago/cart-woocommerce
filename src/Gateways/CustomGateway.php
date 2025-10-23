@@ -294,6 +294,11 @@ class CustomGateway extends AbstractGateway
     /**
      * Register all super token scripts
      *
+     * This method is used to register all super token scripts.
+     *
+     * Should not be tested because it is only used to register scripts.
+     *
+     * @codeCoverageIgnore
      * @return void
      */
     public function registerSuperTokenScripts()
@@ -326,6 +331,7 @@ class CustomGateway extends AbstractGateway
             $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/entities/super-token-trigger-handler'),
             [
                 'current_user_email' => wp_get_current_user()->user_email ?? '',
+                'wallet_button_enabled' => $this->getWalletButtonEnabled(),
             ]
         );
 
@@ -335,6 +341,7 @@ class CustomGateway extends AbstractGateway
             [
                 'yellow_wallet_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-yellow-wallet'),
                 'white_card_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-white-card'),
+                'new_mp_logo_path' => $this->mercadopago->helpers->url->getImageAsset('logos/new-mp-logo'),
                 'payment_methods_order' => $this->mercadopago->hooks->options->getGatewayOption($this, 'payment_methods_order', 'cards_first'),
                 'payment_methods_thumbnails' => $this->mercadopago->sellerConfig->getPaymentMethodsThumbnails(),
                 'intl'              => $this->countryConfigs['intl'],
@@ -343,7 +350,13 @@ class CustomGateway extends AbstractGateway
                 'payment_methods_list_text' => $this->storeTranslations['payment_methods_list_text'],
                 'last_digits_text' => $this->storeTranslations['last_digits_text'],
                 'new_card_text' => $this->storeTranslations['new_card_text'],
-                'account_money_text' => $this->storeTranslations['account_money_text'],
+                'account_money_text' => $this->storeTranslations['locale'] === 'en-US'
+                    ? $this->storeTranslations['account_money_text'] . ' in Mercado&nbsp;Pago'
+                    : $this->storeTranslations['account_money_text'],
+                'account_money_wallet_with_investment_text' => $this->storeTranslations['account_money_wallet_with_investment_text'],
+                'account_money_wallet_text' => $this->storeTranslations['account_money_wallet_text'],
+                'account_money_investment_text' => $this->storeTranslations['account_money_investment_text'],
+                'account_money_available_text' => $this->storeTranslations['account_money_available_text'],
                 'interest_free_part_one_text' => $this->storeTranslations['interest_free_part_one_text'],
                 'interest_free_part_two_text' => $this->storeTranslations['interest_free_part_two_text'],
                 'interest_free_option_text' => $this->storeTranslations['interest_free_option_text'],
@@ -373,6 +386,11 @@ class CustomGateway extends AbstractGateway
                     ],
                 ],
                 'mercado_pago_card_name' => $this->storeTranslations['mercado_pago_card_name'],
+                'mercadopago_privacy_policy' => str_replace(
+                    '{link}',
+                    $this->mercadopago->helpers->links->getPrivacyPolicyLink($this->countryConfigs['site_id']),
+                    $this->storeTranslations['mercadopago_privacy_policy']
+                ),
             ]
         );
 
@@ -442,6 +460,11 @@ class CustomGateway extends AbstractGateway
             'message_error_amount'                    => $this->storeTranslations['message_error_amount'],
             'security_code_tooltip_text_3_digits'     => $this->storeTranslations['security_code_tooltip_text_3_digits'],
             'placeholders_cardholder_name'            => $this->storeTranslations['placeholders_cardholder_name'],
+            'mercadopago_privacy_policy' => str_replace(
+                '{link}',
+                $this->mercadopago->helpers->links->getPrivacyPolicyLink($this->countryConfigs['site_id']),
+                $this->storeTranslations['mercadopago_privacy_policy']
+            ),
         ];
     }
 
