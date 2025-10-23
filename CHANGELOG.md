@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.6.0] - 2025-10-22
+### Added
+- Add loader before custom gateway initialization
+- Added currency convertion ratio value to orders 
+### Changed
+- Improve fast payments experience when wallet button is active
+- Changed translations of MLM account balance use cases
+### Fixed
+- Fix set a semicolon on nbsp call on translations
+- Fixed currency conversion in refund
+- Fixed display unhandled and untranslated error message
+
+
 ## [8.5.6] - 2025-10-10
 ### Fixed
 - Fix installments field validation during payment processing and enhanced error messaging 

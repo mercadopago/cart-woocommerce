@@ -197,7 +197,7 @@ class Cart
     }
 
     /**
-     * Add plugin and commission to WC_Cart fees
+     * Add plugin and commission to WC_Cart fees from Classic Checkout
      *
      * @param AbstractGateway $gateway
      *
@@ -216,6 +216,8 @@ class Cart
 
     /**
      * Add plugin and commission to WC_Cart fees from Blocks
+     *
+     * @link https://developer.woocommerce.com/docs/block-development/getting-started/faq/#how-do-i-add-fees-to-the-cart-when-a-specific-payment-method-is-chosen
      *
      * @param AbstractGateway $gateway
      *

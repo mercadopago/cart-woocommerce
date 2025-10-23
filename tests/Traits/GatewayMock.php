@@ -26,6 +26,13 @@ trait GatewayMock
         $this->gateway->mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
         MercadoPagoMock::mockTranslations($this->gateway, ['storeTranslations', 'adminTranslations']);
         $this->setNotAccessibleProperty($this->gateway, 'links', new ArrayMock(fn() => random()->url()));
+
+        // Initialize settings property to avoid undefined property errors
+        $this->gateway->settings = [
+            'currency_conversion' => 'no',
+            'enabled' => 'yes',
+            'title' => 'Test Gateway',
+        ];
     }
 
     private function processPaymentInternalMock(bool $isBlocks): void

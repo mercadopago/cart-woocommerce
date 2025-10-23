@@ -1,9 +1,22 @@
 /* globals MelidataClient, mercadopago_melidata_params */
 (function () {
-  window.addEventListener('load', function () {
-    window.melidata = null;
+  const LOAD_MELIDATA_CLIENT_ON_BLOCKS_INTERVAL = 1000;
+  const LOAD_MELIDATA_CLIENT_ON_BLOCKS_AFTER_MILLISECONDS = 1000;
+  const CLEAR_INTERVAL_AFTER_MILLISECONDS = 10000;
 
+  function isCheckoutBlocks() {
+    return document.querySelector('.wc-block-checkout__form') ||
+      document.querySelector('.wc-block-components-form') ||
+      document.querySelector('[data-block-name="woocommerce/checkout"]');
+  }
+
+  function isCheckoutBlocksGatewaysIsLoaded() {
+    return document.querySelector('#blocks_checkout_form #payment-method')?.childNodes?.length;
+  }
+
+  function loadMelidataClient() {
     try {
+      window.melidata = null;
       const scriptTag = document.createElement('script');
 
       scriptTag.setAttribute('id', 'melidata_woocommerce_client');
@@ -46,6 +59,35 @@
       document.body.appendChild(scriptTag);
     } catch (e) {
       console.warn(e);
+    }
+  }
+
+  function loadMelidataClientOnCheckoutClassic() {
+    loadMelidataClient();
+  }
+
+  function clearIntervalAfter(interval, milliseconds = CLEAR_INTERVAL_AFTER_MILLISECONDS) {
+    setTimeout(() => {
+      clearInterval(interval);
+    }, milliseconds);
+  }
+
+  function loadMelidataClientOnCheckoutBlocks() {
+    const interval = setInterval(() => {
+      if (isCheckoutBlocksGatewaysIsLoaded()) {
+        clearInterval(interval);
+        setTimeout(loadMelidataClient, LOAD_MELIDATA_CLIENT_ON_BLOCKS_AFTER_MILLISECONDS);
+      }
+    }, LOAD_MELIDATA_CLIENT_ON_BLOCKS_INTERVAL);
+
+    clearIntervalAfter(interval);
+  }
+
+  window.addEventListener('load', function () {
+    if (isCheckoutBlocks()) {
+      loadMelidataClientOnCheckoutBlocks();
+    } else {
+      loadMelidataClientOnCheckoutClassic();
     }
   });
 })();

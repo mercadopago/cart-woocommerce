@@ -449,6 +449,17 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             $this->mercadopago->orderMetadata->setIsProductionModeData($order, $isProductionMode);
             $this->mercadopago->orderMetadata->setUsedGatewayData($order, static::ID);
 
+            if ($this->settings['currency_conversion'] === 'yes') {
+                $ratio = $this->mercadopago->helpers->currency->getRatio($this);
+
+                // Validate ratio is positive and not zero
+                if ($ratio > 0) {
+                    $this->mercadopago->orderMetadata->setCurrencyRatioData($order, $ratio);
+                } else {
+                    throw new Exception("Invalid currency ratio received: {$ratio}. Ratio must be positive and greater than zero.");
+                }
+            }
+
             if ($this->discount != 0) {
                 $percentage  = Numbers::getPercentageFromParcialValue($discount, $order->get_total());
                 $translation = $this->mercadopago->storeTranslations->commonCheckout['discount_title'];
@@ -613,19 +624,27 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         $this->mercadopago->logs->file->error("Message: {$e->getMessage()} \n\n\nStacktrace: {$e->getTraceAsString()} \n\n\n", $source, $context);
 
         $errorMessages = [
+            "400"                              => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+            "exception"                        => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
             "Invalid test user email"          => $this->mercadopago->storeTranslations->commonMessages['invalid_users'],
             "Invalid users involved"           => $this->mercadopago->storeTranslations->commonMessages['invalid_users'],
             "Invalid operators users involved" => $this->mercadopago->storeTranslations->commonMessages['invalid_operators'],
-            "exception"                        => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
-            "400"                              => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
             "Invalid card_number_validation"   => $this->mercadopago->storeTranslations->customCheckout['card_number_validation_error'],
+            "cho_form_error"                   => $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+            'buyer_default'                    => $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default']
         ];
 
+        $messageFound = false;
         foreach ($errorMessages as $keyword => $replacement) {
             if (strpos($message, $keyword) !== false) {
                 $message = $replacement;
+                $messageFound = true;
                 break;
             }
+        }
+
+        if (!$messageFound) {
+            $message = $errorMessages['exception'];
         }
 
         if ($notice) {

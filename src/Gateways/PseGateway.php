@@ -206,7 +206,7 @@ class PseGateway extends AbstractGateway
         if (!$this->isCheckoutValid($checkout)) {
             return $this->processReturnFail(
                 new InvalidCheckoutDataException(),
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                'cho_form_error',
                 self::LOG_SOURCE,
                 $checkout,
                 true
@@ -237,7 +237,7 @@ class PseGateway extends AbstractGateway
             }
             return $this->processReturnFail(
                 new ResponseStatusException('exception : Invalid status or status_detail on ' . __METHOD__),
-                $this->mercadopago->storeTranslations->commonMessages['cho_form_error'],
+                'cho_form_error',
                 self::LOG_SOURCE,
                 $response
             );

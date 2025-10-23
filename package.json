@@ -1,7 +1,7 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "8.5.6",
+  "version": "8.6.0",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -18,6 +18,9 @@
     "postbuild:webpack": "cp index.php build",
     "lint": "eslint assets/**/*.js",
     "lint:fix": "eslint assets/**/*.js --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "pot": "node -e 'require(\"./main.js\").generatePotFiles()'",
     "build:narciso": "bash ./packages/narciso/bin/pre-assets.sh && webpack --mode=production --config narciso.webpack.config.js && bash ./packages/narciso/bin/post-assets.sh",
     "watch:build": "SHELL=/bin/sh chokidar assets packages/narciso -i **/**.min.* -i assets/images -c 'npm run build' --initial",
@@ -28,13 +31,17 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@woocommerce/dependency-extraction-webpack-plugin": "^3.1.0",
     "@woocommerce/eslint-plugin": "^2.3.0",
     "@wordpress/scripts": "^30.11.0",
     "chokidar-cli": "^3.0.0",
     "css-minimizer-webpack-plugin": "^7.0.0",
     "eslint": "^8.57.1",
+    "eslint-plugin-react": "7.37.5",
     "globals": "^15.15.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
     "minify": "^7.2.2",
     "webpack-cli": "^6.0.1",
     "wp-pot": "^1.10.2"

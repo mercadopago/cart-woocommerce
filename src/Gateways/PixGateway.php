@@ -169,7 +169,7 @@ class PixGateway extends AbstractGateway
         if (!filter_var($order->get_billing_email(), FILTER_VALIDATE_EMAIL)) {
             return $this->processReturnFail(
                 new Exception('Email not valid on ' . __METHOD__),
-                $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+                'buyer_default',
                 self::LOG_SOURCE,
                 (array) $order
             );

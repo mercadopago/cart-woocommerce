@@ -30,6 +30,7 @@ use MercadoPago\Woocommerce\Helpers\Template;
  * @var string $currency_ratio
  * @var string $message_error_amount
  * @var string $security_code_tooltip_text_3_digits
+ * @var string $mercadopago_privacy_policy
  *
  * @see \MercadoPago\Woocommerce\Gateways\CustomGateway
  */
@@ -42,7 +43,7 @@ if (!defined('ABSPATH')) {
 <div class="mp-checkout-custom-load">
     <div class="spinner-card-form"></div>
 </div>
-<div class='mp-checkout-container'>
+<div id="mp-checkout-custom-container" class='mp-checkout-container mp-display-none'>
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
@@ -60,7 +61,6 @@ if (!defined('ABSPATH')) {
             <?php if ($wallet_button_enabled) : ?>
                 <div class="mp-wallet-button-container-wrapper">
                 <div class='mp-wallet-button-container'>
-
                     <div class='mp-wallet-button-title'>
                         <span><?= wp_kses_post($wallet_button_title); ?></span>
                     </div>
@@ -68,9 +68,12 @@ if (!defined('ABSPATH')) {
                     <div class='mp-wallet-button-button'>
                         <button id="mp-wallet-button">
                             <img src="<?= esc_url($wallet_button_image); ?>">
-                            </button>
-                        </div>
+                        </button>
                     </div>
+
+                    <footer class='mp-privacy-policy-footer'>
+                        <span><?= wp_kses_post($mercadopago_privacy_policy); ?></span>
+                    </footer>
                 </div>
             <?php endif; ?>
 

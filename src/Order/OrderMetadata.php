@@ -54,6 +54,8 @@ class OrderMetadata
 
     private const CHECKOUT = 'checkout';
 
+    public const CURRENCY_RATIO = '_currency_ratio';
+
     private OrderMeta $orderMeta;
 
     private Logs $logs;
@@ -384,6 +386,20 @@ class OrderMetadata
         $this->setTotalPaidAmountData($order, $totalPaidAmount);
         $this->updatePaymentsOrderMetadata($order, $data);
 
+        $order->save();
+    }
+
+    /**
+     * Set currency ratio data in the order
+     *
+     * @param WC_Order $order
+     * @param mixed $value
+     *
+     * @return void
+     */
+    public function setCurrencyRatioData(WC_Order $order, $value): void
+    {
+        $this->orderMeta->update($order, self::CURRENCY_RATIO, $value);
         $order->save();
     }
 

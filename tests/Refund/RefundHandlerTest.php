@@ -66,6 +66,12 @@ class RefundHandlerTest extends TestCase
 
         $this->requester = Mockery::mock(Requester::class);
         $this->order = Mockery::mock('WC_Order');
+
+        // Add default expectation for _currency_ratio metadata
+        $this->order->shouldReceive('get_meta')
+            ->with('_currency_ratio')
+            ->andReturn(null)
+            ->byDefault();
         $this->mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
         $this->sellerConfig = $this->mercadopagoMock->sellerConfig;
 

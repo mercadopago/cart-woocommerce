@@ -237,7 +237,7 @@ class BasicGateway extends AbstractGateway
         } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
-                $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+                'buyer_default',
                 self::LOG_SOURCE,
                 (array) $order,
                 true

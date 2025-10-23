@@ -138,7 +138,7 @@ class PixGatewayTest extends TestCase
             ->expects()
             ->processReturnFail(
                 Mockery::type(\Exception::class),
-                $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+                'buyer_default',
                 PixGateway::LOG_SOURCE,
                 Mockery::type('array')
             )->andReturn($expected = [

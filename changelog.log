@@ -1,6 +1,19 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.6.0 (22/10/2025) =
+* Added
+- Add loader before custom gateway initialization
+- Added currency convertion ratio value to orders 
+* Changed
+- Improve fast payments experience when wallet button is active
+- Changed translations of MLM account balance use cases
+* Fixed
+- Fix set a semicolon on nbsp call on translations
+- Fixed currency conversion in refund
+- Fixed display unhandled and untranslated error message
+
+
 = v8.5.6 (10/10/2025) =
 * Fixed
 - Fix installments field validation during payment processing and enhanced error messaging

@@ -203,7 +203,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
         }
 
         if (isset($this->gateway)) {
-            $action  = $this->mercadopago->helpers->session->getSession(self::ACTION_SESSION_KEY);
+            $action = $this->mercadopago->helpers->session->getSession(self::ACTION_SESSION_KEY);
 
             if ($action == 'add') {
                 $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFeesFromBlocks($this->gateway);

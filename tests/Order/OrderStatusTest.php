@@ -162,6 +162,7 @@ class OrderStatusTest extends TestCase
         $orderMock->shouldReceive('get_total')->andReturn(100.0);
         $orderMock->shouldReceive('get_id')->andReturn(123);
         $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: Partially Refunded: 25.5');
 
         $paymentsData = [
@@ -222,6 +223,7 @@ class OrderStatusTest extends TestCase
         $orderMock->shouldReceive('get_total')->andReturn(100.0);
         $orderMock->shouldReceive('get_id')->andReturn(123);
         $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: Partially Refunded: 50.75');
 
         $paymentsData = [
@@ -593,29 +595,32 @@ class OrderStatusTest extends TestCase
         $method = $reflection->getMethod('calculateTotalRefunded');
         $method->setAccessible(true);
 
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
+
         $paymentsData = [
             ['transaction_amount_refunded' => 25.50],
             ['transaction_amount_refunded' => 10.25],
             ['transaction_amount_refunded' => 5.00]
         ];
-        $result = $method->invoke($this->orderStatus, $paymentsData);
+        $result = $method->invoke($this->orderStatus, $paymentsData, $orderMock);
         $this->assertEquals(40.75, $result);
 
         $paymentsDataNoRefunds = [
             ['transaction_amount_refunded' => 0],
             ['transaction_amount_refunded' => 0]
         ];
-        $result = $method->invoke($this->orderStatus, $paymentsDataNoRefunds);
+        $result = $method->invoke($this->orderStatus, $paymentsDataNoRefunds, $orderMock);
         $this->assertEquals(0.0, $result);
 
-        $result = $method->invoke($this->orderStatus, []);
+        $result = $method->invoke($this->orderStatus, [], $orderMock);
         $this->assertEquals(0.0, $result);
 
         $paymentsDataMissingField = [
             ['transaction_amount_refunded' => 15.00],
             ['id' => 'payment_2']
         ];
-        $result = $method->invoke($this->orderStatus, $paymentsDataMissingField);
+        $result = $method->invoke($this->orderStatus, $paymentsDataMissingField, $orderMock);
         $this->assertEquals(15.00, $result);
     }
 
@@ -627,6 +632,7 @@ class OrderStatusTest extends TestCase
 
         $orderMock1 = Mockery::mock(WC_Order::class);
         $orderMock1->shouldReceive('get_total_refunded')->andReturn(50.0);
+        $orderMock1->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $paymentsData = [
             ['transaction_amount_refunded' => 25.0],
             ['transaction_amount_refunded' => 20.0]
@@ -636,16 +642,19 @@ class OrderStatusTest extends TestCase
 
         $orderMock2 = Mockery::mock(WC_Order::class);
         $orderMock2->shouldReceive('get_total_refunded')->andReturn(45.0);
+        $orderMock2->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $result = $method->invoke($this->orderStatus, $orderMock2, $paymentsData);
         $this->assertTrue($result, 'Should return true when MP refunded (45.0) = WC refunded (45.0)');
 
         $orderMock3 = Mockery::mock(WC_Order::class);
         $orderMock3->shouldReceive('get_total_refunded')->andReturn(40.0);
+        $orderMock3->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $result = $method->invoke($this->orderStatus, $orderMock3, $paymentsData);
         $this->assertFalse($result, 'Should return false when MP refunded (45.0) > WC refunded (40.0)');
 
         $orderMock4 = Mockery::mock(WC_Order::class);
         $orderMock4->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $orderMock4->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $paymentsDataNoRefunds = [
             ['transaction_amount_refunded' => 0],
             ['transaction_amount_refunded' => 0]
@@ -655,6 +664,7 @@ class OrderStatusTest extends TestCase
 
         $orderMock5 = Mockery::mock(WC_Order::class);
         $orderMock5->shouldReceive('get_total_refunded')->andReturn(10.0);
+        $orderMock5->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $paymentsDataHighRefund = [
             ['transaction_amount_refunded' => 35.0],
             ['transaction_amount_refunded' => 25.0]
@@ -671,6 +681,7 @@ class OrderStatusTest extends TestCase
 
         $orderMock1 = Mockery::mock(WC_Order::class);
         $orderMock1->shouldReceive('get_total_refunded')->andReturn(25.0);
+        $orderMock1->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $paymentsData = [
             ['transaction_amount_refunded' => 30.0],
             ['transaction_amount_refunded' => 20.0]
@@ -680,16 +691,19 @@ class OrderStatusTest extends TestCase
 
         $orderMock2 = Mockery::mock(WC_Order::class);
         $orderMock2->shouldReceive('get_total_refunded')->andReturn(60.0);
+        $orderMock2->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $result = $method->invoke($this->orderStatus, $orderMock2, $paymentsData);
         $this->assertEquals(0.0, $result);
 
         $orderMock3 = Mockery::mock(WC_Order::class);
         $orderMock3->shouldReceive('get_total_refunded')->andReturn(50.0);
+        $orderMock3->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $result = $method->invoke($this->orderStatus, $orderMock3, $paymentsData);
         $this->assertEquals(0.0, $result);
 
         $orderMock4 = Mockery::mock(WC_Order::class);
         $orderMock4->shouldReceive('get_total_refunded')->andReturn(10.25);
+        $orderMock4->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
         $paymentsDataDecimals = [
             ['transaction_amount_refunded' => 15.75],
             ['transaction_amount_refunded' => 8.50]
@@ -861,13 +875,339 @@ class OrderStatusTest extends TestCase
             ->reply('processing');
 
         $validStatuses = [
-            'approved', 'pending', 'in_process', 'rejected',
-            'refunded', 'cancelled', 'in_mediation', 'charged_back'
+            'approved',
+            'pending',
+            'in_process',
+            'rejected',
+            'refunded',
+            'cancelled',
+            'in_mediation',
+            'charged_back'
         ];
 
         foreach ($validStatuses as $status) {
             $this->orderStatus->processStatus($status, $data, $orderMock, $usedGateway);
             $this->assertTrue(true);
         }
+    }
+
+    /**
+     * Data provider for calculateTotalRefunded with different currency ratios
+     */
+    public function calculateTotalRefundedCurrencyRatioProvider(): array
+    {
+        return [
+            'ratio_1.0_no_conversion' => [1.0, 150.0, 'Should return 150.0 with ratio 1.0'],
+            'ratio_2.0_divide_by_2' => [2.0, 75.0, 'Should return 75.0 with ratio 2.0'],
+            'ratio_0.5_multiply_by_2' => [0.5, 300.0, 'Should return 300.0 with ratio 0.5'],
+            'ratio_3.5_divide_by_3.5' => [3.5, 42.857142857142854, 'Should return 42.857... with ratio 3.5'],
+            'ratio_null_defaults_to_1.0' => [null, 150.0, 'Should return 150.0 with null ratio (defaults to 1.0)'],
+        ];
+    }
+
+    /**
+     * Test calculateTotalRefunded with different currency ratios
+     *
+     * @dataProvider calculateTotalRefundedCurrencyRatioProvider
+     */
+    public function testCalculateTotalRefundedWithDifferentCurrencyRatios($currencyRatio, float $expectedResult, string $message): void
+    {
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('calculateTotalRefunded');
+        $method->setAccessible(true);
+
+        $paymentsData = [
+            ['transaction_amount_refunded' => 100.0],
+            ['transaction_amount_refunded' => 50.0]
+        ];
+
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn($currencyRatio);
+
+        $result = $method->invoke($this->orderStatus, $paymentsData, $orderMock);
+        $this->assertEquals($expectedResult, $result, $message);
+    }
+
+    /**
+     * Test calculateTotalRefunded with valid currency ratios
+     */
+    public function testCalculateTotalRefundedWithValidRatio(): void
+    {
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('calculateTotalRefunded');
+        $method->setAccessible(true);
+
+        $paymentsData = [
+            ['transaction_amount_refunded' => 100.0],
+            ['transaction_amount_refunded' => 50.0]
+        ];
+
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(5.25);
+
+        $result = $method->invoke($this->orderStatus, $paymentsData, $orderMock);
+
+        $this->assertEquals(28.57, round($result, 2), 'Valid ratio 5.25 should return approximately 150.0/5.25 ≈ 28.57');
+    }
+
+    /**
+     * Test calculateTotalRefunded with invalid currency ratios that should default to 1.0
+     */
+    public function testCalculateTotalRefundedWithInvalidRatio(): void
+    {
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('calculateTotalRefunded');
+        $method->setAccessible(true);
+
+        $paymentsData = [
+            ['transaction_amount_refunded' => 100.0],
+            ['transaction_amount_refunded' => 50.0]
+        ];
+
+        $invalidCases = [
+            ['value' => '', 'description' => 'Empty string should default to ratio 1.0'],
+            ['value' => 0, 'description' => 'Zero value should default to ratio 1.0'],
+            ['value' => '0', 'description' => 'Zero string should default to ratio 1.0'],
+            ['value' => 'abc', 'description' => 'Non-numeric string should default to ratio 1.0'],
+            ['value' => [], 'description' => 'Array should default to ratio 1.0'],
+            ['value' => (object)['ratio' => 5.0], 'description' => 'Object should default to ratio 1.0'],
+            ['value' => null, 'description' => 'Null should default to ratio 1.0'],
+            ['value' => false, 'description' => 'False should default to ratio 1.0']
+        ];
+
+        foreach ($invalidCases as $case) {
+            $orderMock = Mockery::mock(WC_Order::class);
+            $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn($case['value']);
+            $result = $method->invoke($this->orderStatus, $paymentsData, $orderMock);
+            $this->assertEquals(150.0, $result, $case['description']);
+        }
+    }
+
+    /**
+     * Data provider for refundedFlow with different currency ratios
+     */
+    public function refundedFlowCurrencyRatioProvider(): array
+    {
+        return [
+            'ratio_2.0_mp_amount_50' => [
+                'currency_ratio' => 2.0,
+                'mp_refund_amount' => 50.0,
+                'expected_wc_amount' => 25.0,
+                'description' => 'Should convert 50.0 MP to 25.0 WC with ratio 2.0'
+            ],
+            'ratio_0.5_mp_amount_25' => [
+                'currency_ratio' => 0.5,
+                'mp_refund_amount' => 25.0,
+                'expected_wc_amount' => 50.0,
+                'description' => 'Should convert 25.0 MP to 50.0 WC with ratio 0.5'
+            ],
+            'ratio_1.0_mp_amount_100' => [
+                'currency_ratio' => 1.0,
+                'mp_refund_amount' => 100.0,
+                'expected_wc_amount' => 100.0,
+                'description' => 'Should convert 100.0 MP to 100.0 WC with ratio 1.0'
+            ],
+            'ratio_3.0_mp_amount_90' => [
+                'currency_ratio' => 3.0,
+                'mp_refund_amount' => 90.0,
+                'expected_wc_amount' => 30.0,
+                'description' => 'Should convert 90.0 MP to 30.0 WC with ratio 3.0'
+            ],
+        ];
+    }
+
+    /**
+     * Test refundedFlow with different currency ratios for specific refund amounts
+     *
+     * @dataProvider refundedFlowCurrencyRatioProvider
+     */
+    public function testRefundedFlowWithDifferentCurrencyRatios(
+        float $currencyRatio,
+        float $mpRefundAmount,
+        float $expectedWcAmount,
+        string $description
+    ): void {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_total')->andReturn(100.0);
+        $orderMock->shouldReceive('get_id')->andReturn(123);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn($currencyRatio);
+        $orderMock->shouldReceive('add_order_note');
+
+        $paymentsData = [
+            [
+                'id' => 'payment_123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 25.0
+            ]
+        ];
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('payment_123');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+            ->andReturn('access_token_123');
+
+        $responseMock = Mockery::mock(Response::class);
+        $responseMock->shouldReceive('getStatus')->andReturn(200);
+        $responseMock->shouldReceive('getData')->andReturn($paymentsData[0]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/payment_123', ['Authorization: Bearer access_token_123'])
+            ->andReturn($responseMock);
+
+        $data = [
+            'notification_id' => 'notification_123',
+            'current_refund' => ['id' => 'refund_123'],
+            'refunds_notifying' => [
+                ['id' => 'refund_123', 'amount' => $mpRefundAmount] // Amount in MP currency
+            ]
+        ];
+
+        WP_Mock::userFunction('wc_create_refund', [
+            'times' => 1,
+            'args' => [
+                ['amount' => $expectedWcAmount, 'reason' => 'Refunded', 'order_id' => 123]
+            ],
+            'return' => true
+        ]);
+
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('refundedFlow');
+        $method->setAccessible(true);
+
+        $method->invoke($this->orderStatus, $data, $orderMock);
+        $this->assertTrue(true, $description);
+    }
+
+    /**
+     * Data provider for getUnprocessedRefundAmount with different currency ratios
+     */
+    public function getUnprocessedRefundAmountCurrencyRatioProvider(): array
+    {
+        return [
+            'ratio_2.0_wc_refunded_25' => [
+                'currency_ratio' => 2.0,
+                'wc_refunded' => 25.0,
+                'expected_unprocessed' => 50.0,
+                'description' => 'MP total: 150.0, converted: 75.0, unprocessed: 50.0 with ratio 2.0'
+            ],
+            'ratio_0.5_wc_refunded_100' => [
+                'currency_ratio' => 0.5,
+                'wc_refunded' => 100.0,
+                'expected_unprocessed' => 200.0,
+                'description' => 'MP total: 150.0, converted: 300.0, unprocessed: 200.0 with ratio 0.5'
+            ],
+            'ratio_1.0_wc_refunded_50' => [
+                'currency_ratio' => 1.0,
+                'wc_refunded' => 50.0,
+                'expected_unprocessed' => 100.0,
+                'description' => 'MP total: 150.0, converted: 150.0, unprocessed: 100.0 with ratio 1.0'
+            ],
+            'ratio_3.0_wc_refunded_10' => [
+                'currency_ratio' => 3.0,
+                'wc_refunded' => 10.0,
+                'expected_unprocessed' => 40.0,
+                'description' => 'MP total: 150.0, converted: 50.0, unprocessed: 40.0 with ratio 3.0'
+            ],
+        ];
+    }
+
+    /**
+     * Test getUnprocessedRefundAmount with different currency ratios
+     *
+     * @dataProvider getUnprocessedRefundAmountCurrencyRatioProvider
+     */
+    public function testGetUnprocessedRefundAmountWithDifferentRatios(
+        float $currencyRatio,
+        float $wcRefunded,
+        float $expectedUnprocessed,
+        string $description
+    ): void {
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('getUnprocessedRefundAmount');
+        $method->setAccessible(true);
+
+        $paymentsData = [
+            ['transaction_amount_refunded' => 100.0],
+            ['transaction_amount_refunded' => 50.0]
+        ];
+
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn($wcRefunded);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn($currencyRatio);
+
+        $result = $method->invoke($this->orderStatus, $orderMock, $paymentsData);
+        $this->assertEquals($expectedUnprocessed, $result, $description);
+    }
+
+    /**
+     * Data provider for refundAlreadyProcessed with different currency ratios
+     */
+    public function refundAlreadyProcessedCurrencyRatioProvider(): array
+    {
+        return [
+            'ratio_2.0_wc_greater_than_mp' => [
+                'currency_ratio' => 2.0,
+                'wc_refunded' => 80.0,
+                'expected_result' => true,
+                'description' => 'Should return true when WC refunded (80.0) > MP converted (75.0)'
+            ],
+            'ratio_0.5_wc_less_than_mp' => [
+                'currency_ratio' => 0.5,
+                'wc_refunded' => 250.0,
+                'expected_result' => false,
+                'description' => 'Should return false when WC refunded (250.0) < MP converted (300.0)'
+            ],
+            'ratio_1.0_wc_equals_mp' => [
+                'currency_ratio' => 1.0,
+                'wc_refunded' => 150.0,
+                'expected_result' => true,
+                'description' => 'Should return true when WC refunded (150.0) = MP converted (150.0)'
+            ],
+            'ratio_3.0_wc_greater_than_mp' => [
+                'currency_ratio' => 3.0,
+                'wc_refunded' => 60.0,
+                'expected_result' => true,
+                'description' => 'Should return true when WC refunded (60.0) > MP converted (50.0)'
+            ],
+            'ratio_0.25_wc_less_than_mp' => [
+                'currency_ratio' => 0.25,
+                'wc_refunded' => 500.0,
+                'expected_result' => false,
+                'description' => 'Should return false when WC refunded (500.0) < MP converted (600.0)'
+            ],
+        ];
+    }
+
+    /**
+     * Test refundAlreadyProcessed with different currency ratios
+     *
+     * @dataProvider refundAlreadyProcessedCurrencyRatioProvider
+     */
+    public function testRefundAlreadyProcessedWithDifferentRatios(
+        float $currencyRatio,
+        float $wcRefunded,
+        bool $expectedResult,
+        string $description
+    ): void {
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('refundAlreadyProcessed');
+        $method->setAccessible(true);
+
+        $paymentsData = [
+            ['transaction_amount_refunded' => 100.0],
+            ['transaction_amount_refunded' => 50.0]
+        ];
+
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn($wcRefunded);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn($currencyRatio);
+
+        $result = $method->invoke($this->orderStatus, $orderMock, $paymentsData);
+        $this->assertEquals($expectedResult, $result, $description);
     }
 }

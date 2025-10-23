@@ -1,7 +1,7 @@
-/* globals wc_mercadopago_custom_blocks_params */
+/* globals jQuery, wc, MPCheckoutErrorDispatcher, sendMetric, CheckoutPage */
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { getSetting } from '@woocommerce/settings';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission } from './helpers/cart-update.helper';
 
@@ -13,46 +13,65 @@ const paymentMethodName = 'woo-mercado-pago-custom';
 const settings = getSetting(`woo-mercado-pago-custom_data`, {});
 const defaultLabel = decodeEntities(settings.title) || 'Checkout Custom';
 
-const updateCart = (props) => {
-  const { extensionCartUpdate } = wc.blocksCheckout;
-  const { eventRegistration, emitResponse } = props;
-  const { onPaymentSetup } = eventRegistration;
-
-  useEffect(() => {
-    addDiscountAndCommission(extensionCartUpdate, paymentMethodName);
-
-    const unsubscribe = onPaymentSetup(() => {
-      return { type: emitResponse.responseTypes.SUCCESS };
-    });
-
-    return () => {
-      removeDiscountAndCommission(extensionCartUpdate, paymentMethodName);
-      return unsubscribe();
-    };
-  }, [onPaymentSetup]);
-};
-
 const Label = () => {
-
   const feeTitle = decodeEntities(settings?.params?.fee_title || '');
   const text = `${defaultLabel} ${feeTitle}`;
 
   return (
     <RowImageSelect
       text={text}
-      imgSrc={settings.params.icon}/>
+      imgSrc={settings.params.icon} />
   );
 };
 
 const Content = (props) => {
-  updateCart(props);
-
   const { eventRegistration, emitResponse, onSubmit } = props;
   const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
+  const [totalValue, setTotalValue] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { extensionCartUpdate } = wc.blocksCheckout;
 
   useEffect(() => {
-    handleCartTotalChange(props.billing.cartTotal.value, props.billing.currency);
-  }, [props.billing.cartTotal.value]);
+    if (isLoading) {
+      window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
+    } else {
+      window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    addDiscountAndCommission(extensionCartUpdate, paymentMethodName)
+      .then((result) => {
+        setTotalValue(result?.totals?.total_price);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    return () => {
+      removeDiscountAndCommission(extensionCartUpdate, paymentMethodName);
+      return onPaymentSetup(() => {
+        return { type: emitResponse.responseTypes.SUCCESS };
+      })();
+    };
+  }, [onPaymentSetup]);
+
+  useEffect(() => {
+    if (props.billing.cartTotal.value == totalValue) {
+      handleCartTotalChange(props.billing.cartTotal.value, props.billing.currency)
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      addDiscountAndCommission(extensionCartUpdate, paymentMethodName)
+        .then((result) => {
+          setTotalValue(result?.totals?.total_price);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  }, [props.billing.cartTotal.value, totalValue]);
 
   useEffect(() => {
     const unsubscribe = onPaymentSetup(async () => {
@@ -101,11 +120,11 @@ const Content = (props) => {
 
       const docTypeSelect = document.querySelector('#form-checkout__identificationType');
       const docNumberInput = document.querySelector('#form-checkout__identificationNumber');
-      
+
       if (docTypeSelect && docTypeSelect.value) {
         paymentMethodData['mercadopago_custom[doc_type]'] = docTypeSelect.value;
       }
-      
+
       if (docNumberInput && docNumberInput.value) {
         paymentMethodData['mercadopago_custom[doc_number]'] = docNumberInput.value;
       }
@@ -113,7 +132,7 @@ const Content = (props) => {
       return {
         type: emitResponse.responseTypes.SUCCESS,
         meta: {
-          paymentMethodData: {...window.mpHiddenInputDataFromBlocksCheckout, ...paymentMethodData},
+          paymentMethodData: { ...window.mpHiddenInputDataFromBlocksCheckout, ...paymentMethodData },
         },
       };
     });
@@ -182,11 +201,13 @@ const Content = (props) => {
 
   // Initialize form after content is rendered
   useEffect(() => {
+    setIsLoading(true);
+
     window.mpFormId = 'blocks_checkout_form';
     window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
-    
+
     if (window.mpCheckoutForm) {
-      jQuery(window.mpCheckoutForm).prop('id', mpFormId);
+      jQuery(window.mpCheckoutForm).prop('id', window.mpFormId);
     }
 
     // Add wallet button click handler if it exists

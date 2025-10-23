@@ -1,6 +1,7 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
 import woocommercePlugin from "@woocommerce/eslint-plugin";
+import pluginReact from "eslint-plugin-react";
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -17,5 +18,32 @@ export default [
       ...woocommercePlugin.configs.recommended.rules,
     },
     ...pluginJs.configs.recommended,
+  },
+  {
+    files: ["assets/js/blocks/**/*.js"],
+    languageOptions: {
+      sourceType: "module",
+      globals: globals.browser,
+      ecmaVersion: 2020,
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    plugins: {
+      react: pluginReact,
+    },
+    rules: {
+      "react/jsx-uses-react": "error",
+      "react/jsx-uses-vars": "error",
+      "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off",
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
   },
 ];

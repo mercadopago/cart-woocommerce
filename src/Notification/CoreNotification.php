@@ -81,7 +81,7 @@ class CoreNotification extends AbstractNotification
      *
      * @return void
      */
-    public function handleReceivedNotification($data): void
+    public function handleReceivedNotification($data)
     {
         parent::handleReceivedNotification($data);
 
@@ -107,31 +107,18 @@ class CoreNotification extends AbstractNotification
         }
     }
 
-    /**
-     * Process success response
-     *
-     * @param mixed $data
-     *
-     * @return void
-     */
-    public function handleSuccessfulRequest($data)
+    public function handleSuccessfulRequestInternal($data, $order): void
     {
-        try {
-            $order           = parent::handleSuccessfulRequest($data);
-            $oldOrderStatus  = $order->get_status();
+        $oldOrderStatus = $order->get_status();
 
-            if ($this->isRefundNotification($data)) {
-                $this->handleRefundNotification($order, $oldOrderStatus, $data);
-                return;
-            }
-
-            $processedStatus = $this->getProcessedStatus($order, $data);
-            $this->logStatusChange($oldOrderStatus, $processedStatus);
-            $this->processStatus($processedStatus, $order, $data);
-        } catch (Exception $e) {
-            $this->setResponse(422, $e->getMessage());
-            $this->logs->file->error($e->getMessage(), __CLASS__, $data);
+        if ($this->isRefundNotification($data)) {
+            $this->handleRefundNotification($order, $oldOrderStatus, $data);
+            return;
         }
+
+        $processedStatus = $this->getProcessedStatus($order, $data);
+        $this->logStatusChange($oldOrderStatus, $processedStatus);
+        $this->processStatus($processedStatus, $order, $data);
     }
 
     /**

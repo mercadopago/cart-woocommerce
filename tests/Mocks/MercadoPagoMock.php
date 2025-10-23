@@ -96,6 +96,9 @@ class MercadoPagoMock
         $mock->helpers->links = Mockery::mock(Links::class);
         $mock->helpers->nonce = Mockery::mock(Nonce::class);
         $mock->helpers->notices = Mockery::mock(Notices::class);
+        $mock->helpers->notices->shouldReceive('storeNotice')
+            ->andReturn(true)
+            ->byDefault();
         $mock->helpers->paymentMethods = Mockery::mock(PaymentMethods::class);
         $mock->helpers->requester = Mockery::mock(Requester::class);
         $mock->helpers->session = Mockery::mock(Session::class);

@@ -79,4 +79,8 @@ class MPSuperTokenMetrics {
     errorToUpdateSecurityCode(error, paymentMethod) {
         this.sendMetric('error_to_update_security_code', paymentMethod?.id || 'Unknown payment method', error?.message || 'Unknown error');
     }
+
+    errorToGetPreloadedPaymentMethods(error) {
+        this.sendMetric('error_to_get_preloaded_payment_methods', 'true', error?.message || 'Unknown error');
+    }
 }

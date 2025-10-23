@@ -52,19 +52,19 @@ class IpnNotification extends AbstractNotification
      * @return void
      * @throws Exception
      */
-    public function handleReceivedNotification($data): void
+    public function handleReceivedNotification($data)
     {
         parent::handleReceivedNotification($data);
 
         if (!isset($data['id']) || ! isset($data['topic'])) {
             $message = 'No ID or TOPIC param in Request IPN';
             $this->logs->file->error($message, __CLASS__, $data);
-            $this->setResponse(422, $message);
+            return $this->setResponse(422, $message);
         }
 
         if ($data['topic'] !== 'merchant_order') {
             $message = 'Discarded notification. This notification is already processed as webhook-payment';
-            $this->setResponse(200, $message);
+            return $this->setResponse(200, $message);
         }
 
         $merchantOrderId = preg_replace('/\D/', '', $data['id']);
@@ -75,7 +75,7 @@ class IpnNotification extends AbstractNotification
         if ($response->getStatus() !== 200) {
             $message = 'IPN merchant order not found';
             $this->logs->file->error($message, __CLASS__, (array) $response->getData());
-            $this->setResponse(422, $message);
+            return $this->setResponse(422, $message);
         }
 
         $payments = $response->getData()['payments'];
@@ -83,7 +83,7 @@ class IpnNotification extends AbstractNotification
         if (count($payments) == 0) {
             $message = 'Not found payments into merchant order';
             $this->logs->file->error($message, __CLASS__, $data);
-            $this->setResponse(422, $message);
+            return $this->setResponse(422, $message);
         }
 
         $response->getData()['ipn_type'] = 'merchant_order';
@@ -91,35 +91,22 @@ class IpnNotification extends AbstractNotification
         $this->handleSuccessfulRequest($response->getData());
     }
 
-    /**
-     * Process success response
-     *
-     * @param mixed $data
-     *
-     * @return void
-     */
-    public function handleSuccessfulRequest($data): void
+    public function handleSuccessfulRequestInternal($data, $order): void
     {
-        try {
-            $order           = parent::handleSuccessfulRequest($data);
-            $oldOrderStatus  = $order->get_status();
-            $processedStatus = $this->getProcessedStatus($order, $data);
+        $oldOrderStatus = $order->get_status();
+        $processedStatus = $this->getProcessedStatus($order, $data);
 
-            $this->logs->file->info(
-                sprintf(
-                    'Changing order status from %s to %s',
-                    $oldOrderStatus,
-                    $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
-                ),
-                __CLASS__
-            );
+        $this->logs->file->info(
+            sprintf(
+                'Changing order status from %s to %s',
+                $oldOrderStatus,
+                $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $processedStatus))
+            ),
+            __CLASS__
+        );
 
-            $this->processStatus($processedStatus, $order, $data);
-            $this->setResponse(200, 'Notification IPN Successfully');
-        } catch (Exception $e) {
-            $this->setResponse(422, $e->getMessage());
-            $this->logs->file->error($e->getMessage(), __CLASS__, $data);
-        }
+        $this->processStatus($processedStatus, $order, $data);
+        $this->setResponse(200, 'Notification IPN Successfully');
     }
 
     /**
