@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.6.1] - 2025-11-06
+### Added
+- Added card form click metric to Checkout API funnel tracking
+### Changed
+- Improved trigger mechanism for SDK methods in credit card form fields
+- Simplified offline payment flow when only one payment method is available
+### Fixed
+- Fixed error when switching from credit card to ticket payment method during checkout
+- Fixed currency display in installments when currency conversion is active
+- Fixed redirect to order confirmation page after payment completion
+- Fixed duplicate Pay and Cancel buttons on order received page
+
 ## [8.6.0] - 2025-10-22
 ### Added
 - Add loader before custom gateway initialization

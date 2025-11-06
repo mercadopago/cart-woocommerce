@@ -214,4 +214,16 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             }
         }
     }
+
+    /**
+     * Get amount and currency
+     *
+     * @param string $key 'amount' or 'currency' to get just one value
+     *
+     * @return array|float|null
+     */
+    protected function getCurrencyRatio(?string $gateway_id = '')
+    {
+        return $this->mercadopago->helpers->currency->onlyGetRatio($gateway_id);
+    }
 }

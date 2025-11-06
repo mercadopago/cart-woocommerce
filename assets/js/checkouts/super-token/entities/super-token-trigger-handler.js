@@ -3,16 +3,9 @@
 class MPSuperTokenTriggerHandler {
     CUSTOM_CHECKOUT_BLOCKS_RADIO_SELECTOR = '[value=woo-mercado-pago-custom]';
     CUSTOM_CHECKOUT_CLASSIC_RADIO_SELECTOR = '#payment_method_woo-mercado-pago-custom';
-    CUSTOM_CHECKOUT_CLASSIC_SELECTOR = '.payment_method_woo-mercado-pago-custom';
     FORM_CHECKOUT_SELECTOR = 'form.checkout, form#order_review';
     CHECKOUT_TYPE_SELECTOR = '#mp_checkout_type';
     WALLET_BUTTON_CONTAINER_SELECTOR = '.mp-wallet-button-container';
-    CUSTOM_CHECKOUT_CONTAINER_ID = 'mp-custom-checkout-form-container';
-    CLICKABLE_AREA_CLASS = 'mp-super-token-clickable-area';
-    CARD_NUMBER_FIELD_ID = 'form-checkout__cardNumber-container';
-    CARD_HOLDER_NAME_FIELD_ID = 'form-checkout__cardholderName';
-    EXPIRATION_DATE_FIELD_ID = 'form-checkout__expirationDate-container';
-    SECURITY_CODE_FIELD_ID = 'form-checkout__securityCode-container';
     WALLET_BUTTON_OPTION_VALUE = 'wallet_button';
     CURRENT_USER_EMAIL = wc_mercadopago_supertoken_trigger_handler_params.current_user_email;
     WALLET_BUTTON_ENABLED = wc_mercadopago_supertoken_trigger_handler_params.wallet_button_enabled;
@@ -21,22 +14,18 @@ class MPSuperTokenTriggerHandler {
     wcBuyerEmail = null;
     currentAmount = null;
     isAlreadyListeningForm = false;
-    isAuthenticating = false;
 
     // Dependencies
     mpSuperTokenAuthenticator = null;
     wcEmailListener = null;
     mpSuperTokenPaymentMethods = null;
+    mpSuperTokenTriggerFieldsStrategy = null;
 
-    constructor(mpSuperTokenAuthenticator, wcEmailListener, mpSuperTokenPaymentMethods) {
+    constructor(mpSuperTokenAuthenticator, wcEmailListener, mpSuperTokenPaymentMethods, mpSuperTokenTriggerFieldsStrategy) {
         this.mpSuperTokenAuthenticator = mpSuperTokenAuthenticator;
         this.wcEmailListener = wcEmailListener;
         this.mpSuperTokenPaymentMethods = mpSuperTokenPaymentMethods;
-    }
-
-    reset() {
-        this.removeClickableAreas();
-        this.isAuthenticating = false;
+        this.mpSuperTokenTriggerFieldsStrategy = mpSuperTokenTriggerFieldsStrategy;
     }
 
     walletButtonIsActive() {
@@ -79,28 +68,7 @@ class MPSuperTokenTriggerHandler {
             return null;
         }
 
-        return this.formatAmount(amountElement.value);
-    }
-
-    formatAmount(amount = '') {
-        const rawValue = amount?.replace(/[^\d.,]/g, '');
-        if (!rawValue) return null;
-
-        const lastCommaIndex = rawValue.lastIndexOf(',');
-        const lastDotIndex = rawValue.lastIndexOf('.');
-
-        const isEuropean = lastCommaIndex > lastDotIndex;
-        const normalizedValue = rawValue.replace(/[.,]/g, (match, offset) => {
-            if (isEuropean) {
-                return match === ',' ? '.' : '';
-            } else {
-                return match === '.' ? '.' : '';
-            }
-        });
-
-        const value = parseFloat(normalizedValue);
-
-        return isNaN(value) ? null : value.toFixed(2);
+        return this.mpSuperTokenAuthenticator.formatAmount(amountElement.value);
     }
 
     getCartTotalFromHTML() {
@@ -125,70 +93,6 @@ class MPSuperTokenTriggerHandler {
 
     customCheckoutIsActive() {
         return this.getCustomCheckoutRadioElement()?.checked;
-    }
-
-    alreadyHasClickableArea() {
-        return !!document.querySelector(`.${this.CLICKABLE_AREA_CLASS}`);
-    }
-
-    shouldCreateClickableArea() {
-        return this.customCheckoutIsActive() && !this.alreadyHasClickableArea() && !this.walletButtonIsActive();
-    }
-
-    getMercadoPagoCustomCheckoutContainerElement() {
-        return document.getElementById(this.CUSTOM_CHECKOUT_CONTAINER_ID)
-    }
-
-    getCreditCardFormFields() {
-        return [
-            document.getElementById(this.CARD_NUMBER_FIELD_ID),
-            document.getElementById(this.CARD_HOLDER_NAME_FIELD_ID),
-            document.getElementById(this.EXPIRATION_DATE_FIELD_ID),
-            document.getElementById(this.SECURITY_CODE_FIELD_ID),
-        ];
-    }
-
-    createClickableArea(element) {
-        const clickableArea = element.parentElement;
-
-        clickableArea.addEventListener('click', this.onTrigger.bind(this), { once: true });
-        clickableArea.classList.add(this.CLICKABLE_AREA_CLASS);
-
-        element.style.pointerEvents = 'none';
-        element.classList.add('mp-pointer-events-none');
-    }
-
-    removeClickableAreas() {
-        const clickableAreas = document.querySelectorAll(`.${this.CLICKABLE_AREA_CLASS}`);
-
-        clickableAreas.forEach((clickableArea) => {
-            const input = clickableArea.querySelector('.mp-pointer-events-none');
-            input.style.pointerEvents = 'auto';
-            input.classList.remove('mp-pointer-events-none');
-            clickableArea.classList.remove(this.CLICKABLE_AREA_CLASS);
-            clickableArea.removeEventListener('click', this.onTrigger.bind(this));
-        });
-    }
-
-    onTrigger() {
-        if (this.isAuthenticating || !this.alreadyHasClickableArea()) {
-            return;
-        }
-
-        this.isAuthenticating = true;
-
-        const buyerEmail = this.getBuyerEmail();
-        if (!buyerEmail) {
-            this.isAuthenticating = false;
-            this.removeClickableAreas();
-            return;
-        }
-
-        this.mpSuperTokenAuthenticator.authenticate(this.currentAmount, buyerEmail)
-            .finally(() => {
-                this.isAuthenticating = false;
-                this.removeClickableAreas();
-            });
     }
 
     onTriggerWalletButton(customSubmitFallback = null) {
@@ -224,7 +128,6 @@ class MPSuperTokenTriggerHandler {
     }
 
     resetFlow() {
-        this.reset();
         this.mpSuperTokenAuthenticator.reset();
         this.mpSuperTokenPaymentMethods.reset();
     }
@@ -236,7 +139,7 @@ class MPSuperTokenTriggerHandler {
             this.mpSuperTokenPaymentMethods.unmountCardForm();
             this.mpSuperTokenPaymentMethods.mountCardForm();
         }
-        
+
         this.resetFlow();
         this.loadSuperToken(this.getAmount())
             .finally(() => {
@@ -250,7 +153,6 @@ class MPSuperTokenTriggerHandler {
     resetSuperTokenOnError() {
         if (document.querySelector('#mp_checkout_type')?.value === 'super_token') {
             this.resetCustomCheckout();
-            this.isAuthenticating = false;
             document.querySelector('#mp_checkout_type').value = '';
         }
     }
@@ -285,7 +187,7 @@ class MPSuperTokenTriggerHandler {
             return;
         }
 
-        this.currentAmount = this.formatAmount(currentAmount);
+        this.currentAmount = this.mpSuperTokenAuthenticator.formatAmount(currentAmount);
 
         if (this.amountHasChanged() && !this.walletButtonIsActive()) this.resetFlow();
 
@@ -297,14 +199,12 @@ class MPSuperTokenTriggerHandler {
             return;
         }
 
-        if (this.shouldCreateClickableArea()) {
-            this.getCreditCardFormFields().forEach((elementField) => {
-                this.createClickableArea(elementField);
-            });
-        }
-
         if (this.walletButtonIsActive()) {
             await this._loadSuperTokenPaymentMethodsPreview();
+        }
+
+        if (!this.walletButtonIsActive()) {
+          this.mpSuperTokenTriggerFieldsStrategy.createClickableAreaListeners(this.currentAmount, this.getBuyerEmail());
         }
 
         if (!this.isAlreadyListeningForm) {
@@ -320,11 +220,7 @@ class MPSuperTokenTriggerHandler {
 
                 if (this.walletButtonIsActive()) return;
 
-                const canUseSuperToken = await this.mpSuperTokenAuthenticator.canUseSuperTokenFlow(currentAmount, email);
-
-                if (!canUseSuperToken) {
-                    this.removeClickableAreas();
-                }
+                await this.mpSuperTokenAuthenticator.canUseSuperTokenFlow(currentAmount, email);
             });
 
             this.wcEmailListener.setupEmailChangeHandlers();

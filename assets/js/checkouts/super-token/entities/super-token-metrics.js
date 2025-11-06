@@ -28,7 +28,7 @@ class MPSuperTokenMetrics {
         return 'prod';
     }
 
-    sendMetric(metricName, value, message) {        
+    sendMetric(metricName, value, message) {
         fetch(
             `${this.CORE_MONITOR_URL}/${metricName}`,
             {

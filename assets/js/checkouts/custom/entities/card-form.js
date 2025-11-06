@@ -1,17 +1,18 @@
 /* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher */
 // eslint-disable-next-line no-unused-vars
-class MPCardForm {    
+class MPCardForm {
     constructor() {
         this.form = null;
         this.formMounted = false;
         this.mpFormId = 'checkout';
         this.amount = null;
         this.onReadyDebounce = null;
+        this.fields = null;
     }
 
     async initCardForm(amount = this.getAmount()) {
         this.amount = amount;
-        
+
         if (!window.mpSdkInstance) {
             const mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key, {
                 locale: wc_mercadopago_custom_checkout_params.locale,
@@ -95,23 +96,25 @@ class MPCardForm {
                 clearTimeout(this.onReadyDebounce);
 
                 this.onReadyDebounce = setTimeout(async () => {
-                    if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
-                        MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
-                            fields?.cardNumber,
-                            "blur",
-                            "card_number_filled",
-                            {
-                                isUsingCardForm: true,
-                            }
-                        )
-                    }
-    
-                    try {
-                        await window.mpSuperTokenTriggerHandler?.loadSuperToken(!this.isClassicCheckout() ? this.amount : undefined)
-                    } finally {
-                        this.removeLoadSpinner();
-                        resolve();
-                    }
+                  try {
+                    this.fields = fields;
+
+                    fields?.cardNumber?.on('focus', () => {
+                      MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                        null,
+                        "focus",
+                        "card_number_focused",
+                        {
+                          onlyDispatch: true
+                        }
+                      );
+                    });
+
+                    await window.mpSuperTokenTriggerHandler?.loadSuperToken(!this.isClassicCheckout() ? this.amount : undefined)
+                  } finally {
+                      this.removeLoadSpinner();
+                      resolve();
+                  }
                 }, 2000)
             },
             onFormMounted: (error) => {
@@ -160,10 +163,8 @@ class MPCardForm {
                         CheckoutPage.setValueOn('paymentMethodId', paymentMethod.id);
                         CheckoutPage.setCvvConfig(paymentMethod.settings[0].security_code);
                         CheckoutPage.setImageCard(paymentMethod.secure_thumbnail || paymentMethod.thumbnail);
-                        
                         const additionalInfo = CheckoutPage.loadAdditionalInfo(paymentMethod.additional_info_needed);
                         CheckoutPage.additionalInfoHandler(additionalInfo);
-                        
                         CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'remove', 'mp-error');
                         CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'none');
                         CheckoutPage.shouldEnableInstallmentsComponent(paymentMethod.payment_type_id);
@@ -184,9 +185,14 @@ class MPCardForm {
                 event.preventDefault();
             },
             onValidityChange: (error, field) => {
+                if (field === 'cardNumber') {
+                  this.fields.cardNumber.on('blur', () => {
+                    document.dispatchEvent(new CustomEvent('mp_checkout_field_card_number_filled'));
+                  });
+                }
+
                 if (error) {
                     this.removeLoadSpinner();
-                    
                     let helper_message = CheckoutPage.getHelperMessage(field);
                     let message = wc_mercadopago_custom_checkout_params.input_helper_message[field][error[0].code];
 
@@ -220,7 +226,6 @@ class MPCardForm {
                 this.removeLoadSpinner();
                 CheckoutPage.verifyCardholderName();
                 CheckoutPage.verifyInstallmentsContainer();
-                
                 errors.forEach((error) => {
                     this.removeBlockOverlay();
 
@@ -303,7 +308,6 @@ class MPCardForm {
     createLoadSpinner() {
         const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
-    
         customContainer?.classList.add('mp-display-none');
         loadSpinner?.classList.remove('mp-display-none');
     }
@@ -311,7 +315,6 @@ class MPCardForm {
     removeLoadSpinner() {
         const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
-    
         customContainer?.classList.remove('mp-display-none');
         loadSpinner?.classList.add('mp-display-none');
     }

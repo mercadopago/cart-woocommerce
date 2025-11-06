@@ -1,4 +1,4 @@
-/* globals MPDebounce, WCEmailListener, MPSuperTokenMetrics, MPSuperTokenAuthenticator, MPSuperTokenTriggerHandler, MPSuperTokenPaymentMethods */
+/* globals MPDebounce, WCEmailListener, MPSuperTokenMetrics, MPSuperTokenAuthenticator, MPSuperTokenTriggerHandler, MPSuperTokenPaymentMethods, MPSuperTokenTriggerFieldsStrategy */
 document.addEventListener('DOMContentLoaded', () => {
     const waitMpSdkInstanceLoad = setInterval(() => {
         if (window.mpSdkInstance) {
@@ -17,12 +17,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 mpSuperTokenPaymentMethods,
                 mpSuperTokenMetrics,
             );
+            const mpSuperTokenTriggerFieldsStrategy = new MPSuperTokenTriggerFieldsStrategy(
+              mpSuperTokenAuthenticator,
+              mpSuperTokenPaymentMethods,
+            );
 
             window.mpSuperTokenPaymentMethods = mpSuperTokenPaymentMethods;
             window.mpSuperTokenTriggerHandler = new MPSuperTokenTriggerHandler(
                 mpSuperTokenAuthenticator,
                 wcEmailListener,
                 mpSuperTokenPaymentMethods,
+                mpSuperTokenTriggerFieldsStrategy
             );
         }
     }, 500)

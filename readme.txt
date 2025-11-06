@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 8.6.0
+Stable tag: 8.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,17 +134,17 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.6.0 (22/10/2025) =
+= v8.6.1 (30/10/2025) =
 * Added
-- Add loader before custom gateway initialization
-- Added currency convertion ratio value to orders 
+- Added card form click metric to Checkout API funnel tracking
 * Changed
-- Improve fast payments experience when wallet button is active
-- Changed translations of MLM account balance use cases
+- Improved trigger mechanism for SDK methods in credit card form fields
+- Simplified offline payment flow when only one payment method is available
 * Fixed
-- Fix set a semicolon on nbsp call on translations
-- Fixed currency conversion in refund
-- Fixed display unhandled and untranslated error message
+- Fixed error when switching from credit card to ticket payment method during checkout
+- Fixed currency display in installments when currency conversion is active
+- Fixed redirect to order confirmation page after payment completion
+- Fixed duplicate Pay and Cancel buttons on order received page
 
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

@@ -28,7 +28,7 @@ function formatCurrency(value, currency) {
   return formattedValue.split('.').join('.');
 }
 
-async function handleCartTotalChange(value, currency) {
+async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
   while (!window.mpCustomCheckoutHandler) {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
@@ -38,7 +38,13 @@ async function handleCartTotalChange(value, currency) {
   if (mpCustomCheckoutHandler.cardForm.formMounted && !isSubmitting) {
     mpCustomCheckoutHandler.cardForm.form.unmount();
   }
-  const updatedAmount = formatCurrency(value, currency);
+
+  let updatedAmount = formatCurrency(value, currency);
+  
+  const ratio = parseFloat(currencyRatio);
+  if (ratio > 0) {
+    updatedAmount = String(parseFloat(updatedAmount) * ratio);
+  }
 
   await mpCustomCheckoutHandler.cardForm.initCardForm(updatedAmount);
 }

@@ -168,9 +168,14 @@ class MPEventHandler {
     }
 
     handlePaymentMethodSelected() {
-        if (this.isCheckoutCustomPaymentMethodSelected()) {
-            this.cardForm.createLoadSpinner();
+        if (!this.isCheckoutCustomPaymentMethodSelected()) {
+            if (this.cardForm.formMounted) {
+                this.cardForm.form.unmount();
+            }
+            return;
         }
+
+        this.cardForm.createLoadSpinner();
 
         if (!this.triggeredPaymentMethodSelectedEvent) {
             this.cardForm.initCardForm();
@@ -180,6 +185,7 @@ class MPEventHandler {
     handleOrderReviewSubmit(event) {
         if (this.isCheckoutCustomPaymentMethodSelected()) {
             event.preventDefault();
+            this.cardForm.createLoadSpinner();
             return this.mercadoPagoFormHandler();
         } else {
             if (this.cardForm.formMounted) {
@@ -216,8 +222,24 @@ class MPEventHandler {
                     return;
                 }
 
-                if (response.redirect) {
+                if (response.result === 'success' && response.redirect) {
                     window.location.href = response.redirect;
+                    return;
+                }
+
+                if (response.result === 'fail') {
+                    jQuery('#order_review .woocommerce-error, #order_review .woocommerce-message').remove();
+                    
+                    jQuery('#order_review').prepend(
+                        '<div class="woocommerce-error">' + response.messages + '</div>'
+                    );
+
+                    this.cardForm.removeBlockOverlay();
+                    this.cardForm.removeLoadSpinner();
+                    this.hasToken = false;
+                    this.mercado_pago_submit = false;
+                    
+                    return;
                 }
 
                 window.location.reload();

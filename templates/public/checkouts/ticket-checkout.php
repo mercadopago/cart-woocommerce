@@ -30,13 +30,18 @@ use MercadoPago\Woocommerce\Helpers\Template;
 if (!defined('ABSPATH')) {
     exit;
 }
+
+$has_multiple_payment_methods = is_array($payment_methods) && count($payment_methods) > 1;
+$container_state_class = $has_multiple_payment_methods
+    ? 'mp-checkout-ticket-has-multiple'
+    : 'mp-checkout-ticket-single';
 ?>
 
-<div class='mp-checkout-container'>
+<div class="mp-checkout-container">
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
-        <div class="mp-checkout-ticket-container">
+        <div class="mp-checkout-ticket-container  <?= esc_attr($container_state_class); ?>">
             <div class="mp-checkout-ticket-content">
                 <?php if ($test_mode) : ?>
                     <test-mode
@@ -65,15 +70,25 @@ if (!defined('ABSPATH')) {
                     </div>
                 <?php endif; ?>
 
-                <p class="mp-checkout-ticket-text" data-cy="checkout-ticket-text">
-                    <?= esc_html($ticket_text_label); ?>
-                </p>
-
-                <input-table
-                    name="mercadopago_ticket[payment_method_id]"
-                    button-name=<?= esc_html($input_table_button); ?>
-                    columns='<?= esc_attr(wp_json_encode($payment_methods)); ?>'>
-                </input-table>
+                <?php if ($has_multiple_payment_methods) : ?>
+                    <p class="mp-checkout-ticket-text" data-cy="checkout-ticket-text">
+                        <?= esc_html($ticket_text_label); ?>
+                    </p>
+                
+                    <input-table
+                        name="mercadopago_ticket[payment_method_id]"
+                        button-name=<?= esc_html($input_table_button); ?>
+                        columns='<?= esc_attr(json_encode($payment_methods)); ?>'>
+                    </input-table>
+                <?php else : ?>
+                    <?php if (!empty($payment_methods)) : ?>
+                        <input 
+                            type="hidden" 
+                            name="mercadopago_ticket[payment_method_id]" 
+                            value="<?= esc_attr($payment_methods[0]['value']); ?>" 
+                        />
+                    <?php endif; ?>
+                <?php endif; ?>
 
                 <input-helper
                     isVisible=false

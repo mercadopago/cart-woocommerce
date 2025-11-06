@@ -131,6 +131,14 @@ const Content = (props) => {
           }
       });
 
+      if (!paymentMethodData['mercadopago_ticket[payment_method_id]']) {
+        const hiddenPaymentMethod = document.querySelector('input[name="mercadopago_ticket[payment_method_id]"][type="hidden"]');
+        if (hiddenPaymentMethod && hiddenPaymentMethod.value) {
+          paymentMethodData['mercadopago_ticket[payment_method_id]'] = hiddenPaymentMethod.value;
+          inputPaymentMethod.style.display = 'none';
+        }
+      }
+
       const siteId = document.getElementsByName('mercadopago_ticket[site_id]')[0].value;
 
       if (siteId == 'MLB') {

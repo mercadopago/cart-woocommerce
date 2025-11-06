@@ -332,6 +332,7 @@ class CheckoutTicketPageController {
   verifyPaymentMethods() {
     let paymentOptionSelected = false;
     let documentElement = document.querySelector('.mp-checkout-ticket-container');
+    
     documentElement
       .querySelectorAll('.mp-input-radio-radio')
       .forEach((item) => {
@@ -339,6 +340,13 @@ class CheckoutTicketPageController {
           paymentOptionSelected = true;
         }
     });
+
+    if (!paymentOptionSelected) {
+      const hiddenPaymentMethod = documentElement.querySelector('input[name="mercadopago_ticket[payment_method_id]"][type="hidden"]');
+      if (hiddenPaymentMethod && hiddenPaymentMethod.value) {
+        paymentOptionSelected = true;
+      }
+    }
 
     if (paymentOptionSelected === false) {
       CheckoutTicketPage.setDisplayOfError('fcInputTableContainer', 'add', 'mp-error', 'ticketContent');
@@ -378,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let checkoutTicketPageController = null;
 
-  const ticketFormLoadInterval = setInterval(function () {
+  setInterval(function () {
     const checkoutTicketPaymentMethodElement = 
       document.getElementById('payment_method_woo-mercado-pago-ticket') ?? 
       document.getElementById('radio-control-wc-payment-method-options-woo-mercado-pago-ticket') ??
@@ -390,9 +398,6 @@ document.addEventListener('DOMContentLoaded', function () {
       checkoutTicketPageController = new CheckoutTicketPageController(wc_mercadopago_ticket_checkout_params);
       // Define a global function for ticket.block.js to be able to call the addressFieldsFromTicketRowAreValid method
       window.addressFieldsFromTicketRowAreValid = checkoutTicketPageController.addressFieldsFromTicketRowAreValid.bind(checkoutTicketPageController);
-
-      clearInterval(ticketFormLoadInterval);
-      return;
     }
   }, 1000);
 });

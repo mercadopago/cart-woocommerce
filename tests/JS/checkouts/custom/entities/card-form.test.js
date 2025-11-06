@@ -520,4 +520,185 @@ describe('MPCardForm', () => {
       expect(window.mpSdkInstance).toBe(existingInstance);
     });
   });
+
+  describe('setupSDKFieldFocusListeners()', () => {
+    beforeEach(() => {
+      window.mpSuperTokenTriggerHandler = undefined;
+    });
+
+    afterEach(() => {
+      window.mpSuperTokenTriggerHandler = undefined;
+    });
+
+    test('Given mpSuperTokenTriggerHandler does not exist, When setupSDKFieldFocusListeners() is called, Then should return early and not attach listeners', () => {
+      const mockField = {
+        on: jest.fn(),
+      };
+
+      const fields = {
+        cardNumber: mockField,
+        cardholderName: mockField,
+      };
+
+      window.mpSuperTokenTriggerHandler = undefined;
+
+      cardForm.setupSDKFieldFocusListeners(fields);
+
+      expect(mockField.on).not.toHaveBeenCalled();
+    });
+
+    test('Given fields is null, When setupSDKFieldFocusListeners() is called, Then should return early and not throw error', () => {
+      window.mpSuperTokenTriggerHandler = {
+        onSDKFieldFocus: jest.fn(),
+      };
+
+      expect(() => {
+        cardForm.setupSDKFieldFocusListeners(null);
+      }).not.toThrow();
+
+      expect(window.mpSuperTokenTriggerHandler.onSDKFieldFocus).not.toHaveBeenCalled();
+    });
+
+    test('Given fields is undefined, When setupSDKFieldFocusListeners() is called, Then should return early and not throw error', () => {
+      window.mpSuperTokenTriggerHandler = {
+        onSDKFieldFocus: jest.fn(),
+      };
+
+      expect(() => {
+        cardForm.setupSDKFieldFocusListeners(undefined);
+      }).not.toThrow();
+
+      expect(window.mpSuperTokenTriggerHandler.onSDKFieldFocus).not.toHaveBeenCalled();
+    });
+
+    test('Given valid fields and mpSuperTokenTriggerHandler exists, When setupSDKFieldFocusListeners() is called, Then should attach focus listeners to all fields', () => {
+      const mockOnSDKFieldFocus = jest.fn();
+      window.mpSuperTokenTriggerHandler = {
+        onSDKFieldFocus: mockOnSDKFieldFocus,
+      };
+
+      const mockCardNumberField = {
+        on: jest.fn(),
+      };
+
+      const mockCardholderNameField = {
+        on: jest.fn(),
+      };
+
+      const mockExpirationDateField = {
+        on: jest.fn(),
+      };
+
+      const mockSecurityCodeField = {
+        on: jest.fn(),
+      };
+
+      const fields = {
+        cardNumber: mockCardNumberField,
+        cardholderName: mockCardholderNameField,
+        expirationDate: mockExpirationDateField,
+        securityCode: mockSecurityCodeField,
+      };
+
+      cardForm.setupSDKFieldFocusListeners(fields);
+
+      expect(mockCardNumberField.on).toHaveBeenCalledWith('focus', expect.any(Function));
+      expect(mockCardholderNameField.on).toHaveBeenCalledWith('focus', expect.any(Function));
+      expect(mockExpirationDateField.on).toHaveBeenCalledWith('focus', expect.any(Function));
+      expect(mockSecurityCodeField.on).toHaveBeenCalledWith('focus', expect.any(Function));
+    });
+
+    test('Given valid fields with focus event, When focus event is triggered, Then should call onSDKFieldFocus with correct field name', () => {
+      const mockOnSDKFieldFocus = jest.fn();
+      window.mpSuperTokenTriggerHandler = {
+        onSDKFieldFocus: mockOnSDKFieldFocus,
+      };
+
+      const mockCardNumberField = {
+        on: jest.fn((event, callback) => {
+          if (event === 'focus') {
+            callback({});
+          }
+        }),
+      };
+
+      const fields = {
+        cardNumber: mockCardNumberField,
+      };
+
+      cardForm.setupSDKFieldFocusListeners(fields);
+
+      expect(mockOnSDKFieldFocus).toHaveBeenCalledWith('cardNumber');
+    });
+
+    test('Given field without .on() method, When setupSDKFieldFocusListeners() is called, Then should skip that field and not throw error', () => {
+      const mockOnSDKFieldFocus = jest.fn();
+      window.mpSuperTokenTriggerHandler = {
+        onSDKFieldFocus: mockOnSDKFieldFocus,
+      };
+
+      const mockCardNumberField = {
+        on: jest.fn(),
+      };
+
+      const fields = {
+        cardNumber: mockCardNumberField,
+        invalidField: { someOtherMethod: jest.fn() },
+      };
+
+      expect(() => {
+        cardForm.setupSDKFieldFocusListeners(fields);
+      }).not.toThrow();
+
+      expect(mockCardNumberField.on).toHaveBeenCalledWith('focus', expect.any(Function));
+    });
+
+    test('Given field is null, When setupSDKFieldFocusListeners() is called, Then should skip that field and not throw error', () => {
+      const mockOnSDKFieldFocus = jest.fn();
+      window.mpSuperTokenTriggerHandler = {
+        onSDKFieldFocus: mockOnSDKFieldFocus,
+      };
+
+      const mockCardNumberField = {
+        on: jest.fn(),
+      };
+
+      const fields = {
+        cardNumber: mockCardNumberField,
+        invalidField: null,
+      };
+
+      expect(() => {
+        cardForm.setupSDKFieldFocusListeners(fields);
+      }).not.toThrow();
+
+      expect(mockCardNumberField.on).toHaveBeenCalledWith('focus', expect.any(Function));
+    });
+
+    test('Given multiple fields, When setupSDKFieldFocusListeners() is called, Then should iterate dynamically over all fields using Object.keys()', () => {
+      const mockOnSDKFieldFocus = jest.fn();
+      window.mpSuperTokenTriggerHandler = {
+        onSDKFieldFocus: mockOnSDKFieldFocus,
+      };
+
+      const createMockField = () => ({
+        on: jest.fn((event, callback) => {
+          if (event === 'focus') callback({});
+        }),
+      });
+
+      const fields = {
+        cardNumber: createMockField(),
+        expirationDate: createMockField(),
+        securityCode: createMockField(),
+      };
+
+      cardForm.setupSDKFieldFocusListeners(fields);
+
+      expect(mockOnSDKFieldFocus).toHaveBeenCalledTimes(3);
+      expect(mockOnSDKFieldFocus).toHaveBeenCalledWith('cardNumber');
+      expect(mockOnSDKFieldFocus).toHaveBeenCalledWith('expirationDate');
+      expect(mockOnSDKFieldFocus).toHaveBeenCalledWith('securityCode');
+    });
+  });
 });

@@ -36,6 +36,7 @@ class CustomBlock extends AbstractBlock
                 $this->gateway->getPaymentFieldsParams()
             ),
             'icon' => $this->gateway->icon,
+            'currencyRatio' => $this->getCurrencyRatio($this->name),
         ];
     }
 }

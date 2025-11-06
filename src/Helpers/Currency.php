@@ -127,6 +127,27 @@ class Currency
     }
 
     /**
+     * Get ratio without loading or setting it
+     *
+     * @param string|null $gateway_id
+     *
+     * @return float
+     */
+    public function onlyGetRatio(?string $gateway_id = null): float
+    {
+        return isset($this->ratios[$gateway_id]) ? $this->ratios[$gateway_id] : 1;
+    }
+
+    public function getCurrencyCode(AbstractGateway $gateway): string
+    {
+        if ($this->isConversionEnabled($gateway) && !$this->validateConversion()) {
+            return $this->getCurrency();
+        }
+
+        return $this->getWoocommerceCurrency();
+    }
+
+    /**
      * Set ratio
      *
      * @param string $gatewayId
