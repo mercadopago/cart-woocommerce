@@ -58,7 +58,7 @@ const Content = (props) => {
 
   useEffect(() => {
     if (props.billing.cartTotal.value == totalValue) {
-      handleCartTotalChange(props.billing.cartTotal.value, props.billing.currency)
+      handleCartTotalChange(props.billing.cartTotal.value, props.billing.currency, settings.params.currencyRatio)
         .finally(() => {
           setIsLoading(false);
         });

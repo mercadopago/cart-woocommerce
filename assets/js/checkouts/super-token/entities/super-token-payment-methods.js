@@ -382,7 +382,6 @@ class MPSuperTokenPaymentMethods {
         }
 
         this.emitEventFromSelectPaymentMethod({ id: this.NEW_CARD_TYPE });
-        window.mpSuperTokenTriggerHandler?.removeClickableAreas();
         this.storeActivePaymentMethod({ id: this.NEW_CARD_TYPE });
         this.deselectAllPaymentMethods();
         this.hideAllPaymentMethodDetails();

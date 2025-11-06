@@ -120,7 +120,7 @@ const CheckoutPage = {
 
   formatCurrency(value) {
     const formatter = new Intl.NumberFormat(wc_mercadopago_custom_checkout_params.intl, {
-      currency: wc_mercadopago_custom_checkout_params.currency,
+      currency: wc_mercadopago_custom_checkout_params.currency_code,
       style: 'currency',
       currencyDisplay: 'narrowSymbol',
     });

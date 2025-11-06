@@ -57,6 +57,27 @@ class MPSuperTokenAuthenticator {
         return this.authenticator;
     }
 
+    formatAmount(amount = '') {
+      const rawValue = amount?.replace(/[^\d.,]/g, '');
+      if (!rawValue) return null;
+
+      const lastCommaIndex = rawValue.lastIndexOf(',');
+      const lastDotIndex = rawValue.lastIndexOf('.');
+
+      const isEuropean = lastCommaIndex > lastDotIndex;
+      const normalizedValue = rawValue.replace(/[.,]/g, (match, offset) => {
+          if (isEuropean) {
+              return match === ',' ? '.' : '';
+          } else {
+              return match === '.' ? '.' : '';
+          }
+      });
+
+      const value = parseFloat(normalizedValue);
+
+      return isNaN(value) ? null : value.toFixed(2);
+    }
+
     async buildAuthenticator(amount, buyerEmail) {
         this.amountUsed = amount;
 
@@ -68,7 +89,7 @@ class MPSuperTokenAuthenticator {
 
     async canUseSuperTokenFlow(amount, buyerEmail) {
         try {
-            const authenticator = await this.buildAuthenticator(amount, buyerEmail);
+            const authenticator = await this.buildAuthenticator(this.formatAmount(amount), buyerEmail);
 
             this.ableToUseSuperToken = true;
             this.mpSuperTokenMetrics.canUseSuperToken(true);
@@ -82,6 +103,8 @@ class MPSuperTokenAuthenticator {
 
     async renderAccountPaymentMethods(token) {
         try {
+            window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
+
             const accountPaymentMethods = await this.mpSuperTokenPaymentMethods.getAccountPaymentMethods(token);
 
             if (!accountPaymentMethods?.data.length) {
@@ -91,6 +114,8 @@ class MPSuperTokenAuthenticator {
             this.mpSuperTokenPaymentMethods.renderAccountPaymentMethods(accountPaymentMethods.data, this.amountUsed);
         } catch (error) {
             this.mpSuperTokenMetrics.errorToRenderAccountPaymentMethods(error);
+        } finally {
+            window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
         }
     }
 

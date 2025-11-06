@@ -233,6 +233,7 @@ class CustomGateway extends AbstractGateway
                 'intl'              => $this->countryConfigs['intl'],
                 'site_id'           => $this->countryConfigs['site_id'],
                 'currency'          => $this->countryConfigs['currency'],
+                'currency_code' => $this->mercadopago->helpers->currency->getCurrencyCode($this),
                 'theme'             => get_stylesheet(),
                 'location'          => '/checkout',
                 'plugin_version'    => MP_VERSION,
@@ -324,6 +325,11 @@ class CustomGateway extends AbstractGateway
                 'theme'             => get_stylesheet(),
                 'cust_id'           => $this->mercadopago->sellerConfig->getCustIdFromAT(),
             ]
+        );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_supertoken_trigger_fields_strategy',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token/triggers/mp-super-token-trigger-fields-strategy'),
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(

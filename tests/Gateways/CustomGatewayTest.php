@@ -928,4 +928,144 @@ class CustomGatewayTest extends TestCase
 
         $this->assertEquals('<div>Preview</div>', $result);
     }
+
+    /**
+     * Test registerCheckoutScripts calls getCurrencyCode method
+     *
+     * @return void
+     */
+    public function testRegisterCheckoutScriptsCallsGetCurrencyCode()
+    {
+        // Mock getCurrencyCode to return a specific currency
+        $expectedCurrency = 'BRL';
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getCurrencyCode')
+            ->with($this->gateway)
+            ->once()
+            ->andReturn($expectedCurrency);
+
+        // Mock other dependencies for registerCheckoutScripts
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')
+            ->andReturn('test-css-url');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getJsAsset')
+            ->andReturn('test-js-url');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')
+            ->andReturn('test-image-url');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')
+            ->andReturn('test-public-key');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
+        $this->gateway->mercadopago->hooks->options
+            ->shouldReceive('getGatewayOption')
+            ->andReturn('cards_first');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getPaymentMethodsThumbnails')
+            ->andReturn([]);
+
+        $this->gateway->mercadopago->helpers->links
+            ->shouldReceive('getPrivacyPolicyLink')
+            ->andReturn('https://example.com/privacy');
+
+        // Mock storeTranslations
+        $this->gateway->storeTranslations = [
+            'locale' => 'en-US',
+            'payment_methods_list_text' => 'Payment Methods',
+            'last_digits_text' => 'Last digits',
+            'new_card_text' => 'New card',
+            'account_money_text' => 'Account Money',
+            'account_money_wallet_with_investment_text' => 'Wallet + Investment',
+            'account_money_wallet_text' => 'Wallet',
+            'account_money_investment_text' => 'Investment',
+            'account_money_available_text' => 'Available',
+            'interest_free_part_one_text' => 'Interest free',
+            'interest_free_part_two_text' => 'part two',
+            'interest_free_option_text' => 'Interest free option',
+            'security_code_input_title_text' => 'Security code',
+            'security_code_placeholder_text_3_digits' => '3 digits',
+            'security_code_placeholder_text_4_digits' => '4 digits',
+            'security_code_tooltip_text_3_digits' => '3 digits tooltip',
+            'security_code_tooltip_text_4_digits' => '4 digits tooltip',
+            'security_code_error_message_text' => 'Security code error',
+            'card_installments_label' => 'Installments',
+            'placeholders_issuer' => 'Issuer',
+            'placeholders_installments' => 'Installments',
+            'placeholders_card_expiration_date' => 'Expiration',
+            'placeholders_cardholder_name' => 'Cardholder Name',
+            'installments_required' => 'Required',
+            'card_installments_interest_text' => 'Interest text',
+            'input_helper_message_invalid_type' => 'Invalid type',
+            'input_helper_message_invalid_length' => 'Invalid length',
+            'input_helper_message_card_holder_name_221' => 'Card holder name 221',
+            'input_helper_message_card_holder_name_316' => 'Card holder name 316',
+            'input_helper_message_expiration_date_invalid_type' => 'Expiration date invalid type',
+            'input_helper_message_expiration_date_invalid_length' => 'Expiration date invalid length',
+            'input_helper_message_expiration_date_invalid_value' => 'Expiration date invalid value',
+            'input_helper_message_security_code_invalid_type' => 'Security code invalid type',
+            'input_helper_message_security_code_invalid_length' => 'Security code invalid length',
+            'default_error_message' => 'Default error message',
+            'installments_error_invalid_amount' => 'Invalid amount error',
+            'mercado_pago_card_name' => 'Mercado Pago Card',
+            'mercadopago_privacy_policy' => 'Privacy policy {link}',
+        ];
+
+        // Mock threeDsTranslations
+        $this->gateway->mercadopago->storeTranslations->threeDsTranslations = [
+            'title_loading_3ds_frame' => 'Loading 3DS',
+            'title_loading_3ds_frame2' => 'Loading 3DS 2',
+            'text_loading_3ds_frame' => 'Loading frame',
+            'title_loading_3ds_response' => 'Loading response',
+            'title_3ds_frame' => '3DS Frame',
+            'tooltip_3ds_frame' => '3DS Tooltip',
+            'message_3ds_declined' => '3DS Declined',
+        ];
+
+        // Mock countryConfigs
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'intl' => 'en-US',
+            'site_id' => 'MLA',
+            'currency' => 'ARS'
+        ]);
+
+        // Mock WooCommerce version
+        $this->gateway->mercadopago->woocommerce->version = '8.0.0';
+
+        // Mock get_option method
+        $this->gateway->shouldReceive('get_option')
+            ->andReturn('yes');
+
+        // Mock WordPress functions
+        WP_Mock::userFunction('get_stylesheet')
+            ->andReturn('test-theme');
+
+        WP_Mock::userFunction('wp_get_current_user')
+            ->andReturn((object) ['user_email' => 'test@example.com']);
+
+        // Mock scripts registration
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutStyle')
+            ->andReturnSelf();
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutScript')
+            ->andReturnSelf();
+
+        // Execute the method
+        $this->gateway->registerCheckoutScripts();
+
+        // The test passes if no exceptions are thrown and getCurrencyCode was called
+        $this->expectNotToPerformAssertions();
+    }
 }
