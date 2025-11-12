@@ -448,7 +448,7 @@ class MPSuperTokenPaymentMethods {
             return this.ACCOUNT_MONEY_TEXT;
         }
 
-        if (this.userHasAccountMoney(accountMoneyPaymentMethod) && 
+        if (this.userHasAccountMoney(accountMoneyPaymentMethod) &&
             this.userHasAccountMoneyInvested(accountMoneyPaymentMethod)) {
             return this.ACCOUNT_MONEY_WALLET_WITH_INVESTMENT_TEXT;
         }
@@ -1033,7 +1033,7 @@ class MPSuperTokenPaymentMethods {
 
     reorderAccountPaymentMethods(accountPaymentMethods) {
         const MAX_CREDIT_CARDS = 3;
-        
+
         const cardOptions = accountPaymentMethods.filter(pm => this.isCreditCard(pm) || this.isDebitCard(pm) || this.isPrepaidCard(pm));
         const accountMoneyOption = accountPaymentMethods.find(pm => this.isAccountMoney(pm));
 
@@ -1084,7 +1084,7 @@ class MPSuperTokenPaymentMethods {
     organizePaymentMethodsElements(paymentMethods, onSelectPaymentMethod) {
         const reorderedAccountPaymentMethods = this.reorderAccountPaymentMethods(paymentMethods);
         const normalizedPaymentMethods = this.normalizeAccountPaymentMethods(reorderedAccountPaymentMethods);
-    
+
         normalizedPaymentMethods.reverse().forEach((paymentMethod) => {
             this.getCustomCheckoutEntireElement().insertBefore(
                 this.createPaymentMethodElement(paymentMethod, onSelectPaymentMethod),
@@ -1188,7 +1188,7 @@ class MPSuperTokenPaymentMethods {
 
     forceShowValidationErrors() {
         window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
-        
+
         if (!this.activePaymentMethod) {
             return;
         }
@@ -1197,7 +1197,7 @@ class MPSuperTokenPaymentMethods {
             return;
         }
 
-        const paymentMethodElement = document.getElementById(this.activePaymentMethod.token);
+        const paymentMethodElement = document.getElementById(`${this.activePaymentMethod?.id}${this.activePaymentMethod.card?.card_number?.last_four_digits}`);
         if (!paymentMethodElement) {
             return;
         }
@@ -1293,9 +1293,9 @@ class MPSuperTokenPaymentMethods {
     async renderPreloadedPaymentMethods(preloadedPaymentMethods, onSelectPaymentMethod) {
         return new Promise((resolve) => {
             const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
-        
+
             if (!customCheckoutEntireElement) return;
-    
+
             this.reset();
             this.onCustomCheckoutWasRendered(
                 customCheckoutEntireElement,
