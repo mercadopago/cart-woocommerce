@@ -17,6 +17,8 @@ class Scripts
 
     private const MELIDATA_SCRIPT_NAME = 'mercadopago_melidata';
 
+    private const WOOCCOMMERCE_SCRIPTS_SCRIPT_NAME = 'wc_mercadopago_woocommerce_scripts';
+
     private const CARONTE_SCRIPT_NAME = 'wc_mercadopago';
 
     private const NOTICES_SCRIPT_NAME = 'wc_mercadopago_notices';
@@ -280,6 +282,23 @@ class Scripts
         }
 
         $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
+    }
+
+    public function registerMpBehaviorTrackingScript(): void
+    {
+        global $woocommerce;
+
+        $file = $this->url->getJsAsset('scripts/mp-behavior-tracking');
+
+        $variables = [
+            'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
+            'cust_id'          => $this->seller->getCustIdFromAT() ?: '',
+            'theme'            => get_stylesheet(),
+            'plugin_version'   => MP_VERSION,
+            'platform_version' => $woocommerce->version,
+        ];
+
+        $this->registerCheckoutScript(self::WOOCCOMMERCE_SCRIPTS_SCRIPT_NAME, $file, $variables);
     }
 
     /**

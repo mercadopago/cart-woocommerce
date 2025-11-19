@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
 use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use MercadoPago\Woocommerce\Tests\Mocks\ArrayMock;
 use Mockery\MockInterface;
+use Mockery\Exception\MockeryExceptionInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Helpers\Form;
@@ -689,88 +690,56 @@ class AbstractGatewayTest extends TestCase
      */
     public function processReturnFailProvider(): array
     {
-        $defaultMessage = 'Default buyer refused message';
-        $invalidUsersMessage = 'Invalid users message';
-        $invalidOperatorsMessage = 'Invalid operators message';
-        $cardValidationMessage = 'Card validation error message';
-        $choFormErrorMessage = 'Form validation error message';
-        $translations = [
-            'buyerRefusedMessages' => ['buyer_default' => $defaultMessage],
-            'commonMessages' => [
-                'invalid_users' => $invalidUsersMessage,
-                'invalid_operators' => $invalidOperatorsMessage,
-                'cho_form_error' => $choFormErrorMessage
-            ],
-            'customCheckout' => ['card_number_validation_error' => $cardValidationMessage]
-        ];
-
         return [
-            'error_400' => [
-                'error_message' => '400',
-                'expected_message' => $defaultMessage,
-                'translations' => $translations
-            ],
-            'error_exception' => [
-                'error_message' => 'exception',
-                'expected_message' => $defaultMessage,
-                'translations' => $translations
-            ],
-            'invalid_test_user_email' => [
-                'error_message' => 'Invalid test user email',
-                'expected_message' => $invalidUsersMessage,
-                'translations' => $translations
-            ],
-            'invalid_users_involved' => [
+            'with_known_error_and_notice' => [
                 'error_message' => 'Invalid users involved',
-                'expected_message' => $invalidUsersMessage,
-                'translations' => $translations
+                'expected_message' => 'Translated error message',
+                'with_notice' => true
             ],
-            'invalid_operators_users' => [
-                'error_message' => 'Invalid operators users involved',
-                'expected_message' => $invalidOperatorsMessage,
-                'translations' => $translations
+            'with_unknown_error_and_notice' => [
+                'error_message' => 'Some unknown error',
+                'expected_message' => 'Default error message',
+                'with_notice' => true
             ],
-            'invalid_card_validation' => [
-                'error_message' => 'Invalid card_number_validation',
-                'expected_message' => $cardValidationMessage,
-                'translations' => $translations
-            ],
-            'cho_form_error' => [
-                'error_message' => 'cho_form_error',
-                'expected_message' => $choFormErrorMessage,
-                'translations' => $translations
-            ],
-            'unknown_error' => [
-                'error_message' => 'Some unknown error message',
-                'expected_message' => $defaultMessage,
-                'translations' => $translations
+            'without_notice' => [
+                'error_message' => 'Any error message',
+                'expected_message' => 'Any translated message',
+                'with_notice' => false
             ]
         ];
     }
 
     /**
-     * Test processReturnFail with various error scenarios
+     * Test processReturnFail method behavior
+     * Tests that the method correctly calls the errorMessages helper and returns the expected result
      *
      * @dataProvider processReturnFailProvider
      * @param string $error_message The error message to test
      * @param string $expected_message The expected message in the result
-     * @param array $translations The translations to configure
+     * @param bool $with_notice Whether to show notice or not
      */
-    public function testProcessReturnFail(string $error_message, string $expected_message, array $translations)
+    public function testProcessReturnFail(string $error_message, string $expected_message, bool $with_notice)
     {
         $this->gateway->mercadopago = $this->mercadopagoMock;
 
-        // Configure translations using the existing mock structure
-        foreach ($translations as $section => $messages) {
-            $this->mercadopagoMock->storeTranslations->$section = new ArrayMock(function () use ($messages) {
-                return current($messages);
-            });
-            foreach ($messages as $key => $value) {
-                $this->mercadopagoMock->storeTranslations->$section[$key] = $value;
-            }
-        }
+        // Mock the errorMessages helper to return the expected message
+        $this->mercadopagoMock->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->with($error_message)
+            ->once()
+            ->andReturn($expected_message);
 
-        $this->mercadopagoMock->helpers->notices->shouldReceive('storeNotice')->once();
+        // Mock notices only if with_notice is true
+        if ($with_notice) {
+            $this->mercadopagoMock->helpers->notices
+                ->shouldReceive('storeNotice')
+                ->with($expected_message, 'error')
+                ->once();
+        } else {
+            $this->mercadopagoMock->helpers->notices
+                ->shouldReceive('storeNotice')
+                ->never();
+        }
 
         $exception = Mockery::mock(\Exception::class);
         $exception->shouldReceive('getMessage')->andReturn($error_message);
@@ -780,12 +749,65 @@ class AbstractGatewayTest extends TestCase
             $error_message,
             'test_source',
             [],
-            true
+            $with_notice
         );
 
         $this->assertEquals('fail', $result['result']);
         $this->assertEquals('', $result['redirect']);
         $this->assertEquals($expected_message, $result['message']);
+    }
+
+    /**
+     * Test that MockeryExceptionInterface is re-thrown and not handled
+     *
+     * This test ensures that Mockery exceptions (used for test assertions)
+     * are properly re-thrown instead of being caught and handled as business errors.
+     * This is critical for test infrastructure - it allows PHPUnit to properly
+     * report test failures when mock expectations are not met.
+     *
+     * GIVEN a Mockery exception is passed to processReturnFail
+     * WHEN the method checks the exception type
+     * THEN it should re-throw the exception without any processing
+     * AND not log or handle it as a business error
+     */
+    public function testProcessReturnFailShouldRethrowMockeryExceptions()
+    {
+        // Given - Create a concrete exception that implements MockeryExceptionInterface
+        // We use an anonymous class to simulate a Mockery exception
+        $mockeryException = new class('Mockery expectation failed') extends \Exception implements MockeryExceptionInterface {
+        };
+
+        // Expect the exception to be re-thrown without any processing
+        $this->expectException(MockeryExceptionInterface::class);
+        $this->expectExceptionMessage('Mockery expectation failed');
+
+        // When - processReturnFail is called with a Mockery exception
+        // Then - The exception should be re-thrown immediately (line 632-633)
+        $this->gateway->processReturnFail(
+            $mockeryException,
+            'test message',
+            'test_source',
+            [],
+            false,
+            false
+        );
+
+        // Note: Code after this point won't execute because the exception is thrown
+        // The test passes if the MockeryExceptionInterface is thrown as expected
+    }
+
+    /**
+     * Test that loadWooCommerceScripts calls registerWooCommerceScripts on the Scripts class
+     */
+    public function testLoadWooCommerceScriptsCallsRegisterMpBehaviorTrackingScript(): void
+    {
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerMpBehaviorTrackingScript')
+            ->once();
+
+        $result = $this->gateway->loadMpWooCommerceScripts();
+
+        $this->assertNull($result);
     }
 
     /**
@@ -1218,5 +1240,134 @@ class AbstractGatewayTest extends TestCase
         $this->assertEquals('fail', $result['result']);
         $this->assertEquals('', $result['redirect']);
         $this->assertArrayHasKey('message', $result);
+    }
+
+    /**
+     * Test process payment behavior when RejectedPaymentException is thrown
+     *
+     * GIVEN a gateway processing a payment
+     * AND proccessPaymentInternal throws a RejectedPaymentException
+     * WHEN process_payment is called
+     * THEN it should fail the payment with the rejection message
+     * AND the error should be marked as handled (no translation, no datadog)
+     */
+    public function testProcessPaymentShouldFailWhenRejectedPaymentExceptionIsThrown()
+    {
+        // Given - Setup basic order mock
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_id')->andReturn(1);
+        $order->shouldReceive('get_total')->andReturn(100.0);
+
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(1)
+            ->andReturn($order);
+
+        // Mock basic dependencies
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithDiscount')->andReturn(0);
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithCommission')->andReturn(0);
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getProductionMode')->andReturn('yes');
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setIsProductionModeData')->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setUsedGatewayData')->andReturnSelf();
+
+        // Initialize discount and commission properties
+        $this->gateway->discount = 0;
+        $this->gateway->commission = 0;
+
+        // Mock session helper - called before exception
+        $this->gateway->shouldReceive('setCheckoutSessionDataOnSessionHelperByOrderId')
+            ->once()
+            ->with($order->get_id());
+
+        // When - proccessPaymentInternal throws RejectedPaymentException
+        $rejectionMessage = 'Invalid users involved';
+        $this->gateway
+            ->shouldReceive('proccessPaymentInternal')
+            ->once()
+            ->with($order)
+            ->andThrow(new \MercadoPago\Woocommerce\Exceptions\RejectedPaymentException($rejectionMessage));
+
+        // Mock error messages helper - should NOT be called because handled=true
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->never();
+
+        // Mock datadog - should NOT be called because handled=true
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->never();
+
+        // Mock notice storage for error handling
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with($rejectionMessage, 'error');
+
+        // When - Execute process_payment
+        $result = $this->gateway->process_payment(1);
+
+        // Then - Payment should fail with the rejection message
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertEquals($rejectionMessage, $result['message']);
+    }
+
+    /**
+     * Test process payment behavior when RejectedPaymentException is thrown with custom message
+     *
+     * GIVEN a gateway processing a payment
+     * AND proccessPaymentInternal throws a RejectedPaymentException with specific message
+     * WHEN process_payment is called
+     * THEN it should fail the payment with the exact rejection message
+     * AND not translate or modify the message
+     */
+    public function testProcessPaymentShouldPreserveRejectedPaymentExceptionMessage()
+    {
+        // Given - Setup basic order mock
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_id')->andReturn(1);
+        $order->shouldReceive('get_total')->andReturn(100.0);
+
+        WP_Mock::userFunction('wc_get_order')
+            ->once()
+            ->with(1)
+            ->andReturn($order);
+
+        // Mock basic dependencies
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithDiscount')->andReturn(0);
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('calculateSubtotalWithCommission')->andReturn(0);
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getProductionMode')->andReturn('yes');
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setIsProductionModeData')->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setUsedGatewayData')->andReturnSelf();
+
+        // Initialize discount and commission properties
+        $this->gateway->discount = 0;
+        $this->gateway->commission = 0;
+
+        // Mock session helper - called before exception
+        $this->gateway->shouldReceive('setCheckoutSessionDataOnSessionHelperByOrderId')
+            ->once()
+            ->with($order->get_id());
+
+        // When - proccessPaymentInternal throws RejectedPaymentException with specific message
+        $specificMessage = 'Card payment declined - insufficient funds';
+        $this->gateway
+            ->shouldReceive('proccessPaymentInternal')
+            ->once()
+            ->with($order)
+            ->andThrow(new \MercadoPago\Woocommerce\Exceptions\RejectedPaymentException($specificMessage));
+
+        // Mock notice storage
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with($specificMessage, 'error');
+
+        // When - Execute process_payment
+        $result = $this->gateway->process_payment(1);
+
+        // Then - Payment should fail with the exact message (not translated)
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals($specificMessage, $result['message']);
     }
 }

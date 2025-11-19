@@ -21,7 +21,7 @@ class WCEmailListener {
     }
 
     getEmail() {
-        return jQuery(this.EMAIL_FIELD_SELECTOR).val();
+        return jQuery(this.EMAIL_FIELD_SELECTOR).val()?.trim();
     }
 
     onEmailChange(callback) {
