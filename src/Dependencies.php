@@ -10,6 +10,7 @@ use MercadoPago\Woocommerce\Endpoints\IntegrationWebhook;
 use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Helpers\Actions;
 use MercadoPago\Woocommerce\Helpers\Cart;
+use MercadoPago\Woocommerce\Helpers\ErrorMessages;
 use MercadoPago\Woocommerce\Helpers\I18n;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
@@ -122,6 +123,8 @@ class Dependencies
 
     public CurrentUser $currentUserHelper;
 
+    public ErrorMessages $errorMessagesHelper;
+
     public Gateways $gatewaysHelper;
 
     public Images $imagesHelper;
@@ -219,6 +222,7 @@ class Dependencies
         $this->creditsEnabledHelper    = $this->setCreditsEnabled();
         $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
         $this->cartHelper              = $this->setCart();
+        $this->errorMessagesHelper     = $this->setErrorMessages();
         $this->integrationWebhook      = $this->setIntegrationWebhook();
         $this->hooks                   = $this->setHooks();
         $this->helpers                 = $this->setHelpers();
@@ -574,6 +578,7 @@ class Dependencies
             $this->creditsEnabledHelper,
             $this->currencyHelper,
             $this->currentUserHelper,
+            $this->errorMessagesHelper,
             $this->gatewaysHelper,
             $this->imagesHelper,
             $this->linksHelper,
@@ -591,6 +596,14 @@ class Dependencies
     private function setDownloader(): Downloader
     {
         return new Downloader($this->logs, $this->currentUserHelper);
+    }
+
+    /**
+     * @return ErrorMessages
+     */
+    private function setErrorMessages(): ErrorMessages
+    {
+        return new ErrorMessages($this->storeTranslations);
     }
 
     private function setIntegrationWebhook(): IntegrationWebhook

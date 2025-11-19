@@ -44,7 +44,7 @@ class CurrencyTest extends TestCase
         // Mock dependencies
         $this->adminTranslations = Mockery::mock(AdminTranslations::class);
         $this->adminTranslations->currency = [];
-        
+
         $this->cache = Mockery::mock(Cache::class);
         $this->country = Mockery::mock(Country::class);
         $this->logs = Mockery::mock(Logs::class);
@@ -161,6 +161,4 @@ class CurrencyTest extends TestCase
         // Assert: should return WooCommerce currency (USD)
         $this->assertEquals('USD', $result);
     }
-
 }
-

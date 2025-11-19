@@ -84,6 +84,8 @@ class MPSuperTokenAuthenticator {
         const authenticator = await this.mpSdkInstance
             .authenticator(amount, buyerEmail, { platformId: this.PLATFORM_ID });
 
+        document.dispatchEvent(new CustomEvent('mp-behavior-tracking-super-token-init'));
+
         return authenticator;
     }
 

@@ -1,6 +1,17 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.7.0 (19/11/2025) =
+* Added
+- Call to mercado pago woocommerce scripts
+* Changed
+- Ensure that card security code will be validated before form submit on fast payment flow.
+- Only send pre-load fast payment metric when flow is supported
+- Use new layout to show fast payment flow payment methods
+- Improvement error message treatment on checkout custom
+* Fixed
+- Fix checkout custom layout
+
 = v8.6.1 (06/11/2025) =
 * Added
 - Added card form click metric to Checkout API funnel tracking
@@ -16,7 +27,7 @@ CHANGELOG:
 = v8.6.0 (22/10/2025) =
 * Added
 - Add loader before custom gateway initialization
-- Added currency convertion ratio value to orders 
+- Added currency convertion ratio value to orders
 * Changed
 - Improve fast payments experience when wallet button is active
 - Changed translations of MLM account balance use cases

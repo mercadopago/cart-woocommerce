@@ -10,6 +10,7 @@ use MercadoPago\Woocommerce\Helpers\CredentialsStates;
 use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
+use MercadoPago\Woocommerce\Helpers\ErrorMessages;
 use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Links;
@@ -46,6 +47,8 @@ class Helpers
 
     public CurrentUser $currentUser;
 
+    public ErrorMessages $errorMessages;
+
     public Gateways $gateways;
 
     public Images $images;
@@ -77,6 +80,7 @@ class Helpers
         CreditsEnabled $creditsEnabled,
         Currency $currency,
         CurrentUser $currentUser,
+        ErrorMessages $errorMessages,
         Gateways $gateways,
         Images $images,
         Links $links,
@@ -97,6 +101,7 @@ class Helpers
         $this->creditsEnabled       = $creditsEnabled;
         $this->currency             = $currency;
         $this->currentUser          = $currentUser;
+        $this->errorMessages        = $errorMessages;
         $this->gateways             = $gateways;
         $this->images               = $images;
         $this->links                = $links;

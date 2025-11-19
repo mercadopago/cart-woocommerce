@@ -35,7 +35,7 @@ class MPSuperTokenTriggerHandler {
     getBuyerEmail() {
         this.wcBuyerEmail = this.wcBuyerEmail || this.wcEmailListener.getEmail() || this.CURRENT_USER_EMAIL;
 
-        return this.wcBuyerEmail;
+        return this.wcBuyerEmail?.trim();
     }
 
     amountHasChanged() {
@@ -193,7 +193,8 @@ class MPSuperTokenTriggerHandler {
 
         if (this.isSuperTokenPaymentMethodsLoaded()) {
             this.mpSuperTokenPaymentMethods.renderAccountPaymentMethods(
-                this.mpSuperTokenPaymentMethods.getStoredPaymentMethods()
+                this.mpSuperTokenPaymentMethods.getStoredPaymentMethods(),
+                this.currentAmount
             );
 
             return;

@@ -60,20 +60,21 @@ if (!defined('ABSPATH')) {
 
             <?php if ($wallet_button_enabled) : ?>
                 <div class="mp-wallet-button-container-wrapper">
-                <div class='mp-wallet-button-container'>
-                    <div class='mp-wallet-button-title'>
-                        <span><?= wp_kses_post($wallet_button_title); ?></span>
-                    </div>
+                    <div class='mp-wallet-button-container'>
+                        <div class='mp-wallet-button-title'>
+                            <span><?= wp_kses_post($wallet_button_title); ?></span>
+                        </div>
 
-                    <div class='mp-wallet-button-button'>
-                        <button id="mp-wallet-button">
-                            <img src="<?= esc_url($wallet_button_image); ?>">
-                        </button>
-                    </div>
+                        <div class='mp-wallet-button-button'>
+                            <button id="mp-wallet-button">
+                                <img src="<?= esc_url($wallet_button_image); ?>">
+                            </button>
+                        </div>
 
-                    <footer class='mp-privacy-policy-footer'>
-                        <span><?= wp_kses_post($mercadopago_privacy_policy); ?></span>
-                    </footer>
+                        <footer class='mp-privacy-policy-footer'>
+                            <span><?= wp_kses_post($mercadopago_privacy_policy); ?></span>
+                        </footer>
+                    </div>
                 </div>
             <?php endif; ?>
 

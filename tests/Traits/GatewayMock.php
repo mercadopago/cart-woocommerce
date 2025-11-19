@@ -27,6 +27,11 @@ trait GatewayMock
         MercadoPagoMock::mockTranslations($this->gateway, ['storeTranslations', 'adminTranslations']);
         $this->setNotAccessibleProperty($this->gateway, 'links', new ArrayMock(fn() => random()->url()));
 
+        // Initialize datadog property to avoid uninitialized property errors
+        $datadogMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Metrics\Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
+        $this->gateway->datadog = $datadogMock;
+
         // Initialize settings property to avoid undefined property errors
         $this->gateway->settings = [
             'currency_conversion' => 'no',

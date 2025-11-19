@@ -23,6 +23,7 @@ use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\CreditsEnabled;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\CurrentUser;
+use MercadoPago\Woocommerce\Helpers\ErrorMessages;
 use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Links;
@@ -91,6 +92,12 @@ class MercadoPagoMock
         $mock->helpers->creditsEnabled = Mockery::mock(CreditsEnabled::class);
         $mock->helpers->currency = Mockery::mock(Currency::class);
         $mock->helpers->currentUser = Mockery::mock(CurrentUser::class);
+        $mock->helpers->errorMessages = Mockery::mock(ErrorMessages::class);
+        $mock->helpers->errorMessages->shouldReceive('findErrorMessage')
+            ->andReturnUsing(function ($message) {
+                return $message; // Return the same message by default in tests
+            })
+            ->byDefault();
         $mock->helpers->gateways = Mockery::mock(Gateways::class);
         $mock->helpers->images = Mockery::mock(Images::class);
         $mock->helpers->links = Mockery::mock(Links::class);

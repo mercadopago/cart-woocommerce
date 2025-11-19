@@ -23,6 +23,7 @@ class MPSuperTokenPaymentMethods {
         PAYMENT_METHOD_LIST: 'mp-super-token-payment-methods-list',
         PAYMENT_METHOD: 'mp-super-token-payment-method',
         PAYMENT_METHOD_CONTENT: 'mp-super-token-payment-method__content',
+        PAYMENT_METHOD_CONTENT_TITLE: 'mp-super-token-payment-method__content-title',
         PAYMENT_METHOD_TITLE: 'mp-super-token-payment-method__title',
         PAYMENT_METHOD_DESCRIPTION: 'mp-super-token-payment-method__description',
         PAYMENT_METHOD_LAST_FOUR_DIGITS: 'mp-super-token-payment-method__last-four-digits',
@@ -94,6 +95,7 @@ class MPSuperTokenPaymentMethods {
     activePaymentMethod = null;
     amount = null;
     selectedPreloadedPaymentMethod = null;
+    securityCodeReferences = {};
 
     // Dependencies
     mpSdkInstance = null;
@@ -448,7 +450,7 @@ class MPSuperTokenPaymentMethods {
             return this.ACCOUNT_MONEY_TEXT;
         }
 
-        if (this.userHasAccountMoney(accountMoneyPaymentMethod) && 
+        if (this.userHasAccountMoney(accountMoneyPaymentMethod) &&
             this.userHasAccountMoneyInvested(accountMoneyPaymentMethod)) {
             return this.ACCOUNT_MONEY_WALLET_WITH_INVESTMENT_TEXT;
         }
@@ -839,6 +841,18 @@ class MPSuperTokenPaymentMethods {
         helperErrorElement.style.display = 'flex';
     }
 
+    verifyIsSecurityCodeReferenceTrue(paymentMethod) {
+        return this.securityCodeReferences[this.paymentMethodIdentifier(paymentMethod)] === true;
+    }
+
+    setSecurityCodeReferenceFalse(paymentMethod) {
+        this.securityCodeReferences[this.paymentMethodIdentifier(paymentMethod)] = false;
+    }
+
+    setSecurityCodeReferenceTrue(paymentMethod) {
+        this.securityCodeReferences[this.paymentMethodIdentifier(paymentMethod)] = true;
+    }
+
     mountSecurityCodeField(paymentMethod) {
         if (!this.securityCodeIsRequired(paymentMethod?.security_code_settings)) {
             return;
@@ -846,6 +860,7 @@ class MPSuperTokenPaymentMethods {
 
         this.unmountCardForm();
         this.unmountActiveSecurityCodeInstance();
+        this.setSecurityCodeReferenceFalse(paymentMethod);
 
         const waitSecurityCodeFieldMountInterval = setInterval(() => {
             if (document.getElementById(`mp-super-token-security-code-input-${paymentMethod.token}`)) {
@@ -874,6 +889,8 @@ class MPSuperTokenPaymentMethods {
                         this.storeActiveSecurityCodeInstance(securityCodeField);
                     })
                     .on('validityChange', (e) => {
+                      this.setSecurityCodeReferenceTrue(paymentMethod);
+
                         if (e.errorMessages.length === 0) {
                             if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
                                 MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
@@ -904,6 +921,7 @@ class MPSuperTokenPaymentMethods {
         const ariaLabel = this.buildPaymentMethodAriaLabel(paymentMethod, lastFourDigits, installmentsWithoutFee);
         const temporaryId = Math.random().toString(36).substring(2, 15);
         const paymentMethodId = paymentMethod?.id ? this.paymentMethodIdentifier(paymentMethod) : temporaryId;
+        const shouldShowValueProp = this.isCreditCard(paymentMethod) && installmentsWithoutFee > 1;
 
         paymentMethodElement.id = paymentMethodId;
         paymentMethodElement.dataset.type = paymentMethod?.type;
@@ -915,13 +933,18 @@ class MPSuperTokenPaymentMethods {
         paymentMethodElement.setAttribute('aria-selected', 'false');
         paymentMethodElement.innerHTML = `
             <section class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HEADER}">
-                <section>
-                    <figure class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_THUMBNAIL}">
+                <figure class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_THUMBNAIL}">
                         <img src="${paymentMethod?.thumbnail}" alt="${paymentMethod?.name}">
-                    </figure>
+                </figure>
                     <article class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_CONTENT}">
+                    <section class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_CONTENT_TITLE}">
                         <span class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_TITLE}">${paymentMethod?.name}</span>
-                        ${this.isCreditCard(paymentMethod) && installmentsWithoutFee > 1 ?
+                        ${lastFourDigits
+                            ? `<span class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LAST_FOUR_DIGITS}">**** ${lastFourDigits}</span>`
+                            : ''
+                        }
+                    </section>
+                    ${shouldShowValueProp ?
                             `<span
                                 aria-hidden="true"
                                 class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_VALUE_PROP}">
@@ -930,15 +953,6 @@ class MPSuperTokenPaymentMethods {
                             : ''
                         }
                     </article>
-                    ${lastFourDigits
-                        ? `
-                            <section class="${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LAST_FOUR_DIGITS}">
-                                <span>**** ${lastFourDigits}</span>
-                            </section>
-                        `
-                        : ''
-                    }
-                </section>
             </section>
             ${this.buildCreditCardDetailsInnerHTML(paymentMethod)}
         `;
@@ -1033,7 +1047,7 @@ class MPSuperTokenPaymentMethods {
 
     reorderAccountPaymentMethods(accountPaymentMethods) {
         const MAX_CREDIT_CARDS = 3;
-        
+
         const cardOptions = accountPaymentMethods.filter(pm => this.isCreditCard(pm) || this.isDebitCard(pm) || this.isPrepaidCard(pm));
         const accountMoneyOption = accountPaymentMethods.find(pm => this.isAccountMoney(pm));
 
@@ -1084,7 +1098,7 @@ class MPSuperTokenPaymentMethods {
     organizePaymentMethodsElements(paymentMethods, onSelectPaymentMethod) {
         const reorderedAccountPaymentMethods = this.reorderAccountPaymentMethods(paymentMethods);
         const normalizedPaymentMethods = this.normalizeAccountPaymentMethods(reorderedAccountPaymentMethods);
-    
+
         normalizedPaymentMethods.reverse().forEach((paymentMethod) => {
             this.getCustomCheckoutEntireElement().insertBefore(
                 this.createPaymentMethodElement(paymentMethod, onSelectPaymentMethod),
@@ -1097,7 +1111,7 @@ class MPSuperTokenPaymentMethods {
         const footer = document.createElement('footer');
         footer.classList.add(this.SUPER_TOKEN_STYLES.MERCADO_PAGO_PRIVACY_POLICY_FOOTER);
         footer.id = 'mp-super-token-privacy-policy-footer';
-        footer.innerHTML = this.MERCADO_PAGO_PRIVACY_POLICY;
+        footer.innerHTML = `<span>${this.MERCADO_PAGO_PRIVACY_POLICY}</span>`;
 
         this.getCustomCheckoutEntireElement().insertBefore(
             footer,
@@ -1188,7 +1202,7 @@ class MPSuperTokenPaymentMethods {
 
     forceShowValidationErrors() {
         window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
-        
+
         if (!this.activePaymentMethod) {
             return;
         }
@@ -1197,7 +1211,7 @@ class MPSuperTokenPaymentMethods {
             return;
         }
 
-        const paymentMethodElement = document.getElementById(this.activePaymentMethod.token);
+        const paymentMethodElement = document.getElementById(`${this.activePaymentMethod?.id}${this.activePaymentMethod.card?.card_number?.last_four_digits}`);
         if (!paymentMethodElement) {
             return;
         }
@@ -1239,8 +1253,8 @@ class MPSuperTokenPaymentMethods {
                 return false;
             }
 
-            if (!this.securityCodeIsRequired(this.activePaymentMethod?.security_code_settings)) {
-                return true;
+            if (this.securityCodeIsRequired(this.activePaymentMethod?.security_code_settings) && !this.verifyIsSecurityCodeReferenceTrue(this.activePaymentMethod)) {
+                return false;
             }
 
             if (!this.securityFieldsActiveInstance) {
@@ -1293,9 +1307,9 @@ class MPSuperTokenPaymentMethods {
     async renderPreloadedPaymentMethods(preloadedPaymentMethods, onSelectPaymentMethod) {
         return new Promise((resolve) => {
             const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
-        
+
             if (!customCheckoutEntireElement) return;
-    
+
             this.reset();
             this.onCustomCheckoutWasRendered(
                 customCheckoutEntireElement,

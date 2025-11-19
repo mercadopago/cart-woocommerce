@@ -8,6 +8,9 @@ class MPSuperTokenMetrics {
     SITE_ID = wc_mercadopago_supertoken_metrics_params.site_id;
     CUST_ID = wc_mercadopago_supertoken_metrics_params.cust_id;
     LOCATION = wc_mercadopago_supertoken_metrics_params.location;
+    EMPTY_PRELOADED_PAYMENT_METHODS = 'EMPTY_PRELOADED_PAYMENT_METHODS';
+    AUTHENTICATOR_FLOW_NOT_SUPPORTED = 'Authenticator flow is not supported';
+    SITE_ID_NOT_SUPPORTED_PATTERN = /the\s+site\s+id\s+\w+\s+is\s+not\s+supported/i;
 
     // Dependencies
     mpSdkInstance = null;
@@ -80,7 +83,40 @@ class MPSuperTokenMetrics {
         this.sendMetric('error_to_update_security_code', paymentMethod?.id || 'Unknown payment method', error?.message || 'Unknown error');
     }
 
+    /**
+     * Check if error is an expected error that should not be reported
+     * @param {string} errorMessage - The error message to check
+     * @returns {boolean} - True if error should be skipped, false otherwise
+     */
+    shouldSkipError(errorMessage) {
+        if (!errorMessage) {
+            return false;
+        }
+
+        if (errorMessage === this.EMPTY_PRELOADED_PAYMENT_METHODS) {
+            return true;
+        }
+
+        const errorMessageLower = errorMessage.toLowerCase();
+        if (errorMessageLower.includes(this.AUTHENTICATOR_FLOW_NOT_SUPPORTED.toLowerCase())) {
+            return true;
+        }
+
+        // Pattern: "The site id XXX is not supported" (where XXX can be any site_id like mco, mlc, etc.)
+        if (this.SITE_ID_NOT_SUPPORTED_PATTERN.test(errorMessage)) {
+            return true;
+        }
+
+        return false;
+    }
+
     errorToGetPreloadedPaymentMethods(error) {
-        this.sendMetric('error_to_get_preloaded_payment_methods', 'true', error?.message || 'Unknown error');
+        const errorMessage = error?.message || 'Unknown error';
+
+        if (this.shouldSkipError(errorMessage)) {
+            return;
+        }
+
+        this.sendMetric('error_to_get_preloaded_payment_methods', 'true', errorMessage);
     }
 }

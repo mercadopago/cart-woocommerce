@@ -4,6 +4,7 @@
     gap: 8px;
     padding: 16px !important;
     background-color: #f9f9f9 !important;
+    width: 100% !important;
 }
 
 .payment_box.mp-super-token-payment-methods-list {
@@ -95,12 +96,7 @@
 }
 
 .mp-super-token-payment-method__last-four-digits {
-    display: flex;
-    align-items: center;
-}
-
-.mp-super-token-payment-method__last-four-digits span {
-    font-weight: 600;
+    font-weight: 600 !important;
     text-align: right;
     width: max-content;
     white-space: nowrap;
@@ -153,6 +149,14 @@
     transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
 }
 
+.mp-super-token-payment-method__content-title {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    width: 100%;
+    justify-content: space-between;
+}
+
 .mp-super-token-payment-method__accordion-content--open {
     display: block !important;
     opacity: 1;
@@ -164,13 +168,12 @@
     flex-direction: column;
     justify-content: center;
     gap: 4px;
-    width: 80%;
+    width: 100%;
 }
 
 .mp-super-token-payment-method__title {
     text-overflow: ellipsis;
     overflow: hidden;
-    width: 100%;
 }
 
 .mp-super-token-payment-method__value-prop {
@@ -200,19 +203,12 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-}
-
-.mp-super-token-payment-method__header > section:first-child {
     display: flex !important;
     gap: 12px !important;
     align-items: center !important;
     width: 100% !important;
     container-type: inline-size;
-    container-name: payment-method-header;
-}
-
-.mp-super-token-payment-method__header > section:first-child:has(*:nth-child(3):last-child) {
-    justify-content: space-between !important;
+    container-name: mp-super-token-payment-method-header;
 }
 
 .mp-super-token-payment-method__details {
@@ -270,8 +266,8 @@
     height: 20px;
     border-radius: 50%;
     background: #fff;
-    border: 2px solid #3483FA;
-    color: #3483FA !important;
+    border: 2px solid var(--andes-accent-color);
+    color: var(--andes-accent-color) !important;
     font-size: 16px !important;
     margin-right: 12px;
     cursor: pointer;
@@ -282,46 +278,9 @@
     z-index: 2;
     box-sizing: border-box;
     padding: 9px;
-    font-family: sans-serif !important;
+    font-family: var(--primary-font-family) !important;
     font-weight: 500 !important;
     user-select: none;
-}
-
-.mp-super-token-security-code-container.error .mp-super-token-security-code-tooltip {
-    top: 40%; /* This is 40% of the parent element's height because it needs to be centered vertically discounting the label height */
-}
-
-.mp-super-token-security-code-tooltip:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    color: #222;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    margin-top: 8px;
-    box-shadow: 0 2px 8px 0 rgba(60, 60, 60, 0.15);
-    padding: 15px;
-    font-weight: 400;
-    z-index: 10;
-    border: 1px solid #e0e0e0;
-    pointer-events: none;
-    user-select: none;
-}
-
-.mp-super-token-security-code-tooltip:hover::before {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-bottom-color: #333;
-    margin-top: 2px;
-    z-index: 3;
 }
 
 .mp-input-with-tooltip-helper-error {
@@ -390,39 +349,8 @@ header.mp-payment-methods-header > img.mp-payment-methods-header-logo {
     margin: 0 0 8px 0 !important
 }
 
-@media screen and (max-width: 767px) {
-    .mp-super-token-security-code-tooltip:hover::after {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        transform: none;
-        width: 200px;
-        white-space: normal;
-        text-align: left;
-        margin-top: 8px;
-        margin-left: -150px;
-    }
-
-    .mp-super-token-security-code-tooltip:hover::before {
-        left: 25%;
-        transform: translateX(-50%);
-    }
-}
-
-@container payment-method-header (max-width: 600px) {
-    .mp-super-token-payment-method__content {
-        width: 70%;
-    }
-}
-
-@container payment-method-header (max-width: 400px) {
-    .mp-super-token-payment-method__content {
-        width: 65%;
-    }
-}
-
-@container payment-method-header (max-width: 300px) {
-    .mp-super-token-payment-method__content {
-        width: 100%;
+@container mp-super-token-payment-method-header (max-width: 248px) {
+    .mp-super-token-payment-method__value-prop {
+        display: none !important;
     }
 }
