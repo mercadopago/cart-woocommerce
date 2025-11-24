@@ -44,9 +44,6 @@ class AbstractBlockTest extends TestCase
         $hooksMock->scripts = $scriptsMock;
 
         // Test the specific logic we care about:
-        // if ($this->mercadopago->hooks->checkout->isCheckout()) {
-        //     $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/checkout');
-        // }
         if ($hooksMock->checkout->isCheckout()) {
             $hooksMock->scripts->registerMelidataStoreScript('/checkout');
         }

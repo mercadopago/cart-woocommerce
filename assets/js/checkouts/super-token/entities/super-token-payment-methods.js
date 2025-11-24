@@ -12,6 +12,7 @@ class MPSuperTokenPaymentMethods {
     CHECKOUT_TYPE_SELECTOR = '#mp_checkout_type';
     COLOMBIA_ACCRONYM = 'MCO';
     MEXICO_ACCRONYM = 'MLM';
+    BRAZIL_ACCRONYM = 'MLB';
     CHECKOUT_CUSTOM_LOAD_SELECTOR = '.mp-checkout-custom-load';
     SELECTED_SUPERTOKEN_METHOD_EVENT = 'mp_super_token_payment_method_selected';
     SUPER_TOKEN_STYLES = {
@@ -45,6 +46,7 @@ class MPSuperTokenPaymentMethods {
         PAYMENT_METHODS_LIST_HEADER_LOGO: 'mp-payment-methods-header-logo'
     }
     YELLOW_WALLET_PATH = wc_mercadopago_supertoken_payment_methods_params.yellow_wallet_path;
+    YELLOW_MONEY_PATH = wc_mercadopago_supertoken_payment_methods_params.yellow_money_path;
     WHITE_CARD_PATH = wc_mercadopago_supertoken_payment_methods_params.white_card_path;
     PAYMENT_METHODS_LIST_TEXT = wc_mercadopago_supertoken_payment_methods_params.payment_methods_list_text;
     LAST_DIGITS_TEXT = wc_mercadopago_supertoken_payment_methods_params.last_digits_text;
@@ -71,6 +73,22 @@ class MPSuperTokenPaymentMethods {
     CURRENCY = wc_mercadopago_supertoken_payment_methods_params.currency;
     INTL = wc_mercadopago_supertoken_payment_methods_params.intl;
     MERCADO_PAGO_CARD_NAME = wc_mercadopago_supertoken_payment_methods_params.mercado_pago_card_name;
+    CONSUMER_CREDITS_DUE_DATE = wc_mercadopago_supertoken_payment_methods_params.consumer_credits_due_date;
+    MLB_INSTALLMENT_DEBIT_AUTO_TEXT = wc_mercadopago_supertoken_payment_methods_params.mlb_installment_debit_auto_text;
+    INTEREST_RATE_MLB_TEXT = wc_mercadopago_supertoken_payment_methods_params.interest_rate_mlb_text;
+    EFFECTIVE_TOTAL_COST_MLB_TEXT = wc_mercadopago_supertoken_payment_methods_params.effective_total_cost_mlb_text;
+    IOF_MLB_TEXT = wc_mercadopago_supertoken_payment_methods_params.iof_mlb_text;
+    BORROWED_AMOUNT_MLB_TEXT = wc_mercadopago_supertoken_payment_methods_params.borrowed_amount_mlb_text;
+    PER_MONTH = wc_mercadopago_supertoken_payment_methods_params.per_month;
+    PER_YEAR = wc_mercadopago_supertoken_payment_methods_params.per_year;
+    CAT_MLM_TEXT = wc_mercadopago_supertoken_payment_methods_params.cat_mlm_text;
+    NO_IVA_TEXT = wc_mercadopago_supertoken_payment_methods_params.no_iva_text;
+    TNA_MLM_TEXT = wc_mercadopago_supertoken_payment_methods_params.tna_mlm_text;
+    SYSTEM_AMORTIZATION_MLM_TEXT = wc_mercadopago_supertoken_payment_methods_params.system_amortization_mlm_text;
+    CFTEA_MLA_TEXT = wc_mercadopago_supertoken_payment_methods_params.cftea_mla_text;
+    TNA_MLA_TEXT = wc_mercadopago_supertoken_payment_methods_params.tna_mla_text;
+    TEA_MLA_TEXT = wc_mercadopago_supertoken_payment_methods_params.tea_mla_text;
+    FIXED_RATE_TEXT = wc_mercadopago_supertoken_payment_methods_params.fixed_rate_text;
     MERCADO_PAGO_PRIVACY_POLICY = wc_mercadopago_supertoken_payment_methods_params.mercadopago_privacy_policy;
     NEW_MP_LOGO_PATH = wc_mercadopago_supertoken_payment_methods_params.new_mp_logo_path;
 
@@ -79,7 +97,7 @@ class MPSuperTokenPaymentMethods {
     DEBIT_CARD_TYPE = 'debit_card';
     ACCOUNT_MONEY_TYPE = 'account_money';
     PREPAID_CARD_TYPE = 'prepaid_card';
-    DIGITAL_CURRENCY_TYPE = 'digital_currency';
+    CONSUMER_CREDITS_TYPE = 'digital_currency';
 
     PAYMENT_METHODS_ORDER = wc_mercadopago_supertoken_payment_methods_params.payment_methods_order;
 
@@ -127,7 +145,7 @@ class MPSuperTokenPaymentMethods {
     }
 
     hasStoredPaymentMethods() {
-        return this.paymentMethods.length > 0;
+      return this.paymentMethods.length > 0;
     }
 
     storeSelectedPreloadedPaymentMethod(paymentMethod) {
@@ -138,14 +156,14 @@ class MPSuperTokenPaymentMethods {
         return this.selectedPreloadedPaymentMethod;
     }
 
+    getSelectedPreloadedPaymentMethodFromActivePaymentMethods() {
+        return this.paymentMethods.find(paymentMethod => this.paymentMethodIdentifier(paymentMethod) === this.paymentMethodIdentifier(this.selectedPreloadedPaymentMethod));
+    }
+
     paymentMethodIdentifier(paymentMethod) {
         if (!paymentMethod) return '';
 
         return `${paymentMethod?.id}${paymentMethod?.card?.card_number?.last_four_digits || ''}`;
-    }
-
-    getSelectedPreloadedPaymentMethodFromActivePaymentMethods() {
-        return this.paymentMethods.find(paymentMethod => this.paymentMethodIdentifier(paymentMethod) === this.paymentMethodIdentifier(this.selectedPreloadedPaymentMethod));
     }
 
     setSuperToken(token) {
@@ -370,6 +388,7 @@ class MPSuperTokenPaymentMethods {
         this.setCheckoutType(this.SUPER_TOKEN_CHECKOUT_TYPE);
         this.showPaymentMethodDetails(paymentMethodElement);
         this.mountSecurityCodeField(paymentMethod);
+        this.handleInstallmentsWithoutFeePillVisibility(paymentMethod);
 
         setTimeout(() => {
           document.dispatchEvent(
@@ -390,6 +409,7 @@ class MPSuperTokenPaymentMethods {
         this.unmountActiveSecurityCodeInstance();
         this.selectNewCardAccordion();
         this.setCheckoutType(this.CUSTOM_CHECKOUT_TYPE);
+        this.handleInstallmentsWithoutFeePillVisibility({ type: 'credit_card' });
 
         setTimeout(() => {
             this.mountCardForm();
@@ -425,16 +445,16 @@ class MPSuperTokenPaymentMethods {
         return paymentMethod?.type === this.ACCOUNT_MONEY_TYPE;
     }
 
-    isDigitalCurrency(paymentMethod) {
-        return paymentMethod?.type === this.DIGITAL_CURRENCY_TYPE;
-    }
-
     isPrepaidCard(paymentMethod) {
         return paymentMethod?.type === this.PREPAID_CARD_TYPE;
     }
 
     isMercadoPagoCard(paymentMethod) {
         return paymentMethod?.type === this.PREPAID_CARD_TYPE && paymentMethod?.issuer?.name?.toLowerCase()?.includes('mercado pago');
+    }
+
+    isConsumerCredits(paymentMethod) {
+        return paymentMethod?.type === this.CONSUMER_CREDITS_TYPE;
     }
 
     userHasAccountMoney(accountMoneyPaymentMethod) {
@@ -466,9 +486,31 @@ class MPSuperTokenPaymentMethods {
         return this.ACCOUNT_MONEY_AVAILABLE_TEXT;
     }
 
+    buildConsumerCreditsName() {
+        switch (this.getSiteId()) {
+            case this.MEXICO_ACCRONYM:
+                return 'Meses sin Tarjeta con Mercado&nbsp;Pago';
+            case this.BRAZIL_ACCRONYM:
+                return 'Linha de Crédito Mercado&nbsp;Pago';
+            default:
+                return 'Cuotas sin Tarjeta con Mercado&nbsp;Pago';
+        }
+    }
+
     numberOfInstallmentsWithoutFee(paymentMethod) {
-        if (!this.isCreditCard(paymentMethod) || !paymentMethod.installments?.length) {
+        if (!this.isCreditCard(paymentMethod) && !this.isConsumerCredits(paymentMethod)) {
             return 0;
+        }
+
+        if (!paymentMethod.installments || !paymentMethod.installments.length) {
+            return 0;
+        }
+
+        if (this.isConsumerCredits(paymentMethod)) {
+            // TODO: this is a temporary way to get the number of installments without fee for the consumer credits payment method
+            // we can improve this or even check the installment_rate_collector, but for now it is not present in the API
+            const installmentsWithoutFee = paymentMethod.installments.filter(installment => installment.installment_rate === 0);
+            return installmentsWithoutFee.length > 0 ? installmentsWithoutFee[installmentsWithoutFee.length - 1].installments : 0;
         }
 
         const installmentsWithoutFee = paymentMethod.installments.filter(installment => installment.installment_rate === 0 && installment.installment_rate_collector.includes('MERCADOPAGO'));
@@ -491,6 +533,41 @@ class MPSuperTokenPaymentMethods {
 
     needsBankInterestDisclaimer() {
         return this.COUNTRIES_WITH_BANK_INTEREST_DISCLAIMER.includes(this.getSiteId());
+    }
+
+    formatDateToDayAndMonth(isoDate) {
+        if (!isoDate) {
+            return '';
+        }
+
+        const dateParts = isoDate.split('-');
+        if (dateParts.length !== 3) {
+            return isoDate;
+        }
+
+        const monthsMapping = {
+            '01': 'jan',
+            '02': 'feb',
+            '03': 'mar',
+            '04': 'apr',
+            '05': 'may',
+            '06': 'jun',
+            '07': 'jul',
+            '08': 'aug',
+            '09': 'sep',
+            '10': 'oct',
+            '11': 'nov',
+            '12': 'dec'
+        };
+
+        const [_, month, day] = dateParts;
+        const monthKey = monthsMapping[month];
+        const monthText = (wc_mercadopago_supertoken_payment_methods_params.months_abbreviated &&
+                          wc_mercadopago_supertoken_payment_methods_params.months_abbreviated[monthKey])
+                          ? wc_mercadopago_supertoken_payment_methods_params.months_abbreviated[monthKey]
+                          : month;
+
+        return `${parseInt(day)}/${monthText}`;
     }
 
     formatCurrency(value) {
@@ -687,6 +764,139 @@ class MPSuperTokenPaymentMethods {
         `
     }
 
+    buildConsumerCreditsHint(installment) {
+        const labels = installment?.labels.find(label => label.toLowerCase().includes('|'))?.toLowerCase() ?? '';
+        const conditions = labels.split('|').reduce((acc, label) => {
+          const [key, value] = label.split('_');
+          acc[key] = value;
+          return acc;
+        }, {});
+
+        if (!installment?.consumer_credits?.conditions) {
+            return '';
+        }
+
+        const siteId = this.getSiteId();
+
+        switch (siteId) {
+            case this.BRAZIL_ACCRONYM:
+                const parts = [];
+
+                if (conditions.tem && conditions.tea) {
+                    parts.push(`${this.INTEREST_RATE_MLB_TEXT}: ${conditions.tem} ${this.PER_MONTH} ${conditions.tea} ${this.PER_YEAR}`);
+                }
+
+                if (conditions.cetm && conditions.ceta) {
+                    parts.push(`${this.EFFECTIVE_TOTAL_COST_MLB_TEXT}: ${conditions.cetm} ${this.PER_MONTH} ${conditions.ceta} ${this.PER_YEAR}`);
+                }
+
+                if (conditions.iof) {
+                    const iofAmount = installment.installment_iof_amount || 0;
+                    if (iofAmount > 0) {
+                      const iofAmountFormatted = iofAmount.toFixed(2).replace('.', ',');
+                      parts.push(`${this.IOF_MLB_TEXT}: R$ ${iofAmountFormatted} (${conditions.iof})`);
+                    }
+                }
+
+                const borrowedAmount = installment.total_amount - (installment.installment_iof_amount || 0);
+                parts.push(`${this.BORROWED_AMOUNT_MLB_TEXT}: R$ ${borrowedAmount.toFixed(2).replace('.', ',')}`);
+
+                return parts.join('. ') + '.';
+
+            case this.MEXICO_ACCRONYM:
+                const mexParts = [];
+
+                if (conditions.cat) {
+                    mexParts.push(`${this.CAT_MLM_TEXT}: ${conditions.cat} ${this.NO_IVA_TEXT}`);
+                }
+
+                if (conditions.tna) {
+                    mexParts.push(`${this.TNA_MLM_TEXT}: ${conditions.tna}`);
+                }
+
+                if (mexParts.length > 0) {
+                    mexParts.push(`${this.SYSTEM_AMORTIZATION_MLM_TEXT}`);
+                    return `${mexParts.join('. ')}.`;
+                }
+
+                return '';
+
+            default:
+                const argParts = [];
+
+                if (conditions.cftea) {
+                    argParts.push(`<strong>${this.CFTEA_MLA_TEXT}: ${conditions.cftea}</strong>`);
+                }
+
+                if (conditions.tna) {
+                    argParts.push(`${this.TNA_MLA_TEXT}: ${conditions.tna}`);
+                }
+
+                if (conditions.tea) {
+                    argParts.push(`${this.TEA_MLA_TEXT}: ${conditions.tea}`);
+                }
+
+                if (argParts.length > 0) {
+                    return `${argParts.join(' - ')}. ${this.FIXED_RATE_TEXT}`;
+                }
+
+                return '';
+        }
+    }
+
+    buildConsumerCreditsDetailsInnerHTML(paymentMethod) {
+        if (!this.isConsumerCredits(paymentMethod)) {
+            return '';
+        }
+
+        const section = document.createElement('section');
+        section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS);
+        section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
+
+        const installments = paymentMethod?.installments?.map(installment => ({
+            value: `${installment.installments}`,
+            title: this.buildInstallmentTitle(installment),
+        }));
+
+        section.innerHTML = `
+            <andes-dropdown
+                label="${this.INSTALLMENTS_INPUT_TITLE}"
+                placeholder="${this.INSTALLMENTS_PLACEHOLDER}"
+                required-message="${this.INSTALLMENTS_REQUIRED_MESSAGE}"
+                items='${JSON.stringify(installments || [])}'
+                site-id="${this.getSiteId()}"
+            ></andes-dropdown>
+
+            <div class="mp-consumer-credits-due-date" id="mp-consumer-credits-due-date" style="display: none;">
+            </div>
+
+            <div class="mp-consumer-credits-debit-auto-text" id="mp-consumer-credits-debit-auto-text" style="display: none; text-align: center;"></div>
+
+            <div id="mp-consumer-credits-legal-text" style="display: none;"></div>
+        `;
+
+        return section.outerHTML;
+    }
+
+    buildConsumerCreditsDetailsDueDate(paymentMethod) {
+        if (!this.isConsumerCredits(paymentMethod)) {
+            return '';
+        }
+
+        const element = document.getElementById('mp-consumer-credits-due-date');
+        if (!element) {
+            return;
+        }
+
+        element.innerHTML = `
+            <span style="font-weight: 400 !important;">${this.CONSUMER_CREDITS_DUE_DATE}
+            <b style="font-weight: 600 !important;">${this.formatDateToDayAndMonth(paymentMethod.next_due_date)}</b>.
+            </span>
+        `;
+
+        return element.outerHTML;
+    }
+
     buildCreditCardDetailsInnerHTML(paymentMethod) {
         if (!this.isCreditCard(paymentMethod) && !this.isDebitCard(paymentMethod) && !this.isPrepaidCard(paymentMethod)) {
             return '';
@@ -714,6 +924,19 @@ class MPSuperTokenPaymentMethods {
         section.innerHTML += this.buildSecurityCodeInnerHTML(paymentMethod);
 
         return section.outerHTML;
+    }
+
+    buildMLBConsumerCreditsLegalText() {
+        const element = document.getElementById('mp-consumer-credits-debit-auto-text');
+        if (!element) {
+            return;
+        }
+
+        element.innerHTML = `
+            <span>
+                ${this.MLB_INSTALLMENT_DEBIT_AUTO_TEXT}
+            </span>
+        `;
     }
 
     mountCardForm() {
@@ -914,6 +1137,19 @@ class MPSuperTokenPaymentMethods {
         }, 200)
     }
 
+    handleInstallmentsWithoutFeePillVisibility(selectedPaymentMethod) {
+        const allPaymentMethods = document.querySelectorAll('.mp-super-token-payment-method');
+
+        allPaymentMethods.forEach(paymentMethodElement => {
+            const valuePropPill = paymentMethodElement.querySelector(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_VALUE_PROP}`);
+            if (!valuePropPill) {
+                return;
+            }
+
+                valuePropPill.style.display = 'flex';
+        });
+    }
+
     createPaymentMethodElement(paymentMethod, onSelectPaymentMethod) {
         const lastFourDigits = paymentMethod?.card?.card_number?.last_four_digits;
         const paymentMethodElement = document.createElement('article');
@@ -921,7 +1157,7 @@ class MPSuperTokenPaymentMethods {
         const ariaLabel = this.buildPaymentMethodAriaLabel(paymentMethod, lastFourDigits, installmentsWithoutFee);
         const temporaryId = Math.random().toString(36).substring(2, 15);
         const paymentMethodId = paymentMethod?.id ? this.paymentMethodIdentifier(paymentMethod) : temporaryId;
-        const shouldShowValueProp = this.isCreditCard(paymentMethod) && installmentsWithoutFee > 1;
+        const shouldShowValueProp = (this.isCreditCard(paymentMethod) || this.isConsumerCredits(paymentMethod))  && installmentsWithoutFee > 1;
 
         paymentMethodElement.id = paymentMethodId;
         paymentMethodElement.dataset.type = paymentMethod?.type;
@@ -955,6 +1191,7 @@ class MPSuperTokenPaymentMethods {
                     </article>
             </section>
             ${this.buildCreditCardDetailsInnerHTML(paymentMethod)}
+            ${this.buildConsumerCreditsDetailsInnerHTML(paymentMethod)}
         `;
 
         paymentMethodElement.addEventListener('click', () => {
@@ -988,6 +1225,54 @@ class MPSuperTokenPaymentMethods {
                     dropdownElement.value = selectedItem.value;
                     document.getElementById('cardInstallments').value = selectedItem.value;
                 }
+            });
+        }
+
+        if (this.isConsumerCredits(paymentMethod) && paymentMethod?.installments?.length) {
+            const dropdownElement = paymentMethodElement.querySelector('andes-dropdown');
+            this.addDropdownEventListener(dropdownElement);
+
+            const parameters = {
+                fastPaymentToken: this.getSuperToken(),
+                pricingId: paymentMethod.credits_pricing_id,
+                pseudotoken: paymentMethod.token,
+                customization: {
+                    textColor: "#000000",
+                    textSize: "13px",
+                    linkColor: "#3483FA"
+                }
+            }
+
+            this.mpSdkInstance.renderCreditsContract("mp-consumer-credits-legal-text", parameters)
+            .then((contractController) => {
+              dropdownElement?.addEventListener('change', (event) => {
+                  if (this.getSiteId() === this.BRAZIL_ACCRONYM) {
+                      this.buildMLBConsumerCreditsLegalText();
+                      document.getElementById('mp-consumer-credits-debit-auto-text').style.display = 'block';
+                  };
+                  const selectedItem = event?.detail;
+                  if (selectedItem && selectedItem?.value) {
+                      dropdownElement.value = selectedItem.value;
+
+                      document.getElementById('cardInstallments').value = parseInt(selectedItem.value);
+
+                      const selectedInstallment = paymentMethod.installments.find(installment =>
+                          installment.installments === parseInt(selectedItem.value)
+                      );
+
+                      if (selectedInstallment) {
+                          dropdownElement.setAttribute('hint', this.buildConsumerCreditsHint(selectedInstallment));
+                          dropdownElement.setAttribute('due-date', this.buildConsumerCreditsDetailsDueDate(paymentMethod));
+                          document.getElementById('mp-consumer-credits-due-date').style.display = 'block';
+                          document.getElementById('mp-consumer-credits-legal-text').style.display = 'block';
+                      }
+
+                      contractController.update({ installments: selectedItem.value });
+                  }
+                });
+            })
+            .catch((error) => {
+                console.error(error);
             });
         }
 
@@ -1050,19 +1335,27 @@ class MPSuperTokenPaymentMethods {
 
         const cardOptions = accountPaymentMethods.filter(pm => this.isCreditCard(pm) || this.isDebitCard(pm) || this.isPrepaidCard(pm));
         const accountMoneyOption = accountPaymentMethods.find(pm => this.isAccountMoney(pm));
+        const consumerCreditsOption = accountPaymentMethods.find(pm => this.isConsumerCredits(pm));
 
         const limitedCardsOptions = cardOptions.slice(0, MAX_CREDIT_CARDS);
         const orderPreference = this.PAYMENT_METHODS_ORDER || this.PAYMENT_METHODS_ORDER_TYPE_CARDS_FIRST;
         const isAccountMoneyFirst = orderPreference === this.PAYMENT_METHODS_ORDER_TYPE_ACCOUNT_MONEY_FIRST && accountMoneyOption;
 
-        return isAccountMoneyFirst ? [accountMoneyOption, ...limitedCardsOptions] : [...limitedCardsOptions, accountMoneyOption];
+        const moneySpecializedOptions = [accountMoneyOption, consumerCreditsOption].filter(Boolean);
+        const result = isAccountMoneyFirst ? [moneySpecializedOptions, ...limitedCardsOptions] : [...limitedCardsOptions, moneySpecializedOptions];
+        return result.flat();
     }
 
     normalizeAccountPaymentMethods(accountPaymentMethods) {
-        return accountPaymentMethods.filter(paymentMethod => paymentMethod && !this.isDigitalCurrency(paymentMethod)).map(paymentMethod => {
+        return accountPaymentMethods.map(paymentMethod => {
             if (this.isAccountMoney(paymentMethod)) {
                 paymentMethod.thumbnail = this.YELLOW_WALLET_PATH;
                 paymentMethod.name = this.buildAccountMoneyName(paymentMethod);
+            }
+
+            if (this.isConsumerCredits(paymentMethod)) {
+                paymentMethod.thumbnail = this.YELLOW_MONEY_PATH;
+                paymentMethod.name = this.buildConsumerCreditsName();
             }
 
             if (this.isMercadoPagoCard(paymentMethod)) {
@@ -1097,7 +1390,8 @@ class MPSuperTokenPaymentMethods {
 
     organizePaymentMethodsElements(paymentMethods, onSelectPaymentMethod) {
         const reorderedAccountPaymentMethods = this.reorderAccountPaymentMethods(paymentMethods);
-        const normalizedPaymentMethods = this.normalizeAccountPaymentMethods(reorderedAccountPaymentMethods);
+        const onlyAcceptedPaymentMethods = reorderedAccountPaymentMethods.filter(pm => !this.isConsumerCredits(pm));
+        const normalizedPaymentMethods = this.normalizeAccountPaymentMethods(onlyAcceptedPaymentMethods);
 
         normalizedPaymentMethods.reverse().forEach((paymentMethod) => {
             this.getCustomCheckoutEntireElement().insertBefore(
@@ -1253,8 +1547,8 @@ class MPSuperTokenPaymentMethods {
                 return false;
             }
 
-            if (this.securityCodeIsRequired(this.activePaymentMethod?.security_code_settings) && !this.verifyIsSecurityCodeReferenceTrue(this.activePaymentMethod)) {
-                return false;
+            if (!this.securityCodeIsRequired(this.activePaymentMethod?.security_code_settings)) {
+                return true;
             }
 
             if (!this.securityFieldsActiveInstance) {
@@ -1264,6 +1558,10 @@ class MPSuperTokenPaymentMethods {
             const securityCodeContainer = document.getElementById(`mp-super-token-security-code-container-${this.activePaymentMethod.token}`);
             if (!securityCodeContainer) {
                 return false;
+            }
+
+            if (!this.verifyIsSecurityCodeReferenceTrue(this.activePaymentMethod)) {
+              return false;
             }
 
             const hasError = securityCodeContainer.classList.contains('error');

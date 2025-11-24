@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.1] - 2025-11-24
+### Changed
+- Ensure that fast payment flow header position is initial
+### Fixed
+- Fix installments display when fast payment flow is supported
+- Fix card security code validation when fast payment flow is supported
+
 ## [8.7.0] - 2025-11-19
 ### Added
 - Call to mercado pago woocommerce scripts

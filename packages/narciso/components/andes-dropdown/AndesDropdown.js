@@ -383,7 +383,7 @@ class AndesDropdown extends HTMLElement {
   
     updateHint(hint) {
       if (this.defaultHelper) {
-        this.defaultHelper.setAttribute('message', hint || '');
+        this.defaultHelper.updateMessage(hint || '');
         const hintElement = this.defaultHelper.querySelector('.mp-helper');
         if (hintElement) {
           hintElement.style.display = hint ? 'flex' : 'none';

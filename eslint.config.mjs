@@ -14,10 +14,12 @@ export default [
     plugins: {
       "@woocommerce": woocommercePlugin,
     },
-    rules: {
-      ...woocommercePlugin.configs.recommended.rules,
-    },
     ...pluginJs.configs.recommended,
+    rules: {
+      ...pluginJs.configs.recommended.rules,
+      ...woocommercePlugin.configs.recommended.rules,
+      "no-case-declarations": "off",
+    },
   },
   {
     files: ["assets/js/blocks/**/*.js"],
