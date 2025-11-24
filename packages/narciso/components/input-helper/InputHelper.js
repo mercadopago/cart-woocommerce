@@ -46,12 +46,17 @@ class InputHelper extends HTMLElement {
   createHelperMessage(message, type) {
     const helperMessage = document.createElement('div');
 
-    helperMessage.innerHTML = message;
+    helperMessage.textContent = message;
     helperMessage.classList.add('mp-helper-message');
     helperMessage.classList.add(type);
     helperMessage.setAttribute('data-cy', 'helper-message');
 
     return helperMessage;
+  }
+
+  updateMessage(message) {
+    this.setAttribute('message', message);
+    this.querySelector('.mp-helper-message').textContent = message;
   }
 
   validateVisibility(helper) {

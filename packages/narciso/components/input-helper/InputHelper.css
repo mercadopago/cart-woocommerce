@@ -12,7 +12,7 @@
   font-family: var(--andes-font-style) !important;
   font-size: 13px !important;
   line-height: 18px !important;
-  text-align: left !important;
+  text-align: center !important;
 }
 
 .mp-helper .mp-helper-message.error {

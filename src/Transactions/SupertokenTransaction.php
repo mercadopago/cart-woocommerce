@@ -29,8 +29,16 @@ class SupertokenTransaction extends AbstractPaymentTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
+        // validate payment method id and payment type id
+        if (empty($this->checkout['payment_method_id']) || empty($this->checkout['payment_type_id'])) {
+            throw new Exception('Payment method id and payment type id are required');
+        }
+
         $this->transaction->payment_method_id = $this->checkout['payment_method_id'];
-        if ($this->checkout['payment_type_id'] === 'credit_card') {
+        if (
+            $this->checkout['payment_type_id'] === 'credit_card' ||
+             $this->checkout['payment_type_id'] === 'digital_currency'
+        ) {
             $this->transaction->installments = (int) $this->checkout['installments'];
         }
 

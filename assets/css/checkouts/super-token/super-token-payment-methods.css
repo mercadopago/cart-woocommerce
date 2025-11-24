@@ -5,6 +5,8 @@
     padding: 16px !important;
     background-color: #f9f9f9 !important;
     width: 100% !important;
+    position: relative !important;
+    z-index: 1000 !important;
 }
 
 .payment_box.mp-super-token-payment-methods-list {
@@ -214,7 +216,6 @@
 .mp-super-token-payment-method__details {
     display: flex;
     flex-direction: column;
-    gap: 16px;
     opacity: 1;
     max-height: 1000px;
     overflow: visible;
@@ -256,6 +257,10 @@
     color: #000000E5;
     font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif !important;
     margin-left: 6px;
+}
+
+.mp-super-token-security-code-container:has(.mp-super-token-security-code-input.error) .mp-super-token-security-code-tooltip {
+  top: 41% !important;
 }
 
 .mp-super-token-security-code-tooltip {
@@ -313,16 +318,73 @@
     margin: 0 !important;
 }
 
+.mp-consumer-credits-due-date {
+    justify-content: center;
+    font-family: var(--primary-font-family) !important;
+    text-align: center !important;
+    line-height: 15px !important;
+    font-size: 12px !important;
+    margin: 8px 0!important;
+}
+
+.mp-consumer-credits-due-date span {
+    color: var(--andes-text-color-secondary) !important;
+    font-size: 12px !important;
+}
+
+.mp-consumer-credits-due-date b {
+    color: var(--andes-text-color-secondary) !important;
+    font-size: 12px !important;
+}
+
+.mp-consumer-credits-debit-auto-text {
+    display: flex !important;
+    text-align: center !important;
+}
+
+.mp-consumer-credits-debit-auto-text span {
+    font-family: var(--primary-font-family) !important;
+    color: var(--andes-text-color-secondary) !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    text-align: center !important;
+    margin-bottom: 8px !important;
+}
+
+#mp-consumer-credits-legal-text {
+    border-style: none !important;
+    border-width: 0 !important;
+    --form-padding: 0 !important;
+}
+
+#mp-consumer-credits-legal-text [role="text"] {
+    color: var(--andes-text-color-secondary) !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    margin-bottom: 8px !important;
+}
+
+#mp-consumer-credits-legal-text a {
+    font-weight: 400 !important;
+    text-decoration: none !important;
+}
+
+#mp-consumer-credits-legal-text form {
+    margin-bottom: 4px !important;
+}
+
 .mp-super-token-payment-methods-list .mp-privacy-policy-footer {
     padding: 16px !important;
 }
 
 .mp-payment-methods-header {
+    position: initial !important;
     display: flex;
     justify-content: space-between !important;
     align-items: center !important;
     width: 100% !important;
-    padding: 16px 0 12px 0 !important
+    padding: 16px 0 12px 0 !important;
 }
 
 .mp-payment-methods-header span {
@@ -346,7 +408,26 @@ header.mp-payment-methods-header > img.mp-payment-methods-header-logo {
 
 .mp-super-token-payment-methods-list hr.mp-payment-methods-list-horizontal-row {
     color: var(--andes-gray-color) !important;
-    margin: 0 0 8px 0 !important
+    margin: 0 0 8px 0 !important;
+}
+
+@media screen and (max-width: 767px) {
+    .mp-super-token-security-code-tooltip:hover::after {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        transform: none;
+        width: 200px;
+        white-space: normal;
+        text-align: left;
+        margin-top: 8px;
+        margin-left: -150px;
+    }
+
+    .mp-super-token-security-code-tooltip:hover::before {
+        left: 25%;
+        transform: translateX(-50%);
+    }
 }
 
 @container mp-super-token-payment-method-header (max-width: 248px) {

@@ -138,7 +138,6 @@ class MPThreeDSHandler {
 
             form3ds.submit();
         } catch (error) {
-            console.log(error);
             this.sendMetric('MP_THREE_DS_ERROR', '3DS Loading error: ' + error, this.threedsTarget);
             alert('Error doing Challenge, try again later.');
         }
@@ -239,4 +238,4 @@ class MPThreeDSHandler {
             });
         }
     }
-} 
+}

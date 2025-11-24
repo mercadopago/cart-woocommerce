@@ -1017,6 +1017,23 @@ class CustomGatewayTest extends TestCase
             'installments_error_invalid_amount' => 'Invalid amount error',
             'mercado_pago_card_name' => 'Mercado Pago Card',
             'mercadopago_privacy_policy' => 'Privacy policy {link}',
+            'consumer_credits_due_date' => 'The first installment is due on',
+            'months_abbreviated' => 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
+            'mlb_installment_debit_auto_text' => 'MLB Installment Debit Auto',
+            'interest_rate_mlb_text' => 'Interest Rate MLB',
+            'effective_total_cost_mlb_text' => 'Effective Total Cost MLB',
+            'iof_mlb_text' => 'IOF MLB',
+            'borrowed_amount_mlb_text' => 'Borrowed Amount MLB',
+            'per_month' => 'per month',
+            'per_year' => 'per year',
+            'cat_mlm_text' => 'CAT MLM',
+            'no_iva_text' => 'No IVA',
+            'tna_mlm_text' => 'TNA MLM',
+            'system_amortization_mlm_text' => 'System Amortization MLM',
+            'cftea_mla_text' => 'CFTEA MLA',
+            'tna_mla_text' => 'TNA MLA',
+            'tea_mla_text' => 'TEA MLA',
+            'fixed_rate_text' => 'Fixed Rate',
         ];
 
         // Mock threeDsTranslations
