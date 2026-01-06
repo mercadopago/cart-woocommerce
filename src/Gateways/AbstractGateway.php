@@ -484,15 +484,6 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             $this->setCheckoutSessionDataOnSessionHelperByOrderId($order->get_id());
 
             return $this->proccessPaymentInternal($order);
-        } catch (RejectedPaymentException $e) {
-            return $this->processReturnFail(
-                $e,
-                $e->getMessage(),
-                static::LOG_SOURCE,
-                (array) $order ?? [],
-                true,
-                true
-            );
         } catch (Exception $e) {
             return $this->processReturnFail(
                 $e,
@@ -634,7 +625,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      *
      * @return array
      */
-    public function processReturnFail(Exception $e, string $message, string $source, array $context = [], bool $notice = false, bool $handled = false): array
+    public function processReturnFail(Exception $e, string $message, string $source, array $context = [], bool $notice = false): array
     {
         if ($e instanceof MockeryExceptionInterface) {
             throw $e;
@@ -642,20 +633,20 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
         $this->mercadopago->logs->file->error("Message: {$e->getMessage()} \n\n\nStacktrace: {$e->getTraceAsString()} \n\n\n", $source, $context);
 
-        // Change error message if not previously handled
-        if (!$handled) {
-            $message = $this->mercadopago->helpers->errorMessages->findErrorMessage($message);
-            $this->datadog->sendEvent('woo_checkout_error', $message, $e->getMessage());
-        }
+        $originalMessage = $message;
+
+        $translatedMessage = $this->mercadopago->helpers->errorMessages->findErrorMessage($message);
+
+        $this->datadog->sendEvent('woo_checkout_error', $translatedMessage, $originalMessage);
 
         if ($notice) {
-            $this->mercadopago->helpers->notices->storeNotice($message, 'error');
+            $this->mercadopago->helpers->notices->storeNotice($translatedMessage, 'error');
         }
 
         return [
             'result'   => 'fail',
             'redirect' => '',
-            'message'  => $message,
+            'message'  => $translatedMessage,
         ];
     }
 
@@ -962,23 +953,26 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         if ($response['status'] === 'rejected') {
             $statusDetail = $response['status_detail'];
 
-            $errorMessage = $this->getRejectedPaymentErrorMessage($statusDetail);
+            $errorMessage = $this->getRejectedPaymentErrorKey($statusDetail);
 
             throw new RejectedPaymentException($errorMessage);
         }
     }
 
     /**
-     * Get payment rejected error message
+     * Get payment rejected error message translation key
      *
      * @param string $statusDetail statusDetail.
      *
      * @return string
      */
-    public function getRejectedPaymentErrorMessage(string $statusDetail): string
+    public function getRejectedPaymentErrorKey(string $statusDetail): string
     {
-        return $this->mercadopago->storeTranslations->buyerRefusedMessages[ 'buyer_' . $statusDetail ] ??
-               $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'];
+        $key = 'buyer_' . $statusDetail;
+        if (isset($this->mercadopago->storeTranslations->buyerRefusedMessages[$key])) {
+            return $key;
+        }
+        return 'buyer_default';
     }
 
     /**

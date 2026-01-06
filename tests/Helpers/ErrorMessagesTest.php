@@ -29,6 +29,11 @@ class ErrorMessagesTest extends TestCase
             return '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.';
         });
         $this->storeTranslationsMock->buyerRefusedMessages['buyer_default'] = '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.';
+        $this->storeTranslationsMock->buyerRefusedMessages['buyer_cc_rejected_high_risk'] = '<strong>For safety reasons, your payment was declined</strong><br>We recommended paying with your usual payment method and device for online purchases.';
+        $this->storeTranslationsMock->buyerRefusedMessages['buyer_cc_rejected_call_for_authorize'] = '<strong>Your bank needs you to authorize the payment</strong><br>Please call the telephone number on your card or pay with another method.';
+        $this->storeTranslationsMock->buyerRefusedMessages['buyer_cc_rejected_insufficient_amount'] = '<strong>Your credit card has no available limit</strong><br>Please pay using another card or choose another payment method.';
+        $this->storeTranslationsMock->buyerRefusedMessages['buyer_yape_default'] = '<strong>Yape declined your payment</strong><br>Your payment could not be processed. Please try again or choose another payment method.';
+        $this->storeTranslationsMock->buyerRefusedMessages['buyer_yape_cc_rejected_max_attempts'] = '<strong>Yape declined your payment</strong><br>After three incorrect approval codes, the payment can\'t be done with Yape for your safety.';
 
         $this->storeTranslationsMock->commonMessages = new ArrayMock(function () {
             return 'A problem was occurred when processing your payment. Please, try again.';
@@ -53,8 +58,10 @@ class ErrorMessagesTest extends TestCase
         $this->storeTranslationsMock->checkoutErrorMessagesV2['payment_declined_device'] = '<strong>For safety reasons, your payment was declined</strong><br>We recommend paying with your usual payment method and device for online purchases.';
         $this->storeTranslationsMock->checkoutErrorMessagesV2['card_no_limit'] = '<strong>Your credit card has no available limit</strong><br>Choose another payment method.';
         $this->storeTranslationsMock->checkoutErrorMessagesV2['invalid_test_email'] = '<strong>The test e-mail you entered is not valid</strong><br>Enter a valid email to complete the payment.';
+        $this->storeTranslationsMock->checkoutErrorMessagesV2['invalid_email'] = '<strong>The email you entered is not valid</strong><br>Enter a valid email to complete the payment.';
         $this->storeTranslationsMock->checkoutErrorMessagesV2['payment_generic_error'] = '<strong>Your payment was declined because something went wrong</strong><br>We recommend trying again or paying with another method.';
         $this->storeTranslationsMock->checkoutErrorMessagesV2['payment_not_completed'] = '<strong>It was not possible to complete the payment</strong><br>Please use another method to complete the purchase.';
+        $this->storeTranslationsMock->checkoutErrorMessagesV2['incorrect_card_details'] = '<strong>One or more card details were entered incorrectly</strong><br>Please enter them again exactly as they appear on the card to complete the payment.';
 
         $this->errorMessages = new ErrorMessages($this->storeTranslationsMock);
     }
@@ -324,6 +331,312 @@ class ErrorMessagesTest extends TestCase
      * @param string $description Description of the test case
      */
     public function testFindErrorMessageWithSimilarMessages(string $input_message, string $expected_message, string $description)
+    {
+        $result = $this->errorMessages->findErrorMessage($input_message);
+        $this->assertEquals($expected_message, $result, $description);
+    }
+
+    /**
+     * Data provider for buyer refused keys tests (exact key matching)
+     *
+     * @return array[]
+     */
+    public function buyerRefusedKeysProvider(): array
+    {
+        return [
+            'buyer_default_key' => [
+                'input_message' => 'buyer_default',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should match exact buyer_default key'
+            ],
+            'buyer_cc_rejected_high_risk_key' => [
+                'input_message' => 'buyer_cc_rejected_high_risk',
+                'expected_message' => '<strong>For safety reasons, your payment was declined</strong><br>We recommended paying with your usual payment method and device for online purchases.',
+                'description' => 'Should match exact buyer_cc_rejected_high_risk key'
+            ],
+            'buyer_cc_rejected_call_for_authorize_key' => [
+                'input_message' => 'buyer_cc_rejected_call_for_authorize',
+                'expected_message' => '<strong>Your bank needs you to authorize the payment</strong><br>Please call the telephone number on your card or pay with another method.',
+                'description' => 'Should match exact buyer_cc_rejected_call_for_authorize key'
+            ],
+            'buyer_yape_default_key' => [
+                'input_message' => 'buyer_yape_default',
+                'expected_message' => '<strong>Yape declined your payment</strong><br>Your payment could not be processed. Please try again or choose another payment method.',
+                'description' => 'Should match exact buyer_yape_default key'
+            ],
+            'buyer_yape_cc_rejected_max_attempts_key' => [
+                'input_message' => 'buyer_yape_cc_rejected_max_attempts',
+                'expected_message' => '<strong>Yape declined your payment</strong><br>After three incorrect approval codes, the payment can\'t be done with Yape for your safety.',
+                'description' => 'Should match exact buyer_yape_cc_rejected_max_attempts key'
+            ]
+        ];
+    }
+
+    /**
+     * Test findErrorMessage with buyer refused keys (exact key matching)
+     *
+     * @dataProvider buyerRefusedKeysProvider
+     * @param string $input_message The input error message key
+     * @param string $expected_message The expected translated message
+     * @param string $description Description of the test case
+     */
+    public function testFindErrorMessageWithBuyerRefusedKeys(string $input_message, string $expected_message, string $description)
+    {
+        $result = $this->errorMessages->findErrorMessage($input_message);
+        $this->assertEquals($expected_message, $result, $description);
+    }
+
+    /**
+     * Data provider for checkout error messages V2 keys tests
+     *
+     * @return array[]
+     */
+    public function checkoutErrorMessagesV2KeysProvider(): array
+    {
+        return [
+            'invalid_email_key' => [
+                'input_message' => 'invalid_email',
+                'expected_message' => '<strong>The email you entered is not valid</strong><br>Enter a valid email to complete the payment.',
+                'description' => 'Should match exact invalid_email key'
+            ],
+            'invalid_test_email_key' => [
+                'input_message' => 'invalid_test_email',
+                'expected_message' => '<strong>The test e-mail you entered is not valid</strong><br>Enter a valid email to complete the payment.',
+                'description' => 'Should match exact invalid_test_email key'
+            ]
+        ];
+    }
+
+    /**
+     * Test findErrorMessage with checkout error messages V2 keys
+     *
+     * @dataProvider checkoutErrorMessagesV2KeysProvider
+     * @param string $input_message The input error message key
+     * @param string $expected_message The expected translated message
+     * @param string $description Description of the test case
+     */
+    public function testFindErrorMessageWithCheckoutErrorMessagesV2Keys(string $input_message, string $expected_message, string $description)
+    {
+        $result = $this->errorMessages->findErrorMessage($input_message);
+        $this->assertEquals($expected_message, $result, $description);
+    }
+
+    /**
+     * Data provider for keys with trailing punctuation tests
+     *
+     * @return array[]
+     */
+    public function keysWithTrailingPunctuationProvider(): array
+    {
+        return [
+            'buyer_default_with_period' => [
+                'input_message' => 'buyer_default.',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should match key even with trailing period'
+            ],
+            'buyer_default_with_exclamation' => [
+                'input_message' => 'buyer_default!',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should match key even with trailing exclamation mark'
+            ],
+            'buyer_default_with_question' => [
+                'input_message' => 'buyer_default?',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should match key even with trailing question mark'
+            ],
+            'cho_form_error_with_period' => [
+                'input_message' => 'cho_form_error.',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>Please make sure all the information was entered correctly.',
+                'description' => 'Should match cho_form_error key even with trailing period'
+            ],
+            'invalid_email_with_period' => [
+                'input_message' => 'invalid_email.',
+                'expected_message' => '<strong>The email you entered is not valid</strong><br>Enter a valid email to complete the payment.',
+                'description' => 'Should match invalid_email key even with trailing period'
+            ]
+        ];
+    }
+
+    /**
+     * Test findErrorMessage with keys that have trailing punctuation
+     *
+     * @dataProvider keysWithTrailingPunctuationProvider
+     * @param string $input_message The input error message key with punctuation
+     * @param string $expected_message The expected translated message
+     * @param string $description Description of the test case
+     */
+    public function testFindErrorMessageWithTrailingPunctuation(string $input_message, string $expected_message, string $description)
+    {
+        $result = $this->errorMessages->findErrorMessage($input_message);
+        $this->assertEquals($expected_message, $result, $description);
+    }
+
+    /**
+     * Data provider for messages with escape characters tests
+     *
+     * @return array[]
+     */
+    public function messagesWithEscapeCharactersProvider(): array
+    {
+        return [
+            'message_with_escaped_apostrophe' => [
+                'input_message' => 'The payment method selected isn\'t available at the store.',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should handle escaped apostrophe in message (partial match not found, returns default)'
+            ],
+            'v1_message_with_escaped_apostrophe' => [
+                'input_message' => 'Installments attribute can\'t be null',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommend trying again or paying with another method.',
+                'description' => 'Should match V1 message (installments_required) with escaped apostrophe after normalization'
+            ]
+        ];
+    }
+
+    /**
+     * Test findErrorMessage with messages containing escape characters
+     *
+     * @dataProvider messagesWithEscapeCharactersProvider
+     * @param string $input_message The input error message with escape characters
+     * @param string $expected_message The expected translated message
+     * @param string $description Description of the test case
+     */
+    public function testFindErrorMessageWithEscapeCharacters(string $input_message, string $expected_message, string $description)
+    {
+        $result = $this->errorMessages->findErrorMessage($input_message);
+        $this->assertEquals($expected_message, $result, $description);
+    }
+
+    /**
+     * Data provider for idempotency tests (already translated messages)
+     *
+     * @return array[]
+     */
+    public function alreadyTranslatedMessagesProvider(): array
+    {
+        return [
+            'message_with_strong_tag' => [
+                'input_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should return already translated message as-is (idempotency with <strong>)'
+            ],
+            'message_with_br_tag' => [
+                'input_message' => '<strong>For safety reasons, your payment was declined</strong><br>We recommended paying with your usual payment method and device for online purchases.',
+                'expected_message' => '<strong>For safety reasons, your payment was declined</strong><br>We recommended paying with your usual payment method and device for online purchases.',
+                'description' => 'Should return already translated message as-is (idempotency with <br>)'
+            ],
+            'message_with_b_tag' => [
+                'input_message' => '<b>For safety reasons, your payment was declined</b><br>We recommend paying with another method.',
+                'expected_message' => '<b>For safety reasons, your payment was declined</b><br>We recommend paying with another method.',
+                'description' => 'Should return already translated message as-is (idempotency with <b>)'
+            ],
+            'message_with_self_closing_br' => [
+                'input_message' => '<strong>Payment error</strong><br/>Please try again.',
+                'expected_message' => '<strong>Payment error</strong><br/>Please try again.',
+                'description' => 'Should return already translated message as-is (idempotency with <br/>)'
+            ]
+        ];
+    }
+
+    /**
+     * Test findErrorMessage returns already translated messages as-is (idempotency)
+     *
+     * @dataProvider alreadyTranslatedMessagesProvider
+     * @param string $input_message The input already translated message
+     * @param string $expected_message The expected message (same as input)
+     * @param string $description Description of the test case
+     */
+    public function testFindErrorMessageIdempotency(string $input_message, string $expected_message, string $description)
+    {
+        $result = $this->errorMessages->findErrorMessage($input_message);
+        $this->assertEquals($expected_message, $result, $description);
+    }
+
+    /**
+     * Data provider for keys with whitespace tests
+     *
+     * @return array[]
+     */
+    public function keysWithWhitespaceProvider(): array
+    {
+        return [
+            'key_with_leading_space' => [
+                'input_message' => ' buyer_default',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should match key with leading whitespace'
+            ],
+            'key_with_trailing_space' => [
+                'input_message' => 'buyer_default ',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should match key with trailing whitespace'
+            ],
+            'key_with_both_spaces' => [
+                'input_message' => '  buyer_default  ',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+                'description' => 'Should match key with leading and trailing whitespace'
+            ]
+        ];
+    }
+
+    /**
+     * Test findErrorMessage with keys that have whitespace
+     *
+     * @dataProvider keysWithWhitespaceProvider
+     * @param string $input_message The input error message key with whitespace
+     * @param string $expected_message The expected translated message
+     * @param string $description Description of the test case
+     */
+    public function testFindErrorMessageWithWhitespace(string $input_message, string $expected_message, string $description)
+    {
+        $result = $this->errorMessages->findErrorMessage($input_message);
+        $this->assertEquals($expected_message, $result, $description);
+    }
+
+    /**
+     * Test findErrorMessage preserves periods in middle of keys
+     */
+    public function testFindErrorMessagePreservesMiddlePeriods()
+    {
+        // This test verifies that periods in the middle of a string are preserved
+        // Only trailing periods should be removed
+        $result = $this->errorMessages->findErrorMessage('buyer.something.else');
+        // Should return default since 'buyer.something.else' is not a valid key
+        $this->assertEquals(
+            '<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.',
+            $result,
+            'Periods in middle should be preserved, key not found returns default'
+        );
+    }
+
+    /**
+     * Data provider for input without punctuation but keyword with punctuation tests
+     *
+     * @return array[]
+     */
+    public function inputWithoutPunctuationKeywordWithPunctuationProvider(): array
+    {
+        return [
+            'v2_message_without_trailing_period' => [
+                'input_message' => 'Your credit card has no available limit. We recommend choosing another payment method',
+                'expected_message' => '<strong>Your credit card has no available limit</strong><br>Choose another payment method.',
+                'description' => 'Should match V2 keyword even when input is missing trailing period'
+            ],
+            'v2_communication_error_without_period' => [
+                'input_message' => 'It was not possible to complete the payment due to a communication error. Please try again later',
+                'expected_message' => '<strong>Your payment was declined because something went wrong</strong><br>We recommend trying again or paying with another method.',
+                'description' => 'Should match V2 keyword even when input is missing trailing period'
+            ]
+        ];
+    }
+
+    /**
+     * Test findErrorMessage matches keywords when input is missing trailing punctuation
+     *
+     * @dataProvider inputWithoutPunctuationKeywordWithPunctuationProvider
+     * @param string $input_message The input message without trailing punctuation
+     * @param string $expected_message The expected translated message
+     * @param string $description Description of the test case
+     */
+    public function testFindErrorMessageMatchesKeywordWithPunctuationDifference(string $input_message, string $expected_message, string $description)
     {
         $result = $this->errorMessages->findErrorMessage($input_message);
         $this->assertEquals($expected_message, $result, $description);

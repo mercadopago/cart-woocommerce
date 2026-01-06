@@ -220,7 +220,7 @@ class CustomGatewayTest extends TestCase
                 if ($isOrderPayPage) {
                     $this->gateway
                         ->expects()
-                        ->getRejectedPaymentErrorMessage($response['status_detail'])
+                        ->getRejectedPaymentErrorKey($response['status_detail'])
                         ->andReturn('error');
                     return [
                         'result' => 'fail',

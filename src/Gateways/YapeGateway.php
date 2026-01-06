@@ -200,45 +200,61 @@ class YapeGateway extends AbstractGateway
      * @param $response
      *
      * @return array
-     * @throws RejectedPaymentException
-     * @throws ResponseStatusException
      */
     private function handleResponseStatus($order, $response): array
     {
-        if (is_array($response) && array_key_exists('status', $response)) {
-            switch ($response['status']) {
-                case 'approved':
-                    $this->mercadopago->helpers->cart->emptyCart();
+        try {
+            if (is_array($response) && array_key_exists('status', $response)) {
+                switch ($response['status']) {
+                    case 'approved':
+                        $this->mercadopago->helpers->cart->emptyCart();
 
-                    $urlReceived = $order->get_checkout_order_received_url();
-                    $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
+                        $urlReceived = $order->get_checkout_order_received_url();
+                        $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
 
-                    $this->mercadopago->helpers->notices->storeApprovedStatusNotice($orderStatus);
-                    $this->mercadopago->orderStatus->setOrderStatus($order, 'failed', 'pending');
+                        $this->mercadopago->helpers->notices->storeApprovedStatusNotice($orderStatus);
+                        $this->mercadopago->orderStatus->setOrderStatus($order, 'failed', 'pending');
 
-                    return [
-                        'result'   => 'success',
-                        'redirect' => $urlReceived,
-                    ];
-                case 'pending':
-                case 'in_process':
-                    $this->mercadopago->helpers->cart->emptyCart();
+                        return [
+                            'result'   => 'success',
+                            'redirect' => $urlReceived,
+                        ];
+                    case 'pending':
+                    case 'in_process':
+                        $this->mercadopago->helpers->cart->emptyCart();
 
-                    $urlReceived = $order->get_checkout_order_received_url();
+                        $urlReceived = $order->get_checkout_order_received_url();
 
-                    return [
-                        'result'   => 'success',
-                        'redirect' => $urlReceived,
-                    ];
-                case 'rejected':
-                    $this->handleWithRejectPayment($response);
-                    break;
-                default:
-                    break;
+                        return [
+                            'result'   => 'success',
+                            'redirect' => $urlReceived,
+                        ];
+                    case 'rejected':
+                        $this->handleWithRejectPayment($response);
+                        break;
+                    default:
+                        break;
+                }
             }
-        }
 
-        throw new ResponseStatusException('Response status not mapped on ' . __METHOD__);
+            throw new ResponseStatusException('Response status not mapped on ' . __METHOD__);
+        } catch (ResponseStatusException $e) {
+            return $this->processReturnFail(
+                $e,
+                'buyer_yape_default',
+                self::LOG_SOURCE,
+                (array) $response,
+                true
+            );
+        } catch (Exception $e) {
+            return $this->processReturnFail(
+                $e,
+                $e->getMessage(),
+                self::LOG_SOURCE,
+                (array) $response,
+                true
+            );
+        }
     }
 
     /**
@@ -252,9 +268,19 @@ class YapeGateway extends AbstractGateway
         return $mercadopago->helpers->country->getPluginDefaultCountry() === Country::COUNTRY_CODE_MPE;
     }
 
-    public function getRejectedPaymentErrorMessage(string $statusDetail): string
+    /**
+     * Get Yape payment rejected error message translation key
+     *
+     * @param string $statusDetail statusDetail.
+     *
+     * @return string
+     */
+    public function getRejectedPaymentErrorKey(string $statusDetail): string
     {
-        return $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_yape_' . $statusDetail] ??
-            $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_yape_default'];
+        $key = 'buyer_yape_' . $statusDetail;
+        if (isset($this->mercadopago->storeTranslations->buyerRefusedMessages[$key])) {
+            return $key;
+        }
+        return 'buyer_yape_default';
     }
 }

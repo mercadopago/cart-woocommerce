@@ -130,21 +130,20 @@ class PixGatewayTest extends TestCase
             ->get_billing_email()
             ->andReturn('invalid');
 
-        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages = [
-            'buyer_default' => random()->word()
-        ];
+        $translatedMessage = '<strong>The email you entered is not valid</strong>';
 
         $this->gateway
             ->expects()
             ->processReturnFail(
-                Mockery::type(\Exception::class),
-                'buyer_default',
+                Mockery::type(\MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException::class),
+                'invalid_email',
                 PixGateway::LOG_SOURCE,
-                Mockery::type('array')
+                Mockery::type('array'),
+                true
             )->andReturn($expected = [
                 'result' => 'fail',
                 'redirect' => '',
-                'message' => $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default'],
+                'message' => $translatedMessage,
             ]);
 
         $this->assertEquals($expected, $this->gateway->process_payment(1));

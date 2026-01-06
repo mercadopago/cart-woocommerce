@@ -106,14 +106,34 @@ class YapeGatewayTest extends TestCase
 
         $this->yapeProcessPaymentInternalMock($isBlocks, $response);
 
+        $rejectedMessage = 'buyer_yape_default';
+        $translatedMessage = '<strong>Yape declined your payment</strong>';
+
         $this->gateway
             ->expects()
             ->handleWithRejectPayment($response)
-            ->andThrow(RejectedPaymentException::class);
+            ->andThrow(new RejectedPaymentException($rejectedMessage));
 
-        $this->expectException(RejectedPaymentException::class);
+        // Mock processReturnFail dependencies
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->expects()
+            ->findErrorMessage($rejectedMessage)
+            ->andReturn($translatedMessage);
 
-        $this->gateway->proccessPaymentInternal($this->order);
+        $this->gateway->datadog
+            ->expects()
+            ->sendEvent('woo_checkout_error', $translatedMessage, $rejectedMessage);
+
+        $this->gateway->mercadopago->helpers->notices
+            ->expects()
+            ->storeNotice($translatedMessage, 'error');
+
+        // Exception is now caught and handled, returns fail array
+        $result = $this->gateway->proccessPaymentInternal($this->order);
+
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertEquals($translatedMessage, $result['message']);
     }
 
     /**
@@ -128,8 +148,28 @@ class YapeGatewayTest extends TestCase
             'status' => random()->word()
         ]);
 
-        $this->expectException(ResponseStatusException::class);
+        $originalMessage = 'buyer_yape_default';
+        $translatedMessage = '<strong>Yape declined your payment</strong>';
 
-        $this->gateway->proccessPaymentInternal($this->order);
+        // Mock processReturnFail dependencies
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->expects()
+            ->findErrorMessage($originalMessage)
+            ->andReturn($translatedMessage);
+
+        $this->gateway->datadog
+            ->expects()
+            ->sendEvent('woo_checkout_error', $translatedMessage, $originalMessage);
+
+        $this->gateway->mercadopago->helpers->notices
+            ->expects()
+            ->storeNotice($translatedMessage, 'error');
+
+        // Exception is now caught and handled, returns fail array
+        $result = $this->gateway->proccessPaymentInternal($this->order);
+
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertEquals($translatedMessage, $result['message']);
     }
 }

@@ -772,14 +772,14 @@ class CustomGateway extends AbstractGateway
                         if ($this->isOrderPayPage()) {
                             $this->handlePayForOrderRequest([
                                 'result'   => 'fail',
-                                'messages' => $this->getRejectedPaymentErrorMessage($response['status_detail'])
+                                'messages' => $this->getRejectedPaymentErrorKey($response['status_detail'])
                             ]);
                             return []; // Case $_ENV['PHPUNIT_TEST'] == true
                         }
 
                         $this->handleWithRejectPayment($response);
                         break;
-                    // Fall-through intentional - throw RejectedPaymentException for 'rejected' case.
+                        // Fall-through intentional - throw RejectedPaymentException for 'rejected' case.
 
                     default:
                         break;
