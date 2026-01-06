@@ -33,13 +33,16 @@ class ErrorMessages
     }
 
     /**
-     * Get all error messages (V1 and V2 merged)
+     * Get all error messages (V1, V2, buyer refused, common and checkout error messages merged)
      *
      * @return array
      */
     public function getErrorMessages(): array
     {
         return array_merge(
+            $this->getBuyerRefusedMessagesMapping(),
+            $this->getCommonMessagesMapping(),
+            $this->getCheckoutErrorMessagesV2Mapping(),
             $this->getErrorMessagesV1(),
             $this->getErrorMessagesV2()
         );
@@ -48,21 +51,156 @@ class ErrorMessages
     /**
      * Find and return the appropriate error message based on the input message
      *
-     * @param string $message The error message to search for
+     * This method is idempotent - if the message is identified as already translated, it will be returned as-is.
+     * The lookup priority is:
+     * 1. Exact key match (e.g., 'buyer_cc_rejected_high_risk') - uses normalized message
+     * 2. Already translated detection (contains HTML markers)
+     * 3. Keyword search (partial match in message) - normalizes both message and keyword
+     * 4. Default message (fallback)
      *
-     * @return string The translated error message or default message if not found
+     * @param string $message The error message key or text to search for
+     *
+     * @return string The translated error message or the original if already translated, or the default message if no match found
      */
     public function findErrorMessage(string $message): string
     {
         $allErrorMessages = $this->getErrorMessages();
 
+        $normalizedMessage = $this->normalizeMessageForKeyMatch($message);
+
+        if (isset($allErrorMessages[$normalizedMessage])) {
+            return $allErrorMessages[$normalizedMessage];
+        }
+
+        if ($this->isAlreadyTranslated($message)) {
+            return $message;
+        }
+
+        $messageWithoutSlashes = stripslashes($message);
         foreach ($allErrorMessages as $keyword => $replacement) {
-            if (stripos($message, $keyword) !== false) {
+            if (stripos($message, $keyword) !== false || stripos($messageWithoutSlashes, $keyword) !== false) {
+                return $replacement;
+            }
+            $normalizedKeyword = $this->normalizeMessageForKeyMatch($keyword);
+            if (stripos($normalizedMessage, $normalizedKeyword) !== false) {
                 return $replacement;
             }
         }
 
         return $this->getDefaultErrorMessage();
+    }
+
+    /**
+     * Normalize message for key matching
+     *
+     * Handles common variations in message format:
+     * - Removes trailing punctuation (. ! ?) while preserving punctuation in the middle
+     * - Removes escape characters (e.g., isn\'t becomes isn't)
+     * - Trims whitespace
+     *
+     * @param string $message The message to normalize
+     *
+     * @return string The normalized message
+     */
+    private function normalizeMessageForKeyMatch(string $message): string
+    {
+        $normalized = trim($message);
+
+        $normalized = stripslashes($normalized);
+
+        $normalized = rtrim($normalized, '.!?');
+
+        return $normalized;
+    }
+
+    /**
+     * Check if a message appears to be already translated
+     *
+     * Translated messages typically contain HTML formatting tags
+     * that are used in the StoreTranslations messages.
+     *
+     * @param string $message The message to check
+     *
+     * @return bool True if the message appears to be already translated
+     */
+    private function isAlreadyTranslated(string $message): bool
+    {
+        $translatedMarkers = [
+            '<strong>',
+            '</strong>',
+            '<br>',
+            '<br/>',
+            '<br />',
+            '<b>',
+            '</b>',
+        ];
+
+        foreach ($translatedMarkers as $marker) {
+            if (stripos($message, $marker) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get buyer refused messages mapping (keys to translations)
+     *
+     * @return array
+     */
+    private function getBuyerRefusedMessagesMapping(): array
+    {
+        return [
+            'buyer_cc_rejected_call_for_authorize'      => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_call_for_authorize'],
+            'buyer_cc_rejected_high_risk'               => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_high_risk'],
+            'buyer_rejected_high_risk'                  => $this->storeTranslations->buyerRefusedMessages['buyer_rejected_high_risk'],
+            'buyer_cc_rejected_bad_filled_other'        => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_bad_filled_other'],
+            'buyer_cc_rejected_bad_filled_security_code' => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_bad_filled_security_code'],
+            'buyer_cc_rejected_bad_filled_date'         => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_bad_filled_date'],
+            'buyer_cc_rejected_bad_filled_card_number'  => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_bad_filled_card_number'],
+            'buyer_cc_rejected_insufficient_amount'     => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_insufficient_amount'],
+            'buyer_insufficient_amount'                 => $this->storeTranslations->buyerRefusedMessages['buyer_insufficient_amount'],
+            'buyer_cc_rejected_invalid_installments'    => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_invalid_installments'],
+            'buyer_cc_rejected_card_disabled'           => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_card_disabled'],
+            'buyer_cc_rejected_max_attempts'            => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_max_attempts'],
+            'buyer_cc_rejected_duplicated_payment'      => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_duplicated_payment'],
+            'buyer_bank_error'                          => $this->storeTranslations->buyerRefusedMessages['buyer_bank_error'],
+            'buyer_cc_rejected_other_reason'            => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_other_reason'],
+            'buyer_rejected_by_bank'                    => $this->storeTranslations->buyerRefusedMessages['buyer_rejected_by_bank'],
+            'buyer_cc_rejected_blacklist'               => $this->storeTranslations->buyerRefusedMessages['buyer_cc_rejected_blacklist'],
+            'buyer_default'                             => $this->storeTranslations->buyerRefusedMessages['buyer_default'],
+            'buyer_yape_default'                        => $this->storeTranslations->buyerRefusedMessages['buyer_yape_default'],
+            'buyer_yape_cc_rejected_call_for_authorize' => $this->storeTranslations->buyerRefusedMessages['buyer_yape_cc_rejected_call_for_authorize'],
+            'buyer_yape_cc_unsupported_unsupported'     => $this->storeTranslations->buyerRefusedMessages['buyer_yape_cc_unsupported_unsupported'],
+            'buyer_yape_cc_amount_rate_limit_exceeded'  => $this->storeTranslations->buyerRefusedMessages['buyer_yape_cc_amount_rate_limit_exceeded'],
+            'buyer_yape_cc_rejected_max_attempts'       => $this->storeTranslations->buyerRefusedMessages['buyer_yape_cc_rejected_max_attempts'],
+        ];
+    }
+
+    /**
+     * Get common messages mapping (keys to translations)
+     *
+     * @return array
+     */
+    private function getCommonMessagesMapping(): array
+    {
+        return [
+            'cho_form_error' => $this->storeTranslations->commonMessages['cho_form_error'],
+        ];
+    }
+
+    /**
+     * Get checkout error messages V2 mapping (keys to translations)
+     *
+     * @return array
+     */
+    private function getCheckoutErrorMessagesV2Mapping(): array
+    {
+        return [
+            'invalid_email'      => $this->storeTranslations->checkoutErrorMessagesV2['invalid_email'],
+            'invalid_test_email' => $this->storeTranslations->checkoutErrorMessagesV2['invalid_test_email'],
+        ];
     }
 
     /**
@@ -73,7 +211,6 @@ class ErrorMessages
         return [
             "400"                                                                           => $this->storeTranslations->buyerRefusedMessages['buyer_default'],
             "exception"                                                                     => $this->storeTranslations->buyerRefusedMessages['buyer_default'],
-            'buyer_default'                                                                 => $this->storeTranslations->buyerRefusedMessages['buyer_default'],
             "cho_form_error"                                                                => $this->storeTranslations->commonMessages['cho_form_error'],
             "Invalid users involved"                                                        => $this->storeTranslations->checkoutErrorMessages['invalid_users'],
             "Invalid operators users involved"                                              => $this->storeTranslations->checkoutErrorMessages['payer_email_invalid'],

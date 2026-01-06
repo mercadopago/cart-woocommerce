@@ -1248,8 +1248,8 @@ class AbstractGatewayTest extends TestCase
      * GIVEN a gateway processing a payment
      * AND proccessPaymentInternal throws a RejectedPaymentException
      * WHEN process_payment is called
-     * THEN it should fail the payment with the rejection message
-     * AND the error should be marked as handled (no translation, no datadog)
+     * THEN it should fail the payment with the translated rejection message
+     * AND datadog should receive the event with original and translated messages
      */
     public function testProcessPaymentShouldFailWhenRejectedPaymentExceptionIsThrown()
     {
@@ -1280,36 +1280,40 @@ class AbstractGatewayTest extends TestCase
             ->with($order->get_id());
 
         // When - proccessPaymentInternal throws RejectedPaymentException
-        $rejectionMessage = 'Invalid users involved';
+        $rejectionMessage = 'buyer_cc_rejected_high_risk';
+        $translatedMessage = '<strong>For safety reasons, your payment was declined</strong>';
         $this->gateway
             ->shouldReceive('proccessPaymentInternal')
             ->once()
             ->with($order)
             ->andThrow(new \MercadoPago\Woocommerce\Exceptions\RejectedPaymentException($rejectionMessage));
 
-        // Mock error messages helper - should NOT be called because handled=true
+        // Mock error messages helper - should be called to translate the message
         $this->gateway->mercadopago->helpers->errorMessages
             ->shouldReceive('findErrorMessage')
-            ->never();
+            ->once()
+            ->with($rejectionMessage)
+            ->andReturn($translatedMessage);
 
-        // Mock datadog - should NOT be called because handled=true
+        // Mock datadog - should be called with translated value and original message
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
-            ->never();
+            ->once()
+            ->with('woo_checkout_error', $translatedMessage, $rejectionMessage);
 
         // Mock notice storage for error handling
         $this->gateway->mercadopago->helpers->notices
             ->shouldReceive('storeNotice')
             ->once()
-            ->with($rejectionMessage, 'error');
+            ->with($translatedMessage, 'error');
 
         // When - Execute process_payment
         $result = $this->gateway->process_payment(1);
 
-        // Then - Payment should fail with the rejection message
+        // Then - Payment should fail with the translated rejection message
         $this->assertEquals('fail', $result['result']);
         $this->assertEquals('', $result['redirect']);
-        $this->assertEquals($rejectionMessage, $result['message']);
+        $this->assertEquals($translatedMessage, $result['message']);
     }
 
     /**
@@ -1369,5 +1373,292 @@ class AbstractGatewayTest extends TestCase
         // Then - Payment should fail with the exact message (not translated)
         $this->assertEquals('fail', $result['result']);
         $this->assertEquals($specificMessage, $result['message']);
+    }
+
+    /**
+     * Data provider for status details that exist in translations
+     *
+     * @return array[]
+     */
+    public function existingStatusDetailProvider(): array
+    {
+        return [
+            'high_risk' => ['cc_rejected_high_risk', 'buyer_cc_rejected_high_risk'],
+            'insufficient_amount' => ['cc_rejected_insufficient_amount', 'buyer_cc_rejected_insufficient_amount'],
+            'other_reason' => ['cc_rejected_other_reason', 'buyer_cc_rejected_other_reason'],
+            'bad_filled_card_number' => ['cc_rejected_bad_filled_card_number', 'buyer_cc_rejected_bad_filled_card_number'],
+            'bad_filled_date' => ['cc_rejected_bad_filled_date', 'buyer_cc_rejected_bad_filled_date'],
+            'bad_filled_security_code' => ['cc_rejected_bad_filled_security_code', 'buyer_cc_rejected_bad_filled_security_code'],
+            'call_for_authorize' => ['cc_rejected_call_for_authorize', 'buyer_cc_rejected_call_for_authorize'],
+        ];
+    }
+
+    /**
+     * Data provider for status details that do NOT exist in translations
+     *
+     * @return array[]
+     */
+    public function nonExistingStatusDetailProvider(): array
+    {
+        return [
+            'unknown_error_code' => ['unknown_error_code', 'buyer_default'],
+            'some_random_status' => ['some_random_status', 'buyer_default'],
+            'non_existent_key' => ['non_existent_key', 'buyer_default'],
+            'custom_invalid_status' => ['custom_invalid_status', 'buyer_default'],
+        ];
+    }
+
+    /**
+     * Test getRejectedPaymentErrorKey returns correct key when statusDetail exists in translations
+     *
+     * GIVEN a statusDetail that has a corresponding translation key
+     * WHEN getRejectedPaymentErrorKey is called
+     * THEN it should return the formatted key 'buyer_' + statusDetail
+     *
+     * @dataProvider existingStatusDetailProvider
+     * @param string $statusDetail The status detail from Mercado Pago API
+     * @param string $expectedKey The expected translation key
+     */
+    public function testGetRejectedPaymentErrorKeyReturnsKeyWhenTranslationExists(string $statusDetail, string $expectedKey)
+    {
+        // Given - Setup translations with the expected key
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages[$expectedKey] = 'Some translated message';
+
+        // When - Call the method
+        $result = $this->gateway->getRejectedPaymentErrorKey($statusDetail);
+
+        // Then - Should return the formatted key with 'buyer_' prefix
+        $this->assertStringStartsWith('buyer_', $result);
+        $this->assertEquals($expectedKey, $result);
+    }
+
+    /**
+     * Test getRejectedPaymentErrorKey returns default key when statusDetail does not exist in translations
+     *
+     * GIVEN a statusDetail that does NOT have a corresponding translation key
+     * WHEN getRejectedPaymentErrorKey is called
+     * THEN it should return 'buyer_default'
+     *
+     * @dataProvider nonExistingStatusDetailProvider
+     * @param string $statusDetail The status detail from Mercado Pago API
+     * @param string $expectedKey The expected default key
+     */
+    public function testGetRejectedPaymentErrorKeyReturnsDefaultWhenTranslationNotExists(string $statusDetail, string $expectedKey)
+    {
+        // Given - Ensure the key does NOT exist in translations by using except()
+        $keyToCheck = 'buyer_' . $statusDetail;
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages->except($keyToCheck);
+
+        // When - Call the method
+        $result = $this->gateway->getRejectedPaymentErrorKey($statusDetail);
+
+        // Then - Should return the default key
+        $this->assertEquals($expectedKey, $result);
+    }
+
+    /**
+     * Data provider for rejected payment responses with KNOWN status details (translations exist)
+     *
+     * @return array[]
+     */
+    public function rejectedPaymentWithKnownStatusProvider(): array
+    {
+        return [
+            'high_risk_rejection' => [
+                ['status' => 'rejected', 'status_detail' => 'cc_rejected_high_risk'],
+                'buyer_cc_rejected_high_risk'
+            ],
+            'insufficient_amount_rejection' => [
+                ['status' => 'rejected', 'status_detail' => 'cc_rejected_insufficient_amount'],
+                'buyer_cc_rejected_insufficient_amount'
+            ],
+            'bad_filled_card_number_rejection' => [
+                ['status' => 'rejected', 'status_detail' => 'cc_rejected_bad_filled_card_number'],
+                'buyer_cc_rejected_bad_filled_card_number'
+            ],
+            'call_for_authorize_rejection' => [
+                ['status' => 'rejected', 'status_detail' => 'cc_rejected_call_for_authorize'],
+                'buyer_cc_rejected_call_for_authorize'
+            ],
+        ];
+    }
+
+    /**
+     * Data provider for rejected payment responses with UNKNOWN status details (no translations)
+     *
+     * @return array[]
+     */
+    public function rejectedPaymentWithUnknownStatusProvider(): array
+    {
+        return [
+            'unknown_error' => [
+                ['status' => 'rejected', 'status_detail' => 'unknown_error'],
+                'buyer_default'
+            ],
+            'random_rejection_code' => [
+                ['status' => 'rejected', 'status_detail' => 'random_rejection_code_xyz'],
+                'buyer_default'
+            ],
+            'unmapped_status' => [
+                ['status' => 'rejected', 'status_detail' => 'some_unmapped_status'],
+                'buyer_default'
+            ],
+        ];
+    }
+
+    /**
+     * Data provider for non-rejected payment responses
+     *
+     * @return array[]
+     */
+    public function nonRejectedPaymentResponseProvider(): array
+    {
+        return [
+            'approved_payment' => [
+                ['status' => 'approved', 'status_detail' => 'accredited']
+            ],
+            'pending_payment' => [
+                ['status' => 'pending', 'status_detail' => 'pending_contingency']
+            ],
+            'in_process_payment' => [
+                ['status' => 'in_process', 'status_detail' => 'pending_review_manual']
+            ],
+            'authorized_payment' => [
+                ['status' => 'authorized', 'status_detail' => 'pending_capture']
+            ],
+            'cancelled_payment' => [
+                ['status' => 'cancelled', 'status_detail' => 'by_collector']
+            ],
+            'refunded_payment' => [
+                ['status' => 'refunded', 'status_detail' => 'refunded']
+            ],
+        ];
+    }
+
+    /**
+     * Test handleWithRejectPayment throws RejectedPaymentException with known status detail
+     *
+     * GIVEN a response with status 'rejected' and a KNOWN status_detail
+     * WHEN handleWithRejectPayment is called
+     * THEN it should throw a RejectedPaymentException with the correct translation key
+     *
+     * @dataProvider rejectedPaymentWithKnownStatusProvider
+     * @param array $response The payment response from Mercado Pago API
+     * @param string $expectedErrorKey The expected error key in the exception message
+     */
+    public function testHandleWithRejectPaymentThrowsExceptionWithKnownStatusDetail(array $response, string $expectedErrorKey)
+    {
+        // Given - Setup translation for the known status detail
+        $translationKey = 'buyer_' . $response['status_detail'];
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages[$translationKey] = 'Translated message';
+
+        // Then - Expect RejectedPaymentException to be thrown with correct key
+        $this->expectException(\MercadoPago\Woocommerce\Exceptions\RejectedPaymentException::class);
+        $this->expectExceptionMessage($expectedErrorKey);
+
+        // When - Call the method
+        $this->gateway->handleWithRejectPayment($response);
+    }
+
+    /**
+     * Test handleWithRejectPayment throws RejectedPaymentException with unknown status detail
+     *
+     * GIVEN a response with status 'rejected' and an UNKNOWN status_detail
+     * WHEN handleWithRejectPayment is called
+     * THEN it should throw a RejectedPaymentException with 'buyer_default' key
+     *
+     * @dataProvider rejectedPaymentWithUnknownStatusProvider
+     * @param array $response The payment response from Mercado Pago API
+     * @param string $expectedErrorKey The expected default error key
+     */
+    public function testHandleWithRejectPaymentThrowsExceptionWithUnknownStatusDetail(array $response, string $expectedErrorKey)
+    {
+        // Given - Ensure translation does NOT exist for the unknown status detail
+        $translationKey = 'buyer_' . $response['status_detail'];
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages->except($translationKey);
+
+        // Then - Expect RejectedPaymentException to be thrown with default key
+        $this->expectException(\MercadoPago\Woocommerce\Exceptions\RejectedPaymentException::class);
+        $this->expectExceptionMessage($expectedErrorKey);
+
+        // When - Call the method
+        $this->gateway->handleWithRejectPayment($response);
+    }
+
+    /**
+     * Test handleWithRejectPayment does not throw exception when payment is not rejected
+     *
+     * GIVEN a response with status other than 'rejected'
+     * WHEN handleWithRejectPayment is called
+     * THEN it should NOT throw any exception
+     *
+     * @dataProvider nonRejectedPaymentResponseProvider
+     * @param array $response The payment response from Mercado Pago API
+     */
+    public function testHandleWithRejectPaymentDoesNotThrowExceptionWhenNotRejected(array $response)
+    {
+        // When - Call the method (should not throw)
+        $result = $this->gateway->handleWithRejectPayment($response);
+
+        // Then - Method should complete without throwing exception (returns void/null)
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test handleWithRejectPayment correctly extracts status_detail from response
+     *
+     * GIVEN a rejected payment response with a specific status_detail
+     * WHEN handleWithRejectPayment is called
+     * THEN the exception message should contain the correct error key based on status_detail
+     */
+    public function testHandleWithRejectPaymentExtractsStatusDetailCorrectly()
+    {
+        // Given - A specific rejected response
+        $statusDetail = 'cc_rejected_other_reason';
+        $response = [
+            'status' => 'rejected',
+            'status_detail' => $statusDetail,
+            'id' => '123456789',
+            'payment_method_id' => 'visa'
+        ];
+
+        // Setup translation
+        $expectedKey = 'buyer_' . $statusDetail;
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages[$expectedKey] = 'Other reason message';
+
+        // Then - Expect the correct exception
+        $this->expectException(\MercadoPago\Woocommerce\Exceptions\RejectedPaymentException::class);
+        $this->expectExceptionMessage($expectedKey);
+
+        // When - Call the method
+        $this->gateway->handleWithRejectPayment($response);
+    }
+
+    /**
+     * Test handleWithRejectPayment uses getRejectedPaymentErrorKey method
+     *
+     * GIVEN a rejected payment with unknown status_detail
+     * WHEN handleWithRejectPayment is called
+     * THEN it should use getRejectedPaymentErrorKey and return 'buyer_default' for unknown errors
+     */
+    public function testHandleWithRejectPaymentUsesGetRejectedPaymentErrorKeyForUnknownErrors()
+    {
+        // Given - A rejected response with unknown status_detail
+        $unknownStatusDetail = 'completely_unknown_error_xyz';
+        $response = [
+            'status' => 'rejected',
+            'status_detail' => $unknownStatusDetail
+        ];
+
+        // Ensure the key does NOT exist in translations
+        $keyToCheck = 'buyer_' . $unknownStatusDetail;
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages->except($keyToCheck);
+
+        // Then - Expect exception with default error key
+        $this->expectException(\MercadoPago\Woocommerce\Exceptions\RejectedPaymentException::class);
+        $this->expectExceptionMessage('buyer_default');
+
+        // When - Call the method
+        $this->gateway->handleWithRejectPayment($response);
     }
 }
