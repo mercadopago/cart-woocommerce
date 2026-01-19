@@ -1,14 +1,13 @@
-/* globals wc_mercadopago_supertoken_authenticator_params */
+/* globals wc_mercadopago_supertoken_authenticator_params, MPSuperTokenErrorCodes */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenAuthenticator {
     AMOUNT_ELEMENT_ID = 'mp-amount';
     PLATFORM_ID = wc_mercadopago_supertoken_authenticator_params.platform_id;
 
     // Attributes
-    ableToUseSuperToken = null;
     amountUsed = null;
     authenticator = null;
-    userClosedModal = false;
+    fastPaymentToken = null;
 
     // Dependencies
     mpSdkInstance = null;
@@ -22,31 +21,12 @@ class MPSuperTokenAuthenticator {
     }
 
     reset() {
-        this.ableToUseSuperToken = null;
-    }
-
-    isAbleToUseSuperToken() {
-        return this.ableToUseSuperToken === true;
-    }
-
-    emailAlreadyVerified() {
-        return this.ableToUseSuperToken !== null;
-    }
+      this.authenticator = null;
+      this.fastPaymentToken = null;
+  }
 
     getAmountUsed() {
         return this.amountUsed;
-    }
-
-    isUserClosedModalError(error) {
-        return error?.errorCode === 'NO_USER_CONFIRMATION';
-    }
-
-    storeUserClosedModal() {
-        this.userClosedModal = true;
-    }
-
-    isUserClosedModal() {
-        return this.userClosedModal;
     }
 
     storeAuthenticator(authenticator) {
@@ -55,6 +35,14 @@ class MPSuperTokenAuthenticator {
 
     getStoredAuthenticator() {
         return this.authenticator;
+    }
+
+    storeFastPaymentToken(token) {
+        this.fastPaymentToken = token;
+    }
+
+    getStoredFastPaymentToken() {
+        return this.fastPaymentToken;
     }
 
     formatAmount(amount = '') {
@@ -79,96 +67,85 @@ class MPSuperTokenAuthenticator {
     }
 
     async buildAuthenticator(amount, buyerEmail) {
+      try {
         this.amountUsed = amount;
 
         const authenticator = await this.mpSdkInstance
-            .authenticator(amount, buyerEmail, { platformId: this.PLATFORM_ID });
-
-        document.dispatchEvent(new CustomEvent('mp-behavior-tracking-super-token-init'));
+            .authenticator(amount, buyerEmail, { platformId: this.PLATFORM_ID, version: 2 });
 
         return authenticator;
+      } catch (error) {
+        this.mpSuperTokenMetrics.errorToBuildAuthenticator(error);
+        return null;
+      }
     }
 
-    async canUseSuperTokenFlow(amount, buyerEmail) {
+    async getSimplifiedAuth(authenticator) {
+      try {
+        if (!authenticator) return false;
+
+        return await authenticator.getSimplifiedAuth();
+      } catch (error) {
+        this.mpSuperTokenMetrics.errorToGetSimplifiedAuth(error);
+        return false;
+      }
+    }
+
+    async getFastPaymentToken(authenticator) {
         try {
-            const authenticator = await this.buildAuthenticator(this.formatAmount(amount), buyerEmail);
+          if (!authenticator) return null;
 
-            this.ableToUseSuperToken = true;
-            this.mpSuperTokenMetrics.canUseSuperToken(true);
-
-            return !!authenticator;
+          return await authenticator.getFastPaymentToken();
         } catch (error) {
-            this.ableToUseSuperToken = false;
-            return false;
+          this.mpSuperTokenMetrics.errorToGetFastPaymentToken(error);
+          return null;
         }
     }
 
-    async renderAccountPaymentMethods(token) {
-        try {
-            window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
-
-            const accountPaymentMethods = await this.mpSuperTokenPaymentMethods.getAccountPaymentMethods(token);
-
-            if (!accountPaymentMethods?.data.length) {
-                throw new Error('EMPTY_ACCOUNT_PAYMENT_METHODS');
-            }
-
-            this.mpSuperTokenPaymentMethods.renderAccountPaymentMethods(accountPaymentMethods.data, this.amountUsed);
-        } catch (error) {
-            this.mpSuperTokenMetrics.errorToRenderAccountPaymentMethods(error);
-        } finally {
-            window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
-        }
-    }
-
-    async showAuthenticator(authenticator, showOptions = null) {
-        try {
-            const token = await authenticator.show(showOptions);
-
-            await this.renderAccountPaymentMethods(token);
-        } catch (error) {
-            if (this.isUserClosedModalError(error)) {
-                this.storeUserClosedModal();
-            }
-
-            this.mpSuperTokenMetrics.errorToShowAuthenticator(error);
-        }
-    }
-
-    async authenticate(amount, buyerEmail, showOptions = null) {
-        if (this.ableToUseSuperToken === false) return;
-
-        const authenticator = await this.buildAuthenticator(amount, buyerEmail);
-
-        this.mpSuperTokenMetrics.canUseSuperToken(true);
-
-        await this.showAuthenticator(authenticator, showOptions);
-    }
-
-    async getPreloadedPaymentMethods(amount, buyerEmail) {
+    async getAccountPaymentMethods(amount, buyerEmail) {
         try {
             const authenticator = await this.buildAuthenticator(amount, buyerEmail);
-            const preloadedPaymentMethods = await authenticator.getPreloadedPaymentMethods();
-
-            if (!preloadedPaymentMethods?.length) {
-                throw new Error('EMPTY_PRELOADED_PAYMENT_METHODS');
-            }
+            if (!authenticator) return null;
 
             this.storeAuthenticator(authenticator);
 
-            return preloadedPaymentMethods;
+            const isSimplified = await this.getSimplifiedAuth(authenticator);
+            if (!isSimplified) return null;
+
+            document.dispatchEvent(new CustomEvent('mp-behavior-tracking-super-token-init'));
+
+            this.mpSuperTokenMetrics.canUseSuperToken(true);
+
+            const fastPaymentToken = await this.getFastPaymentToken(authenticator);
+            if (!fastPaymentToken) return null;
+
+            this.storeFastPaymentToken(fastPaymentToken);
+
+            const accountPaymentMethods = await this.mpSuperTokenPaymentMethods.getAccountPaymentMethods(fastPaymentToken);
+            if (!accountPaymentMethods?.data?.length) {
+                throw new Error(MPSuperTokenErrorCodes.EMPTY_ACCOUNT_PAYMENT_METHODS);
+            }
+
+            return accountPaymentMethods.data;
+
         } catch (error) {
-            this.mpSuperTokenMetrics.errorToGetPreloadedPaymentMethods(error);
+            this.mpSuperTokenMetrics.errorToGetAccountPaymentMethods(error);
+            return null;
         }
     }
 
-    async showAuthenticatorWithPreloadedPaymentMethods() {
+    async authorizePayment(pseudotoken) {
         try {
-            const token = await this.getStoredAuthenticator().show({ confirmationLocation: 'app', skipAllUserConfirmation: true });
+            const authenticator = this.getStoredAuthenticator();
+            if (!authenticator) throw new Error(MPSuperTokenErrorCodes.AUTHENTICATOR_NOT_FOUND);
 
-            await this.renderAccountPaymentMethods(token);
+            const hasSimplified = await this.getSimplifiedAuth(authenticator);
+            if (!hasSimplified) return;
+
+            await authenticator.authorizePayment(pseudotoken);
         } catch (error) {
-            this.mpSuperTokenMetrics.errorToShowAuthenticator(error);
+            this.mpSuperTokenMetrics.errorToAuthorizePayment(error);
+            throw new Error(MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_ERROR);
         }
     }
 }

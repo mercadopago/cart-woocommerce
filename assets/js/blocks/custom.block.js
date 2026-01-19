@@ -1,9 +1,11 @@
-/* globals jQuery, wc, MPCheckoutErrorDispatcher, sendMetric, CheckoutPage */
+/* globals jQuery, wc, MPCheckoutErrorDispatcher, sendMetric, CheckoutPage, MPSuperTokenErrorCodes */
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { getSetting } from '@woocommerce/settings';
 import { useEffect, useState } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission } from './helpers/cart-update.helper';
+import { VALIDATION_STORE_KEY } from '@woocommerce/block-data';
+import { select } from '@wordpress/data';
 
 import RowImageSelect from './components/RowImageSelect';
 
@@ -28,16 +30,7 @@ const Content = (props) => {
   const { eventRegistration, emitResponse, onSubmit } = props;
   const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
   const [totalValue, setTotalValue] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const { extensionCartUpdate } = wc.blocksCheckout;
-
-  useEffect(() => {
-    if (isLoading) {
-      window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
-    } else {
-      window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
-    }
-  }, [isLoading]);
 
   useEffect(() => {
     addDiscountAndCommission(extensionCartUpdate, paymentMethodName)
@@ -59,9 +52,6 @@ const Content = (props) => {
   useEffect(() => {
     if (props.billing.cartTotal.value == totalValue) {
       handleCartTotalChange(props.billing.cartTotal.value, props.billing.currency, settings.params.currencyRatio)
-        .finally(() => {
-          setIsLoading(false);
-        });
     } else {
       addDiscountAndCommission(extensionCartUpdate, paymentMethodName)
         .then((result) => {
@@ -75,21 +65,50 @@ const Content = (props) => {
 
   useEffect(() => {
     const unsubscribe = onPaymentSetup(async () => {
+      window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
+
       switch (document.querySelector('#mp_checkout_type')?.value) {
-        case 'super_token':
-          if (!window.mpSuperTokenPaymentMethods) {
-            return { type: emitResponse.responseTypes.ERROR };
-          }
+        case 'super_token': {
+          try {
+            const superTokenPaymentMethods = window.mpSuperTokenPaymentMethods;
+            const superTokenAuthenticator = window.mpSuperTokenAuthenticator;
+            const superTokenMetrics = window.mpSuperTokenMetrics;
 
-          if (!window.mpSuperTokenPaymentMethods.isSelectedPaymentMethodValid()) {
-            window.mpSuperTokenPaymentMethods.forceShowValidationErrors();
+            if (!superTokenPaymentMethods) throw new Error(MPSuperTokenErrorCodes.SUPER_TOKEN_PAYMENT_METHODS_NOT_FOUND);
+            if (!superTokenAuthenticator) throw new Error(MPSuperTokenErrorCodes.SUPER_TOKEN_AUTHENTICATOR_NOT_FOUND);
+            if (!superTokenMetrics) throw new Error(MPSuperTokenErrorCodes.SUPER_TOKEN_METRICS_NOT_FOUND);
+
+            superTokenMetrics.registerClickOnPlaceOrderButton();
+
+            const activeMethod = superTokenPaymentMethods.getActivePaymentMethod();
+            const isSuperTokenValid = activeMethod && superTokenPaymentMethods.isSelectedPaymentMethodValid();
+
+            if (activeMethod && !isSuperTokenValid) {
+              superTokenPaymentMethods.forceShowValidationErrors();
+            }
+
+            if (select(VALIDATION_STORE_KEY).hasValidationErrors()) {
+              superTokenPaymentMethods.selectLastPaymentMethodChoosen();
+
+              break;
+            }
+
+            if (!activeMethod) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_ERROR);
+
+            if (!isSuperTokenValid) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID);
+
+            await superTokenAuthenticator.authorizePayment(activeMethod.token);
+
+            await superTokenPaymentMethods.updateSecurityCode();
+          } catch (exception) {
+            window.mpSuperTokenErrorHandler?.handleError(exception);
             window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
+
             return { type: emitResponse.responseTypes.ERROR };
           }
-
-          await window.mpSuperTokenPaymentMethods.updateSecurityCode();
 
           break;
+        }
         case 'wallet_button':
           break;
         default:
@@ -99,6 +118,7 @@ const Content = (props) => {
           } catch (error) {
             console.warn('token creation error after submit: ', error);
             window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
+            window.mpCustomCheckoutHandler.cardForm.scrollToCardForm();
             return { type: emitResponse.responseTypes.ERROR };
           }
 
@@ -139,6 +159,20 @@ const Content = (props) => {
 
     return () => unsubscribe();
   }, [onPaymentSetup]);
+
+  useEffect(() => {
+    return () => {
+      const paymentMethods = window.mpSuperTokenPaymentMethods;
+      if (paymentMethods?.securityFieldsActiveInstance && typeof paymentMethods.unmountActiveSecurityCodeInstance === 'function') {
+        paymentMethods.unmountActiveSecurityCodeInstance();
+      }
+
+      const cardForm = window.mpCustomCheckoutHandler?.cardForm;
+      if (cardForm?.formMounted && cardForm?.form && typeof cardForm.form.unmount === 'function') {
+        cardForm.form.unmount();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handle3ds = onCheckoutSuccess(async (checkoutResponse) => {
@@ -201,7 +235,6 @@ const Content = (props) => {
 
   // Initialize form after content is rendered
   useEffect(() => {
-    setIsLoading(true);
 
     window.mpFormId = 'blocks_checkout_form';
     window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
@@ -215,12 +248,6 @@ const Content = (props) => {
     if (walletButton) {
       walletButton.addEventListener('click', (event) => {
         event.preventDefault();
-
-        if (window.mpSuperTokenTriggerHandler) {
-          window.mpSuperTokenTriggerHandler.onTriggerWalletButton(onSubmit);
-          return;
-        }
-
         document.querySelector('#mp_checkout_type').value = 'wallet_button';
         onSubmit();
       });

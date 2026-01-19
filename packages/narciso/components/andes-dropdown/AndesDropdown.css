@@ -8,6 +8,7 @@
     --andes-gray-550: rgba(0,0,0,0.55);
     --andes-gray-250: rgba(0,0,0,0.25);
     --andes-gray-040-solid: #f5f5f5;
+    --andes-text-color-secondary: var(--andes-gray-550, #0000008C);
     --andes-spacing-4: 4px;
     --andes-spacing-6: 6px;
     --andes-spacing-8: 8px;
@@ -19,13 +20,14 @@
     --andes-font-size-14: 14px;
     --andes-font-size-16: 16px;
     --andes-font-style: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+    --mp-font-inter: "Inter", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     --andes-radius-06: 6px;
     --andes-shadow-open: 0 2px 8px 0 rgba(0,0,0,0.15);
 }
 
 .andes-dropdown {
     position: relative !important;
-    font-family: var(--andes-font-style) !important;
+    font-family: var(--mp-font-inter) !important;
     font-size: var(--andes-font-size-16) !important;
     width: 100% !important;
     min-height: 70px !important;
@@ -36,6 +38,8 @@
 
 .andes-dropdown__label {
     font-size: var(--andes-font-size-14) !important;
+    font-family: var(--mp-font-inter) !important;
+    line-height: 18px !important;
     color: var(--andes-gray-900) !important;
     display: block !important;
     font-weight: 400 !important;
@@ -71,13 +75,12 @@
     margin: 0 !important;
 }
 
-.andes-dropdown__trigger:focus {
-    box-shadow: 0 0 0 2px var(--woocommerce-primary) !important;
-    outline: 2px solid #3483FA !important;
-}
-
 .andes-dropdown--open .andes-dropdown__trigger {
     box-shadow: var(--andes-shadow-open), 0 0 0 2px var(--woocommerce-primary) !important;
+}
+
+.andes-dropdown--focused .andes-dropdown__trigger {
+    box-shadow: 0 0 0 2px var(--woocommerce-primary) !important;
 }
 
 .andes-dropdown--error .andes-dropdown__trigger {
@@ -102,11 +105,11 @@
     width: 85% !important;
     text-align: left !important;
     color: var(--andes-gray-900) !important;
-    font-family: var(--andes-font-style) !important;
+    font-family: var(--mp-font-inter) !important;
     font-size: var(--andes-font-size-16) !important;
     font-style: normal !important;
     font-weight: 400 !important;
-    line-height: 22px !important; /* 125% */
+    line-height: 20px !important; /* 125% */
     padding-left: 12px !important;
     overflow: hidden !important;
     /* Limita a largura máxima do texto de acordo com o tamanho renderizado da tela */
@@ -116,8 +119,13 @@
 }
 
 .andes-dropdown__trigger[data-placeholder="true"] .andes-dropdown__selected-text {
-    color: var(--andes-gray-550) !important;
+    color: var(--andes-text-color-secondary) !important;
+    font-family: var(--mp-font-inter) !important;
+    font-size: var(--andes-font-size-16) !important;
+    font-style: normal !important;
     font-weight: 400 !important;
+    line-height: 20px !important; /* 125% */
+    padding-left: 12px !important;
 }
 
 .andes-dropdown__arrow {

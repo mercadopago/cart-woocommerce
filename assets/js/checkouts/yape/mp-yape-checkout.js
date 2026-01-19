@@ -51,8 +51,9 @@ const getForm = () => {
 
 const isFormValid = () => {
   const form = getForm();
+  const yapePaymentMethod = form?.querySelector('.payment_method_woo-mercado-pago-yape');
 
-  if (!form) {
+  if (!yapePaymentMethod) {
     return false;
   }
 
@@ -60,7 +61,7 @@ const isFormValid = () => {
   document.getElementsByTagName('input-code')[0].validate();
 
   return !Array
-    .from(form.querySelectorAll('input-helper'))
+    .from(yapePaymentMethod.querySelectorAll('input-helper'))
     .some(item => item.querySelector('div').style.display !== 'none')
 };
 

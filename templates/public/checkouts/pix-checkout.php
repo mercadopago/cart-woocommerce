@@ -27,7 +27,7 @@ if (!defined('ABSPATH')) {
 <div class='mp-checkout-container'>
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
-    <?php else : ?> 
+    <?php else : ?>
         <div class="mp-checkout-pix-container">
             <?php if ($test_mode) : ?>
                 <div class="mp-checkout-pix-test-mode">
@@ -53,13 +53,5 @@ if (!defined('ABSPATH')) {
                 </terms-and-conditions>
             </div>
         </div>
-    <?php endif; ?> 
+    <?php endif; ?>
 </div>
-
-<script type="text/javascript">
-    if (document.getElementById("payment_method_woo-mercado-pago-custom")) {
-        jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-pix", function() {
-            window.mpEventHandler.setCardFormLoadInterval();
-        });
-    }
-</script>

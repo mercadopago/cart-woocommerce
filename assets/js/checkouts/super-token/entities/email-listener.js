@@ -1,7 +1,7 @@
 /* globals jQuery */
 /* eslint-disable no-unused-vars */
 class WCEmailListener {
-    EMAIL_FIELD_SELECTOR = 'form[name="checkout"] input[type="email"], #email';
+    EMAIL_FIELD_SELECTOR = 'form[name="checkout"] input[type="email"], #email, #billing_email';
     INTERVAL_TIME = 1500;
 
     // Attributes

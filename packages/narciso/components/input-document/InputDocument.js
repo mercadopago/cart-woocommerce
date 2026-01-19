@@ -16,7 +16,7 @@ class InputDocument extends HTMLElement {
     const label = this.createLabel(this.getAttribute('label-message'));
     const helper = this.createHelper(this.getAttribute('helper-empty'));
     const hidden = this.createHiddenField(this.getAttribute('hidden-id'));
-    const input = this.createInput(helper, hidden);
+    const input = this.createInput(helper, hidden, label);
 
     inputDocument.appendChild(label);
     inputDocument.appendChild(input);
@@ -33,7 +33,7 @@ class InputDocument extends HTMLElement {
     return label;
   }
 
-  createInput(helper, hidden) {
+  createInput(helper, hidden, label) {
     const mpInput = document.createElement('div');
     mpInput.classList.add('mp-input');
     mpInput.setAttribute('id', 'form-checkout__identificationNumber-container');
@@ -42,15 +42,20 @@ class InputDocument extends HTMLElement {
     const validate = this.getAttribute('validate');
     const verticalLine = this.createVerticalLine();
     const select = this.createSelect(mpInput, helper, documents, validate);
-    const mpDocument = this.createDocument(mpInput, select, helper);
+    const mpDocument = this.createDocument(mpInput, select, helper, label);
 
     select.addEventListener('change', () => {
       mpInput.classList.remove('mp-focus');
       mpInput.classList.remove('mp-error');
+      // Remove o helper de erro quando o select mudar de valor
+      helper.firstElementChild.style.display = 'none';
 
       this.setInpuProperties(select, mpDocument);
 
       this.setMaskInputDocument(select, mpDocument, hidden);
+
+      // Reset do estado do label quando mudar o tipo de documento
+      this.updateLabelState(label, false);
     });
 
     mpInput.appendChild(select);
@@ -329,31 +334,12 @@ class InputDocument extends HTMLElement {
     }
   }
 
-  isValidCC(cc, helper) {
-    if (typeof cc !== 'string' || cc.length === 0) {
+  isValidGenericDocument(document, helper) {
+    if (typeof document !== 'string' || document.length === 0) {
       this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
       return false;
-    } else {
-      return true;
     }
-  }
-
-  isValidCE(ce, helper) {
-    if (typeof ce !== 'string' || ce.length === 0) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  isValidNIT(nit, helper) {
-    if (typeof nit !== 'string' || nit.length === 0) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
-      return false;
-    } else {
-      return true;
-    }
+    return true;
   }
 
   setMaskInputDocument(select, input, hidden) {
@@ -384,10 +370,61 @@ class InputDocument extends HTMLElement {
         const value = e.target.value.replace(/[^\w\s]/gi, '');
         hidden.value = value;
       }
+
+      // Validação em tempo real durante a digitação
+      this.validateDocumentRealTime(e.target, select, input.parentElement);
     });
   }
 
-  createDocument(component, select, helper) {
+  validateDocumentRealTime(input, select, component) {
+    const helper = component.parentElement.querySelector('input-helper');
+    const label = component.parentElement.querySelector('input-label');
+
+    const validateDocument = {
+      CPF: (value) => this.isValidCPF(value, helper),
+      CNPJ: (value) => this.isValidCNPJ(value, helper),
+      CI: (value) => this.isValidCI(value, helper),
+      CC: (value) => this.isValidGenericDocument(value, helper),
+      CE: (value) => this.isValidGenericDocument(value, helper),
+      NIT: (value) => this.isValidGenericDocument(value, helper),
+    };
+
+    const validator = validateDocument[select.value];
+    if (!validator) return;
+
+    const isValid = validator(input.value);
+    this.updateValidationState(isValid, input, component, helper, label);
+  }
+
+  updateValidationState(isValid, input, component, helper, label) {
+    if (isValid) {
+      this.setValidState(input, component, helper, label);
+    } else {
+      this.setInvalidState(input, component, helper, label);
+    }
+  }
+
+  setValidState(input, component, helper, label) {
+    component.classList.remove('mp-error', 'mp-error-2px');
+    helper.firstElementChild.style.display = 'none';
+    input.setAttribute('name', this.getAttribute('input-name'));
+    this.updateLabelState(label, false);
+  }
+
+  setInvalidState(input, component, helper, label) {
+    if (input.value.trim() === '') {
+      component.classList.add('mp-error-2px');
+      input.setAttribute('name', this.getAttribute('input-name'));
+      this.updateLabelState(label, true);
+    } else {
+      component.classList.add('mp-error-2px');
+      helper.firstElementChild.style.display = 'flex';
+      input.setAttribute('name', this.getAttribute('flag-error'));
+      this.updateLabelState(label, true);
+    }
+  }
+
+  createDocument(component, select, helper, label) {
     const input = document.createElement('input');
 
     if (this.getAttribute('input-id')) {
@@ -403,38 +440,60 @@ class InputDocument extends HTMLElement {
     this.setInpuProperties(select, input);
 
     input.addEventListener('focus', () => {
-      component.classList.add('mp-focus');
-      component.classList.remove('mp-error');
-      helper.firstElementChild.style.display = 'none';
-      input.setAttribute('name', this.getAttribute('input-name'));
+      this.handleInputFocus(component, helper, input, label);
     });
 
     input.addEventListener('focusout', () => {
-      component.classList.remove('mp-focus');
-
-      const validateDocument = {
-        CPF: (value) => this.isValidCPF(value, helper),
-        CNPJ: (value) => this.isValidCNPJ(value, helper),
-        CI: (value) => this.isValidCI(value, helper),
-        CC: (value) => this.isValidCC(value, helper),
-        CE: (value) => this.isValidCE(value, helper),
-        NIT: (value) => this.isValidNIT(value, helper),
-      };
-
-      if (typeof validateDocument[select.value] !== 'undefined') {
-        if (validateDocument[select.value](input.value)) {
-          component.classList.remove('mp-error');
-          helper.firstElementChild.style.display = 'none';
-          input.setAttribute('name', this.getAttribute('input-name'));
-        } else {
-          component.classList.add('mp-error');
-          helper.firstElementChild.style.display = 'flex';
-          input.setAttribute('name', this.getAttribute('flag-error'));
-        }
-      }
+      this.handleInputFocusOut(component, helper, input, label);
     });
 
     return input;
+  }
+
+  handleInputFocus(component, helper, input, label) {
+    if (component.classList.contains('mp-error')) {
+      component.classList.remove('mp-error');
+      component.classList.add('mp-error-2px');
+      return;
+    }
+    component.classList.remove('mp-error-2px');
+    component.classList.add('mp-focus');
+    helper.firstElementChild.style.display = 'none';
+    input.setAttribute('name', this.getAttribute('input-name'));
+    this.updateLabelState(label, false);
+  }
+
+  handleInputFocusOut(component, helper, input, label) {
+    component.classList.remove('mp-focus');
+
+    if (input.value.trim() === '') {
+      this.clearErrorStates(component, helper, label);
+    } else {
+      this.handleNonEmptyInput(component);
+    }
+  }
+
+  clearErrorStates(component, helper, label) {
+    component.classList.remove('mp-error-2px', 'mp-error');
+    if (helper) {
+      helper.firstElementChild.style.display = 'none';
+    }
+    this.updateLabelState(label, false);
+  }
+
+  handleNonEmptyInput(component) {
+    if (component.classList.contains('mp-error-2px')) {
+      component.classList.remove('mp-error-2px');
+      component.classList.add('mp-error');
+    }
+  }
+
+  updateLabelState(label, isError) {
+    if (isError) {
+      label.firstElementChild.classList.add('mp-label-error');
+    } else {
+      label.firstElementChild.classList.remove('mp-label-error');
+    }
   }
 
   updateHelperErrorMessage(helper, message) {

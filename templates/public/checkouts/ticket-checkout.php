@@ -74,7 +74,7 @@ $container_state_class = $has_multiple_payment_methods
                     <p class="mp-checkout-ticket-text" data-cy="checkout-ticket-text">
                         <?= esc_html($ticket_text_label); ?>
                     </p>
-                
+
                     <input-table
                         name="mercadopago_ticket[payment_method_id]"
                         button-name=<?= esc_html($input_table_button); ?>
@@ -82,10 +82,10 @@ $container_state_class = $has_multiple_payment_methods
                     </input-table>
                 <?php else : ?>
                     <?php if (!empty($payment_methods)) : ?>
-                        <input 
-                            type="hidden" 
-                            name="mercadopago_ticket[payment_method_id]" 
-                            value="<?= esc_attr($payment_methods[0]['value']); ?>" 
+                        <input
+                            type="hidden"
+                            name="mercadopago_ticket[payment_method_id]"
+                            value="<?= esc_attr($payment_methods[0]['value']); ?>"
                         />
                     <?php endif; ?>
                 <?php endif; ?>
@@ -128,12 +128,6 @@ $container_state_class = $has_multiple_payment_methods
 </div>
 
 <script type="text/javascript">
-    if (document.getElementById("payment_method_woo-mercado-pago-custom")) {
-        jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-ticket", function() {
-            window.mpEventHandler.setCardFormLoadInterval();
-        });
-    }
-
     if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
         MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
             document.getElementById("mp-ticket-gateway-document-input"),

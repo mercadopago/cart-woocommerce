@@ -30,6 +30,8 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     protected const ENABLED_DEFAULT = 'no';
 
+    protected string $paymentMethodName = '';
+
     public string $iconAdmin;
 
     public int $commission;
@@ -637,7 +639,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
         $translatedMessage = $this->mercadopago->helpers->errorMessages->findErrorMessage($message);
 
-        $this->datadog->sendEvent('woo_checkout_error', $translatedMessage, $originalMessage);
+        $this->datadog->sendEvent('woo_checkout_error', $translatedMessage, $originalMessage, $this->paymentMethodName);
 
         if ($notice) {
             $this->mercadopago->helpers->notices->storeNotice($translatedMessage, 'error');

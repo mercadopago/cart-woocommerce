@@ -120,12 +120,6 @@ if (! defined('ABSPATH')) {
 <div>
 </div>
 <script type="text/javascript">
-    if (document.getElementById("payment_method_woo-mercado-pago-custom")) {
-        jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-pse", function() {
-            window.mpEventHandler.setCardFormLoadInterval();
-        });
-    }
-
     if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
         MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
             document.getElementById("mp-pse-gateway-document-input"),

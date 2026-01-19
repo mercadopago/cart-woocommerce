@@ -720,6 +720,18 @@ class AbstractGatewayTest extends TestCase
      */
     public function testProcessReturnFail(string $error_message, string $expected_message, bool $with_notice)
     {
+        // Create a fresh logs->file mock without byDefault() to avoid conflicts
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock
+            ->shouldReceive('error')
+            ->once()
+            ->with(Mockery::type('string'), Mockery::type('string'), Mockery::type('array'))
+            ->andReturnNull();
+
+        // Replace the logs->file mock in mercadopagoMock
+        $this->mercadopagoMock->logs->file = $logsFileMock;
+
+        // Now assign mercadopago to gateway
         $this->gateway->mercadopago = $this->mercadopagoMock;
 
         // Mock the errorMessages helper to return the expected message
@@ -728,6 +740,12 @@ class AbstractGatewayTest extends TestCase
             ->with($error_message)
             ->once()
             ->andReturn($expected_message);
+
+        // Mock datadog->sendEvent
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('woo_checkout_error', $expected_message, $error_message, Mockery::any());
 
         // Mock notices only if with_notice is true
         if ($with_notice) {
@@ -774,7 +792,7 @@ class AbstractGatewayTest extends TestCase
     {
         // Given - Create a concrete exception that implements MockeryExceptionInterface
         // We use an anonymous class to simulate a Mockery exception
-        $mockeryException = new class('Mockery expectation failed') extends \Exception implements MockeryExceptionInterface {
+        $mockeryException = new class ('Mockery expectation failed') extends \Exception implements MockeryExceptionInterface {
         };
 
         // Expect the exception to be re-thrown without any processing
@@ -1299,7 +1317,7 @@ class AbstractGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $rejectionMessage);
+            ->with('woo_checkout_error', $translatedMessage, $rejectionMessage, Mockery::any());
 
         // Mock notice storage for error handling
         $this->gateway->mercadopago->helpers->notices

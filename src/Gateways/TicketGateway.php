@@ -69,6 +69,7 @@ class TicketGateway extends AbstractGateway
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
+        $this->paymentMethodName = self::ID;
     }
 
     public function getCheckoutName(): string

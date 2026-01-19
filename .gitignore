@@ -5,7 +5,7 @@ clover.xml
 coverage
 coverage.xml
 
-.cursor/
+.cursor/*
 /.idea/
 /.vscode/
 /vendor/

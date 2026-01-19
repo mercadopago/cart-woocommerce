@@ -13,6 +13,7 @@ class InputHelper extends HTMLElement {
     helper.classList.add('mp-helper');
     helper.setAttribute('id', this.getAttribute('input-id'));
     helper.setAttribute('data-cy', 'helper-container');
+    helper.setAttribute('role', 'alert');
 
     this.validateVisibility(helper);
 
@@ -39,6 +40,8 @@ class InputHelper extends HTMLElement {
       <path d="M5.99998 7.63645C6.40164 7.63645 6.72725 7.96206 6.72725 8.36373C6.72725 8.76539 6.40164 9.091 5.99998 9.091C5.59832 9.091 5.27271 8.76539 5.27271 8.36373C5.27271 7.96206 5.59832 7.63645 5.99998 7.63645Z" fill="white"/>
     </svg>`;
     icon.classList.add('mp-helper-icon');
+    icon.setAttribute('tabindex', '-1');
+    icon.setAttribute('aria-hidden', 'true');
 
     return icon;
   }
@@ -50,6 +53,8 @@ class InputHelper extends HTMLElement {
     helperMessage.classList.add('mp-helper-message');
     helperMessage.classList.add(type);
     helperMessage.setAttribute('data-cy', 'helper-message');
+    helperMessage.setAttribute('tabindex', '-1');
+    helperMessage.setAttribute('aria-hidden', 'true');
 
     return helperMessage;
   }

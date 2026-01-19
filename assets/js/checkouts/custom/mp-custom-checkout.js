@@ -34,7 +34,7 @@ class MPCustomCheckoutHandler {
   async setupFormConfiguration() {
     try {
       const formConfig = await this.getFormConfig();
-      
+
       if (formConfig.element) {
         formConfig.element.id = formConfig.formId;
       }
@@ -101,13 +101,11 @@ class MPCustomCheckoutHandler {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  setTimeout(function () {
     const cardForm = new MPCardForm();
     const threeDSHandler = new MPThreeDSHandler();
     const eventHandler = new MPEventHandler(cardForm, threeDSHandler);
-  
+
     const mpCustomCheckoutHandler = new MPCustomCheckoutHandler(cardForm, threeDSHandler, eventHandler);
     window.mpCustomCheckoutHandler = mpCustomCheckoutHandler;
     window.mpEventHandler = eventHandler;
-  }, 1000);
 });

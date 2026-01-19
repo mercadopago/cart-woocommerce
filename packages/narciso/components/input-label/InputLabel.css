@@ -1,11 +1,11 @@
 .mp-input-label {
   width: 100% !important;
-  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-family: var(--mp-font-inter) !important;
   font-style: normal !important;
   font-weight: normal !important;
   font-size: 14px !important;
   line-height: 18px !important;
-  color: rgb(0 0 0 / 90%) !important;
+  color: var(--andes-gray-900) !important;
   padding-bottom: 4px !important;
   padding-left: 6px !important;
 }

@@ -27,14 +27,4 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-?>
-
-<?php Template::render('public/checkouts/credits-checkout-container', $args) ?>
-
-<script type="text/javascript">
-    if (document.getElementById("payment_method_woo-mercado-pago-custom")) {
-        jQuery("form.checkout").on("checkout_place_order_woo-mercado-pago-basic", function () {
-            window.mpEventHandler.setCardFormLoadInterval();
-        });
-    }
-</script>
+Template::render('public/checkouts/credits-checkout-container', $args);

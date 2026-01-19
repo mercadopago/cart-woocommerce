@@ -3,6 +3,11 @@
     padding: 2px !important;
 }
 
+#top #payment .payment_box.payment_method_woo-mercado-pago-custom{
+  width: 100% !important;
+  padding: 0 !important;
+}
+
 .mp-checkout-custom-dual-column-row {
     align-items: flex-start !important;
     flex-direction: row !important;
@@ -50,10 +55,22 @@
     padding: 4px 0 0 6px !important
 }
 
-.mp-card-holder-name {
+input.mp-checkout-custom-card-input.mp-card-holder-name {
     margin: 0 !important;
     padding-left: 14px !important;
     box-sizing: border-box !important;
+}
+
+.mp-checkout-custom-card-input.mp-card-holder-name.mp-focus {
+    border: 2px solid var(--woocommerce-primary) !important;
+}
+
+input.mp-card-holder-name.mp-error-2px {
+    border: 2px solid var(--andes-error-red) !important;
+}
+
+input.mp-card-holder-name.mp-error {
+  border: 1px solid var(--andes-error-red) !important;
 }
 
 .mp-checkout-custom-container {
@@ -61,8 +78,9 @@
     display: flex;
     flex-direction: column !important;
     justify-content: center !important;
-    padding: 24px 16px !important;
+    padding: 20px 24px 40px !important;
 }
+
 .mp-checkout-custom-container .mp-test-mode-card {
     margin-bottom: 24px !important
 }
@@ -128,6 +146,10 @@
     width: 100% !important;
 }
 
+div.mp-wallet-button-container div.mp-wallet-button-button button#mp-wallet-button img {
+  width: auto !important;
+}
+
 .mp-wallet-button-container .mp-wallet-button-button button {
     background: var(--andes-brand-color);
     border: 1px solid #AB9300 !important;
@@ -157,10 +179,10 @@
 }
 
 .mp-checkout-custom-card-form {
-    display: flex;
+    display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
-    gap: 32px;
+    gap: 32px !important;
 }
 
 .mp-checkout-custom-card-form .mp-checkout-custom-card-row {
@@ -176,18 +198,85 @@
     width: 50%
 }
 
+.mp-checkout-custom-card-form input-helper #mp-card-holder-name-helper-info {
+  color: var(--Text-andes-text-color-secondary, rgba(0, 0, 0, 0.55));
+  font-size: 13px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  line-height: 18px !important;
+}
+
 .mp-checkout-custom-card-form .mp-checkout-custom-card-input {
-    background: #fff !important;
-    border: 1px solid rgba(0, 0, 0, .25);
+    background: var(--andes-white) !important;
+    border: 1px solid var(--andes-gray-250) !important;
     border-radius: 6px !important;
-    color: rgb(0 0 0 / 55%) !important;
-    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
+    color: var(--andes-gray-900) !important;
+    font-family: var(--mp-font-inter) !important;
     font-size: 16px !important;
     font-style: normal !important;
     font-weight: 400 !important;
     height: 48px !important;
     line-height: 20px !important;
-    outline: 0 !important
+    text-align: left !important;
+    outline: 0 !important;
+    padding: 0 !important;
+}
+
+#form-checkout__cardNumber-container {
+    width: 100% !important;
+    position: relative !important;
+}
+
+#form-checkout__cardNumber-container,
+#form-checkout__expirationDate-container,
+#form-checkout__securityCode-container {
+    &.mp-checkout-custom-card-form-focus {
+        border: 2px solid var(--woocommerce-primary) !important;
+    }
+
+    &.mp-error {
+        border: 1px solid var(--andes-error-red) !important;
+    }
+
+    &.mp-error.mp-checkout-custom-card-form-focus {
+        border: 2px solid var(--andes-error-red) !important;
+    }
+}
+
+input-label:has(+ #form-checkout__cardNumber-container.mp-error) .mp-input-label,
+input-label:has(+ #form-checkout__expirationDate-container.mp-error) .mp-input-label,
+input-label:has(+ .mp-checkout-custom-security-code-container #form-checkout__securityCode-container.mp-error) .mp-input-label {
+    color: var(--andes-error-red) !important;
+}
+
+#form-checkout__cardNumber-container.mp-card-icon-detected {
+  padding-right: 36px !important;
+  box-sizing: border-box !important;
+}
+
+#form-checkout__cardNumber-container.mp-card-icon-detected::before {
+    content: '' !important;
+    position: absolute !important;
+    right: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 32px !important;
+    height: 32px !important;
+    border: 1px solid var(--andes-gray-100-solid) !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    background-image: var(--card-brand-icon) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 32px 24px !important;
+    pointer-events: none !important;
+}
+
+.mp-checkout-custom-card-input::placeholder {
+    color: var(--andes-text-color-secondary) !important;
 }
 
 .mp-checkout-custom-card-input:focus::placeholder {
@@ -200,20 +289,68 @@
     border-radius: 6px !important
 }
 
+:has(> .mp-checkout-custom-load) {
+  padding: 0 !important;
+}
+
 .mp-checkout-custom-load {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 16px;
+    padding: 16px;
+    width: 100% !important;
+    height: 288px !important;
+    background-color: #f9f9f9 !important;
+    opacity: 1;
+    visibility: visible;
+}
+
+.mp-checkout-custom-load:not(.mp-display-none) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative !important;
+  max-height: 1000px !important;
+}
+
+.mp-checkout-custom-load.mp-hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  /* Animation: Loader transition */
+  transition: opacity 0.5s ease-out, visibility 0.5s ease-out !important;
 }
 
 .spinner-card-form {
-    border: 4px solid rgba(0, 0, 255, .1) !important;
-    border-top: 4px solid var(--andes-accent-color) !important;
-    border-radius: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
-    animation: spin 2s linear infinite;
+    width: 48px !important;
+    height: 48px !important;
+    animation: rotate 3s linear infinite;
+}
+
+.spinner-card-form .spinner-path {
+  stroke: var(--andes-accent-color) !important;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% {
+      transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+      stroke-dasharray: 1, 150;
+      stroke-dashoffset: 0;
+  }
+  50% {
+      stroke-dasharray: 90, 150;
+      stroke-dashoffset: -35;
+  }
+  100% {
+      stroke-dasharray: 90, 150;
+      stroke-dashoffset: -124;
+  }
 }
 
 .mp-spinner-3ds {
@@ -406,9 +543,9 @@
     width: 20px !important;
     height: 20px !important;
     border-radius: 50% !important;
-    background: #fff !important;
-    border: 2px solid #3483FA !important;
-    color: #3483FA !important;
+    background: var(--andes-white) !important;
+    border: 2px solid var(--andes-text-color-secondary) !important;
+    color: var(--andes-text-color-secondary) !important;
     font-size: 16px !important;
     font-weight: 500 !important;
     cursor: pointer !important;
@@ -417,7 +554,7 @@
     right: 12px !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    z-index: 1000 !important;
+    z-index: 500 !important;
     box-sizing: border-box !important;
     user-select: none !important;
 }
@@ -425,19 +562,27 @@
 .mp-checkout-custom-security-code-tooltip:hover::after {
     content: attr(data-tooltip) !important;
     position: absolute !important;
-    bottom: 100% !important;
+    top: 100% !important;
     right: 0 !important;
-    background: white !important;
-    color: #222 !important;
-    border-radius: 4px !important;
-    font-size: 12px !important;
-    white-space: nowrap !important;
-    margin-bottom: 8px !important;
+    background: var(--andes-gray-900-solid) !important;
+    width: 312px !important;
+    min-height: 68px !important;
+    color: #FFFFFF !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    font-family: var(--mp-font-inter) !important;
+    line-height: 17px !important;
+    white-space: normal !important;
+    margin-top: 12px !important;
     box-shadow: 0 2px 8px 0 rgba(60, 60, 60, 0.15) !important;
-    padding: 8px 12px !important;
+    padding: 16px !important;
     font-weight: 400 !important;
     z-index: 10 !important;
-    border: 1px solid #e0e0e0 !important;
+    border: none !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
     pointer-events: none !important;
     user-select: none !important;
 }
@@ -445,12 +590,20 @@
 .mp-checkout-custom-security-code-tooltip:hover::before {
     content: '' !important;
     position: absolute !important;
-    bottom: 100% !important;
+    top: 100% !important;
     right: 8px !important;
     border: 4px solid transparent !important;
-    border-top-color: white !important;
-    margin-bottom: 2px !important;
+    border-bottom-color: var(--andes-gray-900-solid) !important;
+    margin-top: 4px !important;
     z-index: 11 !important;
+}
+
+.mp-checkout-custom-card-flags {
+  display: flex !important;
+  margin-bottom: 32px !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
 }
 
 .mp-privacy-policy-footer {

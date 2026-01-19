@@ -1,0 +1,60 @@
+.mp-andes-notice-card {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 16px 16px 16px 12px !important;
+  background: rgb(0 0 0 / 4%) !important;
+  border-radius: 6px !important;
+  border-left-style: solid !important;
+  border-left-width: 4px !important;
+}
+
+.mp-andes-notice-card.warning {
+  border-left-color: var(--andes-warning-color) !important;
+}
+
+.mp-andes-notice-card.error {
+  border-left-color: var(--andes-error-color) !important;
+}
+
+.mp-andes-notice-card-content {
+  display: flex !important;
+  justify-content: flex-start !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  gap: 16px !important;
+}
+
+.mp-andes-notice-badge {
+  font-family: var(--primary-font-family) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #fff !important;
+  width: 16px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  border-radius: 12px !important;
+  font-size: small !important;
+}
+
+.mp-andes-notice-badge.warning {
+  background: var(--andes-warning-color) !important;
+}
+
+.mp-andes-notice-badge.error {
+  background: var(--andes-error-color) !important;
+  font-size: x-small !important;
+}
+
+.mp-andes-notice-description {
+  font-family: var(--primary-font-family) !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+  color: var(--andes-text-color-primary) !important;
+  color: var(--Text-andes-text-color-primary, rgba(0, 0, 0, 0.90));
+  font-weight: 400 !important;
+  line-height: 18px !important;
+}
+

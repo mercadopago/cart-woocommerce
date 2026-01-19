@@ -96,6 +96,7 @@ class PixGateway extends AbstractGateway
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
 
         $this->orderMeta = new OrderMeta();
+        $this->paymentMethodName = self::ID;
     }
 
     public function getCheckoutName(): string

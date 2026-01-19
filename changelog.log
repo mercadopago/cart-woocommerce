@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.7.3 (19/01/2026) =
+* Changed
+- Usability improvements on fast payments flow.
+
 = v8.7.2 (08/12/2025) =
 * Fixed
 - Fix issue with error messages being changed to default one

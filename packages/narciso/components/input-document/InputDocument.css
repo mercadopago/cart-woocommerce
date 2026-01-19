@@ -1,27 +1,44 @@
-.mp-input-document {
-  width: 100% !important;
+:root {
+  --primary-font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --mp-font-inter: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --andes-error-red: #CC1818;
+  --woocommerce-primary: #7F54B3;
 }
 
 .mp-input-document .mp-input {
   height: 48px !important;
   background: #fff !important;
   border: 1px solid rgb(0 0 0 / 25%);
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   display: flex !important;
   align-items: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 div .mp-focus {
-  border: 1px solid #7f54b3 !important;
+  border: 2px solid var(--woocommerce-primary) !important;
 }
 
 div .mp-error {
-  border: 1px solid #f23d4f !important;
+  border: 1px solid var(--andes-error-red) !important;
+}
+
+div.mp-error-2px {
+  border: 2px solid var(--andes-error-red) !important;
+}
+
+#mp-doc-div input-label div.mp-input-label.mp-label-error {
+  color: var(--andes-error-red) !important;
+}
+
+.mp-checkout-custom-card-row input-label div.mp-input-label.mp-label-error {
+  color: var(--andes-error-red) !important;
 }
 
 .mp-input-document .mp-input .mp-document-select {
   background: #fff !important;
-  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-family: var(--mp-font-inter) !important;
   font-style: normal !important;
   font-weight: normal !important;
   font-size: 16px !important;
@@ -29,13 +46,14 @@ div .mp-error {
   height: 20px !important;
   min-height: 20px !important;
   border: 0 !important;
-  margin: 0 8px !important;
+  margin: 0 8px 0 12px!important;
   outline: none !important;
   cursor: pointer !important;
   letter-spacing: 0 !important;
   color: black !important;
   padding: 0 !important;
-  min-width: 10px !important;
+  flex-shrink: 0 !important;
+  min-width: fit-content !important;
 }
 
 .mp-input-document .mp-input .mp-vertical-line {
@@ -46,12 +64,11 @@ div .mp-error {
 
 .mp-input-document .mp-input .mp-document {
   background: #fff !important;
-  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-family: var(--mp-font-inter) !important;
   font-style: normal !important;
   font-weight: normal !important;
   font-size: 16px !important;
   line-height: 20px !important;
-  width: 80% !important;
   height: 20px !important;
   padding: 0 14px !important;
   border: 0 !important;
@@ -60,6 +77,8 @@ div .mp-error {
   box-shadow: none !important;
   color: #000 !important;
   min-height: 38px !important;
+  flex-grow: 1 !important;
+  min-width: 0 !important;
 }
 
 .mp-input-document .mp-input-document-helper {
@@ -69,10 +88,10 @@ div .mp-error {
   height: 18px !important;
   left: calc(50% - 327px / 2 + 9px) !important;
   top: 0 !important;
-  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
+  font-family: var(--mp-font-inter) !important;
   font-size: 13px !important;
   line-height: 18px !important;
-  color: #f23d4f !important;
+  color: var(--andes-error-red) !important;
   display: flex !important;
 }
 
@@ -81,7 +100,7 @@ div .mp-error {
   height: 15px !important;
   left: 0 !important;
   top: 3px !important;
-  background: #f23d4f !important;
+  background: var(--andes-error-red) !important;
   border-radius: 12px !important;
   color: #fff !important;
   display: flex !important;
