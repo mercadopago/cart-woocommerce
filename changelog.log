@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.7.4 (19/01/2026) =
+* Fixed
+- Hide error message when updating cart total on fast payments flow.
+
 = v8.7.3 (19/01/2026) =
 * Changed
 - Usability improvements on fast payments flow.

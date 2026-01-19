@@ -31,6 +31,7 @@ function formatCurrency(value, currency) {
 
 async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
   try {
+    window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
     window.mpCustomCheckoutHandler.cardForm.createLoadSpinner();
 
     while (!window.mpCustomCheckoutHandler) {
