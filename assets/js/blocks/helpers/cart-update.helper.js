@@ -1,4 +1,5 @@
 const namespace = 'mercadopago_blocks_update_cart';
+const REMOVE_LOAD_SPINNER_DELAY = 500;
 
 const addDiscountAndCommission = (callback, paymentMethodName) => {
   return callback({
@@ -29,24 +30,37 @@ function formatCurrency(value, currency) {
 }
 
 async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
-  while (!window.mpCustomCheckoutHandler) {
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  const mpCustomCheckoutHandler = window.mpCustomCheckoutHandler;
-  const isSubmitting = !!document.querySelector('.wc-block-components-spinner');
+  try {
+    window.mpCustomCheckoutHandler.cardForm.createLoadSpinner();
 
-  if (mpCustomCheckoutHandler.cardForm.formMounted && !isSubmitting) {
-    mpCustomCheckoutHandler.cardForm.form.unmount();
-  }
+    while (!window.mpCustomCheckoutHandler) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    const mpCustomCheckoutHandler = window.mpCustomCheckoutHandler;
+    const isSubmitting = !!document.querySelector('.wc-block-components-spinner');
 
-  let updatedAmount = formatCurrency(value, currency);
-  
-  const ratio = parseFloat(currencyRatio);
-  if (ratio > 0) {
-    updatedAmount = String(parseFloat(updatedAmount) * ratio);
-  }
+    if (mpCustomCheckoutHandler.cardForm.formMounted && !isSubmitting) {
+      mpCustomCheckoutHandler.cardForm.form.unmount();
+    }
 
-  await mpCustomCheckoutHandler.cardForm.initCardForm(updatedAmount);
+    let updatedAmount = formatCurrency(value, currency);
+
+    const ratio = parseFloat(currencyRatio);
+    if (ratio > 0) {
+      updatedAmount = String(parseFloat(updatedAmount) * ratio);
+    }
+
+    await Promise.all([
+      mpCustomCheckoutHandler.cardForm.initCardForm(updatedAmount),
+      window.mpSuperTokenTriggerHandler?.loadSuperToken(updatedAmount),
+    ]);
+  } catch (e) {
+    if (typeof sendMetric === 'function') {
+      sendMetric('error_to_update_cart_total', e?.message || 'Unknown error', "mp_cart_total_change_error");
+    }
+  } finally {
+    setTimeout(() => mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner(), REMOVE_LOAD_SPINNER_DELAY);
+  }
 }
 
 export { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission };

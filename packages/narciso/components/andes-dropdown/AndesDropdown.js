@@ -8,14 +8,17 @@ class AndesDropdown extends HTMLElement {
         hasFocus: false,
         isValid: true,
         hasInteracted: false,
-        taxInfo: null
+        taxInfo: null,
+        wasClicked: false,
+        errorCleared: false,
+        focusOnError: false
       };
     }
-  
+
     static get observedAttributes() {
-      return ['label', 'placeholder', 'hint', 'required-message', 'disabled', 'items', 'site-id'];
+      return ['label', 'placeholder', 'hint', 'required-message', 'disabled', 'items', 'site-id', 'focus-on-error'];
     }
-  
+
     connectedCallback() {
       this.build();
     }
@@ -25,16 +28,16 @@ class AndesDropdown extends HTMLElement {
       if (navigator.userAgentData?.platform) {
           return ['iOS'].includes(navigator.userAgentData.platform);
       }
-  
+
       // Fallback for older browsers
       const userAgent = navigator.userAgent;
-      return /iPad|iPhone|iPod/.test(userAgent) || 
+      return /iPad|iPhone|iPod/.test(userAgent) ||
          (userAgent.includes("Mac") && "ontouchend" in document);
     }
-  
+
     attributeChangedCallback(name, oldValue, newValue) {
       if (oldValue === newValue) return;
-      
+
       switch (name) {
         case 'disabled':
           this.setDisabled(newValue !== null);
@@ -54,24 +57,27 @@ class AndesDropdown extends HTMLElement {
         case 'site-id':
           this.updateTaxInfo();
           break;
-      }
+        case 'focus-on-error':
+          this.state.focusOnError = newValue !== null;
+          break;
+        }
     }
-  
+
     build() {
       this.classList.add('andes-dropdown', 'andes-dropdown--form');
-      
+
       const wrapper = document.createElement('div');
       wrapper.classList.add('andes-dropdown__wrapper');
-  
+
       const trigger = this.createTrigger();
       const menu = this.createMenu();
       const defaultHelper = this.createDefaultHelper();
       const errorHelper = this.createErrorHelper();
       const taxInfo = this.createTaxInfo();
-  
+
       wrapper.appendChild(trigger);
       wrapper.appendChild(menu);
-  
+
       const label = this.createLabel();
       this.appendChild(label);
       this.appendChild(wrapper);
@@ -85,14 +91,14 @@ class AndesDropdown extends HTMLElement {
       this.errorHelper = errorHelper;
       this.taxInfo = taxInfo;
       this.itemsContainer = menu.querySelector('.andes-dropdown__items');
-  
+
       this.setupEventListeners();
-      
+
       if (this.itemsContainer) {
         this.renderItems();
       }
     }
-  
+
     createLabel() {
       const label = document.createElement('label');
       label.className = 'andes-dropdown__label';
@@ -101,7 +107,7 @@ class AndesDropdown extends HTMLElement {
       label.setAttribute('for', this.getAttribute('id') || 'andes-dropdown');
       return label;
     }
-  
+
     createTrigger() {
       const trigger = document.createElement('button');
       trigger.type = 'button';
@@ -110,20 +116,20 @@ class AndesDropdown extends HTMLElement {
       trigger.setAttribute('aria-expanded', 'false');
       trigger.setAttribute('aria-controls', 'andes-dropdown-menu');
       trigger.setAttribute('data-placeholder', !this.state.selectedItem);
-  
+
       const selectedText = document.createElement('span');
       selectedText.className = 'andes-dropdown__selected-text';
       selectedText.textContent = this.getAttribute('placeholder') || '';
-  
+
       const arrow = document.createElement('span');
       arrow.className = 'andes-dropdown__arrow';
-  
+
       trigger.appendChild(selectedText);
       trigger.appendChild(arrow);
-  
+
       return trigger;
     }
-  
+
     createMenu() {
       const menu = document.createElement('div');
       menu.className = 'andes-dropdown__menu';
@@ -131,14 +137,14 @@ class AndesDropdown extends HTMLElement {
       menu.setAttribute('tabindex', '0');
       menu.setAttribute('aria-required', this.getAttribute('required') || 'false');
       menu.hidden = true;
-  
+
       const items = document.createElement('div');
       items.className = 'andes-dropdown__items';
-  
+
       menu.appendChild(items);
       return menu;
     }
-  
+
     createDefaultHelper() {
       const helper = document.createElement('input-helper');
       helper.setAttribute('input-id', `${this.getAttribute('id') || 'andes-dropdown'}-default`);
@@ -147,7 +153,7 @@ class AndesDropdown extends HTMLElement {
       helper.setAttribute('isVisible', this.getAttribute('hint') ? 'true' : 'false');
       return helper;
     }
-  
+
     createErrorHelper() {
       const helper = document.createElement('input-helper');
       helper.setAttribute('input-id', `${this.getAttribute('id') || 'andes-dropdown'}-error`);
@@ -156,37 +162,40 @@ class AndesDropdown extends HTMLElement {
       helper.setAttribute('isVisible', 'false');
       return helper;
     }
-  
+
     createTaxInfo() {
       const taxInfo = document.createElement('div');
       taxInfo.className = 'andes-dropdown__tax-info';
       taxInfo.style.display = 'none';
       return taxInfo;
     }
-  
+
     setupEventListeners() {
-      this.trigger.addEventListener('click', () => this.toggleMenu());
+      this.trigger.addEventListener('click', () => {
+        this.handleClick();
+        this.toggleMenu();
+      });
       this.trigger.addEventListener('keydown', (e) => this.handleKeyDown(e));
       this.trigger.addEventListener('keyup', (e) => this.handleKeyUp(e));
       this.trigger.addEventListener('focus', () => this.handleFocus());
       this.trigger.addEventListener('blur', () => this.handleBlur());
-      
+
       // Add mousedown listener to the menu to prevent closing when clicking inside
       this.menu.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
       });
-      
+
       // Use mousedown on document to handle outside clicks
       document.addEventListener('mousedown', (e) => this.handleOutsideClick(e));
     }
-  
+
     renderItems() {
       if (!this.itemsContainer) return;
-      
+
       this.itemsContainer.innerHTML = '';
       const items = JSON.parse(this.getAttribute('items') || '[]');
-      
+
       items.forEach((item, idx) => {
         const itemElement = document.createElement('div');
         itemElement.className = 'andes-dropdown__item';
@@ -195,15 +204,15 @@ class AndesDropdown extends HTMLElement {
         itemElement.setAttribute('tabindex', '0');
         itemElement.setAttribute('aria-label', item.title);
         itemElement.textContent = item.title;
-  
+
         if (item.disabled) {
           itemElement.classList.add('andes-dropdown__item--disabled');
         }
-  
+
         if (this.state.selectedItem && this.state.selectedItem.value === item.value) {
           itemElement.classList.add('andes-dropdown__item--selected');
         }
-  
+
         if (this.state.focusedIndex === idx && this.state.isOpen) {
           itemElement.classList.add('andes-dropdown__item--focused');
           itemElement.setAttribute('aria-selected', 'true');
@@ -213,13 +222,21 @@ class AndesDropdown extends HTMLElement {
           itemElement.setAttribute('aria-selected', 'false');
           itemElement.removeAttribute('id');
         }
-  
+
         if (!item.disabled) {
           itemElement.addEventListener('mousedown', (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            const wasFocused = this.state.hasFocus;
             this.selectItem(item, idx);
+            if (wasFocused) {
+              this.classList.add('andes-dropdown--focused');
+              setTimeout(() => {
+                this.trigger.focus();
+              }, 10);
+            }
           });
-  
+
           itemElement.addEventListener('mouseenter', (e) => {
             this.state.focusedIndex = idx;
 
@@ -231,36 +248,68 @@ class AndesDropdown extends HTMLElement {
             this.renderItems();
           });
         }
-  
+
         this.itemsContainer.appendChild(itemElement);
       });
     }
-  
+
+    handleClick() {
+      this.state.errorCleared = false;
+
+      if (this.state.isOpen) {
+        this.classList.remove('andes-dropdown--error');
+        this.hideErrorMessage();
+      }
+      else if (!this.state.isOpen && this.state.hasInteracted && !this.state.selectedItem) {
+        this.classList.add('andes-dropdown--error');
+        const requiredMessage = this.getAttribute('required-message');
+        if (requiredMessage) {
+          this.setErrorMessage(requiredMessage);
+        }
+      }
+    }
+
     toggleMenu() {
       if (this.getAttribute('disabled') !== null) return;
+
+      if (!this.state.isOpen) {
+        this.state.wasClicked = true;
+      }
+
       this.state.isOpen = !this.state.isOpen;
       this.updateMenuState();
-      
+
       if (this.state.isOpen) {
         this.state.hasInteracted = true;
       }
     }
-  
+
     updateMenuState() {
       if (this.state.isOpen) {
         this.menu.hidden = false;
         this.classList.add('andes-dropdown--open');
         this.trigger.setAttribute('aria-expanded', 'true');
         this.dispatchEvent(new CustomEvent('mp-open-dropdown'));
+        this.classList.remove('andes-dropdown--error');
+        this.hideErrorMessage();
       } else {
         this.menu.hidden = true;
         this.classList.remove('andes-dropdown--open');
         this.trigger.setAttribute('aria-expanded', 'false');
         this.dispatchEvent(new CustomEvent('mp-close-dropdown'));
+
+        if (this.state.hasInteracted && !this.state.selectedItem && !this.state.errorCleared) {
+          this.classList.add('andes-dropdown--error');
+
+          const requiredMessage = this.getAttribute('required-message');
+          if (requiredMessage) {
+            this.setErrorMessage(requiredMessage);
+          }
+        }
       }
       this.renderItems();
     }
-  
+
     selectItem(item, idx) {
       if (item.disabled) return;
       this.state.selectedItem = item;
@@ -269,14 +318,17 @@ class AndesDropdown extends HTMLElement {
       this.updateSelectedText();
       this.updateMenuState();
       this.updateTaxInfo();
+      this.classList.remove('andes-dropdown--error');
+      this.hideErrorMessage();
+      this.state.wasClicked = false;
       this.validate();
       this.dispatchEvent(new CustomEvent('change', { detail: item }));
     }
-  
+
     updateSelectedText() {
       const selectedText = this.trigger.querySelector('.andes-dropdown__selected-text');
       if (!selectedText) return;
-  
+
       if (!this.state.selectedItem) {
         selectedText.textContent = this.getAttribute('placeholder') || '';
         this.trigger.setAttribute('data-placeholder', 'true');
@@ -285,15 +337,16 @@ class AndesDropdown extends HTMLElement {
         this.trigger.setAttribute('data-placeholder', 'false');
       }
     }
-  
+
     handleOutsideClick(event) {
-      // Only close if clicking outside both the trigger and menu
-      if (!this.trigger.contains(event.target) && !this.menu.contains(event.target)) {
-        this.state.isOpen = false;
-        this.updateMenuState();
-      }
+      setTimeout(() => {
+        if (!this.trigger.contains(event.target) && !this.menu.contains(event.target)) {
+          this.state.isOpen = false;
+          this.updateMenuState();
+        }
+      }, 0);
     }
-  
+
     handleKeyDown(event) {
       if (!this.state.isOpen && (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ')) {
         event.preventDefault();
@@ -301,9 +354,9 @@ class AndesDropdown extends HTMLElement {
         this.updateMenuState();
         return;
       }
-  
+
       if (!this.state.isOpen) return;
-  
+
       const items = JSON.parse(this.getAttribute('items') || '[]');
 
       if (event.key === 'Enter' || event.key === ' ') {
@@ -340,31 +393,51 @@ class AndesDropdown extends HTMLElement {
         this.renderItems();
       }
     }
-  
+
     handleFocus() {
       this.state.hasFocus = true;
+      this.classList.add('andes-dropdown--focused');
+      this.classList.remove('andes-dropdown--error');
+      this.hideErrorMessage();
+      this.state.wasClicked = false;
       if (this.defaultHelper) {
         const helperElement = this.defaultHelper.querySelector('.mp-helper');
-        if (helperElement) {
+        const erroHelperElement = this.errorHelper.querySelector('.mp-helper');
+        if (helperElement || erroHelperElement) {
           helperElement.style.display = 'none';
+          erroHelperElement.style.display = 'none';
+          this.classList.remove('andes-dropdown--error');
         }
       }
     }
-  
+
     handleBlur() {
       this.state.hasFocus = false;
       this.state.isOpen = false;
-      this.updateMenuState();
-      if (this.state.hasInteracted) {
-        this.validate();
+
+      if (!this.state.selectedItem) {
+        this.classList.add('andes-dropdown--error');
+
+        return;
       }
+
+      this.classList.remove('andes-dropdown--error');
+      this.classList.remove('andes-dropdown--focused');
+      this.hideErrorMessage();
+      this.state.errorCleared = true;
+      this.menu.hidden = true;
+      this.classList.remove('andes-dropdown--open');
+      this.trigger.setAttribute('aria-expanded', 'false');
+      this.dispatchEvent(new CustomEvent('mp-close-dropdown'));
+      this.renderItems();
+
     }
-  
+
     setItems(items) {
       this.setAttribute('items', JSON.stringify(items));
       this.renderItems();
     }
-  
+
     setDisabled(disabled) {
       if (disabled) {
         this.setAttribute('disabled', '');
@@ -373,14 +446,14 @@ class AndesDropdown extends HTMLElement {
       }
       this.classList.toggle('andes-dropdown--disabled', disabled);
     }
-  
+
     updateLabel(label) {
       const labelElement = this.querySelector('.andes-dropdown__label');
       if (labelElement) {
         labelElement.textContent = label || '';
       }
     }
-  
+
     updateHint(hint) {
       if (this.defaultHelper) {
         this.defaultHelper.updateMessage(hint || '');
@@ -390,13 +463,13 @@ class AndesDropdown extends HTMLElement {
         }
       }
     }
-  
+
     setRequiredMessage(message) {
       if (this.errorHelper) {
         this.errorHelper.setAttribute('message', message || '');
       }
     }
-  
+
     setErrorMessage(message) {
       if (this.errorHelper) {
         this.errorHelper.setAttribute('message', message || '');
@@ -406,7 +479,6 @@ class AndesDropdown extends HTMLElement {
           errorElement.setAttribute('tabindex', '0');
           errorElement.setAttribute('aria-label', message || '');
         }
-        // Hide hint when showing error
         if (this.defaultHelper) {
           const hintElement = this.defaultHelper.querySelector('.mp-helper');
           if (hintElement) {
@@ -418,7 +490,7 @@ class AndesDropdown extends HTMLElement {
         this.classList.add('andes-dropdown--error');
       }
     }
-  
+
     hideErrorMessage() {
       if (this.errorHelper) {
         const errorElement = this.errorHelper.querySelector('.mp-helper');
@@ -435,33 +507,43 @@ class AndesDropdown extends HTMLElement {
       }
       this.classList.remove('andes-dropdown--error');
     }
-  
+
     validate() {
       const hasRequiredMessage = this.getAttribute('required-message') !== null;
       const isValid = !hasRequiredMessage || (hasRequiredMessage && this.state.selectedItem !== null);
-      
+
       this.state.isValid = isValid;
-      
+
+      if (!this.state.isOpen && this.state.hasInteracted) {
+        this.state.errorCleared = false;
+      }
+
       if (this.state.hasInteracted && !this.state.isOpen) {
         if (!isValid) {
-          this.setErrorMessage(this.getAttribute('required-message'));
+          const requiredMessage = this.getAttribute('required-message');
+          if (requiredMessage) {
+            this.setErrorMessage(requiredMessage);
+            if (this.state.focusOnError) {
+              this.trigger.focus();
+            }
+          }
         } else {
           this.hideErrorMessage();
         }
       } else {
         this.hideErrorMessage();
       }
-      
+
       return isValid;
     }
-  
+
     getValue() {
       return this.state.selectedItem ? this.state.selectedItem.value : null;
     }
-  
+
     updateTaxInfo() {
       if (!this.taxInfo) return;
-      
+
       const siteId = this.getAttribute('site-id');
       if (siteId?.toLowerCase() === 'mla' && this.state.selectedItem?.taxInfo) {
         const { cft, tna, tea } = this.state.selectedItem.taxInfo;
@@ -478,7 +560,7 @@ class AndesDropdown extends HTMLElement {
           if (tna) {
             taxes.push(`TNA: ${tna}%`);
           }
-          
+
           if (tea) {
             taxes.push(`TEA: ${tea}%`);
           }
@@ -487,7 +569,7 @@ class AndesDropdown extends HTMLElement {
             this.taxInfo.style.display = 'none';
             return;
           }
-          
+
           this.taxInfo.style.display = 'block';
           this.taxInfo.innerHTML = taxes.join(' - ').concat('. Tasa fija.');
         } else {

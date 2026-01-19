@@ -21,4 +21,8 @@ const CheckoutElements = {
   mpSecurityCodeInfo: '#mp-security-code-info',
   paymentMethodId: '#paymentMethodId',
   customContent: '.mp-checkout-custom-container',
+  mpCardholderNameInputLabel: '#mp-card-holder-div .mp-input-label',
+  mpDocumentInputLabel: '#mp-doc-div input-label div.mp-input-label',
+  mpCardHolderNameHelper: '#mp-card-holder-div #mp-card-holder-name-helper',
+  mpCardHolderNameHelperInfo: '#mp-card-holder-div #mp-card-holder-name-helper-info',
 };

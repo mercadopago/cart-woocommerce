@@ -16,9 +16,12 @@ use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 use WP_Mock;
+use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
+use PHPUnit\Framework\Constraint\IsType;
 
 class CustomGatewayTest extends TestCase
 {
+    use AssertArrayMap;
     use GatewayMock;
     use FormMock;
 
@@ -568,6 +571,201 @@ class CustomGatewayTest extends TestCase
         ];
     }
 
+    public function testFormFieldsMainSectionReturnsConfigurationFields(): void
+    {
+        WP_Mock::userFunction('get_locale', [
+            'return' => 'pt_BR'
+        ]);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')
+            ->andReturn('preview-image.png');
+
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplateHtml')
+            ->andReturn('<div>Preview</div>');
+
+        $result = $this->gateway->formFieldsMainSection();
+
+        $this->assertArrayMap(
+            [
+                'card_info_helper' => [
+                    'type' => IsType::TYPE_STRING,
+                    'value' => IsType::TYPE_STRING,
+                ],
+                'card_info_fees' => [
+                    'type' => IsType::TYPE_STRING,
+                    'value' => [
+                        'title' => IsType::TYPE_STRING,
+                        'subtitle' => IsType::TYPE_STRING,
+                        'button_text' => IsType::TYPE_STRING,
+                        'button_url' => IsType::TYPE_STRING,
+                        'icon' => IsType::TYPE_STRING,
+                        'color_card' => IsType::TYPE_STRING,
+                        'size_card' => IsType::TYPE_STRING,
+                        'target' => IsType::TYPE_STRING,
+                    ],
+                ],
+                'currency_conversion' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'subtitle' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'descriptions' => [
+                        'enabled' => IsType::TYPE_STRING,
+                        'disabled' => IsType::TYPE_STRING,
+                    ],
+                ],
+                'wallet_button' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'subtitle' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'after_toggle' => IsType::TYPE_STRING,
+                    'descriptions' => [
+                        'enabled' => IsType::TYPE_STRING,
+                        'disabled' => IsType::TYPE_STRING,
+                    ],
+                ],
+                'advanced_configuration_title' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'class' => IsType::TYPE_STRING,
+                ],
+                'advanced_configuration_description' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'class' => IsType::TYPE_STRING,
+                ],
+                'binary_mode' => [
+                    'type' => IsType::TYPE_STRING,
+                    'title' => IsType::TYPE_STRING,
+                    'subtitle' => IsType::TYPE_STRING,
+                    'default' => IsType::TYPE_STRING,
+                    'descriptions' => [
+                        'enabled' => IsType::TYPE_STRING,
+                        'disabled' => IsType::TYPE_STRING,
+                    ],
+                ],
+            ],
+            $result
+        );
+    }
+
+    public function testPaymentFieldsAndParams(): void
+    {
+        $siteId = 'MLB';
+        $expectedIconUrls = [
+            'url/master.png',
+            'url/visa.png',
+            'url/elo.png',
+            'url/amex.png',
+            'url/hypercard.png'
+        ];
+
+        $this->gateway->mercadopago->sellerConfig->shouldReceive('getSiteId')->andReturn($siteId);
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
+        $this->gateway->mercadopago->hooks->options->shouldReceive('getGatewayOption')
+            ->with($this->gateway, 'wallet_button', 'yes')
+            ->andReturn('yes');
+
+        $this->gateway->mercadopago->helpers->url->shouldReceive('getImageAsset')
+            ->with('gateways/wallet-button/logo.svg')
+            ->andReturn('https://example.com/wallet-button-logo.svg');
+
+        $this->gateway->mercadopago->helpers->url->shouldReceive('getImageAsset')
+            ->with('checkouts/custom/card-flags/master')
+            ->andReturn('url/master.png');
+        $this->gateway->mercadopago->helpers->url->shouldReceive('getImageAsset')
+            ->with('checkouts/custom/card-flags/visa')
+            ->andReturn('url/visa.png');
+        $this->gateway->mercadopago->helpers->url->shouldReceive('getImageAsset')
+            ->with('checkouts/custom/card-flags/elo')
+            ->andReturn('url/elo.png');
+        $this->gateway->mercadopago->helpers->url->shouldReceive('getImageAsset')
+            ->with('checkouts/custom/card-flags/amex')
+            ->andReturn('url/amex.png');
+        $this->gateway->mercadopago->helpers->url->shouldReceive('getImageAsset')
+            ->with('checkouts/custom/card-flags/hypercard')
+            ->andReturn('url/hypercard.png');
+
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('getAmountAndCurrency')
+            ->andReturn(['amount' => 100.0, 'currencyRatio' => 1.0]);
+
+        $this->gateway->shouldReceive('get_option')
+            ->with('enabled', 'no')
+            ->andReturn('yes');
+
+        $this->gateway->shouldReceive('get_option')
+            ->with('wallet_button', 'yes')
+            ->andReturn('yes');
+
+        // Mock storeTranslations
+        $this->gateway->storeTranslations = [
+            'test_mode_title' => 'Test Mode',
+            'test_mode_description' => 'Test Description',
+            'test_mode_link_text' => 'Test Link',
+            'wallet_button_title' => 'Wallet Button',
+            'card_number_input_label' => 'Card Number',
+            'card_number_input_helper' => 'Card Helper',
+            'card_holder_name_input_label' => 'Card Holder',
+            'card_holder_name_input_helper' => 'Holder Helper',
+            'card_expiration_input_label' => 'Expiration',
+            'card_expiration_input_helper' => 'Expiration Helper',
+            'card_security_code_input_label' => 'Security Code',
+            'card_security_code_input_helper' => 'Security Helper',
+            'card_document_input_label' => 'Document',
+            'card_document_input_helper_empty' => 'Empty Document',
+            'card_document_input_helper_invalid' => 'Invalid Document',
+            'card_document_input_helper_wrong' => 'Wrong Document',
+            'card_issuer_input_label' => 'Issuer',
+            'message_error_amount' => 'Amount Error',
+            'security_code_tooltip_text_3_digits' => '3 Digits Tooltip',
+            'placeholders_cardholder_name' => 'Cardholder Name',
+            'card_holder_input_helper_info' => 'As it spelled on the card.',
+            'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
+        ];
+
+        // Mock links using reflection
+        $linksProperty = (new \ReflectionClass($this->gateway))->getProperty('links');
+        $linksProperty->setAccessible(true);
+        $linksProperty->setValue($this->gateway, [
+            'docs_integration_test' => 'https://example.com/test-docs',
+        ]);
+
+        // Mock countryConfigs using reflection
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'site_id' => $siteId
+        ]);
+
+        $this->gateway->mercadopago->helpers->links
+            ->shouldReceive('getPrivacyPolicyLink')
+            ->with($siteId)
+            ->andReturn('https://example.com/privacy-policy');
+
+        $params = $this->gateway->getPaymentFieldsParams();
+
+        $this->assertEquals($expectedIconUrls, $params['cardFlagIconUrls']);
+        $this->assertEquals($siteId, $params['site_id']);
+        $this->assertEquals(true, $params['wallet_button_enabled']);
+        $this->assertEquals('https://example.com/wallet-button-logo.svg', $params['wallet_button_image']);
+        $this->assertEquals(100.0, $params['amount']);
+        $this->assertEquals(1.0, $params['currency_ratio']);
+
+        $this->gateway->mercadopago->hooks->template->shouldReceive('getWoocommerceTemplate')
+            ->once()
+            ->with('public/checkouts/custom-checkout.php', $params);
+
+        $this->gateway->shouldReceive('getAmount')
+            ->andReturn(100.00);
+
+        // Test payment_fields method
+        $this->gateway->payment_fields();
+    }
+
     /**
      * Test renderOrderForm with wallet_button query var
      *
@@ -848,6 +1046,7 @@ class CustomGatewayTest extends TestCase
             'message_error_amount' => 'Amount Error',
             'security_code_tooltip_text_3_digits' => '3 Digits Tooltip',
             'placeholders_cardholder_name' => 'Cardholder Name',
+            'card_holder_input_helper_info' => 'As it spelled on the card.',
             'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
         ];
 
@@ -949,6 +1148,9 @@ class CustomGatewayTest extends TestCase
             ->shouldReceive('getCssAsset')
             ->andReturn('test-css-url');
 
+        WP_Mock::userFunction('wp_is_mobile')
+            ->andReturn(false);
+
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getJsAsset')
             ->andReturn('test-js-url');
@@ -981,6 +1183,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->storeTranslations = [
             'locale' => 'en-US',
             'payment_methods_list_text' => 'Payment Methods',
+            'payment_methods_list_alt_text' => 'Payment Methods alt text',
             'last_digits_text' => 'Last digits',
             'new_card_text' => 'New card',
             'account_money_text' => 'Account Money',
@@ -1006,6 +1209,7 @@ class CustomGatewayTest extends TestCase
             'card_installments_interest_text' => 'Interest text',
             'input_helper_message_invalid_type' => 'Invalid type',
             'input_helper_message_invalid_length' => 'Invalid length',
+            'input_helper_message_invalid_value' => 'Invalid value',
             'input_helper_message_card_holder_name_221' => 'Card holder name 221',
             'input_helper_message_card_holder_name_316' => 'Card holder name 316',
             'input_helper_message_expiration_date_invalid_type' => 'Expiration date invalid type',
@@ -1034,6 +1238,11 @@ class CustomGatewayTest extends TestCase
             'tna_mla_text' => 'TNA MLA',
             'tea_mla_text' => 'TEA MLA',
             'fixed_rate_text' => 'Fixed Rate',
+            'update_security_code_with_retry_error_text' => 'Update security code with retry error',
+            'update_security_code_no_retry_error_text' => 'Update security code no retry error',
+            'authorize_payment_method_with_retry_error_text' => 'Authorize payment method with retry error',
+            'authorize_payment_method_no_retry_error_text' => 'Authorize payment method no retry error',
+            'select_payment_method_error_text' => 'Select payment method error',
         ];
 
         // Mock threeDsTranslations
@@ -1084,5 +1293,607 @@ class CustomGatewayTest extends TestCase
 
         // The test passes if no exceptions are thrown and getCurrencyCode was called
         $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Test processReturnFail execution to increase coverage
+     * This test ensures processReturnFail is actually executed (not mocked) to cover all lines
+     */
+    public function testProcessReturnFailExecution(): void
+    {
+        // Set paymentMethodName to match CustomGateway constructor
+        $this->setNotAccessibleProperty($this->gateway, 'paymentMethodName', CustomGateway::ID);
+
+        $errorMessage = 'buyer_default';
+        $translatedMessage = 'Translated error message';
+
+        // Create a fresh logs->file mock without byDefault() to avoid conflicts
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock
+            ->shouldReceive('error')
+            ->once()
+            ->with(Mockery::type('string'), CustomGateway::LOG_SOURCE, Mockery::type('array'))
+            ->andReturnNull();
+        $this->gateway->mercadopago->logs->file = $logsFileMock;
+
+        // Mock errorMessages helper
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorMessage)
+            ->andReturn($translatedMessage);
+
+        // Mock datadog->sendEvent
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('woo_checkout_error', $translatedMessage, $errorMessage, CustomGateway::ID);
+
+        // Mock notices
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with($translatedMessage, 'error');
+
+        $exception = new \Exception('Test exception');
+
+        $result = $this->gateway->processReturnFail(
+            $exception,
+            $errorMessage,
+            CustomGateway::LOG_SOURCE,
+            [],
+            true
+        );
+
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertEquals($translatedMessage, $result['message']);
+    }
+
+    /**
+     * Test formFieldsHeaderSection with MLB site
+     *
+     * @return void
+     */
+    public function testFormFieldsHeaderSectionWithMLB(): void
+    {
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLB');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getHomologValidate')
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialExpired')
+            ->andReturn(false);
+
+        $this->gateway->id = CustomGateway::ID;
+
+        $this->gateway->mercadopago->hooks->admin
+            ->shouldReceive('isAdmin')
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validatePage')
+            ->with('wc-settings')
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateSection')
+            ->with(CustomGateway::ID)
+            ->andReturn(true);
+
+        WP_Mock::userFunction('get_transient')
+            ->with('mp_credentials_expired_result')
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKeyProd')
+            ->andReturn('test-public-key-prod');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('isExpiredPublicKey')
+            ->with('test-public-key-prod')
+            ->andReturn(false);
+
+        WP_Mock::userFunction('set_transient')
+            ->with('mp_credentials_expired_result', Mockery::type('array'), 3600)
+            ->andReturn(true);
+
+        $this->gateway->title = 'Test Gateway Title';
+
+        $this->gateway->adminTranslations = [
+            'header_title_MLB' => 'MLB Header Title',
+            'enabled_descriptions_enabled_MLB' => 'MLB Enabled',
+            'enabled_descriptions_disabled_MLB' => 'MLB Disabled',
+        ];
+
+        $result = $this->gateway->formFieldsHeaderSection();
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('header', $result);
+        $this->assertArrayHasKey('enabled', $result);
+        $this->assertArrayHasKey('title', $result);
+        $this->assertEquals('MLB Header Title', $result['header']['title']);
+        $this->assertEquals('MLB Enabled', $result['enabled']['descriptions']['enabled']);
+        $this->assertEquals('MLB Disabled', $result['enabled']['descriptions']['disabled']);
+    }
+
+    /**
+     * Test formFieldsHeaderSection with non-MLB site
+     *
+     * @return void
+     */
+    public function testFormFieldsHeaderSectionWithNonMLB(): void
+    {
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLA');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getHomologValidate')
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialExpired')
+            ->andReturn(false);
+
+        $this->gateway->id = CustomGateway::ID;
+
+        $this->gateway->mercadopago->hooks->admin
+            ->shouldReceive('isAdmin')
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validatePage')
+            ->with('wc-settings')
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateSection')
+            ->with(CustomGateway::ID)
+            ->andReturn(true);
+
+        WP_Mock::userFunction('get_transient')
+            ->with('mp_credentials_expired_result')
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKeyProd')
+            ->andReturn('test-public-key-prod');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('isExpiredPublicKey')
+            ->with('test-public-key-prod')
+            ->andReturn(false);
+
+        WP_Mock::userFunction('set_transient')
+            ->with('mp_credentials_expired_result', Mockery::type('array'), 3600)
+            ->andReturn(true);
+
+        $this->gateway->title = 'Test Gateway Title';
+
+        $this->gateway->adminTranslations = [
+            'header_title_ALL' => 'ALL Header Title',
+            'enabled_descriptions_enabled_ALL' => 'ALL Enabled',
+            'enabled_descriptions_disabled_ALL' => 'ALL Disabled',
+        ];
+
+        $result = $this->gateway->formFieldsHeaderSection();
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('header', $result);
+        $this->assertArrayHasKey('enabled', $result);
+        $this->assertEquals('ALL Header Title', $result['header']['title']);
+        $this->assertEquals('ALL Enabled', $result['enabled']['descriptions']['enabled']);
+        $this->assertEquals('ALL Disabled', $result['enabled']['descriptions']['disabled']);
+    }
+
+    /**
+     * Test renderInstallmentsRateDetails when totalDiffCost > 0
+     *
+     * @return void
+     */
+    public function testRenderInstallmentsRateDetailsWithDiffCost(): void
+    {
+        $orderId = 123;
+        $order = Mockery::mock('WC_Order');
+
+        WP_Mock::userFunction('wc_get_order', [
+            'times' => 1,
+            'args' => [$orderId],
+            'return' => $order
+        ]);
+
+        // Mock countryConfigs
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'currency_symbol' => 'R$'
+        ]);
+
+        // Mock order metadata
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getInstallmentsMeta')
+            ->with($order)
+            ->andReturn(12);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTransactionDetailsMeta')
+            ->with($order)
+            ->andReturn(100.50);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTransactionAmountMeta')
+            ->with($order)
+            ->andReturn(1000.00);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTotalPaidAmountMeta')
+            ->with($order)
+            ->andReturn(1100.00);
+
+        // Mock storeTranslations
+        $this->gateway->storeTranslations = [
+            'title_installment_cost' => 'Installment Cost',
+            'title_installment_total' => 'Installment Total',
+            'text_installments' => 'Installments',
+        ];
+
+        // Mock template
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplate')
+            ->once()
+            ->with('public/order/custom-order-received.php', Mockery::type('array'));
+
+        $this->gateway->renderInstallmentsRateDetails($orderId);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test renderInstallmentsRateDetails when totalDiffCost <= 0
+     *
+     * @return void
+     */
+    public function testRenderInstallmentsRateDetailsWithoutDiffCost(): void
+    {
+        $orderId = 456;
+        $order = Mockery::mock('WC_Order');
+
+        WP_Mock::userFunction('wc_get_order', [
+            'times' => 1,
+            'args' => [$orderId],
+            'return' => $order
+        ]);
+
+        // Mock countryConfigs
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'currency_symbol' => 'R$'
+        ]);
+
+        // Mock order metadata - totalPaidAmount <= transactionAmount
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getInstallmentsMeta')
+            ->with($order)
+            ->andReturn(1);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTransactionDetailsMeta')
+            ->with($order)
+            ->andReturn(100.00);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTransactionAmountMeta')
+            ->with($order)
+            ->andReturn(1000.00);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTotalPaidAmountMeta')
+            ->with($order)
+            ->andReturn(1000.00); // Same as transactionAmount, so diff = 0
+
+        // Template should NOT be called
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplate')
+            ->never();
+
+        $this->gateway->renderInstallmentsRateDetails($orderId);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test registerInstallmentsFeeOnAdminOrder when fee exists and gateway matches
+     *
+     * @return void
+     */
+    public function testRegisterInstallmentsFeeOnAdminOrderWithFee(): void
+    {
+        $orderId = 789;
+        $order = Mockery::mock('WC_Order');
+
+        WP_Mock::userFunction('wc_get_order', [
+            'times' => 1,
+            'args' => [$orderId],
+            'return' => $order
+        ]);
+
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getCurrencySymbol')
+            ->andReturn('R$');
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getUsedGatewayData')
+            ->with($order)
+            ->andReturn(CustomGateway::ID);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTotalPaidAmountMeta')
+            ->with($order)
+            ->andReturn(1100.00);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTransactionAmountMeta')
+            ->with($order)
+            ->andReturn(1000.00);
+
+        $this->gateway->mercadopago->adminTranslations->order = [
+            'order_note_installments_fee_tip' => 'Installments Fee Tip',
+            'order_note_installments_fee_title' => 'Installments Fee',
+            'order_note_total_paid_amount_tip' => 'Total Paid Tip',
+            'order_note_total_paid_amount_title' => 'Total Paid',
+        ];
+
+        // Template should be called twice (for fee and total paid)
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplate')
+            ->twice()
+            ->with('admin/order/generic-note.php', Mockery::type('array'));
+
+        $this->gateway->registerInstallmentsFeeOnAdminOrder($orderId);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test registerInstallmentsFeeOnAdminOrder when fee is zero
+     *
+     * @return void
+     */
+    public function testRegisterInstallmentsFeeOnAdminOrderWithZeroFee(): void
+    {
+        $orderId = 101;
+        $order = Mockery::mock('WC_Order');
+
+        WP_Mock::userFunction('wc_get_order', [
+            'times' => 1,
+            'args' => [$orderId],
+            'return' => $order
+        ]);
+
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getCurrencySymbol')
+            ->andReturn('R$');
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getUsedGatewayData')
+            ->with($order)
+            ->andReturn(CustomGateway::ID);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTotalPaidAmountMeta')
+            ->with($order)
+            ->andReturn(1000.00);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTransactionAmountMeta')
+            ->with($order)
+            ->andReturn(1000.00); // Same, so fee = 0
+
+        // Template should NOT be called
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplate')
+            ->never();
+
+        $this->gateway->registerInstallmentsFeeOnAdminOrder($orderId);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test registerInstallmentsFeeOnAdminOrder when gateway doesn't match
+     *
+     * @return void
+     */
+    public function testRegisterInstallmentsFeeOnAdminOrderWithDifferentGateway(): void
+    {
+        $orderId = 202;
+        $order = Mockery::mock('WC_Order');
+
+        WP_Mock::userFunction('wc_get_order', [
+            'times' => 1,
+            'args' => [$orderId],
+            'return' => $order
+        ]);
+
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getCurrencySymbol')
+            ->andReturn('R$');
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getUsedGatewayData')
+            ->with($order)
+            ->andReturn('woo-mercado-pago-basic'); // Different gateway
+
+        // Template should NOT be called
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplate')
+            ->never();
+
+        $this->gateway->registerInstallmentsFeeOnAdminOrder($orderId);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test getPaymentFieldsParams with different site IDs to cover CARD_FLAGS_BY_COUNTRY
+     *
+     * @return void
+     */
+    public function testGetPaymentFieldsParamsWithDifferentSites(): void
+    {
+        $sites = ['MLA', 'MLM', 'MLC', 'MCO', 'MLU', 'MPE'];
+
+        foreach ($sites as $siteId) {
+            $this->gateway->mercadopago->sellerConfig
+                ->shouldReceive('getSiteId')
+                ->andReturn($siteId);
+
+            $this->gateway->mercadopago->storeConfig
+                ->shouldReceive('isTestMode')
+                ->andReturn(false);
+
+            $this->gateway->mercadopago->helpers->url
+                ->shouldReceive('getImageAsset')
+                ->andReturn('test-image-url');
+
+            $this->gateway->mercadopago->helpers->country
+                ->shouldReceive('SITE_ID_MLA')
+                ->andReturn('MLA');
+
+            $this->gateway->storeTranslations = [
+                'test_mode_title' => 'Test Mode',
+                'test_mode_description' => 'Test Description',
+                'test_mode_link_text' => 'Test Link',
+                'wallet_button_title' => 'Wallet Button',
+                'card_number_input_label' => 'Card Number',
+                'card_number_input_helper' => 'Card Helper',
+                'card_holder_name_input_label' => 'Card Holder',
+                'card_holder_name_input_helper' => 'Holder Helper',
+                'card_expiration_input_label' => 'Expiration',
+                'card_expiration_input_helper' => 'Expiration Helper',
+                'card_security_code_input_label' => 'Security Code',
+                'card_security_code_input_helper' => 'Security Helper',
+                'card_document_input_label' => 'Document',
+                'card_document_input_helper_empty' => 'Empty Document',
+                'card_document_input_helper_invalid' => 'Invalid Document',
+                'card_document_input_helper_wrong' => 'Wrong Document',
+                'card_issuer_input_label' => 'Issuer',
+                'message_error_amount' => 'Amount Error',
+                'security_code_tooltip_text_3_digits' => '3 Digits Tooltip',
+                'placeholders_cardholder_name' => 'Cardholder Name',
+                'card_holder_input_helper_info' => 'As it spelled on the card.',
+                'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
+            ];
+
+            // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods
+            $this->gateway->shouldAllowMockingProtectedMethods();
+            $this->gateway->shouldReceive('getAmountAndCurrency')
+                ->andReturn(['amount' => 100, 'currencyRatio' => 1.0]);
+
+            // Mock getWalletButtonEnabled method
+            $this->gateway->shouldReceive('getWalletButtonEnabled')
+                ->andReturn(true);
+
+            $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+            $countryConfigsProperty->setAccessible(true);
+            $countryConfigsProperty->setValue($this->gateway, [
+                'site_id' => $siteId
+            ]);
+
+            $this->gateway->mercadopago->helpers->links
+                ->shouldReceive('getPrivacyPolicyLink')
+                ->andReturn('https://example.com/privacy-policy');
+
+            $params = $this->gateway->getPaymentFieldsParams();
+
+            $this->assertIsArray($params);
+            $this->assertArrayHasKey('cardFlagIconUrls', $params);
+            $this->assertIsArray($params['cardFlagIconUrls']);
+        }
+    }
+
+    /**
+     * Test getPaymentFieldsParams when site_id is empty string (uses default)
+     *
+     * @return void
+     */
+    public function testGetPaymentFieldsParamsWithEmptySiteId(): void
+    {
+        // Mock getSiteId() to return empty string - this will trigger the ?: operator
+        // The code will use SITE_ID_MLA constant, but for CARD_FLAGS_BY_COUNTRY lookup
+        // we need a valid site ID. Since empty string is falsy, it will use MLA.
+        // However, getSiteId() is called twice - once for site_id param and once for CARD_FLAGS_BY_COUNTRY
+        // We'll mock it to return empty first time, then MLA for the array lookup
+        $callCount = 0;
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturnUsing(function() use (&$callCount) {
+                $callCount++;
+                // First call is for site_id param (line 538), second is for CARD_FLAGS_BY_COUNTRY (line 559)
+                return $callCount === 1 ? '' : 'MLA';
+            });
+
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')
+            ->andReturn('test-image-url');
+
+        $this->gateway->storeTranslations = [
+            'test_mode_title' => 'Test Mode',
+            'test_mode_description' => 'Test Description',
+            'test_mode_link_text' => 'Test Link',
+            'wallet_button_title' => 'Wallet Button',
+            'card_number_input_label' => 'Card Number',
+            'card_number_input_helper' => 'Card Helper',
+            'card_holder_name_input_label' => 'Card Holder',
+            'card_holder_name_input_helper' => 'Holder Helper',
+            'card_expiration_input_label' => 'Expiration',
+            'card_expiration_input_helper' => 'Expiration Helper',
+            'card_security_code_input_label' => 'Security Code',
+            'card_security_code_input_helper' => 'Security Helper',
+            'card_document_input_label' => 'Document',
+            'card_document_input_helper_empty' => 'Empty Document',
+            'card_document_input_helper_invalid' => 'Invalid Document',
+            'card_document_input_helper_wrong' => 'Wrong Document',
+            'card_issuer_input_label' => 'Issuer',
+            'message_error_amount' => 'Amount Error',
+            'security_code_tooltip_text_3_digits' => '3 Digits Tooltip',
+            'placeholders_cardholder_name' => 'Cardholder Name',
+            'card_holder_input_helper_info' => 'As it spelled on the card.',
+            'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
+        ];
+
+        // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('getAmountAndCurrency')
+            ->andReturn(['amount' => 100, 'currencyRatio' => 1.0]);
+
+        // Mock getWalletButtonEnabled method
+        $this->gateway->shouldReceive('getWalletButtonEnabled')
+            ->andReturn(true);
+
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'site_id' => 'MLA'
+        ]);
+
+        $this->gateway->mercadopago->helpers->links
+            ->shouldReceive('getPrivacyPolicyLink')
+            ->andReturn('https://example.com/privacy-policy');
+
+        $params = $this->gateway->getPaymentFieldsParams();
+
+        $this->assertIsArray($params);
+        $this->assertEquals('MLA', $params['site_id']);
     }
 }

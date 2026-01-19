@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="../../../../assets/css/public/mp-vars.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../assets/css/checkouts/mp-plugins-components.min.css" />
+    <title>Andes Notice</title>
+
+    <style>
+        body {
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            flex-direction: column;
+            gap: 16px;
+        }
+    </style>
+  </head>
+
+    <body>
+        <div class="container">
+            <andes-notice
+                type="warning"
+                description="This is a warning notice about the Andes Notice component."
+            >
+            </andes-notice>
+            <andes-notice
+                type="error"
+                description="This is an error notice about the Andes Notice component."
+            >
+            </andes-notice>
+        </div>
+        <script src="../../../../assets/js/checkouts/mp-plugins-components.min.js"></script>
+    </body>
+</html>

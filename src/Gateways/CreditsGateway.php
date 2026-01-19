@@ -61,6 +61,7 @@ class CreditsGateway extends AbstractGateway
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
         $this->setDefaultTooltip();
+        $this->paymentMethodName = self::ID;
     }
 
     public function getCheckoutName(): string

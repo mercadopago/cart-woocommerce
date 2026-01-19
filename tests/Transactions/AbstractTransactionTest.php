@@ -89,15 +89,19 @@ class AbstractTransactionTest extends TestCase
 
     public function testGetSdk(): void
     {
+        // Define constant if not exists (needed for Device::getDeviceProductId)
+        if (!defined('MP_PRODUCT_ID_MOBILE')) {
+            define('MP_PRODUCT_ID_MOBILE', 'BT7OFH09QS3001K5A0H0');
+        }
+
         $this->transaction->mercadopago->sellerConfig
             ->expects()
             ->getCredentialsAccessToken()
             ->andReturn(random()->uuid());
 
-        Mockery::mock('alias:' . Device::class)
-            ->expects()
-            ->getDeviceProductId()
-            ->andReturn(random()->uuid());
+        // Mock the underlying WordPress function instead of alias mocking Device class
+        WP_Mock::userFunction('wp_is_mobile')
+            ->andReturn(false);
 
         $this->transaction->mercadopago->storeConfig
             ->expects()

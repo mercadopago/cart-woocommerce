@@ -41,13 +41,20 @@ if (!defined('ABSPATH')) {
 
 ?>
 <div class="mp-checkout-custom-load">
-    <div class="spinner-card-form"></div>
+    <svg class="spinner-card-form" viewBox="0 0 50 50">
+        <circle class="spinner-path" cx="25" cy="25" r="20" fill="none" stroke-width="3"></circle>
+    </svg>
 </div>
-<div id="mp-checkout-custom-container" class='mp-checkout-container mp-display-none'>
+<div id="mp-checkout-custom-container" class='mp-checkout-container mp-hidden mp-display-none'>
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
-        <div class='mp-checkout-custom-container'>
+        <div class="mp-checkout-custom-container">
+            <div class="mp-checkout-custom-card-flags">
+                <?php foreach ($cardFlagIconUrls as $cardFlagIconUrl) : ?>
+                    <img src="<?= esc_url($cardFlagIconUrl); ?>">
+                <?php endforeach; ?>
+            </div>
             <?php if ($test_mode) : ?>
                 <test-mode
                     title="<?= esc_html($test_mode_title) ?>"
@@ -114,6 +121,13 @@ if (!defined('ABSPATH')) {
                             data-checkout="cardholderName"
                         />
 
+                        <input-helper
+                            isVisible=true
+                            type="info"
+                            message="<?= esc_html($card_holder_input_helper_info); ?>"
+                            input-id="mp-card-holder-name-helper-info"
+                        >
+                        </input-helper>
                         <input-helper
                             isVisible=false
                             type="error"
@@ -243,11 +257,6 @@ if (!defined('ABSPATH')) {
 <script type="text/javascript">
     function submitWalletButton(event) {
         event.preventDefault();
-
-        if (window.mpSuperTokenTriggerHandler) {
-            window.mpSuperTokenTriggerHandler.onTriggerWalletButton();
-            return;
-        }
 
         jQuery('#mp_checkout_type').val('wallet_button');
         jQuery('form.checkout, form#order_review').submit();

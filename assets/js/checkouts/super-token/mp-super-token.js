@@ -1,5 +1,7 @@
-/* globals MPDebounce, WCEmailListener, MPSuperTokenMetrics, MPSuperTokenAuthenticator, MPSuperTokenTriggerHandler, MPSuperTokenPaymentMethods, MPSuperTokenTriggerFieldsStrategy */
+/* globals MPDebounce, WCEmailListener, MPSuperTokenMetrics, MPSuperTokenAuthenticator, MPSuperTokenTriggerHandler, MPSuperTokenPaymentMethods, MPSuperTokenErrorHandler */
 document.addEventListener('DOMContentLoaded', () => {
+    const WAIT_MP_SDK_INSTANCE_LOAD_INTERVAL = 50;
+
     const waitMpSdkInstanceLoad = setInterval(() => {
         if (window.mpSdkInstance) {
             clearInterval(waitMpSdkInstanceLoad);
@@ -17,18 +19,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 mpSuperTokenPaymentMethods,
                 mpSuperTokenMetrics,
             );
-            const mpSuperTokenTriggerFieldsStrategy = new MPSuperTokenTriggerFieldsStrategy(
-              mpSuperTokenAuthenticator,
-              mpSuperTokenPaymentMethods,
-            );
 
+            window.mpSuperTokenMetrics = mpSuperTokenMetrics;
             window.mpSuperTokenPaymentMethods = mpSuperTokenPaymentMethods;
+            window.mpSuperTokenAuthenticator = mpSuperTokenAuthenticator;
+            window.mpSuperTokenErrorHandler = new MPSuperTokenErrorHandler(
+                mpSuperTokenPaymentMethods,
+                mpSuperTokenMetrics
+            );
             window.mpSuperTokenTriggerHandler = new MPSuperTokenTriggerHandler(
                 mpSuperTokenAuthenticator,
                 wcEmailListener,
                 mpSuperTokenPaymentMethods,
-                mpSuperTokenTriggerFieldsStrategy
             );
         }
-    }, 500)
+    }, WAIT_MP_SDK_INSTANCE_LOAD_INTERVAL)
 });

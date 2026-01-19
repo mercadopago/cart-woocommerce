@@ -4,42 +4,52 @@ const CheckoutPage = {
   installmentsEnabled: false,
 
   setElementDisplay(element, operator) {
-    document.querySelector(CheckoutElements[element]).style.display = operator;
+    const elementToSet = document.querySelector(CheckoutElements[element]);
+    if (!elementToSet) return;
+
+    elementToSet.style.display = operator;
   },
 
   setText(element, text) {
-    document.querySelector(CheckoutElements[element]).innerHTML = text;
+    const elementToSet = document.querySelector(CheckoutElements[element]);
+    if (!elementToSet) return;
+
+    elementToSet.innerHTML = text;
   },
 
-  // Public method
   setValueOn(element, value) {
-    document.querySelector(CheckoutElements[element]).value = value;
+    const elementToSet = document.querySelector(CheckoutElements[element]);
+    if (!elementToSet) return;
+
+    elementToSet.value = value;
   },
 
-  // Public method
   setBackground(element, background) {
-    document.querySelector(CheckoutElements[element]).style.setProperty('background', background, 'important');
+    const elementToSet = document.querySelector(CheckoutElements[element]);
+    if (!elementToSet) return;
+
+    elementToSet.style.setProperty('background', background, 'important');
   },
 
-  // Public method
   setImageCard(secureThumbnail) {
-    this.setBackground('fcCardNumberContainer', 'url(' + secureThumbnail + ') 98% 50% no-repeat #fff');
-    document
-      .querySelector(CheckoutElements.fcCardNumberContainer)
-      .style.setProperty('background-size', 'auto', 'important');
+    const cardNumberContainer = document.querySelector(CheckoutElements.fcCardNumberContainer);
+    if (!cardNumberContainer) return;
+
+    cardNumberContainer.style.setProperty('--card-brand-icon', `url(${secureThumbnail})`, 'important');
+    cardNumberContainer.classList.add('mp-card-icon-detected');
   },
 
-  // Public method
   findContainerField(field) {
     let id = field === 'cardholderName' ? `#form-checkout__${field}` : `#form-checkout__${field}-container`;
 
     return Object.keys(CheckoutElements).find((key) => CheckoutElements[key] === id);
   },
 
-  // Public method
   setDisplayOfError(elementName, operator, className, checkoutSelector = 'customContent') {
-    let checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
-    let element = checkoutContent.querySelector(CheckoutElements[elementName]);
+    const checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
+    if (!checkoutContent) return;
+
+    const element = checkoutContent.querySelector(CheckoutElements[elementName]);
 
     if (element) {
       if (operator === 'add') {
@@ -50,10 +60,23 @@ const CheckoutPage = {
     }
   },
 
-  // Public method
+  getInputHelperElement(elementName, helperType, checkoutSelector = 'customContent') {
+    const checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
+    if (!checkoutContent) return;
+
+    return checkoutContent.querySelector(`input-helper[input-id=${elementName}-${helperType}]`);
+  },
+
+  setDisplayOfInputHelperInfo(elementName, operator, checkoutSelector = 'customContent') {
+    let divInputHelper = this.getInputHelperElement(elementName, 'helper-info', checkoutSelector);
+
+    if(divInputHelper) {
+      divInputHelper.childNodes[1].style.display = operator;
+    }
+  },
+
   setDisplayOfInputHelper(elementName, operator, checkoutSelector = 'customContent') {
-    let checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
-    let divInputHelper = checkoutContent.querySelector(`input-helper[input-id=${elementName}-helper]`);
+    let divInputHelper = this.getInputHelperElement(elementName, 'helper', checkoutSelector);
 
     if (divInputHelper) {
       let inputHelper = divInputHelper.querySelector('div');
@@ -61,10 +84,8 @@ const CheckoutPage = {
     }
   },
 
-  // Public method
   setDisplayOfInputHelperMessage(elementName, message, checkoutSelector = 'customContent') {
-    let checkoutContent = document.querySelector(CheckoutElements[checkoutSelector]);
-    let divInputHelper = checkoutContent.querySelector(`input-helper[input-id=${elementName}-helper]`);
+    let divInputHelper = this.getInputHelperElement(elementName, 'helper', checkoutSelector);
 
     if (divInputHelper) {
       let inputHelperMessage = divInputHelper.querySelector('div').childNodes[1];
@@ -93,7 +114,6 @@ const CheckoutPage = {
     }
   },
 
-  // Public method
   additionalInfoHandler(additionalInfoNeeded) {
     if (additionalInfoNeeded.cardholder_name) {
       this.setElementDisplay('fcCardholderName', 'block');
@@ -134,7 +154,6 @@ const CheckoutPage = {
     return formattedValue;
   },
 
-  // Public method
   inputHelperName(field) {
     let inputHelperName = {
       cardNumber: CheckoutElements.mpCardNumber,
@@ -147,7 +166,6 @@ const CheckoutPage = {
     return inputHelperName[field];
   },
 
-  // Public method
   removeAdditionFields() {
     this.setElementDisplay('mpDocumentContainer', 'none');
     this.setElementDisplay('mpInstallmentsCard', 'none');
@@ -155,7 +173,6 @@ const CheckoutPage = {
     this.setValueOn('cardInstallments', '');
   },
 
-  // Public method
   getHelperMessage(field) {
     let query = 'input-helper[input-id=' + this.inputHelperName(field) + '-helper]';
     let divInputHelper = document.querySelector(query);
@@ -180,7 +197,6 @@ const CheckoutPage = {
     return inputHelper.querySelector('div').style.display !== 'flex';
   },
 
-  // Public method
   loadAdditionalInfo(sdkAdditionalInfoNeeded) {
     const additionalInfoNeeded = {
       issuer: false,
@@ -209,14 +225,13 @@ const CheckoutPage = {
     return additionalInfoNeeded;
   },
 
-  // Public method
   clearInstallmentsComponent() {
     const selectorInstallments = document.querySelector(CheckoutElements.mpInstallmentsContainer);
 
-    selectorInstallments.classList.remove(CheckoutElements.mpInstallmentsContainer);
+    selectorInstallments?.classList?.remove(CheckoutElements.mpInstallmentsContainer);
 
-    if (selectorInstallments.firstElementChild) {
-      selectorInstallments.removeChild(selectorInstallments.firstElementChild);
+    if (selectorInstallments?.firstElementChild) {
+      selectorInstallments?.removeChild(selectorInstallments?.firstElementChild);
     }
   },
 
@@ -238,18 +253,29 @@ const CheckoutPage = {
   },
 
   hideErrors() {
-    let customContent = document.querySelector('.mp-checkout-custom-container');
-    let inputHelpers = customContent.querySelectorAll('input-helper');
+    const customContent = document.querySelector('.mp-checkout-custom-container');
+    if (!customContent) return;
+
+    const inputHelpers = customContent.querySelectorAll('input-helper');
+    if (!inputHelpers) return;
 
     inputHelpers.forEach((inputHelper) => {
       inputHelper.querySelector('div').style.display = 'none';
     });
   },
 
-  // Public method
   clearInputs() {
     this.hideErrors();
     this.setBackground('fcCardNumberContainer', 'no-repeat #fff');
+
+    const cardNumberContainer = document.querySelector(CheckoutElements.fcCardNumberContainer);
+
+    if (cardNumberContainer) {
+      cardNumberContainer.classList.remove('mp-card-icon-detected');
+      this.setValueOn('fcCardNumberContainer', '');
+      this.setDisplayOfError('fcCardNumberContainer', 'removed', 'mp-error');
+    }
+
     this.setValueOn('fcCardholderName', '');
     this.setDisplayOfError('fcCardholderName', 'removed', 'mp-error');
 
@@ -261,12 +287,22 @@ const CheckoutPage = {
 
     this.setValueOn('fcIdentificationNumber', '');
     this.setElementDisplay('mpDocumentContainer', 'none');
+
     this.setDisplayOfError('fcIdentificationNumberContainer', 'removed', 'mp-error');
+
+    this.setDisplayOfError('mpCardholderNameInputLabel', 'removed', 'mp-label-error');
+
+    this.setDisplayOfInputHelper('mp-card-holder-name', 'none');
+
+    this.setDisplayOfError('mpCardholderNameInputLabel', 'removed', 'mp-label-error-2x');
 
     this.clearInstallmentsComponent();
     this.setElementDisplay('mpInstallmentsCard', 'none');
 
-    document.querySelector('input[data-cy=input-document]').value = '';
+    const inputDocument = document.querySelector('input[data-cy=input-document]');
+    if (inputDocument) {
+      inputDocument.value = '';
+    }
   },
 
   needsBankInterestDisclaimer() {
@@ -394,29 +430,101 @@ const CheckoutPage = {
 
   verifyCardholderName() {
     const cardholderNameInput = document.querySelector(CheckoutElements.fcCardholderName);
-    const cardholderNameHelper = document.querySelector('#mp-card-holder-name-helper');
-    
+
     if (!cardholderNameInput) {
       return true;
     }
 
-    const isValid = cardholderNameInput.value && cardholderNameInput.value.trim().length > 0;
-    if (!isValid) {
-      if (cardholderNameHelper) {
-        cardholderNameHelper.style.display = 'flex';
-      }
-      this.setDisplayOfError('fcCardholderName', 'add', 'mp-error');
-    } else {
-      if (cardholderNameHelper) {
-        cardholderNameHelper.style.display = 'none';
-      }
-      this.setDisplayOfError('fcCardholderName', 'remove', 'mp-error');
-    }
+    const value = cardholderNameInput.value.trim();
+    const regex = /[^a-zA-Z0-9]/;
+    const isValid = value.length > 2 && !regex.test(value);
+
+    this.updateCardholderNameState(cardholderNameInput, isValid);
 
     return isValid;
   },
 
-  // Public method
+  updateCardholderNameState(input, isValid) {
+    const cardholderNameHelper = document.querySelector(CheckoutElements.mpCardHolderNameHelper);
+    const cardholderNameLabel = document.querySelector(CheckoutElements.mpCardholderNameInputLabel);
+    const cardholderNameHelperInfo = document.querySelector(CheckoutElements.mpCardHolderNameHelperInfo);
+
+
+    if (isValid) {
+      input.classList.remove('mp-error', 'mp-error-2px');
+      cardholderNameLabel?.classList.remove('mp-label-error');
+      if (cardholderNameHelper) {
+        cardholderNameHelper.style.display = 'none';
+      }
+      if (document.activeElement === input) {
+        input.classList.add('mp-focus');
+        cardholderNameHelperInfo.style.display = 'flex';
+      }
+    } else {
+      input.classList.remove('mp-focus');
+      if (cardholderNameHelper) {
+        cardholderNameHelper.style.display = 'flex';
+        cardholderNameHelperInfo.style.display = 'none';
+      }
+      if (cardholderNameLabel) {
+        cardholderNameLabel.classList.add('mp-label-error');
+        cardholderNameHelperInfo.style.display = 'none';
+      }
+      if (document.activeElement === input) {
+        input.classList.remove('mp-error');
+        input.classList.add('mp-error-2px');
+      } else {
+        input.classList.add('mp-error');
+      }
+    }
+  },
+
+  verifyCardholderNameOnFocus() {
+    const cardholderNameInput = document.querySelector(CheckoutElements.fcCardholderName);
+    const cardholderNameHelper = document.querySelector(CheckoutElements.mpCardHolderNameHelper);
+    const cardholderNameInputLabel = document.querySelector(CheckoutElements.mpCardholderNameInputLabel);
+    const cardholderNameHelperInfo = document.querySelector(CheckoutElements.mpCardHolderNameHelperInfo);
+
+    if (!cardholderNameInput) {
+      return;
+    }
+
+    cardholderNameInput.addEventListener('focus', () => {
+      if (!cardholderNameInput.classList.contains('mp-error') && !cardholderNameInput.classList.contains('mp-error-2px')) {
+        cardholderNameInput.classList.add('mp-focus');
+        cardholderNameHelperInfo.style.display = 'flex';
+      } else if (cardholderNameInput.classList.contains('mp-error')) {
+        cardholderNameInput.classList.remove('mp-error');
+        cardholderNameInput.classList.add('mp-error-2px');
+        cardholderNameHelperInfo.style.display = 'none';
+      }
+    });
+
+    cardholderNameInput.addEventListener('blur', () => {
+      cardholderNameInput.classList.remove('mp-focus');
+      cardholderNameInput.classList.remove('mp-error-2px');
+
+      if (cardholderNameHelper) {
+        cardholderNameHelper.style.display = 'none';
+      }
+
+      cardholderNameInputLabel?.classList.remove('mp-label-error');
+      cardholderNameHelperInfo.style.display = 'flex';
+
+      if (cardholderNameInput.value.trim() !== '') {
+        this.verifyCardholderName();
+      }
+    });
+
+    cardholderNameInput.addEventListener('input', () => {
+      if (cardholderNameInput.value.trim() !== '') {
+        this.verifyCardholderName();
+      } else {
+        this.updateCardholderNameState(cardholderNameInput, true);
+      }
+    });
+  },
+
   setChangeEventOnInstallments(response) {
     this.clearInstallmentsComponent();
     const installments = this.getInstallments(response);
@@ -435,7 +543,7 @@ const CheckoutPage = {
     andesDropdown.setAttribute('items', JSON.stringify(installments));
     andesDropdown.setAttribute('required-message', wc_mercadopago_custom_checkout_params.input_helper_message.installments.required);
     andesDropdown.setAttribute('site-id', this.getCountry());
-    
+
     if (this.needsBankInterestDisclaimer()) {
       andesDropdown.setAttribute('hint', '*' + wc_mercadopago_custom_checkout_params.input_helper_message.installments.bank_interest_hint_text);
     }

@@ -117,7 +117,7 @@ class CheckoutTicketPageController {
   validateZipCodeError(canChangeErrorState = true) {
     const zipCodeValue = this.addressElements.zipCode.value.replace('-', '');
     if (!zipCodeValue) {
-      canChangeErrorState && 
+      canChangeErrorState &&
         this.showError(this.addressElements.zipCode, this.errorContainers.zipCode, this.errorMessages.postalcode_error_empty);
       return false;
     }
@@ -127,7 +127,7 @@ class CheckoutTicketPageController {
       return false;
     }
     if (zipCodeValue.length < 8) {
-      canChangeErrorState && 
+      canChangeErrorState &&
         this.showError(this.addressElements.zipCode, this.errorContainers.zipCode, this.errorMessages.postalcode_error_partial);
       return false;
     }
@@ -142,7 +142,7 @@ class CheckoutTicketPageController {
 
   validateStateError(canChangeErrorState = true) {
     if (!this.addressElements.state.value) {
-      canChangeErrorState && 
+      canChangeErrorState &&
         this.showError(this.addressElements.state, this.errorContainers.state, this.errorMessages.state_error_unselected);
       return false;
     }
@@ -157,12 +157,12 @@ class CheckoutTicketPageController {
 
   validateCityError(canChangeErrorState = true) {
     if (!this.addressElements.city.value) {
-      canChangeErrorState && 
+      canChangeErrorState &&
         this.showError(this.addressElements.city, this.errorContainers.city, this.errorMessages.city_error_empty);
       return false;
     }
     if (this.addressElements.city.value.length < 3) {
-      canChangeErrorState && 
+      canChangeErrorState &&
         this.showError(this.addressElements.city, this.errorContainers.city, this.errorMessages.city_error_invalid);
       return false;
     }
@@ -295,7 +295,7 @@ class CheckoutTicketPageController {
 
   handleSubmitEvents() {
     jQuery('form.checkout').on('checkout_place_order_woo-mercado-pago-ticket', () => this.shouldSubmitTicketForm())
-    
+
     // If payment fail, retry on next checkout page
     jQuery('form#order_review').submit(() => this.shouldSubmitTicketForm());
   }
@@ -318,8 +318,13 @@ class CheckoutTicketPageController {
 
   checkForErrors() {
     let hasError = false;
+    const ticketContainer = document.querySelector('.mp-checkout-ticket-container');
 
-    document.querySelectorAll('input-helper').forEach((item) => {
+    if (!ticketContainer) {
+      return false;
+    }
+
+    ticketContainer.querySelectorAll('input-helper').forEach((item) => {
       let inputHelper = item.querySelector('div');
       if (inputHelper.style.display !== 'none') {
         hasError = true;
@@ -332,7 +337,7 @@ class CheckoutTicketPageController {
   verifyPaymentMethods() {
     let paymentOptionSelected = false;
     let documentElement = document.querySelector('.mp-checkout-ticket-container');
-    
+
     documentElement
       .querySelectorAll('.mp-input-radio-radio')
       .forEach((item) => {
@@ -387,8 +392,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let checkoutTicketPageController = null;
 
   setInterval(function () {
-    const checkoutTicketPaymentMethodElement = 
-      document.getElementById('payment_method_woo-mercado-pago-ticket') ?? 
+    const checkoutTicketPaymentMethodElement =
+      document.getElementById('payment_method_woo-mercado-pago-ticket') ??
       document.getElementById('radio-control-wc-payment-method-options-woo-mercado-pago-ticket') ??
       document.querySelectorAll("input[value=woo-mercado-pago-ticket]")[0];
 

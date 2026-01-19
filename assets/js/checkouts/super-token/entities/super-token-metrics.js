@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_supertoken_metrics_params */
+/* globals wc_mercadopago_supertoken_metrics_params, MPSuperTokenSkippableErrorMessages */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenMetrics {
     PLATFORM_NAME = 'woocommerce';
@@ -8,9 +8,6 @@ class MPSuperTokenMetrics {
     SITE_ID = wc_mercadopago_supertoken_metrics_params.site_id;
     CUST_ID = wc_mercadopago_supertoken_metrics_params.cust_id;
     LOCATION = wc_mercadopago_supertoken_metrics_params.location;
-    EMPTY_PRELOADED_PAYMENT_METHODS = 'EMPTY_PRELOADED_PAYMENT_METHODS';
-    AUTHENTICATOR_FLOW_NOT_SUPPORTED = 'Authenticator flow is not supported';
-    SITE_ID_NOT_SUPPORTED_PATTERN = /the\s+site\s+id\s+\w+\s+is\s+not\s+supported/i;
 
     // Dependencies
     mpSdkInstance = null;
@@ -67,12 +64,26 @@ class MPSuperTokenMetrics {
         this.sendMetric('can_use_super_token', canUseSuperToken, errorMessage);
     }
 
-    errorToShowAuthenticator(error) {
-        this.sendMetric('error_to_show_authenticator', 'true', error?.message || 'Unknown error');
+    errorToAuthorizePayment(error) {
+        this.sendMetric('error_to_authorize_payment', 'true', error?.message || 'Unknown error');
     }
 
-    errorToRenderAccountPaymentMethods(error) {
-        this.sendMetric('error_to_render_account_payment_methods', 'true', error?.message || 'Unknown error');
+    errorToGetSimplifiedAuth(error) {
+        this.sendMetric('error_to_get_simplified_auth', 'true', error?.message || 'Unknown error');
+    }
+
+    errorToGetFastPaymentToken(error) {
+        this.sendMetric('error_to_get_fast_payment_token', 'true', error?.message || 'Unknown error');
+    }
+
+    errorToBuildAuthenticator(error) {
+        const errorMessage = error?.message || 'Unknown error';
+
+        if (this.shouldSkipError(errorMessage)) {
+            return;
+        }
+
+        this.sendMetric('error_to_build_authenticator', 'true', errorMessage);
     }
 
     errorToMountCVVField(error, paymentMethod) {
@@ -83,40 +94,46 @@ class MPSuperTokenMetrics {
         this.sendMetric('error_to_update_security_code', paymentMethod?.id || 'Unknown payment method', error?.message || 'Unknown error');
     }
 
+    errorOnSubmit(errorCode, errorMessage) {
+        if (this.shouldSkipError(errorMessage)) {
+            return;
+        }
+
+        this.sendMetric('error_on_submit_super_token', errorCode, errorMessage || 'Unknown error');
+    }
+
     /**
      * Check if error is an expected error that should not be reported
      * @param {string} errorMessage - The error message to check
      * @returns {boolean} - True if error should be skipped, false otherwise
      */
     shouldSkipError(errorMessage) {
-        if (!errorMessage) {
-            return false;
-        }
+        if (!errorMessage) return false;
 
-        if (errorMessage === this.EMPTY_PRELOADED_PAYMENT_METHODS) {
-            return true;
-        }
+        const normalizedMessage = errorMessage
+            .replace(/\[mercado pago\]:\s*/gi, '')
+            .trim()
+            .toLowerCase();
 
-        const errorMessageLower = errorMessage.toLowerCase();
-        if (errorMessageLower.includes(this.AUTHENTICATOR_FLOW_NOT_SUPPORTED.toLowerCase())) {
-            return true;
+        return MPSuperTokenSkippableErrorMessages.some(message => {
+        if (message instanceof RegExp) {
+            return message.test(normalizedMessage);
         }
-
-        // Pattern: "The site id XXX is not supported" (where XXX can be any site_id like mco, mlc, etc.)
-        if (this.SITE_ID_NOT_SUPPORTED_PATTERN.test(errorMessage)) {
-            return true;
-        }
-
-        return false;
+        return normalizedMessage.includes(message);
+      });
     }
 
-    errorToGetPreloadedPaymentMethods(error) {
+    errorToGetAccountPaymentMethods(error) {
         const errorMessage = error?.message || 'Unknown error';
 
         if (this.shouldSkipError(errorMessage)) {
             return;
         }
 
-        this.sendMetric('error_to_get_preloaded_payment_methods', 'true', errorMessage);
+        this.sendMetric('error_to_get_account_payment_methods', 'true', errorMessage);
+    }
+
+    registerClickOnPlaceOrderButton() {
+      this.sendMetric('super_token_click_on_place_order_button', 'true', "");
     }
 }

@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
+use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\FormMock;
@@ -375,4 +376,343 @@ class TicketGatewayTest extends TestCase
 
         $this->assertEquals($expected, $this->gateway->getCheckoutExpirationDate());
     }
+
+    /**
+     * Test processReturnFail execution to increase coverage
+     * This test ensures processReturnFail is actually executed (not mocked) to cover all lines
+     */
+    public function testProcessReturnFailExecution(): void
+    {
+        // Set paymentMethodName to match TicketGateway constructor
+        $this->setNotAccessibleProperty($this->gateway, 'paymentMethodName', TicketGateway::ID);
+
+        $errorMessage = 'buyer_default';
+        $translatedMessage = 'Translated error message';
+
+        // Create a fresh logs->file mock without byDefault() to avoid conflicts
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock
+            ->shouldReceive('error')
+            ->once()
+            ->with(Mockery::type('string'), TicketGateway::LOG_SOURCE, Mockery::type('array'))
+            ->andReturnNull();
+        $this->gateway->mercadopago->logs->file = $logsFileMock;
+
+        // Mock errorMessages helper
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorMessage)
+            ->andReturn($translatedMessage);
+
+        // Mock datadog->sendEvent
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('woo_checkout_error', $translatedMessage, $errorMessage, TicketGateway::ID);
+
+        // Mock notices
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with($translatedMessage, 'error');
+
+        $exception = new \Exception('Test exception');
+
+        $result = $this->gateway->processReturnFail(
+            $exception,
+            $errorMessage,
+            TicketGateway::LOG_SOURCE,
+            [],
+            true
+        );
+
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertEquals($translatedMessage, $result['message']);
+    }
+
+    /**
+     * Test formFieldsMainSection method
+     *
+     * @return void
+     */
+    public function testFormFieldsMainSection(): void
+    {
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCheckoutTicketPaymentMethods')
+            ->andReturn([
+                ['id' => 'payment1', 'name' => 'Payment 1']
+            ]);
+
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('get_field_key')
+            ->andReturn('field_key_1');
+
+        $this->gateway->mercadopago->hooks->options
+            ->shouldReceive('getGatewayOption')
+            ->andReturn('yes');
+
+        $this->gateway->id = TicketGateway::ID;
+
+        $result = $this->gateway->formFieldsMainSection();
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('currency_conversion', $result);
+        $this->assertArrayHasKey('type_payments', $result);
+        $this->assertArrayHasKey('date_expiration', $result);
+        $this->assertArrayHasKey('advanced_configuration_title', $result);
+        $this->assertArrayHasKey('advanced_configuration_description', $result);
+        $this->assertArrayHasKey('stock_reduce_mode', $result);
+    }
+
+    /**
+     * Test formFieldsMainSection with payment methods that have payment_places
+     *
+     * @return void
+     */
+    public function testFormFieldsMainSectionWithPaymentPlaces(): void
+    {
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCheckoutTicketPaymentMethods')
+            ->andReturn([
+                [
+                    'id' => 'paycash',
+                    'name' => 'Paycash',
+                    'payment_places' => [
+                        ['name' => 'Place 1'],
+                        ['name' => 'Place 2']
+                    ]
+                ]
+            ]);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCheckoutTicketPaymentMethods')
+            ->andReturn([
+                [
+                    'id' => 'paycash',
+                    'payment_places' => [
+                        ['name' => 'Place 1'],
+                        ['name' => 'Place 2']
+                    ]
+                ]
+            ]);
+
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('get_field_key')
+            ->andReturn('field_key_1');
+
+        $this->gateway->mercadopago->hooks->options
+            ->shouldReceive('getGatewayOption')
+            ->andReturn('yes');
+
+        $this->gateway->id = TicketGateway::ID;
+
+        $this->gateway->storeTranslations = [
+            'paycash_concatenator' => ' and '
+        ];
+
+        $result = $this->gateway->formFieldsMainSection();
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('type_payments', $result);
+    }
+
+    /**
+     * Test registerCheckoutScripts method
+     *
+     * @return void
+     */
+    public function testRegisterCheckoutScripts(): void
+    {
+        \WP_Mock::userFunction('get_stylesheet')
+            ->andReturn('test-theme');
+
+        $this->gateway->mercadopago->woocommerce->version = '8.0.0';
+
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'site_id' => 'MLB',
+            'currency' => 'BRL'
+        ]);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')
+            ->andReturn('test-public-key');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getPaymentFieldsErrorMessages')
+            ->andReturn([]);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')
+            ->andReturn('test-css-url');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getJsAsset')
+            ->andReturn('test-js-url');
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutScript')
+            ->atLeast()->once();
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutStyle')
+            ->atLeast()->once();
+
+        $this->gateway->storeTranslations = [
+            'custom_checkout' => [],
+            'billing_data_postalcode_error_empty' => 'Postal code is required',
+            'billing_data_postalcode_error_partial' => 'Postal code is partial',
+            'billing_data_postalcode_error_invalid' => 'Postal code is invalid',
+            'billing_data_state_error_unselected' => 'State is required',
+            'billing_data_city_error_empty' => 'City is required',
+            'billing_data_city_error_invalid' => 'City is invalid',
+            'billing_data_neighborhood_error_empty' => 'Neighborhood is required',
+            'billing_data_neighborhood_error_invalid' => 'Neighborhood is invalid',
+            'billing_data_address_error_empty' => 'Address is required',
+            'billing_data_address_error_invalid' => 'Address is invalid',
+            'billing_data_number_error_empty' => 'Number is required',
+            'billing_data_number_error_invalid' => 'Number is invalid'
+        ];
+
+        $this->gateway->registerCheckoutScripts();
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test payment_fields method
+     *
+     * @return void
+     */
+    public function testPaymentFields(): void
+    {
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('getPaymentFieldsParams')
+            ->andReturn(['test' => 'params']);
+
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplate')
+            ->once()
+            ->with('public/checkouts/ticket-checkout.php', ['test' => 'params']);
+
+        $this->gateway->payment_fields();
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test renderThankYouPage when transactionDetails is empty
+     *
+     * @return void
+     */
+    public function testRenderThankYouPageEmptyTransactionDetails(): void
+    {
+        $orderId = 123;
+        $order = Mockery::mock('WC_Order');
+
+        WP_Mock::userFunction('wc_get_order')
+            ->with($orderId)
+            ->andReturn($order);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTicketTransactionDetailsMeta')
+            ->with($order)
+            ->andReturn([]);
+
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplate')
+            ->never();
+
+        $this->gateway->renderThankYouPage($orderId);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test renderThankYouPage with valid transactionDetails
+     *
+     * @return void
+     */
+    public function testRenderThankYouPageWithTransactionDetails(): void
+    {
+        $orderId = 123;
+        $order = Mockery::mock('WC_Order');
+        $transactionDetails = ['ticket_url' => 'https://example.com/ticket'];
+
+        WP_Mock::userFunction('wc_get_order')
+            ->with($orderId)
+            ->andReturn($order);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getTicketTransactionDetailsMeta')
+            ->with($order)
+            ->andReturn($transactionDetails);
+
+        $this->gateway->storeTranslations = [
+            'print_ticket_label' => 'Print Ticket',
+            'print_ticket_link' => 'Print'
+        ];
+
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplate')
+            ->once()
+            ->with('public/order/ticket-order-received.php', Mockery::type('array'));
+
+        $this->gateway->renderThankYouPage($orderId);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Test buildPaycashPaymentString with single payment place
+     *
+     * @return void
+     */
+    public function testBuildPaycashPaymentStringWithSinglePlace(): void
+    {
+        $this->gateway->mercadopago->sellerConfig = Mockery::mock(Seller::class)
+            ->shouldReceive('getCheckoutTicketPaymentMethods')
+            ->andReturn([
+                [
+                    'id' => 'paycash',
+                    'payment_places' => [
+                        ['name' => 'Place 1'],
+                    ],
+                ],
+            ])
+            ->getMock();
+
+        $this->gateway->storeTranslations = [
+            'paycash_concatenator' => ' and '
+        ];
+
+        $result = $this->gateway->buildPaycashPaymentString();
+
+        // With single place, array_pop returns that place, and implode with empty array returns empty string
+        // So result should be empty string concatenated with the place
+        $this->assertIsString($result);
+    }
+
+
+
+    /**
+     * Test getCheckoutExpirationDate with default value
+     *
+     * @return void
+     */
+    public function testGetCheckoutExpirationDateWithDefault(): void
+    {
+        $this->gateway
+            ->shouldReceive('get_option')
+            ->with('date_expiration', '3')
+            ->andReturn('3');
+
+        $result = $this->gateway->getCheckoutExpirationDate();
+
+        $this->assertEquals('3', $result);
+    }
+
 }

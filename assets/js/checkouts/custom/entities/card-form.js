@@ -1,6 +1,8 @@
 /* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher */
 // eslint-disable-next-line no-unused-vars
 class MPCardForm {
+    TIMEOUT_TO_WAIT_INIT_CARD_FORM = 10000;
+
     constructor() {
         this.form = null;
         this.formMounted = false;
@@ -8,10 +10,13 @@ class MPCardForm {
         this.amount = null;
         this.onReadyDebounce = null;
         this.fields = null;
+        this.initCardFormTimeoutReference = null;
+        this.isLoading = false;
     }
 
     async initCardForm(amount = this.getAmount()) {
         this.amount = amount;
+        this.cardNumberFilledValidator = false;
 
         if (!window.mpSdkInstance) {
             const mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key, {
@@ -22,6 +27,8 @@ class MPCardForm {
         }
 
         return new Promise((resolve, reject) => {
+            this.createTimeoutToWaitInitCardForm(reject);
+
             this.form = window.mpSdkInstance.cardForm({
                 amount: amount,
                 iframe: true,
@@ -29,26 +36,51 @@ class MPCardForm {
                 callbacks: this.getCardFormCallbacks(resolve, reject)
             })
         }).then(() => {
+            this.clearTimeoutToWaitInitCardForm();
             this.sendMetric('MP_CARDFORM_SUCCESS', 'Security fields loaded', 'mp_custom_checkout_security_fields_client');
+            CheckoutPage.verifyCardholderNameOnFocus();
         })
         .catch((error) => {
+            this.clearTimeoutToWaitInitCardForm();
             const parsedError = this.handleCardFormErrors(error);
             this.sendMetric('MP_CARDFORM_ERROR', parsedError, 'mp_custom_checkout_security_fields_client');
             console.error('Mercado Pago cardForm error: ', parsedError);
         });
     }
 
+    createTimeoutToWaitInitCardForm(reject = () => {}) {
+      this.initCardFormTimeoutReference = setTimeout(() => {
+        this.removeLoadSpinner();
+        reject(new Error('INIT_CARD_FORM_TIMEOUT'));
+      }, this.TIMEOUT_TO_WAIT_INIT_CARD_FORM);
+    }
+
+    clearTimeoutToWaitInitCardForm() {
+      clearTimeout(this.initCardFormTimeoutReference);
+    }
+
     getCardFormConfig() {
+        const baseStyle = {
+            fontSize: '16px',
+            height: '48px',
+            padding: '14px',
+            textAlign: 'left',
+            fontFamily: 'Inter ',
+            fontWeight: '400',
+            placeholderColor: ' #0000008C',
+        };
+
+        const baseCustomFonts = {
+            src: 'https://fonts.googleapis.com/css2?family=Inter'
+        };
+
         return {
             id: this.mpFormId,
             cardNumber: {
                 id: 'form-checkout__cardNumber-container',
-                placeholder: '0000 0000 0000 0000',
-                style: {
-                    'font-size': '16px',
-                    height: '48px',
-                    padding: '14px',
-                },
+                placeholder: '1234 1234 1234 1234',
+                style: baseStyle,
+                customFonts: [baseCustomFonts]
             },
             cardholderName: {
                 id: 'form-checkout__cardholderName',
@@ -58,20 +90,14 @@ class MPCardForm {
                 id: 'form-checkout__expirationDate-container',
                 placeholder: wc_mercadopago_custom_checkout_params.placeholders['cardExpirationDate'],
                 mode: 'short',
-                style: {
-                    'font-size': '16px',
-                    height: '48px',
-                    padding: '14px',
-                },
+                style: baseStyle,
+                customFonts: [baseCustomFonts]
             },
             securityCode: {
                 id: 'form-checkout__securityCode-container',
                 placeholder: wc_mercadopago_custom_card_form_params.security_code_placeholder_text_3_digits,
-                style: {
-                    'font-size': '16px',
-                    height: '48px',
-                    padding: '14px',
-                },
+                style: baseStyle,
+                customFonts: [baseCustomFonts]
             },
             identificationType: {
                 id: 'form-checkout__identificationType',
@@ -93,32 +119,13 @@ class MPCardForm {
     getCardFormCallbacks(resolve, reject) {
         return {
             onReady: (fields) => {
-                clearTimeout(this.onReadyDebounce);
-
-                this.onReadyDebounce = setTimeout(async () => {
-                  try {
-                    this.fields = fields;
-
-                    fields?.cardNumber?.on('focus', () => {
-                      MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
-                        null,
-                        "focus",
-                        "card_number_focused",
-                        {
-                          onlyDispatch: true
-                        }
-                      );
-                    });
-
-                    await window.mpSuperTokenTriggerHandler?.loadSuperToken(!this.isClassicCheckout() ? this.amount : undefined)
-                  } finally {
-                      this.removeLoadSpinner();
-                      resolve();
-                  }
-                }, 2000)
+                this.fields = fields;
+                this.setupSecureFieldsStylesAndAddListeners();
+                resolve();
             },
             onFormMounted: (error) => {
                 this.formMounted = true;
+                resolve();
 
                 if (error) {
                     console.log('Callback to handle the error: creating the CardForm', error);
@@ -128,6 +135,7 @@ class MPCardForm {
             onFormUnmounted: (error) => {
                 this.formMounted = false;
                 CheckoutPage.clearInputs();
+                resolve();
 
                 if (error) {
                     console.log('Callback to handle the error: unmounting the CardForm', error);
@@ -167,6 +175,10 @@ class MPCardForm {
                         CheckoutPage.additionalInfoHandler(additionalInfo);
                         CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'remove', 'mp-error');
                         CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'none');
+                        CheckoutPage.setDisplayOfError('mpCardholderNameInputLabel', 'remove', 'mp-label-error');
+                        CheckoutPage.setDisplayOfError('mpDocumentInputLabel', 'remove', 'mp-label-error');
+                        CheckoutPage.setDisplayOfInputHelper('mp-card-holder-name', 'none');
+                        CheckoutPage.setDisplayOfInputHelperInfo('mp-card-holder-name', 'flex');
                         CheckoutPage.shouldEnableInstallmentsComponent(paymentMethod.payment_type_id);
                     } else {
                         CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
@@ -186,21 +198,17 @@ class MPCardForm {
             },
             onValidityChange: (error, field) => {
                 if (field === 'cardNumber') {
-                  this.fields.cardNumber.on('blur', () => {
-                    document.dispatchEvent(new CustomEvent('mp_checkout_field_card_number_filled'));
-                  });
+                    this.cardNumberFilledValidator = true;
                 }
 
                 if (error) {
-                    this.removeLoadSpinner();
                     let helper_message = CheckoutPage.getHelperMessage(field);
                     let message = wc_mercadopago_custom_checkout_params.input_helper_message[field][error[0].code];
 
                     if (message) {
                         helper_message.innerHTML = message;
                     } else {
-                        helper_message.innerHTML =
-                            wc_mercadopago_custom_checkout_params.input_helper_message[field]['invalid_length'];
+                        helper_message.innerHTML = wc_mercadopago_custom_checkout_params.input_helper_message[field]['invalid_length'];
                     }
 
                     if (field === 'cardNumber') {
@@ -209,12 +217,21 @@ class MPCardForm {
                             CheckoutPage.removeAdditionFields();
                             CheckoutPage.clearInputs();
                         }
+                        CheckoutPage.setDisplayOfInputHelperInfo('mp-card-holder-name', 'flex');
                     }
 
                     let containerField = CheckoutPage.findContainerField(field);
                     CheckoutPage.setDisplayOfError(containerField, 'add', 'mp-error');
 
+                    if (field === 'cardholderName') {
+                        CheckoutPage.verifyCardholderName();
+                    }
+
                     return CheckoutPage.setDisplayOfInputHelper(CheckoutPage.inputHelperName(field), 'flex');
+                }
+
+                if (field === 'cardholderName' && !CheckoutPage.verifyCardholderName()) {
+                   return;
                 }
 
                 let containerField = CheckoutPage.findContainerField(field);
@@ -223,7 +240,6 @@ class MPCardForm {
                 return CheckoutPage.setDisplayOfInputHelper(CheckoutPage.inputHelperName(field), 'none');
             },
             onError: (errors) => {
-                this.removeLoadSpinner();
                 CheckoutPage.verifyCardholderName();
                 CheckoutPage.verifyInstallmentsContainer();
                 errors.forEach((error) => {
@@ -236,6 +252,8 @@ class MPCardForm {
                         return CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'flex');
                     } else if (error.message.includes('cardholderName')) {
                         CheckoutPage.setDisplayOfError('fcCardholderName', 'add', 'mp-error');
+                        CheckoutPage.setDisplayOfInputHelperInfo('mp-card-holder-name', 'none');
+                        CheckoutPage.setDisplayOfError('mpCardholderNameInputLabel', 'add', 'mp-label-error');
                         return CheckoutPage.setDisplayOfInputHelper('mp-card-holder-name', 'flex');
                     } else if (error.message.includes('expirationMonth') || error.message.includes('expirationYear')) {
                         CheckoutPage.setDisplayOfError('fcCardExpirationDateContainer', 'add', 'mp-error');
@@ -257,6 +275,13 @@ class MPCardForm {
                 });
             },
         };
+    }
+
+    scrollToCardForm() {
+      const cardFormContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
+      if (!cardFormContainer) return;
+
+      cardFormContainer.scrollIntoView({ behavior: 'smooth' });
     }
 
     getAmount() {
@@ -306,17 +331,39 @@ class MPCardForm {
     }
 
     createLoadSpinner() {
+        if (this.isLoading) return;
+
         const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
+
+        document.dispatchEvent(new CustomEvent('mp_super_token_loading_start', { detail: { dateNowInMilliseconds: Date.now() } }));
+
+        this.isLoading = true;
+        customContainer?.classList.add('mp-hidden');
         customContainer?.classList.add('mp-display-none');
+        loadSpinner?.classList.remove('mp-hidden');
         loadSpinner?.classList.remove('mp-display-none');
     }
 
     removeLoadSpinner() {
+        if (!this.isLoading) return;
+
         const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
-        customContainer?.classList.remove('mp-display-none');
-        loadSpinner?.classList.add('mp-display-none');
+
+        document.dispatchEvent(new CustomEvent('mp_super_token_loading_end', { detail: { dateNowInMilliseconds: Date.now() } }));
+
+        this.isLoading = false;
+        const onTransitionEnd = () => {
+          loadSpinner?.classList.add('mp-display-none');
+          customContainer?.classList.remove('mp-hidden');
+          customContainer?.classList.remove('mp-display-none');
+
+          loadSpinner.removeEventListener('transitionend', onTransitionEnd);
+        };
+
+        loadSpinner?.addEventListener('transitionend', onTransitionEnd);
+        loadSpinner?.classList.add('mp-hidden');
     }
 
     removeBlockOverlay() {
@@ -342,5 +389,97 @@ class MPCardForm {
         while (elements.length > 0) {
             elements[0].parentNode.removeChild(elements[0]);
         }
+    }
+
+    setupSecureFieldsStylesAndAddListeners() {
+        if (!this.fields) {
+            return;
+        }
+
+        const secureFieldsConfiguration = [
+            {
+                field: this.fields.cardNumber,
+                fieldName: 'cardNumber',
+                containerId: 'form-checkout__cardNumber-container',
+                focusEventName: 'card_number_focused',
+                blurEventName: 'card_number_filled',
+                validator: () => this.cardNumberFilledValidator
+            },
+            {
+                field: this.fields.expirationDate,
+                containerId: 'form-checkout__expirationDate-container'
+            },
+            {
+                field: this.fields.securityCode,
+                containerId: 'form-checkout__securityCode-container'
+            }
+        ];
+
+        for (const config of secureFieldsConfiguration) {
+            if (!config.field || typeof config.field.on !== 'function') {
+              continue;
+            }
+
+            // sdk listener functions will only run once, so we need to do both things, add the css class and dispatch the events
+            config.field.on('focus', () => {
+                this.addOrRemoveCssClass(
+                  config.containerId,
+                  'mp-checkout-custom-card-form-focus',
+                  'add'
+                );
+
+                if(config.focusEventName) {
+                  MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                    null,
+                    "focus",
+                    config.focusEventName,
+                    {
+                      onlyDispatch: true
+                    }
+                  );
+                }
+            });
+
+            config.field.on('blur', () => {
+                let isValid = false;
+                this.addOrRemoveCssClass(
+                  config.containerId,
+                  'mp-checkout-custom-card-form-focus'
+                );
+
+                if(config.validator) {
+                  if (typeof config.validator === 'function') {
+                    isValid = config.validator();
+                  } else {
+                    isValid = config.validator;
+                  }
+                }
+
+                if(config.blurEventName && isValid) {
+                  MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                    null,
+                    "blur",
+                    config.blurEventName,
+                    {
+                      onlyDispatch: true
+                    }
+                  );
+
+                  if(config.fieldName) {
+                    this.updateFieldValidator(config.fieldName);
+                  }
+                }
+            });
+        }
+    }
+
+    addOrRemoveCssClass(element, className, action = 'remove') {
+      const input = document.getElementById(element);
+      input?.classList[action === 'add' ? 'add' : 'remove'](className);
+    }
+
+    updateFieldValidator(fieldName) {
+      if(fieldName !== 'cardNumber') return;
+      this.cardNumberFilledValidator = false;
     }
 }

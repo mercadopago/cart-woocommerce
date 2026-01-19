@@ -1,6 +1,8 @@
 /* eslint-disable no-unused-vars */
-/* globals MP_DEVICE_SESSION_ID, jQuery, CheckoutPage */
+/* globals wc_mercadopago_custom_event_handler_params, MP_DEVICE_SESSION_ID, jQuery, CheckoutPage, MPSuperTokenErrorCodes */
 class MPEventHandler {
+    REMOVE_LOAD_SPINNER_DELAY = 500;
+
     constructor(cardForm, threeDSHandler) {
         this.cardForm = cardForm;
         this.threeDSHandler = threeDSHandler;
@@ -17,9 +19,20 @@ class MPEventHandler {
         jQuery(document.body).on('checkout_error', this.handleCheckoutError.bind(this));
         jQuery(document).on('updated_checkout', this.handleUpdatedCheckout.bind(this));
         jQuery(document).ready(() => {
-            this.setCardFormLoadInterval();
             this.threeDSHandler.set3dsStatusValidationListener();
+            if (!wc_mercadopago_custom_event_handler_params.is_mobile) {
+                this.initCardFormWhenReady();
+            }
         });
+    }
+
+    initCardFormWhenReady() {
+        const customContainer = document.querySelector('.mp-checkout-custom-container');
+        const customRadio = document.querySelector('#payment_method_woo-mercado-pago-custom');
+
+        if (customRadio?.checked && customContainer?.offsetParent !== null) {
+            this.cardForm.initCardForm();
+        }
     }
 
     showCheckoutClassicLoader() {
@@ -38,44 +51,21 @@ class MPEventHandler {
 
     mercadoPagoFormHandler(event, wc_checkout_form) {
         this.setMercadoPagoSessionId();
+        window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
 
         if (this.mercado_pago_submit) {
             return true;
         } else if (jQuery('#mp_checkout_type').val() === 'wallet_button') {
             return true;
         } else if (jQuery('#mp_checkout_type').val() === 'super_token') {
-            event.preventDefault();
+          window.mpSuperTokenMetrics?.registerClickOnPlaceOrderButton();
 
-            this.showCheckoutClassicLoader();
+          if (this.hasWooCommerceValidationErrors()) return true;
 
-            if (this.mercado_pago_submit) {
-                this.mercado_pago_submit = false;
-                return true;
-            }
+          this.handleWithSuperTokenSubmit(event, wc_checkout_form)
 
-            if (!window.mpSuperTokenPaymentMethods) {
-                return false;
-            }
-
-            if (!window.mpSuperTokenPaymentMethods.isSelectedPaymentMethodValid()) {
-                window.mpSuperTokenPaymentMethods.forceShowValidationErrors();
-                this.cardForm.removeLoadSpinner();
-                this.hideCheckoutClassicLoader();
-                return false;
-            }
-
-            window.mpSuperTokenPaymentMethods.updateSecurityCode()
-                .then(() => {
-                    this.mercado_pago_submit = true;
-                    wc_checkout_form.$checkout_form.trigger('submit');
-                })
-                .catch(() => {
-                    this.cardForm.removeLoadSpinner();
-                    this.hideCheckoutClassicLoader();
-                    return false;
-                });
-
-            return false;
+          // Return false to avoid the default behavior of the form submission
+          return false;
         } else {
             jQuery('#mp_checkout_type').val('custom');
 
@@ -83,9 +73,84 @@ class MPEventHandler {
                 this.setPayerIdentificationInfo();
                 return this.createToken();
             }
-    
+
             return false;
         }
+    }
+
+    async handleWithSuperTokenSubmit(event, wc_checkout_form) {
+        try {
+            event.preventDefault();
+            this.showCheckoutClassicLoader();
+
+            const superTokenPaymentMethods = window.mpSuperTokenPaymentMethods;
+            const superTokenAuthenticator = window.mpSuperTokenAuthenticator;
+
+            if (!superTokenPaymentMethods) throw new Error(MPSuperTokenErrorCodes.SUPER_TOKEN_PAYMENT_METHODS_NOT_FOUND);
+            if (!superTokenAuthenticator) throw new Error(MPSuperTokenErrorCodes.SUPER_TOKEN_AUTHENTICATOR_NOT_FOUND);
+
+            const activeMethod = superTokenPaymentMethods.getActivePaymentMethod();
+            const isSuperTokenValid = activeMethod && superTokenPaymentMethods.isSelectedPaymentMethodValid();
+
+            if (!activeMethod) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_ERROR);
+            if (!isSuperTokenValid) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID);
+
+            await superTokenAuthenticator.authorizePayment(activeMethod.token);
+
+            await superTokenPaymentMethods.updateSecurityCode();
+
+            this.mercado_pago_submit = true;
+            wc_checkout_form.$checkout_form.trigger('submit');
+        } catch(exception) {
+            window.mpSuperTokenErrorHandler?.handleError(exception);
+            this.cardForm.removeLoadSpinner();
+            this.hideCheckoutClassicLoader();
+        }
+    }
+
+    isInsideHiddenContainer(field) {
+        const containersToCheck = [
+            '.shipping_address',
+            '.billing_address',
+            '.woocommerce-shipping-fields',
+            '.woocommerce-billing-fields',
+            '.form-row'
+        ];
+
+        for (const selector of containersToCheck) {
+            const container = field.closest(selector);
+            if (!container) continue;
+
+            if (window.getComputedStyle(container).display === 'none') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    hasWooCommerceValidationErrors() {
+        const invalidFields = document.querySelectorAll(
+            '.woocommerce-invalid, .woocommerce-invalid-required-field, .validate-required.woocommerce-invalid'
+        );
+
+        const visibleInvalidFields = Array.from(invalidFields).filter(field => {
+            return !this.isInsideHiddenContainer(field);
+        });
+
+        const requiredFields = document.querySelectorAll(
+            '.woocommerce-checkout .validate-required input, .woocommerce-checkout .validate-required select'
+        );
+
+        const hasEmptyRequired = Array.from(requiredFields).some(field => {
+            if (field.type === 'hidden' || field.disabled) return false;
+
+            if (this.isInsideHiddenContainer(field)) return false;
+
+            return !field.value.trim();
+        });
+
+        return visibleInvalidFields.length > 0 || hasEmptyRequired;
     }
 
     createToken() {
@@ -95,7 +160,7 @@ class MPEventHandler {
                 return false;
             }
         }
-    
+
         this.cardForm.form
             .createCardToken()
             .then((cardToken) => {
@@ -120,6 +185,7 @@ class MPEventHandler {
             })
             .catch((error) => {
                 console.warn('Token creation error: ', error);
+                this.cardForm.scrollToCardForm();
                 this.cardForm.removeLoadSpinner();
             });
 
@@ -139,32 +205,10 @@ class MPEventHandler {
     }
 
     isCheckoutCustomPaymentMethodSelected() {
-        const checkoutCustomPaymentMethodElement = document.getElementById('payment_method_woo-mercado-pago-custom') || 
+        const checkoutCustomPaymentMethodElement = document.getElementById('payment_method_woo-mercado-pago-custom') ||
             document.querySelector('input[value=woo-mercado-pago-custom]');
 
         return checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked;
-    }
-
-    setCardFormLoadInterval() {
-        var cardFormInterval = setInterval(() => {
-            const cardInput = document.getElementById('form-checkout__cardNumber-container');
-
-            if (!this.isCheckoutCustomPaymentMethodSelected()) {
-                clearInterval(cardFormInterval);
-                return;
-            }
-
-            if (cardInput && cardInput.childElementCount > 0) {
-                clearInterval(cardFormInterval);
-                return;
-            }
-
-            if (this.cardForm.formMounted) {
-                this.cardForm.form.unmount();
-            }
-
-            this.cardForm.initCardForm();
-        }, 1500);
     }
 
     handlePaymentMethodSelected() {
@@ -174,18 +218,11 @@ class MPEventHandler {
             }
             return;
         }
-
-        this.cardForm.createLoadSpinner();
-
-        if (!this.triggeredPaymentMethodSelectedEvent) {
-            this.cardForm.initCardForm();
-        }
     }
 
     handleOrderReviewSubmit(event) {
         if (this.isCheckoutCustomPaymentMethodSelected()) {
             event.preventDefault();
-            this.cardForm.createLoadSpinner();
             return this.mercadoPagoFormHandler();
         } else {
             if (this.cardForm.formMounted) {
@@ -203,12 +240,24 @@ class MPEventHandler {
     }
 
     handleUpdatedCheckout() {
-        if (this.isCheckoutCustomPaymentMethodSelected()) {
-            if (this.cardForm.formMounted) {
-                this.cardForm.form.unmount();
-            }
-            this.cardForm.initCardForm();
+      if (this.isCheckoutCustomPaymentMethodSelected()) {
+        this.cardForm.createLoadSpinner();
+
+        const newAmount = this.cardForm.getAmount();
+        const currentAmount = this.cardForm.amount;
+        const promises = [window.mpSuperTokenTriggerHandler?.loadSuperToken(newAmount)];
+
+        if (this.cardForm.formMounted && newAmount !== currentAmount) {
+          this.cardForm.form.unmount();
         }
+
+        if (!this.cardForm.formMounted) promises.push(this.cardForm.initCardForm());
+
+        Promise.all(promises)
+          .finally(() => {
+            setTimeout(() => this.cardForm.removeLoadSpinner(), this.REMOVE_LOAD_SPINNER_DELAY);
+          });
+      }
     }
 
     handle3dsPayOrderFormSubmission() {
@@ -229,7 +278,7 @@ class MPEventHandler {
 
                 if (response.result === 'fail') {
                     jQuery('#order_review .woocommerce-error, #order_review .woocommerce-message').remove();
-                    
+
                     jQuery('#order_review').prepend(
                         '<div class="woocommerce-error">' + response.messages + '</div>'
                     );
@@ -238,7 +287,7 @@ class MPEventHandler {
                     this.cardForm.removeLoadSpinner();
                     this.hasToken = false;
                     this.mercado_pago_submit = false;
-                    
+
                     return;
                 }
 
@@ -252,12 +301,12 @@ class MPEventHandler {
     /**
      * Set payer identification info to hidden inputs
      * Replicates the same functionality from block mode
-     * 
+     *
      * This function ensures that document type and number values are properly
      * synchronized between the visible form inputs and hidden inputs that are
      * sent to the server. This provides consistency between classic and block
      * checkout modes for the payer identification data.
-     * 
+     *
      * @see custom.block.js - Similar functionality for block mode
      */
     setPayerIdentificationInfo() {
@@ -269,10 +318,10 @@ class MPEventHandler {
         documentElements.forEach(({ selector, hiddenInputId }) => {
             const element = document.querySelector(selector);
             const hiddenInput = document.querySelector(hiddenInputId);
-        
+
             if (element && hiddenInput && element.value) {
                 hiddenInput.value = element.value;
             }
         });
     }
-} 
+}
