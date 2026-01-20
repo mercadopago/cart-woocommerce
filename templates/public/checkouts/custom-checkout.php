@@ -226,7 +226,6 @@ if (!defined('ABSPATH')) {
                     <div id="mp-checkout-custom-installments-container" class="mp-checkout-custom-installments-container"></div>
 
                     <select
-                        style="display: none;"
                         data-checkout="installments"
                         name="installments"
                         id="form-checkout__installments"
@@ -247,7 +246,7 @@ if (!defined('ABSPATH')) {
     <input type="hidden" id="cardExpirationMonth" data-checkout="cardExpirationMonth"/>
     <input type="hidden" id="cardExpirationYear" data-checkout="cardExpirationYear"/>
     <input type="hidden" id="cardTokenId" name="mercadopago_custom[token]"/>
-    <input type="hidden" id="cardInstallments" name="mercadopago_custom[installments]"/>
+    <input type="hidden" id="cardInstallments" name="mercadopago_custom[installments]" value="1"/>
     <input type="hidden" id="mpCardSessionId" name="mercadopago_custom[session_id]" />
     <input type="hidden" id="paymentTypeId" name="mercadopago_custom[payment_type_id]"/>
     <input type="hidden" id="payerDocNumber" name="mercadopago_custom[doc_number]" />

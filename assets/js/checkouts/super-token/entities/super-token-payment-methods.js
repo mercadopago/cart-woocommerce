@@ -439,24 +439,10 @@ class MPSuperTokenPaymentMethods {
         securityCodeTooltip?.setAttribute('tabindex', '0');
       }
 
-      const installmentsDropdown = paymentMethodElement.querySelector('.andes-dropdown');
+      const installmentsDropdown = paymentMethodElement.querySelector('#mp-super-token-installments-select');
       if (installmentsDropdown) {
         installmentsDropdown.setAttribute('aria-hidden', 'false');
         installmentsDropdown.setAttribute('tabindex', '0');
-
-        const installmentsDropdownLabel = installmentsDropdown.querySelector('.andes-dropdown__label');
-        const installmentsDropdownSelectedText = installmentsDropdown.querySelector('.andes-dropdown__wrapper');
-        const installmentsDropdownOptions = installmentsDropdown.querySelector('.andes-dropdown__tax-info');
-        const installmentsDropdownTrigger = installmentsDropdown.querySelector('.andes-dropdown__trigger');
-
-        installmentsDropdownLabel?.setAttribute('aria-hidden', 'false');
-        installmentsDropdownLabel?.setAttribute('tabindex', '0');
-        installmentsDropdownSelectedText?.setAttribute('aria-hidden', 'false');
-        installmentsDropdownSelectedText?.setAttribute('tabindex', '0');
-        installmentsDropdownOptions?.setAttribute('aria-hidden', 'false');
-        installmentsDropdownOptions?.setAttribute('tabindex', '0');
-        installmentsDropdownTrigger?.setAttribute('aria-hidden', 'false');
-        installmentsDropdownTrigger?.setAttribute('tabindex', '0');
       }
     }
 
@@ -475,24 +461,10 @@ class MPSuperTokenPaymentMethods {
         securityCodeTooltip?.setAttribute('tabindex', '-1');
       }
 
-      const installmentsDropdown = paymentMethodElement.querySelector('.andes-dropdown');
+      const installmentsDropdown = paymentMethodElement.querySelector('#mp-super-token-installments-select');
       if (installmentsDropdown) {
         installmentsDropdown.setAttribute('aria-hidden', 'true');
         installmentsDropdown.setAttribute('tabindex', '-1');
-
-        const installmentsDropdownLabel = installmentsDropdown.querySelector('.andes-dropdown__label');
-        const installmentsDropdownSelectedText = installmentsDropdown.querySelector('.andes-dropdown__wrapper');
-        const installmentsDropdownOptions = installmentsDropdown.querySelector('.andes-dropdown__tax-info');
-        const installmentsDropdownTrigger = installmentsDropdown.querySelector('.andes-dropdown__trigger');
-
-        installmentsDropdownLabel?.setAttribute('aria-hidden', 'true');
-        installmentsDropdownLabel?.setAttribute('tabindex', '-1');
-        installmentsDropdownSelectedText?.setAttribute('aria-hidden', 'true');
-        installmentsDropdownSelectedText?.setAttribute('tabindex', '-1');
-        installmentsDropdownOptions?.setAttribute('aria-hidden', 'true');
-        installmentsDropdownOptions?.setAttribute('tabindex', '-1');
-        installmentsDropdownTrigger?.setAttribute('aria-hidden', 'true');
-        installmentsDropdownTrigger?.setAttribute('tabindex', '-1');
       }
     }
 
@@ -1118,15 +1090,9 @@ class MPSuperTokenPaymentMethods {
             const installments = this.normalizeInstallments(paymentMethod.installments);
 
             section.innerHTML = `
-                <andes-dropdown
-                    label="${this.INSTALLMENTS_INPUT_TITLE}"
-                    placeholder="${this.INSTALLMENTS_PLACEHOLDER}"
-                    required-message="${this.INSTALLMENTS_REQUIRED_MESSAGE}"
-                    items='${JSON.stringify(installments)}'
-                    site-id="${this.getSiteId()}"
-                    focus-on-error="true"
-                    ${this.needsBankInterestDisclaimer() ? `hint="*${this.BANK_INTEREST_HINT_TEXT}"` : ''}
-                ></andes-dropdown>
+              <select id="mp-super-token-installments-select" class="mp-input-select-select">
+                  ${installments.map(installment => `<option value="${installment.value}">${installment.title}</option>`).join('')}
+              </select>
             `;
         }
 
@@ -1418,14 +1384,13 @@ class MPSuperTokenPaymentMethods {
         });
 
         if (this.isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
-            const dropdownElement = paymentMethodElement.querySelector('andes-dropdown');
+            const dropdownElement = paymentMethodElement.querySelector('#mp-super-token-installments-select');
 
             this.addDropdownEventListener(dropdownElement);
 
             dropdownElement?.addEventListener('change', (event) => {
-                const selectedItem = event.detail;
+                const selectedItem = event.target.value;
                 if (selectedItem) {
-
                     if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
                         MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
                             null,
@@ -1437,11 +1402,11 @@ class MPSuperTokenPaymentMethods {
                         );
                     }
 
-                    if (selectedItem.value) {
-                      dropdownElement.value = selectedItem.value;
+                    if (selectedItem) {
+                      dropdownElement.value = selectedItem;
                       const cardInstallments = document.getElementById('cardInstallments');
                       if (cardInstallments) {
-                          cardInstallments.value = selectedItem.value;
+                          cardInstallments.value = selectedItem;
                       }
                     }
                 }
@@ -1745,12 +1710,6 @@ class MPSuperTokenPaymentMethods {
             return;
         }
 
-        const installmentsDropdown = paymentMethodElement.querySelector('andes-dropdown');
-        if (installmentsDropdown && this.isCreditCard(this.activePaymentMethod)) {
-            installmentsDropdown.state.hasInteracted = true;
-            installmentsDropdown.validate();
-        }
-
         if (
           this.securityCodeIsRequired(this.activePaymentMethod?.security_code_settings) &&
           !this.verifyIsSecurityCodeReferenceTrue(this.activePaymentMethod)
@@ -1774,17 +1733,9 @@ class MPSuperTokenPaymentMethods {
                 return false;
             }
 
-            const installmentsDropdown = paymentMethodElement.querySelector('andes-dropdown');
+            const installmentsDropdown = paymentMethodElement.querySelector('#mp-super-token-installments-select');
             if (!installmentsDropdown && this.isCreditCard(this.activePaymentMethod)) {
                 return false;
-            }
-
-            if (installmentsDropdown) {
-                installmentsDropdown.state.hasInteracted = true;
-                const isInstallmentsValid = installmentsDropdown.validate();
-                if (!isInstallmentsValid) {
-                    return false;
-                }
             }
 
             if (!this.securityCodeIsRequired(this.activePaymentMethod?.security_code_settings)) {

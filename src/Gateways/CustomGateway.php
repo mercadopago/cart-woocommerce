@@ -556,7 +556,7 @@ class CustomGateway extends AbstractGateway
             'placeholders_cardholder_name'            => $this->storeTranslations['placeholders_cardholder_name'],
             'cardFlagIconUrls'                        => array_map(
                 fn($icon) => $this->mercadopago->helpers->url->getImageAsset("checkouts/custom/card-flags/$icon"),
-                static::CARD_FLAGS_BY_COUNTRY[$this->mercadopago->sellerConfig->getSiteId()]
+                static::CARD_FLAGS_BY_COUNTRY[$this->mercadopago->sellerConfig->getSiteId()] ?? []
             ),
             'card_holder_input_helper_info'            => $this->storeTranslations['card_holder_input_helper_info'],
             'mercadopago_privacy_policy' => str_replace(
