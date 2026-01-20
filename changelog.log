@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog ==
 
+= v8.7.5 (20/01/2026) =
+* Fixed
+- Use select element instead custom select component on checkout custom.
+
 = v8.7.4 (19/01/2026) =
 * Fixed
 - Hide error message when updating cart total on fast payments flow.

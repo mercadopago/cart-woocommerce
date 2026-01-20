@@ -411,17 +411,8 @@ const CheckoutPage = {
 
   verifyInstallmentsContainer() {
     try {
-      if (!this.installmentsEnabled) {
-        return true;
-      }
-
-      const installmentsContainer = document.querySelector(CheckoutElements.mpInstallmentsContainer);
-      if (installmentsContainer) {
-        if (installmentsContainer.firstElementChild) {
-          installmentsContainer.firstElementChild.state.hasInteracted = true;
-          return installmentsContainer.firstElementChild.validate();
-        }
-      }
+      // TODO: Temporariamente não iremos validar as installments devido a solução paliativa mediante a versão do Google Chrome 144.
+      return true;
     } catch (error) {
       console.error('Error verifying installments container', error);
       return false;
@@ -527,36 +518,23 @@ const CheckoutPage = {
 
   setChangeEventOnInstallments(response) {
     this.clearInstallmentsComponent();
-    const installments = this.getInstallments(response);
-    const sdkSelect = document.getElementById('form-checkout__installments');
+    const installmentsSelect = document.getElementById('form-checkout__installments');
 
     if (!this.installmentsEnabled) {
       CheckoutPage.setValueOn('cardInstallments', '1');
-      sdkSelect.value = '1';
+      installmentsSelect.value = '1';
       return;
     }
 
-    const andesDropdown = document.createElement('andes-dropdown');
-    andesDropdown.setAttribute('id', CheckoutElements.mpInstallments);
-    andesDropdown.setAttribute('label', wc_mercadopago_custom_checkout_params.input_title.installments);
-    andesDropdown.setAttribute('placeholder', wc_mercadopago_custom_checkout_params.placeholders['installments']);
-    andesDropdown.setAttribute('items', JSON.stringify(installments));
-    andesDropdown.setAttribute('required-message', wc_mercadopago_custom_checkout_params.input_helper_message.installments.required);
-    andesDropdown.setAttribute('site-id', this.getCountry());
-
-    if (this.needsBankInterestDisclaimer()) {
-      andesDropdown.setAttribute('hint', '*' + wc_mercadopago_custom_checkout_params.input_helper_message.installments.bank_interest_hint_text);
-    }
-
-    andesDropdown.addEventListener('change', (event) => {
-      const selectedItem = event.detail;
+    installmentsSelect.addEventListener('change', (event) => {
+      const selectedItem = event.target.value;
       if (selectedItem) {
-        this.setValueOn('cardInstallments', selectedItem.value);
-        sdkSelect.value = selectedItem.value;
+        CheckoutPage.setValueOn('cardInstallments', selectedItem);
+        installmentsSelect.value = selectedItem;
+        this.verifyInstallmentsContainer();
       }
     });
 
-    this.showInstallmentsComponent(andesDropdown);
     this.setElementDisplay('mpInstallmentsCard', 'block');
   },
 };
