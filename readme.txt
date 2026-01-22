@@ -2,9 +2,9 @@
 Contributors: mercadopago
 Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
-Tested up to: 6.8.1
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.7.5
+Stable tag: 8.7.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,8 +134,8 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.7.5 (20/01/2026) =
+= v8.7.6 (22/01/2026) =
 * Fixed
-- Use select element instead custom select component on checkout custom.
+- Fix card holder name regex validation on checkout custom.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

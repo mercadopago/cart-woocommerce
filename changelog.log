@@ -1,5 +1,9 @@
 CHANGELOG:
-== Changelog ==
+== Changelog
+
+= v8.7.6 (22/01/2026) =
+* Fixed
+- Fix card holder name regex validation on checkout custom.
 
 = v8.7.5 (20/01/2026) =
 * Fixed
