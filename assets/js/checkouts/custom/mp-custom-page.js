@@ -427,7 +427,7 @@ const CheckoutPage = {
     }
 
     const value = cardholderNameInput.value.trim();
-    const regex = /[^a-zA-Z0-9]/;
+    const regex = /[^a-zA-ZÀ-ÿ0-9 ]/;
     const isValid = value.length > 2 && !regex.test(value);
 
     this.updateCardholderNameState(cardholderNameInput, isValid);
