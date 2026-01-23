@@ -439,11 +439,12 @@ class MPSuperTokenPaymentMethods {
         securityCodeTooltip?.setAttribute('tabindex', '0');
       }
 
-      const installmentsDropdown = paymentMethodElement.querySelector('#mp-super-token-installments-select');
-      if (installmentsDropdown) {
-        installmentsDropdown.setAttribute('aria-hidden', 'false');
-        installmentsDropdown.setAttribute('tabindex', '0');
-      }
+      const installmentsDropdown = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethodElement)}`);
+
+      if (!installmentsDropdown) return;
+
+      installmentsDropdown.setAttribute('aria-hidden', 'false');
+      installmentsDropdown.setAttribute('tabindex', '0');
     }
 
     setPaymentMethodChildrenAriaHidden(paymentMethodElement) {
@@ -461,11 +462,12 @@ class MPSuperTokenPaymentMethods {
         securityCodeTooltip?.setAttribute('tabindex', '-1');
       }
 
-      const installmentsDropdown = paymentMethodElement.querySelector('#mp-super-token-installments-select');
-      if (installmentsDropdown) {
-        installmentsDropdown.setAttribute('aria-hidden', 'true');
-        installmentsDropdown.setAttribute('tabindex', '-1');
-      }
+      const installmentsDropdown = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethodElement)}`);
+
+      if (!installmentsDropdown) return;
+
+      installmentsDropdown.setAttribute('aria-hidden', 'true');
+      installmentsDropdown.setAttribute('tabindex', '-1');
     }
 
     showPaymentMethodDetails(paymentMethodElement) {
@@ -1087,18 +1089,67 @@ class MPSuperTokenPaymentMethods {
         section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
 
         if (this.isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
-            const installments = this.normalizeInstallments(paymentMethod.installments);
+            const defaultOption = {
+              value: '',
+              title: this.INSTALLMENTS_PLACEHOLDER,
+              disabled: true,
+              selected: true,
+            };
+            const installments = [defaultOption, ...this.normalizeInstallments(paymentMethod.installments)];
 
             section.innerHTML = `
-              <select id="mp-super-token-installments-select" class="mp-input-select-select">
-                  ${installments.map(installment => `<option value="${installment.value}">${installment.title}</option>`).join('')}
-              </select>
+              <div class="mp-checkout-custom-installments-select-container">
+                <label for="mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}" class="mp-input-label">
+                  ${this.INSTALLMENTS_INPUT_TITLE}
+                </label>
+                <select
+                  data-checkout="installments"
+                  name="installments"
+                  id="mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}"
+                  class="mp-custom-checkout-select-input"
+                >
+                  ${installments.map(installment => `<option ${installment.disabled ? 'disabled' : ''} ${installment.selected ? 'selected' : ''} value="${installment.value}">${installment.title}</option>`).join('')}
+                </select>
+                <input-helper
+                  isVisible=false
+                  type="error"
+                  message="${this.INSTALLMENTS_REQUIRED_MESSAGE}"
+                  input-id="mp-super-token-installments-error-${this.paymentMethodIdentifier(paymentMethod)}"
+                >
+                </input-helper>
+                <div id="mp-super-token-installments-tax-info-${this.paymentMethodIdentifier(paymentMethod)}" class="mp-installments-tax-info" style="display: none;"></div>
+              </div>
             `;
         }
 
         section.innerHTML += this.buildSecurityCodeInnerHTML(paymentMethod);
 
         return section.outerHTML;
+    }
+
+    installmentsWasSelected(paymentMethod) {
+      const installmentsSelect = document.getElementById(`mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}`);
+
+      return !!installmentsSelect?.value;
+    }
+
+    setInstallmentsErrorState(paymentMethod, hasError) {
+      const paymentMethodIdentifier = this.paymentMethodIdentifier(paymentMethod);
+      const installmentsSelect = document.getElementById(`mp-super-token-installments-select-${paymentMethodIdentifier}`);
+      const installmentsLabel = document.querySelector(`label[for="mp-super-token-installments-select-${paymentMethodIdentifier}"]`);
+      const installmentsErrorHelper = document.querySelector(`#mp-super-token-installments-error-${paymentMethodIdentifier}`);
+
+      if (!installmentsSelect || !installmentsLabel || !installmentsErrorHelper) return;
+
+      if (hasError) {
+        installmentsErrorHelper.style.display = 'flex';
+        installmentsSelect.classList.add('mp-super-token-error');
+        installmentsLabel.classList.add('mp-super-token-label-error');
+      } else {
+        installmentsErrorHelper.style.display = 'none';
+        installmentsSelect.classList.remove('mp-super-token-error');
+        installmentsLabel.classList.remove('mp-super-token-label-error');
+      }
     }
 
     buildMLBConsumerCreditsLegalText() {
@@ -1384,7 +1435,7 @@ class MPSuperTokenPaymentMethods {
         });
 
         if (this.isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
-            const dropdownElement = paymentMethodElement.querySelector('#mp-super-token-installments-select');
+            const dropdownElement = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}`);
 
             this.addDropdownEventListener(dropdownElement);
 
@@ -1402,6 +1453,9 @@ class MPSuperTokenPaymentMethods {
                         );
                     }
 
+                    this.setInstallmentsErrorState(paymentMethod, false);
+                    CheckoutPage.updateTaxInfoForSelect(selectedItem, `mp-super-token-installments-tax-info-${this.paymentMethodIdentifier(paymentMethod)}`, paymentMethod?.installments);
+
                     if (selectedItem) {
                       dropdownElement.value = selectedItem;
                       const cardInstallments = document.getElementById('cardInstallments');
@@ -1409,6 +1463,14 @@ class MPSuperTokenPaymentMethods {
                           cardInstallments.value = selectedItem;
                       }
                     }
+                }
+            });
+
+            dropdownElement?.addEventListener('blur', () => {
+                if (this.installmentsWasSelected(paymentMethod)) {
+                    this.setInstallmentsErrorState(paymentMethod, false);
+                } else {
+                    this.setInstallmentsErrorState(paymentMethod, true);
                 }
             });
         }
@@ -1716,6 +1778,10 @@ class MPSuperTokenPaymentMethods {
         ) {
             this.forceSecurityCodeValidation(this.activePaymentMethod);
         }
+
+        if (this.isCreditCard(this.activePaymentMethod) && !this.installmentsWasSelected(this.activePaymentMethod)) {
+            this.setInstallmentsErrorState(this.activePaymentMethod, true);
+        }
     }
 
     isSelectedPaymentMethodValid() {
@@ -1733,8 +1799,8 @@ class MPSuperTokenPaymentMethods {
                 return false;
             }
 
-            const installmentsDropdown = paymentMethodElement.querySelector('#mp-super-token-installments-select');
-            if (!installmentsDropdown && this.isCreditCard(this.activePaymentMethod)) {
+            const installmentsDropdown = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(this.activePaymentMethod)}`);
+            if (!installmentsDropdown && this.isCreditCard(this.activePaymentMethod) && !this.installmentsWasSelected(this.activePaymentMethod)) {
                 return false;
             }
 

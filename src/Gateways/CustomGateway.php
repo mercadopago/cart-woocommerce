@@ -274,6 +274,7 @@ class CustomGateway extends AbstractGateway
                 'security_code_placeholder_text_4_digits' => $this->storeTranslations['security_code_placeholder_text_4_digits'],
                 'security_code_tooltip_text_3_digits' => $this->storeTranslations['security_code_tooltip_text_3_digits'],
                 'security_code_tooltip_text_4_digits' => $this->storeTranslations['security_code_tooltip_text_4_digits'],
+                'installments_select_placeholder_text' => $this->storeTranslations['placeholders_installments'],
             ]
         );
 
@@ -549,6 +550,7 @@ class CustomGateway extends AbstractGateway
             'card_input_document_helper_invalid'      => $this->storeTranslations['card_document_input_helper_invalid'],
             'card_input_document_helper_wrong'        => $this->storeTranslations['card_document_input_helper_wrong'],
             'card_issuer_input_label'                 => $this->storeTranslations['card_issuer_input_label'],
+            'card_installments_label'                 => $this->storeTranslations['card_installments_label'],
             'amount'                                  => $amountAndCurrencyRatio['amount'],
             'currency_ratio'                          => $amountAndCurrencyRatio['currencyRatio'],
             'message_error_amount'                    => $this->storeTranslations['message_error_amount'],
@@ -564,6 +566,9 @@ class CustomGateway extends AbstractGateway
                 $this->mercadopago->helpers->links->getPrivacyPolicyLink($this->countryConfigs['site_id']),
                 $this->storeTranslations['mercadopago_privacy_policy']
             ),
+            'installments_required_message' => $this->storeTranslations['installments_required'],
+            'interest_free_option_text' => $this->storeTranslations['interest_free_option_text'],
+            'bank_interest_hint_text' => $this->storeTranslations['card_installments_interest_text'],
         ];
     }
 

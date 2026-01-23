@@ -70,7 +70,7 @@ input.mp-card-holder-name.mp-error-2px {
 }
 
 input.mp-card-holder-name.mp-error {
-  border: 1px solid var(--andes-error-red) !important;
+  border: 2px solid var(--andes-error-red) !important;
 }
 
 .mp-checkout-custom-container {
@@ -191,6 +191,57 @@ div.mp-wallet-button-container div.mp-wallet-button-button button#mp-wallet-butt
     justify-content: space-between;
 }
 
+.mp-checkout-custom-installments-select-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.mp-installments-tax-info {
+  margin-top: 4px !important;
+  color: var(--andes-text-color-secondary, rgba(0, 0, 0, 0.55)) !important;
+  font-family: var(--primary-font-family) !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  line-height: 18px !important;
+  background-color: transparent !important;
+  padding-left: 6px !important;
+}
+
+.mp-custom-checkout-select-input {
+  background: var(--andes-white) !important;
+  border: 1px solid var(--andes-gray-250) !important;
+  border-radius: 6px !important;
+  color: var(--andes-gray-900) !important;
+  font-family: var(--mp-font-inter) !important;
+  font-size: 16px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  height: 48px !important;
+  line-height: 20px !important;
+  outline: 0 !important;
+  padding: 12px !important;
+  text-align: left !important;
+  width: 100% !important;
+
+  /* Código para reposicionar a seta do select */
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='13' height='8' viewBox='0 0 13 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.70204 0.755972L6.49767 5.5516L11.2983 0.750977L12.1468 1.5995L6.49767 7.24866L0.853516 1.6045L1.70204 0.755972Z' fill='rgba(0,0,0,0.9)'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 40px !important;
+}
+
+.mp-checkout-custom-installments-select-container .mp-input-label.mp-label-error {
+  color: var(--andes-error-red) !important;
+}
+
+.mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input.mp-error {
+  border: 2px solid var(--andes-error-red) !important;
+}
+
 .mp-checkout-custom-card-form .mp-checkout-custom-card-column {
     display: flex;
     flex-direction: column;
@@ -199,7 +250,7 @@ div.mp-wallet-button-container div.mp-wallet-button-button button#mp-wallet-butt
 }
 
 .mp-checkout-custom-card-form input-helper #mp-card-holder-name-helper-info {
-  color: var(--Text-andes-text-color-secondary, rgba(0, 0, 0, 0.55));
+  color: var(--andes-text-color-secondary, rgba(0, 0, 0, 0.55));
   font-size: 13px !important;
   font-style: normal !important;
   font-weight: 400 !important;

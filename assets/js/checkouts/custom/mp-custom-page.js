@@ -2,6 +2,12 @@
 
 const CheckoutPage = {
   installmentsEnabled: false,
+  INSTALLMENTS_SELECT_PLACHOLDER_TEXT: wc_mercadopago_custom_page_params.installments_select_placeholder_text,
+  TAX_TYPES: {
+    cft: { key: 'CFT_', label: 'CFTEA', bold: true },
+    tna: { key: 'TNA_', label: 'TNA', bold: false },
+    tea: { key: 'TEA_', label: 'TEA', bold: false },
+  },
 
   setElementDisplay(element, operator) {
     const elementToSet = document.querySelector(CheckoutElements[element]);
@@ -409,16 +415,6 @@ const CheckoutPage = {
     return taxInfo;
   },
 
-  verifyInstallmentsContainer() {
-    try {
-      // TODO: Temporariamente não iremos validar as installments devido a solução paliativa mediante a versão do Google Chrome 144.
-      return true;
-    } catch (error) {
-      console.error('Error verifying installments container', error);
-      return false;
-    }
-  },
-
   verifyCardholderName() {
     const cardholderNameInput = document.querySelector(CheckoutElements.fcCardholderName);
 
@@ -516,9 +512,25 @@ const CheckoutPage = {
     });
   },
 
-  setChangeEventOnInstallments(response) {
+  addDefaultOptionOnInstallmentsSelect(installmentsSelect) {
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    defaultOption.innerHTML = this.INSTALLMENTS_SELECT_PLACHOLDER_TEXT;
+
+    installmentsSelect.insertBefore(defaultOption, installmentsSelect.firstChild);
+  },
+
+  setChangeEventOnInstallments(installmentsData) {
     this.clearInstallmentsComponent();
     const installmentsSelect = document.getElementById('form-checkout__installments');
+
+    if (!installmentsSelect) return;
+
+    this.installmentsItemsData = installmentsData || [];
+
+    this.addDefaultOptionOnInstallmentsSelect(installmentsSelect);
 
     if (!this.installmentsEnabled) {
       CheckoutPage.setValueOn('cardInstallments', '1');
@@ -527,14 +539,113 @@ const CheckoutPage = {
     }
 
     installmentsSelect.addEventListener('change', (event) => {
-      const selectedItem = event.target.value;
-      if (selectedItem) {
-        CheckoutPage.setValueOn('cardInstallments', selectedItem);
-        installmentsSelect.value = selectedItem;
-        this.verifyInstallmentsContainer();
+      const selectedValue = event.target.value;
+      if (selectedValue) {
+        CheckoutPage.setValueOn('cardInstallments', selectedValue);
+        installmentsSelect.value = selectedValue;
+
+        this.updateTaxInfoForSelect(selectedValue, 'mp-installments-tax-info');
+        this.setInstallmentsErrorState(false);
+      }
+    });
+
+    installmentsSelect.addEventListener('blur', () => {
+      if (this.installmentsWasSelected()) {
+        this.setInstallmentsErrorState(false);
+      } else {
+        this.setInstallmentsErrorState(true);
       }
     });
 
     this.setElementDisplay('mpInstallmentsCard', 'block');
+  },
+
+  installmentsWasSelected() {
+    const installmentsSelect = document.getElementById('form-checkout__installments');
+
+    return !!installmentsSelect?.value;
+  },
+
+  scrollToCheckoutCustomContainer() {
+    const checkoutCustomContainer = document.querySelector('.mp-checkout-custom-container');
+    if (!checkoutCustomContainer) return;
+
+    checkoutCustomContainer.scrollIntoView({ behavior: 'smooth' });
+  },
+
+  setInstallmentsErrorState(hasError) {
+    const installmentsSelect = document.getElementById('form-checkout__installments');
+    const installmentsLabel = document.querySelector('.mp-checkout-custom-installments-select-container .mp-input-label');
+    const installmentsErrorHelper = document.querySelector('#mp-installments-error');
+
+    if (!installmentsSelect || !installmentsLabel || !installmentsErrorHelper) return;
+
+    if (hasError) {
+    installmentsErrorHelper.style.display = 'flex';
+      installmentsSelect.classList.add('mp-error');
+      installmentsLabel.classList.add('mp-label-error');
+    } else {
+      installmentsErrorHelper.style.display = 'none';
+      installmentsSelect.classList.remove('mp-error');
+      installmentsLabel.classList.remove('mp-label-error');
+    }
+  },
+
+  updateTaxInfoForSelect(selectedValue, containerId, payerCosts) {
+    const currentPayerCosts = payerCosts || this.installmentsItemsData?.payer_costs;
+    const taxInfoContainer = document.getElementById(containerId);
+
+    if (!taxInfoContainer) return;
+
+    const shouldHide =
+      this.getCountry() !== 'MLA' ||
+      parseInt(selectedValue, 10) < 2;
+    if (shouldHide) {
+      taxInfoContainer.style.display = 'none';
+      return;
+    }
+
+    const selectedItem = currentPayerCosts?.find(
+      item => `${item.installments}` == `${selectedValue}`
+    );
+    const taxInfo = this.parseTaxInfo(selectedItem?.labels);
+    const taxes = this.formatTaxDisplay(taxInfo);
+    taxInfoContainer.style.display = taxes ? 'block' : 'none';
+    if (taxes) taxInfoContainer.innerHTML = taxes;
+  },
+
+  parseTaxInfo(labels) {
+    if (!Array.isArray(labels)) return {};
+
+    const cleanNumber = (value) => {
+      const cleaned = value?.replace('%', '').trim();
+      return /^\d+([,.]\d+)?$/.test(cleaned) ? cleaned : null;
+    };
+
+    return labels
+      .filter(label => typeof label === 'string')
+      .flatMap(label => label.split('|'))
+      .reduce((acc, part) => {
+        for (const [type, { key }] of Object.entries(this.TAX_TYPES)) {
+          if (part.includes(key)) {
+            const value = cleanNumber(part.split(key)[1]);
+            if (value) acc[type] = value;
+          }
+        }
+        return acc;
+      }, {});
+  },
+
+  formatTaxDisplay(taxInfo) {
+    if (!taxInfo) return null;
+
+    const taxes = Object.entries(this.TAX_TYPES)
+      .filter(([type]) => taxInfo[type])
+      .map(([type, { label, bold }]) => {
+        const text = `${label}: ${taxInfo[type]}%`;
+        return bold ? `<b>${text}</b>` : text;
+      });
+
+    return taxes.length ? `${taxes.join(' - ')}. Tasa fija.` : null;
   },
 };
