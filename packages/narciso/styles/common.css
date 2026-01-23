@@ -106,6 +106,7 @@
     width: 1px !important
 }
 
+#payment .mp-document-select,
 .mp-document-select {
     appearance: auto;
     cursor: pointer !important;

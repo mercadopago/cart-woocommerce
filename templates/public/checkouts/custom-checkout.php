@@ -26,11 +26,15 @@ use MercadoPago\Woocommerce\Helpers\Template;
  * @var string $card_input_document_helper_invalid
  * @var string $card_input_document_helper_wrong
  * @var string $card_issuer_input_label
+ * @var string $card_installments_label
  * @var string $amount
  * @var string $currency_ratio
  * @var string $message_error_amount
  * @var string $security_code_tooltip_text_3_digits
  * @var string $mercadopago_privacy_policy
+ * @var string $installments_required_message
+ * @var string $interest_free_option_text
+ * @var string $bank_interest_hint_text
  *
  * @see \MercadoPago\Woocommerce\Gateways\CustomGateway
  */
@@ -219,19 +223,32 @@ if (!defined('ABSPATH')) {
                         </div>
 
                         <div class="mp-input-select-input">
-                            <select name="issuer" id="form-checkout__issuer" class="mp-input-select-select"></select>
+                            <select name="issuer" id="form-checkout__issuer" class="mp-custom-checkout-select-input"></select>
                         </div>
                     </div>
 
                     <div id="mp-checkout-custom-installments-container" class="mp-checkout-custom-installments-container"></div>
 
-                    <select
-                        data-checkout="installments"
-                        name="installments"
-                        id="form-checkout__installments"
-                        class="mp-input-select-select"
-                    >
-                    </select>
+                    <div class="mp-checkout-custom-installments-select-container">
+                        <label for="form-checkout__installments" class="mp-input-label">
+                            <span><?= esc_html($card_installments_label); ?><b style="color: red;">*</b></span>
+                        </label>
+                        <select
+                            data-checkout="installments"
+                            name="installments"
+                            id="form-checkout__installments"
+                            class="mp-custom-checkout-select-input"
+                        >
+                        </select>
+                        <input-helper
+                            isVisible=false
+                            type="error"
+                            message="<?= esc_html($installments_required_message); ?>"
+                            input-id="mp-installments-error"
+                        >
+                        </input-helper>
+                        <div id="mp-installments-tax-info" class="mp-installments-tax-info" style="display: none;"></div>
+                    </div>
                 </div>
             </div>
         </div>

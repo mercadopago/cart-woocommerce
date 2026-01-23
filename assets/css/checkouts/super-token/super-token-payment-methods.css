@@ -526,6 +526,14 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
     margin: 0 !important;
 }
 
+.mp-checkout-custom-installments-select-container .mp-input-label.mp-super-token-label-error {
+  color: var(--andes-error-red) !important;
+}
+
+.mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input.mp-super-token-error {
+  border: 1px solid var(--andes-error-red) !important;
+}
+
 .mp-consumer-credits-due-date {
     justify-content: center !important;
     font-family: var(--primary-font-family) !important;

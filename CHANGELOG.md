@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.7] 2026-01-23
+### Added
+- Add validation on select element for custom checkout.
+- Add MLA fees display on installments.
+- Add default option on select element.
+
+### Changed
+- Improve installments layout based on design specifications.
+- Add compatibility with Funnel Checkout plugin styles on document type select element.
+
 ## [8.7.6] 2026-01-22
 ### Fixed
 - Fix card holder name regex validation on checkout custom.

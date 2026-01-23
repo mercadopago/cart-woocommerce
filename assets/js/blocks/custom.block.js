@@ -122,8 +122,10 @@ const Content = (props) => {
             return { type: emitResponse.responseTypes.ERROR };
           }
 
-          if (typeof CheckoutPage !== 'undefined' && !CheckoutPage.verifyInstallmentsContainer()) {
+          if (typeof CheckoutPage !== 'undefined' && !CheckoutPage.installmentsWasSelected()) {
             window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
+            CheckoutPage.setInstallmentsErrorState(true);
+            window.mpCustomCheckoutHandler.cardForm.scrollToCardForm();
             return { type: emitResponse.responseTypes.ERROR };
           }
           break;

@@ -241,7 +241,6 @@ class MPCardForm {
             },
             onError: (errors) => {
                 CheckoutPage.verifyCardholderName();
-                CheckoutPage.verifyInstallmentsContainer();
                 errors.forEach((error) => {
                     this.removeBlockOverlay();
 

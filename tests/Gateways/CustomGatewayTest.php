@@ -725,6 +725,10 @@ class CustomGatewayTest extends TestCase
             'placeholders_cardholder_name' => 'Cardholder Name',
             'card_holder_input_helper_info' => 'As it spelled on the card.',
             'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
+            'installments_required' => 'Installments Required',
+            'interest_free_option_text' => 'Interest Free Option Text',
+            'card_installments_interest_text' => 'Card Installments Interest Text',
+            'card_installments_label' => 'Card Installments Label',
         ];
 
         // Mock links using reflection
@@ -1048,6 +1052,10 @@ class CustomGatewayTest extends TestCase
             'placeholders_cardholder_name' => 'Cardholder Name',
             'card_holder_input_helper_info' => 'As it spelled on the card.',
             'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
+            'installments_required' => 'Installments Required',
+            'interest_free_option_text' => 'Interest Free Option Text',
+            'card_installments_interest_text' => 'Card Installments Interest Text',
+            'card_installments_label' => 'Card Installments Label',
         ];
 
         // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods
@@ -1789,6 +1797,10 @@ class CustomGatewayTest extends TestCase
                 'placeholders_cardholder_name' => 'Cardholder Name',
                 'card_holder_input_helper_info' => 'As it spelled on the card.',
                 'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
+                'installments_required' => 'Installments Required',
+                'interest_free_option_text' => 'Interest Free Option Text',
+                'card_installments_interest_text' => 'Card Installments Interest Text',
+                'card_installments_label' => 'Card Installments Label',
             ];
 
             // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods
@@ -1870,6 +1882,10 @@ class CustomGatewayTest extends TestCase
             'placeholders_cardholder_name' => 'Cardholder Name',
             'card_holder_input_helper_info' => 'As it spelled on the card.',
             'mercadopago_privacy_policy' => 'Learn more about&nbsp;<a href="{link}" target="_blank">how we protect your privacy</a>.',
+            'installments_required' => 'Installments Required',
+            'interest_free_option_text' => 'Interest Free Option Text',
+            'card_installments_interest_text' => 'Card Installments Interest Text',
+            'card_installments_label' => 'Card Installments Label',
         ];
 
         // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods

@@ -154,8 +154,10 @@ class MPEventHandler {
     }
 
     createToken() {
-        if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.verifyInstallmentsContainer === 'function') {
-            if (!CheckoutPage.verifyInstallmentsContainer()) {
+        if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.installmentsWasSelected === 'function') {
+            if (!CheckoutPage.installmentsWasSelected()) {
+                CheckoutPage.setInstallmentsErrorState(true);
+                CheckoutPage.scrollToCheckoutCustomContainer();
                 this.cardForm.removeLoadSpinner();
                 return false;
             }
