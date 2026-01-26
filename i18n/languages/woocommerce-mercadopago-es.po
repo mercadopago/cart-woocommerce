@@ -2920,7 +2920,7 @@ msgstr "Pagá en un toque<br>con tus tarjetas guardadas"
 
 #: ../../src/Translations/StoreTranslations.php:283
 msgid "Card number"
-msgstr "Número de Tarjeta"
+msgstr "Número de tarjeta"
 
 #: ../../src/Translations/StoreTranslations.php:285
 msgid "Holder name"

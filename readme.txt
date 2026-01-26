@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.7.7
+Stable tag: 8.7.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,14 +134,17 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.7.7 (23/01/2026) =
+= v8.7.8 (26/01/2026) =
 * Added
-- Add validation on select element for custom checkout
-- Add MLA fees display on installments
-- Add default option on select element
+- Add card holder name helper info display on fast payments flow
+- Add security code tooltip display on fast payments flow
 
 * Changed
-- Improve installments layout based on design specifications
-- Add compatibility with Funnel Checkout plugin styles on document type select element
+- Enhance security code input layout for better alignment on fast payments flow
+- Update CSS for input helper info styling improvements
+- Add create account container to checkout validation
+
+* Fixed
+- Fix capitalization in card number translation for Spanish locales
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

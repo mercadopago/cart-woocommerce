@@ -22,6 +22,11 @@
 
 }
 
+.mp-helper .mp-helper-message.info {
+  color: var(--andes-gray-550) !important;
+  font-weight: 400 !important;
+}
+
 .mp-helper .mp-helper-message.message {
   color: var(--andes-gray-550) !important;
   font-weight: 400 !important;

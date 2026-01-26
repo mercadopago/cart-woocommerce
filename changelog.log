@@ -1,6 +1,19 @@
 CHANGELOG:
 == Changelog
 
+= v8.7.8 (26/01/2026) =
+* Added
+- Add card holder name helper info display on fast payments flow
+- Add security code tooltip display on fast payments flow
+
+* Changed
+- Enhance security code input layout for better alignment on fast payments flow
+- Update CSS for input helper info styling improvements
+- Add create account container to checkout validation
+
+* Fixed
+- Fix capitalization in card number translation for Spanish locales
+
 = v8.7.7 (23/01/2026) =
 * Added
 - Add validation on select element for custom checkout
