@@ -30,7 +30,9 @@ class MPEventHandler {
         const customContainer = document.querySelector('.mp-checkout-custom-container');
         const orderReviewForm = document.querySelector('form#order_review');
 
-        // On order pay page, verify both that container is visible AND payment method is selected
+        // On order pay page, verify payment method is selected
+        // Check radio button first, then fallback to container visibility
+        // (container visible = payment method pre-selected when radio doesn't exist)
         if (orderReviewForm) {
             const isSelected = this.isCheckoutCustomPaymentMethodSelected() || customContainer?.offsetParent !== null;
             if (isSelected) {
