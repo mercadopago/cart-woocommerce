@@ -19,18 +19,36 @@ if (!defined('ABSPATH')) {
 
 <script>
     window.addEventListener('load', function() {
-        window.mp = new MercadoPago('<?= esc_html($public_key); ?>');
-        window.checkout = window.mp.checkout({
-            preference: {
-                id: '<?= esc_html($preference_id); ?>'
-            },
-            autoOpen: true,
-        });
+        if (typeof MercadoPago === 'undefined') {
+            console.error('MercadoPago SDK not loaded');
+            return;
+        }
+
+        try {
+            window.mp = new MercadoPago('<?= esc_html($public_key); ?>');
+            window.checkout = window.mp.checkout({
+                preference: {
+                    id: '<?= esc_html($preference_id); ?>'
+                },
+                autoOpen: true,
+            });
+        } catch (error) {
+            console.error('Error initializing MercadoPago checkout:', error);
+        }
     });
+
+    function openMercadoPagoCheckout(event) {
+        event.preventDefault();
+        if (window.checkout) {
+            window.checkout.open();
+        } else {
+            console.error('MercadoPago checkout not initialized yet');
+        }
+    }
 </script>
 
 <div style="margin-bottom: 24px">
-    <a id="submit-payment" href="#" onclick="checkout.open()" class="button alt">
+    <a id="submit-payment" href="#" onclick="openMercadoPagoCheckout(event);" class="button alt">
         <?= esc_html($pay_with_mp_title); ?>
     </a>
 
