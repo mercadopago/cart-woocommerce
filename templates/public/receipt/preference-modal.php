@@ -44,12 +44,11 @@ if (!defined('ABSPATH')) {
         } else {
             console.error('MercadoPago checkout not initialized yet');
         }
-        return false;
     }
 </script>
 
 <div style="margin-bottom: 24px">
-    <a id="submit-payment" href="#" onclick="return openMercadoPagoCheckout(event)" class="button alt">
+    <a id="submit-payment" href="#" onclick="openMercadoPagoCheckout(event); return false;" class="button alt">
         <?= esc_html($pay_with_mp_title); ?>
     </a>
 
