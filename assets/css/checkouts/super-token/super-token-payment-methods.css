@@ -418,6 +418,9 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
 }
 
 .mp-super-token-security-code-input {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     background: #fff !important;
     border: 1px solid #bfbfbf !important;
     border-radius: 6px !important;
@@ -455,8 +458,6 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
   outline: none !important;
   position: absolute !important;
   right: 0 !important;
-  top: calc(27px + 24px) !important; /* 27px is the height of the label, 24px is the height of the input */
-  transform: translateY(-50%) !important;
   z-index: 2 !important;
   box-sizing: border-box !important;
   padding: 9px !important;
