@@ -126,7 +126,8 @@ class MPEventHandler {
             '.billing_address',
             '.woocommerce-shipping-fields',
             '.woocommerce-billing-fields',
-            '.form-row'
+            '.form-row',
+            '.create-account'
         ];
 
         for (const selector of containersToCheck) {

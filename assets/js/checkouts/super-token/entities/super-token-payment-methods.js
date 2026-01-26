@@ -16,6 +16,7 @@ class MPSuperTokenPaymentMethods {
     CHECKOUT_CUSTOM_LOAD_SELECTOR = '.mp-checkout-custom-load';
     SELECTED_SUPERTOKEN_METHOD_EVENT = 'mp_super_token_payment_method_selected';
     WALLET_BUTTON_SELECTOR = '.mp-wallet-button-container-wrapper';
+    CARD_HOLDER_NAME_HELPER_INFO_SELECTOR = '#mp-card-holder-name-helper-info';
     SUPER_TOKEN_STYLES = {
         ACCORDION: 'mp-super-token-payment-method__accordion',
         ACCORDION_HEADER: 'mp-super-token-payment-method__accordion-header',
@@ -589,6 +590,7 @@ class MPSuperTokenPaymentMethods {
         setTimeout(() => {
             this.unmountCardForm();
             this.mountCardForm();
+            this.showCardHolderNameHelperInfo();
         }, 50);
 
         setTimeout(() => {
@@ -923,6 +925,7 @@ class MPSuperTokenPaymentMethods {
                     class="mp-super-token-security-code-tooltip"
                     role="tooltip"
                     data-tooltip="${securityCodeTooltipText}"
+                    style="display: none !important;"
                 >?</span>
                 <div
                     id="mp-input-with-tooltip-helper-error"
@@ -1338,6 +1341,17 @@ class MPSuperTokenPaymentMethods {
                         })
 
                         this.storeActiveSecurityCodeInstance(securityCodeField);
+
+                        if (this.securityCodeIsRequired(paymentMethod?.security_code_settings)) {
+                          const securityCodeTooltip = document.querySelector(`#mp-super-token-security-code-container-${paymentMethod.token} .mp-super-token-security-code-tooltip`);
+                          const securityCodeInput = document.querySelector(`#mp-super-token-security-code-input-${paymentMethod.token}`);
+
+                          if (!securityCodeTooltip || !securityCodeInput) return;
+
+                          const securityCodeTooltipClone = securityCodeTooltip.cloneNode(true);
+                          securityCodeTooltipClone.style.display = 'flex';
+                          securityCodeInput.appendChild(securityCodeTooltipClone);
+                        }
                     })
                     .on('validityChange', (e) => {
                       this.setSecurityCodeReferenceTrue(paymentMethod);
@@ -1687,6 +1701,13 @@ class MPSuperTokenPaymentMethods {
         }
 
         header.remove();
+    }
+
+    showCardHolderNameHelperInfo() {
+        const cardHolderNameHelperInfo = document.querySelector(this.CARD_HOLDER_NAME_HELPER_INFO_SELECTOR);
+        if (cardHolderNameHelperInfo) {
+            cardHolderNameHelperInfo.style.display = 'flex';
+        }
     }
 
     addHorizontalRow() {

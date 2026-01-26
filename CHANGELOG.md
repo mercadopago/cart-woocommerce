@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.8] 2026-01-26
+### Added
+- Add card holder name helper info display on fast payments flow
+- Add security code tooltip display on fast payments flow
+
+### Changed
+- Enhance security code input layout for better alignment on fast payments flow
+- Update CSS for input helper info styling improvements
+- Add create account container to checkout validation
+
+### Fixed
+- Fix capitalization in card number translation for Spanish locales
+
 ## [8.7.7] 2026-01-23
 ### Added
 - Add validation on select element for custom checkout.
