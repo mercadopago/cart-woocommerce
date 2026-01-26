@@ -28,22 +28,17 @@ class MPEventHandler {
 
     initCardFormWhenReady() {
         const customContainer = document.querySelector('.mp-checkout-custom-container');
-        const customRadio = document.querySelector('#payment_method_woo-mercado-pago-custom');
         const orderReviewForm = document.querySelector('form#order_review');
 
-        // Helper to check if custom checkout is selected
-        const isCustomCheckoutSelected = () => {
-            return customRadio?.checked || customContainer?.offsetParent !== null;
-        };
-
-        // On order pay page (form#order_review exists), check if payment method is selected
-        if (orderReviewForm && isCustomCheckoutSelected()) {
+        // On order pay page, the payment method might be pre-selected without a radio button
+        // so we check if the container is visible
+        if (orderReviewForm && customContainer?.offsetParent !== null) {
             this.cardForm.initCardForm();
             return;
         }
 
-        // On regular checkout page, check if the radio button is checked
-        if (!orderReviewForm && isCustomCheckoutSelected()) {
+        // On regular checkout page, use the existing method to check if payment method is selected
+        if (!orderReviewForm && this.isCheckoutCustomPaymentMethodSelected()) {
             this.cardForm.initCardForm();
         }
     }
