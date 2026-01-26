@@ -31,10 +31,13 @@ class MPEventHandler {
         const customRadio = document.querySelector('#payment_method_woo-mercado-pago-custom');
         const orderReviewForm = document.querySelector('form#order_review');
 
-        // On order pay page (form#order_review exists), payment method is pre-selected
-        // so we just need to check if the container is visible
-        if (orderReviewForm && customContainer?.offsetParent !== null) {
-            this.cardForm.initCardForm();
+        // On order pay page (form#order_review exists), check if payment method is selected
+        // by verifying either the radio is checked OR the container is visible (payment method pre-selected)
+        if (orderReviewForm) {
+            const isSelected = customRadio?.checked || customContainer?.offsetParent !== null;
+            if (isSelected) {
+                this.cardForm.initCardForm();
+            }
             return;
         }
 
