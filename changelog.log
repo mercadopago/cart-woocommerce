@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog
 
+= v8.7.9 (28/01/2026) =
+* Fixed
+- Fix pay for order flow when fast payments flow is supported
+
 = v8.7.8 (26/01/2026) =
 * Added
 - Add card holder name helper info display on fast payments flow
