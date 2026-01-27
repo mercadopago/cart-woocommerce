@@ -15,8 +15,20 @@ class MPCardForm {
     }
 
     async initCardForm(amount = this.getAmount()) {
+        console.log('[MP DEBUG CardForm] initCardForm called, amount:', amount);
         this.amount = amount;
         this.cardNumberFilledValidator = false;
+
+        // Ensure container is visible before initializing SDK
+        const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
+        const loadSpinner = document.querySelector('.mp-checkout-custom-load');
+
+        console.log('[MP DEBUG CardForm] Before init - container hidden:', customContainer?.classList.contains('mp-hidden'));
+        console.log('[MP DEBUG CardForm] Before init - spinner hidden:', loadSpinner?.classList.contains('mp-hidden'));
+
+        // Make container visible for SDK initialization
+        customContainer?.classList.remove('mp-hidden');
+        customContainer?.classList.remove('mp-display-none');
 
         if (!window.mpSdkInstance) {
             const mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key, {
@@ -36,11 +48,14 @@ class MPCardForm {
                 callbacks: this.getCardFormCallbacks(resolve, reject)
             })
         }).then(() => {
+            console.log('[MP DEBUG CardForm] CardForm initialized successfully');
             this.clearTimeoutToWaitInitCardForm();
+            this.removeLoadSpinner();
             this.sendMetric('MP_CARDFORM_SUCCESS', 'Security fields loaded', 'mp_custom_checkout_security_fields_client');
             CheckoutPage.verifyCardholderNameOnFocus();
         })
         .catch((error) => {
+            console.error('[MP DEBUG CardForm] CardForm initialization error:', error);
             this.clearTimeoutToWaitInitCardForm();
             const parsedError = this.handleCardFormErrors(error);
             this.sendMetric('MP_CARDFORM_ERROR', parsedError, 'mp_custom_checkout_security_fields_client');
@@ -345,24 +360,29 @@ class MPCardForm {
     }
 
     removeLoadSpinner() {
-        if (!this.isLoading) return;
+        console.log('[MP DEBUG CardForm] removeLoadSpinner called, isLoading:', this.isLoading);
 
         const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
 
+        console.log('[MP DEBUG CardForm] Elements found:', {
+            customContainer: !!customContainer,
+            loadSpinner: !!loadSpinner
+        });
+
         document.dispatchEvent(new CustomEvent('mp_super_token_loading_end', { detail: { dateNowInMilliseconds: Date.now() } }));
 
         this.isLoading = false;
-        const onTransitionEnd = () => {
-          loadSpinner?.classList.add('mp-display-none');
-          customContainer?.classList.remove('mp-hidden');
-          customContainer?.classList.remove('mp-display-none');
 
-          loadSpinner.removeEventListener('transitionend', onTransitionEnd);
-        };
-
-        loadSpinner?.addEventListener('transitionend', onTransitionEnd);
+        // Hide spinner immediately
         loadSpinner?.classList.add('mp-hidden');
+        loadSpinner?.classList.add('mp-display-none');
+
+        // Ensure container is visible
+        customContainer?.classList.remove('mp-hidden');
+        customContainer?.classList.remove('mp-display-none');
+
+        console.log('[MP DEBUG CardForm] Spinner and container classes updated');
     }
 
     removeBlockOverlay() {

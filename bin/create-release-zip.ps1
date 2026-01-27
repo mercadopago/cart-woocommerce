@@ -33,7 +33,7 @@ $filesToCopy = @(
 foreach ($item in $filesToCopy) {
     $sourcePath = Join-Path $BASE_DIR $item
     $destPath = Join-Path $TMP_DIR $item
-    
+
     if (Test-Path $sourcePath) {
         Copy-Item -Path $sourcePath -Destination $destPath -Recurse -Force
         Write-Host "  Copied: $item"
@@ -67,13 +67,13 @@ Write-Host "[+] Removing non-minified assets..."
 $assetsPath = Join-Path $TMP_DIR "assets"
 
 # Remove non-minified CSS files
-Get-ChildItem -Path $assetsPath -Filter "*.css" -Recurse | 
-    Where-Object { $_.Name -notlike "*.min.css" } | 
+Get-ChildItem -Path $assetsPath -Filter "*.css" -Recurse |
+    Where-Object { $_.Name -notlike "*.min.css" } |
     Remove-Item -Force
 
 # Remove non-minified JS files
-Get-ChildItem -Path $assetsPath -Filter "*.js" -Recurse | 
-    Where-Object { $_.Name -notlike "*.min.js" } | 
+Get-ChildItem -Path $assetsPath -Filter "*.js" -Recurse |
+    Where-Object { $_.Name -notlike "*.min.js" } |
     Remove-Item -Force
 
 Pop-Location

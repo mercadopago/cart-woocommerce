@@ -13,36 +13,59 @@ class MPEventHandler {
     }
 
     bindEvents() {
+        console.log('[MP DEBUG] bindEvents called');
         jQuery('form.checkout').on('checkout_place_order_woo-mercado-pago-custom', (event, wc_checkout_form) => this.mercadoPagoFormHandler(event, wc_checkout_form));
         jQuery('body').on('payment_method_selected', this.handlePaymentMethodSelected.bind(this));
         jQuery('form#order_review').submit(this.handleOrderReviewSubmit.bind(this));
         jQuery(document.body).on('checkout_error', this.handleCheckoutError.bind(this));
         jQuery(document).on('updated_checkout', this.handleUpdatedCheckout.bind(this));
         jQuery(document).ready(() => {
+            console.log('[MP DEBUG] Document ready, is_mobile:', wc_mercadopago_custom_event_handler_params.is_mobile);
             this.threeDSHandler.set3dsStatusValidationListener();
             if (!wc_mercadopago_custom_event_handler_params.is_mobile) {
+                console.log('[MP DEBUG] Calling initCardFormWhenReady from document.ready');
                 this.initCardFormWhenReady();
             }
         });
     }
 
     initCardFormWhenReady() {
+        console.log('[MP DEBUG] initCardFormWhenReady called');
         const customContainer = document.querySelector('.mp-checkout-custom-container');
         const orderReviewForm = document.querySelector('form#order_review');
 
-        // On order pay page, verify payment method is selected
-        // Check radio button first, then fallback to container visibility
-        // (container visible = payment method pre-selected when radio doesn't exist)
+        console.log('[MP DEBUG] Context:', {
+            hasOrderReviewForm: !!orderReviewForm,
+            hasCustomContainer: !!customContainer
+        });
+
+        // On order pay page, verify if custom checkout is present and should be initialized
         if (orderReviewForm) {
-            const isSelected = this.isCheckoutCustomPaymentMethodSelected() || customContainer?.offsetParent !== null;
-            if (isSelected) {
+            // Check if payment method radio exists and is selected
+            const isRadioSelected = this.isCheckoutCustomPaymentMethodSelected();
+
+            // If no radio exists but container is present, it means custom checkout is the only/pre-selected method
+            const hasOnlyCustomCheckout = !document.querySelector('input[name="payment_method"]') && customContainer;
+
+            console.log('[MP DEBUG] Order-pay page:', {
+                isRadioSelected,
+                hasOnlyCustomCheckout,
+                willInitialize: isRadioSelected || hasOnlyCustomCheckout
+            });
+
+            if (isRadioSelected || hasOnlyCustomCheckout) {
+                console.log('[MP DEBUG] Initializing card form on order-pay page');
                 this.cardForm.initCardForm();
             }
             return;
         }
 
         // On regular checkout page, use the existing method to check if payment method is selected
-        if (this.isCheckoutCustomPaymentMethodSelected()) {
+        const isSelected = this.isCheckoutCustomPaymentMethodSelected();
+        console.log('[MP DEBUG] Regular checkout page, isSelected:', isSelected);
+
+        if (isSelected) {
+            console.log('[MP DEBUG] Initializing card form on regular checkout');
             this.cardForm.initCardForm();
         }
     }
@@ -227,11 +250,22 @@ class MPEventHandler {
     }
 
     handlePaymentMethodSelected() {
-        if (!this.isCheckoutCustomPaymentMethodSelected()) {
+        console.log('[MP DEBUG] payment_method_selected event');
+        const isSelected = this.isCheckoutCustomPaymentMethodSelected();
+        console.log('[MP DEBUG] Custom checkout selected:', isSelected);
+
+        if (!isSelected) {
             if (this.cardForm.formMounted) {
                 this.cardForm.form.unmount();
             }
             return;
+        }
+
+        // Initialize card form when payment method is selected
+        const orderReviewForm = document.querySelector('form#order_review');
+        if (orderReviewForm && !this.cardForm.formMounted) {
+            console.log('[MP DEBUG] Initializing card form from payment_method_selected event');
+            this.cardForm.initCardForm();
         }
     }
 
@@ -255,7 +289,11 @@ class MPEventHandler {
     }
 
     handleUpdatedCheckout() {
-      if (this.isCheckoutCustomPaymentMethodSelected()) {
+      console.log('[MP DEBUG] updated_checkout event');
+      const isSelected = this.isCheckoutCustomPaymentMethodSelected();
+      console.log('[MP DEBUG] Custom checkout selected:', isSelected);
+
+      if (isSelected) {
         this.cardForm.createLoadSpinner();
 
         const newAmount = this.cardForm.getAmount();
@@ -266,7 +304,10 @@ class MPEventHandler {
           this.cardForm.form.unmount();
         }
 
-        if (!this.cardForm.formMounted) promises.push(this.cardForm.initCardForm());
+        if (!this.cardForm.formMounted) {
+          console.log('[MP DEBUG] Form not mounted, calling initCardForm');
+          promises.push(this.cardForm.initCardForm());
+        }
 
         Promise.all(promises)
           .finally(() => {
