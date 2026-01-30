@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.9] 2026-01-28
+### Fixed
+- Fix pay for order flow when fast payments flow is supported
+
 ## [8.7.8] 2026-01-26
 ### Added
 - Add card holder name helper info display on fast payments flow
