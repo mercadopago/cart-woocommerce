@@ -1,8 +1,8 @@
 name: publish-release
 
 on:
-  # push:
-  #   branches: [ master ]
+  push:
+    branches: [ master ]
 
 jobs:
   publish-release:
@@ -12,13 +12,13 @@ jobs:
       - name: get-npm-version
         id: package-version
         uses: martinbeentjes/npm-get-version-action@main
-      # - name: Setup release
-      #   env:
-      #     SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
-      #     SSH_SDK_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY_PHP_SDK }}
-      #     DESTINATION_REPOSITORY_USERNAME: 'mercadopago'
-      #     DESTINATION_REPOSITORY_NAME: 'cart-woocommerce'
-      #     GIT_USER_NAME: 'Mercado Pago'
-      #     GIT_USER_EMAIL: 'woocommerce.dev@mercadopago.com'
-      #     PACKAGE_VERSION: ${{ steps.package-version.outputs.current-version }}
-      #   run: bin/setup-release.sh
+      - name: Setup release
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+          SSH_SDK_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY_PHP_SDK }}
+          DESTINATION_REPOSITORY_USERNAME: 'mercadopago'
+          DESTINATION_REPOSITORY_NAME: 'cart-woocommerce'
+          GIT_USER_NAME: 'Mercado Pago'
+          GIT_USER_EMAIL: 'woocommerce.dev@mercadopago.com'
+          PACKAGE_VERSION: ${{ steps.package-version.outputs.current-version }}
+        run: bin/setup-release.sh
