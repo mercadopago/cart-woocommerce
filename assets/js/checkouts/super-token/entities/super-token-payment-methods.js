@@ -226,13 +226,17 @@ class MPSuperTokenPaymentMethods {
           withRetry: this.AUTHORIZE_PAYMENT_METHOD_WITH_RETRY_ERROR_TEXT,
           withoutRetry: this.AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT
         },
+        'AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED': {
+          withRetry: this.AUTHORIZE_PAYMENT_METHOD_WITH_RETRY_ERROR_TEXT,
+          withoutRetry: this.AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT
+        },
         'SELECT_PAYMENT_METHOD_ERROR': {
           withRetry: this.SELECT_PAYMENT_METHOD_ERROR_TEXT,
           withoutRetry: this.SELECT_PAYMENT_METHOD_ERROR_TEXT
         },
       };
 
-      const errorConfig = errorMessages[errorCode];
+      const errorConfig = Object.entries(errorMessages).find(([key]) => errorCode.includes(key))?.[1] || null;
 
       if (!errorConfig) {
           return this.SUBMIT_SUPER_TOKEN_GENERIC_ERROR_TEXT;
@@ -1331,6 +1335,7 @@ class MPSuperTokenPaymentMethods {
                         'font-size': '16px',
                         height: '48px',
                         padding: '14px',
+                        fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif'
                     }
                 })
                     .mount(`mp-super-token-security-code-input-${paymentMethod.token}`)

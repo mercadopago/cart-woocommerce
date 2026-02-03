@@ -1,9 +1,25 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
-
+ 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## v8.7.9 (02/02/2026)
+### Changed
+- Reorder updateSecurityCode and authorizePayment execution on fast payments flow
+- Improve error reset flow on fast payments when an error occurs (except user cancellation)
+- Clear lastException state when user cancels authentication on fast payments flow
+
+### Fixed
+- Fix missing SUPER_TOKEN_METRICS_NOT_FOUND constant in error constants file
+- Fix potential residual state when user cancels fast payments authentication
+- Fix unit_price value according transaction_amount on fast payments flow
+- Fix few issues related to layout on fast payments flow
+
+### Added
+- Add more metrics cases for fast payments error tracking
+- Improve error message handling in fast payments metrics
 
 ## [8.7.8] 2026-01-26
 ### Added

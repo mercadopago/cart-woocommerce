@@ -97,12 +97,13 @@ const Content = (props) => {
 
             if (!isSuperTokenValid) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID);
 
-            await superTokenAuthenticator.authorizePayment(activeMethod.token);
-
             await superTokenPaymentMethods.updateSecurityCode();
+
+            await superTokenAuthenticator.authorizePayment(activeMethod.token);
           } catch (exception) {
-            window.mpSuperTokenErrorHandler?.handleError(exception);
             window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
+            window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError();
+            window.mpSuperTokenTriggerHandler?.setLastException(exception);
 
             return { type: emitResponse.responseTypes.ERROR };
           }

@@ -335,13 +335,18 @@ class MPCardForm {
         const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
 
-        document.dispatchEvent(new CustomEvent('mp_super_token_loading_start', { detail: { dateNowInMilliseconds: Date.now() } }));
-
         this.isLoading = true;
         customContainer?.classList.add('mp-hidden');
         customContainer?.classList.add('mp-display-none');
         loadSpinner?.classList.remove('mp-hidden');
         loadSpinner?.classList.remove('mp-display-none');
+
+        const dateNowInMilliseconds = Date.now();
+
+        setTimeout( () => {
+          document.dispatchEvent(new CustomEvent('mp_super_token_loading_start', { detail: { dateNowInMilliseconds } }))
+          if(!window.melidata) sendMetric('MP_MELIDATA_CLIENT_UNDEFINED', 'Loading started but melidata client is not loaded yet', 'mp_custom_checkout_melidata_client_undefined');
+        }, 3000);
     }
 
     removeLoadSpinner() {
@@ -349,8 +354,6 @@ class MPCardForm {
 
         const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
-
-        document.dispatchEvent(new CustomEvent('mp_super_token_loading_end', { detail: { dateNowInMilliseconds: Date.now() } }));
 
         this.isLoading = false;
         const onTransitionEnd = () => {
@@ -363,6 +366,14 @@ class MPCardForm {
 
         loadSpinner?.addEventListener('transitionend', onTransitionEnd);
         loadSpinner?.classList.add('mp-hidden');
+
+        const dateNowInMilliseconds = Date.now();
+
+        setTimeout( () => {
+          document.dispatchEvent(new CustomEvent('mp_super_token_loading_end', { detail: { dateNowInMilliseconds } }))
+          if(!window.melidata) sendMetric('MP_MELIDATA_CLIENT_UNDEFINED', 'Loading ended but melidata client is not loaded yet', 'mp_custom_checkout_melidata_client_undefined');
+        }, 3000);
+
     }
 
     removeBlockOverlay() {

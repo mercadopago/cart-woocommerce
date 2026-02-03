@@ -6,6 +6,7 @@ use Exception;
 use MercadoPago\PP\Sdk\Entity\Payment\Item;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
+use MercadoPago\Woocommerce\Helpers\Numbers;
 use WC_Order;
 
 class SupertokenTransaction extends AbstractPaymentTransaction
@@ -99,7 +100,7 @@ class SupertokenTransaction extends AbstractPaymentTransaction
         $totalValue = 0;
 
         foreach ($items as $item) {
-            $unitPrice = (float) $item->unit_price;
+            $unitPrice = Numbers::makesValueSafe($item->unit_price);
             $quantity = (int) $item->quantity;
 
             $totalValue += $unitPrice * $quantity;
@@ -111,7 +112,7 @@ class SupertokenTransaction extends AbstractPaymentTransaction
             'description' => "Consolidated Items",
             'category_id' => $this->mercadopago->storeConfig->getStoreCategory('others'),
             'quantity' => 1,
-            'unit_price' => $totalValue
+            'unit_price' => Numbers::format($totalValue),
         ];
 
         return [$consolidatedItem];
