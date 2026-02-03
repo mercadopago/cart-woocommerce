@@ -386,7 +386,6 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
 .mp-super-token-payment-method__header {
     display: flex !important;
     justify-content: space-between !important;
-    align-items: center !important;
     gap: 12px !important;
     width: 100% !important;
     container-type: inline-size !important;
@@ -645,9 +644,10 @@ header.mp-payment-methods-header > img.mp-payment-methods-header-logo {
 }
 
 .mp-super-token-payment-methods-list hr.mp-payment-methods-list-horizontal-row {
+    height: 0 !important;
     color: var(--andes-gray-color) !important;
     margin: 0 0 8px 0 !important;
-    border: 0px solid !important;
+    border: 1px solid !important;
 }
 
 @container mp-super-token-payment-method-header (max-width: 248px) {

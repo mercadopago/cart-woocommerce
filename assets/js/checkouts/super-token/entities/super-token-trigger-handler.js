@@ -5,22 +5,39 @@ class MPSuperTokenTriggerHandler {
     CUSTOM_CHECKOUT_CLASSIC_RADIO_SELECTOR = '#payment_method_woo-mercado-pago-custom';
     FORM_CHECKOUT_SELECTOR = 'form.checkout, form#order_review';
     CHECKOUT_TYPE_SELECTOR = '#mp_checkout_type';
+    LOADING_ANIMATION_FINISH_DELAY = 500;
+    AVOID_INSTANT_REMOVAL_LOADER_DELAY = 500;
     CURRENT_USER_EMAIL = wc_mercadopago_supertoken_trigger_handler_params.current_user_email;
 
     // Attributes
     wcBuyerEmail = null;
     currentAmount = null;
     isAlreadyListeningForm = false;
+    lastException = null;
 
     // Dependencies
     mpSuperTokenAuthenticator = null;
     wcEmailListener = null;
     mpSuperTokenPaymentMethods = null;
+    mpSuperTokenErrorHandler = null;
 
-    constructor(mpSuperTokenAuthenticator, wcEmailListener, mpSuperTokenPaymentMethods) {
+    constructor(mpSuperTokenAuthenticator, wcEmailListener, mpSuperTokenPaymentMethods, mpSuperTokenErrorHandler) {
         this.mpSuperTokenAuthenticator = mpSuperTokenAuthenticator;
         this.wcEmailListener = wcEmailListener;
         this.mpSuperTokenPaymentMethods = mpSuperTokenPaymentMethods;
+        this.mpSuperTokenErrorHandler = mpSuperTokenErrorHandler;
+    }
+
+    hasLastException() {
+        return !!this.getLastException();
+    }
+
+    getLastException() {
+        return this.lastException;
+    }
+
+    setLastException(exception) {
+        this.lastException = exception;
     }
 
     getBuyerEmail() {
@@ -76,19 +93,31 @@ class MPSuperTokenTriggerHandler {
 
         this.loadSuperToken(this.currentAmount)
             .finally(() => {
-                // Apenas para não remover o loader tão rápido
                 setTimeout(() => {
                     window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
 
                     if (this.mpSuperTokenPaymentMethods.hasCheckoutError()) {
                       this.mpSuperTokenPaymentMethods.selectLastPaymentMethodChoosen();
                     }
-                }, 500);
+
+                    if (this.hasLastException()) {
+                      setTimeout(() => {
+                        this.mpSuperTokenErrorHandler.handleError(this.getLastException());
+                        this.setLastException(null);
+                      }, this.LOADING_ANIMATION_FINISH_DELAY);
+                    }
+                }, this.AVOID_INSTANT_REMOVAL_LOADER_DELAY);
             });
     }
 
     resetSuperTokenOnError() {
         if (document.querySelector('#mp_checkout_type')?.value === 'super_token') {
+            const paymentMethodList = document.querySelector(`.${this.mpSuperTokenPaymentMethods?.SUPER_TOKEN_STYLES?.PAYMENT_METHOD_LIST}`);
+
+            if (paymentMethodList) {
+              paymentMethodList.scrollIntoView({ behavior: 'smooth' });
+            }
+
             this.mpSuperTokenPaymentMethods.deselectAllPaymentMethods();
             this.mpSuperTokenPaymentMethods.hideAllPaymentMethodDetails();
             this.mpSuperTokenPaymentMethods.unmountActiveSecurityCodeInstance();

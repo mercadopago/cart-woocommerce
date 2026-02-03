@@ -144,8 +144,11 @@ class MPSuperTokenAuthenticator {
 
             await authenticator.authorizePayment(pseudotoken);
         } catch (error) {
-            this.mpSuperTokenMetrics.errorToAuthorizePayment(error);
-            throw new Error(MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_ERROR);
+          this.mpSuperTokenMetrics.errorToAuthorizePayment(error);
+
+          if (error?.message?.includes('USER_CANCELLED')) throw new Error(MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED);
+
+          throw new Error(MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_ERROR);
         }
     }
 }

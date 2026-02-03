@@ -110,7 +110,8 @@ class MPSuperTokenMetrics {
     shouldSkipError(errorMessage) {
         if (!errorMessage) return false;
 
-        const normalizedMessage = errorMessage
+        const errorMessageString = typeof errorMessage !== 'string' ? `${errorMessage}` : errorMessage;
+        const normalizedMessage = errorMessageString
             .replace(/\[mercado pago\]:\s*/gi, '')
             .trim()
             .toLowerCase();

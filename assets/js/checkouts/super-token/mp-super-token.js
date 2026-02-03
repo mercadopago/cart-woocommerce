@@ -19,18 +19,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 mpSuperTokenPaymentMethods,
                 mpSuperTokenMetrics,
             );
+            const mpSuperTokenErrorHandler = new MPSuperTokenErrorHandler(
+              mpSuperTokenPaymentMethods,
+              mpSuperTokenMetrics
+          );
 
             window.mpSuperTokenMetrics = mpSuperTokenMetrics;
             window.mpSuperTokenPaymentMethods = mpSuperTokenPaymentMethods;
             window.mpSuperTokenAuthenticator = mpSuperTokenAuthenticator;
-            window.mpSuperTokenErrorHandler = new MPSuperTokenErrorHandler(
-                mpSuperTokenPaymentMethods,
-                mpSuperTokenMetrics
-            );
+            window.mpSuperTokenErrorHandler = mpSuperTokenErrorHandler;
             window.mpSuperTokenTriggerHandler = new MPSuperTokenTriggerHandler(
                 mpSuperTokenAuthenticator,
                 wcEmailListener,
                 mpSuperTokenPaymentMethods,
+                mpSuperTokenErrorHandler
             );
         }
     }, WAIT_MP_SDK_INSTANCE_LOAD_INTERVAL)

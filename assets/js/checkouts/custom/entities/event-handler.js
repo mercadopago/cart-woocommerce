@@ -95,16 +95,17 @@ class MPEventHandler {
             if (!activeMethod) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_ERROR);
             if (!isSuperTokenValid) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID);
 
-            await superTokenAuthenticator.authorizePayment(activeMethod.token);
-
             await superTokenPaymentMethods.updateSecurityCode();
+
+            await superTokenAuthenticator.authorizePayment(activeMethod.token);
 
             this.mercado_pago_submit = true;
             wc_checkout_form.$checkout_form.trigger('submit');
         } catch(exception) {
-            window.mpSuperTokenErrorHandler?.handleError(exception);
             this.cardForm.removeLoadSpinner();
             this.hideCheckoutClassicLoader();
+            window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError();
+            window.mpSuperTokenTriggerHandler?.setLastException(exception);
         }
     }
 

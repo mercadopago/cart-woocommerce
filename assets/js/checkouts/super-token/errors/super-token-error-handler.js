@@ -27,10 +27,11 @@ class MPSuperTokenErrorHandler {
      * @returns {{code: string, message: string}}
      */
     parseError(exception) {
-        return {
-            code: exception?.message || MPSuperTokenErrorCodes.UNKNOWN_ERROR,
-            message: exception?.message || exception || 'Unknown error'
-        };
+      const normalizedMessage = typeof exception !== 'string' ? `${exception}` : exception;
+      return {
+          code: normalizedMessage || MPSuperTokenErrorCodes.UNKNOWN_ERROR,
+          message: normalizedMessage || 'Unknown error'
+      };
     }
 
     /**

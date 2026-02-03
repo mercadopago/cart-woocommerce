@@ -13,6 +13,7 @@ const MPSuperTokenErrorCodes = {
     // Authentication errors
     AUTHENTICATOR_NOT_FOUND: 'AUTHENTICATOR_NOT_FOUND',
     AUTHORIZE_PAYMENT_METHOD_ERROR: 'AUTHORIZE_PAYMENT_METHOD_ERROR',
+    AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED: 'AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED',
 
     // Payment errors
     UPDATE_SECURITY_CODE_ERROR: 'UPDATE_SECURITY_CODE_ERROR',
@@ -22,6 +23,7 @@ const MPSuperTokenErrorCodes = {
     SUPER_TOKEN_PAYMENT_METHODS_NOT_FOUND: 'SUPER_TOKEN_PAYMENT_METHODS_NOT_FOUND',
     SUPER_TOKEN_AUTHENTICATOR_NOT_FOUND: 'SUPER_TOKEN_AUTHENTICATOR_NOT_FOUND',
     CUSTOM_CHECKOUT_ENTIRE_ELEMENT_NOT_FOUND: 'CUSTOM_CHECKOUT_ENTIRE_ELEMENT_NOT_FOUND',
+    SUPER_TOKEN_METRICS_NOT_FOUND: 'SUPER_TOKEN_METRICS_NOT_FOUND',
 
     // Generic error
     UNKNOWN_ERROR: 'UNKNOWN_ERROR'
@@ -35,8 +37,7 @@ const MPSuperTokenErrorCodes = {
 const MPSuperTokenExpectedErrors = [
     MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_ERROR,
     MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID,
-    MPSuperTokenErrorCodes.UPDATE_SECURITY_CODE_ERROR,
-    MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_ERROR,
+    MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED,
 ];
 
 /**
@@ -46,14 +47,7 @@ const MPSuperTokenExpectedErrors = [
  * @constant {Array<string|RegExp>}
  */
 const MPSuperTokenSkippableErrorMessages = [
-    'user cancelled authentication',
-    'no applications were detected on device',
-    'authenticator flow is not supported',
-    'payment request flow not supported',
-    'invalid email address provided',
-    'invalid amount value provided',
-    'empty_account_payment_methods',
-    'paymentrequest api is not supported on this browser',
     /the\s+site\s+id\s+\w+\s+is\s+not\s+supported/i,
+    'authenticator flow is not supported',
 ];
 
