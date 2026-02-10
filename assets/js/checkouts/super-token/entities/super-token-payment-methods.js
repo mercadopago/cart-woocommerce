@@ -544,7 +544,15 @@ class MPSuperTokenPaymentMethods {
             return 'new_credit_card';
         }
 
-        return `${paymentMethod?.id || 'none'} ${paymentMethod?.type || 'none'}`.toLowerCase();
+        if (paymentMethod?.type === this.ACCOUNT_MONEY_TYPE) {
+          return this.ACCOUNT_MONEY_TYPE;
+        }
+
+        const paymentMethodName = `${paymentMethod?.id || 'none'} ${paymentMethod?.type || 'none'}`.toLowerCase();
+
+        const lastFourDigits = paymentMethod?.card?.card_number?.last_four_digits;
+
+        return paymentMethodName.concat(lastFourDigits ? ` ${lastFourDigits}` : '');
     }
 
     emitEventFromSelectPaymentMethod(paymentMethod) {
@@ -1220,13 +1228,17 @@ class MPSuperTokenPaymentMethods {
     }
 
     removeCheckoutLoaderFromPaymentMethodsList() {
-        const checkoutLoaderElement = this.getCheckoutLoaderElement();
-        const checkoutEntireElement = this.getCustomCheckoutEntireElement();
-        if (!checkoutLoaderElement || !checkoutEntireElement) {
-            return;
-        }
+      const checkoutLoaderElement = this.getCheckoutLoaderElement();
+      const checkoutEntireElement = this.getCustomCheckoutEntireElement();
+      if (!checkoutLoaderElement || !checkoutEntireElement) {
+        return;
+      }
 
-        checkoutEntireElement.appendChild(checkoutLoaderElement);
+      checkoutEntireElement.appendChild(checkoutLoaderElement);
+    }
+
+    getPaymentMethodsListElement() {
+        return document.querySelector(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LIST}`);
     }
 
     hidePaymentMethodsList() {
@@ -1681,7 +1693,7 @@ class MPSuperTokenPaymentMethods {
     }
 
     removeMercadoPagoPrivacyPolicyFooter() {
-        const footer = this.getCustomCheckoutEntireElement().querySelector('#mp-super-token-privacy-policy-footer');
+        const footer = this.getCustomCheckoutEntireElement()?.querySelector('#mp-super-token-privacy-policy-footer') ?? null;
         if (!footer) {
             return;
         }
@@ -1793,7 +1805,7 @@ class MPSuperTokenPaymentMethods {
             return;
         }
 
-        const paymentMethodElement = document.getElementById(`${this.activePaymentMethod?.id}${this.activePaymentMethod.card?.card_number?.last_four_digits}`);
+        const paymentMethodElement = document.getElementById(this.paymentMethodIdentifier(this.activePaymentMethod));
         if (!paymentMethodElement) {
             return;
         }
@@ -1808,6 +1820,8 @@ class MPSuperTokenPaymentMethods {
         if (this.isCreditCard(this.activePaymentMethod) && !this.installmentsWasSelected(this.activePaymentMethod)) {
             this.setInstallmentsErrorState(this.activePaymentMethod, true);
         }
+
+        paymentMethodElement.scrollIntoView({ behavior: 'smooth' });
     }
 
     isSelectedPaymentMethodValid() {
@@ -1826,7 +1840,7 @@ class MPSuperTokenPaymentMethods {
             }
 
             const installmentsDropdown = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(this.activePaymentMethod)}`);
-            if (!installmentsDropdown && this.isCreditCard(this.activePaymentMethod) && !this.installmentsWasSelected(this.activePaymentMethod)) {
+            if (installmentsDropdown && this.isCreditCard(this.activePaymentMethod) && !this.installmentsWasSelected(this.activePaymentMethod)) {
                 return false;
             }
 

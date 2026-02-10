@@ -272,7 +272,7 @@ class OrderStatus
                 }
 
                 $refundAmount = 0;
-                $refundRatio = (float) ($order->get_meta(OrderMetadata::CURRENCY_RATIO) ?? 1);
+                $refundRatio = (float) ($order->get_meta(OrderMetadata::CURRENCY_RATIO) ?: 1);
 
                 if (isset($data['current_refund']['id'])) {
                     $refundId = $data['current_refund']['id'];

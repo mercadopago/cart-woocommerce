@@ -24,7 +24,7 @@ class MPCheckoutSessionDataRegister {
             const mp = new MercadoPago(this.PUBLIC_KEY, {
                 locale: this.LOCALE,
             });
-    
+
             window.mpSdkInstance = mp;
         }
 
@@ -107,7 +107,7 @@ class MPCheckoutSessionDataRegister {
             }
 
             this.FLOW_ID = this.generateFlowId();
-    
+
             this.registerOnSessionStorage();
             this.registerOnHiddenInput();
             window.mpHiddenInputDataFromBlocksCheckout = this.getHiddenInputDataFromBlocksCheckout();

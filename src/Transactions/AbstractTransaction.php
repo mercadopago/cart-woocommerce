@@ -213,7 +213,7 @@ abstract class AbstractTransaction
         return $checkoutSessionData;
     }
 
-    private function getCheckoutSessionData()
+    public function getCheckoutSessionData()
     {
         $mercado_pago_checkout_session = $this->getAndDeleteCheckoutSessionDataOnHelperSessionByOrderId($this->order->get_id()) ?? [];
 

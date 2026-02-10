@@ -17,7 +17,7 @@ class MPSuperTokenErrorHandler {
      * @returns {boolean}
      */
     isExpectedError(errorCode) {
-        return MPSuperTokenExpectedErrors.includes(errorCode);
+      return MPSuperTokenExpectedErrors.some(expected => errorCode.includes(expected));
     }
 
     /**
@@ -54,7 +54,7 @@ class MPSuperTokenErrorHandler {
     displayError(errorCode) {
         if (!this.paymentMethods) return;
 
-        if (errorCode === MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID) {
+        if (errorCode.includes(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID)) {
             this.paymentMethods.forceShowValidationErrors();
         } else {
             const errorMessage = this.paymentMethods.convertErrorCodeToErrorMessage(errorCode);

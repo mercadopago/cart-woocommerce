@@ -3,6 +3,7 @@
 class MPSuperTokenAuthenticator {
     AMOUNT_ELEMENT_ID = 'mp-amount';
     PLATFORM_ID = wc_mercadopago_supertoken_authenticator_params.platform_id;
+    SUPER_TOKEN_VALIDATION_ELEMENT_ID = 'super_token_validation';
 
     // Attributes
     amountUsed = null;
@@ -23,7 +24,14 @@ class MPSuperTokenAuthenticator {
     reset() {
       this.authenticator = null;
       this.fastPaymentToken = null;
-  }
+    }
+
+    setSuperTokenValidation(value) {
+      const superTokenValidationElement = document.getElementById(this.SUPER_TOKEN_VALIDATION_ELEMENT_ID);
+      if (superTokenValidationElement) {
+        superTokenValidationElement.value = value ? 'true' : 'false';
+      }
+    }
 
     getAmountUsed() {
         return this.amountUsed;

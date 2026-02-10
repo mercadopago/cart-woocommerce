@@ -194,6 +194,7 @@ div.mp-wallet-button-container div.mp-wallet-button-button button#mp-wallet-butt
 .mp-checkout-custom-installments-select-container {
   display: flex;
   flex-direction: column;
+  margin: 0 !important;
 }
 
 .mp-installments-tax-info {
@@ -223,6 +224,8 @@ div.mp-wallet-button-container div.mp-wallet-button-button button#mp-wallet-butt
   padding: 12px !important;
   text-align: left !important;
   width: 100% !important;
+  margin: 0 !important;
+  box-shadow: unset !important;
 
   /* Código para reposicionar a seta do select */
   -webkit-appearance: none !important;
@@ -349,7 +352,6 @@ input-label:has(+ .mp-checkout-custom-security-code-container #form-checkout__se
     justify-content: center;
     align-items: center;
     padding: 16px;
-    width: 100% !important;
     height: 288px !important;
     background-color: #f9f9f9 !important;
     opacity: 1;

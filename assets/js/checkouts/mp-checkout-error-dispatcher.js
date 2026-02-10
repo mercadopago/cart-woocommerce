@@ -1,7 +1,7 @@
 /* globals jQuery */
 class MPErrorMessageNormalizer {
     static DEFAULT_ERROR_MESSAGE = 'empty error message';
-    
+
     static normalize(message) {
         if (!message) return this.DEFAULT_ERROR_MESSAGE;
         return message.replace(/[\t\n]/g, '').trim() || this.DEFAULT_ERROR_MESSAGE;
@@ -39,7 +39,8 @@ class MPClassicCheckoutErrorHandler extends MPCheckoutErrorHandler {
             const normalizedMessage = MPErrorMessageNormalizer.normalize(errorMessage);
 
             MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
-                message: normalizedMessage
+                message: normalizedMessage,
+                errorOrigin: 'post_submit'
             });
         });
     }
@@ -63,7 +64,8 @@ class MPOrderPayCheckoutErrorHandler extends MPCheckoutErrorHandler {
 
         setTimeout(() => {
             MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
-                message: normalizedMessage
+                message: normalizedMessage,
+                errorOrigin: 'post_submit'
             });
         }, this.#ORDER_PAY_DELAY);
     }
@@ -75,9 +77,10 @@ class MPBlocksCheckoutErrorHandler extends MPCheckoutErrorHandler {
     handle(checkoutResponse) {
         const message = checkoutResponse?.processingResponse?.paymentDetails?.message;
         const normalizedMessage = MPErrorMessageNormalizer.normalize(message);
-        
+
         MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
-            message: normalizedMessage
+            message: normalizedMessage,
+            errorOrigin: 'post_submit'
         });
     }
 }
