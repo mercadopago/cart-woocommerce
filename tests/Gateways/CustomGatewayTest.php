@@ -1912,4 +1912,212 @@ class CustomGatewayTest extends TestCase
         $this->assertIsArray($params);
         $this->assertEquals('MLA', $params['site_id']);
     }
+
+    /**
+     * @dataProvider processPaymentSuperTokenValidationFailedProvider
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProcessPaymentSuperTokenSendsMetricWhenValidationFailed(bool $isBlocks, string $superTokenValidation, bool $shouldSendMetric): void
+    {
+        $checkout = [
+            'checkout_type' => 'super_token',
+            'token' => random()->uuid(),
+            'amount' => 100,
+            'payment_method_id' => 'visa',
+            'payment_type_id' => 'credit_card',
+            'installments' => 1,
+            'super_token_validation' => $superTokenValidation,
+        ];
+
+        $this->processPaymentMock($checkout, $isBlocks);
+
+        // Mock get_id() specifically for this test
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
+        $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-123'];
+
+        $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        $superTokenTransactionMock
+            ->expects()
+            ->createPayment()
+            ->andReturn(['status' => 'approved'])
+            ->getMock()
+            ->expects()
+            ->getInternalMetadata()
+            ->andReturn($paymentMetadata = Mockery::mock(PaymentMetadata::class));
+
+        $superTokenTransactionMock
+            ->shouldReceive('getCheckoutSessionData')
+            ->andReturn($checkoutSessionData);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->setSupertokenMetadata($this->order, ['status' => 'approved'], $paymentMetadata);
+
+        // Mock sellerConfig for metric details
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLB');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')
+            ->andReturn(true);
+
+        if ($shouldSendMetric) {
+            $this->gateway->datadog
+                ->shouldReceive('sendEvent')
+                ->once()
+                ->with(
+                    'super_token_validation_failed',
+                    'true',
+                    'INCOMPLETE_SUPER_TOKEN_VALIDATION',
+                    'super_token',
+                    [
+                        'site_id' => 'MLB',
+                        'environment' => 'homol',
+                        'cust_id' => 'test-cust-id',
+                        'sdk_instance_id' => 'test-flow-id-123',
+                    ]
+                );
+        } else {
+            $this->gateway->datadog
+                ->shouldNotReceive('sendEvent')
+                ->with(
+                    'super_token_validation_failed',
+                    Mockery::any(),
+                    Mockery::any(),
+                    Mockery::any(),
+                    Mockery::any()
+                );
+        }
+
+        $this->handleResponseStatusMock(['status' => 'approved'], false);
+
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->validateGetVar('pay_for_order')
+            ->andReturn(false);
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('success', $result['result']);
+    }
+
+    /**
+     * @dataProvider processPaymentSuperTokenValidationFailedProvider
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProcessPaymentSuperTokenSendsMetricWithUnknownFlowId(bool $isBlocks): void
+    {
+        $checkout = [
+            'checkout_type' => 'super_token',
+            'token' => random()->uuid(),
+            'amount' => 100,
+            'payment_method_id' => 'visa',
+            'payment_type_id' => 'credit_card',
+            'installments' => 1,
+            'super_token_validation' => 'false',
+        ];
+
+        $this->processPaymentMock($checkout, $isBlocks);
+
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
+        // Return empty checkout session data (no _mp_flow_id)
+        $checkoutSessionData = [];
+
+        $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        $superTokenTransactionMock
+            ->expects()
+            ->createPayment()
+            ->andReturn(['status' => 'approved'])
+            ->getMock()
+            ->expects()
+            ->getInternalMetadata()
+            ->andReturn($paymentMetadata = Mockery::mock(PaymentMetadata::class));
+
+        $superTokenTransactionMock
+            ->shouldReceive('getCheckoutSessionData')
+            ->andReturn($checkoutSessionData);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->setSupertokenMetadata($this->order, ['status' => 'approved'], $paymentMetadata);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLA');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')
+            ->andReturn(false);
+
+        // Should send metric with 'Unknown' as sdk_instance_id
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'super_token_validation_failed',
+                'true',
+                'INCOMPLETE_SUPER_TOKEN_VALIDATION',
+                'super_token',
+                [
+                    'site_id' => 'MLA',
+                    'environment' => 'prod',
+                    'cust_id' => 'test-cust-id',
+                    'sdk_instance_id' => 'Unknown',
+                ]
+            );
+
+        $this->handleResponseStatusMock(['status' => 'approved'], false);
+
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->validateGetVar('pay_for_order')
+            ->andReturn(false);
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('success', $result['result']);
+    }
+
+    public function processPaymentSuperTokenValidationFailedProvider(): array
+    {
+        return [
+            'blocks checkout - validation failed' => [
+                true,   // isBlocks
+                'false', // super_token_validation
+                true,   // shouldSendMetric
+            ],
+            'classic checkout - validation failed' => [
+                false,  // isBlocks
+                'false', // super_token_validation
+                true,   // shouldSendMetric
+            ],
+            'blocks checkout - validation passed' => [
+                true,   // isBlocks
+                'true', // super_token_validation
+                false,  // shouldSendMetric
+            ],
+            'classic checkout - validation passed' => [
+                false,  // isBlocks
+                'true', // super_token_validation
+                false,  // shouldSendMetric
+            ],
+        ];
+    }
 }

@@ -477,8 +477,8 @@ class PseGatewayTest extends TestCase
             ->andReturn([
                 [
                     'financial_institutions' => [
-                        ['id' => 'bank1', 'name' => 'Bank 1'],
-                        ['id' => 'bank2', 'name' => 'Bank 2']
+                        ['id' => 'bank1', 'description' => 'Bank 1'],
+                        ['id' => 'bank2', 'description' => 'Bank 2']
                     ]
                 ]
             ]);
@@ -518,6 +518,11 @@ class PseGatewayTest extends TestCase
             ->with('test@example.com')
             ->andReturn('test@example.com');
 
+        \WP_Mock::userFunction('wp_json_encode')
+            ->andReturnUsing(function ($data) {
+                return json_encode($data);
+            });
+
         $this->gateway->shouldAllowMockingProtectedMethods();
         $this->gateway->shouldReceive('getAmountAndCurrency')
             ->andReturn(['amount' => 100, 'currencyRatio' => 1.0]);
@@ -530,6 +535,16 @@ class PseGatewayTest extends TestCase
         $this->assertArrayHasKey('financial_institutions', $params);
         $this->assertEquals('test-icon', $params['checkout_blocks_row_image_src']);
         $this->assertEquals('test@example.com', $params['payer_email']);
+
+        // Verify financial_institutions is a JSON string with correct format
+        $this->assertIsString($params['financial_institutions']);
+        $decodedInstitutions = json_decode($params['financial_institutions'], true);
+        $this->assertIsArray($decodedInstitutions);
+        $this->assertCount(2, $decodedInstitutions);
+        $this->assertArrayHasKey('id', $decodedInstitutions[0]);
+        $this->assertArrayHasKey('description', $decodedInstitutions[0]);
+        $this->assertEquals('bank1', $decodedInstitutions[0]['id']);
+        $this->assertEquals('Bank 1', $decodedInstitutions[0]['description']);
     }
 
     /**
@@ -600,6 +615,11 @@ class PseGatewayTest extends TestCase
             ->with(null)
             ->andReturn('');
 
+        \WP_Mock::userFunction('wp_json_encode')
+            ->andReturnUsing(function ($data) {
+                return json_encode($data);
+            });
+
         $this->gateway->shouldAllowMockingProtectedMethods();
         $this->gateway->shouldReceive('getAmountAndCurrency')
             ->andReturn(['amount' => 100, 'currencyRatio' => 1.0]);
@@ -609,6 +629,10 @@ class PseGatewayTest extends TestCase
         $this->assertIsArray($params);
         // esc_js(null) returns empty string '', not null
         $this->assertEquals('', $params['payer_email']); // Should be empty string for logged out user
+
+        // Verify financial_institutions is an empty JSON array string
+        $this->assertIsString($params['financial_institutions']);
+        $this->assertEquals('[]', $params['financial_institutions']);
     }
 
     /**
@@ -635,5 +659,4 @@ class PseGatewayTest extends TestCase
 
         $this->assertTrue($result);
     }
-
 }

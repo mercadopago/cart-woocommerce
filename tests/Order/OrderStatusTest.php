@@ -217,6 +217,82 @@ class OrderStatusTest extends TestCase
         $this->assertTrue(true);
     }
 
+    /**
+     * @dataProvider currencyRatioFallbackProvider
+     */
+    public function testRefundedFlowPartialRefundWithInvalidCurrencyRatioFallsBackToOne($currencyRatioValue): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_total')->andReturn(100.0);
+        $orderMock->shouldReceive('get_id')->andReturn(123);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn($currencyRatioValue);
+        $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: Partially Refunded: 25.5');
+
+        $paymentsData = [
+            [
+                'id' => 'payment_123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 25.5
+            ]
+        ];
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('payment_123');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+            ->andReturn('access_token_123');
+
+        $responseMock = Mockery::mock(Response::class);
+        $responseMock->shouldReceive('getStatus')->andReturn(200);
+        $responseMock->shouldReceive('getData')->andReturn($paymentsData[0]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/payment_123', ['Authorization: Bearer access_token_123'])
+            ->andReturn($responseMock);
+
+        $data = [
+            'notification_id' => 'notification_123',
+            'transaction_amount' => 100.0,
+            'total_refunded' => 25.5,
+            'transaction_amount_refunded' => 25.5,
+            'current_refund' => ['id' => 'refund_123'],
+            'refunds_notifying' => [
+                ['id' => 'refund_123', 'amount' => 25.5]
+            ]
+        ];
+
+        WP_Mock::userFunction('wc_create_refund', [
+            'times' => 1,
+            'args' => [
+                ['amount' => 25.5, 'reason' => 'Refunded', 'order_id' => 123]
+            ],
+            'return' => true
+        ]);
+
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('refundedFlow');
+        $method->setAccessible(true);
+
+        $method->invoke($this->orderStatus, $data, $orderMock);
+        $this->assertTrue(true);
+    }
+
+    public static function currencyRatioFallbackProvider(): array
+    {
+        return [
+            'null value' => [null],
+            'empty string' => [''],
+            'zero integer' => [0],
+            'zero float' => [0.0],
+            'zero string' => ['0'],
+            'false value' => [false],
+        ];
+    }
+
     public function testRefundedFlowMultipleRefundsFindsCorrectOne(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);

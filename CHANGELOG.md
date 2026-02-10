@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v8.7.10 (09/02/2026)
+### Added
+- Add new metric to track if fast payment flow was correctly validated
+
+### Changed
+- Improve select card metric on fast payment flow
+
+### Fixed
+- Using QIT code styles recommended by WooCommerce
+- Fix Checkout Custom load on multistep checkout
+- Fix Checkout Custom load on Order Pay page
+- Fix Checkout Custom loading spinner styles
+- Fix refund ratio causing division by zero error
+
 ## v8.7.9 (02/02/2026)
 ### Changed
 - Reorder updateSecurityCode and authorizePayment execution on fast payments flow

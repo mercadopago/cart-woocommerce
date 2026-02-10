@@ -100,10 +100,19 @@ const Content = (props) => {
             await superTokenPaymentMethods.updateSecurityCode();
 
             await superTokenAuthenticator.authorizePayment(activeMethod.token);
+
+            window.mpSuperTokenAuthenticator?.setSuperTokenValidation(true);
           } catch (exception) {
             window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
+
+            if (exception?.message === MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID) {
+              window.mpSuperTokenErrorHandler.handleError(exception);
+              return { type: emitResponse.responseTypes.ERROR };
+            }
+
             window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError();
             window.mpSuperTokenTriggerHandler?.setLastException(exception);
+            window.mpSuperTokenAuthenticator?.setSuperTokenValidation(false);
 
             return { type: emitResponse.responseTypes.ERROR };
           }

@@ -130,6 +130,7 @@ div.mp-super-token-payment-methods-list.mp-initial-state {
   visibility: visible !important;
   transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
   transition-delay: 150ms !important;
+  display: block !important;
 }
 
 .mp-super-token-payment-methods-list.mp-initial-state > hr.mp-payment-methods-list-horizontal-row {
@@ -161,7 +162,7 @@ div.mp-super-token-payment-methods-list.mp-initial-state {
   opacity: 1 !important;
   visibility: visible !important;
   transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
-  transition-delay: 400ms !important;
+  transition-delay: 700ms !important;
 }
 
 *:has(#payment_method_woo-mercado-pago-custom) .mp-super-token-payment-methods-list.mp-initial-state > div.mp-super-token-payment-method__accordion {
@@ -242,6 +243,7 @@ div.mp-super-token-payment-methods-list.mp-initial-state {
   font-size: 14px !important;
 }
 
+.wc_payment_method .mp-super-token-payment-method__accordion-header,
 .mp-super-token-payment-method__accordion-header {
     display: flex !important;
     flex-direction: row !important;
@@ -439,6 +441,7 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
     font-weight: 400 !important;
     color: #000000E5 !important;
     font-family: var(--mp-font-inter) !important;
+    line-height: 18px !important;
 }
 
 .mp-super-token-security-code-tooltip {
@@ -523,7 +526,6 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
 
 .mp-super-token-security-code-label {
     padding: 0px 0px 4px 6px !important;
-    margin: 0 !important;
 }
 
 .mp-checkout-custom-installments-select-container .mp-input-label.mp-super-token-label-error {

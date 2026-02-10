@@ -357,15 +357,19 @@ class MPCardForm {
 
         this.isLoading = false;
         const onTransitionEnd = () => {
+          loadSpinner?.classList.add('mp-hidden');
           loadSpinner?.classList.add('mp-display-none');
           customContainer?.classList.remove('mp-hidden');
           customContainer?.classList.remove('mp-display-none');
-
-          loadSpinner.removeEventListener('transitionend', onTransitionEnd);
         };
 
-        loadSpinner?.addEventListener('transitionend', onTransitionEnd);
-        loadSpinner?.classList.add('mp-hidden');
+        if (window.mpSuperTokenTriggerHandler?.isSuperTokenPaymentMethodsLoaded()) {
+          loadSpinner?.classList.add('mp-hidden');
+        }
+
+        setTimeout( () => {
+          onTransitionEnd();
+        }, 800);
 
         const dateNowInMilliseconds = Date.now();
 

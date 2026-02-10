@@ -81,6 +81,7 @@ class MPSuperTokenTriggerHandler {
     resetCustomCheckout(shouldClearCache = true) {
         window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
         window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
+        this.mpSuperTokenAuthenticator?.setSuperTokenValidation(false);
 
         if (this.mpSuperTokenPaymentMethods.hasStoredPaymentMethods()) {
             this.mpSuperTokenPaymentMethods.unmountCardForm();

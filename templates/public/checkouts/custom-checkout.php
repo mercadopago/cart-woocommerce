@@ -44,12 +44,12 @@ if (!defined('ABSPATH')) {
 }
 
 ?>
-<div class="mp-checkout-custom-load">
-    <svg class="spinner-card-form" viewBox="0 0 50 50">
-        <circle class="spinner-path" cx="25" cy="25" r="20" fill="none" stroke-width="3"></circle>
-    </svg>
-</div>
-<div id="mp-checkout-custom-container" class='mp-checkout-container mp-hidden mp-display-none'>
+    <div class="mp-checkout-custom-load">
+        <svg class="spinner-card-form" viewBox="0 0 50 50">
+            <circle class="spinner-path" cx="25" cy="25" r="20" fill="none" stroke-width="3"></circle>
+        </svg>
+    </div>
+    <div id="mp-checkout-custom-container" class='mp-checkout-container mp-hidden mp-display-none'>
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
@@ -268,6 +268,7 @@ if (!defined('ABSPATH')) {
     <input type="hidden" id="paymentTypeId" name="mercadopago_custom[payment_type_id]"/>
     <input type="hidden" id="payerDocNumber" name="mercadopago_custom[doc_number]" />
     <input type="hidden" id="payerDocType" name="mercadopago_custom[doc_type]" />
+    <input type="hidden" id="super_token_validation" name="mercadopago_custom[super_token_validation]" value="false" />
 </div>
 
 <script type="text/javascript">

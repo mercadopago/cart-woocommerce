@@ -603,7 +603,27 @@ class CustomGateway extends AbstractGateway
                     ])
                     && ($checkout['payment_type_id'] != 'credit_card' || (!empty($checkout['installments']) && $checkout['installments'] > 0))
                 ) {
+                    $checkout['super_token_validation'] = $checkout['super_token_validation'] ?? false;
+
                     $this->transaction = new SupertokenTransaction($this, $order, $checkout);
+
+                    if ($checkout['super_token_validation'] === 'false') {
+                        $checkoutSessionData = $this->transaction->getCheckoutSessionData();
+
+                        $this->datadog->sendEvent(
+                            'super_token_validation_failed',
+                            'true',
+                            'INCOMPLETE_SUPER_TOKEN_VALIDATION',
+                            'super_token',
+                            [
+                                'site_id' => $this->mercadopago->sellerConfig->getSiteId(),
+                                'environment' => $this->mercadopago->storeConfig->isTestMode() ? 'homol' : 'prod',
+                                'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
+                                'sdk_instance_id' => $checkoutSessionData['_mp_flow_id'] ?? 'Unknown',
+                            ]
+                        );
+                    }
+
                     $response          = $this->transaction->createPayment();
 
                     $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response, $this->transaction->getInternalMetadata());
