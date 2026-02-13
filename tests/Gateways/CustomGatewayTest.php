@@ -258,10 +258,12 @@ class CustomGatewayTest extends TestCase
      */
     public function testProcessPaymentSuperToken(bool $isBlocks, bool $isOrderPayPage, array $checkout, array $response)
     {
+        $token = random()->uuid();
         $this->processPaymentMock(
             array_merge([
                 'checkout_type' => 'super_token',
-                'token' => random()->uuid(),
+                'token' => $token,
+                'authorized_pseudotoken' => $token,
                 'amount' => 100,
                 'payment_method_id' => 'visa',
             ], $checkout),
@@ -273,14 +275,20 @@ class CustomGatewayTest extends TestCase
             ->andReturn(1)
             ->byDefault();
 
-        Mockery::mock('overload:' . SupertokenTransaction::class)
+        $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        $superTokenTransactionMock
+                ->expects()
+                ->createPayment()
+                ->andReturn($response)
+                ->getMock()
+                ->expects()
+                ->getInternalMetadata()
+                ->andReturn($paymentMetadata = Mockery::mock(PaymentMetadata::class));
+
+        $superTokenTransactionMock
             ->expects()
-            ->createPayment()
-            ->andReturn($response)
-            ->getMock()
-            ->expects()
-            ->getInternalMetadata()
-            ->andReturn($paymentMetadata = Mockery::mock(PaymentMetadata::class));
+            ->getCheckoutSessionData()
+            ->andReturn(['_mp_flow_id' => 'test-flow-id-123', 'token' => $token, 'authorized_pseudotoken' => $token]);
 
         $this->gateway->mercadopago->orderMetadata
             ->expects()
@@ -1920,9 +1928,11 @@ class CustomGatewayTest extends TestCase
      */
     public function testProcessPaymentSuperTokenSendsMetricWhenValidationFailed(bool $isBlocks, string $superTokenValidation, bool $shouldSendMetric): void
     {
+        $token = random()->uuid();
         $checkout = [
             'checkout_type' => 'super_token',
-            'token' => random()->uuid(),
+            'token' => $token,
+            'authorized_pseudotoken' => $token,
             'amount' => 100,
             'payment_method_id' => 'visa',
             'payment_type_id' => 'credit_card',
@@ -2011,15 +2021,122 @@ class CustomGatewayTest extends TestCase
     }
 
     /**
+     * @dataProvider processPaymentSuperTokenPseudotokenMismatchProvider
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProcessPaymentSuperTokenSendsMetricWhenPseudotokenMismatch(
+        bool $isBlocks,
+        ?string $authorizedPseudotoken,
+        bool $shouldSendMetric
+    ): void {
+        $token = 'pseudotoken-sent-in-order';
+
+        $checkout = [
+            'checkout_type' => 'super_token',
+            'token' => $token,
+            'authorized_pseudotoken' => $token,
+            'amount' => 100,
+            'payment_method_id' => 'visa',
+            'payment_type_id' => 'credit_card',
+            'installments' => 1,
+            'super_token_validation' => 'true',
+        ];
+
+        if ($authorizedPseudotoken !== null) {
+            $checkout['authorized_pseudotoken'] = $authorizedPseudotoken;
+        }
+
+        $this->processPaymentMock($checkout, $isBlocks);
+
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
+        $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-456'];
+
+        $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        $superTokenTransactionMock
+            ->expects()
+            ->createPayment()
+            ->andReturn(['status' => 'approved'])
+            ->getMock()
+            ->expects()
+            ->getInternalMetadata()
+            ->andReturn($paymentMetadata = Mockery::mock(PaymentMetadata::class));
+
+        $superTokenTransactionMock
+            ->shouldReceive('getCheckoutSessionData')
+            ->andReturn($checkoutSessionData);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->setSupertokenMetadata($this->order, ['status' => 'approved'], $paymentMetadata);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLB');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')
+            ->andReturn(true);
+
+        if ($shouldSendMetric) {
+            $this->gateway->datadog
+                ->shouldReceive('sendEvent')
+                ->once()
+                ->with(
+                    'authorized_pseudotoken_mismatch',
+                    $token,
+                    $authorizedPseudotoken,
+                    'super_token',
+                    [
+                        'site_id' => 'MLB',
+                        'environment' => 'homol',
+                        'cust_id' => 'test-cust-id',
+                        'sdk_instance_id' => 'test-flow-id-456',
+                    ]
+                );
+        } else {
+            $this->gateway->datadog
+                ->shouldNotReceive('sendEvent')
+                ->with(
+                    'authorized_pseudotoken_mismatch',
+                    Mockery::any(),
+                    Mockery::any(),
+                    Mockery::any(),
+                    Mockery::any()
+                );
+        }
+
+        $this->handleResponseStatusMock(['status' => 'approved'], false);
+
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->validateGetVar('pay_for_order')
+            ->andReturn(false);
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('success', $result['result']);
+}
+
+    /**
      * @dataProvider processPaymentSuperTokenValidationFailedProvider
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */
     public function testProcessPaymentSuperTokenSendsMetricWithUnknownFlowId(bool $isBlocks): void
     {
+        $token = random()->uuid();
         $checkout = [
             'checkout_type' => 'super_token',
-            'token' => random()->uuid(),
+            'token' => $token,
+            'authorized_pseudotoken' => $token,
             'amount' => 100,
             'payment_method_id' => 'visa',
             'payment_type_id' => 'credit_card',
@@ -2117,6 +2234,32 @@ class CustomGatewayTest extends TestCase
                 false,  // isBlocks
                 'true', // super_token_validation
                 false,  // shouldSendMetric
+            ],
+        ];
+    }
+
+    public function processPaymentSuperTokenPseudotokenMismatchProvider(): array
+    {
+        return [
+            'blocks checkout - pseudotoken mismatch' => [
+                true,                           // isBlocks
+                'different-pseudotoken-value',   // authorized_pseudotoken (differs from token)
+                true,                           // shouldSendMetric
+            ],
+            'classic checkout - pseudotoken mismatch' => [
+                false,                          // isBlocks
+                'different-pseudotoken-value',   // authorized_pseudotoken (differs from token)
+                true,                           // shouldSendMetric
+            ],
+            'blocks checkout - pseudotoken matches' => [
+                true,                           // isBlocks
+                'pseudotoken-sent-in-order',     // authorized_pseudotoken (SAME as $token in test)
+                false,                          // shouldSendMetric
+            ],
+            'classic checkout - pseudotoken matches' => [
+                false,                          // isBlocks
+                'pseudotoken-sent-in-order',     // authorized_pseudotoken (SAME as $token in test)
+                false,                          // shouldSendMetric
             ],
         ];
     }

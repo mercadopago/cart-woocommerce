@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.7.10
+Stable tag: 8.7.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,18 +134,12 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.7.10 (09/02/2026) =
+= v8.7.11 (18/02/2026) =
 * Added
-- Add new metric to track if fast payment flow was correctly validated
-
-* Changed
-- Improve select card metric on fast payment flow
+- Add authorized pseudotoken tracking to detect token mismatch on fast payment flow
+- Add server-side metric for pseudotoken inconsistency detection
 
 * Fixed
-- Using QIT code styles recommended by WooCommerce
-- Fix Checkout Custom load on multistep checkout
-- Fix Checkout Custom load on Order Pay page
-- Fix Checkout Custom loading spinner styles
-- Fix refund ratio causing division by zero error
+- Fix fast payment flow using authorized pseudotoken to ensure payment consistency
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

@@ -43,7 +43,7 @@ class SupertokenTransaction extends AbstractPaymentTransaction
             $this->transaction->installments = (int) $this->checkout['installments'];
         }
 
-        $this->superToken = $this->checkout['token'];
+        $this->superToken = $this->checkout['authorized_pseudotoken'];
         $this->paymentTypeId = $this->checkout['payment_type_id'];
     }
 

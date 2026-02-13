@@ -269,6 +269,7 @@ if (!defined('ABSPATH')) {
     <input type="hidden" id="payerDocNumber" name="mercadopago_custom[doc_number]" />
     <input type="hidden" id="payerDocType" name="mercadopago_custom[doc_type]" />
     <input type="hidden" id="super_token_validation" name="mercadopago_custom[super_token_validation]" value="false" />
+    <input type="hidden" id="authorized_pseudotoken" name="mercadopago_custom[authorized_pseudotoken]" />
 </div>
 
 <script type="text/javascript">

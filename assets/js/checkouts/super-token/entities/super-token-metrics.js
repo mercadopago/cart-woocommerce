@@ -182,4 +182,8 @@ class MPSuperTokenMetrics {
   registerClickOnPlaceOrderButton() {
     this.sendMetric('super_token_click_on_place_order_button', 'true', "");
   }
+
+  registerAuthorizedPseudotoken(pseudotoken, authorizedPseudotokenInputExists) {
+    this.sendMetric('authorized_pseudotoken', pseudotoken, `input_exists:${authorizedPseudotokenInputExists ? "true" : "false"}`);
+  }
 }
