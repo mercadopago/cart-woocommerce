@@ -4,6 +4,7 @@ class MPSuperTokenAuthenticator {
     AMOUNT_ELEMENT_ID = 'mp-amount';
     PLATFORM_ID = wc_mercadopago_supertoken_authenticator_params.platform_id;
     SUPER_TOKEN_VALIDATION_ELEMENT_ID = 'super_token_validation';
+    AUTHORIZED_PSEUDOTOKEN_ELEMENT_ID = 'authorized_pseudotoken';
 
     // Attributes
     amountUsed = null;
@@ -110,6 +111,16 @@ class MPSuperTokenAuthenticator {
         }
     }
 
+    storeAuthorizedPseudotoken(pseudotoken) {
+      const authorizedPseudotokenElement = document.getElementById(this.AUTHORIZED_PSEUDOTOKEN_ELEMENT_ID);
+
+      this.mpSuperTokenMetrics.registerAuthorizedPseudotoken(pseudotoken, authorizedPseudotokenElement ? true : false);
+
+      if (authorizedPseudotokenElement) {
+        authorizedPseudotokenElement.value = pseudotoken;
+      }
+    }
+
     async getAccountPaymentMethods(amount, buyerEmail) {
         try {
             const authenticator = await this.buildAuthenticator(amount, buyerEmail);
@@ -151,6 +162,8 @@ class MPSuperTokenAuthenticator {
             if (!hasSimplified) return;
 
             await authenticator.authorizePayment(pseudotoken);
+
+            this.storeAuthorizedPseudotoken(pseudotoken);
         } catch (error) {
           this.mpSuperTokenMetrics.errorToAuthorizePayment(error);
 

@@ -1,6 +1,14 @@
 CHANGELOG:
 == Changelog
 
+= v8.7.11 (18/02/2026) =
+* Added
+- Add authorized pseudotoken tracking to detect token mismatch on fast payment flow
+- Add server-side metric for pseudotoken inconsistency detection
+
+* Fixed
+- Fix fast payment flow using authorized pseudotoken to ensure payment consistency
+
 = v8.7.10 (09/02/2026) =
 * Added
 - Add new metric to track if fast payment flow was correctly validated
