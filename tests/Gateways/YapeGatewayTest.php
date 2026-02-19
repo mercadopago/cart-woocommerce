@@ -12,7 +12,7 @@ use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Gateways\YapeGateway;
-use \WP_Mock;
+use WP_Mock;
 
 class YapeGatewayTest extends TestCase
 {
@@ -301,6 +301,11 @@ class YapeGatewayTest extends TestCase
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getJsAsset')
             ->andReturn('test-js-url');
+
+        // Mock getMercadoPagoSdkUrl for SDK URL retrieval
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getMercadoPagoSdkUrl')
+            ->andReturn('https://sdk.mercadopago.com/js/v2');
 
         $this->gateway->mercadopago->hooks->scripts
             ->shouldReceive('registerCheckoutScript')

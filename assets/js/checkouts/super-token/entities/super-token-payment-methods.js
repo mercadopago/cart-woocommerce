@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_supertoken_payment_methods_params, Intl, MPCheckoutFieldsDispatcher, MPSuperTokenErrorCodes */
+/* globals wc_mercadopago_supertoken_bundle_params, Intl, MPCheckoutFieldsDispatcher, MPSuperTokenErrorCodes */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenPaymentMethods {
     SUPER_TOKEN_CHECKOUT_TYPE = 'super_token';
@@ -48,62 +48,62 @@ class MPSuperTokenPaymentMethods {
         PAYMENT_METHODS_LIST_HEADER_LOGO: 'mp-payment-methods-header-logo',
         ANIMATION_CLASS: 'mp-initial-state'
     }
-    YELLOW_WALLET_PATH = wc_mercadopago_supertoken_payment_methods_params.yellow_wallet_path;
-    YELLOW_MONEY_PATH = wc_mercadopago_supertoken_payment_methods_params.yellow_money_path;
-    WHITE_CARD_PATH = wc_mercadopago_supertoken_payment_methods_params.white_card_path;
-    PAYMENT_METHODS_LIST_TEXT = wc_mercadopago_supertoken_payment_methods_params.payment_methods_list_text;
-    PAYMENT_METHODS_LIST_ALT_TEXT = wc_mercadopago_supertoken_payment_methods_params.payment_methods_list_alt_text;
-    LAST_DIGITS_TEXT = wc_mercadopago_supertoken_payment_methods_params.last_digits_text;
-    NEW_CARD_TEXT = wc_mercadopago_supertoken_payment_methods_params.new_card_text;
-    ACCOUNT_MONEY_TEXT = wc_mercadopago_supertoken_payment_methods_params.account_money_text;
-    ACCOUNT_MONEY_WALLET_WITH_INVESTMENT_TEXT = wc_mercadopago_supertoken_payment_methods_params.account_money_wallet_with_investment_text;
-    ACCOUNT_MONEY_WALLET_TEXT = wc_mercadopago_supertoken_payment_methods_params.account_money_wallet_text;
-    ACCOUNT_MONEY_INVESTMENT_TEXT = wc_mercadopago_supertoken_payment_methods_params.account_money_investment_text;
-    ACCOUNT_MONEY_AVAILABLE_TEXT = wc_mercadopago_supertoken_payment_methods_params.account_money_available_text;
-    INTEREST_FREE_PART_ONE_TEXT = wc_mercadopago_supertoken_payment_methods_params.interest_free_part_one_text;
-    INTEREST_FREE_PART_TWO_TEXT = wc_mercadopago_supertoken_payment_methods_params.interest_free_part_two_text;
-    BANK_INTEREST_HINT_TEXT = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.installments.bank_interest_hint_text;
-    INSTALLMENTS_INPUT_TITLE = wc_mercadopago_supertoken_payment_methods_params.input_title.installments;
-    INSTALLMENTS_PLACEHOLDER = wc_mercadopago_supertoken_payment_methods_params.placeholders.installments;
-    INSTALLMENTS_REQUIRED_MESSAGE = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.installments.required;
-    INSTALLMENTS_INTEREST_FREE_OPTION_TEXT = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.installments.interest_free_option_text;
-    SECURITY_CODE_INPUT_TITLE_TEXT = wc_mercadopago_supertoken_payment_methods_params.security_code_input_title_text;
-    SECURITY_CODE_PLACEHOLDER_TEXT_3_DIGITS = wc_mercadopago_supertoken_payment_methods_params.security_code_placeholder_text_3_digits;
-    SECURITY_CODE_PLACEHOLDER_TEXT_4_DIGITS = wc_mercadopago_supertoken_payment_methods_params.security_code_placeholder_text_4_digits;
-    SECURITY_CODE_ERROR_MESSAGES = wc_mercadopago_supertoken_payment_methods_params.input_helper_message.securityCode;
-    SECURITY_CODE_TOOLTIP_TEXT_3_DIGITS = wc_mercadopago_supertoken_payment_methods_params.security_code_tooltip_text_3_digits;
-    SECURITY_CODE_TOOLTIP_TEXT_4_DIGITS = wc_mercadopago_supertoken_payment_methods_params.security_code_tooltip_text_4_digits;
-    SITE_ID = wc_mercadopago_supertoken_payment_methods_params.site_id;
-    CURRENCY = wc_mercadopago_supertoken_payment_methods_params.currency;
-    INTL = wc_mercadopago_supertoken_payment_methods_params.intl;
-    MERCADO_PAGO_CARD_NAME = wc_mercadopago_supertoken_payment_methods_params.mercado_pago_card_name;
-    CONSUMER_CREDITS_DUE_DATE = wc_mercadopago_supertoken_payment_methods_params.consumer_credits_due_date;
-    MLB_INSTALLMENT_DEBIT_AUTO_TEXT = wc_mercadopago_supertoken_payment_methods_params.mlb_installment_debit_auto_text;
-    INTEREST_RATE_MLB_TEXT = wc_mercadopago_supertoken_payment_methods_params.interest_rate_mlb_text;
-    EFFECTIVE_TOTAL_COST_MLB_TEXT = wc_mercadopago_supertoken_payment_methods_params.effective_total_cost_mlb_text;
-    IOF_MLB_TEXT = wc_mercadopago_supertoken_payment_methods_params.iof_mlb_text;
-    BORROWED_AMOUNT_MLB_TEXT = wc_mercadopago_supertoken_payment_methods_params.borrowed_amount_mlb_text;
-    PER_MONTH = wc_mercadopago_supertoken_payment_methods_params.per_month;
-    PER_YEAR = wc_mercadopago_supertoken_payment_methods_params.per_year;
-    CAT_MLM_TEXT = wc_mercadopago_supertoken_payment_methods_params.cat_mlm_text;
-    NO_IVA_TEXT = wc_mercadopago_supertoken_payment_methods_params.no_iva_text;
-    TNA_MLM_TEXT = wc_mercadopago_supertoken_payment_methods_params.tna_mlm_text;
-    SYSTEM_AMORTIZATION_MLM_TEXT = wc_mercadopago_supertoken_payment_methods_params.system_amortization_mlm_text;
-    CFTEA_MLA_TEXT = wc_mercadopago_supertoken_payment_methods_params.cftea_mla_text;
-    TNA_MLA_TEXT = wc_mercadopago_supertoken_payment_methods_params.tna_mla_text;
-    TEA_MLA_TEXT = wc_mercadopago_supertoken_payment_methods_params.tea_mla_text;
-    FIXED_RATE_TEXT = wc_mercadopago_supertoken_payment_methods_params.fixed_rate_text;
-    MERCADO_PAGO_PRIVACY_POLICY = wc_mercadopago_supertoken_payment_methods_params.mercadopago_privacy_policy;
-    NEW_MP_LOGO_PATH = wc_mercadopago_supertoken_payment_methods_params.new_mp_logo_path;
-    PAYMENT_METHODS_THUMBNAILS = wc_mercadopago_supertoken_payment_methods_params.payment_methods_thumbnails;
-    PAYMENT_METHODS_ORDER = wc_mercadopago_supertoken_payment_methods_params.payment_methods_order;
-    UPDATE_SECURITY_CODE_WITH_RETRY_ERROR_TEXT = wc_mercadopago_supertoken_payment_methods_params.update_security_code_with_retry_error_text;
-    UPDATE_SECURITY_CODE_NO_RETRY_ERROR_TEXT = wc_mercadopago_supertoken_payment_methods_params.update_security_code_no_retry_error_text;
-    AUTHORIZE_PAYMENT_METHOD_WITH_RETRY_ERROR_TEXT = wc_mercadopago_supertoken_payment_methods_params.authorize_payment_method_with_retry_error_text;
-    AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT = wc_mercadopago_supertoken_payment_methods_params.authorize_payment_method_no_retry_error_text;
-    SELECT_PAYMENT_METHOD_ERROR_TEXT = wc_mercadopago_supertoken_payment_methods_params.select_payment_method_error_text;
+    YELLOW_WALLET_PATH = wc_mercadopago_supertoken_bundle_params.yellow_wallet_path;
+    YELLOW_MONEY_PATH = wc_mercadopago_supertoken_bundle_params.yellow_money_path;
+    WHITE_CARD_PATH = wc_mercadopago_supertoken_bundle_params.white_card_path;
+    PAYMENT_METHODS_LIST_TEXT = wc_mercadopago_supertoken_bundle_params.payment_methods_list_text;
+    PAYMENT_METHODS_LIST_ALT_TEXT = wc_mercadopago_supertoken_bundle_params.payment_methods_list_alt_text;
+    LAST_DIGITS_TEXT = wc_mercadopago_supertoken_bundle_params.last_digits_text;
+    NEW_CARD_TEXT = wc_mercadopago_supertoken_bundle_params.new_card_text;
+    ACCOUNT_MONEY_TEXT = wc_mercadopago_supertoken_bundle_params.account_money_text;
+    ACCOUNT_MONEY_WALLET_WITH_INVESTMENT_TEXT = wc_mercadopago_supertoken_bundle_params.account_money_wallet_with_investment_text;
+    ACCOUNT_MONEY_WALLET_TEXT = wc_mercadopago_supertoken_bundle_params.account_money_wallet_text;
+    ACCOUNT_MONEY_INVESTMENT_TEXT = wc_mercadopago_supertoken_bundle_params.account_money_investment_text;
+    ACCOUNT_MONEY_AVAILABLE_TEXT = wc_mercadopago_supertoken_bundle_params.account_money_available_text;
+    INTEREST_FREE_PART_ONE_TEXT = wc_mercadopago_supertoken_bundle_params.interest_free_part_one_text;
+    INTEREST_FREE_PART_TWO_TEXT = wc_mercadopago_supertoken_bundle_params.interest_free_part_two_text;
+    BANK_INTEREST_HINT_TEXT = wc_mercadopago_supertoken_bundle_params.input_helper_message.installments.bank_interest_hint_text;
+    INSTALLMENTS_INPUT_TITLE = wc_mercadopago_supertoken_bundle_params.input_title.installments;
+    INSTALLMENTS_PLACEHOLDER = wc_mercadopago_supertoken_bundle_params.placeholders.installments;
+    INSTALLMENTS_REQUIRED_MESSAGE = wc_mercadopago_supertoken_bundle_params.input_helper_message.installments.required;
+    INSTALLMENTS_INTEREST_FREE_OPTION_TEXT = wc_mercadopago_supertoken_bundle_params.input_helper_message.installments.interest_free_option_text;
+    SECURITY_CODE_INPUT_TITLE_TEXT = wc_mercadopago_supertoken_bundle_params.security_code_input_title_text;
+    SECURITY_CODE_PLACEHOLDER_TEXT_3_DIGITS = wc_mercadopago_supertoken_bundle_params.security_code_placeholder_text_3_digits;
+    SECURITY_CODE_PLACEHOLDER_TEXT_4_DIGITS = wc_mercadopago_supertoken_bundle_params.security_code_placeholder_text_4_digits;
+    SECURITY_CODE_ERROR_MESSAGES = wc_mercadopago_supertoken_bundle_params.input_helper_message.securityCode;
+    SECURITY_CODE_TOOLTIP_TEXT_3_DIGITS = wc_mercadopago_supertoken_bundle_params.security_code_tooltip_text_3_digits;
+    SECURITY_CODE_TOOLTIP_TEXT_4_DIGITS = wc_mercadopago_supertoken_bundle_params.security_code_tooltip_text_4_digits;
+    SITE_ID = wc_mercadopago_supertoken_bundle_params.site_id;
+    CURRENCY = wc_mercadopago_supertoken_bundle_params.currency;
+    INTL = wc_mercadopago_supertoken_bundle_params.intl;
+    MERCADO_PAGO_CARD_NAME = wc_mercadopago_supertoken_bundle_params.mercado_pago_card_name;
+    CONSUMER_CREDITS_DUE_DATE = wc_mercadopago_supertoken_bundle_params.consumer_credits_due_date;
+    MLB_INSTALLMENT_DEBIT_AUTO_TEXT = wc_mercadopago_supertoken_bundle_params.mlb_installment_debit_auto_text;
+    INTEREST_RATE_MLB_TEXT = wc_mercadopago_supertoken_bundle_params.interest_rate_mlb_text;
+    EFFECTIVE_TOTAL_COST_MLB_TEXT = wc_mercadopago_supertoken_bundle_params.effective_total_cost_mlb_text;
+    IOF_MLB_TEXT = wc_mercadopago_supertoken_bundle_params.iof_mlb_text;
+    BORROWED_AMOUNT_MLB_TEXT = wc_mercadopago_supertoken_bundle_params.borrowed_amount_mlb_text;
+    PER_MONTH = wc_mercadopago_supertoken_bundle_params.per_month;
+    PER_YEAR = wc_mercadopago_supertoken_bundle_params.per_year;
+    CAT_MLM_TEXT = wc_mercadopago_supertoken_bundle_params.cat_mlm_text;
+    NO_IVA_TEXT = wc_mercadopago_supertoken_bundle_params.no_iva_text;
+    TNA_MLM_TEXT = wc_mercadopago_supertoken_bundle_params.tna_mlm_text;
+    SYSTEM_AMORTIZATION_MLM_TEXT = wc_mercadopago_supertoken_bundle_params.system_amortization_mlm_text;
+    CFTEA_MLA_TEXT = wc_mercadopago_supertoken_bundle_params.cftea_mla_text;
+    TNA_MLA_TEXT = wc_mercadopago_supertoken_bundle_params.tna_mla_text;
+    TEA_MLA_TEXT = wc_mercadopago_supertoken_bundle_params.tea_mla_text;
+    FIXED_RATE_TEXT = wc_mercadopago_supertoken_bundle_params.fixed_rate_text;
+    MERCADO_PAGO_PRIVACY_POLICY = wc_mercadopago_supertoken_bundle_params.mercadopago_privacy_policy;
+    NEW_MP_LOGO_PATH = wc_mercadopago_supertoken_bundle_params.new_mp_logo_path;
+    PAYMENT_METHODS_THUMBNAILS = wc_mercadopago_supertoken_bundle_params.payment_methods_thumbnails;
+    PAYMENT_METHODS_ORDER = wc_mercadopago_supertoken_bundle_params.payment_methods_order;
+    UPDATE_SECURITY_CODE_WITH_RETRY_ERROR_TEXT = wc_mercadopago_supertoken_bundle_params.update_security_code_with_retry_error_text;
+    UPDATE_SECURITY_CODE_NO_RETRY_ERROR_TEXT = wc_mercadopago_supertoken_bundle_params.update_security_code_no_retry_error_text;
+    AUTHORIZE_PAYMENT_METHOD_WITH_RETRY_ERROR_TEXT = wc_mercadopago_supertoken_bundle_params.authorize_payment_method_with_retry_error_text;
+    AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT = wc_mercadopago_supertoken_bundle_params.authorize_payment_method_no_retry_error_text;
+    SELECT_PAYMENT_METHOD_ERROR_TEXT = wc_mercadopago_supertoken_bundle_params.select_payment_method_error_text;
     // We use the update_security_code_with_retry_error_text because it's the same message for the generic error
-    SUBMIT_SUPER_TOKEN_GENERIC_ERROR_TEXT = wc_mercadopago_supertoken_payment_methods_params.update_security_code_with_retry_error_text;
+    SUBMIT_SUPER_TOKEN_GENERIC_ERROR_TEXT = wc_mercadopago_supertoken_bundle_params.update_security_code_with_retry_error_text;
 
     NEW_CARD_TYPE = 'new_card';
     CREDIT_CARD_TYPE = 'credit_card';
@@ -752,9 +752,9 @@ class MPSuperTokenPaymentMethods {
 
         const [_, month, day] = dateParts;
         const monthKey = monthsMapping[month];
-        const monthText = (wc_mercadopago_supertoken_payment_methods_params.months_abbreviated &&
-                          wc_mercadopago_supertoken_payment_methods_params.months_abbreviated[monthKey])
-                          ? wc_mercadopago_supertoken_payment_methods_params.months_abbreviated[monthKey]
+        const monthText = (wc_mercadopago_supertoken_bundle_params.months_abbreviated &&
+                          wc_mercadopago_supertoken_bundle_params.months_abbreviated[monthKey])
+                          ? wc_mercadopago_supertoken_bundle_params.months_abbreviated[monthKey]
                           : month;
 
         return `${parseInt(day)}/${monthText}`;
@@ -1642,11 +1642,11 @@ class MPSuperTokenPaymentMethods {
             }
 
             if (this.isPrepaidCard(paymentMethod)) {
-                paymentMethod.thumbnail = this.PAYMENT_METHODS_THUMBNAILS[paymentMethod.id] || this.WHITE_CARD_PATH;
+                paymentMethod.thumbnail = this.PAYMENT_METHODS_THUMBNAILS[paymentMethod.id] || paymentMethod.thumbnail || this.WHITE_CARD_PATH;
             }
 
             if (this.isCreditCard(paymentMethod) || this.isDebitCard(paymentMethod)) {
-                paymentMethod.thumbnail = this.PAYMENT_METHODS_THUMBNAILS[paymentMethod.id] || this.WHITE_CARD_PATH;
+                paymentMethod.thumbnail = this.PAYMENT_METHODS_THUMBNAILS[paymentMethod.id] || paymentMethod.thumbnail || this.WHITE_CARD_PATH;
                 paymentMethod.name = (paymentMethod.issuer.name ?? paymentMethod.name) + ' ' + (this.isCreditCard(paymentMethod) ? 'Crédito' : 'Débito');
             }
 

@@ -76,28 +76,66 @@
   margin-bottom: 0;
 }
 
-.mp-checkout-yape-inputs
+.payment_box.payment_method_woo-mercado-pago-yape .mp-checkout-yape-inputs {
+  container-name: yape-inputs;
+  container-type: inline-size;
+  --mp-yape-code-gap: 8px;
+}
+
+
+.payment_box.payment_method_woo-mercado-pago-yape .mp-checkout-yape-inputs
 .mp-yape-input-container {
-  display: flex !important;
-  gap: 8px !important;
+  display: grid !important;
+  grid-auto-flow: row;
+  grid-template-columns: repeat(3, 38px);
+  gap: var(--mp-yape-code-gap, 8px) !important;
   width: 100% !important;
 }
 
-input.mp-yape-code-input {
+.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-3 {
+  grid-template-columns: repeat(3, 38px);
+}
+
+.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6 {
+  grid-template-columns: repeat(3, 38px) 0 repeat(3, 38px);
+}
+
+.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6
+.mp-yape-code-input:nth-child(3) {
+  grid-column: 3;
+}
+
+.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6
+.mp-yape-code-input:nth-child(4) {
+  grid-column: 5;
+}
+
+.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6
+.mp-yape-code-input:nth-child(5) {
+  grid-column: 6;
+}
+
+.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6
+.mp-yape-code-input:nth-child(6) {
+  grid-column: 7;
+}
+
+.payment_box.payment_method_woo-mercado-pago-yape input.mp-yape-code-input {
+  width: 38px !important;
+  background: #ffffff !important;
   margin: 0 !important;
   padding: 0 !important;
+  min-width: 0;
+  flex: 0 0 auto;
 }
 
 @media screen and (max-width: 480px) {
-  .mp-checkout-yape-inputs .mp-yape-input-container {
+  .payment_box.payment_method_woo-mercado-pago-yape .mp-checkout-yape-inputs .mp-yape-input-container {
     width: 100% !important;
-    display: flex !important;
-    gap: 1px !important;
-  }
-
-  input.mp-yape-code-input {
-    margin: 0 !important;
-    padding: 0 !important;
+    display: grid !important;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, 38px);
+    gap: var(--mp-yape-code-gap, 8px) !important;
   }
 }
 

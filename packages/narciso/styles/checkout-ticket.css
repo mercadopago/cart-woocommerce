@@ -84,6 +84,11 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-billing-text {
     overflow: hidden;
 }
 
+.mp-checkout-ticket-address-container {
+  container-type: inline-size !important;
+  container-name: mp-checkout-ticket-address-container !important;
+}
+
 .mp-checkout-ticket-billing-input-column {
     display: flex !important;
     flex-direction: column !important;
@@ -113,6 +118,8 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-billing-text {
     line-height: 20px !important;
     outline: 0 !important;
     padding: 0px 14px !important;
+    gap: 12px !important;
+    box-sizing: border-box;
 }
 
 .mp-checkout-ticket-billing-input-number-disabled {
@@ -147,8 +154,10 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-billing-text {
 }
 
 .mp-checkout-ticket-billing-input-number input {
-    width: 65% !important;
-    float: left !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    float: none !important;
     border: none !important;
     border-color: none !important;
     color: #000 !important;
@@ -168,8 +177,9 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-billing-text {
 }
 
 .mp-checkout-ticket-billing-number-toggle-checkbox {
-    width: 35% !important;
-    float: right !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    float: none !important;
     display: flex !important;
     align-items: center !important;
     justify-content: flex-end !important;
@@ -177,7 +187,7 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-billing-text {
 }
 
 .mp-checkout-ticket-billing-number-toggle-checkbox p {
-    height: 20px !important;
+    height: 19px !important;
     color: #000000 !important;
     font-weight: 400 !important;
     font-size: 14px !important;
@@ -201,4 +211,50 @@ div div .mp-checkout-ticket-content .mp-checkout-ticket-billing-text {
       display: flex !important;
       flex-wrap: wrap !important;
     }
+    .mp-checkout-ticket-billing-input-number {
+      height: 48px !important;
+      padding: 8px 14px !important;
+      align-items: center !important;
+      flex-wrap: nowrap !important;
+    }
+    .mp-checkout-ticket-billing-input-number input {
+      flex: 1 1 auto !important;
+      width: auto !important;
+    }
+    .mp-checkout-ticket-billing-number-toggle-checkbox {
+      width: auto !important;
+      flex: 0 0 auto !important;
+      justify-content: flex-end !important;
+    }
+    .mp-checkout-ticket-billing-number-toggle-checkbox p {
+      white-space: nowrap !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .mp-checkout-ticket-billing-input-number {
+      gap: 8px !important;
+    }
+    .mp-checkout-ticket-billing-number-toggle-checkbox {
+      flex-wrap: nowrap !important;
+      max-width: 45% !important;
+    }
+    .mp-checkout-ticket-billing-number-toggle-checkbox p {
+      white-space: nowrap !important;
+      text-overflow: ellipsis !important;
+    }
+}
+
+@container mp-checkout-ticket-address-container (max-width: 300px) {
+  .mp-checkout-ticket-billing-input-row {
+    flex-direction: column !important;
+  }
+
+  .mp-checkout-ticket-billing-number-toggle-checkbox {
+    flex-direction: column-reverse !important;
+  }
+
+  .mp-checkout-ticket-billing-input-number {
+    padding-right: 2px !important;
+  }
 }

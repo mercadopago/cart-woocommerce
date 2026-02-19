@@ -223,6 +223,7 @@ class InputCode extends HTMLElement {
       .mp-yape-code-input {
         width: 38px !important;
         height: 48px !important;
+        background: #ffffff !important;
         text-align: center !important;
         font-size: 24px !important;
         border: 1px solid #ccc !important;

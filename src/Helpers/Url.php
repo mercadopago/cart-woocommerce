@@ -35,9 +35,31 @@ class Url
     }
 
     /**
+     * Get Mercado Pago SDK JS URL based on MP_SDK_ENV (prod, beta, gama).
+     * Override via wp-config.php: define('MP_SDK_ENV', 'beta');
+     *
+     * @return string
+     */
+    public function getMercadoPagoSdkUrl(): string
+    {
+        $env = defined('MP_SDK_ENV') ? MP_SDK_ENV : 'prod';
+        $env = is_string($env) ? strtolower(trim($env)) : 'prod';
+
+        $urls = [
+            'prod' => 'https://sdk.mercadopago.com/js/v2',
+            'beta' => 'https://beta-sdk.mercadopago.com/js/v2',
+            'gama' => 'https://beta-sdk.mercadopago.com/gama/js/v2',
+        ];
+
+        return $urls[$env] ?? $urls['prod'];
+    }
+
+
+    /**
      * Get plugin css asset file url
      *
      * @param string $fileName
+     * @param bool $useExternal
      *
      * @return string
      */
@@ -46,10 +68,12 @@ class Url
         return $this->getPluginFileUrl("assets/css/$fileName.min.css");
     }
 
+
     /**
      * Get plugin js asset file url
      *
      * @param string $fileName
+     * @param bool $useExternal
      *
      * @return string
      */

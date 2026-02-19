@@ -523,7 +523,7 @@ class OrderStatus
             explode(',', $this->orderMetadata->getPaymentsIdMeta($order))
         ));
 
-        $headers = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+        $headers = ['Authorization: Bearer ' . $this->getAccessTokenForOrder($order)];
 
         foreach ($paymentsIds as $paymentId) {
             $response = $this->requester->get(self::PAYMENTS_ENDPOINT . $paymentId, $headers);
@@ -574,7 +574,7 @@ class OrderStatus
             explode(',', $this->orderMetadata->getPaymentsIdMeta($order))
         ));
 
-        $headers = ['Authorization: Bearer ' . $this->seller->getCredentialsAccessToken()];
+        $headers = ['Authorization: Bearer ' . $this->getAccessTokenForOrder($order)];
 
         try {
             $lastPaymentId = end($paymentsIds);
@@ -622,5 +622,28 @@ class OrderStatus
         }
 
         return ["id" => "P-$paymentId", "type" => "payment"];
+    }
+
+    /**
+     * Get access token based on order creation mode
+     *
+     * @param WC_Order $order
+     *
+     * @return string
+     */
+    private function getAccessTokenForOrder(WC_Order $order): string
+    {
+        $isProductionMode = $this->orderMetadata->getIsProductionModeData($order);
+        if ($isProductionMode !== null && $isProductionMode !== '') {
+            if (in_array($isProductionMode, ['yes', '1', 1, true], true)) {
+                return $this->seller->getCredentialsAccessTokenProd();
+            }
+
+            if (in_array($isProductionMode, ['no', '0', 0, false], true)) {
+                return $this->seller->getCredentialsAccessTokenTest();
+            }
+        }
+
+        return $this->seller->getCredentialsAccessToken();
     }
 }

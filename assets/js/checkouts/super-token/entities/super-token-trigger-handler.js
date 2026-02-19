@@ -7,7 +7,7 @@ class MPSuperTokenTriggerHandler {
     CHECKOUT_TYPE_SELECTOR = '#mp_checkout_type';
     LOADING_ANIMATION_FINISH_DELAY = 500;
     AVOID_INSTANT_REMOVAL_LOADER_DELAY = 500;
-    CURRENT_USER_EMAIL = wc_mercadopago_supertoken_trigger_handler_params.current_user_email;
+    CURRENT_USER_EMAIL = wc_mercadopago_supertoken_bundle_params.current_user_email;
 
     // Attributes
     wcBuyerEmail = null;

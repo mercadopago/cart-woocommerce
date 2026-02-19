@@ -1,3 +1,4 @@
+/* Super Token Payment Methods List */
 div.mp-super-token-payment-methods-list {
     display: flex !important;
     flex-direction: column !important;
@@ -275,6 +276,7 @@ div.mp-super-token-payment-methods-list.mp-initial-state {
     outline: none !important;
 }
 
+.payment_method_woo-mercado-pago-custom .mp-super-token-payment-method__accordion-header img,
 .mp-super-token-payment-method__accordion-header img {
     width: 32px !important;
     height: 24px !important;
@@ -302,6 +304,7 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
   align-items: start !important;
 }
 
+.payment_method_woo-mercado-pago-custom .mp-super-token-payment-method__thumbnail,
 .mp-super-token-payment-method__thumbnail {
     min-width: 32px !important;
     height: 24px !important;
@@ -312,6 +315,7 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
     margin: 0 !important;
 }
 
+.payment_method_woo-mercado-pago-custom .mp-super-token-payment-method__thumbnail img,
 .mp-super-token-payment-method__thumbnail img {
     width: 100% !important ;
     height: 100% !important;
@@ -605,8 +609,6 @@ section.mp-super-token-payment-method__header:has(.mp-super-token-payment-method
     width: 100% !important;
     padding-bottom: 12px !important;
     margin: 0 !important;
-    position: relative !important;
-    bottom: 0 !important;
     opacity: 1 !important;
     /* Animaton: Title and logo transition */
     transition-delay: 0.25s !important;
