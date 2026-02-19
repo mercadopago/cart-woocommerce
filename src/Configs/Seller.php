@@ -413,7 +413,7 @@ class Seller
             'status'   => 'success',
             'data'     => [
                 'nickname' => $sellerInfo['data']['nickname'],
-                'app_name' => $sellerInfo['data']['app_name'] ? $sellerInfo['data']['app_name'] : $sellerInfo['data']['client_id'],
+                'app_name' => isset($sellerInfo['data']['app_name']) ? $sellerInfo['data']['app_name'] : $sellerInfo['data']['client_id'],
                 'email'    => $sellerInfo['data']['email'],
             ],
         ];

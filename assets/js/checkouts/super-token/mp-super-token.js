@@ -5,11 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const waitMpSdkInstanceLoad = setInterval(() => {
         if (window.mpSdkInstance) {
             clearInterval(waitMpSdkInstanceLoad);
-
+            const SUPER_TOKEN_JS_VERSION = '1.0.0';
             const mpSdkInstance = window.mpSdkInstance;
             const mpDebounce = new MPDebounce();
             const wcEmailListener = new WCEmailListener(mpDebounce);
-            const mpSuperTokenMetrics = new MPSuperTokenMetrics(mpSdkInstance);
+            const mpSuperTokenMetrics = new MPSuperTokenMetrics(mpSdkInstance, SUPER_TOKEN_JS_VERSION);
             const mpSuperTokenPaymentMethods = new MPSuperTokenPaymentMethods(
                 mpSdkInstance,
                 mpSuperTokenMetrics,

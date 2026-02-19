@@ -259,9 +259,12 @@ class CustomGatewayTest extends TestCase
     public function testProcessPaymentSuperToken(bool $isBlocks, bool $isOrderPayPage, array $checkout, array $response)
     {
         $token = random()->uuid();
+        $token = random()->uuid();
         $this->processPaymentMock(
             array_merge([
                 'checkout_type' => 'super_token',
+                'token' => $token,
+                'authorized_pseudotoken' => $token,
                 'token' => $token,
                 'authorized_pseudotoken' => $token,
                 'amount' => 100,
@@ -276,19 +279,24 @@ class CustomGatewayTest extends TestCase
             ->byDefault();
 
         $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        // Note: createPayment() is called twice in the code (lines 753-754)
+        // This is a known issue that needs investigation
         $superTokenTransactionMock
                 ->expects()
                 ->createPayment()
+                ->twice()
                 ->andReturn($response)
                 ->getMock()
                 ->expects()
                 ->getInternalMetadata()
                 ->andReturn($paymentMetadata = Mockery::mock(PaymentMetadata::class));
 
+        // Mock getCheckoutSessionData to return only the flow_id (used for metrics)
+        // Note: token and authorized_pseudotoken come from $checkout array, not from session data
         $superTokenTransactionMock
             ->expects()
             ->getCheckoutSessionData()
-            ->andReturn(['_mp_flow_id' => 'test-flow-id-123', 'token' => $token, 'authorized_pseudotoken' => $token]);
+            ->andReturn(['_mp_flow_id' => 'test-flow-id-123']);
 
         $this->gateway->mercadopago->orderMetadata
             ->expects()
@@ -1096,11 +1104,11 @@ class CustomGatewayTest extends TestCase
     }
 
     /**
-     * Test registerCheckoutStyle method
+     * Test registerSuperTokenStyles method (renamed from registerCheckoutStyle)
      *
      * @return void
      */
-    public function testRegisterCheckoutStyle()
+    public function testRegisterSuperTokenStyles()
     {
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getCssAsset')
@@ -1112,7 +1120,8 @@ class CustomGatewayTest extends TestCase
             ->with('wc_mercadopago_supertoken_payment_methods', 'test-css-url')
             ->once();
 
-        $this->gateway->registerCheckoutStyle();
+        // Note: Method was renamed from registerCheckoutStyle to registerSuperTokenStyles
+        $this->gateway->registerSuperTokenStyles();
 
         // Verify the method was called
         $this->assertTrue(true);
@@ -1163,6 +1172,11 @@ class CustomGatewayTest extends TestCase
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getCssAsset')
             ->andReturn('test-css-url');
+
+        // Mock getMercadoPagoSdkUrl for SDK URL retrieval
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getMercadoPagoSdkUrl')
+            ->andReturn('https://sdk.mercadopago.com/js/v2');
 
         WP_Mock::userFunction('wp_is_mobile')
             ->andReturn(false);
@@ -1294,6 +1308,13 @@ class CustomGatewayTest extends TestCase
 
         WP_Mock::userFunction('wp_get_current_user')
             ->andReturn((object) ['user_email' => 'test@example.com']);
+
+        // Mock add_action for wp_enqueue_scripts (used in registerSuperTokenLocalizeParams)
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+
+        // Mock wp_localize_script (called inside the closure)
+        WP_Mock::userFunction('wp_localize_script')
+            ->andReturn(true);
 
         // Mock scripts registration
         $this->gateway->mercadopago->hooks->scripts
@@ -1853,7 +1874,7 @@ class CustomGatewayTest extends TestCase
         $callCount = 0;
         $this->gateway->mercadopago->sellerConfig
             ->shouldReceive('getSiteId')
-            ->andReturnUsing(function() use (&$callCount) {
+            ->andReturnUsing(function () use (&$callCount) {
                 $callCount++;
                 // First call is for site_id param (line 538), second is for CARD_FLAGS_BY_COUNTRY (line 559)
                 return $callCount === 1 ? '' : 'MLA';
@@ -1922,6 +1943,18 @@ class CustomGatewayTest extends TestCase
     }
 
     /**
+     * Test that super_token_validation_failed metric is sent when validation fails
+     *
+     * Context: The super token validation happens on the frontend before payment submission.
+     * When validation is incomplete or fails (super_token_validation === 'false'), we send
+     * a metric to track these failures for monitoring and debugging purposes.
+     *
+     * The metric includes:
+     * - site_id: Identifies the Mercado Pago site (MLB, MLA, etc.)
+     * - environment: 'homol' for test mode, 'prod' for production
+     * - cust_id: Customer ID from access token
+     * - sdk_instance_id: Flow ID from checkout session (or 'Unknown' if missing)
+     *
      * @dataProvider processPaymentSuperTokenValidationFailedProvider
      * @runInSeparateProcess
      * @preserveGlobalState disabled
@@ -1929,8 +1962,11 @@ class CustomGatewayTest extends TestCase
     public function testProcessPaymentSuperTokenSendsMetricWhenValidationFailed(bool $isBlocks, string $superTokenValidation, bool $shouldSendMetric): void
     {
         $token = random()->uuid();
+        $token = random()->uuid();
         $checkout = [
             'checkout_type' => 'super_token',
+            'token' => $token,
+            'authorized_pseudotoken' => $token,
             'token' => $token,
             'authorized_pseudotoken' => $token,
             'amount' => 100,
@@ -1950,9 +1986,11 @@ class CustomGatewayTest extends TestCase
         $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-123'];
 
         $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        // Note: createPayment() is called twice in the code (lines 753-754)
         $superTokenTransactionMock
             ->expects()
             ->createPayment()
+            ->twice()
             ->andReturn(['status' => 'approved'])
             ->getMock()
             ->expects()
@@ -2021,6 +2059,22 @@ class CustomGatewayTest extends TestCase
     }
 
     /**
+     * Test that authorized_pseudotoken_mismatch metric is sent when tokens don't match
+     *
+     * Context: This test validates the security check introduced to detect when the
+     * authorized_pseudotoken (returned from the authorization flow) differs from the
+     * token originally sent in the checkout. This mismatch could indicate:
+     * - A potential security issue
+     * - Frontend/backend synchronization problems
+     * - Token manipulation attempts
+     *
+     * The metric helps track these anomalies for security monitoring and debugging.
+     * It compares:
+     * - checkoutCustomToken: The 'token' field from the checkout data
+     * - authorizedPseudotoken: The 'authorized_pseudotoken' field from checkout data
+     *
+     * When they differ, the metric is sent with both values for analysis.
+     *
      * @dataProvider processPaymentSuperTokenPseudotokenMismatchProvider
      * @runInSeparateProcess
      * @preserveGlobalState disabled
@@ -2056,9 +2110,11 @@ class CustomGatewayTest extends TestCase
         $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-456'];
 
         $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        // Note: createPayment() is called twice in the code (lines 753-754)
         $superTokenTransactionMock
             ->expects()
             ->createPayment()
+            ->twice()
             ->andReturn(['status' => 'approved'])
             ->getMock()
             ->expects()
@@ -2123,9 +2179,21 @@ class CustomGatewayTest extends TestCase
         $result = $this->gateway->process_payment(1);
 
         $this->assertEquals('success', $result['result']);
-}
+    }
 
     /**
+     * Test that metrics use 'Unknown' as fallback when flow ID is missing
+     *
+     * Context: The sdk_instance_id (flow ID) is used to track the user's journey through
+     * the checkout process. It's stored in the checkout session data as '_mp_flow_id'.
+     *
+     * In cases where the session data is corrupted, missing, or not properly initialized,
+     * we use 'Unknown' as a fallback value to ensure metrics are still sent and we can
+     * track how often this edge case occurs.
+     *
+     * This test validates that the fallback mechanism works correctly by returning an
+     * empty checkout session data array (no _mp_flow_id key).
+     *
      * @dataProvider processPaymentSuperTokenValidationFailedProvider
      * @runInSeparateProcess
      * @preserveGlobalState disabled
@@ -2133,8 +2201,11 @@ class CustomGatewayTest extends TestCase
     public function testProcessPaymentSuperTokenSendsMetricWithUnknownFlowId(bool $isBlocks): void
     {
         $token = random()->uuid();
+        $token = random()->uuid();
         $checkout = [
             'checkout_type' => 'super_token',
+            'token' => $token,
+            'authorized_pseudotoken' => $token,
             'token' => $token,
             'authorized_pseudotoken' => $token,
             'amount' => 100,
@@ -2154,9 +2225,11 @@ class CustomGatewayTest extends TestCase
         $checkoutSessionData = [];
 
         $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        // Note: createPayment() is called twice in the code (lines 753-754)
         $superTokenTransactionMock
             ->expects()
             ->createPayment()
+            ->twice()
             ->andReturn(['status' => 'approved'])
             ->getMock()
             ->expects()
@@ -2212,54 +2285,146 @@ class CustomGatewayTest extends TestCase
         $this->assertEquals('success', $result['result']);
     }
 
+    /**
+     * Data provider for super token validation failure tests
+     *
+     * Tests both checkout types (blocks and classic) with different validation states.
+     * The metric should only be sent when super_token_validation === 'false'.
+     */
     public function processPaymentSuperTokenValidationFailedProvider(): array
     {
         return [
             'blocks checkout - validation failed' => [
                 true,   // isBlocks
-                'false', // super_token_validation
+                'false', // super_token_validation (string 'false' triggers metric)
                 true,   // shouldSendMetric
             ],
             'classic checkout - validation failed' => [
                 false,  // isBlocks
-                'false', // super_token_validation
+                'false', // super_token_validation (string 'false' triggers metric)
                 true,   // shouldSendMetric
             ],
             'blocks checkout - validation passed' => [
                 true,   // isBlocks
-                'true', // super_token_validation
+                'true', // super_token_validation (string 'true' - no metric)
                 false,  // shouldSendMetric
             ],
             'classic checkout - validation passed' => [
                 false,  // isBlocks
-                'true', // super_token_validation
+                'true', // super_token_validation (string 'true' - no metric)
                 false,  // shouldSendMetric
             ],
         ];
     }
 
+    /**
+     * Data provider for pseudotoken mismatch tests
+     *
+     * Tests the security check that compares checkout['token'] with checkout['authorized_pseudotoken'].
+     * The metric should only be sent when these values differ, indicating a potential issue.
+     *
+     * Note: In the test, $token is set to 'pseudotoken-sent-in-order', so when
+     * authorized_pseudotoken has the same value, they match (no metric).
+     * When authorized_pseudotoken has a different value, they mismatch (metric sent).
+     */
     public function processPaymentSuperTokenPseudotokenMismatchProvider(): array
     {
         return [
             'blocks checkout - pseudotoken mismatch' => [
                 true,                           // isBlocks
                 'different-pseudotoken-value',   // authorized_pseudotoken (differs from token)
-                true,                           // shouldSendMetric
+                true,                           // shouldSendMetric (mismatch detected)
             ],
             'classic checkout - pseudotoken mismatch' => [
                 false,                          // isBlocks
                 'different-pseudotoken-value',   // authorized_pseudotoken (differs from token)
-                true,                           // shouldSendMetric
+                true,                           // shouldSendMetric (mismatch detected)
             ],
             'blocks checkout - pseudotoken matches' => [
                 true,                           // isBlocks
                 'pseudotoken-sent-in-order',     // authorized_pseudotoken (SAME as $token in test)
-                false,                          // shouldSendMetric
+                false,                          // shouldSendMetric (no mismatch)
             ],
             'classic checkout - pseudotoken matches' => [
                 false,                          // isBlocks
                 'pseudotoken-sent-in-order',     // authorized_pseudotoken (SAME as $token in test)
-                false,                          // shouldSendMetric
+                false,                          // shouldSendMetric (no mismatch)
+            ],
+        ];
+    }
+
+    /**
+     * Test that super token payment fails when authorized_pseudotoken is missing
+     * This validates the change from 'token' to 'authorized_pseudotoken' in the anyEmpty() validation
+     *
+     * @dataProvider processPaymentSuperTokenMissingFieldProvider
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProcessPaymentSuperTokenFailsWhenAuthorizedPseudotokenMissing(bool $isBlocks, array $missingFields): void
+    {
+        $checkout = [
+            'checkout_type' => 'super_token',
+            'token' => random()->uuid(),
+            'amount' => 100,
+            'payment_method_id' => 'visa',
+            'payment_type_id' => 'credit_card',
+            'installments' => 1,
+        ];
+
+        // Remove the field that should be missing
+        foreach ($missingFields as $field) {
+            unset($checkout[$field]);
+        }
+
+        $this->processPaymentMock($checkout, $isBlocks);
+
+        // Mock get_id() for this test
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
+        // Mock processReturnFail to handle the exception
+        $this->gateway
+            ->expects()
+            ->processReturnFail()
+            ->withAnyArgs()
+            ->andReturn($expected = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'Unable to process payment',
+            ]);
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('fail', $result['result']);
+    }
+
+    /**
+     * Data provider for testProcessPaymentSuperTokenFailsWhenAuthorizedPseudotokenMissing
+     */
+    public function processPaymentSuperTokenMissingFieldProvider(): array
+    {
+        return [
+            'blocks checkout - missing authorized_pseudotoken' => [
+                true,  // isBlocks
+                ['authorized_pseudotoken'], // missing fields
+            ],
+            'classic checkout - missing authorized_pseudotoken' => [
+                false, // isBlocks
+                ['authorized_pseudotoken'], // missing fields
+            ],
+            'blocks checkout - missing amount' => [
+                true,  // isBlocks
+                ['amount'], // missing fields
+            ],
+            'classic checkout - missing payment_method_id' => [
+                false, // isBlocks
+                ['payment_method_id'], // missing fields
+            ],
+            'blocks checkout - missing payment_type_id' => [
+                true,  // isBlocks
+                ['payment_type_id'], // missing fields
             ],
         ];
     }

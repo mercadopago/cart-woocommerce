@@ -179,7 +179,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('payment_123');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $responseMock = Mockery::mock(Response::class);
@@ -243,7 +247,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('payment_123');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $responseMock = Mockery::mock(Response::class);
@@ -316,7 +324,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('payment_123');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $responseMock = Mockery::mock(Response::class);
@@ -435,7 +447,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('123,456');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $responseMocks = [];
@@ -476,7 +492,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('123');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $responseMock = Mockery::mock(Response::class);
@@ -498,7 +518,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $result = $this->orderStatus->getAllPaymentsData($orderMock);
@@ -513,7 +537,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn(' 123 , 456 , ');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $responseMock1 = Mockery::mock(Response::class);
@@ -641,7 +669,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('123');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $responseMock = Mockery::mock(Response::class);
@@ -796,7 +828,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock1)
             ->andReturn('');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock1)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_test');
 
         $result = $this->orderStatus->getAllPaymentsData($orderMock1);
@@ -809,6 +845,10 @@ class OrderStatusTest extends TestCase
         $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
             ->with($orderMock2)
             ->andReturn('INVALID_PAYMENT');
+
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock2)
+            ->andReturn('no');
 
         $responseMock = Mockery::mock(Response::class);
         $responseMock->shouldReceive('getStatus')->andReturn(404);
@@ -829,7 +869,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('PAY_123,PAY_456');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_test');
 
         $paymentResponse = Mockery::mock(Response::class);
@@ -869,7 +913,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('PAY_INVALID');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_test');
 
         $paymentResponse = Mockery::mock(Response::class);
@@ -900,7 +948,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('PAY_API_ERROR');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_test');
 
         $paymentResponse = Mockery::mock(Response::class);
@@ -938,7 +990,8 @@ class OrderStatusTest extends TestCase
 
         $this->orderMetadataMock->shouldReceive('updateOrderCustomFieldsAfterSync');
         $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')->andReturn('');
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')->andReturn('test_token');
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')->andReturn('no');
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')->andReturn('test_token');
         $this->requesterMock->shouldReceive('get')->andReturn(
             Mockery::mock('MercadoPago\Woocommerce\IO\ApiResponse')
                 ->shouldReceive('getStatus')->andReturn(200)
@@ -965,6 +1018,51 @@ class OrderStatusTest extends TestCase
             $this->orderStatus->processStatus($status, $data, $orderMock, $usedGateway);
             $this->assertTrue(true);
         }
+    }
+
+    /**
+     * Data provider for getAccessTokenForOrder
+     */
+    public function accessTokenForOrderProvider(): array
+    {
+        return [
+            'production_mode_yes' => ['yes', 'access_token_prod', 'prod'],
+            'production_mode_no' => ['no', 'access_token_test', 'test'],
+            'production_mode_null_fallback' => [null, 'access_token_default', 'fallback'],
+        ];
+    }
+
+    /**
+     * Test getAccessTokenForOrder using is_production_mode
+     *
+     * @dataProvider accessTokenForOrderProvider
+     */
+    public function testGetAccessTokenForOrder(?string $isProductionMode, string $expectedToken, string $case): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn($isProductionMode);
+
+        if ($case === 'prod') {
+            $this->sellerMock->shouldReceive('getCredentialsAccessTokenProd')
+                ->andReturn($expectedToken);
+        } elseif ($case === 'test') {
+            $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
+                ->andReturn($expectedToken);
+        } else {
+            $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+                ->andReturn($expectedToken);
+        }
+
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('getAccessTokenForOrder');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->orderStatus, $orderMock);
+
+        $this->assertEquals($expectedToken, $result);
     }
 
     /**
@@ -1124,7 +1222,11 @@ class OrderStatusTest extends TestCase
             ->with($orderMock)
             ->andReturn('payment_123');
 
-        $this->sellerMock->shouldReceive('getCredentialsAccessToken')
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
             ->andReturn('access_token_123');
 
         $responseMock = Mockery::mock(Response::class);

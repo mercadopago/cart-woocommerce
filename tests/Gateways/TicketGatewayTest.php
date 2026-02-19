@@ -714,5 +714,4 @@ class TicketGatewayTest extends TestCase
 
         $this->assertEquals('3', $result);
     }
-
 }

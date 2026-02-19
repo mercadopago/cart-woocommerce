@@ -183,9 +183,6 @@ const Content = (props) => {
 
   return (
     <div>
-      <div className={'mp-checkout-custom-load'}>
-        <div className={'spinner-card-form'}></div>
-      </div>
       <div className={'mp-checkout-yape-container'}>
         <div ref={ref} className={'mp-checkout-yape-content'}>
             {test_mode ? (

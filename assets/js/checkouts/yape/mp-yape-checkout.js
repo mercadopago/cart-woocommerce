@@ -65,6 +65,42 @@ const isFormValid = () => {
     .some(item => item.querySelector('div').style.display !== 'none')
 };
 
+let yapeCodeLayoutObserver;
+
+const updateYapeCodeLayout = () => {
+  const phoneInput = document.getElementById('checkout__yapePhoneNumber');
+  const inputsContainer = document.querySelector('.payment_method_woo-mercado-pago-yape .mp-yape-input-container');
+
+  if (!phoneInput || !inputsContainer) {
+    return;
+  }
+
+  const styles = window.getComputedStyle(inputsContainer);
+  const gapValue = parseFloat(styles.columnGap || styles.gap || '8') || 8;
+  const requiredWidth = (6 * 38) + (5 * gapValue);
+  const availableWidth = phoneInput.getBoundingClientRect().width;
+  const useSixColumns = availableWidth >= requiredWidth;
+
+  inputsContainer.classList.toggle('mp-yape-code-columns-6', useSixColumns);
+  inputsContainer.classList.toggle('mp-yape-code-columns-3', !useSixColumns);
+};
+
+const setupYapeCodeLayout = () => {
+  if (yapeCodeLayoutObserver) {
+    yapeCodeLayoutObserver.disconnect();
+    yapeCodeLayoutObserver = null;
+  }
+
+  const phoneInput = document.getElementById('checkout__yapePhoneNumber');
+
+  if (window.ResizeObserver && phoneInput) {
+    yapeCodeLayoutObserver = new ResizeObserver(updateYapeCodeLayout);
+    yapeCodeLayoutObserver.observe(phoneInput);
+  }
+
+  updateYapeCodeLayout();
+};
+
 // Process when submit the checkout form
 jQuery('form.checkout').on('checkout_place_order_woo-mercado-pago-yape', (_event, wc_checkout_form) => {
   const $token = jQuery("#yapeToken");
@@ -89,4 +125,12 @@ jQuery('form#order_review').submit(async function (event) {
   event.preventDefault();
   await mercadoPagoFormHandlerYape();
   this.submit();
+});
+
+jQuery(() => {
+  setupYapeCodeLayout();
+});
+
+jQuery(document.body).on('updated_checkout', () => {
+  setupYapeCodeLayout();
 });

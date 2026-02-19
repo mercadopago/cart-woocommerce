@@ -4,12 +4,14 @@ class MPSuperTokenMetrics {
   PLATFORM_NAME = 'woocommerce';
   CORE_MONITOR_URL = 'https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/big';
   MELIDATA_ERROR_EVENT_NAME = 'mp_checkout_error';
-  PLUGIN_VERSION = wc_mercadopago_supertoken_metrics_params.plugin_version;
-  PLATFORM_VERSION = wc_mercadopago_supertoken_metrics_params.platform_version;
-  SITE_ID = wc_mercadopago_supertoken_metrics_params.site_id;
-  CUST_ID = wc_mercadopago_supertoken_metrics_params.cust_id;
-  LOCATION = wc_mercadopago_supertoken_metrics_params.location;
 
+  // Params
+  PLUGIN_VERSION = wc_mercadopago_supertoken_bundle_params.plugin_version;
+  PLATFORM_VERSION = wc_mercadopago_supertoken_bundle_params.platform_version;
+  SITE_ID = wc_mercadopago_supertoken_bundle_params.site_id;
+  CUST_ID = wc_mercadopago_supertoken_bundle_params.cust_id;
+  LOCATION = wc_mercadopago_supertoken_bundle_params.location;
+  SUPER_TOKEN_JS_VERSION = null;
   CUSTOM_CHECKOUT_STEPS = {
     LOAD_SUPER_TOKEN: 'load_super_token',
     SELECT_PAYMENT_METHOD: 'select_payment_method',
@@ -19,8 +21,9 @@ class MPSuperTokenMetrics {
   // Dependencies
   mpSdkInstance = null;
 
-  constructor(mpSdkInstance) {
+  constructor(mpSdkInstance, SUPER_TOKEN_JS_VERSION) {
     this.mpSdkInstance = mpSdkInstance;
+    this.SUPER_TOKEN_JS_VERSION = SUPER_TOKEN_JS_VERSION;
   }
 
   getSdkInstanceId() {
@@ -58,6 +61,7 @@ class MPSuperTokenMetrics {
             environment: this.getEnvironment(),
             sdk_instance_id: this.getSdkInstanceId(),
             cust_id: this.CUST_ID,
+            js_version: this.SUPER_TOKEN_JS_VERSION,
           }
         }),
       }

@@ -104,7 +104,7 @@ class YapeGateway extends AbstractGateway
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_sdk',
-            'https://sdk.mercadopago.com/js/v2'
+            $this->mercadopago->helpers->url->getMercadoPagoSdkUrl()
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(

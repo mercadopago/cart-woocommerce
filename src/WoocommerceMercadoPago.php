@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.7.11';
+    private const PLUGIN_VERSION = '8.7.12';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -46,6 +46,10 @@ class WoocommerceMercadoPago
     private const PLATFORM_NAME = 'woocommerce';
 
     private const PLUGIN_NAME = 'woocommerce-mercadopago/woocommerce-mercadopago.php';
+
+    private const PLUGIN_SUPER_TOKEN_USE_BUNDLE = false;
+
+    private const PLUGIN_SDK_ENV = 'prod';
 
     public WooCommerce $woocommerce;
 
@@ -428,6 +432,8 @@ class WoocommerceMercadoPago
         $this->define('MP_PLATFORM_NAME', self::PLATFORM_NAME);
         $this->define('MP_PRODUCT_ID_DESKTOP', self::PRODUCT_ID_DESKTOP);
         $this->define('MP_PRODUCT_ID_MOBILE', self::PRODUCT_ID_MOBILE);
+        $this->define('MP_SUPER_TOKEN_USE_BUNDLE', self::PLUGIN_SUPER_TOKEN_USE_BUNDLE);
+        $this->define('MP_SDK_ENV', self::PLUGIN_SDK_ENV);
     }
 
     /**
