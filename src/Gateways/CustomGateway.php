@@ -750,11 +750,6 @@ class CustomGateway extends AbstractGateway
                         );
                     }
 
-                    // Note: The createPayment() call appears twice below. This may be:
-                    // - Intentional for retry logic or double-verification
-                    // - A merge artifact that needs cleanup
-                    // TODO: Verify if both calls are necessary or if one should be removed
-                    $response          = $this->transaction->createPayment();
                     $response = $this->transaction->createPayment();
 
                     $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response, $this->transaction->getInternalMetadata());

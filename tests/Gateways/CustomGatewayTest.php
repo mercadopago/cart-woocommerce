@@ -279,12 +279,10 @@ class CustomGatewayTest extends TestCase
             ->byDefault();
 
         $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
-        // Note: createPayment() is called twice in the code (lines 753-754)
-        // This is a known issue that needs investigation
         $superTokenTransactionMock
                 ->expects()
                 ->createPayment()
-                ->twice()
+                ->once()
                 ->andReturn($response)
                 ->getMock()
                 ->expects()
@@ -1986,11 +1984,10 @@ class CustomGatewayTest extends TestCase
         $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-123'];
 
         $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
-        // Note: createPayment() is called twice in the code (lines 753-754)
         $superTokenTransactionMock
             ->expects()
             ->createPayment()
-            ->twice()
+            ->once()
             ->andReturn(['status' => 'approved'])
             ->getMock()
             ->expects()
@@ -2110,11 +2107,10 @@ class CustomGatewayTest extends TestCase
         $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-456'];
 
         $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
-        // Note: createPayment() is called twice in the code (lines 753-754)
         $superTokenTransactionMock
             ->expects()
             ->createPayment()
-            ->twice()
+            ->once()
             ->andReturn(['status' => 'approved'])
             ->getMock()
             ->expects()
@@ -2225,11 +2221,10 @@ class CustomGatewayTest extends TestCase
         $checkoutSessionData = [];
 
         $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
-        // Note: createPayment() is called twice in the code (lines 753-754)
         $superTokenTransactionMock
             ->expects()
             ->createPayment()
-            ->twice()
+            ->once()
             ->andReturn(['status' => 'approved'])
             ->getMock()
             ->expects()
@@ -2426,6 +2421,60 @@ class CustomGatewayTest extends TestCase
                 true,  // isBlocks
                 ['payment_type_id'], // missing fields
             ],
+        ];
+    }
+
+    /**
+     * @dataProvider processPaymentDefaultMissingFieldProvider
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProcessPaymentDefaultFailsWhenRequiredFieldsMissing(bool $isBlocks, array $missingFields): void
+    {
+        $checkout = [
+            'checkout_type' => 'custom',
+            'token' => random()->uuid(),
+            'amount' => 100,
+            'payment_method_id' => 'visa',
+            'installments' => 1,
+        ];
+
+        foreach ($missingFields as $field) {
+            unset($checkout[$field]);
+        }
+
+        $this->processPaymentMock($checkout, $isBlocks);
+
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+
+        $this->gateway
+            ->expects()
+            ->processReturnFail()
+            ->withAnyArgs()
+            ->andReturn($expected = [
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'Unable to process payment',
+            ]);
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('fail', $result['result']);
+    }
+
+    public function processPaymentDefaultMissingFieldProvider(): array
+    {
+        return [
+            'blocks - missing token' => [true, ['token']],
+            'classic - missing token' => [false, ['token']],
+            'blocks - missing amount' => [true, ['amount']],
+            'classic - missing amount' => [false, ['amount']],
+            'blocks - missing payment_method_id' => [true, ['payment_method_id']],
+            'classic - missing payment_method_id' => [false, ['payment_method_id']],
+            'blocks - missing installments' => [true, ['installments']],
+            'classic - missing installments' => [false, ['installments']],
         ];
     }
 }
