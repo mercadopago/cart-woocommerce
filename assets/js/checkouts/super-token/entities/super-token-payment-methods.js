@@ -125,6 +125,7 @@ class MPSuperTokenPaymentMethods {
     securityCodeReferences = {};
     lastPaymentMethodChoosen = null; // Should not be resetted
     attemptsByErrorCode = {};
+    isRendering = false;
 
     // Dependencies
     mpSdkInstance = null;
@@ -136,6 +137,7 @@ class MPSuperTokenPaymentMethods {
     }
 
     reset() {
+        this.isRendering = false;
         this.paymentMethods = [];
         this.attemptsByErrorCode = {};
         this.securityCodeReferences = {};
@@ -1880,19 +1882,24 @@ class MPSuperTokenPaymentMethods {
         this.storeAmount(amount);
         this.storeActivePaymentMethod(this.getPaymentMethodSelectedFromDOMToAccountPaymentMethods(accountPaymentMethods));
 
-        if (this.paymentMethodsAreRendered()) return;
+        if (this.paymentMethodsAreRendered() || this.isRendering) return;
 
         if (!this.hasStoredPaymentMethods()) this.storePaymentMethodsInMemory(accountPaymentMethods);
+        this.isRendering = true;
 
         const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
 
-        if (!customCheckoutEntireElement) throw new Error(MPSuperTokenErrorCodes.CUSTOM_CHECKOUT_ENTIRE_ELEMENT_NOT_FOUND);
+        if (!customCheckoutEntireElement) {
+          this.isRendering = false;
+          throw new Error(MPSuperTokenErrorCodes.CUSTOM_CHECKOUT_ENTIRE_ELEMENT_NOT_FOUND);
+        }
 
         this.onCustomCheckoutWasRendered(
             customCheckoutEntireElement,
             accountPaymentMethods
         );
 
+        this.isRendering = false;
         setTimeout(() => {
           const sdkInstanceId = this.mpSuperTokenMetrics.getSdkInstanceId();
           document.dispatchEvent(new CustomEvent('supertoken_loaded', { detail: { sdkInstanceId } }));

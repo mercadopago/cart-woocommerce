@@ -1,4 +1,5 @@
 const fs = require('fs');
+const readline = require('readline');
 const path = require('path');
 const minify = require('minify');
 const wpPot = require('wp-pot');
@@ -160,11 +161,77 @@ function findFilesInDir (startPath, filter, excludes = '') {
   return results;
 }
 
+async function setupSuperToken() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  const ask = (question) => new Promise((resolve) => rl.question(question, resolve));
+  const version = await ask('Qual será a versão do Super Token? (ex: 1.0.0): ');
+  if (!/^\d+\.\d+\.\d+/.test(version)) {
+    console.error('Versão inválida. Use o formato semver (ex: 1.2.3)');
+    process.exit(1);
+  }
+
+  const env = await ask('Qual ambiente do JS SDK? (prod, beta, gama): ');
+  if (!['prod', 'beta', 'gama'].includes(env)) {
+    console.error('Ambiente inválido. Use: prod, beta ou gama');
+    process.exit(1);
+  }
+
+  rl.close();
+
+  // 1. Set PLUGIN_SUPER_TOKEN_USE_BUNDLE = false and PLUGIN_SDK_ENV
+  const phpPath = 'src/WoocommerceMercadoPago.php';
+  let phpContent = fs.readFileSync(phpPath, 'utf8');
+
+  phpContent = phpContent.replace(
+    /private const PLUGIN_SUPER_TOKEN_USE_BUNDLE = \w+;/,
+    'private const PLUGIN_SUPER_TOKEN_USE_BUNDLE = false;'
+  );
+
+  phpContent = phpContent.replace(
+    /private const PLUGIN_SDK_ENV = '[^']+';/,
+    `private const PLUGIN_SDK_ENV = '${env}';`
+  );
+
+  fs.writeFileSync(phpPath, phpContent, 'utf8');
+  console.log(`✔ ${phpPath}: PLUGIN_SUPER_TOKEN_USE_BUNDLE = false`);
+  console.log(`✔ ${phpPath}: PLUGIN_SDK_ENV = '${env}'`);
+
+  // 2. Update SUPER_TOKEN_JS_VERSION in JS file
+  const jsPath = 'assets/js/checkouts/super-token/mp-super-token.js';
+  let jsContent = fs.readFileSync(jsPath, 'utf8');
+
+  jsContent = jsContent.replace(
+    /const SUPER_TOKEN_JS_VERSION = '[^']+';/,
+    `const SUPER_TOKEN_JS_VERSION = '${version}';`
+  );
+
+  fs.writeFileSync(jsPath, jsContent, 'utf8');
+  console.log(`✔ ${jsPath}: SUPER_TOKEN_JS_VERSION = '${version}'`);
+
+  // 3. Update --mp-super-token-loader-version in CSS file
+  const cssPath = 'assets/css/checkouts/super-token/mp-super-token.css';
+  let cssContent = fs.readFileSync(cssPath, 'utf8');
+
+  cssContent = cssContent.replace(
+    /--mp-super-token-loader-version: [^;]+;/,
+    `--mp-super-token-loader-version: ${version};`
+  );
+
+  fs.writeFileSync(cssPath, cssContent, 'utf8');
+  console.log(`✔ ${cssPath}: --mp-super-token-loader-version: ${version}`);
+
+  console.log('\nConfiguração concluída!');
+}
+
 module.exports = {
   minifyFiles,
   bundleSuperTokenCss,
   bundleSuperTokenJs,
   copySuperTokenBundlesToScriptsProject,
   bundleAndCopySuperTokenAssets,
-  generatePotFiles
+  generatePotFiles,
+  setupSuperToken
 };
