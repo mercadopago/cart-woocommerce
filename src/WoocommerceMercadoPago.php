@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.7.13';
+    private const PLUGIN_VERSION = '8.7.14';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -47,7 +47,7 @@ class WoocommerceMercadoPago
 
     private const PLUGIN_NAME = 'woocommerce-mercadopago/woocommerce-mercadopago.php';
 
-    private const PLUGIN_SUPER_TOKEN_USE_BUNDLE = false;
+    private const PLUGIN_SUPER_TOKEN_USE_BUNDLE = true;
 
     private const PLUGIN_SDK_ENV = 'prod';
 

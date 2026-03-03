@@ -14,6 +14,7 @@ class MPSuperTokenTriggerHandler {
     currentAmount = null;
     isAlreadyListeningForm = false;
     lastException = null;
+    isFetchingPaymentMethods = false;
 
     // Dependencies
     mpSuperTokenAuthenticator = null;
@@ -47,9 +48,21 @@ class MPSuperTokenTriggerHandler {
     }
 
     amountHasChanged() {
-        return this.currentAmount != null
-            && this.mpSuperTokenAuthenticator.getAmountUsed() != null
-            && this.currentAmount !== this.mpSuperTokenAuthenticator.getAmountUsed();
+        const currentAmount = this.currentAmount;
+        const amountUsed = this.mpSuperTokenAuthenticator.getAmountUsed();
+
+        return currentAmount != null
+            && amountUsed != null
+            && currentAmount !== amountUsed;
+    }
+
+    emailHasChanged() {
+        const buyerEmail = this.getBuyerEmail();
+        const emailUsed = this.mpSuperTokenAuthenticator.getEmailUsed();
+
+        return buyerEmail != null
+            && emailUsed != null
+            && buyerEmail !== emailUsed;
     }
 
     isDifferentEmail(newEmail) {
@@ -101,9 +114,10 @@ class MPSuperTokenTriggerHandler {
                       this.mpSuperTokenPaymentMethods.selectLastPaymentMethodChoosen();
                     }
 
-                    if (this.hasLastException()) {
+                    const lastException = this.getLastException();
+                    if (lastException) {
                       setTimeout(() => {
-                        this.mpSuperTokenErrorHandler.handleError(this.getLastException());
+                        this.mpSuperTokenErrorHandler.handleError(lastException);
                         this.setLastException(null);
                       }, this.LOADING_ANIMATION_FINISH_DELAY);
                     }
@@ -136,10 +150,12 @@ class MPSuperTokenTriggerHandler {
         const buyerEmail = this.getBuyerEmail();
         if (!buyerEmail) return;
 
+        this.isFetchingPaymentMethods = true;
         const paymentMethods = await this.mpSuperTokenAuthenticator.getAccountPaymentMethods(
             this.currentAmount,
             buyerEmail
         );
+        this.isFetchingPaymentMethods = false;
 
         if (!paymentMethods || !paymentMethods.length) return;
 
@@ -152,6 +168,9 @@ class MPSuperTokenTriggerHandler {
     async loadSuperToken(currentAmount) {
         this.currentAmount = this.mpSuperTokenAuthenticator.formatAmount(currentAmount);
 
+        // Prevent unnecessary re-fetching of payment methods
+        if (this.isFetchingPaymentMethods && !this.amountHasChanged() && !this.emailHasChanged()) return;
+
         if (this.amountHasChanged()) this.resetFlow();
 
         if (this.isSuperTokenPaymentMethodsLoaded()) {
@@ -162,8 +181,6 @@ class MPSuperTokenTriggerHandler {
 
             return;
         }
-
-        await this.fetchAndRenderSuperTokenPaymentMethods();
 
         if (!this.isAlreadyListeningForm) {
             this.wcEmailListener.onEmailChange(async (email, isValid) => {
@@ -181,5 +198,7 @@ class MPSuperTokenTriggerHandler {
 
             this.isAlreadyListeningForm = true;
         }
+
+        await this.fetchAndRenderSuperTokenPaymentMethods();
     }
 }

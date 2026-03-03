@@ -51,3 +51,7 @@ const MPSuperTokenSkippableErrorMessages = [
     'authenticator flow is not supported',
 ];
 
+
+window.MPSuperTokenErrorCodes = MPSuperTokenErrorCodes;
+window.MPSuperTokenExpectedErrors = MPSuperTokenExpectedErrors;
+window.MPSuperTokenSkippableErrorMessages = MPSuperTokenSkippableErrorMessages;

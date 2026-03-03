@@ -8,6 +8,7 @@ class MPSuperTokenAuthenticator {
 
   // Attributes
   amountUsed = null;
+  emailUsed = null;
   authenticator = null;
   fastPaymentToken = null;
 
@@ -36,6 +37,10 @@ class MPSuperTokenAuthenticator {
 
   getAmountUsed() {
       return this.amountUsed;
+  }
+
+  getEmailUsed() {
+    return this.emailUsed;
   }
 
   storeAuthenticator(authenticator) {
@@ -78,6 +83,7 @@ class MPSuperTokenAuthenticator {
   async buildAuthenticator(amount, buyerEmail) {
     try {
       this.amountUsed = amount;
+      this.emailUsed = buyerEmail;
 
       const authenticator = await this.mpSdkInstance
           .authenticator(amount, buyerEmail, { platformId: this.PLATFORM_ID, version: 2 });

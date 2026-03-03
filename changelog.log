@@ -1,6 +1,11 @@
 CHANGELOG:
 == Changelog
 
+= v8.7.14 (26/02/2026) =
+* Changed
+- Using fast payment flow with super token bundle enabled
+- Improve fast payment flow loading and rendering handling
+
 = v8.7.13 (20/02/2026) =
 * Fixed
 - Remove unnecessary call to createPayment method on fast payment flow
