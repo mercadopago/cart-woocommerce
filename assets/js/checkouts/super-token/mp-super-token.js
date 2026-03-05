@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const waitMpSdkInstanceLoad = setInterval(() => {
         if (window.mpSdkInstance) {
             clearInterval(waitMpSdkInstanceLoad);
-            const SUPER_TOKEN_JS_VERSION = '1.0.0';
+            const SUPER_TOKEN_JS_VERSION = '1.0.1';
             const mpSdkInstance = window.mpSdkInstance;
             const mpDebounce = new MPDebounce();
             const wcEmailListener = new WCEmailListener(mpDebounce);

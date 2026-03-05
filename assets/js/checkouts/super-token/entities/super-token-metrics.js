@@ -79,7 +79,7 @@ class MPSuperTokenMetrics {
     if (!error) return "Unknown error";
 
     const errorMessage = error?.message || `${JSON.stringify(error)}`;
-    const normalizedErrorMessage = errorMessage?.includes('invalid_email_address_provided') ? 'invalid_email_address_provided' : errorMessage;
+    const normalizedErrorMessage = errorMessage?.includes('email') ? 'invalid_email_address_provided' : errorMessage;
 
     return normalizedErrorMessage || "Unknown error";
   }
