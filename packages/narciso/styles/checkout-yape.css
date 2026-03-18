@@ -1,13 +1,4 @@
-.mp-checkout-container {
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  font: inherit !important;
-  font-size: 100% !important;
-  vertical-align: baseline !important;
-}
-
-.mp-checkout-yape-container {
+#mp-checkout-yape-root.mp-checkout-yape-container {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -15,18 +6,18 @@
   padding: 24px !important;
 }
 
-.mp-checkout-yape-content {
+#mp-checkout-yape-root.mp-checkout-yape-container > .mp-checkout-yape-content {
   width: 100% !important;
   padding: 12px !important;
   box-sizing: border-box !important;
 }
 
-.mp-checkout-yape-test-mode {
+#mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-test-mode {
   padding: 0 0 5px !important;
   margin-bottom: 24px !important;
 }
 
-.mp-checkout-yape-inputs {
+#mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-inputs {
   display: flex;
   align-items: baseline;
   gap: 20px;
@@ -36,25 +27,26 @@
   max-width: inherit;
 }
 
-.mp-checkout-yape-inputs input-field {
+#mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-inputs input-field {
   width: 100% !important;
 }
 
-.mp-checkout-yape-terms-and-conditions {
+#mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-terms-and-conditions {
   display: flex;
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
-  padding-top: 24px !important;
+  padding: 24px 12px 0!important;
 }
 
-.mp-checkout-yape-title-container {
+#mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-title-container {
   display: flex;
   flex-direction: column;
   margin-bottom: 24px !important;
   gap: 6px;
 }
-.mp-checkout-yape-title {
+
+#mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-title {
   font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
   font-size: 18px !important;
   font-weight: 600 !important;
@@ -65,7 +57,7 @@
   margin-top: 0;
 }
 
-.mp-checkout-yape-subtitle {
+#mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-subtitle {
   font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
   font-size: 14px !important;
   font-weight: 400 !important;
@@ -76,15 +68,13 @@
   margin-bottom: 0;
 }
 
-.payment_box.payment_method_woo-mercado-pago-yape .mp-checkout-yape-inputs {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-inputs {
   container-name: yape-inputs;
   container-type: inline-size;
   --mp-yape-code-gap: 8px;
 }
 
-
-.payment_box.payment_method_woo-mercado-pago-yape .mp-checkout-yape-inputs
-.mp-yape-input-container {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-inputs .mp-yape-input-container {
   display: grid !important;
   grid-auto-flow: row;
   grid-template-columns: repeat(3, 38px);
@@ -92,35 +82,31 @@
   width: 100% !important;
 }
 
-.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-3 {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-yape-input-container.mp-yape-code-columns-3 {
   grid-template-columns: repeat(3, 38px);
 }
 
-.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6 {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-yape-input-container.mp-yape-code-columns-6 {
   grid-template-columns: repeat(3, 38px) 0 repeat(3, 38px);
 }
 
-.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6
-.mp-yape-code-input:nth-child(3) {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-yape-input-container.mp-yape-code-columns-6 .mp-yape-code-input:nth-child(3) {
   grid-column: 3;
 }
 
-.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6
-.mp-yape-code-input:nth-child(4) {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-yape-input-container.mp-yape-code-columns-6 .mp-yape-code-input:nth-child(4) {
   grid-column: 5;
 }
 
-.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6
-.mp-yape-code-input:nth-child(5) {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-yape-input-container.mp-yape-code-columns-6 .mp-yape-code-input:nth-child(5) {
   grid-column: 6;
 }
 
-.payment_box.payment_method_woo-mercado-pago-yape .mp-yape-input-container.mp-yape-code-columns-6
-.mp-yape-code-input:nth-child(6) {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-yape-input-container.mp-yape-code-columns-6 .mp-yape-code-input:nth-child(6) {
   grid-column: 7;
 }
 
-.payment_box.payment_method_woo-mercado-pago-yape input.mp-yape-code-input {
+.payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container input.mp-yape-code-input {
   width: 38px !important;
   background: #ffffff !important;
   margin: 0 !important;
@@ -130,7 +116,7 @@
 }
 
 @media screen and (max-width: 480px) {
-  .payment_box.payment_method_woo-mercado-pago-yape .mp-checkout-yape-inputs .mp-yape-input-container {
+  .payment_box.payment_method_woo-mercado-pago-yape #mp-checkout-yape-root.mp-checkout-yape-container .mp-checkout-yape-inputs .mp-yape-input-container {
     width: 100% !important;
     display: grid !important;
     grid-auto-flow: row;
@@ -138,5 +124,3 @@
     gap: var(--mp-yape-code-gap, 8px) !important;
   }
 }
-
-

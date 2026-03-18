@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v8.7.15 (12/03/2026)
+### Added
+- Add CSS layout reset scoped to fast payment flow to prevent style conflicts with themes
+- Add new metric to check if fast payment flow was initialized with success.
+- Add new metric to calculate melidata load time
+
+### Changed
+- Increase CSS specificity and improve layout reset across all checkouts to prevent style conflicts with themes
+- Prioritize melidata loading and MP JS SDK
+
+### Fixed
+- Fix Classic Checkout form validation to include required checkbox fields
+- Fix card form remount when SDK iframes become detached from their containers
+- Fix infinite loading overlay on Blocks Checkout when fast payment flow error occurs
+- Fix loading spinner stuck on cart update due to uninitialized variable reference
+
 ## v8.7.14 (26/02/2026)
 ### Changed
 - Using fast payment flow with super token bundle enabled

@@ -396,6 +396,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
                 'platform_version'  => $this->mercadopago->woocommerce->version,
                 'site_id'           => $this->countryConfigs['site_id'],
                 'currency'          => $this->countryConfigs['currency'],
+                'cust_id'           => $this->mercadopago->sellerConfig->getCustIdFromAT(),
             ]
         );
     }
@@ -592,12 +593,10 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      */
     public function loadMelidataStoreScripts(): void
     {
+        $this->mercadopago->hooks->scripts->prioritizeMelidataStoreScriptEarly('/checkout');
+
         $this->mercadopago->hooks->checkout->registerBeforePay(function () {
             $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/woocommerce_pay');
-        });
-
-        $this->mercadopago->hooks->checkout->registerBeforeCheckoutForm(function () {
-            $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/checkout');
         });
 
         $this->mercadopago->hooks->checkout->registerPayOrderBeforeSubmit(function () {
@@ -957,7 +956,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
             $errorMessage = $this->getRejectedPaymentErrorKey($statusDetail);
 
-            throw new RejectedPaymentException($errorMessage);
+            throw new RejectedPaymentException($errorMessage, 0, null, $statusDetail);
         }
     }
 

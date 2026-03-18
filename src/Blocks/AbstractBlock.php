@@ -52,6 +52,7 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
         $this->gateway     = $this->setGateway();
         $this->links       = $this->mercadopago->helpers->links->getLinks();
 
+        $this->mercadopago->hooks->scripts->prioritizeMelidataStoreScriptEarly('/checkout');
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
         $this->mercadopago->hooks->blocks->registerBlocksEnqueueCheckoutScriptsBefore([$this, 'resetCheckoutSession']);
         $this->mercadopago->hooks->blocks->registerBlocksUpdated(self::UPDATE_CART_NAMESPACE, [$this, 'updateCartToRegisterDiscountAndCommission']);
@@ -111,10 +112,6 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             $this->mercadopago->helpers->url->getCssAsset('checkouts/mp-plugins-components')
         );
         $this->mercadopago->hooks->scripts->registerPaymentBlockScript($scriptName, $scriptPath, $asset['version'] ?? '', $asset['dependencies'] ?? []);
-
-        if ($this->mercadopago->hooks->checkout->isCheckout()) {
-            $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/checkout');
-        }
 
         return [$scriptName];
     }

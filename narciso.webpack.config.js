@@ -7,7 +7,12 @@ const CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin');
 module.exports = {
   entry: {
     'mp-plugins-components': glob.sync(path.resolve(__dirname, './packages/narciso/**/*.js')),
-    'mp-plugins-styles': glob.sync(path.resolve(__dirname, './packages/narciso/**/*.css')),
+    'mp-plugins-styles': [
+      path.resolve(__dirname, './packages/narciso/styles/common.css'),
+      ...glob.sync(path.resolve(__dirname, './packages/narciso/**/*.css'), {
+        ignore: '**/styles/common.css'
+      }),
+    ],
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

@@ -26,7 +26,7 @@ $tabIndex = 1;
 ?>
 
 <div class='mp-checkout-container'>
-    <div class="mp-checkout-credits-container">
+    <div id="mp-checkout-credits-root" class="mp-checkout-credits-container">
             <?php if ($test_mode) : ?>
                 <test-mode title="<?= esc_attr($i18n['test_mode_title']) ?>"
                     description="<?= esc_attr($i18n['test_mode_description']) ?>"

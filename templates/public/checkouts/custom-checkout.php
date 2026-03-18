@@ -49,7 +49,7 @@ if (!defined('ABSPATH')) {
             <circle class="spinner-path" cx="25" cy="25" r="20" fill="none" stroke-width="3"></circle>
         </svg>
     </div>
-    <div id="mp-checkout-custom-container" class='mp-checkout-container mp-hidden mp-display-none'>
+    <div id="mp-checkout-custom-root" class='mp-checkout-container mp-hidden mp-display-none'>
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
@@ -75,10 +75,25 @@ if (!defined('ABSPATH')) {
                         <div class='mp-wallet-button-title'>
                             <span><?= wp_kses_post($wallet_button_title); ?></span>
                         </div>
-
                         <div class='mp-wallet-button-button'>
-                            <button id="mp-wallet-button">
-                                <img src="<?= esc_url($wallet_button_image); ?>">
+                            <button id="mp-wallet-button"
+                                style="background: var(--andes-brand-color);
+                                border: 1px solid #ab9300 !important;
+                                border-radius: 6px !important;
+                                cursor: pointer !important;
+                                display: flex !important;
+                                flex-direction: row !important;
+                                font-size: 14px !important;
+                                font-weight: 700 !important;
+                                height: 48px !important;
+                                justify-content: center !important;
+                                line-height: 16px !important;
+                                max-width: 377px !important;
+                                padding: 10px 12px !important;
+                                text-align: center !important;
+                                transition: all .3ms ease-in-out !important;
+                                width: 100% !important;">
+                                <img src="<?= esc_url($wallet_button_image); ?>" style="width: auto !important;">
                             </button>
                         </div>
 

@@ -290,6 +290,10 @@ class YapeGatewayTest extends TestCase
             ->shouldReceive('getCredentialsPublicKey')
             ->andReturn('test-public-key');
 
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getPaymentFieldsErrorMessages')
             ->andReturn([]);
@@ -302,7 +306,6 @@ class YapeGatewayTest extends TestCase
             ->shouldReceive('getJsAsset')
             ->andReturn('test-js-url');
 
-        // Mock getMercadoPagoSdkUrl for SDK URL retrieval
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getMercadoPagoSdkUrl')
             ->andReturn('https://sdk.mercadopago.com/js/v2');

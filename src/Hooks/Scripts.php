@@ -245,6 +245,45 @@ class Scripts
         $this->registerMelidataScript('buyer', $location, $paymentMethod);
     }
 
+    public function prioritizeMelidataStoreScriptEarly(string $location = ''): void
+    {
+        $file = $this->url->getJsAsset('melidata/melidata-client');
+
+        add_action('wp_enqueue_scripts', function () use ($file, $location) {
+            if ($this->isPaymentsRelatedPage()) {
+                wp_enqueue_script(
+                    self::MELIDATA_SCRIPT_NAME,
+                    $file,
+                    wp_script_is('wc_mercadopago_sdk', 'registered')
+                            ? ['wc_mercadopago_sdk']
+                            : [],
+                    $this->url->assetVersion(),
+                    true
+                );
+
+                if ($location) {
+                    global $woocommerce;
+
+                    $variables = [
+                        'type'             => 'buyer',
+                        'site_id'          => $this->seller->getSiteId() ?: "not_available",
+                        'location'         => $location,
+                        'payment_method'   => '',
+                        'plugin_version'   => MP_VERSION,
+                        'platform_version' => $woocommerce->version,
+                        'payment_methods'  => $this->paymentMethods->getEnabledPaymentMethods(),
+                    ];
+
+                    wp_localize_script(
+                        self::MELIDATA_SCRIPT_NAME,
+                        self::MELIDATA_SCRIPT_NAME . self::SUFFIX,
+                        $variables
+                    );
+                }
+            }
+        }, 20);
+    }
+
     /**
      * Register melidata scripts
      *

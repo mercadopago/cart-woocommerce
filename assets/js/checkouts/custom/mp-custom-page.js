@@ -438,7 +438,7 @@ const CheckoutPage = {
 
 
     if (isValid) {
-      input.classList.remove('mp-error', 'mp-error-2px');
+      this.toggleErrorBorder(input);
       cardholderNameLabel?.classList.remove('mp-label-error');
       if (cardholderNameHelper) {
         cardholderNameHelper.style.display = 'none';
@@ -457,12 +457,7 @@ const CheckoutPage = {
         cardholderNameLabel.classList.add('mp-label-error');
         cardholderNameHelperInfo.style.display = 'none';
       }
-      if (document.activeElement === input) {
-        input.classList.remove('mp-error');
-        input.classList.add('mp-error-2px');
-      } else {
-        input.classList.add('mp-error');
-      }
+      this.toggleErrorBorder(input, document.activeElement === input);
     }
   },
 
@@ -481,15 +476,16 @@ const CheckoutPage = {
         cardholderNameInput.classList.add('mp-focus');
         cardholderNameHelperInfo.style.display = 'flex';
       } else if (cardholderNameInput.classList.contains('mp-error')) {
-        cardholderNameInput.classList.remove('mp-error');
-        cardholderNameInput.classList.add('mp-error-2px');
+        this.toggleErrorBorder(cardholderNameInput, true);
         cardholderNameHelperInfo.style.display = 'none';
       }
     });
 
     cardholderNameInput.addEventListener('blur', () => {
+      const hadError = cardholderNameInput.classList.contains('mp-error-2px');
+
       cardholderNameInput.classList.remove('mp-focus');
-      cardholderNameInput.classList.remove('mp-error-2px');
+      this.toggleErrorBorder(cardholderNameInput);
 
       if (cardholderNameHelper) {
         cardholderNameHelper.style.display = 'none';
@@ -498,7 +494,7 @@ const CheckoutPage = {
       cardholderNameInputLabel?.classList.remove('mp-label-error');
       cardholderNameHelperInfo.style.display = 'flex';
 
-      if (cardholderNameInput.value.trim() !== '') {
+      if (cardholderNameInput.value.trim() !== '' || hadError) {
         this.verifyCardholderName();
       }
     });
@@ -549,6 +545,12 @@ const CheckoutPage = {
       }
     });
 
+    installmentsSelect.addEventListener('focus', () => {
+      if (installmentsSelect.classList.contains('mp-error')) {
+        this.toggleErrorBorder(installmentsSelect, true);
+      }
+    });
+
     installmentsSelect.addEventListener('blur', () => {
       if (this.installmentsWasSelected()) {
         this.setInstallmentsErrorState(false);
@@ -573,6 +575,15 @@ const CheckoutPage = {
     checkoutCustomContainer.scrollIntoView({ behavior: 'smooth' });
   },
 
+  toggleErrorBorder(element, isFocused) {
+    element.classList.remove('mp-error', 'mp-error-2px');
+    if (isFocused === true) {
+      element.classList.add('mp-error-2px');
+    } else if (isFocused === false) {
+      element.classList.add('mp-error');
+    }
+  },
+
   setInstallmentsErrorState(hasError) {
     const installmentsSelect = document.getElementById('form-checkout__installments');
     const installmentsLabel = document.querySelector('.mp-checkout-custom-installments-select-container .mp-input-label');
@@ -581,12 +592,14 @@ const CheckoutPage = {
     if (!installmentsSelect || !installmentsLabel || !installmentsErrorHelper) return;
 
     if (hasError) {
-    installmentsErrorHelper.style.display = 'flex';
-      installmentsSelect.classList.add('mp-error');
+      const isFocused = document.activeElement === installmentsSelect;
+
+      installmentsErrorHelper.style.display = 'flex';
       installmentsLabel.classList.add('mp-label-error');
+      this.toggleErrorBorder(installmentsSelect, isFocused);
     } else {
       installmentsErrorHelper.style.display = 'none';
-      installmentsSelect.classList.remove('mp-error');
+      this.toggleErrorBorder(installmentsSelect);
       installmentsLabel.classList.remove('mp-label-error');
     }
   },

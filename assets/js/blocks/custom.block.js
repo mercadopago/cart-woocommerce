@@ -103,7 +103,7 @@ const Content = (props) => {
 
             window.mpSuperTokenAuthenticator?.setSuperTokenValidation(true);
           } catch (exception) {
-            window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
+            window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
 
             if (exception?.message === MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID) {
               window.mpSuperTokenErrorHandler.handleError(exception);

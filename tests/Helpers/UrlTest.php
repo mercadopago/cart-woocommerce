@@ -15,12 +15,12 @@ class UrlTest extends TestCase
     public function setUp(): void
     {
         WP_Mock::setUp();
-        
+
         // Define MP_PLUGIN_FILE if not already defined
         if (!defined('MP_PLUGIN_FILE')) {
             define('MP_PLUGIN_FILE', '/path/to/plugin/mercadopago.php');
         }
-        
+
         $this->stringsMock = $this->createMock(Strings::class);
         $this->url = new Url($this->stringsMock);
     }
@@ -28,7 +28,7 @@ class UrlTest extends TestCase
     public function tearDown(): void
     {
         WP_Mock::tearDown();
-        
+
         // Clean up superglobals
         $_GET = [];
         $_SERVER = [];
@@ -143,14 +143,14 @@ class UrlTest extends TestCase
      * because they depend on filter_input_array() and other internal PHP functions that cannot
      * be mocked with WP_Mock. These methods also depend on Form::sanitizedGetData() which uses
      * WordPress functions like map_deep() and sanitize_text_field().
-     * 
+     *
      * These scenarios should be tested through integration tests with a full WordPress environment.
      */
 
     public function testGetCurrentUrl()
     {
         $_SERVER['REQUEST_URI'] = '/wp-admin/admin.php?page=mercadopago';
-        
+
         WP_Mock::userFunction('sanitize_text_field', [
             'times' => 1,
             'return' => '/wp-admin/admin.php?page=mercadopago'
@@ -168,7 +168,7 @@ class UrlTest extends TestCase
     public function testGetCurrentUrlWithoutRequestUri()
     {
         unset($_SERVER['REQUEST_URI']);
-        
+
         $result = $this->url->getCurrentUrl();
         $this->assertEquals('', $result);
     }
@@ -187,7 +187,7 @@ class UrlTest extends TestCase
     public function testGetServerAddress()
     {
         $_SERVER['SERVER_ADDR'] = '192.168.1.1';
-        
+
         WP_Mock::userFunction('sanitize_text_field', [
             'times' => 1,
             'return' => '192.168.1.1'
@@ -205,7 +205,7 @@ class UrlTest extends TestCase
     public function testGetServerAddressWithoutServerAddr()
     {
         unset($_SERVER['SERVER_ADDR']);
-        
+
         $result = $this->url->getServerAddress();
         $this->assertEquals('127.0.0.1', $result);
     }
@@ -376,7 +376,7 @@ class UrlTest extends TestCase
     public function testValidateGetVarExists()
     {
         $_GET['action'] = 'edit';
-        
+
         $result = $this->url->validateGetVar('action');
         $this->assertTrue($result);
     }

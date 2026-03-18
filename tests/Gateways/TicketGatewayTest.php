@@ -541,6 +541,10 @@ class TicketGatewayTest extends TestCase
             ->shouldReceive('getCredentialsPublicKey')
             ->andReturn('test-public-key');
 
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getPaymentFieldsErrorMessages')
             ->andReturn([]);

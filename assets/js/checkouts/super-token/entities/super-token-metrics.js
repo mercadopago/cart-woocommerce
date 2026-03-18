@@ -79,7 +79,7 @@ class MPSuperTokenMetrics {
     if (!error) return "Unknown error";
 
     const errorMessage = error?.message || `${JSON.stringify(error)}`;
-    const normalizedErrorMessage = errorMessage?.includes('invalid_email_address_provided') ? 'invalid_email_address_provided' : errorMessage;
+    const normalizedErrorMessage = errorMessage?.includes('email') ? 'invalid_email_address_provided' : errorMessage;
 
     return normalizedErrorMessage || "Unknown error";
   }
@@ -189,5 +189,15 @@ class MPSuperTokenMetrics {
 
   registerAuthorizedPseudotoken(pseudotoken, authorizedPseudotokenInputExists) {
     this.sendMetric('authorized_pseudotoken', pseudotoken, `input_exists:${authorizedPseudotokenInputExists ? "true" : "false"}`);
+  }
+
+  errorToRenderAccountPaymentMethods(error) {
+    const errorMessage = this.normalizeErrorMessage(error);
+
+    if (this.shouldSkipError(errorMessage)) {
+      return;
+    }
+
+    this.sendMetric('error_to_render_account_payment_methods', 'true', errorMessage);
   }
 }

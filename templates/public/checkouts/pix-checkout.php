@@ -28,7 +28,7 @@ if (!defined('ABSPATH')) {
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
-        <div class="mp-checkout-pix-container">
+        <div id="mp-checkout-pix-root" class="mp-checkout-pix-container">
             <?php if ($test_mode) : ?>
                 <div class="mp-checkout-pix-test-mode">
                     <test-mode
