@@ -108,7 +108,7 @@ const Content = (props) => {
 
   return (
     <div className="mp-checkout-container">
-      <div className="mp-checkout-pix-container">
+      <div id="mp-checkout-pix-root" className="mp-checkout-pix-container">
         <div className="mp-checkout-pix-content">
           {test_mode ? <TestMode title={test_mode_title} description={test_mode_description} /> : null}
 

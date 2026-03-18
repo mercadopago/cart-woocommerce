@@ -40,7 +40,7 @@ if (! defined('ABSPATH')) {
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
-        <div class="mp-checkout-pse-container">
+        <div id="mp-checkout-pse-root" class="mp-checkout-pse-container">
             <div class="mp-checkout-pse-content">
                 <?php if ($test_mode) : ?>
                     <div class="mp-checkout-pse-test-mode">

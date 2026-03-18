@@ -182,8 +182,8 @@ const Content = (props) => {
   }, [onPaymentSetup, emitResponse.responseTypes.ERROR, emitResponse.responseTypes.SUCCESS]);
 
   return (
-    <div>
-      <div className={'mp-checkout-yape-container'}>
+    <div className="mp-checkout-container">
+      <div id="mp-checkout-yape-root" className={'mp-checkout-yape-container'}>
         <div ref={ref} className={'mp-checkout-yape-content'}>
             {test_mode ? (
               <TestMode

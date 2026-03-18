@@ -24,7 +24,6 @@ class Images
         $image = imagescale($image, 447);
 
         imagepng($image);
-        imagedestroy($image);
 
         exit();
     }
@@ -43,7 +42,6 @@ class Images
         $image = imagescale($image, 447);
 
         imagepng($image);
-        imagedestroy($image);
 
         exit();
     }

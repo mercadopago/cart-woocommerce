@@ -1,4 +1,4 @@
-.mp-alert-details-card {
+.mp-checkout-container .mp-alert-details-card {
   display: flex !important;
   flex-direction: column !important;
   padding: 16px !important;
@@ -9,22 +9,22 @@
   border-left-width: 4px !important;
 }
 
-.mp-alert-details-card-content {
+.mp-checkout-container .mp-alert-details-card-content {
   display: flex !important;
   flex-direction: row !important;
   justify-content: flex-start !important;
   align-items: baseline !important;
 }
 
-.mp-alert-details-card-content-left {
+.mp-checkout-container .mp-alert-details-card-content-left {
   margin-right: 8px !important;
 }
 
-.mp-alert-details-card-content-right {
+.mp-checkout-container .mp-alert-details-card-content-right {
   margin-left: 8px !important;
 }
 
-.mp-alert-details-badge {
+.mp-checkout-container .mp-alert-details-badge {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
@@ -36,7 +36,7 @@
   border-radius: 50% !important;
 }
 
-.mp-alert-details-title {
+.mp-checkout-container .mp-alert-details-title {
   font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
   font-style: normal !important;
   font-weight: bold !important;
@@ -50,7 +50,7 @@
   padding: 0 !important;
 }
 
-.mp-alert-details-description {
+.mp-checkout-container .mp-alert-details-description {
   font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
   font-style: normal !important;
   font-weight: normal !important;
@@ -64,7 +64,7 @@
   color: black !important;
 }
 
-.mp-alert-details-retry-button {
+.mp-checkout-container .mp-alert-details-retry-button {
   font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
   font-style: normal !important;
   font-weight: normal !important;
@@ -81,7 +81,7 @@
   outline: 0 !important;
 }
 
-.mp-alert-details-retry-button:hover {
+.mp-checkout-container .mp-alert-details-retry-button:hover {
   background-color: #2968c8 !important;
   border: 1px solid #2968c8 !important;
 }

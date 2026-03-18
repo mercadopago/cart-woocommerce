@@ -41,7 +41,7 @@ $container_state_class = $has_multiple_payment_methods
     <?php if ($amount === null) : ?>
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
-        <div class="mp-checkout-ticket-container  <?= esc_attr($container_state_class); ?>">
+        <div id="mp-checkout-ticket-root" class="mp-checkout-ticket-container   <?= esc_attr($container_state_class); ?>">
             <div class="mp-checkout-ticket-content">
                 <?php if ($test_mode) : ?>
                     <test-mode

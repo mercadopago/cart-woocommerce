@@ -1,4 +1,4 @@
-.mp-input-with-tooltip-label {
+.mp-checkout-container .mp-input-with-tooltip-label {
   display: block;
   font-size: 14px;
   font-weight: 400;
@@ -8,7 +8,7 @@
   margin-left: 6px;
 }
 
-.mp-input-with-tooltip-input-container {
+.mp-checkout-container .mp-input-with-tooltip-input-container {
   display: flex;
   align-items: center;
   position: relative;
@@ -20,11 +20,11 @@
   font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif !important;
 }
 
-.mp-input-with-tooltip-input-container:focus-within {
+.mp-checkout-container .mp-input-with-tooltip-input-container:focus-within {
   border-color: #1976d2;
 }
 
-.mp-input-with-tooltip-input {
+.mp-checkout-container .mp-input-with-tooltip-input {
   flex: 1;
   border: none;
   outline: none;
@@ -39,17 +39,17 @@
   font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif !important;
 }
 
-.mp-input-with-tooltip-input::placeholder {
+.mp-checkout-container .mp-input-with-tooltip-input::placeholder {
   color: #737373 !important;
 }
 
-.mp-input-with-tooltip-input::placeholder {
+.mp-checkout-container .mp-input-with-tooltip-input::placeholder {
   color: #b0b0b0;
   opacity: 1;
   font-size: 16px;
 }
 
-.mp-input-with-tooltip-tooltip-icon {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -72,11 +72,11 @@
   user-select: none;
 }
 
-.mp-input-with-tooltip-tooltip-icon:focus {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-icon:focus {
   box-shadow: 0 0 0 2px #90caf9;
 }
 
-.mp-input-with-tooltip-tooltip-content {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-content {
   display: none;
   position: absolute;
   background: #fff;
@@ -91,12 +91,12 @@
   user-select: none;
 }
 
-.mp-input-with-tooltip-tooltip-content.show {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-content.show {
   display: block;
 }
 
 /* Tooltip positions */
-.mp-input-with-tooltip-tooltip-right {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-right {
   left: 100%;
   top: 50%;
   transform: translateY(-50%) translateX(1.2rem);
@@ -104,7 +104,7 @@
   position: absolute;
 }
 
-.mp-input-with-tooltip-tooltip-right::before {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-right::before {
   /* Triângulo branco */
   content: '';
   position: absolute;
@@ -119,7 +119,7 @@
   z-index: 2;
 }
 
-.mp-input-with-tooltip-tooltip-right::after {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-right::after {
   /* Sombra */
   content: '';
   position: absolute;
@@ -136,7 +136,7 @@
   pointer-events: none;
 }
 
-.mp-input-with-tooltip-tooltip-left {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-left {
   top: 50%;
   left: 0;
   transform: translateX(-110%) translateY(-50%);
@@ -144,7 +144,7 @@
   position: absolute;
 }
 
-.mp-input-with-tooltip-tooltip-left::before {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-left::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -158,7 +158,7 @@
   z-index: 2;
 }
 
-.mp-input-with-tooltip-tooltip-left::after {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-left::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -174,7 +174,7 @@
   pointer-events: none;
 }
 
-.mp-input-with-tooltip-tooltip-top {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-top {
   left: 50%;
   bottom: 100%;
   transform: translateX(-50%) translateY(-1.2rem);
@@ -182,7 +182,7 @@
   position: absolute;
 }
 
-.mp-input-with-tooltip-tooltip-top::before {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-top::before {
   /* Triângulo branco */
   content: '';
   position: absolute;
@@ -197,7 +197,7 @@
   z-index: 2;
 }
 
-.mp-input-with-tooltip-tooltip-top::after {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-top::after {
   /* Sombra */
   content: '';
   position: absolute;
@@ -214,7 +214,7 @@
   pointer-events: none;
 }
 
-.mp-input-with-tooltip-tooltip-bottom {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-bottom {
   left: 50%;
   top: 100%;
   transform: translateX(-50%) translateY(1.2rem);
@@ -222,7 +222,7 @@
   position: absolute;
 }
 
-.mp-input-with-tooltip-tooltip-bottom::before {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-bottom::before {
   /* Triângulo branco */
   content: '';
   position: absolute;
@@ -237,7 +237,7 @@
   z-index: 2;
 }
 
-.mp-input-with-tooltip-tooltip-bottom::after {
+.mp-checkout-container .mp-input-with-tooltip-tooltip-bottom::after {
   /* Sombra */
   content: '';
   position: absolute;
@@ -254,7 +254,7 @@
   pointer-events: none;
 }
 
-.mp-input-with-tooltip-helper-error {
+.mp-checkout-container .mp-input-with-tooltip-helper-error {
   color: #e53935;
   font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif !important;
   margin-top: 4px;
@@ -265,10 +265,10 @@
   margin-left: 6px;
 }
 
-.mp-input-with-tooltip-input-container.error {
+.mp-checkout-container .mp-input-with-tooltip-input-container.error {
   border-color: #e53935 !important;
 }
 
-.mp-input-with-tooltip-label.error {
+.mp-checkout-container .mp-input-with-tooltip-label.error {
   color: #e53935 !important;
 }

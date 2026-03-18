@@ -201,7 +201,7 @@ const Content = (props) => {
 
   return (
     <div className="mp-checkout-container">
-      <div className="mp-checkout-pse-container">
+      <div id="mp-checkout-pse-root" className="mp-checkout-pse-container">
         <div ref={ref} className="mp-checkout-pse-content">
           {test_mode ? (
             <TestMode

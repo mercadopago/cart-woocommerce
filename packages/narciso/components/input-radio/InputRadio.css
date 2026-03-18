@@ -1,23 +1,23 @@
-.mp-input-radio-container {
+.mp-checkout-container .mp-input-radio-container {
   display: flex;
   position: relative !important;
 }
 
-.mp-input-radio-radio:checked,
-.mp-input-radio-radio:not(:checked) {
+.mp-checkout-container .mp-input-radio-radio:checked,
+.mp-checkout-container .mp-input-radio-radio:not(:checked) {
   opacity: 0 !important;
 }
 
-.mp-input-radio-radio:checked + .mp-input-radio-label,
-.mp-input-radio-radio:not(:checked) + .mp-input-radio-label {
+.mp-checkout-container .mp-input-radio-radio:checked + .mp-input-radio-label,
+.mp-checkout-container .mp-input-radio-radio:not(:checked) + .mp-input-radio-label {
   cursor: pointer !important;
   line-height: 20px !important;
   display: inline-block;
   color: #666 !important;
 }
 
-.mp-input-radio-radio:checked + .mp-input-radio-label::before,
-.mp-input-radio-radio:not(:checked) + .mp-input-radio-label::before {
+.mp-checkout-container .mp-input-radio-radio:checked + .mp-input-radio-label::before,
+.mp-checkout-container .mp-input-radio-radio:not(:checked) + .mp-input-radio-label::before {
   content: "" !important;
   position: absolute !important;
   left: 0 !important;
@@ -30,12 +30,12 @@
   box-sizing: border-box !important;
 }
 
-.mp-input-radio-radio:checked + .mp-input-radio-label::before {
+.mp-checkout-container .mp-input-radio-radio:checked + .mp-input-radio-label::before {
   border: 2px solid #7f54b3 !important;
 }
 
-.mp-input-radio-radio:checked + .mp-input-radio-label::after,
-.mp-input-radio-radio:not(:checked) + .mp-input-radio-label::after {
+.mp-checkout-container .mp-input-radio-radio:checked + .mp-input-radio-label::after,
+.mp-checkout-container .mp-input-radio-radio:not(:checked) + .mp-input-radio-label::after {
   content: "" !important;
   width: 8px !important;
   height: 8px !important;
@@ -47,10 +47,10 @@
   box-sizing: border-box !important;
 }
 
-.mp-input-radio-radio:not(:checked) + .mp-input-radio-label::after {
+.mp-checkout-container .mp-input-radio-radio:not(:checked) + .mp-input-radio-label::after {
   opacity: 0 !important;
 }
 
-.mp-input-radio-radio:checked + .mp-input-radio-label::after {
+.mp-checkout-container .mp-input-radio-radio:checked + .mp-input-radio-label::after {
   opacity: 1 !important;
 }

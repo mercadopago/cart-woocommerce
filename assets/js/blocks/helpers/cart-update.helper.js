@@ -32,7 +32,13 @@ function formatCurrency(value, currency) {
 async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
   try {
     window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
-    window.mpCustomCheckoutHandler.cardForm.createLoadSpinner();
+
+    if (
+      window.mpCustomCheckoutHandler?.cardForm
+      && typeof window.mpCustomCheckoutHandler?.cardForm.createLoadSpinner === 'function'
+    ) {
+      window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
+    }
 
     while (!window.mpCustomCheckoutHandler) {
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -60,7 +66,7 @@ async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
       sendMetric('error_to_update_cart_total', e?.message || 'Unknown error', "mp_cart_total_change_error");
     }
   } finally {
-    setTimeout(() => mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner(), REMOVE_LOAD_SPINNER_DELAY);
+    setTimeout(() => window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner(), REMOVE_LOAD_SPINNER_DELAY);
   }
 }
 

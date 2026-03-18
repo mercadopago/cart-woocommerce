@@ -134,6 +134,34 @@ class CustomGateway extends AbstractGateway
         return 'checkout-custom';
     }
 
+    private function getCheckoutEmailIfAvailable()
+    {
+        $order_key = isset($_GET['key']) ? sanitize_text_field(wp_unslash($_GET['key'])) : '';
+        if ($order_key) {
+            $order_id = wc_get_order_id_by_order_key($order_key);
+            if ($order_id) {
+                $order = wc_get_order($order_id);
+                if ($order) {
+                    return $order->get_billing_email();
+                }
+            }
+        }
+
+        $current_user = wp_get_current_user();
+        if ($current_user->ID && $current_user->user_email) {
+            return $current_user->user_email;
+        }
+
+        if (WC()->customer) {
+            $email = WC()->customer->get_billing_email();
+            if ($email) {
+                return $email;
+            }
+        }
+
+        return '';
+    }
+
     public function formFieldsHeaderSection(): array
     {
         return array_replace_recursive(parent::formFieldsHeaderSection(), [
@@ -533,7 +561,7 @@ class CustomGateway extends AbstractGateway
                 'location' => '/checkout',
                 'theme' => get_stylesheet(),
                 'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
-                'current_user_email' => wp_get_current_user()->user_email ?? '',
+                'current_user_email' => $this->getCheckoutEmailIfAvailable(),
                 'wallet_button_enabled' => $this->getWalletButtonEnabled(),
                 'yellow_wallet_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-yellow-wallet'),
                 'yellow_money_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-yellow-money'),
@@ -915,6 +943,29 @@ class CustomGateway extends AbstractGateway
     }
 
     /**
+     * Override processReturnFail to return JSON on the Order Pay page.
+     * Without this, WooCommerce's WC_Form_Handler::pay_action() would receive the
+     * fail array and redirect, causing the AJAX caller to get HTML instead of JSON.
+     */
+    public function processReturnFail(Exception $e, string $message, string $source, array $context = [], bool $notice = false): array
+    {
+        $result = parent::processReturnFail($e, $message, $source, $context, $notice);
+
+        if ($this->isOrderPayPage()) {
+            $statusDetail = $e instanceof RejectedPaymentException ? $e->getStatusDetail() : $this->storeTranslations['default_error_message'];
+            $this->handlePayForOrderRequest([
+                'result' => 'fail',
+                'redirect' => false,
+                'messages' => $this->mercadopago->storeTranslations->buyerRefusedMessages[
+                    $this->getRejectedPaymentErrorKey($statusDetail)
+                ] ?? $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default']
+            ]);
+        }
+
+        return $result;
+    }
+
+    /**
      * Check if there is a pay_for_order query param.
      * This indicates that the user is on the Order Pay Checkout page.
      *
@@ -1001,7 +1052,9 @@ class CustomGateway extends AbstractGateway
                         if ($this->isOrderPayPage()) {
                             $this->handlePayForOrderRequest([
                                 'result' => 'fail',
-                                'messages' => $this->getRejectedPaymentErrorKey($response['status_detail'])
+                                'messages' => $this->mercadopago->storeTranslations->buyerRefusedMessages[
+                                $this->getRejectedPaymentErrorKey($response['status_detail'])
+                            ] ?? $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default']
                             ]);
                             return []; // Case $_ENV['PHPUNIT_TEST'] == true
                         }

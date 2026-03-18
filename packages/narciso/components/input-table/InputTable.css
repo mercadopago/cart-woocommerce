@@ -1,4 +1,4 @@
-.mp-input-table-container {
+.mp-checkout-container .mp-input-table-container {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -6,7 +6,7 @@
   width: 100% !important;
 }
 
-.mp-input-table-list {
+.mp-checkout-container .mp-input-table-list {
   display: flex !important;
   flex-direction: column !important;
   width: 100% !important;
@@ -16,17 +16,17 @@
   margin-left: 0 !important;
 }
 
-.mp-input-table-item {
+.mp-checkout-container .mp-input-table-item {
   margin: 0 16px !important;
   padding: 0 4px 0 0 !important;
   cursor: pointer !important;
 }
 
-.mp-input-table-item:not(:first-child) {
+.mp-checkout-container .mp-input-table-item:not(:first-child) {
   border-top: 1px solid rgb(0 0 0 / 10%) !important;
 }
 
-.mp-input-table-label {
+.mp-checkout-container .mp-input-table-label {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -35,13 +35,13 @@
   cursor: pointer !important;
 }
 
-.mp-input-table-option {
+.mp-checkout-container .mp-input-table-option {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
 }
 
-.mp-input-table-row-text {
+.mp-checkout-container .mp-input-table-row-text {
   font-family: var(--primary-font-family) !important;
   font-style: normal !important;
   font-weight: bold !important;
@@ -51,7 +51,7 @@
   padding-left: 16px !important;
 }
 
-.mp-input-table-row-text-image {
+.mp-checkout-container .mp-input-table-row-text-image {
   font-family: var(--primary-font-family) !important;
   font-size: 16px !important;
   font-style: normal !important;
@@ -64,7 +64,7 @@
   color: #000000e5 !important;
 }
 
-.mp-input-table-row-obs {
+.mp-checkout-container .mp-input-table-row-obs {
   font-family: var(--primary-font-family) !important;
   font-style: normal !important;
   font-weight: normal !important;
@@ -74,7 +74,7 @@
   text-align: right !important;
 }
 
-.mp-input-table-row-obs-highlight {
+.mp-checkout-container .mp-input-table-row-obs-highlight {
   font-family: var(--primary-font-family) !important;
   font-style: normal !important;
   font-weight: normal !important;
@@ -83,14 +83,14 @@
   color: #00a650 !important;
 }
 
-.mp-input-table-container-link {
+.mp-checkout-container .mp-input-table-container-link {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 16px 0 24px !important;
 }
 
-.mp-input-table-link {
+.mp-checkout-container .mp-input-table-link {
   font-family: var(--primary-font-family) !important;
   font-style: normal !important;
   font-weight: normal !important;
@@ -101,19 +101,19 @@
   cursor: pointer !important;
 }
 
-.mp-input-table-link:hover {
+.mp-checkout-container .mp-input-table-link:hover {
   color: #7249a5 !important;
   transition: all 0.3ms !important;
 }
 
-.mp-input-table-bank-interest-container {
+.mp-checkout-container .mp-input-table-bank-interest-container {
   width: 100% !important;
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
 }
 
-.mp-input-table-bank-interest-text {
+.mp-checkout-container .mp-input-table-bank-interest-text {
   max-width: 100% !important;
   color: #737373 !important;
   font-size: 13px !important;

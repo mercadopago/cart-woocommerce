@@ -1,3 +1,27 @@
+/* ==========================================================================
+   CSS Variables
+   ========================================================================== */
+:root {
+    --mp-font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif;
+    --mp-font-size-base: 14px;
+    --mp-font-size-input: 16px;
+    --mp-line-height-base: 16px;
+    --mp-line-height-input: 20px;
+    --mp-color-white: #fff;
+    --mp-color-black: #000;
+    --mp-color-red: red;
+    --mp-color-error: #F23D4F;
+    --mp-color-focus: #7F54B3;
+    --mp-color-border: rgba(0, 0, 0, .25);
+    --mp-border-radius: 6px;
+    --mp-border-radius-lg: 8px;
+    --mp-input-height: 48px;
+    --mp-icon-size: 32px;
+}
+
+/* ==========================================================================
+   Reset - Checkout Container
+   ========================================================================== */
 .mp-checkout-container a,
 .mp-checkout-container abbr,
 .mp-checkout-container acronym,
@@ -9,9 +33,12 @@
 .mp-checkout-container b,
 .mp-checkout-container big,
 .mp-checkout-container blockquote,
+.mp-checkout-container br,
+.mp-checkout-container button,
 .mp-checkout-container canvas,
 .mp-checkout-container caption,
 .mp-checkout-container center,
+.mp-checkout-container circle,
 .mp-checkout-container cite,
 .mp-checkout-container code,
 .mp-checkout-container dd,
@@ -36,6 +63,7 @@
 .mp-checkout-container h6,
 .mp-checkout-container header,
 .mp-checkout-container hgroup,
+.mp-checkout-container hr,
 .mp-checkout-container i,
 .mp-checkout-container iframe,
 .mp-checkout-container img,
@@ -51,8 +79,10 @@
 .mp-checkout-container nav,
 .mp-checkout-container object,
 .mp-checkout-container ol,
+.mp-checkout-container option,
 .mp-checkout-container output,
 .mp-checkout-container p,
+.mp-checkout-container path,
 .mp-checkout-container pre,
 .mp-checkout-container q,
 .mp-checkout-container ruby,
@@ -67,6 +97,7 @@
 .mp-checkout-container sub,
 .mp-checkout-container summary,
 .mp-checkout-container sup,
+.mp-checkout-container svg,
 .mp-checkout-container table,
 .mp-checkout-container tbody,
 .mp-checkout-container td,
@@ -80,167 +111,155 @@
 .mp-checkout-container ul,
 .mp-checkout-container var,
 .mp-checkout-container video {
-    font: inherit;
-    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif;
-    font-size: 14px;
-    font-style: normal;
-    line-height: 16px;
-    margin: 0;
-    padding: 0;
-    vertical-align: baseline;
-    width: auto
-}
-
-.mp-checkout-container {
-    border: 0 !important;
-    font: inherit !important;
-    font-size: 100% !important;
+    font-family: var(--mp-font-family) !important;
+    font-size: var(--mp-font-size-base) !important;
+    font-style: normal !important;
+    line-height: var(--mp-line-height-base) !important;
     margin: 0 !important;
     padding: 0 !important;
-    vertical-align: baseline !important
-}
-
-.mp-vertical-line {
-    border-left: 1px solid rgba(0, 0, 0, .25) !important;
-    height: 36px !important;
-    width: 1px !important
-}
-
-#payment .mp-document-select,
-.mp-document-select {
-    appearance: auto;
-    cursor: pointer !important;
-    letter-spacing: 0 !important;
-    margin: 0 8px !important;
-    width: 25% !important
-}
-
-.mp-document-select,
-.mp-input-document {
-    background: #fff !important;
+    vertical-align: baseline !important;
+    width: auto !important;
     border: 0 !important;
-    color: #000 !important;
-    font-family: var(--mp-font-inter) !important;
-    font-size: 14px !important;
-    font-style: normal !important;
-    font-weight: 400 !important;
-    line-height: 20px !important;
-    outline: 0 !important
 }
 
-.mp-input-document {
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    margin-bottom: 24px !important;
-    width: 100% !important
+/* ==========================================================================
+   Components
+   ========================================================================== */
+
+/* Vertical Line */
+.mp-vertical-line {
+    border-left: 1px solid var(--mp-color-border) !important;
+    height: 36px !important;
+    width: 1px !important;
 }
 
+/* ==========================================================================
+   Alert Message
+   ========================================================================== */
 .alert-message {
-    color: red;
+    color: var(--mp-color-red);
     font-weight: 700 !important;
 }
 
+/* ==========================================================================
+   Payment Method Icons
+   ========================================================================== */
 .row-image-select {
-    height: 18px;
-    display: flex !important;
-    justify-content: space-between;
     align-content: center;
     align-items: center;
+    display: flex !important;
     flex-direction: row;
+    height: 18px;
+    justify-content: space-between;
     width: 100%;
 }
 
 .row-image-select img {
-    height: 32px !important;
-    max-height: 32px !important;
-    max-width: 32px !important;
-    width: 32px !important;
+    height: var(--mp-icon-size) !important;
+    max-height: var(--mp-icon-size) !important;
+    max-width: var(--mp-icon-size) !important;
+    order: 2;
+    padding: 0;
+    width: var(--mp-icon-size) !important;
 }
 
-.payment_method_woo-mercado-pago-basic, .payment_method_woo-mercado-pago-ticket,
-.payment_method_woo-mercado-pago-custom, .payment_method_woo-mercado-pago-pix,
-.payment_method_woo-mercado-pago-yape, .payment_method_woo-mercado-pago-credits,
+.payment_method_woo-mercado-pago-basic,
+.payment_method_woo-mercado-pago-ticket,
+.payment_method_woo-mercado-pago-custom,
+.payment_method_woo-mercado-pago-pix,
+.payment_method_woo-mercado-pago-yape,
+.payment_method_woo-mercado-pago-credits,
 .payment_method_woo-mercado-pago-pse {
-  label {
-    img {
-      height: 32px !important;
-      max-height: 32px !important;
-        max-width: 32px !important;
-        width: 32px !important;
+    label img {
+        height: var(--mp-icon-size) !important;
+        max-height: var(--mp-icon-size) !important;
+        max-width: var(--mp-icon-size) !important;
+        width: var(--mp-icon-size) !important;
     }
-  }
-}
-.row-image-select img {
-    padding: 0;
-    order: 2;
 }
 
 .wc_payment_method > label > img {
-    vertical-align: middle;
+    height: var(--mp-icon-size) !important;
     margin: -2px 0 0 .5em;
+    max-height: var(--mp-icon-size) !important;
+    max-width: var(--mp-icon-size) !important;
+    order: 2;
     padding: 0;
     position: relative;
-    height: 32px !important;
-    max-height: 32px !important;
-    max-width: 32px !important;
-    width: 32px !important;
-    order: 2;
+    vertical-align: middle;
+    width: var(--mp-icon-size) !important;
 }
 
-.mp-checkout-andes-input {
-    background: #fff !important;
-    border: 1px solid rgba(0, 0, 0, .25);
-    border-radius: 6px !important;
-    color: #000 !important;
-    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
-    font-size: 16px !important;
+/* ==========================================================================
+   Andes Input
+   ========================================================================== */
+.mp-checkout-container .mp-checkout-andes-input,
+.mp-checkout-container .mp-checkout-andes-input-error {
+    background: var(--mp-color-white) !important;
+    border: 1px solid var(--mp-color-border) !important;
+    border-radius: var(--mp-border-radius) !important;
+    color: var(--mp-color-black) !important;
+    flex-grow: 0;
+    flex-shrink: 0;
+    font-family: var(--mp-font-family) !important;
+    font-size: var(--mp-font-size-input) !important;
     font-weight: 400 !important;
-    height: 48px !important;
-    line-height: 20px !important;
-    outline: 0 !important;
-    padding: 0px 14px !important;
-    max-width: 100% !important;
+    height: var(--mp-input-height) !important;
+    line-height: var(--mp-line-height-input) !important;
     margin: 0 !important;
-    flex-grow: 0;    /* Prevents items from growing */
-    flex-shrink: 0;  /* Prevents items from shrinking */
+    max-width: 100% !important;
+    outline: 0 !important;
+    padding: 0 14px !important;
 }
 
-.mp-checkout-andes-input:focus {
-    border-color: #7F54B3 !important;
+.mp-checkout-container .mp-checkout-andes-input:focus {
+    border-color: var(--mp-color-focus) !important;
 }
 
-.mp-checkout-andes-input-error {
-    background: #fff !important;
-    border: 1px solid rgba(0, 0, 0, .25);
-    border-radius: 6px !important;
-    border-color: #F23D4F !important;
-    color: #000 !important;
-    font-family: Proxima Nova, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif !important;
-    font-size: 16px !important;
+.mp-checkout-container .mp-checkout-andes-input-error {
+    border-color: var(--mp-color-error) !important;
+}
+
+.mp-checkout-container .mp-checkout-andes-input-error:focus {
+    border: 2px solid var(--mp-color-border);
+}
+
+/* ==========================================================================
+   Privacy Policy Footer
+   ========================================================================== */
+.mp-checkout-container .mp-privacy-policy-footer,
+.mp-checkout-container .mp-privacy-policy-footer * {
+    font-size: 12px !important;
     font-weight: 400 !important;
-    height: 48px !important;
-    line-height: 20px !important;
-    outline: 0 !important;
-    padding: 0px 14px !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    flex-grow: 0;    /* Prevents items from growing */
-    flex-shrink: 0;  /* Prevents items from shrinking */
+    line-height: 15px !important;
+    font-family: var(--primary-font-family) !important;
 }
 
-.mp-checkout-andes-input-error:focus {
-    border: 2px solid rgba(0, 0, 0, .25);
+.mp-checkout-container .mp-privacy-policy-footer {
+    text-align: center;
+    color: var(--andes-text-color-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
+.mp-checkout-container .mp-privacy-policy-footer a {
+    color: var(--andes-accent-color) !important;
+    text-decoration: none !important;
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
 .mp-display-none {
     display: none !important;
 }
 
 .mp-hidden {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  z-index: -1 !important;
-  padding: 0 !important;
-  margin: 0 !important;
+    margin: 0 !important;
+    opacity: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    z-index: -1 !important;
 }

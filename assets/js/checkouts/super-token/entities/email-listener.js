@@ -16,8 +16,13 @@ class WCEmailListener {
     }
 
     isValid(email) {
-        const result = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i.exec(email);
-        return result !== null;
+      if (!email || email.length > 254) return false;
+
+      const localPart = email.split('@')[0];
+      if (localPart && localPart.length > 64) return false;
+
+      const regex = /^[a-zA-Z0-9_%+-]+(\.[a-zA-Z0-9_%+-]+)*@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/i;
+      return regex.test(email);
     }
 
     getEmail() {

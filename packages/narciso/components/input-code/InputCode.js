@@ -146,13 +146,13 @@ class InputCode extends HTMLElement {
   applyStyles() {
     const style = document.createElement('style');
     style.textContent = `
-      .mp-yape-input-code-container {
+      .mp-checkout-container .mp-yape-input-code-container {
         display: flex !important;
         flex-direction: column !important;
         font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
       }
 
-      .mp-yape-label-container {
+      .mp-checkout-container .mp-yape-label-container {
         display: flex !important;
         align-items: flex-start !important;
         margin-bottom: -8px !important;
@@ -164,19 +164,19 @@ class InputCode extends HTMLElement {
         padding-left: 6px !important
       }
 
-      .mp-yape-icon-wrapper {
+      .mp-checkout-container .mp-yape-icon-wrapper {
         position: relative !important;
         display: flex !important;
         align-items: center !important;
       }
 
-      .mp-yape-icon {
+      .mp-checkout-container .mp-yape-icon {
         max-width: 20px !important;
         margin-left: 4px !important;
         cursor: pointer !important;
       }
 
-      .mp-yape-tooltip {
+      .mp-checkout-container .mp-yape-tooltip {
         display: none !important;
         position: absolute !important;
         top: -55px !important;
@@ -197,7 +197,7 @@ class InputCode extends HTMLElement {
 
       }
 
-      .mp-yape-tooltip::after {
+      .mp-checkout-container .mp-yape-tooltip::after {
         content: "";
         position: absolute;
         bottom: -8px;
@@ -211,16 +211,16 @@ class InputCode extends HTMLElement {
         color: white;
       }
 
-      .mp-yape-icon-wrapper:hover .mp-yape-tooltip {
+      .mp-checkout-container .mp-yape-icon-wrapper:hover .mp-yape-tooltip {
         display: block !important;
       }
 
-      .mp-yape-input-container {
+      .mp-checkout-container .mp-yape-input-container {
         display: flex !important;
         gap: 8px !important;
       }
 
-      .mp-yape-code-input {
+      .mp-checkout-container .mp-yape-code-input {
         width: 38px !important;
         height: 48px !important;
         background: #ffffff !important;
@@ -235,31 +235,31 @@ class InputCode extends HTMLElement {
         box-sizing: border-box;
       }
 
-      .mp-yape-code-input:nth-child(4) {
+      .mp-checkout-container .mp-yape-code-input:nth-child(4) {
         margin-left: 10px !important;
       }
 
-      .mp-input-code-focus {
+      .mp-checkout-container .mp-input-code-focus {
         border: 1px solid var(--andes-accent-color) !important;
       }
 
-      .mp-input-code-error {
+      .mp-checkout-container .mp-input-code-error {
         border: 1px solid #f23d4f !important;
       }
 
       @media screen and (max-width: 375px) {
-        .mp-yape-input-container {
+        #mp-checkout-yape-root.mp-checkout-yape-container .mp-yape-input-container {
           flex-direction: row !important;
           gap: 2px !important;
         }
 
-        .mp-checkout-yape-container {
+        #mp-checkout-yape-root.mp-checkout-yape-container {
           padding: 24px 0!important;
         }
       }
 
       @media only screen and (min-width: 376px) and (max-width: 480px) {
-        .mp-checkout-yape-container {
+        #mp-checkout-yape-root.mp-checkout-yape-container {
           padding: 24px 0!important;
         }
       }

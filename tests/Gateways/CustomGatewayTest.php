@@ -224,10 +224,10 @@ class CustomGatewayTest extends TestCase
                     $this->gateway
                         ->expects()
                         ->getRejectedPaymentErrorKey($response['status_detail'])
-                        ->andReturn('error');
+                        ->andReturn($errorKey = 'error');
                     return [
                         'result' => 'fail',
-                        'messages' => 'error'
+                        'messages' => $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages[$errorKey]
                     ];
                 }
                 $this->gateway
@@ -1305,7 +1305,7 @@ class CustomGatewayTest extends TestCase
             ->andReturn('test-theme');
 
         WP_Mock::userFunction('wp_get_current_user')
-            ->andReturn((object) ['user_email' => 'test@example.com']);
+            ->andReturn((object) ['ID' => 1, 'user_email' => 'test@example.com']);
 
         // Mock add_action for wp_enqueue_scripts (used in registerSuperTokenLocalizeParams)
         WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
@@ -1369,6 +1369,166 @@ class CustomGatewayTest extends TestCase
             ->shouldReceive('storeNotice')
             ->once()
             ->with($translatedMessage, 'error');
+
+        // The override calls isOrderPayPage(); mock it to return false (not on Order Pay page)
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->validateGetVar('pay_for_order')
+            ->andReturn(false);
+
+        $exception = new \Exception('Test exception');
+
+        $result = $this->gateway->processReturnFail(
+            $exception,
+            $errorMessage,
+            CustomGateway::LOG_SOURCE,
+            [],
+            true
+        );
+
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertEquals($translatedMessage, $result['message']);
+    }
+
+    /**
+     * Test processReturnFail outputs JSON via handlePayForOrderRequest on Order Pay page.
+     *
+     * Context: On the Order Pay page, the custom checkout submits via AJAX and expects
+     * a JSON response. Without this override, WooCommerce's WC_Form_Handler::pay_action()
+     * would redirect, causing the AJAX caller to receive HTML instead of JSON.
+     *
+     * @return void
+     */
+    public function testProcessReturnFailOutputsJsonOnOrderPayPage(): void
+    {
+        $this->setNotAccessibleProperty($this->gateway, 'paymentMethodName', CustomGateway::ID);
+
+        $statusDetail = 'cc_rejected_other_reason';
+        $errorMessage = 'buyer_cc_rejected_other_reason';
+        $translatedMessage = 'Translated error message';
+        $buyerMessage = 'Your payment was declined';
+
+        // Mock logs->file
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock
+            ->shouldReceive('error')
+            ->once()
+            ->with(Mockery::type('string'), CustomGateway::LOG_SOURCE, Mockery::type('array'))
+            ->andReturnNull();
+        $this->gateway->mercadopago->logs->file = $logsFileMock;
+
+        // Mock errorMessages helper
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorMessage)
+            ->andReturn($translatedMessage);
+
+        // Mock datadog->sendEvent
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('woo_checkout_error', $translatedMessage, $errorMessage, CustomGateway::ID);
+
+        // Mock notices
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with($translatedMessage, 'error');
+
+        // Mock isOrderPayPage to return true
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->validateGetVar('pay_for_order')
+            ->andReturn(true);
+
+        // Replace ArrayMock with a plain array so isset/access behave predictably.
+        // getRejectedPaymentErrorKey('cc_rejected_other_reason') prepends 'buyer_' →
+        // looks up 'buyer_cc_rejected_other_reason' which exists, so it returns that key.
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages = [
+            'buyer_cc_rejected_other_reason' => $buyerMessage,
+            'buyer_default' => $buyerMessage,
+        ];
+
+        // Mock wp_json_encode to use json_encode
+        WP_Mock::userFunction('wp_json_encode')
+            ->once()
+            ->andReturnUsing('json_encode');
+
+        $expectedOutput = json_encode([
+            'result' => 'fail',
+            'redirect' => false,
+            'messages' => $buyerMessage,
+        ]);
+
+        $this->expectOutputString($expectedOutput);
+
+        $exception = new RejectedPaymentException(
+            $errorMessage,
+            0,
+            null,
+            $statusDetail
+        );
+
+        $result = $this->gateway->processReturnFail(
+            $exception,
+            $errorMessage,
+            CustomGateway::LOG_SOURCE,
+            [],
+            true
+        );
+
+        $this->assertEquals('fail', $result['result']);
+        $this->assertEquals('', $result['redirect']);
+        $this->assertEquals($translatedMessage, $result['message']);
+    }
+
+    /**
+     * Test processReturnFail does NOT output JSON when not on Order Pay page.
+     *
+     * @return void
+     */
+    public function testProcessReturnFailDoesNotOutputJsonOutsideOrderPayPage(): void
+    {
+        $this->setNotAccessibleProperty($this->gateway, 'paymentMethodName', CustomGateway::ID);
+
+        $errorMessage = 'buyer_default';
+        $translatedMessage = 'Translated error message';
+
+        // Mock logs->file
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock
+            ->shouldReceive('error')
+            ->once()
+            ->with(Mockery::type('string'), CustomGateway::LOG_SOURCE, Mockery::type('array'))
+            ->andReturnNull();
+        $this->gateway->mercadopago->logs->file = $logsFileMock;
+
+        // Mock errorMessages helper
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorMessage)
+            ->andReturn($translatedMessage);
+
+        // Mock datadog->sendEvent
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('woo_checkout_error', $translatedMessage, $errorMessage, CustomGateway::ID);
+
+        // Mock notices
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with($translatedMessage, 'error');
+
+        // Mock isOrderPayPage to return false
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->validateGetVar('pay_for_order')
+            ->andReturn(false);
 
         $exception = new \Exception('Test exception');
 
@@ -2476,5 +2636,303 @@ class CustomGatewayTest extends TestCase
             'blocks - missing installments' => [true, ['installments']],
             'classic - missing installments' => [false, ['installments']],
         ];
+    }
+
+    /**
+     * Helper to set up common mocks for registerCheckoutScripts email tests
+     */
+    private function setupCheckoutEmailTestDependencies(): void
+    {
+        $expectedCurrency = 'BRL';
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getCurrencyCode')
+            ->with($this->gateway)
+            ->andReturn($expectedCurrency);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')
+            ->andReturn('test-css-url');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getMercadoPagoSdkUrl')
+            ->andReturn('https://sdk.mercadopago.com/js/v2');
+
+        WP_Mock::userFunction('wp_is_mobile')
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getJsAsset')
+            ->andReturn('test-js-url');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')
+            ->andReturn('test-image-url');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')
+            ->andReturn('test-public-key');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
+        $this->gateway->mercadopago->hooks->options
+            ->shouldReceive('getGatewayOption')
+            ->andReturn('cards_first');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getPaymentMethodsThumbnails')
+            ->andReturn([]);
+
+        $this->gateway->mercadopago->helpers->links
+            ->shouldReceive('getPrivacyPolicyLink')
+            ->andReturn('https://example.com/privacy');
+
+        $this->gateway->storeTranslations = [
+            'locale' => 'en-US',
+            'payment_methods_list_text' => 'Payment Methods',
+            'payment_methods_list_alt_text' => 'Payment Methods alt text',
+            'last_digits_text' => 'Last digits',
+            'new_card_text' => 'New card',
+            'account_money_text' => 'Account Money',
+            'account_money_wallet_with_investment_text' => 'Wallet + Investment',
+            'account_money_wallet_text' => 'Wallet',
+            'account_money_investment_text' => 'Investment',
+            'account_money_available_text' => 'Available',
+            'interest_free_part_one_text' => 'Interest free',
+            'interest_free_part_two_text' => 'part two',
+            'interest_free_option_text' => 'Interest free option',
+            'security_code_input_title_text' => 'Security code',
+            'security_code_placeholder_text_3_digits' => '3 digits',
+            'security_code_placeholder_text_4_digits' => '4 digits',
+            'security_code_tooltip_text_3_digits' => '3 digits tooltip',
+            'security_code_tooltip_text_4_digits' => '4 digits tooltip',
+            'security_code_error_message_text' => 'Security code error',
+            'card_installments_label' => 'Installments',
+            'placeholders_issuer' => 'Issuer',
+            'placeholders_installments' => 'Installments',
+            'placeholders_card_expiration_date' => 'Expiration',
+            'placeholders_cardholder_name' => 'Cardholder Name',
+            'installments_required' => 'Required',
+            'card_installments_interest_text' => 'Interest text',
+            'input_helper_message_invalid_type' => 'Invalid type',
+            'input_helper_message_invalid_length' => 'Invalid length',
+            'input_helper_message_invalid_value' => 'Invalid value',
+            'input_helper_message_card_holder_name_221' => 'Card holder name 221',
+            'input_helper_message_card_holder_name_316' => 'Card holder name 316',
+            'input_helper_message_expiration_date_invalid_type' => 'Expiration date invalid type',
+            'input_helper_message_expiration_date_invalid_length' => 'Expiration date invalid length',
+            'input_helper_message_expiration_date_invalid_value' => 'Expiration date invalid value',
+            'input_helper_message_security_code_invalid_type' => 'Security code invalid type',
+            'input_helper_message_security_code_invalid_length' => 'Security code invalid length',
+            'default_error_message' => 'Default error message',
+            'installments_error_invalid_amount' => 'Invalid amount error',
+            'mercado_pago_card_name' => 'Mercado Pago Card',
+            'mercadopago_privacy_policy' => 'Privacy policy {link}',
+            'consumer_credits_due_date' => 'The first installment is due on',
+            'months_abbreviated' => 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
+            'mlb_installment_debit_auto_text' => 'MLB Installment Debit Auto',
+            'interest_rate_mlb_text' => 'Interest Rate MLB',
+            'effective_total_cost_mlb_text' => 'Effective Total Cost MLB',
+            'iof_mlb_text' => 'IOF MLB',
+            'borrowed_amount_mlb_text' => 'Borrowed Amount MLB',
+            'per_month' => 'per month',
+            'per_year' => 'per year',
+            'cat_mlm_text' => 'CAT MLM',
+            'no_iva_text' => 'No IVA',
+            'tna_mlm_text' => 'TNA MLM',
+            'system_amortization_mlm_text' => 'System Amortization MLM',
+            'cftea_mla_text' => 'CFTEA MLA',
+            'tna_mla_text' => 'TNA MLA',
+            'tea_mla_text' => 'TEA MLA',
+            'fixed_rate_text' => 'Fixed Rate',
+            'update_security_code_with_retry_error_text' => 'Update security code with retry error',
+            'update_security_code_no_retry_error_text' => 'Update security code no retry error',
+            'authorize_payment_method_with_retry_error_text' => 'Authorize payment method with retry error',
+            'authorize_payment_method_no_retry_error_text' => 'Authorize payment method no retry error',
+            'select_payment_method_error_text' => 'Select payment method error',
+        ];
+
+        $this->gateway->mercadopago->storeTranslations->threeDsTranslations = [
+            'title_loading_3ds_frame' => 'Loading 3DS',
+            'title_loading_3ds_frame2' => 'Loading 3DS 2',
+            'text_loading_3ds_frame' => 'Loading frame',
+            'title_loading_3ds_response' => 'Loading response',
+            'title_3ds_frame' => '3DS Frame',
+            'tooltip_3ds_frame' => '3DS Tooltip',
+            'message_3ds_declined' => '3DS Declined',
+        ];
+
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'intl' => 'en-US',
+            'site_id' => 'MLA',
+            'currency' => 'ARS'
+        ]);
+
+        $this->gateway->mercadopago->woocommerce->version = '8.0.0';
+
+        $this->gateway->shouldReceive('get_option')
+            ->andReturn('yes');
+
+        WP_Mock::userFunction('get_stylesheet')
+            ->andReturn('test-theme');
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutStyle')
+            ->andReturnSelf();
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutScript')
+            ->andReturnSelf();
+    }
+
+    /**
+     * Test getCheckoutEmailIfAvailable returns email from order when order key is present in $_GET
+     */
+    public function testGetCheckoutEmailIfAvailableReturnsEmailFromOrderKey(): void
+    {
+        $_GET['key'] = 'wc_order_abc123';
+
+        $this->setupCheckoutEmailTestDependencies();
+
+        WP_Mock::userFunction('sanitize_text_field')
+            ->andReturnArg(0);
+
+        WP_Mock::userFunction('wp_unslash')
+            ->andReturnArg(0);
+
+        WP_Mock::userFunction('wc_get_order_id_by_order_key')
+            ->with('wc_order_abc123')
+            ->andReturn(1150);
+
+        $orderMock = Mockery::mock(\WC_Order::class);
+        $orderMock->shouldReceive('get_billing_email')
+            ->andReturn('billing@example.com');
+
+        WP_Mock::userFunction('wc_get_order')
+            ->with(1150)
+            ->andReturn($orderMock);
+
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        WP_Mock::userFunction('wp_localize_script')->andReturn(true);
+
+        $this->gateway->registerCheckoutScripts();
+
+        // Verify no exceptions were thrown — the email was resolved from order key
+        $this->expectNotToPerformAssertions();
+
+        unset($_GET['key']);
+    }
+
+    /**
+     * Test getCheckoutEmailIfAvailable falls back to current user email when no order key
+     */
+    public function testGetCheckoutEmailIfAvailableFallsBackToCurrentUser(): void
+    {
+        unset($_GET['key']);
+
+        $this->setupCheckoutEmailTestDependencies();
+
+        WP_Mock::userFunction('wp_get_current_user')
+            ->andReturn((object) ['ID' => 1, 'user_email' => 'user@example.com']);
+
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        WP_Mock::userFunction('wp_localize_script')->andReturn(true);
+
+        $this->gateway->registerCheckoutScripts();
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Test getCheckoutEmailIfAvailable falls back to WC customer email
+     */
+    public function testGetCheckoutEmailIfAvailableFallsBackToWcCustomer(): void
+    {
+        unset($_GET['key']);
+
+        $this->setupCheckoutEmailTestDependencies();
+
+        WP_Mock::userFunction('wp_get_current_user')
+            ->andReturn((object) ['ID' => 0, 'user_email' => '']);
+
+        $customerMock = Mockery::mock();
+        $customerMock->shouldReceive('get_billing_email')
+            ->andReturn('customer@example.com');
+
+        $wcMock = (object) ['customer' => $customerMock];
+
+        WP_Mock::userFunction('WC')
+            ->andReturn($wcMock);
+
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        WP_Mock::userFunction('wp_localize_script')->andReturn(true);
+
+        $this->gateway->registerCheckoutScripts();
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Test getCheckoutEmailIfAvailable returns empty string when no email source is available
+     */
+    public function testGetCheckoutEmailIfAvailableReturnsEmptyWhenNoEmailAvailable(): void
+    {
+        unset($_GET['key']);
+
+        $this->setupCheckoutEmailTestDependencies();
+
+        WP_Mock::userFunction('wp_get_current_user')
+            ->andReturn((object) ['ID' => 0, 'user_email' => '']);
+
+        $customerMock = Mockery::mock();
+        $customerMock->shouldReceive('get_billing_email')
+            ->andReturn('');
+
+        $wcMock = (object) ['customer' => $customerMock];
+
+        WP_Mock::userFunction('WC')
+            ->andReturn($wcMock);
+
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        WP_Mock::userFunction('wp_localize_script')->andReturn(true);
+
+        $this->gateway->registerCheckoutScripts();
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Test getCheckoutEmailIfAvailable falls back when order key exists but order is not found
+     */
+    public function testGetCheckoutEmailIfAvailableFallsBackWhenOrderNotFound(): void
+    {
+        $_GET['key'] = 'wc_order_invalid';
+
+        $this->setupCheckoutEmailTestDependencies();
+
+        WP_Mock::userFunction('sanitize_text_field')
+            ->andReturnArg(0);
+
+        WP_Mock::userFunction('wp_unslash')
+            ->andReturnArg(0);
+
+        WP_Mock::userFunction('wc_get_order_id_by_order_key')
+            ->with('wc_order_invalid')
+            ->andReturn(0);
+
+        WP_Mock::userFunction('wp_get_current_user')
+            ->andReturn((object) ['ID' => 1, 'user_email' => 'fallback@example.com']);
+
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        WP_Mock::userFunction('wp_localize_script')->andReturn(true);
+
+        $this->gateway->registerCheckoutScripts();
+
+        $this->expectNotToPerformAssertions();
+
+        unset($_GET['key']);
     }
 }

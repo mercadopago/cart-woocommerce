@@ -3,7 +3,7 @@
     height: 32px !important;
 }
 
-.mp-checkout-credits-terms-and-conditions {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-credits-terms-and-conditions {
     align-items: center !important;
     display: flex !important;
     justify-content: center !important;
@@ -11,7 +11,7 @@
     text-align: center !important;
 }
 
-.mp-checkout-credits-container {
+#mp-checkout-credits-root.mp-checkout-credits-container {
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
@@ -19,33 +19,33 @@
     background-color: #fff !important;
 }
 
-.mp-checkout-credits-container .mp-test-mode-card {
-    margin-bottom: 24px !important
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-test-mode-card {
+    margin-bottom: 24px !important;
 }
 
-.mp-checkout-credits-content {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-credits-content {
     background-color: #fff !important;
 }
 
-.mp-checkout-credits-test-mode {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-credits-test-mode {
     padding: 0 0 25px !important;
 }
 
-.mp-credits-checkout-benefits {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-credits-checkout-benefits {
     padding: 40px !important;
 }
 
-.mp-checkout-benefits-list-container {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-benefits-list-container {
     display: flex;
     flex-direction: column !important;
     font-family: var(--primary-font-family) !important;
 }
 
-.mp-checkout-benefits-list-container p {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-benefits-list-container p {
     padding: 0 !important;
 }
 
-.mp-checkout-benefits-list-title {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-benefits-list-title {
     text-align: left !important;
     font-style: normal !important;
     font-weight: 600 !important;
@@ -58,7 +58,7 @@
     margin-inline-end: 0 !important;
 }
 
-.mp-checkout-benefits-list {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-benefits-list {
     list-style-type: none !important;
     display: flex;
     flex-direction: column !important;
@@ -71,7 +71,7 @@
     line-height: 18px !important;
 }
 
-.mp-checkout-benefits-list-item {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-benefits-list-item {
     display: flex;
     align-items: center !important;
     justify-content: flex-start !important;
@@ -79,17 +79,17 @@
     font-weight: 600;
 }
 
-.mp-checkout-benefits-list-item span {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-benefits-list-item span {
     color: rgb(0, 0, 0, 0.55) !important;
     font-weight: 400;
 }
 
-.mp-checkout-benefits-list-item>span>b {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-benefits-list-item>span>b {
     font-size: 14px !important;
     font-weight: 600;
 }
 
-.mp-checkout-benefits-list-count-list-item {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-benefits-list-count-list-item {
     color: var(--andes-accent-color) !important;
     line-height: 0 !important;
     margin-right: 8px !important;
@@ -97,21 +97,21 @@
     font-weight: 600 !important;
 }
 
-.mp-checkout-redirect-v3-container {
-  background-color: #f5f5f5 !important;
-  align-items: center;
-  display: flex;
-  padding: 16px 40px !important;
-  flex-direction: column;
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-redirect-v3-container {
+    background-color: #f5f5f5 !important;
+    align-items: center;
+    display: flex;
+    padding: 16px 40px !important;
+    flex-direction: column;
 }
 
-.mp-checkout-redirect-v3-container p {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-redirect-v3-container p {
     font-size: 12px !important;
     font-family: var(--primary-font-family) !important;
     color: var(--andes-text-color-secondary) !important;
 }
 
-.mp-checkout-redirect-v3-title-container {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-redirect-v3-title-container {
     display: flex !important;
     justify-content: left !important;
     align-items: center !important;
@@ -119,12 +119,12 @@
     margin-bottom: 8px !important;
 }
 
-.mp-checkout-redirect-v3-mp-logo-image {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-redirect-v3-mp-logo-image {
     width: 20px !important;
     margin: 0 !important;
 }
 
-.mp-checkout-redirect-v3-title {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-redirect-v3-title {
     margin: 0px !important;
     font-weight: 600 !important;
     size: 12px !important;
@@ -132,7 +132,7 @@
     color: rgba(0, 0, 0, 0.55) !important;
 }
 
-.mp-checkout-redirect-v3-description {
+#mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-redirect-v3-description {
     margin: 0px !important;
     font-weight: 400 !important;
     size: 12px !important;
@@ -141,7 +141,7 @@
 }
 
 @media (max-width: 768px) {
-    .mp-checkout-redirect-v3-container {
+    #mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-redirect-v3-container {
         background-color: #F5F5F5 !important;
         padding: 16px 20px !important;
         font-family: var(--primary-font-family) !important;
@@ -149,7 +149,7 @@
 }
 
 @media (max-width: 400px) {
-    .mp-checkout-redirect-v3-container {
+    #mp-checkout-credits-root.mp-checkout-credits-container .mp-checkout-redirect-v3-container {
         background-color: #F5F5F5 !important;
         padding: 16px 20px !important;
         font-family: var(--primary-font-family) !important;
@@ -157,7 +157,7 @@
 }
 
 @media only screen and (max-width: 768px) {
-    .mp-credits-checkout-benefits {
+    #mp-checkout-credits-root.mp-checkout-credits-container .mp-credits-checkout-benefits {
         padding: 40px 20px !important;
     }
 }

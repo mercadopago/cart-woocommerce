@@ -41,8 +41,15 @@ class PaymentMethodsTest extends TestCase
         $this->assertEquals($expectedPaymentMethods, $result);
     }
 
-    public function testGetEnabledPaymentMethodsReturnsEmptyArrayWhenWCNotExists()
+    public function testGetEnabledPaymentMethodsReturnsEmptyArrayWhenWCReturnsNull()
     {
+        $wcMock = Mockery::mock();
+        $wcMock->shouldReceive('payment_gateways')
+            ->andReturn(new \stdClass());
+
+        WP_Mock::userFunction('WC')
+            ->andReturn($wcMock);
+
         $result = $this->paymentMethods->getEnabledPaymentMethods();
 
         $this->assertEquals([], $result);

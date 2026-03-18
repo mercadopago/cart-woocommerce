@@ -397,6 +397,10 @@ class PseGatewayTest extends TestCase
             ->shouldReceive('getCredentialsPublicKey')
             ->andReturn('test-public-key');
 
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getCssAsset')
             ->andReturn('test-css-url');
@@ -415,7 +419,7 @@ class PseGatewayTest extends TestCase
 
         $this->gateway->mercadopago->hooks->scripts
             ->shouldReceive('registerCheckoutScript')
-            ->atLeast()->once(); // parent::registerCheckoutScripts() + 3 scripts específicos do PSE
+            ->atLeast()->once();
 
         $this->gateway->storeTranslations = [
             'financial_placeholder' => 'Select financial institution'

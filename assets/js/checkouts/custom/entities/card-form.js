@@ -12,6 +12,8 @@ class MPCardForm {
         this.fields = null;
         this.initCardFormTimeoutReference = null;
         this.isLoading = false;
+
+        this.sendMelidataTimeToLoadMetric();
     }
 
     async initCardForm(amount = this.getAmount()) {
@@ -277,14 +279,20 @@ class MPCardForm {
     }
 
     scrollToCardForm() {
-      const cardFormContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
+      const cardFormContainer = document.querySelector('#mp-checkout-custom-root.mp-checkout-container');
       if (!cardFormContainer) return;
 
       cardFormContainer.scrollIntoView({ behavior: 'smooth' });
     }
 
     getAmount() {
-        const amount = parseFloat(document.getElementById('mp-amount').value.replace(',', '.'));
+        const amountElement = document.getElementById('mp-amount');
+
+        if (!amountElement) {
+            return this.amount;
+        }
+
+        const amount = parseFloat(amountElement.value.replace(',', '.'));
         return String(amount);
     }
 
@@ -332,7 +340,7 @@ class MPCardForm {
     createLoadSpinner() {
         if (this.isLoading) return;
 
-        const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
+        const customContainer = document.querySelector('#mp-checkout-custom-root.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
 
         this.isLoading = true;
@@ -350,9 +358,12 @@ class MPCardForm {
     }
 
     removeLoadSpinner() {
-        if (!this.isLoading) return;
+        const loadingElement = document.querySelector('.mp-checkout-custom-load');
+        const loadingIsVisible = loadingElement && window.getComputedStyle(loadingElement).display !== 'none';
 
-        const customContainer = document.querySelector('#mp-checkout-custom-container.mp-checkout-container');
+        if (!this.isLoading && !loadingIsVisible) return;
+
+        const customContainer = document.querySelector('#mp-checkout-custom-root.mp-checkout-container');
         const loadSpinner = document.querySelector('.mp-checkout-custom-load');
 
         this.isLoading = false;
@@ -495,5 +506,28 @@ class MPCardForm {
     updateFieldValidator(fieldName) {
       if(fieldName !== 'cardNumber') return;
       this.cardNumberFilledValidator = false;
+    }
+
+    sendMelidataTimeToLoadMetric() {
+      const startTime = Date.now();
+
+      const interval = setInterval(() => {
+        if (window.melidata) {
+          clearInterval(interval);
+
+          const endTime = Date.now();
+          const durationInSeconds = (endTime - startTime) / 1000;
+
+          sendMetric(
+            durationInSeconds,
+            'time in seconds to load melidata client',
+            'mp_custom_checkout_melidata_time_to_load',
+          );
+        }
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(interval);
+      }, 20000); // 20 seconds
     }
 }

@@ -5,10 +5,10 @@
   --woocommerce-primary: #7F54B3;
 }
 
-.mp-input-document .mp-input {
+.mp-checkout-container .mp-input-document .mp-input {
   height: 48px !important;
   background: #fff !important;
-  border: 1px solid rgb(0 0 0 / 25%);
+  border: 1px solid rgb(0 0 0 / 25%) !important;
   border-radius: 6px !important;
   display: flex !important;
   align-items: center !important;
@@ -16,27 +16,27 @@
   box-sizing: border-box !important;
 }
 
-div .mp-focus {
+.mp-checkout-container .mp-input-document .mp-input.mp-focus {
   border: 2px solid var(--woocommerce-primary) !important;
 }
 
-div .mp-error {
+.mp-checkout-container .mp-input-document .mp-input.mp-error {
   border: 1px solid var(--andes-error-red) !important;
 }
 
-div.mp-error-2px {
+.mp-checkout-container .mp-input-document .mp-input.mp-error-2px {
   border: 2px solid var(--andes-error-red) !important;
 }
 
-#mp-doc-div input-label div.mp-input-label.mp-label-error {
+.mp-checkout-container #mp-doc-div input-label div.mp-input-label.mp-label-error {
   color: var(--andes-error-red) !important;
 }
 
-.mp-checkout-custom-card-row input-label div.mp-input-label.mp-label-error {
+.mp-checkout-container .mp-checkout-custom-card-row input-label div.mp-input-label.mp-label-error {
   color: var(--andes-error-red) !important;
 }
 
-.mp-input-document .mp-input .mp-document-select {
+.mp-checkout-container .mp-input-document .mp-input .mp-document-select {
   background: #fff !important;
   font-family: var(--mp-font-inter) !important;
   font-style: normal !important;
@@ -56,13 +56,13 @@ div.mp-error-2px {
   min-width: fit-content !important;
 }
 
-.mp-input-document .mp-input .mp-vertical-line {
+.mp-checkout-container .mp-input-document .mp-input .mp-vertical-line {
   height: 36px !important;
   width: 1px !important;
   border-left: 1px solid rgb(0 0 0 / 25%) !important;
 }
 
-.mp-input-document .mp-input .mp-document {
+.mp-checkout-container .mp-input-document .mp-input .mp-document {
   background: #fff !important;
   font-family: var(--mp-font-inter) !important;
   font-style: normal !important;
@@ -81,7 +81,7 @@ div.mp-error-2px {
   min-width: 0 !important;
 }
 
-.mp-input-document .mp-input-document-helper {
+.mp-checkout-container .mp-input-document .mp-input-document-helper {
   position: static !important;
   margin-top: 5px !important;
   width: 327px !important;
@@ -95,7 +95,7 @@ div.mp-error-2px {
   display: flex !important;
 }
 
-.mp-input-document .mp-input-document-helper .mp-input-document-helper-icon {
+.mp-checkout-container .mp-input-document .mp-input-document-helper .mp-input-document-helper-icon {
   width: 15px !important;
   height: 15px !important;
   left: 0 !important;
@@ -107,4 +107,33 @@ div.mp-error-2px {
   align-items: center !important;
   justify-content: center !important;
   margin: 1px 5px !important;
+}
+
+#payment .mp-checkout-container .mp-document-select,
+.mp-document-select {
+    appearance: auto;
+    cursor: pointer !important;
+    letter-spacing: 0 !important;
+    margin: 0 8px !important;
+    width: 25% !important;
+}
+
+.mp-checkout-container .mp-document-select,
+.mp-checkout-container .mp-input-document {
+    background: var(--mp-color-white) !important;
+    border: 0 !important;
+    color: var(--mp-color-black) !important;
+    font-family: var(--mp-font-inter) !important;
+    font-size: var(--mp-font-size-base) !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    line-height: var(--mp-line-height-input) !important;
+    outline: 0 !important;
+}
+
+.mp-checkout-container .mp-input-document {
+    border-radius: var(--mp-border-radius-lg) !important;
+    box-shadow: none !important;
+    margin-bottom: 24px !important;
+    width: 100% !important;
 }

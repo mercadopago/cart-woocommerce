@@ -109,6 +109,7 @@ class MPSuperTokenTriggerHandler {
             .finally(() => {
                 setTimeout(() => {
                     window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
+                    window.mpCustomCheckoutHandler?.eventHandler?.hideCheckoutClassicLoader();
 
                     if (this.mpSuperTokenPaymentMethods.hasCheckoutError()) {
                       this.mpSuperTokenPaymentMethods.selectLastPaymentMethodChoosen();

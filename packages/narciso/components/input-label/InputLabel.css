@@ -1,4 +1,4 @@
-.mp-input-label {
+.mp-checkout-container .mp-input-label {
   width: 100% !important;
   font-family: var(--mp-font-inter) !important;
   font-style: normal !important;
@@ -10,6 +10,6 @@
   padding-left: 6px !important;
 }
 
-.mp-input-label b {
+.mp-checkout-container .mp-input-label b {
   padding-left: 4px !important;
 }

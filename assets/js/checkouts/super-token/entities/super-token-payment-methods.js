@@ -4,11 +4,13 @@ class MPSuperTokenPaymentMethods {
     SUPER_TOKEN_CHECKOUT_TYPE = 'super_token';
     CUSTOM_CHECKOUT_TYPE = 'custom';
     COUNTRIES_WITH_BANK_INTEREST_DISCLAIMER = ['MCO', 'MPE', 'MLC'];
+    CUSTOM_BLOCK_ORIGINAL_ID = 'radio-control-wc-payment-method-options-woo-mercado-pago-custom__content';
     CUSTOM_CHECKOUT_BLOCKS_SELECTOR = '#radio-control-wc-payment-method-options-woo-mercado-pago-custom__content';
     CUSTOM_CHECKOUT_CLASSIC_SELECTOR = '.payment_box.payment_method_woo-mercado-pago-custom';
     CARD_FLAGS_SELECTOR = '.mp-checkout-custom-card-flags';
     CHECKOUT_CUSTOM_CONTAINER_SELECTOR = '.mp-checkout-custom-container';
-    CHECKOUT_CONTAINER_SELECTOR = '#mp-checkout-custom-container.mp-checkout-container';
+    NEW_CHECKOUT_CONTAINER_SELECTOR = '#mp-checkout-custom-root';
+    OLD_CHECKOUT_CONTAINER_SELECTOR = '#mp-checkout-custom-container'
     CHECKOUT_TYPE_SELECTOR = '#mp_checkout_type';
     COLOMBIA_ACCRONYM = 'MCO';
     MEXICO_ACCRONYM = 'MLM';
@@ -18,6 +20,7 @@ class MPSuperTokenPaymentMethods {
     WALLET_BUTTON_SELECTOR = '.mp-wallet-button-container-wrapper';
     CARD_HOLDER_NAME_HELPER_INFO_SELECTOR = '#mp-card-holder-name-helper-info';
     SUPER_TOKEN_STYLES = {
+        ROOT_ID: 'mp-checkout-super-token-root',
         ACCORDION: 'mp-super-token-payment-method__accordion',
         ACCORDION_HEADER: 'mp-super-token-payment-method__accordion-header',
         ACCORDION_TITLE: 'mp-super-token-payment-method__accordion-title',
@@ -145,15 +148,16 @@ class MPSuperTokenPaymentMethods {
 
         this.unmountActiveSecurityCodeInstance();
         this.hideAllPaymentMethodDetails();
+        this.restoreCustomCheckoutEntireElementOriginalId();
         this.showWalletButton();
         this.showCardFlags();
         this.removePaymentMethodElements();
         this.removePaymentMethodsListHeader();
         this.removeAccordion();
         this.deselectAllPaymentMethods();
-        this.removePaymentMethodsListClasses();
         this.removeMercadoPagoPrivacyPolicyFooter();
         this.removeHorizontalRow();
+        this.removePaymentMethodsListClasses();
     }
 
     storePaymentMethodsInMemory(accountPaymentMethods) {
@@ -270,7 +274,8 @@ class MPSuperTokenPaymentMethods {
     }
 
     getCustomCheckoutEntireElement() {
-        return document.querySelector(this.CUSTOM_CHECKOUT_BLOCKS_SELECTOR)
+        return document.querySelector(`#${this.SUPER_TOKEN_STYLES.ROOT_ID}`)
+            || document.querySelector(this.CUSTOM_CHECKOUT_BLOCKS_SELECTOR)
             || document.querySelector(this.CUSTOM_CHECKOUT_CLASSIC_SELECTOR);
     }
 
@@ -325,7 +330,7 @@ class MPSuperTokenPaymentMethods {
 
     removePaymentMethodsListClasses() {
         const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
-        const checkoutContainer = customCheckoutEntireElement?.querySelector(this.CHECKOUT_CONTAINER_SELECTOR);
+        const checkoutContainer = customCheckoutEntireElement?.querySelector(this.NEW_CHECKOUT_CONTAINER_SELECTOR) ?? customCheckoutEntireElement?.querySelector(this.OLD_CHECKOUT_CONTAINER_SELECTOR);
 
         if (checkoutContainer) {
             checkoutContainer.style.height = 'auto';
@@ -1243,6 +1248,13 @@ class MPSuperTokenPaymentMethods {
         return document.querySelector(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LIST}`);
     }
 
+    restoreCustomCheckoutEntireElementOriginalId() {
+        const paymentMethodsListElement = this.getPaymentMethodsListElement();
+        if (!paymentMethodsListElement) return;
+
+        paymentMethodsListElement.setAttribute('id', this.CUSTOM_BLOCK_ORIGINAL_ID);
+    }
+
     hidePaymentMethodsList() {
         const paymentMethodsListElement = document.querySelector(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LIST);
         if (!paymentMethodsListElement) {
@@ -1348,7 +1360,7 @@ class MPSuperTokenPaymentMethods {
                     style: {
                         'font-size': '16px',
                         height: '48px',
-                        padding: '14px',
+                        padding: '12px',
                         fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif'
                     }
                 })
@@ -1560,7 +1572,7 @@ class MPSuperTokenPaymentMethods {
     }
 
     convertCreditCardFormToPaymentMethodElement(customCheckoutEntireElement) {
-        const creditCardFormElement = customCheckoutEntireElement.querySelector(this.CHECKOUT_CONTAINER_SELECTOR);
+        const creditCardFormElement = customCheckoutEntireElement.querySelector(this.NEW_CHECKOUT_CONTAINER_SELECTOR) ?? customCheckoutEntireElement.querySelector(this.OLD_CHECKOUT_CONTAINER_SELECTOR);
 
         const createAccordionHeader = () => {
             const accordionHeader = document.createElement('section');
@@ -1603,6 +1615,7 @@ class MPSuperTokenPaymentMethods {
     }
 
     convertCustomCheckoutAreaToPaymentMethodList(customCheckoutEntireElement) {
+        customCheckoutEntireElement.id = this.SUPER_TOKEN_STYLES.ROOT_ID;
         customCheckoutEntireElement.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LIST);
         customCheckoutEntireElement.setAttribute('role', 'listbox');
         customCheckoutEntireElement.setAttribute('aria-label', this.PAYMENT_METHODS_LIST_ALT_TEXT);
@@ -1879,30 +1892,34 @@ class MPSuperTokenPaymentMethods {
     }
 
     renderAccountPaymentMethods(accountPaymentMethods, amount) {
-        this.storeAmount(amount);
-        this.storeActivePaymentMethod(this.getPaymentMethodSelectedFromDOMToAccountPaymentMethods(accountPaymentMethods));
+        try {
+            this.storeAmount(amount);
+            this.storeActivePaymentMethod(this.getPaymentMethodSelectedFromDOMToAccountPaymentMethods(accountPaymentMethods));
 
-        if (this.paymentMethodsAreRendered() || this.isRendering) return;
+            if (this.paymentMethodsAreRendered() || this.isRendering) return;
 
-        if (!this.hasStoredPaymentMethods()) this.storePaymentMethodsInMemory(accountPaymentMethods);
-        this.isRendering = true;
+            if (!this.hasStoredPaymentMethods()) this.storePaymentMethodsInMemory(accountPaymentMethods);
+            this.isRendering = true;
 
-        const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
+            const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
 
-        if (!customCheckoutEntireElement) {
-          this.isRendering = false;
-          throw new Error(MPSuperTokenErrorCodes.CUSTOM_CHECKOUT_ENTIRE_ELEMENT_NOT_FOUND);
+            if (!customCheckoutEntireElement) {
+            this.isRendering = false;
+            throw new Error(MPSuperTokenErrorCodes.CUSTOM_CHECKOUT_ENTIRE_ELEMENT_NOT_FOUND);
+            }
+
+            this.onCustomCheckoutWasRendered(
+                customCheckoutEntireElement,
+                accountPaymentMethods
+            );
+
+            this.isRendering = false;
+            setTimeout(() => {
+            const sdkInstanceId = this.mpSuperTokenMetrics.getSdkInstanceId();
+            document.dispatchEvent(new CustomEvent('supertoken_loaded', { detail: { sdkInstanceId } }));
+            }, 500);
+        } catch (error) {
+            this.mpSuperTokenMetrics.errorToRenderAccountPaymentMethods(error);
         }
-
-        this.onCustomCheckoutWasRendered(
-            customCheckoutEntireElement,
-            accountPaymentMethods
-        );
-
-        this.isRendering = false;
-        setTimeout(() => {
-          const sdkInstanceId = this.mpSuperTokenMetrics.getSdkInstanceId();
-          document.dispatchEvent(new CustomEvent('supertoken_loaded', { detail: { sdkInstanceId } }));
-        }, 500);
     }
 }

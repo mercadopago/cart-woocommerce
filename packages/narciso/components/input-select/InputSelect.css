@@ -1,13 +1,12 @@
-.mp-input-select-input {
+.mp-checkout-container .mp-input-select-input {
   display: flex !important;
   align-items: center !important;
   height: 48px !important;
   background: #fff !important;
-  border: 1px solid rgb(0 0 0 / 25%) !important;
   border-radius: 8px !important;
 }
 
-.mp-input-select-select {
+.mp-checkout-container .mp-input-select-select {
   background: var(--andes-white) !important;
   border: 1px solid var(--andes-gray-250) !important;
   border-radius: 6px !important;

@@ -1,4 +1,4 @@
-.mp-pix-template-container {
+.mp-checkout-container #mp-checkout-pix-root.mp-checkout-pix-container .mp-pix-template-container {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -7,7 +7,7 @@
   text-align: center !important;
 }
 
-.mp-pix-template-image {
+.mp-checkout-container #mp-checkout-pix-root.mp-checkout-pix-container .mp-pix-template-image {
   width: 100% !important;
   height: auto !important;
   max-width: 240px !important;
@@ -21,7 +21,7 @@
   overflow: hidden !important;
 }
 
-.mp-pix-template-title {
+.mp-checkout-container #mp-checkout-pix-root.mp-checkout-pix-container .mp-pix-template-title {
   font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
   font-style: normal !important;
   font-weight: bold !important;
@@ -35,7 +35,7 @@
   padding-bottom: 16px !important;
 }
 
-.mp-pix-template-subtitle {
+.mp-checkout-container #mp-checkout-pix-root.mp-checkout-pix-container .mp-pix-template-subtitle {
   font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif !important;
   font-style: normal !important;
   font-weight: normal !important;

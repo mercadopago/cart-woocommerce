@@ -32,7 +32,7 @@ if (! defined('ABSPATH')) {
 ?>
 
 <div class="mp-checkout-container">
-    <div class="mp-checkout-yape-container">
+    <div id="mp-checkout-yape-root" class="mp-checkout-yape-container">
         <div class="mp-checkout-yape-content">
                 <?php if ($test_mode) : ?>
                     <div class="mp-checkout-yape-test-mode">

@@ -76,8 +76,12 @@ class MPEventHandler {
         return hasBodyClass || hasOrderReviewForm;
     }
 
+    getCheckoutForm() {
+        return this.isOrderPayPage() ? jQuery('form#order_review') : jQuery('form.checkout');
+    }
+
     showCheckoutClassicLoader() {
-        jQuery('form.checkout')?.block({
+        this.getCheckoutForm()?.block({
             message: null,
             overlayCSS: {
                 background: '#fff',
@@ -87,7 +91,7 @@ class MPEventHandler {
     }
 
     hideCheckoutClassicLoader() {
-        jQuery('form.checkout')?.unblock();
+        this.getCheckoutForm()?.unblock();
     }
 
     mercadoPagoFormHandler(event, wc_checkout_form) {
@@ -101,14 +105,26 @@ class MPEventHandler {
         } else if (jQuery('#mp_checkout_type').val() === 'super_token') {
           window.mpSuperTokenMetrics?.registerClickOnPlaceOrderButton();
 
-          if (this.hasWooCommerceValidationErrors()) return true;
+          if (this.hasWooCommerceValidationErrors()) {
+            if (this.isOrderPayPage()) {
+              document.getElementById('order_review').submit();
+              return false;
+            }
 
-          this.handleWithSuperTokenSubmit(event, wc_checkout_form)
+            return true;
+          }
+
+          this.handleWithSuperTokenSubmit(event, wc_checkout_form);
 
           // Return false to avoid the default behavior of the form submission
           return false;
         } else {
             jQuery('#mp_checkout_type').val('custom');
+
+            if (this.hasWooCommerceValidationErrors() && this.isOrderPayPage()) {
+                document.getElementById('order_review').submit();
+                return false;
+            }
 
             if (!this.hasToken) {
                 this.setPayerIdentificationInfo();
@@ -136,20 +152,25 @@ class MPEventHandler {
             if (!activeMethod) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_ERROR);
             if (!isSuperTokenValid) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID);
 
+            if (this.isOrderPayPage()) superTokenPaymentMethods.unmountCardForm();
+
             await superTokenPaymentMethods.updateSecurityCode();
 
             await superTokenAuthenticator.authorizePayment(activeMethod.token);
 
             this.mercado_pago_submit = true;
             window.mpSuperTokenAuthenticator?.setSuperTokenValidation(true);
-            wc_checkout_form.$checkout_form.trigger('submit');
+            if (!this.isOrderPayPage()) {
+                wc_checkout_form.$checkout_form.trigger('submit');
+            } else {
+                this.handle3dsPayOrderFormSubmission();
+            }
         } catch(exception) {
-            this.cardForm.removeLoadSpinner();
-            this.hideCheckoutClassicLoader();
-
             if (exception?.message === MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID) {
-              window.mpSuperTokenErrorHandler.handleError(exception);
-              return;
+                window.mpSuperTokenErrorHandler.handleError(exception);
+                this.cardForm.removeLoadSpinner();
+                this.hideCheckoutClassicLoader();
+                return;
             }
 
             window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError();
@@ -189,8 +210,12 @@ class MPEventHandler {
             return !this.isInsideHiddenContainer(field);
         });
 
+        const formScope = this.isOrderPayPage()
+            ? '#order_review'
+            : '.woocommerce-checkout';
+
         const requiredFields = document.querySelectorAll(
-            '.woocommerce-checkout .validate-required input, .woocommerce-checkout .validate-required select'
+            `${formScope} .validate-required input, ${formScope} .validate-required select`
         );
 
         const hasEmptyRequired = Array.from(requiredFields).some(field => {
@@ -198,6 +223,7 @@ class MPEventHandler {
 
             if (this.isInsideHiddenContainer(field)) return false;
 
+            if (field.type === 'checkbox') return !field.checked;
             return !field.value.trim();
         });
 
@@ -271,7 +297,7 @@ class MPEventHandler {
         }
 
         if (window.mpSuperTokenTriggerHandler?.isSuperTokenPaymentMethodsLoaded()) {
-          window.mpSuperTokenPaymentMethods?.getPaymentMethodsListElement()?.remove();
+          window.mpSuperTokenPaymentMethods.getPaymentMethodsListElement()?.style.setProperty('display', 'none', 'important');
         }
 
         return;
@@ -284,8 +310,11 @@ class MPEventHandler {
 
     handleOrderReviewSubmit(event) {
         if (this.isCheckoutCustomPaymentMethodSelected()) {
-            event.preventDefault();
-            return this.mercadoPagoFormHandler();
+            // Não deve ocorrer o event.preventDefault antes do método mercadoPagoFormHandler ser chamado,
+            // pois em casos com mercado_pago_submit=true, por exemplo,
+            // iremos utilizar a submissão tradicional do formulário,
+            // e isso impediria o comportamento esperado.
+            return this.mercadoPagoFormHandler(event);
         } else {
             if (this.cardForm.formMounted) {
                 this.cardForm.form.unmount();
@@ -309,7 +338,17 @@ class MPEventHandler {
         const currentAmount = this.cardForm.amount;
         const promises = [window.mpSuperTokenTriggerHandler?.loadSuperToken(newAmount)];
 
-        if (this.cardForm.formMounted && newAmount !== currentAmount) {
+        const isCardFormDetached = this.cardForm.formMounted
+          && ['form-checkout__cardNumber-container', 'form-checkout__expirationDate-container', 'form-checkout__securityCode-container']
+            .every(containerId => {
+              const container = document.getElementById(containerId);
+              return !!container && !container.querySelector('iframe');
+            });
+
+        if (isCardFormDetached) {
+          this.cardForm.form.unmount();
+          this.cardForm.formMounted = false;
+        } else if (this.cardForm.formMounted && newAmount !== currentAmount) {
           this.cardForm.form.unmount();
         }
 
@@ -345,8 +384,15 @@ class MPEventHandler {
                         '<div class="woocommerce-error">' + response.messages + '</div>'
                     );
 
+                    const errorMessageElement = document.querySelector('#order_review .woocommerce-error');
+                    if (errorMessageElement) {
+                        errorMessageElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+
                     this.cardForm.removeBlockOverlay();
                     this.cardForm.removeLoadSpinner();
+                    this.cardForm.form.unmount();
+                    this.cardForm.initCardForm();
                     this.hasToken = false;
                     this.mercado_pago_submit = false;
 
@@ -388,19 +434,28 @@ class MPEventHandler {
     }
 
     onSelectCheckoutCustomInOrderPayPage() {
-      if (this.cardForm.formMounted) {
-        return;
-      }
+        const MAX_RETRIES = 100;
+        let retryCount = 0;
 
-      this.cardForm.createLoadSpinner();
-      const newAmount = this.cardForm.getAmount();
-      const promises = [this.cardForm.initCardForm()];
+        this.cardForm.createLoadSpinner();
 
-      promises.push(window.mpSuperTokenTriggerHandler?.loadSuperToken(newAmount));
+        const waitSuperTokenClassesInterval = setInterval(() => {
+            if (++retryCount < MAX_RETRIES && !window.mpSuperTokenTriggerHandler) return;
 
-      return Promise.all(promises)
-        .finally(() => {
-          setTimeout(() => this.cardForm.removeLoadSpinner(), this.REMOVE_LOAD_SPINNER_DELAY);
-        });
+            clearInterval(waitSuperTokenClassesInterval);
+            
+            const newAmount = this.cardForm.getAmount();
+            const promises = [];
+
+            if (window.mpSuperTokenTriggerHandler) {
+                promises.push(window.mpSuperTokenTriggerHandler?.loadSuperToken(newAmount));
+            }
+            if (!this.cardForm.formMounted) promises.push(this.cardForm.initCardForm());
+
+            return Promise.all(promises)
+                .finally(() => {
+                    setTimeout(() => this.cardForm.removeLoadSpinner(), this.REMOVE_LOAD_SPINNER_DELAY);
+                });
+        }, 100);
     }
 }

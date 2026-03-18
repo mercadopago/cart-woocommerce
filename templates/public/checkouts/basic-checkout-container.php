@@ -25,7 +25,7 @@ if ($amount === null) {
 ?>
 
 <div class='mp-checkout-container'>
-    <div class="mp-checkout-pro-container">
+    <div id="mp-checkout-pro-root" class="mp-checkout-pro-container">
         <div class="mp-checkout-pro-content">
 
         <?php if ($test_mode) : ?>

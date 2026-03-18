@@ -1,4 +1,4 @@
-.mp-andes-notice-card {
+.mp-checkout-container .mp-andes-notice-card {
   display: flex !important;
   flex-direction: column !important;
   padding: 16px 16px 16px 12px !important;
@@ -8,15 +8,15 @@
   border-left-width: 4px !important;
 }
 
-.mp-andes-notice-card.warning {
+.mp-checkout-container .mp-andes-notice-card.warning {
   border-left-color: var(--andes-warning-color) !important;
 }
 
-.mp-andes-notice-card.error {
+.mp-checkout-container .mp-andes-notice-card.error {
   border-left-color: var(--andes-error-color) !important;
 }
 
-.mp-andes-notice-card-content {
+.mp-checkout-container .mp-andes-notice-card-content {
   display: flex !important;
   justify-content: flex-start !important;
   flex-direction: row !important;
@@ -24,7 +24,7 @@
   gap: 16px !important;
 }
 
-.mp-andes-notice-badge {
+.mp-checkout-container .mp-andes-notice-badge {
   font-family: var(--primary-font-family) !important;
   display: flex !important;
   flex-direction: row !important;
@@ -38,16 +38,16 @@
   font-size: small !important;
 }
 
-.mp-andes-notice-badge.warning {
+.mp-checkout-container .mp-andes-notice-badge.warning {
   background: var(--andes-warning-color) !important;
 }
 
-.mp-andes-notice-badge.error {
+.mp-checkout-container .mp-andes-notice-badge.error {
   background: var(--andes-error-color) !important;
   font-size: x-small !important;
 }
 
-.mp-andes-notice-description {
+.mp-checkout-container .mp-andes-notice-description {
   font-family: var(--primary-font-family) !important;
   font-style: normal !important;
   font-weight: normal !important;
@@ -57,4 +57,3 @@
   font-weight: 400 !important;
   line-height: 18px !important;
 }
-
