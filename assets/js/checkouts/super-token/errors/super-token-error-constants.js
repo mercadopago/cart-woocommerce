@@ -29,29 +29,4 @@ const MPSuperTokenErrorCodes = {
     UNKNOWN_ERROR: 'UNKNOWN_ERROR'
 };
 
-/**
- * Expected errors that should not trigger error metrics
- * These are business-level errors that are part of normal flow
- * @constant {Array<string>}
- */
-const MPSuperTokenExpectedErrors = [
-    MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_ERROR,
-    MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID,
-    MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED,
-];
-
-/**
- * Skippable error messages from SDK/external sources
- * These error messages should not trigger metrics reporting as they are
- * expected user behaviors or known SDK limitations
- * @constant {Array<string|RegExp>}
- */
-const MPSuperTokenSkippableErrorMessages = [
-    /the\s+site\s+id\s+\w+\s+is\s+not\s+supported/i,
-    'authenticator flow is not supported',
-];
-
-
 window.MPSuperTokenErrorCodes = MPSuperTokenErrorCodes;
-window.MPSuperTokenExpectedErrors = MPSuperTokenExpectedErrors;
-window.MPSuperTokenSkippableErrorMessages = MPSuperTokenSkippableErrorMessages;
