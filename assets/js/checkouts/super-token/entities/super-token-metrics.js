@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_supertoken_metrics_params, MPSuperTokenSkippableErrorMessages */
+/* globals wc_mercadopago_supertoken_metrics_params */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenMetrics {
   PLATFORM_NAME = 'woocommerce';
@@ -116,10 +116,6 @@ class MPSuperTokenMetrics {
 
     this.dispatchMelidataErrorEvent(errorMessage, this.CUSTOM_CHECKOUT_STEPS.LOAD_SUPER_TOKEN);
 
-    if (this.shouldSkipError(errorMessage)) {
-      return;
-    }
-
     this.sendMetric('error_to_build_authenticator', 'true', errorMessage);
   }
 
@@ -142,43 +138,13 @@ class MPSuperTokenMetrics {
 
     this.dispatchMelidataErrorEvent(errorMessage, this.CUSTOM_CHECKOUT_STEPS.POST_SUBMIT);
 
-    if (this.shouldSkipError(errorMessage)) {
-      return;
-    }
-
     this.sendMetric('error_on_submit_super_token', errorCode, errorMessage);
-  }
-
-  /**
-   * Check if error is an expected error that should not be reported
-   * @param {string} errorMessage - The error message to check
-   * @returns {boolean} - True if error should be skipped, false otherwise
-   */
-  shouldSkipError(errorMessage) {
-    if (!errorMessage) return false;
-
-    const errorMessageString = typeof errorMessage !== 'string' ? `${errorMessage}` : errorMessage;
-    const normalizedMessage = errorMessageString
-      .replace(/\[mercado pago\]:\s*/gi, '')
-      .trim()
-      .toLowerCase();
-
-    return MPSuperTokenSkippableErrorMessages.some(message => {
-      if (message instanceof RegExp) {
-        return message.test(normalizedMessage);
-      }
-      return normalizedMessage.includes(message);
-    });
   }
 
   errorToGetAccountPaymentMethods(error) {
     const errorMessage = this.normalizeErrorMessage(error);
 
     this.dispatchMelidataErrorEvent(errorMessage, this.CUSTOM_CHECKOUT_STEPS.LOAD_SUPER_TOKEN);
-
-    if (this.shouldSkipError(errorMessage)) {
-      return;
-    }
 
     this.sendMetric('error_to_get_account_payment_methods', 'true', errorMessage);
   }
@@ -194,10 +160,14 @@ class MPSuperTokenMetrics {
   errorToRenderAccountPaymentMethods(error) {
     const errorMessage = this.normalizeErrorMessage(error);
 
-    if (this.shouldSkipError(errorMessage)) {
-      return;
-    }
-
     this.sendMetric('error_to_render_account_payment_methods', 'true', errorMessage);
+  }
+
+  isNotSimplifiedAuth() {
+    this.sendMetric('is_not_simplified_auth', 'true', '');
+  }
+
+  cannotGetFastPaymentToken() {
+    this.sendMetric('cannot_get_fast_payment_token', 'true', '');
   }
 }

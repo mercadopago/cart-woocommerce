@@ -1,4 +1,4 @@
-/* globals MPSuperTokenErrorCodes, MPSuperTokenExpectedErrors */
+/* globals MPSuperTokenErrorCodes */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenErrorHandler {
     /**
@@ -8,16 +8,6 @@ class MPSuperTokenErrorHandler {
     constructor(mpSuperTokenPaymentMethods, mpSuperTokenMetrics) {
         this.paymentMethods = mpSuperTokenPaymentMethods;
         this.metrics = mpSuperTokenMetrics;
-    }
-
-    /**
-     * Expected errors are part of normal business flow
-     *
-     * @param {string} errorCode
-     * @returns {boolean}
-     */
-    isExpectedError(errorCode) {
-      return MPSuperTokenExpectedErrors.some(expected => errorCode.includes(expected));
     }
 
     /**
@@ -35,15 +25,13 @@ class MPSuperTokenErrorHandler {
     }
 
     /**
-     * Reports error metric only for unexpected errors
+     * Reports error metric
      *
      * @param {string} errorCode
      * @param {string} errorMessage
      */
     reportErrorMetric(errorCode, errorMessage) {
-        if (!this.isExpectedError(errorCode) && this.metrics) {
-            this.metrics.errorOnSubmit(errorCode, errorMessage);
-        }
+        this.metrics.errorOnSubmit(errorCode, errorMessage);
     }
 
     /**
@@ -52,8 +40,6 @@ class MPSuperTokenErrorHandler {
      * @param {string} errorCode
      */
     displayError(errorCode) {
-        if (!this.paymentMethods) return;
-
         if (errorCode.includes(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID)) {
             this.paymentMethods.forceShowValidationErrors();
         } else {

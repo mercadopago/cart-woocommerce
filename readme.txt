@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.7.15
+Stable tag: 8.7.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,20 +134,8 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.7.15 (12/03/2026) =
-* Added
-- Add CSS layout reset scoped to fast payment flow to prevent style conflicts with themes
-- Add new metric to check if fast payment flow was initialized with success.
-- Add new metric to calculate melidata load time
-
-* Changed
-- Increase CSS specificity and improve layout reset across all checkouts to prevent style conflicts with themes
-- Prioritize melidata loading and MP JS SDK
-
+= v8.7.16 (24/03/2026) =
 * Fixed
-- Fix Classic Checkout form validation to include required checkbox fields
-- Fix card form remount when SDK iframes become detached from their containers
-- Fix infinite loading overlay on Blocks Checkout when fast payment flow error occurs
-- Fix loading spinner stuck on cart update due to uninitialized variable reference
+- Fix checkout form validation to only check the terms and conditions checkbox instead of all checkboxes.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

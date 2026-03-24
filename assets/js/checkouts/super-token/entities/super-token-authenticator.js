@@ -135,14 +135,20 @@ class MPSuperTokenAuthenticator {
           this.storeAuthenticator(authenticator);
 
           const isSimplified = await this.getSimplifiedAuth(authenticator);
-          if (!isSimplified) return null;
+          if (!isSimplified) {
+            this.mpSuperTokenMetrics.isNotSimplifiedAuth();
+            return null;
+          }
 
           document.dispatchEvent(new CustomEvent('mp-behavior-tracking-super-token-init'));
 
           this.mpSuperTokenMetrics.canUseSuperToken(true);
 
           const fastPaymentToken = await this.getFastPaymentToken(authenticator);
-          if (!fastPaymentToken) return null;
+          if (!fastPaymentToken) {
+            this.mpSuperTokenMetrics.cannotGetFastPaymentToken();
+            return null;
+          }
 
           this.storeFastPaymentToken(fastPaymentToken);
 
