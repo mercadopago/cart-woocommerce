@@ -223,7 +223,7 @@ class MPEventHandler {
 
             if (this.isInsideHiddenContainer(field)) return false;
 
-            if (field.type === 'checkbox') return !field.checked;
+            if (field.type === 'checkbox' && field.id === 'terms' && field.name === 'terms') return !field.checked;
             return !field.value.trim();
         });
 

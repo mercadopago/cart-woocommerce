@@ -1,6 +1,10 @@
 CHANGELOG:
 == Changelog
 
+= v8.7.16 (24/03/2026) =
+* Fixed
+- Fix checkout form validation to only check the terms and conditions checkbox instead of all checkboxes.
+
 = v8.7.15 (12/03/2026) =
 * Added
 - Add CSS layout reset scoped to fast payment flow to prevent style conflicts with themes
