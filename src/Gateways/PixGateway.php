@@ -361,11 +361,27 @@ class PixGateway extends AbstractGateway
         $orderId = Form::sanitizedGetData('id');
         if (!$orderId) {
             $this->mercadopago->helpers->images->getErrorImage();
+            return;
         }
 
         $order = wc_get_order($orderId);
         if (!$order) {
             $this->mercadopago->helpers->images->getErrorImage();
+            return;
+        }
+
+        $metricDetails = [
+            'site_id' => $this->mercadopago->sellerConfig->getSiteId(),
+            'environment' => $this->mercadopago->storeConfig->isTestMode() ? 'homol' : 'prod',
+            'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
+        ];
+
+        $orderKey = Form::sanitizedGetData('key');
+        if (!$orderKey || $order->get_order_key() !== $orderKey) {
+            $reason = !$orderKey ? 'missing_order_key' : 'invalid_order_key';
+            $this->datadog->sendEvent('pix_qr_access', $reason, null, 'pix', $metricDetails);
+            $this->mercadopago->helpers->images->getErrorImage();
+            return;
         }
 
         $qrCodeBase64 = $this->mercadopago->orderMetadata->getPixQrBase64Meta($order);
@@ -375,8 +391,10 @@ class PixGateway extends AbstractGateway
 
         if (!$qrCodeBase64) {
             $this->mercadopago->helpers->images->getErrorImage();
+            return;
         }
 
+        $this->datadog->sendEvent('pix_qr_access', 'authorized', null, 'pix', $metricDetails);
         $this->mercadopago->helpers->images->getBase64Image($qrCodeBase64);
     }
 
@@ -414,7 +432,7 @@ class PixGateway extends AbstractGateway
 
             $qrCodeImage = !in_array('gd', get_loaded_extensions(), true)
                 ? "data:image/jpeg;base64,$qrCodeBase64"
-                : "$siteUrl?wc-api=$imageEndpoint&id={$order->get_id()}";
+                : "$siteUrl?wc-api=$imageEndpoint&id={$order->get_id()}&key={$order->get_order_key()}";
 
             $this->mercadopago->hooks->scripts->registerStoreStyle(
                 'mp_pix_image',

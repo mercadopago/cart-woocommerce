@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "Checking coverage for changed files..."
+node scripts/diff-coverage.js

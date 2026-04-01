@@ -68,19 +68,29 @@ RUN curl -sLS https://getcomposer.org/installer | php -- --install-dir=/usr/bin 
 RUN curl -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x /usr/local/bin/wp
 
-# Instalar o WordPress (aguardando o banco de dados estar pronto)
-RUN cd /var/www/html/ && \
-    mysqld --port=3306 --socket=/var/run/mysqld/mysqld.sock & sleep 5 && \
-    wp config create --dbname=wordpress --dbuser=wordpress --dbpass=wordpress --dbhost=127.0.0.1 --allow-root; \
-    wp core install --url=localhost:8765 --title=Local --admin_user=admin --admin_password=admin --admin_email=admin@test.com --skip-email --allow-root
+# Pré-baixar plugins e tema do WordPress para evitar downloads na inicialização do container.
+# Ficam fora do VOLUME /var/www/html, então persistem na imagem.
+RUN mkdir -p /usr/src/wp-staging/plugins /usr/src/wp-staging/themes \
+    && curl -fsSL "https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip" \
+       -o /usr/src/wp-staging/plugins/woocommerce.zip \
+    && curl -fsSL "https://github.com/woocommerce/wc-smooth-generator/releases/latest/download/wc-smooth-generator.zip" \
+       -o /usr/src/wp-staging/plugins/wc-smooth-generator.zip \
+    && curl -fsSL "https://downloads.wordpress.org/theme/storefront.latest-stable.zip" \
+       -o /usr/src/wp-staging/themes/storefront.zip
 
-# Instalar Playwright
-RUN npm install -g playwright \
-    && playwright install --with-deps chromium
+# Instalar dependências e2e e o Chromium para a versão exata do @playwright/test declarada
+# em package.json. Usar o binário local garante que a versão do browser bate com a do runner.
+# O cache npm (~/.npm) persiste na imagem — npm install no entrypoint será instantâneo.
+COPY package.json package-lock.json /tmp/e2e-cache/
+RUN cd /tmp/e2e-cache \
+    && npm ci \
+    && ./node_modules/.bin/playwright install --with-deps chromium
 
-# Copia o script de inicialização
-COPY ./build/entrypoint.sh entrypoint.sh
-RUN chmod +x entrypoint.sh
+# Copia o script de inicialização para fora do VOLUME /var/www/html
+# (sem o path absoluto, WORKDIR herda /var/www/html da imagem base e o arquivo
+#  fica escondido pelo volume anônimo em runtime)
+COPY ./build/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Executa o script de inicialização
 ENTRYPOINT ["/entrypoint.sh"]

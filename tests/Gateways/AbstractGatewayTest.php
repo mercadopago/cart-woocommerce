@@ -823,6 +823,10 @@ class AbstractGatewayTest extends TestCase
             ->shouldReceive('registerMpBehaviorTrackingScript')
             ->once();
 
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerHealthMonitorCheckoutScript')
+            ->once();
+
         $result = $this->gateway->loadMpWooCommerceScripts();
 
         $this->assertNull($result);

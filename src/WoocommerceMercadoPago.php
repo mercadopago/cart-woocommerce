@@ -25,6 +25,7 @@ use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Strings;
+use MercadoPago\Woocommerce\HealthMonitor\FileIntegrityChecker;
 use WooCommerce;
 
 if (!defined('ABSPATH')) {
@@ -33,7 +34,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.7.16';
+    private const PLUGIN_VERSION = '8.7.17';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -164,6 +165,24 @@ class WoocommerceMercadoPago
     }
 
     /**
+     * Register health monitor components:
+     * - FileIntegrityChecker: detects modified JS/CSS files (admin, rate-limited to 1x/hour)
+     * - ScriptHealthMonitor: detects dequeued scripts (frontend, rate-limited to 1x/hour)
+     *
+     * @return void
+     */
+    public function registerHealthMonitor(): void
+    {
+        if (is_admin()) {
+            add_action('admin_init', function () {
+                (new FileIntegrityChecker())->runWithRateLimit();
+            });
+        }
+
+        $this->hooks->scripts->scriptHealthMonitor->register();
+    }
+
+    /**
      * Register actions when gateway is not called on page
      *
      * @return void
@@ -238,6 +257,7 @@ class WoocommerceMercadoPago
 
         $this->registerBlocks();
         $this->registerGateways();
+        $this->registerHealthMonitor();
         $this->registerActionsWhenGatewayIsNotCalled();
         $this->registerMyAccountOrderActionsFilter();
 

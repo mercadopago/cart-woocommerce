@@ -25,6 +25,7 @@ class Datadog extends Singleton
     public function sendEvent(string $event_type, $value, $message = null, $paymentMethod = null, $details = []): void
     {
         try {
+            $team = $details['team'] ?? 'smb';
             $datadogEvent = $this->sdk->getDatadogEventInstance();
 
             if (! is_null($message)) {
@@ -45,7 +46,7 @@ class Datadog extends Singleton
                 $datadogEvent->details = array_merge($datadogEvent->details ?? [], $details);
             }
 
-            $datadogEvent->register(array("team" => "smb", "event_type" => $event_type, "details" => $datadogEvent->details));
+            $datadogEvent->register(array("team" => $team, "event_type" => $event_type, "details" => $datadogEvent->details));
         } catch (Exception $e) {
             return;
         }

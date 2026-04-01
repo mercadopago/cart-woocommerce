@@ -6,6 +6,7 @@ use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Helpers\PaymentMethods;
+use MercadoPago\Woocommerce\HealthMonitor\ScriptHealthMonitor;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -23,23 +24,30 @@ class Scripts
 
     private const NOTICES_SCRIPT_NAME = 'wc_mercadopago_notices';
 
+    private const HEALTH_MONITOR_SCRIPT_NAME = 'wc_mercadopago_health_monitor';
+
     private Url $url;
 
     private Seller $seller;
 
     private PaymentMethods $paymentMethods;
 
+    public ScriptHealthMonitor $scriptHealthMonitor;
+
     /**
      * Scripts constructor
      *
      * @param Url $url
      * @param Seller $seller
+     * @param PaymentMethods $paymentMethods
+     * @param ScriptHealthMonitor $scriptHealthMonitor
      */
-    public function __construct(Url $url, Seller $seller, PaymentMethods $paymentMethods)
+    public function __construct(Url $url, Seller $seller, PaymentMethods $paymentMethods, ScriptHealthMonitor $scriptHealthMonitor)
     {
         $this->url    = $url;
         $this->seller = $seller;
         $this->paymentMethods = $paymentMethods;
+        $this->scriptHealthMonitor = $scriptHealthMonitor;
     }
 
     /**
@@ -104,6 +112,7 @@ class Scripts
         add_action('wp_enqueue_scripts', function () use ($name, $file, $variables) {
             if ($this->isPaymentsRelatedPage()) {
                 $this->registerScript($name, $file, $variables);
+                $this->scriptHealthMonitor->trackEnqueued($name);
             }
         });
     }
@@ -338,6 +347,42 @@ class Scripts
         ];
 
         $this->registerCheckoutScript(self::WOOCCOMMERCE_SCRIPTS_SCRIPT_NAME, $file, $variables);
+    }
+
+    /**
+     * Register health monitor script on checkout pages.
+     * Detects CSS conflicts and missing JS globals caused by third-party customizations.
+     *
+     * @return void
+     */
+    public function registerHealthMonitorCheckoutScript(): void
+    {
+        global $woocommerce;
+        $file = $this->url->getJsAsset('health/mp-health-monitor');
+
+        add_action('wp_enqueue_scripts', function () use ($woocommerce, $file) {
+            if (!$this->isPaymentsRelatedPage()) {
+                return;
+            }
+
+            $is_checkout_block   = has_block('woocommerce/checkout');
+            $is_checkout_classic = is_checkout();
+            $is_order_pay        = is_checkout_pay_page();
+
+            $variables = [
+                'site_id'          => $this->seller->getSiteId() ?: 'not_available',
+                'theme'            => get_stylesheet(),
+                'plugin_version'   => MP_VERSION,
+                'platform_version' => $woocommerce->version,
+                'cust_id'          => $this->seller->getCustIdFromAT() ?: '',
+                'is_test'          => $this->seller->isTestUser(),
+                'is_checkout'      => ($is_checkout_block || $is_checkout_classic || $is_order_pay) && !is_order_received_page(),
+                'payment_methods'  => $this->paymentMethods->getEnabledPaymentMethods(),
+            ];
+
+            $this->registerScript(self::HEALTH_MONITOR_SCRIPT_NAME, $file, $variables);
+            $this->scriptHealthMonitor->trackEnqueued(self::HEALTH_MONITOR_SCRIPT_NAME);
+        });
     }
 
     /**

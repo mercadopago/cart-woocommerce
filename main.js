@@ -3,6 +3,7 @@ const readline = require('readline');
 const path = require('path');
 const minify = require('minify');
 const wpPot = require('wp-pot');
+const { sync: globSync } = require('glob');
 
 /**
  * Minify JS and CSS files
@@ -226,6 +227,33 @@ async function setupSuperToken() {
   console.log('\nConfiguração concluída!');
 }
 
+/**
+ * Generate integrity-manifest.json with SHA-256 hashes of critical JS/CSS files.
+ * Run as the last build step so hashes reflect final (minified) assets.
+ */
+function generateIntegrityManifest () {
+  const crypto = require('crypto');
+
+  const criticalFiles = globSync('assets/**/*.min.{js,css}');
+
+  const manifest = {};
+
+  criticalFiles.forEach((file) => {
+    const absolutePath = path.resolve(file);
+
+    if (!fs.existsSync(absolutePath)) {
+      console.warn(`[integrity] Arquivo não encontrado, ignorando: ${file}`);
+      return;
+    }
+
+    const content = fs.readFileSync(absolutePath);
+    manifest[file] = crypto.createHash('sha256').update(content).digest('hex');
+  });
+
+  fs.writeFileSync('integrity-manifest.json', JSON.stringify(manifest, null, 2));
+  console.log('[integrity] integrity-manifest.json gerado com', Object.keys(manifest).length, 'entradas.');
+}
+
 module.exports = {
   minifyFiles,
   bundleSuperTokenCss,
@@ -233,5 +261,6 @@ module.exports = {
   copySuperTokenBundlesToScriptsProject,
   bundleAndCopySuperTokenAssets,
   generatePotFiles,
+  generateIntegrityManifest,
   setupSuperToken
 };

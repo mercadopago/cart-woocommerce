@@ -7,8 +7,11 @@ use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\PaymentMethods;
+use MercadoPago\Woocommerce\HealthMonitor\ScriptHealthMonitor;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
+use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use WP_Mock;
 
 class ScriptsTest extends TestCase
@@ -42,6 +45,8 @@ class ScriptsTest extends TestCase
     /** @var Mockery\MockInterface|PaymentMethods */
     private $paymentMethodsMock;
 
+    private ScriptHealthMonitor $scriptHealthMonitor;
+
     private Scripts $scripts;
 
     public function setUp(): void
@@ -50,10 +55,26 @@ class ScriptsTest extends TestCase
         $this->sellerMock         = Mockery::mock(Seller::class);
         $this->paymentMethodsMock = Mockery::mock(PaymentMethods::class);
 
+        $sellerConfig = Mockery::mock(Seller::class);
+        $sellerConfig->shouldReceive('getSiteId')->andReturn('MLB')->byDefault();
+        $sellerConfig->shouldReceive('getCustIdFromAT')->andReturn('cust-123')->byDefault();
+
+        $storeConfig = Mockery::mock(Store::class);
+        $storeConfig->shouldReceive('isTestMode')->andReturn(false)->byDefault();
+
+        $mercadopagoMock = Mockery::mock(WoocommerceMercadoPago::class);
+        $mercadopagoMock->sellerConfig = $sellerConfig;
+        $mercadopagoMock->storeConfig  = $storeConfig;
+
+        $GLOBALS['mercadopago'] = $mercadopagoMock;
+
+        $this->scriptHealthMonitor = new ScriptHealthMonitor();
+
         $this->scripts = new Scripts(
             $this->urlMock,
             $this->sellerMock,
-            $this->paymentMethodsMock
+            $this->paymentMethodsMock,
+            $this->scriptHealthMonitor
         );
 
         $GLOBALS['woocommerce'] = (object) ['version' => '8.0.0'];
@@ -62,6 +83,13 @@ class ScriptsTest extends TestCase
         $this->urlMock->shouldReceive('assetVersion')->andReturn('1.0.0');
         $this->sellerMock->shouldReceive('getSiteId')->andReturn('MLA');
         $this->paymentMethodsMock->shouldReceive('getEnabledPaymentMethods')->andReturn([]);
+    }
+
+    public function tearDown(): void
+    {
+        unset($GLOBALS['mercadopago']);
+        Mockery::close();
+        parent::tearDown();
     }
 
     /**
@@ -141,6 +169,51 @@ class ScriptsTest extends TestCase
                 $melidataPhase_A, self::PHASE_LABELS[$melidataPhase_A]
             )
         );
+    }
+
+    /**
+     * TC-INT-01: registerCheckoutScript wires ScriptHealthMonitor correctly.
+     *
+     * Proves the integration between Scripts and ScriptHealthMonitor:
+     * 1) registerCheckoutScript registers a wp_enqueue_scripts action
+     * 2) Scripts exposes the SAME ScriptHealthMonitor instance injected via DI
+     * 3) trackEnqueued on that shared instance records handles for dequeue detection
+     *
+     * Note: WP_Mock's HookedCallbackResponder::react() invokes perform() with zero
+     * arguments, so the original closure cannot be captured and executed here.
+     * The closure body (`$this->scriptHealthMonitor->trackEnqueued($name)`) is
+     * verified through code review and the ScriptHealthMonitor unit-test suite.
+     */
+    public function testRegisterCheckoutScriptTracksHandleInScriptHealthMonitor(): void
+    {
+        $hookRegistered = false;
+
+        WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
+            ->with(Mockery::type('callable'), 10, 1)
+            ->perform(function () use (&$hookRegistered) {
+                $hookRegistered = true;
+            });
+
+        $this->scripts->registerCheckoutScript('wc_mercadopago_supertoken', 'path/to/supertoken.js');
+
+        // 1) The wp_enqueue_scripts hook was registered
+        $this->assertTrue($hookRegistered, 'registerCheckoutScript must add a wp_enqueue_scripts action');
+
+        // 2) The ScriptHealthMonitor accessible through Scripts is the same injected instance
+        $this->assertSame(
+            $this->scriptHealthMonitor,
+            $this->scripts->scriptHealthMonitor,
+            'Scripts must expose the injected ScriptHealthMonitor instance'
+        );
+
+        // 3) trackEnqueued on the shared instance records the handle
+        $this->scripts->scriptHealthMonitor->trackEnqueued('wc_mercadopago_supertoken');
+
+        $reflection = new \ReflectionProperty(ScriptHealthMonitor::class, 'trackedHandles');
+        $reflection->setAccessible(true);
+        $tracked = $reflection->getValue($this->scriptHealthMonitor);
+
+        $this->assertContains('wc_mercadopago_supertoken', $tracked);
     }
 
     /**

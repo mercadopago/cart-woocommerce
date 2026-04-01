@@ -134,8 +134,18 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.7.16 (24/03/2026) =
+= v8.7.17 (25/03/2026) =
+* Added
+- Add monitoring to detect if files in the assets folder have been modified
+- Add monitoring to detect if our scripts have been removed via dequeue
+- Add monitoring to detect if expected window variables are present
+- Add monitoring to detect if certain styles have been overridden
+- Add melidataReady promise to ensure tracking loading events are dispatched only after melidata client is ready
+- Add melidata load delay metrics for loading start and end events
+
 * Fixed
-- Fix checkout form validation to only check the terms and conditions checkbox instead of all checkboxes.
+- Fix melidata client not loading on stores using Fluid Checkout plugin
+- Fix missing order key authorization check on PIX QR code image endpoint to prevent unauthorized access
+- Fix status sync metabox breaking order page when payment data is missing or invalid
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).
