@@ -47,6 +47,7 @@ use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Hooks\Template;
+use MercadoPago\Woocommerce\HealthMonitor\ScriptHealthMonitor;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
@@ -102,6 +103,8 @@ class Dependencies
     public Product $productHook;
 
     public Scripts $scriptsHook;
+
+    public ScriptHealthMonitor $scriptHealthMonitor;
 
     public Template $templateHook;
 
@@ -201,6 +204,7 @@ class Dependencies
         $this->urlHelper               = $this->setUrl();
         $this->linksHelper             = $this->setLinks();
         $this->paymentMethodsHelper    = $this->setPaymentMethods();
+        $this->scriptHealthMonitor     = new ScriptHealthMonitor();
         $this->scriptsHook             = $this->setScripts();
         $this->adminTranslations       = $this->setAdminTranslations();
         $this->storeTranslations       = $this->setStoreTranslations();
@@ -302,7 +306,7 @@ class Dependencies
      */
     private function setScripts(): Scripts
     {
-        return new Scripts($this->urlHelper, $this->sellerConfig, $this->paymentMethodsHelper);
+        return new Scripts($this->urlHelper, $this->sellerConfig, $this->paymentMethodsHelper, $this->scriptHealthMonitor);
     }
 
     /**

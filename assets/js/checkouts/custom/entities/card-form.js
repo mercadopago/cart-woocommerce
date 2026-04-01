@@ -337,6 +337,13 @@ class MPCardForm {
         jQuery('form.checkout')?.unblock();
     }
 
+    getMelidataReadyPromise() {
+        if (!window.melidataReady) {
+            return Promise.reject(new Error('melidataReady is undefined'));
+        }
+        return window.melidataReady;
+    }
+
     createLoadSpinner() {
         if (this.isLoading) return;
 
@@ -350,11 +357,19 @@ class MPCardForm {
         loadSpinner?.classList.remove('mp-display-none');
 
         const dateNowInMilliseconds = Date.now();
+        const melidataWasReady = !!window.melidata;
 
-        setTimeout( () => {
-          document.dispatchEvent(new CustomEvent('mp_super_token_loading_start', { detail: { dateNowInMilliseconds } }))
-          if(!window.melidata) sendMetric('MP_MELIDATA_CLIENT_UNDEFINED', 'Loading started but melidata client is not loaded yet', 'mp_custom_checkout_melidata_client_undefined');
-        }, 3000);
+        this.getMelidataReadyPromise()
+          .then(() => {
+            if (!melidataWasReady) {
+              const durationInSeconds = Math.round((Date.now() - dateNowInMilliseconds) / 10) / 100;
+              sendMetric(durationInSeconds, 'time in seconds waiting for melidata client at loading start', 'mp_custom_checkout_melidata_load_start_delay');
+            }
+            document.dispatchEvent(new CustomEvent('mp_super_token_loading_start', { detail: { dateNowInMilliseconds } }));
+          })
+          .catch((error) => {
+            sendMetric('MP_MELIDATA_CLIENT_UNDEFINED', `Loading started but melidata client failed to load: ${error?.message || 'unknown error'}`, 'mp_custom_checkout_melidata_client_undefined');
+          });
     }
 
     removeLoadSpinner() {
@@ -383,11 +398,19 @@ class MPCardForm {
         }, 800);
 
         const dateNowInMilliseconds = Date.now();
+        const melidataWasReady = !!window.melidata;
 
-        setTimeout( () => {
-          document.dispatchEvent(new CustomEvent('mp_super_token_loading_end', { detail: { dateNowInMilliseconds } }))
-          if(!window.melidata) sendMetric('MP_MELIDATA_CLIENT_UNDEFINED', 'Loading ended but melidata client is not loaded yet', 'mp_custom_checkout_melidata_client_undefined');
-        }, 3000);
+        this.getMelidataReadyPromise()
+          .then(() => {
+            if (!melidataWasReady) {
+              const durationInSeconds = Math.round((Date.now() - dateNowInMilliseconds) / 10) / 100;
+              sendMetric(durationInSeconds, 'time in seconds waiting for melidata client at loading end', 'mp_custom_checkout_melidata_load_end_delay');
+            }
+            document.dispatchEvent(new CustomEvent('mp_super_token_loading_end', { detail: { dateNowInMilliseconds } }));
+          })
+          .catch((error) => {
+            sendMetric('MP_MELIDATA_CLIENT_UNDEFINED', `Loading ended but melidata client failed to load: ${error?.message || 'unknown error'}`, 'mp_custom_checkout_melidata_client_undefined');
+          });
 
     }
 

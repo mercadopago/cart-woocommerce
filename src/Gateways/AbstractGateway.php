@@ -584,6 +584,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     public function loadMpWooCommerceScripts(): void
     {
         $this->mercadopago->hooks->scripts->registerMpBehaviorTrackingScript();
+        $this->mercadopago->hooks->scripts->registerHealthMonitorCheckoutScript();
     }
 
     /**

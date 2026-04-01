@@ -145,13 +145,19 @@ class Order
                 return;
             }
 
+            $metaboxData = $this->getMetaboxData($order);
+
+            if (empty($metaboxData)) {
+                return;
+            }
+
             $this->loadScripts($order);
 
             $this->addMetaBox(
                 'mp_payment_status_sync',
                 $this->adminTranslations->statusSync['metabox_title'],
                 'admin/order/payment-status-metabox-content.php',
-                $this->getMetaboxData($order)
+                $metaboxData
             );
         });
     }
@@ -192,6 +198,10 @@ class Order
             $allPaymentsData = $this->orderStatus->getAllPaymentsData($order);
         } catch (Exception $e) {
             $this->logs->file->error('Mercado Pago: Error getting payments data for metabox: ' . $e->getMessage(), __CLASS__);
+            return [];
+        }
+
+        if (!$lastPayment || empty($allPaymentsData)) {
             return [];
         }
 

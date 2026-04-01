@@ -5,11 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v8.7.16 (24/03/2026)
+## [8.7.17] 2026-03-25
+### Added
+- Add monitoring to detect if files in the assets folder have been modified
+- Add monitoring to detect if our scripts have been removed via dequeue
+- Add monitoring to detect if expected window variables are present
+- Add monitoring to detect if certain styles have been overridden
+- Add melidataReady promise to ensure tracking loading events are dispatched only after melidata client is ready
+- Add melidata load delay metrics for loading start and end events
+
+### Fixed
+- Fix melidata client not loading on stores using Fluid Checkout plugin
+- Fix missing order key authorization check on PIX QR code image endpoint to prevent unauthorized access
+- Fix status sync metabox breaking order page when payment data is missing or invalid
+
+## [8.7.16] 2026-03-24
 * Fixed
 - Fix checkout form validation to only check the terms and conditions checkbox instead of all checkboxes.
 
-## v8.7.15 (12/03/2026)
+## [8.7.15] 2026-03-12
 ### Added
 - Add CSS layout reset scoped to fast payment flow to prevent style conflicts with themes
 - Add new metric to check if fast payment flow was initialized with success.
@@ -25,23 +39,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix infinite loading overlay on Blocks Checkout when fast payment flow error occurs
 - Fix loading spinner stuck on cart update due to uninitialized variable reference
 
-## v8.7.14 (26/02/2026)
+## [8.7.14] 2026-02-26
 ### Changed
 - Using fast payment flow with super token bundle enabled
 - Improve fast payment flow loading and rendering handling
 
-## v8.7.13 (20/02/2026)
+## [8.7.13] 2026-02-20
 ### Fixed
 - Remove unnecessary call to createPayment method on fast payment flow
 
-## v8.7.12 (19/02/2026)
+## [8.7.12] 2026-02-19
 ### Fixed
 - Remove YAPE loader and improve responsiveness
 - Fix get notifications on sandbox environment
 - Fix “no number“ with broke label on ticket
 - Improvement fast payment flow styles
 
-## v8.7.11 (18/02/2026)
+## [8.7.11] 2026-02-18
 ### Added
 - Add authorized pseudotoken tracking to detect token mismatch on fast payment flow
 - Add server-side metric for pseudotoken inconsistency detection
@@ -49,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fix fast payment flow using authorized pseudotoken to ensure payment consistency
 
-## v8.7.10 (09/02/2026)
+## [8.7.10] 2026-02-09
 ### Added
 - Add new metric to track if fast payment flow was correctly validated
 
@@ -63,7 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix Checkout Custom loading spinner styles
 - Fix refund ratio causing division by zero error
 
-## v8.7.9 (02/02/2026)
+## [8.7.9] 2026-02-02
 ### Changed
 - Reorder updateSecurityCode and authorizePayment execution on fast payments flow
 - Improve error reset flow on fast payments when an error occurs (except user cancellation)
