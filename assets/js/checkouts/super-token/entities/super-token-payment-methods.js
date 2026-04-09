@@ -1,5 +1,5 @@
-/* globals wc_mercadopago_supertoken_bundle_params, Intl, MPCheckoutFieldsDispatcher, MPSuperTokenErrorCodes */
-/* eslint-disable no-unused-vars */
+/* globals wc_mercadopago_supertoken_bundle_params, Intl, MPCheckoutFieldsDispatcher, MPSuperTokenErrorCodes, CheckoutPage */
+/* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
 class MPSuperTokenPaymentMethods {
     SUPER_TOKEN_CHECKOUT_TYPE = 'super_token';
     CUSTOM_CHECKOUT_TYPE = 'custom';
@@ -146,6 +146,7 @@ class MPSuperTokenPaymentMethods {
         this.securityCodeReferences = {};
         this.activePaymentMethod = null;
 
+        this.setCheckoutType(this.CUSTOM_CHECKOUT_TYPE);
         this.unmountActiveSecurityCodeInstance();
         this.hideAllPaymentMethodDetails();
         this.restoreCustomCheckoutEntireElementOriginalId();
@@ -433,7 +434,10 @@ class MPSuperTokenPaymentMethods {
     }
 
     setCheckoutType(type) {
-        document.querySelector(this.CHECKOUT_TYPE_SELECTOR).value = type;
+        const element = document.querySelector(this.CHECKOUT_TYPE_SELECTOR);
+        if (!element) return;
+
+        element.value = type;
     }
 
     setPaymentMethodChildrenAriaVisible(paymentMethodElement) {
@@ -757,14 +761,14 @@ class MPSuperTokenPaymentMethods {
             '12': 'dec'
         };
 
-        const [_, month, day] = dateParts;
+        const [, month, day] = dateParts;
         const monthKey = monthsMapping[month];
         const monthText = (wc_mercadopago_supertoken_bundle_params.months_abbreviated &&
                           wc_mercadopago_supertoken_bundle_params.months_abbreviated[monthKey])
                           ? wc_mercadopago_supertoken_bundle_params.months_abbreviated[monthKey]
                           : month;
 
-        return `${parseInt(day)}/${monthText}`;
+        return `${parseInt(day, 10)}/${monthText}`;
     }
 
     formatCurrency(value) {
@@ -1546,10 +1550,10 @@ class MPSuperTokenPaymentMethods {
                   if (selectedItem && selectedItem?.value) {
                       dropdownElement.value = selectedItem.value;
 
-                      document.getElementById('cardInstallments').value = parseInt(selectedItem.value);
+                      document.getElementById('cardInstallments').value = parseInt(selectedItem.value, 10);
 
                       const selectedInstallment = paymentMethod.installments.find(installment =>
-                          installment.installments === parseInt(selectedItem.value)
+                          installment.installments === parseInt(selectedItem.value, 10)
                       );
 
                       if (selectedInstallment) {

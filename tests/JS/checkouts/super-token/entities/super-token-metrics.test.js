@@ -6,9 +6,16 @@ describe('MPSuperTokenMetrics', () => {
   let metrics;
   let MPSuperTokenMetrics;
   let mockMpSdkInstance;
-  let mockFetch;
 
   beforeAll(() => {
+    global.wc_mercadopago_supertoken_bundle_params = {
+      plugin_version: '1.0.0',
+      platform_version: '6.0.0',
+      site_id: 'MLA',
+      cust_id: 'test-cust-id',
+      location: 'https://example.com',
+    };
+
     global.wc_mercadopago_supertoken_metrics_params = {
       plugin_version: '1.0.0',
       platform_version: '6.0.0',
@@ -17,7 +24,6 @@ describe('MPSuperTokenMetrics', () => {
       location: 'https://example.com',
     };
 
-    // Create a shared fetch mock
     const sharedFetchMock = jest.fn(() => Promise.resolve());
 
     global.window = {
@@ -27,7 +33,6 @@ describe('MPSuperTokenMetrics', () => {
       fetch: sharedFetchMock,
     };
 
-    // Mock fetch in both global and window
     global.fetch = sharedFetchMock;
 
     MPSuperTokenMetrics = loadFile(superTokenMetricsPath, 'MPSuperTokenMetrics', global);
@@ -35,13 +40,10 @@ describe('MPSuperTokenMetrics', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Ensure fetch mock is available
+
     if (!global.fetch) {
       global.fetch = jest.fn(() => Promise.resolve());
     }
-    
-    mockFetch = global.fetch;
 
     mockMpSdkInstance = {
       getSDKInstanceId: jest.fn(() => 'test-sdk-instance-id'),
@@ -54,146 +56,119 @@ describe('MPSuperTokenMetrics', () => {
     jest.clearAllMocks();
   });
 
-  describe('shouldSkipError()', () => {
-    test.each([
-      { value: null, description: 'null' },
-      { value: undefined, description: 'undefined' },
-      { value: '', description: 'empty string' },
-    ])('Given errorMessage is $description, When shouldSkipError() is called, Then should return false', ({ value }) => {
-      const result = metrics.shouldSkipError(value);
-      expect(result).toBe(false);
+  describe('normalizeErrorMessage()', () => {
+    test('Given null error, When normalizeErrorMessage() is called, Then should return "Unknown error"', () => {
+      const result = metrics.normalizeErrorMessage(null);
+      expect(result).toBe('Unknown error');
     });
 
-    test('Given errorMessage is EMPTY_PRELOADED_PAYMENT_METHODS, When shouldSkipError() is called, Then should return true', () => {
-      const result = metrics.shouldSkipError(metrics.EMPTY_PRELOADED_PAYMENT_METHODS);
-      expect(result).toBe(true);
+    test('Given undefined error, When normalizeErrorMessage() is called, Then should return "Unknown error"', () => {
+      const result = metrics.normalizeErrorMessage(undefined);
+      expect(result).toBe('Unknown error');
     });
 
-    test.each([
-      { message: 'Authenticator flow is not supported', expected: true },
-      { message: 'authenticator flow is not supported', expected: true },
-      { message: 'AUTHENTICATOR FLOW IS NOT SUPPORTED', expected: true },
-      { message: 'Error: Authenticator flow is not supported.', expected: true },
-      { message: 'The authenticator flow is not supported for this site', expected: true },
-      { message: 'Some other error', expected: false },
-    ])('Given errorMessage is "$message", When shouldSkipError() is called, Then should return $expected', ({ message, expected }) => {
-      const result = metrics.shouldSkipError(message);
-      expect(result).toBe(expected);
+    test('Given error with message, When normalizeErrorMessage() is called, Then should return the message', () => {
+      const result = metrics.normalizeErrorMessage({ message: 'Network error' });
+      expect(result).toBe('Network error');
     });
 
-    test.each([
-      { siteId: 'mco', expected: true },
-      { siteId: 'mlc', expected: true },
-      { siteId: 'mlu', expected: true },
-      { siteId: 'mpe', expected: true },
-    ])('Given errorMessage is "The site id $siteId is not supported", When shouldSkipError() is called, Then should return $expected', ({ siteId, expected }) => {
-      const result = metrics.shouldSkipError(`The site id ${siteId} is not supported`);
-      expect(result).toBe(expected);
+    test('Given error without message, When normalizeErrorMessage() is called, Then should return stringified error', () => {
+      const result = metrics.normalizeErrorMessage({ code: 500 });
+      expect(result).toBe('{"code":500}');
     });
 
-    test.each([
-      { message: 'The site id MCO is not supported', expected: true },
-      { message: 'the site id mlc is not supported', expected: true },
-      { message: 'THE SITE ID MLU IS NOT SUPPORTED', expected: true },
-      { message: 'Error: The site id mpe is not supported.', expected: true },
-      { message: 'The site id XYZ is not supported', expected: true },
-      { message: 'Site id is not supported', expected: false },
-      { message: 'The site is not supported', expected: false },
-    ])('Given errorMessage is "$message", When shouldSkipError() is called, Then should return $expected', ({ message, expected }) => {
-      const result = metrics.shouldSkipError(message);
-      expect(result).toBe(expected);
-    });
-
-    test('Given errorMessage is a regular error, When shouldSkipError() is called, Then should return false', () => {
-      const result = metrics.shouldSkipError('Network error occurred');
-      expect(result).toBe(false);
+    test('Given error with email in message, When normalizeErrorMessage() is called, Then should return sanitized message', () => {
+      const result = metrics.normalizeErrorMessage({ message: 'Invalid email address' });
+      expect(result).toBe('invalid_email_address_provided');
     });
   });
 
-  describe('errorToGetPreloadedPaymentMethods()', () => {
+  describe('errorToGetAccountPaymentMethods()', () => {
     beforeEach(() => {
       jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+      jest.spyOn(metrics, 'dispatchMelidataErrorEvent').mockImplementation(() => {});
     });
 
-    test('Given error with message that should be skipped, When errorToGetPreloadedPaymentMethods() is called, Then should not call sendMetric', () => {
-      const error = { message: metrics.EMPTY_PRELOADED_PAYMENT_METHODS };
-      
-      metrics.errorToGetPreloadedPaymentMethods(error);
-
-      expect(metrics.sendMetric).not.toHaveBeenCalled();
-    });
-
-    test('Given error with "Authenticator flow is not supported" message, When errorToGetPreloadedPaymentMethods() is called, Then should not call sendMetric', () => {
-      const error = { message: 'Authenticator flow is not supported' };
-      
-      metrics.errorToGetPreloadedPaymentMethods(error);
-
-      expect(metrics.sendMetric).not.toHaveBeenCalled();
-    });
-
-    test('Given error with "The site id mco is not supported" message, When errorToGetPreloadedPaymentMethods() is called, Then should not call sendMetric', () => {
-      const error = { message: 'The site id mco is not supported' };
-      
-      metrics.errorToGetPreloadedPaymentMethods(error);
-
-      expect(metrics.sendMetric).not.toHaveBeenCalled();
-    });
-
-    test('Given error with regular error message, When errorToGetPreloadedPaymentMethods() is called, Then should call sendMetric with correct parameters', () => {
+    test('Given error with message, When errorToGetAccountPaymentMethods() is called, Then should call sendMetric with correct parameters', () => {
       const error = { message: 'Network error occurred' };
-      
-      metrics.errorToGetPreloadedPaymentMethods(error);
+
+      metrics.errorToGetAccountPaymentMethods(error);
 
       expect(metrics.sendMetric).toHaveBeenCalledWith(
-        'error_to_get_preloaded_payment_methods',
+        'error_to_get_account_payment_methods',
         'true',
         'Network error occurred'
       );
     });
 
-    test('Given error without message, When errorToGetPreloadedPaymentMethods() is called, Then should call sendMetric with "Unknown error"', () => {
-      const error = {};
-      
-      metrics.errorToGetPreloadedPaymentMethods(error);
+    test('Given error with message, When errorToGetAccountPaymentMethods() is called, Then should dispatch melidata error event', () => {
+      const error = { message: 'Network error occurred' };
+
+      metrics.errorToGetAccountPaymentMethods(error);
+
+      expect(metrics.dispatchMelidataErrorEvent).toHaveBeenCalledWith(
+        'Network error occurred',
+        metrics.CUSTOM_CHECKOUT_STEPS.LOAD_SUPER_TOKEN
+      );
+    });
+
+    test('Given null error, When errorToGetAccountPaymentMethods() is called, Then should call sendMetric with "Unknown error"', () => {
+      metrics.errorToGetAccountPaymentMethods(null);
 
       expect(metrics.sendMetric).toHaveBeenCalledWith(
-        'error_to_get_preloaded_payment_methods',
+        'error_to_get_account_payment_methods',
         'true',
         'Unknown error'
       );
     });
 
-    test('Given null error, When errorToGetPreloadedPaymentMethods() is called, Then should call sendMetric with "Unknown error"', () => {
-      metrics.errorToGetPreloadedPaymentMethods(null);
+    test('Given error without message, When errorToGetAccountPaymentMethods() is called, Then should call sendMetric with stringified error', () => {
+      const error = { code: 500 };
+
+      metrics.errorToGetAccountPaymentMethods(error);
 
       expect(metrics.sendMetric).toHaveBeenCalledWith(
-        'error_to_get_preloaded_payment_methods',
+        'error_to_get_account_payment_methods',
         'true',
-        'Unknown error'
+        '{"code":500}'
+      );
+    });
+  });
+
+  describe('errorOnSubmit()', () => {
+    beforeEach(() => {
+      jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+      jest.spyOn(metrics, 'dispatchMelidataErrorEvent').mockImplementation(() => {});
+    });
+
+    test('Given error code and error, When errorOnSubmit() is called, Then should call sendMetric with error code', () => {
+      const error = { message: 'Submit failed' };
+
+      metrics.errorOnSubmit('SELECT_PAYMENT_METHOD_ERROR', error);
+
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'error_on_submit_super_token',
+        'SELECT_PAYMENT_METHOD_ERROR',
+        'Submit failed'
       );
     });
 
-    test('Given undefined error, When errorToGetPreloadedPaymentMethods() is called, Then should call sendMetric with "Unknown error"', () => {
-      metrics.errorToGetPreloadedPaymentMethods(undefined);
+    test('Given error code and error, When errorOnSubmit() is called, Then should dispatch melidata error event for POST_SUBMIT step', () => {
+      const error = { message: 'Submit failed' };
 
-      expect(metrics.sendMetric).toHaveBeenCalledWith(
-        'error_to_get_preloaded_payment_methods',
-        'true',
-        'Unknown error'
+      metrics.errorOnSubmit('SELECT_PAYMENT_METHOD_ERROR', error);
+
+      expect(metrics.dispatchMelidataErrorEvent).toHaveBeenCalledWith(
+        'Submit failed',
+        metrics.CUSTOM_CHECKOUT_STEPS.POST_SUBMIT
       );
     });
   });
 
   describe('sendMetric()', () => {
-    let sendMetricInstance;
-
-    beforeEach(() => {
-      // Create a new instance for testing
-      sendMetricInstance = new MPSuperTokenMetrics(mockMpSdkInstance);
-    });
-
     test('Given valid parameters, When sendMetric() is called, Then should execute without errors', () => {
-      // Simply verify the method can be called without throwing
+      const sendMetricInstance = new MPSuperTokenMetrics(mockMpSdkInstance);
+
       expect(() => {
         sendMetricInstance.sendMetric('test_metric', 'test_value', 'test_message');
       }).not.toThrow();
@@ -233,6 +208,22 @@ describe('MPSuperTokenMetrics', () => {
     test('Given any condition, When getEnvironment() is called, Then should return "prod"', () => {
       const result = metrics.getEnvironment();
       expect(result).toBe('prod');
+    });
+  });
+
+  describe('registerClickOnPlaceOrderButton()', () => {
+    beforeEach(() => {
+      jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+    });
+
+    test('Given registerClickOnPlaceOrderButton() is called, Then should send metric with correct name', () => {
+      metrics.registerClickOnPlaceOrderButton();
+
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'super_token_click_on_place_order_button',
+        'true',
+        ''
+      );
     });
   });
 });

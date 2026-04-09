@@ -2,6 +2,11 @@ import globals from "globals";
 import pluginJs from "@eslint/js";
 import woocommercePlugin from "@woocommerce/eslint-plugin";
 import pluginReact from "eslint-plugin-react";
+import pluginJsdoc from "eslint-plugin-jsdoc";
+import wordpressPlugin from "@wordpress/eslint-plugin";
+import typescriptPlugin from "@typescript-eslint/eslint-plugin";
+import pluginImport from "eslint-plugin-import";
+import pluginJest from "eslint-plugin-jest";
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -13,6 +18,12 @@ export default [
     },
     plugins: {
       "@woocommerce": woocommercePlugin,
+      jsdoc: pluginJsdoc,
+      "@wordpress": wordpressPlugin,
+      "@typescript-eslint": typescriptPlugin,
+      import: pluginImport,
+      jest: pluginJest,
+      react: pluginReact,
     },
     ...pluginJs.configs.recommended,
     rules: {

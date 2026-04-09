@@ -7,7 +7,7 @@ const CHECK_IF_SUPER_TOKEN_CLASSES_IS_LOADED_TIMEOUT = 15000;
 const waitMpSdkInstanceLoad = setInterval(() => {
   if (window.mpSdkInstance) {
     clearInterval(waitMpSdkInstanceLoad);
-    const SUPER_TOKEN_JS_VERSION = '1.0.4';
+    const SUPER_TOKEN_JS_VERSION = '1.1.2';
     const mpSdkInstance = window.mpSdkInstance;
     const mpDebounce = new MPDebounce();
     const wcEmailListener = new WCEmailListener(mpDebounce);
