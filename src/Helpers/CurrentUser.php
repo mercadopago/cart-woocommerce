@@ -121,7 +121,7 @@ class CurrentUser
      */
     public function validateUserNeededPermissions(): void
     {
-        $neededRoles = ['administrator', 'manage_woocommerce'];
+        $neededRoles = ['administrator', 'shop_manager'];
 
         if (!$this->userHasRoles($neededRoles)) {
             $this->logs->file->error('User does not have permissions', __CLASS__);
