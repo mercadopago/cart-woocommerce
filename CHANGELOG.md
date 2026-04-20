@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.18] 2026-04-16
+### Added
+- New Fast Payment flow with Encrypted Security Code (ESC) for credit and debit cards, reducing unnecessary CVV prompts and increasing approval rates.
+- Add skeleton loader while verifying CVV requirement to prevent UI flicker on payment method selection.
+
+### Fixed
+- Fix Blocks checkout rendering an empty page in some stores.
+- Fix commission display in Blocks checkout.
+- Fix issuer select (Banco Emisor) losing visual styles in production.
+- Fix postcode field being cleared by WooCommerce AJAX after country change.
+- Fix Mercado Pago checkout URL detection for all LATAM country TLDs.
+- Retry currency conversion requests instead of caching API errors.
+
 ## [8.7.17] 2026-03-25
 ### Added
 - Add monitoring to detect if files in the assets folder have been modified
@@ -20,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix status sync metabox breaking order page when payment data is missing or invalid
 
 ## [8.7.16] 2026-03-24
-* Fixed
+### Fixed
 - Fix checkout form validation to only check the terms and conditions checkbox instead of all checkboxes.
 
 ## [8.7.15] 2026-03-12

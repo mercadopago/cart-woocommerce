@@ -17,6 +17,10 @@
     --mp-border-radius-lg: 8px;
     --mp-input-height: 48px;
     --mp-icon-size: 32px;
+    --andes-white: #ffffff;
+    --andes-gray-250: rgba(0, 0, 0, 0.25);
+    --andes-gray-900: rgba(0, 0, 0, 0.9);
+    --andes-error-red: #CC1818;
 }
 
 /* ==========================================================================

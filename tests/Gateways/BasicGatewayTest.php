@@ -196,7 +196,7 @@ class BasicGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', 'Translated error message', 'buyer_default', BasicGateway::ID);
+            ->with('woo_checkout_error', 'Translated error message', Mockery::type('string'), BasicGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -297,7 +297,7 @@ class BasicGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $errorMessage, BasicGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), BasicGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices

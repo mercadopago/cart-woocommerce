@@ -2,8 +2,13 @@ import { test, expect } from "@playwright/test";
 import { mpe } from "../../../data/meli_sites";
 import { fillStepsToCheckout } from "../../../flows/fill_steps_to_checkout";
 import payWithYape from "../../../flows/yape";
+const { skipIfNotSite } = require("../../../helpers/site-guard");
 
 const { shop_url, guestUser } = mpe;
+
+test.beforeEach(() => {
+  skipIfNotSite(test, 'MPE');
+});
 
 async function makePayment(page, form) {
   await fillStepsToCheckout(page, shop_url, guestUser);
@@ -12,12 +17,13 @@ async function makePayment(page, form) {
 
 async function rejectedPaymentTest(page, form) {
   await makePayment(page, form);
-  await expect(page.locator('.wc-block-store-notice.wc-block-components-notice-banner.is-error')).toBeVisible();
+  await expect(page.locator('.woocommerce-error, .wc-block-store-notice.wc-block-components-notice-banner.is-error')).toBeVisible({ timeout: 30000 });
 }
 
 test('Given Yape payment When using phone number 111111111 Should create payment with success', async ({ page }) => {
   await makePayment(page, { phoneNumber: '111111111' });
-  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible();
+  await page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible({ timeout: 30000 });
 })
 
 test('Given Yape payment When using phone number 111111112 Should not create payment', async ({ page }) => {

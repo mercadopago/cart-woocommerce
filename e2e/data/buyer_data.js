@@ -30,55 +30,91 @@ const GUEST_USER_CONFIGS = {
     documentType: process.env.DOC_TYPE_MLA,
     document: process.env.DOC_NUMBER_MLA,
     siteId: "MLA",
+    address: {
+      street: "Av Corrientes",
+      number: "1234",
+      countryId: "AR",
+      state: "C",
+      city: "Buenos Aires",
+      neighborhood: "San Nicolas",
+      zip: "C1043AAZ",
+      complement: "",
+    },
   },
   MCO: {
     email: process.env.USER_MCO,
     documentType: process.env.DOC_TYPE_MCO,
     document: process.env.DOC_NUMBER_MCO,
+    siteId: "MCO",
+    address: {
+      street: "Carrera 7 No 71-21",
+      number: "71",
+      countryId: "CO",
+      state: "CO-DC",
+      city: "Bogota",
+      neighborhood: "Chapinero",
+      zip: "110231",
+      complement: "",
+    },
   },
   MPE: {
-    mpUserAccount: process.env.USER_MPE,
-    mpPasswordAccount: process.env.USER_MPE_PASSWORD,
     documentType: process.env.DOC_TYPE_MPE,
     document: process.env.DOC_NUMBER_MPE,
+    siteId: "MPE",
+    address: {
+      street: "Av Javier Prado Este",
+      number: "4600",
+      countryId: "PE",
+      state: "LIM",
+      city: "Lima",
+      neighborhood: "Surco",
+      zip: "15023",
+      complement: "",
+    },
   },
   MLM: {
     email: process.env.GUEST_EMAIL,
     firstName: "John",
     lastName: "Doe",
+    siteId: "MLM",
     address: {
-      street: "Rua das Flores",
-      number: "122",
-      countryId: "BR",
-      state: "SP",
-      city: "Assis",
-      neighborhood: "Jardim California",
-      zip: "82854644",
-      complement: "sem",
+      street: "Av Reforma",
+      number: "222",
+      countryId: "MX",
+      state: "DF",
+      city: "Ciudad de Mexico",
+      neighborhood: "Centro",
+      zip: "06000",
+      complement: "",
     }
   },
   MLU: {
     siteId: "MLU",
     documentType: process.env.DOC_TYPE_MLU,
     document: process.env.DOC_NUMBER_MLU,
+    address: {
+      street: "Av 18 de Julio",
+      number: "1234",
+      countryId: "UY",
+      state: "UY-MO",
+      city: "Montevideo",
+      neighborhood: "Centro",
+      zip: "11100",
+      complement: "",
+    },
   },
-  MLC: {},
-};
-
-const CREDITS_USER_CONFIGS = {
-  MLB: {
-    mpUserAccount: process.env.USER_CREDITS_MLB,
-    mpPasswordAccount: process.env.USER_CREDITS_PASSWORD_MLB,
-    twoFactor: process.env.TWO_FACTOR_MLB,
-  },
-  MLA: {
-    mpUserAccount: process.env.USER_CREDITS_MLA,
-    mpPasswordAccount: process.env.USER_CREDITS_PASSWORD_MLA,
-  },
-  MLM: {
-    mpUserAccount: process.env.USER_CREDITS_MLM,
-    mpPasswordAccount: process.env.USER_CREDITS_PASSWORD_MLM,
-    twoFactor: process.env.TWO_FACTOR_MLM,
+  MLC: {
+    siteId: "MLC",
+    address: {
+      street: "Av Providencia",
+      number: "1234",
+      countryId: "CL",
+      state: "CL-RM",
+      city: "Santiago",
+      neighborhood: "Providencia",
+      zip: "7500000",
+      complement: "",
+    },
   },
 };
 
@@ -89,25 +125,7 @@ export const guestUserMCO = createUser(BASE_GUEST_USER, GUEST_USER_CONFIGS.MCO);
 export const guestUserMPE = createUser(BASE_GUEST_USER, GUEST_USER_CONFIGS.MPE);
 export const guestUserMLM = createUser(BASE_GUEST_USER, GUEST_USER_CONFIGS.MLM);
 export const guestUserMLU = createUser(BASE_GUEST_USER, GUEST_USER_CONFIGS.MLU);
-
-export const loggedUserMLM = createUser(BASE_GUEST_USER, {
-  email: process.env.USER_LOGGED_MLM,
-  password: process.env.USER_LOGGED_PASSWORD_MLM,
-});
-
-export const loggedUserMLC = createUser(BASE_GUEST_USER, {
-  email: process.env.USER_MLC,
-  password: process.env.USER_MLC_PASSWORD,
-});
-
-export const loggedUserMLU = createUser(BASE_GUEST_USER, {
-  email: process.env.USER_MLU_EMAIL,
-  password: process.env.USER_MLU_PASSWORD,
-});
-
-export const choCreditsUserMLB = createUser(guestUserMLB, CREDITS_USER_CONFIGS.MLB);
-export const choCreditsUserMLA = createUser(guestUserMLA, CREDITS_USER_CONFIGS.MLA);
-export const choCreditsUserMLM = createUser(guestUserMLB, CREDITS_USER_CONFIGS.MLM);
+export const guestUserMLC = createUser(BASE_GUEST_USER, GUEST_USER_CONFIGS.MLC);
 
 export const pseUserMCO = createUser(guestUserMCO, {
   password: process.env.USER_MCO_PASSWORD,

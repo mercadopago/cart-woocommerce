@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.7.16
+Stable tag: 8.7.18
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,18 +134,17 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.7.17 (25/03/2026) =
-* Added
-- Add monitoring to detect if files in the assets folder have been modified
-- Add monitoring to detect if our scripts have been removed via dequeue
-- Add monitoring to detect if expected window variables are present
-- Add monitoring to detect if certain styles have been overridden
-- Add melidataReady promise to ensure tracking loading events are dispatched only after melidata client is ready
-- Add melidata load delay metrics for loading start and end events
+= v8.7.18 (16/04/2026) =
+### Added
+- New Fast Payment flow with Encrypted Security Code (ESC) for credit and debit cards, reducing unnecessary CVV prompts and increasing approval rates.
+- Add skeleton loader while verifying CVV requirement to prevent UI flicker on payment method selection.
 
-* Fixed
-- Fix melidata client not loading on stores using Fluid Checkout plugin
-- Fix missing order key authorization check on PIX QR code image endpoint to prevent unauthorized access
-- Fix status sync metabox breaking order page when payment data is missing or invalid
+### Fixed
+- Fix Blocks checkout rendering an empty page in some stores.
+- Fix commission display in Blocks checkout.
+- Fix issuer select (Banco Emisor) losing visual styles in production.
+- Fix postcode field being cleared by WooCommerce AJAX after country change.
+- Fix Mercado Pago checkout URL detection for all LATAM country TLDs.
+- Retry currency conversion requests instead of caching API errors.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

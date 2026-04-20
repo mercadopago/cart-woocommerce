@@ -21,12 +21,14 @@ class MPSuperTokenTriggerHandler {
     wcEmailListener = null;
     mpSuperTokenPaymentMethods = null;
     mpSuperTokenErrorHandler = null;
+    mpSuperTokenMetrics = null;
 
-    constructor(mpSuperTokenAuthenticator, wcEmailListener, mpSuperTokenPaymentMethods, mpSuperTokenErrorHandler) {
+    constructor(mpSuperTokenAuthenticator, wcEmailListener, mpSuperTokenPaymentMethods, mpSuperTokenErrorHandler, mpSuperTokenMetrics) {
         this.mpSuperTokenAuthenticator = mpSuperTokenAuthenticator;
         this.wcEmailListener = wcEmailListener;
         this.mpSuperTokenPaymentMethods = mpSuperTokenPaymentMethods;
         this.mpSuperTokenErrorHandler = mpSuperTokenErrorHandler;
+        this.mpSuperTokenMetrics = mpSuperTokenMetrics;
     }
 
     hasLastException() {
@@ -92,9 +94,9 @@ class MPSuperTokenTriggerHandler {
     }
 
     resetCustomCheckout(shouldClearCache = true) {
-        window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
+        this.mpSuperTokenPaymentMethods.hideSuperTokenError();
         window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
-        this.mpSuperTokenAuthenticator?.setSuperTokenValidation(false);
+        this.mpSuperTokenAuthenticator.setSuperTokenValidation(false);
 
         if (this.mpSuperTokenPaymentMethods.hasStoredPaymentMethods()) {
             this.mpSuperTokenPaymentMethods.unmountCardForm();
@@ -128,7 +130,7 @@ class MPSuperTokenTriggerHandler {
 
     resetSuperTokenOnError() {
         if (document.querySelector('#mp_checkout_type')?.value === 'super_token') {
-            const paymentMethodList = document.querySelector(`.${this.mpSuperTokenPaymentMethods?.SUPER_TOKEN_STYLES?.PAYMENT_METHOD_LIST}`);
+            const paymentMethodList = document.querySelector(`.${this.mpSuperTokenPaymentMethods.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LIST}`);
 
             if (paymentMethodList) {
               paymentMethodList.scrollIntoView({ behavior: 'smooth' });
@@ -149,8 +151,12 @@ class MPSuperTokenTriggerHandler {
 
     async fetchAndRenderSuperTokenPaymentMethods() {
         const buyerEmail = this.getBuyerEmail();
-        if (!buyerEmail) return;
+        if (!buyerEmail) {
+            this.mpSuperTokenMetrics.sendMetric('super_token_skipped_no_email', 'true', '');
+            return;
+        }
 
+        this.mpSuperTokenMetrics.sendMetric('super_token_email_captured', 'true', '');
         this.isFetchingPaymentMethods = true;
         const paymentMethods = await this.mpSuperTokenAuthenticator.getAccountPaymentMethods(
             this.currentAmount,
@@ -172,7 +178,10 @@ class MPSuperTokenTriggerHandler {
         // Prevent unnecessary re-fetching of payment methods
         if (this.isFetchingPaymentMethods && !this.amountHasChanged() && !this.emailHasChanged()) return;
 
-        if (this.amountHasChanged()) this.resetFlow();
+        if (this.amountHasChanged()) {
+            this.resetFlow();
+            this.mpSuperTokenMetrics.sendMetric('super_token_reset_on_amount_change', 'true', '');
+        }
 
         if (this.isSuperTokenPaymentMethodsLoaded()) {
             this.mpSuperTokenPaymentMethods.renderAccountPaymentMethods(
@@ -191,6 +200,7 @@ class MPSuperTokenTriggerHandler {
 
                 if (this.isDifferentEmail(email) && this.wcBuyerEmail != null) {
                     this.wcBuyerEmail = email;
+                    this.mpSuperTokenMetrics.sendMetric('super_token_reset_on_email_change', 'true', '');
                     this.resetCustomCheckout();
                 }
             });

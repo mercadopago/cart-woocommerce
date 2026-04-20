@@ -9,8 +9,9 @@ test('test successful payment with Pix, payment must be approved and success pag
   await fillStepsToCheckout(page, shop_url, guestUserMLB);
   await payWithPix(page);
 
-  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible();
-  await expect(page.locator('img.mp-details-pix-qr-img')).toBeVisible();
+  // Payment processing and redirect to thank-you page can take up to 60s
+  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible({ timeout: 60000 });
+  await expect(page.locator('img.mp-details-pix-qr-img')).toBeVisible({ timeout: 10000 });
   await expect(page.locator('.mp-details-pix-qr-subtitle')).toBeVisible();
   await expect(page.locator('.mp-details-pix-qr-description')).toBeVisible();
   await expect(page.locator('#mp-qr-code')).toBeVisible();

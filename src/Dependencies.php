@@ -465,12 +465,12 @@ class Dependencies
             $this->adminTranslations,
             $this->cacheHelper,
             $this->countryHelper,
-            $this->logs,
             $this->noticesHelper,
             $this->requesterHelper,
             $this->sellerConfig,
             $this->optionsHook,
-            $this->urlHelper
+            $this->urlHelper,
+            $this->storeConfig
         );
     }
 

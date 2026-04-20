@@ -1,6 +1,20 @@
 CHANGELOG:
 == Changelog
 
+= v8.7.18 (16/04/2026) =
+* Added
+- New Fast Payment flow with Encrypted Security Code (ESC) for credit and debit cards, reducing unnecessary CVV prompts and increasing approval rates.
+- Add skeleton loader while verifying CVV requirement to prevent UI flicker on payment method selection.
+
+
+* Fixed
+- Fix Blocks checkout rendering an empty page in some stores.
+- Fix commission display in Blocks checkout.
+- Fix issuer select (Banco Emisor) losing visual styles in production.
+- Fix postcode field being cleared by WooCommerce AJAX after country change.
+- Fix Mercado Pago checkout URL detection for all LATAM country TLDs.
+- Retry currency conversion requests instead of caching API errors.
+
 = v8.7.17 (25/03/2026) =
 * Added
 - Add monitoring to detect if files in the assets folder have been modified

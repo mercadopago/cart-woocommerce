@@ -1,36 +1,22 @@
 import { test } from '@playwright/test';
 import { mlu } from '../../../../data/meli_sites';
-import { redirectCancelOrderTest, redirectSuccessfulPaymentTest, redirectSuccessfulPendingPaymentTest, successfulPaymentTest } from '../../../../flows/chopro';
+import { redirectCancelOrderTest, redirectSuccessfulPaymentTest, redirectSuccessfulPendingPaymentTest } from '../../../../flows/chopro';
+const { skipIfNotSite } = require("../../../../helpers/site-guard");
 
-const { shop_url, credit_card_scenarios, guestUser } = mlu;
-const { APPROVED, REJECTED, PENDING } = credit_card_scenarios;
+const { shop_url, guestUser } = mlu;
+
+test.beforeEach(() => {
+  skipIfNotSite(test, 'MLU');
+});
 
 test('test credit card payment with approved and guest user', async ({ page }) => {
-  await redirectSuccessfulPaymentTest({
-    page,
-    url: shop_url,
-    user: guestUser,
-    card: APPROVED.master,
-    form: APPROVED.form
-  });
+  await redirectSuccessfulPaymentTest({ page, url: shop_url, user: guestUser });
 });
 
 test('test credit card payment with rejected and guest user', async ({ page }) => {
-  await redirectCancelOrderTest({
-    page,
-    url: shop_url,
-    user: guestUser,
-    card: REJECTED.master,
-    form: REJECTED.form
-  });
+  await redirectCancelOrderTest({ page, url: shop_url, user: guestUser });
 });
 
 test('test credit card payment with pending and guest user', async ({ page }) => {
-  await redirectSuccessfulPendingPaymentTest({
-    page,
-    url: shop_url,
-    user: guestUser,
-    card: PENDING.master,
-    form: PENDING.form
-  });
+  await redirectSuccessfulPendingPaymentTest({ page, url: shop_url, user: guestUser });
 });

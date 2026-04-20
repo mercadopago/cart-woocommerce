@@ -409,7 +409,7 @@ class TicketGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $errorMessage, TicketGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), TicketGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices

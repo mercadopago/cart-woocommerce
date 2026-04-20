@@ -109,33 +109,32 @@ describe('mp-health-monitor', () => {
       expect(cssCalls).toHaveLength(0);
     });
 
-    test('TC-CSS-03: elemento presente com display:none por CSS externo envia métrica', () => {
-      // Arrange — cria elemento crítico e stylesheet externa que o esconde
+    test('TC-CSS-03: checkCssConflicts roda sem lançar exceção quando elemento presente no DOM (jsdom)', () => {
+      // jsdom não processa CSS real — getComputedStyle retorna valores vazios independente
+      // de qualquer stylesheet, então elementsWithCustomizations nunca detecta anomalias
+      // neste ambiente. O teste garante que o fluxo completo roda sem exceção e que
+      // nenhuma métrica é enviada sem conflito real. O path de detecção real é coberto
+      // pelos testes E2E (I-04) em browser Chromium.
       document.body.innerHTML = `
         <div class="mp-wallet-button-container" style="display:none"></div>
       `;
 
-      // Seta todas as globals pra isolar o teste de CSS
       window.wc_mercadopago_checkout_session_data_register_params = { loaded: true };
       window.mercadopago_melidata_params = { loaded: true };
       window.MelidataClient = {};
       window.melidata = {};
 
-      triggerChecks();
+      expect(() => triggerChecks()).not.toThrow();
 
       const cssCalls = global.navigator.sendBeacon.mock.calls.filter(([url]) =>
         url.includes('mp_css_conflict_detected')
       );
-
-      // Nota: em jsdom, getComputedStyle não processa CSS real como um browser.
-      // Se elementsWithCustomizations não detectar conflito, o teste valida
-      // que o fluxo completo roda sem erro. Em browser real (E2E), detectaria.
-      // Este teste garante que o path de envio de métrica não quebra.
-      expect(cssCalls.length).toBeGreaterThanOrEqual(0);
+      // jsdom não detecta conflito — nenhuma métrica deve ser enviada
+      expect(cssCalls).toHaveLength(0);
     });
 
     test('TC-CSS-05: sessionStorage previne segunda métrica de CSS na mesma sessão', () => {
-      sessionStorage.setItem('mp_health_css_conflict_sent', '1');
+      sessionStorage.setItem('mp_health_css_conflict_wallet_sent', '1');
       sessionStorage.setItem('mp_health_script_globals_sent', '1');
       document.body.innerHTML = `
         <div class="mp-wallet-button-container"></div>
@@ -144,6 +143,50 @@ describe('mp-health-monitor', () => {
       triggerChecks();
 
       expect(global.navigator.sendBeacon).not.toHaveBeenCalled();
+    });
+
+    test('TC-CSS-06: listener supertoken_loaded executa checkCssConflicts com seletor do Super Token', () => {
+      // Arrange — element present so querySelector is exercised
+      document.body.innerHTML = '<div class="mp-super-token-payment-methods-list"></div>';
+      const querySpy = jest.spyOn(document, 'querySelector');
+
+      // Act — dispatch the event that super-token-payment-methods.js fires after render
+      document.dispatchEvent(new CustomEvent('supertoken_loaded', { detail: { sdkInstanceId: 'test-sdk' } }));
+
+      // Assert — checkCssConflicts must have queried the super token selector
+      expect(querySpy).toHaveBeenCalledWith('.mp-super-token-payment-methods-list');
+      querySpy.mockRestore();
+    });
+
+    test('TC-CSS-07: rate-limit sessionStorage é respeitado pelo listener supertoken_loaded', () => {
+      // Arrange — rate-limit already active
+      sessionStorage.setItem('mp_health_css_conflict_supertoken_sent', '1');
+      const querySpy = jest.spyOn(document, 'querySelector');
+
+      // Act
+      document.dispatchEvent(new CustomEvent('supertoken_loaded', { detail: { sdkInstanceId: 'test-sdk' } }));
+
+      // Assert — early return before querySelector because sessionStorage flag is set
+      expect(querySpy).not.toHaveBeenCalledWith('.mp-super-token-payment-methods-list');
+      // Assert — no metric dispatched (rate-limit blocked the entire check)
+      expect(global.navigator.sendBeacon).not.toHaveBeenCalled();
+      querySpy.mockRestore();
+    });
+
+    test('TC-CSS-08: listener supertoken_loaded executa checkCssConflicts apenas uma vez mesmo com múltiplos disparos', () => {
+      // Arrange — no session flag, no element in DOM so no anomalies and no flag set after first call
+      sessionStorage.removeItem('mp_health_css_conflict_supertoken_sent');
+      document.body.innerHTML = '';
+      const querySpy = jest.spyOn(document, 'querySelector');
+
+      // Act — fire the event twice; without {once: true} querySelector would be called twice
+      document.dispatchEvent(new CustomEvent('supertoken_loaded', { detail: { sdkInstanceId: 'test-sdk' } }));
+      document.dispatchEvent(new CustomEvent('supertoken_loaded', { detail: { sdkInstanceId: 'test-sdk' } }));
+
+      // Assert — querySelector called at most once for the super token selector
+      const calls = querySpy.mock.calls.filter(([arg]) => arg === '.mp-super-token-payment-methods-list');
+      expect(calls).toHaveLength(1);
+      querySpy.mockRestore();
     });
   });
 
@@ -266,15 +309,45 @@ describe('mp-health-monitor', () => {
   // ---------------------------------------------------------------------------
 
   describe('Resiliência e payload', () => {
-    test('TC-RES-01: erro no setup do listener não propaga — try/catch externo absorve', () => {
+    test('TC-RES-01: erro no setup do listener não propaga — try/catch externo absorve e envia mp_health_monitor_error', () => {
       // Sobrescrever document.addEventListener para lançar durante o setup da IIFE.
-      // O try/catch externo do script deve absorver o erro.
+      // O try/catch externo deve absorver o erro e emitir mp_health_monitor_error.
       const original = window.document.addEventListener.bind(window.document);
       window.document.addEventListener = () => { throw new Error('forced setup error'); };
 
       expect(() => loadHealthMonitor()).not.toThrow();
 
+      const errorCalls = global.navigator.sendBeacon.mock.calls.filter(([url]) =>
+        url.includes('mp_health_monitor_error')
+      );
+      expect(errorCalls).toHaveLength(1);
+      const payload = JSON.parse(errorCalls[0][1]);
+      expect(payload.value).toBe('error');
+      expect(payload.message).toBe('forced setup error');
+
       window.document.addEventListener = original;
+    });
+
+    test('TC-RES-02: readyState já complete quando script carrega — scripts() chamado imediatamente', () => {
+      // Simula página já carregada (readyState=complete): scripts() deve ser chamado
+      // diretamente sem aguardar DOMContentLoaded.
+      Object.defineProperty(document, 'readyState', { value: 'complete', configurable: true });
+
+      window.wc_mercadopago_checkout_session_data_register_params = { loaded: true };
+      window.mercadopago_melidata_params = { loaded: true };
+      window.MelidataClient = {};
+      window.melidata = {};
+
+      loadHealthMonitor();
+      jest.runAllTimers();
+
+      // O setTimeout interno de 3s deve ter rodado — nenhuma métrica de erro enviada
+      const errorCalls = global.navigator.sendBeacon.mock.calls.filter(([url]) =>
+        url.includes('mp_health_monitor_error') || url.includes('mp_health_check_error')
+      );
+      expect(errorCalls).toHaveLength(0);
+
+      Object.defineProperty(document, 'readyState', { value: 'loading', configurable: true });
     });
 
     test('TC-PAY-01: payload contém todos os campos obrigatórios', () => {

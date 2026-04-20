@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_supertoken_authenticator_params, MPSuperTokenErrorCodes */
+/* globals wc_mercadopago_supertoken_bundle_params, MPSuperTokenErrorCodes */
 /* eslint-disable no-unused-vars */
 class MPSuperTokenAuthenticator {
   AMOUNT_ELEMENT_ID = 'mp-amount';
@@ -97,7 +97,10 @@ class MPSuperTokenAuthenticator {
 
   async getSimplifiedAuth(authenticator) {
     try {
-      if (!authenticator) return false;
+      if (!authenticator) {
+        this.mpSuperTokenMetrics.sendMetric('super_token_authenticator_null', 'getSimplifiedAuth', '');
+        return false;
+      }
 
       return await authenticator.getSimplifiedAuth();
     } catch (error) {
@@ -108,7 +111,10 @@ class MPSuperTokenAuthenticator {
 
   async getFastPaymentToken(authenticator) {
       try {
-        if (!authenticator) return null;
+        if (!authenticator) {
+          this.mpSuperTokenMetrics.sendMetric('super_token_authenticator_null', 'getFastPaymentToken', '');
+          return null;
+        }
 
         return await authenticator.getFastPaymentToken();
       } catch (error) {
@@ -171,7 +177,10 @@ class MPSuperTokenAuthenticator {
           if (!authenticator) throw new Error(MPSuperTokenErrorCodes.AUTHENTICATOR_NOT_FOUND);
 
           const hasSimplified = await this.getSimplifiedAuth(authenticator);
-          if (!hasSimplified) return;
+          if (!hasSimplified) {
+            this.mpSuperTokenMetrics.sendMetric('super_token_auth_expired_on_submit', 'true', '');
+            return;
+          }
 
           await authenticator.authorizePayment(pseudotoken);
 

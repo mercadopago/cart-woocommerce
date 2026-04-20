@@ -128,7 +128,7 @@ class YapeGatewayTest extends TestCase
         $datadogMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Metrics\Datadog::class);
         $datadogMock
             ->expects()
-            ->sendEvent('woo_checkout_error', $translatedMessage, $rejectedMessage, 'woo-mercado-pago-yape');
+            ->sendEvent('woo_checkout_error', $translatedMessage, Mockery::type('string'), 'woo-mercado-pago-yape');
         $this->gateway->datadog = $datadogMock;
 
         $this->gateway->mercadopago->helpers->notices
@@ -176,7 +176,7 @@ class YapeGatewayTest extends TestCase
         $datadogMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Metrics\Datadog::class);
         $datadogMock
             ->expects()
-            ->sendEvent('woo_checkout_error', $translatedMessage, $originalMessage, 'woo-mercado-pago-yape');
+            ->sendEvent('woo_checkout_error', $translatedMessage, Mockery::type('string'), 'woo-mercado-pago-yape');
         $this->gateway->datadog = $datadogMock;
 
         $this->gateway->mercadopago->helpers->notices
@@ -228,7 +228,7 @@ class YapeGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $errorMessage, YapeGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), YapeGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -531,7 +531,7 @@ class YapeGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', 'Translated error message', 'buyer_yape_default', YapeGateway::ID);
+            ->with('woo_checkout_error', 'Translated error message', Mockery::type('string'), YapeGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices

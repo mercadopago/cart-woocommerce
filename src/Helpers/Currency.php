@@ -4,9 +4,10 @@ namespace MercadoPago\Woocommerce\Helpers;
 
 use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
-use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 
 if (!defined('ABSPATH')) {
@@ -27,8 +28,6 @@ class Currency
 
     private Country $country;
 
-    private Logs $logs;
-
     private Notices $notices;
 
     private Requester $requester;
@@ -39,39 +38,44 @@ class Currency
 
     private Url $url;
 
+    private Datadog $datadog;
+
+    private Store $store;
+
     /**
      * Currency constructor
      *
      * @param AdminTranslations $adminTranslations
      * @param Cache             $cache
      * @param Country           $country
-     * @param Logs              $logs
      * @param Notices           $notices
      * @param Requester         $requester
      * @param Seller            $seller
      * @param Options           $options
      * @param Url               $url
+     * @param Store             $store
      */
     public function __construct(
         AdminTranslations $adminTranslations,
         Cache $cache,
         Country $country,
-        Logs $logs,
         Notices $notices,
         Requester $requester,
         Seller $seller,
         Options $options,
-        Url $url
+        Url $url,
+        Store $store
     ) {
         $this->translations = $adminTranslations->currency;
         $this->cache        = $cache;
         $this->country      = $country;
-        $this->logs         = $logs;
         $this->notices      = $notices;
         $this->requester    = $requester;
         $this->seller       = $seller;
         $this->options      = $options;
         $this->url          = $url;
+        $this->datadog      = Datadog::getInstance();
+        $this->store        = $store;
     }
 
     /**
@@ -115,9 +119,15 @@ class Currency
     public function getRatio(AbstractGateway $gateway): float
     {
         if (!isset($this->ratios[$gateway->id])) {
-            if ($this->isConversionEnabled($gateway) && !$this->validateConversion()) {
-                $ratio = $this->loadRatio();
-                $this->setRatio($gateway->id, $ratio);
+            if ($this->isConversionEnabled($gateway)) {
+                if (!$this->validateConversion()) {
+                    $this->sendCurrencyConversionActiveMetric($gateway, 'mp_currency_conversion_diff');
+                    $ratio = $this->loadRatio();
+                    $this->setRatio($gateway->id, $ratio);
+                } else {
+                    $this->sendCurrencyConversionActiveMetric($gateway, 'mp_currency_conversion_same');
+                    $this->setRatio($gateway->id);
+                }
             } else {
                 $this->setRatio($gateway->id);
             }
@@ -250,15 +260,99 @@ class Currency
                 'status' => $response->getStatus(),
             ];
 
+            if ($response->getStatus() >= 400) {
+                $data = $response->getData();
+                $errorMessage = is_array($data) && isset($data['message']) && is_string($data['message']) ? $data['message'] : 'HTTP ' . $response->getStatus();
+
+                $this->sendCurrencyConversionErrorMetric(
+                    $fromCurrency,
+                    $toCurrency,
+                    $response->getStatus(),
+                    $errorMessage
+                );
+
+                return $serializedResponse;
+            }
+
             $this->cache->setCache($key, $serializedResponse);
 
             return $serializedResponse;
         } catch (Exception $e) {
+            $this->sendCurrencyConversionErrorMetric(
+                $fromCurrency,
+                $toCurrency,
+                0,
+                $e->getMessage()
+            );
+
             return [
                 'data'   => null,
                 'status' => 500,
             ];
         }
+    }
+
+    /**
+     * Send cached daily metric for currency conversion active status
+     *
+     * @param AbstractGateway $gateway
+     * @param string          $eventType
+     *
+     * @return void
+     */
+    private function sendCurrencyConversionActiveMetric(AbstractGateway $gateway, string $eventType): void
+    {
+        $cacheKey = sprintf('metric_%s_%s', $eventType, $gateway->id);
+
+        if ($this->cache->getCache($cacheKey)) {
+            return;
+        }
+
+        $this->datadog->sendEvent(
+            $eventType,
+            '1',
+            null,
+            $gateway->getPaymentMethodName(),
+            [
+                'site_id'        => $this->seller->getSiteId(),
+                'environment'    => $this->store->isTestMode() ? 'homol' : 'prod',
+                'cust_id'        => $this->seller->getCustIdFromAT(),
+                'from_currency'  => $this->getWoocommerceCurrency(),
+            ]
+        );
+
+        $this->cache->setCache($cacheKey, true, 86400);
+    }
+
+    /**
+     * Send currency conversion error metric to Datadog
+     *
+     * @param string $fromCurrency
+     * @param string $toCurrency
+     * @param int    $httpStatus
+     * @param string $errorMessage
+     *
+     * @return void
+     */
+    private function sendCurrencyConversionErrorMetric(
+        string $fromCurrency,
+        string $toCurrency,
+        int $httpStatus,
+        string $errorMessage
+    ): void {
+        $this->datadog->sendEvent(
+            'mp_currency_conversion_error',
+            (string) $httpStatus,
+            $errorMessage,
+            null,
+            [
+                'site_id' => $this->seller->getSiteId(),
+                'environment' => $this->store->isTestMode() ? 'homol' : 'prod',
+                'cust_id' => $this->seller->getCustIdFromAT(),
+                'from_currency' => $fromCurrency,
+                'to_currency'   => $toCurrency,
+            ]
+        );
     }
 
     /**
