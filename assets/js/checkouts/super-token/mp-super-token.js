@@ -7,7 +7,7 @@ const CHECK_IF_SUPER_TOKEN_CLASSES_IS_LOADED_TIMEOUT = 15000;
 const waitMpSdkInstanceLoad = setInterval(() => {
   if (window.mpSdkInstance) {
     clearInterval(waitMpSdkInstanceLoad);
-    const SUPER_TOKEN_JS_VERSION = '1.0.4';
+    const SUPER_TOKEN_JS_VERSION = '1.1.2';
     const mpSdkInstance = window.mpSdkInstance;
     const mpDebounce = new MPDebounce();
     const wcEmailListener = new WCEmailListener(mpDebounce);
@@ -34,8 +34,21 @@ const waitMpSdkInstanceLoad = setInterval(() => {
       mpSuperTokenAuthenticator,
       wcEmailListener,
       mpSuperTokenPaymentMethods,
-      mpSuperTokenErrorHandler
+      mpSuperTokenErrorHandler,
+      mpSuperTokenMetrics
     );
+
+    mpSuperTokenMetrics.sendMetric('super_token_sdk_loaded', 'true', '');
+
+    if (window.mpEventHandler && typeof window.mpEventHandler.setSuperTokenDependencies === 'function') {
+      window.mpEventHandler.setSuperTokenDependencies({
+        triggerHandler: window.mpSuperTokenTriggerHandler,
+        authenticator: window.mpSuperTokenAuthenticator,
+        paymentMethods: window.mpSuperTokenPaymentMethods,
+        metrics: window.mpSuperTokenMetrics,
+        errorHandler: window.mpSuperTokenErrorHandler,
+      });
+    }
   }
 }, WAIT_MP_SDK_INSTANCE_LOAD_INTERVAL)
 

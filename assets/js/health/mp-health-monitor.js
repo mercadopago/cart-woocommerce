@@ -142,6 +142,16 @@
 
         // --- Step 6: Compare with actual rendered values ---
 
+        function elementIdentifier(el) {
+            if (el.id) return `#${el.id}`;
+            const mpClass = [...el.classList].find(c => c.startsWith('mp-'));
+            if (mpClass) return `.${mpClass}`;
+            if (el.classList[0]) return `.${el.classList[0]}`;
+            const parent = el.parentElement;
+            const idx = parent ? [...parent.children].indexOf(el) : 0;
+            return `${el.tagName.toLowerCase()}:nth-child(${idx + 1})`;
+        }
+
         const result = {};
         pluginValues.forEach((expected, el) => {
             const cs = window.getComputedStyle(el);
@@ -182,16 +192,6 @@
         });
 
         return result;
-    }
-
-    function elementIdentifier(el) {
-        if (el.id) return `#${el.id}`;
-        const mpClass = [...el.classList].find(c => c.startsWith('mp-'));
-        if (mpClass) return `.${mpClass}`;
-        if (el.classList[0]) return `.${el.classList[0]}`;
-        const parent = el.parentElement;
-        const idx = parent ? [...parent.children].indexOf(el) : 0;
-        return `${el.tagName.toLowerCase()}:nth-child(${idx + 1})`;
     }
 
     /**
@@ -238,21 +238,14 @@
      * for gateways that are not active on the current page.
      * Rate-limited to one metric per browser session via sessionStorage.
      */
-    function checkCssConflicts() {
-        const SESSION_KEY = 'mp_health_css_conflict_sent';
-
-        if (sessionStorage.getItem(SESSION_KEY)) {
+    function checkCssConflicts(selectors, sessionKey) {
+        if (sessionStorage.getItem(sessionKey)) {
             return;
         }
 
-        const CRITICAL_ELEMENTS = [
-            '.mp-wallet-button-container',
-            '.mp-super-token-payment-methods-list',
-        ];
-
         const anomalies = [];
 
-        CRITICAL_ELEMENTS.forEach(function (item) {
+        selectors.forEach(function (item) {
             const el = document.querySelector(item);
 
             if (!el) {
@@ -278,7 +271,7 @@
             )
         );
 
-        sessionStorage.setItem(SESSION_KEY, '1');
+        sessionStorage.setItem(sessionKey, '1');
     }
 
     /**
@@ -331,10 +324,11 @@
         const scripts = () => {
             setTimeout(() => {
                 try {
-                    checkCssConflicts();
+                    checkCssConflicts(['.mp-wallet-button-container'], 'mp_health_css_conflict_wallet_sent');
                     checkScriptGlobals();
                 } catch (e) {
                     // Never propagate errors — health checks must not interfere with checkout
+                    sendMetric('mp_health_check_error', buildPayload('error', e && e.message ? e.message : 'unknown'));
                 }
             }, TIME_TO_MELIDATA_LOAD);
         }
@@ -344,7 +338,17 @@
         } else {
             scripts();
         }
+
+        document.addEventListener('supertoken_loaded', function () {
+            try {
+                checkCssConflicts(['.mp-super-token-payment-methods-list'], 'mp_health_css_conflict_supertoken_sent');
+            } catch (e) {
+                // Never propagate errors — health checks must not interfere with checkout
+                sendMetric('mp_health_check_error', buildPayload('error', e && e.message ? e.message : 'unknown'));
+            }
+        }, { once: true });
     } catch (e) {
         // Never propagate errors — health checks must not interfere with checkout
+        sendMetric('mp_health_monitor_error', buildPayload('error', e && e.message ? e.message : 'unknown'));
     }
 })();

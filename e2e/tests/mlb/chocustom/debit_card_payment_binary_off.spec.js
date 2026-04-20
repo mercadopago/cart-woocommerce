@@ -2,6 +2,9 @@ import { test } from "@playwright/test";
 import { mlb } from "../../../data/meli_sites";
 import { rejectedPaymentTest, successfulPaymentTest, emptyFieldsPaymentTest } from "../../../flows/chocustom";
 
+// Known bug: debit card checkout displays the installments selector, but debit
+// cards can only be paid in a single installment (a vista). The selector should
+// be hidden or disabled for debit payment_type_id. Does not block the payment.
 const { shop_url, debit_card_scenarios, guestUserMLB } = mlb;
 const { APPROVED, PENDING, REJECTED, EMPTY_FIELDS } = debit_card_scenarios;
 

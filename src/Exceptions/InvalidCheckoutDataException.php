@@ -11,8 +11,16 @@ if (!defined('ABSPATH')) {
 
 class InvalidCheckoutDataException extends Exception
 {
-    public function __construct($message = "Invalid checkout data", $code = 0, ?Throwable $previous = null)
+    private array $details;
+
+    public function __construct($message = "Invalid checkout data", $code = 0, ?Throwable $previous = null, array $details = [])
     {
         parent::__construct($message, $code, $previous);
+        $this->details = $details;
+    }
+
+    public function getDetails(): array
+    {
+        return $this->details;
     }
 }

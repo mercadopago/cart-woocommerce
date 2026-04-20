@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.7.16
+Stable tag: 8.7.18
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,18 +134,60 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.7.17 (25/03/2026) =
+= v8.7.18 (16/04/2026) =
 * Added
-- Add monitoring to detect if files in the assets folder have been modified
-- Add monitoring to detect if our scripts have been removed via dequeue
-- Add monitoring to detect if expected window variables are present
-- Add monitoring to detect if certain styles have been overridden
-- Add melidataReady promise to ensure tracking loading events are dispatched only after melidata client is ready
-- Add melidata load delay metrics for loading start and end events
+- Add ESC (Encrypted Security Code) flow for credit and debit cards to reduce unnecessary CVV prompts and increase payment approvals
+- Add lazy getter pattern (getSuperTokenDeps) in MPEventHandler for Fast Payment dependency injection, replacing direct window.* access
+- Add Datadog metrics for currency conversion API error tracking and active conversion monitoring
+- Add granular error details to woo_checkout_error Datadog metric
+- Add Datadog metric to detect null amount in currency conversion flow
+- Add metric alert in MPEventHandler when Fast Payment dependencies are incomplete: MP_SUPER_TOKEN_DEPENDENCIES_NOT_SET
+- Add metric alert in card form when Fast Payment trigger handler is missing: mp_cardform_trigger_handler_missing
+
+* Changed
+- Pre-download 8 popular WooCommerce themes (astra, kadence, oceanwp, blocksy, generatepress, neve, hestia, storefront)
+- Add THEME parameter to select active theme on environment setup (`make up THEME=kadence`)
+- Auto-reset when theme changes between runs (tracked in .current-site)
+- Document top 5 themes per LATAM country in README
+- Refactor E2E test suite with per-country auto-configuration (MLB, MLA, MLM, MCO, MLC, MLU, MPE)
+- Add global-setup that auto-resets Docker store when country changes and configures MP plugin
+- Add support for both Classic and Blocks checkout modes via `CHECKOUT=classic|blocks` env var
+- Add credential validation with clear error messages and admin URL for onboarding
+- Add site-guard helper to skip tests when store country doesn't match target
+- Add CORS fast-fail detection (~5s) for MP sandbox PCI migration issues
+- Add E2E Guardian agent that suggests relevant tests based on git diff on push
+- Simplify Checkout Pro and Credits tests to verify redirect only (external checkout is not plugin scope)
+- Update all flows to support both Classic and Blocks checkout selectors
+- Enable 4 parallel Playwright workers for faster local execution
+- Reduce global test timeout from 120s to 60s with early validation for missing card data
+- Add per-country npm scripts (`test:mlb:classic`, `test:mlb:blocks`, etc.)
+- Remove obsolete login/2FA/credits user configs (no longer needed after redirect-only approach)
+- Complete README rewrite with onboarding guide, troubleshooting, and credential setup
+- Remove unused `Logs` dependency from `Currency` helper
 
 * Fixed
-- Fix melidata client not loading on stores using Fluid Checkout plugin
-- Fix missing order key authorization check on PIX QR code image endpoint to prevent unauthorized access
-- Fix status sync metabox breaking order page when payment data is missing or invalid
+- Fix `_site_id_v1` not set in Docker causing ticket/boleto address form not to render for MLB
+- Fix WC state codes for CL (`CL-RM`), CO (`CO-DC`), UY (`UY-MO`) in billing address data
+- Fix hidden billing fields (postcode, state) for countries where WC locale hides them (Chile)
+- Fix PSE document field name (`docNumber` → `doc_number`) and flow for Classic checkout
+- Fix MCO binary_on card key (`masterMCO` → `master`)
+- Fix MLU ticket doc type case sensitivity (`Otro` vs `OTRO`) with uppercase fallback
+- Fix MPE ticket spec using invalid spread operator for guest user data
+- Fix Yape and PSE flows for Classic checkout (label click + `#place_order`)
+- Fix Blocks checkout rendering empty page (self-closing tag → full inner blocks structure)
+- Fix `wp-env.js` to work inside Docker container (detect `INSIDE_CONTAINER`)
+- Fix MP checkout URL regex to match all country TLDs (`.cl`, `.com.br`, `.com.ar`)
+- Fix postcode field cleared by WC AJAX after country change
+- Suppress non-fatal wp-cli stderr during global setup
+- Add skeleton loader on payment method details while verifying CVV requirement via second API call
+- Add generation counter pattern to prevent stale ESC responses on rapid payment method switches
+- Add skip metric with categorized reason when ESC payment method fetch is not executed in handleWithEscPaymentMethod
+- Fix issuer select (Banco Emisor) losing visual styles (border, border-radius, height, font) in production
+- Skip caching error responses from `/currency_conversions/search` API to allow retries and consistent error metric reporting
+- Fix display of commission in checkout blocks.
+- Fix fast payments flow CSS conflict detection never triggering
+- Fix single sessionStorage key (`mp_health_css_conflict_sent`) blocking conflict detection of Wallet Button and fast payments flow in the same session
+- Fix `waitForMelidata` throwing `TypeError` when `window.melidataReady` is truthy but not-thenable
+- Fix return null on stale ESC generation and guard mountSecurityCodeField call
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

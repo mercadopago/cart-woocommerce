@@ -1,7 +1,7 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "8.7.17",
+  "version": "8.7.18",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -42,6 +42,7 @@
     "chokidar-cli": "^3.0.0",
     "css-minimizer-webpack-plugin": "^7.0.0",
     "eslint": "^8.57.1",
+    "eslint-plugin-jsdoc": "^46.10.1",
     "eslint-plugin-react": "7.37.5",
     "globals": "^15.15.0",
     "jest": "^30.2.0",

@@ -1,5 +1,6 @@
-/* globals wc_mercadopago_supertoken_bundle_params, Intl, MPCheckoutFieldsDispatcher, MPSuperTokenErrorCodes */
+/* globals wc_mercadopago_supertoken_bundle_params, Intl, MPCheckoutFieldsDispatcher, MPSuperTokenErrorCodes, CheckoutPage */
 /* eslint-disable no-unused-vars */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 class MPSuperTokenPaymentMethods {
     SUPER_TOKEN_CHECKOUT_TYPE = 'super_token';
     CUSTOM_CHECKOUT_TYPE = 'custom';
@@ -117,6 +118,7 @@ class MPSuperTokenPaymentMethods {
     PAYMENT_METHODS_ORDER_TYPE_CARDS_FIRST = 'cards_first';
     PAYMENT_METHODS_ORDER_TYPE_ACCOUNT_MONEY_FIRST = 'account_money_first';
     MAX_ATTEMPTS_BY_ERROR_CODE = 3;
+    GET_PAYMENT_METHOD_TIMEOUT_MS = 5000;
 
     // Attributes
     paymentMethods = [];
@@ -129,6 +131,7 @@ class MPSuperTokenPaymentMethods {
     lastPaymentMethodChoosen = null; // Should not be resetted
     attemptsByErrorCode = {};
     isRendering = false;
+    escSelectionGeneration = 0;
 
     // Dependencies
     mpSdkInstance = null;
@@ -139,6 +142,12 @@ class MPSuperTokenPaymentMethods {
         this.mpSuperTokenMetrics = mpSuperTokenMetrics;
     }
 
+    escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = String(str);
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     reset() {
         this.isRendering = false;
         this.paymentMethods = [];
@@ -146,6 +155,7 @@ class MPSuperTokenPaymentMethods {
         this.securityCodeReferences = {};
         this.activePaymentMethod = null;
 
+        this.setCheckoutType(this.CUSTOM_CHECKOUT_TYPE);
         this.unmountActiveSecurityCodeInstance();
         this.hideAllPaymentMethodDetails();
         this.restoreCustomCheckoutEntireElementOriginalId();
@@ -248,9 +258,11 @@ class MPSuperTokenPaymentMethods {
           return this.SUBMIT_SUPER_TOKEN_GENERIC_ERROR_TEXT;
       }
 
-      return this.shouldAllowRetry(this.getAttemptByErrorCode(errorCode))
-        ? errorConfig.withRetry
-        : errorConfig.withoutRetry;
+      const allowRetry = this.shouldAllowRetry(this.getAttemptByErrorCode(errorCode));
+      if (!allowRetry) {
+          this.mpSuperTokenMetrics.sendMetric('super_token_retry_limit_reached', errorCode, '');
+      }
+      return allowRetry ? errorConfig.withRetry : errorConfig.withoutRetry;
     }
 
     showSuperTokenError(errorMessage) {
@@ -421,6 +433,7 @@ class MPSuperTokenPaymentMethods {
 
       const paymentMethod = this.getSelectedPreloadedPaymentMethodFromActivePaymentMethods();
       if (!paymentMethod) {
+          this.mpSuperTokenMetrics.sendMetric('super_token_preloaded_method_not_found', 'true', '');
           return;
       }
 
@@ -433,7 +446,10 @@ class MPSuperTokenPaymentMethods {
     }
 
     setCheckoutType(type) {
-        document.querySelector(this.CHECKOUT_TYPE_SELECTOR).value = type;
+        const element = document.querySelector(this.CHECKOUT_TYPE_SELECTOR);
+        if (!element) return;
+
+        element.value = type;
     }
 
     setPaymentMethodChildrenAriaVisible(paymentMethodElement) {
@@ -568,12 +584,14 @@ class MPSuperTokenPaymentMethods {
         document.dispatchEvent(new CustomEvent(this.SELECTED_SUPERTOKEN_METHOD_EVENT, { detail: { payment_method: formattedPaymentMethodName } }))
     }
 
-    onSelectSuperTokenPaymentMethod(paymentMethodElement, paymentMethod) {
+    async onSelectSuperTokenPaymentMethod(paymentMethodElement, paymentMethod) {
         if (this.paymentMethodAlreadySelected(paymentMethod)) {
             return;
         }
 
+        this.mpSuperTokenMetrics.sendMetric('super_token_withdraw', 'false', '');
         this.emitEventFromSelectPaymentMethod(paymentMethod);
+        this.mpSuperTokenMetrics.registerSelectPaymentMethod(paymentMethod?.type);
         this.storeActivePaymentMethod(paymentMethod);
         this.hideAllPaymentMethodDetails();
         this.closeAccordion();
@@ -582,8 +600,12 @@ class MPSuperTokenPaymentMethods {
         this.fillCardTokenFields(paymentMethod);
         this.setCheckoutType(this.SUPER_TOKEN_CHECKOUT_TYPE);
         this.showPaymentMethodDetails(paymentMethodElement);
-        this.mountSecurityCodeField(paymentMethod);
-        this.handleInstallmentsWithoutFeePillVisibility(paymentMethod);
+        this.handleInstallmentsWithoutFeePillVisibility();
+
+        const verifiedPaymentMethod = await this.handleWithEscPaymentMethod(paymentMethod, paymentMethodElement);
+        if (verifiedPaymentMethod !== null) {
+            this.mountSecurityCodeField(verifiedPaymentMethod);
+        }
 
         setTimeout(() => {
           document.dispatchEvent(
@@ -597,6 +619,7 @@ class MPSuperTokenPaymentMethods {
             return;
         }
 
+        this.mpSuperTokenMetrics.sendMetric('super_token_withdraw', 'true', '');
         this.emitEventFromSelectPaymentMethod({ id: this.NEW_CARD_TYPE });
         this.storeActivePaymentMethod({ id: this.NEW_CARD_TYPE });
         this.deselectAllPaymentMethods();
@@ -604,7 +627,7 @@ class MPSuperTokenPaymentMethods {
         this.unmountActiveSecurityCodeInstance();
         this.selectNewCardAccordion();
         this.setCheckoutType(this.CUSTOM_CHECKOUT_TYPE);
-        this.handleInstallmentsWithoutFeePillVisibility({ type: 'credit_card' });
+        this.handleInstallmentsWithoutFeePillVisibility();
 
         setTimeout(() => {
             this.unmountCardForm();
@@ -757,14 +780,14 @@ class MPSuperTokenPaymentMethods {
             '12': 'dec'
         };
 
-        const [_, month, day] = dateParts;
+        const [, month, day] = dateParts;
         const monthKey = monthsMapping[month];
         const monthText = (wc_mercadopago_supertoken_bundle_params.months_abbreviated &&
                           wc_mercadopago_supertoken_bundle_params.months_abbreviated[monthKey])
                           ? wc_mercadopago_supertoken_bundle_params.months_abbreviated[monthKey]
                           : month;
 
-        return `${parseInt(day)}/${monthText}`;
+        return `${parseInt(day, 10)}/${monthText}`;
     }
 
     formatCurrency(value) {
@@ -894,26 +917,182 @@ class MPSuperTokenPaymentMethods {
         return securityCodeSettings?.mode === 'mandatory';
     }
 
-    addDropdownEventListener(dropdownElement) {
-        dropdownElement?.addEventListener('mp-open-dropdown', () => {
-            const checkoutContainer = document.querySelector(this.CHECKOUT_CUSTOM_CONTAINER_SELECTOR)
+    shouldFetchPaymentMethodAgain(paymentMethod, paymentMethodElement) {
+        if (!paymentMethod || !paymentMethodElement) throw new Error(MPSuperTokenErrorCodes.PAYMENT_METHOD_NOT_EXISTS);
 
-            if (!checkoutContainer) {
-                return;
+        if (paymentMethodElement.hasAttribute('data-cvv-is-required-double-check')) return false;
+
+        return (this.isCreditCard(paymentMethod) || this.isDebitCard(paymentMethod))
+            && this.securityCodeIsRequired(paymentMethod.security_code_settings)
+            && paymentMethod.has_esc === true;
+    }
+
+    getSkipReason(paymentMethod, paymentMethodElement) {
+        if (paymentMethodElement && paymentMethodElement.hasAttribute('data-cvv-is-required-double-check')) {
+            return 'already_checked';
+        }
+
+        if (!this.isCreditCard(paymentMethod) && !this.isDebitCard(paymentMethod)) {
+            return 'not_card';
+        }
+
+        if (!this.securityCodeIsRequired(paymentMethod?.security_code_settings)) {
+            return 'security_code_not_required';
+        }
+
+        if (paymentMethod?.has_esc !== true) {
+            return 'esc_disabled';
+        }
+
+        return 'unknown';
+    }
+
+    hasMissingEsc(paymentMethod) {
+        return (this.isCreditCard(paymentMethod) || this.isDebitCard(paymentMethod))
+            && this.securityCodeIsRequired(paymentMethod?.security_code_settings)
+            && typeof paymentMethod?.has_esc === 'undefined';
+    }
+
+    getPaymentMethodElementByIdentifier(paymentMethod) {
+        return document.getElementById(this.paymentMethodIdentifier(paymentMethod));
+    }
+
+    timeoutRequest(errorCode, timeoutMs = 5000) {
+        return new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(errorCode)), timeoutMs)
+        );
+    }
+
+    parseMsToSeconds(milliseconds) {
+        return (milliseconds / 1000).toFixed(2);
+    }
+
+    async fetchPaymentMethod(paymentMethod, paymentMethodElement) {
+        const currentPaymentMethodIdentifier = this.paymentMethodIdentifier(paymentMethod);
+        
+        const REQUEST_START_TIME = Date.now();
+        const result = await Promise.race([
+            this.mpSdkInstance.getAccountPaymentMethod(this.getSuperToken(), paymentMethod.token),
+            this.timeoutRequest(MPSuperTokenErrorCodes.GET_PAYMENT_METHOD_TIMEOUT_ERROR, this.GET_PAYMENT_METHOD_TIMEOUT_MS)
+        ]);
+
+        const updatedPaymentMethod = result?.data;
+
+        if (!updatedPaymentMethod) throw new Error(MPSuperTokenErrorCodes.FETCH_PAYMENT_METHOD_NOT_FOUND);
+
+        paymentMethodElement.setAttribute('data-cvv-is-required-double-check', true);
+
+        this.mpSuperTokenMetrics.getPaymentMethodLoadingTime(
+            currentPaymentMethodIdentifier,
+            this.parseMsToSeconds(Date.now() - REQUEST_START_TIME)
+        );
+
+        return updatedPaymentMethod;
+    }
+
+    updatePaymentMethodInList(updatedPaymentMethod) {
+        if (!this.paymentMethods) {
+            throw new Error(MPSuperTokenErrorCodes.UPDATE_PAYMENT_METHOD_WITH_ESC_FAILED_EMPTY_METHODS);
+        }
+
+        const updatedPaymentMethodList = this.paymentMethods
+            .map((pm) => this
+                .paymentMethodIdentifier(pm) === this.paymentMethodIdentifier(updatedPaymentMethod)
+                ? updatedPaymentMethod : pm
+            );
+
+        this.paymentMethods = updatedPaymentMethodList;
+    }
+
+    showDetailsSkeleton(paymentMethodElement) {
+        const wrapper = paymentMethodElement.querySelector('.mp-super-token-method-details-wrapper');
+        if (!wrapper) return;
+
+        wrapper.classList.add('mp-super-token-method-details-wrapper--loading');
+
+        const skeleton = document.createElement('div');
+        skeleton.classList.add('mp-super-token-method-details-skeleton');
+        wrapper.appendChild(skeleton);
+    }
+
+    hideDetailsSkeleton(paymentMethodElement) {
+        const wrapper = paymentMethodElement.querySelector('.mp-super-token-method-details-wrapper');
+        if (!wrapper) return;
+
+        wrapper.classList.remove('mp-super-token-method-details-wrapper--loading');
+
+        const skeleton = wrapper.querySelector('.mp-super-token-method-details-skeleton');
+        if (skeleton) skeleton.remove();
+    }
+
+    removeSecurityCodeField(paymentMethod) {
+        const securityCodeContainer = document.getElementById(`mp-super-token-security-code-container-${paymentMethod.token}`);
+
+        if (securityCodeContainer) {
+            securityCodeContainer.remove();
+        }
+    }
+
+    async handleWithEscPaymentMethod(paymentMethod, paymentMethodElement) {
+        try {
+            if (this.shouldFetchPaymentMethodAgain(paymentMethod, paymentMethodElement)) {
+                this.showDetailsSkeleton(paymentMethodElement);
+                
+                const currentGeneration = ++this.escSelectionGeneration;
+                const updatedPaymentMethod = await this.fetchPaymentMethod(paymentMethod, paymentMethodElement);
+
+                if (currentGeneration !== this.escSelectionGeneration) {
+                    this.hideDetailsSkeleton(paymentMethodElement);
+                    return null;
+                }
+
+                this.updatePaymentMethodInList(updatedPaymentMethod);
+                this.storeActivePaymentMethod(updatedPaymentMethod);
+
+                if (!this.securityCodeIsRequired(updatedPaymentMethod.security_code_settings)) {
+                    this.removeSecurityCodeField(updatedPaymentMethod);
+                }
+                
+                this.mpSuperTokenMetrics
+                    .fetchPaymentMethodSuccess(
+                        this.paymentMethodIdentifier(updatedPaymentMethod),
+                        updatedPaymentMethod.security_code_settings
+                            ?   this.securityCodeIsRequired(updatedPaymentMethod.security_code_settings)
+                            :   null
+                    );
+
+                this.hideDetailsSkeleton(paymentMethodElement);
+
+                return updatedPaymentMethod;
+            } else if (this.hasMissingEsc(paymentMethod)) {
+                this.mpSuperTokenMetrics.hasEscNotExists(this.paymentMethodIdentifier(paymentMethod));
+
+                return paymentMethod;
+            }  else {
+                this.mpSuperTokenMetrics
+                    .fetchPaymentMethodSkipped(
+                        this.paymentMethodIdentifier(paymentMethod),
+                        this.getSkipReason(paymentMethod, paymentMethodElement)
+                    );
+
+                return paymentMethod;
+            }
+        } catch (error) {
+            this.hideDetailsSkeleton(paymentMethodElement);
+
+            if (error?.message === MPSuperTokenErrorCodes.GET_PAYMENT_METHOD_TIMEOUT_ERROR) {
+                this.mpSuperTokenMetrics.getPaymentMethodLoadingTime(
+                    this.paymentMethodIdentifier(paymentMethod),
+                    this.parseMsToSeconds(this.GET_PAYMENT_METHOD_TIMEOUT_MS)
+                );
+
+                this.mpSuperTokenMetrics.fetchPaymentMethodTimeout(this.paymentMethodIdentifier(paymentMethod));
             }
 
-            checkoutContainer.style.zIndex = '9999 !important';
-        });
+            this.mpSuperTokenMetrics.getPaymentMethodFail(error, this.paymentMethodIdentifier(paymentMethod));
 
-        dropdownElement?.addEventListener('mp-close-dropdown', () => {
-            const checkoutContainer = document.querySelector(this.CHECKOUT_CUSTOM_CONTAINER_SELECTOR)
-
-            if (!checkoutContainer) {
-                return;
-            }
-
-            checkoutContainer.style.zIndex = '1';
-        });
+            return paymentMethod;
+        }
     }
 
     buildSecurityCodeInnerHTML(paymentMethod) {
@@ -977,7 +1156,7 @@ class MPSuperTokenPaymentMethods {
         }, {});
 
         if (!installment?.consumer_credits?.conditions) {
-            return '';
+            throw new Error('no_installment_conditions');
         }
 
         const siteId = this.getSiteId();
@@ -987,18 +1166,18 @@ class MPSuperTokenPaymentMethods {
                 const parts = [];
 
                 if (conditions.tem && conditions.tea) {
-                    parts.push(`${this.INTEREST_RATE_MLB_TEXT}: ${conditions.tem} ${this.PER_MONTH} ${conditions.tea} ${this.PER_YEAR}`);
+                    parts.push(`${this.INTEREST_RATE_MLB_TEXT}: ${this.escapeHtml(conditions.tem)} ${this.PER_MONTH} ${this.escapeHtml(conditions.tea)} ${this.PER_YEAR}`);
                 }
 
                 if (conditions.cetm && conditions.ceta) {
-                    parts.push(`${this.EFFECTIVE_TOTAL_COST_MLB_TEXT}: ${conditions.cetm} ${this.PER_MONTH} ${conditions.ceta} ${this.PER_YEAR}`);
+                    parts.push(`${this.EFFECTIVE_TOTAL_COST_MLB_TEXT}: ${this.escapeHtml(conditions.cetm)} ${this.PER_MONTH} ${this.escapeHtml(conditions.ceta)} ${this.PER_YEAR}`);
                 }
 
                 if (conditions.iof) {
                     const iofAmount = installment.installment_iof_amount || 0;
                     if (iofAmount > 0) {
                       const iofAmountFormatted = iofAmount.toFixed(2).replace('.', ',');
-                      parts.push(`${this.IOF_MLB_TEXT}: R$ ${iofAmountFormatted} (${conditions.iof})`);
+                      parts.push(`${this.IOF_MLB_TEXT}: R$ ${iofAmountFormatted} (${this.escapeHtml(conditions.iof)})`);
                     }
                 }
 
@@ -1011,11 +1190,11 @@ class MPSuperTokenPaymentMethods {
                 const mexParts = [];
 
                 if (conditions.cat) {
-                    mexParts.push(`${this.CAT_MLM_TEXT}: ${conditions.cat} ${this.NO_IVA_TEXT}`);
+                    mexParts.push(`${this.CAT_MLM_TEXT}: ${this.escapeHtml(conditions.cat)} ${this.NO_IVA_TEXT}`);
                 }
 
                 if (conditions.tna) {
-                    mexParts.push(`${this.TNA_MLM_TEXT}: ${conditions.tna}`);
+                    mexParts.push(`${this.TNA_MLM_TEXT}: ${this.escapeHtml(conditions.tna)}`);
                 }
 
                 if (mexParts.length > 0) {
@@ -1029,15 +1208,15 @@ class MPSuperTokenPaymentMethods {
                 const argParts = [];
 
                 if (conditions.cftea) {
-                    argParts.push(`<strong>${this.CFTEA_MLA_TEXT}: ${conditions.cftea}</strong>`);
+                    argParts.push(`<strong>${this.CFTEA_MLA_TEXT}: ${this.escapeHtml(conditions.cftea)}</strong>`);
                 }
 
                 if (conditions.tna) {
-                    argParts.push(`${this.TNA_MLA_TEXT}: ${conditions.tna}`);
+                    argParts.push(`${this.TNA_MLA_TEXT}: ${this.escapeHtml(conditions.tna)}`);
                 }
 
                 if (conditions.tea) {
-                    argParts.push(`${this.TEA_MLA_TEXT}: ${conditions.tea}`);
+                    argParts.push(`${this.TEA_MLA_TEXT}: ${this.escapeHtml(conditions.tea)}`);
                 }
 
                 if (argParts.length > 0) {
@@ -1053,43 +1232,65 @@ class MPSuperTokenPaymentMethods {
             return '';
         }
 
-        const section = document.createElement('section');
-        section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS);
-        section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
+        try {
+            const section = document.createElement('section');
+            section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS);
+            section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
 
-        const installments = paymentMethod?.installments?.map(installment => ({
-            value: `${installment.installments}`,
-            title: this.buildInstallmentTitle(installment),
-        }));
+            const installments = paymentMethod?.installments?.map(installment => ({
+                value: `${installment.installments}`,
+                title: this.buildInstallmentTitle(installment),
+            })) || [];
 
-        section.innerHTML = `
-            <andes-dropdown
-                label="${this.INSTALLMENTS_INPUT_TITLE}"
-                placeholder="${this.INSTALLMENTS_PLACEHOLDER}"
-                required-message="${this.INSTALLMENTS_REQUIRED_MESSAGE}"
-                items='${JSON.stringify(installments || [])}'
-                site-id="${this.getSiteId()}"
-            ></andes-dropdown>
+            section.innerHTML = `
+                <div class="mp-checkout-custom-installments-select-container">
+                    <label for="mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}" class="mp-input-label">
+                        ${this.INSTALLMENTS_INPUT_TITLE}
+                    </label>
+                    <select
+                        data-checkout="installments"
+                        name="installments"
+                        id="mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}"
+                        class="mp-custom-checkout-select-input"
+                    >
+                        <option disabled selected value="">${this.INSTALLMENTS_PLACEHOLDER}</option>
+                        ${installments.map(installment => `<option value="${this.escapeHtml(installment.value)}">${this.escapeHtml(installment.title)}</option>`).join('')}
+                    </select>
+                    <input-helper
+                        isVisible=false
+                        type="error"
+                        message="${this.INSTALLMENTS_REQUIRED_MESSAGE}"
+                        input-id="mp-super-token-installments-error-${this.paymentMethodIdentifier(paymentMethod)}"
+                    >
+                    </input-helper>
+                </div>
 
-            <div class="mp-consumer-credits-due-date" id="mp-consumer-credits-due-date" style="display: none;">
-            </div>
+                <div id="mp-consumer-credits-hint" style="display: none;"></div>
 
-            <div class="mp-consumer-credits-debit-auto-text" id="mp-consumer-credits-debit-auto-text" style="display: none; text-align: center;"></div>
+                <div class="mp-consumer-credits-due-date" id="mp-consumer-credits-due-date" style="display: none;">
+                </div>
 
-            <div id="mp-consumer-credits-legal-text" style="display: none;"></div>
-        `;
+                <div class="mp-consumer-credits-debit-auto-text" id="mp-consumer-credits-debit-auto-text" style="display: none; text-align: center;"></div>
 
-        return section.outerHTML;
+                <div id="mp-consumer-credits-legal-text" style="display: none;"></div>
+            `;
+
+            this.mpSuperTokenMetrics.renderConsumerCreditsDetailsInnerHTML(true);
+            return section.outerHTML;
+        } catch (_error) {
+            this.mpSuperTokenMetrics.renderConsumerCreditsDetailsInnerHTML(false);
+            return '';
+        }
     }
 
     buildConsumerCreditsDetailsDueDate(paymentMethod) {
         if (!this.isConsumerCredits(paymentMethod)) {
-            return '';
+            throw new Error('Payment method is not consumer credits');
         }
 
         const element = document.getElementById('mp-consumer-credits-due-date');
         if (!element) {
-            return;
+            throw new Error('Consumer credits due date element not found');
         }
 
         element.innerHTML = `
@@ -1097,8 +1298,6 @@ class MPSuperTokenPaymentMethods {
             <b style="font-weight: 600 !important;">${this.formatDateToDayAndMonth(paymentMethod.next_due_date)}</b>.
             </span>
         `;
-
-        return element.outerHTML;
     }
 
     buildCreditCardDetailsInnerHTML(paymentMethod) {
@@ -1110,16 +1309,16 @@ class MPSuperTokenPaymentMethods {
         section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS);
         section.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
 
-        if (this.isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
-            const defaultOption = {
-              value: '',
-              title: this.INSTALLMENTS_PLACEHOLDER,
-              disabled: true,
-              selected: true,
-            };
-            const installments = [defaultOption, ...this.normalizeInstallments(paymentMethod.installments)];
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('mp-super-token-method-details-wrapper');
 
-            section.innerHTML = `
+        if (this.isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
+            const installments = this.normalizeInstallments(paymentMethod.installments).map((installment, index) => ({
+              ...installment,
+              selected: index === 0,
+            }));
+
+            wrapper.innerHTML = `
               <div class="mp-checkout-custom-installments-select-container">
                 <label for="mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}" class="mp-input-label">
                   ${this.INSTALLMENTS_INPUT_TITLE}
@@ -1130,7 +1329,7 @@ class MPSuperTokenPaymentMethods {
                   id="mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}"
                   class="mp-custom-checkout-select-input"
                 >
-                  ${installments.map(installment => `<option ${installment.disabled ? 'disabled' : ''} ${installment.selected ? 'selected' : ''} value="${installment.value}">${installment.title}</option>`).join('')}
+                  ${installments.map(installment => `<option ${installment.selected ? 'selected' : ''} value="${this.escapeHtml(installment.value)}">${this.escapeHtml(installment.title)}</option>`).join('')}
                 </select>
                 <input-helper
                   isVisible=false
@@ -1144,7 +1343,9 @@ class MPSuperTokenPaymentMethods {
             `;
         }
 
-        section.innerHTML += this.buildSecurityCodeInnerHTML(paymentMethod);
+        wrapper.innerHTML += this.buildSecurityCodeInnerHTML(paymentMethod);
+
+        section.appendChild(wrapper);
 
         return section.outerHTML;
     }
@@ -1276,7 +1477,10 @@ class MPSuperTokenPaymentMethods {
     async updateSecurityCode() {
         const paymentMethod = this.activePaymentMethod;
 
-        if (!paymentMethod || !this.securityCodeIsRequired(paymentMethod?.security_code_settings)) {
+        if (
+            !paymentMethod
+            || !this.securityCodeIsRequired(paymentMethod?.security_code_settings)
+        ) {
             return;
         }
 
@@ -1371,6 +1575,7 @@ class MPSuperTokenPaymentMethods {
                             settings: paymentMethod?.security_code_settings
                         })
 
+                        this.mpSuperTokenMetrics.sendMetric('super_token_cvv_field_ready', 'true', '');
                         this.storeActiveSecurityCodeInstance(securityCodeField);
 
                         if (this.securityCodeIsRequired(paymentMethod?.security_code_settings)) {
@@ -1399,6 +1604,7 @@ class MPSuperTokenPaymentMethods {
                                 );
                             }
 
+                            this.mpSuperTokenMetrics.sendMetric('super_token_cvv_filled', 'true', '');
                             this.toggleSecurityCodeErrorMessage('', paymentMethod);
                         } else {
                           this.setSecurityCodeReferenceFalse(paymentMethod);
@@ -1412,7 +1618,7 @@ class MPSuperTokenPaymentMethods {
         }, 200)
     }
 
-    handleInstallmentsWithoutFeePillVisibility(selectedPaymentMethod) {
+    handleInstallmentsWithoutFeePillVisibility() {
         const allPaymentMethods = document.querySelectorAll('.mp-super-token-payment-method');
 
         allPaymentMethods.forEach(paymentMethodElement => {
@@ -1482,8 +1688,6 @@ class MPSuperTokenPaymentMethods {
         if (this.isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
             const dropdownElement = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}`);
 
-            this.addDropdownEventListener(dropdownElement);
-
             dropdownElement?.addEventListener('change', (event) => {
                 const selectedItem = event.target.value;
                 if (selectedItem) {
@@ -1498,6 +1702,7 @@ class MPSuperTokenPaymentMethods {
                         );
                     }
 
+                    this.mpSuperTokenMetrics.installmentsFilled('credit_card');
                     this.setInstallmentsErrorState(paymentMethod, false);
                     CheckoutPage.updateTaxInfoForSelect(selectedItem, `mp-super-token-installments-tax-info-${this.paymentMethodIdentifier(paymentMethod)}`, paymentMethod?.installments);
 
@@ -1518,11 +1723,26 @@ class MPSuperTokenPaymentMethods {
                     this.setInstallmentsErrorState(paymentMethod, true);
                 }
             });
+
+            if (dropdownElement?.value) {
+                const cardInstallments = document.getElementById('cardInstallments');
+                if (cardInstallments) {
+                    cardInstallments.value = dropdownElement.value;
+                }
+                CheckoutPage.updateTaxInfoForSelect(dropdownElement.value, `mp-super-token-installments-tax-info-${this.paymentMethodIdentifier(paymentMethod)}`, paymentMethod?.installments);
+            }
         }
 
         if (this.isConsumerCredits(paymentMethod) && paymentMethod?.installments?.length) {
-            const dropdownElement = paymentMethodElement.querySelector('andes-dropdown');
-            this.addDropdownEventListener(dropdownElement);
+            const selectElement = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}`);
+
+            selectElement?.addEventListener('blur', () => {
+                if (this.installmentsWasSelected(paymentMethod)) {
+                    this.setInstallmentsErrorState(paymentMethod, false);
+                } else {
+                    this.setInstallmentsErrorState(paymentMethod, true);
+                }
+            });
 
             const parameters = {
                 fastPaymentToken: this.getSuperToken(),
@@ -1533,38 +1753,82 @@ class MPSuperTokenPaymentMethods {
                     textSize: "13px",
                     linkColor: "#3483FA"
                 }
-            }
+            };
 
             this.mpSdkInstance.renderCreditsContract("mp-consumer-credits-legal-text", parameters)
             .then((contractController) => {
-              dropdownElement?.addEventListener('change', (event) => {
-                  if (this.getSiteId() === this.BRAZIL_ACCRONYM) {
-                      this.buildMLBConsumerCreditsLegalText();
-                      document.getElementById('mp-consumer-credits-debit-auto-text').style.display = 'block';
-                  };
-                  const selectedItem = event?.detail;
-                  if (selectedItem && selectedItem?.value) {
-                      dropdownElement.value = selectedItem.value;
+                this.mpSuperTokenMetrics.renderCreditsContract(true);
 
-                      document.getElementById('cardInstallments').value = parseInt(selectedItem.value);
+                const legalTextElement = document.getElementById('mp-consumer-credits-legal-text');
+                legalTextElement?.addEventListener('click', (event) => {
+                    if (event.target.tagName === 'A') {
+                        this.mpSuperTokenMetrics.registerOpenCreditsInfoModal(event.target.textContent.trim());
+                    }
+                });
 
-                      const selectedInstallment = paymentMethod.installments.find(installment =>
-                          installment.installments === parseInt(selectedItem.value)
-                      );
+                selectElement?.addEventListener('change', (event) => {
+                    const selectedValue = event.target.value;
+                    if (!selectedValue) return;
 
-                      if (selectedInstallment) {
-                          dropdownElement.setAttribute('hint', this.buildConsumerCreditsHint(selectedInstallment));
-                          dropdownElement.setAttribute('due-date', this.buildConsumerCreditsDetailsDueDate(paymentMethod));
-                          document.getElementById('mp-consumer-credits-due-date').style.display = 'block';
-                          document.getElementById('mp-consumer-credits-legal-text').style.display = 'block';
-                      }
+                    if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+                        MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                            null,
+                            "focusout",
+                            "super_token_installments_filled",
+                            {
+                                onlyDispatch: true
+                            }
+                        );
+                    }
 
-                      contractController.update({ installments: selectedItem.value });
-                  }
+                    if (this.getSiteId() === this.BRAZIL_ACCRONYM) {
+                        this.buildMLBConsumerCreditsLegalText();
+                        document.getElementById('mp-consumer-credits-debit-auto-text').style.display = 'block';
+                    }
+
+                    document.getElementById('cardInstallments').value = parseInt(selectedValue, 10);
+
+                    const selectedInstallment = paymentMethod.installments.find(installment =>
+                        installment.installments === parseInt(selectedValue, 10)
+                    );
+
+                    if (selectedInstallment) {
+                        const hintElement = document.getElementById('mp-consumer-credits-hint');
+                        if (hintElement) {
+                            try {
+                                const hintContent = this.buildConsumerCreditsHint(selectedInstallment);
+                                hintElement.innerHTML = hintContent;
+                                hintElement.style.display = hintContent ? 'block' : 'none';
+                                if (hintContent) {
+                                    this.mpSuperTokenMetrics.renderConsumerCreditsHint(true);
+                                } else {
+                                    this.mpSuperTokenMetrics.renderConsumerCreditsHint(false, 'no_hint_content_to_render');
+                                }
+                            } catch (error) {
+                                hintElement.style.display = 'none';
+                                this.mpSuperTokenMetrics.renderConsumerCreditsHint(false, error);
+                            }
+                        }
+                        try {
+                            this.buildConsumerCreditsDetailsDueDate(paymentMethod);
+                            this.mpSuperTokenMetrics.renderConsumerCreditsDueDate(true);
+                            document.getElementById('mp-consumer-credits-due-date').style.display = 'block';
+                        } catch (error) {
+                            this.mpSuperTokenMetrics.renderConsumerCreditsDueDate(false, error);
+                        }
+                        document.getElementById('mp-consumer-credits-legal-text').style.display = 'block';
+                    }
+
+                    try {
+                        contractController.update({ installments: selectedValue });
+                        this.mpSuperTokenMetrics.installmentsFilled('consumer_credits');
+                    } catch (error) {
+                        this.mpSuperTokenMetrics.errorToUpdateCreditsContract(error);
+                    }
                 });
             })
             .catch((error) => {
-                console.error(error);
+                this.mpSuperTokenMetrics.renderCreditsContract(false, error);
             });
         }
 
@@ -1684,8 +1948,7 @@ class MPSuperTokenPaymentMethods {
 
     organizePaymentMethodsElements(paymentMethods) {
         const reorderedAccountPaymentMethods = this.reorderAccountPaymentMethods(paymentMethods);
-        const onlyAcceptedPaymentMethods = reorderedAccountPaymentMethods.filter(pm => !this.isConsumerCredits(pm));
-        const normalizedPaymentMethods = this.normalizeAccountPaymentMethods(onlyAcceptedPaymentMethods);
+        const normalizedPaymentMethods = this.normalizeAccountPaymentMethods(reorderedAccountPaymentMethods);
 
         normalizedPaymentMethods.reverse().forEach((paymentMethod) => {
             this.getCustomCheckoutEntireElement().insertBefore(
@@ -1816,7 +2079,7 @@ class MPSuperTokenPaymentMethods {
             return;
         }
 
-        if (!this.isCreditCard(this.activePaymentMethod) && !this.isDebitCard(this.activePaymentMethod)) {
+        if (!this.isCreditCard(this.activePaymentMethod) && !this.isDebitCard(this.activePaymentMethod) && !this.isConsumerCredits(this.activePaymentMethod)) {
             return;
         }
 
@@ -1832,7 +2095,7 @@ class MPSuperTokenPaymentMethods {
             this.forceSecurityCodeValidation(this.activePaymentMethod);
         }
 
-        if (this.isCreditCard(this.activePaymentMethod) && !this.installmentsWasSelected(this.activePaymentMethod)) {
+        if ((this.isCreditCard(this.activePaymentMethod) || this.isConsumerCredits(this.activePaymentMethod)) && !this.installmentsWasSelected(this.activePaymentMethod)) {
             this.setInstallmentsErrorState(this.activePaymentMethod, true);
         }
 
@@ -1855,7 +2118,10 @@ class MPSuperTokenPaymentMethods {
             }
 
             const installmentsDropdown = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(this.activePaymentMethod)}`);
-            if (installmentsDropdown && this.isCreditCard(this.activePaymentMethod) && !this.installmentsWasSelected(this.activePaymentMethod)) {
+            if (installmentsDropdown && (this.isCreditCard(this.activePaymentMethod) || this.isConsumerCredits(this.activePaymentMethod)) && !this.installmentsWasSelected(this.activePaymentMethod)) {
+                if (this.isConsumerCredits(this.activePaymentMethod)) {
+                    this.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected();
+                }
                 return false;
             }
 
@@ -1916,6 +2182,7 @@ class MPSuperTokenPaymentMethods {
             this.isRendering = false;
             setTimeout(() => {
             const sdkInstanceId = this.mpSuperTokenMetrics.getSdkInstanceId();
+            this.mpSuperTokenMetrics.sendMetric('super_token_methods_ready', 'true', '');
             document.dispatchEvent(new CustomEvent('supertoken_loaded', { detail: { sdkInstanceId } }));
             }, 500);
         } catch (error) {

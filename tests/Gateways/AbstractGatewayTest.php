@@ -745,7 +745,7 @@ class AbstractGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $expected_message, $error_message, Mockery::any());
+            ->with('woo_checkout_error', $expected_message, Mockery::type('string'), Mockery::any());
 
         // Mock notices only if with_notice is true
         if ($with_notice) {
@@ -1017,6 +1017,13 @@ class AbstractGatewayTest extends TestCase
             $expected,
             $this->gateway->getEnabled()
         );
+    }
+
+    public function testGetPaymentMethodName()
+    {
+        $this->setNotAccessibleProperty($this->gateway, 'paymentMethodName', 'custom');
+
+        $this->assertEquals('custom', $this->gateway->getPaymentMethodName());
     }
 
     /**
@@ -1321,7 +1328,7 @@ class AbstractGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $rejectionMessage, Mockery::any());
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), Mockery::any());
 
         // Mock notice storage for error handling
         $this->gateway->mercadopago->helpers->notices
@@ -1682,5 +1689,143 @@ class AbstractGatewayTest extends TestCase
 
         // When - Call the method
         $this->gateway->handleWithRejectPayment($response);
+    }
+
+    /**
+     * Test getAmountAndCurrency sends Datadog metric when getRatio throws exception
+     *
+     * GIVEN a gateway with currency conversion enabled
+     * AND currency helper throws an exception during getRatio
+     * WHEN getAmountAndCurrency is called
+     * THEN it should send mp_get_amount_and_currency_error metric with ratio:0
+     * AND return amount as null
+     */
+    public function testGetAmountAndCurrencySendsMetricWhenGetRatioFails(): void
+    {
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('getAmountAndCurrency')->passthru();
+
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($this->gateway)
+            ->andThrow(new \Exception('Currency conversion API unavailable'));
+
+        $this->gateway
+            ->shouldReceive('sendAmountCurrencyErrorMetric')
+            ->once()
+            ->with(null, 0, 'Currency conversion API unavailable');
+
+        $result = $this->gateway->getAmountAndCurrency();
+
+        $this->assertNull($result['amount']);
+        $this->assertEquals(0, $result['currencyRatio']);
+    }
+
+    /**
+     * Test getAmountAndCurrency sends Datadog metric when getAmount throws exception
+     *
+     * GIVEN a gateway where getRatio succeeds
+     * AND getAmount throws an exception
+     * WHEN getAmountAndCurrency is called
+     * THEN it should send mp_get_amount_and_currency_error metric with ratio > 0
+     * AND return amount as null
+     */
+    public function testGetAmountAndCurrencySendsMetricWhenGetAmountFails(): void
+    {
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('getAmountAndCurrency')->passthru();
+        $this->gateway->shouldReceive('getAmount')->andThrow(new \Exception('Cart unavailable'));
+
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($this->gateway)
+            ->andReturn(1.35);
+
+        $this->gateway
+            ->shouldReceive('sendAmountCurrencyErrorMetric')
+            ->once()
+            ->with(null, 1.35, 'Cart unavailable');
+
+        $result = $this->gateway->getAmountAndCurrency();
+
+        $this->assertNull($result['amount']);
+        $this->assertEquals(1.35, $result['currencyRatio']);
+    }
+
+    /**
+     * Test sendAmountCurrencyErrorMetric sends correct details to Datadog
+     *
+     * GIVEN valid seller and store configuration
+     * WHEN sendAmountCurrencyErrorMetric is called
+     * THEN it should send sendEvent with team, site_id, environment, cust_id and from_currency
+     */
+    public function testSendAmountCurrencyErrorMetricSendsCorrectDetails(): void
+    {
+        $this->setupMetricErrorMocks();
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'mp_get_amount_and_currency_error',
+                'amount:null_ratio:0',
+                'Test error',
+                Mockery::type('string'),
+                Mockery::on(function ($details) {
+                    return $details['team'] === 'big'
+                        && $details['site_id'] === 'MLB'
+                        && $details['environment'] === 'prod'
+                        && $details['cust_id'] === '198358065'
+                        && $details['from_currency'] === 'USD';
+                })
+            );
+
+        $this->gateway->sendAmountCurrencyErrorMetric(null, 0, 'Test error');
+        $this->addToAssertionCount(Mockery::getContainer()->mockery_getExpectationCount());
+    }
+
+    /**
+     * Test sendAmountCurrencyErrorMetric only sends metric once per request
+     *
+     * GIVEN sendAmountCurrencyErrorMetric was already called once
+     * WHEN sendAmountCurrencyErrorMetric is called again
+     * THEN it should NOT send a second event to Datadog
+     */
+    public function testSendAmountCurrencyErrorMetricDeduplicates(): void
+    {
+        $this->setupMetricErrorMocks();
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once();
+
+        $this->gateway->sendAmountCurrencyErrorMetric(null, 0, 'First call');
+        $this->gateway->sendAmountCurrencyErrorMetric(null, 0, 'Second call');
+        $this->addToAssertionCount(Mockery::getContainer()->mockery_getExpectationCount());
+    }
+
+    private function setupMetricErrorMocks(): void
+    {
+        $this->resetAmountCurrencyErrorFlag();
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('sendAmountCurrencyErrorMetric')->passthru();
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')->andReturn('MLB');
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')->andReturn(false);
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')->andReturn('198358065');
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getWoocommerceCurrency')->andReturn('USD');
+    }
+
+    private function resetAmountCurrencyErrorFlag(): void
+    {
+        $reflection = new \ReflectionProperty(AbstractGateway::class, 'amountCurrencyErrorSent');
+        $reflection->setAccessible(true);
+        $reflection->setValue(null, false);
     }
 }

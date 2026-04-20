@@ -4,11 +4,47 @@ namespace MercadoPago\Woocommerce\Tests\Blocks;
 
 use Mockery;
 use PHPUnit\Framework\TestCase;
+use MercadoPago\Woocommerce\Blocks\AbstractBlock;
+use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
+use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+
+/**
+ * Concrete stub that bypasses the original constructor to avoid WC() and global $mercadopago dependencies.
+ */
+class AbstractBlockStub extends AbstractBlock
+{
+    public $gateway = null;
+
+    public function __construct(WoocommerceMercadoPago $mercadopago)
+    {
+        $this->mercadopago       = $mercadopago;
+        $this->links             = [];
+        $this->storeTranslations = [];
+        $this->settings          = ['title' => 'Test Title', 'description' => 'Test Description'];
+    }
+
+    public function getScriptParams(): array
+    {
+        return ['test_param' => 'test_value'];
+    }
+}
 
 class AbstractBlockTest extends TestCase
 {
     use WoocommerceMock;
+
+    private AbstractBlockStub $block;
+    private $mercadopago;
+
+    /**
+     * @before
+     */
+    public function blockSetUp(): void
+    {
+        $this->mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
+        $this->block       = new AbstractBlockStub($this->mercadopago);
+    }
 
     /**
      * @dataProvider registerMelidataStoreScriptProvider
@@ -69,5 +105,37 @@ class AbstractBlockTest extends TestCase
                 'shouldRegisterMelidataScript' => false,
             ],
         ];
+    }
+
+    public function testGetPaymentMethodDataIncludesFeeTitleWhenGatewayIsSet(): void
+    {
+        $gatewayMock           = Mockery::mock();
+        $gatewayMock->supports = ['products'];
+        $this->block->gateway  = $gatewayMock;
+
+        $gatewayMock
+            ->shouldReceive('getFeeTitle')
+            ->once()
+            ->andReturn('5% commission');
+
+        $result = $this->block->get_payment_method_data();
+
+        $this->assertEquals('5% commission', $result['params']['fee_title']);
+        $this->assertEquals('Test Title', $result['title']);
+        $this->assertEquals('Test Description', $result['description']);
+        $this->assertEquals(['products'], $result['supports']);
+        $this->assertEquals('test_value', $result['params']['test_param']);
+    }
+
+    public function testGetPaymentMethodDataDoesNotIncludeFeeTitleWhenGatewayIsNull(): void
+    {
+        $this->block->gateway = null;
+        $result = $this->block->get_payment_method_data();
+
+        $this->assertArrayNotHasKey('fee_title', $result['params']);
+        $this->assertEquals('Test Title', $result['title']);
+        $this->assertEquals('Test Description', $result['description']);
+        $this->assertEquals([], $result['supports']);
+        $this->assertEquals('test_value', $result['params']['test_param']);
     }
 }

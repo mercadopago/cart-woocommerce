@@ -1,9 +1,17 @@
 import { test } from "@playwright/test";
 import { mco } from "../../../data/meli_sites";
 import { rejectedPaymentTest, successfulPaymentTest, emptyFieldsPaymentTest } from "../../../flows/chocustom";
+const { skipIfNotSite } = require("../../../helpers/site-guard");
 
+// Known bug: debit card checkout displays the installments selector, but debit
+// cards can only be paid in a single installment (a vista). The selector should
+// be hidden or disabled for debit payment_type_id. Does not block the payment.
 const { shop_url, debit_card_scenarios, guestUserMCO } = mco;
 const { APPROVED, PENDING, REJECTED, EMPTY_FIELDS } = debit_card_scenarios;
+
+test.beforeEach(() => {
+  skipIfNotSite(test, 'MCO');
+});
 
 test('Given guest user with visa card, When payment is approved, Should show success page', async ({page}) => {
   await successfulPaymentTest(page, shop_url, guestUserMCO, APPROVED.visa, APPROVED.form);

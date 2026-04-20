@@ -1,9 +1,14 @@
 import { test } from "@playwright/test";
 import { mco } from "../../../data/meli_sites";
-import { rejectedPaymentTest, successfulPaymentTest } from "../../../flows/chocustom";
+import { rejectedPaymentTest, successfulPaymentTest, emptyFieldsPaymentTest } from "../../../flows/chocustom";
+const { skipIfNotSite } = require("../../../helpers/site-guard");
 
 const { shop_url, credit_card_scenarios, guestUserMCO } = mco;
 const { APPROVED, PENDING, REJECTED, EMPTY_FIELDS } = credit_card_scenarios;
+
+test.beforeEach(() => {
+  skipIfNotSite(test, 'MCO');
+});
 
 test('Given guest user with master card, When payment is approved, Should show success page', async ({ page }) => {
   await successfulPaymentTest(page, shop_url, guestUserMCO, APPROVED.master, APPROVED.form);

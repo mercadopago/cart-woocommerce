@@ -123,11 +123,17 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
      */
     public function get_payment_method_data(): array
     {
+        $params = $this->getScriptParams();
+
+        if (isset($this->gateway)) {
+            $params['fee_title'] = $this->gateway->getFeeTitle();
+        }
+
         return [
             'title'       => $this->get_setting('title'),
             'description' => $this->get_setting('description'),
             'supports'    => $this->get_supported_features(),
-            'params'      => $this->getScriptParams(),
+            'params'      => $params,
         ];
     }
 

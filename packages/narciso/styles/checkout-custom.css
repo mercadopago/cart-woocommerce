@@ -183,7 +183,8 @@
 }
 
 
-#mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input {
+#mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input,
+#mp-checkout-custom-root #mp-checkout-custom-issuers-container .mp-custom-checkout-select-input {
     background: var(--andes-white) !important;
     border: 1px solid var(--andes-gray-250) !important;
     border-radius: 6px !important;
@@ -212,11 +213,13 @@
     padding-right: 40px !important;
 }
 
-#mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input:has(option:not([disabled]):checked) {
+#mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input:has(option:not([disabled]):checked),
+#mp-checkout-custom-root #mp-checkout-custom-issuers-container .mp-custom-checkout-select-input:has(option:not([disabled]):checked) {
     color: var(--andes-gray-900) !important;
 }
 
-#mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input option {
+#mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input option,
+#mp-checkout-custom-root #mp-checkout-custom-issuers-container .mp-custom-checkout-select-input option {
     color: var(--andes-gray-900) !important;
 }
 

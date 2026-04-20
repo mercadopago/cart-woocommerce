@@ -363,7 +363,7 @@ class Notices
      */
     public function storeNotice(string $message, string $type = 'success', array $data = []): void
     {
-        wc_add_notice($message, $type, $data);
+        wc_add_notice($message, $type, array_merge($data, ['mp-source' => 'plugin']));
     }
 
     /**

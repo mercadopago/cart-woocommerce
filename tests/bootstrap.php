@@ -10,6 +10,7 @@ define('MP_VERSION', random()->semver());
 define('MP_SUPER_TOKEN_USE_BUNDLE', false); // Default to false for tests
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/Mocks/WoocommerceBlocksStub.php';
 
 WP_Mock::activateStrictMode(); // Each test must declare it's own mock expectations
 WP_Mock::bootstrap();

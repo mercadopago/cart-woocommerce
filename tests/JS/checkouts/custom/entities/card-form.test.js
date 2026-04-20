@@ -52,6 +52,8 @@ describe('MPCardForm', () => {
         prepend: jest.fn(),
         length: 0,
         css: jest.fn(),
+        block: jest.fn(),
+        unblock: jest.fn(),
       };
     });
 
@@ -74,11 +76,15 @@ describe('MPCardForm', () => {
       verifyCardholderName: jest.fn(),
       verifyInstallmentsContainer: jest.fn(),
       setDisplayOfInputHelperMessage: jest.fn(),
+      verifyCardholderNameOnFocus: jest.fn(),
+      setDisplayOfInputHelperInfo: jest.fn(),
     };
 
     global.MPCheckoutFieldsDispatcher = {
       addEventListenerDispatcher: jest.fn(),
     };
+
+    global.sendMetric = jest.fn();
 
     global.window.mpCheckoutForm = '#checkout-form';
 
@@ -93,9 +99,9 @@ describe('MPCardForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     cardForm = new MPCardForm();
-    
+
     document.body.innerHTML = `
       <input id="mp-amount" value="100.50" />
     `;
@@ -124,8 +130,8 @@ describe('MPCardForm', () => {
       expect(cardForm.mpFormId).toBe('checkout');
     });
 
-    test('should define TIMEOUT_TO_WAIT_CHECKOUT_AMOUNT_LOAD as 2500', () => {
-      expect(cardForm.TIMEOUT_TO_WAIT_CHECKOUT_AMOUNT_LOAD).toBe(2500);
+    test('should define TIMEOUT_TO_WAIT_INIT_CARD_FORM as 10000', () => {
+      expect(cardForm.TIMEOUT_TO_WAIT_INIT_CARD_FORM).toBe(10000);
     });
   });
 
@@ -145,9 +151,9 @@ describe('MPCardForm', () => {
       'Given mp-amount field has value "$inputValue", When getAmount() is called, Then should $description and return "$expectedValue"',
       ({ inputValue, expectedValue }) => {
         document.getElementById('mp-amount').value = inputValue;
-        
+
         const amount = cardForm.getAmount();
-        
+
         expect(amount).toBe(expectedValue);
         expect(typeof amount).toBe('string');
       }
@@ -283,139 +289,6 @@ describe('MPCardForm', () => {
     });
   });
 
-  describe('shouldCreateLoadSpinner()', () => {
-    test.each([
-      {
-        hasListRendered: false,
-        hasClassicCheckout: false,
-        hasTokenLoaded: false,
-        expectedResult: true,
-        description: 'return true when all conditions are false (should show spinner)',
-      },
-      {
-        hasListRendered: true,
-        hasClassicCheckout: false,
-        hasTokenLoaded: false,
-        expectedResult: false,
-        description: 'return false when super token list is rendered',
-      },
-      {
-        hasListRendered: false,
-        hasClassicCheckout: true,
-        hasTokenLoaded: false,
-        expectedResult: false,
-        description: 'return false when classic checkout is present',
-      },
-      {
-        hasListRendered: false,
-        hasClassicCheckout: false,
-        hasTokenLoaded: true,
-        expectedResult: false,
-        description: 'return false when super token is loaded',
-      },
-      {
-        hasListRendered: true,
-        hasClassicCheckout: true,
-        hasTokenLoaded: false,
-        expectedResult: false,
-        description: 'return false when both list rendered and classic checkout exist',
-      },
-      {
-        hasListRendered: true,
-        hasClassicCheckout: false,
-        hasTokenLoaded: true,
-        expectedResult: false,
-        description: 'return false when both list rendered and token loaded',
-      },
-      {
-        hasListRendered: false,
-        hasClassicCheckout: true,
-        hasTokenLoaded: true,
-        expectedResult: false,
-        description: 'return false when both classic checkout and token loaded',
-      },
-      {
-        hasListRendered: true,
-        hasClassicCheckout: true,
-        hasTokenLoaded: true,
-        expectedResult: false,
-        description: 'return false when all conditions are true',
-      },
-    ])(
-      'Given list rendered=$hasListRendered, classic checkout=$hasClassicCheckout, token loaded=$hasTokenLoaded, When shouldCreateLoadSpinner() is called, Then should $description',
-      ({ hasListRendered, hasClassicCheckout, hasTokenLoaded, expectedResult }) => {
-        document.body.innerHTML = '';
-
-        if (hasListRendered) {
-          const listElement = document.createElement('div');
-          listElement.className = 'mp-super-token-payment-methods-list';
-          document.body.appendChild(listElement);
-        }
-
-        if (hasClassicCheckout) {
-          const checkoutElement = document.createElement('div');
-          checkoutElement.className = 'payment_method_woo-mercado-pago-custom';
-          document.body.appendChild(checkoutElement);
-        }
-
-        if (hasTokenLoaded) {
-          window.mpSuperTokenTriggerHandler = {
-            isSuperTokenPaymentMethodsLoaded: () => true,
-          };
-        } else {
-          window.mpSuperTokenTriggerHandler = undefined;
-        }
-
-        const result = cardForm.shouldCreateLoadSpinner();
-
-        expect(result).toBe(expectedResult);
-
-        document.body.innerHTML = '';
-        window.mpSuperTokenTriggerHandler = undefined;
-      }
-    );
-  });
-
-  describe('isSuperTokenPaymentMethodsLoaded()', () => {
-    test.each([
-      {
-        handlerExists: true,
-        methodReturns: true,
-        expectedResult: true,
-        description: 'return true when handler exists and method returns true',
-      },
-      {
-        handlerExists: true,
-        methodReturns: false,
-        expectedResult: false,
-        description: 'return false when handler exists and method returns false',
-      },
-      {
-        handlerExists: false,
-        methodReturns: null,
-        expectedResult: false,
-        description: 'return false when handler does not exist',
-      },
-    ])(
-      'Given mpSuperTokenTriggerHandler exists=$handlerExists and returns=$methodReturns, When isSuperTokenPaymentMethodsLoaded() is called, Then should $description',
-      ({ handlerExists, methodReturns, expectedResult }) => {
-        if (handlerExists) {
-          window.mpSuperTokenTriggerHandler = {
-            isSuperTokenPaymentMethodsLoaded: () => methodReturns,
-          };
-        } else {
-          window.mpSuperTokenTriggerHandler = undefined;
-        }
-
-        const result = cardForm.isSuperTokenPaymentMethodsLoaded();
-
-        expect(result).toBe(expectedResult);
-
-        window.mpSuperTokenTriggerHandler = undefined;
-      }
-    );
-  });
-
   describe('isClassicCheckout()', () => {
     test.each([
       {
@@ -448,38 +321,6 @@ describe('MPCardForm', () => {
     );
   });
 
-  describe('isSuperTokenPaymentMethodsListRendered()', () => {
-    test.each([
-      {
-        elementExists: true,
-        expectedResult: true,
-        description: 'return true when super token payment methods list exists in DOM',
-      },
-      {
-        elementExists: false,
-        expectedResult: false,
-        description: 'return false when super token payment methods list does not exist in DOM',
-      },
-    ])(
-      'Given super token list element exists=$elementExists, When isSuperTokenPaymentMethodsListRendered() is called, Then should $description',
-      ({ elementExists, expectedResult }) => {
-        document.body.innerHTML = '';
-
-        if (elementExists) {
-          const element = document.createElement('div');
-          element.className = 'mp-super-token-payment-methods-list';
-          document.body.appendChild(element);
-        }
-
-        const result = cardForm.isSuperTokenPaymentMethodsListRendered();
-
-        expect(result).toBe(expectedResult);
-
-        document.body.innerHTML = '';
-      }
-    );
-  });
-
   describe('initCardForm()', () => {
     beforeEach(() => {
       document.body.innerHTML = `
@@ -487,7 +328,7 @@ describe('MPCardForm', () => {
         <div class="mp-checkout-custom-container"></div>
         <div class="mp-checkout-custom-load"></div>
       `;
-      
+
       window.mpSdkInstance = undefined;
       window.mPmetrics = [];
     });
@@ -513,192 +354,11 @@ describe('MPCardForm', () => {
       const mockCardForm = jest.fn().mockReturnValue(Promise.resolve());
       const existingInstance = { cardForm: mockCardForm };
       window.mpSdkInstance = existingInstance;
-      
+
       cardForm.initCardForm('100.00');
 
       expect(global.MercadoPago).not.toHaveBeenCalled();
       expect(window.mpSdkInstance).toBe(existingInstance);
-    });
-  });
-
-  describe('setupSDKFieldFocusListeners()', () => {
-    beforeEach(() => {
-      window.mpSuperTokenTriggerHandler = undefined;
-    });
-
-    afterEach(() => {
-      window.mpSuperTokenTriggerHandler = undefined;
-    });
-
-    test('Given mpSuperTokenTriggerHandler does not exist, When setupSDKFieldFocusListeners() is called, Then should return early and not attach listeners', () => {
-      const mockField = {
-        on: jest.fn(),
-      };
-
-      const fields = {
-        cardNumber: mockField,
-        cardholderName: mockField,
-      };
-
-      window.mpSuperTokenTriggerHandler = undefined;
-
-      cardForm.setupSDKFieldFocusListeners(fields);
-
-      expect(mockField.on).not.toHaveBeenCalled();
-    });
-
-    test('Given fields is null, When setupSDKFieldFocusListeners() is called, Then should return early and not throw error', () => {
-      window.mpSuperTokenTriggerHandler = {
-        onSDKFieldFocus: jest.fn(),
-      };
-
-      expect(() => {
-        cardForm.setupSDKFieldFocusListeners(null);
-      }).not.toThrow();
-
-      expect(window.mpSuperTokenTriggerHandler.onSDKFieldFocus).not.toHaveBeenCalled();
-    });
-
-    test('Given fields is undefined, When setupSDKFieldFocusListeners() is called, Then should return early and not throw error', () => {
-      window.mpSuperTokenTriggerHandler = {
-        onSDKFieldFocus: jest.fn(),
-      };
-
-      expect(() => {
-        cardForm.setupSDKFieldFocusListeners(undefined);
-      }).not.toThrow();
-
-      expect(window.mpSuperTokenTriggerHandler.onSDKFieldFocus).not.toHaveBeenCalled();
-    });
-
-    test('Given valid fields and mpSuperTokenTriggerHandler exists, When setupSDKFieldFocusListeners() is called, Then should attach focus listeners to all fields', () => {
-      const mockOnSDKFieldFocus = jest.fn();
-      window.mpSuperTokenTriggerHandler = {
-        onSDKFieldFocus: mockOnSDKFieldFocus,
-      };
-
-      const mockCardNumberField = {
-        on: jest.fn(),
-      };
-
-      const mockCardholderNameField = {
-        on: jest.fn(),
-      };
-
-      const mockExpirationDateField = {
-        on: jest.fn(),
-      };
-
-      const mockSecurityCodeField = {
-        on: jest.fn(),
-      };
-
-      const fields = {
-        cardNumber: mockCardNumberField,
-        cardholderName: mockCardholderNameField,
-        expirationDate: mockExpirationDateField,
-        securityCode: mockSecurityCodeField,
-      };
-
-      cardForm.setupSDKFieldFocusListeners(fields);
-
-      expect(mockCardNumberField.on).toHaveBeenCalledWith('focus', expect.any(Function));
-      expect(mockCardholderNameField.on).toHaveBeenCalledWith('focus', expect.any(Function));
-      expect(mockExpirationDateField.on).toHaveBeenCalledWith('focus', expect.any(Function));
-      expect(mockSecurityCodeField.on).toHaveBeenCalledWith('focus', expect.any(Function));
-    });
-
-    test('Given valid fields with focus event, When focus event is triggered, Then should call onSDKFieldFocus with correct field name', () => {
-      const mockOnSDKFieldFocus = jest.fn();
-      window.mpSuperTokenTriggerHandler = {
-        onSDKFieldFocus: mockOnSDKFieldFocus,
-      };
-
-      const mockCardNumberField = {
-        on: jest.fn((event, callback) => {
-          if (event === 'focus') {
-            callback({});
-          }
-        }),
-      };
-
-      const fields = {
-        cardNumber: mockCardNumberField,
-      };
-
-      cardForm.setupSDKFieldFocusListeners(fields);
-
-      expect(mockOnSDKFieldFocus).toHaveBeenCalledWith('cardNumber');
-    });
-
-    test('Given field without .on() method, When setupSDKFieldFocusListeners() is called, Then should skip that field and not throw error', () => {
-      const mockOnSDKFieldFocus = jest.fn();
-      window.mpSuperTokenTriggerHandler = {
-        onSDKFieldFocus: mockOnSDKFieldFocus,
-      };
-
-      const mockCardNumberField = {
-        on: jest.fn(),
-      };
-
-      const fields = {
-        cardNumber: mockCardNumberField,
-        invalidField: { someOtherMethod: jest.fn() },
-      };
-
-      expect(() => {
-        cardForm.setupSDKFieldFocusListeners(fields);
-      }).not.toThrow();
-
-      expect(mockCardNumberField.on).toHaveBeenCalledWith('focus', expect.any(Function));
-    });
-
-    test('Given field is null, When setupSDKFieldFocusListeners() is called, Then should skip that field and not throw error', () => {
-      const mockOnSDKFieldFocus = jest.fn();
-      window.mpSuperTokenTriggerHandler = {
-        onSDKFieldFocus: mockOnSDKFieldFocus,
-      };
-
-      const mockCardNumberField = {
-        on: jest.fn(),
-      };
-
-      const fields = {
-        cardNumber: mockCardNumberField,
-        invalidField: null,
-      };
-
-      expect(() => {
-        cardForm.setupSDKFieldFocusListeners(fields);
-      }).not.toThrow();
-
-      expect(mockCardNumberField.on).toHaveBeenCalledWith('focus', expect.any(Function));
-    });
-
-    test('Given multiple fields, When setupSDKFieldFocusListeners() is called, Then should iterate dynamically over all fields using Object.keys()', () => {
-      const mockOnSDKFieldFocus = jest.fn();
-      window.mpSuperTokenTriggerHandler = {
-        onSDKFieldFocus: mockOnSDKFieldFocus,
-      };
-
-      const createMockField = () => ({
-        on: jest.fn((event, callback) => {
-          if (event === 'focus') callback({});
-        }),
-      });
-
-      const fields = {
-        cardNumber: createMockField(),
-        expirationDate: createMockField(),
-        securityCode: createMockField(),
-      };
-
-      cardForm.setupSDKFieldFocusListeners(fields);
-
-      expect(mockOnSDKFieldFocus).toHaveBeenCalledTimes(3);
-      expect(mockOnSDKFieldFocus).toHaveBeenCalledWith('cardNumber');
-      expect(mockOnSDKFieldFocus).toHaveBeenCalledWith('expirationDate');
-      expect(mockOnSDKFieldFocus).toHaveBeenCalledWith('securityCode');
     });
   });
 });

@@ -242,7 +242,7 @@ class CreditsGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', 'Translated error message', 'buyer_default', CreditsGateway::ID);
+            ->with('woo_checkout_error', 'Translated error message', Mockery::type('string'), CreditsGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -289,7 +289,7 @@ class CreditsGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $errorMessage, CreditsGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CreditsGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices

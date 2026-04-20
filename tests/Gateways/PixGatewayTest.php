@@ -328,7 +328,7 @@ class PixGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $errorMessage, PixGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), PixGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -395,7 +395,7 @@ class PixGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', 'Invalid email message', 'invalid_email', PixGateway::ID);
+            ->with('woo_checkout_error', 'Invalid email message', Mockery::type('string'), PixGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices

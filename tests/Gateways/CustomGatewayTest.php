@@ -1113,15 +1113,23 @@ class CustomGatewayTest extends TestCase
             ->with('checkouts/super-token/super-token-payment-methods')
             ->andReturn('test-css-url');
 
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')
+            ->with('checkouts/super-token/super-token-method-details-skeleton')
+            ->andReturn('test-skeleton-css-url');
+
         $this->gateway->mercadopago->hooks->scripts
             ->shouldReceive('registerCheckoutStyle')
             ->with('wc_mercadopago_supertoken_payment_methods', 'test-css-url')
             ->once();
 
-        // Note: Method was renamed from registerCheckoutStyle to registerSuperTokenStyles
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutStyle')
+            ->with('wc_mercadopago_supertoken_payment_method_details_skeleton', 'test-skeleton-css-url')
+            ->once();
+
         $this->gateway->registerSuperTokenStyles();
 
-        // Verify the method was called
         $this->assertTrue(true);
     }
 
@@ -1362,7 +1370,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $errorMessage, CustomGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -1429,7 +1437,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $errorMessage, CustomGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -1516,7 +1524,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, $errorMessage, CustomGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -2516,7 +2524,7 @@ class CustomGatewayTest extends TestCase
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */
-    public function testProcessPaymentSuperTokenFailsWhenAuthorizedPseudotokenMissing(bool $isBlocks, array $missingFields): void
+    public function testProcessPaymentSuperTokenFailsWhenAuthorizedPseudotokenMissing(bool $isBlocks, array $missingFields, array $overrides = []): void
     {
         $checkout = [
             'checkout_type' => 'super_token',
@@ -2531,6 +2539,9 @@ class CustomGatewayTest extends TestCase
         foreach ($missingFields as $field) {
             unset($checkout[$field]);
         }
+
+        // Override fields with specific values
+        $checkout = array_merge($checkout, $overrides);
 
         $this->processPaymentMock($checkout, $isBlocks);
 
@@ -2580,6 +2591,16 @@ class CustomGatewayTest extends TestCase
             'blocks checkout - missing payment_type_id' => [
                 true,  // isBlocks
                 ['payment_type_id'], // missing fields
+            ],
+            'classic checkout - credit_card with empty installments' => [
+                false, // isBlocks
+                [], // no fields to remove
+                ['installments' => ''], // override installments to empty
+            ],
+            'blocks checkout - credit_card with zero installments' => [
+                true,  // isBlocks
+                [], // no fields to remove
+                ['installments' => 0], // override installments to zero
             ],
         ];
     }
@@ -2934,5 +2955,115 @@ class CustomGatewayTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         unset($_GET['key']);
+    }
+
+    /**
+     * Test processReturnFail with InvalidCheckoutDataException enriches message with tags
+     */
+    public function testProcessReturnFailEnrichesMessageFromInvalidCheckoutDataException(): void
+    {
+        $this->setNotAccessibleProperty($this->gateway, 'paymentMethodName', 'woo-mercado-pago-custom');
+
+        $errorMessage = 'exception : Unable to process payment on test';
+        $translatedMessage = 'Translated error';
+
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock->shouldReceive('error')->once()->andReturnNull();
+        $this->gateway->mercadopago->logs->file = $logsFileMock;
+
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorMessage)
+            ->andReturn($translatedMessage);
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'woo_checkout_error',
+                $translatedMessage,
+                Mockery::on(function ($message) {
+                    return str_contains($message, 'missing_fields : token')
+                        && str_contains($message, 'exception_type : invalidcheckoutdataexception');
+                }),
+                'woo-mercado-pago-custom'
+            );
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->with('pay_for_order')
+            ->andReturn(false);
+
+        $exception = new \MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException(
+            $errorMessage,
+            0,
+            null,
+            [
+                'missing_fields' => 'token',
+            ]
+        );
+
+        $result = $this->gateway->processReturnFail(
+            $exception,
+            $errorMessage,
+            CustomGateway::LOG_SOURCE,
+            [],
+            false
+        );
+
+        $this->assertEquals('fail', $result['result']);
+    }
+
+    /**
+     * Test processReturnFail with generic Exception enriches message with only exception_type
+     */
+    public function testProcessReturnFailWithGenericExceptionEnrichesMessageWithExceptionType(): void
+    {
+        $this->setNotAccessibleProperty($this->gateway, 'paymentMethodName', 'woo-mercado-pago-custom');
+
+        $errorMessage = 'Generic error';
+        $translatedMessage = 'Translated generic error';
+
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock->shouldReceive('error')->once()->andReturnNull();
+        $this->gateway->mercadopago->logs->file = $logsFileMock;
+
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorMessage)
+            ->andReturn($translatedMessage);
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'woo_checkout_error',
+                $translatedMessage,
+                Mockery::on(function ($message) use ($errorMessage) {
+                    return str_contains($message, $errorMessage)
+                        && str_contains($message, 'exception_type : exception')
+                        && !str_contains($message, 'missing_fields');
+                }),
+                'woo-mercado-pago-custom'
+            );
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->with('pay_for_order')
+            ->andReturn(false);
+
+        $exception = new \Exception($errorMessage);
+
+        $result = $this->gateway->processReturnFail(
+            $exception,
+            $errorMessage,
+            CustomGateway::LOG_SOURCE,
+            [],
+            false
+        );
+
+        $this->assertEquals('fail', $result['result']);
     }
 }

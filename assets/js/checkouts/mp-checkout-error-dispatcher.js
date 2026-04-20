@@ -16,6 +16,21 @@ class MPCustomEventDispatcher {
     }
 }
 
+class MPDispatchedErrorTracker {
+    static #dispatched = new Set();
+
+    static track(message, errorOrigin) {
+        const key = `${errorOrigin}::${message}`;
+        if (this.#dispatched.has(key)) return false;
+        this.#dispatched.add(key);
+        return true;
+    }
+
+    static reset() {
+        this.#dispatched.clear();
+    }
+}
+
 class MPCheckoutErrorHandler {
     handle() {
         throw new Error('Method must be implemented');
@@ -38,9 +53,12 @@ class MPClassicCheckoutErrorHandler extends MPCheckoutErrorHandler {
             const errorMessage = errorElement?.textContent || errorMessageAsHTML;
             const normalizedMessage = MPErrorMessageNormalizer.normalize(errorMessage);
 
+            const isPluginError = !!errorElement?.querySelector('li[data-mp-source="plugin"]');
+            const errorOrigin = isPluginError ? 'post_submit_mercado_pago' : 'post_submit_woocommerce';
+
             MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
                 message: normalizedMessage,
-                errorOrigin: 'post_submit'
+                errorOrigin: errorOrigin
             });
         });
     }
@@ -48,26 +66,101 @@ class MPClassicCheckoutErrorHandler extends MPCheckoutErrorHandler {
 
 class MPOrderPayCheckoutErrorHandler extends MPCheckoutErrorHandler {
     #ORDER_PAY_FORM = 'form#order_review';
-    #ORDER_PAY_ELEMENT_ERROR = '.woocommerce-notices-wrapper .woocommerce-error';
-    #ORDER_PAY_DELAY = 1000;
+    #ERROR_SELECTORS = [
+        '.woocommerce-notices-wrapper .woocommerce-error',
+        '#order_review > .woocommerce-error'
+    ];
     ERROR_EVENT_NAME = 'mp_checkout_error';
 
     handle() {
-        if (!document.querySelector(this.#ORDER_PAY_FORM)) {
-            return;
+        const form = document.querySelector(this.#ORDER_PAY_FORM);
+        if (!form) return;
+
+        form.addEventListener('submit', () => MPDispatchedErrorTracker.reset());
+
+        this.handlePageLoadErrors();
+        this.observeForDynamicErrors(form);
+    }
+
+    findAllErrorElements() {
+        const elements = [];
+        for (const selector of this.#ERROR_SELECTORS) {
+            elements.push(...document.querySelectorAll(selector));
         }
+        return elements;
+    }
 
-        const errorElement = document.querySelector(this.#ORDER_PAY_ELEMENT_ERROR);
-        if (!errorElement) return;
-
+    dispatchError(errorElement) {
         const normalizedMessage = MPErrorMessageNormalizer.normalize(errorElement.textContent);
+        const isPluginError = !!errorElement.querySelector('li[data-mp-source="plugin"]');
+        const errorOrigin = isPluginError ? 'post_submit_mercado_pago' : 'post_submit_woocommerce';
 
-        setTimeout(() => {
-            MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
-                message: normalizedMessage,
-                errorOrigin: 'post_submit'
-            });
-        }, this.#ORDER_PAY_DELAY);
+        if (!MPDispatchedErrorTracker.track(normalizedMessage, errorOrigin)) return;
+
+        MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
+            message: normalizedMessage,
+            errorOrigin: errorOrigin
+        });
+    }
+
+    dispatchAllErrors(errorElements) {
+        errorElements.forEach(el => this.dispatchError(el));
+    }
+
+    handlePageLoadErrors() {
+        const errorElements = this.findAllErrorElements();
+        if (!errorElements.length) return;
+
+        this.waitForMelidata().then(() => this.dispatchAllErrors(errorElements));
+    }
+
+    waitForMelidata() {
+        return new Promise((resolve) => {
+            if (window.melidata) {
+                resolve();
+                return;
+            }
+
+            if (window.melidataReady && typeof window.melidataReady.then === 'function') {
+                window.melidataReady.then(resolve).catch(resolve);
+                return;
+            }
+
+            if (window.melidataReady) {
+                resolve();
+                return;
+            }
+
+            if (document.readyState === 'complete') {
+                resolve();
+                return;
+            }
+
+            window.addEventListener('load', () => {
+                if (window.melidataReady && typeof window.melidataReady.then === 'function') {
+                    window.melidataReady.then(resolve).catch(resolve);
+                } else {
+                    resolve();
+                }
+            }, { once: true });
+        });
+    }
+
+    observeForDynamicErrors(form) {
+        const targets = [
+            document.querySelector('.woocommerce-notices-wrapper'),
+            form
+        ].filter(Boolean);
+
+        targets.forEach(target => {
+            new MutationObserver((mutations) => {
+                const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0);
+                if (!hasAddedNodes) return;
+
+                const errorElements = this.findAllErrorElements();
+                this.dispatchAllErrors(errorElements);
+            }).observe(target, { childList: true });
+        });
     }
 }
 
@@ -80,7 +173,7 @@ class MPBlocksCheckoutErrorHandler extends MPCheckoutErrorHandler {
 
         MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
             message: normalizedMessage,
-            errorOrigin: 'post_submit'
+            errorOrigin: 'post_submit_mercado_pago'
         });
     }
 }

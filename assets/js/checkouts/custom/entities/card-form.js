@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher */
+/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher, sendMetric */
 // eslint-disable-next-line no-unused-vars
 class MPCardForm {
     TIMEOUT_TO_WAIT_INIT_CARD_FORM = 10000;
@@ -389,8 +389,12 @@ class MPCardForm {
           customContainer?.classList.remove('mp-display-none');
         };
 
-        if (window.mpSuperTokenTriggerHandler?.isSuperTokenPaymentMethodsLoaded()) {
-          loadSpinner?.classList.add('mp-hidden');
+        if (window.mpSuperTokenTriggerHandler) {
+          if (window.mpSuperTokenTriggerHandler.isSuperTokenPaymentMethodsLoaded()) {
+            loadSpinner?.classList.add('mp-hidden');
+          }
+        } else if (typeof sendMetric === 'function') {
+          sendMetric('MP_SUPER_TOKEN_TRIGGER_HANDLER_MISSING', 'removeLoadSpinner', 'mp_cardform_trigger_handler_missing');
         }
 
         setTimeout( () => {
