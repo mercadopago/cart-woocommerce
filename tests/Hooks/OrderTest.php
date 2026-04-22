@@ -444,14 +444,12 @@ public function testGetMetaboxDataReturnsEmptyWhenExceptionIsThrown(): void
             ->with($orderMock)
             ->andReturn([['status' => 'approved', 'id' => '123']]);
 
-        // updateMetadataIfStatusChanged dependencies
         $this->orderStatusMock->shouldReceive('mapMpStatusToWoocommerceStatus')->andReturn('processing')->byDefault();
         $this->orderStatusMock->shouldReceive('getAllPaymentsData')->andReturn([])->byDefault();
 
         $this->orderMetadataMock->shouldReceive('getUsedGatewayData')->andReturn('woo-mercado-pago-custom');
         $this->orderMetadataMock->shouldReceive('updateOrderCustomFieldsAfterSync')->byDefault();
 
-        // Core assertion: processStatus is called with correct gateway
         $this->orderStatusMock->shouldReceive('processStatus')
             ->once()
             ->with('approved', Mockery::type('array'), $orderMock, 'woo-mercado-pago-custom');
@@ -466,6 +464,53 @@ public function testGetMetaboxDataReturnsEmptyWhenExceptionIsThrown(): void
         $this->orderStatusMock->shouldReceive('getLastNotification')
             ->with($orderMock)
             ->andReturn([]);
+
+        $this->orderStatusMock->shouldReceive('getAllPaymentsData')
+            ->with($orderMock)
+            ->andReturn([]);
+
+        $this->orderStatusMock->shouldNotReceive('processStatus');
+
+        $this->order->syncOrderStatus($orderMock);
+    }
+
+    public function testSyncOrderStatusFallsBackToPaymentApiWhenKvsMisses(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_status')->andReturn('pending')->byDefault();
+        $orderMock->shouldReceive('get_meta')->andReturn('')->byDefault();
+
+        $this->orderStatusMock->shouldReceive('getLastNotification')
+            ->with($orderMock)
+            ->andReturn([]);
+
+        $this->orderStatusMock->shouldReceive('getAllPaymentsData')
+            ->with($orderMock)
+            ->andReturn([['status' => 'approved', 'id' => '123', 'status_detail' => 'accredited']]);
+
+        $this->orderStatusMock->shouldReceive('mapMpStatusToWoocommerceStatus')->andReturn('processing')->byDefault();
+
+        $this->orderMetadataMock->shouldReceive('getUsedGatewayData')->andReturn('woo-mercado-pago-basic');
+        $this->orderMetadataMock->shouldReceive('updateOrderCustomFieldsAfterSync')->byDefault();
+
+        $this->orderStatusMock->shouldReceive('processStatus')
+            ->once()
+            ->with('approved', Mockery::type('array'), $orderMock, 'woo-mercado-pago-basic');
+
+        $this->order->syncOrderStatus($orderMock);
+    }
+
+    public function testSyncOrderStatusFallbackSkipsRefundWithoutNotification(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+
+        $this->orderStatusMock->shouldReceive('getLastNotification')
+            ->with($orderMock)
+            ->andReturn([]);
+
+        $this->orderStatusMock->shouldReceive('getAllPaymentsData')
+            ->with($orderMock)
+            ->andReturn([['status' => 'refunded', 'id' => '456', 'status_detail' => 'refunded']]);
 
         $this->orderStatusMock->shouldNotReceive('processStatus');
 

@@ -374,27 +374,55 @@ class Order
             $notification = $this->orderStatus->getLastNotification($order);
             $notification = reset($notification);
 
-            if (empty($notification)) {
-                $this->logs->file->error('Mercado Pago: Error getting notification info for sync order status', __CLASS__);
+            if (!empty($notification)) {
+                $this->processSyncData($order, (array) $notification);
                 return;
             }
 
-            /* Dev Internal Note: The sync button works with all payment flows, but is particularly useful
-             * for orders made with Checkout API or Checkout Pro - credit and debit cards,
-             * where approved payment triggers the internal notification flow.
-             */
-
-            $this->updateMetadataIfStatusChanged($order, $notification['status']);
-
-            $this->orderStatus->processStatus(
-                $notification['status'],
-                (array) $notification,
-                $order,
-                $this->orderMetadata->getUsedGatewayData($order)
+            $this->logs->file->info(
+                'Mercado Pago: Notification not found via KVS, falling back to payment API for sync order status',
+                __CLASS__
             );
+
+            $lastPaymentInfo = $this->getLastPaymentInfo($order);
+
+            if (empty($lastPaymentInfo)) {
+                $this->logs->file->error('Mercado Pago: Error getting payment info for sync order status', __CLASS__);
+                return;
+            }
+
+            if ($lastPaymentInfo['status'] === 'refunded') {
+                $this->logs->file->info(
+                    'Mercado Pago: Refund sync skipped — payment API data lacks notification_id required by refund flow',
+                    __CLASS__
+                );
+                return;
+            }
+
+            $this->processSyncData($order, (array) $lastPaymentInfo);
         } catch (Exception $e) {
             $this->logs->file->error('Mercado Pago: Error in sync order status: ' . $e->getMessage(), __CLASS__);
         }
+    }
+
+    /**
+     * Process sync data for order status update
+     *
+     * @param WC_Order $order
+     * @param array $notification
+     *
+     * @return void
+     */
+    private function processSyncData(WC_Order $order, array $notification): void
+    {
+        $this->updateMetadataIfStatusChanged($order, $notification['status']);
+
+        $this->orderStatus->processStatus(
+            $notification['status'],
+            $notification,
+            $order,
+            $this->orderMetadata->getUsedGatewayData($order)
+        );
     }
 
     /**
