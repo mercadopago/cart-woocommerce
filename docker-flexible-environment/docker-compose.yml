@@ -1,0 +1,36 @@
+# ============================================================================
+# docker compose up                       → MLB store, PHP 7.4
+# SITE=mla docker compose up              → MLA store, PHP 7.4
+# SITE=mlb PHP_VERSION=8.4 docker compose up → MLB store, PHP 8.4
+# ============================================================================
+
+services:
+  wordpress:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-7.4}
+    container_name: mp-wc-dev
+    ports:
+      - "${PORT:-8080}:80"
+    environment:
+      - SITE=${SITE:-mlb}
+      - PORT=${PORT:-8080}
+      - MP_PUBLIC_KEY_TEST=${MP_PUBLIC_KEY_TEST:-}
+      - MP_ACCESS_TOKEN_TEST=${MP_ACCESS_TOKEN_TEST:-}
+      - MP_PUBLIC_KEY_PROD=${MP_PUBLIC_KEY_PROD:-}
+      - MP_ACCESS_TOKEN_PROD=${MP_ACCESS_TOKEN_PROD:-}
+      - MP_CUSTOM_DOMAIN=${MP_CUSTOM_DOMAIN:-}
+      - THEME=${THEME:-storefront}
+    # Chromium headless (Playwright E2E) needs more shared memory than Docker's default 64MB.
+    # 2GB is the Playwright-recommended setting for Docker containers.
+    shm_size: '2gb'
+    volumes:
+      - wp-data:/var/www/html
+      - db-data:/var/lib/mysql
+      - ..:/woocommerce-mercadopago
+
+volumes:
+  wp-data:
+  db-data:

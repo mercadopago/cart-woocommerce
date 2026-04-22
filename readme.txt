@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.7.18
+Stable tag: 8.7.19
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,17 +134,9 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.7.18 (16/04/2026) =
-### Added
-- New Fast Payment flow with Encrypted Security Code (ESC) for credit and debit cards, reducing unnecessary CVV prompts and increasing approval rates.
-- Add skeleton loader while verifying CVV requirement to prevent UI flicker on payment method selection.
-
-### Fixed
-- Fix Blocks checkout rendering an empty page in some stores.
-- Fix commission display in Blocks checkout.
-- Fix issuer select (Banco Emisor) losing visual styles in production.
-- Fix postcode field being cleared by WooCommerce AJAX after country change.
-- Fix Mercado Pago checkout URL detection for all LATAM country TLDs.
-- Retry currency conversion requests instead of caching API errors.
+= v8.7.19 (22/04/2026) =
+* Fixed
+- Fallback to payment API when KVS notification is missing on order sync — orders stuck in pending after a KVS miss are now correctly processed via direct payment API call
+- Skip refund sync when falling back to payment API, as the API response lacks the `notification_id` required by the refund flow
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

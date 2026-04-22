@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.7.18';
+    private const PLUGIN_VERSION = '8.7.19';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
