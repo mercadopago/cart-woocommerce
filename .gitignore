@@ -23,3 +23,7 @@ phpstan-baseline.neon
 
 # SSL certificates (local dev)
 *.pem
+
+# IA Files
+.personal-agents
+.claude/settings.local.json

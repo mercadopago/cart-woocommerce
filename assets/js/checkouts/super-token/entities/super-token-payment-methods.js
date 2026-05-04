@@ -1636,7 +1636,7 @@ class MPSuperTokenPaymentMethods {
         const paymentMethodElement = document.createElement('article');
         const installmentsWithoutFee = this.numberOfInstallmentsWithoutFee(paymentMethod);
         const ariaLabel = this.buildPaymentMethodAriaLabel(paymentMethod, lastFourDigits, installmentsWithoutFee);
-        const temporaryId = Math.random().toString(36).substring(2, 15);
+        const temporaryId = Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(36)).join('').substring(0, 13);
         const paymentMethodId = paymentMethod?.id ? this.paymentMethodIdentifier(paymentMethod) : temporaryId;
         const shouldShowValueProp = (this.isCreditCard(paymentMethod) || this.isConsumerCredits(paymentMethod))  && installmentsWithoutFee > 1;
 

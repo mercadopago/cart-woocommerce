@@ -663,4 +663,19 @@ class PseGatewayTest extends TestCase
 
         $this->assertTrue($result);
     }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testConstructorReturnsEarlyWhenNotBooted(): void
+    {
+        global $mercadopago;
+        $mercadopago = Mockery::mock(\MercadoPago\Woocommerce\WoocommerceMercadoPago::class);
+        $mercadopago->shouldReceive('booted')->andReturn(false);
+
+        $gateway = new PseGateway();
+
+        $this->assertFalse(isset($gateway->adminTranslations));
+    }
 }

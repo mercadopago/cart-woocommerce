@@ -34,6 +34,10 @@ class BasicGateway extends AbstractGateway
     {
         parent::__construct();
 
+        if (!$this->mercadopago->booted()) {
+            return;
+        }
+
         $this->adminTranslations = $this->mercadopago->adminTranslations->basicGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->basicCheckout;
 

@@ -97,6 +97,16 @@ describe('WCEmailListener', () => {
       });
     });
 
+    describe('anchored regex rejects non-email strings', () => {
+      test('Given text containing a valid email in the middle, When isValid() is called, Then returns false (regex has anchors)', () => {
+        const textWithEmail = 'contato: user@example.com por favor';
+        expect(emailListener.isValid(textWithEmail)).toBe(false);
+      });
+
+      test('Given email with leading text before @, When isValid() is called, Then returns false due to anchored regex', () => {
+        expect(emailListener.isValid('not-valid user@example.com')).toBe(false);
+      });
+    });
   });
 
   // ---------------------------------------------------------------------------

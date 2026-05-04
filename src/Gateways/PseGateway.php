@@ -41,6 +41,10 @@ class PseGateway extends AbstractGateway
     {
         parent::__construct();
 
+        if (!$this->mercadopago->booted()) {
+            return;
+        }
+
         $this->adminTranslations = $this->mercadopago->adminTranslations->pseGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->pseCheckout;
 

@@ -3,10 +3,7 @@
 namespace MercadoPago\Woocommerce\Libraries\Metrics;
 
 use Exception;
-use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Libraries\Singleton\Singleton;
-
-use function is_null;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -14,39 +11,51 @@ if (!defined('ABSPATH')) {
 
 class Datadog extends Singleton
 {
-    private Sdk $sdk;
-
-    public function __construct()
-    {
-        parent::__construct();
-        $this->sdk = new Sdk();
-    }
+    private const BASEURL = 'https://api.mercadopago.com';
+    private const ENDPOINT = '/ppcore/prod/monitor/v1/event/datadog';
+    private const REQUEST_TIMEOUT_SECONDS = 3;
 
     public function sendEvent(string $event_type, $value, $message = null, $paymentMethod = null, $details = []): void
     {
         try {
             $team = $details['team'] ?? 'smb';
-            $datadogEvent = $this->sdk->getDatadogEventInstance();
 
-            if (! is_null($message)) {
-                $datadogEvent->message = $message;
+            $payload = [
+                'value'          => $value,
+                'plugin_version' => MP_VERSION,
+                'platform'       => [
+                    'name'    => MP_PLATFORM_NAME,
+                    'version' => $this->getWoocommerceVersion(),
+                    'url'     => site_url(),
+                ],
+            ];
+
+            if ($message !== null) {
+                $payload['message'] = $message;
             }
 
-            $datadogEvent->value = $value;
-            $datadogEvent->plugin_version = MP_VERSION;
-            $datadogEvent->platform->name = MP_PLATFORM_NAME;
-            $datadogEvent->platform->version = $this->getWoocommerceVersion();
-            $datadogEvent->platform->url = site_url();
+            $eventDetails = [];
 
-            if (! is_null($paymentMethod)) {
-                $datadogEvent->details = ["payment_method" => $paymentMethod];
+            if ($paymentMethod !== null) {
+                $eventDetails['payment_method'] = $paymentMethod;
             }
 
-            if (! empty($details)) {
-                $datadogEvent->details = array_merge($datadogEvent->details ?? [], $details);
+            if (!empty($details)) {
+                $eventDetails = array_merge($eventDetails, $details);
             }
 
-            $datadogEvent->register(array("team" => $team, "event_type" => $event_type, "details" => $datadogEvent->details));
+            if (!empty($eventDetails)) {
+                $payload['details'] = $eventDetails;
+            }
+
+            $url = self::BASEURL . self::ENDPOINT . '/' . $team . '/' . $event_type;
+
+            wp_remote_post($url, [
+                'blocking' => false,
+                'timeout'  => self::REQUEST_TIMEOUT_SECONDS,
+                'body'     => wp_json_encode($payload),
+                'headers'  => ['Content-Type' => 'application/json'],
+            ]);
         } catch (Exception $e) {
             return;
         }

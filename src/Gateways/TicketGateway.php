@@ -44,6 +44,10 @@ class TicketGateway extends AbstractGateway
     {
         parent::__construct();
 
+        if (!$this->mercadopago->booted()) {
+            return;
+        }
+
         $this->adminTranslations = $this->mercadopago->adminTranslations->ticketGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->ticketCheckout;
 

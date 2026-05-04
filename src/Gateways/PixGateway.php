@@ -64,6 +64,10 @@ class PixGateway extends AbstractGateway
     {
         parent::__construct();
 
+        if (!$this->mercadopago->booted()) {
+            return;
+        }
+
         $this->adminTranslations = $this->mercadopago->adminTranslations->pixGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->pixCheckout;
 

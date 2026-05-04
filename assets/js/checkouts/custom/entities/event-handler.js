@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+/* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
 /* globals wc_mercadopago_custom_event_handler_params, MP_DEVICE_SESSION_ID, jQuery, CheckoutPage, MPSuperTokenErrorCodes, sendMetric */
 class MPEventHandler {
     REMOVE_LOAD_SPINNER_DELAY = 500;
@@ -16,6 +16,7 @@ class MPEventHandler {
         this.mpSuperTokenPaymentMethods = null;
         this.mpSuperTokenMetrics = null;
         this.mpSuperTokenErrorHandler = null;
+        this.loadSpinnerTimeout = null;
     }
 
     setSuperTokenDependencies({ triggerHandler, authenticator, paymentMethods, metrics, errorHandler }) {
@@ -219,55 +220,29 @@ class MPEventHandler {
         }
     }
 
-    isInsideHiddenContainer(field) {
-        const containersToCheck = [
-            '.shipping_address',
-            '.billing_address',
-            '.woocommerce-shipping-fields',
-            '.woocommerce-billing-fields',
-            '.form-row',
-            '.create-account'
-        ];
-
-        for (const selector of containersToCheck) {
-            const container = field.closest(selector);
-            if (!container) continue;
-
-            if (window.getComputedStyle(container).display === 'none') {
-                return true;
+    hasWooCommerceValidationErrors() {
+        if (typeof window.hasWooCommerceValidationErrors === 'function') {
+            try {
+                return window.hasWooCommerceValidationErrors();
+            } catch (error) {
+                if (typeof sendMetric === 'function') {
+                    sendMetric(
+                        'MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK',
+                        error?.message || error?.name || 'threw an error',
+                        'mp_custom_checkout_validation_cdn_fallback'
+                    );
+                }
+                return false;
             }
         }
-
+        if (typeof sendMetric === 'function') {
+            sendMetric(
+                'MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK',
+                'hasWooCommerceValidationErrors not available',
+                'mp_custom_checkout_validation_cdn_fallback'
+            );
+        }
         return false;
-    }
-
-    hasWooCommerceValidationErrors() {
-        const invalidFields = document.querySelectorAll(
-            '.woocommerce-invalid, .woocommerce-invalid-required-field, .validate-required.woocommerce-invalid'
-        );
-
-        const visibleInvalidFields = Array.from(invalidFields).filter(field => {
-            return !this.isInsideHiddenContainer(field);
-        });
-
-        const formScope = this.isOrderPayPage()
-            ? '#order_review'
-            : '.woocommerce-checkout';
-
-        const requiredFields = document.querySelectorAll(
-            `${formScope} .validate-required input, ${formScope} .validate-required select`
-        );
-
-        const hasEmptyRequired = Array.from(requiredFields).some(field => {
-            if (field.type === 'hidden' || field.disabled) return false;
-
-            if (this.isInsideHiddenContainer(field)) return false;
-
-            if (field.type === 'checkbox' && field.id === 'terms' && field.name === 'terms') return !field.checked;
-            return !field.value.trim();
-        });
-
-        return visibleInvalidFields.length > 0 || hasEmptyRequired;
     }
 
     createToken() {
@@ -336,9 +311,13 @@ class MPEventHandler {
           this.cardForm.form.unmount();
         }
 
+        clearTimeout(this.loadSpinnerTimeout);
+
         const { superTokenTriggerHandler, superTokenPaymentMethods } = this.getSuperTokenDeps();
         if (superTokenTriggerHandler?.isSuperTokenPaymentMethodsLoaded()) {
           superTokenPaymentMethods?.getPaymentMethodsListElement()?.style.setProperty('display', 'none', 'important');
+        } else if (superTokenTriggerHandler?.isFetchingPaymentMethods) {
+          superTokenTriggerHandler.cancelLoad();
         }
 
         return;
@@ -374,6 +353,7 @@ class MPEventHandler {
 
     handleUpdatedCheckout() {
       if (this.isCheckoutCustomPaymentMethodSelected()) {
+        clearTimeout(this.loadSpinnerTimeout);
         this.cardForm.createLoadSpinner();
 
         const newAmount = this.cardForm.getAmount();
@@ -403,7 +383,7 @@ class MPEventHandler {
 
         Promise.all(promises)
           .finally(() => {
-            setTimeout(() => this.cardForm.removeLoadSpinner(), this.REMOVE_LOAD_SPINNER_DELAY);
+            this.loadSpinnerTimeout = setTimeout(() => this.cardForm.removeLoadSpinner(), this.REMOVE_LOAD_SPINNER_DELAY);
           });
       }
     }

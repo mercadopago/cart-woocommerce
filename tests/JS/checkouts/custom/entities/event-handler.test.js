@@ -19,17 +19,22 @@ describe('MPEventHandler - hasWooCommerceValidationErrors', () => {
     }));
 
     global.MPSuperTokenErrorCodes = {};
+    global.sendMetric = jest.fn();
 
     MPEventHandler = loadFile(eventHandlerPath, 'MPEventHandler', {
       jQuery: global.jQuery,
       wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
       MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
+      setTimeout: global.setTimeout,
+      clearTimeout: global.clearTimeout,
+      sendMetric: global.sendMetric,
     });
   });
 
   beforeEach(() => {
     document.body.innerHTML = '';
     document.body.className = '';
+    global.sendMetric.mockClear();
 
     const cardForm = {
       formMounted: false,
@@ -46,524 +51,143 @@ describe('MPEventHandler - hasWooCommerceValidationErrors', () => {
   });
 
   // =========================================================================
-  // No validation errors and no empty required fields
+  // hasWooCommerceValidationErrors — CDN wrapper
+  // Implementation lives in window.hasWooCommerceValidationErrors (CDN bundle).
+  // The plugin method is a thin wrapper: delegate if available, fallback otherwise.
   // =========================================================================
-  describe('given a checkout form with no validation errors', () => {
-    it('when all required fields are filled, then should return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="John Doe" />
-          </div>
-        </div>
-      `;
+  describe('hasWooCommerceValidationErrors() CDN wrapper', () => {
+    afterEach(() => {
+      delete window.hasWooCommerceValidationErrors;
+    });
+
+    it('when CDN function is available and returns true, then should delegate and return true', () => {
+      window.hasWooCommerceValidationErrors = jest.fn().mockReturnValue(true);
+
+      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
+      expect(window.hasWooCommerceValidationErrors).toHaveBeenCalledTimes(1);
+    });
+
+    it('when CDN function is available and returns false, then should delegate and return false', () => {
+      window.hasWooCommerceValidationErrors = jest.fn().mockReturnValue(false);
+
+      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
+      expect(window.hasWooCommerceValidationErrors).toHaveBeenCalledTimes(1);
+    });
+
+    it('when CDN function is not available, then should return false and never block the checkout', () => {
+      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
+    });
+
+    it('when CDN function is not available, then should emit MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK metric', () => {
+      handler.hasWooCommerceValidationErrors();
+
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK',
+        'hasWooCommerceValidationErrors not available',
+        'mp_custom_checkout_validation_cdn_fallback'
+      );
+    });
+
+    it('when CDN function throws, then should return false and never block the checkout', () => {
+      window.hasWooCommerceValidationErrors = jest.fn().mockImplementation(() => {
+        throw new Error('unexpected CDN error');
+      });
 
       expect(handler.hasWooCommerceValidationErrors()).toBe(false);
     });
 
-    it('when the form has no fields at all, then should return false', () => {
-      document.body.innerHTML = '<div class="woocommerce-checkout"></div>';
+    it('when CDN function throws, then should emit MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK metric with error message', () => {
+      window.hasWooCommerceValidationErrors = jest.fn().mockImplementation(() => {
+        throw new Error('unexpected CDN error');
+      });
 
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
+      handler.hasWooCommerceValidationErrors();
+
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK',
+        'unexpected CDN error',
+        'mp_custom_checkout_validation_cdn_fallback'
+      );
+    });
+
+    it('when CDN function is available, then should not emit fallback metric', () => {
+      window.hasWooCommerceValidationErrors = jest.fn().mockReturnValue(false);
+
+      handler.hasWooCommerceValidationErrors();
+
+      expect(global.sendMetric).not.toHaveBeenCalled();
     });
   });
 
   // =========================================================================
-  // Visible invalid fields (woocommerce-invalid classes)
+  // handlePaymentMethodSelected
   // =========================================================================
-  describe('given visible fields with woocommerce-invalid classes', () => {
-    it('when a field has the woocommerce-invalid class, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="woocommerce-invalid">
-            <input type="text" value="" />
-          </div>
-        </div>
-      `;
+  describe('handlePaymentMethodSelected()', () => {
+    let superTokenTriggerHandler;
+    let superTokenPaymentMethods;
 
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
+    beforeEach(() => {
+      superTokenPaymentMethods = {
+        getPaymentMethodsListElement: jest.fn().mockReturnValue(null),
+        reset: jest.fn(),
+      };
+      superTokenTriggerHandler = {
+        isSuperTokenPaymentMethodsLoaded: jest.fn().mockReturnValue(false),
+        isFetchingPaymentMethods: false,
+        loadSuperToken: jest.fn().mockResolvedValue(),
+        cancelLoad: jest.fn(),
+      };
+      handler.getSuperTokenDeps = jest.fn().mockReturnValue({
+        superTokenTriggerHandler,
+        superTokenPaymentMethods,
+      });
+      handler.isCheckoutCustomPaymentMethodSelected = jest.fn().mockReturnValue(false);
+      handler.cardForm.getAmount = jest.fn().mockReturnValue('100.00');
+      handler.cardForm.amount = '100.00';
     });
 
-    it('when a field has the woocommerce-invalid-required-field class, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="woocommerce-invalid-required-field">
-            <input type="text" value="filled" />
-          </div>
-        </div>
-      `;
+    it('Given Super Token is mid-fetch (isFetchingPaymentMethods=true), When non-custom method selected, Then should call cancelLoad()', () => {
+      superTokenTriggerHandler.isFetchingPaymentMethods = true;
 
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
+      handler.handlePaymentMethodSelected();
+
+      expect(superTokenTriggerHandler.cancelLoad).toHaveBeenCalledTimes(1);
     });
 
-    it('when a field has both validate-required and woocommerce-invalid classes, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required woocommerce-invalid">
-            <input type="text" value="filled" />
-          </div>
-        </div>
-      `;
+    it('Given Super Token already loaded (isSuperTokenPaymentMethodsLoaded=true), When non-custom method selected, Then should hide list and NOT call cancelLoad()', () => {
+      superTokenTriggerHandler.isSuperTokenPaymentMethodsLoaded.mockReturnValue(true);
+      const listElement = { style: { setProperty: jest.fn() } };
+      superTokenPaymentMethods.getPaymentMethodsListElement.mockReturnValue(listElement);
 
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
+      handler.handlePaymentMethodSelected();
+
+      expect(listElement.style.setProperty).toHaveBeenCalledWith('display', 'none', 'important');
+      expect(superTokenTriggerHandler.cancelLoad).not.toHaveBeenCalled();
     });
 
-    it('when the woocommerce-invalid field is inside a hidden container, then should return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="shipping_address" style="display: none;">
-            <div class="woocommerce-invalid">
-              <input type="text" value="" />
-            </div>
-          </div>
-        </div>
-      `;
+    it('Given Super Token not present (getSuperTokenDeps returns undefined), When non-custom method selected, Then should not throw', () => {
+      handler.getSuperTokenDeps = jest.fn().mockReturnValue({
+        superTokenTriggerHandler: undefined,
+        superTokenPaymentMethods: undefined,
+      });
 
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // Empty required fields
-  // =========================================================================
-  describe('given required fields in the checkout form', () => {
-    it('when a required text input is empty, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
+      expect(() => handler.handlePaymentMethodSelected()).not.toThrow();
     });
 
-    it('when a required text input contains only whitespace, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="   " />
-          </div>
-        </div>
-      `;
+    it('Given WooCommerce fires updated_checkout (Super Token starts loading) and user quickly switches to Pix, When handlePaymentMethodSelected() fires, Then should interrupt Super Token load and list must not be present in DOM', () => {
+      // Step 1: WooCommerce fires updated_checkout → handleUpdatedCheckout triggers loadSuperToken
+      handler.isCheckoutCustomPaymentMethodSelected.mockReturnValue(true);
+      handler.handleUpdatedCheckout();
+      // loadSuperToken is in-flight (as it would be in the real implementation after the call)
+      superTokenTriggerHandler.isFetchingPaymentMethods = true;
 
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
+      // Step 2: user quickly switches to Pix before Super Token finishes loading
+      handler.isCheckoutCustomPaymentMethodSelected.mockReturnValue(false);
+      handler.handlePaymentMethodSelected();
 
-    it('when a required select has an empty value, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <select><option value="">Select</option></select>
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when all required fields are filled, then should return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="John" />
-          </div>
-          <div class="validate-required">
-            <select><option value="BR">Brazil</option></select>
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // Hidden and disabled fields should be skipped
-  // =========================================================================
-  describe('given required fields that are hidden or disabled', () => {
-    it('when a required field is of type hidden, then should skip it and return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="hidden" value="" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when a required field is disabled, then should skip it and return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="" disabled />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // Fields inside hidden containers
-  // =========================================================================
-  describe('given required fields inside hidden containers', () => {
-    it('when the field is inside a hidden .shipping_address, then should skip it and return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="shipping_address" style="display: none;">
-            <div class="validate-required">
-              <input type="text" value="" />
-            </div>
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when the field is inside a hidden .billing_address, then should skip it and return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="billing_address" style="display: none;">
-            <div class="validate-required">
-              <input type="text" value="" />
-            </div>
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when the field is inside a hidden .create-account, then should skip it and return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="create-account" style="display: none;">
-            <div class="validate-required">
-              <input type="text" value="" />
-            </div>
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when the field is inside a hidden .form-row, then should skip it and return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="form-row" style="display: none;">
-            <div class="validate-required">
-              <input type="text" value="" />
-            </div>
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when the field is inside a visible container, then should detect the empty field and return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="shipping_address" style="display: block;">
-            <div class="validate-required">
-              <input type="text" value="" />
-            </div>
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-  });
-
-  // =========================================================================
-  // Terms and conditions checkbox (id="terms")
-  // =========================================================================
-  describe('given a terms and conditions checkbox with id="terms"', () => {
-    it('when the terms checkbox is unchecked, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="checkbox" id="terms" name="terms" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when the terms checkbox is checked, then should return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="checkbox" id="terms" name="terms" checked />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when a checkbox has a different id, then should not treat it as the terms checkbox', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="checkbox" id="other-checkbox" />
-          </div>
-        </div>
-      `;
-
-      // A checkbox without id="terms" is evaluated via field.value.trim()
-      // checkbox.value defaults to "on", so it is not considered empty
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when a checkbox has no id, then should not treat it as the terms checkbox', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="checkbox" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // Form scope — Order Pay Page vs Standard Checkout
-  // =========================================================================
-  describe('given different checkout page contexts', () => {
-    it('when on the order pay page, then should scope required fields to #order_review', () => {
-      document.body.innerHTML = `
-        <form id="order_review">
-          <div class="validate-required">
-            <input type="text" value="" />
-          </div>
-        </form>
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="filled" />
-          </div>
-        </div>
-      `;
-      document.body.classList.add('woocommerce-order-pay');
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when on the standard checkout page, then should scope required fields to .woocommerce-checkout', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="filled" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when on the standard checkout page with an empty field, then should detect it and return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when on the order pay page, then should ignore empty fields outside #order_review', () => {
-      document.body.innerHTML = `
-        <form id="order_review">
-          <div class="validate-required">
-            <input type="text" value="filled" />
-          </div>
-        </form>
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="" />
-          </div>
-        </div>
-      `;
-      document.body.classList.add('woocommerce-order-pay');
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // Combined conditions
-  // =========================================================================
-  describe('given multiple validation conditions at the same time', () => {
-    it('when there is a visible invalid field but all required fields are filled, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="woocommerce-invalid">
-            <input type="text" value="filled" />
-          </div>
-          <div class="validate-required">
-            <input type="text" value="filled" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when there are no invalid fields but a required field is empty, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="filled" />
-          </div>
-          <div class="validate-required">
-            <input type="text" value="" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when there are both visible invalid fields and empty required fields, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="woocommerce-invalid">
-            <input type="text" value="" />
-          </div>
-          <div class="validate-required">
-            <input type="text" value="" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when invalid fields are hidden and all required fields are filled, then should return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="billing_address" style="display: none;">
-            <div class="woocommerce-invalid">
-              <input type="text" value="" />
-            </div>
-          </div>
-          <div class="validate-required">
-            <input type="text" value="filled" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when hidden and disabled fields are skipped but a visible empty field exists, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="hidden" value="" />
-          </div>
-          <div class="validate-required">
-            <input type="text" value="" disabled />
-          </div>
-          <div class="validate-required">
-            <input type="text" value="" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when hidden and disabled fields are skipped and the remaining field is filled, then should return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="hidden" value="" />
-          </div>
-          <div class="validate-required">
-            <input type="text" value="" disabled />
-          </div>
-          <div class="validate-required">
-            <input type="text" value="filled" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when the terms checkbox is unchecked but all other fields are filled, then should return true', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="John" />
-          </div>
-          <div class="validate-required">
-            <input type="checkbox" id="terms" name="terms" />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when the terms checkbox is checked and all other fields are filled, then should return false', () => {
-      document.body.innerHTML = `
-        <div class="woocommerce-checkout">
-          <div class="validate-required">
-            <input type="text" value="John" />
-          </div>
-          <div class="validate-required">
-            <input type="checkbox" id="terms" checked />
-          </div>
-        </div>
-      `;
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // Order Pay Page with terms and conditions checkbox
-  // =========================================================================
-  describe('given the order pay page with a terms and conditions checkbox', () => {
-    it('when the terms checkbox is unchecked, then should return true', () => {
-      document.body.innerHTML = `
-        <form id="order_review">
-          <div class="validate-required">
-            <input type="checkbox" id="terms" name="terms" />
-          </div>
-        </form>
-      `;
-      document.body.classList.add('woocommerce-order-pay');
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-    });
-
-    it('when the terms checkbox is checked, then should return false', () => {
-      document.body.innerHTML = `
-        <form id="order_review">
-          <div class="validate-required">
-            <input type="checkbox" id="terms" checked />
-          </div>
-        </form>
-      `;
-      document.body.classList.add('woocommerce-order-pay');
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
+      expect(superTokenTriggerHandler.loadSuperToken).toHaveBeenCalledTimes(1);
+      expect(superTokenTriggerHandler.cancelLoad).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('.mp-super-token-payment-methods-list')).toBeNull();
     });
   });
 });

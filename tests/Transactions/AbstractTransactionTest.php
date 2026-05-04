@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Transactions;
 
+use Exception;
 use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
@@ -9,12 +10,14 @@ use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
+use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
 use MercadoPago\Woocommerce\Transactions\AbstractTransaction;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use WP_Mock;
 use WP_Theme;
 use WP_User;
@@ -448,5 +451,45 @@ class AbstractTransactionTest extends TestCase
         $expectedMetadataArray = (array) $mockMetadata;
         $this->assertEquals($expectedMetadataArray, $this->transaction->transaction->metadata);
         $this->assertNull($this->transaction->transaction->metadata['flow_id']);
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     * @testWith [true,  "homol"]
+     *           [false, "prod"]
+     */
+    public function testSendApiErrorMetricDispatchesToDatadogWithContext(bool $isTestMode, string $expectedEnvironment): void
+    {
+        $apiRoute  = '/checkout/preferences';
+        $exception = new Exception('API failure', 400);
+        $siteId    = 'MLB';
+        $custId    = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn($isTestMode);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_api_error', '400', 'API failure', null, [
+                'team'        => 'big',
+                'api_route'   => $apiRoute,
+                'site_id'     => $siteId,
+                'environment' => $expectedEnvironment,
+                'cust_id'     => $custId,
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendApiErrorMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
     }
 }

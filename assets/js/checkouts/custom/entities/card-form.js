@@ -1,5 +1,5 @@
 /* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher, sendMetric */
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 class MPCardForm {
     TIMEOUT_TO_WAIT_INIT_CARD_FORM = 10000;
 
@@ -127,6 +127,7 @@ class MPCardForm {
             },
             onFormMounted: (error) => {
                 this.formMounted = true;
+                document.dispatchEvent(new CustomEvent('mp_card_form_mounted'));
                 resolve();
 
                 if (error) {
@@ -186,9 +187,9 @@ class MPCardForm {
                         CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
                         CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'flex');
                     }
-                } catch (error) {
-                    if (error) {
-                        console.error('Payment methods handling error: ', error);
+                } catch (err) {
+                    if (err) {
+                        console.error('Payment methods handling error: ', err);
                         return;
                     }
                     CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');

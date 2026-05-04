@@ -545,6 +545,10 @@ class CustomGateway extends AbstractGateway
                 'path' => 'checkouts/super-token/entities/super-token-authenticator',
             ],
             [
+                'handle' => 'wc_mercadopago_supertoken_checkout_form_validator',
+                'path' => 'checkouts/super-token/validators/checkout-form-validator',
+            ],
+            [
                 'handle' => 'wc_mercadopago_supertoken',
                 'path' => 'checkouts/super-token/mp-super-token',
             ]
@@ -564,6 +568,7 @@ class CustomGateway extends AbstractGateway
                 'platform_version' => $this->mercadopago->woocommerce->version,
                 'site_id' => $this->countryConfigs['site_id'],
                 'location' => '/checkout',
+                'plugin_js_base_url' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/'),
                 'theme' => get_stylesheet(),
                 'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
                 'current_user_email' => $this->getCheckoutEmailIfAvailable(),

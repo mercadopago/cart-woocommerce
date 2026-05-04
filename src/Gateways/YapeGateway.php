@@ -29,6 +29,10 @@ class YapeGateway extends AbstractGateway
     {
         parent::__construct();
 
+        if (!$this->mercadopago->booted()) {
+            return;
+        }
+
         $this->adminTranslations = $this->mercadopago->adminTranslations->yapeGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->yapeCheckout;
 

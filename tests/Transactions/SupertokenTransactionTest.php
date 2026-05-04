@@ -2,11 +2,13 @@
 
 namespace MercadoPago\Woocommerce\Tests\Transactions;
 
+use Exception;
 use MercadoPago\PP\Sdk\Entity\Payment\AdditionalInfo;
 use MercadoPago\PP\Sdk\Entity\Payment\Item;
 use MercadoPago\PP\Sdk\Entity\Payment\ItemList;
 use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\Woocommerce\Helpers\Numbers;
+use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
 use Mockery;
 use Mockery\MockInterface;
@@ -305,6 +307,74 @@ class SupertokenTransactionTest extends TestCase
         $this->assertEqualsWithDelta(75428.99, Numbers::makesValueSafe('75428.994999999995343387126922607421875'), 0.01);
         $this->assertEquals(142.14, Numbers::makesValueSafe('142.14'));
         $this->assertEquals(100.0, Numbers::makesValueSafe('100'));
+    }
+
+    public function testCreatePaymentHappyPath(): void
+    {
+        $superToken    = random()->uuid();
+        $paymentTypeId = 'credit_card';
+
+        $this->setPrivateSupertokenProperties($superToken, $paymentTypeId);
+
+        $this->transaction
+            ->expects()
+            ->updateTransactionItems();
+
+        $this->transaction->transaction
+            ->expects()
+            ->saveWithSuperToken($superToken, $paymentTypeId)
+            ->andReturn($data = [
+                'random' => random()->word(),
+            ]);
+
+        $this->transaction->mercadopago->logs->file = Mockery::mock(File::class)
+            ->expects()
+            ->info('Payment created', '', $data)
+            ->getMock();
+
+        $this->assertEquals($data, $this->transaction->createPayment());
+    }
+
+    public function testCreatePaymentSendsApiErrorMetricAndRethrowsOnException(): void
+    {
+        $superToken    = random()->uuid();
+        $paymentTypeId = 'credit_card';
+        $apiRoute      = '/v1/asgard/payments';
+        $exception     = new Exception('API failure', 500);
+
+        $this->setPrivateSupertokenProperties($superToken, $paymentTypeId);
+
+        $this->transaction
+            ->expects()
+            ->updateTransactionItems();
+
+        $this->transaction->transaction
+            ->expects()
+            ->saveWithSuperToken($superToken, $paymentTypeId)
+            ->andThrow($exception);
+
+        $this->transaction->transaction
+            ->expects()
+            ->getUris()
+            ->andReturn(['post' => $apiRoute]);
+
+        $this->transaction
+            ->shouldAllowMockingProtectedMethods()
+            ->expects()
+            ->sendApiErrorMetric($apiRoute, $exception);
+
+        $this->expectExceptionObject($exception);
+
+        $this->transaction->createPayment();
+    }
+
+    private function setPrivateSupertokenProperties(string $superToken, string $paymentTypeId): void
+    {
+        foreach (['superToken' => $superToken, 'paymentTypeId' => $paymentTypeId] as $name => $value) {
+            $property = new \ReflectionProperty(SupertokenTransaction::class, $name);
+            $property->setAccessible(true);
+            $property->setValue($this->transaction, $value);
+        }
     }
 
     public function consolidateItemsProvider(): array
