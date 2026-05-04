@@ -4,14 +4,25 @@ const { resolveAlias } = require('../../../helpers/path-resolver');
 const superTokenErrorConstantsPath = resolveAlias('assets/js/checkouts/super-token/errors/super-token-error-constants.js');
 const superTokenMetricsPath = resolveAlias('assets/js/checkouts/super-token/entities/super-token-metrics.js');
 
+const localStorageStore = {};
+const mockLocalStorage = {
+  getItem: (key) => localStorageStore[key] ?? null,
+  setItem: (key, value) => { localStorageStore[key] = String(value); },
+  removeItem: (key) => { delete localStorageStore[key]; },
+  clear: () => { Object.keys(localStorageStore).forEach(k => delete localStorageStore[k]); },
+};
+
 describe('MPSuperTokenMetrics', () => {
   let metrics;
   let MPSuperTokenMetrics;
   let mockMpSdkInstance;
+  let mockFetch;
 
   beforeAll(() => {
-    const mockFetch = jest.fn(() => Promise.resolve());
+    mockFetch = jest.fn(() => Promise.resolve());
     const mockDispatchEvent = jest.fn();
+
+    global.localStorage = mockLocalStorage;
 
     const context = {
       window: {
@@ -21,6 +32,7 @@ describe('MPSuperTokenMetrics', () => {
       document: { dispatchEvent: mockDispatchEvent },
       console,
       fetch: mockFetch,
+      localStorage: mockLocalStorage,
       CustomEvent: class CustomEvent {
         constructor(name, options) {
           this.name = name;
@@ -57,6 +69,7 @@ describe('MPSuperTokenMetrics', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFetch.mockImplementation(() => Promise.resolve());
 
     mockMpSdkInstance = {
       getSDKInstanceId: jest.fn(() => 'test-sdk-instance-id'),
@@ -329,6 +342,175 @@ describe('MPSuperTokenMetrics', () => {
         'true',
         ''
       );
+    });
+  });
+
+  describe('sendStaleCacheMetrics()', () => {
+    beforeEach(() => {
+      jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+      mockLocalStorage.clear();
+    });
+
+    test('Given already checked within 24h, When sendStaleCacheMetrics() is called, Then should not send metric', async () => {
+      mockLocalStorage.setItem('mp_js_cache_age_checked', String(Date.now()));
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(metrics.sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given last check was over 24h ago, When sendStaleCacheMetrics() is called, Then should send metric', async () => {
+      mockLocalStorage.setItem('mp_js_cache_age_checked', String(Date.now() - 86400001));
+
+      mockFetch.mockImplementation(() => Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: (key) => ({ 'age': null, 'last-modified': 'Mon, 10 Mar 2026 10:00:00 GMT' })[key] || null }
+      }));
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(metrics.sendMetric).toHaveBeenCalledTimes(4);
+    });
+
+    test('Given HEAD returns only age header (no last-modified), When sendStaleCacheMetrics() is called, Then should use age as fallback', async () => {
+      mockFetch.mockImplementation(() => Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: (key) => ({ 'age': '1296000', 'last-modified': null })[key] || null }
+      }));
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(metrics.sendMetric).toHaveBeenCalledTimes(4);
+
+      const firstCall = metrics.sendMetric.mock.calls[0];
+      expect(firstCall[0]).toBe('mp_js_cache_age');
+      expect(firstCall[1]).toBe('15');
+      expect(firstCall[2]).toContain('file : card-form');
+      expect(firstCall[2]).toContain('age_days : 15');
+    });
+
+    test('Given HEAD returns 405, When sendStaleCacheMetrics() is called, Then should retry with GET Range and send metric', async () => {
+      let callCount = 0;
+      mockFetch.mockImplementation((url, options) => {
+        callCount++;
+        if (options.method === 'HEAD') {
+          return Promise.resolve({ status: 405, headers: { get: () => null } });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 206,
+          headers: { get: (key) => ({ 'age': '864000', 'last-modified': null })[key] || null }
+        });
+      });
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(callCount).toBe(8);
+      expect(metrics.sendMetric).toHaveBeenCalledTimes(4);
+
+      const firstCall = metrics.sendMetric.mock.calls[0];
+      expect(firstCall[1]).toBe('10');
+    });
+
+    test('Given HEAD returns only last-modified header, When sendStaleCacheMetrics() is called, Then should calculate age_days from last-modified', async () => {
+      mockFetch.mockImplementation(() => Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: (key) => ({ 'age': null, 'last-modified': new Date(Date.now() - 30 * 86400000).toUTCString() })[key] || null }
+      }));
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(metrics.sendMetric).toHaveBeenCalledTimes(4);
+
+      const firstCall = metrics.sendMetric.mock.calls[0];
+      const ageDays = parseInt(firstCall[1], 10);
+      expect(ageDays).toBeGreaterThanOrEqual(29);
+      expect(ageDays).toBeLessThanOrEqual(31);
+    });
+
+    test('Given plugin_js_base_url is absent from params, When sendStaleCacheMetrics() is called, Then should fetch from the fallback hardcoded path', async () => {
+      const capturedUrls = [];
+      mockFetch.mockImplementation((url) => {
+        capturedUrls.push(url);
+        return Promise.resolve({
+          status: 200,
+          headers: { get: (key) => ({ 'age': '86400', 'last-modified': null })[key] || null }
+        });
+      });
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(capturedUrls[0]).toContain('/wp-content/plugins/woocommerce-mercadopago/assets/js/');
+      expect(capturedUrls[0]).toContain('card-form.min.js');
+    });
+
+    test('Given response is not ok (404), When sendStaleCacheMetrics() is called, Then should not send metric', async () => {
+      mockFetch.mockImplementation(() => Promise.resolve({
+        ok: false,
+        status: 404,
+        headers: { get: () => null }
+      }));
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(metrics.sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given response has no cache headers, When sendStaleCacheMetrics() is called, Then should not send metric', async () => {
+      mockFetch.mockImplementation(() => Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: () => null }
+      }));
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(metrics.sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given last-modified header is malformed, When sendStaleCacheMetrics() is called, Then should not send metric with NaN', async () => {
+      mockFetch.mockImplementation(() => Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: (key) => ({ 'last-modified': 'invalid-date', 'age': null })[key] || null }
+      }));
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(metrics.sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given fetch throws error, When sendStaleCacheMetrics() is called, Then should silently skip without calling sendMetric', async () => {
+      mockFetch.mockImplementation(() => Promise.reject(new Error('CORS error')));
+
+      await metrics.sendStaleCacheMetrics();
+
+      expect(metrics.sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given all headers present, When sendStaleCacheMetrics() is called, Then last_modified takes priority over age', async () => {
+      mockFetch.mockImplementation(() => Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: (key) => ({ 'age': '259200', 'last-modified': 'Wed, 09 Apr 2026 12:00:00 GMT' })[key] || null }
+      }));
+
+      await metrics.sendStaleCacheMetrics();
+
+      const expectedFiles = ['card-form', 'event-handler', 'melidata-client', 'super-token-loader'];
+      expect(metrics.sendMetric).toHaveBeenCalledTimes(4);
+
+      metrics.sendMetric.mock.calls.forEach((call, index) => {
+        expect(call[0]).toBe('mp_js_cache_age');
+        // age_days is calculated from last-modified (not from Age header)
+        const ageDays = parseInt(call[1], 10);
+        expect(ageDays).toBeGreaterThanOrEqual(14);
+        expect(call[2]).toContain(`file : ${expectedFiles[index]}`);
+        expect(call[2]).toContain('last_modified : 2026-04-09');
+      });
     });
   });
 

@@ -319,4 +319,15 @@ class BasicGatewayTest extends TestCase
         $this->assertEquals('', $result['redirect']);
         $this->assertEquals($translatedMessage, $result['message']);
     }
+
+    public function testConstructorReturnsEarlyWhenNotBooted(): void
+    {
+        global $mercadopago;
+        $mercadopago = Mockery::mock(\MercadoPago\Woocommerce\WoocommerceMercadoPago::class);
+        $mercadopago->shouldReceive('booted')->andReturn(false);
+
+        $gateway = new BasicGateway();
+
+        $this->assertFalse(isset($gateway->adminTranslations));
+    }
 }

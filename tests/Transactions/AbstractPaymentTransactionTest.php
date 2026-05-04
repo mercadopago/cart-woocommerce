@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Transactions;
 
+use Exception;
 use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
@@ -52,6 +53,35 @@ class AbstractPaymentTransactionTest extends TestCase
 
         $this->assertEquals($data, $this->transaction->createPayment());
         $this->assertEquals($checkout['session_id'] ?? null, $this->transaction->transaction->session_id);
+    }
+
+    public function testCreatePaymentSendsApiErrorMetricAndRethrowsOnException(): void
+    {
+        $apiRoute  = '/v1/asgard/payments';
+        $exception = new Exception('API failure', 500);
+
+        $this->transaction
+            ->expects()
+            ->logTransactionPayload();
+
+        $this->transaction->transaction
+            ->expects()
+            ->save()
+            ->andThrow($exception);
+
+        $this->transaction->transaction
+            ->expects()
+            ->getUris()
+            ->andReturn(['post' => $apiRoute]);
+
+        $this->transaction
+            ->shouldAllowMockingProtectedMethods()
+            ->expects()
+            ->sendApiErrorMetric($apiRoute, $exception);
+
+        $this->expectExceptionObject($exception);
+
+        $this->transaction->createPayment();
     }
 
     public function testSetPayerTransaction(): void

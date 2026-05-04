@@ -718,4 +718,19 @@ class TicketGatewayTest extends TestCase
 
         $this->assertEquals('3', $result);
     }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testConstructorReturnsEarlyWhenNotBooted(): void
+    {
+        global $mercadopago;
+        $mercadopago = Mockery::mock(\MercadoPago\Woocommerce\WoocommerceMercadoPago::class);
+        $mercadopago->shouldReceive('booted')->andReturn(false);
+
+        $gateway = new TicketGateway();
+
+        $this->assertFalse(isset($gateway->adminTranslations));
+    }
 }

@@ -259,4 +259,65 @@ class MPSuperTokenMetrics {
     this.dispatchMelidataErrorEvent('no_installment_selected', this.CUSTOM_CHECKOUT_STEPS.POST_SUBMIT);
     this.sendMetric('error_to_submit_without_installment_selected', 'true', '');
   }
+
+  async sendStaleCacheMetrics() {
+    const SESSION_KEY = 'mp_js_cache_age_checked';
+    const ONE_DAY_MS = 86400000;
+
+    const lastChecked = parseInt(localStorage.getItem(SESSION_KEY) || '0', 10);
+    if (Date.now() - lastChecked < ONE_DAY_MS) return;
+
+    localStorage.setItem(SESSION_KEY, String(Date.now()));
+
+    const basePath = wc_mercadopago_supertoken_bundle_params?.plugin_js_base_url
+      || '/wp-content/plugins/woocommerce-mercadopago/assets/js/';
+    const files = [
+      'checkouts/custom/entities/card-form.min.js',
+      'checkouts/custom/entities/event-handler.min.js',
+      'melidata/melidata-client.min.js',
+      'checkouts/super-token-loader.min.js'
+    ];
+
+    await Promise.all(files.map(async (file) => {
+      try {
+        let response = await fetch(basePath + file, {
+          method: 'HEAD',
+          cache: 'no-store'
+        });
+
+        if (response.status === 405) {
+          response = await fetch(basePath + file, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: { 'Range': 'bytes=0-0' }
+          });
+        }
+
+        if (!response.ok) return;
+
+        const lastModified = response.headers.get('last-modified');
+        const age = response.headers.get('age');
+
+        let ageDays = null;
+        if (lastModified) {
+          ageDays = Math.round((Date.now() - new Date(lastModified).getTime()) / 86400000);
+        } else if (age) {
+          ageDays = Math.round(parseInt(age, 10) / 86400);
+        }
+
+        if (!Number.isFinite(ageDays)) return;
+
+        const fileName = file.split('/').pop().replace('.min.js', '');
+        const lastModifiedDate = lastModified ? new Date(lastModified).toISOString().slice(0, 10) : 'unknown';
+
+        this.sendMetric(
+          'mp_js_cache_age',
+          String(ageDays),
+          `file : ${fileName} age_days : ${ageDays} last_modified : ${lastModifiedDate}`
+        );
+      } catch {
+        // Silence errors — must not impact checkout
+      }
+    }));
+  }
 }

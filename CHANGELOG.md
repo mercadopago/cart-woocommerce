@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.20] 2026-04-28
+### Fixed
+- Fix fatal error on first admin page load after install or update caused by missing booted() guard in BasicGateway, PixGateway, TicketGateway, CreditsGateway, PseGateway and YapeGateway constructors
+- Fix checkout blocked by hidden third-party shipping sub-fields (e.g. kShipping Argentina office selector) when a simpler shipping method is selected — validation now delegates to CDN and only evaluates visible fields
+- Fix fast payment flow rendering over another payment method when switching quickly between custom checkout and another payment method
+
+### Added
+- Add metric mp_js_cache_age to detect stale plugin JS files cached on seller servers
+- Add metric mp_custom_checkout_validation_cdn_fallback when checkout validation CDN function is unavailable
+
+### Changed
+- Prevent fast payment flow from initializing when the email field contains invalid data (partial text, address, or phone number), reducing authentication errors during checkout
+
 ## [8.7.19] 2026-04-22
 ### Fixed
 - Fallback to payment API when KVS notification is missing on order sync — orders stuck in pending after a KVS miss are now correctly processed via direct payment API call
@@ -17,8 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Datadog metrics for currency conversion API error tracking and active conversion monitoring
 - Add granular error details to woo_checkout_error Datadog metric
 - Add Datadog metric to detect null amount in currency conversion flow
-- Add metric alert in MPEventHandler when Fast Payment dependencies are incomplete: MP_SUPER_TOKEN_DEPENDENCIES_NOT_SET
-- Add metric alert in card form when Fast Payment trigger handler is missing: mp_cardform_trigger_handler_missing
+- Add metric alerts when fast payment dependencies are incomplete at initialization
+
+### Fixed
+- Fix false-positive fast payment initialization metric by replacing timeout-based triggers with event-driven initialization
+- Fix email validation regex in WCEmailListener to use anchored pattern (^...$), rejecting non-email strings that contain an email substring
+- Fix missing interval cleanup timeout for SDK polling (setInterval without clearInterval safety net after 15s)
+- Fix Math.random() usage for DOM element IDs replaced with crypto.getRandomValues() (CSPRNG)
 
 ### Changed
 - Pre-download 8 popular WooCommerce themes (astra, kadence, oceanwp, blocksy, generatepress, neve, hestia, storefront)

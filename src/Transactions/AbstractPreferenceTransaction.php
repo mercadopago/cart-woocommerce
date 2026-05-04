@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Transactions;
 
+use Exception;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use WC_Order;
 
@@ -27,10 +28,15 @@ abstract class AbstractPreferenceTransaction extends AbstractTransaction
     public function createPreference()
     {
         $this->logTransactionPayload();
-        $data = $this->transaction->save();
-        $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
 
-        return $data;
+        try {
+            $data = $this->transaction->save();
+            $this->mercadopago->logs->file->info('Preference created', $this->gateway::LOG_SOURCE, $data);
+            return $data;
+        } catch (Exception $e) {
+            $this->sendApiErrorMetric($this->transaction->getUris()['post'] ?? 'unknown', $e);
+            throw $e;
+        }
     }
 
     public function setCommonTransaction(): void

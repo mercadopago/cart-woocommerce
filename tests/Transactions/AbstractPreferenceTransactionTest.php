@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Transactions;
 
+use Exception;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
 use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
@@ -44,6 +45,35 @@ class AbstractPreferenceTransactionTest extends TestCase
             ->getMock();
 
         $this->assertEquals($data, $this->transaction->createPreference());
+    }
+
+    public function testCreatePreferenceSendsApiErrorMetricAndRethrowsOnException(): void
+    {
+        $apiRoute  = '/checkout/preferences';
+        $exception = new Exception('API failure', 500);
+
+        $this->transaction
+            ->expects()
+            ->logTransactionPayload();
+
+        $this->transaction->transaction
+            ->expects()
+            ->save()
+            ->andThrow($exception);
+
+        $this->transaction->transaction
+            ->expects()
+            ->getUris()
+            ->andReturn(['post' => $apiRoute]);
+
+        $this->transaction
+            ->shouldAllowMockingProtectedMethods()
+            ->expects()
+            ->sendApiErrorMetric($apiRoute, $exception);
+
+        $this->expectExceptionObject($exception);
+
+        $this->transaction->createPreference();
     }
 
     /**

@@ -35,6 +35,10 @@ class CreditsGateway extends AbstractGateway
     {
         parent::__construct();
 
+        if (!$this->mercadopago->booted()) {
+            return;
+        }
+
         $this->adminTranslations = $this->mercadopago->adminTranslations->creditsGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->creditsCheckout;
 

@@ -46,6 +46,7 @@ describe('MPSuperTokenTriggerHandler', () => {
 
     mockEmailListener = {
       getEmail: jest.fn().mockReturnValue(null),
+      isValid: jest.fn().mockReturnValue(true),
       onEmailChange: jest.fn(),
       setupEmailChangeHandlers: jest.fn(),
     };
@@ -72,6 +73,7 @@ describe('MPSuperTokenTriggerHandler', () => {
 
     mockMetrics = {
       sendMetric: jest.fn(),
+      sendStaleCacheMetrics: jest.fn().mockResolvedValue(undefined),
     };
 
     triggerHandler = new MPSuperTokenTriggerHandler(
@@ -270,6 +272,19 @@ describe('MPSuperTokenTriggerHandler', () => {
     });
   });
 
+  describe('cancelLoad()', () => {
+    test('Given triggerHandler, When cancelLoad() is called, Then should increment loadGeneration, set isFetchingPaymentMethods=false and call reset()', () => {
+      triggerHandler.isFetchingPaymentMethods = true;
+      const generationBefore = triggerHandler.loadGeneration;
+
+      triggerHandler.cancelLoad();
+
+      expect(triggerHandler.loadGeneration).toBe(generationBefore + 1);
+      expect(triggerHandler.isFetchingPaymentMethods).toBe(false);
+      expect(mockPaymentMethods.reset).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('fetchAndRenderSuperTokenPaymentMethods()', () => {
     test('Given no buyer email, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should return early', async () => {
       triggerHandler.wcBuyerEmail = null;
@@ -295,6 +310,7 @@ describe('MPSuperTokenTriggerHandler', () => {
     test('Given valid email and payment methods returned, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should render payment methods', async () => {
       triggerHandler.wcBuyerEmail = 'buyer@example.com';
       triggerHandler.currentAmount = '100.00';
+      mockEmailListener.isValid.mockReturnValue(true);
       const mockPMs = [{ id: 'visa', type: 'credit_card' }];
       mockAuthenticator.getAccountPaymentMethods.mockResolvedValue(mockPMs);
 
@@ -307,11 +323,99 @@ describe('MPSuperTokenTriggerHandler', () => {
     test('Given valid email but no payment methods returned, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should not render', async () => {
       triggerHandler.wcBuyerEmail = 'buyer@example.com';
       triggerHandler.currentAmount = '100.00';
+      mockEmailListener.isValid.mockReturnValue(true);
       mockAuthenticator.getAccountPaymentMethods.mockResolvedValue(null);
 
       await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
 
       expect(mockPaymentMethods.renderAccountPaymentMethods).not.toHaveBeenCalled();
+    });
+
+    test('Given cancelLoad() is called during API fetch, When fetchAndRenderSuperTokenPaymentMethods() resolves, Then should not render', async () => {
+      triggerHandler.wcBuyerEmail = 'buyer@example.com';
+      triggerHandler.currentAmount = '100.00';
+      const mockPMs = [{ id: 'visa', type: 'credit_card' }];
+      mockAuthenticator.getAccountPaymentMethods.mockImplementation(async () => {
+        triggerHandler.cancelLoad();
+        return mockPMs;
+      });
+
+      await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
+
+      expect(mockPaymentMethods.renderAccountPaymentMethods).not.toHaveBeenCalled();
+    });
+
+    test('Given no cancellation during fetch, When fetchAndRenderSuperTokenPaymentMethods() resolves, Then should render normally', async () => {
+      triggerHandler.wcBuyerEmail = 'buyer@example.com';
+      triggerHandler.currentAmount = '100.00';
+      const mockPMs = [{ id: 'visa', type: 'credit_card' }];
+      mockAuthenticator.getAccountPaymentMethods.mockResolvedValue(mockPMs);
+
+      await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
+
+      expect(mockPaymentMethods.renderAccountPaymentMethods).toHaveBeenCalledWith(mockPMs, '100.00');
+    });
+
+    test('Given invalid email from DOM, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should not call SDK and emit skip metric', async () => {
+      triggerHandler.wcBuyerEmail = 'rua ferreropolis14';
+      mockEmailListener.isValid.mockReturnValue(false);
+
+      await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
+
+      expect(mockAuthenticator.getAccountPaymentMethods).not.toHaveBeenCalled();
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_email', 'true', '');
+    });
+
+    test('Given invalid email from DOM, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should not emit super_token_email_captured metric', async () => {
+      triggerHandler.wcBuyerEmail = 'carlo';
+      mockEmailListener.isValid.mockReturnValue(false);
+
+      await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
+
+      expect(mockMetrics.sendMetric).not.toHaveBeenCalledWith('super_token_email_captured', 'true', '');
+    });
+
+    test('Given invalid CURRENT_USER_EMAIL, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should not call SDK', async () => {
+      triggerHandler.wcBuyerEmail = null;
+      triggerHandler.CURRENT_USER_EMAIL = 'nome sem arroba';
+      mockEmailListener.getEmail.mockReturnValue(null);
+      mockEmailListener.isValid.mockReturnValue(false);
+
+      await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
+
+      expect(mockAuthenticator.getAccountPaymentMethods).not.toHaveBeenCalled();
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_email', 'true', '');
+    });
+
+    test('Given valid CURRENT_USER_EMAIL when DOM has no email, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should call SDK normally', async () => {
+      triggerHandler.wcBuyerEmail = null;
+      triggerHandler.CURRENT_USER_EMAIL = 'user@mercadopago.com';
+      mockEmailListener.getEmail.mockReturnValue(null);
+      mockEmailListener.isValid.mockReturnValue(true);
+      mockAuthenticator.getAccountPaymentMethods.mockResolvedValue(null);
+
+      await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
+
+      expect(mockAuthenticator.getAccountPaymentMethods).toHaveBeenCalled();
+    });
+
+    test('Given email without @ from DOM, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should not call SDK', async () => {
+      triggerHandler.wcBuyerEmail = 'iremol10 hotmail.com';
+      mockEmailListener.isValid.mockReturnValue(false);
+
+      await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
+
+      expect(mockAuthenticator.getAccountPaymentMethods).not.toHaveBeenCalled();
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_email', 'true', '');
+    });
+
+    test('Given duplicated pasted email, When fetchAndRenderSuperTokenPaymentMethods() is called, Then should not call SDK', async () => {
+      triggerHandler.wcBuyerEmail = 'user@example.comuser@example.com';
+      mockEmailListener.isValid.mockReturnValue(false);
+
+      await triggerHandler.fetchAndRenderSuperTokenPaymentMethods();
+
+      expect(mockAuthenticator.getAccountPaymentMethods).not.toHaveBeenCalled();
     });
   });
 
@@ -326,6 +430,27 @@ describe('MPSuperTokenTriggerHandler', () => {
 
       expect(mockPaymentMethods.renderAccountPaymentMethods).toHaveBeenCalledWith(storedPMs, '100.00');
       expect(mockAuthenticator.getAccountPaymentMethods).not.toHaveBeenCalled();
+    });
+
+    test('Given loadSuperToken is called, When super token loads successfully, Then should call sendStaleCacheMetrics once', async () => {
+      triggerHandler.wcBuyerEmail = 'buyer@example.com';
+      mockAuthenticator.formatAmount.mockReturnValue('100.00');
+      mockAuthenticator.getAccountPaymentMethods.mockResolvedValue(null);
+
+      await triggerHandler.loadSuperToken('100.00');
+
+      expect(mockMetrics.sendStaleCacheMetrics).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given loadSuperToken is called multiple times, When cacheMetricsDispatched is true, Then should NOT call sendStaleCacheMetrics again', async () => {
+      triggerHandler.wcBuyerEmail = 'buyer@example.com';
+      mockAuthenticator.formatAmount.mockReturnValue('100.00');
+      mockAuthenticator.getAccountPaymentMethods.mockResolvedValue(null);
+
+      await triggerHandler.loadSuperToken('100.00');
+      await triggerHandler.loadSuperToken('100.00');
+
+      expect(mockMetrics.sendStaleCacheMetrics).toHaveBeenCalledTimes(1);
     });
 
     test('Given amount changed, When loadSuperToken() is called, Then should reset flow before fetching', async () => {

@@ -1828,4 +1828,23 @@ class AbstractGatewayTest extends TestCase
         $reflection->setAccessible(true);
         $reflection->setValue(null, false);
     }
+
+    /**
+     * @testWith ["pk_live_abc", "at_live_xyz", false]
+     *           ["",            "at_live_xyz", true]
+     *           ["pk_live_abc", "",            true]
+     *           ["",            "",            true]
+     */
+    public function testIsMissingCredentials(string $publicKey, string $accessToken, bool $expected): void
+    {
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->andReturn($publicKey)
+            ->getMock()
+            ->shouldReceive('getCredentialsAccessToken')->andReturn($accessToken);
+
+        $method = new \ReflectionMethod(AbstractGateway::class, 'isMissingCredentials');
+        $method->setAccessible(true);
+
+        $this->assertSame($expected, $method->invoke($this->gateway));
+    }
 }

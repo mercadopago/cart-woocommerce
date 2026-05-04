@@ -1,5 +1,5 @@
-/* globals wc_mercadopago_supertoken_trigger_handler_params, jQuery */
-/* eslint-disable no-unused-vars */
+/* globals wc_mercadopago_supertoken_bundle_params */
+/* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
 class MPSuperTokenTriggerHandler {
     CUSTOM_CHECKOUT_BLOCKS_RADIO_SELECTOR = '[value=woo-mercado-pago-custom]';
     CUSTOM_CHECKOUT_CLASSIC_RADIO_SELECTOR = '#payment_method_woo-mercado-pago-custom';
@@ -15,6 +15,8 @@ class MPSuperTokenTriggerHandler {
     isAlreadyListeningForm = false;
     lastException = null;
     isFetchingPaymentMethods = false;
+    loadGeneration = 0;
+    cacheMetricsDispatched = false;
 
     // Dependencies
     mpSuperTokenAuthenticator = null;
@@ -149,6 +151,12 @@ class MPSuperTokenTriggerHandler {
         return this.mpSuperTokenPaymentMethods.hasStoredPaymentMethods()
     }
 
+    cancelLoad() {
+        this.loadGeneration++;
+        this.isFetchingPaymentMethods = false;
+        this.mpSuperTokenPaymentMethods.reset();
+    }
+
     async fetchAndRenderSuperTokenPaymentMethods() {
         const buyerEmail = this.getBuyerEmail();
         if (!buyerEmail) {
@@ -156,12 +164,23 @@ class MPSuperTokenTriggerHandler {
             return;
         }
 
+        // SDK rejects invalid emails — validate before calling to avoid invalid_email_address_provided errors
+        if (!this.wcEmailListener.isValid(buyerEmail)) {
+            this.mpSuperTokenMetrics.sendMetric('super_token_skipped_invalid_email', 'true', '');
+            return;
+        }
+
         this.mpSuperTokenMetrics.sendMetric('super_token_email_captured', 'true', '');
         this.isFetchingPaymentMethods = true;
+        const currentGeneration = this.loadGeneration;
         const paymentMethods = await this.mpSuperTokenAuthenticator.getAccountPaymentMethods(
             this.currentAmount,
             buyerEmail
         );
+        if (this.loadGeneration !== currentGeneration) {
+            return;
+        }
+
         this.isFetchingPaymentMethods = false;
 
         if (!paymentMethods || !paymentMethods.length) return;
@@ -211,5 +230,10 @@ class MPSuperTokenTriggerHandler {
         }
 
         await this.fetchAndRenderSuperTokenPaymentMethods();
+
+        if (!this.cacheMetricsDispatched) {
+            this.cacheMetricsDispatched = true;
+            this.mpSuperTokenMetrics.sendStaleCacheMetrics().catch(() => {}); // fire-and-forget: must not delay checkout flow
+        }
     }
 }

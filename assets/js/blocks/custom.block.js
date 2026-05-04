@@ -247,7 +247,6 @@ const Content = (props) => {
 
   // Initialize form after content is rendered
   useEffect(() => {
-
     window.mpFormId = 'blocks_checkout_form';
     window.mpCheckoutForm = document.querySelector('.wc-block-components-form.wc-block-checkout__form');
 

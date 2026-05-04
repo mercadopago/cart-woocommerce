@@ -7,9 +7,11 @@ use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
+use MercadoPago\Woocommerce\Helpers\MetricContext;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Helpers\NotificationType;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
@@ -465,5 +467,12 @@ abstract class AbstractTransaction
             $payer->platform_email         = $this->mercadopago->helpers->currentUser->getCurrentUserData()->user_email;
             $payer->register_updated_at    = $this->mercadopago->helpers->currentUser->getCurrentUserData()->__get('user_modified');
         }
+    }
+
+    // Datadog value reflects $e->getCode(), which may be 0 when the SDK cannot attribute the failure to an HTTP status.
+    protected function sendApiErrorMetric(string $apiRoute, Exception $e): void
+    {
+        $details = MetricContext::buildApiErrorDetails($apiRoute, $this->mercadopago ?? null);
+        Datadog::getInstance()->sendEvent('mp_api_error', (string) $e->getCode(), $e->getMessage(), null, $details);
     }
 }

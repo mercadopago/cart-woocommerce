@@ -311,4 +311,19 @@ class CreditsGatewayTest extends TestCase
         $this->assertEquals('', $result['redirect']);
         $this->assertEquals($translatedMessage, $result['message']);
     }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testConstructorReturnsEarlyWhenNotBooted(): void
+    {
+        global $mercadopago;
+        $mercadopago = Mockery::mock(\MercadoPago\Woocommerce\WoocommerceMercadoPago::class);
+        $mercadopago->shouldReceive('booted')->andReturn(false);
+
+        $gateway = new CreditsGateway();
+
+        $this->assertFalse(isset($gateway->adminTranslations));
+    }
 }

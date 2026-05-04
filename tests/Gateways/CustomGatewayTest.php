@@ -1195,6 +1195,10 @@ class CustomGatewayTest extends TestCase
             ->shouldReceive('getImageAsset')
             ->andReturn('test-image-url');
 
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getPluginFileUrl')
+            ->andReturn('https://example.com/wp-content/plugins/woocommerce-mercadopago/assets/js/');
+
         $this->gateway->mercadopago->sellerConfig
             ->shouldReceive('getCredentialsPublicKey')
             ->andReturn('test-public-key');
@@ -2689,6 +2693,10 @@ class CustomGatewayTest extends TestCase
             ->shouldReceive('getImageAsset')
             ->andReturn('test-image-url');
 
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getPluginFileUrl')
+            ->andReturn('https://example.com/wp-content/plugins/woocommerce-mercadopago/assets/js/');
         $this->gateway->mercadopago->sellerConfig
             ->shouldReceive('getCredentialsPublicKey')
             ->andReturn('test-public-key');
