@@ -284,7 +284,33 @@ class Gateway
      */
     public function registerBeforeThankYou($callback): void
     {
+        // Static flag: all gateways share the same callback logic via getAvailablePaymentGateways(),
+        // so a single registration covers all of them. Prevents 7x duplicate hook registrations.
+        static $registered = false;
+        if ($registered) {
+            return;
+        }
+
+        // Classic themes: hook fires within the thank-you PHP template.
+        // Block-based themes (e.g. Twenty Twenty-Five): woocommerce_before_thankyou is not fired.
+        // Detection on wp action (query vars resolved); registration at wp_enqueue_scripts
+        // priority 20 runs after prioritizeMelidataStoreScriptEarly (priority 10) so
+        // wp_localize_script overwrites /checkout with /thankyou.
         add_action('woocommerce_before_thankyou', $callback);
+        add_action('wp', function () use ($callback) {
+            if (!is_wc_endpoint_url('order-received')) {
+                return;
+            }
+            $orderId = absint(get_query_var('order-received'));
+            if (!$orderId) {
+                return;
+            }
+            add_action('wp_enqueue_scripts', function () use ($callback, $orderId) {
+                $callback($orderId);
+            }, 20);
+        });
+
+        $registered = true;
     }
 
     /**

@@ -12,6 +12,7 @@ class MPCardForm {
         this.fields = null;
         this.initCardFormTimeoutReference = null;
         this.isLoading = false;
+        this.dispatcherMissingReported = false;
 
         this.sendMelidataTimeToLoadMetric();
     }
@@ -449,6 +450,11 @@ class MPCardForm {
             return;
         }
 
+        if (typeof MPCheckoutFieldsDispatcher === 'undefined' && typeof sendMetric === 'function' && !this.dispatcherMissingReported) {
+            sendMetric('MP_CHECKOUT_FIELDS_DISPATCHER_MISSING', 'setupSecureFieldsStylesAndAddListeners', 'mp_checkout_init_error');
+            this.dispatcherMissingReported = true;
+        }
+
         const secureFieldsConfiguration = [
             {
                 field: this.fields.cardNumber,
@@ -481,8 +487,8 @@ class MPCardForm {
                   'add'
                 );
 
-                if(config.focusEventName) {
-                  MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                if(config.focusEventName && typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+                  MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
                     null,
                     "focus",
                     config.focusEventName,
@@ -508,8 +514,8 @@ class MPCardForm {
                   }
                 }
 
-                if(config.blurEventName && isValid) {
-                  MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                if(config.blurEventName && isValid && typeof MPCheckoutFieldsDispatcher !== 'undefined') {
+                  MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
                     null,
                     "blur",
                     config.blurEventName,

@@ -1,4 +1,4 @@
-/* globals MPDebounce, WCEmailListener, MPSuperTokenMetrics, MPSuperTokenAuthenticator, MPSuperTokenTriggerHandler, MPSuperTokenPaymentMethods, MPSuperTokenErrorHandler */
+/* globals MPDebounce, WCEmailListener, MPSuperTokenMetrics, MPSuperTokenAuthenticator, MPSuperTokenTriggerHandler, MPSuperTokenPaymentMethods, MPSuperTokenErrorHandler, sendMetric */
 const WAIT_MP_SDK_INSTANCE_LOAD_INTERVAL = 50;
 const MAX_TIME_WAIT_FOR_MP_SDK_INSTANCE_LOAD = 15000;
 
@@ -6,7 +6,7 @@ const MAX_TIME_WAIT_FOR_MP_SDK_INSTANCE_LOAD = 15000;
 const waitMpSdkInstanceLoad = setInterval(() => {
   if (window.mpSdkInstance) {
     clearInterval(waitMpSdkInstanceLoad);
-    const SUPER_TOKEN_JS_VERSION = '1.1.2';
+    const SUPER_TOKEN_JS_VERSION = '1.1.5';
     const mpSdkInstance = window.mpSdkInstance;
     const mpDebounce = new MPDebounce();
     const wcEmailListener = new WCEmailListener(mpDebounce);
@@ -38,6 +38,10 @@ const waitMpSdkInstanceLoad = setInterval(() => {
     );
 
     mpSuperTokenMetrics.sendMetric('super_token_sdk_loaded', 'true', '');
+
+    if (window.mpSuperTokenTriggerHandler && !window.mpCustomCheckoutHandler && typeof sendMetric === 'function') {
+      sendMetric('MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS', 'mp_super_token_init', 'mp_super_token_init_error');
+    }
 
     if (window.mpEventHandler && typeof window.mpEventHandler.setSuperTokenDependencies === 'function') {
       window.mpEventHandler.setSuperTokenDependencies({

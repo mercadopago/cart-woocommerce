@@ -188,3 +188,184 @@ describe('MPSuperTokenAuthenticator', () => {
     });
   });
 });
+
+// =============================================================================
+// T09 — Instrumentação do callSdkWithMetrics em buildAuthenticator e authorizePayment
+// =============================================================================
+describe('MPSuperTokenAuthenticator - T09 mp_api_error instrumentation', () => {
+  let MPSuperTokenAuthenticatorT09;
+  let authenticator;
+  let mockSdkInstance;
+  let mockMetrics;
+  let sendMetricMock;
+  const sdkMetricsPath = resolveAlias('assets/js/checkouts/mp-sdk-metrics.js');
+
+  beforeAll(() => {
+    // Globals que o source file exige (independente do describe anterior, em caso de execução isolada)
+    global.wc_mercadopago_supertoken_bundle_params = {
+      platform_id: 'test-platform-id',
+    };
+    global.MPSuperTokenErrorCodes = {
+      AUTHENTICATOR_NOT_FOUND: 'AUTHENTICATOR_NOT_FOUND',
+      AUTHORIZE_PAYMENT_METHOD_ERROR: 'AUTHORIZE_PAYMENT_METHOD_ERROR',
+      AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED: 'AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED',
+      EMPTY_ACCOUNT_PAYMENT_METHODS: 'EMPTY_ACCOUNT_PAYMENT_METHODS',
+    };
+
+    sendMetricMock = jest.fn();
+
+    // Carrega callSdkWithMetrics real com window.sendMetric mocado
+    const callSdkWithMetrics = loadFile(sdkMetricsPath, 'callSdkWithMetrics', {
+      window: { sendMetric: sendMetricMock },
+    });
+
+    // O source file usa window.callSdkWithMetrics — populamos no global.window
+    global.window.callSdkWithMetrics = callSdkWithMetrics;
+
+    MPSuperTokenAuthenticatorT09 = loadFile(filePath, 'MPSuperTokenAuthenticator', global);
+  });
+
+  beforeEach(() => {
+    sendMetricMock.mockClear();
+
+    mockSdkInstance = {
+      getSDKInstanceId: jest.fn(() => 'test-sdk-id'),
+      authenticator: jest.fn(),
+    };
+
+    mockMetrics = {
+      sendMetric: jest.fn(),
+      errorToBuildAuthenticator: jest.fn(),
+      errorToGetSimplifiedAuth: jest.fn(),
+      errorToGetFastPaymentToken: jest.fn(),
+      errorToAuthorizePayment: jest.fn(),
+      errorToGetAccountPaymentMethods: jest.fn(),
+      isNotSimplifiedAuth: jest.fn(),
+      canUseSuperToken: jest.fn(),
+      cannotGetFastPaymentToken: jest.fn(),
+      registerAuthorizedPseudotoken: jest.fn(),
+    };
+
+    authenticator = new MPSuperTokenAuthenticatorT09(mockSdkInstance, {}, mockMetrics);
+  });
+
+  describe('buildAuthenticator (T09 wrap)', () => {
+    test('TC-T09-01: SDK rejeita → sendMetric com api_route=buildAuthenticator e payment_method=supertoken', async () => {
+      const sdkError = {
+        message: 'No applications were detected on device',
+        cause: [{ code: 'E001', description: 'No app' }],
+      };
+      mockSdkInstance.authenticator.mockRejectedValue(sdkError);
+
+      await authenticator.buildAuthenticator(100, 'test@example.com');
+
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0',
+        'No applications were detected on device',
+        'mp_api_error',
+        { api_route: 'buildAuthenticator' }
+      );
+    });
+
+    test('TC-T09-02: errorToBuildAuthenticator legado continua sendo chamado (métricas complementares)', async () => {
+      const sdkError = { message: 'fail' };
+      mockSdkInstance.authenticator.mockRejectedValue(sdkError);
+
+      await authenticator.buildAuthenticator(100, 'test@example.com');
+
+      expect(mockMetrics.errorToBuildAuthenticator).toHaveBeenCalledWith(sdkError);
+    });
+
+    test('TC-T09-03: SDK resolve com sucesso → sendMetric NÃO é chamado', async () => {
+      const fakeAuth = { id: 'auth-123' };
+      mockSdkInstance.authenticator.mockResolvedValue(fakeAuth);
+
+      const result = await authenticator.buildAuthenticator(100, 'test@example.com');
+
+      expect(result).toBe(fakeAuth);
+      expect(sendMetricMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('authorizePayment (T09 wrap)', () => {
+    test('TC-T09-04: SDK rejeita → sendMetric com api_route=authorizePayment e payment_method=supertoken', async () => {
+      const mockAuth = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(true),
+        authorizePayment: jest.fn().mockRejectedValue({
+          message: 'auth failed',
+          status: 400,
+        }),
+      };
+      authenticator.storeAuthenticator(mockAuth);
+
+      await authenticator.authorizePayment('fake-pseudotoken').catch(() => {});
+
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '400',
+        'auth failed',
+        'mp_api_error',
+        { api_route: 'authorizePayment' }
+      );
+    });
+
+    test('TC-T09-05: errorToAuthorizePayment legado continua sendo chamado (métricas complementares)', async () => {
+      const sdkError = { message: 'auth failed', status: 400 };
+      const mockAuth = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(true),
+        authorizePayment: jest.fn().mockRejectedValue(sdkError),
+      };
+      authenticator.storeAuthenticator(mockAuth);
+
+      await authenticator.authorizePayment('fake-pseudotoken').catch(() => {});
+
+      expect(mockMetrics.errorToAuthorizePayment).toHaveBeenCalled();
+    });
+
+    test('TC-T09-06: pré-validação interna (AUTHENTICATOR_NOT_FOUND) NÃO dispara mp_api_error', async () => {
+      // Sem authenticator armazenado → throw interno antes da chamada SDK
+      await authenticator.authorizePayment('any').catch(() => {});
+
+      // sendMetric do mp_api_error não foi chamado — wrapper só captura erros DO SDK call
+      expect(sendMetricMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('fallback quando window.callSdkWithMetrics não está disponível', () => {
+    test('TC-T09-07: buildAuthenticator executa SDK normalmente mesmo sem window.callSdkWithMetrics', async () => {
+      const fakeAuth = { id: 'auth-fallback' };
+      mockSdkInstance.authenticator.mockResolvedValue(fakeAuth);
+
+      delete global.window.callSdkWithMetrics;
+
+      const result = await authenticator.buildAuthenticator(100, 'test@example.com');
+
+      expect(result).toBe(fakeAuth);
+      expect(sendMetricMock).not.toHaveBeenCalled();
+
+      global.window.callSdkWithMetrics = loadFile(sdkMetricsPath, 'callSdkWithMetrics', {
+        window: { sendMetric: sendMetricMock },
+      });
+    });
+
+    test('TC-T09-08: authorizePayment executa SDK normalmente mesmo sem window.callSdkWithMetrics', async () => {
+      const mockAuth = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(true),
+        authorizePayment: jest.fn().mockResolvedValue(undefined),
+      };
+      authenticator.storeAuthenticator(mockAuth);
+      document.body.innerHTML = '<input id="authorized_pseudotoken" />';
+
+      delete global.window.callSdkWithMetrics;
+
+      await authenticator.authorizePayment('fake-pseudotoken').catch(() => {});
+
+      expect(mockAuth.authorizePayment).toHaveBeenCalled();
+      expect(sendMetricMock).not.toHaveBeenCalled();
+
+      global.window.callSdkWithMetrics = loadFile(sdkMetricsPath, 'callSdkWithMetrics', {
+        window: { sendMetric: sendMetricMock },
+      });
+      document.body.innerHTML = '';
+    });
+  });
+});

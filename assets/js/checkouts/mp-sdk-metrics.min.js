@@ -1,0 +1,1 @@
+async function callSdkWithMetrics(t,i){try{return await t()}catch(t){const n=String(t?.status??0),r=("string"==typeof t?t:null)||t?.message||t?.cause?.[0]?.description||"Unknown SDK error";throw"function"==typeof window.sendMetric&&window.sendMetric(n,r,"mp_api_error",{api_route:i}),t}}window.callSdkWithMetrics=callSdkWithMetrics;

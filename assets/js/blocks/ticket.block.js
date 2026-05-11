@@ -93,7 +93,7 @@ const Content = (props) => {
   useEffect(() => {
     if (!hasInitialized) {
       if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
-          MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+          MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
               document.getElementById("mp-ticket-gateway-document-input"),
               "focusout",
               "ticket_document_filled",
@@ -101,6 +101,8 @@ const Content = (props) => {
                   dispatchOnlyIf: (e) => e?.target?.value.length
               }
           );
+      } else if (typeof sendMetric === 'function') {
+          sendMetric('MP_CHECKOUT_FIELDS_DISPATCHER_MISSING', 'ticket_block', 'mp_checkout_init_error');
       }
 
       hasInitialized = true;

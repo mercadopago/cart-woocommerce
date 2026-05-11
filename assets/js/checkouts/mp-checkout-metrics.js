@@ -1,4 +1,4 @@
-function sendMetric(value, message, target) {
+function sendMetric(value, message, target, extraDetails = {}) {
   const storeParams = wc_mercadopago_checkout_metrics_params;
   const url = 'https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/big/' + target;
   const payload = {
@@ -12,6 +12,7 @@ function sendMetric(value, message, target) {
       url: window.location.href,
     },
     "details": {
+      ...extraDetails,
       site_id: storeParams.site_id,
       environment: 'prod',
       sdk_instance_id: window.sessionStorage.getItem('_mp_flow_id') || 'not_available',

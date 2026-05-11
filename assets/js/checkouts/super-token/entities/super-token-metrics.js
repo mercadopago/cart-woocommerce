@@ -255,9 +255,9 @@ class MPSuperTokenMetrics {
     this.sendMetric('error_to_update_credits_contract', 'true', errorMessage);
   }
 
-  errorToSubmitWithoutInstallmentSelected() {
+  errorToSubmitWithoutInstallmentSelected(paymentMethodType = '') {
     this.dispatchMelidataErrorEvent('no_installment_selected', this.CUSTOM_CHECKOUT_STEPS.POST_SUBMIT);
-    this.sendMetric('error_to_submit_without_installment_selected', 'true', '');
+    this.sendMetric('error_to_submit_without_installment_selected', 'true', paymentMethodType);
   }
 
   async sendStaleCacheMetrics() {

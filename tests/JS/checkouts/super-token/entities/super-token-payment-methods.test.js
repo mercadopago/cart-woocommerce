@@ -480,5 +480,374 @@ describe('MPSuperTokenPaymentMethods - Installments Pre-selection', () => {
 
       expect(mockMetrics.installmentsFilled).toHaveBeenCalledWith('consumer_credits');
     });
+
+    test('given consumer credits installment selected, when #cardInstallments is absent from DOM, then should not throw TypeError', async () => {
+      document.body.innerHTML = `
+        <div id="mp-consumer-credits-hint"></div>
+        <div id="mp-consumer-credits-due-date"></div>
+        <div id="mp-consumer-credits-legal-text"></div>
+        <div id="mp-consumer-credits-debit-auto-text"></div>
+      `;
+
+      const paymentMethod = makeConsumerCreditsPaymentMethod();
+      const element = dispatcherInstance.createPaymentMethodElement(paymentMethod);
+      document.body.appendChild(element);
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const select = document.querySelector(`#mp-super-token-installments-select-${dispatcherInstance.paymentMethodIdentifier(paymentMethod)}`);
+      select.value = '3';
+
+      expect(() => select.dispatchEvent(new Event('change'))).not.toThrow();
+    });
+  });
+
+  describe('createPaymentMethodElement - installments dispatcher missing metric', () => {
+    let metricInstance;
+
+    const makeCreditCardForMetric = () => ({
+      id: 'credit_card_id',
+      type: 'credit_card',
+      name: 'Visa',
+      thumbnail: '',
+      token: 'token123',
+      card: { card_number: { last_four_digits: '1234' } },
+      security_code_settings: { length: 3, card_location: 'back' },
+      installments: [
+        { installments: 1, installment_amount: 100, installment_rate: 0, installment_rate_collector: ['MERCADOPAGO'], total_amount: 100, labels: [] },
+        { installments: 3, installment_amount: 35, installment_rate: 5, installment_rate_collector: [], total_amount: 105, labels: [] },
+      ],
+    });
+
+    beforeEach(() => {
+      document.body.innerHTML = '<input type="hidden" id="cardInstallments" value="">';
+      global.sendMetric = jest.fn();
+
+      const MetricClass = loadFile(superTokenPaymentMethodsPath, 'MPSuperTokenPaymentMethods', {
+        ...global,
+        MPCheckoutFieldsDispatcher: undefined,
+        CheckoutPage: { updateTaxInfoForSelect: jest.fn() },
+      });
+      metricInstance = new MetricClass();
+    });
+
+    afterEach(() => {
+      delete global.sendMetric;
+    });
+
+    test('Given MPCheckoutFieldsDispatcher is absent, When createPaymentMethodElement() is called with credit card, Then should send MP_CHECKOUT_FIELDS_DISPATCHER_MISSING metric', () => {
+      metricInstance.createPaymentMethodElement(makeCreditCardForMetric());
+
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'MP_CHECKOUT_FIELDS_DISPATCHER_MISSING',
+        'super_token_installments_setup',
+        'mp_super_token_init_error'
+      );
+    });
+
+    test('Given MPCheckoutFieldsDispatcher is absent, When createPaymentMethodElement() is called twice, Then should send metric only once', () => {
+      const paymentMethod = makeCreditCardForMetric();
+      metricInstance.createPaymentMethodElement(paymentMethod);
+      metricInstance.createPaymentMethodElement(paymentMethod);
+
+      expect(global.sendMetric).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given MPCheckoutFieldsDispatcher is present, When createPaymentMethodElement() is called with credit card, Then should not send dispatcher missing metric', () => {
+      const PresentClass = loadFile(superTokenPaymentMethodsPath, 'MPSuperTokenPaymentMethods', {
+        ...global,
+        MPCheckoutFieldsDispatcher: { addEventListenerDispatcher: jest.fn() },
+        CheckoutPage: { updateTaxInfoForSelect: jest.fn() },
+      });
+      PresentClass.prototype.installmentsDispatcherMissingReported = false;
+      const presentInstance = new PresentClass();
+      presentInstance.createPaymentMethodElement(makeCreditCardForMetric());
+
+      expect(global.sendMetric).not.toHaveBeenCalledWith(
+        'MP_CHECKOUT_FIELDS_DISPATCHER_MISSING',
+        'super_token_installments_setup',
+        expect.any(String)
+      );
+    });
+  });
+
+  describe('createPaymentMethodElement - consumer credits dispatcher missing metric', () => {
+    let missingInstance;
+    let mockMetrics;
+
+    const makeConsumerCreditsForMetric = () => ({
+      id: 'consumer_credits',
+      type: 'digital_currency',
+      name: 'Mercado Crédito',
+      thumbnail: '',
+      token: 'token_credits',
+      credits_pricing_id: 'pricing_123',
+      card: { card_number: {} },
+      installments: [
+        { installments: 3, installment_amount: 35, installment_rate: 5, installment_rate_collector: [], total_amount: 105, labels: [], consumer_credits: { conditions: {} } },
+      ],
+    });
+
+    beforeEach(() => {
+      mockMetrics = {
+        renderCreditsContract: jest.fn(),
+        installmentsFilled: jest.fn(),
+        renderConsumerCreditsHint: jest.fn(),
+        renderConsumerCreditsDueDate: jest.fn(),
+        renderConsumerCreditsDetailsInnerHTML: jest.fn(),
+        errorToUpdateCreditsContract: jest.fn(),
+        registerOpenCreditsInfoModal: jest.fn(),
+        sendMetric: jest.fn(),
+      };
+
+      document.body.innerHTML = `
+        <input type="hidden" id="cardInstallments" value="">
+        <div id="mp-consumer-credits-hint"></div>
+        <div id="mp-consumer-credits-due-date"></div>
+        <div id="mp-consumer-credits-legal-text"></div>
+        <div id="mp-consumer-credits-debit-auto-text"></div>
+      `;
+
+      global.sendMetric = jest.fn();
+
+      const MissingClass = loadFile(superTokenPaymentMethodsPath, 'MPSuperTokenPaymentMethods', {
+        ...global,
+        MPCheckoutFieldsDispatcher: undefined,
+      });
+      missingInstance = new MissingClass();
+      missingInstance.mpSuperTokenMetrics = mockMetrics;
+      missingInstance.mpSdkInstance = {
+        renderCreditsContract: jest.fn(() => Promise.resolve({ update: jest.fn() })),
+      };
+    });
+
+    afterEach(() => {
+      delete global.sendMetric;
+    });
+
+    test('Given MPCheckoutFieldsDispatcher is absent, When createPaymentMethodElement() is called with consumer credits, Then should send MP_CHECKOUT_FIELDS_DISPATCHER_MISSING metric at setup time', () => {
+      missingInstance.createPaymentMethodElement(makeConsumerCreditsForMetric());
+
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'MP_CHECKOUT_FIELDS_DISPATCHER_MISSING',
+        'super_token_consumer_credits_installments_setup',
+        'mp_super_token_init_error'
+      );
+    });
+
+    test('Given MPCheckoutFieldsDispatcher is absent, When createPaymentMethodElement() is called twice with consumer credits, Then should send metric only once', () => {
+      const paymentMethod = makeConsumerCreditsForMetric();
+      missingInstance.createPaymentMethodElement(paymentMethod);
+      missingInstance.createPaymentMethodElement(paymentMethod);
+
+      expect(global.sendMetric).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('isSelectedPaymentMethodValid', () => {
+    const makePaymentMethodElement = (identifier) => {
+      const el = document.createElement('div');
+      el.id = identifier;
+      document.body.appendChild(el);
+      return el;
+    };
+
+    const makeSecurityCodeContainer = (token, { hasError = false, helperVisible = false } = {}) => {
+      const container = document.createElement('div');
+      container.id = `mp-super-token-security-code-container-${token}`;
+      if (hasError) container.classList.add('error');
+      if (helperVisible) {
+        const helper = document.createElement('div');
+        helper.id = 'mp-input-with-tooltip-helper-error';
+        helper.style.display = 'flex';
+        container.appendChild(helper);
+      }
+      document.body.appendChild(container);
+      return container;
+    };
+
+    test('given credit card with empty installments array, when isSelectedPaymentMethodValid is called, should return true if CVV is valid', () => {
+      const paymentMethod = { id: 'visa', type: 'credit_card', token: 'token_visa', card: { card_number: { last_four_digits: '1234' } }, installments: [], security_code_settings: { mode: 'mandatory', length: 3 } };
+      instance.activePaymentMethod = paymentMethod;
+
+      const identifier = instance.paymentMethodIdentifier(paymentMethod);
+      makePaymentMethodElement(identifier);
+      makeSecurityCodeContainer(paymentMethod.token);
+
+      instance.securityFieldsActiveInstance = { unmount: jest.fn() };
+      instance.verifyIsSecurityCodeReferenceTrue = jest.fn().mockReturnValue(true);
+
+      const result = instance.isSelectedPaymentMethodValid();
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('validateInstallmentSelection', () => {
+    const makePaymentMethodContainer = (identifier) => {
+      const el = document.createElement('div');
+      el.id = identifier;
+      document.body.appendChild(el);
+      return el;
+    };
+
+    const addInstallmentsDropdown = (container, identifier, { withValue = false } = {}) => {
+      const select = document.createElement('select');
+      select.id = `mp-super-token-installments-select-${identifier}`;
+      if (withValue) select.value = '3';
+      container.appendChild(select);
+      return select;
+    };
+
+    const mockMetrics = () => {
+      instance.mpSuperTokenMetrics = { errorToSubmitWithoutInstallmentSelected: jest.fn() };
+    };
+
+    beforeEach(() => {
+      instance.forceShowValidationErrors = jest.fn();
+    });
+
+    test('given consumer credits with installment dropdown and no installment selected, when validateInstallmentSelection is called, should return false, fire metric tagged as consumer_credits and show validation errors', () => {
+      const paymentMethod = { id: 'consumer_credits', type: 'digital_currency', token: 'token_credits', card: { card_number: {} } };
+      instance.activePaymentMethod = paymentMethod;
+      mockMetrics();
+
+      const identifier = instance.paymentMethodIdentifier(paymentMethod);
+      const container = makePaymentMethodContainer(identifier);
+      addInstallmentsDropdown(container, identifier, { withValue: false });
+
+      const result = instance.validateInstallmentSelection();
+
+      expect(result).toBe(false);
+      expect(instance.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected).toHaveBeenCalledTimes(1);
+      expect(instance.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected).toHaveBeenCalledWith('consumer_credits');
+      expect(instance.forceShowValidationErrors).toHaveBeenCalledTimes(1);
+    });
+
+    test('given credit card with installment dropdown and no installment selected, when validateInstallmentSelection is called, should return false and fire metric tagged as credit_card', () => {
+      const paymentMethod = { id: 'visa', type: 'credit_card', token: 'token_visa', card: { card_number: { last_four_digits: '1234' } }, installments: [{ installments: 3 }] };
+      instance.activePaymentMethod = paymentMethod;
+      mockMetrics();
+
+      const identifier = instance.paymentMethodIdentifier(paymentMethod);
+      const container = makePaymentMethodContainer(identifier);
+      addInstallmentsDropdown(container, identifier, { withValue: false });
+
+      const result = instance.validateInstallmentSelection();
+
+      expect(result).toBe(false);
+      expect(instance.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected).toHaveBeenCalledTimes(1);
+      expect(instance.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected).toHaveBeenCalledWith('credit_card');
+      expect(instance.forceShowValidationErrors).toHaveBeenCalledTimes(1);
+    });
+
+    test('given credit card with installment dropdown and installment selected, when validateInstallmentSelection is called, should return true', () => {
+      const paymentMethod = { id: 'visa', type: 'credit_card', token: 'token_visa', card: { card_number: { last_four_digits: '1234' } } };
+      instance.activePaymentMethod = paymentMethod;
+      mockMetrics();
+
+      const identifier = instance.paymentMethodIdentifier(paymentMethod);
+      const container = makePaymentMethodContainer(identifier);
+      const select = addInstallmentsDropdown(container, identifier);
+
+      const option = document.createElement('option');
+      option.value = '3';
+      select.appendChild(option);
+      select.value = '3';
+
+      const result = instance.validateInstallmentSelection();
+
+      expect(result).toBe(true);
+      expect(instance.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected).not.toHaveBeenCalled();
+      expect(instance.forceShowValidationErrors).not.toHaveBeenCalled();
+    });
+
+    test('given credit card with no installment dropdown rendered (empty installments), when validateInstallmentSelection is called, should return true', () => {
+      const paymentMethod = { id: 'visa', type: 'credit_card', token: 'token_visa', card: { card_number: { last_four_digits: '1234' } }, installments: [] };
+      instance.activePaymentMethod = paymentMethod;
+      mockMetrics();
+
+      const identifier = instance.paymentMethodIdentifier(paymentMethod);
+      makePaymentMethodContainer(identifier);
+      // no installments dropdown added to container
+
+      const result = instance.validateInstallmentSelection();
+
+      expect(result).toBe(true);
+      expect(instance.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected).not.toHaveBeenCalled();
+      expect(instance.forceShowValidationErrors).not.toHaveBeenCalled();
+    });
+
+    test('given account money payment method, when validateInstallmentSelection is called, should return true', () => {
+      const paymentMethod = { id: 'account_money', type: 'account_money' };
+      instance.activePaymentMethod = paymentMethod;
+      mockMetrics();
+
+      const identifier = instance.paymentMethodIdentifier(paymentMethod);
+      makePaymentMethodContainer(identifier);
+
+      const result = instance.validateInstallmentSelection();
+
+      expect(result).toBe(true);
+      expect(instance.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected).not.toHaveBeenCalled();
+      expect(instance.forceShowValidationErrors).not.toHaveBeenCalled();
+    });
+
+    test('given an unexpected DOM error during validation, when validateInstallmentSelection is called, should send observability metric, log only the error message to console, attempt to surface validation errors and re-throw the error', () => {
+      const domError = new Error('unexpected DOM error');
+      const getElementByIdSpy = jest.spyOn(document, 'getElementById').mockImplementation(() => { throw domError; });
+
+      instance.activePaymentMethod = { id: 'visa', type: 'credit_card', token: 'token-visa', card: { card_number: { last_four_digits: '1234' } } };
+      const sendMetric = jest.fn();
+      instance.mpSuperTokenMetrics = { sendMetric };
+      instance.forceShowValidationErrors = jest.fn();
+
+      expect(() => instance.validateInstallmentSelection()).toThrow(domError);
+      expect(sendMetric).toHaveBeenCalledWith('error_to_validate_installment_selection', 'true', 'unexpected DOM error');
+      expect(console.error).toHaveBeenCalledWith('Error validating installment selection: ', 'unexpected DOM error');
+      expect(instance.forceShowValidationErrors).toHaveBeenCalledTimes(1);
+
+      getElementByIdSpy.mockRestore();
+    });
+
+    test('given an unexpected error without a message, when validateInstallmentSelection is called, should fall back to "unknown" in the console log and metric', () => {
+      const domError = {};
+      const getElementByIdSpy = jest.spyOn(document, 'getElementById').mockImplementation(() => { throw domError; });
+
+      instance.activePaymentMethod = { id: 'visa', type: 'credit_card', token: 'token-visa', card: { card_number: { last_four_digits: '1234' } } };
+      const sendMetric = jest.fn();
+      instance.mpSuperTokenMetrics = { sendMetric };
+      instance.forceShowValidationErrors = jest.fn();
+
+      let thrown = null;
+      try {
+        instance.validateInstallmentSelection();
+      } catch (e) {
+        thrown = e;
+      }
+
+      expect(thrown).toBe(domError);
+      expect(sendMetric).toHaveBeenCalledWith('error_to_validate_installment_selection', 'true', 'unknown');
+      expect(console.error).toHaveBeenCalledWith('Error validating installment selection: ', 'unknown');
+
+      getElementByIdSpy.mockRestore();
+    });
+
+    test('given forceShowValidationErrors itself throws while handling a previous exception, when validateInstallmentSelection is called, should swallow the UI error logging only its message and re-throw the original error', () => {
+      const domError = new Error('original DOM error');
+      const uiError = new Error('UI error while showing validation errors');
+      const getElementByIdSpy = jest.spyOn(document, 'getElementById').mockImplementation(() => { throw domError; });
+
+      instance.activePaymentMethod = { id: 'visa', type: 'credit_card', token: 'token-visa', card: { card_number: { last_four_digits: '1234' } } };
+      const sendMetric = jest.fn();
+      instance.mpSuperTokenMetrics = { sendMetric };
+      instance.forceShowValidationErrors = jest.fn().mockImplementation(() => { throw uiError; });
+
+      expect(() => instance.validateInstallmentSelection()).toThrow(domError);
+      expect(instance.forceShowValidationErrors).toHaveBeenCalledTimes(1);
+      expect(console.error).toHaveBeenCalledWith('Failed to render validation errors after exception: ', 'UI error while showing validation errors');
+
+      getElementByIdSpy.mockRestore();
+    });
   });
 });

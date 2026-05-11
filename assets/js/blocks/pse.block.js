@@ -136,7 +136,7 @@ const Content = (props) => {
   useEffect(() => {
     if (!hasInitialized) {
       if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
-          MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+          MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
               document.getElementById("mp-pse-gateway-document-input"),
               "focusout",
               "pse_document_filled",
@@ -144,6 +144,8 @@ const Content = (props) => {
                   dispatchOnlyIf: (e) => e?.target?.value.length
               }
           );
+      } else if (typeof sendMetric === 'function') {
+          sendMetric('MP_CHECKOUT_FIELDS_DISPATCHER_MISSING', 'pse_block', 'mp_checkout_init_error');
       }
 
       hasInitialized = true;

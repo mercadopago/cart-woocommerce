@@ -345,3 +345,84 @@ describe('checkIfSuperTokenWasInitialized', () => {
     });
   });
 });
+
+describe('mp-super-token init block - mpCustomCheckoutHandler missing metric', () => {
+  function runInitBlock(windowOverrides = {}, globalOverrides = {}) {
+    const fileContent = fs.readFileSync(mpSuperTokenPath, 'utf8');
+
+    const mockSendMetric = jest.fn();
+
+    let capturedIntervalCallback = null;
+
+    const context = {
+      window: {
+        mpSdkInstance: {},
+        ...windowOverrides,
+      },
+      setInterval: (callback) => {
+        capturedIntervalCallback = callback;
+        return 1;
+      },
+      clearInterval: jest.fn(),
+      setTimeout: jest.fn(),
+      document: { addEventListener: jest.fn() },
+      console: global.console,
+      sendMetric: mockSendMetric,
+      MPDebounce: jest.fn(() => ({})),
+      WCEmailListener: jest.fn(() => ({})),
+      MPSuperTokenMetrics: jest.fn(() => ({ sendMetric: jest.fn() })),
+      MPSuperTokenPaymentMethods: jest.fn(() => ({})),
+      MPSuperTokenAuthenticator: jest.fn(() => ({})),
+      MPSuperTokenErrorHandler: jest.fn(() => ({})),
+      MPSuperTokenTriggerHandler: jest.fn(() => ({})),
+      sessionStorage: { getItem: jest.fn().mockReturnValue(null), setItem: jest.fn() },
+      ...globalOverrides,
+    };
+
+    new vm.Script(fileContent).runInNewContext(context);
+    capturedIntervalCallback?.();
+
+    return { context, mockSendMetric };
+  }
+
+  test('Given mpCustomCheckoutHandler is absent and sendMetric is available, When init runs, Then should send MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS metric', () => {
+    const { mockSendMetric } = runInitBlock();
+
+    expect(mockSendMetric).toHaveBeenCalledWith(
+      'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
+      'mp_super_token_init',
+      'mp_super_token_init_error'
+    );
+  });
+
+  test('Given mpCustomCheckoutHandler is present, When init runs, Then should not send metric', () => {
+    const { mockSendMetric } = runInitBlock({ mpCustomCheckoutHandler: { cardForm: {} } });
+
+    expect(mockSendMetric).not.toHaveBeenCalledWith(
+      'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
+      expect.any(String),
+      expect.any(String)
+    );
+  });
+
+  test('Given sendMetric is not available, When init runs, Then should not send metric', () => {
+    const { mockSendMetric } = runInitBlock({}, { sendMetric: undefined });
+
+    expect(mockSendMetric).not.toHaveBeenCalled();
+  });
+
+  test('Given mpCustomCheckoutHandler is absent, When init runs, Then should NOT call any flag-marking method on the trigger handler (split flag contract)', () => {
+    const trackedMarkMethod = jest.fn();
+
+    runInitBlock(
+      {},
+      {
+        MPSuperTokenTriggerHandler: jest.fn(() => ({
+          markCustomHandlerMissingReported: trackedMarkMethod,
+        })),
+      }
+    );
+
+    expect(trackedMarkMethod).not.toHaveBeenCalled();
+  });
+});

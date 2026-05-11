@@ -402,6 +402,11 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
                 'cust_id'           => $this->mercadopago->sellerConfig->getCustIdFromAT(),
             ]
         );
+
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            'wc_mercadopago_sdk_metrics',
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-sdk-metrics')
+        );
     }
 
     /**
@@ -609,11 +614,17 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
         $this->mercadopago->hooks->gateway->registerBeforeThankYou(function ($orderId) {
             $order         = wc_get_order($orderId);
+
+            if (!$order) {
+                return;
+            }
+
             $paymentMethod = $order->get_payment_method();
 
             foreach ($this->mercadopago->storeConfig->getAvailablePaymentGateways() as $gateway) {
                 if ($gateway::ID === $paymentMethod) {
                     $this->mercadopago->hooks->scripts->registerMelidataStoreScript('/thankyou', $paymentMethod);
+                    break;
                 }
             }
         });

@@ -94,7 +94,7 @@ class OrderTest extends TestCase
     /**
      * getMetaboxData — early return scenarios
      */
-    
+
     public function testGetMetaboxDataReturnsEmptyWhenLastPaymentIsFalse(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
@@ -108,7 +108,7 @@ class OrderTest extends TestCase
         $this->assertSame([], $result);
     }
 
-public function testGetMetaboxDataReturnsEmptyWhenExceptionIsThrown(): void
+    public function testGetMetaboxDataReturnsEmptyWhenExceptionIsThrown(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
 
@@ -571,7 +571,8 @@ public function testGetMetaboxDataReturnsEmptyWhenExceptionIsThrown(): void
 
     public function testRegisterMetaBoxAddsActionsForBothOrderScreens(): void
     {
-        $callback = function () {};
+        $callback = function () {
+        };
 
         WP_Mock::expectActionAdded('add_meta_boxes_shop_order', $callback);
         WP_Mock::expectActionAdded('add_meta_boxes_woocommerce_page_wc-orders', $callback);
@@ -599,7 +600,8 @@ public function testGetMetaboxDataReturnsEmptyWhenExceptionIsThrown(): void
 
     public function testRegisterOrderDetailsAfterOrderTableAddsAction(): void
     {
-        $callback = function () {};
+        $callback = function () {
+        };
         WP_Mock::expectActionAdded('woocommerce_order_details_after_order_table', $callback);
 
         $this->order->registerOrderDetailsAfterOrderTable($callback);
@@ -607,7 +609,8 @@ public function testGetMetaboxDataReturnsEmptyWhenExceptionIsThrown(): void
 
     public function testRegisterEmailBeforeOrderTableAddsAction(): void
     {
-        $callback = function () {};
+        $callback = function () {
+        };
         WP_Mock::expectActionAdded('woocommerce_email_before_order_table', $callback);
 
         $this->order->registerEmailBeforeOrderTable($callback);
@@ -615,7 +618,8 @@ public function testGetMetaboxDataReturnsEmptyWhenExceptionIsThrown(): void
 
     public function testRegisterAdminOrderTotalsAfterTotalAddsAction(): void
     {
-        $callback = function () {};
+        $callback = function () {
+        };
         WP_Mock::expectActionAdded('woocommerce_admin_order_totals_after_total', $callback);
 
         $this->order->registerAdminOrderTotalsAfterTotal($callback);

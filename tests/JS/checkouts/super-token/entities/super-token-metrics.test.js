@@ -901,7 +901,7 @@ describe('MPSuperTokenMetrics', () => {
       jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
     });
 
-    test('When errorToSubmitWithoutInstallmentSelected() is called, Then should call sendMetric and dispatch melidata error event', () => {
+    test('When errorToSubmitWithoutInstallmentSelected() is called without arguments, Then should call sendMetric with empty payment method type and dispatch melidata error event', () => {
       metrics.errorToSubmitWithoutInstallmentSelected();
 
       expect(metrics.sendMetric).toHaveBeenCalledWith(
@@ -912,6 +912,26 @@ describe('MPSuperTokenMetrics', () => {
       expect(metrics.dispatchMelidataErrorEvent).toHaveBeenCalledWith(
         'no_installment_selected',
         'post_submit'
+      );
+    });
+
+    test('When errorToSubmitWithoutInstallmentSelected() is called with consumer_credits, Then should forward the payment method type to sendMetric', () => {
+      metrics.errorToSubmitWithoutInstallmentSelected('consumer_credits');
+
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'error_to_submit_without_installment_selected',
+        'true',
+        'consumer_credits'
+      );
+    });
+
+    test('When errorToSubmitWithoutInstallmentSelected() is called with credit_card, Then should forward the payment method type to sendMetric', () => {
+      metrics.errorToSubmitWithoutInstallmentSelected('credit_card');
+
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'error_to_submit_without_installment_selected',
+        'true',
+        'credit_card'
       );
     });
   });

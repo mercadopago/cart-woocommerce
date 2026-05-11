@@ -77,6 +77,17 @@ class MPThreeDSHandler {
             })
             .fail((xhr, textStatus, errorThrown) => {
                 console.error('Failed to make POST:', textStatus, errorThrown);
+                // window.sendMetric → Datadog beacon; distinto de this.sendMetric (mPmetrics). Guard evita ReferenceError se mp-checkout-metrics não carregou.
+                if (typeof window.sendMetric === 'function') {
+                    window.sendMetric(
+                        String(xhr?.status ?? 0),
+                        `3DS flow failed: ${textStatus} ${errorThrown}`,
+                        'mp_api_error',
+                        {
+                            api_route: '3ds_challenge',
+                        }
+                    );
+                }
                 window.dispatchEvent(
                     new CustomEvent('completed_3ds', {
                         detail: {

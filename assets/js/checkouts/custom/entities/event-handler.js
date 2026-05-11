@@ -193,6 +193,12 @@ class MPEventHandler {
             if (!activeMethod) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_ERROR);
             if (!isSuperTokenValid) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID);
 
+            if (!superTokenPaymentMethods.validateInstallmentSelection()) {
+                this.cardForm.removeLoadSpinner();
+                this.hideCheckoutClassicLoader();
+                return;
+            }
+
             if (this.isOrderPayPage()) superTokenPaymentMethods.unmountCardForm();
 
             await superTokenPaymentMethods.updateSecurityCode();
@@ -214,7 +220,12 @@ class MPEventHandler {
                 return;
             }
 
-            superTokenTriggerHandler?.resetSuperTokenOnError();
+            const recoverableErrors = [
+                MPSuperTokenErrorCodes.UPDATE_SECURITY_CODE_ERROR,
+                MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_ERROR,
+                MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED,
+            ];
+            superTokenTriggerHandler?.resetSuperTokenOnError(recoverableErrors.includes(exception?.message));
             superTokenTriggerHandler?.setLastException(exception);
             superTokenAuthenticator?.setSuperTokenValidation(false);
         }
@@ -255,8 +266,11 @@ class MPEventHandler {
             }
         }
 
-        this.cardForm.form
-            .createCardToken()
+        const callFn = window.callSdkWithMetrics || ((fn) => fn());
+        callFn(
+            () => this.cardForm.form.createCardToken(),
+            'createCardToken'
+        )
             .then((cardToken) => {
                 if (cardToken.token) {
                     if (this.hasToken) {
@@ -348,7 +362,7 @@ class MPEventHandler {
 
         this.cardForm.removeLoadSpinner();
         const { superTokenTriggerHandler } = this.getSuperTokenDeps();
-        superTokenTriggerHandler?.resetSuperTokenOnError();
+        superTokenTriggerHandler?.resetSuperTokenOnError(true);
     }
 
     handleUpdatedCheckout() {

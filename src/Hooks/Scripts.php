@@ -259,7 +259,7 @@ class Scripts
         $file = $this->url->getJsAsset('melidata/melidata-client');
 
         add_action('wp_enqueue_scripts', function () use ($file, $location) {
-            if ($this->isPaymentsRelatedPage()) {
+            if ($this->isPaymentsRelatedPage() && !is_cart() && !is_view_order_page()) {
                 wp_enqueue_script(
                     self::MELIDATA_SCRIPT_NAME,
                     $file,

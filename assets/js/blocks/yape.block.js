@@ -123,7 +123,7 @@ const Content = (props) => {
   useEffect(() => {
     if (!hasInitialized) {
       if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
-          MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+          MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
               document.getElementById("checkout__yapePhoneNumber"),
               "focusout",
               "yape_phone_number_filled",
@@ -131,6 +131,8 @@ const Content = (props) => {
                   dispatchOnlyIf: (e) => e?.target?.value.length
               }
           );
+      } else if (typeof sendMetric === 'function') {
+          sendMetric('MP_CHECKOUT_FIELDS_DISPATCHER_MISSING', 'yape_block', 'mp_checkout_init_error');
       }
 
       hasInitialized = true;
@@ -163,7 +165,11 @@ const Content = (props) => {
       const yape = window.mpSdkInstance.yape(yapeOptions);
 
       try {
-        const yapeToken = await yape.create();
+        const callFn = window.callSdkWithMetrics || ((fn) => fn());
+        const yapeToken = await callFn(
+          () => yape.create(),
+          'yape.create'
+        );
         paymentMethodData['mercadopago_yape[token]'] = yapeToken.id;
       } catch (error) {
         console.warn('Token creation error: ', error);

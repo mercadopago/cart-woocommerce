@@ -85,8 +85,11 @@ class MPSuperTokenAuthenticator {
       this.amountUsed = amount;
       this.emailUsed = buyerEmail;
 
-      const authenticator = await this.mpSdkInstance
-          .authenticator(amount, buyerEmail, { platformId: this.PLATFORM_ID, version: 2 });
+      const callFn = window.callSdkWithMetrics || ((fn) => fn());
+      const authenticator = await callFn(
+          () => this.mpSdkInstance.authenticator(amount, buyerEmail, { platformId: this.PLATFORM_ID, version: 2 }),
+          'buildAuthenticator'
+      );
 
       return authenticator;
     } catch (error) {
@@ -182,7 +185,11 @@ class MPSuperTokenAuthenticator {
             return;
           }
 
-          await authenticator.authorizePayment(pseudotoken);
+          const callFn = window.callSdkWithMetrics || ((fn) => fn());
+          await callFn(
+              () => authenticator.authorizePayment(pseudotoken),
+              'authorizePayment'
+          );
 
           this.storeAuthorizedPseudotoken(pseudotoken);
       } catch (error) {
