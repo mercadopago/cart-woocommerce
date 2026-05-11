@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_supertoken_bundle_params, Intl, MPCheckoutFieldsDispatcher, MPSuperTokenErrorCodes, CheckoutPage */
+/* globals wc_mercadopago_supertoken_bundle_params, Intl, MPCheckoutFieldsDispatcher, MPSuperTokenErrorCodes, CheckoutPage, sendMetric */
 /* eslint-disable no-unused-vars */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 class MPSuperTokenPaymentMethods {
@@ -126,12 +126,15 @@ class MPSuperTokenPaymentMethods {
     securityFieldsActiveInstance = null;
     activePaymentMethod = null;
     amount = null;
-    selectedPreloadedPaymentMethod = null;
+    selectedPreloadedPaymentMethod = null; // Should not be resetted
     securityCodeReferences = {};
     lastPaymentMethodChoosen = null; // Should not be resetted
     attemptsByErrorCode = {};
     isRendering = false;
     escSelectionGeneration = 0;
+    securityFieldDispatcherMissingReported = false;
+    installmentsDispatcherMissingReported = false;
+    creditsInstallmentsDispatcherMissingReported = false;
 
     // Dependencies
     mpSdkInstance = null;
@@ -428,7 +431,7 @@ class MPSuperTokenPaymentMethods {
         return document.getElementById(this.paymentMethodIdentifier(paymentMethod));
     }
 
-    selectPreloadedPaymentMethod() {
+    async selectPreloadedPaymentMethod() {
       this.closeAccordion();
 
       const paymentMethod = this.getSelectedPreloadedPaymentMethodFromActivePaymentMethods();
@@ -442,7 +445,8 @@ class MPSuperTokenPaymentMethods {
           return;
       }
 
-      this.onSelectSuperTokenPaymentMethod(paymentMethodElement, paymentMethod);
+      this.storeActivePaymentMethod(paymentMethod);
+      await this.onSelectSuperTokenPaymentMethod(paymentMethodElement, paymentMethod);
     }
 
     setCheckoutType(type) {
@@ -538,6 +542,10 @@ class MPSuperTokenPaymentMethods {
     storeActivePaymentMethod(paymentMethod) {
         this.activePaymentMethod = paymentMethod;
         this.lastPaymentMethodChoosen = paymentMethod || this.lastPaymentMethodChoosen;
+    }
+
+    clearActivePaymentMethod() {
+        this.activePaymentMethod = null;
     }
 
     getLastPaymentMethodChoosen() {
@@ -727,8 +735,7 @@ class MPSuperTokenPaymentMethods {
         }
 
         if (this.isConsumerCredits(paymentMethod)) {
-            // TODO: this is a temporary way to get the number of installments without fee for the consumer credits payment method
-            // we can improve this or even check the installment_rate_collector, but for now it is not present in the API
+            // Temporary: filters installments without fee since installment_rate_collector is not yet available in the API
             const installmentsWithoutFee = paymentMethod.installments.filter(installment => installment.installment_rate === 0);
             return installmentsWithoutFee.length > 0 ? installmentsWithoutFee[installmentsWithoutFee.length - 1].installments : 0;
         }
@@ -969,7 +976,7 @@ class MPSuperTokenPaymentMethods {
 
     async fetchPaymentMethod(paymentMethod, paymentMethodElement) {
         const currentPaymentMethodIdentifier = this.paymentMethodIdentifier(paymentMethod);
-        
+
         const REQUEST_START_TIME = Date.now();
         const result = await Promise.race([
             this.mpSdkInstance.getAccountPaymentMethod(this.getSuperToken(), paymentMethod.token),
@@ -1037,7 +1044,7 @@ class MPSuperTokenPaymentMethods {
         try {
             if (this.shouldFetchPaymentMethodAgain(paymentMethod, paymentMethodElement)) {
                 this.showDetailsSkeleton(paymentMethodElement);
-                
+
                 const currentGeneration = ++this.escSelectionGeneration;
                 const updatedPaymentMethod = await this.fetchPaymentMethod(paymentMethod, paymentMethodElement);
 
@@ -1052,7 +1059,7 @@ class MPSuperTokenPaymentMethods {
                 if (!this.securityCodeIsRequired(updatedPaymentMethod.security_code_settings)) {
                     this.removeSecurityCodeField(updatedPaymentMethod);
                 }
-                
+
                 this.mpSuperTokenMetrics
                     .fetchPaymentMethodSuccess(
                         this.paymentMethodIdentifier(updatedPaymentMethod),
@@ -1558,6 +1565,11 @@ class MPSuperTokenPaymentMethods {
                     ? this.SECURITY_CODE_PLACEHOLDER_TEXT_3_DIGITS
                     : this.SECURITY_CODE_PLACEHOLDER_TEXT_4_DIGITS;
 
+                if (typeof MPCheckoutFieldsDispatcher === 'undefined' && typeof sendMetric === 'function' && !this.securityFieldDispatcherMissingReported) {
+                    sendMetric('MP_CHECKOUT_FIELDS_DISPATCHER_MISSING', 'super_token_cvv_mount', 'mp_super_token_init_error');
+                    this.securityFieldDispatcherMissingReported = true;
+                }
+
                 const securityCodeField = this.mpSdkInstance.fields.create('securityCode', {
                     placeholder: securityCodePlaceholderText,
                     ariaRequired: true,
@@ -1594,7 +1606,7 @@ class MPSuperTokenPaymentMethods {
 
                         if (e.errorMessages.length === 0) {
                             if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
-                                MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                                MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
                                     null,
                                     "focusout",
                                     "super_token_cvv_filled",
@@ -1687,12 +1699,16 @@ class MPSuperTokenPaymentMethods {
 
         if (this.isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
             const dropdownElement = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}`);
+            if (typeof MPCheckoutFieldsDispatcher === 'undefined' && typeof sendMetric === 'function' && !this.installmentsDispatcherMissingReported) {
+                sendMetric('MP_CHECKOUT_FIELDS_DISPATCHER_MISSING', 'super_token_installments_setup', 'mp_super_token_init_error');
+                this.installmentsDispatcherMissingReported = true;
+            }
 
             dropdownElement?.addEventListener('change', (event) => {
                 const selectedItem = event.target.value;
                 if (selectedItem) {
                     if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
-                        MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                        MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
                             null,
                             "focusout",
                             "super_token_installments_filled",
@@ -1736,6 +1752,11 @@ class MPSuperTokenPaymentMethods {
         if (this.isConsumerCredits(paymentMethod) && paymentMethod?.installments?.length) {
             const selectElement = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}`);
 
+            if (typeof MPCheckoutFieldsDispatcher === 'undefined' && typeof sendMetric === 'function' && !this.creditsInstallmentsDispatcherMissingReported) {
+                sendMetric('MP_CHECKOUT_FIELDS_DISPATCHER_MISSING', 'super_token_consumer_credits_installments_setup', 'mp_super_token_init_error');
+                this.creditsInstallmentsDispatcherMissingReported = true;
+            }
+
             selectElement?.addEventListener('blur', () => {
                 if (this.installmentsWasSelected(paymentMethod)) {
                     this.setInstallmentsErrorState(paymentMethod, false);
@@ -1771,7 +1792,7 @@ class MPSuperTokenPaymentMethods {
                     if (!selectedValue) return;
 
                     if (typeof MPCheckoutFieldsDispatcher !== 'undefined') {
-                        MPCheckoutFieldsDispatcher?.addEventListenerDispatcher(
+                        MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
                             null,
                             "focusout",
                             "super_token_installments_filled",
@@ -1786,7 +1807,10 @@ class MPSuperTokenPaymentMethods {
                         document.getElementById('mp-consumer-credits-debit-auto-text').style.display = 'block';
                     }
 
-                    document.getElementById('cardInstallments').value = parseInt(selectedValue, 10);
+                    const cardInstallments = document.getElementById('cardInstallments');
+                    if (cardInstallments) {
+                        cardInstallments.value = parseInt(selectedValue, 10);
+                    }
 
                     const selectedInstallment = paymentMethod.installments.find(installment =>
                         installment.installments === parseInt(selectedValue, 10)
@@ -1826,6 +1850,12 @@ class MPSuperTokenPaymentMethods {
                         this.mpSuperTokenMetrics.errorToUpdateCreditsContract(error);
                     }
                 });
+
+                // If the dropdown already has a value (restored after a payment error),
+                // dispatch change now that the listener is registered so hint and contract update
+                if (selectElement?.value) {
+                    selectElement.dispatchEvent(new Event('change'));
+                }
             })
             .catch((error) => {
                 this.mpSuperTokenMetrics.renderCreditsContract(false, error);
@@ -2117,14 +2147,6 @@ class MPSuperTokenPaymentMethods {
                 return false;
             }
 
-            const installmentsDropdown = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(this.activePaymentMethod)}`);
-            if (installmentsDropdown && (this.isCreditCard(this.activePaymentMethod) || this.isConsumerCredits(this.activePaymentMethod)) && !this.installmentsWasSelected(this.activePaymentMethod)) {
-                if (this.isConsumerCredits(this.activePaymentMethod)) {
-                    this.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected();
-                }
-                return false;
-            }
-
             if (!this.securityCodeIsRequired(this.activePaymentMethod?.security_code_settings)) {
                 return true;
             }
@@ -2154,6 +2176,31 @@ class MPSuperTokenPaymentMethods {
         } catch (error) {
             console.error('Error validating selected payment method after submit: ', error);
             return false;
+        }
+    }
+
+    validateInstallmentSelection() {
+        try {
+            const paymentMethodElement = document.getElementById(this.paymentMethodIdentifier(this.activePaymentMethod));
+            const installmentsDropdown = paymentMethodElement?.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(this.activePaymentMethod)}`);
+
+            if (installmentsDropdown && (this.isCreditCard(this.activePaymentMethod) || this.isConsumerCredits(this.activePaymentMethod)) && !this.installmentsWasSelected(this.activePaymentMethod)) {
+                const paymentMethodType = this.isConsumerCredits(this.activePaymentMethod) ? 'consumer_credits' : 'credit_card';
+                this.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected(paymentMethodType);
+                this.forceShowValidationErrors();
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            this.mpSuperTokenMetrics?.sendMetric('error_to_validate_installment_selection', 'true', error?.message ?? 'unknown');
+            console.error('Error validating installment selection: ', error?.message ?? 'unknown');
+            try {
+                this.forceShowValidationErrors();
+            } catch (uiError) {
+                console.error('Failed to render validation errors after exception: ', uiError?.message ?? 'unknown');
+            }
+            throw error;
         }
     }
 

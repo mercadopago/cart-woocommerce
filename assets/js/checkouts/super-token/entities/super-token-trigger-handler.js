@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_supertoken_bundle_params */
+/* globals wc_mercadopago_supertoken_bundle_params, sendMetric */
 /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
 class MPSuperTokenTriggerHandler {
     CUSTOM_CHECKOUT_BLOCKS_RADIO_SELECTOR = '[value=woo-mercado-pago-custom]';
@@ -15,8 +15,10 @@ class MPSuperTokenTriggerHandler {
     isAlreadyListeningForm = false;
     lastException = null;
     isFetchingPaymentMethods = false;
+    customHandlerMissingReportedOnReset = false;
     loadGeneration = 0;
     cacheMetricsDispatched = false;
+    savedInstallments = null;
 
     // Dependencies
     mpSuperTokenAuthenticator = null;
@@ -97,6 +99,14 @@ class MPSuperTokenTriggerHandler {
 
     resetCustomCheckout(shouldClearCache = true) {
         this.mpSuperTokenPaymentMethods.hideSuperTokenError();
+
+        if (!window.mpCustomCheckoutHandler && !this.customHandlerMissingReportedOnReset) {
+            if (typeof sendMetric === 'function') {
+                sendMetric('MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS', 'resetCustomCheckout', 'mp_super_token_init_error');
+                this.customHandlerMissingReportedOnReset = true;
+            }
+        }
+
         window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
         this.mpSuperTokenAuthenticator.setSuperTokenValidation(false);
 
@@ -111,12 +121,16 @@ class MPSuperTokenTriggerHandler {
 
         this.loadSuperToken(this.currentAmount)
             .finally(() => {
-                setTimeout(() => {
+                setTimeout(async () => {
                     window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
                     window.mpCustomCheckoutHandler?.eventHandler?.hideCheckoutClassicLoader();
 
-                    if (this.mpSuperTokenPaymentMethods.hasCheckoutError()) {
-                      this.mpSuperTokenPaymentMethods.selectLastPaymentMethodChoosen();
+                    try {
+                        await this.restorePreloadedPaymentMethod();
+                    } catch (e) {
+                        if (this.mpSuperTokenMetrics) {
+                            this.mpSuperTokenMetrics.sendMetric('super_token_restore_error', e?.message || 'unknown', 'mp_super_token_restore_error');
+                        }
                     }
 
                     const lastException = this.getLastException();
@@ -130,7 +144,56 @@ class MPSuperTokenTriggerHandler {
             });
     }
 
-    resetSuperTokenOnError() {
+    async restorePreloadedPaymentMethod() {
+        if (!this.mpSuperTokenPaymentMethods.getSelectedPreloadedPaymentMethod()) {
+            if (this.mpSuperTokenPaymentMethods.hasCheckoutError()) {
+                this.mpSuperTokenPaymentMethods.selectLastPaymentMethodChoosen();
+            }
+            return;
+        }
+
+        await this.mpSuperTokenPaymentMethods.selectPreloadedPaymentMethod();
+        this.mpSuperTokenPaymentMethods.storeSelectedPreloadedPaymentMethod(null);
+
+        const activeMethod = this.mpSuperTokenPaymentMethods.getActivePaymentMethod();
+        const savedInstallments = this.savedInstallments;
+        this.savedInstallments = null;
+
+        if (!activeMethod) {
+            this.mpSuperTokenMetrics.sendMetric('super_token_restore_active_method_not_set', 'true', 'mp_super_token_restore_error');
+            return;
+        }
+
+        const element = this.mpSuperTokenPaymentMethods.getPaymentMethodElementFromDOM(activeMethod);
+        if (!element) {
+            this.mpSuperTokenMetrics.sendMetric('super_token_restore_element_not_found', 'true', 'mp_super_token_restore_error');
+            return;
+        }
+
+        this.mpSuperTokenPaymentMethods.showPaymentMethodDetails(element);
+
+        if (!savedInstallments) return;
+
+        const installmentsId = `mp-super-token-installments-select-${this.mpSuperTokenPaymentMethods.paymentMethodIdentifier(activeMethod)}`;
+        const dropdown = element.querySelector(`#${installmentsId}`);
+        if (!dropdown) {
+            this.mpSuperTokenMetrics.sendMetric('super_token_restore_installments_dropdown_not_found', 'true', 'mp_super_token_restore_error');
+            return;
+        }
+
+        const optionExists = [...dropdown.options].some(o => o.value === savedInstallments);
+        if (!optionExists) {
+            this.mpSuperTokenMetrics.sendMetric('super_token_restore_installment_option_not_found', 'true', 'mp_super_token_restore_error');
+            return;
+        }
+
+        dropdown.value = savedInstallments;
+        const cardInstallments = document.getElementById('cardInstallments');
+        if (cardInstallments) cardInstallments.value = savedInstallments;
+        dropdown.dispatchEvent(new Event('change'));
+    }
+
+    resetSuperTokenOnError(preserveSelection = false) {
         if (document.querySelector('#mp_checkout_type')?.value === 'super_token') {
             const paymentMethodList = document.querySelector(`.${this.mpSuperTokenPaymentMethods.SUPER_TOKEN_STYLES.PAYMENT_METHOD_LIST}`);
 
@@ -138,12 +201,23 @@ class MPSuperTokenTriggerHandler {
               paymentMethodList.scrollIntoView({ behavior: 'smooth' });
             }
 
+            this.savedInstallments = null;
+            let lastMethodToPreserve = null;
+            if (preserveSelection) {
+                lastMethodToPreserve = this.mpSuperTokenPaymentMethods.getLastPaymentMethodChoosen() || null;
+                this.savedInstallments = document.getElementById('cardInstallments')?.value || null;
+            }
+
             this.mpSuperTokenPaymentMethods.deselectAllPaymentMethods();
             this.mpSuperTokenPaymentMethods.hideAllPaymentMethodDetails();
             this.mpSuperTokenPaymentMethods.unmountActiveSecurityCodeInstance();
-            this.mpSuperTokenPaymentMethods.activePaymentMethod = null;
+            this.mpSuperTokenPaymentMethods.clearActivePaymentMethod();
 
             this.resetCustomCheckout(true);
+
+            if (lastMethodToPreserve) {
+                this.mpSuperTokenPaymentMethods.storeSelectedPreloadedPaymentMethod(lastMethodToPreserve);
+            }
         }
     }
 

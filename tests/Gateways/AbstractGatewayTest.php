@@ -472,7 +472,7 @@ class AbstractGatewayTest extends TestCase
      *           ["supertoken_not_supported"]
      *           ["some_other_error", "unknown_error"]
      */
-    public function testProcessRefundError(string $type, string $message = null)
+    public function testProcessRefundError(string $type, ?string $message = null)
     {
         WP_Mock::userFunction('wc_get_order')->once();
 
@@ -1806,6 +1806,113 @@ class AbstractGatewayTest extends TestCase
         $this->addToAssertionCount(Mockery::getContainer()->mockery_getExpectationCount());
     }
 
+    /**
+     * GIVEN wc_get_order() returns false for an invalid order
+     * WHEN the woocommerce_before_thankyou callback registered by loadMelidataStoreScripts fires
+     * THEN registerMelidataStoreScript must NOT be called (null order guard — PSW-3862)
+     */
+    public function testLoadMelidataStoreScriptsSkipsRegisterScriptWhenOrderNotFound(): void
+    {
+        $capturedCallback = null;
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('prioritizeMelidataStoreScriptEarly')
+            ->once()
+            ->with('/checkout');
+
+        $this->gateway->mercadopago->hooks->checkout
+            ->shouldReceive('registerBeforePay')
+            ->once()
+            ->with(Mockery::type('callable'));
+
+        $this->gateway->mercadopago->hooks->checkout
+            ->shouldReceive('registerPayOrderBeforeSubmit')
+            ->once()
+            ->with(Mockery::type('callable'));
+
+        $this->gateway->mercadopago->hooks->gateway
+            ->shouldReceive('registerBeforeThankYou')
+            ->once()
+            ->andReturnUsing(function (callable $callback) use (&$capturedCallback) {
+                $capturedCallback = $callback;
+            });
+
+        $this->gateway->loadMelidataStoreScripts();
+
+        $this->assertIsCallable($capturedCallback, 'registerBeforeThankYou must receive a callable');
+
+        WP_Mock::userFunction('wc_get_order', ['args' => [42], 'return' => false]);
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldNotReceive('registerMelidataStoreScript');
+
+        $capturedCallback(42);
+
+        $this->addToAssertionCount(Mockery::getContainer()->mockery_getExpectationCount());
+    }
+
+    /**
+     * GIVEN wc_get_order() returns a valid order whose payment method matches an available gateway
+     * WHEN the woocommerce_before_thankyou callback registered by loadMelidataStoreScripts fires
+     * THEN registerMelidataStoreScript('/thankyou', $paymentMethod) must be called exactly once
+     *      and the loop must stop after the first match (break statement — PSW-3862)
+     */
+    public function testLoadMelidataStoreScriptsEnqueuesMelidataOnThankYouPageForMatchingGateway(): void
+    {
+        $capturedCallback = null;
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('prioritizeMelidataStoreScriptEarly')
+            ->once()
+            ->with('/checkout');
+
+        $this->gateway->mercadopago->hooks->checkout
+            ->shouldReceive('registerBeforePay')
+            ->once()
+            ->with(Mockery::type('callable'));
+
+        $this->gateway->mercadopago->hooks->checkout
+            ->shouldReceive('registerPayOrderBeforeSubmit')
+            ->once()
+            ->with(Mockery::type('callable'));
+
+        $this->gateway->mercadopago->hooks->gateway
+            ->shouldReceive('registerBeforeThankYou')
+            ->once()
+            ->andReturnUsing(function (callable $callback) use (&$capturedCallback) {
+                $capturedCallback = $callback;
+            });
+
+        $this->gateway->loadMelidataStoreScripts();
+
+        $this->assertIsCallable($capturedCallback, 'registerBeforeThankYou must receive a callable');
+
+        $paymentMethod = 'woo-mercado-pago-custom';
+
+        $orderMock = Mockery::mock(\WC_Order::class);
+        $orderMock->shouldReceive('get_payment_method')->once()->andReturn($paymentMethod);
+
+        WP_Mock::userFunction('wc_get_order', ['args' => [99], 'return' => $orderMock]);
+
+        $matchingGateway = new class {
+            public const ID = 'woo-mercado-pago-custom';
+        };
+
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('getAvailablePaymentGateways')
+            ->once()
+            ->andReturn([$matchingGateway]);
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerMelidataStoreScript')
+            ->once()
+            ->with('/thankyou', $paymentMethod);
+
+        $capturedCallback(99);
+
+        $this->addToAssertionCount(Mockery::getContainer()->mockery_getExpectationCount());
+    }
+
     private function setupMetricErrorMocks(): void
     {
         $this->resetAmountCurrencyErrorFlag();
@@ -1846,5 +1953,57 @@ class AbstractGatewayTest extends TestCase
         $method->setAccessible(true);
 
         $this->assertSame($expected, $method->invoke($this->gateway));
+    }
+
+    public function testRegisterCheckoutScriptsRegistersSdkMetrics(): void
+    {
+        \WP_Mock::userFunction('get_stylesheet')->andReturn('test-theme');
+
+        $this->gateway->mercadopago->woocommerce->version = '8.0.0';
+
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'site_id' => 'MLB',
+            'currency' => 'BRL',
+        ]);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->andReturn('test-public-key');
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')->andReturn('test-cust-id');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')->andReturn('test-css-url');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getJsAsset')
+            ->with('checkouts/mp-sdk-metrics')
+            ->once()
+            ->andReturn('test-js-url');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getJsAsset')
+            ->withAnyArgs()
+            ->byDefault()
+            ->andReturn('test-js-url');
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutStyle')->byDefault();
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutScript')
+            ->with('wc_mercadopago_sdk_metrics', 'test-js-url')
+            ->once();
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerCheckoutScript')
+            ->withAnyArgs()
+            ->byDefault();
+
+        $this->gateway->registerCheckoutScripts();
+
+        $this->assertTrue(true);
     }
 }

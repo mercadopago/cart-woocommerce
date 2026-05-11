@@ -64,6 +64,16 @@ describe('MPSuperTokenTriggerHandler', () => {
       deselectAllPaymentMethods: jest.fn(),
       hideAllPaymentMethodDetails: jest.fn(),
       unmountActiveSecurityCodeInstance: jest.fn(),
+      clearActivePaymentMethod: jest.fn(),
+      storePaymentMethodsInMemory: jest.fn(),
+      getActivePaymentMethod: jest.fn().mockReturnValue(null),
+      getPaymentMethodElementFromDOM: jest.fn().mockReturnValue(null),
+      showPaymentMethodDetails: jest.fn(),
+      paymentMethodIdentifier: jest.fn().mockReturnValue(''),
+      getLastPaymentMethodChoosen: jest.fn().mockReturnValue(null),
+      storeSelectedPreloadedPaymentMethod: jest.fn(),
+      getSelectedPreloadedPaymentMethod: jest.fn().mockReturnValue(null),
+      selectPreloadedPaymentMethod: jest.fn(),
       SUPER_TOKEN_STYLES: { PAYMENT_METHOD_LIST: 'mp-super-token-payment-methods-list' },
     };
 
@@ -464,6 +474,318 @@ describe('MPSuperTokenTriggerHandler', () => {
 
       expect(mockAuthenticator.reset).toHaveBeenCalled();
       expect(mockPaymentMethods.reset).toHaveBeenCalled();
+    });
+  });
+
+  describe('resetSuperTokenOnError()', () => {
+    test('Given mp_checkout_type is not super_token, When resetSuperTokenOnError() is called, Then should do nothing', () => {
+      document.body.innerHTML = `<input id="mp_checkout_type" value="custom" />`;
+
+      triggerHandler.resetSuperTokenOnError();
+
+      expect(mockPaymentMethods.deselectAllPaymentMethods).not.toHaveBeenCalled();
+    });
+
+    test('Given mp_checkout_type is super_token, When resetSuperTokenOnError() is called, Then should always do full reset regardless of preserveSelection', () => {
+      document.body.innerHTML = `<input id="mp_checkout_type" value="super_token" />`;
+
+      triggerHandler.resetSuperTokenOnError(false);
+
+      expect(mockPaymentMethods.deselectAllPaymentMethods).toHaveBeenCalledTimes(1);
+      expect(mockPaymentMethods.hideAllPaymentMethodDetails).toHaveBeenCalledTimes(1);
+      expect(mockPaymentMethods.unmountActiveSecurityCodeInstance).toHaveBeenCalledTimes(1);
+      expect(mockPaymentMethods.reset).toHaveBeenCalledTimes(1);
+
+      jest.clearAllMocks();
+
+      triggerHandler.resetSuperTokenOnError(true);
+
+      expect(mockPaymentMethods.deselectAllPaymentMethods).toHaveBeenCalledTimes(1);
+      expect(mockPaymentMethods.hideAllPaymentMethodDetails).toHaveBeenCalledTimes(1);
+      expect(mockPaymentMethods.unmountActiveSecurityCodeInstance).toHaveBeenCalledTimes(1);
+      expect(mockPaymentMethods.reset).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given preserveSelection is false (default), When resetSuperTokenOnError() is called, Then should NOT store selected payment method', () => {
+      document.body.innerHTML = `<input id="mp_checkout_type" value="super_token" />`;
+      const lastMethod = { id: 'visa', token: 'TOKEN123' };
+      mockPaymentMethods.getLastPaymentMethodChoosen.mockReturnValue(lastMethod);
+
+      triggerHandler.resetSuperTokenOnError();
+
+      expect(mockPaymentMethods.storeSelectedPreloadedPaymentMethod).not.toHaveBeenCalled();
+    });
+
+    test('Given savedInstallments has a stale value from a previous cycle, When resetSuperTokenOnError(false) is called, Then should clear savedInstallments unconditionally', () => {
+      document.body.innerHTML = `<input id="mp_checkout_type" value="super_token" />`;
+      triggerHandler.savedInstallments = '6';
+
+      triggerHandler.resetSuperTokenOnError(false);
+
+      expect(triggerHandler.savedInstallments).toBeNull();
+    });
+
+    test('Given preserveSelection is true (recoverable error), When resetSuperTokenOnError() is called, Then should store last payment method and installments before reset', () => {
+      document.body.innerHTML = `
+        <input id="mp_checkout_type" value="super_token" />
+        <input id="cardInstallments" value="3" />
+      `;
+      const lastMethod = { id: 'visa', token: 'TOKEN123', card: { card_number: { last_four_digits: '1234' } } };
+      mockPaymentMethods.getLastPaymentMethodChoosen.mockReturnValue(lastMethod);
+
+      triggerHandler.resetSuperTokenOnError(true);
+
+      expect(mockPaymentMethods.storeSelectedPreloadedPaymentMethod).toHaveBeenCalledWith(lastMethod);
+      expect(triggerHandler.savedInstallments).toBe('3');
+    });
+
+    test('Given mp_checkout_type is super_token and payment method list exists, When resetSuperTokenOnError() is called, Then should scroll to payment method list', () => {
+      const scrollIntoViewMock = jest.fn();
+      document.body.innerHTML = `
+        <input id="mp_checkout_type" value="super_token" />
+        <div class="mp-super-token-payment-methods-list"></div>
+      `;
+      document.querySelector('.mp-super-token-payment-methods-list').scrollIntoView = scrollIntoViewMock;
+
+      triggerHandler.resetSuperTokenOnError();
+
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+    });
+  });
+
+  describe('restorePreloadedPaymentMethod()', () => {
+    let localHandler;
+    let LocalTriggerHandler;
+
+    beforeAll(() => {
+      LocalTriggerHandler = loadFile(superTokenTriggerHandlerPath, 'MPSuperTokenTriggerHandler', {
+        ...global,
+        Event,
+      });
+    });
+
+    beforeEach(() => {
+      localHandler = new LocalTriggerHandler(
+        mockAuthenticator,
+        mockEmailListener,
+        mockPaymentMethods,
+        mockErrorHandler,
+        mockMetrics
+      );
+    });
+
+    test('Given no preloaded method and no checkout error, When restorePreloadedPaymentMethod() is called, Then should do nothing', async () => {
+      await localHandler.restorePreloadedPaymentMethod();
+
+      expect(mockPaymentMethods.selectLastPaymentMethodChoosen).not.toHaveBeenCalled();
+      expect(mockPaymentMethods.selectPreloadedPaymentMethod).not.toHaveBeenCalled();
+      expect(mockMetrics.sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given no preloaded method but checkout error exists, When restorePreloadedPaymentMethod() is called, Then should call selectLastPaymentMethodChoosen', async () => {
+      mockPaymentMethods.hasCheckoutError.mockReturnValue(true);
+
+      await localHandler.restorePreloadedPaymentMethod();
+
+      expect(mockPaymentMethods.selectLastPaymentMethodChoosen).toHaveBeenCalledTimes(1);
+      expect(mockPaymentMethods.selectPreloadedPaymentMethod).not.toHaveBeenCalled();
+    });
+
+    test('Given preloaded method but selectPreloadedPaymentMethod does not set activeMethod, When restorePreloadedPaymentMethod() is called, Then should send active_method_not_set metric and clear savedInstallments', async () => {
+      mockPaymentMethods.getSelectedPreloadedPaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.selectPreloadedPaymentMethod.mockResolvedValue();
+      localHandler.savedInstallments = '3';
+
+      await localHandler.restorePreloadedPaymentMethod();
+
+      expect(mockPaymentMethods.storeSelectedPreloadedPaymentMethod).toHaveBeenCalledWith(null);
+      expect(localHandler.savedInstallments).toBeNull();
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith('super_token_restore_active_method_not_set', 'true', 'mp_super_token_restore_error');
+      expect(mockPaymentMethods.showPaymentMethodDetails).not.toHaveBeenCalled();
+    });
+
+    test('Given preloaded method and activeMethod set but DOM element not found, When restorePreloadedPaymentMethod() is called, Then should send element_not_found metric', async () => {
+      mockPaymentMethods.getSelectedPreloadedPaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.selectPreloadedPaymentMethod.mockResolvedValue();
+      mockPaymentMethods.getActivePaymentMethod.mockReturnValue({ id: 'visa' });
+
+      await localHandler.restorePreloadedPaymentMethod();
+
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith('super_token_restore_element_not_found', 'true', 'mp_super_token_restore_error');
+      expect(mockPaymentMethods.showPaymentMethodDetails).not.toHaveBeenCalled();
+    });
+
+    test('Given preloaded method with active element but no savedInstallments, When restorePreloadedPaymentMethod() is called, Then should show payment method details without restoring installments', async () => {
+      const element = document.createElement('div');
+      mockPaymentMethods.getSelectedPreloadedPaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.selectPreloadedPaymentMethod.mockResolvedValue();
+      mockPaymentMethods.getActivePaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.getPaymentMethodElementFromDOM.mockReturnValue(element);
+
+      await localHandler.restorePreloadedPaymentMethod();
+
+      expect(mockPaymentMethods.showPaymentMethodDetails).toHaveBeenCalledWith(element);
+      expect(mockMetrics.sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given savedInstallments set but installments dropdown not in DOM, When restorePreloadedPaymentMethod() is called, Then should send dropdown_not_found metric', async () => {
+      const element = document.createElement('div');
+      mockPaymentMethods.getSelectedPreloadedPaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.selectPreloadedPaymentMethod.mockResolvedValue();
+      mockPaymentMethods.getActivePaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.getPaymentMethodElementFromDOM.mockReturnValue(element);
+      mockPaymentMethods.paymentMethodIdentifier.mockReturnValue('visa1234');
+      localHandler.savedInstallments = '3';
+
+      await localHandler.restorePreloadedPaymentMethod();
+
+      expect(mockPaymentMethods.showPaymentMethodDetails).toHaveBeenCalledWith(element);
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith('super_token_restore_installments_dropdown_not_found', 'true', 'mp_super_token_restore_error');
+    });
+
+    test('Given savedInstallments set but option value not in dropdown options, When restorePreloadedPaymentMethod() is called, Then should send option_not_found metric', async () => {
+      const element = document.createElement('div');
+      const dropdown = document.createElement('select');
+      dropdown.id = 'mp-super-token-installments-select-visa1234';
+      const option = document.createElement('option');
+      option.value = '6';
+      dropdown.appendChild(option);
+      element.appendChild(dropdown);
+      mockPaymentMethods.getSelectedPreloadedPaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.selectPreloadedPaymentMethod.mockResolvedValue();
+      mockPaymentMethods.getActivePaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.getPaymentMethodElementFromDOM.mockReturnValue(element);
+      mockPaymentMethods.paymentMethodIdentifier.mockReturnValue('visa1234');
+      localHandler.savedInstallments = '3';
+
+      await localHandler.restorePreloadedPaymentMethod();
+
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith('super_token_restore_installment_option_not_found', 'true', 'mp_super_token_restore_error');
+    });
+
+    test('Given preloaded method, element found, savedInstallments with matching option, When restorePreloadedPaymentMethod() is called, Then should restore dropdown value, sync cardInstallments and dispatch change', async () => {
+      const element = document.createElement('div');
+      const dropdown = document.createElement('select');
+      dropdown.id = 'mp-super-token-installments-select-visa1234';
+      const option = document.createElement('option');
+      option.value = '3';
+      dropdown.appendChild(option);
+      element.appendChild(dropdown);
+      document.body.innerHTML += '<input id="cardInstallments" value="" />';
+      mockPaymentMethods.getSelectedPreloadedPaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.selectPreloadedPaymentMethod.mockResolvedValue();
+      mockPaymentMethods.getActivePaymentMethod.mockReturnValue({ id: 'visa' });
+      mockPaymentMethods.getPaymentMethodElementFromDOM.mockReturnValue(element);
+      mockPaymentMethods.paymentMethodIdentifier.mockReturnValue('visa1234');
+      localHandler.savedInstallments = '3';
+      const dispatchEventSpy = jest.spyOn(dropdown, 'dispatchEvent');
+
+      await localHandler.restorePreloadedPaymentMethod();
+
+      expect(mockPaymentMethods.showPaymentMethodDetails).toHaveBeenCalledWith(element);
+      expect(dropdown.value).toBe('3');
+      expect(document.getElementById('cardInstallments').value).toBe('3');
+      expect(dispatchEventSpy).toHaveBeenCalledTimes(1);
+      expect(mockMetrics.sendMetric).not.toHaveBeenCalled();
+      expect(localHandler.savedInstallments).toBeNull();
+    });
+  });
+
+  describe('resetCustomCheckout()', () => {
+    let localHandler;
+    let capturedSendMetric;
+    let LocalTriggerHandler;
+
+    beforeAll(() => {
+      capturedSendMetric = jest.fn();
+      LocalTriggerHandler = loadFile(superTokenTriggerHandlerPath, 'MPSuperTokenTriggerHandler', {
+        ...global,
+        sendMetric: capturedSendMetric,
+      });
+    });
+
+    beforeEach(() => {
+      capturedSendMetric.mockClear();
+      delete global.window.mpCustomCheckoutHandler;
+      localHandler = new LocalTriggerHandler(
+        mockAuthenticator,
+        mockEmailListener,
+        mockPaymentMethods,
+        mockErrorHandler,
+        mockMetrics
+      );
+    });
+
+    afterEach(() => {
+      delete global.window.mpCustomCheckoutHandler;
+    });
+
+    test('Given mpCustomCheckoutHandler is absent and sendMetric is available, When resetCustomCheckout() is called, Then should send MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS metric', () => {
+      localHandler.resetCustomCheckout();
+
+      expect(capturedSendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
+        'resetCustomCheckout',
+        'mp_super_token_init_error'
+      );
+    });
+
+    test('Given mpCustomCheckoutHandler is absent and sendMetric is available, When resetCustomCheckout() is called twice, Then should send metric only once', () => {
+      localHandler.resetCustomCheckout();
+      localHandler.resetCustomCheckout();
+
+      expect(capturedSendMetric).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given init block already reported the missing handler externally, When resetCustomCheckout() is called and handler is still absent, Then should send its own metric independently (split flag regression)', () => {
+      capturedSendMetric('MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS', 'mp_super_token_init', 'mp_super_token_init_error');
+      capturedSendMetric.mockClear();
+
+      expect(localHandler.customHandlerMissingReportedOnReset).toBe(false);
+
+      localHandler.resetCustomCheckout();
+
+      expect(capturedSendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
+        'resetCustomCheckout',
+        'mp_super_token_init_error'
+      );
+      expect(localHandler.customHandlerMissingReportedOnReset).toBe(true);
+    });
+
+    test('Given mpCustomCheckoutHandler is absent and sendMetric is available, When resetCustomCheckout() is called, Then should set customHandlerMissingReportedOnReset to true', () => {
+      localHandler.resetCustomCheckout();
+
+      expect(localHandler.customHandlerMissingReportedOnReset).toBe(true);
+    });
+
+    test('Given mpCustomCheckoutHandler is absent but sendMetric is NOT available, When resetCustomCheckout() is called, Then should not set customHandlerMissingReportedOnReset', () => {
+      const NoMetricClass = loadFile(superTokenTriggerHandlerPath, 'MPSuperTokenTriggerHandler', {
+        ...global,
+      });
+      const noMetricHandler = new NoMetricClass(
+        mockAuthenticator,
+        mockEmailListener,
+        mockPaymentMethods,
+        mockErrorHandler,
+        mockMetrics
+      );
+
+      noMetricHandler.resetCustomCheckout();
+
+      expect(noMetricHandler.customHandlerMissingReportedOnReset).toBe(false);
+    });
+
+    test('Given mpCustomCheckoutHandler is present, When resetCustomCheckout() is called, Then should not send metric', () => {
+      global.window.mpCustomCheckoutHandler = { cardForm: { createLoadSpinner: jest.fn() } };
+
+      localHandler.resetCustomCheckout();
+
+      expect(capturedSendMetric).not.toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
+        expect.any(String),
+        expect.any(String)
+      );
     });
   });
 });

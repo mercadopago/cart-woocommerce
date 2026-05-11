@@ -321,6 +321,73 @@ describe('MPCardForm', () => {
     );
   });
 
+  describe('setupSecureFieldsStylesAndAddListeners()', () => {
+    const mockFields = {
+      cardNumber: { on: jest.fn() },
+      expirationDate: { on: jest.fn() },
+      securityCode: { on: jest.fn() },
+    };
+
+    describe('when MPCheckoutFieldsDispatcher is not loaded', () => {
+      let localCardForm;
+
+      beforeAll(() => {
+        const savedDispatcher = global.MPCheckoutFieldsDispatcher;
+        global.MPCheckoutFieldsDispatcher = undefined;
+        const LocalMPCardForm = loadFile(cardFormPath, 'MPCardForm', global);
+        localCardForm = new LocalMPCardForm();
+        global.MPCheckoutFieldsDispatcher = savedDispatcher;
+      });
+
+      beforeEach(() => {
+        jest.clearAllMocks();
+        localCardForm.fields = { ...mockFields };
+      });
+
+      afterEach(() => {
+        localCardForm.fields = null;
+      });
+
+      test('Given MPCheckoutFieldsDispatcher is undefined, When setupSecureFieldsStylesAndAddListeners() is called, Then should send MP_CHECKOUT_FIELDS_DISPATCHER_MISSING metric', () => {
+        localCardForm.setupSecureFieldsStylesAndAddListeners();
+
+        expect(global.sendMetric).toHaveBeenCalledWith(
+          'MP_CHECKOUT_FIELDS_DISPATCHER_MISSING',
+          'setupSecureFieldsStylesAndAddListeners',
+          'mp_checkout_init_error'
+        );
+      });
+
+      test('Given fields is null, When setupSecureFieldsStylesAndAddListeners() is called, Then should return early and not send metric', () => {
+        localCardForm.fields = null;
+
+        localCardForm.setupSecureFieldsStylesAndAddListeners();
+
+        expect(global.sendMetric).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('when MPCheckoutFieldsDispatcher is loaded', () => {
+      beforeEach(() => {
+        cardForm.fields = { ...mockFields };
+      });
+
+      afterEach(() => {
+        cardForm.fields = null;
+      });
+
+      test('Given MPCheckoutFieldsDispatcher is defined, When setupSecureFieldsStylesAndAddListeners() is called, Then should not send MP_CHECKOUT_FIELDS_DISPATCHER_MISSING metric', () => {
+        cardForm.setupSecureFieldsStylesAndAddListeners();
+
+        expect(global.sendMetric).not.toHaveBeenCalledWith(
+          'MP_CHECKOUT_FIELDS_DISPATCHER_MISSING',
+          'setupSecureFieldsStylesAndAddListeners',
+          'mp_checkout_init_error'
+        );
+      });
+    });
+  });
+
   describe('initCardForm()', () => {
     beforeEach(() => {
       document.body.innerHTML = `

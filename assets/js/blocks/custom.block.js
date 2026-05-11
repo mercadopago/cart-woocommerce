@@ -97,6 +97,19 @@ const Content = (props) => {
 
             if (!isSuperTokenValid) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID);
 
+            if (!superTokenPaymentMethods.validateInstallmentSelection()) {
+              if (!window.mpCustomCheckoutHandler) {
+                superTokenMetrics.sendMetric(
+                  'mp_custom_checkout_handler_missing',
+                  'installment_validation_failed',
+                  'mpCustomCheckoutHandler was undefined during installment validation cleanup'
+                );
+              } else {
+                window.mpCustomCheckoutHandler.cardForm?.removeLoadSpinner();
+              }
+              return { type: emitResponse.responseTypes.ERROR };
+            }
+
             await superTokenPaymentMethods.updateSecurityCode();
 
             await superTokenAuthenticator.authorizePayment(activeMethod.token);
@@ -106,11 +119,18 @@ const Content = (props) => {
             window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
 
             if (exception?.message === MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID) {
-              window.mpSuperTokenErrorHandler.handleError(exception);
+              if (window.mpSuperTokenErrorHandler) {
+                window.mpSuperTokenErrorHandler.handleError(exception);
+              }
               return { type: emitResponse.responseTypes.ERROR };
             }
 
-            window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError();
+            const recoverableErrors = [
+              MPSuperTokenErrorCodes.UPDATE_SECURITY_CODE_ERROR,
+              MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_ERROR,
+              MPSuperTokenErrorCodes.AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED,
+            ];
+            window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError(recoverableErrors.includes(exception?.message));
             window.mpSuperTokenTriggerHandler?.setLastException(exception);
             window.mpSuperTokenAuthenticator?.setSuperTokenValidation(false);
 
@@ -123,7 +143,11 @@ const Content = (props) => {
           break;
         default:
           try {
-            const cardToken = await window.mpCustomCheckoutHandler.cardForm.form.createCardToken();
+            const callFn = window.callSdkWithMetrics || ((fn) => fn());
+            const cardToken = await callFn(
+              () => window.mpCustomCheckoutHandler.cardForm.form.createCardToken(),
+              'createCardToken'
+            );
             document.querySelector('#cardTokenId').value = cardToken.token;
           } catch (error) {
             console.warn('token creation error after submit: ', error);
@@ -231,7 +255,7 @@ const Content = (props) => {
         MPCheckoutErrorDispatcher.dispatchEventWhenBlocksCheckoutErrorOccurred(checkoutResponse);
       }
 
-      window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError();
+      window.mpSuperTokenTriggerHandler?.resetSuperTokenOnError(true);
 
       const processingResponse = checkoutResponse.processingResponse;
       sendMetric("MP_CUSTOM_BLOCKS_ERROR", processingResponse.paymentStatus, targetName);

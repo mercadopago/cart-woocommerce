@@ -1,5 +1,38 @@
 <?php
 
+// WHY THIS NAMESPACE BLOCK EXISTS
+//
+// Scripts.php registers closures via add_action('wp_enqueue_scripts', $closure, 20).
+// To test whether the closure body correctly excludes cart/view-order pages, we need
+// to invoke that closure directly in PHPUnit.
+//
+// The problem: WP_Mock controls add_action globally via its hook-tracking system
+// (WP_Mock/API/function-mocks.php). Calling WP_Mock::userFunction('add_action') would
+// conflict with that system and throw "Unexpected use of add_action" in strict mode.
+//
+// The solution: PHP resolves unqualified function calls by looking in the *current
+// namespace first*, then falling back to the global namespace. By defining add_action
+// here in MercadoPago\Woocommerce\Hooks (the same namespace as Scripts.php), PHP picks
+// up this version instead of the global WP_Mock stub whenever Scripts.php calls
+// add_action(). This override delegates to \WP_Mock::onActionAdded() to keep all
+// existing hook-tracking expectations working, and additionally stores the closure in
+// $GLOBALS when the test sets __test_capture_wp_enqueue_scripts = true.
+//
+// DO NOT remove this block or move it below the test namespace declaration — it must
+// be declared before the test class for PHP to resolve it for Scripts.php calls.
+namespace MercadoPago\Woocommerce\Hooks;
+
+if (!function_exists('MercadoPago\\Woocommerce\\Hooks\\add_action')) {
+    function add_action(string $tag, callable $callback, int $priority = 10, int $acceptedArgs = 1): bool
+    {
+        if (isset($GLOBALS['__test_capture_wp_enqueue_scripts']) && $tag === 'wp_enqueue_scripts' && $priority === 20) {
+            $GLOBALS['__test_captured_wp_enqueue_closure'] = $callback;
+        }
+        \WP_Mock::onActionAdded($tag)->react($callback, $priority, $acceptedArgs);
+        return true;
+    }
+}
+
 namespace MercadoPago\Woocommerce\Tests\Hooks;
 
 use Mockery;
@@ -165,8 +198,10 @@ class ScriptsTest extends TestCase
                 "prioritizeMelidataStoreScriptEarly: melidata enqueued at phase %d (%s)\n" .
                 "registerMelidataStoreScript:        melidata enqueued at phase %d (%s)\n" .
                 "Expected the fast path to produce a lower (earlier) lifecycle phase number.",
-                $melidataPhase_B, self::PHASE_LABELS[$melidataPhase_B],
-                $melidataPhase_A, self::PHASE_LABELS[$melidataPhase_A]
+                $melidataPhase_B,
+                self::PHASE_LABELS[$melidataPhase_B],
+                $melidataPhase_A,
+                self::PHASE_LABELS[$melidataPhase_A]
             )
         );
     }
@@ -214,6 +249,85 @@ class ScriptsTest extends TestCase
         $tracked = $reflection->getValue($this->scriptHealthMonitor);
 
         $this->assertContains('wc_mercadopago_supertoken', $tracked);
+    }
+
+    /**
+     * Proves that the closure registered by prioritizeMelidataStoreScriptEarly does NOT call
+     * wp_enqueue_script when is_cart() returns true.
+     *
+     * Guards the fix from PSW-3862: isPaymentsRelatedPage() includes is_cart(), so without
+     * the explicit !is_cart() guard, melidata-client would be enqueued on the cart page.
+     */
+    public function testPrioritizeMelidataStoreScriptEarlyDoesNotEnqueueOnCartPage(): void
+    {
+        $GLOBALS['__test_capture_wp_enqueue_scripts'] = true;
+
+        WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
+            ->with(Mockery::type('callable'), 20, 1)
+            ->perform(function () {
+            });
+
+        $this->scripts->prioritizeMelidataStoreScriptEarly('/checkout');
+
+        $capturedClosure = $GLOBALS['__test_captured_wp_enqueue_closure'] ?? null;
+        unset($GLOBALS['__test_capture_wp_enqueue_scripts'], $GLOBALS['__test_captured_wp_enqueue_closure']);
+
+        $this->assertIsCallable($capturedClosure, 'prioritizeMelidataStoreScriptEarly must register a wp_enqueue_scripts closure at priority 20');
+
+        // isPaymentsRelatedPage() = true (because is_cart() = true), but !is_cart() = false → condition short-circuits to false
+        WP_Mock::userFunction('is_view_order_page', ['return' => false]);
+        WP_Mock::userFunction('is_cart', ['return' => true]);
+
+        $enqueueCalled = false;
+        WP_Mock::userFunction('wp_enqueue_script', [
+            'return' => function () use (&$enqueueCalled) {
+                $enqueueCalled = true;
+            },
+        ]);
+
+        ($capturedClosure)();
+
+        $this->assertFalse($enqueueCalled, 'wp_enqueue_script must not be called when is_cart() returns true');
+    }
+
+    /**
+     * Proves that the closure registered by prioritizeMelidataStoreScriptEarly does NOT call
+     * wp_enqueue_script when is_view_order_page() returns true.
+     *
+     * Guards the fix from PSW-3862: isPaymentsRelatedPage() includes is_view_order_page(), so
+     * without the explicit !is_view_order_page() guard, melidata-client would be enqueued on
+     * the order details page.
+     */
+    public function testPrioritizeMelidataStoreScriptEarlyDoesNotEnqueueOnViewOrderPage(): void
+    {
+        $GLOBALS['__test_capture_wp_enqueue_scripts'] = true;
+
+        WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
+            ->with(Mockery::type('callable'), 20, 1)
+            ->perform(function () {
+            });
+
+        $this->scripts->prioritizeMelidataStoreScriptEarly('/checkout');
+
+        $capturedClosure = $GLOBALS['__test_captured_wp_enqueue_closure'] ?? null;
+        unset($GLOBALS['__test_capture_wp_enqueue_scripts'], $GLOBALS['__test_captured_wp_enqueue_closure']);
+
+        $this->assertIsCallable($capturedClosure, 'prioritizeMelidataStoreScriptEarly must register a wp_enqueue_scripts closure at priority 20');
+
+        // isPaymentsRelatedPage() = true (because is_view_order_page() = true), but !is_view_order_page() = false → condition fails
+        WP_Mock::userFunction('is_view_order_page', ['return' => true]);
+        WP_Mock::userFunction('is_cart', ['return' => false]);
+
+        $enqueueCalled = false;
+        WP_Mock::userFunction('wp_enqueue_script', [
+            'return' => function () use (&$enqueueCalled) {
+                $enqueueCalled = true;
+            },
+        ]);
+
+        ($capturedClosure)();
+
+        $this->assertFalse($enqueueCalled, 'wp_enqueue_script must not be called when is_view_order_page() returns true');
     }
 
     /**

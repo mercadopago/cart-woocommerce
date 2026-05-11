@@ -23,7 +23,11 @@ async function mercadoPagoFormHandlerYape() {
   const yape = window.mpSdkInstance.yape(yapeOptions);
 
   try {
-    const yapeToken = await yape.create();
+    const callFn = window.callSdkWithMetrics || ((fn) => fn());
+    const yapeToken = await callFn(
+      () => yape.create(),
+      'yape.create'
+    );
     document.getElementById("yapeToken").value = yapeToken.id;
     return true;
   } catch (error) {

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.21] 2026-05-04
+### Added
+- Add frontend instrumentation for payment SDK calls to improve error observability
+- Add structured error logging and monitoring for payment API calls
+
+### Fixed
+- Fix duplicate metric `error_on_submit_super_token` fired when submitting Consumer Credits without an installment selected — separated installment validation (`validateInstallmentSelection`) from payment method validity check (`isSelectedPaymentMethodValid`)
+- Fix `MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS` metric being suppressed at `resetCustomCheckout` call site when init already reported missing handler — split into scoped `customHandlerMissingReportedOnReset` flag
+- Strip query parameters from URI before reporting `mp_api_error` metric to prevent high-cardinality metric tags
+- Fix checkout metrics not tracking correctly on thank-you and order-pay pages in Full Site Editing themes
+- Fix TypeError when processing fast payment installment selection in certain checkout layouts where the installments field is absent from the DOM
+- Fix fast payment initialization failing when a non-custom payment method is selected by default
+- Fix fast payment CSS conflict detection not triggering in some configurations
+- Fix payment method icon styling interfering with other payment gateways in Blocks checkout
+- Preserve selected payment method and installments after a failed payment attempt
+
 ## [8.7.20] 2026-04-28
 ### Fixed
 - Fix fatal error on first admin page load after install or update caused by missing booted() guard in BasicGateway, PixGateway, TicketGateway, CreditsGateway, PseGateway and YapeGateway constructors
@@ -17,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Prevent fast payment flow from initializing when the email field contains invalid data (partial text, address, or phone number), reducing authentication errors during checkout
-
 ## [8.7.19] 2026-04-22
 ### Fixed
 - Fallback to payment API when KVS notification is missing on order sync — orders stuck in pending after a KVS miss are now correctly processed via direct payment API call
