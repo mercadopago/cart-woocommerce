@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Tests\Blocks;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Blocks\AbstractBlock;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -47,6 +48,14 @@ class AbstractBlockTest extends TestCase
     }
 
     /**
+     * @after
+     */
+    public function blockTearDown(): void
+    {
+        Mockery::close();
+    }
+
+    /**
      * @dataProvider registerMelidataStoreScriptProvider
      */
     public function testRegisterMelidataStoreScriptCall(
@@ -84,8 +93,7 @@ class AbstractBlockTest extends TestCase
             $hooksMock->scripts->registerMelidataStoreScript('/checkout');
         }
 
-        // The test passes if Mockery expectations are met
-        $this->assertTrue(true, 'Mockery expectations validated the registerMelidataStoreScript call behavior');
+        $this->expectNotToPerformAssertions();
     }
 
     /**
@@ -137,5 +145,89 @@ class AbstractBlockTest extends TestCase
         $this->assertEquals('Test Description', $result['description']);
         $this->assertEquals([], $result['supports']);
         $this->assertEquals('test_value', $result['params']['test_param']);
+    }
+
+    public function testIsActiveReturnsFalseWhenGatewayIsNotSet(): void
+    {
+        $this->block->gateway = null;
+
+        $this->assertFalse($this->block->is_active());
+    }
+
+    public function testIsActiveReturnsFalseWhenStaticIsAvailableReturnsFalse(): void
+    {
+        $gatewayMock = Mockery::mock(MercadoPagoGatewayInterface::class);
+        $gatewayMock->shouldReceive('isAvailable')->once()->andReturn(false);
+        $gatewayMock->shouldNotReceive('isMissingCredentials');
+        $this->block->gateway = $gatewayMock;
+
+        $this->assertFalse($this->block->is_active());
+    }
+
+    public function testIsActiveReturnsFalseWhenCredentialsAreMissing(): void
+    {
+        $gatewayMock = Mockery::mock(MercadoPagoGatewayInterface::class);
+        $gatewayMock->shouldReceive('isAvailable')->once()->andReturn(true);
+        $gatewayMock->shouldReceive('isMissingCredentials')->once()->andReturn(true);
+        $this->block->gateway = $gatewayMock;
+
+        $this->assertFalse($this->block->is_active());
+    }
+
+    public function testIsActiveReturnsTrueWhenGatewayIsAvailableAndHasCredentials(): void
+    {
+        $gatewayMock = Mockery::mock(MercadoPagoGatewayInterface::class);
+        $gatewayMock->shouldReceive('isAvailable')->once()->andReturn(true);
+        $gatewayMock->shouldReceive('isMissingCredentials')->once()->andReturn(false);
+        $this->block->gateway = $gatewayMock;
+
+        $this->assertTrue($this->block->is_active());
+    }
+
+    public function testUpdateCartSetsSessionWithoutCallingCalculateTotal(): void
+    {
+        $this->mercadopago->helpers->session
+            ->shouldReceive('setSession')
+            ->with(AbstractBlockStub::ACTION_SESSION_KEY, 'add')
+            ->once();
+        $this->mercadopago->helpers->session
+            ->shouldReceive('setSession')
+            ->with(AbstractBlockStub::GATEWAY_SESSION_KEY, 'woo-mercado-pago-basic')
+            ->once();
+        $this->mercadopago->helpers->cart
+            ->shouldNotReceive('calculateTotal');
+
+        $this->block->updateCartToRegisterDiscountAndCommission([
+            'action'  => 'add',
+            'gateway' => 'woo-mercado-pago-basic',
+        ]);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testUpdateCartReturnsEarlyWhenActionIsEmpty(): void
+    {
+        $this->mercadopago->helpers->session->shouldNotReceive('setSession');
+        $this->mercadopago->helpers->cart->shouldNotReceive('calculateTotal');
+
+        $this->block->updateCartToRegisterDiscountAndCommission([
+            'action'  => '',
+            'gateway' => 'woo-mercado-pago-basic',
+        ]);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testUpdateCartReturnsEarlyWhenGatewayIsEmpty(): void
+    {
+        $this->mercadopago->helpers->session->shouldNotReceive('setSession');
+        $this->mercadopago->helpers->cart->shouldNotReceive('calculateTotal');
+
+        $this->block->updateCartToRegisterDiscountAndCommission([
+            'action'  => 'add',
+            'gateway' => '',
+        ]);
+
+        $this->expectNotToPerformAssertions();
     }
 }

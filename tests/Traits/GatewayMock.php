@@ -27,6 +27,14 @@ trait GatewayMock
         MercadoPagoMock::mockTranslations($this->gateway, ['storeTranslations', 'adminTranslations']);
         $this->setNotAccessibleProperty($this->gateway, 'links', new ArrayMock(fn() => random()->url()));
 
+        // Valid credentials by default; override in tests that exercise the missing-credentials path.
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->byDefault()->andReturn('APP_USR-public-key');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsAccessToken')->byDefault()->andReturn('APP_USR-access-token');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')->byDefault()->andReturn('test-cust-id');
+
         // Initialize datadog property to avoid uninitialized property errors
         $datadogMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Metrics\Datadog::class);
         $datadogMock->shouldReceive('sendEvent')->byDefault();

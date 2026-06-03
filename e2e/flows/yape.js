@@ -1,3 +1,5 @@
+import { placeOrder } from "./place_order.helper";
+
 export default async function (page, { otp = '123456', phoneNumber }) {
   // Select Yape — supports both Classic and Blocks
   const classicRadio = page.locator('#payment_method_woo-mercado-pago-yape');
@@ -21,13 +23,6 @@ export default async function (page, { otp = '123456', phoneNumber }) {
 
   await page.waitForTimeout(2000);
 
-  // Click place order — supports both Classic and Blocks
-  const classicPlaceOrder = page.locator('#place_order');
-  const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
-
-  if (await classicPlaceOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await classicPlaceOrder.click();
-  } else {
-    await blocksPlaceOrder.click();
-  }
+  // Click place order (Classic single-click / Blocks two-phase submit)
+  await placeOrder(page);
 }

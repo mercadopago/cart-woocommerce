@@ -1,5 +1,6 @@
 import { fillStepsToCheckout } from "./fill_steps_to_checkout";
 import { expect } from "@playwright/test";
+import { placeOrder } from "./place_order.helper";
 
 const CORS_MESSAGE = [
   '[CORS] Falha na tokenizacao de cartao no ambiente Sandbox.',
@@ -102,8 +103,20 @@ async function makePayment(page, url, user, card, form) {
 
   await page.locator('iframe[name="cardNumber"]').waitFor({ state: 'visible', timeout: 30000 });
   const cardNumberInput = page.frameLocator('iframe[name="cardNumber"]').locator('[name="cardNumber"]');
-  await cardNumberInput.click({ timeout: 15000 });
-  await cardNumberInput.pressSequentially(card.number.replace(/\s/g, ''), { delay: 30 });
+  const cardDigits = card.number.replace(/\D/g, '');
+  // pressSequentially intermittently drops keystrokes in the SDK's secure-field iframe
+  // (worse in Blocks / for 15-digit amex), producing an incomplete number → tokenization
+  // fails with "this card must have exactly N digits" → the test then burns the full
+  // timeout retrying. Type and VERIFY the digit count, re-typing until complete.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await cardNumberInput.click({ timeout: 15000 });
+    await cardNumberInput.fill('');
+    await cardNumberInput.pressSequentially(cardDigits, { delay: 50 });
+    const entered = (await cardNumberInput.inputValue().catch(() => '')).replace(/\D/g, '');
+    if (entered.length === cardDigits.length) {
+      break;
+    }
+  }
 
   const securityCodeInput = page.frameLocator('iframe[name="securityCode"]').locator('[name="securityCode"]');
   await securityCodeInput.click();
@@ -115,29 +128,42 @@ async function makePayment(page, url, user, card, form) {
 
   await page.waitForTimeout(3000);
 
-  const installments = page.locator('#mp-checkout-custom-installments-card');
+  // Fill the extra card fields, each gated on ITS OWN visibility. The MP test result
+  // is driven by the cardholder NAME (APRO/OTHE/CONT), so it must always be filled
+  // when the field renders — even for debit/amex cards, which don't show an
+  // installments dropdown. A previous version gated the name on installments
+  // visibility, which skipped the name for debit/amex (no installments) → MP rejected
+  // the payment ("recusado devido a um erro"). The identification select and the
+  // installments dropdown are optional (some countries hide identification, e.g. MLA;
+  // debit/single-installment cards hide installments), so we only touch each when it
+  // is actually visible — avoiding both the missed-name rejection and hangs on hidden
+  // selects. We wait (bounded) for the cardholder field as the "card form rendered"
+  // anchor; if it never renders we skip (prior behavior for checkouts without it).
+  const cardholderName = page.locator('#form-checkout__cardholderName');
+  const cardFormRendered = await cardholderName
+    .waitFor({ state: 'visible', timeout: 12000 })
+    .then(() => true)
+    .catch(() => false);
 
-  if (await installments.isVisible()) {
-    await page.locator('#form-checkout__identificationType').selectOption(form.docType);
-    await page.waitForTimeout(200);
-    await page.locator('[name="identificationNumber"]').fill(form.docNumber);
-    await page.locator('#form-checkout__cardholderName').fill(form.name);
+  if (cardFormRendered) {
+    await cardholderName.fill(form.name);
 
-    if (form.name !== '') {
+    const identificationType = page.locator('#form-checkout__identificationType');
+    if (await identificationType.isVisible().catch(() => false)) {
+      await identificationType.selectOption(form.docType);
+      await page.waitForTimeout(200);
+      await page.locator('[name="identificationNumber"]').fill(form.docNumber);
+    }
+
+    const installments = page.locator('#mp-checkout-custom-installments-card');
+    if (form.name !== '' && await installments.isVisible().catch(() => false)) {
       await page.locator('#form-checkout__installments').selectOption({ index: 1 });
     }
     await page.waitForLoadState();
   }
 
-  // Click place order — supports both Classic and Blocks
-  const classicPlaceOrder = page.locator('#place_order');
-  const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
-
-  if (await classicPlaceOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await classicPlaceOrder.click();
-  } else {
-    await blocksPlaceOrder.click();
-  }
+  // Click place order (Classic single-click / Blocks two-phase submit)
+  await placeOrder(page);
 
   await page.waitForLoadState();
 }

@@ -696,6 +696,70 @@ describe('MPSuperTokenMetrics', () => {
     });
   });
 
+  describe('updateSecurityCodeGetCardIdSuccess()', () => {
+    beforeEach(() => {
+      jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+    });
+
+    test('When called, Then should call sendMetric with update_security_code_get_card_id_success', () => {
+      metrics.updateSecurityCodeGetCardIdSuccess();
+
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'update_security_code_get_card_id_success',
+        'true',
+        ''
+      );
+    });
+  });
+
+  describe('updateSecurityCodeCardTokenCreated()', () => {
+    beforeEach(() => {
+      jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+    });
+
+    test('When called, Then should call sendMetric with update_security_code_card_token_created', () => {
+      metrics.updateSecurityCodeCardTokenCreated();
+
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'update_security_code_card_token_created',
+        'true',
+        ''
+      );
+    });
+  });
+
+  describe('updateSecurityCodePseudotokenUpdated()', () => {
+    beforeEach(() => {
+      jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+    });
+
+    test('When called, Then should call sendMetric with update_security_code_pseudotoken_updated', () => {
+      metrics.updateSecurityCodePseudotokenUpdated();
+
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'update_security_code_pseudotoken_updated',
+        'true',
+        ''
+      );
+    });
+  });
+
+  describe('updateSecurityCodeSuccess()', () => {
+    beforeEach(() => {
+      jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+    });
+
+    test('When called, Then should call sendMetric with update_security_code_success', () => {
+      metrics.updateSecurityCodeSuccess();
+
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'update_security_code_success',
+        'true',
+        ''
+      );
+    });
+  });
+
   describe('errorOnSubmit()', () => {
     beforeEach(() => {
       jest.spyOn(metrics, 'dispatchMelidataErrorEvent').mockImplementation(() => {});
@@ -948,5 +1012,222 @@ describe('MPSuperTokenMetrics', () => {
         metrics.sendMetric('test_metric', 'value', 'message');
       }).not.toThrow();
     });
+  });
+});
+
+// =============================================================================
+// MeliData Loading Validation (PSW-4050)
+// =============================================================================
+//
+// These tests exercise the new waitForMelidata_() helper and the 5s timeout race
+// in dispatchMelidataErrorEvent. The setup uses a richer vm context than the main
+// describe block above because waitForMelidata_ accesses window.addEventListener,
+// window.melidata, window.melidataReady, and document.readyState — none of which
+// the original test harness provides.
+// =============================================================================
+
+describe('MPSuperTokenMetrics.waitForMelidata_() and timeout race (PSW-4050)', () => {
+  let metrics;
+  let MPSuperTokenMetricsClass;
+  let testWindow;
+  let testDocument;
+  let dispatchedEvents;
+  let fetchMock;
+  let loadListeners;
+
+  beforeEach(() => {
+    dispatchedEvents = [];
+    loadListeners = [];
+    fetchMock = jest.fn(() => ({ catch: () => {} }));
+
+    testWindow = {
+      melidata: undefined,
+      melidataReady: undefined,
+      location: { href: 'https://example.com/checkout' },
+      addEventListener: jest.fn((eventName, cb, opts) => {
+        if (eventName === 'load') {
+          loadListeners.push({ cb, opts });
+        }
+      }),
+    };
+
+    testDocument = {
+      readyState: 'loading',
+      dispatchEvent: jest.fn((event) => {
+        dispatchedEvents.push(event);
+        return true;
+      }),
+    };
+
+    const context = {
+      window: testWindow,
+      document: testDocument,
+      console,
+      fetch: fetchMock,
+      localStorage: mockLocalStorage,
+      Promise,
+      // Dynamic dispatch so jest.useFakeTimers() (which swaps the host's setTimeout)
+      // is visible to code running inside the vm sandbox.
+      setTimeout: (cb, ms) => global.setTimeout(cb, ms),
+      clearTimeout: (id) => global.clearTimeout(id),
+      CustomEvent: function CustomEvent(name, options) {
+        return { type: name, detail: options?.detail };
+      },
+      wc_mercadopago_supertoken_bundle_params: {
+        plugin_version: '1.0.0',
+        platform_version: '6.0.0',
+        site_id: 'MLA',
+        cust_id: 'test-cust-id',
+        location: 'https://example.com',
+      },
+    };
+
+    const fileContent = fs.readFileSync(superTokenMetricsPath, 'utf8');
+    const script = new vm.Script(`${fileContent}\nMPSuperTokenMetrics;`);
+    MPSuperTokenMetricsClass = script.runInNewContext(context);
+
+    metrics = new MPSuperTokenMetricsClass({ getSDKInstanceId: () => 'test-id' });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch 1: window.melidata already loaded
+  // ---------------------------------------------------------------------------
+  test('TC-STM-WFM-01: resolves synchronously when window.melidata is set', async () => {
+    testWindow.melidata = { track: jest.fn() };
+
+    await expect(metrics.waitForMelidata_()).resolves.toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch 2: window.melidataReady is a thenable Promise
+  // ---------------------------------------------------------------------------
+  test('TC-STM-WFM-02: chains onto window.melidataReady when it is a Promise', async () => {
+    testWindow.melidataReady = Promise.resolve();
+
+    await expect(metrics.waitForMelidata_()).resolves.toBeUndefined();
+  });
+
+  test('TC-STM-WFM-02b: a rejected melidataReady is absorbed by .catch(resolve)', async () => {
+    testWindow.melidataReady = Promise.reject(new Error('cdn fail'));
+
+    await expect(metrics.waitForMelidata_()).resolves.toBeInstanceOf(Error);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch 3: melidataReady is truthy but not thenable (third-party shim)
+  // ---------------------------------------------------------------------------
+  test('TC-STM-WFM-03: resolves when melidataReady is truthy non-thenable', async () => {
+    testWindow.melidataReady = true;
+
+    await expect(metrics.waitForMelidata_()).resolves.toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch 4: document.readyState === 'complete'
+  // ---------------------------------------------------------------------------
+  test('TC-STM-WFM-04: resolves immediately when readyState is complete', async () => {
+    testDocument.readyState = 'complete';
+
+    await expect(metrics.waitForMelidata_()).resolves.toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch 5: load-event fallback
+  // ---------------------------------------------------------------------------
+  test('TC-STM-WFM-05: subscribes to window load event and resolves when fired', async () => {
+    testDocument.readyState = 'loading';
+
+    const promise = metrics.waitForMelidata_();
+
+    expect(testWindow.addEventListener).toHaveBeenCalledWith('load', expect.any(Function), { once: true });
+    // Simulate window 'load' firing
+    loadListeners.forEach(({ cb }) => cb());
+
+    await expect(promise).resolves.toBeUndefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  // dispatchMelidataErrorEvent: happy path (microtask dispatch)
+  // ---------------------------------------------------------------------------
+  test('TC-STM-DME-01: dispatches via microtask when window.melidata is present', async () => {
+    testWindow.melidata = { track: jest.fn() };
+
+    metrics.dispatchMelidataErrorEvent('card declined', 'post_submit');
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(testDocument.dispatchEvent).toHaveBeenCalledTimes(1);
+    const evt = dispatchedEvents[0];
+    expect(evt.type).toBe('mp_checkout_error');
+    expect(evt.detail.message).toBe('card declined');
+    expect(evt.detail.errorOrigin).toBe('post_submit_mercado_pago');
+  });
+
+  // ---------------------------------------------------------------------------
+  // dispatchMelidataErrorEvent: timeout path — sendMetric AND dispatch
+  // ---------------------------------------------------------------------------
+  test('TC-STM-DME-02: after 5000ms timeout, sendMetric is called with mp_melidata_load_timeout and dispatch still occurs', async () => {
+    jest.useFakeTimers();
+    testDocument.readyState = 'loading'; // no readiness signal, no load event
+
+    const sendMetricSpy = jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+
+    metrics.dispatchMelidataErrorEvent('timeout case', 'post_submit');
+
+    // Advance past the 5s timeout
+    jest.advanceTimersByTime(5000);
+    // Drain microtasks so Promise.race().then(dispatch) runs
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(sendMetricSpy).toHaveBeenCalledTimes(1);
+    expect(sendMetricSpy).toHaveBeenCalledWith('mp_melidata_load_timeout', 'true', 'timeout case');
+
+    // Dispatch still happens (best-effort)
+    expect(testDocument.dispatchEvent).toHaveBeenCalledTimes(1);
+    expect(dispatchedEvents[0].type).toBe('mp_checkout_error');
+    expect(dispatchedEvents[0].detail.message).toBe('timeout case');
+  });
+
+  // ---------------------------------------------------------------------------
+  // TC-STM-DME-02b: timeout is cancelled when melidata loads before 5s — no false-positive metric
+  // ---------------------------------------------------------------------------
+  test('TC-STM-DME-02b: sendMetric is NOT called when melidata loads before the timeout', async () => {
+    jest.useFakeTimers();
+    testWindow.melidata = { track: jest.fn() };
+
+    const sendMetricSpy = jest.spyOn(metrics, 'sendMetric').mockImplementation(() => {});
+
+    metrics.dispatchMelidataErrorEvent('fast case', 'post_submit');
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Advance past the timeout window — metric must NOT fire
+    jest.advanceTimersByTime(5000);
+
+    expect(sendMetricSpy).not.toHaveBeenCalled();
+    expect(testDocument.dispatchEvent).toHaveBeenCalledTimes(1);
+  });
+
+  // ---------------------------------------------------------------------------
+  // dispatchMelidataErrorEvent: cleanMessage strips '[mercado pago]:' prefix
+  // ---------------------------------------------------------------------------
+  test('TC-STM-DME-03: cleanMessage logic still strips [mercado pago]: prefix before dispatch', async () => {
+    testWindow.melidata = {}; // ready
+
+    metrics.dispatchMelidataErrorEvent('[mercado pago]: card declined', 'post_submit');
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(dispatchedEvents[0].detail.message).toBe('card declined');
   });
 });

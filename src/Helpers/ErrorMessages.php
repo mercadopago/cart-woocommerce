@@ -187,6 +187,7 @@ class ErrorMessages
     {
         return [
             'cho_form_error' => $this->storeTranslations->commonMessages['cho_form_error'],
+            'missing_credentials_at_payment' => $this->storeTranslations->commonMessages['missing_credentials_at_payment'],
         ];
     }
 

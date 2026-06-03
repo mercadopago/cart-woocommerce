@@ -55,4 +55,11 @@ interface MercadoPagoGatewayInterface
      * @return bool
      */
     public static function isAvailable(): bool;
+
+    /**
+     * Whether the seller credentials required to operate this gateway are missing.
+     *
+     * @return bool
+     */
+    public function isMissingCredentials(): bool;
 }

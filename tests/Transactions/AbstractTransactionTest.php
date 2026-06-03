@@ -461,6 +461,10 @@ class AbstractTransactionTest extends TestCase
      */
     public function testSendApiErrorMetricDispatchesToDatadogWithContext(bool $isTestMode, string $expectedEnvironment): void
     {
+        // No flow_id or checkout_type resolved on the transaction metadata → both degrade to null.
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => null, 'checkout_type' => null];
+
         $apiRoute  = '/checkout/preferences';
         $exception = new Exception('API failure', 400);
         $siteId    = 'MLB';
@@ -481,15 +485,208 @@ class AbstractTransactionTest extends TestCase
             ->getMock()
             ->expects()
             ->sendEvent('mp_api_error', '400', 'API failure', null, [
-                'team'        => 'big',
-                'api_route'   => $apiRoute,
-                'site_id'     => $siteId,
-                'environment' => $expectedEnvironment,
-                'cust_id'     => $custId,
+                'team'            => 'big',
+                'api_route'       => $apiRoute,
+                'site_id'         => $siteId,
+                'environment'     => $expectedEnvironment,
+                'cust_id'         => $custId,
+                'sdk_instance_id' => null,
             ]);
 
         $method = new ReflectionMethod(AbstractTransaction::class, 'sendApiErrorMetric');
         $method->setAccessible(true);
         $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    /**
+     * A populated flow_id and checkout_type in transaction metadata must be forwarded to Datadog
+     * as sdk_instance_id and payment_method respectively. Classic and Blocks both land in metadata
+     * via getInternalMetadata() — the resolution difference is covered by
+     * testGetCheckoutSessionDataMergesSessionAndPostForBothCheckoutModes.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     * @dataProvider apiErrorMetadataProvider
+     */
+    public function testSendApiErrorMetricForwardsMetadataFieldsToDatadog(string $apiRoute, int $statusCode, string $checkoutType): void
+    {
+        $flowId = random()->uuid();
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => $checkoutType];
+
+        $exception = new Exception('API failure', $statusCode);
+        $siteId    = 'MLB';
+        $custId    = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_api_error', (string) $statusCode, 'API failure', $checkoutType, [
+                'team'            => 'big',
+                'api_route'       => $apiRoute,
+                'site_id'         => $siteId,
+                'environment'     => 'prod',
+                'cust_id'         => $custId,
+                'sdk_instance_id' => $flowId,
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendApiErrorMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    public function apiErrorMetadataProvider(): array
+    {
+        return [
+            'classic checkout route' => ['/checkout/preferences', 500, 'credit_card'],
+            'blocks checkout route'  => ['/v1/asgard/payments',   503, 'super_token'],
+        ];
+    }
+
+    /**
+     * Defensive: when the transaction metadata has no flow_id or checkout_type key, both degrade
+     * to null without error.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendApiErrorMetricSendsNullSdkInstanceIdWhenMetadataHasNoFlowId(): void
+    {
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = [];
+
+        $apiRoute  = '/checkout/preferences';
+        $exception = new Exception('API failure', 422);
+        $siteId    = 'MLB';
+        $custId    = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_api_error', '422', 'API failure', null, [
+                'team'            => 'big',
+                'api_route'       => $apiRoute,
+                'site_id'         => $siteId,
+                'environment'     => 'prod',
+                'cust_id'         => $custId,
+                'sdk_instance_id' => null,
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendApiErrorMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    /**
+     * Reachable edge: a store can submit an empty _mp_flow_id, which getInternalMetadata stores
+     * verbatim ('' is not null, so the ?? null fallback does not fire). resolveMetadataField must
+     * coerce the empty string to null so the metric carries no noise value.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendApiErrorMetricCoercesEmptyFlowIdToNull(): void
+    {
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => '', 'checkout_type' => ''];
+
+        $apiRoute  = '/checkout/preferences';
+        $exception = new Exception('API failure', 400);
+        $siteId    = 'MLB';
+        $custId    = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_api_error', '400', 'API failure', null, [
+                'team'            => 'big',
+                'api_route'       => $apiRoute,
+                'site_id'         => $siteId,
+                'environment'     => 'prod',
+                'cust_id'         => $custId,
+                'sdk_instance_id' => null,
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendApiErrorMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    /**
+     * Protects the resolution that feeds metadata['flow_id'] (and therefore sdk_instance_id):
+     * getCheckoutSessionData must merge the WC session with the request POST and work for
+     * both Classic (nested array under mercadopago_checkout_session) and Blocks (flat key
+     * resolved via processBlocksCheckoutData).
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testGetCheckoutSessionDataMergesSessionAndPostForBothCheckoutModes(): void
+    {
+        $order = $this->mockTransactionOrder();
+        $order->shouldReceive('get_id')->andReturn(123);
+
+        // Classic: nested array present in POST.
+        $_POST['mercadopago_checkout_session'] = ['_mp_flow_id' => 'classic-flow'];
+
+        $this->transaction->mercadopago->helpers->session
+            ->expects()->getSession('mp_checkout_session_123')->andReturnNull()
+            ->getMock()
+            ->expects()->deleteSession('mp_checkout_session_123');
+
+        $classic = $this->transaction->getCheckoutSessionData();
+        $this->assertSame('classic-flow', $classic['_mp_flow_id']);
+
+        // Blocks: no nested key in POST → resolved via gateway->processBlocksCheckoutData,
+        // and merged on top of session-persisted data (Order Pay / 3DS scenario).
+        unset($_POST['mercadopago_checkout_session']);
+        $_POST['mercadopago_checkout_session_mp_flow_id'] = 'blocks-flow';
+
+        $this->transaction->mercadopago->helpers->session
+            ->expects()->getSession('mp_checkout_session_123')->andReturn(['_mp_flow_id' => 'session-flow'])
+            ->getMock()
+            ->expects()->deleteSession('mp_checkout_session_123');
+
+        $this->transaction->gateway
+            ->expects()
+            ->processBlocksCheckoutData('mercadopago_checkout_session', ['mercadopago_checkout_session_mp_flow_id' => 'blocks-flow'])
+            ->andReturn(['_mp_flow_id' => 'blocks-flow']);
+
+        $blocks = $this->transaction->getCheckoutSessionData();
+        // POST value wins over session value via array_merge.
+        $this->assertSame('blocks-flow', $blocks['_mp_flow_id']);
     }
 }

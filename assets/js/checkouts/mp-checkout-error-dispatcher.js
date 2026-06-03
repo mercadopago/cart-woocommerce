@@ -9,10 +9,78 @@ class MPErrorMessageNormalizer {
 }
 
 class MPCustomEventDispatcher {
-    static dispatch(eventName, detail) {
+    static MELIDATA_TIMEOUT_MS = 5000;
+    static TIMEOUT_METRIC_URL = 'https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/big';
+
+    static #dispatch(eventName, detail) {
         document.dispatchEvent(
             new CustomEvent(eventName, { detail })
         );
+    }
+
+    static waitForMelidata() {
+        return new Promise((resolve) => {
+            if (window.melidata) {
+                resolve();
+                return;
+            }
+
+            if (window.melidataReady && typeof window.melidataReady.then === 'function') {
+                window.melidataReady.then(resolve).catch(resolve);
+                return;
+            }
+
+            if (window.melidataReady) {
+                resolve();
+                return;
+            }
+
+            if (document.readyState === 'complete') {
+                resolve();
+                return;
+            }
+
+            window.addEventListener('load', () => {
+                if (window.melidataReady && typeof window.melidataReady.then === 'function') {
+                    window.melidataReady.then(resolve).catch(resolve);
+                } else {
+                    resolve();
+                }
+            }, { once: true });
+        });
+    }
+
+    static dispatchWhenReady(eventName, detail) {
+        let timeoutId;
+        const ready = this.waitForMelidata();
+        const timeout = new Promise((resolve) => {
+            timeoutId = setTimeout(() => {
+                this.sendTimeoutMetric(eventName);
+                resolve();
+            }, this.MELIDATA_TIMEOUT_MS);
+        });
+        Promise.race([ready, timeout]).then(() => {
+            clearTimeout(timeoutId);
+            this.#dispatch(eventName, detail);
+        }).catch(() => {
+            // best-effort — dispatch failure must not impact checkout
+        });
+    }
+
+    static sendTimeoutMetric(eventName) {
+        try {
+            fetch(`${this.TIMEOUT_METRIC_URL}/mp_melidata_load_timeout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: 'true', message: eventName }),
+                keepalive: true,
+            }).catch(() => {
+                // Intentional: best-effort telemetry-of-telemetry.
+                // Failures must not generate noise in the customer's checkout console.
+            });
+        } catch (_) {
+            // best-effort telemetry-of-telemetry; never throw
+        }
     }
 }
 
@@ -56,7 +124,7 @@ class MPClassicCheckoutErrorHandler extends MPCheckoutErrorHandler {
             const isPluginError = !!errorElement?.querySelector('li[data-mp-source="plugin"]');
             const errorOrigin = isPluginError ? 'post_submit_mercado_pago' : 'post_submit_woocommerce';
 
-            MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
+            MPCustomEventDispatcher.dispatchWhenReady(this.ERROR_EVENT_NAME, {
                 message: normalizedMessage,
                 errorOrigin: errorOrigin
             });
@@ -97,7 +165,7 @@ class MPOrderPayCheckoutErrorHandler extends MPCheckoutErrorHandler {
 
         if (!MPDispatchedErrorTracker.track(normalizedMessage, errorOrigin)) return;
 
-        MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
+        MPCustomEventDispatcher.dispatchWhenReady(this.ERROR_EVENT_NAME, {
             message: normalizedMessage,
             errorOrigin: errorOrigin
         });
@@ -111,39 +179,7 @@ class MPOrderPayCheckoutErrorHandler extends MPCheckoutErrorHandler {
         const errorElements = this.findAllErrorElements();
         if (!errorElements.length) return;
 
-        this.waitForMelidata().then(() => this.dispatchAllErrors(errorElements));
-    }
-
-    waitForMelidata() {
-        return new Promise((resolve) => {
-            if (window.melidata) {
-                resolve();
-                return;
-            }
-
-            if (window.melidataReady && typeof window.melidataReady.then === 'function') {
-                window.melidataReady.then(resolve).catch(resolve);
-                return;
-            }
-
-            if (window.melidataReady) {
-                resolve();
-                return;
-            }
-
-            if (document.readyState === 'complete') {
-                resolve();
-                return;
-            }
-
-            window.addEventListener('load', () => {
-                if (window.melidataReady && typeof window.melidataReady.then === 'function') {
-                    window.melidataReady.then(resolve).catch(resolve);
-                } else {
-                    resolve();
-                }
-            }, { once: true });
-        });
+        this.dispatchAllErrors(errorElements);
     }
 
     observeForDynamicErrors(form) {
@@ -171,7 +207,7 @@ class MPBlocksCheckoutErrorHandler extends MPCheckoutErrorHandler {
         const message = checkoutResponse?.processingResponse?.paymentDetails?.message;
         const normalizedMessage = MPErrorMessageNormalizer.normalize(message);
 
-        MPCustomEventDispatcher.dispatch(this.ERROR_EVENT_NAME, {
+        MPCustomEventDispatcher.dispatchWhenReady(this.ERROR_EVENT_NAME, {
             message: normalizedMessage,
             errorOrigin: 'post_submit_mercado_pago'
         });

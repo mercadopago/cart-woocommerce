@@ -126,9 +126,10 @@ class YapeGatewayTest extends TestCase
 
         // Reset datadog mock to remove byDefault() and set specific expectation
         $datadogMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Metrics\Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
         $datadogMock
             ->expects()
-            ->sendEvent('woo_checkout_error', $translatedMessage, Mockery::type('string'), 'woo-mercado-pago-yape');
+            ->sendEvent('woo_checkout_error', $translatedMessage, Mockery::type('string'), 'woo-mercado-pago-yape', ['cust_id' => 'test-cust-id']);
         $this->gateway->datadog = $datadogMock;
 
         $this->gateway->mercadopago->helpers->notices
@@ -174,9 +175,10 @@ class YapeGatewayTest extends TestCase
 
         // Reset datadog mock to remove byDefault() and set specific expectation
         $datadogMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Metrics\Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
         $datadogMock
             ->expects()
-            ->sendEvent('woo_checkout_error', $translatedMessage, Mockery::type('string'), 'woo-mercado-pago-yape');
+            ->sendEvent('woo_checkout_error', $translatedMessage, Mockery::type('string'), 'woo-mercado-pago-yape', ['cust_id' => 'test-cust-id']);
         $this->gateway->datadog = $datadogMock;
 
         $this->gateway->mercadopago->helpers->notices
@@ -228,7 +230,7 @@ class YapeGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), YapeGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), YapeGateway::ID, ['cust_id' => 'test-cust-id']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -531,7 +533,7 @@ class YapeGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', 'Translated error message', Mockery::type('string'), YapeGateway::ID);
+            ->with('woo_checkout_error', 'Translated error message', Mockery::type('string'), YapeGateway::ID, ['cust_id' => 'test-cust-id']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices

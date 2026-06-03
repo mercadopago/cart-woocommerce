@@ -187,6 +187,39 @@ describe('MPSuperTokenAuthenticator', () => {
       document.body.innerHTML = '';
     });
   });
+
+  describe('getAccountPaymentMethods()', () => {
+    test('Given simplified auth resolves to true, When getAccountPaymentMethods() is called, Then should not call isNotSimplifiedAuth metric', async () => {
+      const mockAuth = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(true),
+        getFastPaymentToken: jest.fn().mockResolvedValue(null),
+      };
+      mockSdkInstance.authenticator.mockResolvedValue(mockAuth);
+
+      await authenticator.getAccountPaymentMethods(100, 'test@example.com');
+
+      expect(mockMetrics.isNotSimplifiedAuth).not.toHaveBeenCalled();
+    });
+
+    test('Given simplified auth resolves to false, When getAccountPaymentMethods() is called, Then should call isNotSimplifiedAuth metric', async () => {
+      const mockAuth = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(false),
+      };
+      mockSdkInstance.authenticator.mockResolvedValue(mockAuth);
+
+      await authenticator.getAccountPaymentMethods(100, 'test@example.com');
+
+      expect(mockMetrics.isNotSimplifiedAuth).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given buildAuthenticator returns null, When getAccountPaymentMethods() is called, Then neither auth metric is called', async () => {
+      mockSdkInstance.authenticator.mockResolvedValue(null);
+
+      await authenticator.getAccountPaymentMethods(100, 'test@example.com');
+
+      expect(mockMetrics.isNotSimplifiedAuth).not.toHaveBeenCalled();
+    });
+  });
 });
 
 // =============================================================================

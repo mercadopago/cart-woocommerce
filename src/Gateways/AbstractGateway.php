@@ -248,12 +248,55 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         ];
     }
 
-    protected function isMissingCredentials(): bool
+    /**
+     * Check whether the seller credentials required to operate this gateway are missing.
+     *
+     * Single source of truth for credential guards across:
+     * - is_available() (Classic checkout display)
+     * - AbstractBlock::is_active() (Blocks checkout display)
+     * - process_payment() (payment processing)
+     * - Helpers\Gateways::getEnabledPaymentGateways() (Funnel reporting)
+     *
+     * @return bool
+     */
+    public function isMissingCredentials(): bool
     {
         return Arrays::anyEmpty([
             $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
             $this->mercadopago->sellerConfig->getCredentialsAccessToken()
         ]);
+    }
+
+    /**
+     * WooCommerce per-request availability check.
+     *
+     * Returns false when WC-native availability rejects the gateway or when
+     * seller credentials are missing.
+     *
+     * @return bool
+     */
+    public function is_available(): bool
+    {
+        if (!$this->isParentAvailable()) {
+            return false;
+        }
+
+        if ($this->isMissingCredentials()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Wraps parent::is_available() so tests can override it without invoking
+     * the WC class hierarchy.
+     *
+     * @return bool
+     */
+    protected function isParentAvailable(): bool
+    {
+        return (bool) parent::is_available();
     }
 
     protected function missingCredentialsFormFieldNotice(): array
@@ -456,6 +499,23 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     {
         try {
             $order = wc_get_order($order_id);
+
+            if ($this->isMissingCredentials()) {
+                $this->mercadopago->logs->file->error(
+                    "Payment attempt blocked: gateway enabled without credentials",
+                    static::LOG_SOURCE,
+                    ['gateway_id' => static::ID, 'order_id' => $order_id]
+                );
+
+                $this->datadog->sendEvent(
+                    'MP_CHECKOUT_BLOCKED_MISSING_CREDENTIALS',
+                    static::ID,
+                    'Payment attempt blocked because gateway has no credentials configured',
+                    $this->paymentMethodName
+                );
+
+                throw new InvalidCheckoutDataException('missing_credentials_at_payment');
+            }
 
             $discount   = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
             $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
@@ -662,7 +722,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         }
         $datadogMessage = $originalMessage . ' ' . implode(' ', $tagParts);
 
-        $this->datadog->sendEvent('woo_checkout_error', $translatedMessage, $datadogMessage, $this->paymentMethodName);
+        $this->datadog->sendEvent('woo_checkout_error', $translatedMessage, $datadogMessage, $this->paymentMethodName, ['cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT()]);
 
         if ($notice) {
             $this->mercadopago->helpers->notices->storeNotice($translatedMessage, 'error');

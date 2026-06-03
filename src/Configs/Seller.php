@@ -451,20 +451,15 @@ class Seller
      * Update Payment Methods
      *
      * @param string|null $publicKey
-     * @param string|null $accessToken
      *
      */
-    public function updatePaymentMethods(?string $publicKey = null, ?string $accessToken = null): void
+    public function updatePaymentMethods(?string $publicKey = null): void
     {
         if ($publicKey === null) {
             $publicKey = $this->getCredentialsPublicKey();
         }
 
-        if ($accessToken === null) {
-            $accessToken = $this->getCredentialsAccessToken();
-        }
-
-        $paymentMethodsResponse = $this->getPaymentMethods($publicKey, $accessToken);
+        $paymentMethodsResponse = $this->getPaymentMethods($publicKey);
 
         if ($paymentMethodsResponse['status'] !== 200) {
             $this->setCheckoutBasicPaymentMethods([]);
@@ -803,35 +798,43 @@ class Seller
      * Get Payment Methods
      *
      * @param string|null $publicKey
-     * @param string|null $accessToken
      *
      * @return array
      */
-    private function getPaymentMethods(?string $publicKey = null, ?string $accessToken = null): array
+    private function getPaymentMethods(?string $publicKey = null): array
     {
         try {
-            $key       = sprintf('%sat%spk%s', __FUNCTION__, $accessToken, $publicKey);
-            $cache     = $this->cache->getCache($key);
-            $productId = Device::getDeviceProductId();
+            $environment  = $this->store->isTestMode() ? 'beta' : 'prod';
+            $key          = sprintf('%senv%spk%s', __FUNCTION__, $environment, $publicKey);
+            $cache        = $this->cache->getCache($key);
 
             if ($cache) {
                 return $cache;
             }
 
-            $headers = [];
-            $uri     = '/v1/payment_methods';
+            $productId    = Device::getDeviceProductId();
+            $headers      = [];
+            $uri          = '/ppcore/' . $environment . '/payment-methods/v1/payment-methods';
+            $integratorId = $this->store->getIntegratorId();
+
+            $headers[] = 'x-platform-id: ' . MP_PLATFORM_ID;
 
             if ($productId) {
-                $headers[] = 'X-Product-Id: ' . $productId;
+                $headers[] = 'x-product-id: ' . $productId;
             }
 
-            if ($accessToken) {
-                $headers[] = 'Authorization: Bearer ' . $accessToken;
+            if ($integratorId) {
+                $headers[] = 'x-integrator-id: ' . $integratorId;
             }
-
 
             if ($publicKey) {
-                $uri = $uri . '?public_key=' . $publicKey;
+                // Core endpoint authenticates with raw public_key, not Bearer token
+                $headers[] = 'Authorization: ' . $publicKey;
+            } else {
+                $this->logs->file->warning(
+                    'Payment methods requested without public_key — Authorization header omitted',
+                    __CLASS__
+                );
             }
 
             $response           = $this->requester->get($uri, $headers);

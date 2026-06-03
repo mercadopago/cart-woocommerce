@@ -276,7 +276,7 @@ class PseGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), PseGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), PseGateway::ID, ['cust_id' => 'test-cust-id']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -342,7 +342,7 @@ class PseGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', 'Form error message', Mockery::type('string'), PseGateway::ID);
+            ->with('woo_checkout_error', 'Form error message', Mockery::type('string'), PseGateway::ID, ['cust_id' => 'test-cust-id']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices

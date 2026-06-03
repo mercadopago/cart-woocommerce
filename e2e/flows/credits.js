@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { fillStepsToCheckout } from "./fill_steps_to_checkout";
+import { placeOrder } from "./place_order.helper";
 
 const MP_CHECKOUT_URL = /mercadopago\.[a-z.]+\/(checkout|credits)/;
 
@@ -19,15 +20,8 @@ export async function successfulPaymentTest(page, url, user) {
 
   await page.waitForTimeout(1000);
 
-  // Click place order — supports both Classic and Blocks
-  const classicPlaceOrder = page.locator('#place_order');
-  const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
-
-  if (await classicPlaceOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await classicPlaceOrder.click();
-  } else {
-    await blocksPlaceOrder.click();
-  }
+  // Click place order (Classic single-click / Blocks two-phase submit)
+  await placeOrder(page);
 
   // Plugin scope: verify redirect to MP checkout/credits page
   await page.waitForURL(MP_CHECKOUT_URL, { timeout: 30000 });

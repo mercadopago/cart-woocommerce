@@ -1,3 +1,5 @@
+import { placeOrder } from "./place_order.helper";
+
 export default async function(page) {
   await page.waitForLoadState();
 
@@ -14,21 +16,8 @@ export default async function(page) {
   // Wait for Classic checkout's update_order_review AJAX to complete
   await page.waitForTimeout(2000);
 
-  // Click place order — supports both Classic and Blocks
-  const classicPlaceOrder = page.locator('#place_order');
-  const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
-
-  if (await classicPlaceOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await classicPlaceOrder.click();
-  } else {
-    await Promise.all([
-      page.waitForResponse(
-        resp => resp.url().includes('wc/store') && resp.url().includes('checkout') && resp.request().method() === 'POST',
-        { timeout: 60000 }
-      ),
-      blocksPlaceOrder.click(),
-    ]);
-  }
+  // Click place order (Classic single-click / Blocks two-phase submit)
+  await placeOrder(page);
 
   await page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 30000 });
 }

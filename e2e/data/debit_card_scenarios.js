@@ -44,7 +44,8 @@ const MCO = generateCardScenarios({
     number: process.env.DC_AMEX_MCO,
   },
   visa: {
-    number: process.env.DC_VISA,
+    // MCO debit must use a Colombian debit Visa; the generic DC_VISA is Brazilian.
+    number: process.env.DC_VISA_MCO || process.env.DC_VISA,
   },
   form: {
     docType: process.env.DOC_TYPE_MCO,

@@ -6,7 +6,7 @@ const MAX_TIME_WAIT_FOR_MP_SDK_INSTANCE_LOAD = 15000;
 const waitMpSdkInstanceLoad = setInterval(() => {
   if (window.mpSdkInstance) {
     clearInterval(waitMpSdkInstanceLoad);
-    const SUPER_TOKEN_JS_VERSION = '1.1.5';
+    const SUPER_TOKEN_JS_VERSION = '1.1.6';
     const mpSdkInstance = window.mpSdkInstance;
     const mpDebounce = new MPDebounce();
     const wcEmailListener = new WCEmailListener(mpDebounce);
