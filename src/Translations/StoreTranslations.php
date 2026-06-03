@@ -569,6 +569,7 @@ class StoreTranslations
         $this->commonMessages = [
             'cho_default_error'                        => __('A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago'),
             'cho_form_error'                           => __('<strong>Your payment was declined because something went wrong</strong><br>Please make sure all the information was entered correctly.', 'woocommerce-mercadopago'),
+            'missing_credentials_at_payment'           => __('This payment method is temporarily unavailable. Please choose another option or contact the store.', 'woocommerce-mercadopago'),
             'cho_see_order_form'                       => __('See your order form', 'woocommerce-mercadopago'),
             'cho_payment_declined'                     => __('Your payment was declined. You can try again.', 'woocommerce-mercadopago'),
             'cho_button_try_again'                     => __('Click to try again', 'woocommerce-mercadopago'),

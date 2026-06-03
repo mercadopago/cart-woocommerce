@@ -1,5 +1,6 @@
 import { fillStepsToCheckout } from "./fill_steps_to_checkout";
 import { expect } from "@playwright/test";
+import { placeOrder } from "./place_order.helper";
 
 export async function successfulPaymentTest(page, url, user, method = null) {
   await fillStepsToCheckout(page, url, user);
@@ -40,15 +41,8 @@ async function makePayment(page, user, method = null) {
 
   await invoiceForm({ page, user, method });
 
-  // Click place order — supports both Classic and Blocks
-  const classicPlaceOrder = page.locator('#place_order');
-  const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
-
-  if (await classicPlaceOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await classicPlaceOrder.click();
-  } else {
-    await blocksPlaceOrder.click();
-  }
+  // Click place order (Classic single-click / Blocks two-phase submit)
+  await placeOrder(page);
 
   await page.waitForLoadState();
 }

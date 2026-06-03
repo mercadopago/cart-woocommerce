@@ -1493,10 +1493,15 @@ class MPSuperTokenPaymentMethods {
 
         try {
             const { card_id } = await this.mpSdkInstance.getCardId(this.getSuperToken(), paymentMethod.token);
+            this.mpSuperTokenMetrics?.updateSecurityCodeGetCardIdSuccess();
 
             const { id } = await this.mpSdkInstance.fields.createCardToken({ cardId: card_id });
+            this.mpSuperTokenMetrics?.updateSecurityCodeCardTokenCreated();
 
             await this.mpSdkInstance.updatePseudotoken(this.getSuperToken(), paymentMethod.token, id);
+            this.mpSuperTokenMetrics?.updateSecurityCodePseudotokenUpdated();
+
+            this.mpSuperTokenMetrics?.updateSecurityCodeSuccess();
         } catch (error) {
             this.mpSuperTokenMetrics.errorToUpdateSecurityCode(error, paymentMethod);
             throw new Error(MPSuperTokenErrorCodes.UPDATE_SECURITY_CODE_ERROR);

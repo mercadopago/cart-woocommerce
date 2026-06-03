@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { fillStepsToCheckout } from "./fill_steps_to_checkout";
+import { placeOrder } from "./place_order.helper";
 
 // The plugin's responsibility for Checkout Pro is limited to:
 // 1. Creating the MP preference (API call)
@@ -25,15 +26,8 @@ async function selectCheckoutProAndSubmit(page, url, user) {
 
   await page.waitForTimeout(1000);
 
-  // Click place order
-  const classicPlaceOrder = page.locator('#place_order');
-  const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
-
-  if (await classicPlaceOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await classicPlaceOrder.click();
-  } else {
-    await blocksPlaceOrder.click();
-  }
+  // Click place order (Classic single-click / Blocks two-phase submit)
+  await placeOrder(page);
 }
 
 // --- Redirect tests ---

@@ -14,11 +14,15 @@ module.exports = defineConfig({
     fullyParallel: false,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
-    /* Retry on CI only — local runs fail fast */
-    retries: process.env.CI ? 3 : 0,
-    /* Each test gets an isolated browser context (separate cookies/session),
-       so parallel workers don't conflict. 4 workers for fast local execution. */
-    workers: process.env.CI ? 1 : 4,
+    /* CI retries for infra noise; local retries absorb MP sandbox latency variance
+       on "successful payment" flows (payment approval/settlement can intermittently
+       exceed the per-test timeout — the same test passes on a re-attempt). */
+    retries: process.env.CI ? 3 : 2,
+    /* Each test gets an isolated browser context (separate cookies/session).
+       Full-checkout flows hit a single shared store + the real MP sandbox API, so
+       too many parallel workers cause contention (orders time out intermittently).
+       2 workers locally balances speed vs. stability; set to 1 for max determinism. */
+    workers: process.env.CI ? 1 : 2,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: "html",
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

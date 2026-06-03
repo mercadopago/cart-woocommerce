@@ -8,6 +8,14 @@ require('dotenv').config();
 const PORT = process.env.PORT || '8080';
 const ADMIN_URL = `http://localhost:${PORT}/wp-admin/admin.php?page=mercadopago-settings`;
 
+// Credential environment: 'test' (default, sandbox) or 'prod' (production).
+// Controlled by the MP_ENV env var. When 'prod', the setup reads MP_*_PROD_<SITE>
+// credentials, writes them to the plugin's prod slots and disables test mode so
+// the plugin exercises the production payment flow.
+const MP_ENV = (process.env.MP_ENV || 'test').toLowerCase();
+const IS_PROD = MP_ENV === 'prod';
+const CRED_SUFFIX = IS_PROD ? 'PROD' : 'TEST';
+
 function detectSite() {
   if (process.env.SITE) return process.env.SITE.toUpperCase();
 
@@ -19,13 +27,16 @@ function detectSite() {
 }
 
 function getCredentials(site) {
-  const accessToken = process.env[`MP_ACCESS_TOKEN_TEST_${site}`]
-    || process.env.MP_ACCESS_TOKEN_TEST
-    || wpGetOption('_mp_access_token_test');
+  const accessTokenOption = IS_PROD ? '_mp_access_token_prod' : '_mp_access_token_test';
+  const publicKeyOption = IS_PROD ? '_mp_public_key_prod' : '_mp_public_key_test';
 
-  const publicKey = process.env[`MP_PUBLIC_KEY_TEST_${site}`]
-    || process.env.MP_PUBLIC_KEY_TEST
-    || wpGetOption('_mp_public_key_test');
+  const accessToken = process.env[`MP_ACCESS_TOKEN_${CRED_SUFFIX}_${site}`]
+    || process.env[`MP_ACCESS_TOKEN_${CRED_SUFFIX}`]
+    || wpGetOption(accessTokenOption);
+
+  const publicKey = process.env[`MP_PUBLIC_KEY_${CRED_SUFFIX}_${site}`]
+    || process.env[`MP_PUBLIC_KEY_${CRED_SUFFIX}`]
+    || wpGetOption(publicKeyOption);
 
   return { accessToken, publicKey };
 }
@@ -37,15 +48,17 @@ function validateCredentials(creds, site) {
   if (!creds.accessToken) missing.push('access_token');
   if (!creds.publicKey) missing.push('public_key');
 
+  const tokenPrefix = IS_PROD ? 'APP_USR-' : 'TEST-';
+
   throw new Error(
-    `[E2E] Credenciais MP nao configuradas para ${site} (faltando: ${missing.join(', ')}).\n\n` +
+    `[E2E] Credenciais MP (${CRED_SUFFIX}) nao configuradas para ${site} (faltando: ${missing.join(', ')}).\n\n` +
     `Opcoes para resolver:\n` +
     `  1. Adicionar no e2e/.env:\n` +
-    `     MP_ACCESS_TOKEN_TEST_${site}=TEST-...\n` +
-    `     MP_PUBLIC_KEY_TEST_${site}=TEST-...\n\n` +
+    `     MP_ACCESS_TOKEN_${CRED_SUFFIX}_${site}=${tokenPrefix}...\n` +
+    `     MP_PUBLIC_KEY_${CRED_SUFFIX}_${site}=${tokenPrefix}...\n\n` +
     `  2. Ou credenciais genericas (usadas para todos os paises):\n` +
-    `     MP_ACCESS_TOKEN_TEST=TEST-...\n` +
-    `     MP_PUBLIC_KEY_TEST=TEST-...\n\n` +
+    `     MP_ACCESS_TOKEN_${CRED_SUFFIX}=${tokenPrefix}...\n` +
+    `     MP_PUBLIC_KEY_${CRED_SUFFIX}=${tokenPrefix}...\n\n` +
     `  3. Ou configurar via admin do plugin:\n` +
     `     ${ADMIN_URL}\n` +
     `     (login: admin / admin)\n\n` +
@@ -65,8 +78,7 @@ module.exports = async function globalSetup() {
       ? 'container is not running'
       : `store is ${(currentSite || 'unknown').toUpperCase()}, need ${site}`;
 
-    // eslint-disable-next-line no-console
-    console.log(`[E2E] ${reason} — resetting store...`);
+    process.stdout.write(`[E2E] ${reason} — resetting store...\n`);
 
     const ok = resetStore(site);
     if (!ok) {
@@ -77,8 +89,7 @@ module.exports = async function globalSetup() {
     }
   }
 
-  // eslint-disable-next-line no-console
-  console.log(`[E2E] Configuring store for ${site}...`);
+  process.stdout.write(`[E2E] Configuring store for ${site}...\n`);
 
   // --- WC core settings ---
   wpOption('woocommerce_coming_soon', 'no');
@@ -138,7 +149,8 @@ module.exports = async function globalSetup() {
   );
 
   // --- MP plugin settings ---
-  wpOption('checkbox_checkout_test_mode', 'yes');
+  // test mode 'yes' uses the *_test credential slots; 'no' uses the *_prod slots.
+  wpOption('checkbox_checkout_test_mode', IS_PROD ? 'no' : 'yes');
   wpOption('_mp_custom_domain', 'https://e2e-test.example.com');
   wpOption('_mp_custom_domain_options', 'yes');
   wpOption('_site_id_v1', site);
@@ -147,12 +159,17 @@ module.exports = async function globalSetup() {
   const creds = getCredentials(site);
   validateCredentials(creds, site);
 
-  wpOption('_mp_access_token_test', creds.accessToken);
-  wpOption('_mp_public_key_test', creds.publicKey);
+  if (IS_PROD) {
+    wpOption('_mp_access_token_prod', creds.accessToken);
+    wpOption('_mp_public_key_prod', creds.publicKey);
+  } else {
+    wpOption('_mp_access_token_test', creds.accessToken);
+    wpOption('_mp_public_key_test', creds.publicKey);
+  }
 
-  // Extract client_id from access token (format: TEST-{client_id}-{timestamp}-{hash})
+  // Extract client_id from access token (format: {TEST|APP_USR}-{client_id}-{timestamp}-{hash})
   // and set integration options required by the plugin.
-  const clientId = creds.accessToken.replace(/^TEST-/, '').split('-')[0];
+  const clientId = creds.accessToken.replace(/^(TEST|APP_USR)-/, '').split('-')[0];
   if (clientId && /^\d+$/.test(clientId)) {
     wpOption('_mp_client_id', clientId);
   } else if (clientId) {
@@ -185,6 +202,5 @@ module.exports = async function globalSetup() {
 
   setGatewaySetting('woo-mercado-pago-custom', 'binary_mode', 'no');
 
-  // eslint-disable-next-line no-console
-  console.log(`[E2E] Store configured for ${site} | checkout: ${checkoutMode} | credentials: OK`);
+  process.stdout.write(`[E2E] Store configured for ${site} | checkout: ${checkoutMode} | env: ${CRED_SUFFIX} (test_mode=${IS_PROD ? 'no' : 'yes'}) | credentials: OK\n`);
 };

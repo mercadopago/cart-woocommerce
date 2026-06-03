@@ -32,15 +32,19 @@ const MPE = generateCardScenarios({
   }
 });
 
+// MLA must use Argentine test cards. The generic CC_* are Brazilian (CC_MASTER=5031…),
+// and a BR card in an AR store makes the SDK skip the DNI requirement (document field
+// stays display:none) so the payment is rejected. Prefer CC_*_MLA when provided;
+// fall back to the generic to avoid breaking until the AR cards are added to .env.
 const MLA = generateCardScenarios({
   master: {
-    number: process.env.CC_MASTER,
+    number: process.env.CC_MASTER_MLA || process.env.CC_MASTER,
   },
   amex: {
-    number: process.env.CC_AMEX,
+    number: process.env.CC_AMEX_MLA || process.env.CC_AMEX,
   },
   visa: {
-    number: process.env.CC_VISA,
+    number: process.env.CC_VISA_MLA || process.env.CC_VISA,
   },
   form: {
     docType: process.env.DOC_TYPE_MLA,
@@ -56,7 +60,8 @@ const MCO = generateCardScenarios({
     number: process.env.CC_AMEX_MCO,
   },
   visa: {
-    number: process.env.CC_VISA,
+    // MCO must use a Colombian Visa; the generic CC_VISA is Brazilian.
+    number: process.env.CC_VISA_MCO || process.env.CC_VISA,
   },
   form: {
     docType: process.env.DOC_TYPE_MCO,

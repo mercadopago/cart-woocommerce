@@ -731,6 +731,11 @@ class AbstractGatewayTest extends TestCase
         // Replace the logs->file mock in mercadopagoMock
         $this->mercadopagoMock->logs->file = $logsFileMock;
 
+        // getCustIdFromAT required since processReturnFail now includes cust_id in woo_checkout_error metric
+        $this->mercadopagoMock->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('test-cust-id');
+
         // Now assign mercadopago to gateway
         $this->gateway->mercadopago = $this->mercadopagoMock;
 
@@ -741,11 +746,11 @@ class AbstractGatewayTest extends TestCase
             ->once()
             ->andReturn($expected_message);
 
-        // Mock datadog->sendEvent
+        // Mock datadog->sendEvent — 5th arg must include cust_id
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $expected_message, Mockery::type('string'), Mockery::any());
+            ->with('woo_checkout_error', $expected_message, Mockery::type('string'), Mockery::any(), ['cust_id' => 'test-cust-id']);
 
         // Mock notices only if with_notice is true
         if ($with_notice) {
@@ -773,6 +778,56 @@ class AbstractGatewayTest extends TestCase
         $this->assertEquals('fail', $result['result']);
         $this->assertEquals('', $result['redirect']);
         $this->assertEquals($expected_message, $result['message']);
+    }
+
+    /**
+     * GIVEN an exception is handled by processReturnFail
+     * WHEN woo_checkout_error Datadog event is sent
+     * THEN it must include cust_id from sellerConfig in the extra tags array
+     */
+    public function testProcessReturnFailIncludesCustIdInWooCheckoutErrorMetric()
+    {
+        $custId = 'seller-123';
+        $errorMessage = 'test error';
+        $translatedMessage = 'translated test error';
+
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock->shouldReceive('error')->once()->andReturnNull();
+        $this->mercadopagoMock->logs->file = $logsFileMock;
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->once()
+            ->andReturn($custId);
+
+        $this->mercadopagoMock->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->with($errorMessage)
+            ->once()
+            ->andReturn($translatedMessage);
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'woo_checkout_error',
+                $translatedMessage,
+                Mockery::type('string'),
+                Mockery::any(),
+                ['cust_id' => $custId]
+            );
+
+        $this->mercadopagoMock->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->never();
+
+        $exception = Mockery::mock(\Exception::class);
+        $exception->shouldReceive('getMessage')->andReturn($errorMessage);
+
+        $result = $this->gateway->processReturnFail($exception, $errorMessage, 'test_source');
+
+        $this->assertEquals('fail', $result['result']);
     }
 
     /**
@@ -1324,11 +1379,11 @@ class AbstractGatewayTest extends TestCase
             ->with($rejectionMessage)
             ->andReturn($translatedMessage);
 
-        // Mock datadog - should be called with translated value and original message
+        // Mock datadog - should be called with translated value, original message and cust_id
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), Mockery::any());
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), Mockery::any(), ['cust_id' => 'test-cust-id']);
 
         // Mock notice storage for error handling
         $this->gateway->mercadopago->helpers->notices
@@ -2005,5 +2060,145 @@ class AbstractGatewayTest extends TestCase
         $this->gateway->registerCheckoutScripts();
 
         $this->assertTrue(true);
+    }
+
+    public function testIsAvailableReturnsFalseWhenParentIsNotAvailable(): void
+    {
+        $gateway = Mockery::mock($this->gatewayClass)->shouldAllowMockingProtectedMethods()->makePartial();
+        $gateway->mercadopago = $this->gateway->mercadopago;
+        $gateway->shouldReceive('isParentAvailable')->once()->andReturn(false);
+        $gateway->shouldNotReceive('isMissingCredentials');
+
+        $this->assertFalse($gateway->is_available());
+    }
+
+    public function testIsAvailableReturnsFalseWhenCredentialsAreMissing(): void
+    {
+        $gateway = Mockery::mock($this->gatewayClass)->shouldAllowMockingProtectedMethods()->makePartial();
+        $gateway->mercadopago = $this->gateway->mercadopago;
+        $gateway->shouldReceive('isParentAvailable')->once()->andReturn(true);
+
+        $gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->andReturn('');
+        $gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsAccessToken')->andReturn('APP_USR-token');
+
+        $this->assertFalse($gateway->is_available());
+    }
+
+    public function testIsAvailableReturnsTrueWhenParentAvailableAndCredentialsPresent(): void
+    {
+        $gateway = Mockery::mock($this->gatewayClass)->shouldAllowMockingProtectedMethods()->makePartial();
+        $gateway->mercadopago = $this->gateway->mercadopago;
+        $gateway->shouldReceive('isParentAvailable')->once()->andReturn(true);
+
+        // sellerConfig already returns valid credentials by default via GatewayMock trait.
+        $this->assertTrue($gateway->is_available());
+    }
+
+    public function testIsMissingCredentialsReturnsTrueWhenPublicKeyIsEmpty(): void
+    {
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->once()->andReturn('');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsAccessToken')->once()->andReturn('APP_USR-token');
+
+        $this->assertTrue($this->gateway->isMissingCredentials());
+    }
+
+    public function testIsMissingCredentialsReturnsTrueWhenAccessTokenIsEmpty(): void
+    {
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->once()->andReturn('APP_USR-public-key');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsAccessToken')->once()->andReturn('');
+
+        $this->assertTrue($this->gateway->isMissingCredentials());
+    }
+
+    public function testIsMissingCredentialsReturnsFalseWhenBothCredentialsArePresent(): void
+    {
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->once()->andReturn('APP_USR-public-key');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsAccessToken')->once()->andReturn('APP_USR-token');
+
+        $this->assertFalse($this->gateway->isMissingCredentials());
+    }
+
+    public function testProcessPaymentBlocksAndReturnsFailWhenCredentialsAreMissing(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_id')->andReturn(1)->byDefault();
+
+        WP_Mock::userFunction('wc_get_order')->once()->with(1)->andReturn($order);
+
+        // Override default credentials from GatewayMock trait — exercise the missing path.
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->andReturn('');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsAccessToken')->andReturn('');
+
+        // Replace the logs->file mock entirely — MercadoPagoMock::setMocksForLogFunctions()
+        // pre-registers shouldReceive('error') with andReturn(null), which would
+        // outrank an additive expectation here.
+        $logCalls = [];
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock->shouldReceive('error')->andReturnUsing(function (...$args) use (&$logCalls) {
+            $logCalls[] = $args;
+            return null;
+        });
+        $logsFileMock->shouldReceive('info')->andReturn(null);
+        $logsFileMock->shouldReceive('warning')->andReturn(null);
+        $logsFileMock->shouldReceive('debug')->andReturn(null);
+        $this->gateway->mercadopago->logs->file = $logsFileMock;
+
+        // Datadog mock comes from GatewayMock trait with sendEvent->byDefault() —
+        // override here to capture both the guard event and processReturnFail event.
+        $datadogCalls = [];
+        $datadogMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Metrics\Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->andReturnUsing(function (...$args) use (&$datadogCalls) {
+            $datadogCalls[] = $args;
+            return null;
+        });
+        $this->gateway->datadog = $datadogMock;
+
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->with('missing_credentials_at_payment')
+            ->andReturn('translated-error');
+
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with('translated-error', 'error');
+
+        // proccessPaymentInternal must NOT be reached.
+        $this->gateway->shouldNotReceive('proccessPaymentInternal');
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertSame('fail', $result['result']);
+        $this->assertSame('translated-error', $result['message']);
+
+        $guardLogFound = false;
+        foreach ($logCalls as $call) {
+            if (($call[0] ?? null) === 'Payment attempt blocked: gateway enabled without credentials') {
+                $guardLogFound = true;
+                $this->assertIsArray($call[2] ?? null);
+                $this->assertSame(1, $call[2]['order_id'] ?? null);
+                break;
+            }
+        }
+        $this->assertTrue($guardLogFound, 'Guard error log was not emitted with the expected payload');
+
+        $guardDatadogFound = false;
+        foreach ($datadogCalls as $call) {
+            if (($call[0] ?? null) === 'MP_CHECKOUT_BLOCKED_MISSING_CREDENTIALS') {
+                $guardDatadogFound = true;
+                break;
+            }
+        }
+        $this->assertTrue($guardDatadogFound, 'Guard datadog event was not emitted');
     }
 }

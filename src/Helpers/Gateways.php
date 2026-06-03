@@ -34,9 +34,17 @@ class Gateways
         foreach ($paymentGateways as $gateway) {
             $gateway = new $gateway();
 
-            if (isset($gateway->settings['enabled']) && 'yes' === $gateway->settings['enabled']) {
-                $enabledPaymentGateways[] = $gateway->id;
+            $isEnabled = isset($gateway->settings['enabled']) && 'yes' === $gateway->settings['enabled'];
+            if (!$isEnabled) {
+                continue;
             }
+
+            // method_exists() guard handles third-party gateways that don't implement MercadoPagoGatewayInterface.
+            if (method_exists($gateway, 'isMissingCredentials') && $gateway->isMissingCredentials()) {
+                continue;
+            }
+
+            $enabledPaymentGateways[] = $gateway->id;
         }
 
         return $enabledPaymentGateways;

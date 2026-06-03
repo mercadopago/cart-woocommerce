@@ -81,13 +81,25 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
     }
 
     /**
-     * Returns if this payment method should be active
+     * Returns if this payment method should be active.
+     *
+     * Returns false when the gateway is not set, when its static availability
+     * rule rejects it (country, payment method registration), or when seller
+     * credentials are missing.
      *
      * @return boolean
      */
     public function is_active(): bool
     {
-        return isset($this->gateway) && $this->gateway->isAvailable();
+        if (!isset($this->gateway) || !$this->gateway->isAvailable()) {
+            return false;
+        }
+
+        if ($this->gateway->isMissingCredentials()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -188,8 +200,6 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
 
         $this->mercadopago->helpers->session->setSession(self::ACTION_SESSION_KEY, $action);
         $this->mercadopago->helpers->session->setSession(self::GATEWAY_SESSION_KEY, $gateway);
-
-        $this->mercadopago->helpers->cart->calculateTotal();
     }
 
     /**

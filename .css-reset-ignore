@@ -1,0 +1,25 @@
+# .css-reset-ignore
+#
+# Lista de classes CSS do SuperToken que devem ser excluidas do gap analysis
+# feito por `bin/check-css-reset.js`.
+#
+# Formato:
+#   - Linhas vazias ou iniciadas por `#` sao ignoradas (comentarios).
+#   - `nome-da-classe`              -> exclui a classe inteira do gap analysis.
+#   - `nome-da-classe:prop1,prop2`  -> exclui apenas essas propriedades; as demais
+#                                     ainda precisam de cobertura no CSS reset.
+#
+# Use este arquivo quando a ausencia de cobertura for INTENCIONAL (ex.: a classe
+# nao precisa de protecao contra temas porque so existe em contextos fora do
+# escopo do SuperToken). Caso contrario, adicione cobertura no CSS em vez de
+# ignorar aqui.
+#
+# Exemplos (descomente para usar):
+#
+# mp-initial-state
+# mp-super-token-widget:display,box-shadow
+
+# ROOT_ID (SUPER_TOKEN_STYLES.ROOT_ID): usado como seletor de ID (#mp-checkout-super-token-root)
+# no CSS reset, nao como classe (.mp-checkout-super-token-root). Sem regra de classe no reset
+# e intencional — a protecao e feita via ID selector.
+mp-checkout-super-token-root

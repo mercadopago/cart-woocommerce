@@ -4,6 +4,8 @@ class MPSuperTokenMetrics {
   PLATFORM_NAME = 'woocommerce';
   CORE_MONITOR_URL = 'https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/big';
   MELIDATA_ERROR_EVENT_NAME = 'mp_checkout_error';
+  MELIDATA_TIMEOUT_MS = 5000;
+  MELIDATA_LOAD_TIMEOUT_METRIC = 'mp_melidata_load_timeout';
 
   // Params
   PLUGIN_VERSION = wc_mercadopago_supertoken_bundle_params.plugin_version;
@@ -52,7 +54,7 @@ class MPSuperTokenMetrics {
           "plugin_version": this.PLUGIN_VERSION,
           "platform": {
             name: this.PLATFORM_NAME,
-            uri: window.location.href,
+            uri: window.location.origin,
             version: this.PLATFORM_VERSION,
             url: `${this.LOCATION}${this.THEME ? `_${this.THEME}` : ''}`,
           },
@@ -69,6 +71,50 @@ class MPSuperTokenMetrics {
       .catch((error) => console.error('Super Token metrics error: ', error));
   }
 
+  /**
+   * Wait for the MeliData CDN client to be loaded before resolving.
+   *
+   * @see MPCustomEventDispatcher.waitForMelidata in assets/js/checkouts/mp-checkout-error-dispatcher.js
+   *
+   * NOTE: This is a mirror of the canonical implementation. The SuperToken bundle is
+   * built and served separately from MeLi's CDN (`http2.mlstatic.com`), so the
+   * `MPCustomEventDispatcher` global from the plugin bundle is not available here.
+   * Keep these two implementations in lock-step.
+   *
+   * @returns {Promise<void>} Resolves when MeliData is ready (or never throws).
+   */
+  waitForMelidata_() {
+    return new Promise((resolve) => {
+      if (window.melidata) {
+        resolve();
+        return;
+      }
+
+      if (window.melidataReady && typeof window.melidataReady.then === 'function') {
+        window.melidataReady.then(resolve).catch(resolve);
+        return;
+      }
+
+      if (window.melidataReady) {
+        resolve();
+        return;
+      }
+
+      if (document.readyState === 'complete') {
+        resolve();
+        return;
+      }
+
+      window.addEventListener('load', () => {
+        if (window.melidataReady && typeof window.melidataReady.then === 'function') {
+          window.melidataReady.then(resolve).catch(resolve);
+        } else {
+          resolve();
+        }
+      }, { once: true });
+    });
+  }
+
   dispatchMelidataErrorEvent(errorMessage, errorOrigin) {
     const cleanMessage = errorMessage?.replace(/^\[mercado pago\]:\s*/i, '').trim() || errorMessage;
     const fullOrigin = `${errorOrigin}_mercado_pago`;
@@ -78,12 +124,21 @@ class MPSuperTokenMetrics {
       );
     };
 
-    if (window.melidata || document.readyState === 'complete') {
-      dispatch();
-      return;
-    }
+    let timeoutId;
+    const ready = this.waitForMelidata_();
+    const timeout = new Promise((resolve) => {
+      timeoutId = setTimeout(() => {
+        this.sendMetric(this.MELIDATA_LOAD_TIMEOUT_METRIC, 'true', cleanMessage);
+        resolve();
+      }, this.MELIDATA_TIMEOUT_MS);
+    });
 
-    window.addEventListener('load', () => dispatch(), { once: true });
+    Promise.race([ready, timeout]).then(() => {
+      clearTimeout(timeoutId);
+      dispatch();
+    }).catch(() => {
+      // best-effort — dispatch failure must not impact checkout
+    });
   }
 
   normalizeErrorMessage(error) {
@@ -144,6 +199,22 @@ class MPSuperTokenMetrics {
     this.sendMetric('error_to_update_security_code', paymentMethod?.token || 'Unknown payment method token', errorMessage);
   }
 
+  updateSecurityCodeGetCardIdSuccess() {
+    this.sendMetric('update_security_code_get_card_id_success', 'true', '');
+  }
+
+  updateSecurityCodeCardTokenCreated() {
+    this.sendMetric('update_security_code_card_token_created', 'true', '');
+  }
+
+  updateSecurityCodePseudotokenUpdated() {
+    this.sendMetric('update_security_code_pseudotoken_updated', 'true', '');
+  }
+
+  updateSecurityCodeSuccess() {
+    this.sendMetric('update_security_code_success', 'true', '');
+  }
+
   errorOnSubmit(errorCode, error) {
     const errorMessage = this.normalizeErrorMessage(error);
 
@@ -200,7 +271,7 @@ class MPSuperTokenMetrics {
   fetchPaymentMethodTimeout(paymentMethodIdentifier) {
     this.sendMetric('fetch_payment_method_timeout', paymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD', 'Fetch payment method timed out');
   }
-  
+
   isNotSimplifiedAuth() {
     this.sendMetric('is_not_simplified_auth', 'true', '');
   }

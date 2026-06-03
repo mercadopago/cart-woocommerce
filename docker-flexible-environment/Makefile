@@ -68,8 +68,10 @@ THEME      ?= storefront
 TESTS      ?=
 TUNNEL     ?= $(shell if command -v cloudflared >/dev/null 2>&1; then echo "cloudflared"; elif command -v ngrok >/dev/null 2>&1; then echo "ngrok"; else echo "none"; fi)
 NGROK_DOMAIN ?= $(shell cat .env 2>/dev/null | grep '^NGROK_DOMAIN=' | cut -d= -f2)
-CONTAINER  := mp-wc-dev
-TUNNEL_PID := .tunnel.pid
+CONTAINER       := mp-wc-dev
+TUNNEL_PID      := .tunnel.pid
+TUNNEL_LOG      := .tunnel.log
+TUNNEL_URL_FILE := .tunnel-url
 DC_BIN     := $(shell if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then echo "docker compose"; elif command -v docker-compose >/dev/null 2>&1; then echo "docker-compose"; else echo "ERROR"; fi)
 ifeq ($(DC_BIN),ERROR)
 $(error "docker compose not found. Install Docker Desktop or docker-compose.")
@@ -128,9 +130,9 @@ logs:
 
 info:
 	@echo "Container: $(CONTAINER)"
-	@if [ -f .tunnel-url ]; then \
-		echo "URL:       $$(cat .tunnel-url)/shop (HTTPS tunnel)"; \
-		echo "Admin:     $$(cat .tunnel-url)/wp-admin"; \
+	@if [ -f $(TUNNEL_URL_FILE) ]; then \
+		echo "URL:       $$(cat $(TUNNEL_URL_FILE))/shop (HTTPS tunnel)"; \
+		echo "Admin:     $$(cat $(TUNNEL_URL_FILE))/wp-admin"; \
 	else \
 		echo "URL:       http://localhost:$(PORT)/shop"; \
 		echo "Admin:     http://localhost:$(PORT)/wp-admin"; \
@@ -140,7 +142,7 @@ info:
 	@echo "WC:        $$( $(WP) plugin get woocommerce --field=version 2>/dev/null || echo 'unknown')"
 	@echo "MP Plugin: $$( $(WP) plugin get woocommerce-mercadopago --field=status 2>/dev/null || echo 'unknown')"
 	@echo "Git:       $$( docker exec $(CONTAINER) bash -c 'cd /woocommerce-mercadopago && git branch --show-current' 2>/dev/null || echo 'unknown')"
-	@if [ -f .tunnel-url ]; then echo "Tunnel:    $$(cat .tunnel-url)"; else echo "Tunnel:    off (run 'make tunnel' for HTTPS)"; fi
+	@if [ -f $(TUNNEL_URL_FILE) ]; then echo "Tunnel:    $$(cat $(TUNNEL_URL_FILE))"; else echo "Tunnel:    off (run 'make tunnel' for HTTPS)"; fi
 
 status:
 	@$(WP) plugin list --format=table 2>/dev/null || echo "Container not running"
@@ -233,34 +235,67 @@ e2e-all:
 # ---------- HTTPS Tunnel (required for MP notifications) ----------
 
 tunnel:
-	@if [ -f $(TUNNEL_PID) ] && kill -0 $$(cat $(TUNNEL_PID)) 2>/dev/null; then \
-		echo "[mp-dev] Tunnel already running (PID $$(cat $(TUNNEL_PID)))"; \
-		$(MAKE) tunnel-url; \
-		exit 0; \
-	fi
-	@echo "[mp-dev] Requesting sudo access to update /etc/hosts (needed for VPN DNS bypass)..."
-	@sudo -v
-ifeq ($(TUNNEL),ngrok)
-	@command -v ngrok >/dev/null 2>&1 || { echo "[mp-dev] ERROR: ngrok not installed. Run: brew install ngrok"; exit 1; }
-	@if [ -n "$(NGROK_DOMAIN)" ]; then \
-		echo "[mp-dev] Starting ngrok tunnel with static domain: $(NGROK_DOMAIN)"; \
-		ngrok http $(PORT) --url=$(NGROK_DOMAIN) --log=stdout > .tunnel.log 2>&1 & echo $$! > $(TUNNEL_PID); \
+	@PID_FILE=$(TUNNEL_PID); \
+	URL_FILE=$(TUNNEL_URL_FILE); \
+	LOG_FILE=$(TUNNEL_LOG); \
+	TUNNEL_KIND='$(TUNNEL)'; \
+	if [ -f "$$PID_FILE" ] && kill -0 $$(cat $$PID_FILE) 2>/dev/null; then \
+		if [ -f "$$URL_FILE" ]; then \
+			echo "[mp-dev] Tunnel already running (PID $$(cat $$PID_FILE))"; \
+			echo "Tunnel URL: $$(cat $$URL_FILE)"; \
+			exit 0; \
+		else \
+			echo "[mp-dev] ERROR: Stale tunnel process (PID $$(cat $$PID_FILE)) is running but no URL was recorded."; \
+			echo "  Run 'make tunnel-stop' to clean it up, then 'make tunnel' again."; \
+			exit 1; \
+		fi; \
+	elif [ -f "$$PID_FILE" ]; then \
+		echo "[mp-dev] Found stale tunnel state (PID $$(cat $$PID_FILE) is dead). Cleaning up."; \
+		rm -f $$PID_FILE $$LOG_FILE $$URL_FILE; \
+	fi; \
+	echo "[mp-dev] Requesting sudo access to update /etc/hosts (needed for VPN DNS bypass)..."; \
+	sudo -v || { echo "[mp-dev] ERROR: sudo authentication failed. Aborting."; exit 1; }; \
+	if [ "$$TUNNEL_KIND" = "ngrok" ]; then \
+		command -v ngrok >/dev/null 2>&1 || { echo "[mp-dev] ERROR: ngrok not installed. Run: brew install ngrok"; exit 1; }; \
+		if [ -n "$(NGROK_DOMAIN)" ]; then \
+			echo "[mp-dev] Starting ngrok tunnel with static domain: $(NGROK_DOMAIN)"; \
+			ngrok http $(PORT) --url=$(NGROK_DOMAIN) --log=stdout > $$LOG_FILE 2>&1 & echo $$! > $$PID_FILE; \
+		else \
+			echo "[mp-dev] Starting ngrok tunnel (random URL — set NGROK_DOMAIN in .env for a fixed one)..."; \
+			ngrok http $(PORT) --log=stdout > $$LOG_FILE 2>&1 & echo $$! > $$PID_FILE; \
+		fi; \
 	else \
-		echo "[mp-dev] Starting ngrok tunnel (random URL — set NGROK_DOMAIN in .env for a fixed one)..."; \
-		ngrok http $(PORT) --log=stdout > .tunnel.log 2>&1 & echo $$! > $(TUNNEL_PID); \
-	fi
-	@sleep 3
-	@TUNNEL_URL=$$(curl -s http://127.0.0.1:4040/api/tunnels 2>/dev/null | grep -o '"public_url":"https://[^"]*' | grep -o 'https://[^"]*' | head -1); \
+		command -v cloudflared >/dev/null 2>&1 || { echo "[mp-dev] ERROR: cloudflared not installed. Run: brew install cloudflared"; exit 1; }; \
+		echo "[mp-dev] Starting cloudflared tunnel to localhost:$(PORT)..."; \
+		cloudflared tunnel --url http://localhost:$(PORT) > $$LOG_FILE 2>&1 & echo $$! > $$PID_FILE; \
+	fi; \
+	TUNNEL_URL=""; \
+	for i in $$(seq 1 60); do \
+		if [ "$$TUNNEL_KIND" = "ngrok" ]; then \
+			TUNNEL_URL=$$(curl -s http://127.0.0.1:4040/api/tunnels 2>/dev/null | grep -o '"public_url":"https://[^"]*' | grep -o 'https://[^"]*' | head -1); \
+		else \
+			TUNNEL_URL=$$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' $$LOG_FILE 2>/dev/null | head -1); \
+		fi; \
+		[ -n "$$TUNNEL_URL" ] && break; \
+		sleep 0.5; \
+	done; \
 	if [ -z "$$TUNNEL_URL" ]; then \
-		echo "[mp-dev] ERROR: Could not get tunnel URL. Check: cat .tunnel.log"; \
-		cat .tunnel.log | tail -5; \
+		echo "[mp-dev] ERROR: Could not get tunnel URL after 30s. Check: cat $$LOG_FILE"; \
+		tail -5 $$LOG_FILE 2>/dev/null || true; \
+		kill $$(cat $$PID_FILE) 2>/dev/null || true; \
+		rm -f $$PID_FILE $$LOG_FILE; \
 		exit 1; \
 	fi; \
-	echo "$$TUNNEL_URL" > .tunnel-url; \
+	echo "$$TUNNEL_URL" > $$URL_FILE; \
 	$(WP) option update siteurl "$$TUNNEL_URL"; \
 	$(WP) option update home "$$TUNNEL_URL"; \
 	TUNNEL_HOST=$$(echo "$$TUNNEL_URL" | sed 's|https://||'); \
-	TUNNEL_IP=$$(dig +short "$$TUNNEL_HOST" @1.1.1.1 2>/dev/null | head -1); \
+	TUNNEL_IP=$$(dig +short "$$TUNNEL_HOST" @1.1.1.1 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$$' | head -1); \
+	if [ -z "$$TUNNEL_IP" ]; then \
+		TUNNEL_IP=$$(curl -sf "https://1.1.1.1/dns-query?name=$$TUNNEL_HOST&type=A" \
+			-H "accept: application/dns-json" 2>/dev/null \
+			| grep -oE '"data":"[0-9.]+"' | head -1 | grep -oE '[0-9.]+'); \
+	fi; \
 	if [ -n "$$TUNNEL_IP" ]; then \
 		sudo sed -i '' '/# mp-tunnel/d' /etc/hosts 2>/dev/null; \
 		echo "[mp-dev] Updating /etc/hosts for VPN DNS bypass..."; \
@@ -279,45 +314,11 @@ ifeq ($(TUNNEL),ngrok)
 	echo ""; \
 	echo "  Configure this URL in Mercado Pago webhook settings."; \
 	echo "  The tunnel stays open until you run: make tunnel-stop"
-else
-	@command -v cloudflared >/dev/null 2>&1 || { echo "[mp-dev] ERROR: cloudflared not installed. Run: brew install cloudflared"; exit 1; }
-	@echo "[mp-dev] Starting cloudflared tunnel to localhost:$(PORT)..."
-	@cloudflared tunnel --url http://localhost:$(PORT) > .tunnel.log 2>&1 & echo $$! > $(TUNNEL_PID)
-	@sleep 5
-	@TUNNEL_URL=$$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' .tunnel.log | head -1); \
-	if [ -z "$$TUNNEL_URL" ]; then \
-		echo "[mp-dev] ERROR: Could not get tunnel URL. Check: cat .tunnel.log"; \
-		exit 1; \
-	fi; \
-	echo "$$TUNNEL_URL" > .tunnel-url; \
-	$(WP) option update siteurl "$$TUNNEL_URL"; \
-	$(WP) option update home "$$TUNNEL_URL"; \
-	TUNNEL_HOST=$$(echo "$$TUNNEL_URL" | sed 's|https://||'); \
-	TUNNEL_IP=$$(dig +short "$$TUNNEL_HOST" @1.1.1.1 2>/dev/null | head -1); \
-	if [ -n "$$TUNNEL_IP" ]; then \
-		sudo sed -i '' '/# mp-tunnel/d' /etc/hosts 2>/dev/null; \
-		echo "[mp-dev] Updating /etc/hosts for VPN DNS bypass..."; \
-		sudo sh -c "printf '\n$$TUNNEL_IP $$TUNNEL_HOST  # mp-tunnel\n' >> /etc/hosts" \
-			&& echo "[mp-dev] /etc/hosts updated" \
-			|| { echo "[mp-dev] WARN: Could not update /etc/hosts. Run manually:"; \
-			     echo "  sudo sh -c \"printf '\\\\n$$TUNNEL_IP $$TUNNEL_HOST  # mp-tunnel\\\\n' >> /etc/hosts\""; }; \
-	fi; \
-	echo ""; \
-	echo "============================================"; \
-	echo "  HTTPS Store: $$TUNNEL_URL/shop"; \
-	echo "  HTTPS Admin: $$TUNNEL_URL/wp-admin"; \
-	echo "  Webhook URL: $$TUNNEL_URL/?wc-api=WC_WooMercadoPago_*"; \
-	echo "  Credentials: admin / admin"; \
-	echo "============================================"; \
-	echo ""; \
-	echo "  Configure this URL in Mercado Pago webhook settings."; \
-	echo "  The tunnel stays open until you run: make tunnel-stop"
-endif
 
 tunnel-stop:
 	@if [ -f $(TUNNEL_PID) ]; then \
 		kill $$(cat $(TUNNEL_PID)) 2>/dev/null || true; \
-		rm -f $(TUNNEL_PID) .tunnel.log; \
+		rm -f $(TUNNEL_PID) $(TUNNEL_LOG); \
 	fi
 	@pkill -f "ngrok http" 2>/dev/null || true
 	@pkill -f "cloudflared tunnel" 2>/dev/null || true
@@ -328,16 +329,16 @@ tunnel-stop:
 			&& echo "[mp-dev] /etc/hosts cleaned." \
 			|| echo "[mp-dev] WARN: Could not clean /etc/hosts. Run manually: sudo sed -i '' '/# mp-tunnel/d' /etc/hosts"; \
 	fi
-	@if [ -f .tunnel-url ]; then \
+	@if [ -f $(TUNNEL_URL_FILE) ]; then \
 		echo "[mp-dev] Restoring local URL..."; \
 		$(WP) option update siteurl "http://localhost:$(PORT)" 2>/dev/null || true; \
 		$(WP) option update home "http://localhost:$(PORT)" 2>/dev/null || true; \
-		rm -f .tunnel-url; \
+		rm -f $(TUNNEL_URL_FILE); \
 	fi
 
 tunnel-url:
-	@if [ -f .tunnel-url ]; then \
-		echo "Tunnel URL: $$(cat .tunnel-url)"; \
+	@if [ -f $(TUNNEL_URL_FILE) ]; then \
+		echo "Tunnel URL: $$(cat $(TUNNEL_URL_FILE))"; \
 	else \
 		echo "No tunnel active. Run: make tunnel"; \
 	fi

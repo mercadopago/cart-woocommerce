@@ -5,10 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.22] 2026-06-03
+### Added
+- Internal observability improvements for checkout error diagnostics
+
+### Changed
+- Internal improvements to communication with the payment methods API
+
+### Fixed
+- Fixed incorrect blocking of fast payment in stores using custom checkout plugins (e.g., FunnelKit)
+- Fixed incorrect display of installment options in markets with bank installments (Peru, Chile, Colombia, and others)
+- Fixed checkout error messages that could be lost in some configurations
+- Fixed possible fee duplication in stores with custom fee plugins
+- Fixed checkout display when seller credentials are missing or expired
+
 ## [8.7.21] 2026-05-04
 ### Added
 - Add frontend instrumentation for payment SDK calls to improve error observability
 - Add structured error logging and monitoring for payment API calls
+- Preserve selected payment method and installments after a failed payment attempt
 
 ### Fixed
 - Fix duplicate metric `error_on_submit_super_token` fired when submitting Consumer Credits without an installment selected — separated installment validation (`validateInstallmentSelection`) from payment method validity check (`isSelectedPaymentMethodValid`)
@@ -19,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix fast payment initialization failing when a non-custom payment method is selected by default
 - Fix fast payment CSS conflict detection not triggering in some configurations
 - Fix payment method icon styling interfering with other payment gateways in Blocks checkout
-- Preserve selected payment method and installments after a failed payment attempt
 
 ## [8.7.20] 2026-04-28
 ### Fixed

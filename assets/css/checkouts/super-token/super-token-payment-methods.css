@@ -705,6 +705,27 @@
     padding-top: 0 !important;
 }
 
+/* Method Details Wrapper (ESC flow — PSW-3706) */
+#payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper,
+#payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper.mp-super-token-method-details-wrapper--loading,
+#payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper.mp-super-token-method-details-wrapper--loading {
+    display: block !important;
+    visibility: visible !important;
+}
+
+#payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper .mp-super-token-method-details-skeleton,
+#payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper .mp-super-token-method-details-skeleton {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 /* Security Code */
 #payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-security-code-container,
 #payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-security-code-container {

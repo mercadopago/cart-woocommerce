@@ -317,20 +317,22 @@ const CheckoutPage = {
   },
 
   getInstallments(response) {
-    let payerCosts = [];
     const installments = [];
 
-    this.clearInstallmentsComponent();
-    payerCosts = this.getCountry() === 'MCO' ? response.payer_costs.slice(0, Math.min(6, response.payer_costs.length)) : response.payer_costs;
-    if (payerCosts) {
-      this.setElementDisplay('mpInstallmentsCard', 'block');
+    if (!response || !Array.isArray(response.payer_costs)) {
+      return installments;
     }
+
+    const payerCosts = this.getCountry() === 'MCO'
+      ? response.payer_costs.slice(0, Math.min(6, response.payer_costs.length))
+      : response.payer_costs;
 
     payerCosts.forEach((payerCost) => {
       const installment = payerCost.installments;
       const installmentAmount = this.formatCurrency(payerCost.installment_amount);
       const installmentRate = payerCost.installment_rate !== 0;
-      const installmentRateThirdParty = payerCost.installment_rate_collector.includes('THIRD_PARTY');
+      const collector = payerCost?.installment_rate_collector;
+      const installmentRateThirdParty = Array.isArray(collector) && collector.includes('THIRD_PARTY');
       const totalAmount = this.formatCurrency(payerCost.total_amount);
 
       let title = `${installment.toString()}x `;
@@ -534,6 +536,12 @@ const CheckoutPage = {
       return;
     }
 
+    // PPSP-1207 regression fix: SDK populates <option>s with API's raw
+    // `recommended_message`, which drops "sem juros" and the bank interest
+    // disclaimer. Rebuild the options using the localized custom titles.
+    this.replaceInstallmentsOptions(installmentsSelect, installmentsData);
+    this.renderBankInterestDisclaimer(installmentsData);
+
     installmentsSelect.addEventListener('change', (event) => {
       const selectedValue = event.target.value;
       if (selectedValue) {
@@ -560,6 +568,62 @@ const CheckoutPage = {
     });
 
     this.setElementDisplay('mpInstallmentsCard', 'block');
+  },
+
+  replaceInstallmentsOptions(installmentsSelect, installmentsData) {
+    const customItems = this.getInstallments(installmentsData);
+    if (!customItems.length) return;
+
+    Array.from(installmentsSelect.querySelectorAll('option'))
+      .filter((option) => !option.disabled)
+      .forEach((option) => option.remove());
+
+    customItems.forEach(({ value, title }) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = title;
+      installmentsSelect.appendChild(option);
+    });
+  },
+
+  hasThirdPartyInterestFreeInstallment(installmentsData) {
+    if (!installmentsData || !Array.isArray(installmentsData.payer_costs)) {
+      return false;
+    }
+
+    return installmentsData.payer_costs.some((payerCost) => {
+      const collector = payerCost?.installment_rate_collector;
+      const isThirdParty = Array.isArray(collector) && collector.includes('THIRD_PARTY');
+      const isInterestFree = payerCost?.installment_rate === 0;
+      return isThirdParty && isInterestFree;
+    });
+  },
+
+  renderBankInterestDisclaimer(installmentsData) {
+    const existingHint = document.getElementById('mp-installments-bank-interest-hint');
+    if (existingHint) existingHint.remove();
+
+    if (!this.needsBankInterestDisclaimer()) return;
+    if (!this.hasThirdPartyInterestFreeInstallment(installmentsData)) return;
+
+    const hintText = wc_mercadopago_custom_checkout_params
+      ?.input_helper_message?.installments?.bank_interest_hint_text;
+    if (!hintText) return;
+
+    const container = document.querySelector('.mp-checkout-custom-installments-select-container');
+    if (!container) return;
+
+    const hint = document.createElement('div');
+    hint.id = 'mp-installments-bank-interest-hint';
+    hint.className = 'mp-installments-bank-interest-hint';
+    hint.textContent = `*${hintText}`;
+
+    const taxInfo = document.getElementById('mp-installments-tax-info');
+    if (taxInfo) {
+      container.insertBefore(hint, taxInfo);
+    } else {
+      container.appendChild(hint);
+    }
   },
 
   installmentsWasSelected() {

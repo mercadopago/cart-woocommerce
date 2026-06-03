@@ -123,6 +123,7 @@ describe('MPSuperTokenPaymentMethods - Installments Pre-selection', () => {
       SUPER_TOKEN_METRICS_NOT_FOUND: 'SUPER_TOKEN_METRICS_NOT_FOUND',
       SELECT_PAYMENT_METHOD_ERROR: 'SELECT_PAYMENT_METHOD_ERROR',
       SELECT_PAYMENT_METHOD_NOT_VALID: 'SELECT_PAYMENT_METHOD_NOT_VALID',
+      UPDATE_SECURITY_CODE_ERROR: 'UPDATE_SECURITY_CODE_ERROR',
     };
     global.Intl = Intl;
 
@@ -848,6 +849,99 @@ describe('MPSuperTokenPaymentMethods - Installments Pre-selection', () => {
       expect(console.error).toHaveBeenCalledWith('Failed to render validation errors after exception: ', 'UI error while showing validation errors');
 
       getElementByIdSpy.mockRestore();
+    });
+  });
+
+  describe('updateSecurityCode()', () => {
+    let mockMpSdkInstance;
+    let mockMpSuperTokenMetrics;
+
+    beforeEach(() => {
+      mockMpSdkInstance = {
+        getCardId: jest.fn().mockResolvedValue({ card_id: 'card-123' }),
+        fields: {
+          createCardToken: jest.fn().mockResolvedValue({ id: 'token-456' }),
+        },
+        updatePseudotoken: jest.fn().mockResolvedValue(undefined),
+      };
+
+      mockMpSuperTokenMetrics = {
+        updateSecurityCodeGetCardIdSuccess: jest.fn(),
+        updateSecurityCodeCardTokenCreated: jest.fn(),
+        updateSecurityCodePseudotokenUpdated: jest.fn(),
+        updateSecurityCodeSuccess: jest.fn(),
+        errorToUpdateSecurityCode: jest.fn(),
+      };
+
+      instance.mpSdkInstance = mockMpSdkInstance;
+      instance.mpSuperTokenMetrics = mockMpSuperTokenMetrics;
+      instance.activePaymentMethod = {
+        token: 'pm-token-abc',
+        security_code_settings: { mode: 'mandatory' },
+      };
+      instance.superToken = 'super-token-xyz';
+    });
+
+    test('Given all SDK calls succeed, When updateSecurityCode() is called, Then all 4 metrics fire and error metric does not', async () => {
+      await instance.updateSecurityCode();
+
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeGetCardIdSuccess).toHaveBeenCalledTimes(1);
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeCardTokenCreated).toHaveBeenCalledTimes(1);
+      expect(mockMpSuperTokenMetrics.updateSecurityCodePseudotokenUpdated).toHaveBeenCalledTimes(1);
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeSuccess).toHaveBeenCalledTimes(1);
+      expect(mockMpSuperTokenMetrics.errorToUpdateSecurityCode).not.toHaveBeenCalled();
+    });
+
+    test('Given getCardId fails, When updateSecurityCode() is called, Then no step metrics fire and error metric fires', async () => {
+      mockMpSdkInstance.getCardId.mockRejectedValue(new Error('getCardId failed'));
+
+      await expect(instance.updateSecurityCode()).rejects.toThrow('UPDATE_SECURITY_CODE_ERROR');
+
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeGetCardIdSuccess).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeCardTokenCreated).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.updateSecurityCodePseudotokenUpdated).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeSuccess).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.errorToUpdateSecurityCode).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given createCardToken fails, When updateSecurityCode() is called, Then only metric 1 fires', async () => {
+      mockMpSdkInstance.fields.createCardToken.mockRejectedValue(new Error('createCardToken failed'));
+
+      await expect(instance.updateSecurityCode()).rejects.toThrow('UPDATE_SECURITY_CODE_ERROR');
+
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeGetCardIdSuccess).toHaveBeenCalledTimes(1);
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeCardTokenCreated).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.updateSecurityCodePseudotokenUpdated).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeSuccess).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.errorToUpdateSecurityCode).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given updatePseudotoken fails, When updateSecurityCode() is called, Then only metrics 1 and 2 fire', async () => {
+      mockMpSdkInstance.updatePseudotoken.mockRejectedValue(new Error('updatePseudotoken failed'));
+
+      await expect(instance.updateSecurityCode()).rejects.toThrow('UPDATE_SECURITY_CODE_ERROR');
+
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeGetCardIdSuccess).toHaveBeenCalledTimes(1);
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeCardTokenCreated).toHaveBeenCalledTimes(1);
+      expect(mockMpSuperTokenMetrics.updateSecurityCodePseudotokenUpdated).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeSuccess).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.errorToUpdateSecurityCode).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given activePaymentMethod has no security_code_settings, When updateSecurityCode() is called, Then no SDK calls and no metrics fire', async () => {
+      instance.activePaymentMethod = { token: 'pm-token-abc', type: 'account_money' };
+
+      await instance.updateSecurityCode();
+
+      expect(mockMpSdkInstance.getCardId).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeGetCardIdSuccess).not.toHaveBeenCalled();
+      expect(mockMpSuperTokenMetrics.updateSecurityCodeSuccess).not.toHaveBeenCalled();
+    });
+
+    test('Given mpSuperTokenMetrics is null, When updateSecurityCode() is called, Then it does not throw a secondary TypeError', async () => {
+      instance.mpSuperTokenMetrics = null;
+
+      await expect(instance.updateSecurityCode()).resolves.toBeUndefined();
     });
   });
 });

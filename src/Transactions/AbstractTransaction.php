@@ -473,6 +473,19 @@ abstract class AbstractTransaction
     protected function sendApiErrorMetric(string $apiRoute, Exception $e): void
     {
         $details = MetricContext::buildApiErrorDetails($apiRoute, $this->mercadopago ?? null);
-        Datadog::getInstance()->sendEvent('mp_api_error', (string) $e->getCode(), $e->getMessage(), null, $details);
+        $details['sdk_instance_id'] = $this->resolveMetadataField('flow_id');
+        // payment_method carries checkout_type — the product bucket (super_token, credit_card, pix…), not the card brand. Intentional: PSW-3760 needs the SuperToken flow identifiable in API errors.
+        $paymentMethod = $this->resolveMetadataField('checkout_type');
+        Datadog::getInstance()->sendEvent('mp_api_error', (string) $e->getCode(), $e->getMessage(), $paymentMethod, $details);
+    }
+
+    // Assumes setCommonTransaction() has already run (called in every subtype constructor before save()).
+    // If a failure occurs before that point, the field will be absent and the value degrades to null — by design.
+    private function resolveMetadataField(string $field): ?string
+    {
+        $metadata = $this->transaction->metadata ?? null;
+        $value    = is_array($metadata) ? ($metadata[$field] ?? null) : null;
+
+        return is_string($value) && $value !== '' ? $value : null;
     }
 }

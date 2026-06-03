@@ -1374,7 +1374,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -1441,7 +1441,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -1528,7 +1528,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -2995,7 +2995,8 @@ class CustomGatewayTest extends TestCase
                     return str_contains($message, 'missing_fields : token')
                         && str_contains($message, 'exception_type : invalidcheckoutdataexception');
                 }),
-                'woo-mercado-pago-custom'
+                'woo-mercado-pago-custom',
+                ['cust_id' => 'test-cust-id']
             );
 
         $this->gateway->mercadopago->helpers->url
@@ -3054,7 +3055,8 @@ class CustomGatewayTest extends TestCase
                         && str_contains($message, 'exception_type : exception')
                         && !str_contains($message, 'missing_fields');
                 }),
-                'woo-mercado-pago-custom'
+                'woo-mercado-pago-custom',
+                ['cust_id' => 'test-cust-id']
             );
 
         $this->gateway->mercadopago->helpers->url
