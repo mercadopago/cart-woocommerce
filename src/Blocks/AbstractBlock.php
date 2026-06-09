@@ -215,6 +215,10 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             return;
         }
 
+        if (!$this->hasFees()) {
+            return;
+        }
+
         if (isset($this->gateway)) {
             $action = $this->mercadopago->helpers->session->getSession(self::ACTION_SESSION_KEY);
 
@@ -222,10 +226,24 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
                 $this->mercadopago->helpers->cart->addDiscountAndCommissionOnFeesFromBlocks($this->gateway);
             }
 
-            if ($action == 'remove') {
-                $this->mercadopago->helpers->cart->removeDiscountAndCommissionOnFeesFromBlocks($this->gateway);
-            }
+            // action 'remove' is a no-op: WooCommerce calls remove_all_fees() at the
+            // start of every calculate_totals() cycle, which already clears MP fees.
         }
+    }
+
+    /**
+     * Whether the gateway has a commission or discount configured.
+     *
+     * @return bool
+     */
+    public function hasFees(): bool
+    {
+        if (!isset($this->gateway)) {
+            return false;
+        }
+
+        return (isset($this->gateway->commission) && $this->gateway->commission !== 0)
+            || (isset($this->gateway->discount) && $this->gateway->discount !== 0);
     }
 
     /**

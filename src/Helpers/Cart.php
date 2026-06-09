@@ -235,62 +235,6 @@ class Cart
     }
 
     /**
-     * Remove plugin discount value on WC_Cart fees
-     *
-     * @return void
-     */
-    public function removeDiscountOnFees(): void
-    {
-        $discountName = $this->storeTranslations->commonCheckout['cart_discount'];
-        $this->addFee($discountName, 0);
-    }
-
-    /**
-     * Remove plugin commission value on WC_Cart fees
-     *
-     * @return void
-     */
-    public function removeCommissionOnFees(): void
-    {
-        $commissionName = $this->storeTranslations->commonCheckout['cart_commission'];
-        $this->addFee($commissionName, 0);
-    }
-
-    /**
-     * Remove plugin and commission to WC_Cart fees
-     *
-     * @param AbstractGateway $gateway
-     *
-     * @return void
-     */
-    public function removeDiscountAndCommissionOnFees(AbstractGateway $gateway)
-    {
-        $selectedGateway = $this->session->getSession('chosen_payment_method');
-
-        if ($selectedGateway && $selectedGateway == $gateway::ID) {
-            $this->removeDiscountOnFees();
-            $this->removeCommissionOnFees();
-        }
-    }
-
-    /**
-     * Remove plugin and commission to WC_Cart fees
-     *
-     * @param AbstractGateway $gateway
-     *
-     * @return void
-     */
-    public function removeDiscountAndCommissionOnFeesFromBlocks(AbstractGateway $gateway)
-    {
-        $selectedGateway = $this->session->getSession(AbstractBlock::GATEWAY_SESSION_KEY);
-
-        if ($selectedGateway && $selectedGateway == $gateway::ID) {
-            $this->removeDiscountOnFees();
-            $this->removeCommissionOnFees();
-        }
-    }
-
-    /**
      * Add fee to WC_Cart
      *
      * @param string $name

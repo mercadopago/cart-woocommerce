@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Tests\Blocks;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Blocks\AbstractBlock;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
@@ -229,5 +230,118 @@ class AbstractBlockTest extends TestCase
         ]);
 
         $this->expectNotToPerformAssertions();
+    }
+
+    public function testFeeHookCallsAddFeesWhenActionIsAdd(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 5;
+        $gatewayMock->discount   = 0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->mercadopago->hooks->checkout
+            ->shouldReceive('isCheckout')->once()->andReturn(false);
+        $this->mercadopago->hooks->cart
+            ->shouldReceive('isCart')->once()->andReturn(false);
+        $this->mercadopago->helpers->session
+            ->shouldReceive('getSession')->with(AbstractBlockStub::ACTION_SESSION_KEY)->once()->andReturn('add');
+        $this->mercadopago->helpers->cart
+            ->shouldReceive('addDiscountAndCommissionOnFeesFromBlocks')->with($gatewayMock)->once();
+
+        $this->block->registerDiscountAndCommissionFeesOnCart();
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testFeeHookNoOpsWhenActionIsRemove(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 5;
+        $gatewayMock->discount   = 0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->mercadopago->hooks->checkout
+            ->shouldReceive('isCheckout')->once()->andReturn(false);
+        $this->mercadopago->hooks->cart
+            ->shouldReceive('isCart')->once()->andReturn(false);
+        $this->mercadopago->helpers->session
+            ->shouldReceive('getSession')->with(AbstractBlockStub::ACTION_SESSION_KEY)->once()->andReturn('remove');
+        $this->mercadopago->helpers->cart->shouldNotReceive('addDiscountAndCommissionOnFeesFromBlocks');
+
+        $this->block->registerDiscountAndCommissionFeesOnCart();
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testFeeHookReturnsEarlyWhenNoFees(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 0;
+        $gatewayMock->discount   = 0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->mercadopago->hooks->checkout
+            ->shouldReceive('isCheckout')->once()->andReturn(false);
+        $this->mercadopago->hooks->cart
+            ->shouldReceive('isCart')->once()->andReturn(false);
+        $this->mercadopago->helpers->session->shouldNotReceive('getSession');
+        $this->mercadopago->helpers->cart->shouldNotReceive('addDiscountAndCommissionOnFeesFromBlocks');
+
+        $this->block->registerDiscountAndCommissionFeesOnCart();
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testFeeHookSkipsFeeLogicWhenGatewayIsNotSet(): void
+    {
+        $this->block->gateway = null;
+
+        $this->mercadopago->hooks->checkout
+            ->shouldReceive('isCheckout')->once()->andReturn(false);
+        $this->mercadopago->hooks->cart
+            ->shouldReceive('isCart')->once()->andReturn(false);
+        $this->mercadopago->helpers->session->shouldNotReceive('getSession');
+        $this->mercadopago->helpers->cart->shouldNotReceive('addDiscountAndCommissionOnFeesFromBlocks');
+
+        $this->block->registerDiscountAndCommissionFeesOnCart();
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testHasFeesTrueWhenCommissionIsSet(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 5;
+        $gatewayMock->discount   = 0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertTrue($this->block->hasFees());
+    }
+
+    public function testHasFeesTrueWhenDiscountIsSet(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 0;
+        $gatewayMock->discount   = 10;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertTrue($this->block->hasFees());
+    }
+
+    public function testHasFeesFalseWhenBothAreZero(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 0;
+        $gatewayMock->discount   = 0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertFalse($this->block->hasFees());
+    }
+
+    public function testHasFeesFalseWhenGatewayNotSet(): void
+    {
+        $this->block->gateway = null;
+
+        $this->assertFalse($this->block->hasFees());
     }
 }

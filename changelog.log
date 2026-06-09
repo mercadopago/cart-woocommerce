@@ -2,6 +2,10 @@ CHANGELOG:
 
 == Changelog
 
+= v8.7.23 (09/06/2026) =
+* Fixed
+- Fixed Mercado Pago fees (0.00) being displayed on orders paid through other gateways when no Mercado Pago fees are configured
+
 = v8.7.22 (03/06/2026) =
 * Added
 - Internal observability improvements for checkout error diagnostics

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.7.23] 2026-06-09
+### Fixed
+- Fixed Mercado Pago fees (0.00) being displayed on orders paid through other gateways when no Mercado Pago fees are configured
+
 ## [8.7.22] 2026-06-03
 ### Added
 - Internal observability improvements for checkout error diagnostics
