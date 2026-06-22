@@ -13,6 +13,9 @@ class MPCardForm {
         this.initCardFormTimeoutReference = null;
         this.isLoading = false;
         this.dispatcherMissingReported = false;
+        this.hasFiredCheckoutOpenedEvent = false;
+        this.hasReportedAmountTrackingDropped = false;
+        this.lastTrackedAmount = null;
 
         this.sendMelidataTimeToLoadMetric();
     }
@@ -21,12 +24,15 @@ class MPCardForm {
         this.amount = amount;
         this.cardNumberFilledValidator = false;
 
+        this.dispatchCheckoutAmountEvent(amount);
+
         if (!window.mpSdkInstance) {
             const mp = new MercadoPago(wc_mercadopago_custom_checkout_params.public_key, {
                 locale: wc_mercadopago_custom_checkout_params.locale,
             });
 
             window.mpSdkInstance = mp;
+            document.dispatchEvent(new CustomEvent('mp_sdk_instance_ready'));
         }
 
         return new Promise((resolve, reject) => {
@@ -298,6 +304,62 @@ class MPCardForm {
         return String(amount);
     }
 
+    formatTrackingAmount(amount = '') {
+        const rawValue = String(amount ?? '').replace(/[^\d.,]/g, '');
+        if (!rawValue) return null;
+
+        const lastCommaIndex = rawValue.lastIndexOf(',');
+        const lastDotIndex = rawValue.lastIndexOf('.');
+
+        const isEuropean = lastCommaIndex > lastDotIndex;
+        const normalizedValue = rawValue.replace(/[.,]/g, (match) => {
+            if (isEuropean) {
+                return match === ',' ? '.' : '';
+            }
+            return match === '.' ? '.' : '';
+        });
+
+        const value = parseFloat(normalizedValue);
+        return isNaN(value) ? null : value.toFixed(2);
+    }
+
+    reportAmountTrackingDroppedOnce(eventOrigin, error) {
+        if (this.hasReportedAmountTrackingDropped) return;
+        this.hasReportedAmountTrackingDropped = true;
+        this.sendMetric(
+            'true',
+            `melidataReady rejected on ${eventOrigin}: ${error?.message || 'unknown error'}`,
+            'mp_checkout_amount_tracking_dropped'
+        );
+    }
+
+    emitWhenMelidataReady(eventName, detail) {
+        const melidataReady = window.melidataReady;
+
+        if (!melidataReady || typeof melidataReady.then !== 'function') {
+            this.reportAmountTrackingDroppedOnce(eventName, new Error('melidataReady is not a Promise'));
+            return;
+        }
+
+        melidataReady
+            .then(() => document.dispatchEvent(new CustomEvent(eventName, { detail })))
+            .catch((error) => this.reportAmountTrackingDroppedOnce(eventName, error));
+    }
+
+    dispatchCheckoutAmountEvent(rawAmount) {
+        const amount = this.formatTrackingAmount(rawAmount);
+        const previousAmount = this.lastTrackedAmount;
+
+        if (!this.hasFiredCheckoutOpenedEvent) {
+            this.hasFiredCheckoutOpenedEvent = true;
+            this.lastTrackedAmount = amount;
+            this.emitWhenMelidataReady('mp_checkout_opened', { amount });
+        } else if (previousAmount && previousAmount !== amount) {
+            this.lastTrackedAmount = amount;
+            this.emitWhenMelidataReady('mp_amount_changed', { amount, oldAmount: previousAmount });
+        }
+    }
+
     handleCardFormErrors(cardFormErrors) {
         if (cardFormErrors.length) {
             const errors = [];
@@ -312,12 +374,8 @@ class MPCardForm {
     }
 
     sendMetric(action, label, target) {
-        if (typeof window.mPmetrics !== 'undefined') {
-            window.mPmetrics.push({
-                action: action,
-                label: label,
-                target: target,
-            });
+        if (typeof window.sendMetric === 'function') {
+            window.sendMetric(action, label, target);
         }
     }
 

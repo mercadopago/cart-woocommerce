@@ -2,7 +2,7 @@ const vm = require('vm');
 const fs = require('fs');
 const { resolveAlias } = require('../../helpers/path-resolver');
 
-const mpSuperTokenPath = resolveAlias('assets/js/checkouts/super-token/mp-super-token.js');
+const mpSuperTokenPath = resolveAlias(`assets/js/checkouts/super-token/${global.SUPER_TOKEN_VERSION}/mp-super-token.js`);
 
 function loadCheckIfSuperTokenWasInitialized(windowOverrides = {}) {
   const fileContent = fs.readFileSync(mpSuperTokenPath, 'utf8');
@@ -346,31 +346,40 @@ describe('checkIfSuperTokenWasInitialized', () => {
   });
 });
 
-describe('mp-super-token init block - mpCustomCheckoutHandler missing metric', () => {
-  function runInitBlock(windowOverrides = {}, globalOverrides = {}) {
+describe('mp-super-token initialization', () => {
+  const MP_SDK_INSTANCE_READY_EVENT = 'mp_sdk_instance_ready';
+  const LEGACY_POLL_WINDOW_MS = 15000;
+  const SCRIPT_STARTED_AT = 1000;
+
+  function runSuperTokenInit({ windowOverrides = {}, globalOverrides = {} } = {}) {
     const fileContent = fs.readFileSync(mpSuperTokenPath, 'utf8');
 
-    const mockSendMetric = jest.fn();
+    const globalSendMetric = jest.fn();
+    const superTokenMetricsSendMetric = jest.fn();
+    const eventListeners = {};
+    const clock = { now: SCRIPT_STARTED_AT };
 
-    let capturedIntervalCallback = null;
+    let fallbackPollTick = null;
+    let fallbackPollExpiry = null;
+    let intervalCleared = false;
 
     const context = {
       window: {
-        mpSdkInstance: {},
+        mpSdkInstance: undefined,
         ...windowOverrides,
       },
-      setInterval: (callback) => {
-        capturedIntervalCallback = callback;
-        return 1;
+      document: {
+        addEventListener: (eventName, handler) => { eventListeners[eventName] = handler; },
       },
-      clearInterval: jest.fn(),
-      setTimeout: jest.fn(),
-      document: { addEventListener: jest.fn() },
+      setInterval: (callback) => { fallbackPollTick = callback; return 1; },
+      clearInterval: () => { intervalCleared = true; },
+      setTimeout: (callback) => { fallbackPollExpiry = callback; return 2; },
+      Date: { now: () => clock.now },
       console: global.console,
-      sendMetric: mockSendMetric,
+      sendMetric: globalSendMetric,
       MPDebounce: jest.fn(() => ({})),
       WCEmailListener: jest.fn(() => ({})),
-      MPSuperTokenMetrics: jest.fn(() => ({ sendMetric: jest.fn() })),
+      MPSuperTokenMetrics: jest.fn(() => ({ sendMetric: superTokenMetricsSendMetric })),
       MPSuperTokenPaymentMethods: jest.fn(() => ({})),
       MPSuperTokenAuthenticator: jest.fn(() => ({})),
       MPSuperTokenErrorHandler: jest.fn(() => ({})),
@@ -380,49 +389,149 @@ describe('mp-super-token init block - mpCustomCheckoutHandler missing metric', (
     };
 
     new vm.Script(fileContent).runInNewContext(context);
-    capturedIntervalCallback?.();
 
-    return { context, mockSendMetric };
+    return {
+      context,
+      globalSendMetric,
+      superTokenMetricsSendMetric,
+      clock,
+      isListeningForSdkInstanceReady: () => typeof eventListeners[MP_SDK_INSTANCE_READY_EVENT] === 'function',
+      fireSdkInstanceReadyEvent: () => eventListeners[MP_SDK_INSTANCE_READY_EVENT]?.(),
+      runFallbackPollTick: () => fallbackPollTick?.(),
+      expireFallbackPoll: () => fallbackPollExpiry?.(),
+      registeredFallbackPoll: () => fallbackPollTick !== null,
+      wasFallbackPollCleared: () => intervalCleared,
+    };
   }
 
-  test('Given mpCustomCheckoutHandler is absent and sendMetric is available, When init runs, Then should send MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS metric', () => {
-    const { mockSendMetric } = runInitBlock();
+  function lastInitSourceMetric(superTokenMetricsSendMetric) {
+    const call = superTokenMetricsSendMetric.mock.calls.find(([metricName]) => metricName === 'super_token_init_source');
+    return call ? call[1] : null;
+  }
 
-    expect(mockSendMetric).toHaveBeenCalledWith(
-      'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
-      'mp_super_token_init',
-      'mp_super_token_init_error'
-    );
+  describe('already-ready path: SDK instance present when the script runs', () => {
+    test('Given the SDK instance already exists, When the script runs, Then it builds the classes immediately', () => {
+      const { context, superTokenMetricsSendMetric } = runSuperTokenInit({ windowOverrides: { mpSdkInstance: {} } });
+
+      expect(context.window.mpSuperTokenTriggerHandler).toBeDefined();
+      expect(superTokenMetricsSendMetric).toHaveBeenCalledWith('super_token_sdk_loaded', 'true', '');
+    });
+
+    test('Given the SDK instance already exists, When the classes are built, Then init source is reported as "already_ready"', () => {
+      const { superTokenMetricsSendMetric } = runSuperTokenInit({ windowOverrides: { mpSdkInstance: {} } });
+
+      expect(lastInitSourceMetric(superTokenMetricsSendMetric)).toBe('already_ready');
+    });
+
+    test('Given the SDK instance already exists, When the script runs, Then it does not register a fallback poll', () => {
+      const { registeredFallbackPoll } = runSuperTokenInit({ windowOverrides: { mpSdkInstance: {} } });
+
+      expect(registeredFallbackPoll()).toBe(false);
+    });
+
+    test('Given mpCustomCheckoutHandler is absent, When the classes are built, Then it sends MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS', () => {
+      const { globalSendMetric } = runSuperTokenInit({ windowOverrides: { mpSdkInstance: {} } });
+
+      expect(globalSendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
+        'mp_super_token_init',
+        'mp_super_token_init_error'
+      );
+    });
+
+    test('Given mpCustomCheckoutHandler is present, When the classes are built, Then it does not send MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS', () => {
+      const { globalSendMetric } = runSuperTokenInit({
+        windowOverrides: { mpSdkInstance: {}, mpCustomCheckoutHandler: { cardForm: {} } },
+      });
+
+      expect(globalSendMetric).not.toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
+        expect.any(String),
+        expect.any(String)
+      );
+    });
+
+    test('Given mpCustomCheckoutHandler is absent, When the classes are built, Then it does not call any flag-marking method on the trigger handler (split flag contract)', () => {
+      const trackedMarkMethod = jest.fn();
+
+      runSuperTokenInit({
+        windowOverrides: { mpSdkInstance: {} },
+        globalOverrides: {
+          MPSuperTokenTriggerHandler: jest.fn(() => ({ markCustomHandlerMissingReported: trackedMarkMethod })),
+        },
+      });
+
+      expect(trackedMarkMethod).not.toHaveBeenCalled();
+    });
   });
 
-  test('Given mpCustomCheckoutHandler is present, When init runs, Then should not send metric', () => {
-    const { mockSendMetric } = runInitBlock({ mpCustomCheckoutHandler: { cardForm: {} } });
+  describe('event-driven path: SDK instance absent when the script runs', () => {
+    test('Given the SDK instance is absent, When the script runs, Then it does not build the classes yet', () => {
+      const { context, superTokenMetricsSendMetric } = runSuperTokenInit();
 
-    expect(mockSendMetric).not.toHaveBeenCalledWith(
-      'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
-      expect.any(String),
-      expect.any(String)
-    );
+      expect(context.window.mpSuperTokenTriggerHandler).toBeUndefined();
+      expect(superTokenMetricsSendMetric).not.toHaveBeenCalledWith('super_token_sdk_loaded', 'true', '');
+    });
+
+    test('Given the SDK instance is absent, When the script runs, Then it listens for the mp_sdk_instance_ready event', () => {
+      const { isListeningForSdkInstanceReady } = runSuperTokenInit();
+
+      expect(isListeningForSdkInstanceReady()).toBe(true);
+    });
+
+    test('Given the SDK instance arrives within the legacy window, When the event fires, Then it builds the classes with source "sdk_event"', () => {
+      const harness = runSuperTokenInit();
+
+      harness.context.window.mpSdkInstance = {};
+      harness.clock.now = SCRIPT_STARTED_AT + 5000;
+      harness.fireSdkInstanceReadyEvent();
+
+      expect(harness.context.window.mpSuperTokenTriggerHandler).toBeDefined();
+      expect(lastInitSourceMetric(harness.superTokenMetricsSendMetric)).toBe('sdk_event');
+    });
+
+    test('Given the SDK instance arrives AFTER the legacy 15s window, When the event fires, Then init source is reported as "sdk_event_recovered"', () => {
+      const harness = runSuperTokenInit();
+
+      harness.context.window.mpSdkInstance = {};
+      harness.clock.now = SCRIPT_STARTED_AT + LEGACY_POLL_WINDOW_MS + 1;
+      harness.fireSdkInstanceReadyEvent();
+
+      expect(harness.context.window.mpSuperTokenTriggerHandler).toBeDefined();
+      expect(lastInitSourceMetric(harness.superTokenMetricsSendMetric)).toBe('sdk_event_recovered');
+    });
   });
 
-  test('Given sendMetric is not available, When init runs, Then should not send metric', () => {
-    const { mockSendMetric } = runInitBlock({}, { sendMetric: undefined });
+  describe('fallback poll: resilience when the event is never emitted', () => {
+    test('Given the SDK instance is absent, When the script runs, Then it registers a fallback poll', () => {
+      const { registeredFallbackPoll } = runSuperTokenInit();
 
-    expect(mockSendMetric).not.toHaveBeenCalled();
+      expect(registeredFallbackPoll()).toBe(true);
+    });
+
+    test('Given the SDK instance appears, When the fallback poll ticks, Then it builds the classes with source "fallback_poll" and clears the poll', () => {
+      const harness = runSuperTokenInit();
+
+      harness.context.window.mpSdkInstance = {};
+      harness.runFallbackPollTick();
+
+      expect(harness.context.window.mpSuperTokenTriggerHandler).toBeDefined();
+      expect(lastInitSourceMetric(harness.superTokenMetricsSendMetric)).toBe('fallback_poll');
+      expect(harness.wasFallbackPollCleared()).toBe(true);
+    });
   });
 
-  test('Given mpCustomCheckoutHandler is absent, When init runs, Then should NOT call any flag-marking method on the trigger handler (split flag contract)', () => {
-    const trackedMarkMethod = jest.fn();
+  describe('idempotency: the classes are built at most once', () => {
+    test('Given the event already built the classes, When the fallback poll ticks afterwards, Then it does not rebuild', () => {
+      const harness = runSuperTokenInit();
 
-    runInitBlock(
-      {},
-      {
-        MPSuperTokenTriggerHandler: jest.fn(() => ({
-          markCustomHandlerMissingReported: trackedMarkMethod,
-        })),
-      }
-    );
+      harness.context.window.mpSdkInstance = {};
+      harness.fireSdkInstanceReadyEvent();
+      harness.runFallbackPollTick();
 
-    expect(trackedMarkMethod).not.toHaveBeenCalled();
+      const sdkLoadedCalls = harness.superTokenMetricsSendMetric.mock.calls
+        .filter(([metricName]) => metricName === 'super_token_sdk_loaded');
+      expect(sdkLoadedCalls).toHaveLength(1);
+    });
   });
 });

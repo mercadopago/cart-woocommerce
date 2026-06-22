@@ -1,8 +1,17 @@
 const { resolveAlias } = require('../../../helpers/path-resolver');
 const { loadFile } = require('../../../helpers/load-file');
+// Static require so Jest's module graph links this suite to the source file.
+// The class is not exported (it is executed via loadFile below), but this edge
+// is what lets `jest --findRelatedTests` / diff-coverage attribute coverage here.
+require('assets/js/checkouts/custom/entities/event-handler.js');
 const eventHandlerPath = resolveAlias('assets/js/checkouts/custom/entities/event-handler.js');
 
-describe('MPEventHandler - hasWooCommerceValidationErrors', () => {
+// No-op stub: MPEventHandler constructor uses MobileCheckoutClassicObserver as a default
+// parameter. Tests instantiate the handler directly without going through bindEvents,
+// so the observer never runs — a no-op class is sufficient to satisfy the reference.
+class MobileCheckoutClassicObserverStub { constructor() {} }
+
+describe('MPEventHandler - validateCheckoutThenContinue', () => {
   let handler;
   let MPEventHandler;
 
@@ -30,11 +39,13 @@ describe('MPEventHandler - hasWooCommerceValidationErrors', () => {
     global.sendMetric = jest.fn();
 
     MPEventHandler = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
       jQuery: global.jQuery,
       wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
       MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
       setTimeout: global.setTimeout,
       clearTimeout: global.clearTimeout,
+      AbortController: global.AbortController,
       sendMetric: global.sendMetric,
     });
   });
@@ -59,71 +70,206 @@ describe('MPEventHandler - hasWooCommerceValidationErrors', () => {
   });
 
   // =========================================================================
-  // hasWooCommerceValidationErrors — CDN wrapper
-  // Implementation lives in window.hasWooCommerceValidationErrors (CDN bundle).
-  // The plugin method is a thin wrapper: delegate if available, fallback otherwise.
+  // validateCheckoutThenContinue — server-side pre-validation (wc_ajax_mp_validate_checkout)
+  // Replaces the legacy CSS check: no fallback, trust the endpoint 100%.
   // =========================================================================
-  describe('hasWooCommerceValidationErrors() CDN wrapper', () => {
+  describe('validateCheckoutThenContinue()', () => {
+    let onValid;
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    beforeEach(() => {
+      onValid = jest.fn();
+      window.wc_mercadopago_checkout_update_params = {
+        validationEndpoint: 'https://store.test/?wc-ajax=mp_validate_checkout',
+      };
+      handler.getCheckoutForm = jest.fn().mockReturnValue({
+        serialize: () => 'billing_postcode=12345',
+        length: 1,
+        prepend: jest.fn(),
+      });
+      handler.isOrderPayPage = jest.fn().mockReturnValue(false);
+      handler.showCheckoutClassicLoader = jest.fn();
+      handler.hideCheckoutClassicLoader = jest.fn();
+    });
+
     afterEach(() => {
-      delete window.hasWooCommerceValidationErrors;
+      delete global.fetch;
+      delete window.wc_mercadopago_checkout_update_params;
     });
 
-    it('when CDN function is available and returns true, then should delegate and return true', () => {
-      window.hasWooCommerceValidationErrors = jest.fn().mockReturnValue(true);
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(true);
-      expect(window.hasWooCommerceValidationErrors).toHaveBeenCalledTimes(1);
-    });
-
-    it('when CDN function is available and returns false, then should delegate and return false', () => {
-      window.hasWooCommerceValidationErrors = jest.fn().mockReturnValue(false);
-
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-      expect(window.hasWooCommerceValidationErrors).toHaveBeenCalledTimes(1);
-    });
-
-    it('when CDN function is not available, then should return false and never block the checkout', () => {
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
-
-    it('when CDN function is not available, then should emit MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK metric', () => {
-      handler.hasWooCommerceValidationErrors();
-
-      expect(global.sendMetric).toHaveBeenCalledWith(
-        'MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK',
-        'hasWooCommerceValidationErrors not available',
-        'mp_custom_checkout_validation_cdn_fallback'
-      );
-    });
-
-    it('when CDN function throws, then should return false and never block the checkout', () => {
-      window.hasWooCommerceValidationErrors = jest.fn().mockImplementation(() => {
-        throw new Error('unexpected CDN error');
+    it('when form is valid, then should fetch once, call onValid and preventDefault', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { valid: true, errors: [] } }),
       });
+      const event = { preventDefault: jest.fn() };
 
-      expect(handler.hasWooCommerceValidationErrors()).toBe(false);
-    });
+      handler.validateCheckoutThenContinue(event, onValid);
+      await flush();
 
-    it('when CDN function throws, then should emit MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK metric with error message', () => {
-      window.hasWooCommerceValidationErrors = jest.fn().mockImplementation(() => {
-        throw new Error('unexpected CDN error');
-      });
-
-      handler.hasWooCommerceValidationErrors();
-
-      expect(global.sendMetric).toHaveBeenCalledWith(
-        'MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK',
-        'unexpected CDN error',
-        'mp_custom_checkout_validation_cdn_fallback'
-      );
-    });
-
-    it('when CDN function is available, then should not emit fallback metric', () => {
-      window.hasWooCommerceValidationErrors = jest.fn().mockReturnValue(false);
-
-      handler.hasWooCommerceValidationErrors();
-
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
+      expect(onValid).toHaveBeenCalledTimes(1);
+      // Regression guard: the validation overlay must be cleared before handing off to the
+      // continuation, otherwise createToken's card-field failures leave the form stuck loading.
+      expect(handler.hideCheckoutClassicLoader).toHaveBeenCalledTimes(1);
+      // A conclusive valid verdict is NOT a fail open — no fail-open metric is emitted.
       expect(global.sendMetric).not.toHaveBeenCalled();
+      expect(handler.isValidating).toBe(false);
+    });
+
+    it('when form is invalid, then should show errors and NOT continue tokenization', async () => {
+      const errors = [{ field: 'billing_postcode', code: 'postcode', message: 'Postcode is required' }];
+      global.fetch = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { valid: false, errors } }),
+      });
+      handler.displayCheckoutValidationErrors = jest.fn();
+
+      handler.validateCheckoutThenContinue({ preventDefault: jest.fn() }, onValid);
+      await flush();
+
+      expect(onValid).not.toHaveBeenCalled();
+      expect(handler.displayCheckoutValidationErrors).toHaveBeenCalledWith(errors);
+      expect(handler.hideCheckoutClassicLoader).toHaveBeenCalledTimes(1);
+      expect(handler.isValidating).toBe(false);
+    });
+
+    it('when the endpoint fails (network/timeout), then should fail open, not block, and emit the fail-open metric', async () => {
+      global.fetch = jest.fn().mockRejectedValue(new Error('Failed to fetch'));
+      handler.displayCheckoutValidationErrors = jest.fn();
+
+      handler.validateCheckoutThenContinue({ preventDefault: jest.fn() }, onValid);
+      await flush();
+
+      expect(onValid).toHaveBeenCalledTimes(1);
+      expect(handler.displayCheckoutValidationErrors).not.toHaveBeenCalled();
+      expect(handler.hideCheckoutClassicLoader).toHaveBeenCalledTimes(1);
+      expect(handler.isValidating).toBe(false);
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN',
+        'network',
+        'Failed to fetch'
+      );
+    });
+
+    it('when the endpoint returns an unexpected error response (success:false), then should fail open and emit the fail-open metric', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: false, data: { error: 'unexpected_error' } }),
+      });
+      handler.displayCheckoutValidationErrors = jest.fn();
+
+      handler.validateCheckoutThenContinue({ preventDefault: jest.fn() }, onValid);
+      await flush();
+
+      expect(onValid).toHaveBeenCalledTimes(1);
+      expect(handler.displayCheckoutValidationErrors).not.toHaveBeenCalled();
+      expect(handler.isValidating).toBe(false);
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN',
+        'server_error',
+        'validate_checkout_then_continue'
+      );
+    });
+
+    it('when a validation is already in progress, then a second call should be ignored (single fetch)', async () => {
+      // Pending fetch keeps the lock held across the second call.
+      global.fetch = jest.fn().mockReturnValue(new Promise(() => {}));
+      const event = { preventDefault: jest.fn() };
+
+      handler.validateCheckoutThenContinue(event, onValid);
+      handler.validateCheckoutThenContinue(event, onValid);
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(handler.isValidating).toBe(true);
+    });
+
+    it('when the endpoint URL is missing, then should fail open without blocking and emit the fail-open metric', () => {
+      window.wc_mercadopago_checkout_update_params = {};
+      global.fetch = jest.fn();
+      const event = { preventDefault: jest.fn() };
+
+      handler.validateCheckoutThenContinue(event, onValid);
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(onValid).toHaveBeenCalledTimes(1);
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN',
+        'endpoint_missing',
+        'validate_checkout_then_continue'
+      );
+    });
+
+    it('when on the order-pay page, then should skip pre-validation, not fetch and call onValid directly', () => {
+      // order-pay posts #order_review (woocommerce-pay-nonce), which this endpoint cannot
+      // validate; pre-validating would fail open with 'server_error' on every order-pay payment.
+      handler.isOrderPayPage = jest.fn().mockReturnValue(true);
+      global.fetch = jest.fn();
+      const event = { preventDefault: jest.fn() };
+
+      handler.validateCheckoutThenContinue(event, onValid);
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(onValid).toHaveBeenCalledTimes(1);
+      // Not a fail open — it is a deliberate skip, so no fail-open metric is emitted.
+      expect(global.sendMetric).not.toHaveBeenCalled();
+      expect(handler.isValidating).toBe(false);
+    });
+
+    // ---- error rendering + loader visibility ----------------------------
+    describe('error rendering and loaders', () => {
+      beforeEach(() => {
+        // jsdom does not implement scrollIntoView
+        Element.prototype.scrollIntoView = jest.fn();
+      });
+
+      it('renders the errors as a list inside the WooCommerce notice group', () => {
+        document.body.innerHTML = '<div class="woocommerce-NoticeGroup-checkout"></div>';
+
+        handler.displayCheckoutValidationErrors([
+          { field: 'billing_postcode', code: 'postcode', message: 'Postcode is required' },
+          { field: 'billing_email', code: 'email', message: 'Invalid email' },
+        ]);
+
+        const list = document.querySelector('.woocommerce-NoticeGroup-checkout ul.woocommerce-error');
+        expect(list).not.toBeNull();
+        const items = list.querySelectorAll('li');
+        expect(items).toHaveLength(2);
+        expect(items[0].textContent).toBe('Postcode is required');
+        expect(list.getAttribute('role')).toBe('alert');
+      });
+
+      it('prepends the error list to the checkout form when there is no notice group', () => {
+        const prepend = jest.fn();
+        handler.getCheckoutForm = jest.fn().mockReturnValue({ length: 1, prepend });
+
+        handler.displayCheckoutValidationErrors([{ field: 'x', code: 'x', message: 'Some error' }]);
+
+        expect(prepend).toHaveBeenCalledTimes(1);
+        const list = prepend.mock.calls[0][0];
+        expect(list.className).toBe('woocommerce-error');
+        expect(list.querySelectorAll('li')).toHaveLength(1);
+      });
+
+      it('does nothing when there are no error messages', () => {
+        document.body.innerHTML = '<div class="woocommerce-NoticeGroup-checkout"></div>';
+
+        handler.displayCheckoutValidationErrors([{ field: 'x', code: 'x' }]); // no message
+
+        expect(document.querySelector('.woocommerce-error')).toBeNull();
+      });
+
+      it('uses the card-form spinner on the Order Pay page', () => {
+        handler.isOrderPayPage = jest.fn().mockReturnValue(true);
+        handler.cardForm.createLoadSpinner = jest.fn();
+        handler.cardForm.removeLoadSpinner = jest.fn();
+
+        handler.showValidationLoader();
+        handler.hideValidationLoader();
+
+        expect(handler.cardForm.createLoadSpinner).toHaveBeenCalledTimes(1);
+        expect(handler.cardForm.removeLoadSpinner).toHaveBeenCalledTimes(1);
+      });
     });
   });
 
@@ -225,6 +371,16 @@ describe('MPEventHandler - hasWooCommerceValidationErrors', () => {
       expect(handler.mercado_pago_submit).toBe(false);
     });
 
+    it('when called mid-validation, then should release the isValidating lock', () => {
+      // Guards against a stuck buy button: if checkout_error fires while a validation fetch is
+      // still pending, the lock must be released so the buyer can retry.
+      handler.isValidating = true;
+
+      handler.handleCheckoutError();
+
+      expect(handler.isValidating).toBe(false);
+    });
+
     it('when called with Super Token active, then should call resetSuperTokenOnError with preserveSelection=true', () => {
       handler.handleCheckoutError();
 
@@ -265,6 +421,7 @@ describe('MPEventHandler - createToken (T05 mp_api_error instrumentation)', () =
     // jQuery e demais globais já foram setados pelo describe anterior;
     // aqui re-carregamos MPEventHandler com window.callSdkWithMetrics disponível via global.
     MPEventHandlerForT05 = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
       jQuery: global.jQuery,
       wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
       MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
@@ -367,6 +524,7 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
     };
 
     MPEventHandler = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
       jQuery: global.jQuery,
       wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
       MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
@@ -459,5 +617,168 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
       expect(superTokenTriggerHandler.setLastException).toHaveBeenCalledWith(domError);
       expect(superTokenAuthenticator.authorizePayment).not.toHaveBeenCalled();
     });
+  });
+});
+
+// =============================================================================
+// T06 — Gate de validação de documento antes de createCardToken (PSW-3990)
+// verifyDocument() deve ser invocada antes de createCardToken() no Classic.
+// CheckoutPage.verifyDocument é um método de mp-custom-page.js disponível
+// globalmente — segue o mesmo padrão de guard do gate de installments.
+//
+// CheckoutPage precisa ser passado no contexto do loadFile (não via global)
+// pois o vm.Script tem contexto próprio e não enxerga global.CheckoutPage
+// atribuído após a criação do sandbox.
+// =============================================================================
+describe('MPEventHandler - createToken (T06 document validation gate)', () => {
+  let MPEventHandlerForT06;
+  let handler;
+  let cardFormMock;
+  let checkoutPageMock;
+  let sendMetricMock;
+
+  beforeAll(() => {
+    sendMetricMock = jest.fn();
+
+    // Objeto mutável passado como referência no contexto do vm.
+    // As propriedades são atualizadas em cada teste — o módulo enxerga as mudanças
+    // porque mantém referência ao mesmo objeto.
+    checkoutPageMock = {
+      verifyDocument: jest.fn(),
+      scrollToCheckoutCustomContainer: jest.fn(),
+    };
+
+    MPEventHandlerForT06 = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
+      jQuery: global.jQuery,
+      wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
+      MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
+      setTimeout: global.setTimeout,
+      clearTimeout: global.clearTimeout,
+      CheckoutPage: checkoutPageMock,
+      sendMetric: sendMetricMock,
+    });
+  });
+
+  beforeEach(() => {
+    // #form-checkout__identificationNumber simula o hidden input com value vazio (campo não preenchido)
+    document.body.innerHTML = '<input type="hidden" id="cardTokenId">' +
+      '<input type="hidden" id="form-checkout__identificationNumber" value="">' +
+      '<div id="mp-doc-div"><div id="form-checkout__identificationNumber-container"></div></div>';
+    Element.prototype.scrollIntoView = jest.fn();
+    sendMetricMock.mockClear();
+    checkoutPageMock.verifyDocument = jest.fn();
+    checkoutPageMock.scrollToCheckoutCustomContainer = jest.fn();
+    checkoutPageMock.setDisplayOfError = jest.fn();
+    checkoutPageMock.setDisplayOfInputHelper = jest.fn();
+
+    cardFormMock = {
+      formMounted: false,
+      initCardForm: jest.fn(),
+      createLoadSpinner: jest.fn(),
+      removeLoadSpinner: jest.fn(),
+      scrollToCardForm: jest.fn(),
+      form: {
+        createCardToken: jest.fn().mockResolvedValue({ token: 'tok_test_123' }),
+      },
+    };
+
+    handler = new MPEventHandlerForT06(cardFormMock, {
+      set3dsStatusValidationListener: jest.fn(),
+    });
+  });
+
+  test('TC-EH-DOC-01: verifyDocument() returns false → createCardToken is not called', () => {
+    checkoutPageMock.verifyDocument.mockReturnValue(false);
+
+    handler.createToken();
+
+    expect(cardFormMock.form.createCardToken).not.toHaveBeenCalled();
+  });
+
+  test('TC-EH-DOC-02: verifyDocument() returns false → metric sent with reason empty_field', () => {
+    // DOM tem #form-checkout__identificationNumber com value="" → reason = 'empty_field'
+    checkoutPageMock.verifyDocument.mockReturnValue(false);
+
+    handler.createToken();
+
+    expect(cardFormMock.removeLoadSpinner).toHaveBeenCalled();
+    expect(sendMetricMock).toHaveBeenCalledWith(
+      'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
+      'empty_field',
+      'mp_custom_document_validation',
+      { reason: 'empty_field' }
+    );
+  });
+
+  test('TC-EH-DOC-03: verifyDocument() returns false → document error and input-helper are shown', () => {
+    checkoutPageMock.setDisplayOfError = jest.fn();
+    checkoutPageMock.setDisplayOfInputHelper = jest.fn();
+    checkoutPageMock.verifyDocument.mockReturnValue(false);
+
+    handler.createToken();
+
+    expect(checkoutPageMock.setDisplayOfError).toHaveBeenCalledWith('fcIdentificationNumberContainer', 'add', 'mp-error');
+    expect(checkoutPageMock.setDisplayOfInputHelper).toHaveBeenCalledWith('mp-doc-number', 'flex');
+  });
+
+  test('TC-EH-DOC-04: verifyDocument() returns true and no CSS error class → createCardToken is called, no metric', () => {
+    checkoutPageMock.verifyDocument.mockReturnValue(true);
+
+    handler.createToken();
+
+    expect(cardFormMock.form.createCardToken).toHaveBeenCalled();
+    expect(sendMetricMock).not.toHaveBeenCalled();
+  });
+
+  test('TC-EH-DOC-06: verifyDocument() returns true but mp-error on container → metric sent with reason invalid_format', () => {
+    // Simula CPF inválido: container tem mp-error, input tem valor não-vazio
+    checkoutPageMock.verifyDocument.mockReturnValue(true);
+    document.querySelector('#form-checkout__identificationNumber').value = '12345678900';
+    document.querySelector('#form-checkout__identificationNumber-container').classList.add('mp-error');
+
+    handler.createToken();
+
+    expect(cardFormMock.form.createCardToken).not.toHaveBeenCalled();
+    expect(cardFormMock.removeLoadSpinner).toHaveBeenCalled();
+    expect(sendMetricMock).toHaveBeenCalledWith(
+      'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
+      'invalid_format',
+      'mp_custom_document_validation',
+      { reason: 'invalid_format' }
+    );
+  });
+
+  test('TC-EH-DOC-07: verifyDocument() returns true but mp-error-2px on second container (duplicate) → metric sent with reason invalid_format', () => {
+    // Simula containers duplicados: primeiro stale, segundo ativo com mp-error-2px
+    checkoutPageMock.verifyDocument.mockReturnValue(true);
+    document.querySelector('#form-checkout__identificationNumber').value = '543634600';
+    const activeContainer = document.createElement('div');
+    activeContainer.id = 'form-checkout__identificationNumber-container';
+    activeContainer.classList.add('mp-error-2px');
+    document.body.appendChild(activeContainer);
+
+    handler.createToken();
+
+    expect(cardFormMock.form.createCardToken).not.toHaveBeenCalled();
+    expect(sendMetricMock).toHaveBeenCalledWith(
+      'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
+      'invalid_format',
+      'mp_custom_document_validation',
+      { reason: 'invalid_format' }
+    );
+
+    document.body.removeChild(activeContainer);
+  });
+
+  test('TC-EH-DOC-05: CheckoutPage.verifyDocument not defined → createCardToken is called, no metric', () => {
+    // Simula método ausente: typeof CheckoutPage.verifyDocument === 'function' é false
+    // beforeEach recria verifyDocument: jest.fn() antes de cada teste — restauração manual desnecessária
+    delete checkoutPageMock.verifyDocument;
+
+    handler.createToken();
+
+    expect(cardFormMock.form.createCardToken).toHaveBeenCalled();
+    expect(sendMetricMock).not.toHaveBeenCalled();
   });
 });

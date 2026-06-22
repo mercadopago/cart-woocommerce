@@ -107,11 +107,11 @@ class Scripts
      *
      * @return void
      */
-    public function registerCheckoutScript(string $name, string $file, array $variables = []): void
+    public function registerCheckoutScript(string $name, string $file, array $variables = [], array $deps = []): void
     {
-        add_action('wp_enqueue_scripts', function () use ($name, $file, $variables) {
+        add_action('wp_enqueue_scripts', function () use ($name, $file, $variables, $deps) {
             if ($this->isPaymentsRelatedPage()) {
-                $this->registerScript($name, $file, $variables);
+                $this->registerScript($name, $file, $variables, $deps);
                 $this->scriptHealthMonitor->trackEnqueued($name);
             }
         });
@@ -147,12 +147,13 @@ class Scripts
      * @param string $name
      * @param string $file
      * @param array $variables
+     * @param array $deps
      *
      * @return void
      */
-    public function registerStoreScript(string $name, string $file, array $variables = []): void
+    public function registerStoreScript(string $name, string $file, array $variables = [], array $deps = []): void
     {
-        $this->registerScript($name, $file, $variables);
+        $this->registerScript($name, $file, $variables, $deps);
     }
 
     /**
@@ -260,12 +261,14 @@ class Scripts
 
         add_action('wp_enqueue_scripts', function () use ($file, $location) {
             if ($this->isPaymentsRelatedPage() && !is_cart() && !is_view_order_page()) {
+                $deps = array_merge(
+                    wp_script_is('wc_mercadopago_sdk', 'registered') ? ['wc_mercadopago_sdk'] : [],
+                    wp_script_is('wc-blocks-registry', 'registered') ? ['wc-blocks-registry'] : []
+                );
                 wp_enqueue_script(
                     self::MELIDATA_SCRIPT_NAME,
                     $file,
-                    wp_script_is('wc_mercadopago_sdk', 'registered')
-                            ? ['wc_mercadopago_sdk']
-                            : [],
+                    $deps,
                     $this->url->assetVersion(),
                     true
                 );
@@ -329,7 +332,8 @@ class Scripts
             return;
         }
 
-        $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables);
+        $deps = wp_script_is('wc-blocks-registry', 'registered') ? ['wc-blocks-registry'] : [];
+        $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables, $deps);
     }
 
     public function registerMpBehaviorTrackingScript(): void
@@ -432,9 +436,9 @@ class Scripts
      *
      * @return void
      */
-    private function registerScript(string $name, string $file, array $variables = []): void
+    private function registerScript(string $name, string $file, array $variables = [], array $deps = []): void
     {
-        wp_enqueue_script($name, $file, [], $this->url->assetVersion(), true);
+        wp_enqueue_script($name, $file, $deps, $this->url->assetVersion(), true);
 
         if ($variables) {
             wp_localize_script($name, $name . self::SUFFIX, $variables);

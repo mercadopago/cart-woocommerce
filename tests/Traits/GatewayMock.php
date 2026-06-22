@@ -40,6 +40,14 @@ trait GatewayMock
         $datadogMock->shouldReceive('sendEvent')->byDefault();
         $this->gateway->datadog = $datadogMock;
 
+        // AbstractGateway::registerCheckoutScripts() resolves the checkout validation
+        // endpoint URL via WC_AJAX::get_endpoint(); provide a default so the shared
+        // script registration does not fail. Specific tests may override this.
+        Mockery::mock('alias:WC_AJAX')
+            ->shouldReceive('get_endpoint')
+            ->byDefault()
+            ->andReturn('https://store.test/?wc-ajax=endpoint');
+
         // Initialize settings property to avoid undefined property errors
         $this->gateway->settings = [
             'currency_conversion' => 'no',

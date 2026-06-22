@@ -11,6 +11,7 @@ use MercadoPago\Woocommerce\Transactions\CustomTransaction;
 use MercadoPago\Woocommerce\Transactions\SupertokenTransaction;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
+use MercadoPago\PP\Sdk\Exceptions\ApiException;
 use MercadoPago\Woocommerce\Helpers\Device;
 
 if (!defined('ABSPATH')) {
@@ -254,14 +255,16 @@ class CustomGateway extends AbstractGateway
      */
     public function registerSuperTokenStyles()
     {
+        $version = MP_SUPER_TOKEN_VERSION;
+
         $this->mercadopago->hooks->scripts->registerCheckoutStyle(
             'wc_mercadopago_supertoken_payment_methods',
-            $this->mercadopago->helpers->url->getCssAsset('checkouts/super-token/super-token-payment-methods'),
+            $this->mercadopago->helpers->url->getCssAsset("checkouts/super-token/{$version}/super-token-payment-methods"),
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutStyle(
             'wc_mercadopago_supertoken_payment_method_details_skeleton',
-            $this->mercadopago->helpers->url->getCssAsset('checkouts/super-token/super-token-method-details-skeleton'),
+            $this->mercadopago->helpers->url->getCssAsset("checkouts/super-token/{$version}/super-token-method-details-skeleton"),
         );
     }
 
@@ -374,18 +377,23 @@ class CustomGateway extends AbstractGateway
             $scriptUrl = $this->mercadopago->helpers->url->getJsAsset($script['path']);
         }
 
+        $deps = $script['deps'] ?? [];
+
         if (isset($script['localize'])) {
             $this->mercadopago->hooks->scripts->registerCheckoutScript(
                 $script['handle'],
                 $scriptUrl,
-                $script['localize']
+                $script['localize'],
+                $deps
             );
             return;
         }
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             $script['handle'],
-            $scriptUrl
+            $scriptUrl,
+            [],
+            $deps
         );
     }
 
@@ -416,8 +424,13 @@ class CustomGateway extends AbstractGateway
                 'path' => 'checkouts/custom/entities/three-ds-handler',
             ],
             [
+                'handle' => 'wc_mercadopago_custom_mobile_checkout_classic_observer',
+                'path' => 'checkouts/custom/entities/mobile-checkout-classic-observer',
+            ],
+            [
                 'handle' => 'wc_mercadopago_custom_event_handler',
                 'path' => 'checkouts/custom/entities/event-handler',
+                'deps' => ['wc_mercadopago_custom_mobile_checkout_classic_observer'],
                 'localize' => [
                     'is_mobile' => Device::isMobile(),
                 ],
@@ -511,46 +524,48 @@ class CustomGateway extends AbstractGateway
      */
     private function getSuperTokenScripts(): array
     {
+        $version = MP_SUPER_TOKEN_VERSION;
+
         return [
             [
                 'handle' => 'wc_mercadopago_supertoken_error_constants',
-                'path' => 'checkouts/super-token/errors/super-token-error-constants',
+                'path' => "checkouts/super-token/{$version}/errors/super-token-error-constants",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken_error_handler',
-                'path' => 'checkouts/super-token/errors/super-token-error-handler',
+                'path' => "checkouts/super-token/{$version}/errors/super-token-error-handler",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken_debounce',
-                'path' => 'checkouts/super-token/entities/debounce',
+                'path' => "checkouts/super-token/{$version}/entities/debounce",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken_email_listener',
-                'path' => 'checkouts/super-token/entities/email-listener',
+                'path' => "checkouts/super-token/{$version}/entities/email-listener",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken_metrics',
-                'path' => 'checkouts/super-token/entities/super-token-metrics',
+                'path' => "checkouts/super-token/{$version}/entities/super-token-metrics",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken_trigger_handler',
-                'path' => 'checkouts/super-token/entities/super-token-trigger-handler',
+                'path' => "checkouts/super-token/{$version}/entities/super-token-trigger-handler",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken_payment_methods',
-                'path' => 'checkouts/super-token/entities/super-token-payment-methods',
+                'path' => "checkouts/super-token/{$version}/entities/super-token-payment-methods",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken_authenticator',
-                'path' => 'checkouts/super-token/entities/super-token-authenticator',
+                'path' => "checkouts/super-token/{$version}/entities/super-token-authenticator",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken_checkout_form_validator',
-                'path' => 'checkouts/super-token/validators/checkout-form-validator',
+                'path' => "checkouts/super-token/{$version}/validators/checkout-form-validator",
             ],
             [
                 'handle' => 'wc_mercadopago_supertoken',
-                'path' => 'checkouts/super-token/mp-super-token',
+                'path' => "checkouts/super-token/{$version}/mp-super-token",
             ]
         ];
     }
@@ -577,6 +592,13 @@ class CustomGateway extends AbstractGateway
                 'yellow_money_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-yellow-money'),
                 'white_card_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-white-card'),
                 'new_mp_logo_path' => $this->mercadopago->helpers->url->getImageAsset('logos/new-mp-logo'),
+                'mp_logo_blue_path' => $this->mercadopago->helpers->url->getImageAsset('logos/mp-logo-blue'),
+                'mp_logo_dark_path' => $this->mercadopago->helpers->url->getImageAsset('logos/mp-logo-dark'),
+                'saved_cards_title' => $this->storeTranslations['saved_cards_title'],
+                'saved_card_title' => $this->storeTranslations['saved_card_title'],
+                'mp_methods_title' => $this->storeTranslations['mp_methods_title'],
+                'account_money_balance_text' => $this->storeTranslations['account_money_balance_text'],
+                'saved_payment_method_title' => $this->storeTranslations['saved_payment_method_title'],
                 'payment_methods_order' => $this->mercadopago->hooks->options->getGatewayOption($this, 'payment_methods_order', 'cards_first'),
                 'payment_methods_thumbnails' => $this->mercadopago->sellerConfig->getPaymentMethodsThumbnails(),
                 'intl' => $this->countryConfigs['intl'],
@@ -621,6 +643,7 @@ class CustomGateway extends AbstractGateway
                     ],
                 ],
                 'mercado_pago_card_name' => $this->storeTranslations['mercado_pago_card_name'],
+                'mercado_pago_credit_card_name' => $this->storeTranslations['mercado_pago_credit_card_name'],
                 'consumer_credits_due_date' => $this->storeTranslations['consumer_credits_due_date'],
                 'months_abbreviated' => $this->storeTranslations['months_abbreviated'],
                 'mlb_installment_debit_auto_text' => $this->storeTranslations['mlb_installment_debit_auto_text'],
@@ -789,7 +812,21 @@ class CustomGateway extends AbstractGateway
                         );
                     }
 
-                    $response = $this->transaction->createPayment();
+                    try {
+                        $response = $this->transaction->createPayment();
+                    } catch (ApiException $e) {
+                        $errorCode = $this->mercadopago->helpers->errorMessages->findCodeInOriginalMessage($e->getOriginalMessage())
+                            ?? $e->getErrorCode()
+                            ?? $e->getMessage();
+
+                        return $this->processReturnFail(
+                            $e,
+                            $errorCode,
+                            self::LOG_SOURCE,
+                            [],
+                            true
+                        );
+                    }
 
                     $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response, $this->transaction->getInternalMetadata());
                     return $this->handleResponseStatus($order, $response);
@@ -974,13 +1011,26 @@ class CustomGateway extends AbstractGateway
         $result = parent::processReturnFail($e, $message, $source, $context, $notice);
 
         if ($this->isOrderPayPage()) {
-            $statusDetail = $e instanceof RejectedPaymentException ? $e->getStatusDetail() : $this->storeTranslations['default_error_message'];
+            // Forward the resolved $result['message'] when the error carries a specific code — either a
+            // top-level errorCode, or one embedded only in original_message (e.g. pseudotoken_payment_method_gone,
+            // which arrives with a null/generic errorCode). The errorCode check comes first so original_message is
+            // only scanned when needed. Otherwise fall back to the generic buyer message.
+            $hasResolvableCode = $e instanceof ApiException
+                && ($e->getErrorCode() !== null
+                    || $this->mercadopago->helpers->errorMessages->findCodeInOriginalMessage($e->getOriginalMessage()) !== null);
+
+            $messages = $hasResolvableCode
+                ? $result['message']
+                : ($this->mercadopago->storeTranslations->buyerRefusedMessages[
+                    $this->getRejectedPaymentErrorKey(
+                        $e instanceof RejectedPaymentException ? $e->getStatusDetail() : $this->storeTranslations['default_error_message']
+                    )
+                ] ?? $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default']);
+
             $this->handlePayForOrderRequest([
-                'result' => 'fail',
+                'result'   => 'fail',
                 'redirect' => false,
-                'messages' => $this->mercadopago->storeTranslations->buyerRefusedMessages[
-                    $this->getRejectedPaymentErrorKey($statusDetail)
-                ] ?? $this->mercadopago->storeTranslations->buyerRefusedMessages['buyer_default']
+                'messages' => $messages,
             ]);
         }
 
@@ -1091,13 +1141,7 @@ class CustomGateway extends AbstractGateway
             }
             throw new ResponseStatusException('exception: Response status not mapped on ' . __METHOD__);
         } catch (Exception $e) {
-            return $this->processReturnFail(
-                $e,
-                $e->getMessage(),
-                self::LOG_SOURCE,
-                (array) $response,
-                true
-            );
+            return $this->processReturnFail($e, $e->getMessage(), self::LOG_SOURCE, (array) $response, true);
         }
     }
 

@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.7.24';
+    private const PLUGIN_VERSION = '8.8.0';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -49,6 +49,8 @@ class WoocommerceMercadoPago
     private const PLUGIN_NAME = 'woocommerce-mercadopago/woocommerce-mercadopago.php';
 
     private const PLUGIN_SUPER_TOKEN_USE_BUNDLE = true;
+
+    private const PLUGIN_SUPER_TOKEN_VERSION = 'v2.1';
 
     private const PLUGIN_SDK_ENV = 'prod';
 
@@ -122,6 +124,7 @@ class WoocommerceMercadoPago
     public function registerHooks(): void
     {
         add_action('init', [$this, 'loadPluginTextDomain'], 0);
+        add_action('init', [$this, 'runMigrations'], 0);
         add_action('init', [$this, 'init'], 1);
         add_filter('query_vars', function ($vars) {
             $vars[] = 'wallet_button';
@@ -279,6 +282,27 @@ class WoocommerceMercadoPago
     public function booted(): bool
     {
         return static::$booted;
+    }
+
+    /**
+     * Run one-time data migrations keyed by version.
+     * Deletes stale cached options so they are refreshed from the API on next load.
+     *
+     * @return void
+     */
+    public function runMigrations(): void
+    {
+        $installedVersion = get_option('_mp_installed_version', '0.0.0');
+
+        if ($installedVersion === self::PLUGIN_VERSION) {
+            return;
+        }
+
+        if (version_compare($installedVersion, '8.8.0', '<')) {
+            delete_option('_all_payment_methods_ticket');
+        }
+
+        update_option('_mp_installed_version', self::PLUGIN_VERSION);
     }
 
     /**
@@ -453,6 +477,7 @@ class WoocommerceMercadoPago
         $this->define('MP_PRODUCT_ID_DESKTOP', self::PRODUCT_ID_DESKTOP);
         $this->define('MP_PRODUCT_ID_MOBILE', self::PRODUCT_ID_MOBILE);
         $this->define('MP_SUPER_TOKEN_USE_BUNDLE', self::PLUGIN_SUPER_TOKEN_USE_BUNDLE);
+        $this->define('MP_SUPER_TOKEN_VERSION', self::PLUGIN_SUPER_TOKEN_VERSION);
         $this->define('MP_SDK_ENV', self::PLUGIN_SDK_ENV);
     }
 

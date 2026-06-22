@@ -46,7 +46,7 @@
   },
   "require": {
     "php": ">=7.4",
-    "mp-plugins/php-sdk": "3.3.0"
+    "mp-plugins/php-sdk": "3.5.0"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "^3.7",

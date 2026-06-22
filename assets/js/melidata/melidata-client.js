@@ -1,4 +1,4 @@
-/* globals MelidataClient, mercadopago_melidata_params */
+/* globals MelidataClient, mercadopago_melidata_params, wp */
 (function () {
   let resolveMelidataReady, rejectMelidataReady;
   window.melidataReady = new Promise((resolve, reject) => {
@@ -9,6 +9,11 @@
   const LOAD_MELIDATA_CLIENT_ON_BLOCKS_INTERVAL = 1000;
   const LOAD_MELIDATA_CLIENT_ON_BLOCKS_AFTER_MILLISECONDS = 1000;
   const CLEAR_INTERVAL_AFTER_MILLISECONDS = 10000;
+
+  // Capture synchronously: melidata declares wc-blocks-registry as a dep (Scripts.php),
+  // so the registry is already available here. Accessing it from the deferred setInterval
+  // would trigger WooCommerce's "inline or unknown script" warning (PSW-4150).
+  const wcBlocksRegistry = window.wc?.wcBlocksRegistry;
 
   function isCheckoutBlocks() {
     return document.querySelector('.wc-block-checkout__form') ||
@@ -22,8 +27,8 @@
     const paymentStore = wp.data.select('wc/store/payment');
     if (!paymentStore) return true;
 
-    if (typeof window.wc?.wcBlocksRegistry?.getPaymentMethods === 'function') {
-      const registered = window.wc.wcBlocksRegistry.getPaymentMethods();
+    if (typeof wcBlocksRegistry?.getPaymentMethods === 'function') {
+      const registered = wcBlocksRegistry.getPaymentMethods();
       if (Object.keys(registered).length === 0) return true;
     }
 

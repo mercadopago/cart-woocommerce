@@ -1,10 +1,10 @@
 /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
-/* globals wc_mercadopago_custom_event_handler_params, MP_DEVICE_SESSION_ID, jQuery, CheckoutPage, MPSuperTokenErrorCodes, sendMetric */
+/* globals wc_mercadopago_custom_event_handler_params, MP_DEVICE_SESSION_ID, jQuery, CheckoutPage, MPSuperTokenErrorCodes, sendMetric, MobileCheckoutClassicObserver */
 class MPEventHandler {
     REMOVE_LOAD_SPINNER_DELAY = 500;
     MAX_ORDER_PAY_RETRIES = 5;
 
-    constructor(cardForm, threeDSHandler) {
+    constructor(cardForm, threeDSHandler, mobileCheckoutClassicObserver = MobileCheckoutClassicObserver) {
         this.cardForm = cardForm;
         this.threeDSHandler = threeDSHandler;
         this.triggeredPaymentMethodSelectedEvent = false;
@@ -17,6 +17,9 @@ class MPEventHandler {
         this.mpSuperTokenMetrics = null;
         this.mpSuperTokenErrorHandler = null;
         this.loadSpinnerTimeout = null;
+        this._mobileObserver = null;
+        this._MobileCheckoutClassicObserver = mobileCheckoutClassicObserver;
+        this.isValidating = false;
     }
 
     setSuperTokenDependencies({ triggerHandler, authenticator, paymentMethods, metrics, errorHandler }) {
@@ -59,11 +62,18 @@ class MPEventHandler {
         jQuery('body').on('payment_method_selected', this.handlePaymentMethodSelected.bind(this));
         jQuery('form#order_review').submit(this.handleOrderReviewSubmit.bind(this));
         jQuery(document.body).on('checkout_error', this.handleCheckoutError.bind(this));
-        jQuery(document).on('updated_checkout', this.handleUpdatedCheckout.bind(this));
         jQuery(document).ready(() => {
             this.threeDSHandler.set3dsStatusValidationListener();
             if (!wc_mercadopago_custom_event_handler_params.is_mobile) {
+                jQuery(document).on('updated_checkout', this.handleUpdatedCheckout.bind(this));
                 this.initCardFormWhenReady();
+            } else {
+                this._mobileObserver = new this._MobileCheckoutClassicObserver(
+                    this.cardForm,
+                    this.isCheckoutCustomPaymentMethodSelected.bind(this),
+                    this.handleUpdatedCheckout.bind(this),
+                    this.initCardFormWhenReady.bind(this)
+                );
             }
         });
     }
@@ -147,34 +157,173 @@ class MPEventHandler {
         } else if (jQuery('#mp_checkout_type').val() === 'super_token') {
           superTokenMetrics?.registerClickOnPlaceOrderButton();
 
-          if (this.hasWooCommerceValidationErrors()) {
-            if (this.isOrderPayPage()) {
-              document.getElementById('order_review').submit();
-              return false;
-            }
-
-            return true;
-          }
-
-          this.handleWithSuperTokenSubmit(event, wc_checkout_form);
+          this.validateCheckoutThenContinue(event, () => this.handleWithSuperTokenSubmit(event, wc_checkout_form));
 
           // Return false to avoid the default behavior of the form submission
           return false;
         } else {
             jQuery('#mp_checkout_type').val('custom');
 
-            if (this.hasWooCommerceValidationErrors() && this.isOrderPayPage()) {
-                document.getElementById('order_review').submit();
-                return false;
-            }
-
-            if (!this.hasToken) {
-                this.setPayerIdentificationInfo();
-                return this.createToken();
-            }
+            this.validateCheckoutThenContinue(event, () => {
+                if (!this.hasToken) {
+                    this.setPayerIdentificationInfo();
+                    this.createToken();
+                }
+            });
 
             return false;
         }
+    }
+
+    /**
+     * Runs server-side checkout validation through the wc_ajax_mp_validate_checkout
+     * endpoint before tokenization. When the form is valid, runs `onValid`. When it is
+     * invalid (or the endpoint fails), shows the errors and never tokenizes — there is
+     * no CSS fallback in this flow; defense in depth still happens on the real submit.
+     *
+     * @param {Event} event the checkout submit event
+     * @param {Function} onValid continuation to run when the form is valid
+     */
+    validateCheckoutThenContinue(event, onValid) {
+        if (this.isValidating) {
+            return;
+        }
+
+        // Order-pay (/checkout/order-pay/): billing data is stored in the existing order and is
+        // not re-posted in #order_review, which carries woocommerce-pay-nonce — not the
+        // woocommerce-process-checkout-nonce this endpoint validates. Pre-validating here would
+        // always fail the nonce check and fail open with reason 'server_error' on every order-pay
+        // payment, polluting the metric. Skip the pre-check; the real WC submit still validates.
+        if (this.isOrderPayPage()) {
+            onValid();
+            return;
+        }
+
+        const params = window.wc_mercadopago_checkout_update_params;
+        const validationEndpoint = params?.validationEndpoint;
+
+        // Proceeds to tokenization despite NOT getting a conclusive verdict. This is the
+        // fail-open path: never block the buyer on a best-effort pre-check (the real
+        // WooCommerce submit still validates). `reason` lets us measure fail-open rate and
+        // break it down; `detail` carries extra context (e.g. the network error message).
+        const failOpenAndContinue = (reason, detail) => {
+            if (typeof sendMetric === 'function') {
+                sendMetric('MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN', reason, detail || 'validate_checkout_then_continue');
+            }
+            this.hideValidationLoader();
+            onValid();
+        };
+
+        // Defensive: a new plugin version always localizes the endpoint. If it is missing,
+        // do not block payment — fail open (no loader was shown yet).
+        if (!validationEndpoint) {
+            failOpenAndContinue('endpoint_missing');
+            return;
+        }
+
+        this.isValidating = true;
+        event.preventDefault();
+        this.showValidationLoader();
+
+        const body = this.getCheckoutForm()?.serialize() ?? '';
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        window.fetch(validationEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body,
+            signal: controller.signal,
+        })
+            .then((response) => response.json())
+            .then((response) => {
+                // Conclusive "form is invalid" verdict — block the buyer and show the errors.
+                if (response?.success && response?.data?.valid === false) {
+                    this.displayCheckoutValidationErrors(response?.data?.errors);
+                    this.hideValidationLoader();
+                    return;
+                }
+
+                // Conclusive "valid" verdict — proceed normally (NOT a fail open). The
+                // continuation owns the loader lifecycle from here (createToken manages the
+                // card-form spinner; handleWithSuperTokenSubmit re-shows its own loader), so
+                // we clear our validation overlay before handing off to avoid a stuck overlay.
+                // On the super_token path this means a hide-then-show of the classic loader: the
+                // brief flicker is intentional and accepted so each step owns its own loader —
+                // do not "fix" it by leaving the overlay up, which risks a stuck overlay if the
+                // continuation bails before re-showing it.
+                if (response?.success && response?.data?.valid === true) {
+                    this.hideValidationLoader();
+                    onValid();
+                    return;
+                }
+
+                // Inconclusive/unexpected server response (e.g. success:false) — fail open.
+                failOpenAndContinue('server_error');
+            })
+            .catch((error) => {
+                // Network/timeout on this extra layer — fail open.
+                const reason = error?.name === 'AbortError' ? 'timeout' : 'network';
+                failOpenAndContinue(reason, error?.message || error?.name || reason);
+            })
+            .finally(() => {
+                clearTimeout(timeoutId);
+                this.isValidating = false;
+            });
+    }
+
+    showValidationLoader() {
+        if (this.isOrderPayPage()) {
+            this.cardForm?.createLoadSpinner();
+        } else {
+            this.showCheckoutClassicLoader();
+        }
+    }
+
+    hideValidationLoader() {
+        if (this.isOrderPayPage()) {
+            this.cardForm?.removeLoadSpinner();
+        } else {
+            this.hideCheckoutClassicLoader();
+        }
+    }
+
+    /**
+     * Renders checkout validation errors inside the standard WooCommerce notice group.
+     * Uses textContent (no innerHTML) to avoid injecting unsanitized markup.
+     *
+     * @param {Array} errors list of { field, code, message }
+     */
+    displayCheckoutValidationErrors(errors) {
+        const messages = (Array.isArray(errors) ? errors : [])
+            .map((error) => error?.message)
+            .filter(Boolean);
+
+        if (messages.length === 0) {
+            return;
+        }
+
+        const list = document.createElement('ul');
+        list.className = 'woocommerce-error';
+        list.setAttribute('role', 'alert');
+        messages.forEach((message) => {
+            const item = document.createElement('li');
+            item.textContent = message;
+            list.appendChild(item);
+        });
+
+        const form = this.getCheckoutForm();
+        const noticeGroup = document.querySelector('.woocommerce-NoticeGroup-checkout');
+
+        if (noticeGroup) {
+            // replaceChildren clears existing notices and appends the new list in one call,
+            // without innerHTML (forbidden by the Node security rules).
+            noticeGroup.replaceChildren(list);
+        } else if (form?.length) {
+            form.prepend(list);
+        }
+
+        list.scrollIntoView({ behavior: 'smooth' });
     }
 
     async handleWithSuperTokenSubmit(event, wc_checkout_form) {
@@ -231,36 +380,36 @@ class MPEventHandler {
         }
     }
 
-    hasWooCommerceValidationErrors() {
-        if (typeof window.hasWooCommerceValidationErrors === 'function') {
-            try {
-                return window.hasWooCommerceValidationErrors();
-            } catch (error) {
-                if (typeof sendMetric === 'function') {
-                    sendMetric(
-                        'MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK',
-                        error?.message || error?.name || 'threw an error',
-                        'mp_custom_checkout_validation_cdn_fallback'
-                    );
-                }
-                return false;
-            }
-        }
-        if (typeof sendMetric === 'function') {
-            sendMetric(
-                'MP_CUSTOM_CHECKOUT_VALIDATION_CDN_FALLBACK',
-                'hasWooCommerceValidationErrors not available',
-                'mp_custom_checkout_validation_cdn_fallback'
-            );
-        }
-        return false;
-    }
-
     createToken() {
         if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.installmentsWasSelected === 'function') {
             if (!CheckoutPage.installmentsWasSelected()) {
                 CheckoutPage.setInstallmentsErrorState(true);
                 CheckoutPage.scrollToCheckoutCustomContainer();
+                this.cardForm.removeLoadSpinner();
+                return false;
+            }
+        }
+
+        if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.verifyDocument === 'function') {
+            const docContainers = document.querySelectorAll('#form-checkout__identificationNumber-container');
+            const hasDocError = Array.from(docContainers).some(
+                (el) => el.classList.contains('mp-error') || el.classList.contains('mp-error-2px')
+            );
+
+            if (!CheckoutPage.verifyDocument() || hasDocError) {
+                const docInput = document.querySelector('#form-checkout__identificationNumber');
+                const reason = (!docInput?.value || docInput.value === '-1') ? 'empty_field' : 'invalid_format';
+                if (typeof sendMetric === 'function') {
+                    sendMetric(
+                        'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
+                        reason,
+                        'mp_custom_document_validation',
+                        { reason }
+                    );
+                }
+                CheckoutPage.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
+                CheckoutPage.setDisplayOfInputHelper('mp-doc-number', 'flex');
+                document.querySelector('#mp-doc-div')?.scrollIntoView({ behavior: 'smooth' });
                 this.cardForm.removeLoadSpinner();
                 return false;
             }
@@ -357,6 +506,11 @@ class MPEventHandler {
     }
 
     handleCheckoutError() {
+        // Release the validation lock in case checkout_error fired mid-validation (e.g. another
+        // script triggered the event while our fetch was still pending). Otherwise the lock would
+        // stay held until the request resolves, leaving the buy button unusable until then.
+        this.isValidating = false;
+        this.hideValidationLoader();
         this.hasToken = false;
         this.mercado_pago_submit = false;
 
@@ -366,40 +520,41 @@ class MPEventHandler {
     }
 
     handleUpdatedCheckout() {
-      if (this.isCheckoutCustomPaymentMethodSelected()) {
-        clearTimeout(this.loadSpinnerTimeout);
-        this.cardForm.createLoadSpinner();
+        if (this.isCheckoutCustomPaymentMethodSelected()) {
+            clearTimeout(this.loadSpinnerTimeout);
+            this.cardForm.createLoadSpinner();
 
-        const newAmount = this.cardForm.getAmount();
-        const currentAmount = this.cardForm.amount;
-        const promises = [];
-        const { superTokenTriggerHandler } = this.getSuperTokenDeps();
+            const newAmount = this.cardForm.getAmount();
+            const currentAmount = this.cardForm.amount;
+            const promises = [];
+            const { superTokenTriggerHandler } = this.getSuperTokenDeps();
 
-        if (superTokenTriggerHandler) {
-          promises.push(superTokenTriggerHandler.loadSuperToken(newAmount));
+            if (superTokenTriggerHandler) {
+                promises.push(superTokenTriggerHandler.loadSuperToken(newAmount));
+            }
+
+            const isCardFormDetached = this.cardForm.formMounted
+                && ['form-checkout__cardNumber-container', 'form-checkout__expirationDate-container', 'form-checkout__securityCode-container']
+                    .every(containerId => {
+                        const container = document.getElementById(containerId);
+                        return !!container && !container.querySelector('iframe');
+                    });
+
+            if (isCardFormDetached) {
+                this.cardForm.form.unmount();
+                this.cardForm.formMounted = false;
+            } else if (this.cardForm.formMounted && newAmount !== currentAmount) {
+                this.cardForm.form.unmount();
+            }
+
+            if (!this.cardForm.formMounted) promises.push(this.cardForm.initCardForm());
+
+            return Promise.all(promises)
+                .finally(() => {
+                    this.loadSpinnerTimeout = setTimeout(() => this.cardForm.removeLoadSpinner(), this.REMOVE_LOAD_SPINNER_DELAY);
+                });
         }
-
-        const isCardFormDetached = this.cardForm.formMounted
-          && ['form-checkout__cardNumber-container', 'form-checkout__expirationDate-container', 'form-checkout__securityCode-container']
-            .every(containerId => {
-              const container = document.getElementById(containerId);
-              return !!container && !container.querySelector('iframe');
-            });
-
-        if (isCardFormDetached) {
-          this.cardForm.form.unmount();
-          this.cardForm.formMounted = false;
-        } else if (this.cardForm.formMounted && newAmount !== currentAmount) {
-          this.cardForm.form.unmount();
-        }
-
-        if (!this.cardForm.formMounted) promises.push(this.cardForm.initCardForm());
-
-        Promise.all(promises)
-          .finally(() => {
-            this.loadSpinnerTimeout = setTimeout(() => this.cardForm.removeLoadSpinner(), this.REMOVE_LOAD_SPINNER_DELAY);
-          });
-      }
+        return Promise.resolve();
     }
 
     handle3dsPayOrderFormSubmission() {
