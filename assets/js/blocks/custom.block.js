@@ -1,4 +1,4 @@
-/* globals jQuery, wc, MPCheckoutErrorDispatcher, sendMetric, CheckoutPage, MPSuperTokenErrorCodes */
+/* globals jQuery, MPCheckoutErrorDispatcher, sendMetric, CheckoutPage, MPSuperTokenErrorCodes */
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { getSetting } from '@woocommerce/settings';
 import { useEffect, useState } from '@wordpress/element';
@@ -6,6 +6,7 @@ import { decodeEntities } from '@wordpress/html-entities';
 import { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission } from './helpers/cart-update.helper';
 import { VALIDATION_STORE_KEY } from '@woocommerce/block-data';
 import { select } from '@wordpress/data';
+import { extensionCartUpdate } from '@woocommerce/blocks-checkout';
 
 import RowImageSelect from './components/RowImageSelect';
 
@@ -30,7 +31,6 @@ const Content = (props) => {
   const { eventRegistration, emitResponse, onSubmit } = props;
   const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
   const [totalValue, setTotalValue] = useState(null);
-  const { extensionCartUpdate } = wc.blocksCheckout;
 
   useEffect(() => {
     addDiscountAndCommission(extensionCartUpdate, paymentMethodName)
@@ -142,6 +142,31 @@ const Content = (props) => {
         case 'wallet_button':
           break;
         default:
+          if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.verifyDocument === 'function') {
+            const docContainers = document.querySelectorAll('#form-checkout__identificationNumber-container');
+            const hasDocError = Array.from(docContainers).some(
+              (el) => el.classList.contains('mp-error') || el.classList.contains('mp-error-2px')
+            );
+
+            if (!CheckoutPage.verifyDocument() || hasDocError) {
+              const docInput = document.querySelector('#form-checkout__identificationNumber');
+              const reason = (!docInput?.value || docInput.value === '-1') ? 'empty_field' : 'invalid_format';
+              if (typeof sendMetric === 'function') {
+                sendMetric(
+                  'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
+                  reason,
+                  'mp_custom_document_validation',
+                  { reason }
+                );
+              }
+              CheckoutPage.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
+              CheckoutPage.setDisplayOfInputHelper('mp-doc-number', 'flex');
+              document.querySelector('#mp-doc-div')?.scrollIntoView({ behavior: 'smooth' });
+              window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
+              return { type: emitResponse.responseTypes.ERROR };
+            }
+          }
+
           try {
             const callFn = window.callSdkWithMetrics || ((fn) => fn());
             const cardToken = await callFn(

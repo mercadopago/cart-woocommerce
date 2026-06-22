@@ -586,7 +586,7 @@ class Seller
      */
     private function setupTicketPaymentMethods(array $paymentMethodsResponse): void
     {
-        $excludedPaymentMethods   = ['paypal', 'pse', 'pix',];
+        $excludedPaymentMethods   = ['paypal', 'pse', 'pix', 'consumer_credits'];
         $serializedPaymentMethods = [];
 
         foreach ($paymentMethodsResponse['data'] as $paymentMethod) {

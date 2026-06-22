@@ -1,6 +1,6 @@
 const { resolveAlias } = require('../../../helpers/path-resolver');
 const { loadFile } = require('../../../helpers/load-file');
-const filePath = resolveAlias('assets/js/checkouts/super-token/errors/super-token-error-handler.js');
+const filePath = resolveAlias(`assets/js/checkouts/super-token/${global.SUPER_TOKEN_VERSION}/errors/super-token-error-handler.js`);
 
 describe('MPSuperTokenErrorHandler', () => {
   let MPSuperTokenErrorHandler;

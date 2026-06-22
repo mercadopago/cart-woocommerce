@@ -147,12 +147,14 @@ else
     echo "[mp-dev] Existing store detected ($(cat "$SITE_FLAG" 2>/dev/null || echo 'unknown')). Skipping setup."
 fi
 
-# ---------- Ensure plugin symlink (always, even on restart) ----------
-# The symlink target is inside the volume, but the source mount may change
-if [ ! -L "$WP_PLUGINS/woocommerce-mercadopago" ] || \
-   [ "$(readlink "$WP_PLUGINS/woocommerce-mercadopago")" != "$PLUGIN_SRC" ]; then
+# ---------- Auto-link plugin ONLY when the path is absent ----------
+# If a dev has deleted the bundled plugin and installed their own build/zip
+# (a real directory), or a valid symlink already exists, we leave it untouched.
+# This gives full freedom to manage the plugin from wp-admin without the
+# container clobbering it — or nesting a symlink inside it — on every restart.
+if [ ! -e "$WP_PLUGINS/woocommerce-mercadopago" ] && [ ! -L "$WP_PLUGINS/woocommerce-mercadopago" ]; then
     ln -sfn "$PLUGIN_SRC" "$WP_PLUGINS/woocommerce-mercadopago"
-    echo "[mp-dev] Plugin symlink refreshed."
+    echo "[mp-dev] Plugin symlink created."
 fi
 
 # ---------- Start Apache ----------

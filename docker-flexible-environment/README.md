@@ -4,6 +4,10 @@ Ambiente de desenvolvimento local para o plugin WooCommerce Mercado Pago.
 Sobe uma loja WooCommerce completa, configurada por pais, com gateways de pagamento
 ativos, credenciais de teste e Xdebug pronto para uso.
 
+> **Homologacao na AWS:** para publicar este mesmo ambiente (do seu working tree
+> local, com HTTPS publico e webhook) numa instancia AWS — uma loja por pais —
+> veja [`deploy/`](deploy/README.md) ou use a skill `/woo-homolog`.
+
 ## Requisitos
 
 | Ferramenta | Instalacao | Notas |

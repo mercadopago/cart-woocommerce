@@ -77,7 +77,7 @@ class MPThreeDSHandler {
             })
             .fail((xhr, textStatus, errorThrown) => {
                 console.error('Failed to make POST:', textStatus, errorThrown);
-                // window.sendMetric → Datadog beacon; distinto de this.sendMetric (mPmetrics). Guard evita ReferenceError se mp-checkout-metrics não carregou.
+                // window.sendMetric → Datadog beacon. Guard evita ReferenceError se mp-checkout-metrics não carregou.
                 if (typeof window.sendMetric === 'function') {
                     window.sendMetric(
                         String(xhr?.status ?? 0),
@@ -241,12 +241,8 @@ class MPThreeDSHandler {
     }
 
     sendMetric(action, label, target) {
-        if (typeof window.mPmetrics !== 'undefined') {
-            window.mPmetrics.push({
-                action: action,
-                label: label,
-                target: target,
-            });
+        if (typeof window.sendMetric === 'function') {
+            window.sendMetric(action, label, target);
         }
     }
 }

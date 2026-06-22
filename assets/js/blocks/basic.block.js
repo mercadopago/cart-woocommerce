@@ -1,6 +1,7 @@
 /* globals wc_mercadopago_basic_blocks_params */
 
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
+import { extensionCartUpdate } from '@woocommerce/blocks-checkout';
 import { getSetting } from '@woocommerce/settings';
 import { useEffect } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
@@ -15,7 +16,6 @@ const settings = getSetting(`woo-mercado-pago-basic_data`, {});
 const defaultLabel = decodeEntities(settings.title) || 'Checkout Pro';
 
 const updateCart = (props) => {
-  const { extensionCartUpdate } = wc.blocksCheckout;
   const { eventRegistration, emitResponse } = props;
   const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
 

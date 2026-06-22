@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use MercadoPago\Woocommerce\Endpoints\CheckoutValidation;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Notification\NotificationFactory;
 use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
@@ -427,9 +428,18 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             $this->mercadopago->helpers->url->getCssAsset('checkouts/mp-plugins-components')
         );
 
+        // validationEndpoint is localized as a page-wide global (wc_mercadopago_checkout_update_params)
+        // attached to this gateway-agnostic shared script. It is NOT consumed by mp-checkout-update.js
+        // itself, but by the checkout pre-validation flow in
+        // assets/js/checkouts/custom/entities/event-handler.js (validateCheckoutThenContinue). This is the
+        // same cross-script localize pattern already used by wc_mercadopago_checkout_session_data_register
+        // (consumed by mp-health-monitor.js). Kept here so any gateway can reuse the endpoint if needed.
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
             'wc_mercadopago_checkout_update',
-            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-checkout-update')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/mp-checkout-update'),
+            [
+                'validationEndpoint' => \WC_AJAX::get_endpoint(CheckoutValidation::VALIDATION_ENDPOINT),
+            ]
         );
 
         $this->mercadopago->hooks->scripts->registerCheckoutScript(

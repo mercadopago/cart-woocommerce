@@ -972,6 +972,42 @@ class OrderStatusTest extends TestCase
         $this->assertEquals([], $result);
     }
 
+    public function testGetLastNotificationReturnsEmptyWhenPaymentIdsIsEmpty(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('');
+
+        $this->requesterMock->shouldNotReceive('get');
+
+        $result = $this->orderStatus->getLastNotification($orderMock);
+        $this->assertEquals([], $result);
+    }
+
+    public function testGetLastNotificationReturnsEmptyWhenPaymentIdsContainsOnlyCommasAndSpaces(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn(' , , ');
+
+        $this->requesterMock->shouldNotReceive('get');
+
+        $result = $this->orderStatus->getLastNotification($orderMock);
+        $this->assertEquals([], $result);
+    }
+
+    public function testGetNotificationIdThrowsWhenPaymentIdIsEmpty(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('paymentId is required');
+
+        $this->orderStatus->getNotificationId('', ['Authorization: Bearer token']);
+    }
+
     /**
      * Test processStatus executes without errors for valid statuses
      */

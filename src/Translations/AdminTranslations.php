@@ -452,13 +452,13 @@ class AdminTranslations
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
+            _x('enabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
+            _x('disabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $autoReturnDescriptionsEnabled = sprintf(
@@ -592,13 +592,13 @@ class AdminTranslations
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
+            _x('enabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
+            _x('disabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $this->creditsGatewaySettings = [
@@ -727,25 +727,25 @@ class AdminTranslations
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
+            _x('enabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
+            _x('disabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $walletButtonDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Payments via Mercado Pago accounts are', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
+            _x('enabled', 'payments via account (plural)', 'woocommerce-mercadopago')
         );
 
         $walletButtonDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
             __('Payments via Mercado Pago accounts are', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
+            _x('disabled', 'payments via account (plural)', 'woocommerce-mercadopago')
         );
 
         $binaryModeDescriptionsEnabled = sprintf(
@@ -773,7 +773,7 @@ class AdminTranslations
             'card_settings_subtitle'                    => __('Set the deadlines and fees, test your store or access the Plugin manual.', 'woocommerce-mercadopago'),
             'card_settings_button_text'                 => __('Go to Settings', 'woocommerce-mercadopago'),
             'enabled_title'                             => __('Enable the checkout', 'woocommerce-mercadopago'),
-            'enabled_subtitle'                          => __('By disabling it, you will disable all credit cards payments from Mercado Pago Transparent Checkout.', 'woocommerce-mercadopago'),
+            'enabled_subtitle'                          => __('By disabling it, you will disable all credit card payments from Mercado Pago Transparent Checkout.', 'woocommerce-mercadopago'),
             'enabled_descriptions_enabled_ALL'          => $enabledDescriptionsEnabledAll,
             'enabled_descriptions_disabled_ALL'         => $enabledDescriptionsDisabledAll,
             'enabled_descriptions_enabled_MLB'          => $enabledDescriptionsEnabledMLB,
@@ -819,13 +819,13 @@ class AdminTranslations
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
+            _x('enabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
+            _x('disabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $this->ticketGatewaySettings = [
@@ -881,13 +881,13 @@ class AdminTranslations
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
+            _x('enabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
+            _x('disabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $this->pseGatewaySettings = [
@@ -953,13 +953,13 @@ class AdminTranslations
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
+            _x('enabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
+            _x('disabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $stepsStepTwoText = sprintf(
@@ -1053,13 +1053,13 @@ class AdminTranslations
         $currencyConversionDescriptionsEnabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('enabled', 'woocommerce-mercadopago')
+            _x('enabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
         $currencyConversionDescriptionsDisabled = sprintf(
             '%s <b>%s</b>.',
             __('Currency conversion is', 'woocommerce-mercadopago'),
-            __('disabled', 'woocommerce-mercadopago')
+            _x('disabled', 'currency conversion (feminine)', 'woocommerce-mercadopago')
         );
 
 

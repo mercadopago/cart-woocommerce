@@ -151,6 +151,78 @@ class SellerTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
+    private function buildSellerForTicketTest(array $apiResponse, ?array &$capturedTicketMethods = null): Seller
+    {
+        Mockery::mock('alias:' . Device::class)
+            ->shouldReceive('getDeviceProductId')
+            ->andReturn('');
+
+        $mockResponse = Mockery::mock();
+        $mockResponse->shouldReceive('getStatus')->andReturn(200);
+        $mockResponse->shouldReceive('getData')->andReturn($apiResponse);
+
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')->andReturn($mockResponse);
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('set')
+            ->andReturnUsing(function ($key, $value) use (&$capturedTicketMethods) {
+                if ($key === '_all_payment_methods_ticket') {
+                    $capturedTicketMethods = $value;
+                }
+                return true;
+            });
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->andReturn(null);
+        $mockCache->shouldReceive('setCache')->andReturn(null);
+
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockStore->shouldReceive('isTestMode')->andReturn(false);
+        $mockStore->shouldReceive('getIntegratorId')->andReturn('');
+
+        $mockLogs = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        return new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+    }
+
+    public function testSetupTicketPaymentMethodsExcludesConsumerCredits(): void
+    {
+        $apiResponse = [
+            ['id' => 'bolbradesco',      'payment_type_id' => 'ticket',           'name' => 'Boleto',           'secure_thumbnail' => ''],
+            ['id' => 'consumer_credits', 'payment_type_id' => 'digital_currency', 'name' => 'Linha de Crédito', 'secure_thumbnail' => ''],
+        ];
+
+        $capturedTicketMethods = null;
+        $seller = $this->buildSellerForTicketTest($apiResponse, $capturedTicketMethods);
+        $seller->updatePaymentMethods('test_public_key');
+
+        $this->assertNotNull($capturedTicketMethods);
+        $ids = array_column($capturedTicketMethods, 'id');
+        $this->assertNotContains('consumer_credits', $ids);
+    }
+
+    public function testSetupTicketPaymentMethodsKeepsOfflinePaymentMethods(): void
+    {
+        $apiResponse = [
+            ['id' => 'bolbradesco',      'payment_type_id' => 'ticket',           'name' => 'Boleto',           'secure_thumbnail' => ''],
+            ['id' => 'paycash',          'payment_type_id' => 'ticket',           'name' => 'Paycash',          'secure_thumbnail' => ''],
+            ['id' => 'consumer_credits', 'payment_type_id' => 'digital_currency', 'name' => 'Linha de Crédito', 'secure_thumbnail' => ''],
+            ['id' => 'visa',             'payment_type_id' => 'credit_card',      'name' => 'Visa',             'secure_thumbnail' => ''],
+        ];
+
+        $capturedTicketMethods = null;
+        $seller = $this->buildSellerForTicketTest($apiResponse, $capturedTicketMethods);
+        $seller->updatePaymentMethods('test_public_key');
+
+        $this->assertNotNull($capturedTicketMethods);
+        $ids = array_column($capturedTicketMethods, 'id');
+        $this->assertContains('bolbradesco', $ids);
+        $this->assertContains('paycash', $ids);
+        $this->assertNotContains('consumer_credits', $ids);
+        $this->assertNotContains('visa', $ids);
+    }
+
     public function testIsExpiredPublicKeyReturnsTrueWhenStatusIs401(): void
     {
         /** @var Requester&\Mockery\MockInterface $mockRequester */

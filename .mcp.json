@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "ApplicationSecurityMCP": {
+      "type": "stdio",
+      "command": "mcp-remote-proxy",
+      "args": [
+        "https://codeguard-mcp.melioffice.com/mcp",
+        "--transport",
+        "http"
+      ]
+    },
+    "backend": {
+      "type": "stdio",
+      "command": "mcp-remote-proxy",
+      "args": [
+        "https://mcp.melioffice.com/namespaces/backend/mcp",
+        "--transport",
+        "http"
+      ]
+    },
+    "genai_code_review": {
+      "type": "stdio",
+      "command": "mcp-remote-proxy",
+      "args": [
+        "https://genai-code-review-mcp.melioffice.com/mcp",
+        "--transport",
+        "http"
+      ]
+    }
+  }
+}

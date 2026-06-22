@@ -26,6 +26,7 @@ class MPCheckoutSessionDataRegister {
             });
 
             window.mpSdkInstance = mp;
+            document.dispatchEvent(new CustomEvent('mp_sdk_instance_ready'));
         }
 
         if (typeof window.mpSdkInstance?.getSDKInstanceId === 'function') {
@@ -102,6 +103,11 @@ class MPCheckoutSessionDataRegister {
 
     static execute() {
         document.addEventListener('DOMContentLoaded', () => {
+            // Idempotent with registerFlowId(), which may have registered it first on deferred loads.
+            if (this.FLOW_ID) {
+                return;
+            }
+
             if (!document.querySelector(this.FORM_SELECTORS)) {
                 return;
             }
@@ -113,6 +119,36 @@ class MPCheckoutSessionDataRegister {
             window.mpHiddenInputDataFromBlocksCheckout = this.getHiddenInputDataFromBlocksCheckout();
         })
     }
+
+    static registerFlowId() {
+        const ensureFlowIdRegistered = () => {
+            try {
+                if (this.FLOW_ID) {
+                    return;
+                }
+                this.FLOW_ID = this.generateFlowId();
+                this.registerOnSessionStorage();
+
+                // The server reads flow_id from POST, not sessionStorage, so the Blocks
+                // payload and the hidden input (when a form exists) must carry it too.
+                window.mpHiddenInputDataFromBlocksCheckout = this.getHiddenInputDataFromBlocksCheckout();
+                if (document.querySelector(this.FORM_SELECTORS)) {
+                    this.registerOnHiddenInput();
+                }
+            } catch (error) {
+                if (typeof window.sendMetric === 'function') {
+                    window.sendMetric(JSON.stringify(error || {}), error?.message || 'unknown', 'mp_flow_id_fallback_error');
+                }
+            }
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ensureFlowIdRegistered, { once: true });
+        } else {
+            ensureFlowIdRegistered();
+        }
+    }
 }
 
 MPCheckoutSessionDataRegister.execute();
+MPCheckoutSessionDataRegister.registerFlowId();

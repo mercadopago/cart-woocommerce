@@ -1,6 +1,6 @@
 const { resolveAlias } = require('../../../helpers/path-resolver');
 const { loadFile } = require('../../../helpers/load-file');
-const validatorPath = resolveAlias('assets/js/checkouts/super-token/validators/checkout-form-validator.js');
+const validatorPath = resolveAlias(`assets/js/checkouts/super-token/${global.SUPER_TOKEN_VERSION}/validators/checkout-form-validator.js`);
 
 describe('hasWooCommerceValidationErrors (CDN - checkout-form-validator)', () => {
   beforeAll(() => {

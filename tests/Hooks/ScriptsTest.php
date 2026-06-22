@@ -163,6 +163,7 @@ class ScriptsTest extends TestCase
         ]);
 
         WP_Mock::userFunction('wp_localize_script', ['return' => true]);
+        WP_Mock::userFunction('wp_script_is', ['return' => false]);
 
         // -----------------------------------------------------------------
         // SCENARIO A — registerMelidataStoreScript (slow path)
@@ -328,6 +329,157 @@ class ScriptsTest extends TestCase
         ($capturedClosure)();
 
         $this->assertFalse($enqueueCalled, 'wp_enqueue_script must not be called when is_view_order_page() returns true');
+    }
+
+    /**
+     * Proves that prioritizeMelidataStoreScriptEarly guards both deps with wp_script_is:
+     * wc_mercadopago_sdk and wc-blocks-registry are each declared only when registered.
+     *
+     * Guards the fix from PSW-4150: melidata-client.js accesses wc.wcBlocksRegistry, so
+     * wc-blocks-registry must be declared (load order) when present — but declaring a dep
+     * on an unregistered handle makes WordPress skip the enqueue, which would silently drop
+     * melidata on payment pages where the registry is absent (e.g. classic checkout). Both
+     * registration paths therefore use the same guard.
+     *
+     * @dataProvider melidataDepsProvider
+     */
+    public function testPrioritizeMelidataStoreScriptEarlyGuardsBothDeps(bool $sdkRegistered, bool $registryRegistered): void
+    {
+        $GLOBALS['__test_capture_wp_enqueue_scripts'] = true;
+
+        WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
+            ->with(Mockery::type('callable'), 20, 1)
+            ->perform(function () {
+            });
+
+        $this->scripts->prioritizeMelidataStoreScriptEarly('/checkout');
+
+        $capturedClosure = $GLOBALS['__test_captured_wp_enqueue_closure'] ?? null;
+        unset($GLOBALS['__test_capture_wp_enqueue_scripts'], $GLOBALS['__test_captured_wp_enqueue_closure']);
+
+        $this->assertIsCallable($capturedClosure);
+
+        WP_Mock::userFunction('is_view_order_page', ['return' => false]);
+        WP_Mock::userFunction('is_cart', ['return' => false]);
+        WP_Mock::userFunction('is_order_received_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout_pay_page', ['return' => false]);
+        WP_Mock::userFunction('is_add_payment_method_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout', ['return' => true]);
+        WP_Mock::userFunction('get_query_var', ['return' => false]);
+        WP_Mock::userFunction('wp_script_is', [
+            'return' => function (string $handle) use ($sdkRegistered, $registryRegistered) {
+                if ($handle === 'wc_mercadopago_sdk') {
+                    return $sdkRegistered;
+                }
+                if ($handle === 'wc-blocks-registry') {
+                    return $registryRegistered;
+                }
+                return false;
+            },
+        ]);
+        WP_Mock::userFunction('wp_localize_script', ['return' => true]);
+
+        $capturedDeps = null;
+        $enqueued = false;
+        WP_Mock::userFunction('wp_enqueue_script', [
+            'return' => function (string $handle, string $src, array $deps) use (&$capturedDeps, &$enqueued) {
+                if ($handle === 'mercadopago_melidata') {
+                    $capturedDeps = $deps;
+                    $enqueued = true;
+                }
+            },
+        ]);
+
+        ($capturedClosure)();
+
+        // melidata must always be enqueued, regardless of which deps are present
+        $this->assertTrue($enqueued, 'mercadopago_melidata must always be enqueued (never skipped)');
+        $this->assertIsArray($capturedDeps);
+
+        if ($sdkRegistered) {
+            $this->assertContains('wc_mercadopago_sdk', $capturedDeps);
+        } else {
+            $this->assertNotContains('wc_mercadopago_sdk', $capturedDeps);
+        }
+
+        if ($registryRegistered) {
+            $this->assertContains('wc-blocks-registry', $capturedDeps);
+        } else {
+            $this->assertNotContains('wc-blocks-registry', $capturedDeps);
+        }
+    }
+
+    /**
+     * @return array<string, array{bool, bool}>
+     */
+    public static function melidataDepsProvider(): array
+    {
+        return [
+            'sdk + registry registered'   => [true, true],
+            'sdk registered, no registry' => [true, false],
+            'registry registered, no sdk' => [false, true],
+            'neither registered'          => [false, false],
+        ];
+    }
+
+    /**
+     * Proves that registerMelidataStoreScript (the path used on /products, /pay_order,
+     * /thankyou) declares wc-blocks-registry as a dependency when that script is
+     * registered, and omits it otherwise so melidata still loads when the registry is
+     * absent (declaring a dep on an unregistered handle makes WordPress skip the script).
+     *
+     * Keeps both melidata registration paths consistent (PSW-4150): melidata-client.js
+     * reads wc.wcBlocksRegistry synchronously on every page it loads, so the handle must
+     * declare the dependency wherever the registry is present.
+     *
+     * @dataProvider melidataRegistryRegisteredProvider
+     */
+    public function testRegisterMelidataStoreScriptDeclaresWcBlocksRegistryWhenRegistered(bool $registryRegistered): void
+    {
+        WP_Mock::userFunction('wp_script_is', [
+            'return' => function (string $handle) use ($registryRegistered) {
+                return $handle === 'wc-blocks-registry' ? $registryRegistered : false;
+            },
+        ]);
+        WP_Mock::userFunction('wp_localize_script', ['return' => true]);
+
+        $capturedDeps = null;
+        WP_Mock::userFunction('wp_enqueue_script', [
+            'return' => function (string $handle, string $src, array $deps) use (&$capturedDeps) {
+                if ($handle === 'mercadopago_melidata') {
+                    $capturedDeps = $deps;
+                }
+            },
+        ]);
+
+        $this->scripts->registerMelidataStoreScript('/pay_order');
+
+        $this->assertNotNull($capturedDeps, 'wp_enqueue_script must be called for mercadopago_melidata');
+
+        if ($registryRegistered) {
+            $this->assertContains(
+                'wc-blocks-registry',
+                $capturedDeps,
+                'wc-blocks-registry must be declared when the registry script is registered'
+            );
+        } else {
+            $this->assertNotContains(
+                'wc-blocks-registry',
+                $capturedDeps,
+                'wc-blocks-registry must be omitted when not registered, so melidata still loads'
+            );
+        }
+    }
+
+    /**
+     * @return array<string, array{bool}>
+     */
+    public static function melidataRegistryRegisteredProvider(): array
+    {
+        return [
+            'registry registered'     => [true],
+            'registry not registered' => [false],
+        ];
     }
 
     /**

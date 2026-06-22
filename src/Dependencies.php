@@ -20,6 +20,7 @@ use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Endpoints\CheckoutCustom;
+use MercadoPago\Woocommerce\Endpoints\CheckoutValidation;
 use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\CredentialsStates;
@@ -79,6 +80,8 @@ class Dependencies
     public Store $storeConfig;
 
     public CheckoutCustom $checkoutCustomEndpoints;
+
+    public CheckoutValidation $checkoutValidationEndpoints;
 
     public Admin $adminHook;
 
@@ -225,6 +228,7 @@ class Dependencies
         $this->settings                = $this->setSettings();
         $this->creditsEnabledHelper    = $this->setCreditsEnabled();
         $this->checkoutCustomEndpoints = $this->setCustomCheckoutEndpoints();
+        $this->checkoutValidationEndpoints = $this->setCheckoutValidationEndpoints();
         $this->cartHelper              = $this->setCart();
         $this->errorMessagesHelper     = $this->setErrorMessages();
         $this->integrationWebhook      = $this->setIntegrationWebhook();
@@ -538,6 +542,17 @@ class Dependencies
             $this->sessionHelper,
             $this->sellerConfig,
             $this->storeTranslations
+        );
+    }
+
+    /**
+     * @return CheckoutValidation
+     */
+    private function setCheckoutValidationEndpoints(): CheckoutValidation
+    {
+        return new CheckoutValidation(
+            $this->endpointsHook,
+            $this->nonceHelper
         );
     }
 

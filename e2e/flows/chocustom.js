@@ -1,6 +1,5 @@
 import { fillStepsToCheckout } from "./fill_steps_to_checkout";
 import { expect } from "@playwright/test";
-import { placeOrder } from "./place_order.helper";
 
 const CORS_MESSAGE = [
   '[CORS] Falha na tokenizacao de cartao no ambiente Sandbox.',
@@ -14,7 +13,7 @@ const CORS_MESSAGE = [
   'Integradores nao conseguem tokenizar cartoes, impedindo testes E2E de pagamento.',
 ].join('\n');
 
-function trackCorsErrors(page) {
+export function trackCorsErrors(page) {
   const errors = [];
   page.on('console', msg => {
     if (msg.text().includes('CORS') || msg.text().includes('net::ERR_FAILED')) {
@@ -24,7 +23,7 @@ function trackCorsErrors(page) {
   return errors;
 }
 
-function assertNoCors(corsErrors) {
+export function assertNoCors(corsErrors) {
   if (corsErrors.length > 0) {
     throw new Error(CORS_MESSAGE + '\n\nErros capturados no console:\n' + corsErrors.join('\n'));
   }
@@ -77,14 +76,12 @@ export async function emptyFieldsPaymentTest(page, url, user, card, form) {
   }
 }
 
-async function makePayment(page, url, user, card, form) {
-  if (!card?.number) {
-    throw new Error(
-      `[E2E] Card number is undefined. Check that the env var for this card is set in e2e/.env.\n` +
-      `Card object: ${JSON.stringify(card)}`
-    );
-  }
-
+/**
+ * Navigates from shop to checkout, fills billing data and selects the
+ * Mercado Pago Custom (credit/debit card) payment method. Supports both
+ * Classic and Blocks checkout.
+ */
+export async function goToCustomCheckout(page, url, user) {
   await fillStepsToCheckout(page, url, user);
   await page.waitForLoadState();
 
@@ -100,7 +97,16 @@ async function makePayment(page, url, user, card, form) {
   }
 
   await page.waitForLoadState();
+}
 
+/**
+ * Fills the Mercado Pago SDK card fields (inside iframes) and the document /
+ * cardholder / installments fields. Uses pressSequentially so the SDK fires its
+ * input events (fill() does not trigger them). When `card.number` is an invalid
+ * value, the SDK will refuse to produce a token at place-order time — this is
+ * intentional for the infinite-loading recovery scenario.
+ */
+export async function fillCustomCardForm(page, card, form) {
   await page.locator('iframe[name="cardNumber"]').waitFor({ state: 'visible', timeout: 30000 });
   const cardNumberInput = page.frameLocator('iframe[name="cardNumber"]').locator('[name="cardNumber"]');
   const cardDigits = card.number.replace(/\D/g, '');
@@ -161,9 +167,33 @@ async function makePayment(page, url, user, card, form) {
     }
     await page.waitForLoadState();
   }
+}
 
-  // Click place order (Classic single-click / Blocks two-phase submit)
-  await placeOrder(page);
+/**
+ * Clicks the place-order button. Supports both Classic and Blocks checkout.
+ */
+export async function placeOrder(page) {
+  const classicPlaceOrder = page.locator('#place_order');
+  const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
+
+  if (await classicPlaceOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await classicPlaceOrder.click();
+  } else {
+    await blocksPlaceOrder.click();
+  }
 
   await page.waitForLoadState();
+}
+
+async function makePayment(page, url, user, card, form) {
+  if (!card?.number) {
+    throw new Error(
+      `[E2E] Card number is undefined. Check that the env var for this card is set in e2e/.env.\n` +
+      `Card object: ${JSON.stringify(card)}`
+    );
+  }
+
+  await goToCustomCheckout(page, url, user);
+  await fillCustomCardForm(page, card, form);
+  await placeOrder(page);
 }

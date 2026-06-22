@@ -229,63 +229,45 @@ describe('MPCardForm', () => {
   });
 
   describe('sendMetric()', () => {
+    afterEach(() => {
+      global.sendMetric = jest.fn();
+    });
+
     test.each([
       {
         action: 'CARD_FORM_LOADED',
         label: 'Card form loaded successfully',
         target: 'checkout_page',
-        description: 'push metric to mPmetrics array with valid data',
       },
       {
         action: 'PAYMENT_ERROR',
         label: 'Payment processing failed',
         target: 'payment_gateway',
-        description: 'push metric with error information',
       },
       {
         action: 'VALIDATION_SUCCESS',
         label: 'Card validation passed',
         target: 'card_validator',
-        description: 'push metric with validation success',
       },
     ])(
-      'Given mPmetrics is defined, When sendMetric("$action", "$label", "$target") is called, Then should $description',
+      'Given window.sendMetric is available, When sendMetric("$action", "$label", "$target") is called, Then it forwards the arguments to the global Datadog beacon',
       ({ action, label, target }) => {
-        window.mPmetrics = [];
+        const beacon = jest.fn();
+        window.sendMetric = beacon;
 
         cardForm.sendMetric(action, label, target);
 
-        expect(window.mPmetrics).toHaveLength(1);
-        expect(window.mPmetrics[0]).toEqual({
-          action: action,
-          label: label,
-          target: target,
-        });
+        expect(beacon).toHaveBeenCalledTimes(1);
+        expect(beacon).toHaveBeenCalledWith(action, label, target);
       }
     );
 
-    test('Given mPmetrics is undefined, When sendMetric() is called, Then should not throw error and do nothing', () => {
-      window.mPmetrics = undefined;
+    test('Given window.sendMetric is undefined, When sendMetric() is called, Then it does not throw', () => {
+      window.sendMetric = undefined;
 
       expect(() => {
         cardForm.sendMetric('TEST_ACTION', 'Test label', 'test_target');
       }).not.toThrow();
-
-      expect(window.mPmetrics).toBeUndefined();
-    });
-
-    test('Given mPmetrics already has metrics, When sendMetric() is called multiple times, Then should append new metrics', () => {
-      window.mPmetrics = [
-        { action: 'INITIAL_ACTION', label: 'Initial', target: 'initial_target' },
-      ];
-
-      cardForm.sendMetric('SECOND_ACTION', 'Second metric', 'second_target');
-      cardForm.sendMetric('THIRD_ACTION', 'Third metric', 'third_target');
-
-      expect(window.mPmetrics).toHaveLength(3);
-      expect(window.mPmetrics[0].action).toBe('INITIAL_ACTION');
-      expect(window.mPmetrics[1].action).toBe('SECOND_ACTION');
-      expect(window.mPmetrics[2].action).toBe('THIRD_ACTION');
     });
   });
 
@@ -426,6 +408,175 @@ describe('MPCardForm', () => {
 
       expect(global.MercadoPago).not.toHaveBeenCalled();
       expect(window.mpSdkInstance).toBe(existingInstance);
+    });
+
+    test('Given mpSdkInstance does not exist, When initCardForm() is called, Then it dispatches mp_sdk_instance_ready so the Super Token bundle can build its classes', () => {
+      const sdkInstanceReadyListener = jest.fn();
+      document.addEventListener('mp_sdk_instance_ready', sdkInstanceReadyListener);
+
+      cardForm.initCardForm('100.00');
+
+      expect(sdkInstanceReadyListener).toHaveBeenCalledTimes(1);
+
+      document.removeEventListener('mp_sdk_instance_ready', sdkInstanceReadyListener);
+    });
+
+    test('Given mpSdkInstance already exists, When initCardForm() is called, Then it does not dispatch mp_sdk_instance_ready again', () => {
+      window.mpSdkInstance = { cardForm: jest.fn().mockReturnValue(Promise.resolve()) };
+      const sdkInstanceReadyListener = jest.fn();
+      document.addEventListener('mp_sdk_instance_ready', sdkInstanceReadyListener);
+
+      cardForm.initCardForm('100.00');
+
+      expect(sdkInstanceReadyListener).not.toHaveBeenCalled();
+
+      document.removeEventListener('mp_sdk_instance_ready', sdkInstanceReadyListener);
+    });
+  });
+
+  describe('formatTrackingAmount()', () => {
+    test.each([
+      { input: '100.00', expected: '100.00' },
+      { input: '100.5', expected: '100.50' },
+      { input: '1234.56', expected: '1234.56' },
+      { input: 'R$ 1.234,56', expected: '1234.56' }, // separador europeu (milhar com ponto, decimal com vírgula)
+      { input: '1,234.56', expected: '1234.56' },     // US-style (milhar com vírgula, decimal com ponto)
+      { input: '99,90', expected: '99.90' },          // decimal com vírgula
+      { input: 1234.56, expected: '1234.56' },        // número (coerção para string — não deve lançar)
+      { input: null, expected: null },
+      { input: undefined, expected: null },
+      { input: 'abc', expected: null },
+      { input: '', expected: null },
+    ])(
+      'Given input "$input", When formatTrackingAmount() is called, Then returns "$expected" (mesmo formato do contrato checkout_amount)',
+      ({ input, expected }) => {
+        expect(cardForm.formatTrackingAmount(input)).toBe(expected);
+      }
+    );
+  });
+
+  describe('dispatchCheckoutAmountEvent() — tracking de amount (PSW-4147)', () => {
+    let dispatchEventSpy;
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+    const opened = () =>
+      dispatchEventSpy.mock.calls.map((c) => c[0]).filter((e) => e.type === 'mp_checkout_opened');
+    const changed = () =>
+      dispatchEventSpy.mock.calls.map((c) => c[0]).filter((e) => e.type === 'mp_amount_changed');
+
+    beforeEach(() => {
+      dispatchEventSpy = jest.spyOn(document, 'dispatchEvent');
+      window.sendMetric = jest.fn();
+    });
+
+    afterEach(() => {
+      dispatchEventSpy.mockRestore();
+      delete window.melidataReady;
+    });
+
+    describe('quando melidataReady resolve', () => {
+      beforeEach(() => {
+        window.melidataReady = Promise.resolve();
+      });
+
+      test('Given primeira chamada, When dispatchCheckoutAmountEvent(), Then dispara mp_checkout_opened 1x com amount formatado', async () => {
+        cardForm.dispatchCheckoutAmountEvent('100.5');
+        await flush();
+
+        expect(opened()).toHaveLength(1);
+        expect(opened()[0].detail).toEqual({ amount: '100.50' });
+        expect(cardForm.hasFiredCheckoutOpenedEvent).toBe(true);
+      });
+
+      test('Given open já disparado, When chamado novamente com o mesmo amount, Then NÃO dispara open de novo nem mp_amount_changed', async () => {
+        cardForm.dispatchCheckoutAmountEvent('100.00');
+        cardForm.dispatchCheckoutAmountEvent('100.00');
+        cardForm.dispatchCheckoutAmountEvent('100.00');
+        await flush();
+
+        expect(opened()).toHaveLength(1);
+        expect(changed()).toHaveLength(0);
+      });
+
+      test('Given open já disparado, When o amount muda, Then dispara mp_amount_changed com amount e oldAmount', async () => {
+        cardForm.dispatchCheckoutAmountEvent('100.00');
+        await flush();
+        cardForm.dispatchCheckoutAmountEvent('200.00');
+        await flush();
+
+        expect(changed()).toHaveLength(1);
+        expect(changed()[0].detail).toEqual({ amount: '200.00', oldAmount: '100.00' });
+      });
+
+      test('Given amount que formata para null (ex.: DOM sem #mp-amount), When dispatchCheckoutAmountEvent() na primeira chamada, Then dispara mp_checkout_opened com amount null e marca hasFired', async () => {
+        cardForm.dispatchCheckoutAmountEvent('abc'); // formatTrackingAmount → null
+
+        await flush();
+
+        expect(opened()).toHaveLength(1);
+        expect(opened()[0].detail).toEqual({ amount: null });
+        expect(cardForm.hasFiredCheckoutOpenedEvent).toBe(true);
+      });
+
+      test('Given open com amount null já disparado, When segue com amount válido (null !== "100.00"), Then NÃO dispara mp_amount_changed (previousAmount null é falsy)', async () => {
+        cardForm.dispatchCheckoutAmountEvent('abc'); // open com amount null → lastTrackedAmount = null
+        await flush();
+        cardForm.dispatchCheckoutAmountEvent('100.00'); // previousAmount = null → guard previousAmount && ... barra
+        await flush();
+
+        expect(changed()).toHaveLength(0);
+      });
+    });
+
+    describe('quando melidataReady rejeita (drop)', () => {
+      beforeEach(() => {
+        window.melidataReady = Promise.reject(new Error('Unable to load melidata script on page'));
+      });
+
+      test('Given melidataReady rejeita, When o open é processado, Then NÃO dispara o evento DOM e reporta mp_checkout_amount_tracking_dropped com value="true" (flag de sessão)', async () => {
+        cardForm.dispatchCheckoutAmountEvent('100.00');
+        await flush();
+
+        expect(opened()).toHaveLength(0);
+        expect(window.sendMetric).toHaveBeenCalledWith(
+          'true',
+          expect.stringContaining('melidataReady rejected on mp_checkout_opened'),
+          'mp_checkout_amount_tracking_dropped'
+        );
+      });
+
+      test('Given melidataReady rejeita em múltiplas transições (open + change), When processadas, Then reporta o drop apenas 1x por sessão', async () => {
+        cardForm.dispatchCheckoutAmountEvent('100.00');
+        await flush();
+        cardForm.dispatchCheckoutAmountEvent('200.00');
+        await flush();
+
+        const dropCalls = window.sendMetric.mock.calls.filter(
+          (c) => c[2] === 'mp_checkout_amount_tracking_dropped'
+        );
+        expect(dropCalls).toHaveLength(1);
+      });
+    });
+
+    describe('quando melidataReady não é uma Promise (sobrescrito por terceiro)', () => {
+      test.each([
+        { label: 'truthy não-thenable (true)', value: true },
+        { label: 'número (1)', value: 1 },
+        { label: 'objeto sem then', value: {} },
+      ])(
+        'Given window.melidataReady = $label, When dispatchCheckoutAmountEvent(), Then NÃO lança, NÃO dispara o evento DOM e reporta o drop',
+        ({ value }) => {
+          window.melidataReady = value;
+
+          expect(() => cardForm.dispatchCheckoutAmountEvent('100.00')).not.toThrow();
+
+          expect(opened()).toHaveLength(0);
+          expect(window.sendMetric).toHaveBeenCalledWith(
+            'true',
+            expect.stringContaining('melidataReady rejected on mp_checkout_opened'),
+            'mp_checkout_amount_tracking_dropped'
+          );
+        }
+      );
     });
   });
 });

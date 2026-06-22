@@ -63,6 +63,22 @@ class ErrorMessagesTest extends TestCase
         $this->storeTranslationsMock->checkoutErrorMessagesV2['payment_not_completed'] = '<strong>It was not possible to complete the payment</strong><br>Please use another method to complete the purchase.';
         $this->storeTranslationsMock->checkoutErrorMessagesV2['incorrect_card_details'] = '<strong>One or more card details were entered incorrectly</strong><br>Please enter them again exactly as they appear on the card to complete the payment.';
 
+        $this->storeTranslationsMock->superTokenApiErrors = [
+            'CPP_AT_0103004' => '<strong>It wasn\'t possible to validate the payment</strong><br>Try again in a moment. If the issue persists, please contact the seller for next steps.',
+            'CPP_AT_0103006' => '<strong>Your payment was declined due to an error</strong><br>Please try again or use a different payment method.',
+            'CPP_AT_0103016' => '<strong>This payment method isn\'t available</strong><br>Please use a different payment method to complete your purchase.',
+            'CPP_AT_0103019' => '<strong>Something went wrong while processing your payment</strong><br>Check if the charge appears on your card. If not, please try again or use a different payment method.',
+            'CPP_AT_0103020' => '<strong>It wasn\'t possible to validate your card</strong><br>Check if you have available credit or use a different payment method.',
+            'CPP_AT_0103021' => '<strong>For security reasons, your payment was declined</strong><br>We recommend using your usual payment method and device for online purchases.',
+            'CPP_AT_0103045' => '<strong>For security reasons, your payment was declined</strong><br>We recommend using your usual payment method and device for online purchases.',
+            'CPP_AT_0103058' => '<strong>The purchase amount exceeds the limit for this payment method</strong><br>Please use a different payment method to complete your purchase.',
+            'CPP_AT_0800001' => '<strong>Some card details are incorrect</strong><br>Please review the information entered to complete the payment.',
+        ];
+
+        $this->storeTranslationsMock->superTokenOriginalMessageErrors = [
+            'pseudotoken_payment_method_gone' => '<strong>Your payment session has expired</strong><br>Please try again to complete your purchase.',
+        ];
+
         $this->errorMessages = new ErrorMessages($this->storeTranslationsMock);
     }
 
@@ -640,5 +656,145 @@ class ErrorMessagesTest extends TestCase
     {
         $result = $this->errorMessages->findErrorMessage($input_message);
         $this->assertEquals($expected_message, $result, $description);
+    }
+
+    /**
+     * Data provider for Super Token CPP_AT error codes
+     *
+     * @return array[]
+     */
+    public function superTokenApiErrorCodesProvider(): array
+    {
+        return [
+            'auth_error'           => ['CPP_AT_0103004'],
+            'database_error'       => ['CPP_AT_0103006'],
+            'payment_method_error' => ['CPP_AT_0103016'],
+            'refund_error'         => ['CPP_AT_0103019'],
+            'reserve_error'        => ['CPP_AT_0103020'],
+            'too_many_attempts'    => ['CPP_AT_0103021'],
+            'high_risk'            => ['CPP_AT_0103045'],
+            'amount_limit'         => ['CPP_AT_0103058'],
+            'bad_filled'           => ['CPP_AT_0800001'],
+        ];
+    }
+
+    /**
+     * Test findErrorMessage resolves CPP_AT codes to localized Super Token messages.
+     * The expected value comes directly from superTokenApiErrors — no key indirection needed.
+     *
+     * @dataProvider superTokenApiErrorCodesProvider
+     * @param string $input_code The CPP_AT error code from ag-transaction
+     */
+    public function testFindErrorMessageReturnsSuperTokenMessageForCppAtCode(string $input_code): void
+    {
+        $expected = $this->storeTranslationsMock->superTokenApiErrors[$input_code];
+
+        $result = $this->errorMessages->findErrorMessage($input_code);
+
+        $this->assertEquals($expected, $result, "CPP_AT code '{$input_code}' should resolve to the correct message from superTokenApiErrors");
+    }
+
+    /**
+     * Test that an unknown CPP_AT code falls back to the default error message
+     */
+    public function testFindErrorMessageReturnDefaultForUnknownCppAtCode(): void
+    {
+        $result = $this->errorMessages->findErrorMessage('CPP_AT_9999999');
+
+        $this->assertEquals($this->errorMessages->getDefaultErrorMessage(), $result);
+    }
+
+    /**
+     * Test getErrorMessages includes all 9 Super Token CPP_AT mappings
+     */
+    public function testGetErrorMessagesIncludesSuperTokenCppAtMappings(): void
+    {
+        $allMessages = $this->errorMessages->getErrorMessages();
+
+        $expectedCodes = [
+            'CPP_AT_0103004',
+            'CPP_AT_0103006',
+            'CPP_AT_0103016',
+            'CPP_AT_0103019',
+            'CPP_AT_0103020',
+            'CPP_AT_0103021',
+            'CPP_AT_0103045',
+            'CPP_AT_0103058',
+            'CPP_AT_0800001',
+        ];
+
+        foreach ($expectedCodes as $code) {
+            $this->assertArrayHasKey($code, $allMessages, "CPP_AT code '{$code}' must be present in getErrorMessages()");
+        }
+    }
+
+    /**
+     * Test getErrorMessages includes original_message error keys
+     */
+    public function testGetErrorMessagesIncludesSuperTokenOriginalMessageErrors(): void
+    {
+        $allMessages = $this->errorMessages->getErrorMessages();
+
+        $this->assertArrayHasKey(
+            'pseudotoken_payment_method_gone',
+            $allMessages,
+            "'pseudotoken_payment_method_gone' must be present in getErrorMessages()"
+        );
+    }
+
+    /**
+     * Test findErrorMessage resolves pseudotoken_payment_method_gone to its translated message
+     */
+    public function testFindErrorMessageReturnsSuperTokenMessageForPseudotokenGone(): void
+    {
+        $expected = $this->storeTranslationsMock->superTokenOriginalMessageErrors['pseudotoken_payment_method_gone'];
+
+        $result = $this->errorMessages->findErrorMessage('pseudotoken_payment_method_gone');
+
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * Test findCodeInOriginalMessage returns the matching code when present in the error chain
+     */
+    public function testFindCodeInOriginalMessageReturnsCodeWhenFound(): void
+    {
+        $originalMessage = 'ErrorOrderClientCreateRequest | errors: [code: pseudotoken_payment_method_gone, message: Payment method unavailable]';
+
+        $result = $this->errorMessages->findCodeInOriginalMessage($originalMessage);
+
+        $this->assertEquals('pseudotoken_payment_method_gone', $result);
+    }
+
+    /**
+     * Test findCodeInOriginalMessage returns null when original_message contains no known code
+     */
+    public function testFindCodeInOriginalMessageReturnsNullWhenNoMatch(): void
+    {
+        $originalMessage = 'ErrorOrderClientCreateRequest | errors: [code: some_other_error]';
+
+        $result = $this->errorMessages->findCodeInOriginalMessage($originalMessage);
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test findCodeInOriginalMessage returns null when original_message is null
+     */
+    public function testFindCodeInOriginalMessageReturnsNullForNullInput(): void
+    {
+        $result = $this->errorMessages->findCodeInOriginalMessage(null);
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Test findCodeInOriginalMessage returns null when original_message is empty string
+     */
+    public function testFindCodeInOriginalMessageReturnsNullForEmptyInput(): void
+    {
+        $result = $this->errorMessages->findCodeInOriginalMessage('');
+
+        $this->assertNull($result);
     }
 }

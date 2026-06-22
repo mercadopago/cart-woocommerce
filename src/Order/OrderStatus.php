@@ -574,6 +574,10 @@ class OrderStatus
             explode(',', $this->orderMetadata->getPaymentsIdMeta($order))
         ));
 
+        if (empty($paymentsIds)) {
+            return [];
+        }
+
         $headers = ['Authorization: Bearer ' . $this->getAccessTokenForOrder($order)];
 
         try {
@@ -604,6 +608,10 @@ class OrderStatus
      */
     public function getNotificationId(string $paymentId, array $headers): array
     {
+        if (empty($paymentId)) {
+            throw new \InvalidArgumentException('paymentId is required');
+        }
+
         $response = $this->requester->get(self::PAYMENTS_ENDPOINT . $paymentId, $headers);
 
         if ($response->getStatus() != 200 && $response->getStatus() != 201) {

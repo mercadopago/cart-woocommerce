@@ -1,3 +1,4 @@
+/* globals sendMetric */
 const namespace = 'mercadopago_blocks_update_cart';
 const REMOVE_LOAD_SPINNER_DELAY = 500;
 
@@ -29,6 +30,25 @@ function formatCurrency(value, currency) {
   return formattedValue.split('.').join('.');
 }
 
+async function waitForHandler(getHandler, metric) {
+  const WAIT_HANDLER_INTERVAL = 100;
+  const MAX_WAIT_HANDLER = 15000;
+  const startedWaitingAt = Date.now();
+  let handler = getHandler();
+  while (!handler) {
+    if (Date.now() - startedWaitingAt >= MAX_WAIT_HANDLER) {
+      if (typeof sendMetric === 'function') {
+        sendMetric(metric.name, metric.message, metric.errorType);
+      }
+      return null;
+    }
+    await new Promise(resolve => setTimeout(resolve, WAIT_HANDLER_INTERVAL));
+    handler = getHandler();
+  }
+
+  return handler;
+}
+
 async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
   try {
     window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
@@ -40,10 +60,16 @@ async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
       window.mpCustomCheckoutHandler?.cardForm?.createLoadSpinner();
     }
 
-    while (!window.mpCustomCheckoutHandler) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    const mpCustomCheckoutHandler = window.mpCustomCheckoutHandler;
+    const mpCustomCheckoutHandler = await waitForHandler(
+      () => window.mpCustomCheckoutHandler,
+      {
+        name: 'MP_CUSTOM_CHECKOUT_HANDLER_NOT_READY_ON_CART_UPDATE',
+        message: 'Custom checkout handler did not load within the expected time on cart total change',
+        errorType: 'mp_cart_total_change_error',
+      }
+    );
+    if (!mpCustomCheckoutHandler) return;
+    
     const isSubmitting = !!document.querySelector('.wc-block-components-spinner');
 
     if (mpCustomCheckoutHandler.cardForm.formMounted && !isSubmitting) {
@@ -57,10 +83,20 @@ async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
       updatedAmount = String(parseFloat(updatedAmount) * ratio);
     }
 
-    await Promise.all([
-      mpCustomCheckoutHandler.cardForm.initCardForm(updatedAmount),
-      window.mpSuperTokenTriggerHandler?.loadSuperToken(updatedAmount),
-    ]);
+    // Sequential on purpose: initCardForm() boots the Mercado Pago JS SDK, which
+    // loadSuperToken() currently depends on. They are not parallelizable until that
+    // coupling is removed (planned refactor, Q3). Do not switch back to Promise.all.
+    await mpCustomCheckoutHandler.cardForm.initCardForm(updatedAmount);
+
+    const superTokenTriggerHandler = await waitForHandler(
+      () => window.mpSuperTokenTriggerHandler,
+      {
+        name: 'MP_SUPER_TOKEN_HANDLER_NOT_READY_ON_CART_UPDATE',
+        message: 'Trigger handler did not load within the expected time on cart total change',
+        errorType: 'mp_super_token_init_error',
+      }
+    );
+    await superTokenTriggerHandler?.loadSuperToken(updatedAmount);
   } catch (e) {
     if (typeof sendMetric === 'function') {
       sendMetric('error_to_update_cart_total', e?.message || 'Unknown error', "mp_cart_total_change_error");

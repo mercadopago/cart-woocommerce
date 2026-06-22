@@ -543,6 +543,7 @@ class Order
                     'limit'    => -1,
                     'status'   => 'pending',
                     'meta_query' => array(
+                        'relation' => 'AND',
                         array(
                             'key' => 'is_production_mode',
                             'compare' => 'EXISTS'
@@ -550,6 +551,11 @@ class Order
                         array(
                             'key' => 'blocks_payment',
                             'compare' => 'EXISTS'
+                        ),
+                        array(
+                            'key' => '_Mercado_Pago_Payment_IDs',
+                            'value' => '',
+                            'compare' => '!='
                         )
                     )
                 ));

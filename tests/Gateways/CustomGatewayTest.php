@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
 use Exception;
+use MercadoPago\PP\Sdk\Exceptions\ApiException;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Gateways\CustomGateway;
@@ -1108,14 +1109,16 @@ class CustomGatewayTest extends TestCase
      */
     public function testRegisterSuperTokenStyles()
     {
+        $version = MP_SUPER_TOKEN_VERSION;
+
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getCssAsset')
-            ->with('checkouts/super-token/super-token-payment-methods')
+            ->with("checkouts/super-token/{$version}/super-token-payment-methods")
             ->andReturn('test-css-url');
 
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getCssAsset')
-            ->with('checkouts/super-token/super-token-method-details-skeleton')
+            ->with("checkouts/super-token/{$version}/super-token-method-details-skeleton")
             ->andReturn('test-skeleton-css-url');
 
         $this->gateway->mercadopago->hooks->scripts
@@ -1131,6 +1134,25 @@ class CustomGatewayTest extends TestCase
         $this->gateway->registerSuperTokenStyles();
 
         $this->assertTrue(true);
+    }
+
+    public function testSuperTokenV21I18nKeysExistInStoreTranslations()
+    {
+        $requiredKeys = [
+            'saved_cards_title',
+            'saved_card_title',
+            'mp_methods_title',
+            'account_money_balance_text',
+            'saved_payment_method_title',
+        ];
+
+        foreach ($requiredKeys as $key) {
+            $this->assertArrayHasKey(
+                $key,
+                $this->gateway->storeTranslations,
+                "storeTranslations must contain '$key' for getSuperTokenLocalizeData() to pass it to the bundle"
+            );
+        }
     }
 
     /**
@@ -1226,6 +1248,11 @@ class CustomGatewayTest extends TestCase
             'payment_methods_list_alt_text' => 'Payment Methods alt text',
             'last_digits_text' => 'Last digits',
             'new_card_text' => 'New card',
+            'saved_cards_title' => 'Saved cards',
+            'saved_card_title' => 'Saved card',
+            'mp_methods_title' => 'You can also use',
+            'account_money_balance_text' => 'Enough to pay for this purchase.',
+            'saved_payment_method_title' => 'Saved payment method',
             'account_money_text' => 'Account Money',
             'account_money_wallet_with_investment_text' => 'Wallet + Investment',
             'account_money_wallet_text' => 'Wallet',
@@ -1260,6 +1287,7 @@ class CustomGatewayTest extends TestCase
             'default_error_message' => 'Default error message',
             'installments_error_invalid_amount' => 'Invalid amount error',
             'mercado_pago_card_name' => 'Mercado Pago Card',
+            'mercado_pago_credit_card_name' => 'Mercado Pago Credit Card',
             'mercadopago_privacy_policy' => 'Privacy policy {link}',
             'consumer_credits_due_date' => 'The first installment is due on',
             'months_abbreviated' => 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
@@ -1493,6 +1521,99 @@ class CustomGatewayTest extends TestCase
 
         $this->assertEquals('fail', $result['result']);
         $this->assertEquals('', $result['redirect']);
+        $this->assertEquals($translatedMessage, $result['message']);
+    }
+
+    /**
+     * Test processReturnFail forwards the original_message-resolved message on the Order Pay page.
+     *
+     * Context: when the specific error code arrives only inside original_message
+     * (e.g. pseudotoken_payment_method_gone) with a null top-level errorCode, the Order Pay
+     * branch must still forward the resolved $result['message'] — not fall back to buyer_default.
+     *
+     * @return void
+     */
+    public function testProcessReturnFailForwardsResolvedOriginalMessageOnOrderPayPage(): void
+    {
+        $this->setNotAccessibleProperty($this->gateway, 'paymentMethodName', CustomGateway::ID);
+
+        $errorCode = 'pseudotoken_payment_method_gone';
+        $originalMessage = 'ErrorOrderClientCreateRequest | errors: [code: pseudotoken_payment_method_gone, message: Payment method unavailable]';
+        $translatedMessage = '<strong>Your payment session has expired</strong><br>Please try again to complete your purchase.';
+        $buyerMessage = 'Your payment was declined';
+
+        // Mock logs->file
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock
+            ->shouldReceive('error')
+            ->once()
+            ->with(Mockery::type('string'), CustomGateway::LOG_SOURCE, Mockery::type('array'))
+            ->andReturnNull();
+        $this->gateway->mercadopago->logs->file = $logsFileMock;
+
+        // parent::processReturnFail resolves the message from the code passed by the catch block
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorCode)
+            ->andReturn($translatedMessage);
+
+        // The Order Pay branch checks original_message and finds the specific code (non-null)
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findCodeInOriginalMessage')
+            ->once()
+            ->with($originalMessage)
+            ->andReturn($errorCode);
+
+        // Mock datadog->sendEvent
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id']);
+
+        // Mock notices
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with($translatedMessage, 'error');
+
+        // Mock isOrderPayPage to return true
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->validateGetVar('pay_for_order')
+            ->andReturn(true);
+
+        // buyer_default is present but must NOT be used — the resolved message takes precedence
+        $this->gateway->mercadopago->storeTranslations->buyerRefusedMessages = [
+            'buyer_default' => $buyerMessage,
+        ];
+
+        // Mock wp_json_encode to use json_encode
+        WP_Mock::userFunction('wp_json_encode')
+            ->once()
+            ->andReturnUsing('json_encode');
+
+        // The resolved "payment session expired" message must be forwarded — not buyer_default
+        $expectedOutput = json_encode([
+            'result' => 'fail',
+            'redirect' => false,
+            'messages' => $translatedMessage,
+        ]);
+
+        $this->expectOutputString($expectedOutput);
+
+        // ApiException with NULL errorCode but original_message carrying the specific code
+        $exception = new ApiException('invalid_payment_method_id', null, 410, $originalMessage);
+
+        $result = $this->gateway->processReturnFail(
+            $exception,
+            $errorCode,
+            CustomGateway::LOG_SOURCE,
+            [],
+            true
+        );
+
+        $this->assertEquals('fail', $result['result']);
         $this->assertEquals($translatedMessage, $result['message']);
     }
 
@@ -2723,6 +2844,11 @@ class CustomGatewayTest extends TestCase
             'payment_methods_list_alt_text' => 'Payment Methods alt text',
             'last_digits_text' => 'Last digits',
             'new_card_text' => 'New card',
+            'saved_cards_title' => 'Saved cards',
+            'saved_card_title' => 'Saved card',
+            'mp_methods_title' => 'You can also use',
+            'account_money_balance_text' => 'Enough to pay for this purchase.',
+            'saved_payment_method_title' => 'Saved payment method',
             'account_money_text' => 'Account Money',
             'account_money_wallet_with_investment_text' => 'Wallet + Investment',
             'account_money_wallet_text' => 'Wallet',
@@ -2757,6 +2883,7 @@ class CustomGatewayTest extends TestCase
             'default_error_message' => 'Default error message',
             'installments_error_invalid_amount' => 'Invalid amount error',
             'mercado_pago_card_name' => 'Mercado Pago Card',
+            'mercado_pago_credit_card_name' => 'Mercado Pago Credit Card',
             'mercadopago_privacy_policy' => 'Privacy policy {link}',
             'consumer_credits_due_date' => 'The first installment is due on',
             'months_abbreviated' => 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
@@ -3075,5 +3202,251 @@ class CustomGatewayTest extends TestCase
         );
 
         $this->assertEquals('fail', $result['result']);
+    }
+
+    /**
+     * Test that when checkout_type is super_token and ApiException has an error code,
+     * findErrorMessage receives the CPP_AT code (not the EN message string).
+     * The try-catch in proccessPaymentInternal ST case intercepts the exception.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProccessPaymentInternalSuperTokenApiExceptionPassesErrorCode(): void
+    {
+        $errorCode    = 'CPP_AT_0103004';
+        $apiException = new ApiException('It wasn\'t possible to validate the payment.', $errorCode);
+
+        $this->processPaymentMock([
+            'checkout_type'          => 'super_token',
+            'authorized_pseudotoken' => 'test-token',
+            'token'                  => 'test-token',
+            'amount'                 => 100,
+            'payment_method_id'      => 'visa',
+            'payment_type_id'        => 'credit_card',
+            'installments'           => 1,
+            'super_token_validation' => 'true',
+        ], false);
+
+        $this->order->shouldReceive('get_id')->andReturn(1)->byDefault();
+
+        $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        $superTokenTransactionMock->expects()->createPayment()->once()->andThrow($apiException);
+        $superTokenTransactionMock->expects()->getCheckoutSessionData()->andReturn(['_mp_flow_id' => 'test-flow-id']);
+
+        // findCodeInOriginalMessage is checked first — returns null (no originalMessage on this exception)
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findCodeInOriginalMessage')
+            ->once()
+            ->with(null)
+            ->andReturn(null);
+
+        // Falls through to getErrorCode() — findErrorMessage receives the CPP_AT code
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorCode)
+            ->andReturn($errorCode);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->andReturn(false)
+            ->byDefault();
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('fail', $result['result']);
+    }
+
+    /**
+     * Test that when checkout_type is NOT super_token (custom card), ApiException propagates
+     * to AbstractGateway::process_payment catch which uses getMessage() (no CPP_AT handling).
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProccessPaymentDefaultApiExceptionUsesGetMessage(): void
+    {
+        $errorMessage = 'Some payment error message';
+        $apiException = new ApiException($errorMessage, 'CPP_AT_0103004');
+
+        $this->processPaymentMock([
+            'checkout_type'     => 'custom',
+            'token'             => 'test-token',
+            'amount'            => 100,
+            'payment_method_id' => 'visa',
+            'payment_type_id'   => 'credit_card',
+            'installments'      => 1,
+        ], false);
+
+        $this->order->shouldReceive('get_id')->andReturn(1)->byDefault();
+
+        $customTransactionMock = Mockery::mock('overload:' . CustomTransaction::class);
+        $customTransactionMock->expects()->createPayment()->once()->andThrow($apiException);
+
+        // For non-super_token, AbstractGateway::process_payment catch uses getMessage()
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorMessage)
+            ->andReturn($errorMessage);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->andReturn(false)
+            ->byDefault();
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('fail', $result['result']);
+    }
+
+    /**
+     * Test that when checkout_type is super_token and ApiException has NO error code (null),
+     * findCodeInOriginalMessage is called and, if it also returns null, falls back to getMessage().
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProccessPaymentInternalSuperTokenApiExceptionFallsBackToMessageWhenNoErrorCode(): void
+    {
+        $errorMessage = 'It was not possible to complete the payment.';
+        // ApiException with null errorCode and no originalMessage
+        $apiException = new ApiException($errorMessage);
+
+        $this->processPaymentMock([
+            'checkout_type'          => 'super_token',
+            'authorized_pseudotoken' => 'test-token',
+            'token'                  => 'test-token',
+            'amount'                 => 100,
+            'payment_method_id'      => 'visa',
+            'payment_type_id'        => 'credit_card',
+            'installments'           => 1,
+            'super_token_validation' => 'true',
+        ], false);
+
+        $this->order->shouldReceive('get_id')->andReturn(1)->byDefault();
+
+        $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        $superTokenTransactionMock->expects()->createPayment()->once()->andThrow($apiException);
+        $superTokenTransactionMock->expects()->getCheckoutSessionData()->andReturn(['_mp_flow_id' => 'test-flow-id']);
+
+        // findCodeInOriginalMessage receives null (no originalMessage on exception) and returns null
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findCodeInOriginalMessage')
+            ->once()
+            ->with(null)
+            ->andReturn(null);
+
+        // Falls through to getMessage()
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with($errorMessage)
+            ->andReturn($errorMessage);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->andReturn(false)
+            ->byDefault();
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('fail', $result['result']);
+    }
+
+    /**
+     * Test that when checkout_type is super_token, ApiException has no errorCode but
+     * originalMessage contains 'pseudotoken_payment_method_gone', the specific code
+     * is resolved via findCodeInOriginalMessage and passed to findErrorMessage.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProccessPaymentInternalSuperTokenApiExceptionResolvesCodeFromOriginalMessage(): void
+    {
+        $originalMessage = 'ErrorOrderClientCreateRequest | errors: [code: pseudotoken_payment_method_gone, message: Payment method unavailable]';
+        $apiException    = new ApiException('invalid_payment_method_id', null, 410, $originalMessage);
+
+        $this->processPaymentMock([
+            'checkout_type'          => 'super_token',
+            'authorized_pseudotoken' => 'test-token',
+            'token'                  => 'test-token',
+            'amount'                 => 100,
+            'payment_method_id'      => 'visa',
+            'payment_type_id'        => 'credit_card',
+            'installments'           => 1,
+            'super_token_validation' => 'true',
+        ], false);
+
+        $this->order->shouldReceive('get_id')->andReturn(1)->byDefault();
+
+        $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
+        $superTokenTransactionMock->expects()->createPayment()->once()->andThrow($apiException);
+        $superTokenTransactionMock->expects()->getCheckoutSessionData()->andReturn(['_mp_flow_id' => 'test-flow-id']);
+
+        // findCodeInOriginalMessage finds the code in the error chain
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findCodeInOriginalMessage')
+            ->once()
+            ->with($originalMessage)
+            ->andReturn('pseudotoken_payment_method_gone');
+
+        // findErrorMessage receives the resolved code, not the generic getMessage()
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->once()
+            ->with('pseudotoken_payment_method_gone')
+            ->andReturn('<strong>Your payment session has expired</strong><br>Please try again to complete your purchase.');
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->andReturn(false)
+            ->byDefault();
+
+        $result = $this->gateway->process_payment(1);
+
+        $this->assertEquals('fail', $result['result']);
+    }
+
+    /**
+     * Test that on the order-pay page, when super_token throws ApiException with errorCode !== null,
+     * processReturnFail passes the already-translated CPP_AT message to handlePayForOrderRequest
+     * instead of falling back to buyerRefusedMessages['buyer_default'].
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testProcessReturnFailOnOrderPayPageUsesTranslatedCppAtMessage(): void
+    {
+        $errorCode      = 'CPP_AT_0103004';
+        $translatedMsg  = '<strong>It wasn\'t possible to validate the payment</strong><br>Try again in a moment.';
+        $apiException   = new ApiException('It wasn\'t possible to validate the payment.', $errorCode);
+
+        $this->gateway->mercadopago->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->with($errorCode)
+            ->andReturn($translatedMsg);
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->with('pay_for_order')
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->byDefault();
+
+        WP_Mock::userFunction('wp_json_encode')
+            ->once()
+            ->andReturnUsing('json_encode');
+
+        $this->expectOutputString(json_encode([
+            'result'   => 'fail',
+            'redirect' => false,
+            'messages' => $translatedMsg,
+        ]));
+
+        $this->gateway->processReturnFail($apiException, $errorCode, 'test_source', [], true);
     }
 }

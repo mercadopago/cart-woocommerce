@@ -72,6 +72,11 @@
     border: 1px solid var(--andes-error-red) !important;
 }
 
+#mp-checkout-custom-root #mp-custom-checkout-form-container #mp-card-holder-div input.mp-checkout-custom-card-input.mp-card-holder-name::placeholder {
+    color: var(--andes-text-color-secondary, rgba(0, 0, 0, 0.55)) !important;
+    opacity: 1 !important;
+}
+
 #mp-checkout-custom-root .mp-checkout-custom-container {
     background-color: #fff !important;
     display: flex;

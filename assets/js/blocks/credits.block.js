@@ -2,6 +2,7 @@
 
 import { useEffect } from '@wordpress/element';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
+import { extensionCartUpdate } from '@woocommerce/blocks-checkout';
 import { decodeEntities } from '@wordpress/html-entities';
 import { getSetting } from '@woocommerce/settings';
 import { addDiscountAndCommission, removeDiscountAndCommission } from './helpers/cart-update.helper';
@@ -15,7 +16,6 @@ const settings = getSetting(`woo-mercado-pago-credits_data`, {});
 const defaultLabel = decodeEntities(settings.title) || 'Checkout Credits';
 
 const updateCart = (props) => {
-  const { extensionCartUpdate } = wc.blocksCheckout;
   const { eventRegistration, emitResponse } = props;
   const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
 
