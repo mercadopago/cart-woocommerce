@@ -564,6 +564,11 @@ class CustomGateway extends AbstractGateway
                 'path' => "checkouts/super-token/{$version}/validators/checkout-form-validator",
             ],
             [
+                // Version-agnostic (shared across A/B variants): no {$version} in the path.
+                'handle' => 'wc_mercadopago_supertoken_checkout_validation_resolver',
+                'path' => 'checkouts/super-token/shared/validators/checkout-validation-resolver',
+            ],
+            [
                 'handle' => 'wc_mercadopago_supertoken',
                 'path' => "checkouts/super-token/{$version}/mp-super-token",
             ]

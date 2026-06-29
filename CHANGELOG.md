@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.8.1] 2026-06-29
+### Fixed
+- Fix fast payment checkout being blocked by required address fields that are filled and visible on screen in stores with custom checkout layouts (e.g. funnel or multi-step checkouts), by cross-checking the validation result against the page before blocking the buyer
+
 ## [8.8.0] 2026-06-22
 ### Added
 - Add fast payment v2.1 experience: saved cards and Account Money displayed in two grouped blocks, country-specific iconography, buyer email header, and improved accessibility

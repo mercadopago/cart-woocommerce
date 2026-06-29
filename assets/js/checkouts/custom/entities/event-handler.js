@@ -1,5 +1,22 @@
 /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
 /* globals wc_mercadopago_custom_event_handler_params, MP_DEVICE_SESSION_ID, jQuery, CheckoutPage, MPSuperTokenErrorCodes, sendMetric, MobileCheckoutClassicObserver */
+
+// Verdict actions returned by the CDN-hosted resolver (window.mpResolveCheckoutValidation).
+// These VALUES are the cross-boundary contract — they must match the resolver's strings.
+const VALIDATION_ACTION = { PROCEED: 'PROCEED', BLOCK: 'BLOCK', FAIL_OPEN: 'FAIL_OPEN' };
+
+// Fail-open reasons owned by the plugin (route-level + CDN availability). Emitted as the
+// metric value; the original cause travels in the metric message (detail).
+const FAIL_OPEN_REASON = {
+    TIMEOUT: 'TIMEOUT',
+    NETWORK: 'NETWORK',
+    ENDPOINT_MISSING: 'ENDPOINT_MISSING',
+    CDN_UNAVAILABLE: 'CDN_UNAVAILABLE',
+    CDN_ERROR: 'CDN_ERROR',
+};
+
+const FAIL_OPEN_METRIC = 'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN';
+
 class MPEventHandler {
     REMOVE_LOAD_SPINNER_DELAY = 500;
     MAX_ORDER_PAY_RETRIES = 5;
@@ -176,10 +193,11 @@ class MPEventHandler {
     }
 
     /**
-     * Runs server-side checkout validation through the wc_ajax_mp_validate_checkout
-     * endpoint before tokenization. When the form is valid, runs `onValid`. When it is
-     * invalid (or the endpoint fails), shows the errors and never tokenizes — there is
-     * no CSS fallback in this flow; defense in depth still happens on the real submit.
+     * Runs server-side checkout validation through the wc_ajax_mp_validate_checkout endpoint
+     * before tokenization, then delegates the verdict to the CDN-hosted resolver
+     * (resolveCheckoutValidation). On PROCEED runs `onValid`; on BLOCK shows the real errors and
+     * never tokenizes; on FAIL_OPEN (route or resolver failure) proceeds without blocking — defense
+     * in depth still happens on the real WooCommerce submit.
      *
      * @param {Event} event the checkout submit event
      * @param {Function} onValid continuation to run when the form is valid
@@ -208,7 +226,8 @@ class MPEventHandler {
         // break it down; `detail` carries extra context (e.g. the network error message).
         const failOpenAndContinue = (reason, detail) => {
             if (typeof sendMetric === 'function') {
-                sendMetric('MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN', reason, detail || 'validate_checkout_then_continue');
+                // Stable Datadog event = FAIL_OPEN_METRIC; value = reason; message = the original cause.
+                sendMetric(reason, detail || 'validate_checkout_then_continue', FAIL_OPEN_METRIC);
             }
             this.hideValidationLoader();
             onValid();
@@ -217,7 +236,7 @@ class MPEventHandler {
         // Defensive: a new plugin version always localizes the endpoint. If it is missing,
         // do not block payment — fail open (no loader was shown yet).
         if (!validationEndpoint) {
-            failOpenAndContinue('endpoint_missing');
+            failOpenAndContinue(FAIL_OPEN_REASON.ENDPOINT_MISSING);
             return;
         }
 
@@ -237,39 +256,62 @@ class MPEventHandler {
         })
             .then((response) => response.json())
             .then((response) => {
-                // Conclusive "form is invalid" verdict — block the buyer and show the errors.
-                if (response?.success && response?.data?.valid === false) {
-                    this.displayCheckoutValidationErrors(response?.data?.errors);
+                // The verdict (cross-check + funnel metrics) lives on the CDN resolver so it can be
+                // hot-fixed without a plugin release. resolveCheckoutValidation falls open if the
+                // resolver is absent or throws — the buyer is never blocked on a best-effort layer.
+                const verdict = this.resolveCheckoutValidation(response);
+
+                if (verdict.action === VALIDATION_ACTION.BLOCK) {
+                    this.displayCheckoutValidationErrors(verdict.errors);
                     this.hideValidationLoader();
                     return;
                 }
 
-                // Conclusive "valid" verdict — proceed normally (NOT a fail open). The
-                // continuation owns the loader lifecycle from here (createToken manages the
-                // card-form spinner; handleWithSuperTokenSubmit re-shows its own loader), so
-                // we clear our validation overlay before handing off to avoid a stuck overlay.
-                // On the super_token path this means a hide-then-show of the classic loader: the
-                // brief flicker is intentional and accepted so each step owns its own loader —
-                // do not "fix" it by leaving the overlay up, which risks a stuck overlay if the
-                // continuation bails before re-showing it.
-                if (response?.success && response?.data?.valid === true) {
-                    this.hideValidationLoader();
-                    onValid();
+                if (verdict.action === VALIDATION_ACTION.FAIL_OPEN) {
+                    failOpenAndContinue(verdict.reason, verdict.detail);
                     return;
                 }
 
-                // Inconclusive/unexpected server response (e.g. success:false) — fail open.
-                failOpenAndContinue('server_error');
+                // PROCEED: the continuation owns the loader lifecycle from here (createToken manages
+                // the card-form spinner; handleWithSuperTokenSubmit re-shows its own loader), so we
+                // clear our validation overlay before handing off to avoid a stuck overlay. On the
+                // super_token path this means a brief hide-then-show flicker, intentional and accepted
+                // so each step owns its own loader.
+                this.hideValidationLoader();
+                onValid();
             })
             .catch((error) => {
-                // Network/timeout on this extra layer — fail open.
-                const reason = error?.name === 'AbortError' ? 'timeout' : 'network';
+                // Network/timeout on this extra layer — fail open, carrying the original cause.
+                const reason = error?.name === 'AbortError' ? FAIL_OPEN_REASON.TIMEOUT : FAIL_OPEN_REASON.NETWORK;
                 failOpenAndContinue(reason, error?.message || error?.name || reason);
             })
             .finally(() => {
                 clearTimeout(timeoutId);
                 this.isValidating = false;
             });
+    }
+
+    /**
+     * Thin wrapper over the CDN-hosted validation resolver (window.mpResolveCheckoutValidation).
+     * The cross-check and funnel metrics live on the CDN so they can be hot-fixed without a plugin
+     * release. If the resolver is absent (bundle not yet loaded) or throws, fail open — never block
+     * the buyer on this best-effort layer — and carry the cause so the metric records the root.
+     *
+     * @param {Object} response parsed JSON from the validation route
+     * @returns {{ action: string, errors?: Array, reason?: string, detail?: string }}
+     */
+    resolveCheckoutValidation(response) {
+        try {
+            if (typeof window.mpResolveCheckoutValidation === 'function') {
+                const verdict = window.mpResolveCheckoutValidation(response);
+                if (verdict?.action) {
+                    return verdict;
+                }
+            }
+        } catch (error) {
+            return { action: VALIDATION_ACTION.FAIL_OPEN, reason: FAIL_OPEN_REASON.CDN_ERROR, detail: error?.message || error?.name };
+        }
+        return { action: VALIDATION_ACTION.FAIL_OPEN, reason: FAIL_OPEN_REASON.CDN_UNAVAILABLE };
     }
 
     showValidationLoader() {

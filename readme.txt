@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 8.8.0
+Stable tag: 8.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,27 +134,8 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.8.0 (22/06/2026) =
-### Added
-- Add fast payment v2.1 experience: saved cards and Account Money displayed in two grouped blocks, country-specific iconography, buyer email header, and improved accessibility
-- Add dynamic fast payment bundle selection via CDN config file, enabling A/B testing, split control, and kill switch without plugin deploy
-- Add server-side checkout validation before fast payment tokenization, catching form errors independently of theme or DOM structure
-
-### Changed
-- Replace fixed polling with event-driven Super Token init and fallback, adding `super_token_init_source` metric
-- Dispatch `mp_checkout_opened` and `mp_amount_changed` Melidata events on checkout load and amount updates, with `mp_checkout_amount_tracking_dropped` metric fallback
-- Emit `mp_custom_checkout_mobile_update_error` metric when a mobile card form re-init fails, replacing the previously silent error swallow in the iOS observer
-
+= v8.8.1 (29/06/2026) =
 ### Fixed
-- Fix missing script dependencies on the Blocks checkout that could prevent discounts, fees and coupons from being applied in stores using asset optimisation plugins
-- Fix fast payment error metric to report structured SDK error code instead of raw error message
-- Fix permanent loading spinner in Custom Checkout on iOS devices when using multi-step checkout plugins (e.g. Checkout for WooCommerce): the card form now initialises via a fallback event that is not cancelled when the iOS tab loses focus
-- Fix invalid fiscal document (CPF) bypassing front-end validation and reaching the payment API in custom checkout (Classic and Blocks)
-- Fixed Ticket Gateway incorrectly displaying "Linha de Crédito" (consumer_credits) alongside offline payment methods such as Boleto
-- Fix copy errors and grammatical inconsistencies in admin panel translations across gateway settings, including gender agreement for the currency conversion status text (English, Spanish, and Portuguese)
-- Fix payment sync cron returning HTTP 405 when order has no associated payment_id
-- Fix _mp_flow_id not being registered in sessionStorage on Safari/iOS (including Blocks checkout), now renewed on each page load
-- Fix oversized card network logos in the Super Token fast payment, now contained within the thumbnail frame on iOS
-- Fix card holder name placeholder color in Custom Checkout to match the other card fields
+- Fix fast payment checkout being blocked by required address fields that are filled and visible on screen in stores with custom checkout layouts (e.g. funnel or multi-step checkouts), by cross-checking the validation result against the page before blocking the buyer
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).
