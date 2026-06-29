@@ -25,7 +25,7 @@ async function addProductsToCart(page) {
   }
 }
 
-async function fillBillingData(page, user) {
+export async function fillBillingData(page, user) {
   await page.waitForLoadState();
 
   // Detect checkout mode: Classic uses #billing_first_name, Blocks uses #shipping-first_name or #email

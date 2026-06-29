@@ -1,0 +1,15 @@
+# Config real com emails de test users
+config/countries.json
+
+# Estado de túnel / logs
+.tunnel*
+*.log
+
+# Snapshots / artefatos locais
+snapshots/
+*.png
+
+# Artefatos do Playwright
+playwright-report/
+test-results/
+.last-run.json

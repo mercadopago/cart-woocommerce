@@ -79,7 +79,7 @@ const SUPER_TOKEN_FOLDER_MAP = { 'v2': 'v1', 'v2.1': 'v2.1' };
  * In dev mode (MP_SUPER_TOKEN_USE_BUNDLE=false) the bundle is not built, so the JS keeps
  * the default value declared in its source file.
  */
-const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.0', 'v2.1': '1.2.0' };
+const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.1', 'v2.1': '1.2.1' };
 
 /**
  * Resolves the loader version for a variant.
@@ -107,9 +107,13 @@ function resolveSuperTokenLoaderVersion (version) {
  */
 function bundleSuperTokenJs (version = getActiveSuperTokenVersion()) {
   const jsBaseDir = `./assets/js/checkouts/super-token/${version}`;
+  // Version-agnostic files shared by every variant (e.g. the checkout validation resolver):
+  // bundled into each variant from a single source, so they are not coupled to a variant folder.
+  const sharedBaseDir = `./assets/js/checkouts/super-token/shared`;
   const jsOutputFilePath = path.resolve(`./assets/js/checkouts/super-token/super-token.bundle.js`);
-  const jsFiles = findFilesInDir(jsBaseDir, '.js', '/blocks');
-  const jsFilesToBundle = jsFiles
+  const variantFiles = findFilesInDir(jsBaseDir, '.js', '/blocks');
+  const sharedFiles = fs.existsSync(sharedBaseDir) ? findFilesInDir(sharedBaseDir, '.js', '/blocks') : [];
+  const jsFilesToBundle = [...variantFiles, ...sharedFiles]
     .filter((filePath) => {
       const normalizedPath = path.normalize(filePath);
       return normalizedPath.includes('.js')

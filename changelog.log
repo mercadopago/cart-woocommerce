@@ -2,6 +2,10 @@ CHANGELOG:
 
 == Changelog
 
+= v8.8.1 (29/06/2026) =
+* Fixed
+- Fix fast payment checkout being blocked by required address fields that are filled and visible on screen in stores with custom checkout layouts (e.g. funnel or multi-step checkouts), by cross-checking the validation result against the page before blocking the buyer
+
 = v8.8.0 (22/06/2026) =
 * Added
 - Add fast payment v2.1 experience: saved cards and Account Money displayed in two grouped blocks, country-specific iconography, buyer email header, and improved accessibility

@@ -25,13 +25,20 @@ describe('main.js — super-token bundle build (A/B)', () => {
     fs.existsSync.mockReturnValue(true);
     fs.readdirSync.mockReturnValue(['mp-super-token.js', 'mp-super-token.css']);
     fs.lstatSync.mockReturnValue({ isDirectory: () => false });
-    // PHP read → the active-variant source of truth; any other read → bundle source
-    // (with a SUPER_TOKEN_JS_VERSION assignment so the JS injection guard finds its target).
-    fs.readFileSync.mockImplementation((filePath) =>
-      String(filePath).endsWith('.php')
-        ? "private const PLUGIN_SUPER_TOKEN_VERSION = 'v2.1';"
-        : "const SUPER_TOKEN_JS_VERSION = '0.0.0-source';\n// bundled content"
-    );
+    // PHP read → the active-variant source of truth. Variant files → bundle source with the
+    // SUPER_TOKEN_JS_VERSION assignment (only one file actually carries it — the metrics file).
+    // Shared files (super-token/shared/**) are version-agnostic and carry no such declaration,
+    // so the concatenated bundle still has exactly one declaration for the injection to replace.
+    fs.readFileSync.mockImplementation((filePath) => {
+      const normalizedPath = String(filePath);
+      if (normalizedPath.endsWith('.php')) {
+        return "private const PLUGIN_SUPER_TOKEN_VERSION = 'v2.1';";
+      }
+      if (normalizedPath.includes('shared')) {
+        return '// shared bundled content (version-agnostic, no version declaration)';
+      }
+      return "const SUPER_TOKEN_JS_VERSION = '0.0.0-source';\n// bundled content";
+    });
     fs.writeFileSync.mockImplementation(() => {});
     fs.copyFileSync.mockImplementation(() => {});
     fs.mkdirSync.mockImplementation(() => {});
@@ -224,6 +231,22 @@ describe('main.js — super-token bundle build (A/B)', () => {
       expect(writtenJs).toContain(`const SUPER_TOKEN_JS_VERSION = '${main.SUPER_TOKEN_LOADER_VERSION['v2']}'`);
       // the bare assignment (class field) is left untouched — anchoring prevents stamping the wrong target
       expect(writtenJs).toContain("SUPER_TOKEN_JS_VERSION = '0.0.0-field'");
+    });
+  });
+
+  describe('bundleSuperTokenJs — version-agnostic shared folder', () => {
+    it('Given a shared folder exists, When bundling a variant, Then should also bundle super-token/shared (single source across A/B variants)', () => {
+      main.bundleSuperTokenJs('v2');
+
+      expect(readSourceDir('./assets/js/checkouts/super-token/v2')).toBe(true);
+      expect(readSourceDir('./assets/js/checkouts/super-token/shared')).toBe(true);
+    });
+
+    it('Given the shared folder does not exist, When bundling a variant, Then should skip it without failing the build', () => {
+      fs.existsSync.mockImplementation((p) => !String(p).includes('shared'));
+
+      expect(() => main.bundleSuperTokenJs('v2')).not.toThrow();
+      expect(readSourceDir('./assets/js/checkouts/super-token/shared')).toBe(false);
     });
   });
 

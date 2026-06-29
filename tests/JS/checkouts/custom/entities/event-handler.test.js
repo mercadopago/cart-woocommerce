@@ -95,9 +95,11 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
     afterEach(() => {
       delete global.fetch;
       delete window.wc_mercadopago_checkout_update_params;
+      delete window.mpResolveCheckoutValidation;
     });
 
-    it('when form is valid, then should fetch once, call onValid and preventDefault', async () => {
+    it('Given the resolver returns PROCEED, When the form validation resolves, Then should fetch once, call onValid and preventDefault', async () => {
+      window.mpResolveCheckoutValidation = jest.fn().mockReturnValue({ action: 'PROCEED' });
       global.fetch = jest.fn().mockResolvedValue({
         json: () => Promise.resolve({ success: true, data: { valid: true, errors: [] } }),
       });
@@ -112,13 +114,14 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
       // Regression guard: the validation overlay must be cleared before handing off to the
       // continuation, otherwise createToken's card-field failures leave the form stuck loading.
       expect(handler.hideCheckoutClassicLoader).toHaveBeenCalledTimes(1);
-      // A conclusive valid verdict is NOT a fail open — no fail-open metric is emitted.
+      // PROCEED is not a fail open — the plugin emits no metric (PASSED lives on the CDN resolver).
       expect(global.sendMetric).not.toHaveBeenCalled();
       expect(handler.isValidating).toBe(false);
     });
 
-    it('when form is invalid, then should show errors and NOT continue tokenization', async () => {
+    it('Given the resolver returns BLOCK, When the form validation resolves, Then should show the errors and NOT continue tokenization', async () => {
       const errors = [{ field: 'billing_postcode', code: 'postcode', message: 'Postcode is required' }];
+      window.mpResolveCheckoutValidation = jest.fn().mockReturnValue({ action: 'BLOCK', errors });
       global.fetch = jest.fn().mockResolvedValue({
         json: () => Promise.resolve({ success: true, data: { valid: false, errors } }),
       });
@@ -133,7 +136,7 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
       expect(handler.isValidating).toBe(false);
     });
 
-    it('when the endpoint fails (network/timeout), then should fail open, not block, and emit the fail-open metric', async () => {
+    it('Given the route fetch fails (network), When the buyer pays, Then should fail open carrying the cause and not block', async () => {
       global.fetch = jest.fn().mockRejectedValue(new Error('Failed to fetch'));
       handler.displayCheckoutValidationErrors = jest.fn();
 
@@ -144,16 +147,36 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
       expect(handler.displayCheckoutValidationErrors).not.toHaveBeenCalled();
       expect(handler.hideCheckoutClassicLoader).toHaveBeenCalledTimes(1);
       expect(handler.isValidating).toBe(false);
+      // Migrated: value = reason, message = cause, target (Datadog event) = FAIL_OPEN metric.
       expect(global.sendMetric).toHaveBeenCalledWith(
-        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN',
-        'network',
-        'Failed to fetch'
+        'NETWORK',
+        'Failed to fetch',
+        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN'
       );
     });
 
-    it('when the endpoint returns an unexpected error response (success:false), then should fail open and emit the fail-open metric', async () => {
+    it('Given the resolver returns FAIL_OPEN with a cause, When validation resolves, Then should fail open propagating reason and cause', async () => {
+      window.mpResolveCheckoutValidation = jest.fn().mockReturnValue({ action: 'FAIL_OPEN', reason: 'SERVER_ERROR', detail: 'unexpected_error' });
       global.fetch = jest.fn().mockResolvedValue({
         json: () => Promise.resolve({ success: false, data: { error: 'unexpected_error' } }),
+      });
+
+      handler.validateCheckoutThenContinue({ preventDefault: jest.fn() }, onValid);
+      await flush();
+
+      expect(onValid).toHaveBeenCalledTimes(1);
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'SERVER_ERROR',
+        'unexpected_error',
+        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN'
+      );
+      expect(handler.isValidating).toBe(false);
+    });
+
+    it('Given the CDN resolver is absent, When validation resolves, Then should fail open with CDN_UNAVAILABLE and not block', async () => {
+      delete window.mpResolveCheckoutValidation;
+      global.fetch = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { valid: false, errors: [{ field: 'billing_city', message: 'x' }] } }),
       });
       handler.displayCheckoutValidationErrors = jest.fn();
 
@@ -162,12 +185,30 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
 
       expect(onValid).toHaveBeenCalledTimes(1);
       expect(handler.displayCheckoutValidationErrors).not.toHaveBeenCalled();
-      expect(handler.isValidating).toBe(false);
       expect(global.sendMetric).toHaveBeenCalledWith(
-        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN',
-        'server_error',
-        'validate_checkout_then_continue'
+        'CDN_UNAVAILABLE',
+        'validate_checkout_then_continue',
+        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN'
       );
+      expect(handler.isValidating).toBe(false);
+    });
+
+    it('Given the CDN resolver throws, When validation resolves, Then should fail open with CDN_ERROR carrying the cause', async () => {
+      window.mpResolveCheckoutValidation = jest.fn(() => { throw new Error('resolver boom'); });
+      global.fetch = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { valid: false, errors: [] } }),
+      });
+
+      handler.validateCheckoutThenContinue({ preventDefault: jest.fn() }, onValid);
+      await flush();
+
+      expect(onValid).toHaveBeenCalledTimes(1);
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'CDN_ERROR',
+        'resolver boom',
+        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN'
+      );
+      expect(handler.isValidating).toBe(false);
     });
 
     it('when a validation is already in progress, then a second call should be ignored (single fetch)', async () => {
@@ -182,7 +223,7 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
       expect(handler.isValidating).toBe(true);
     });
 
-    it('when the endpoint URL is missing, then should fail open without blocking and emit the fail-open metric', () => {
+    it('Given the endpoint URL is missing, When the buyer pays, Then should fail open without blocking and emit the fail-open metric', () => {
       window.wc_mercadopago_checkout_update_params = {};
       global.fetch = jest.fn();
       const event = { preventDefault: jest.fn() };
@@ -193,9 +234,9 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
       expect(event.preventDefault).not.toHaveBeenCalled();
       expect(onValid).toHaveBeenCalledTimes(1);
       expect(global.sendMetric).toHaveBeenCalledWith(
-        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN',
-        'endpoint_missing',
-        'validate_checkout_then_continue'
+        'ENDPOINT_MISSING',
+        'validate_checkout_then_continue',
+        'MP_CHECKOUT_AJAX_VALIDATION_FAIL_OPEN'
       );
     });
 
