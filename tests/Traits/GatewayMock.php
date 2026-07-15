@@ -35,6 +35,9 @@ trait GatewayMock
         $this->gateway->mercadopago->sellerConfig
             ->shouldReceive('getCustIdFromAT')->byDefault()->andReturn('test-cust-id');
 
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('getProductionMode')->byDefault()->andReturn('yes');
+
         // Initialize datadog property to avoid uninitialized property errors
         $datadogMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Metrics\Datadog::class);
         $datadogMock->shouldReceive('sendEvent')->byDefault();

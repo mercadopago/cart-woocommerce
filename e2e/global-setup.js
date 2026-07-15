@@ -121,7 +121,20 @@ module.exports = async function globalSetup() {
     '<!-- wp:woocommerce/checkout-actions-block /-->',
     '</div><!-- /wp:woocommerce/checkout-fields-block -->',
     '<!-- wp:woocommerce/checkout-totals-block --><div class="wp-block-woocommerce-checkout-totals-block">',
-    '<!-- wp:woocommerce/checkout-order-summary-block /-->',
+    // checkout-order-summary-block must also be expanded with its inner blocks —
+    // the self-closing form renders an empty container (same issue as the root checkout
+    // block). checkout-order-summary-fee-block is required for MP discount/commission
+    // fee rows to appear in the Order Summary sidebar.
+    '<!-- wp:woocommerce/checkout-order-summary-block --><div class="wp-block-woocommerce-checkout-order-summary-block">',
+    '<!-- wp:woocommerce/checkout-order-summary-cart-items-block /-->',
+    '<!-- wp:woocommerce/checkout-order-summary-subtotal-block /-->',
+    '<!-- wp:woocommerce/checkout-order-summary-fee-block /-->',
+    '<!-- wp:woocommerce/checkout-order-summary-discount-block /-->',
+    '<!-- wp:woocommerce/checkout-order-summary-coupon-form-block /-->',
+    '<!-- wp:woocommerce/checkout-order-summary-shipping-block /-->',
+    '<!-- wp:woocommerce/checkout-order-summary-taxes-block /-->',
+    '<!-- wp:woocommerce/checkout-order-summary-totals-block /-->',
+    '</div><!-- /wp:woocommerce/checkout-order-summary-block -->',
     '</div><!-- /wp:woocommerce/checkout-totals-block -->',
     '</div><!-- /wp:woocommerce/checkout -->',
   ].join('');
@@ -184,8 +197,10 @@ module.exports = async function globalSetup() {
     '$all = get_option("_site_id_payment_methods", []); ' +
     '$byType = []; ' +
     'foreach ($all as $m) { $byType[$m["payment_type_id"]][] = $m; } ' +
-    'if (isset($byType["ticket"])) update_option("_all_payment_methods_ticket", $byType["ticket"]); ' +
-    'if (isset($byType["bank_transfer"])) update_option("_mp_payment_methods_pix", $byType["bank_transfer"]); '
+    // Always reset caches before populating so stale data from a previous country never
+    // bleeds into the current one (e.g. MLB boleto persisting when switching to MPE/MLC/MLU).
+    'update_option("_all_payment_methods_ticket", isset($byType["ticket"]) ? $byType["ticket"] : []); ' +
+    'update_option("_mp_payment_methods_pix", isset($byType["bank_transfer"]) ? $byType["bank_transfer"] : []); '
   );
 
   // Enable payment gateways

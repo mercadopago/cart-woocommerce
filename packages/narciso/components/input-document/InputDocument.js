@@ -47,14 +47,14 @@ class InputDocument extends HTMLElement {
     select.addEventListener('change', () => {
       mpInput.classList.remove('mp-focus');
       mpInput.classList.remove('mp-error');
-      // Remove o helper de erro quando o select mudar de valor
+      // Clear the error helper when the document type changes
       helper.firstElementChild.style.display = 'none';
 
       this.setInpuProperties(select, mpDocument);
 
       this.setMaskInputDocument(select, mpDocument, hidden);
 
-      // Reset do estado do label quando mudar o tipo de documento
+      // Reset the label state when the document type changes
       this.updateLabelState(label, false);
     });
 
@@ -218,31 +218,17 @@ class InputDocument extends HTMLElement {
   }
 
   isValidCNPJ(cnpj, helper) {
-    cnpj = cnpj.replace(/[^\d]+/g, '');
+    cnpj = cnpj.replace(/[^A-Z0-9]/gi, '').toUpperCase();
 
     if (cnpj === '') {
       this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
       return false;
     }
 
-    // Elimina CNPJs invalidos conhecidos
-    if (
-      cnpj === '00000000000000' ||
-      cnpj === '11111111111111' ||
-      cnpj === '22222222222222' ||
-      cnpj === '33333333333333' ||
-      cnpj === '44444444444444' ||
-      cnpj === '55555555555555' ||
-      cnpj === '66666666666666' ||
-      cnpj === '77777777777777' ||
-      cnpj === '88888888888888' ||
-      cnpj === '99999999999999'
-    ) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    if (parseInt(cnpj, 10) === 0) {
+    // Repeated-sequence check only applies when the length is correct (14 chars).
+    // This preserves 'helper-invalid' for short repeated inputs (e.g. 'A', 'AAAA')
+    // and shows 'helper-wrong' only for a full-length repeated sequence.
+    if (cnpj.length === 14 && cnpj.split('').every((c) => c === cnpj[0])) {
       this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
       return false;
     }
@@ -252,7 +238,13 @@ class InputDocument extends HTMLElement {
       return false;
     }
 
-    // Valida DVs
+    // Validate charset: 12 alphanumeric positions + 2 numeric check digits
+    if (!/^[A-Z0-9]{12}[0-9]{2}$/.test(cnpj)) {
+      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
+      return false;
+    }
+
+    // Validate check digits
     let tamanho = cnpj.length - 2;
     let numeros = cnpj.substring(0, tamanho);
 
@@ -262,7 +254,7 @@ class InputDocument extends HTMLElement {
     let pos = tamanho - 7;
 
     for (let i = tamanho; i >= 1; i -= 1) {
-      soma += numeros.charAt(tamanho - i) * pos--;
+      soma += (numeros.charCodeAt(tamanho - i) - 48) * pos--;
 
       if (pos < 2) {
         pos = 9;
@@ -282,7 +274,7 @@ class InputDocument extends HTMLElement {
     pos = tamanho - 7;
 
     for (let i = tamanho; i >= 1; i -= 1) {
-      soma += numeros.charAt(tamanho - i) * pos--;
+      soma += (numeros.charCodeAt(tamanho - i) - 48) * pos--;
 
       if (pos < 2) {
         pos = 9;
@@ -353,12 +345,12 @@ class InputDocument extends HTMLElement {
           .replace(/(-\d{2})\d+?$/, '$1'),
       CNPJ: (value) =>
         value
-          .replace(/\D+/g, '')
-          .replace(/(\d{2})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1.$2')
-          .replace(/(\d{3})(\d)/, '$1/$2')
-          .replace(/(\d{4})(\d)/, '$1-$2')
-          .replace(/(-\d{2})\d+?$/, '$1'),
+          .replace(/[^A-Za-z0-9]+/g, '')
+          .replace(/^([A-Za-z0-9]{2})([A-Za-z0-9])/, '$1.$2')
+          .replace(/^([A-Za-z0-9]{2})\.([A-Za-z0-9]{3})([A-Za-z0-9])/, '$1.$2.$3')
+          .replace(/\.([A-Za-z0-9]{3})([A-Za-z0-9])/, '.$1/$2')
+          .replace(/([A-Za-z0-9]{4})([0-9])/, '$1-$2')
+          .replace(/(-[0-9]{2})[A-Za-z0-9]+?$/, '$1'),
       CI: (value) => value.replace(/\D+/g, ''),
     };
 
@@ -367,11 +359,11 @@ class InputDocument extends HTMLElement {
         e.target.value = masks[select.value](e.target.value);
       }
       if (hidden) {
-        const value = e.target.value.replace(/[^\w\s]/gi, '');
+        const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         hidden.value = value;
       }
 
-      // Validação em tempo real durante a digitação
+      // Real-time validation while typing
       this.validateDocumentRealTime(e.target, select, input.parentElement);
     });
   }

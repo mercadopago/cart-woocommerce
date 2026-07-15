@@ -159,6 +159,18 @@
   border-bottom: solid #ccc 1px;
 }
 
+.form-table tr:is(.mp-subscriptions-group, :has(.mp-subscriptions-group)) {
+    border-bottom: none;
+}
+
+.form-table tr:has(.mp-subscriptions-group):not(:has(.mp-toggle-checkbox)) th {
+  padding-top: 0 !important;
+}
+
+.form-table tr:has(.mp-subscriptions-group) td {
+  margin-bottom: 32px !important;
+}
+
 .form-table th {
   width: 100% !important;
   display: block;
@@ -598,4 +610,89 @@ h3.mp-small-text {
   color: #646970 !important;
   font-size: 14px !important;
   font-weight: 400 !important;
+}
+
+.mp-subscriptions-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.mp-subscriptions-modal {
+  background: #fff;
+  border-radius: 8px;
+  padding: 32px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.mp-subscriptions-modal__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 12px;
+}
+
+.mp-subscriptions-modal__body {
+  font-size: 14px;
+  color: #646970;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.mp-subscriptions-modal__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.mp-subscriptions-modal__btn {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.mp-subscriptions-modal__btn--primary {
+  background: var(--andes-accent-color);
+  color: #fff;
+  border: none;
+}
+
+.mp-subscriptions-modal__btn--primary:focus-visible {
+  box-shadow: 0 0 0 0.1875em rgb(27 135 201 / 30%) !important;
+}
+
+.mp-subscriptions-modal__btn--primary:hover {
+  background: var(--andes-accent-color);
+  opacity: 0.85;
+  border: none;
+}
+
+.mp-subscriptions-modal__btn--secondary:focus-visible {
+  box-shadow: 0 0 0 0.1875em rgb(27 135 201 / 30%) !important;
+}
+
+.mp-subscriptions-modal__btn--secondary {
+  background: var(--All-andes-blue-ml-150, rgba(65, 137, 230, 0.15));
+  color: var(--andes-accent-color);
+  border-color: transparent;
+}
+
+.mp-subscriptions-modal__btn--secondary:hover {
+  background: rgba(65, 137, 230, 0.25);
+}
+
+.mp-subscriptions-notice {
+  margin: 0;
 }

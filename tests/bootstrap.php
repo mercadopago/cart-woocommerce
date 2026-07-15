@@ -25,7 +25,9 @@ if (empty($mpSuperTokenVersionMatch[1])) {
 define('MP_SUPER_TOKEN_VERSION', $mpSuperTokenVersionMatch[1]);
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/Mocks/WoocommerceGatewayStub.php';
 require_once __DIR__ . '/Mocks/WoocommerceBlocksStub.php';
+require_once __DIR__ . '/Mocks/SdkExceptionsStub.php';
 
 WP_Mock::activateStrictMode(); // Each test must declare it's own mock expectations
 WP_Mock::bootstrap();

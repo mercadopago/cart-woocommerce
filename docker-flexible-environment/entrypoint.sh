@@ -157,6 +157,18 @@ if [ ! -e "$WP_PLUGINS/woocommerce-mercadopago" ] && [ ! -L "$WP_PLUGINS/woocomm
     echo "[mp-dev] Plugin symlink created."
 fi
 
+# ---------- Diretórios de upload/upgrade (idempotente) ----------
+mkdir -p /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade
+chown -R www-data:www-data /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade 2>/dev/null || true
+
+# ---------- Sync runtime wp-config constants ----------
+# Applied on every container start (not just first-time setup) so env-var changes
+# take effect without requiring a volume reset.
+if [ -n "${MP_AUTOMATIC_PAYMENTS_BASE_PATH:-}" ]; then
+    $WP config set MP_AUTOMATIC_PAYMENTS_BASE_PATH "$MP_AUTOMATIC_PAYMENTS_BASE_PATH" 2>/dev/null || true
+    echo "[mp-dev] MP_AUTOMATIC_PAYMENTS_BASE_PATH → $MP_AUTOMATIC_PAYMENTS_BASE_PATH"
+fi
+
 # ---------- Start Apache ----------
 echo "[mp-dev] Store ready at $SITE_URL"
 exec apache2-foreground

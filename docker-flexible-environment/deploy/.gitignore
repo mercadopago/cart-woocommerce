@@ -1,2 +1,2 @@
 # Config local por dev (HOMOLOG_INSTANCE, overrides) — não versionar
-.deploy.env
+.deploy*.env

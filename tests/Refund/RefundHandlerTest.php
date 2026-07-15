@@ -1158,4 +1158,114 @@ class RefundHandlerTest extends TestCase
         $this->assertEquals('approved', $result[0]['status']);
         $this->assertEquals($responseData, $result[0]['data']);
     }
+
+    // -------------------------------------------------------------------------
+    // Regression tests — WCS renewal order refunds
+    // Verifies that RefundHandler reads _Mercado_Pago_Payment_IDs from the
+    // renewal order passed to it, never from a parent order.
+    // -------------------------------------------------------------------------
+
+    public function testFullRefundOnRenewalUsesRenewalPaymentId(): void
+    {
+        $renewalPaymentId = 'RENEWAL-PAY-9001';
+        $accessToken      = 'TEST-ACCESS-TOKEN';
+
+        $this->order->shouldReceive('get_meta')->with('checkout_type')->andReturn('');
+        $this->order->shouldReceive('get_meta')->once()->with('_Mercado_Pago_Payment_IDs')->andReturn($renewalPaymentId);
+        $this->order->shouldReceive('get_id')->andReturn(500);
+        $this->sellerConfig->shouldReceive('getCredentialsAccessToken')->once()->andReturn($accessToken);
+
+        $response = Mockery::mock(Response::class);
+        $response->shouldReceive('getStatus')->andReturn(201);
+        $response->shouldReceive('getData')->andReturn(['id' => 'refund-ok', 'status' => 'approved']);
+
+        $this->requester
+            ->shouldReceive('post')
+            ->once()
+            ->with(Mockery::pattern('/' . preg_quote($renewalPaymentId, '/') . '/'), Mockery::any(), Mockery::any())
+            ->andReturn($response);
+
+        $this->mockDatadogSuccess();
+
+        $result = $this->refundHandler->processRefund(9.90, 'renewal refund');
+
+        $this->assertEquals('approved', $result['status']);
+    }
+
+    public function testPartialRefundOnRenewalUsesRenewalPaymentId(): void
+    {
+        $renewalPaymentId = 'RENEWAL-PAY-9001';
+        $accessToken      = 'TEST-ACCESS-TOKEN';
+
+        $this->order->shouldReceive('get_meta')->with('checkout_type')->andReturn('');
+        $this->order->shouldReceive('get_meta')->once()->with('_Mercado_Pago_Payment_IDs')->andReturn($renewalPaymentId);
+        $this->order->shouldReceive('get_id')->andReturn(500);
+        $this->sellerConfig->shouldReceive('getCredentialsAccessToken')->once()->andReturn($accessToken);
+
+        $response = Mockery::mock(Response::class);
+        $response->shouldReceive('getStatus')->andReturn(201);
+        $response->shouldReceive('getData')->andReturn(['id' => 'refund-partial', 'status' => 'approved']);
+
+        $this->requester
+            ->shouldReceive('post')
+            ->once()
+            ->with(
+                Mockery::pattern('/' . preg_quote($renewalPaymentId, '/') . '/'),
+                Mockery::any(),
+                Mockery::on(fn($p) => isset($p['amount']) && $p['amount'] > 0)
+            )
+            ->andReturn($response);
+
+        $this->mockDatadogSuccess();
+
+        $result = $this->refundHandler->processRefund(4.95, 'partial renewal refund');
+
+        $this->assertEquals('approved', $result['status']);
+    }
+
+    public function testRefundFailsWhenRenewalHasNoPaymentId(): void
+    {
+        $this->order->shouldReceive('get_meta')->with('checkout_type')->andReturn('');
+        $this->order->shouldReceive('get_meta')->once()->with('_Mercado_Pago_Payment_IDs')->andReturn('');
+        $this->order->shouldReceive('get_id')->andReturn(500);
+
+        $this->mockDatadogError('404', 'Not Found: Payment ID not found in order metadata');
+
+        $this->expectException(RefundException::class);
+
+        $this->refundHandler->processRefund(9.90);
+    }
+
+    public function testRenewalRefundNeverReadsParentPaymentId(): void
+    {
+        $renewalPaymentId = 'RENEWAL-PAY-9001';
+        $parentPaymentId  = 'PARENT-PAY-1001';
+        $accessToken      = 'TEST-ACCESS-TOKEN';
+
+        $this->order->shouldReceive('get_meta')->with('checkout_type')->andReturn('');
+        $this->order->shouldReceive('get_meta')->once()->with('_Mercado_Pago_Payment_IDs')->andReturn($renewalPaymentId);
+        $this->order->shouldReceive('get_id')->andReturn(500);
+        $this->order->shouldNotReceive('get_parent_id');
+        $this->sellerConfig->shouldReceive('getCredentialsAccessToken')->once()->andReturn($accessToken);
+
+        $response = Mockery::mock(Response::class);
+        $response->shouldReceive('getStatus')->andReturn(201);
+        $response->shouldReceive('getData')->andReturn(['id' => 'refund-ok', 'status' => 'approved']);
+
+        $this->requester
+            ->shouldReceive('post')
+            ->once()
+            ->with(
+                Mockery::not(Mockery::pattern('/' . preg_quote($parentPaymentId, '/') . '/')),
+                Mockery::any(),
+                Mockery::any()
+            )
+            ->andReturn($response);
+
+        $this->mockDatadogSuccess();
+
+        $result = $this->refundHandler->processRefund(9.90);
+
+        $this->assertEquals('approved', $result['status']);
+    }
 }

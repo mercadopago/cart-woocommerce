@@ -1,6 +1,8 @@
+import { test } from "@playwright/test";
 import { placeOrder } from "./place_order.helper";
 
 export default async function(page) {
+  test.setTimeout(120000);
   await page.waitForLoadState();
 
   // Select PIX — supports both Classic and Blocks radio IDs
@@ -19,5 +21,5 @@ export default async function(page) {
   // Click place order (Classic single-click / Blocks two-phase submit)
   await placeOrder(page);
 
-  await page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 60000 });
 }

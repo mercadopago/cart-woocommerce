@@ -344,4 +344,65 @@ class AbstractBlockTest extends TestCase
 
         $this->assertFalse($this->block->hasFees());
     }
+
+    public function testHasFeesTrueWhenCommissionIsDecimal(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 0.5;
+        $gatewayMock->discount   = 0.0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertTrue($this->block->hasFees());
+    }
+
+    public function testHasFeesTrueWhenDiscountIsDecimal(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 0.0;
+        $gatewayMock->discount   = 0.5;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertTrue($this->block->hasFees());
+    }
+
+    public function testHasFeesFalseWhenBothAreZeroFloat(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 0.0;
+        $gatewayMock->discount   = 0.0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertFalse($this->block->hasFees());
+    }
+
+    public function testHasFeesFalseWhenFeesAreNegative(): void
+    {
+        // admin form enforces min=0; guard must not treat a negative value as a fee
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = -1.0;
+        $gatewayMock->discount   = 0.0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertFalse($this->block->hasFees());
+    }
+
+    public function testHasFeesTrueWhenCommissionIsSmallestDecimal(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 0.01;
+        $gatewayMock->discount   = 0.0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertTrue($this->block->hasFees());
+    }
+
+    public function testHasFeesTrueWhenDiscountIsMaximum(): void
+    {
+        $gatewayMock             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->commission = 0.0;
+        $gatewayMock->discount   = 99.0;
+        $this->block->gateway    = $gatewayMock;
+
+        $this->assertTrue($this->block->hasFees());
+    }
 }

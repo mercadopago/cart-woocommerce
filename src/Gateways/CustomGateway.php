@@ -13,6 +13,8 @@ use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\PP\Sdk\Exceptions\ApiException;
 use MercadoPago\Woocommerce\Helpers\Device;
+use MercadoPago\Woocommerce\Helpers\SubscriptionsHelper;
+use MercadoPago\Woocommerce\Helpers\WebhookUrl;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -111,8 +113,8 @@ class CustomGateway extends AbstractGateway
         $this->description = $this->adminTranslations['gateway_description'];
         $this->method_title = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->discount = (int) $this->getActionableValue('gateway_discount', 0);
-        $this->commission = (int) $this->getActionableValue('commission', 0);
+        $this->discount = (float) $this->getActionableValue('gateway_discount', 0);
+        $this->commission = (float) $this->getActionableValue('commission', 0);
 
         $this->mercadopago->hooks->gateway->registerUpdateOptions($this);
         $this->mercadopago->hooks->gateway->registerGatewayTitle($this);
@@ -122,12 +124,830 @@ class CustomGateway extends AbstractGateway
         $this->mercadopago->hooks->order->registerAdminOrderTotalsAfterTotal([$this, 'registerInstallmentsFeeOnAdminOrder']);
 
         $this->mercadopago->hooks->endpoints->registerApiEndpoint(self::WEBHOOK_API_NAME, [$this, 'webhook']);
+
+        // Subscription settings validation must always run — the toggle and token
+        // fields exist in the admin regardless of WCS being installed.
+        add_filter('woocommerce_settings_api_sanitized_fields_' . $this->id, [$this, 'validateSubscriptionsBeforeSave']);
+
+        if (SubscriptionsHelper::isWcsActive()) {
+            add_action('admin_notices', [$this, 'displaySubscriptionsValidationNotice']);
+            add_action('admin_notices', [$this, 'displayCardChangeInconsistencyNotice']);
+            add_action('before_woocommerce_pay', [$this, 'restoreChangePaymentError'], 1);
+            add_action('before_woocommerce_pay', [$this, 'restoreChangePaymentSuccess'], 1);
+            add_action('wp_enqueue_scripts', [$this, 'overridePublicKeyForSubscriptionCheckout'], 20);
+            add_action('wp_enqueue_scripts', [$this, 'dequeueSuperTokenForSubscriptionCheckout'], 20);
+        }
         $this->mercadopago->hooks->checkout->registerReceipt($this->id, [$this, 'renderOrderForm']);
 
         $this->mercadopago->hooks->cart->registerCartCalculateFees([$this, 'registerDiscountAndCommissionFeesOnCart']);
 
         $this->mercadopago->helpers->currency->handleCurrencyNotices($this);
         $this->paymentMethodName = self::ID;
+
+        $this->initWcsSupports();
+    }
+
+    /**
+     * Returns true when the current page is a subscription payment context.
+     *
+     * Covers three entry points (evaluated in priority order):
+     *   1. Payment-method change (My Account → Change payment) — WCS reuses the
+     *      order-pay endpoint with the subscription ID, so change_payment_method
+     *      must be detected first; applying wcs_order_contains_subscription() to
+     *      a WC_Subscription returns false and would skip the override otherwise.
+     *   2. Order Pay — decision is based on the order being paid, not the cart.
+     *      'any' covers renewal orders that failed and land on Order Pay for retry.
+     *   3. Standard checkout — decision based on the cart.
+     *
+     * Shared by overridePublicKeyForSubscriptionCheckout() and
+     * dequeueSuperTokenForSubscriptionCheckout() to keep both methods in sync.
+     */
+    private function isSubscriptionPaymentContext(): bool
+    {
+        if ($this->mercadopago->helpers->url->validateGetVar('change_payment_method')) {
+            return true;
+        }
+
+        $orderId = (int) get_query_var('order-pay');
+        if ($orderId > 0) {
+            $order = wc_get_order($orderId);
+            return $order
+                && function_exists('wcs_order_contains_subscription')
+                && \wcs_order_contains_subscription($order, 'any');
+        }
+
+        return class_exists('WC_Subscriptions_Cart')
+            && \WC_Subscriptions_Cart::cart_contains_subscription();
+    }
+
+    /**
+     * Overrides the MP SDK public key in the checkout JS params so the card
+     * token is generated with the Pre-approval credential instead of the
+     * standard one. Delegates context detection to isSubscriptionPaymentContext().
+     *
+     * Runs at wp_enqueue_scripts priority 20 (after script registration at
+     * priority 10), when WC()->cart is already loaded from session.
+     */
+    public function overridePublicKeyForSubscriptionCheckout(): void
+    {
+        if (!$this->isSubscriptionPaymentContext()) {
+            return;
+        }
+
+        $key = $this->mercadopago->subscriptionsHelper->resolvePublicKey($this->mercadopago->storeConfig);
+        if ($key === '') {
+            return;
+        }
+
+        $escaped = esc_js($key);
+        wp_add_inline_script(
+            'wc_mercadopago_custom_checkout',
+            "if (window.wc_mercadopago_custom_checkout_params) {
+    window.wc_mercadopago_custom_checkout_params.public_key = '{$escaped}';
+}
+if (window.wc_mercadopago_checkout_session_data_register_params) {
+    window.wc_mercadopago_checkout_session_data_register_params.public_key = '{$escaped}';
+}
+if (typeof MPCheckoutSessionDataRegister !== 'undefined') {
+    MPCheckoutSessionDataRegister.PUBLIC_KEY = '{$escaped}';
+}
+window.mpSdkInstance = null;",
+            'after'
+        );
+    }
+
+    /**
+     * Super Token (account money / saved cards via MP login) is incompatible with
+     * subscriptions — recurring charges run through the Pre-approval flow, not the
+     * Super Token payment methods. Dequeues Super Token scripts on any subscription
+     * payment context. Delegates context detection to isSubscriptionPaymentContext().
+     *
+     * Runs at wp_enqueue_scripts priority 20 (after the scripts are enqueued at
+     * priority 10), when WC()->cart is already loaded from session.
+     */
+    public function dequeueSuperTokenForSubscriptionCheckout(): void
+    {
+        if (!$this->isSubscriptionPaymentContext()) {
+            return;
+        }
+
+        foreach ($this->getSuperTokenScripts() as $script) {
+            wp_dequeue_script($script['handle']);
+            wp_deregister_script($script['handle']);
+        }
+    }
+
+    /**
+     * Conditionally register WooCommerce Subscriptions support flags on the
+     * gateway. Intentionally excludes `gateway_scheduled_payments` (Mercado
+     * Pago manages renewal scheduling server-side via the Pre-approval API).
+     *
+     * When the subscriptions_enabled toggle is off, no flags are registered and
+     * WCS automatically hides the gateway for subscription products in all
+     * checkout types (Classic and Blocks).
+     *
+     * @return void
+     */
+    private function initWcsSupports(): void
+    {
+        if (
+            SubscriptionsHelper::isWcsActive()
+            && $this->get_option('subscriptions_enabled', 'no') === 'yes'
+            && $this->mercadopago->subscriptionsHelper->resolveAccessToken($this->mercadopago->storeConfig) !== ''
+        ) {
+            $this->supports = array_merge($this->supports, [
+                'subscriptions',
+                'subscription_cancellation',
+                'subscription_suspension',
+                'subscription_reactivation',
+                'subscription_payment_method_change_customer',
+                'subscription_payment_method_change_admin',
+                'subscription_amount_changes',
+                'subscription_date_changes',
+                'multiple_subscriptions',
+            ]);
+        }
+    }
+
+    /**
+     * Process payment with branching for WooCommerce Subscriptions scenarios.
+     *
+     * Branch order is significant (scenario labels match the inline comments below):
+     *  - Payment-method change (Scenario 3) — total is $0 and the order still
+     *    contains a subscription product, so this MUST be checked first
+     *    (otherwise the next branch would incorrectly route it to the
+     *    initial-payment flow).
+     *  - Initial payment for a new subscription (Scenario 1) — order contains a
+     *    subscription product and we are not changing the method.
+     *  - Standard order (Scenario 4) — delegate to the parent (existing checkout behavior).
+     *
+     * When WCS is not installed, both guard clauses short-circuit and the
+     * call falls through to `parent::process_payment()`, preserving the
+     * exact prior behavior (zero regression).
+     *
+     * @param int $order_id
+     * @return array
+     */
+    public function process_payment($order_id): array
+    {
+        if (!SubscriptionsHelper::isWcsActive()) {
+            return parent::process_payment($order_id);
+        }
+
+        // Scenario 3 — Payment-method change: must be checked first because
+        // the order total is $0 during a method-change request; without this guard the next
+        // branch would misroute it as a new-subscription initial payment.
+        if (
+            class_exists('WC_Subscriptions_Change_Payment_Gateway')
+            && !empty(\WC_Subscriptions_Change_Payment_Gateway::$is_request_to_change_payment)
+        ) {
+            return $this->process_subscription_payment_method_change(wc_get_order($order_id));
+        }
+
+        // Scenario 1 — Initial payment for a new subscription.
+        // WCS is guaranteed active here (early return above handles the absent case).
+        $order = wc_get_order($order_id);
+        if (wcs_order_contains_subscription($order)) {
+            try {
+                return $this->process_subscription_initial_payment($order);
+            } catch (\Exception $e) {
+                // \Error (e.g. TypeError) propagates to WooCommerce's top-level error boundary —
+                // same behaviour as AbstractGateway::process_payment() for the regular checkout.
+                return $this->processReturnFail($e, $e->getMessage(), self::LOG_SOURCE, (array) $order, true);
+            }
+        }
+
+        // Scenario 4 — Standard order; delegate to parent (existing checkout behavior).
+        return parent::process_payment($order_id);
+    }
+
+    /**
+     * Handle the customer-initiated payment-method change for an existing
+     * subscription.
+     *
+     * Orchestrates the add-then-remove sequence via AP v2:
+     *   1. POST /subscriptions/{id}/payment-methods with set_as_default: true
+     *   2. DELETE /subscriptions/{id}/payment-methods (only when a previous card differs from the new one)
+     *
+     * 422 handling:
+     *   - LastPaymentMethod   → silent success (old card was already gone)
+     *   - CannotRemoveDefault → partial success: error log + admin notice; new card is already default
+     *
+     * @param \WC_Order|false $order
+     * @return array
+     */
+    private function process_subscription_payment_method_change($order): array
+    {
+        if (!$order || !function_exists('wcs_get_subscription')) {
+            return $this->paymentMethodChangeFailure(
+                __('Could not load the subscription to change the payment method.', 'woocommerce-mercadopago')
+            );
+        }
+
+        $subscription = wcs_get_subscription($order->get_id()) ?: $order;
+
+        $subscriptionId = (string) $this->mercadopago->subscriptionsHelper
+            ->getSubscriptionMeta($subscription, '_mp_subscription_id', '');
+        if ($subscriptionId === '') {
+            $this->mercadopago->automaticPaymentsClient->log(
+                'error',
+                'op=change-payment-method error=missing_subscription_id',
+                ['wc_order_id' => $order->get_id()]
+            );
+            return $this->paymentMethodChangeFailure(
+                __('Subscription is not linked to Mercado Pago yet.', 'woocommerce-mercadopago')
+            );
+        }
+
+        $checkout = $this->getCheckoutFormData($order);
+        $token    = isset($checkout['token']) ? (string) $checkout['token'] : '';
+        if ($token === '') {
+            return $this->paymentMethodChangeFailure(
+                __('Please enter the new card data to continue.', 'woocommerce-mercadopago')
+            );
+        }
+
+        $accessToken = $this->mercadopago->subscriptionsHelper->resolveAccessToken($this->mercadopago->storeConfig);
+        if ($accessToken === '') {
+            $this->mercadopago->automaticPaymentsClient->log(
+                'error',
+                'op=change-payment-method error=missing_access_token'
+            );
+            return $this->paymentMethodChangeFailure(
+                __('Recurring Payments credential is missing. Contact the store administrator.', 'woocommerce-mercadopago')
+            );
+        }
+
+        $oldCardId = (string) $this->mercadopago->subscriptionsHelper
+            ->getSubscriptionMeta($subscription, '_mp_active_card_id', '');
+
+        $idemKey = $this->mercadopago->subscriptionsHelper->generateIdempotencyKey(
+            $this->mercadopago->subscriptionsHelper->buildAddPaymentMethodSeed($subscriptionId, $token)
+        );
+
+        try {
+            $addResult = $this->mercadopago->automaticPaymentsClient->addPaymentMethod(
+                $subscriptionId,
+                $token,
+                $accessToken,
+                $idemKey,
+                $oldCardId !== '' ? $oldCardId : null
+            );
+        } catch (Exception $e) {
+            $this->mercadopago->automaticPaymentsClient->log(
+                'error',
+                'op=add-payment-method exception=' . $e->getMessage(),
+                ['subscription_id' => $subscriptionId]
+            );
+            return $this->paymentMethodChangeFailure(
+                __('We could not process the card change. Please try again in a few minutes.', 'woocommerce-mercadopago')
+            );
+        }
+
+        if ($addResult['status'] >= 400) {
+            $userMessage = $this->mercadopago->subscriptionsHelper->mapApiErrorToUserMessage(
+                $addResult['status'],
+                $addResult['data']['error'] ?? null,
+                $addResult['data']['code'] ?? null
+            );
+            return $this->paymentMethodChangeFailure(
+                $userMessage !== ''
+                    ? $userMessage
+                    : __('We could not add the new card. Please try a different card.', 'woocommerce-mercadopago')
+            );
+        }
+
+        if (empty($addResult['new_card_id'])) {
+            $this->mercadopago->automaticPaymentsClient->log('info', 'op=change-payment-method status=no-op same-card', [
+                'subscription_id' => $subscriptionId,
+            ]);
+            set_transient(
+                'mp_wcs_pm_success_' . get_current_user_id(),
+                __('Payment method updated successfully.', 'woocommerce-mercadopago'),
+                60
+            );
+            return [
+                'result'   => 'success',
+                'redirect' => $subscription->get_view_order_url(),
+            ];
+        }
+
+        $newCardId = (string) $addResult['new_card_id'];
+
+        if ($oldCardId !== '' && $oldCardId !== $newCardId) {
+            try {
+                $removeResult = $this->mercadopago->automaticPaymentsClient->removePaymentMethod(
+                    $subscriptionId,
+                    $oldCardId,
+                    $accessToken
+                );
+            } catch (Exception $e) {
+                $this->mercadopago->automaticPaymentsClient->log(
+                    'warning',
+                    'op=remove-payment-method exception=' . $e->getMessage(),
+                    ['subscription_id' => $subscriptionId]
+                );
+                // Remove failed — old card stays orphaned in the profile.
+                $this->triggerCardChangeInconsistencyNotice($subscriptionId);
+                $removeResult = ['status' => 0, 'data' => [], 'error' => null];
+            }
+
+            if (($removeResult['error'] ?? null) === 'cannot_remove_default') {
+                $this->triggerCardChangeInconsistencyNotice($subscriptionId);
+            }
+        }
+
+        $newPaymentMethods = $addResult['data']['profile']['payment_methods'] ?? [];
+        $newDefaultPm      = $this->findPaymentMethodByCardId($newPaymentMethods, $newCardId);
+
+        $helper = $this->mercadopago->subscriptionsHelper;
+        $helper->setSubscriptionMeta($subscription, '_mp_active_card_id', $newCardId);
+        if (isset($newDefaultPm['last_four_digits'])) {
+            $helper->setSubscriptionMeta($subscription, '_mp_active_card_last_four', (string) $newDefaultPm['last_four_digits']);
+        }
+        if (isset($newDefaultPm['brand'])) {
+            $helper->setSubscriptionMeta($subscription, '_mp_active_card_brand', (string) $newDefaultPm['brand']);
+        }
+
+        $this->mercadopago->automaticPaymentsClient->log('info', 'op=change-payment-method status=ok', [
+            'subscription_id' => $subscriptionId,
+            'new_card_id'     => $newCardId,
+        ]);
+
+        set_transient(
+            'mp_wcs_pm_success_' . get_current_user_id(),
+            __('Payment method updated successfully.', 'woocommerce-mercadopago'),
+            60
+        );
+
+        return [
+            'result'   => 'success',
+            'redirect' => $subscription->get_view_order_url(),
+        ];
+    }
+
+    /**
+     * Exibe admin notice WP quando `CannotRemoveDefault` ocorreu (AC-4).
+     * Consome o transient gravado em {@see triggerCardChangeInconsistencyNotice()}.
+     *
+     * Usa `get_transient()` em vez de query SQL directa para compatibilidade
+     * com lojas que utilizam object cache persistente (Redis/Memcached).
+     *
+     * O transient é GLOBAL (sem chave por-usuário) de propósito: a troca de cartão
+     * é disparada pelo comprador no front-end (My Account → Change payment), mas
+     * este alerta crítico precisa ser visto pelo admin na tela da assinatura — quem
+     * grava e quem lê são usuários diferentes, então uma chave por get_current_user_id()
+     * quebraria a notificação. Não converter para per-usuário.
+     */
+    public function displayCardChangeInconsistencyNotice(): void
+    {
+        if (!function_exists('get_current_screen')) {
+            return;
+        }
+        $screen = get_current_screen();
+        if (!$screen || strpos((string) $screen->id, 'shop_subscription') === false) {
+            return;
+        }
+
+        $messages = get_transient('mp_subscription_card_change_inconsistencies');
+        if (empty($messages) || !is_array($messages)) {
+            return;
+        }
+
+        delete_transient('mp_subscription_card_change_inconsistencies');
+
+        foreach ($messages as $message) {
+            printf(
+                '<div class="notice notice-error is-dismissible"><p>%s</p></div>',
+                esc_html((string) $message)
+            );
+        }
+    }
+
+    /**
+     * Localiza o PM correspondente ao `card_id` recém adicionado.
+     *
+     * @param array<int, mixed> $paymentMethods
+     * @return array<string, mixed>
+     */
+    private function findPaymentMethodByCardId(array $paymentMethods, string $cardId): array
+    {
+        foreach ($paymentMethods as $pm) {
+            if (!is_array($pm)) {
+                continue;
+            }
+            if ((string) ($pm['card_id'] ?? '') === $cardId) {
+                return $pm;
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Stores a critical admin notice when CannotRemoveDefault is returned by the AP v2 API,
+     * meaning the new card failed to become the default — requires manual investigation.
+     *
+     * Global transient by design: this runs in the buyer's context (front-end
+     * change-payment flow) but must surface to the admin on the subscription screen.
+     * A per-user key (get_current_user_id) would break that hand-off. See
+     * {@see displayCardChangeInconsistencyNotice()}.
+     */
+    private function triggerCardChangeInconsistencyNotice(string $subscriptionId): void
+    {
+        $message = sprintf(
+            /* translators: %s = subscription id */
+            __('Mercado Pago: critical inconsistency removing the old card on subscription %s. Please check WC > Status > Logs (channel: mercadopago-subscriptions).', 'woocommerce-mercadopago'),
+            $subscriptionId
+        );
+
+        $ttl      = defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400;
+        $existing = get_transient('mp_subscription_card_change_inconsistencies');
+        $queue    = is_array($existing) ? $existing : [];
+        $queue[]  = $message;
+        set_transient('mp_subscription_card_change_inconsistencies', $queue, $ttl);
+    }
+
+    /**
+     * Reads the change-payment error transient (set on POST) and re-queues it
+     * as a WC notice so WCS displays it after the page reload triggered by the
+     * MP checkout JS. Must run at priority 1 — before WCS store_pay_shortcode_messages
+     * (priority 5) captures the notice queue for the ob-swap flow.
+     *
+     * Only acts on GET requests: during the AJAX POST the transient must be
+     * preserved so it survives to the subsequent reload.
+     */
+    public function restoreChangePaymentError(): void
+    {
+        if (sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'] ?? '')) !== 'GET') {
+            return;
+        }
+        $key     = 'mp_wcs_pm_error_' . get_current_user_id();
+        $message = get_transient($key);
+        if ($message) {
+            wc_add_notice($message, 'error');
+            delete_transient($key);
+        }
+    }
+
+    /**
+     * Reads the change-payment success transient (set on POST) and re-queues it
+     * as a WC notice so WCS displays it after the page reload triggered by the
+     * MP checkout JS. Mirrors restoreChangePaymentError() for the success path.
+     */
+    public function restoreChangePaymentSuccess(): void
+    {
+        if (sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'] ?? '')) !== 'GET') {
+            return;
+        }
+        $key     = 'mp_wcs_pm_success_' . get_current_user_id();
+        $message = get_transient($key);
+        if ($message) {
+            wc_add_notice($message, 'success');
+            delete_transient($key);
+        }
+    }
+
+    /**
+     * Atalho para a resposta de falha consumida pelo WCS.
+     *
+     * Persists the message in a short-lived transient so it survives the page
+     * reload that the MP checkout JS performs after receiving the HTML response.
+     *
+     * @return array{result:string, message:string}
+     */
+    private function paymentMethodChangeFailure(string $message): array
+    {
+        set_transient('mp_wcs_pm_error_' . get_current_user_id(), $message, 60);
+        return [
+            'result'  => 'fail',
+            'message' => $message,
+        ];
+    }
+
+    /**
+     * Handle the first/initial payment of a brand-new subscription.
+     *
+     * @param \WC_Order $order
+     * @return array
+     */
+    private function process_subscription_initial_payment($order): array
+    {
+        $this->mercadopago->orderMetadata->setIsProductionModeData($order, $this->mercadopago->storeConfig->getProductionMode());
+        $this->mercadopago->orderMetadata->setUsedGatewayData($order, static::ID);
+
+        if (($this->settings['currency_conversion'] ?? 'no') === 'yes') {
+            $ratio = $this->mercadopago->helpers->currency->getRatio($this);
+            if ($ratio > 0) {
+                $this->mercadopago->orderMetadata->setCurrencyRatioData($order, $ratio);
+            } else {
+                $this->mercadopago->logs->file->warning(
+                    'op=cit step=currency_ratio_skipped reason=invalid_ratio ratio=' . $ratio
+                        . ' order_id=' . $order->get_id(),
+                    self::LOG_SOURCE
+                );
+            }
+        }
+
+        $logSource   = self::LOG_SOURCE;
+        $logger      = $this->mercadopago->logs->file;
+        $client      = $this->mercadopago->automaticPaymentsClient;
+        $helper      = $this->mercadopago->subscriptionsHelper;
+        $translations = $this->storeTranslations;
+
+        $subscriptions = function_exists('wcs_get_subscriptions_for_order')
+            ? \wcs_get_subscriptions_for_order($order)
+            : [];
+        $subscription = is_array($subscriptions) && !empty($subscriptions)
+            ? reset($subscriptions)
+            : null;
+
+        $orderId = (int) $order->get_id();
+
+        if (!$subscription) {
+            $logger->error("op=cit step=abort reason=no_subscription order_id={$orderId}", $logSource);
+            throw new InvalidCheckoutDataException($translations['wcs_cit_failed_generic'] ?? '');
+        }
+
+        $accessToken = $this->mercadopago->subscriptionsHelper->resolveAccessToken($this->mercadopago->storeConfig);
+        if ($accessToken === '') {
+            $logger->error("op=cit step=abort reason=missing_access_token order_id={$orderId}", $logSource);
+            throw new InvalidCheckoutDataException($translations['wcs_cit_no_credential'] ?? '');
+        }
+
+        $checkout = $this->getCheckoutFormData($order);
+        $missing  = array_filter(['token', 'payment_method_id'], fn($f) => empty($checkout[$f] ?? null));
+        if (!empty($missing)) {
+            $missingList = implode(',', $missing);
+            $logger->error("op=cit step=abort reason=missing_checkout_fields fields={$missingList} order_id={$orderId}", $logSource);
+            throw new InvalidCheckoutDataException(
+                $translations['wcs_cit_missing_card'] ?? '',
+                0,
+                null,
+                ['fields' => $missingList]
+            );
+        }
+
+        $payload  = $this->buildCitPayload($order, $subscription, $checkout);
+        $response = $client->cit($accessToken, $order, $payload);
+
+        $data           = (array) ($response->getData() ?? []);
+        $paymentStatus  = $data['payment']['status'] ?? null;
+        $paymentId      = $data['payment']['id'] ?? null;
+        $subscriptionId = $data['subscription']['id'] ?? null;
+        $httpStatus     = $response->getStatus();
+
+        // Hard API failure (4xx/5xx) — subscription was likely not created.
+        if ($httpStatus >= 400) {
+            $apiError = $data['error'] ?? null;
+            $detail   = $data['payment']['status_detail'] ?? null;
+            $logger->warning(
+                "op=cit step=api_error http_status={$httpStatus} order_id={$orderId}",
+                $logSource
+            );
+            $msg = $helper->mapApiErrorToUserMessage($httpStatus, $apiError, $detail);
+            return ['result' => 'failure', 'messages' => $msg];
+        }
+
+        // Persist AP metadata only for statuses that can eventually succeed.
+        // Rejected payments are excluded: a retry with a new card creates a new AP
+        // subscription, so persisting the ID from a failed CIT would be wrong.
+        // Must happen before delegating so the 3DS flow has metadata when it completes.
+        if ($subscriptionId !== null && in_array($paymentStatus, ['approved', 'pending', 'in_process'], true)) {
+            $metaToSet = [
+                '_mp_subscription_id'         => $subscriptionId,
+                '_mp_customer_id'             => $data['customer']['id'] ?? null,
+                '_mp_active_card_id'          => $data['card']['id'] ?? null,
+                '_mp_active_card_last_four'   => $data['card']['last_four_digits'] ?? null,
+                '_mp_active_card_brand'       => $data['card']['payment_method'] ?? ($data['card']['payment_method_id'] ?? null),
+                '_mp_subscription_created_at' => gmdate('c'),
+            ];
+            foreach ((array) $subscriptions as $sub) {
+                foreach ($metaToSet as $key => $value) {
+                    $helper->setSubscriptionMeta($sub, $key, $value);
+                }
+            }
+            // No save() needed after: setCustomMetadata persists the order internally.
+            $this->mercadopago->orderMetadata->setCustomMetadata($order, $data['payment'] ?? []);
+        }
+
+        // Delegate all 2xx status handling to the shared method:
+        //   approved          → redirect (payment_complete handled by MP webhook)
+        //   pending_challenge → 3DS modal flow
+        //   pending/in_process → redirect to order received
+        //   rejected          → buyerRefusedMessages (same UX as normal checkout)
+        return $this->handleResponseStatus($order, $this->normalizeCitResponse($data));
+    }
+
+    /**
+     * Normalizes the AP v2 CIT response into the flat array structure
+     * expected by handleResponseStatus().
+     *
+     * @param array $data Raw data array from AutomaticPaymentsClient::cit() response.
+     * @return array
+     */
+    private function normalizeCitResponse(array $data): array
+    {
+        $payment = $data['payment'] ?? [];
+        return [
+            'status'        => $payment['status'] ?? null,
+            'status_detail' => $payment['status_detail'] ?? null,
+            'id'            => $payment['id'] ?? null,
+            'three_ds_info' => $data['three_ds_info'] ?? [],
+            'card'          => [
+                'last_four_digits' => $data['card']['last_four_digits'] ?? ($payment['card']['last_four_digits'] ?? null),
+            ],
+        ];
+    }
+
+    /**
+     * Builds the AP v2 CIT payload.
+     *
+     * @param \WC_Order        $order
+     * @param \WC_Subscription $subscription
+     * @param array            $checkout Sanitized POST data from getCheckoutFormData().
+     * @return array
+     */
+    protected function buildCitPayload($order, $subscription, array $checkout): array
+    {
+        $storeConfig = $this->mercadopago->storeConfig;
+
+        $document    = $checkout['doc_number'] ?? '';
+        $idType      = $checkout['doc_type'] ?? '';
+        $interval    = (int) (method_exists($subscription, 'get_billing_interval') ? $subscription->get_billing_interval() : 1);
+        $period      = method_exists($subscription, 'get_billing_period') ? $subscription->get_billing_period() : 'month';
+
+        $userAgent   = isset($_SERVER['HTTP_USER_AGENT'])
+            ? substr(sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])), 0, 256)
+            : '';
+        $ip          = class_exists('\WC_Geolocation') ? \WC_Geolocation::get_ip_address() : '';
+
+        $stateId     = '';
+        $country     = $order->get_billing_country();
+        $state       = $order->get_billing_state();
+        if ($country && $state) {
+            $stateId = $country . '-' . $state;
+        }
+
+        $currency = $this->countryConfigs['currency'];
+
+        $items             = [];
+        $transactionAmount = 0.0;
+
+        foreach ($order->get_items() as $item) {
+            $product  = $item->get_product();
+            $quantity = $item->get_quantity();
+            $title    = $item->get_name() . ' x ' . $quantity;
+            $amount   = Numbers::calculateByCurrency(
+                $currency,
+                $item->get_total() + $item->get_total_tax(),
+                $this->ratio
+            );
+            $transactionAmount += $amount;
+            $items[]            = [
+                'id'          => (string) $item->get_product_id(),
+                'title'       => $title,
+                'description' => $product ? $this->mercadopago->helpers->strings->sanitizeAndTruncateText($product->get_description()) : '',
+                'picture_url' => $product ? (wp_get_attachment_url($product->get_image_id()) ?: '') : '',
+                'category_id' => $this->mercadopago->storeConfig->getStoreCategory('others'),
+                'unit_price'  => Numbers::formatByCurrency($currency, $amount),
+                'currency_id' => $currency,
+                'quantity'    => '1',
+            ];
+        }
+
+        $shipAmount         = Numbers::calculateByCurrency(
+            $currency,
+            Numbers::format((float) $order->get_shipping_total()) + Numbers::format((float) $order->get_shipping_tax()),
+            $this->ratio
+        );
+        $transactionAmount += $shipAmount;
+        if ($shipAmount > 0) {
+            $items[] = [
+                'id'          => 'shipping',
+                'title'       => $this->mercadopago->orderShipping->getShippingMethod($order),
+                'description' => $this->mercadopago->storeTranslations->commonCheckout['shipping_title'],
+                'category_id' => $this->mercadopago->storeConfig->getStoreCategory('others'),
+                'unit_price'  => Numbers::formatByCurrency($currency, $shipAmount),
+                'currency_id' => $currency,
+                'quantity'    => '1',
+            ];
+        }
+
+        foreach ($order->get_fees() as $fee) {
+            $feeAmount          = Numbers::calculateByCurrency(
+                $currency,
+                Numbers::format((float) $fee->get_total()) + Numbers::format((float) $fee->get_total_tax()),
+                $this->ratio
+            );
+            $transactionAmount += $feeAmount;
+            if ($feeAmount > 0) {
+                $items[] = [
+                    'id'          => 'fee',
+                    'title'       => $this->mercadopago->helpers->strings->sanitizeAndTruncateText($fee->get_name()),
+                    'description' => $this->mercadopago->helpers->strings->sanitizeAndTruncateText($fee->get_name()),
+                    'category_id' => $this->mercadopago->storeConfig->getStoreCategory('others'),
+                    'unit_price'  => Numbers::formatByCurrency($currency, $feeAmount),
+                    'currency_id' => $currency,
+                    'quantity'    => '1',
+                ];
+            }
+        }
+
+        $payer = [
+            'email'      => $order->get_billing_email(),
+            'first_name' => $order->get_billing_first_name(),
+            'last_name'  => $order->get_billing_last_name(),
+        ];
+        if (!Arrays::anyEmpty($checkout, ['doc_type', 'doc_number'])) {
+            $payer['identification'] = [
+                'type'   => $idType,
+                'number' => $document,
+            ];
+        }
+
+        return [
+            'token' => $checkout['token'],
+            'payer' => $payer,
+            'transaction' => [
+                'amount'              => (float) Numbers::formatByCurrency($currency, $transactionAmount),
+                'currency'            => $currency,
+                'description'         => $this->buildSubscriptionDescription($order),
+                'external_reference'  => get_option('_mp_store_identificator', 'WC-') . $order->get_id(),
+                'installments'        => 1, // RN-08: subscriptions are incompatible with installment payments.
+                'statement_descriptor' => $storeConfig->getStoreName('Mercado Pago'),
+                'three_d_secure_mode' => 'optional',
+            ],
+            'subscription' => [
+                'external_id' => 'WC-SUB-' . $subscription->get_id(),
+                'frequency'   => $interval . '-' . $period,
+            ],
+            'device' => [
+                'fingerprint' => $checkout['session_id'] ?? '',
+                'ip'          => $ip,
+                'user_agent'  => $userAgent,
+            ],
+            'additional_info' => [
+                'ip_address' => $ip,
+                'items'      => $items,
+                'payer'      => [
+                    'first_name' => $order->get_billing_first_name(),
+                    'last_name'  => $order->get_billing_last_name(),
+                    'email'      => $order->get_billing_email(),
+                    'phone'      => ['number' => $order->get_billing_phone()],
+                    'address'    => [
+                        'street_name' => $order->get_billing_address_1(),
+                        'city'        => $order->get_billing_city(),
+                        'state'       => $order->get_billing_state(),
+                        'zip_code'    => $order->get_billing_postcode(),
+                        'country'     => $order->get_billing_country(),
+                    ],
+                ],
+            ],
+            'platform' => [
+                'environment' => [
+                    'platform_version' => defined('WC_VERSION') ? WC_VERSION : '',
+                    'module_version'   => defined('MP_VERSION') ? MP_VERSION : '',
+                    'runtime_version'  => PHP_VERSION,
+                ],
+            ],
+            'sponsor_id'      => $this->countryConfigs['sponsor_id'] ?? null,
+            'notification_url' => $this->buildCitNotificationUrl(),
+            'point_of_interaction' => [
+                'location' => [
+                    'source'   => 'payer',
+                    'state_id' => $stateId,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Builds notification_url matching AbstractTransaction::getNotificationUrl().
+     * Delegates to the shared WebhookUrl helper so CIT and MIT stay in sync.
+     */
+    protected function buildCitNotificationUrl(): string
+    {
+        return WebhookUrl::build(
+            $this->mercadopago->storeConfig->getCustomDomain(),
+            $this->mercadopago->storeConfig->getCustomDomainOptions(),
+            fn() => $this->mercadopago->woocommerce->api_request_url(self::WEBHOOK_API_NAME),
+            get_site_url(),
+            self::WEBHOOK_API_NAME
+        );
+    }
+
+    protected function buildSubscriptionDescription($order): string
+    {
+        $items = [];
+        foreach ($order->get_items() as $item) {
+            $items[] = $item->get_name();
+            if (count($items) >= 3) {
+                break;
+            }
+        }
+        return $items
+            ? implode(', ', $items)
+            : __('Subscription', 'woocommerce-mercadopago') . ' WC-ORDER-' . $order->get_id();
     }
 
     public function getCheckoutName(): string
@@ -163,6 +983,258 @@ class CustomGateway extends AbstractGateway
         return '';
     }
 
+    public function formFieldsSubscriptionsSection(): array
+    {
+        if (!SubscriptionsHelper::isWcsActive()) {
+            return [];
+        }
+
+        return [
+            'subscriptions_enabled' => [
+                'type'         => 'mp_toggle_switch',
+                'title'        => $this->adminTranslations['subscriptions_enabled_title'],
+                'subtitle'     => $this->adminTranslations['subscriptions_enabled_subtitle'],
+                'default'      => 'no',
+                'class'        => 'mp-subscriptions-group',
+                'descriptions' => [
+                    'enabled'  => $this->adminTranslations['subscriptions_enabled_description_enabled'],
+                    'disabled' => $this->adminTranslations['subscriptions_enabled_description_disabled'],
+                ],
+            ],
+            'subscriptions_notice' => [
+                'type'        => 'mp_subscriptions_notice',
+                'title'       => $this->adminTranslations['subscriptions_notice_title'],
+                'description' => $this->adminTranslations['subscriptions_notice_description'],
+                'class'        => 'mp-subscriptions-group',
+            ],
+            'subscriptions_public_key_prod' => [
+                'type'        => 'text',
+                'title'       => $this->adminTranslations['subscriptions_public_key_prod_title'],
+                'description' => $this->adminTranslations['subscriptions_public_key_prod_description'],
+                'default'     => '',
+                'class'       => 'mp-subscriptions-group',
+            ],
+            'subscriptions_access_token_prod' => [
+                'type'        => 'text',
+                'title'       => $this->adminTranslations['subscriptions_access_token_prod_title'],
+                'description' => $this->adminTranslations['subscriptions_access_token_prod_description'],
+                'default'     => '',
+                'class'       => 'mp-subscriptions-group',
+            ],
+            'subscriptions_public_key_test' => [
+                'type'        => 'text',
+                'title'       => $this->adminTranslations['subscriptions_public_key_test_title'],
+                'description' => $this->adminTranslations['subscriptions_public_key_test_description'],
+                'default'     => '',
+                'class'       => 'mp-subscriptions-group',
+            ],
+            'subscriptions_access_token_test' => [
+                'type'        => 'text',
+                'title'       => $this->adminTranslations['subscriptions_access_token_test_title'],
+                'description' => $this->adminTranslations['subscriptions_access_token_test_description'],
+                'default'     => '',
+            ],
+        ];
+    }
+
+    /**
+     * @param string $key
+     * @param array  $data
+     * @return string
+     */
+    public function generate_mp_subscriptions_notice_html(string $key, array $data): string
+    {
+        return sprintf(
+            '<tr valign="top" id="tr_%s" class="%s">
+                <td colspan="2" class="forminp">
+                    <div class="mp-card-info mp-subscriptions-notice">
+                        <div class="mp-alert-color-success"></div>
+                        <div class="mp-card-body-payments mp-card-body-size">
+                            <div class="mp-icon-badge-info"></div>
+                            <div>
+                                <span class="mp-text-title">%s</span>
+                                <span class="mp-text-subtitle">%s</span>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>',
+            esc_attr($key),
+            esc_attr($data['class'] ?? ''),
+            esc_html($data['title']),
+            esc_html($data['description'])
+        );
+    }
+
+    public function validateSubscriptionsBeforeSave(array $fields): array
+    {
+        $enabled   = isset($fields['subscriptions_enabled']) && $fields['subscriptions_enabled'] === 'yes';
+        $tokenProd = $fields['subscriptions_access_token_prod'] ?? '';
+        $tokenTest = $fields['subscriptions_access_token_test'] ?? '';
+
+        if (!$enabled) {
+            $this->mercadopago->funnel->updateStepPaymentMethods(false);
+            return $fields;
+        }
+
+        if (empty($tokenProd) && empty($tokenTest)) {
+            $fields['subscriptions_enabled'] = 'no';
+            set_transient('mp_subscriptions_save_result_' . get_current_user_id(), [
+                'valid'        => false,
+                'user_message' => __('Please fill in at least one Pre-approval Access Token to activate Recurring Payments.', 'woocommerce-mercadopago'),
+            ], 60);
+            $this->mercadopago->funnel->updateStepPaymentMethods(false);
+            return $fields;
+        }
+
+        // The token for the current environment (prod or sandbox) must be present.
+        // Having only the other environment's token is not sufficient — subscriptions
+        // would silently not work for the active mode.
+        // The public key is validated here together with the token so that both
+        // missing-field errors are reported in a single save attempt.
+        $isTestMode        = $this->mercadopago->storeConfig->isTestMode();
+        $relevantToken     = $isTestMode ? $tokenTest : $tokenProd;
+        $publicKeyField    = $isTestMode ? 'subscriptions_public_key_test' : 'subscriptions_public_key_prod';
+        $relevantPublicKey = $fields[$publicKeyField] ?? '';
+
+        if (empty($relevantToken) || empty($relevantPublicKey)) {
+            $missingMode     = $isTestMode
+                ? __('Sandbox', 'woocommerce-mercadopago')
+                : __('Production', 'woocommerce-mercadopago');
+            $missingMessages = [];
+
+            if (empty($relevantToken)) {
+                $missingMessages[] = sprintf(
+                    /* translators: %s: environment name (Production or Sandbox) */
+                    __('Please fill in the %s Pre-approval Access Token to activate Recurring Payments in this environment.', 'woocommerce-mercadopago'),
+                    $missingMode
+                );
+            }
+
+            if (empty($relevantPublicKey)) {
+                $missingMessages[] = sprintf(
+                    /* translators: %s: environment name (Production or Sandbox) */
+                    __('Please fill in the %s Pre-approval Public Key to activate Recurring Payments in this environment.', 'woocommerce-mercadopago'),
+                    $missingMode
+                );
+            }
+
+            $fields['subscriptions_enabled'] = 'no';
+            set_transient('mp_subscriptions_save_result_' . get_current_user_id(), [
+                'valid'        => false,
+                'user_message' => implode(' | ', $missingMessages),
+            ], 60);
+            $this->mercadopago->funnel->updateStepPaymentMethods(false);
+            return $fields;
+        }
+
+        $errors      = [];
+        $resultProd  = null;
+        $resultTest  = null;
+
+        if (!empty($tokenProd)) {
+            $resultProd = $this->mercadopago->subscriptionsCredentialsValidator->validate($tokenProd);
+            if (!$resultProd['valid']) {
+                $errors[] = __('Recurring credential', 'woocommerce-mercadopago') . ': ' . $this->translatedValidationMessage($resultProd['reason'] ?? '');
+            }
+        }
+
+        if (!empty($tokenTest)) {
+            $resultTest = $this->mercadopago->subscriptionsCredentialsValidator->validate($tokenTest);
+            if (!$resultTest['valid']) {
+                $errors[] = __('Test credential', 'woocommerce-mercadopago') . ': ' . $this->translatedValidationMessage($resultTest['reason'] ?? '');
+            }
+        }
+
+        if (!empty($errors)) {
+            // Tokens are kept as typed so the user can correct them without retyping.
+            // Only the enabled flag is forced off — the feature stays inactive until
+            // a successful validation.
+            $fields['subscriptions_enabled'] = 'no';
+
+            set_transient('mp_subscriptions_save_result_' . get_current_user_id(), [
+                'valid'        => false,
+                'user_message' => implode(' | ', $errors),
+            ], 60);
+        } else {
+            // Both tokens belong to the same app — app_name and app_id are the same in either result.
+            $successResult = $resultProd ?? $resultTest ?? [];
+
+            set_transient('mp_subscriptions_save_result_' . get_current_user_id(), [
+                'valid'    => true,
+                'app_name' => $successResult['app_name'] ?? null,
+                'app_id'   => $successResult['app_id'] ?? null,
+            ], 60);
+
+            \MercadoPago\Woocommerce\Hooks\Subscriptions::clearCredentialRevokedNotice();
+        }
+
+        $this->mercadopago->funnel->updateStepPaymentMethods(
+            ($fields['subscriptions_enabled'] ?? 'no') === 'yes'
+        );
+
+        return $fields;
+    }
+
+    public function displaySubscriptionsValidationNotice(): void
+    {
+        // Only show on the Custom gateway settings page.
+        $page    = Form::sanitizedGetData('page');
+        $tab     = Form::sanitizedGetData('tab');
+        $section = Form::sanitizedGetData('section');
+
+        if ($page !== 'wc-settings' || $tab !== 'checkout' || $section !== self::ID) {
+            return;
+        }
+
+        $userId = get_current_user_id();
+        $result = get_transient('mp_subscriptions_save_result_' . $userId);
+
+        if ($result === false) {
+            return;
+        }
+
+        delete_transient('mp_subscriptions_save_result_' . $userId);
+
+        if ($result['valid']) {
+            $appName = !empty($result['app_name']) ? $result['app_name'] : ($result['app_id'] ?? '');
+            $message = __('Pre-approval credentials validated successfully', 'woocommerce-mercadopago')
+                . ($appName ? ' — ' . __('Application', 'woocommerce-mercadopago') . ': ' . $appName : '')
+                . '.';
+            $type    = 'success';
+        } else {
+            $message = $result['user_message'] ?? __('Error validating recurring payments credential.', 'woocommerce-mercadopago');
+            $type    = 'error';
+        }
+
+        printf('<div class="notice notice-%s is-dismissible"><p>%s</p></div>', esc_attr($type), esc_html($message));
+    }
+
+    /**
+     * Maps a validator `reason` code to a localised, user-facing message.
+     *
+     * The validator is intentionally decoupled from WP i18n — it returns only
+     * a typed `reason` string. Translation happens here, at the presentation layer.
+     */
+    private function translatedValidationMessage(string $reason): string
+    {
+        $map = [
+            'malformed_token'       => __('Invalid Token format.', 'woocommerce-mercadopago'),
+            'invalid_token'         => __('Invalid or expired Token.', 'woocommerce-mercadopago'),
+            'token_app_mismatch'    => __('This Access Token does not belong to the expected application. Contact your Mercado Pago commercial consultant.', 'woocommerce-mercadopago'),
+            'application_not_found' => __('Credential application not found. Please check if the token is valid.', 'woocommerce-mercadopago'),
+            'service_unavailable'   => __('Could not validate the credential at this time. Please try again.', 'woocommerce-mercadopago'),
+            'scope_field_missing'   => __('Could not verify application scopes. Please contact your Mercado Pago commercial consultant.', 'woocommerce-mercadopago'),
+            'missing_scope'         => __('This credential does not have the required Pre-approval scope. Please request activation from your Mercado Pago commercial consultant.', 'woocommerce-mercadopago'),
+            'application_inactive'  => __('This application is inactive in Mercado Pago. Contact your Mercado Pago commercial consultant.', 'woocommerce-mercadopago'),
+            'application_blocked'   => __('This application is blocked in Mercado Pago. Contact your Mercado Pago commercial consultant.', 'woocommerce-mercadopago'),
+            'application_disabled'  => __('This application is disabled in Mercado Pago. Contact your Mercado Pago commercial consultant.', 'woocommerce-mercadopago'),
+            'unexpected_response'   => __('Unexpected response when validating the credential.', 'woocommerce-mercadopago'),
+        ];
+
+        return $map[$reason] ?? __('An error occurred while validating the credential.', 'woocommerce-mercadopago');
+    }
+
     public function formFieldsHeaderSection(): array
     {
         return array_replace_recursive(parent::formFieldsHeaderSection(), [
@@ -187,66 +1259,71 @@ class CustomGateway extends AbstractGateway
      */
     public function formFieldsMainSection(): array
     {
-        return [
-            'card_info_helper' => [
-                'type' => 'title',
-                'value' => '',
-            ],
-            'card_info_fees' => [
-                'type' => 'mp_card_info',
-                'value' => [
-                    'title' => $this->adminTranslations['card_info_fees_title'],
-                    'subtitle' => $this->adminTranslations['card_info_fees_subtitle'],
-                    'button_text' => $this->adminTranslations['card_info_fees_button_url'],
-                    'button_url' => $this->links['mercadopago_costs'],
-                    'icon' => 'mp-icon-badge-info',
-                    'color_card' => 'mp-alert-color-success',
-                    'size_card' => 'mp-card-body-size',
-                    'target' => '_blank',
+        return array_merge(
+            [
+                'card_info_helper' => [
+                    'type' => 'title',
+                    'value' => '',
+                ],
+                'card_info_fees' => [
+                    'type' => 'mp_card_info',
+                    'value' => [
+                        'title' => $this->adminTranslations['card_info_fees_title'],
+                        'subtitle' => $this->adminTranslations['card_info_fees_subtitle'],
+                        'button_text' => $this->adminTranslations['card_info_fees_button_url'],
+                        'button_url' => $this->links['mercadopago_costs'],
+                        'icon' => 'mp-icon-badge-info',
+                        'color_card' => 'mp-alert-color-success',
+                        'size_card' => 'mp-card-body-size',
+                        'target' => '_blank',
+                    ],
+                ],
+                'currency_conversion' => [
+                    'type' => 'mp_toggle_switch',
+                    'title' => $this->adminTranslations['currency_conversion_title'],
+                    'subtitle' => $this->adminTranslations['currency_conversion_subtitle'],
+                    'default' => 'no',
+                    'descriptions' => [
+                        'enabled' => $this->adminTranslations['currency_conversion_descriptions_enabled'],
+                        'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
+                    ],
+                ],
+                static::WALLET_BUTTON_ENABLED_OPTION => [
+                    'type' => 'mp_toggle_switch',
+                    'title' => $this->adminTranslations['wallet_button_title'],
+                    'subtitle' => $this->adminTranslations['wallet_button_subtitle'],
+                    'default' => static::WALLET_BUTTON_ENABLED_DEFAULT,
+                    'after_toggle' => $this->getWalletButtonPreview(),
+                    'descriptions' => [
+                        'enabled' => $this->adminTranslations['wallet_button_descriptions_enabled'],
+                        'disabled' => $this->adminTranslations['wallet_button_descriptions_disabled'],
+                    ],
                 ],
             ],
-            'currency_conversion' => [
-                'type' => 'mp_toggle_switch',
-                'title' => $this->adminTranslations['currency_conversion_title'],
-                'subtitle' => $this->adminTranslations['currency_conversion_subtitle'],
-                'default' => 'no',
-                'descriptions' => [
-                    'enabled' => $this->adminTranslations['currency_conversion_descriptions_enabled'],
-                    'disabled' => $this->adminTranslations['currency_conversion_descriptions_disabled'],
+            $this->formFieldsSubscriptionsSection(),
+            [
+                'advanced_configuration_title' => [
+                    'type' => 'title',
+                    'title' => $this->adminTranslations['advanced_configuration_title'],
+                    'class' => 'mp-subtitle-body',
                 ],
-            ],
-            static::WALLET_BUTTON_ENABLED_OPTION => [
-                'type' => 'mp_toggle_switch',
-                'title' => $this->adminTranslations['wallet_button_title'],
-                'subtitle' => $this->adminTranslations['wallet_button_subtitle'],
-                'default' => static::WALLET_BUTTON_ENABLED_DEFAULT,
-                'after_toggle' => $this->getWalletButtonPreview(),
-                'descriptions' => [
-                    'enabled' => $this->adminTranslations['wallet_button_descriptions_enabled'],
-                    'disabled' => $this->adminTranslations['wallet_button_descriptions_disabled'],
+                'advanced_configuration_description' => [
+                    'type' => 'title',
+                    'title' => $this->adminTranslations['advanced_configuration_subtitle'],
+                    'class' => 'mp-small-text',
                 ],
-            ],
-            'advanced_configuration_title' => [
-                'type' => 'title',
-                'title' => $this->adminTranslations['advanced_configuration_title'],
-                'class' => 'mp-subtitle-body',
-            ],
-            'advanced_configuration_description' => [
-                'type' => 'title',
-                'title' => $this->adminTranslations['advanced_configuration_subtitle'],
-                'class' => 'mp-small-text',
-            ],
-            'binary_mode' => [
-                'type' => 'mp_toggle_switch',
-                'title' => $this->adminTranslations['binary_mode_title'],
-                'subtitle' => $this->adminTranslations['binary_mode_subtitle'],
-                'default' => 'no',
-                'descriptions' => [
-                    'enabled' => $this->adminTranslations['binary_mode_descriptions_enabled'],
-                    'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
+                'binary_mode' => [
+                    'type' => 'mp_toggle_switch',
+                    'title' => $this->adminTranslations['binary_mode_title'],
+                    'subtitle' => $this->adminTranslations['binary_mode_subtitle'],
+                    'default' => 'no',
+                    'descriptions' => [
+                        'enabled' => $this->adminTranslations['binary_mode_descriptions_enabled'],
+                        'disabled' => $this->adminTranslations['binary_mode_descriptions_disabled'],
+                    ],
                 ],
-            ],
-        ];
+            ]
+        );
     }
 
     /**
@@ -403,6 +1480,7 @@ class CustomGateway extends AbstractGateway
      */
     private function getCustomCheckoutScripts(): array
     {
+
         return [
             [
                 'handle' => 'wc_mercadopago_security_session',
@@ -879,7 +1957,7 @@ class CustomGateway extends AbstractGateway
      *
      * @return array
      */
-    private function getCheckoutFormData($order): array
+    protected function getCheckoutFormData($order): array
     {
         if (isset($_POST['mercadopago_custom'])) {
             $checkout = Form::sanitizedPostData('mercadopago_custom');
@@ -1088,10 +2166,14 @@ class CustomGateway extends AbstractGateway
 
                     case 'pending':
                     case 'in_process':
-                        if ($response['status_detail'] === 'pending_challenge') {
+                        if (
+                            $response['status_detail'] === 'pending_challenge'
+                            && !empty($response['three_ds_info']['external_resource_url'])
+                            && !empty($response['three_ds_info']['creq'])
+                        ) {
                             $this->mercadopago->helpers->session->setSession('mp_3ds_url', $response['three_ds_info']['external_resource_url']);
                             $this->mercadopago->helpers->session->setSession('mp_3ds_creq', $response['three_ds_info']['creq']);
-                            $this->mercadopago->helpers->session->setSession('mp_order_id', $order->ID);
+                            $this->mercadopago->helpers->session->setSession('mp_order_id', $order->get_id());
                             $this->mercadopago->helpers->session->setSession('mp_payment_id', $response['id']);
                             $lastFourDigits = (empty($response['card']['last_four_digits'])) ? '****' : $response['card']['last_four_digits'];
 

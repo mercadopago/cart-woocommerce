@@ -242,8 +242,8 @@ abstract class AbstractBlock extends AbstractPaymentMethodType implements Mercad
             return false;
         }
 
-        return (isset($this->gateway->commission) && $this->gateway->commission !== 0)
-            || (isset($this->gateway->discount) && $this->gateway->discount !== 0);
+        return (isset($this->gateway->commission) && $this->gateway->commission > 0)
+            || (isset($this->gateway->discount) && $this->gateway->discount > 0);
     }
 
     /**

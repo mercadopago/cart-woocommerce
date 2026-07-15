@@ -39,7 +39,7 @@ if (!defined('ABSPATH')) {
                 <input
                     id="<?= esc_attr($field_key) ?>"
                     name="<?= esc_attr($field_key) ?>"
-                    class="mp-toggle-checkbox"
+                    class="mp-toggle-checkbox <?= esc_attr($settings['class'] ?? '') ?>"
                     type="checkbox"
                     value="yes"
                     <?= checked($field_value, 'yes') ?>

@@ -1968,6 +1968,81 @@ class AbstractGatewayTest extends TestCase
         $this->addToAssertionCount(Mockery::getContainer()->mockery_getExpectationCount());
     }
 
+    public function testGetFeeTitleWithDecimalDiscount(): void
+    {
+        $this->gateway->mercadopago->helpers->cart
+            ->shouldReceive('isAvailable')
+            ->once()
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->helpers->cart
+            ->shouldReceive('calculateSubtotalWithDiscount')
+            ->once()
+            ->with($this->gateway)
+            ->andReturn(0.5);
+
+        $this->gateway->mercadopago->helpers->cart
+            ->shouldReceive('calculateSubtotalWithCommission')
+            ->once()
+            ->with($this->gateway)
+            ->andReturn(0.0);
+
+        $this->gateway->mercadopago->hooks->gateway
+            ->shouldReceive('buildTitleWithDiscountAndCommission')
+            ->once()
+            ->with(0.5, 0.0, Mockery::type('string'), Mockery::type('string'))
+            ->andReturn(' (Desconto R$ 0,50)');
+
+        $result = $this->gateway->getFeeTitle();
+
+        $this->assertSame(' (Desconto R$ 0,50)', $result);
+    }
+
+    public function testGetFeeTitleReturnEmptyWhenCartNotAvailable(): void
+    {
+        $this->gateway->mercadopago->helpers->cart
+            ->shouldReceive('isAvailable')
+            ->once()
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->helpers->cart
+            ->shouldNotReceive('calculateSubtotalWithDiscount');
+
+        $this->gateway->mercadopago->helpers->cart
+            ->shouldNotReceive('calculateSubtotalWithCommission');
+
+        $result = $this->gateway->getFeeTitle();
+
+        $this->assertSame('', $result);
+    }
+
+    public function testDiscountFloatPropertyAcceptsDecimalStringCoercion(): void
+    {
+        $this->gateway->discount = 0.5;
+        $this->assertSame(0.5, $this->gateway->discount);
+        $this->assertIsFloat($this->gateway->discount);
+    }
+
+    public function testCommissionFloatPropertyAcceptsDecimalStringCoercion(): void
+    {
+        $this->gateway->commission = 1.5;
+        $this->assertSame(1.5, $this->gateway->commission);
+        $this->assertIsFloat($this->gateway->commission);
+    }
+
+    public function testDiscountNotTruncatedForFractionalValues(): void
+    {
+        $this->gateway->discount = (float) '0.5';
+        $this->assertGreaterThan(0.0, $this->gateway->discount);
+        $this->assertSame(0.5, $this->gateway->discount);
+    }
+
+    public function testCommissionNotTruncatedForFractionalValues(): void
+    {
+        $this->gateway->commission = (float) '1.5';
+        $this->assertSame(1.5, $this->gateway->commission);
+    }
+
     private function setupMetricErrorMocks(): void
     {
         $this->resetAmountCurrencyErrorFlag();
@@ -2200,5 +2275,56 @@ class AbstractGatewayTest extends TestCase
             }
         }
         $this->assertTrue($guardDatadogFound, 'Guard datadog event was not emitted');
+    }
+
+    public function testMissingCredentialsFormFieldNoticeReturnsExpectedStructure(): void
+    {
+        $method = new \ReflectionMethod(AbstractGateway::class, 'missingCredentialsFormFieldNotice');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->gateway);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('card_info_validate', $result);
+        $this->assertSame('mp_card_info', $result['card_info_validate']['type']);
+        $this->assertArrayHasKey('value', $result['card_info_validate']);
+        $this->assertArrayHasKey('title', $result['card_info_validate']['value']);
+        $this->assertArrayHasKey('subtitle', $result['card_info_validate']['value']);
+        $this->assertArrayHasKey('button_text', $result['card_info_validate']['value']);
+        $this->assertArrayHasKey('button_url', $result['card_info_validate']['value']);
+        $this->assertArrayHasKey('icon', $result['card_info_validate']['value']);
+    }
+
+    public function testRegisterAdminScriptsPassesSubscriptionModalTranslationKeys(): void
+    {
+        $capturedVars = null;
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getJsAsset')->andReturn('js/admin/mp-admin-configs.js');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')->andReturn('css/admin/mp-admin-configs.css');
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerAdminScript')
+            ->once()
+            ->withArgs(function ($name, $file, $vars) use (&$capturedVars) {
+                $capturedVars = $vars;
+                return true;
+            });
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerAdminStyle')
+            ->once();
+
+        $this->gateway->registerAdminScripts();
+
+        $this->assertArrayHasKey('subscriptions_disable_modal_title', $capturedVars);
+        $this->assertArrayHasKey('subscriptions_disable_modal_body', $capturedVars);
+        $this->assertArrayHasKey('subscriptions_disable_modal_keep', $capturedVars);
+        $this->assertArrayHasKey('subscriptions_disable_modal_confirm', $capturedVars);
+        $this->assertNotEmpty($capturedVars['subscriptions_disable_modal_title']);
+        $this->assertNotEmpty($capturedVars['subscriptions_disable_modal_body']);
+        $this->assertNotEmpty($capturedVars['subscriptions_disable_modal_keep']);
+        $this->assertNotEmpty($capturedVars['subscriptions_disable_modal_confirm']);
     }
 }

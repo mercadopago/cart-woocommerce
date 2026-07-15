@@ -37,6 +37,8 @@ class MPEventHandler {
         this._mobileObserver = null;
         this._MobileCheckoutClassicObserver = mobileCheckoutClassicObserver;
         this.isValidating = false;
+        this._validationAbortController = null;
+        this._validationCancelled = false;
     }
 
     setSuperTokenDependencies({ triggerHandler, authenticator, paymentMethods, metrics, errorHandler }) {
@@ -207,6 +209,10 @@ class MPEventHandler {
             return;
         }
 
+        // Reset the cancellation flag so a previous checkout_error that fired without a
+        // validation in-flight does not permanently suppress the next attempt's onValid().
+        this._validationCancelled = false;
+
         // Order-pay (/checkout/order-pay/): billing data is stored in the existing order and is
         // not re-posted in #order_review, which carries woocommerce-pay-nonce — not the
         // woocommerce-process-checkout-nonce this endpoint validates. Pre-validating here would
@@ -245,7 +251,8 @@ class MPEventHandler {
         this.showValidationLoader();
 
         const body = this.getCheckoutForm()?.serialize() ?? '';
-        const controller = new AbortController();
+        this._validationAbortController = new AbortController();
+        const controller = this._validationAbortController;
         const timeoutId = setTimeout(() => controller.abort(), 8000);
 
         window.fetch(validationEndpoint, {
@@ -256,6 +263,11 @@ class MPEventHandler {
         })
             .then((response) => response.json())
             .then((response) => {
+                // Guard against the race where abort() was called after the response was already
+                // fully buffered — in that case no AbortError is thrown and the .catch() never
+                // fires, so _validationCancelled must be checked here as well.
+                if (this._validationCancelled) return;
+
                 // The verdict (cross-check + funnel metrics) lives on the CDN resolver so it can be
                 // hot-fixed without a plugin release. resolveCheckoutValidation falls open if the
                 // resolver is absent or throws — the buyer is never blocked on a best-effort layer.
@@ -281,13 +293,20 @@ class MPEventHandler {
                 onValid();
             })
             .catch((error) => {
-                // Network/timeout on this extra layer — fail open, carrying the original cause.
+                // AbortError from handleCheckoutError() — checkout is already in error state,
+                // do not proceed. AbortError from the 8s internal timeout falls through to
+                // fail-open so the buyer is never blocked on a best-effort layer.
+                if (error?.name === 'AbortError' && this._validationCancelled) {
+                    return;
+                }
                 const reason = error?.name === 'AbortError' ? FAIL_OPEN_REASON.TIMEOUT : FAIL_OPEN_REASON.NETWORK;
                 failOpenAndContinue(reason, error?.message || error?.name || reason);
             })
             .finally(() => {
                 clearTimeout(timeoutId);
                 this.isValidating = false;
+                this._validationAbortController = null;
+                this._validationCancelled = false;
             });
     }
 
@@ -551,6 +570,9 @@ class MPEventHandler {
         // Release the validation lock in case checkout_error fired mid-validation (e.g. another
         // script triggered the event while our fetch was still pending). Otherwise the lock would
         // stay held until the request resolves, leaving the buy button unusable until then.
+        this._validationCancelled = true;
+        this._validationAbortController?.abort();
+        this._validationAbortController = null;
         this.isValidating = false;
         this.hideValidationLoader();
         this.hasToken = false;
@@ -655,6 +677,26 @@ class MPEventHandler {
      *
      * @see custom.block.js - Similar functionality for block mode
      */
+    /**
+     * Normalize a document number for the API payload: strip the mask and
+     * uppercase it (raw value). Applied to every document type intentionally —
+     * it aligns Classic checkout with Blocks, which already sent the raw value
+     * for every document. The document type is an enum (CPF/CNPJ/CI/CC/CE/NIT...)
+     * and is never passed through here, so per-type validation stays unchanged —
+     * only the format of the value sent to the API changes (masked → raw).
+     *
+     * The Payments API accepts the raw, mask-free value for non-Brazilian
+     * document types as well. Validated end-to-end on MLC (RUT): a value typed
+     * with the mask in the checkout reaches the payload mask-free and the
+     * payment is created successfully.
+     *
+     * @param {string} value - The masked value from the visible input.
+     * @returns {string} Raw uppercase document number (only A-Z and 0-9).
+     */
+    normalizeDocumentNumber(value) {
+        return value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
     setPayerIdentificationInfo() {
         const documentElements = [
             { selector: '#form-checkout__identificationType', hiddenInputId: '#payerDocType' },
@@ -666,7 +708,10 @@ class MPEventHandler {
             const hiddenInput = document.querySelector(hiddenInputId);
 
             if (element && hiddenInput && element.value) {
-                hiddenInput.value = element.value;
+                const isDocNumber = hiddenInputId === '#payerDocNumber';
+                hiddenInput.value = isDocNumber
+                    ? this.normalizeDocumentNumber(element.value)
+                    : element.value;
             }
         });
     }

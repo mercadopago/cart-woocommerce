@@ -105,4 +105,4 @@ function resetStore(site) {
   }
 }
 
-module.exports = { wpCli, wpOption, wpGetOption, wpEval, enableGateway, setGatewaySetting, isContainerRunning, getCurrentStoreSite, resetStore };
+module.exports = { wpCli, wpOption, wpGetOption, wpEval, enableGateway, setGatewaySetting, isContainerRunning, getCurrentStoreSite, resetStore, CONTAINER, INSIDE_CONTAINER };

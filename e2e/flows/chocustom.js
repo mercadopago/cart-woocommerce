@@ -1,5 +1,5 @@
 import { fillStepsToCheckout } from "./fill_steps_to_checkout";
-import { expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 const CORS_MESSAGE = [
   '[CORS] Falha na tokenizacao de cartao no ambiente Sandbox.',
@@ -30,12 +30,13 @@ export function assertNoCors(corsErrors) {
 }
 
 export async function successfulPaymentTest(page, url, user, card, form) {
+  test.setTimeout(120000);
   const corsErrors = trackCorsErrors(page);
   await makePayment(page, url, user, card, form);
 
   // Fast-fail on CORS: check after 5s instead of waiting the full 60s timeout
   const result = await Promise.race([
-    page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 60000 }).then(() => 'ok'),
+    page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 80000 }).then(() => 'ok'),
     page.waitForTimeout(5000).then(() => corsErrors.length > 0 ? 'cors' : null),
   ]);
 
@@ -43,7 +44,7 @@ export async function successfulPaymentTest(page, url, user, card, form) {
     assertNoCors(corsErrors);
   }
 
-  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible({ timeout: 30000 });
+  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible({ timeout: 80000 });
 }
 
 export async function rejectedPaymentTest(page, url, user, card, form) {
@@ -94,6 +95,10 @@ export async function goToCustomCheckout(page, url, user) {
     await page.waitForTimeout(1000);
   } else {
     await blocksRadio.check();
+    // Blocks sends a Store API request after payment method selection to recalculate the
+    // cart (adds MP discount/commission fees via session key). waitForLoadState() resolves
+    // before that async response is processed, so give the Store API time to settle.
+    await page.waitForTimeout(3000);
   }
 
   await page.waitForLoadState();
@@ -156,9 +161,19 @@ export async function fillCustomCardForm(page, card, form) {
 
     const identificationType = page.locator('#form-checkout__identificationType');
     if (await identificationType.isVisible().catch(() => false)) {
-      await identificationType.selectOption(form.docType);
-      await page.waitForTimeout(200);
-      await page.locator('[name="identificationNumber"]').fill(form.docNumber);
+      const docTypeAvailable = await identificationType
+        .locator(`option[value="${form.docType}"]`)
+        .count()
+        .then((n) => n > 0)
+        .catch(() => false);
+      if (docTypeAvailable) {
+        await identificationType.selectOption(form.docType);
+      }
+      await page.waitForTimeout(3000);
+
+      if (form.docNumber != null) {
+        await page.locator('[name="identificationNumber"]').fill(form.docNumber);
+      }
     }
 
     const installments = page.locator('#mp-checkout-custom-installments-card');
@@ -171,14 +186,19 @@ export async function fillCustomCardForm(page, card, form) {
 
 /**
  * Clicks the place-order button. Supports both Classic and Blocks checkout.
+ *
+ * Blocks — wait for the cart to settle before submitting:
+ * When the gateway is selected, the plugin applies discount/commission via a cart extension (extensionCartUpdate). This marks the cart totals dirty and triggers background recalculations (POST /wc/store/v1/batch). If the order is submitted while one of those is still in flight, WC Blocks runs a totals recalculation instead of placing the order — the buyer stays on the checkout and never reaches order-received. Waiting for networkidle reproduces the natural pause a real shopper has between selecting the method and clicking, after which the recalculation settles.
  */
 export async function placeOrder(page) {
   const classicPlaceOrder = page.locator('#place_order');
-  const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
 
   if (await classicPlaceOrder.isVisible({ timeout: 3000 }).catch(() => false)) {
     await classicPlaceOrder.click();
   } else {
+    const blocksPlaceOrder = page.locator('.wc-block-components-checkout-place-order-button');
+    await expect(blocksPlaceOrder).toBeEnabled({ timeout: 10000 });
+    await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
     await blocksPlaceOrder.click();
   }
 

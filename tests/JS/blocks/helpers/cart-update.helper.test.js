@@ -352,3 +352,142 @@ describe('cart-update.helper', () => {
     });
   });
 });
+
+const path = require('path');
+
+const helperPath = path.resolve(__dirname, '../../../../assets/js/blocks/helpers/cart-update.helper.js');
+
+function loadHelper(ctx) {
+  const src = fs.readFileSync(helperPath, 'utf8').replace(/^export\s+\{[^}]+\};?\s*$/m, '');
+  const script = new vm.Script(src + '\n({ handleCartTotalChange, addDiscountAndCommission, removeDiscountAndCommission });');
+  return script.runInNewContext({
+    window: global.window,
+    document: global.document,
+    console: global.console,
+    setTimeout: global.setTimeout,
+    Promise: global.Promise,
+    parseFloat: global.parseFloat,
+    String: global.String,
+    Number: global.Number,
+    Math: global.Math,
+    sendMetric: ctx.sendMetric,
+  });
+}
+
+describe('handleCartTotalChange — lock + queue', () => {
+  let handleCartTotalChange;
+  let initCardFormMock;
+  let sendMetricMock;
+
+  const currency = { minorUnit: 2 };
+  const value = 10000;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    sendMetricMock = jest.fn();
+
+    initCardFormMock = jest.fn().mockResolvedValue(undefined);
+
+    global.window.mpCustomCheckoutHandler = {
+      cardForm: {
+        formMounted: false,
+        form: { unmount: jest.fn() },
+        createLoadSpinner: jest.fn(),
+        removeLoadSpinner: jest.fn(),
+        initCardForm: initCardFormMock,
+      },
+    };
+    global.window.mpSuperTokenPaymentMethods = { hideSuperTokenError: jest.fn() };
+    global.window.mpSuperTokenTriggerHandler = { loadSuperToken: jest.fn().mockResolvedValue(undefined) };
+
+    ({ handleCartTotalChange } = loadHelper({ sendMetric: sendMetricMock }));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    global.window.mpCustomCheckoutHandler = undefined;
+    global.window.mpSuperTokenPaymentMethods = undefined;
+    global.window.mpSuperTokenTriggerHandler = undefined;
+  });
+
+  test('Given a single call, When handleCartTotalChange completes, Then initCardForm is called exactly once', async () => {
+    await handleCartTotalChange(value, currency, 1);
+    jest.runAllTimers();
+
+    expect(initCardFormMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('Given two concurrent calls, When first is in progress, Then second is queued and initCardForm runs twice in series (not interleaved)', async () => {
+    let resolveFirst;
+    initCardFormMock
+      .mockImplementationOnce(() => new Promise(res => { resolveFirst = res; }))
+      .mockResolvedValue(undefined);
+
+    const call1 = handleCartTotalChange(value, currency, 1);
+    const call2 = handleCartTotalChange(value + 100, currency, 1);
+
+    // waitForHandler() awaits the handler, so the first call reaches initCardForm
+    // one microtask later — flush before asserting the in-progress call count.
+    await Promise.resolve();
+
+    expect(initCardFormMock).toHaveBeenCalledTimes(1);
+
+    resolveFirst();
+    await call1;
+    await call2;
+    jest.runAllTimers();
+
+    expect(initCardFormMock).toHaveBeenCalledTimes(2);
+  });
+
+  test('Given three concurrent calls during one in progress, When resolved, Then only the last pending call is replayed (coalescing)', async () => {
+    let resolveFirst;
+    initCardFormMock
+      .mockImplementationOnce(() => new Promise(res => { resolveFirst = res; }))
+      .mockResolvedValue(undefined);
+
+    const call1 = handleCartTotalChange(value, currency, 1);
+    handleCartTotalChange(value + 100, currency, 1);
+    handleCartTotalChange(value + 200, currency, 1);
+
+    // waitForHandler() awaits the handler, so the first call reaches initCardForm
+    // one microtask later — flush before asserting the in-progress call count.
+    await Promise.resolve();
+
+    expect(initCardFormMock).toHaveBeenCalledTimes(1);
+
+    resolveFirst();
+    await call1;
+    await Promise.resolve();
+    jest.runAllTimers();
+
+    expect(initCardFormMock).toHaveBeenCalledTimes(2);
+    expect(initCardFormMock).toHaveBeenLastCalledWith(String(parseFloat(String(value + 200) / 100) * 1));
+  });
+
+  test('Given two chained calls, When both complete, Then removeLoadSpinner is called exactly once (not once per call)', async () => {
+    let resolveFirst;
+    initCardFormMock
+      .mockImplementationOnce(() => new Promise(res => { resolveFirst = res; }))
+      .mockResolvedValue(undefined);
+
+    const call1 = handleCartTotalChange(value, currency, 1);
+    handleCartTotalChange(value + 100, currency, 1);
+
+    // waitForHandler() awaits the handler, so the first call reaches initCardForm
+    // (capturing resolveFirst) one microtask later — flush before resolving it.
+    await Promise.resolve();
+
+    resolveFirst();
+    await call1;
+    // The queued call is replayed without being awaited, and the merged helper adds
+    // extra waitForHandler() hops; drain pending microtasks so the replay reaches its
+    // finally (which schedules removeLoadSpinner via setTimeout) before runAllTimers.
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve();
+    }
+    jest.runAllTimers();
+
+    expect(global.window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner).toHaveBeenCalledTimes(1);
+  });
+});

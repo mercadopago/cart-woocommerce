@@ -417,7 +417,11 @@ class OrderMetadata
         $this->updatePaymentDetails($order, $paymentData);
         $this->updateLatestPaymentId($order);
         $this->addFeeDetails($order, $paymentData);
-        $this->setMercadoPagoPaymentId($order, [$paymentData['id']]);
+        // Use extractPaymentId for null-safety — consistent with initializePaymentMetadata.
+        $paymentId = $this->extractPaymentId($paymentData);
+        if ($paymentId !== null) {
+            $this->setMercadoPagoPaymentId($order, [$paymentId]);
+        }
     }
 
     /**

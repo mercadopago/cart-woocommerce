@@ -20,6 +20,23 @@ npm run test:mlb:classic   # Brazil — Classic checkout
 npm run test:mlb:blocks    # Brazil — Blocks checkout
 ```
 
+## Suíte completa / regressão (`run-all-report.sh`)
+
+Para rodar a **matriz completa** (7 países × 2 checkouts) com relatório consolidado
+(total/ok/erro/skip por país + causa real de cada falha), em vez de país a país:
+
+```bash
+cd e2e
+bash run-all-report.sh            # matriz 7×2 + relatório consolidado
+bash run-all-report.sh --menu     # modo interativo (país / checkout / ambiente / PSE...)
+bash run-all-report.sh --release  # regressão oficial (PSE (MCO) + retries)
+```
+
+Ajuda completa: `bash run-all-report.sh --help` (ou `--help --interactive` no browser).
+
+📚 **Guia rápido no Confluence:** [Script E2E Regression Runner (`run-all-report.sh`)](https://mercadolibre.atlassian.net/wiki/spaces/PLU/pages/4363812987/Script+E2E+Regression+Runner+run-all-report.sh)
+&nbsp;&nbsp;·&nbsp;&nbsp;SDD da task: [`docs/task-e2e-report-script.md`](docs/task-e2e-report-script.md)
+
 ## Prerequisites
 
 | Tool | Install | Why |

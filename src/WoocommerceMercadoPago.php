@@ -12,6 +12,10 @@ use MercadoPago\Woocommerce\Blocks\TicketBlock;
 use MercadoPago\Woocommerce\Blocks\PseBlock;
 use MercadoPago\Woocommerce\Blocks\YapeBlock;
 use MercadoPago\Woocommerce\Configs\Metadata;
+use MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient;
+use MercadoPago\Woocommerce\Helpers\SubscriptionsCredentialsValidator;
+use MercadoPago\Woocommerce\Helpers\SubscriptionsHelper;
+use MercadoPago\Woocommerce\Hooks\Subscriptions as SubscriptionsHook;
 use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Helpers\Paths;
 use MercadoPago\Woocommerce\Order\OrderBilling;
@@ -34,7 +38,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.8.1';
+    private const PLUGIN_VERSION = '8.9.0';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -85,6 +89,14 @@ class WoocommerceMercadoPago
     public Funnel $funnel;
 
     public Country $country;
+
+    public \MercadoPago\Woocommerce\Helpers\SubscriptionsHelper $subscriptionsHelper;
+
+    public \MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient $automaticPaymentsClient;
+
+    public SubscriptionsCredentialsValidator $subscriptionsCredentialsValidator;
+
+    public SubscriptionsHook $subscriptionsHook;
 
     private static bool $booted = false;
 
@@ -365,6 +377,9 @@ class WoocommerceMercadoPago
         // General
         $this->logs = $dependencies->logs;
 
+        $this->subscriptionsHelper     = $dependencies->subscriptionsHelper;
+        $this->automaticPaymentsClient = $dependencies->automaticPaymentsClient;
+
         // Exclusive
         $this->settings = $dependencies->settings;
 
@@ -376,6 +391,9 @@ class WoocommerceMercadoPago
         $this->country = $dependencies->countryHelper;
 
         $this->funnel = $dependencies->funnel;
+
+        $this->subscriptionsCredentialsValidator = $dependencies->subscriptionsCredentialsValidator;
+        $this->subscriptionsHook                 = $dependencies->subscriptionsHook;
     }
 
     /**

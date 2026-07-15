@@ -1,0 +1,42 @@
+{
+  "payment": {
+    "id": "MOCK-PAY-CIT-1001",
+    "status": "approved",
+    "status_detail": "accredited",
+    "transaction_amount": 49.90,
+    "currency_id": "BRL",
+    "card_id": "9876543210",
+    "external_reference": "WC-ORDER-101"
+  },
+  "customer": {
+    "id": "MOCK-CUST-2001",
+    "email": "buyer@example.com"
+  },
+  "card": {
+    "id": "9876543210",
+    "first_six_digits": "503143",
+    "last_four_digits": "6351",
+    "payment_method": "master",
+    "expiration_month": 11,
+    "expiration_year": 2030,
+    "cardholder": {
+      "name": "APRO",
+      "identification": {
+        "type": "CPF",
+        "number": "12345678909"
+      }
+    }
+  },
+  "profile": {
+    "id": null,
+    "status": "pending_creation"
+  },
+  "subscription": {
+    "id": "CPP-WSUB-1001",
+    "external_id": "WC-SUB-789"
+  },
+  "three_ds_info": {
+    "result": "approved",
+    "challenge_required": false
+  }
+}

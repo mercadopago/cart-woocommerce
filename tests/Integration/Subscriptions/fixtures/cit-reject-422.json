@@ -1,0 +1,12 @@
+{
+  "error": "PaymentRejected",
+  "code": "CPP_TAAP_0601004",
+  "message": "Pagamento recusado pelo emissor do cartao",
+  "status": 422,
+  "cause": [
+    {
+      "code": "cc_rejected_other_reason",
+      "description": "Pagamento recusado pelo emissor"
+    }
+  ]
+}

@@ -88,9 +88,15 @@ class Funnel
     /**
      * @return void
      */
-    public function updateStepPaymentMethods(?\Closure $after = null): void
+    public function updateStepPaymentMethods(?bool $isSubscriptionEnabled = null, ?\Closure $after = null): void
     {
-        $this->update(['accepted_payments' => $this->gateways->getEnabledPaymentGateways()], $after);
+        $attrs = ['accepted_payments' => $this->gateways->getEnabledPaymentGateways()];
+
+        if ($isSubscriptionEnabled !== null) {
+            $attrs['is_subscription_enabled'] = $isSubscriptionEnabled;
+        }
+
+        $this->update($attrs, $after);
     }
 
     public function updateStepPluginMode(?\Closure $after = null): void

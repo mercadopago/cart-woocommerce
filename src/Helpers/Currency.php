@@ -215,6 +215,18 @@ class Currency
     }
 
     /**
+     * Fetches and returns the current store-to-MP conversion ratio via API.
+     * Throws if the ratio cannot be retrieved so callers can decide the fallback.
+     *
+     * @return float
+     * @throws \Exception
+     */
+    public function getCurrentRatio(): float
+    {
+        return $this->loadRatio();
+    }
+
+    /**
      * Load ratio
      *
      * @return float

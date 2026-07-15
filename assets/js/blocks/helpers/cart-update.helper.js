@@ -2,6 +2,9 @@
 const namespace = 'mercadopago_blocks_update_cart';
 const REMOVE_LOAD_SPINNER_DELAY = 500;
 
+let _cartUpdateInProgress = false;
+let _pendingCartUpdate = null;
+
 const addDiscountAndCommission = (callback, paymentMethodName) => {
   return callback({
     namespace,
@@ -49,7 +52,14 @@ async function waitForHandler(getHandler, metric) {
   return handler;
 }
 
-async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
+async function handleCartTotalChange(value, currency, currencyRatio = 1) {
+  if (_cartUpdateInProgress) {
+    _pendingCartUpdate = { value, currency, currencyRatio };
+    return;
+  }
+
+  _cartUpdateInProgress = true;
+
   try {
     window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
 
@@ -102,7 +112,15 @@ async function handleCartTotalChange(value, currency, currencyRatio = 1 ) {
       sendMetric('error_to_update_cart_total', e?.message || 'Unknown error', "mp_cart_total_change_error");
     }
   } finally {
-    setTimeout(() => window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner(), REMOVE_LOAD_SPINNER_DELAY);
+    _cartUpdateInProgress = false;
+
+    if (_pendingCartUpdate !== null) {
+      const next = _pendingCartUpdate;
+      _pendingCartUpdate = null;
+      handleCartTotalChange(next.value, next.currency, next.currencyRatio);
+    } else {
+      setTimeout(() => window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner(), REMOVE_LOAD_SPINNER_DELAY);
+    }
   }
 }
 

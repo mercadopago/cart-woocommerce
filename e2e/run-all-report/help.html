@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>run-all-report.sh — Help</title>
+<style>
+  :root{--blue:#0366d6;--blue-l:#dbeafe;--green:#1a7f37;--green-l:#dcfce7;
+    --yellow:#9a6700;--yellow-l:#fef9c3;--red:#cf222e;--red-l:#fee2e2;
+    --purple:#6f42c1;--purple-l:#ede9fe;--gray:#57606a;--gray-l:#f6f8fa;
+    --border:#e1e4e8;--text:#24292f;--mono:'SFMono-Regular',Consolas,monospace;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:#f8f9fa;color:var(--text);line-height:1.6;padding:40px 24px;}
+  .wrap{max-width:860px;margin:0 auto;}
+  .hero{background:linear-gradient(135deg,#0366d6,#6f42c1);color:#fff;
+    border-radius:12px;padding:32px 36px;margin-bottom:36px;}
+  .hero h1{font-size:24px;font-weight:700;margin-bottom:8px;}
+  .hero p{opacity:.85;font-size:15px;}
+  .hero .tags{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .tag{background:rgba(255,255,255,.18);border-radius:6px;padding:3px 10px;
+    font-size:12px;font-weight:600;}
+  h2{font-size:18px;font-weight:700;margin:36px 0 14px;padding-bottom:8px;
+    border-bottom:2px solid var(--border);}
+  h3{font-size:14px;font-weight:700;margin:20px 0 6px;color:var(--gray);}
+  p{margin-bottom:10px;font-size:14px;}
+  code{font-family:var(--mono);font-size:12px;background:var(--gray-l);
+    border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--red);}
+  pre{background:#1e1e2e;color:#cdd6f4;border-radius:8px;padding:18px;
+    overflow-x:auto;margin:10px 0 18px;font-family:var(--mono);font-size:13px;
+    line-height:1.55;position:relative;}
+  .copy-btn{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.12);
+    border:none;color:#cdd6f4;border-radius:4px;padding:3px 8px;font-size:11px;
+    cursor:pointer;font-family:var(--mono);}
+  .copy-btn:hover{background:rgba(255,255,255,.22);}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0 18px;}
+  th{background:var(--gray-l);border:1px solid var(--border);padding:8px 12px;
+    text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--gray);}
+  td{border:1px solid var(--border);padding:8px 12px;vertical-align:top;}
+  tr:nth-child(even) td{background:var(--gray-l);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;
+    font-weight:600;}
+  .b-blue{background:var(--blue-l);color:var(--blue);}
+  .b-green{background:var(--green-l);color:var(--green);}
+  .b-yellow{background:var(--yellow-l);color:var(--yellow);}
+  .b-red{background:var(--red-l);color:var(--red);}
+  .b-purple{background:var(--purple-l);color:var(--purple);}
+  .callout{border-radius:8px;padding:12px 16px;margin:14px 0;border-left:4px solid;
+    font-size:13.5px;}
+  .callout.info{background:var(--blue-l);border-color:var(--blue);}
+  .callout.warn{background:var(--yellow-l);border-color:var(--yellow);}
+  .callout p{margin:0;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0 18px;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:8px;
+    padding:14px 16px;}
+  .card .code{font-family:var(--mono);font-size:13px;font-weight:700;
+    color:var(--blue);margin-bottom:4px;}
+  .card p{font-size:12.5px;color:var(--gray);margin:0;}
+  @media(max-width:600px){.grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <h1>run-all-report.sh</h1>
+  <p>Executa a suíte E2E completa (7 países × 2 checkouts) e gera um relatório
+     consolidado em <code style="background:rgba(255,255,255,.2);color:#fff">e2e/results/report.md</code>.</p>
+  <div class="tags">
+    <span class="tag">14 combinações</span>
+    <span class="tag">sem retries por padrão</span>
+    <span class="tag">relatório markdown</span>
+    <span class="tag">PSE (MCO)</span>
+  </div>
+</div>
+
+<h2>Opções</h2>
+<table>
+  <thead><tr><th>Flag</th><th>Descrição</th><th>Padrão</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>--site SITE</code></td>
+      <td>Roda apenas o país informado</td>
+      <td><span class="badge b-blue">todos</span></td>
+    </tr>
+    <tr>
+      <td><code>--checkout MODE</code></td>
+      <td>Roda apenas o modo de checkout (<code>classic</code> ou <code>blocks</code>)</td>
+      <td><span class="badge b-blue">ambos</span></td>
+    </tr>
+    <tr>
+      <td><code>--with-retries</code></td>
+      <td>Habilita retries do <code>playwright.config.js</code> (2x por falha).<br/>
+          Sem esta flag cada teste roda apenas 1 vez — mais rápido, mais direto.</td>
+      <td><span class="badge b-green">sem retries</span></td>
+    </tr>
+    <tr>
+      <td><code>--release</code></td>
+      <td>Atalho para regressão oficial de release: roda a matriz completa com PSE via
+          run-pse.sh <strong>e</strong> retries. Equivale a
+          <code>--with-pse</code> + <code>--with-retries</code>.</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code>--with-pse</code></td>
+      <td>Habilita o PSE (MCO) via mu-plugin temporário que intercepta
+          <code>woocommerce_get_checkout_order_received_url</code> e retorna um domínio HTTPS
+          válido para o <code>callback_url</code> (sem alterar <code>home_url()</code> global).
+          Sem esta flag PSE falha em localhost e a causa real aparece no relatório.</td>
+      <td><span class="badge b-yellow">PSE desabilitado</span></td>
+    </tr>
+    <tr>
+      <td><code>--no-report</code></td>
+      <td>Desabilita a geração do relatório HTML consolidado e não abre o browser.
+          Útil para runs rápidos ou CI.</td>
+      <td><span class="badge b-green">relatório gerado</span></td>
+    </tr>
+    <tr>
+      <td><code>--rerun-failed</code></td>
+      <td>Re-roda APENAS os specs que falharam na run completa anterior, por combinação,
+          e gera o relatório consolidado. Lê os JSONs de <code>results/</code> (rode a
+          matriz completa antes). Aceita os mesmos filtros (<code>--site</code>,
+          <code>--checkout</code>, <code>--with-retries</code>, etc.); combinações sem
+          falha anterior são puladas.</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code>--prod</code></td>
+      <td>Roda em ambiente de <strong>produção</strong> (<code>test_mode=no</code>), usando
+          <code>MP_ACCESS_TOKEN_PROD_&lt;SITE&gt;</code> / <code>MP_PUBLIC_KEY_PROD_&lt;SITE&gt;</code>.
+          Equivale a <code>MP_ENV=prod</code>.</td>
+      <td><span class="badge b-green">test (sandbox)</span></td>
+    </tr>
+    <tr>
+      <td><code>--debug</code></td>
+      <td>Abre o Playwright Inspector para UMA combinação (requer <code>--site</code> e
+          <code>--checkout</code>). Com <code>--rerun-failed</code>, só os que falharam.</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code>--menu</code>, <code>-m</code></td>
+      <td>Modo interativo: pergunta país, checkout, retries, relatório, ambiente e PSE.</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code>--clean</code></td>
+      <td>Apaga tudo em <code>e2e/results/</code> (JSONs, logs, blobs, report.md
+          e histórico) e sai sem rodar testes.</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code>--help</code>, <code>-h</code></td>
+      <td>Exibe o help no terminal.</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><code>--help --interactive</code></td>
+      <td>Abre o help em página HTML no browser.</td>
+      <td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Países disponíveis</h2>
+<div class="grid">
+  <div class="card"><div class="code">MLA</div><p>Argentina</p></div>
+  <div class="card"><div class="code">MLB</div><p>Brasil</p></div>
+  <div class="card"><div class="code">MLC</div><p>Chile</p></div>
+  <div class="card"><div class="code">MLM</div><p>México</p></div>
+  <div class="card"><div class="code">MCO</div><p>Colômbia</p></div>
+  <div class="card"><div class="code">MLU</div><p>Uruguai</p></div>
+  <div class="card"><div class="code">MPE</div><p>Peru</p></div>
+</div>
+
+<h2>Sem retries vs. com retries</h2>
+<div class="callout info">
+  <p><strong>Por padrão o script roda sem retries</strong> — cada teste executa apenas uma vez,
+  dando feedback imediato sem esperar tentativas extras. Use <code>--with-retries</code>
+  para regressões oficiais onde falhas de sandbox precisam ser absorvidas.</p>
+</div>
+<table>
+  <thead><tr><th>Modo</th><th>Tentativas por falha</th><th>Tempo extra</th><th>Quando usar</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="badge b-green">Padrão (sem retries)</span></td>
+      <td>1</td><td>0</td><td>Debug, smoke rápido, CI com falhas reais</td>
+    </tr>
+    <tr>
+      <td><code>--with-retries</code></td>
+      <td>3 (1 + 2 retries)</td><td>+30-60s por falha</td><td>Regressão oficial de release</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Pré-requisitos</h2>
+<table>
+  <thead><tr><th>Ferramenta</th><th>Como verificar</th><th>Como instalar</th></tr></thead>
+  <tbody>
+    <tr><td>Docker + container <code>mp-wc-dev</code></td>
+        <td><code>docker ps --filter name=mp-wc-dev</code></td>
+        <td><code>cd docker-flexible-environment && make up</code></td></tr>
+    <tr><td>Node.js + dependências</td>
+        <td><code>node --version</code></td>
+        <td><code>cd e2e && npm install</code></td></tr>
+    <tr><td>jq</td>
+        <td><code>jq --version</code></td>
+        <td><code>brew install jq</code></td></tr>
+    <tr><td><code>e2e/.env</code> com credenciais</td>
+        <td>Arquivo existe e tem <code>MP_ACCESS_TOKEN_TEST_*</code></td>
+        <td>Copiar de <code>e2e/.env.sample</code> e preencher</td></tr>
+    <tr><td>—</td>
+                <td>PSE não requer ferramenta externa</td>
+                <td>—</td></tr>
+  </tbody>
+</table>
+
+<h2>Exemplos</h2>
+
+<h3>Matriz completa sem retries (padrão)</h3>
+<pre>bash e2e/run-all-report.sh<button class="copy-btn" onclick="copy(this)">copiar</button></pre>
+
+<h3>Só Brasil classic — debug rápido</h3>
+<pre>bash e2e/run-all-report.sh --site MLB --checkout classic<button class="copy-btn" onclick="copy(this)">copiar</button></pre>
+
+<h3>Matriz completa com retries — regressão oficial</h3>
+<pre>bash e2e/run-all-report.sh --with-retries<button class="copy-btn" onclick="copy(this)">copiar</button></pre>
+
+<h3>Brasil em produção (test users / cartões de teste)</h3>
+<pre>bash e2e/run-all-report.sh --site MLB --prod<button class="copy-btn" onclick="copy(this)">copiar</button></pre>
+
+<h3>Matriz completa + PSE (MCO)</h3>
+<pre>bash e2e/run-all-report.sh --with-pse --with-retries<button class="copy-btn" onclick="copy(this)">copiar</button></pre>
+
+<h2>Investigando falhas</h2>
+
+<p>Após um run com falhas, use o Playwright UI para inspecionar teste a teste:</p>
+
+<h3>Todos os que falharam — recomendado</h3>
+<pre>SITE=MLB CHECKOUT=blocks npx playwright test tests/mlb/ --last-failed --ui<button class="copy-btn" onclick="copy(this)">copiar</button></pre>
+<p style="font-size:12.5px;color:var(--gray)">Usa o cache do último run — abre o UI já filtrado pelos testes que falharam.</p>
+
+<h3>Por arquivo</h3>
+<pre>SITE=MLB CHECKOUT=blocks npx playwright test tests/mlb/chocredits/ --ui
+SITE=MLB CHECKOUT=blocks npx playwright test tests/mlb/chocustom/checkout_validation_gate.spec.js --ui
+SITE=MLB CHECKOUT=blocks npx playwright test tests/mlb/chopro/modal/ --ui
+SITE=MLB CHECKOUT=blocks npx playwright test tests/mlb/chopro/redirect/ --ui<button class="copy-btn" onclick="copy(this)">copiar</button></pre>
+
+<h3>Teste específico por linha</h3>
+<pre>SITE=MLB CHECKOUT=blocks npx playwright test tests/mlb/chocustom/checkout_validation_gate.spec.js:33 --ui<button class="copy-btn" onclick="copy(this)">copiar</button></pre>
+<p style="font-size:12.5px;color:var(--gray)">Substitua o número da linha pelo número que aparece no relatório de falhas.</p>
+
+<h2>Arquivos de saída</h2>
+<table>
+  <thead><tr><th>Arquivo</th><th>Conteúdo</th></tr></thead>
+  <tbody>
+    <tr><td><code>e2e/results/report.md</code></td>
+        <td>Relatório consolidado — tabela resumo + falhas detalhadas</td></tr>
+    <tr><td><code>e2e/results/&lt;SITE&gt;-&lt;MODE&gt;.json</code></td>
+        <td>JSON bruto do Playwright por combinação (parseado pelo script)</td></tr>
+    <tr><td><code>e2e/results/&lt;SITE&gt;-&lt;MODE&gt;.log</code></td>
+        <td>Log de progresso por combinação (útil para debug)</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <p><strong>Exit code:</strong> <code>0</code> → todos passaram &nbsp;|&nbsp;
+  <code>1</code> → algum falhou ou houve falha de execução &nbsp;|&nbsp;
+  <code>130</code> → interrompido (Ctrl+C)</p>
+</div>
+
+</div>
+<script>
+function copy(btn){
+  const code=btn.parentElement.childNodes[0].textContent.trim();
+  const done=()=>{btn.textContent='copiado!';setTimeout(()=>btn.textContent='copiar',1500);};
+  // navigator.clipboard exige contexto seguro; o help abre via file:// (open), que não é seguro na maioria dos browsers — fallback para execCommand.
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(code).then(done);
+  }else{
+    const ta=Object.assign(document.createElement('textarea'),{value:code});
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);done();
+  }
+}
+</script>
+</body>
+</html>

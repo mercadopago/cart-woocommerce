@@ -308,10 +308,95 @@ class MPSuperTokenPaymentMethods {
     }
 
     hideSuperTokenError() {
+        this.excludeRecaptchaFromPreValidation();
+
         const andesNotice = document.getElementById('mp-fast-payments-error');
         if (!andesNotice) return;
 
         andesNotice.remove();
+    }
+
+    /**
+     * Captcha tokens (reCAPTCHA g-recaptcha-response, hCaptcha h-captcha-response, Cloudflare
+     * Turnstile cf-turnstile-response) are single-use. The Classic pre-validation request
+     * (mp_validate_checkout) serializes form.checkout via jQuery .serialize() and, server-side,
+     * re-runs woocommerce_checkout_process — the captcha plugin consumes the token there, so the real
+     * submit then fails the captcha and blocks the buyer. Install a one-time spy on jQuery's global
+     * .serialize() that omits the checkout form's captcha field from every serialize EXCEPT the real
+     * submit: it disables the field just for that one call (disable → serialize → re-enable in
+     * finally, so the live field is never left disabled) whenever mercado_pago_submit is false. The
+     * real submit serializes with mercado_pago_submit true, so it keeps the token. The flag is read at
+     * serialize time (not install time), so no sticky disabled state leaks into the real submit. Acts
+     * only when form.checkout itself is serialized (captchas on other forms/widgets on the page are
+     * ignored); runs only on the standard Classic checkout (absent on Blocks and order-pay). Each disable/enable emits a
+     * success metric (action + field name); failures emit an error metric. Best-effort: never throws.
+     */
+    excludeRecaptchaFromPreValidation() {
+        const metrics = this.mpSuperTokenMetrics;
+        const CAPTCHA_SELECTOR = '[name^="g-recaptcha-response"], [name^="h-captcha-response"], [name^="cf-turnstile-response"]';
+
+        try {
+            // form.checkout exists only on the standard Classic checkout — absent on Blocks and on
+            // the order-pay page (form#order_review), neither of which runs this pre-validation.
+            const checkoutForm = document.querySelector('form.checkout');
+            if (!checkoutForm) {
+                return;
+            }
+
+            // Only the checkout form's own captcha matters — ignore any captcha elsewhere on the page.
+            if (!checkoutForm.querySelector(CAPTCHA_SELECTOR)) {
+                return;
+            }
+
+            const jq = window.jQuery;
+            if (!jq?.fn || typeof jq.fn.serialize !== 'function') {
+                metrics?.errorToExcludeRecaptchaFromPreValidation('serialize_unavailable', 'jQuery.fn.serialize is not available');
+                return;
+            }
+
+            // Install the spy once, capturing the original first (avoids self-recursion).
+            if (jq.fn.serialize.__mpRecaptchaSpy) {
+                return;
+            }
+
+            const originalSerialize = jq.fn.serialize;
+            const patchedSerialize = function () {
+                // Act only when the checkout form itself is being serialized (pre-validation / real
+                // submit) — never on serializes of other forms on the page. `this` is the jQuery
+                // collection .serialize() was called on. On the real submit (mercado_pago_submit ===
+                // true) keep the token; otherwise omit it, scoping the disable to this call (finally).
+                const serializedForm = this && this[0];
+                const isCheckoutForm = !!serializedForm
+                    && typeof serializedForm.matches === 'function'
+                    && serializedForm.matches('form.checkout');
+                const captchaFields = isCheckoutForm && !window.mpEventHandler?.mercado_pago_submit
+                    ? Array.from(serializedForm.querySelectorAll(CAPTCHA_SELECTOR)).filter((field) => !field.disabled)
+                    : [];
+
+                if (!captchaFields.length) {
+                    return originalSerialize.apply(this, arguments);
+                }
+
+                captchaFields.forEach((field) => {
+                    field.disabled = true;
+                    metrics?.captchaFieldToggledOnPreValidation('disabled', field.name);
+                });
+
+                try {
+                    return originalSerialize.apply(this, arguments);
+                } finally {
+                    captchaFields.forEach((field) => {
+                        field.disabled = false;
+                        metrics?.captchaFieldToggledOnPreValidation('enabled', field.name);
+                    });
+                }
+            };
+
+            patchedSerialize.__mpRecaptchaSpy = true;
+            jq.fn.serialize = patchedSerialize;
+        } catch (error) {
+            metrics?.errorToExcludeRecaptchaFromPreValidation('setup', error);
+        }
     }
 
     getCustomCheckoutEntireElement() {

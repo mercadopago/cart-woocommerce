@@ -47,8 +47,8 @@ class YapeGateway extends AbstractGateway
         $this->description        = $this->adminTranslations['gateway_description'];
         $this->method_title       = $this->adminTranslations['gateway_method_title'];
         $this->method_description = $this->adminTranslations['gateway_method_description'];
-        $this->discount           = $this->getActionableValue('gateway_discount', 0);
-        $this->commission         = $this->getActionableValue('commission', 0);
+        $this->discount           = (float) $this->getActionableValue('gateway_discount', 0);
+        $this->commission         = (float) $this->getActionableValue('commission', 0);
 
         $this->mercadopago->hooks->gateway->registerUpdateOptions($this);
         $this->mercadopago->hooks->gateway->registerGatewayTitle($this);

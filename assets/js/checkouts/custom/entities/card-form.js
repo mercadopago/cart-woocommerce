@@ -138,8 +138,7 @@ class MPCardForm {
                 resolve();
 
                 if (error) {
-                    console.log('Callback to handle the error: creating the CardForm', error);
-                    return;
+                    this.sendMetric('MP_CARDFORM_MOUNT_ERROR', error?.message || 'unknown', 'mp_custom_checkout_security_fields_client');
                 }
             },
             onFormUnmounted: (error) => {
@@ -148,8 +147,7 @@ class MPCardForm {
                 resolve();
 
                 if (error) {
-                    console.log('Callback to handle the error: unmounting the CardForm', error);
-                    return;
+                    this.sendMetric('MP_CARDFORM_UNMOUNT_ERROR', error?.message || 'unknown', 'mp_custom_checkout_security_fields_client');
                 }
             },
             onInstallmentsReceived: (error, installments) => {

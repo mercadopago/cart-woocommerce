@@ -9,8 +9,11 @@ use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Endpoints\IntegrationWebhook;
 use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Helpers\Actions;
+use MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient;
+use MercadoPago\Woocommerce\Helpers\SubscriptionsCredentialsValidator;
 use MercadoPago\Woocommerce\Helpers\Cart;
 use MercadoPago\Woocommerce\Helpers\ErrorMessages;
+use MercadoPago\Woocommerce\Helpers\SubscriptionsHelper;
 use MercadoPago\Woocommerce\Helpers\I18n;
 use MercadoPago\Woocommerce\Helpers\Images;
 use MercadoPago\Woocommerce\Helpers\Session;
@@ -47,6 +50,7 @@ use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Hooks\Plugin;
 use MercadoPago\Woocommerce\Hooks\Product;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Hooks\Subscriptions as SubscriptionsHook;
 use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\HealthMonitor\ScriptHealthMonitor;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
@@ -130,6 +134,14 @@ class Dependencies
     public CurrentUser $currentUserHelper;
 
     public ErrorMessages $errorMessagesHelper;
+
+    public SubscriptionsHelper $subscriptionsHelper;
+
+    public AutomaticPaymentsClient $automaticPaymentsClient;
+
+    public SubscriptionsCredentialsValidator $subscriptionsCredentialsValidator;
+
+    public SubscriptionsHook $subscriptionsHook;
 
     public Gateways $gatewaysHelper;
 
@@ -231,9 +243,13 @@ class Dependencies
         $this->checkoutValidationEndpoints = $this->setCheckoutValidationEndpoints();
         $this->cartHelper              = $this->setCart();
         $this->errorMessagesHelper     = $this->setErrorMessages();
+        $this->subscriptionsHelper              = $this->setSubscriptionsHelper();
+        $this->automaticPaymentsClient          = $this->setAutomaticPaymentsClient();
+        $this->subscriptionsCredentialsValidator = $this->setSubscriptionsCredentialsValidator();
         $this->integrationWebhook      = $this->setIntegrationWebhook();
         $this->hooks                   = $this->setHooks();
         $this->helpers                 = $this->setHelpers();
+        $this->subscriptionsHook                = $this->setSubscriptionsHook();
 
         I18n::boot($this->adminTranslations, $this->storeTranslations);
     }
@@ -623,6 +639,38 @@ class Dependencies
     private function setErrorMessages(): ErrorMessages
     {
         return new ErrorMessages($this->storeTranslations);
+    }
+
+    private function setSubscriptionsHook(): SubscriptionsHook
+    {
+        return new SubscriptionsHook(
+            $this->automaticPaymentsClient,
+            $this->subscriptionsHelper,
+            $this->storeConfig,
+            $this->logs,
+            $this->helpers,
+            $this->orderMetadata
+        );
+    }
+
+    private function setSubscriptionsHelper(): SubscriptionsHelper
+    {
+        return new SubscriptionsHelper($this->storeTranslations);
+    }
+
+    private function setSubscriptionsCredentialsValidator(): SubscriptionsCredentialsValidator
+    {
+        return new SubscriptionsCredentialsValidator($this->requesterHelper, $this->logs);
+    }
+
+    private function setAutomaticPaymentsClient(): AutomaticPaymentsClient
+    {
+        return new AutomaticPaymentsClient(
+            $this->requesterHelper,
+            $this->subscriptionsHelper,
+            $this->logs,
+            $this->storeConfig->isTestMode()
+        );
     }
 
     private function setIntegrationWebhook(): IntegrationWebhook
