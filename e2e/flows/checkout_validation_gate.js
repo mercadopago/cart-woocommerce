@@ -76,7 +76,15 @@ export async function validationGateBlocksTest(page, url, user, card, form, muta
   await placeOrder(page);
 
   const response = await validationResponse;
-  const body = await response.json();
+  // PHP debug notices may prefix the response body (when WP_DEBUG is on); extract the JSON object from the raw text so the parse doesn't fail on the notice.
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    const text = await response.text();
+    const firstBrace = text.indexOf('{');
+    body = firstBrace >= 0 ? JSON.parse(text.slice(firstBrace)) : null;
+  }
 
   // The gate must conclusively reject the form.
   expect(body?.success).toBe(true);
@@ -89,6 +97,30 @@ export async function validationGateBlocksTest(page, url, user, card, form, muta
   await assertNotOrderReceived(page);
 
   // Checkout stays usable — no stuck overlay.
+  await assertOverlayCleared(page);
+}
+
+/**
+ * C1 / C2 — Blocks variant. WC Blocks applies client-side validation before submission, so the server gate (wc_ajax=mp_validate_checkout) is never reached.
+ * We verify the inline error element renders and the order is not placed.
+ *
+ * WC Blocks renders field errors as:
+ *   <div class="wc-block-components-validation-error" role="alert">
+ *     <p id="validate-error-{field}">...</p>
+ *   </div>
+ *
+ * @param {Function} mutateForm    async (page) => void  introduces the invalidity
+ * @param {string}   errorSelector CSS selector for the expected inline error element
+ *                   (e.g. '#validate-error-shipping_postcode')
+ */
+export async function validationGateInlineTest(page, url, user, card, form, mutateForm, errorSelector) {
+  await goToCustomCheckout(page, url, user);
+  await fillCustomCardForm(page, card, form);
+  await mutateForm(page);
+  await placeOrder(page);
+
+  await expect(page.locator(errorSelector)).toBeVisible({ timeout: 10000 });
+  await assertNotOrderReceived(page);
   await assertOverlayCleared(page);
 }
 
@@ -129,4 +161,24 @@ export async function infiniteLoadingRecoveryTest(page, url, user, card, form) {
 
   // The place-order button is clickable again (checkout not frozen).
   await expect(page.locator('#place_order')).toBeEnabled({ timeout: 15000 });
+}
+
+/**
+ * C3 — Blocks variant. The server gate (mp_validate_checkout) is not reached in
+ * Blocks, so we don't wait for it. The user-facing invariant is the same: an invalid card must not freeze the checkout — the order is never placed and the
+ * Blocks place-order button recovers to a clickable state (no infinite spinner).
+ */
+export async function infiniteLoadingRecoveryInlineTest(page, url, user, card, form) {
+  await goToCustomCheckout(page, url, user);
+  await fillCustomCardForm(page, card, form);
+
+  await placeOrder(page);
+
+  // Never reaches the success page.
+  await assertNotOrderReceived(page);
+
+  // The Blocks place-order button recovers — not stuck in the disabled/processing state.
+  await expect(
+    page.locator('.wc-block-components-checkout-place-order-button')
+  ).toBeEnabled({ timeout: 15000 });
 }

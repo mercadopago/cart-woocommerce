@@ -190,6 +190,11 @@ const Content = (props) => {
           break;
       }
 
+      const sessionIdEl = document.querySelector('#mpCardSessionId');
+      if (sessionIdEl && window.MP_DEVICE_SESSION_ID) {
+        sessionIdEl.value = window.MP_DEVICE_SESSION_ID;
+      }
+
       const checkoutInputs = document.querySelector('#mercadopago-utilities');
       const paymentMethodData = {};
 

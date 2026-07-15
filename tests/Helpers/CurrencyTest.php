@@ -473,4 +473,43 @@ class CurrencyTest extends TestCase
 
         $this->assertEquals(1, $result);
     }
+
+    /* ─── getCurrentRatio ─── */
+
+    public function testGetCurrentRatioReturnsRatioFromApi(): void
+    {
+        $this->setupGetRatioMocks();
+
+        $response = new Response();
+        $response->setStatus(200);
+        $response->setData(['ratio' => 5.177]);
+
+        $this->requester->shouldReceive('get')->once()->andReturn($response);
+
+        $datadogMock = Mockery::mock(Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
+        $this->setNotAccessibleProperty($this->currency, 'datadog', $datadogMock);
+
+        $result = $this->currency->getCurrentRatio();
+
+        $this->assertEqualsWithDelta(5.177, $result, 0.001);
+    }
+
+    public function testGetCurrentRatioThrowsWhenApiReturnsError(): void
+    {
+        $this->setupGetRatioMocks();
+
+        $response = new Response();
+        $response->setStatus(500);
+        $response->setData(['message' => 'Service unavailable']);
+
+        $this->requester->shouldReceive('get')->once()->andReturn($response);
+
+        $datadogMock = Mockery::mock(Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
+        $this->setNotAccessibleProperty($this->currency, 'datadog', $datadogMock);
+
+        $this->expectException(\Exception::class);
+        $this->currency->getCurrentRatio();
+    }
 }

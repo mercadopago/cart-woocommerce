@@ -119,6 +119,43 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
       expect(handler.isValidating).toBe(false);
     });
 
+    it('after checkout_error without validation in-flight, the next validateCheckoutThenContinue() should still call onValid()', async () => {
+      // Regression guard for the stuck-button scenario: checkout_error fires after server
+      // refuses payment (no fetch in-flight), leaving _validationCancelled=true. The next
+      // attempt must reset the flag so onValid() is not permanently suppressed.
+      window.mpResolveCheckoutValidation = jest.fn().mockReturnValue({ action: 'PROCEED' });
+      global.fetch = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { valid: true, errors: [] } }),
+      });
+
+      handler._validationAbortController = null;
+      handler.handleCheckoutError();
+      expect(handler._validationCancelled).toBe(true);
+
+      handler.validateCheckoutThenContinue({ preventDefault: jest.fn() }, onValid);
+      await flush();
+
+      expect(onValid).toHaveBeenCalledTimes(1);
+    });
+
+    it('when _validationCancelled is set before the buffered response resolves, then should not call onValid()', async () => {
+      // Covers the race where abort() is called after the response is fully buffered:
+      // no AbortError is thrown, so the .catch() guard never fires — the .then() guard
+      // must catch this case to prevent ghost state.
+      window.mpResolveCheckoutValidation = jest.fn().mockReturnValue({ action: 'PROCEED' });
+      global.fetch = jest.fn().mockResolvedValue({
+        json: () => Promise.resolve({ success: true, data: { valid: true, errors: [] } }),
+      });
+      const event = { preventDefault: jest.fn() };
+
+      handler.validateCheckoutThenContinue(event, onValid);
+      // Simulate handleCheckoutError() firing before the microtask queue drains
+      handler._validationCancelled = true;
+      await flush();
+
+      expect(onValid).not.toHaveBeenCalled();
+    });
+
     it('Given the resolver returns BLOCK, When the form validation resolves, Then should show the errors and NOT continue tokenization', async () => {
       const errors = [{ field: 'billing_postcode', code: 'postcode', message: 'Postcode is required' }];
       window.mpResolveCheckoutValidation = jest.fn().mockReturnValue({ action: 'BLOCK', errors });
@@ -434,6 +471,67 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
       });
 
       expect(() => handler.handleCheckoutError()).not.toThrow();
+    });
+
+    it('when called mid-validation with an in-flight fetch, then should abort it to prevent ghost state', () => {
+      const mockAbort = jest.fn();
+      handler._validationAbortController = { abort: mockAbort };
+
+      handler.handleCheckoutError();
+
+      expect(mockAbort).toHaveBeenCalledTimes(1);
+      expect(handler._validationAbortController).toBeNull();
+    });
+
+    it('when called mid-validation, then should set _validationCancelled so the catch handler suppresses onValid()', () => {
+      handler._validationAbortController = { abort: jest.fn() };
+      handler._validationCancelled = false;
+
+      handler.handleCheckoutError();
+
+      expect(handler._validationCancelled).toBe(true);
+    });
+
+    it('when called with no in-flight fetch, then should not throw', () => {
+      handler._validationAbortController = null;
+
+      expect(() => handler.handleCheckoutError()).not.toThrow();
+    });
+  });
+
+  describe('setPayerIdentificationInfo() — normalize document number for payload (classic checkout)', () => {
+    // Sets up the visible field (#form-checkout__identificationNumber) and the hidden
+    // (#payerDocNumber), runs the sync and returns the value that would go to the payload.
+    function syncDocNumber(visibleValue, docType = 'CNPJ') {
+      document.body.innerHTML =
+        `<input id="form-checkout__identificationType" value="${docType}" />` +
+        '<input id="payerDocType" type="hidden" />' +
+        '<input id="form-checkout__identificationNumber" />' +
+        '<input id="payerDocNumber" type="hidden" />';
+      document.querySelector('#form-checkout__identificationNumber').value = visibleValue;
+      handler.setPayerIdentificationInfo();
+      return document.querySelector('#payerDocNumber').value;
+    }
+
+    // The submitted value must be raw (no mask) and uppercase.
+    // Normalization applies to ALL document types (aligns classic to Blocks).
+    const cases = [
+      { visible: '12.ABC.345/01DE-35', type: 'CNPJ', expected: '12ABC34501DE35', desc: 'uppercase masked alphanumeric CNPJ → raw' },
+      { visible: '12.abc.345/01de-35', type: 'CNPJ', expected: '12ABC34501DE35', desc: 'lowercase masked alphanumeric CNPJ → raw uppercase' },
+      { visible: '12abc3450-1de35', type: 'CNPJ', expected: '12ABC34501DE35', desc: 'malformed CNPJ (spurious hyphen) → raw uppercase' },
+      { visible: '11.222.333/0001-81', type: 'CNPJ', expected: '11222333000181', desc: 'legacy numeric CNPJ → raw (no regression)' },
+      { visible: '123.456.789-01', type: 'CPF', expected: '12345678901', desc: 'masked CPF → raw (normalization applies to all doc types)' },
+      { visible: '12.345.678-K', type: 'RUT', expected: '12345678K', desc: 'RUT with K check digit → K preserved, mask stripped' },
+    ];
+
+    test.each(cases)('#payerDocNumber receives "$expected" from "$visible" — $desc', ({ visible, type, expected }) => {
+      expect(syncDocNumber(visible, type)).toBe(expected);
+    });
+  });
+
+  describe('normalizeDocumentNumber()', () => {
+    test('strips the mask and uppercases the document number (masked CPF → raw)', () => {
+      expect(handler.normalizeDocumentNumber('123.456.789-01')).toBe('12345678901');
     });
   });
 });

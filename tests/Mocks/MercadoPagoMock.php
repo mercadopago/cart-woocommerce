@@ -148,6 +148,13 @@ class MercadoPagoMock
         // Store config mocks
         $mock->storeConfig = Mockery::mock(Store::class);
         $mock->storeConfig->options = Mockery::mock(Options::class);
+        $mock->storeConfig->shouldReceive('isTestMode')->byDefault()->andReturn(true);
+        $mock->storeConfig->shouldReceive('isProductionMode')->byDefault()->andReturn(false);
+
+        // Subscriptions feature (feat-001) mocks — wired by Dependencies::setSubscriptions*
+        $mock->subscriptionsHelper = Mockery::mock(\MercadoPago\Woocommerce\Helpers\SubscriptionsHelper::class);
+        $mock->subscriptionsHelper->shouldReceive('resolveAccessToken')->byDefault()->andReturn('APP_USR-preapproval');
+        $mock->automaticPaymentsClient = Mockery::mock(\MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient::class);
 
         // Logs mocks
         $mock->logs = Mockery::mock(Logs::class);

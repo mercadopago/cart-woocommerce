@@ -6,8 +6,10 @@ use Exception;
 use MercadoPago\PP\Sdk\Exceptions\ApiException;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
+use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Gateways\CustomGateway;
 use MercadoPago\Woocommerce\Helpers\Form;
+use MercadoPago\Woocommerce\Helpers\SubscriptionsCredentialsValidator;
 use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\FormMock;
@@ -3448,5 +3450,599 @@ class CustomGatewayTest extends TestCase
         ]));
 
         $this->gateway->processReturnFail($apiException, $errorCode, 'test_source', [], true);
+    }
+
+    /* ───────────────────────────────────────────────────────────────
+     * T-005 — Admin Subscription Settings (PSW-3999)
+     * Covers: formFieldsSubscriptionsSection, validateSubscriptionsBeforeSave,
+     *         displaySubscriptionsValidationNotice, translatedValidationMessage
+     * ─────────────────────────────────────────────────────────────── */
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testFormFieldsSubscriptionsSectionReturnsEmptyWhenWcsAbsent(): void
+    {
+        $this->assertFalse(function_exists('wcs_order_contains_subscription'));
+        $this->assertSame([], $this->gateway->formFieldsSubscriptionsSection());
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testFormFieldsSubscriptionsSectionReturnsFieldsWhenWcsActive(): void
+    {
+        if (!class_exists('WC_Subscriptions')) {
+            eval('class WC_Subscriptions {}');
+        }
+        if (!function_exists('wcs_order_contains_subscription')) {
+            eval('function wcs_order_contains_subscription($order, $type = "any") { return true; }');
+        }
+
+        $result = $this->gateway->formFieldsSubscriptionsSection();
+
+        $this->assertArrayHasKey('subscriptions_enabled', $result);
+        $this->assertArrayHasKey('subscriptions_access_token_prod', $result);
+        $this->assertArrayHasKey('subscriptions_access_token_test', $result);
+        $this->assertSame('mp_toggle_switch', $result['subscriptions_enabled']['type']);
+        $this->assertSame('mp-subscriptions-group', $result['subscriptions_enabled']['class']);
+    }
+
+    public function testValidateSubscriptionsBeforeSavePassesThroughWhenToggleOff(): void
+    {
+        $fields = ['subscriptions_enabled' => 'no', 'subscriptions_access_token_prod' => 'tok', 'subscriptions_access_token_test' => ''];
+
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldNotReceive('validate');
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('set_transient')->never();
+
+        $this->assertSame($fields, $this->gateway->validateSubscriptionsBeforeSave($fields));
+    }
+
+    public function testValidateSubscriptionsBeforeSaveDisablesWhenBothTokensEmpty(): void
+    {
+        $fields = ['subscriptions_enabled' => 'yes', 'subscriptions_access_token_prod' => '', 'subscriptions_access_token_test' => ''];
+
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldNotReceive('validate');
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('set_transient')->once()->with('mp_subscriptions_save_result_1', Mockery::on(fn($v) => $v['valid'] === false), 60);
+
+        $result = $this->gateway->validateSubscriptionsBeforeSave($fields);
+        $this->assertSame('no', $result['subscriptions_enabled']);
+    }
+
+    public function testValidateSubscriptionsBeforeSaveDisablesWhenProdTokenInvalid(): void
+    {
+        $fields = ['subscriptions_enabled' => 'yes', 'subscriptions_access_token_prod' => 'APP_USR-bad', 'subscriptions_access_token_test' => '', 'subscriptions_public_key_prod' => 'APP_USR-pub-prod'];
+
+        // This test covers production mode: only the prod token is present and invalid.
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
+
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldReceive('validate')->once()->andReturn(['valid' => false, 'reason' => 'invalid_token']);
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('set_transient')->once()->with('mp_subscriptions_save_result_1', Mockery::on(fn($v) => $v['valid'] === false), 60);
+
+        $this->assertSame('no', $this->gateway->validateSubscriptionsBeforeSave($fields)['subscriptions_enabled']);
+    }
+
+    /**
+     * Test mode active but only the production token is filled — the
+     * relevant (sandbox) token is empty, so saving must be blocked with the
+     * environment-specific Sandbox message and no credential validation call.
+     */
+    public function testValidateSubscriptionsBeforeSaveDisablesWhenSandboxTokenMissingInTestMode(): void
+    {
+        $fields = ['subscriptions_enabled' => 'yes', 'subscriptions_access_token_prod' => 'APP_USR-valid', 'subscriptions_access_token_test' => ''];
+
+        // Test mode active: relevant token is the (empty) sandbox token.
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(true);
+
+        // The credential validator must never be called — the early return happens first.
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldNotReceive('validate');
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+
+        $captured = null;
+        WP_Mock::userFunction('set_transient')->once()->andReturnUsing(function ($k, $v) use (&$captured) {
+            $captured = $v;
+            return true;
+        });
+
+        $result = $this->gateway->validateSubscriptionsBeforeSave($fields);
+
+        $this->assertSame('no', $result['subscriptions_enabled']);
+        $this->assertFalse($captured['valid']);
+        $this->assertStringContainsString('Sandbox', $captured['user_message']);
+    }
+
+    /**
+     * Production mode active but only the sandbox token is filled — the
+     * relevant (production) token is empty, so saving must be blocked with the
+     * environment-specific Production message and no credential validation call.
+     */
+    public function testValidateSubscriptionsBeforeSaveDisablesWhenProdTokenMissingInProductionMode(): void
+    {
+        $fields = ['subscriptions_enabled' => 'yes', 'subscriptions_access_token_prod' => '', 'subscriptions_access_token_test' => 'TEST-valid'];
+
+        // Production mode active: relevant token is the (empty) production token.
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
+
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldNotReceive('validate');
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+
+        $captured = null;
+        WP_Mock::userFunction('set_transient')->once()->andReturnUsing(function ($k, $v) use (&$captured) {
+            $captured = $v;
+            return true;
+        });
+
+        $result = $this->gateway->validateSubscriptionsBeforeSave($fields);
+
+        $this->assertSame('no', $result['subscriptions_enabled']);
+        $this->assertFalse($captured['valid']);
+        $this->assertStringContainsString('Production', $captured['user_message']);
+    }
+
+    public function testValidateSubscriptionsBeforeSaveAccumulatesBothErrors(): void
+    {
+        $fields = ['subscriptions_enabled' => 'yes', 'subscriptions_access_token_prod' => 'APP_USR-bad-prod', 'subscriptions_access_token_test' => 'TEST-bad-test', 'subscriptions_public_key_prod' => 'APP_USR-pub-prod', 'subscriptions_public_key_test' => 'TEST-pub-test'];
+
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldReceive('validate')->with('APP_USR-bad-prod')->andReturn(['valid' => false, 'reason' => 'missing_scope']);
+        $validator->shouldReceive('validate')->with('TEST-bad-test')->andReturn(['valid' => false, 'reason' => 'invalid_token']);
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+
+        $capturedTransient = null;
+        WP_Mock::userFunction('set_transient')->once()->andReturnUsing(function ($k, $v) use (&$capturedTransient) {
+            $capturedTransient = $v;
+            return true;
+        });
+
+        $this->gateway->validateSubscriptionsBeforeSave($fields);
+
+        $this->assertStringContainsString('|', $capturedTransient['user_message']);
+    }
+
+    public function testValidateSubscriptionsBeforeSaveKeepsEnabledWhenTokensValid(): void
+    {
+        $fields = ['subscriptions_enabled' => 'yes', 'subscriptions_access_token_prod' => 'APP_USR-valid', 'subscriptions_access_token_test' => '', 'subscriptions_public_key_prod' => 'APP_USR-pub-prod'];
+
+        // Production mode: only the prod token is provided; it must be the relevant token.
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
+
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldReceive('validate')->once()->andReturn(['valid' => true, 'reason' => 'ok', 'app_id' => '123', 'app_name' => 'App']);
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(true);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('set_transient')
+            ->once()
+            ->with(
+                'mp_subscriptions_save_result_1',
+                Mockery::on(fn($v) => $v['valid'] === true && $v['app_name'] === 'App' && $v['app_id'] === '123'),
+                60
+            );
+        // clearCredentialRevokedNotice() is called on the success path; return
+        // an empty notices array so update_option is never triggered.
+        WP_Mock::userFunction('get_option')->andReturn([]);
+
+        $this->assertSame('yes', $this->gateway->validateSubscriptionsBeforeSave($fields)['subscriptions_enabled']);
+    }
+
+    public function testValidateSubscriptionsBeforeSaveKeepsEnabledWhenOnlySandboxTokenValid(): void
+    {
+        // Mirror of the prod-only test: verifies that when only the sandbox token is provided
+        // and valid, $resultProd = null and $resultProd ?? $resultTest ?? [] correctly
+        // falls through to $resultTest — propagating app_name and app_id from the sandbox result.
+        $fields = ['subscriptions_enabled' => 'yes', 'subscriptions_access_token_prod' => '', 'subscriptions_access_token_test' => 'TEST-valid-sandbox', 'subscriptions_public_key_test' => 'TEST-pub-sandbox'];
+
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldReceive('validate')->once()->with('TEST-valid-sandbox')
+            ->andReturn(['valid' => true, 'reason' => 'ok', 'app_id' => '456', 'app_name' => 'SandboxApp']);
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        // Allow funnel calls without strict count — the argument contract is already covered
+        // by the prod-only mirror test; here we focus on the ?? fallback behaviour.
+        $this->gateway->mercadopago->funnel = Mockery::mock(\MercadoPago\Woocommerce\Funnel\Funnel::class)->shouldIgnoreMissing();
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('set_transient')->andReturnUsing(
+            function ($key, $value) use (&$capturedTransient) {
+                $capturedTransient = $value;
+                return true;
+            }
+        );
+        // clearCredentialRevokedNotice() is called on the success path; return
+        // an empty notices array so update_option is never triggered.
+        WP_Mock::userFunction('get_option')->andReturn([]);
+
+        $result = $this->gateway->validateSubscriptionsBeforeSave($fields);
+
+        $this->assertSame('yes', $result['subscriptions_enabled']);
+        $this->assertTrue($capturedTransient['valid']);
+        $this->assertSame('SandboxApp', $capturedTransient['app_name']);
+        $this->assertSame('456', $capturedTransient['app_id']);
+    }
+
+    public function testValidateSubscriptionsBeforeSaveCallsFunnelWithFalseWhenOneTokenFails(): void
+    {
+        // Both tokens are provided. Prod passes; sandbox fails.
+        // The errors array is non-empty → subscriptions_enabled forced to 'no'
+        // → the final updateStepPaymentMethods call must receive false.
+        $fields = [
+            'subscriptions_enabled'             => 'yes',
+            'subscriptions_access_token_prod'   => 'APP_USR-valid',
+            'subscriptions_access_token_test'   => 'TEST-invalid',
+            'subscriptions_public_key_prod'     => 'APP_USR-pub-prod',
+            'subscriptions_public_key_test'     => 'TEST-pub-test',
+        ];
+
+        $validator = Mockery::mock(SubscriptionsCredentialsValidator::class);
+        $validator->shouldReceive('validate')->with('APP_USR-valid')->once()
+            ->andReturn(['valid' => true, 'reason' => 'ok', 'app_id' => '1', 'app_name' => 'App']);
+        $validator->shouldReceive('validate')->with('TEST-invalid')->once()
+            ->andReturn(['valid' => false, 'reason' => 'invalid_token']);
+        $this->gateway->mercadopago->subscriptionsCredentialsValidator = $validator;
+
+        $funnel = Mockery::mock(\MercadoPago\Woocommerce\Funnel\Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('set_transient')
+            ->once()
+            ->with('mp_subscriptions_save_result_1', Mockery::on(fn($v) => $v['valid'] === false), 60);
+
+        $result = $this->gateway->validateSubscriptionsBeforeSave($fields);
+        $this->assertSame('no', $result['subscriptions_enabled']);
+    }
+
+    public function testValidateSubscriptionsBeforeSaveDisablesWhenProdPublicKeyMissing(): void
+    {
+        // Token is valid but the production pre-approval public key is absent.
+        // Without the public key the checkout SDK would fall back to the store key,
+        // causing CIT to fail — so the feature must be disabled.
+        $fields = [
+            'subscriptions_enabled'           => 'yes',
+            'subscriptions_access_token_prod' => 'APP_USR-valid',
+            'subscriptions_access_token_test' => '',
+            'subscriptions_public_key_prod'   => '',
+        ];
+
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
+
+        $funnel = Mockery::mock(\MercadoPago\Woocommerce\Funnel\Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('set_transient')
+            ->once()
+            ->with(
+                'mp_subscriptions_save_result_1',
+                Mockery::on(fn($v) => $v['valid'] === false && str_contains($v['user_message'], 'Production')),
+                60
+            );
+
+        $result = $this->gateway->validateSubscriptionsBeforeSave($fields);
+        $this->assertSame('no', $result['subscriptions_enabled']);
+    }
+
+    public function testValidateSubscriptionsBeforeSaveDisablesWhenSandboxPublicKeyMissing(): void
+    {
+        // Token is valid but the sandbox pre-approval public key is absent.
+        $fields = [
+            'subscriptions_enabled'           => 'yes',
+            'subscriptions_access_token_prod' => '',
+            'subscriptions_access_token_test' => 'TEST-valid',
+            'subscriptions_public_key_test'   => '',
+        ];
+
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(true);
+
+        $funnel = Mockery::mock(\MercadoPago\Woocommerce\Funnel\Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('set_transient')
+            ->once()
+            ->with(
+                'mp_subscriptions_save_result_1',
+                Mockery::on(fn($v) => $v['valid'] === false && str_contains($v['user_message'], 'Sandbox')),
+                60
+            );
+
+        $result = $this->gateway->validateSubscriptionsBeforeSave($fields);
+        $this->assertSame('no', $result['subscriptions_enabled']);
+    }
+
+    public function testValidateSubscriptionsBeforeSaveDisablesWhenTokenAndPubKeyBothMissing(): void
+    {
+        // Sandbox mode: both the sandbox token and sandbox public key are absent.
+        // Both errors must appear in a single save attempt, separated by ' | '.
+        $fields = [
+            'subscriptions_enabled'           => 'yes',
+            'subscriptions_access_token_prod' => 'APP_USR-valid-but-not-relevant',
+            'subscriptions_access_token_test' => '',
+            'subscriptions_public_key_test'   => '',
+        ];
+
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(true);
+
+        $funnel = Mockery::mock(\MercadoPago\Woocommerce\Funnel\Funnel::class);
+        $funnel->shouldReceive('updateStepPaymentMethods')->once()->with(false);
+        $this->gateway->mercadopago->funnel = $funnel;
+
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('set_transient')
+            ->once()
+            ->with(
+                'mp_subscriptions_save_result_1',
+                Mockery::on(fn($v) =>
+                    $v['valid'] === false &&
+                    str_contains($v['user_message'], 'Access Token') &&
+                    str_contains($v['user_message'], 'Public Key') &&
+                    str_contains($v['user_message'], ' | ')
+                ),
+                60
+            );
+
+        $result = $this->gateway->validateSubscriptionsBeforeSave($fields);
+        $this->assertSame('no', $result['subscriptions_enabled']);
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testDisplaySubscriptionsValidationNoticeDoesNothingOnWrongPage(): void
+    {
+        // Form::sanitizedGetData uses filter_input_array(INPUT_GET) — must be mocked in CLI context.
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedGetData')->with('page')->andReturn('wc-settings');
+            $mock->shouldReceive('sanitizedGetData')->with('tab')->andReturn('checkout');
+            $mock->shouldReceive('sanitizedGetData')->with('section')->andReturn('other-gateway');
+        });
+
+        ob_start();
+        $this->gateway->displaySubscriptionsValidationNotice();
+        $this->assertSame('', ob_get_clean());
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testDisplaySubscriptionsValidationNoticeDoesNothingWhenNoTransient(): void
+    {
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedGetData')->with('page')->andReturn('wc-settings');
+            $mock->shouldReceive('sanitizedGetData')->with('tab')->andReturn('checkout');
+            $mock->shouldReceive('sanitizedGetData')->with('section')->andReturn(CustomGateway::ID);
+        });
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('get_transient')->once()->andReturn(false);
+
+        ob_start();
+        $this->gateway->displaySubscriptionsValidationNotice();
+        $this->assertSame('', ob_get_clean());
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testDisplaySubscriptionsValidationNoticeRendersSuccessNotice(): void
+    {
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedGetData')->with('page')->andReturn('wc-settings');
+            $mock->shouldReceive('sanitizedGetData')->with('tab')->andReturn('checkout');
+            $mock->shouldReceive('sanitizedGetData')->with('section')->andReturn(CustomGateway::ID);
+        });
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('get_transient')->once()->andReturn(['valid' => true, 'app_name' => 'TestApp']);
+        WP_Mock::userFunction('delete_transient')->once();
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('esc_attr')->andReturnArg(0);
+        WP_Mock::userFunction('esc_html')->andReturnArg(0);
+
+        ob_start();
+        $this->gateway->displaySubscriptionsValidationNotice();
+        $output = ob_get_clean();
+
+        $this->assertStringContainsString('notice-success', $output);
+        $this->assertStringContainsString('TestApp', $output);
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testDisplaySubscriptionsValidationNoticeRendersErrorNotice(): void
+    {
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedGetData')->with('page')->andReturn('wc-settings');
+            $mock->shouldReceive('sanitizedGetData')->with('tab')->andReturn('checkout');
+            $mock->shouldReceive('sanitizedGetData')->with('section')->andReturn(CustomGateway::ID);
+        });
+        WP_Mock::userFunction('get_current_user_id')->andReturn(1);
+        WP_Mock::userFunction('get_transient')->once()->andReturn(['valid' => false, 'user_message' => 'Token error.']);
+        WP_Mock::userFunction('delete_transient')->once();
+        WP_Mock::userFunction('__')->andReturnArg(0);
+        WP_Mock::userFunction('esc_attr')->andReturnArg(0);
+        WP_Mock::userFunction('esc_html')->andReturnArg(0);
+
+        ob_start();
+        $this->gateway->displaySubscriptionsValidationNotice();
+        $output = ob_get_clean();
+
+        $this->assertStringContainsString('notice-error', $output);
+        $this->assertStringContainsString('Token error.', $output);
+    }
+
+    public function testTranslatedValidationMessageReturnsKnownReasonMessage(): void
+    {
+        WP_Mock::userFunction('__')->andReturnArg(0);
+
+        $method = (new \ReflectionClass(CustomGateway::class))->getMethod('translatedValidationMessage');
+        $method->setAccessible(true);
+
+        $this->assertStringContainsString('Invalid', $method->invoke($this->gateway, 'invalid_token'));
+        $this->assertStringContainsString('Pre-approval', $method->invoke($this->gateway, 'missing_scope'));
+        $this->assertStringContainsString('inactive', $method->invoke($this->gateway, 'application_inactive'));
+    }
+
+    public function testTranslatedValidationMessageReturnsFallbackForUnknownReason(): void
+    {
+        WP_Mock::userFunction('__')->andReturnArg(0);
+
+        $method = (new \ReflectionClass(CustomGateway::class))->getMethod('translatedValidationMessage');
+        $method->setAccessible(true);
+
+        $this->assertNotEmpty($method->invoke($this->gateway, 'completely_unknown_reason'));
+    }
+
+    /* ─── getCheckoutFormData — classic checkout (blocks=no) ─── */
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testGetCheckoutFormDataReturnsClassicCheckoutData(): void
+    {
+        $_POST['mercadopago_custom'] = ['token' => 'tok_abc'];
+        $this->mockFormSanitizedPostData(['token' => 'tok_abc', 'payment_method_id' => 'visa'], 'mercadopago_custom');
+
+        $order = \Mockery::mock(\WC_Order::class);
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('markPaymentAsBlocks')
+            ->once()
+            ->with($order, 'no');
+
+        $method = (new \ReflectionClass(CustomGateway::class))->getMethod('getCheckoutFormData');
+        $method->setAccessible(true);
+        $result = $method->invoke($this->gateway, $order);
+
+        $this->assertIsArray($result);
+    }
+
+    /* ─── getCheckoutFormData — blocks checkout (blocks=yes) ─── */
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testGetCheckoutFormDataReturnsBlocksCheckoutData(): void
+    {
+        $blocksData = ['mercadopago_custom_token' => 'blk_tok'];
+        $this->mockFormSanitizedPostData([]);
+
+        $order = \Mockery::mock(\WC_Order::class);
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('markPaymentAsBlocks')
+            ->once()
+            ->with($order, 'yes');
+
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('processBlocksCheckoutData')
+            ->once()
+            ->andReturn($blocksData);
+
+        $method = (new \ReflectionClass(CustomGateway::class))->getMethod('getCheckoutFormData');
+        $method->setAccessible(true);
+        $result = $method->invoke($this->gateway, $order);
+
+        $this->assertSame($blocksData, $result);
+    }
+
+    public function testGenerateMpSubscriptionsNoticeHtmlRendersExpectedStructure(): void
+    {
+        WP_Mock::userFunction('esc_attr')->andReturnArg(0);
+        WP_Mock::userFunction('esc_html')->andReturnArg(0);
+
+        $html = $this->gateway->generate_mp_subscriptions_notice_html('subscriptions_notice', [
+            'class'       => 'mp-subscriptions-group',
+            'title'       => 'This feature requires prior approval.',
+            'description' => 'Contact your commercial consultant.',
+        ]);
+
+        $this->assertStringContainsString('mp-card-info', $html);
+        $this->assertStringContainsString('mp-alert-color-success', $html);
+        $this->assertStringContainsString('mp-icon-badge-info', $html);
+        $this->assertStringContainsString('mp-subscriptions-group', $html);
+        $this->assertStringContainsString('This feature requires prior approval.', $html);
+        $this->assertStringContainsString('Contact your commercial consultant.', $html);
+    }
+
+    public function testGenerateMpSubscriptionsNoticeHtmlUsesEmptyClassWhenMissing(): void
+    {
+        WP_Mock::userFunction('esc_attr')->andReturnArg(0);
+        WP_Mock::userFunction('esc_html')->andReturnArg(0);
+
+        $html = $this->gateway->generate_mp_subscriptions_notice_html('subscriptions_notice', [
+            'title'       => 'Title',
+            'description' => 'Body',
+        ]);
+
+        $this->assertStringContainsString('class=""', $html);
+        $this->assertStringContainsString('Title', $html);
+        $this->assertStringContainsString('Body', $html);
     }
 }

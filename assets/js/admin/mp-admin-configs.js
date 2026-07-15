@@ -18,6 +18,7 @@
     setCheckboxStyle();
     handleMultipleCheckboxes();
     makeCollapsibleAdvancedConfig();
+    handleSubscriptionsToggle();
   }
 
   function hasConfigurations() {
@@ -175,6 +176,106 @@
         headerPlus.style.display = "block";
       }
     };
+  }
+
+  function handleSubscriptionsToggle() {
+    const toggle = document.querySelector('[id$="subscriptions_enabled"]');
+    if (!toggle) return;
+
+    const credentialInputs = document.querySelectorAll(
+      '[id$="subscriptions_access_token_prod"], [id$="subscriptions_access_token_test"], [id$="subscriptions_public_key_prod"], [id$="subscriptions_public_key_test"]'
+    );
+
+    function syncVisibility() {
+      credentialInputs.forEach(function (input) {
+        const row = input.closest('tr');
+        if (row) {
+          row.style.display = toggle.checked ? '' : 'none';
+        }
+      });
+      document.querySelectorAll('tr.mp-subscriptions-group').forEach(function (row) {
+        row.style.display = toggle.checked ? '' : 'none';
+      });
+    }
+
+    function showDisableConfirmModal(onConfirm, onCancel) {
+      const params = window.wc_mercadopago_admin_components_params || {};
+
+      const title = document.createElement('h2');
+      title.id = 'mp-subs-modal-title';
+      title.className = 'mp-subscriptions-modal__title';
+      title.textContent = params.subscriptions_disable_modal_title || '';
+
+      const body = document.createElement('p');
+      body.className = 'mp-subscriptions-modal__body';
+      body.textContent = params.subscriptions_disable_modal_body || '';
+
+      const keepBtn = document.createElement('button');
+      keepBtn.type = 'button';
+      keepBtn.id = 'mp-subs-modal-keep';
+      keepBtn.className = 'mp-subscriptions-modal__btn mp-subscriptions-modal__btn--primary';
+      keepBtn.textContent = params.subscriptions_disable_modal_keep || '';
+
+      const confirmBtn = document.createElement('button');
+      confirmBtn.type = 'button';
+      confirmBtn.id = 'mp-subs-modal-confirm';
+      confirmBtn.className = 'mp-subscriptions-modal__btn mp-subscriptions-modal__btn--secondary';
+      confirmBtn.textContent = params.subscriptions_disable_modal_confirm || '';
+
+      const actions = document.createElement('div');
+      actions.className = 'mp-subscriptions-modal__actions';
+      actions.appendChild(keepBtn);
+      actions.appendChild(confirmBtn);
+
+      const modal = document.createElement('div');
+      modal.className = 'mp-subscriptions-modal';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.setAttribute('aria-labelledby', 'mp-subs-modal-title');
+      modal.appendChild(title);
+      modal.appendChild(body);
+      modal.appendChild(actions);
+
+      const overlay = document.createElement('div');
+      overlay.className = 'mp-subscriptions-modal-overlay';
+      overlay.appendChild(modal);
+
+      document.body.appendChild(overlay);
+      keepBtn.focus();
+
+      overlay.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { overlay.remove(); onCancel(); toggle.focus(); }
+      });
+
+      overlay.querySelector('#mp-subs-modal-keep').addEventListener('click', function () {
+        overlay.remove();
+        toggle.focus();
+        onCancel();
+      });
+
+      overlay.querySelector('#mp-subs-modal-confirm').addEventListener('click', function () {
+        overlay.remove();
+        toggle.focus();
+        onConfirm();
+      });
+    }
+
+    syncVisibility();
+
+    toggle.addEventListener('change', function () {
+      if (!toggle.checked) {
+        toggle.checked = true;
+        showDisableConfirmModal(
+          function () {
+            toggle.checked = false;
+            syncVisibility();
+          },
+          function () {}
+        );
+        return;
+      }
+      syncVisibility();
+    });
   }
 
   function makeCollapsibleOptions(idPlus, idLess) {

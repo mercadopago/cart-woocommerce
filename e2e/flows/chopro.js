@@ -1,4 +1,4 @@
-import { expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { fillStepsToCheckout } from "./fill_steps_to_checkout";
 import { placeOrder } from "./place_order.helper";
 
@@ -10,7 +10,11 @@ import { placeOrder } from "./place_order.helper";
 
 const MP_CHECKOUT_URL = /mercadopago\.[a-z.]+\/checkout/;
 
+const MODAL_REDIRECT_TIMEOUT = 90000;
+const PER_TEST_TIMEOUT = 150000;
+
 async function selectCheckoutProAndSubmit(page, url, user) {
+  test.setTimeout(PER_TEST_TIMEOUT);
   await fillStepsToCheckout(page, url, user);
   await page.waitForLoadState();
 
@@ -23,37 +27,43 @@ async function selectCheckoutProAndSubmit(page, url, user) {
   } else {
     await blocksRadio.check();
   }
-
-  await page.waitForTimeout(1000);
+  await page.waitForLoadState();
+  await page.waitForTimeout(2000);
 
   // Click place order (Classic single-click / Blocks two-phase submit)
   await placeOrder(page);
+  // Use PER_TEST_TIMEOUT explicitly: the default navigationTimeout (30 s) can expire in
+  // slow sandbox/Blocks before assertRedirectedToMpCheckout is even reached.
+  await page.waitForLoadState('load', { timeout: PER_TEST_TIMEOUT });
 }
 
 // --- Redirect tests ---
 
+// Waits (generously) for the redirect to the MP checkout. Extends the per-test timeout so the unstable redirect timing never outlives the test budget.
+async function assertRedirectedToMpCheckout(page) {
+  test.setTimeout(PER_TEST_TIMEOUT);
+  await page.waitForURL(MP_CHECKOUT_URL, { waitUntil: 'domcontentloaded', timeout: MODAL_REDIRECT_TIMEOUT });
+  await expect(page).toHaveURL(MP_CHECKOUT_URL);
+}
+
 export async function redirectSuccessfulPaymentTest({ page, url, user }) {
   await selectCheckoutProAndSubmit(page, url, user);
-  await page.waitForURL(MP_CHECKOUT_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await expect(page).toHaveURL(MP_CHECKOUT_URL);
+  await assertRedirectedToMpCheckout(page);
 }
 
 export async function redirectSuccessfulPendingPaymentTest({ page, url, user }) {
   await selectCheckoutProAndSubmit(page, url, user);
-  await page.waitForURL(MP_CHECKOUT_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await expect(page).toHaveURL(MP_CHECKOUT_URL);
+  await assertRedirectedToMpCheckout(page);
 }
 
 export async function redirectCancelOrderTest({ page, url, user }) {
   await selectCheckoutProAndSubmit(page, url, user);
-  await page.waitForURL(MP_CHECKOUT_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await expect(page).toHaveURL(MP_CHECKOUT_URL);
+  await assertRedirectedToMpCheckout(page);
 }
 
 export async function redirectRejectAndChangeMethodTest({ page, url, user }) {
   await selectCheckoutProAndSubmit(page, url, user);
-  await page.waitForURL(MP_CHECKOUT_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await expect(page).toHaveURL(MP_CHECKOUT_URL);
+  await assertRedirectedToMpCheckout(page);
 }
 
 // --- Modal tests ---
@@ -67,20 +77,26 @@ export async function getModal(page) {
 }
 
 async function assertCheckoutProLoaded(page) {
-  // Either the modal iframe appears or we're redirected to MP checkout
-  const modal = page.locator('#mercadopago-checkout');
-  const redirected = page.waitForURL(MP_CHECKOUT_URL, { timeout: 30000 }).then(() => 'redirect').catch(() => null);
-  const modalVisible = modal.waitFor({ state: 'visible', timeout: 30000 }).then(() => 'modal').catch(() => null);
+  test.setTimeout(PER_TEST_TIMEOUT);
 
-  const result = await Promise.race([redirected, modalVisible]);
+  // Either the modal iframe appears or we're redirected to MP checkout.
+  // Promise.any (not race+catch): it resolves on the FIRST branch to succeed and only rejects if BOTH fail. With race+catch a branch that times out resolves to null and can "win" the race, masking the other branch that would still succeed a bit later.
+  const modal = page.locator('#mercadopago-checkout');
+  const redirected = page.waitForURL(MP_CHECKOUT_URL, { timeout: MODAL_REDIRECT_TIMEOUT }).then(() => 'redirect');
+  const modalVisible = modal.waitFor({ state: 'visible', timeout: MODAL_REDIRECT_TIMEOUT }).then(() => 'modal');
+
+  let result;
+  try {
+    result = await Promise.any([redirected, modalVisible]);
+  } catch {
+    throw new Error('Checkout Pro did not load: neither modal nor redirect detected');
+  }
 
   if (result === 'modal') {
     const frame = await getModal(page);
     await expect(frame.locator('body')).toBeVisible({ timeout: 10000 });
-  } else if (result === 'redirect') {
-    await expect(page).toHaveURL(MP_CHECKOUT_URL);
   } else {
-    throw new Error('Checkout Pro did not load: neither modal nor redirect detected');
+    await expect(page).toHaveURL(MP_CHECKOUT_URL);
   }
 }
 

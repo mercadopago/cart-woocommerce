@@ -91,6 +91,19 @@ class StoreTranslations
 
     // TODO(PHP8.2): Change type hint from phpdoc to native
     /**
+     * Subscription-related buyer-facing error messages.
+     *
+     * Keys match the symbolic `error` field returned by Core P&P
+     * (technical spec §4.7 — 13 documented codes) plus a few stable
+     * codes (`CPP_TAAP_*`) and HTTP-status fallbacks. Empty strings are
+     * intentional silent-success cases (caller should not surface them).
+     *
+     * @var array|ArrayAccess
+     */
+    public $subscriptionsErrorMessages = [];
+
+    // TODO(PHP8.2): Change type hint from phpdoc to native
+    /**
      * @var array|ArrayAccess
      */
     public $threeDsTranslations;
@@ -138,6 +151,8 @@ class StoreTranslations
         $this->setCheckoutErrorMessagesTranslationsV2();
         $this->setSuperTokenApiErrorTranslations();
         $this->setSuperTokenOriginalMessageErrorTranslations();
+        $this->setSubscriptionsErrorMessagesTranslations();
+        $this->setCitErrorTranslations();
         $this->set3dsTranslations();
     }
 
@@ -746,6 +761,23 @@ class StoreTranslations
      *
      * @return void
      */
+    private function setCitErrorTranslations(): void
+    {
+        // Buyer-facing strings used by the CIT (initial subscription payment) flow.
+        // Source language (en-US) here is what gettext picks up; pt-BR and es-MX
+        // are filled via i18n/languages/woocommerce-mercadopago-pt.po and -es_MX.po.
+        $citStrings = [
+            'wcs_cit_failed_generic'   => __('We could not activate your subscription. Please try again.', 'woocommerce-mercadopago'),
+            'wcs_cit_no_credential'    => __('Recurring payments credential is not configured. Please contact the store.', 'woocommerce-mercadopago'),
+            'wcs_cit_missing_card'     => __('Card data is incomplete. Please review and try again.', 'woocommerce-mercadopago'),
+            'wcs_cit_admin_no_token'   => __('Pre-approval access token is not configured.', 'woocommerce-mercadopago'),
+            'wcs_cit_admin_bad_card'   => __('Card data is incomplete.', 'woocommerce-mercadopago'),
+        ];
+
+        // Merge into customCheckout so $this->storeTranslations consumed by CustomGateway sees them.
+        $this->customCheckout = array_merge($this->customCheckout, $citStrings);
+    }
+
     private function set3dsTranslations(): void
     {
         $this->threeDsTranslations = [
@@ -756,6 +788,45 @@ class StoreTranslations
             'title_3ds_frame'            => __('Complete the bank validation so your payment can be approved', 'woocommerce-mercadopago'),
             'tooltip_3ds_frame'          => __('Please keep this page open. If you close it, you will not be able to resume the validation.', 'woocommerce-mercadopago'),
             'message_3ds_declined'       => __('<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases.', 'woocommerce-mercadopago'),
+        ];
+    }
+
+    /**
+     * Subscription-related buyer-facing error messages.
+     *
+     * Keys are the symbolic `error` field values returned by Core P&P
+     * (technical spec §4.7), plus a stable code (`CPP_TAAP_*`) and HTTP
+     * fallback keys. Empty strings are intentional silent-success cases
+     * (caller logs internally and shows nothing to the buyer).
+     *
+     * @return void
+     */
+    private function setSubscriptionsErrorMessagesTranslations(): void
+    {
+        $this->subscriptionsErrorMessages = [
+            // 13 symbolic error names (spec §4.7)
+            'InvalidToken'           => __('We could not process this card. Please try again.', 'woocommerce-mercadopago'),
+            'PaymentRejected'        => __('Payment was declined by the card issuer.', 'woocommerce-mercadopago'),
+            'ThreeDsFailed'          => __('3D Secure authentication failed. Please try another card.', 'woocommerce-mercadopago'),
+            'CardCustomerMismatch'   => __('A technical error occurred. Please contact support.', 'woocommerce-mercadopago'),
+            'CardExpired'            => __('The card linked to this subscription has expired. Please update the card.', 'woocommerce-mercadopago'),
+            'CustomerNotFound'       => __('A technical error occurred. Please contact support.', 'woocommerce-mercadopago'),
+            'SubscriptionNotFound'   => __('A technical error occurred. Please contact support.', 'woocommerce-mercadopago'),
+            'PaymentMethodNotFound'  => '',
+            'LastPaymentMethod'      => '',
+            'CannotRemoveDefault'    => '',
+            'AlreadyDefault'         => '',
+            'SaveCardFailed'         => __('We could not save the card. Please try again.', 'woocommerce-mercadopago'),
+            'IdempotencyKeyReused'   => __('A technical error occurred. Please contact support.', 'woocommerce-mercadopago'),
+
+            // Stable Core P&P codes (spec §4.7 - "Códigos estáveis")
+            'CPP_TAAP_0602002'       => __('We could not complete the operation. Please try another card.', 'woocommerce-mercadopago'),
+
+            // HTTP-level fallbacks
+            'http_unavailable'       => __('Service temporarily unavailable. Please try again in a moment.', 'woocommerce-mercadopago'),
+
+            // Generic catch-all
+            'generic'                => __('A technical error occurred. Please contact support.', 'woocommerce-mercadopago'),
         ];
     }
 }

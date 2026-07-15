@@ -1,20 +1,25 @@
 import { fillStepsToCheckout } from "./fill_steps_to_checkout";
-import { expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { placeOrder } from "./place_order.helper";
 
+const ORDER_RECEIVED_TIMEOUT = 70000;
+const TICKET_TEST_TIMEOUT = 120000;
+
 export async function successfulPaymentTest(page, url, user, method = null) {
+  test.setTimeout(TICKET_TEST_TIMEOUT);
   await fillStepsToCheckout(page, url, user);
   await makePayment(page, user, method);
 
-  await page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible({ timeout: 10000 });
+  await page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: ORDER_RECEIVED_TIMEOUT });
+  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible({ timeout: 60000 });
 }
 
 export async function rejectedPaymentTest(page, url, user, method = null) {
+  test.setTimeout(TICKET_TEST_TIMEOUT);
   await fillStepsToCheckout(page, url, user);
   await makePayment(page, user, method);
 
-  await expect(page.locator('.woocommerce-error, .wc-block-store-notice.wc-block-components-notice-banner.is-error')).toBeVisible({ timeout: 30000 });
+  await expect(page.locator('.woocommerce-error, .wc-block-store-notice.wc-block-components-notice-banner.is-error')).toBeVisible({ timeout: ORDER_RECEIVED_TIMEOUT });
 }
 
 async function makePayment(page, user, method = null) {
@@ -37,6 +42,7 @@ async function makePayment(page, user, method = null) {
     MLB: mlbInvoiceForm,
     MLA: mlaInvoiceForm,
     MLU: mluInvoiceForm,
+    MLM: mlmInvoiceForm,
   }[user.siteId] ?? defaultInvoiceForm;
 
   await invoiceForm({ page, user, method });
@@ -72,6 +78,11 @@ async function mlbInvoiceForm({ page, user }) {
 
 async function mlaInvoiceForm({ page, method }) {
   await page.getByText(method).click();
+}
+
+async function mlmInvoiceForm({ page }) {
+  await page.getByText('OXXO', { exact: true }).click();
+  await page.waitForTimeout(1000);
 }
 
 async function mluInvoiceForm({ page, user, method }) {

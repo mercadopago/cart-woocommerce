@@ -20,6 +20,14 @@ if (!function_exists('MercadoPago\\Woocommerce\\Hooks\\add_action')) {
     }
 }
 
+if (!function_exists('MercadoPago\\Woocommerce\\Hooks\\add_filter')) {
+    function add_filter(string $tag, callable $callback, int $priority = 10, int $acceptedArgs = 1): bool
+    {
+        $GLOBALS['__captured_filters'][$tag][] = ['callback' => $callback, 'priority' => $priority];
+        return true;
+    }
+}
+
 namespace MercadoPago\Woocommerce\Tests\Hooks;
 
 use Mockery;
@@ -29,6 +37,7 @@ use MercadoPago\Woocommerce\Hooks\Gateway;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Funnel\Funnel;
@@ -42,17 +51,32 @@ class GatewayTest extends TestCase
 {
     private Gateway $gateway;
 
+    /** @var Mockery\MockInterface|Checkout */
+    private $checkoutMock;
+
+    /** @var Mockery\MockInterface|StoreTranslations */
+    private $storeTranslationsMock;
+
     protected function setUp(): void
     {
         WP_Mock::setUp();
         $GLOBALS['__captured_actions'] = [];
+        $GLOBALS['__captured_filters'] = [];
+
+        // AbstractGateway extends WC_Payment_Gateway; define the stub so it can be mocked.
+        if (!class_exists('WC_Payment_Gateway')) {
+            Mockery::mock('WC_Payment_Gateway');
+        }
+
+        $this->checkoutMock = Mockery::mock(Checkout::class);
+        $this->storeTranslationsMock = Mockery::mock(StoreTranslations::class);
 
         $this->gateway = new Gateway(
             Mockery::mock(Options::class),
             Mockery::mock(Template::class),
             Mockery::mock(Store::class),
-            Mockery::mock(Checkout::class),
-            Mockery::mock(StoreTranslations::class),
+            $this->checkoutMock,
+            $this->storeTranslationsMock,
             Mockery::mock(Url::class),
             Mockery::mock(Funnel::class)
         );
@@ -63,6 +87,8 @@ class GatewayTest extends TestCase
         WP_Mock::tearDown();
         Mockery::close();
         unset($GLOBALS['__captured_actions']);
+        unset($GLOBALS['__captured_filters']);
+        unset($GLOBALS['mercadopago']);
     }
 
     // -------------------------------------------------------------------------
@@ -149,6 +175,168 @@ class GatewayTest extends TestCase
         ($GLOBALS['__captured_actions']['wp'][0]['callback'])();
 
         $this->assertArrayNotHasKey('wp_enqueue_scripts', $GLOBALS['__captured_actions']);
+    }
+
+    public function testBuildTitleWithOnlyDiscountDecimal(): void
+    {
+        WP_Mock::userFunction('wc_price')->with(0.5)->andReturn('R$&nbsp;0,50');
+        WP_Mock::userFunction('wc_price')->with(0.0)->andReturn('R$&nbsp;0,00');
+        WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(fn($v) => strip_tags($v));
+
+        $this->setCommonCheckoutTranslations(['text_concatenation' => 'e']);
+
+        $result = $this->gateway->buildTitleWithDiscountAndCommission(0.5, 0.0, 'Desconto', 'Comissão');
+
+        $this->assertStringContainsString('Desconto', $result);
+        $this->assertStringNotContainsString('Comissão', $result);
+    }
+
+    public function testBuildTitleWithOnlyCommissionDecimal(): void
+    {
+        WP_Mock::userFunction('wc_price')->with(0.0)->andReturn('R$&nbsp;0,00');
+        WP_Mock::userFunction('wc_price')->with(1.5)->andReturn('R$&nbsp;1,50');
+        WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(fn($v) => strip_tags($v));
+
+        $this->setCommonCheckoutTranslations(['text_concatenation' => 'e']);
+
+        $result = $this->gateway->buildTitleWithDiscountAndCommission(0.0, 1.5, 'Desconto', 'Comissão');
+
+        $this->assertStringContainsString('Comissão', $result);
+        $this->assertStringNotContainsString('Desconto', $result);
+    }
+
+    public function testBuildTitleWithBothDecimalValues(): void
+    {
+        WP_Mock::userFunction('wc_price')->with(0.5)->andReturn('R$&nbsp;0,50');
+        WP_Mock::userFunction('wc_price')->with(1.5)->andReturn('R$&nbsp;1,50');
+        WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(fn($v) => strip_tags($v));
+
+        $this->setCommonCheckoutTranslations(['text_concatenation' => 'e']);
+
+        $result = $this->gateway->buildTitleWithDiscountAndCommission(0.5, 1.5, 'Desconto', 'Comissão');
+
+        $this->assertStringContainsString('Desconto', $result);
+        $this->assertStringContainsString('Comissão', $result);
+    }
+
+    public function testBuildTitleWithBothWholeNumberValues(): void
+    {
+        WP_Mock::userFunction('wc_price')->with(10.0)->andReturn('R$&nbsp;10,00');
+        WP_Mock::userFunction('wc_price')->with(5.0)->andReturn('R$&nbsp;5,00');
+        WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(fn($v) => strip_tags($v));
+
+        $this->setCommonCheckoutTranslations(['text_concatenation' => 'e']);
+
+        $result = $this->gateway->buildTitleWithDiscountAndCommission(10.0, 5.0, 'Desconto', 'Comissão');
+
+        $this->assertStringContainsString('Desconto', $result);
+        $this->assertStringContainsString('Comissão', $result);
+    }
+
+    public function testBuildTitleReturnEmptyWhenBothAreZero(): void
+    {
+        WP_Mock::userFunction('wc_price')->andReturn('R$&nbsp;0,00');
+        WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(fn($v) => strip_tags($v));
+
+        $this->setCommonCheckoutTranslations(['text_concatenation' => 'e']);
+
+        $result = $this->gateway->buildTitleWithDiscountAndCommission(0.0, 0.0, 'Desconto', 'Comissão');
+
+        $this->assertSame('', $result);
+    }
+
+    public function testRegisterGatewayTitleKeepsPlainTitleForNonMercadoPagoGateway(): void
+    {
+        $paymentGateway = Mockery::mock(AbstractGateway::class)->makePartial();
+        $paymentGateway->id = 'stripe';
+
+        $this->gateway->registerGatewayTitle($paymentGateway);
+        $filter = $this->getGatewayTitleFilter();
+
+        $this->assertSame('Stripe', $filter('Stripe', 'stripe'));
+    }
+
+    public function testRegisterGatewayTitleKeepsPlainTitleWhenBothFeesAreZero(): void
+    {
+        $paymentGateway = Mockery::mock(AbstractGateway::class)->makePartial();
+        $paymentGateway->id         = 'woo-mercado-pago-custom';
+        $paymentGateway->commission = 0.0;
+        $paymentGateway->discount   = 0.0;
+
+        $this->checkoutMock->shouldReceive('isCheckout')->andReturn(true);
+
+        $this->gateway->registerGatewayTitle($paymentGateway);
+        $filter = $this->getGatewayTitleFilter();
+
+        $this->assertSame('Cartão de crédito', $filter('Cartão de crédito', 'woo-mercado-pago-custom'));
+    }
+
+    public function testRegisterGatewayTitleKeepsPlainTitleWhenFeesAreNegative(): void
+    {
+        // admin form enforces min=0; defensive guard covers values below zero
+        $paymentGateway = Mockery::mock(AbstractGateway::class)->makePartial();
+        $paymentGateway->id         = 'woo-mercado-pago-custom';
+        $paymentGateway->commission = -1.0;
+        $paymentGateway->discount   = 0.0;
+
+        $this->checkoutMock->shouldReceive('isCheckout')->andReturn(true);
+
+        $this->gateway->registerGatewayTitle($paymentGateway);
+        $filter = $this->getGatewayTitleFilter();
+
+        $this->assertSame('Cartão de crédito', $filter('Cartão de crédito', 'woo-mercado-pago-custom'));
+    }
+
+    public function testRegisterGatewayTitleAppendsSuffixWhenDiscountIsPositive(): void
+    {
+        $paymentGateway = Mockery::mock(AbstractGateway::class)->makePartial();
+        $paymentGateway->id         = 'woo-mercado-pago-custom';
+        $paymentGateway->commission = 0.0;
+        $paymentGateway->discount   = 0.5;
+
+        $this->checkoutMock->shouldReceive('isCheckout')->andReturn(true);
+
+        global $mercadopago;
+        $mercadopago = Mockery::mock(\MercadoPago\Woocommerce\WoocommerceMercadoPago::class);
+        $cart = Mockery::mock(\MercadoPago\Woocommerce\Helpers\Cart::class);
+        $cart->shouldReceive('calculateSubtotalWithDiscount')->with($paymentGateway)->andReturn(0.5);
+        $cart->shouldReceive('calculateSubtotalWithCommission')->with($paymentGateway)->andReturn(0.0);
+        $helpers = Mockery::mock(\MercadoPago\Woocommerce\Helpers::class);
+        $helpers->cart = $cart;
+        $mercadopago->helpers = $helpers;
+
+        $this->storeTranslationsMock->commonCheckout = [
+            'discount_title'     => 'Desconto',
+            'fee_title'          => 'Taxa',
+            'text_concatenation' => 'e',
+        ];
+
+        WP_Mock::userFunction('wc_price')->andReturnUsing(fn($v) => 'R$ ' . number_format($v, 2, ',', '.'));
+        WP_Mock::userFunction('wp_strip_all_tags')->andReturnUsing(fn($v) => $v);
+
+        $this->gateway->registerGatewayTitle($paymentGateway);
+        $filter = $this->getGatewayTitleFilter();
+
+        $result = $filter('Cartão de crédito', 'woo-mercado-pago-custom');
+
+        $this->assertStringContainsString('Desconto', $result);
+        $this->assertStringContainsString('R$ 0,50', $result);
+        $this->assertStringNotContainsString('Taxa', $result);
+    }
+
+    private function getGatewayTitleFilter(): callable
+    {
+        return $GLOBALS['__captured_filters']['woocommerce_gateway_title'][0]['callback'];
+    }
+
+    /**
+     * Sets commonCheckout translations on the gateway's translations mock via reflection.
+     */
+    private function setCommonCheckoutTranslations(array $commonCheckout): void
+    {
+        $translations = (new \ReflectionClass($this->gateway))->getProperty('translations');
+        $translations->setAccessible(true);
+        $translations->getValue($this->gateway)->commonCheckout = $commonCheckout;
     }
 
     public function testRegisterBeforeThankYouBlockCallbackRegistersEnqueueAtPriority20AndInvokesCallback(): void

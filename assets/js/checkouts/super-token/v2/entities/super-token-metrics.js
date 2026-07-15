@@ -1,5 +1,5 @@
-/* globals wc_mercadopago_supertoken_metrics_params */
-/* eslint-disable no-unused-vars */
+/* globals wc_mercadopago_supertoken_bundle_params */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
 class MPSuperTokenMetrics {
   PLATFORM_NAME = 'woocommerce';
   CORE_MONITOR_URL = 'https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/big';
@@ -221,8 +221,8 @@ class MPSuperTokenMetrics {
     this.sendMetric('update_security_code_success', 'true', '');
   }
 
-  errorOnSubmit(errorCode, error) {
-    const errorMessage = this.normalizeErrorMessage(error);
+  errorOnSubmit(errorCode, error, shouldNormalizeError = true) {
+    const errorMessage = shouldNormalizeError ? this.normalizeErrorMessage(error) : error;
 
     this.dispatchMelidataErrorEvent(errorMessage, this.CUSTOM_CHECKOUT_STEPS.POST_SUBMIT);
 
@@ -239,6 +239,14 @@ class MPSuperTokenMetrics {
 
   registerClickOnPlaceOrderButton() {
     this.sendMetric('super_token_click_on_place_order_button', 'true', "");
+  }
+
+  errorToExcludeRecaptchaFromPreValidation(context, error) {
+    this.sendMetric('error_to_exclude_recaptcha_from_pre_validation', context, this.normalizeErrorMessage(error));
+  }
+
+  captchaFieldToggledOnPreValidation(action, fieldName) {
+    this.sendMetric('super_token_captcha_field_toggled_on_pre_validation', action, fieldName);
   }
 
   registerAuthorizedPseudotoken(pseudotoken, authorizedPseudotokenInputExists) {

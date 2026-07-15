@@ -15,6 +15,12 @@
 (function () {
     const METRIC_DETAIL = 'validate_checkout_then_continue';
     const MAX_ANCESTOR_DEPTH = 20;
+    const SUPER_TOKEN_CHECKOUT_TYPE = 'super_token';
+
+    const CHECKOUT_TYPE_LABEL = {
+        ABSENT: 'absent',
+        EMPTY: 'empty',
+    };
 
     // Verdict contract shared with the plugin wrapper (event-handler.js). The action VALUES are the
     // cross-boundary protocol — both sides MUST use the same strings.
@@ -25,14 +31,22 @@
     };
 
     const FAIL_OPEN_REASON = {
-        SERVER_ERROR: 'SERVER_ERROR',
         EMPTY_ERRORS: 'EMPTY_ERRORS',
+        UNEXPECTED_ERROR: 'UNEXPECTED_ERROR',
+        UNEXPECTED_RESPONSE: 'UNEXPECTED_RESPONSE',
+    };
+
+    const BLOCK_REASON = {
+        EMPTY_FIELDS: 'EMPTY_FIELDS',
     };
 
     const VALIDATION_METRIC = {
         PASSED: 'MP_CHECKOUT_AJAX_VALIDATION_PASSED',
         BLOCKED: 'MP_CHECKOUT_AJAX_VALIDATION_BLOCKED',
+        SKIPPED: 'MP_CHECKOUT_AJAX_VALIDATION_SKIPPED',
         FALSE_POSITIVE: 'MP_CHECKOUT_AJAX_VALIDATION_FALSE_POSITIVE',
+        UNEXPECTED_ERROR: 'MP_CHECKOUT_AJAX_VALIDATION_UNEXPECTED_ERROR',
+        UNEXPECTED_RESPONSE: 'MP_CHECKOUT_AJAX_VALIDATION_UNEXPECTED_RESPONSE',
     };
 
     function getFieldNodesByName(fieldName) {
@@ -120,36 +134,78 @@
         window.mpSuperTokenMetrics?.sendMetric?.(metricName, value, METRIC_DETAIL);
     }
 
-    window.mpResolveCheckoutValidation = function (response) {
-        if (response?.success && response?.data?.valid === true) {
-            emitMetric(VALIDATION_METRIC.PASSED, 'valid');
-            return { action: VALIDATION_ACTION.PROCEED };
+    function emitEmptyFieldsOnSubmitMetric(emptyFields) {
+        // The emptyFields not should be normalized because
+        // normalize method replace "email" value to "invalid_email_address_provided"
+        // masking the real value of the field that is empty and causing the error.
+        const shouldNormalizeError = false;
+
+        emitMetric(VALIDATION_METRIC.BLOCKED, emptyFields);
+        window.mpSuperTokenMetrics?.errorOnSubmit?.(BLOCK_REASON.EMPTY_FIELDS, emptyFields, shouldNormalizeError);
+    }
+
+    function readCheckoutType() {
+        const element = document.querySelector('#mp_checkout_type');
+        if (!element) {
+            return { checkoutType: null, metricValue: CHECKOUT_TYPE_LABEL.ABSENT };
         }
+        // checkoutType is the raw value used by the guard (may be naturally empty);
+        // metricValue normalizes a falsy value to 'empty' so the metric stays filterable.
+        return { checkoutType: element.value, metricValue: element.value || CHECKOUT_TYPE_LABEL.EMPTY };
+    }
 
-        if (response?.success && response?.data?.valid === false) {
-            const errors = response.data.errors;
-            if (!Array.isArray(errors) || !errors.length) {
-                return { action: VALIDATION_ACTION.FAIL_OPEN, reason: FAIL_OPEN_REASON.EMPTY_ERRORS };
-            }
+    window.mpResolveCheckoutValidation = function (response) {
+        const { checkoutType, metricValue } = readCheckoutType();
 
-            const { realErrors, rescuedFields } = crossCheckErrorsAgainstDom(errors);
-
-            if (rescuedFields.length) {
-                emitMetric(VALIDATION_METRIC.FALSE_POSITIVE, rescuedFields.join('/'));
-            }
-
-            if (!realErrors.length) {
+        try {
+            // Only the Super Token flow uses this layer; any other checkout type validates elsewhere.
+            if (checkoutType !== SUPER_TOKEN_CHECKOUT_TYPE) {
+                emitMetric(VALIDATION_METRIC.SKIPPED, metricValue);
                 return { action: VALIDATION_ACTION.PROCEED };
             }
 
-            emitMetric(VALIDATION_METRIC.BLOCKED, joinErrorFields(realErrors));
-            return { action: VALIDATION_ACTION.BLOCK, errors: realErrors };
-        }
+            if (response?.success && response?.data?.valid === true) {
+                emitMetric(VALIDATION_METRIC.PASSED, 'valid');
+                return { action: VALIDATION_ACTION.PROCEED };
+            }
 
-        return {
-            action: VALIDATION_ACTION.FAIL_OPEN,
-            reason: FAIL_OPEN_REASON.SERVER_ERROR,
-            detail: response?.data?.error,
-        };
+            if (response?.success && response?.data?.valid === false) {
+                const errors = response.data.errors;
+                if (!Array.isArray(errors) || !errors.length) {
+                    return { action: VALIDATION_ACTION.FAIL_OPEN, reason: FAIL_OPEN_REASON.EMPTY_ERRORS };
+                }
+
+                const { realErrors, rescuedFields } = crossCheckErrorsAgainstDom(errors);
+
+                if (rescuedFields.length) {
+                    emitMetric(VALIDATION_METRIC.FALSE_POSITIVE, rescuedFields.join('/'));
+                }
+
+                if (!realErrors.length) {
+                    return { action: VALIDATION_ACTION.PROCEED };
+                }
+
+                emitEmptyFieldsOnSubmitMetric(joinErrorFields(realErrors));
+                return { action: VALIDATION_ACTION.BLOCK, errors: realErrors };
+            }
+
+            emitMetric(VALIDATION_METRIC.UNEXPECTED_RESPONSE, response?.data?.error || 'unknown');
+
+            return {
+                action: VALIDATION_ACTION.FAIL_OPEN,
+                reason: FAIL_OPEN_REASON.UNEXPECTED_RESPONSE,
+                detail: response?.data?.error,
+            };
+        } catch (error) {
+            const errorMessage = error?.message || FAIL_OPEN_REASON.UNEXPECTED_ERROR;
+
+            emitMetric(VALIDATION_METRIC.UNEXPECTED_ERROR, errorMessage);
+
+            return {
+                action: VALIDATION_ACTION.FAIL_OPEN,
+                reason: FAIL_OPEN_REASON.UNEXPECTED_ERROR,
+                detail: errorMessage,
+            };
+        }
     };
 })();

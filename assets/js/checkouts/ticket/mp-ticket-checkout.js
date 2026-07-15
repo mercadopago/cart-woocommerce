@@ -4,6 +4,7 @@ class CheckoutTicketPageController {
   constructor(params) {
     this.siteId = params.site_id;
     this.errorMessages = params.error_messages;
+    this.maskedDocNumberBeforeSubmit = null;
     this.initElements();
     this.addEventListeners();
   }
@@ -101,6 +102,24 @@ class CheckoutTicketPageController {
     if (documentElement.querySelector('.mp-document')?.value === '') {
       documentElement.querySelector('.mp-input').classList.add('mp-error');
       documentElement.querySelector('input-document').querySelector('input-helper').querySelector('.mp-helper').style.display = 'flex';
+    }
+  }
+
+  normalizeDocumentNumber() {
+    const docInput = document.querySelector('input[name="mercadopago_ticket[doc_number]"]');
+    if (docInput && docInput.value) {
+      // Keep the masked value so it can be restored for display if the payment fails.
+      // The ticket input-document has no hidden field, so we mutate the visible input;
+      // a structural fix (hidden field, like the card checkout) is tracked in PSW-4175.
+      this.maskedDocNumberBeforeSubmit = docInput.value;
+      docInput.value = docInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+  }
+
+  restoreDocumentMaskOnFailure() {
+    const docInput = document.querySelector('input[name="mercadopago_ticket[doc_number]"]');
+    if (docInput && this.maskedDocNumberBeforeSubmit) {
+      docInput.value = this.maskedDocNumberBeforeSubmit;
     }
   }
 
@@ -298,6 +317,12 @@ class CheckoutTicketPageController {
 
     // If payment fail, retry on next checkout page
     jQuery('form#order_review').submit(() => this.shouldSubmitTicketForm());
+
+    // On a failed checkout WooCommerce unblocks the form without re-rendering the payment
+    // fields, so the doc input would keep showing the raw (mask-free) value written at
+    // submit. Restore the masked value for display (mitigation; PSW-4175 removes this once
+    // the ticket input-document carries a hidden field like the card checkout).
+    jQuery(document.body).on('checkout_error', () => this.restoreDocumentMaskOnFailure());
   }
 
   shouldSubmitTicketForm() {
@@ -313,6 +338,11 @@ class CheckoutTicketPageController {
     const errorOnAddressFields = this.siteId === 'MLB' && !this.addressFieldsFromTicketRowAreValid();
     const hasError = this.checkForErrors() || errorOnAddressFields;
     hasError && this.removeBlockOverlay();
+
+    if (!hasError && this.siteId === 'MLB') {
+      this.normalizeDocumentNumber();
+    }
+
     return !hasError;
   }
 

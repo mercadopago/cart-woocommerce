@@ -66,7 +66,8 @@ require_instance() {
     } >&2
     exit 1
   fi
-  INSTANCE_HOST="${INSTANCE_NAME}.${BASE_DOMAIN}"
+  # Se o nome já contém ponto (FQDN), usa direto; senão, anexa o base domain
+  [[ "$INSTANCE_NAME" == *"."* ]] && INSTANCE_HOST="$INSTANCE_NAME" || INSTANCE_HOST="${INSTANCE_NAME}.${BASE_DOMAIN}"
 }
 
 ensure_remote() {
@@ -74,6 +75,11 @@ ensure_remote() {
   ssh_cmd 'bash -s' <<'EOS' 2>&1 | filter
 mkdir -p ~/woo-homolog
 if ! command -v docker >/dev/null 2>&1; then curl -fsSL https://get.docker.com | sudo sh && sudo usermod -aG docker "$USER"; fi
+# Libera portas 80/443 caso apache2 do sistema esteja ocupando-as
+if sudo ss -tlnp 2>/dev/null | grep -qE ':80[^0-9]|:443[^0-9]' && sudo systemctl is-active --quiet apache2 2>/dev/null; then
+  echo ">> parando apache2 (ocupa portas 80/443)..."
+  sudo systemctl stop apache2 && sudo systemctl disable apache2
+fi
 EOS
 }
 
@@ -105,13 +111,33 @@ wait_ready() {  # $1 = site
     && log "loja $1 pronta" || die "timeout no setup de $1 (veja: ./deploy.sh logs $1)"
 }
 
+# Graceful Caddy reload that SURFACES failures. A rejected config or an unready caddy
+# container leaves the (possibly new) hostname on the previous routing and unreachable, so
+# we retry a few times and fail loudly instead of masking the error with `|| true`. Uses a
+# command substitution (not a pipe to `filter`) so the real exit code is checked — a piped
+# `... | filter` always reports success because filter() ends in `|| true` under pipefail.
+reload_caddy() {
+  log "recarregando Caddy (graceful reload, sem restart)..."
+  local i out
+  for i in 1 2 3; do
+    if out="$(ssh_cmd 'docker exec caddy caddy reload --config /etc/caddy/Caddyfile' 2>&1)"; then
+      printf '%s\n' "$out" | filter
+      log "Caddy recarregado."
+      return 0
+    fi
+    log "reload do Caddy falhou (tentativa $i/3); retentando em 2s..."
+    sleep 2
+  done
+  die "falha ao recarregar o Caddy após 3 tentativas (config rejeitada ou container indisponível) — o novo domínio pode estar inacessível. Detalhe: $out"
+}
+
 fix_urls() {  # $1 = site, $2 = domain
-  log "apontando URLs públicas + webhook + reload do Caddy..."
+  log "apontando URLs públicas + webhook..."
   ssh_cmd "docker exec wp-$1 wp --allow-root option update siteurl https://$2 >/dev/null && \
            docker exec wp-$1 wp --allow-root option update home https://$2 >/dev/null && \
            docker exec wp-$1 wp --allow-root option update _mp_custom_domain https://$2 >/dev/null && \
-           docker exec wp-$1 wp --allow-root rewrite flush --hard >/dev/null 2>&1; \
-           docker restart caddy >/dev/null 2>&1" 2>&1 | filter
+           docker exec wp-$1 wp --allow-root rewrite flush --hard >/dev/null 2>&1" 2>&1 | filter
+  reload_caddy
 }
 
 cmd_publish() {
@@ -147,7 +173,19 @@ cmd_publish_all() {
   sync_plugin   # uma única transferência -> o volume remoto é compartilhado entre as lojas
   for s in $a; do cmd_publish "$s" skip-sync; done
 }
-cmd_sync()    { sync_plugin; local a; a="$(get_active)"; log "reiniciando lojas ativas: $a"; for s in $a; do ssh_cmd "docker restart wp-$s >/dev/null 2>&1" 2>&1 | filter; done; log "código republicado em: $a"; }
+cmd_sync() {
+  sync_plugin
+  local a; a="$(get_active)"
+  log "reiniciando lojas ativas: $a"
+  for s in $a; do
+    if ssh_cmd "docker inspect wp-$s >/dev/null 2>&1"; then
+      ssh_cmd "docker restart wp-$s >/dev/null 2>&1" 2>&1 | filter
+    else
+      log "container wp-$s não encontrado em .active-sites, pulando"
+    fi
+  done
+  log "código republicado em: $a"
+}
 cmd_status()  { log "instância: $INSTANCE_NAME | lojas ativas: $(get_active)"; ssh_cmd "cd $REMOTE_DIR && docker compose ps 2>/dev/null" 2>&1 | filter; for s in $(get_active); do echo "  https://$(site_domain "$s")/shop"; done; }
 cmd_logs()    { local s="${1:?uso: logs <site>}"; validate_site "$s"; ssh_cmd "docker logs -f --tail=120 wp-$s"; }
 cmd_shell()   { local s="${1:?uso: shell <site>}"; validate_site "$s"; ssh "${SSH_OPTS[@]}" -t "$SSH_USER@$INSTANCE_HOST" "docker exec -it wp-$s bash"; }
@@ -163,6 +201,30 @@ cmd_config() {
   done
   log "aplicado em: $active"
 }
+cmd_prepare_zip() {
+  local site="${1:-}"; [ -n "$site" ] || die "uso: ./deploy.sh prepare-zip <site>"
+  validate_site "$site"
+  log "preparando wp-$site para upload de zip via wp-admin..."
+  ssh_cmd "
+    docker exec wp-$site rm -f /var/www/html/wp-content/plugins/woocommerce-mercadopago 2>/dev/null || true
+    docker exec wp-$site wp --allow-root --skip-plugins eval '
+      \$plugins = get_option(\"active_plugins\", []);
+      \$filtered = array_values(array_filter(\$plugins, function(\$p) {
+        return strpos(\$p, \"woocommerce-mercadopago\") === false;
+      }));
+      update_option(\"active_plugins\", \$filtered);
+      echo \"Plugin desativado. Ativos restantes: \" . count(\$filtered) . PHP_EOL;
+    ' 2>/dev/null || true
+    docker exec wp-$site wp --allow-root config set FS_METHOD direct --type=constant 2>/dev/null || true
+    docker exec wp-$site bash -c 'mkdir -p /var/www/html/wp-content/uploads/\$(date +%Y/%m) /var/www/html/wp-content/upgrade && chown -R www-data:www-data /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade'
+  " 2>&1 | filter
+  printf '\033[1;32m== pronto ==\033[0m\n  Acesse: https://%s/wp-admin/plugin-install.php\n  Faça upload do zip e ative o plugin.\n' "$(site_domain "$site")"
+}
+
+cmd_reload_caddy() {
+  reload_caddy
+}
+
 cmd_destroy() {
   local s="${1:?uso: destroy <site>}"; validate_site "$s"
   ssh_cmd "cd $REMOTE_DIR && docker rm -f wp-$s 2>/dev/null; docker volume rm woo-homolog_wp-$s-data woo-homolog_db-$s-data 2>/dev/null" 2>&1 | filter
@@ -172,18 +234,20 @@ cmd_destroy() {
 
 cmd="${1:-}"
 case "$cmd" in
-  publish|publish-all|sync|status|logs|shell|down|destroy|config) require_instance ;;
-  *) echo "uso: $0 {publish <site>|publish-all|sync|config <CONST> <valor>|status|logs <site>|shell <site>|down <site>|destroy <site>}"; exit 1 ;;
+  publish|publish-all|sync|status|logs|shell|down|destroy|config|prepare-zip|reload-caddy) require_instance ;;
+  *) echo "uso: $0 {publish <site>|publish-all|sync|config <CONST> <valor>|status|logs <site>|shell <site>|down <site>|destroy <site>|prepare-zip <site>|reload-caddy}"; exit 1 ;;
 esac
 
 case "$cmd" in
-  publish)     cmd_publish "${2:-}";;
-  publish-all) cmd_publish_all;;
-  sync)        cmd_sync;;
-  status)      cmd_status;;
-  logs)        cmd_logs "${2:-}";;
-  shell)       cmd_shell "${2:-}";;
-  down)        cmd_down "${2:-}";;
-  destroy)     cmd_destroy "${2:-}";;
-  config)      cmd_config "${2:-}" "${3:-}";;
+  publish)      cmd_publish "${2:-}";;
+  publish-all)  cmd_publish_all;;
+  sync)         cmd_sync;;
+  status)       cmd_status;;
+  logs)         cmd_logs "${2:-}";;
+  shell)        cmd_shell "${2:-}";;
+  down)         cmd_down "${2:-}";;
+  destroy)      cmd_destroy "${2:-}";;
+  config)       cmd_config "${2:-}" "${3:-}";;
+  prepare-zip)  cmd_prepare_zip "${2:-}";;
+  reload-caddy) cmd_reload_caddy;;
 esac

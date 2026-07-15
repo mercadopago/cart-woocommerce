@@ -11,6 +11,7 @@ export default async function (page, { otp = '123456', phoneNumber }) {
     await blocksRadio.check();
   }
 
+  await page.waitForLoadState();
   await page.waitForTimeout(1000);
   await page.locator('.mp-yape-input').fill(phoneNumber);
 
@@ -25,4 +26,8 @@ export default async function (page, { otp = '123456', phoneNumber }) {
 
   // Click place order (Classic single-click / Blocks two-phase submit)
   await placeOrder(page);
+
+  // Let the order submission settle before the caller waits for success/rejection
+  // (Blocks is slower to surface the result).
+  await page.waitForLoadState().catch(() => {});
 }

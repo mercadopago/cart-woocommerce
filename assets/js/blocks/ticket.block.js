@@ -114,22 +114,29 @@ const Content = (props) => {
       const inputDocDiv = document.querySelector('.mp-input');
       const inputDocHelper = document.getElementById('mp-doc-number-helper');
       const inputPaymentMethod = document.getElementById('mp-payment-method-helper');
+      const siteId = document.getElementsByName('mercadopago_ticket[site_id]')[0]?.value ?? '';
+
+      // Alphanumeric-CNPJ normalization is MLB-only (mirrors the classic checkout guard in
+      // CheckoutTicketPageController.normalizeDocumentNumber). The doc_number field is also
+      // rendered for MLU, so we keep its value untouched there.
+      const rawDocNumber =
+        document.getElementsByName('mercadopago_ticket[doc_number]')[0]?.value ??
+        document.getElementsByName('mercadopago_ticket[docNumberError]')[0]?.value ?? '';
       const paymentMethodData = {
-        'mercadopago_ticket[site_id]': document.getElementsByName('mercadopago_ticket[site_id]')[0].value,
-        'mercadopago_ticket[amount]': document.getElementsByName('mercadopago_ticket[amount]')[0].value,
+        'mercadopago_ticket[site_id]': siteId,
+        'mercadopago_ticket[amount]': document.getElementsByName('mercadopago_ticket[amount]')[0]?.value ?? '',
         'mercadopago_ticket[doc_type]': document.getElementsByName('mercadopago_ticket[doc_type]')[0]?.value,
         'mercadopago_ticket[doc_number]':
-          document.getElementsByName('mercadopago_ticket[doc_number]')[0]?.value ??
-          document.getElementsByName('mercadopago_ticket[docNumberError]')[0]?.value,
+          siteId === 'MLB' ? rawDocNumber.toUpperCase().replace(/[^A-Z0-9]/g, '') : rawDocNumber,
       };
 
       document
         .querySelector('.mp-checkout-ticket-container')
-        .querySelectorAll('.mp-input-radio-radio')
+        ?.querySelectorAll('.mp-input-radio-radio')
         .forEach((item) => {
           if (item.checked) {
             paymentMethodData['mercadopago_ticket[payment_method_id]'] = item.value;
-            inputPaymentMethod.style.display = 'none';
+            setInputDisplayStyle(inputPaymentMethod, 'none');
           }
       });
 
@@ -137,20 +144,18 @@ const Content = (props) => {
         const hiddenPaymentMethod = document.querySelector('input[name="mercadopago_ticket[payment_method_id]"][type="hidden"]');
         if (hiddenPaymentMethod && hiddenPaymentMethod.value) {
           paymentMethodData['mercadopago_ticket[payment_method_id]'] = hiddenPaymentMethod.value;
-          inputPaymentMethod.style.display = 'none';
+          setInputDisplayStyle(inputPaymentMethod, 'none');
         }
       }
 
-      const siteId = document.getElementsByName('mercadopago_ticket[site_id]')[0].value;
-
       if (siteId == 'MLB') {
         mlbTicketRequiredFields.forEach(element => {
-          paymentMethodData[`mercadopago_ticket[${element}]`] = document.querySelector(`#form-checkout__${element}`).value;
+          paymentMethodData[`mercadopago_ticket[${element}]`] = document.querySelector(`#form-checkout__${element}`)?.value ?? '';
         });
       }
 
       if ((siteId == 'MLB' || siteId == 'MLU') && paymentMethodData['mercadopago_ticket[doc_number]'] === '') {
-        inputDocDiv.classList.add('mp-error');
+        inputDocDiv?.classList.add('mp-error');
         setInputDisplayStyle(inputDocHelper, 'flex');
       }
 

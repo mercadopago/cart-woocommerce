@@ -36,9 +36,9 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     public string $iconAdmin;
 
-    public int $commission;
+    public float $commission;
 
-    public int $discount;
+    public float $discount;
 
     public int $expirationDate;
 
@@ -374,9 +374,17 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
      */
     public function registerAdminScripts()
     {
+        $translations = $this->mercadopago->adminTranslations->customGatewaySettings;
+
         $this->mercadopago->hooks->scripts->registerAdminScript(
             'wc_mercadopago_admin_components',
-            $this->mercadopago->helpers->url->getJsAsset('admin/mp-admin-configs')
+            $this->mercadopago->helpers->url->getJsAsset('admin/mp-admin-configs'),
+            [
+                'subscriptions_disable_modal_title'   => $translations['subscriptions_disable_modal_title']   ?? '',
+                'subscriptions_disable_modal_body'    => $translations['subscriptions_disable_modal_body']    ?? '',
+                'subscriptions_disable_modal_keep'    => $translations['subscriptions_disable_modal_keep']    ?? '',
+                'subscriptions_disable_modal_confirm' => $translations['subscriptions_disable_modal_confirm'] ?? '',
+            ]
         );
 
         $this->mercadopago->hooks->scripts->registerAdminStyle(

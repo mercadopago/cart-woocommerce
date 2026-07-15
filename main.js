@@ -79,7 +79,7 @@ const SUPER_TOKEN_FOLDER_MAP = { 'v2': 'v1', 'v2.1': 'v2.1' };
  * In dev mode (MP_SUPER_TOKEN_USE_BUNDLE=false) the bundle is not built, so the JS keeps
  * the default value declared in its source file.
  */
-const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.1', 'v2.1': '1.2.1' };
+const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.2', 'v2.1': '1.2.2' };
 
 /**
  * Resolves the loader version for a variant.

@@ -115,7 +115,7 @@ class WoocommerceMercadoPagoTest extends TestCase
      */
     public function testRunMigrationsDoesNotClearCacheForStoresAboveRelease(): void
     {
-        $this->mockInstalledVersion('8.9.0');
+        $this->mockInstalledVersion('9.0.0');
 
         $deleted = false;
         $updated = false;

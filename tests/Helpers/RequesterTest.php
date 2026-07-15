@@ -162,7 +162,7 @@ class RequesterTest extends TestCase
             ->once()
             ->with('mp_api_error', '500', 'HTTP 500', null, [
                 'team'      => 'big',
-                'api_route' => '/v1/payments/123',
+                'api_route' => '/v1/payments/{id}',
             ]);
 
         $result = $this->requester->get('/v1/payments/123', []);
@@ -179,7 +179,7 @@ class RequesterTest extends TestCase
             ->once()
             ->with('mp_api_error', '404', 'Not Found', null, [
                 'team'      => 'big',
-                'api_route' => '/v1/refunds/99',
+                'api_route' => '/v1/refunds/{id}',
             ]);
 
         $result = $this->requester->put('/v1/refunds/99', [], []);
@@ -286,6 +286,95 @@ class RequesterTest extends TestCase
         $result = $this->requester->post('/v1/payments', [], []);
 
         $this->assertEquals(401, $result->getStatus());
+    }
+
+    // --- delete() ---
+
+    public function testDeleteSuccessDoesNotSendMetric(): void
+    {
+        $response = $this->createResponse(204);
+        $this->httpClient->shouldReceive('send')->once()->with('DELETE', '/v1/subscriptions/123', [], null)->andReturn($response);
+        $this->datadogMock->shouldNotReceive('sendEvent');
+
+        $result = $this->requester->delete('/v1/subscriptions/123', []);
+
+        $this->assertEquals(204, $result->getStatus());
+    }
+
+    public function testDeleteWithHttp4xxSendsMetric(): void
+    {
+        $response = $this->createResponse(404, ['message' => 'Not Found']);
+        $this->httpClient->shouldReceive('send')->once()->andReturn($response);
+
+        $this->datadogMock->shouldReceive('sendEvent')
+            ->once()
+            ->with('mp_api_error', '404', 'Not Found', null, [
+                'team'      => 'big',
+                'api_route' => '/v1/subscriptions/{id}',
+            ]);
+
+        $result = $this->requester->delete('/v1/subscriptions/99', []);
+
+        $this->assertEquals(404, $result->getStatus());
+    }
+
+    public function testDeleteWithBodySendsJsonPayload(): void
+    {
+        $response = $this->createResponse(200);
+        $this->httpClient->shouldReceive('send')
+            ->once()
+            ->with('DELETE', '/v2/subscriptions/SUB-1/payment-methods', [], '{"card_ids":["CARD-1"]}')
+            ->andReturn($response);
+        $this->datadogMock->shouldNotReceive('sendEvent');
+
+        $result = $this->requester->delete('/v2/subscriptions/SUB-1/payment-methods', [], ['card_ids' => ['CARD-1']]);
+
+        $this->assertEquals(200, $result->getStatus());
+    }
+
+    public function testDeleteWithHttp422SendsMetric(): void
+    {
+        $response = $this->createResponse(422, ['code' => 'LastPaymentMethod', 'message' => 'last']);
+        $this->httpClient->shouldReceive('send')->once()->andReturn($response);
+
+        $this->datadogMock
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('mp_api_error', '422', Mockery::any(), null, Mockery::any());
+
+        $result = $this->requester->delete('/v2/subscriptions/SUB-1/payment-methods', []);
+
+        $this->assertEquals(422, $result->getStatus());
+    }
+
+    public function testDeleteWithEmptyBodySendsNullPayload(): void
+    {
+        $response = $this->createResponse(204);
+        $this->httpClient->shouldReceive('send')
+            ->once()
+            ->with('DELETE', '/v2/subscriptions/SUB-1', [], null)
+            ->andReturn($response);
+
+        $result = $this->requester->delete('/v2/subscriptions/SUB-1', []);
+
+        $this->assertEquals(204, $result->getStatus());
+    }
+
+    public function testDeleteExceptionSendsMetricAndRethrows(): void
+    {
+        $this->httpClient->shouldReceive('send')->once()->andThrow(new Exception('Connection timeout'));
+
+        $this->datadogMock->shouldReceive('sendEvent')
+            ->once()
+            ->with('mp_api_error', '0', 'Connection timeout', null, [
+                'team'      => 'big',
+                'api_route' => '/v1/subscriptions/{id}',
+            ]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Connection timeout');
+
+        $this->requester->delete('/v1/subscriptions/99', []);
     }
 
     // --- Edge case: error response without message field ---

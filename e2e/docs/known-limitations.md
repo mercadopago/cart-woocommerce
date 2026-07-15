@@ -11,12 +11,21 @@ o débito MLB existe apenas em InStore/Tap-to-Pay, não no checkout web). A API 
 - **Spec:** `tests/mlb/chocustom/debit_card_payment_binary_off.spec.js` está com `test.describe.skip`.
 - **Reabrir:** só se o débito for ativado no checkout online do MLB.
 
-## 2. PSE (MCO) — exige domínio público (callback_url)
-`PseTransaction` define `callback_url` = URL de retorno do WC (= `home`). Em `localhost` o MP
-rejeita (`"callback_url attribute must be url valid"`). Diferente do `notification_url`, o
-`callback_url` **não** aplica `_mp_custom_domain`.
-- **Como rodar:** `bash e2e/run-pse-with-tunnel.sh` (sobe cloudflared temporário, aponta
-  `home/siteurl`, roda PSE classic+blocks, restaura localhost).
+## 2. PSE (MCO) — executável localmente via `run-pse.sh` (resolvido em PSW-4206)
+`PseTransaction` define `callback_url` = URL de retorno do WC (`WC_Order::get_checkout_order_received_url()`).
+Em `localhost` o MP rejeita (`"callback_url attribute must be url valid"`). Diferente do
+`notification_url`, o `callback_url` **não** aplica `_mp_custom_domain`.
+
+- **Solução (PSW-4206):** `run-pse.sh` instala um mu-plugin temporário que intercepta o
+  filtro `woocommerce_get_checkout_order_received_url` (o filtro exato do WooCommerce, **não**
+  `home_url()` global) e substitui `localhost` por `https://e2e-test.example.com`. O MP
+  valida apenas o **formato** da URL — o domínio não precisa ser acessível. O mu-plugin é
+  removido automaticamente via `trap cleanup EXIT`.
+- **Como rodar:** `bash e2e/run-pse.sh` (standalone) ou `--with-pse` / `--release` no runner.
+- **Manutenção:** o `run-pse.sh` usa uma allowlist explícita de diretórios MCO na fase 1
+  (`chocustom/`, `chopro/`, `ticket/`). Novos diretórios de teste MCO precisam ser adicionados
+  manualmente — caso contrário ficam fora da cobertura do `--with-pse` / `--release` sem
+  nenhum sinal de erro no relatório.
 - O PSE também depende do serviço **BankTransfers** do MP, que pode dar
   `"BankTransfers Timeout"` transitório — absorvido por `retries`.
 

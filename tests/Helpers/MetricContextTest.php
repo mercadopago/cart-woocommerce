@@ -24,25 +24,27 @@ class MetricContextTest extends TestCase
         ], $details);
     }
 
-    public function testBuildApiErrorDetailsStripsQueryParametersFromApiRoute(): void
+    public function testBuildApiErrorDetailsStripsQueryParametersAndParameterizesIdSegments(): void
     {
         $uri = '/ppcore/prod/configurations-api/onboarding/v1/integration/123?code_verifier=secret-value';
 
         $details = MetricContext::buildApiErrorDetails($uri);
 
         $this->assertEquals(
-            '/ppcore/prod/configurations-api/onboarding/v1/integration/123',
+            '/ppcore/prod/configurations-api/onboarding/v1/integration/{id}',
             $details['api_route']
         );
         $this->assertStringNotContainsString('code_verifier', $details['api_route']);
         $this->assertStringNotContainsString('secret-value', $details['api_route']);
+        $this->assertStringNotContainsString('123', $details['api_route']);
     }
 
-    public function testBuildApiErrorDetailsPreservesPathWhenNoQueryString(): void
+    public function testBuildApiErrorDetailsParameterizesNumericSegments(): void
     {
         $details = MetricContext::buildApiErrorDetails('/v1/payments/123456');
 
-        $this->assertEquals('/v1/payments/123456', $details['api_route']);
+        // Numeric path segments are parameterized — keeps api_route low-cardinality.
+        $this->assertEquals('/v1/payments/{id}', $details['api_route']);
     }
 
     public function testBuildApiErrorDetailsStripsMultipleQueryParametersFromApiRoute(): void
@@ -94,6 +96,134 @@ class MetricContextTest extends TestCase
         $this->assertEquals('PARAM_SITE', $details['site_id']);
         $this->assertEquals('homol', $details['environment']);
         $this->assertEquals('param-cust', $details['cust_id']);
+    }
+
+    /* ───────── parameterizeApiRoute — heuristic 1: pure numeric ───────── */
+
+    public function testParameterizeApiRouteHeuristic1ShortInteger(): void
+    {
+        // Any purely numeric string is treated as an ID regardless of length.
+        $this->assertSame('/v1/orders/{id}', MetricContext::parameterizeApiRoute('/v1/orders/42'));
+    }
+
+    public function testParameterizeApiRouteHeuristic1LongInteger(): void
+    {
+        $this->assertSame(
+            '/applications/{id}',
+            MetricContext::parameterizeApiRoute('/applications/9999999999')
+        );
+    }
+
+    /* ───────── parameterizeApiRoute — heuristic 2: UUID ───────── */
+
+    public function testParameterizeApiRouteHeuristic2UuidV4IsReplaced(): void
+    {
+        $this->assertSame(
+            '/v1/tokens/{id}',
+            MetricContext::parameterizeApiRoute('/v1/tokens/8a1f8e1f-91dc-4d9d-9c9f-1e2d3c4b5a6f')
+        );
+    }
+
+    public function testParameterizeApiRouteHeuristic2UuidUppercaseIsReplaced(): void
+    {
+        $this->assertSame(
+            '/v1/tokens/{id}',
+            MetricContext::parameterizeApiRoute('/v1/tokens/8A1F8E1F-91DC-4D9D-9C9F-1E2D3C4B5A6F')
+        );
+    }
+
+    /* ───────── parameterizeApiRoute — heuristic 3: digit + separator ───────── */
+
+    public function testParameterizeApiRouteHeuristic3LowercaseWithHyphenAndDigitIsReplaced(): void
+    {
+        // No uppercase → heuristics 2 and 4 do not fire; digit + hyphen + len > 4 → heuristic 3 fires.
+        $this->assertSame(
+            '/v1/tokens/{id}',
+            MetricContext::parameterizeApiRoute('/v1/tokens/tok-abc-12345')
+        );
+    }
+
+    public function testParameterizeApiRouteHeuristic3LowercaseWithUnderscoreAndDigitIsReplaced(): void
+    {
+        $this->assertSame(
+            '/v1/tokens/{id}',
+            MetricContext::parameterizeApiRoute('/v1/tokens/ref_abc123xyz')
+        );
+    }
+
+    public function testParameterizeApiRouteHeuristic3ShortSegmentWithDigitIsNotReplaced(): void
+    {
+        // Length ≤ 4 even with digit and separator — not treated as ID (e.g. "a-1", len=3).
+        $this->assertSame('/v2/a-1', MetricContext::parameterizeApiRoute('/v2/a-1'));
+    }
+
+    /* ───────── parameterizeApiRoute — heuristic 4: uppercase + separator ───────── */
+
+    public function testParameterizeApiRouteHeuristic4UppercasePrefixWithoutDigitIsReplaced(): void
+    {
+        // CPP-WSUB-xyz: has uppercase (C) and hyphen but no digit → only heuristic 4 fires.
+        $this->assertSame(
+            '/automatic-payments/v2/subscriptions/{id}/payment-methods/default',
+            MetricContext::parameterizeApiRoute('/automatic-payments/v2/subscriptions/CPP-WSUB-xyz/payment-methods/default')
+        );
+    }
+
+    public function testParameterizeApiRouteHeuristic4UppercasePrefixWithDigitIsReplaced(): void
+    {
+        // CPP-WSUB-abc-123: heuristics 3 and 4 both match — either is sufficient.
+        $this->assertSame(
+            '/automatic-payments/v2/subscriptions/{id}',
+            MetricContext::parameterizeApiRoute('/automatic-payments/v2/subscriptions/CPP-WSUB-abc-123')
+        );
+    }
+
+    /* ───────── parameterizeApiRoute — no ID (keyword-only paths) ───────── */
+
+    public function testParameterizeApiRouteKeywordOnlyPathIsUnchanged(): void
+    {
+        // All segments are lowercase keywords with no digits — nothing is replaced.
+        $this->assertSame(
+            '/automatic-payments/v2/intents/cit',
+            MetricContext::parameterizeApiRoute('/automatic-payments/v2/intents/cit')
+        );
+        $this->assertSame(
+            '/automatic-payments/v2/intents/mit',
+            MetricContext::parameterizeApiRoute('/automatic-payments/v2/intents/mit')
+        );
+        $this->assertSame(
+            '/v1/payment-methods/default',
+            MetricContext::parameterizeApiRoute('/v1/payment-methods/default')
+        );
+    }
+
+    /* ───────── parameterizeApiRoute — multiple IDs in one path ───────── */
+
+    public function testParameterizeApiRouteReplacesMultipleIdSegments(): void
+    {
+        // Two ID segments at distinct positions — both must be replaced independently.
+        $this->assertSame(
+            '/v1/subscriptions/{id}/events/{id}',
+            MetricContext::parameterizeApiRoute('/v1/subscriptions/CPP-WSUB-abc-123/events/8a1f8e1f-91dc-4d9d-9c9f-1e2d3c4b5a6f')
+        );
+    }
+
+    /* ───────── parameterizeApiRoute — absolute URL + query string ───────── */
+
+    public function testParameterizeApiRouteStripsAbsoluteHostPrefix(): void
+    {
+        $this->assertSame(
+            '/automatic-payments/v2/subscriptions/{id}/payment-methods',
+            MetricContext::parameterizeApiRoute('https://api.mercadopago.com/automatic-payments/v2/subscriptions/CPP-WSUB-abc-123/payment-methods')
+        );
+    }
+
+    public function testBuildApiErrorDetailsTemplatesApV2SubscriptionRoutesEvenWithQueryString(): void
+    {
+        $details = MetricContext::buildApiErrorDetails(
+            '/automatic-payments/v2/subscriptions/CPP-WSUB-real-id/payment-methods?foo=bar'
+        );
+
+        $this->assertSame('/automatic-payments/v2/subscriptions/{id}/payment-methods', $details['api_route']);
     }
 
     private function makeMercadopagoMock(string $siteId, bool $isTestMode, string $custId): object

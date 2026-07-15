@@ -93,6 +93,25 @@ class CartTest extends TestCase
     /**
      * @throws Exception
      */
+    public function testAddDiscountOnFeesWithDecimalDiscount(): void
+    {
+        $gateway           = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gateway->discount = 0.5;
+
+        $this->wcCart->shouldReceive('get_cart_contents_total')->once()->andReturn(100.0);
+        $this->wcCart->shouldReceive('get_cart_contents_tax')->once()->andReturn(0.0);
+        $this->wcCart->shouldReceive('add_fee')
+            ->once()
+            ->with('Mercado Pago Discount', -0.5, true);
+
+        $this->cart->addDiscountOnFees($gateway);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * @throws Exception
+     */
     public function testAddDiscountOnFeesDoesNotCallAddFeeWhenDiscountIsZero(): void
     {
         $gateway           = Mockery::mock(AbstractGateway::class)->makePartial();
@@ -124,6 +143,25 @@ class CartTest extends TestCase
         $this->wcCart->shouldReceive('add_fee')
             ->once()
             ->with('Mercado Pago Commission', 5.0, true);
+
+        $this->cart->addCommissionOnFees($gateway);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testAddCommissionOnFeesWithDecimalCommission(): void
+    {
+        $gateway             = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gateway->commission = 1.5;
+
+        $this->wcCart->shouldReceive('get_cart_contents_total')->once()->andReturn(200.0);
+        $this->wcCart->shouldReceive('get_cart_contents_tax')->once()->andReturn(0.0);
+        $this->wcCart->shouldReceive('add_fee')
+            ->once()
+            ->with('Mercado Pago Commission', 3.0, true);
 
         $this->cart->addCommissionOnFees($gateway);
 
@@ -220,6 +258,57 @@ class CartTest extends TestCase
         $this->wcCart->shouldNotReceive('add_fee');
 
         $this->cart->addDiscountAndCommissionOnFeesFromBlocks($gateway);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testAddDiscountAndCommissionOnFeesClassicWithDecimalValues(): void
+    {
+        $gateway             = Mockery::mock(CartGatewayStub::class)->makePartial();
+        $gateway->discount   = 0.5;
+        $gateway->commission = 1.5;
+
+        $this->session
+            ->shouldReceive('getSession')
+            ->with('chosen_payment_method')
+            ->once()
+            ->andReturn(CartGatewayStub::ID);
+
+        $this->wcCart->shouldReceive('get_cart_contents_total')->twice()->andReturn(100.0);
+        $this->wcCart->shouldReceive('get_cart_contents_tax')->twice()->andReturn(0.0);
+        $this->wcCart->shouldReceive('add_fee')
+            ->once()
+            ->with('Mercado Pago Discount', -0.5, true);
+        $this->wcCart->shouldReceive('add_fee')
+            ->once()
+            ->with('Mercado Pago Commission', 1.5, true);
+
+        $this->cart->addDiscountAndCommissionOnFees($gateway);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testAddDiscountAndCommissionOnFeesClassicSkipsWhenGatewayIdDoesNotMatch(): void
+    {
+        $gateway             = Mockery::mock(CartGatewayStub::class)->makePartial();
+        $gateway->discount   = 0.5;
+        $gateway->commission = 1.5;
+
+        $this->session
+            ->shouldReceive('getSession')
+            ->with('chosen_payment_method')
+            ->once()
+            ->andReturn('woo-mercado-pago-other');
+
+        $this->wcCart->shouldNotReceive('add_fee');
+
+        $this->cart->addDiscountAndCommissionOnFees($gateway);
 
         $this->expectNotToPerformAssertions();
     }

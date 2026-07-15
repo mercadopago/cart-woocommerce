@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.9.0] 2026-07-06
+### Added
+- Add WooCommerce Subscriptions integration via Mercado Pago Automatic Payments: sellers with a Pre-approval credential can now offer recurring payment products. The first purchase is processed through the existing Custom checkout; subsequent renewals are charged automatically without requiring the buyer to re-enter card details. Buyers can update their saved card directly from My Account → Subscriptions, and cancelling a subscription in WooCommerce automatically cancels the corresponding recurring charge in Mercado Pago. Supported in BR, AR, CO, MX, PE, CL and UY.
+- Add support for alphanumeric CNPJ (RFB NT 49/2024): the checkout now accepts the new CNPJ format containing letters, ensuring Brazilian buyers and sellers are not blocked at checkout after the Federal Revenue transition.
+
+### Fixed
+- Fix commission and discount decimal values being silently truncated to integers, causing fractional rates (e.g. 0.5%) to be applied as zero in both Classic and Blocks checkouts
+
 ## [8.8.1] 2026-06-29
 ### Fixed
 - Fix fast payment checkout being blocked by required address fields that are filled and visible on screen in stores with custom checkout layouts (e.g. funnel or multi-step checkouts), by cross-checking the validation result against the page before blocking the buyer

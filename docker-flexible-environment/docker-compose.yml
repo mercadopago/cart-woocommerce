@@ -23,6 +23,7 @@ services:
       - MP_ACCESS_TOKEN_PROD=${MP_ACCESS_TOKEN_PROD:-}
       - MP_CUSTOM_DOMAIN=${MP_CUSTOM_DOMAIN:-}
       - THEME=${THEME:-storefront}
+      - MP_AUTOMATIC_PAYMENTS_BASE_PATH=${MP_AUTOMATIC_PAYMENTS_BASE_PATH:-}
     # Chromium headless (Playwright E2E) needs more shared memory than Docker's default 64MB.
     # 2GB is the Playwright-recommended setting for Docker containers.
     shm_size: '2gb'

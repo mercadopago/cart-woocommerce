@@ -60,6 +60,15 @@ class Numbers
     }
 
     /**
+     * Number of decimal places used by the given currency (0 for zero-decimal
+     * currencies like CLP/COP, 2 otherwise). Single source for this rule.
+     */
+    public static function getDecimalsForCurrency(string $currency): int
+    {
+        return in_array($currency, ['COP', 'CLP'], true) ? 0 : 2;
+    }
+
+    /**
      * Number format value
      *
      * @param string $currency
@@ -70,11 +79,21 @@ class Numbers
      */
     public static function calculateByCurrency(string $currency, float $value, float $ratio): float
     {
-        if ($currency === 'COP' || $currency === 'CLP') {
+        if (self::getDecimalsForCurrency($currency) === 0) {
             return self::format($value * $ratio, 0);
         }
 
         return self::format($value * $ratio * 100) / 100;
+    }
+
+    /**
+     * Formats an already-calculated amount as a string with the currency's decimal
+     * places (e.g. "9.90" for BRL, "1234" for CLP) — required by AP v2, which
+     * expects unit_price as a string. Uses a dot as decimal separator, no thousands.
+     */
+    public static function formatByCurrency(string $currency, float $amount): string
+    {
+        return number_format($amount, self::getDecimalsForCurrency($currency), '.', '');
     }
 
     /**

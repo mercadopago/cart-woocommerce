@@ -432,6 +432,24 @@ describe('MPCardForm', () => {
 
       document.removeEventListener('mp_sdk_instance_ready', sdkInstanceReadyListener);
     });
+
+    test('Given mpSdkInstance is set, When initCardForm() is called, Then should call SDK cardForm with full config including all fields', () => {
+      const mockCardFormFn = jest.fn().mockReturnValue(Promise.resolve());
+      window.mpSdkInstance = { cardForm: mockCardFormFn };
+
+      cardForm.initCardForm('100.00');
+
+      expect(mockCardFormFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          form: expect.objectContaining({
+            identificationType: expect.anything(),
+            identificationNumber: expect.anything(),
+            issuer: expect.anything(),
+            installments: expect.anything(),
+          }),
+        })
+      );
+    });
   });
 
   describe('formatTrackingAmount()', () => {
@@ -576,6 +594,34 @@ describe('MPCardForm', () => {
             'mp_checkout_amount_tracking_dropped'
           );
         }
+      );
+    });
+  });
+
+  describe('getCardFormConfig()', () => {
+    test('When getCardFormConfig() is called, Then should return config with all fields including identificationType, identificationNumber, issuer and installments', () => {
+      const config = cardForm.getCardFormConfig();
+
+      expect(config).toHaveProperty('cardNumber');
+      expect(config).toHaveProperty('cardholderName');
+      expect(config).toHaveProperty('cardExpirationDate');
+      expect(config).toHaveProperty('securityCode');
+      expect(config).toHaveProperty('identificationType');
+      expect(config).toHaveProperty('identificationNumber');
+      expect(config).toHaveProperty('issuer');
+      expect(config).toHaveProperty('installments');
+    });
+
+    test('When getCardFormConfig() is called, Then cardNumber config should have correct style and customFonts', () => {
+      const config = cardForm.getCardFormConfig();
+
+      expect(config.cardNumber).toEqual(
+        expect.objectContaining({
+          id: 'form-checkout__cardNumber-container',
+          placeholder: '1234 1234 1234 1234',
+          style: expect.objectContaining({ fontSize: '16px' }),
+          customFonts: expect.any(Array),
+        })
       );
     });
   });

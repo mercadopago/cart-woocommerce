@@ -330,4 +330,33 @@ class BasicGatewayTest extends TestCase
 
         $this->assertFalse(isset($gateway->adminTranslations));
     }
+
+    /**
+     * Guards the PSW-4036 regression at the assignment point: the real source
+     * string "0.5" returned by getActionableValue() must land as float 0.5 on the
+     * typed property (it used to be truncated to int(0) when discount/commission
+     * were typed int). Exercises the real getActionableValue reading the mocked
+     * option, instead of a float literal.
+     */
+    public function testDiscountAndCommissionCoerceDecimalStringFromActionableValue(): void
+    {
+        $options = $this->gateway->mercadopago->hooks->options;
+        $options->shouldReceive('getGatewayOption')
+            ->with($this->gateway, 'gateway_discount_checkbox')->andReturn('yes');
+        $options->shouldReceive('getGatewayOption')
+            ->with($this->gateway, 'gateway_discount', 0)->andReturn('0.5');
+        $options->shouldReceive('getGatewayOption')
+            ->with($this->gateway, 'commission_checkbox')->andReturn('yes');
+        $options->shouldReceive('getGatewayOption')
+            ->with($this->gateway, 'commission', 0)->andReturn('1.5');
+
+        $this->assertSame('0.5', $this->gateway->getActionableValue('gateway_discount', 0));
+        $this->assertSame('1.5', $this->gateway->getActionableValue('commission', 0));
+
+        $this->gateway->discount   = $this->gateway->getActionableValue('gateway_discount', 0);
+        $this->gateway->commission = $this->gateway->getActionableValue('commission', 0);
+
+        $this->assertSame(0.5, $this->gateway->discount);
+        $this->assertSame(1.5, $this->gateway->commission);
+    }
 }

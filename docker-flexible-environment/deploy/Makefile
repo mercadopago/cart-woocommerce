@@ -7,7 +7,7 @@
 #   make logs SITE=mlb        logs da loja
 #   make down SITE=mlb        para a loja (mantém dados)
 #   make destroy SITE=mlb     remove a loja e os dados
-.PHONY: publish publish-all sync config status logs shell down destroy
+.PHONY: publish publish-all sync config status logs shell down destroy prepare-zip reload-caddy
 SITE ?=
 KEY ?=
 VAL ?=
@@ -21,3 +21,5 @@ logs:         ; @./deploy.sh logs $(SITE)
 shell:        ; @./deploy.sh shell $(SITE)
 down:         ; @./deploy.sh down $(SITE)
 destroy:      ; @./deploy.sh destroy $(SITE)
+prepare-zip:  ; @./deploy.sh prepare-zip $(SITE)
+reload-caddy: ; @./deploy.sh reload-caddy

@@ -39,7 +39,9 @@ trait WoocommerceMock
             ]);
         }
 
-        Mockery::mock('WC_Payment_Gateway');
+        if (!class_exists('WC_Payment_Gateway')) {
+            Mockery::mock('WC_Payment_Gateway');
+        }
         Mockery::mock('WC_Product');
         Mockery::mock('WC_Product_Simple');
         Mockery::mock('WC_Product_External');
