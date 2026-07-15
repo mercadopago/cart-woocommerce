@@ -13,7 +13,7 @@ class Template
      */
     public static function render(string $template, array $args = []): void
     {
-        wc_get_template(static::templateName($template), $args, null, Paths::templatesPath());
+        wc_get_template(static::templateName($template), $args, '', Paths::templatesPath());
     }
 
     /**
@@ -21,7 +21,7 @@ class Template
      */
     public static function html(string $template, array $args = []): string
     {
-        return wc_get_template_html(static::templateName($template), $args, null, Paths::templatesPath());
+        return wc_get_template_html(static::templateName($template), $args, '', Paths::templatesPath());
     }
 
     private static function templateName(string $template): string
