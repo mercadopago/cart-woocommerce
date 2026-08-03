@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Transactions;
 use Exception;
 use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use MercadoPago\PP\Sdk\Entity\Preference\Preference;
+use MercadoPago\PP\Sdk\Exceptions\ApiException;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
@@ -472,11 +473,52 @@ abstract class AbstractTransaction
     // Datadog value reflects $e->getCode(), which may be 0 when the SDK cannot attribute the failure to an HTTP status.
     protected function sendApiErrorMetric(string $apiRoute, Exception $e): void
     {
-        $details = MetricContext::buildApiErrorDetails($apiRoute, $this->mercadopago ?? null);
+        $details = MetricContext::buildBaseMetricDetails($apiRoute, $this->mercadopago ?? null);
         $details['sdk_instance_id'] = $this->resolveMetadataField('flow_id');
         // payment_method carries checkout_type — the product bucket (super_token, credit_card, pix…), not the card brand. Intentional: PSW-3760 needs the SuperToken flow identifiable in API errors.
         $paymentMethod = $this->resolveMetadataField('checkout_type');
         Datadog::getInstance()->sendEvent('mp_api_error', (string) $e->getCode(), $e->getMessage(), $paymentMethod, $details);
+    }
+
+    // Records every payment-creation outcome (success and error) so it can be cross-referenced with the Core P&P funnel.
+    // The HTTP status class is inferred from control flow: the SDK only returns data on 2xx (handleResponse throws on
+    // non-2xx), so a returned call is a success. On an ApiException the class comes from the status it carries
+    // (getApiStatus), which keeps 5xx correct even if the SDK later raises ApiException for it; any other Exception is
+    // the SDK's generic "Internal API Error", i.e. a 5xx. A rejected card is NOT an API error — it is a 2xx whose
+    // business outcome lives in the response body, so on success payment_status carries that outcome
+    // (approved/rejected/pending/in_process/…). This runs on the successful payment return path, so it must never
+    // affect the flow: any failure here is swallowed silently (no block, no log) — a missing metric must never cost a payment.
+    protected function sendPaymentCreateResultMetric(string $apiRoute, ?Exception $e = null, ?array $data = null): void
+    {
+        try {
+            if ($e === null) {
+                $statusClass   = '2xx';
+                $alertType     = 'success';
+                $paymentStatus = is_array($data) ? ($data['status'] ?? null) : null;
+                $message       = 'success';
+            } elseif ($e instanceof ApiException) {
+                $apiStatus     = $e->getApiStatus();
+                $statusClass   = ($apiStatus !== null && $apiStatus >= 500) ? '5xx' : '4xx';
+                $alertType     = 'error';
+                $paymentStatus = null;
+                $message       = $e->getMessage();
+            } else {
+                $statusClass   = '5xx';
+                $alertType     = 'error';
+                $paymentStatus = null;
+                $message       = $e->getMessage();
+            }
+
+            $details = MetricContext::buildBaseMetricDetails($apiRoute, $this->mercadopago ?? null);
+            $details['sdk_instance_id'] = $this->resolveMetadataField('flow_id');
+            $details['alert_type']      = $alertType;
+            $details['payment_status']  = $paymentStatus;
+
+            $paymentMethod = $this->resolveMetadataField('checkout_type');
+            Datadog::getInstance()->sendEvent('mp_payment_create_result', $statusClass, $message, $paymentMethod, $details);
+        } catch (\Throwable $t) {
+            // Intentionally ignored: observability must never block or pollute the payment flow.
+        }
     }
 
     // Assumes setCommonTransaction() has already run (called in every subtype constructor before save()).

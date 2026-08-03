@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher, sendMetric */
+/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher, sendMetric, MPCardFormErrorCodes */
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 class MPCardForm {
     TIMEOUT_TO_WAIT_INIT_CARD_FORM = 10000;
@@ -16,6 +16,10 @@ class MPCardForm {
         this.hasFiredCheckoutOpenedEvent = false;
         this.hasReportedAmountTrackingDropped = false;
         this.lastTrackedAmount = null;
+        this.cardBinIsValid = true;
+        this.cardNumberValidity = null;
+        this.lastVerdictBin = null;
+        this.currentBin = null;
 
         this.sendMelidataTimeToLoadMetric();
     }
@@ -48,6 +52,7 @@ class MPCardForm {
             this.clearTimeoutToWaitInitCardForm();
             this.sendMetric('MP_CARDFORM_SUCCESS', 'Security fields loaded', 'mp_custom_checkout_security_fields_client');
             CheckoutPage.verifyCardholderNameOnFocus();
+            CheckoutPage.clearDocumentLabelErrorOnInput();
         })
         .catch((error) => {
             this.clearTimeoutToWaitInitCardForm();
@@ -60,7 +65,7 @@ class MPCardForm {
     createTimeoutToWaitInitCardForm(reject = () => {}) {
       this.initCardFormTimeoutReference = setTimeout(() => {
         this.removeLoadSpinner();
-        reject(new Error('INIT_CARD_FORM_TIMEOUT'));
+        reject(new Error(MPCardFormErrorCodes.INIT_CARD_FORM_TIMEOUT));
       }, this.TIMEOUT_TO_WAIT_INIT_CARD_FORM);
     }
 
@@ -129,6 +134,10 @@ class MPCardForm {
         return {
             onReady: (fields) => {
                 this.fields = fields;
+                this.cardBinIsValid = true;
+                this.cardNumberValidity = null;
+                this.lastVerdictBin = null;
+                this.currentBin = null;
                 this.setupSecureFieldsStylesAndAddListeners();
                 resolve();
             },
@@ -166,13 +175,45 @@ class MPCardForm {
                     return;
                 }
             },
+            onBinChange: (bin) => {
+                // onBinChange fires ~200ms before onPaymentMethodsReceived, with the raw BIN string.
+                // On a BIN change a fresh verdict is on the way, so clear the previous (now stale) card-number error and residual payment method id optimistically instead of waiting for it — mirrors the optimistic reset in onReady. Editing within the same BIN (or Super Token, which owns the shared field) keeps them. See docs/agent/traps.md.
+                const value = typeof bin === 'string' ? bin : (bin && bin.bin) || '';
+                this.currentBin = value;
+                if (value && value !== this.lastVerdictBin) {
+                    this.cardBinIsValid = true;
+                    CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'remove', 'mp-error');
+                    CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'none');
+                    if (document.querySelector('#mp_checkout_type')?.value !== 'super_token') {
+                        CheckoutPage.setValueOn('paymentMethodId', '');
+                    }
+                }
+            },
             onPaymentMethodsReceived: (error, paymentMethods) => {
+                // Record the BIN this verdict is for, so onBinChange can tell a real BIN change from an edit within the same BIN (which must keep the current error state — see traps.md).
+                this.lastVerdictBin = this.currentBin;
                 if (error) {
                     console.error('Payment methods handling error: ', error);
+                    this.cardBinIsValid = false;
+                    CheckoutPage.clearCardState();
+                    const helperMsg = CheckoutPage.getHelperMessage('cardNumber');
+                    if (helperMsg) {
+                        const isInvalidBin = error?.message?.includes(MPCardFormErrorCodes.NO_PAYMENT_METHODS_FOUND)
+                            || error?.toString?.().includes(MPCardFormErrorCodes.NO_PAYMENT_METHODS_FOUND);
+                        helperMsg.innerHTML = isInvalidBin
+                            ? wc_mercadopago_custom_checkout_params.input_helper_message?.cardNumber?.invalid_value
+                                ?? wc_mercadopago_custom_checkout_params.input_helper_message?.cardNumber?.invalid_length
+                                ?? ''
+                            : wc_mercadopago_custom_checkout_params.input_helper_message?.cardNumber?.invalid_length
+                                ?? '';
+                    }
+                    CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
+                    CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'flex');
                     return;
                 }
                 try {
                     if (paymentMethods) {
+                        this.cardBinIsValid = true;
                         CheckoutPage.clearInputs();
                         const paymentMethod = paymentMethods[0];
 
@@ -189,6 +230,8 @@ class MPCardForm {
                         CheckoutPage.setDisplayOfInputHelperInfo('mp-card-holder-name', 'flex');
                         CheckoutPage.shouldEnableInstallmentsComponent(paymentMethod.payment_type_id);
                     } else {
+                        this.cardBinIsValid = false;
+                        CheckoutPage.clearCardState();
                         CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
                         CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'flex');
                     }
@@ -197,6 +240,7 @@ class MPCardForm {
                         console.error('Payment methods handling error: ', err);
                         return;
                     }
+                    this.cardBinIsValid = false;
                     CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
                     CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'flex');
                 }
@@ -207,25 +251,39 @@ class MPCardForm {
             onValidityChange: (error, field) => {
                 if (field === 'cardNumber') {
                     this.cardNumberFilledValidator = true;
+                    if (error && !error[0]) {
+                        if (typeof sendMetric === 'function') {
+                            sendMetric('MP_CUSTOM_CHECKOUT_CARD_VALIDATION_BLOCKED', 'unexpected_error_format',
+                                'mp_custom_card_validation', { reason: 'unexpected_error_format' });
+                        }
+                        this.cardNumberValidity = null;
+                        return;
+                    }
+                    this.cardNumberValidity = error ? error[0].code : null;
                 }
 
                 if (error) {
                     let helper_message = CheckoutPage.getHelperMessage(field);
                     let message = wc_mercadopago_custom_checkout_params.input_helper_message[field][error[0].code];
 
-                    if (message) {
-                        helper_message.innerHTML = message;
-                    } else {
-                        helper_message.innerHTML = wc_mercadopago_custom_checkout_params.input_helper_message[field]['invalid_length'];
+                    if (helper_message) {
+                        if (message) {
+                            helper_message.innerHTML = message;
+                        } else {
+                            helper_message.innerHTML = wc_mercadopago_custom_checkout_params.input_helper_message[field]['invalid_length'];
+                        }
                     }
 
                     if (field === 'cardNumber') {
                         if (error[0].code !== 'invalid_length') {
+                            const isSuperToken = document.querySelector('#mp_checkout_type')?.value === 'super_token';
                             CheckoutPage.setBackground('fcCardNumberContainer', 'no-repeat #fff');
-                            CheckoutPage.removeAdditionFields();
+                            CheckoutPage.removeAdditionFields(!isSuperToken);
                             CheckoutPage.clearInputs();
                         }
-                        CheckoutPage.setDisplayOfInputHelperInfo('mp-card-holder-name', 'flex');
+                        if (!CheckoutPage.cardholderNameHasError()) {
+                            CheckoutPage.setDisplayOfInputHelperInfo('mp-card-holder-name', 'flex');
+                        }
                     }
 
                     let containerField = CheckoutPage.findContainerField(field);
@@ -242,6 +300,10 @@ class MPCardForm {
                    return;
                 }
 
+                if (field === 'cardNumber' && !this.cardBinIsValid) {
+                    return;
+                }
+
                 let containerField = CheckoutPage.findContainerField(field);
                 CheckoutPage.setDisplayOfError(containerField, 'removed', 'mp-error');
 
@@ -252,7 +314,7 @@ class MPCardForm {
                 errors.forEach((error) => {
                     this.removeBlockOverlay();
 
-                    if (error.message.includes('timed out')) {
+                    if (error.message.includes(MPCardFormErrorCodes.TIMED_OUT)) {
                         return reject(error);
                     } else if (error.message.includes('cardNumber')) {
                         CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
@@ -266,7 +328,7 @@ class MPCardForm {
                         CheckoutPage.setDisplayOfError('fcCardExpirationDateContainer', 'add', 'mp-error');
                         return CheckoutPage.setDisplayOfInputHelper('mp-expiration-date', 'flex');
                     } else if (error.message.includes('securityCode')) {
-                        if (error.message.includes('should be a number') || error.message.includes('should be of length')) {
+                        if (error.message.includes(MPCardFormErrorCodes.SECURITY_CODE_INVALID_NUMBER) || error.message.includes(MPCardFormErrorCodes.SECURITY_CODE_INVALID_LENGTH)) {
                             CheckoutPage.setDisplayOfInputHelperMessage('mp-security-code', wc_mercadopago_custom_checkout_params.input_helper_message.securityCode.invalid_length);
                         } else {
                             CheckoutPage.setDisplayOfInputHelperMessage('mp-security-code', wc_mercadopago_custom_checkout_params.input_helper_message.securityCode.invalid_type);
@@ -289,6 +351,22 @@ class MPCardForm {
       if (!cardFormContainer) return;
 
       cardFormContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    getCardValidationReason() {
+        if (this.cardNumberValidity === 'invalid_length') {
+            return 'invalid_length';
+        }
+        if (this.cardNumberValidity === 'invalid_type') {
+            return 'empty_field';
+        }
+        if (this.cardBinIsValid === false) {
+            return 'invalid_bin';
+        }
+        if (!this.cardNumberValidity) {
+            return 'empty_field';
+        }
+        return this.cardNumberValidity;
     }
 
     getAmount() {

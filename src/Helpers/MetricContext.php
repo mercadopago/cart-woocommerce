@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 class MetricContext
 {
-    public static function buildApiErrorDetails(string $apiRoute, ?object $mercadopago = null): array
+    public static function buildBaseMetricDetails(string $apiRoute, ?object $mercadopago = null): array
     {
         $details = [
             'team'      => 'big',

@@ -1,7 +1,7 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "8.9.0",
+  "version": "8.9.1",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -14,6 +14,7 @@
     "setup:st": "node -e 'require(\"./main.js\").setupSuperToken()'",
     "build": "npm run build:narciso && npm run build:js && npm run build:css && npm run build:super-token:bundle && npm run build:webpack && npm run build:integrity",
     "build:integrity": "node -e 'require(\"./main.js\").generateIntegrityManifest()'",
+    "verify:integrity": "node bin/verify-integrity.js",
     "build:js": "node -e 'require(\"./main.js\").minifyFiles(\"js\")'",
     "build:css": "node -e 'require(\"./main.js\").minifyFiles(\"css\")'",
     "build:super-token:bundle": "node -e 'require(\"./main.js\").bundleAllSuperTokenVariants()'",

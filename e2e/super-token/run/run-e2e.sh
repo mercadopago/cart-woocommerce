@@ -36,37 +36,82 @@ export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
 log() { printf '\033[1;34m>>\033[0m %s\n' "$*"; }
 
-# 1. Túnel/loja precisa estar no ar ---------------------------------------------
-# Checa o PROCESSO do túnel + a URL — NÃO o DNS do host (a VPN bloqueia o trycloudflare
-# no host; quem precisa alcançar é o emulador, que resolve por conta própria).
-TUNNEL_URL="$(cat "$DOCKER_DIR/.tunnel-url" 2>/dev/null || true)"
-TUNNEL_PID="$(cat "$DOCKER_DIR/.tunnel.pid" 2>/dev/null || true)"
-if [ -z "$TUNNEL_URL" ] || ! { [ -n "$TUNNEL_PID" ] && kill -0 "$TUNNEL_PID" 2>/dev/null; }; then
-  echo "!! túnel não está no ar. Rode antes: make store SITE=$SITE"; exit 1
-fi
-if curl -sL "$TUNNEL_URL/shop" -o /dev/null --max-time 8 2>/dev/null; then
-  log "loja: $TUNNEL_URL (host alcança)"
+# 1. Loja precisa estar alcançável pelo Chrome do emulador ----------------------
+# Duas fontes de loja:
+#   • SHOP_URL no ambiente → loja EXTERNA pública (ex.: homologação em ppolimpo.io). O emulador
+#     alcança direto pela internet — sem túnel (cloudflare/ngrok bloqueados no Mac corporativo).
+#     Pula a guarda de túnel e o realinhamento do siteurl do docker local (a loja externa
+#     gerencia o próprio siteurl). Uso: SHOP_URL=https://skhalil-prod.ppolimpo.io make test SITE=mlb
+#   • sem SHOP_URL → loja docker local exposta pelo túnel que o `make store` gravou.
+if [ -n "${SHOP_URL:-}" ]; then
+  # SHOP_URL vira a baseURL do Chrome do emulador; sem esquema (typo comum: esquecer o https://) o
+  # navegador falha com erro críptico. Exige http(s):// explícito, igual à validação de slug do STORE.
+  [[ "$SHOP_URL" =~ ^https?:// ]] || { echo "!! SHOP_URL deve começar com http:// ou https:// (recebido: '$SHOP_URL')"; exit 1; }
+  STORE_URL="${SHOP_URL%/}"   # sem barra final: navegamos para $STORE_URL/?add-to-cart=...
+  EXTERNAL_STORE=1
+  # Sinaliza ao helpers/store.js que estamos em loja externa: sem alvo remoto (WP_SSH), os cenários
+  # `env` devem SKIPAR — nunca cair no `docker exec mp-wc-dev` local (mutaria a loja errada enquanto
+  # o emulador testa a externa). Ver storeToolingAvailable() em helpers/store.js.
+  export WP_EXTERNAL_STORE=1
+  log "loja EXTERNA: $STORE_URL (SHOP_URL — sem túnel)"
+  # Tooling de loja remota (helpers/store.js): os cenários `env` (Fluid Checkout, termos Classic)
+  # precisam de WP-CLI na MESMA loja externa. Se STORE for passado, resolve o container wp-<STORE>
+  # + a instância (deploy/.deploy.env, igual ao setup-store-remote.sh) e exporta WP_SSH/WP_CONTAINER;
+  # sem STORE, esses cenários fazem skip (não sabemos onde rodar o WP-CLI).
+  if [ -n "${STORE:-}" ]; then
+    # $STORE vira wp-$STORE e é interpolado no comando remoto via ssh (helpers/store.js) — restringe
+    # a um slug para impedir injeção de shell na instância.
+    [[ "$STORE" =~ ^[a-z0-9-]+$ ]] || { echo "!! STORE inválido: '$STORE' (permitido: a-z, 0-9, hífen)"; exit 1; }
+    DEPLOY_ENV="$DOCKER_DIR/deploy/.deploy.env"
+    [ -f "$DEPLOY_ENV" ] && { set -a; . "$DEPLOY_ENV"; set +a; }
+    ST_INSTANCE="${INSTANCE:-${HOMOLOG_INSTANCE:-}}"
+    ST_BASE_DOMAIN="${HOMOLOG_BASE_DOMAIN:-ppolimpo.io}"
+    if [ -n "$ST_INSTANCE" ]; then
+      [[ "$ST_INSTANCE" == *"."* ]] && ST_HOST="$ST_INSTANCE" || ST_HOST="${ST_INSTANCE}.${ST_BASE_DOMAIN}"
+      export WP_CONTAINER="wp-$STORE"
+      export WP_SSH="${HOMOLOG_SSH_USER:-ubuntu}@$ST_HOST"
+      export WP_SSH_KEY="${HOMOLOG_SSH_KEY:-$HOME/.ssh/id_aws}"
+      log "tooling de loja remota: $WP_SSH → docker exec $WP_CONTAINER"
+    else
+      log "STORE=$STORE mas instância indefinida (HOMOLOG_INSTANCE/INSTANCE) — cenários env farão skip."
+    fi
+  fi
 else
-  log "loja: $TUNNEL_URL (host não resolve — normal sob VPN; o emulador alcança)"
+  EXTERNAL_STORE=0
+  # Checa o PROCESSO do túnel + a URL — NÃO o DNS do host (a VPN bloqueia o trycloudflare
+  # no host; quem precisa alcançar é o emulador, que resolve por conta própria).
+  STORE_URL="$(cat "$DOCKER_DIR/.tunnel-url" 2>/dev/null || true)"
+  TUNNEL_PID="$(cat "$DOCKER_DIR/.tunnel.pid" 2>/dev/null || true)"
+  if [ -z "$STORE_URL" ] || ! { [ -n "$TUNNEL_PID" ] && kill -0 "$TUNNEL_PID" 2>/dev/null; }; then
+    echo "!! túnel não está no ar. Rode antes: make store SITE=$SITE (ou defina SHOP_URL p/ loja externa)"; exit 1
+  fi
+  if curl -sL "$STORE_URL/shop" -o /dev/null --max-time 8 2>/dev/null; then
+    log "loja: $STORE_URL (host alcança)"
+  else
+    log "loja: $STORE_URL (host não resolve — normal sob VPN; o emulador alcança)"
+  fi
 fi
 
-# 1.1 Invariante túnel ↔ WP siteurl ---------------------------------------------
+# 1.1 Invariante túnel ↔ WP siteurl (só no modo túnel/docker local) -------------
 # O flow navega pelo .tunnel-url (exportado como SHOP_URL abaixo), mas o WooCommerce faz
 # canonical-redirect para o `siteurl`. Se divergirem, o add-to-cart cai num host e o /checkout/ é
 # avaliado noutro → o carrinho fica vazio → o WC manda pro /cart/ e o teste "não redireciona pro
 # checkout". O túnel já foi confirmado vivo acima, então re-alinhamos siteurl/home/_mp_custom_domain
 # (idempotente, os mesmos updates do setup-store) em vez de abortar — zero atrito pro dev.
-WP_CONTAINER="${WP_CONTAINER:-mp-wc-dev}"
-wp_opt() { docker exec "$WP_CONTAINER" wp "$@" --allow-root 2>/dev/null | tr -d '\r'; }
-CURRENT_SITEURL="$(wp_opt option get siteurl || true)"
-if [ -z "$CURRENT_SITEURL" ]; then
-  log "não consegui ler o siteurl (container '$WP_CONTAINER' no ar?) — seguindo sem checar o invariante."
-elif [ "$CURRENT_SITEURL" != "$TUNNEL_URL" ]; then
-  log "siteurl ($CURRENT_SITEURL) ≠ túnel ($TUNNEL_URL) — re-alinhando WP para evitar redirect pro carrinho..."
-  for opt in siteurl home _mp_custom_domain; do
-    wp_opt option update "$opt" "$TUNNEL_URL" >/dev/null || true
-  done
-  wp_opt cache flush >/dev/null 2>&1 || true
+# Loja EXTERNA (SHOP_URL) gerencia o próprio siteurl e não roda no container mp-wc-dev — pula.
+if [ "$EXTERNAL_STORE" = "0" ]; then
+  WP_CONTAINER="${WP_CONTAINER:-mp-wc-dev}"
+  wp_opt() { docker exec "$WP_CONTAINER" wp "$@" --allow-root 2>/dev/null | tr -d '\r'; }
+  CURRENT_SITEURL="$(wp_opt option get siteurl || true)"
+  if [ -z "$CURRENT_SITEURL" ]; then
+    log "não consegui ler o siteurl (container '$WP_CONTAINER' no ar?) — seguindo sem checar o invariante."
+  elif [ "$CURRENT_SITEURL" != "$STORE_URL" ]; then
+    log "siteurl ($CURRENT_SITEURL) ≠ túnel ($STORE_URL) — re-alinhando WP para evitar redirect pro carrinho..."
+    for opt in siteurl home _mp_custom_domain; do
+      wp_opt option update "$opt" "$STORE_URL" >/dev/null || true
+    done
+    wp_opt cache flush >/dev/null 2>&1 || true
+  fi
 fi
 
 # 2. Boot do golden device (snapshot) -------------------------------------------
@@ -117,7 +162,7 @@ adb shell settings put system screen_off_timeout 1800000 >/dev/null 2>&1 || true
 # recém-iniciado responde o CDP normalmente.
 adb shell am force-stop com.android.chrome >/dev/null 2>&1 || true
 sleep 2
-adb shell am start -a android.intent.action.VIEW -d "$TUNNEL_URL/?add-to-cart=$PRODUCT" \
+adb shell am start -a android.intent.action.VIEW -d "$STORE_URL/?add-to-cart=$PRODUCT" \
   -n com.android.chrome/com.google.android.apps.chrome.Main >/dev/null 2>&1 \
   || { echo "!! falha ao abrir o Chrome no emulador (device conectado? com.android.chrome instalado?)"; exit 1; }
 sleep 5
@@ -136,7 +181,7 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
   . "$NVM_DIR/nvm.sh"
   nvm use 22 >/dev/null 2>&1 || echo "[aviso] Node 22 não disponível via nvm — usando $(node -v)" >&2
 fi
-export SHOP_URL="$TUNNEL_URL"
+export SHOP_URL="$STORE_URL"
 
 # Roda só a pasta do país no ar; N/GREP filtram por título (--grep), GROUP foca um grupo.
 TARGET="tests/$SITE"

@@ -130,6 +130,10 @@ class ErrorMessagesTest extends TestCase
             'card_data_required' => [
                 'input_message' => 'The parameter cardholder.name cannot be null or empty',
                 'expected_message' => '<strong>One or more card details were entered incorrectly</strong><br>Please enter them again exactly as they appear on the card to complete the payment.'
+            ],
+            'bin_not_found' => [
+                'input_message' => 'bin_not_found',
+                'expected_message' => '<strong>One or more card details were entered incorrectly</strong><br>Please enter them again exactly as they appear on the card to complete the payment.'
             ]
         ];
     }

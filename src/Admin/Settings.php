@@ -34,6 +34,8 @@ class Settings
 
     private const NONCE_ID = 'mp_settings_nonce';
 
+    private const DOWNLOAD_LOG_NONCE_ID = 'mp_download_log_nonce';
+
     private const ONBOARDING_ERROR = 'onboarding_error';
 
     private const NOT_LINKED_FAILED = 'not_linked_failed';
@@ -291,7 +293,7 @@ class Settings
             'woocommerce',
             'Mercado Pago Settings',
             'Mercado Pago',
-            'manage_options',
+            'manage_woocommerce',
             'mercadopago-settings',
             [$this, 'mercadoPagoSubmenuPageCallback']
         );
@@ -341,6 +343,8 @@ class Settings
         $pluginVersion = MP_VERSION ??  "";
 
         $credentialsState = $this->credentialsStates->getCredentialsTemplate($this->getMercadoPagoCredentialsStatus());
+
+        $downloadLogNonce = $this->nonce->generateNonce(self::DOWNLOAD_LOG_NONCE_ID);
 
         include dirname(__FILE__) . '/../../templates/admin/settings/settings.php';
     }
@@ -676,6 +680,7 @@ class Settings
     public function mercadopagoDownloadLog()
     {
         try {
+            $this->nonce->validateNonce(self::DOWNLOAD_LOG_NONCE_ID, Form::sanitizedGetData('nonce'));
             $this->downloader->downloadLog();
         } catch (Exception $e) {
             $this->logs->file->error('Mercado pago gave error to download log files: ' . $e->getMessage(), __CLASS__);

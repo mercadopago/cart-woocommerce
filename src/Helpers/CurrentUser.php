@@ -115,15 +115,13 @@ class CurrentUser
     }
 
     /**
-     * Validate if user has administrator or editor permissions
+     * Validate that the current user has the manage_woocommerce capability
      *
      * @return void
      */
     public function validateUserNeededPermissions(): void
     {
-        $neededRoles = ['administrator', 'manage_woocommerce'];
-
-        if (!$this->userHasRoles($neededRoles)) {
+        if (!$this->currentUserCan('manage_woocommerce')) {
             $this->logs->file->error('User does not have permissions', __CLASS__);
             wp_send_json_error('Forbidden', 403);
         }

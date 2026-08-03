@@ -9,8 +9,10 @@ import {
   PENDING_BUYER,
 } from "../flows/super-token.js";
 
-// iframe de detecção de app do MP (ApplicationsDetect). Bloqueá-lo = "app não detectado".
-const PRAPI_IFRAME = "**/op-pay/prapi/**";
+// Detecção de app / elegibilidade do MP. Bloqueá-la = "app não detectado" → sem ST.
+// Cobre os dois bundles: `op-pay/prapi` (prod/v1) e `/v2/user-flows` (homol) — RegExp p/ não
+// acoplar o teste a um bundle específico (o env é escolhido em super-token-loader.js).
+const APP_DETECTION = /op-pay\/prapi|\/v2\/user-flows/;
 
 const { buyerFor } = require("../data/country.js");
 const { skipIfNotSite } = require("../../helpers/site-guard.js");
@@ -47,8 +49,8 @@ export function eligibilityScenarios(site) {
     });
 
     test("Given a device without the Super Token app, When they open the Custom Checkout, Then it falls back to the standard checkout", async ({ page, faults }) => {
-      // Bloqueia o iframe de detecção de app (PRAPI) → ApplicationsDetect falha → sem ST.
-      await faults.failUrl(PRAPI_IFRAME);
+      // Bloqueia a detecção de app/elegibilidade → ApplicationsDetect falha → sem ST.
+      await faults.failUrl(APP_DETECTION);
 
       await startCustomCheckout(page, buyer);
 

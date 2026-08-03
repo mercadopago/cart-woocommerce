@@ -24,7 +24,8 @@ describe('MPCardForm', () => {
       },
       input_helper_message: {
         cardNumber: {
-          invalid_length: 'Número do cartão inválido',
+          invalid_length: 'Insira o número completo.',
+          invalid_value: 'Insira um número válido.',
           invalid_type: 'Número do cartão deve conter apenas dígitos',
         },
         cardholderName: {
@@ -59,6 +60,7 @@ describe('MPCardForm', () => {
 
     global.CheckoutPage = {
       clearInputs: jest.fn(),
+      clearCardState: jest.fn(),
       setChangeEventOnInstallments: jest.fn(),
       setValueOn: jest.fn(),
       setCvvConfig: jest.fn(),
@@ -78,6 +80,8 @@ describe('MPCardForm', () => {
       setDisplayOfInputHelperMessage: jest.fn(),
       verifyCardholderNameOnFocus: jest.fn(),
       setDisplayOfInputHelperInfo: jest.fn(),
+      cardholderNameHasError: jest.fn(() => false),
+      clearDocumentLabelErrorOnInput: jest.fn(),
     };
 
     global.MPCheckoutFieldsDispatcher = {
@@ -85,6 +89,10 @@ describe('MPCardForm', () => {
     };
 
     global.sendMetric = jest.fn();
+
+    global.MPCardFormErrorCodes = {
+      NO_PAYMENT_METHODS_FOUND: 'No payment methods found',
+    };
 
     global.window.mpCheckoutForm = '#checkout-form';
 
@@ -473,7 +481,7 @@ describe('MPCardForm', () => {
     );
   });
 
-  describe('dispatchCheckoutAmountEvent() — tracking de amount (PSW-4147)', () => {
+  describe('dispatchCheckoutAmountEvent() — tracking de amount', () => {
     let dispatchEventSpy;
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
     const opened = () =>
@@ -595,6 +603,468 @@ describe('MPCardForm', () => {
           );
         }
       );
+    });
+  });
+
+  describe('onPaymentMethodsReceived callback', () => {
+    let onPaymentMethodsReceived;
+
+    beforeEach(() => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      onPaymentMethodsReceived = callbacks.onPaymentMethodsReceived;
+    });
+
+    test('Given SDK returns NO_PAYMENT_METHODS_FOUND error (invalid BIN), When onPaymentMethodsReceived is called, Then calls clearCardState (resetting name and state), sets invalid card message and does not call clearInputs', () => {
+      const mockHelperEl = { innerHTML: '' };
+      CheckoutPage.getHelperMessage = jest.fn(() => mockHelperEl);
+
+      onPaymentMethodsReceived('No payment methods found', null);
+
+      expect(CheckoutPage.clearCardState).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.getHelperMessage).toHaveBeenCalledWith('cardNumber');
+      expect(mockHelperEl.innerHTML).toBe('Insira um número válido.');
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('fcCardNumberContainer', 'add', 'mp-error');
+      expect(CheckoutPage.setDisplayOfInputHelper).toHaveBeenCalledWith('mp-card-number', 'flex');
+      expect(CheckoutPage.clearInputs).not.toHaveBeenCalled();
+    });
+
+    test('Given SDK returns an unknown error, When onPaymentMethodsReceived is called, Then calls clearCardState, sets generic fallback message and shows card number error', () => {
+      const mockHelperEl = { innerHTML: '' };
+      CheckoutPage.getHelperMessage = jest.fn(() => mockHelperEl);
+
+      onPaymentMethodsReceived('Some unexpected SDK error', null);
+
+      expect(CheckoutPage.clearCardState).toHaveBeenCalledTimes(1);
+      expect(mockHelperEl.innerHTML).toBe('Insira o número completo.');
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('fcCardNumberContainer', 'add', 'mp-error');
+      expect(CheckoutPage.setDisplayOfInputHelper).toHaveBeenCalledWith('mp-card-number', 'flex');
+      expect(CheckoutPage.clearInputs).not.toHaveBeenCalled();
+    });
+
+    test('Given SDK returns an Error object with NO_PAYMENT_METHODS_FOUND message (invalid BIN), When onPaymentMethodsReceived is called, Then calls clearCardState and sets invalid card message via the error.message branch', () => {
+      const mockHelperEl = { innerHTML: '' };
+      CheckoutPage.getHelperMessage = jest.fn(() => mockHelperEl);
+
+      onPaymentMethodsReceived(new Error('No payment methods found'), null);
+
+      expect(CheckoutPage.clearCardState).toHaveBeenCalledTimes(1);
+      expect(mockHelperEl.innerHTML).toBe('Insira um número válido.');
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('fcCardNumberContainer', 'add', 'mp-error');
+      expect(CheckoutPage.setDisplayOfInputHelper).toHaveBeenCalledWith('mp-card-number', 'flex');
+      expect(CheckoutPage.clearInputs).not.toHaveBeenCalled();
+    });
+
+    test('Given SDK returns null paymentMethods without error, When onPaymentMethodsReceived is called, Then calls clearCardState and shows card number error', () => {
+      onPaymentMethodsReceived(null, null);
+
+      expect(CheckoutPage.clearCardState).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('fcCardNumberContainer', 'add', 'mp-error');
+      expect(CheckoutPage.setDisplayOfInputHelper).toHaveBeenCalledWith('mp-card-number', 'flex');
+      expect(CheckoutPage.clearInputs).not.toHaveBeenCalled();
+    });
+
+    test('Given SDK returns valid paymentMethods, When onPaymentMethodsReceived is called, Then calls clearInputs and sets paymentMethodId', () => {
+      const mockPaymentMethod = {
+        id: 'master',
+        settings: [{ security_code: { length: 3 } }],
+        secure_thumbnail: 'https://example.com/master.png',
+        thumbnail: 'https://example.com/master.png',
+        additional_info_needed: [],
+        payment_type_id: 'credit_card',
+      };
+
+      onPaymentMethodsReceived(null, [mockPaymentMethod]);
+
+      expect(CheckoutPage.clearInputs).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.setValueOn).toHaveBeenCalledWith('paymentMethodId', 'master');
+    });
+  });
+
+  describe('onBinChange callback (early BIN-change reset)', () => {
+    let callbacks;
+
+    beforeEach(() => {
+      callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+    });
+
+    test('Given a BIN different from the last verdict, When onBinChange runs, Then it marks the BIN optimistically valid, clears the card-number error early and drops the residual paymentMethodId', () => {
+      cardForm.lastVerdictBin = '11111111';
+      cardForm.cardBinIsValid = false;
+
+      callbacks.onBinChange('42356477');
+
+      expect(cardForm.currentBin).toBe('42356477');
+      expect(cardForm.cardBinIsValid).toBe(true);
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('fcCardNumberContainer', 'remove', 'mp-error');
+      expect(CheckoutPage.setDisplayOfInputHelper).toHaveBeenCalledWith('mp-card-number', 'none');
+      expect(CheckoutPage.setValueOn).toHaveBeenCalledWith('paymentMethodId', '');
+    });
+
+    test('Given the same BIN as the last verdict (editing within the same BIN), When onBinChange runs, Then it keeps the current error state and does not touch paymentMethodId', () => {
+      cardForm.lastVerdictBin = '42356477';
+      cardForm.cardBinIsValid = false;
+
+      callbacks.onBinChange('42356477');
+
+      expect(cardForm.currentBin).toBe('42356477');
+      expect(cardForm.cardBinIsValid).toBe(false);
+      expect(CheckoutPage.setDisplayOfError).not.toHaveBeenCalled();
+      expect(CheckoutPage.setValueOn).not.toHaveBeenCalled();
+    });
+
+    test('Given an empty BIN (field cleared), When onBinChange runs, Then it records the empty bin and takes no action', () => {
+      cardForm.lastVerdictBin = '42356477';
+
+      callbacks.onBinChange('');
+
+      expect(cardForm.currentBin).toBe('');
+      expect(CheckoutPage.setDisplayOfError).not.toHaveBeenCalled();
+      expect(CheckoutPage.setValueOn).not.toHaveBeenCalled();
+    });
+
+    test('Given the Super Token flow, When onBinChange runs on a new BIN, Then it clears the error but never clears paymentMethodId (Super Token owns that shared field)', () => {
+      document.body.innerHTML += '<input type="hidden" id="mp_checkout_type" value="super_token" />';
+      cardForm.lastVerdictBin = null;
+
+      callbacks.onBinChange('42356477');
+
+      expect(cardForm.cardBinIsValid).toBe(true);
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('fcCardNumberContainer', 'remove', 'mp-error');
+      expect(CheckoutPage.setValueOn).not.toHaveBeenCalledWith('paymentMethodId', '');
+    });
+
+    test('Given the bin arrives as an object { bin }, When onBinChange runs, Then it reads the raw bin string from the object', () => {
+      cardForm.lastVerdictBin = null;
+
+      callbacks.onBinChange({ bin: '42356477' });
+
+      expect(cardForm.currentBin).toBe('42356477');
+      expect(CheckoutPage.setValueOn).toHaveBeenCalledWith('paymentMethodId', '');
+    });
+
+    test('Given a bin was tracked by onBinChange, When onPaymentMethodsReceived resolves for a recognized card, Then it records that bin as the last verdict and repopulates paymentMethodId', () => {
+      callbacks.onBinChange('42356477');
+
+      callbacks.onPaymentMethodsReceived(null, [{
+        id: 'visa',
+        settings: [{ security_code: { length: 3 } }],
+        secure_thumbnail: '',
+        thumbnail: '',
+        additional_info_needed: [],
+        payment_type_id: 'credit_card',
+      }]);
+
+      expect(cardForm.lastVerdictBin).toBe('42356477');
+      expect(CheckoutPage.setValueOn).toHaveBeenCalledWith('paymentMethodId', 'visa');
+    });
+  });
+
+  describe('clearInputs() other call sites — no regression from clearCardState()', () => {
+    test('Given cardForm is unmounted without error, When onFormUnmounted is called, Then calls clearInputs and resolves without sending a metric', () => {
+      const resolve = jest.fn();
+      const callbacks = cardForm.getCardFormCallbacks(resolve, jest.fn());
+
+      callbacks.onFormUnmounted(null);
+
+      expect(CheckoutPage.clearInputs).toHaveBeenCalledTimes(1);
+      expect(resolve).toHaveBeenCalledTimes(1);
+      expect(global.sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given cardForm is unmounted with error, When onFormUnmounted is called, Then still calls clearInputs and sends an unmount error metric', () => {
+      const resolve = jest.fn();
+      const callbacks = cardForm.getCardFormCallbacks(resolve, jest.fn());
+
+      callbacks.onFormUnmounted(new Error('iframe detached'));
+
+      expect(CheckoutPage.clearInputs).toHaveBeenCalledTimes(1);
+      expect(global.sendMetric).toHaveBeenCalledWith('MP_CARDFORM_UNMOUNT_ERROR', 'iframe detached', 'mp_custom_checkout_security_fields_client');
+    });
+
+    test('Given cardNumber becomes invalid for a reason other than invalid_length, When onValidityChange is called, Then calls clearInputs to reset residual card state', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onValidityChange([{ code: 'invalid_type' }], 'cardNumber');
+
+      expect(CheckoutPage.clearInputs).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.setBackground).toHaveBeenCalledWith('fcCardNumberContainer', 'no-repeat #fff');
+    });
+
+    test('Given cardNumber is simply too short (invalid_length), When onValidityChange is called, Then does not call clearInputs (user is still typing)', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onValidityChange([{ code: 'invalid_length' }], 'cardNumber');
+
+      expect(CheckoutPage.clearInputs).not.toHaveBeenCalled();
+    });
+
+    test('Given getHelperMessage returns null (helper element missing from DOM), When onValidityChange is called with an error, Then does not throw and still applies the error state', () => {
+      CheckoutPage.getHelperMessage = jest.fn(() => null);
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      expect(() => callbacks.onValidityChange([{ code: 'invalid_type' }], 'cardNumber')).not.toThrow();
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('container', 'add', 'mp-error');
+    });
+  });
+
+  describe('cardBinIsValid tracking', () => {
+    const mockPaymentMethod = {
+      id: 'master',
+      settings: [{ security_code: { length: 3 } }],
+      secure_thumbnail: 'https://example.com/master.png',
+      thumbnail: 'https://example.com/master.png',
+      additional_info_needed: [],
+      payment_type_id: 'credit_card',
+    };
+
+    test('Given onPaymentMethodsReceived is called with an error, When it runs, Then sets cardBinIsValid to false', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onPaymentMethodsReceived('No payment methods found', null);
+
+      expect(cardForm.cardBinIsValid).toBe(false);
+    });
+
+    test('Given onPaymentMethodsReceived is called with null paymentMethods and no error, When it runs, Then sets cardBinIsValid to false', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onPaymentMethodsReceived(null, null);
+
+      expect(cardForm.cardBinIsValid).toBe(false);
+    });
+
+    test('Given onPaymentMethodsReceived is called with a recognized payment method, When it runs, Then sets cardBinIsValid to true', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onPaymentMethodsReceived(null, [mockPaymentMethod]);
+
+      expect(cardForm.cardBinIsValid).toBe(true);
+    });
+
+    test('Given cardBinIsValid is false, When onValidityChange is called with a valid cardNumber format, Then does not remove the error state', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      cardForm.cardBinIsValid = false;
+
+      callbacks.onValidityChange(null, 'cardNumber');
+
+      expect(CheckoutPage.setDisplayOfError).not.toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+    });
+
+    test('Given cardBinIsValid is false (invalid BIN detected), When onValidityChange fires an invalid_length error for cardNumber, Then does NOT flip cardBinIsValid (keeps the invalid-BIN lock) and tracks invalid_length', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      cardForm.cardBinIsValid = false;
+
+      callbacks.onValidityChange([{ code: 'invalid_length' }], 'cardNumber');
+
+      expect(cardForm.cardBinIsValid).toBe(false);
+      expect(cardForm.cardNumberValidity).toBe('invalid_length');
+    });
+
+    test('Given cardBinIsValid is false, When onValidityChange fires an invalid_length error for a different field (securityCode), Then does not reset the cardNumber BIN flag', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      cardForm.cardBinIsValid = false;
+
+      callbacks.onValidityChange([{ code: 'invalid_length' }], 'securityCode');
+
+      expect(cardForm.cardBinIsValid).toBe(false);
+    });
+
+    test('Given cardBinIsValid is false, When onValidityChange fires an invalid_type error (empty field) for cardNumber, Then does NOT flip cardBinIsValid and tracks the empty state', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      cardForm.cardBinIsValid = false;
+
+      callbacks.onValidityChange([{ code: 'invalid_type' }], 'cardNumber');
+
+      expect(cardForm.cardBinIsValid).toBe(false);
+      expect(cardForm.cardNumberValidity).toBe('invalid_type');
+    });
+
+    test('Given a cardNumber that becomes valid (no error), When onValidityChange runs, Then cardNumberValidity is cleared to null', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      cardForm.cardNumberValidity = 'invalid_length';
+
+      callbacks.onValidityChange(null, 'cardNumber');
+
+      expect(cardForm.cardNumberValidity).toBeNull();
+    });
+
+    test('Given the SDK passes an empty error array for cardNumber, When onValidityChange runs, Then does not throw, cardNumberValidity is null and emits unexpected_error_format metric', () => {
+      // Reload so the vm sandbox captures the current global.sendMetric reference
+      // (the bare `sendMetric` global is snapshotted at load time).
+      const LocalMPCardForm = loadFile(cardFormPath, 'MPCardForm', global);
+      const localCardForm = new LocalMPCardForm();
+      const callbacks = localCardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      expect(() => callbacks.onValidityChange([], 'cardNumber')).not.toThrow();
+      expect(localCardForm.cardNumberValidity).toBeNull();
+      expect(global.sendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_CARD_VALIDATION_BLOCKED',
+        'unexpected_error_format',
+        'mp_custom_card_validation',
+        { reason: 'unexpected_error_format' }
+      );
+    });
+
+    describe('getCardValidationReason()', () => {
+      test('Given cardBinIsValid is false (complete BIN rejected, valid format), Then returns invalid_bin', () => {
+        cardForm.cardBinIsValid = false;
+        cardForm.cardNumberValidity = null;
+
+        expect(cardForm.getCardValidationReason()).toBe('invalid_bin');
+      });
+
+      test('Given cardBinIsValid is false but the number is currently incomplete (invalid_length), Then the current state wins and returns invalid_length', () => {
+        cardForm.cardBinIsValid = false;
+        cardForm.cardNumberValidity = 'invalid_length';
+
+        expect(cardForm.getCardValidationReason()).toBe('invalid_length');
+      });
+
+      test('Given the field is empty (cardNumberValidity invalid_type) and BIN not rejected, Then returns empty_field', () => {
+        cardForm.cardBinIsValid = true;
+        cardForm.cardNumberValidity = 'invalid_type';
+
+        expect(cardForm.getCardValidationReason()).toBe('empty_field');
+      });
+
+      test('Given the number is incomplete (invalid_length) and BIN not rejected, Then returns invalid_length', () => {
+        cardForm.cardBinIsValid = true;
+        cardForm.cardNumberValidity = 'invalid_length';
+
+        expect(cardForm.getCardValidationReason()).toBe('invalid_length');
+      });
+
+      test('Given a fresh, never-touched field (cardNumberValidity null) and BIN not rejected, Then returns empty_field (consistent with a touched-then-emptied field)', () => {
+        cardForm.cardBinIsValid = true;
+        cardForm.cardNumberValidity = null;
+
+        expect(cardForm.getCardValidationReason()).toBe('empty_field');
+      });
+
+      test('Given an unforeseen SDK validity code (not length/type) and BIN not rejected, Then reports it as-is instead of masking it as empty_field', () => {
+        cardForm.cardBinIsValid = true;
+        cardForm.cardNumberValidity = 'invalid_value';
+
+        expect(cardForm.getCardValidationReason()).toBe('invalid_value');
+      });
+    });
+
+    test('Given cardBinIsValid is true (default), When onValidityChange is called with a valid cardNumber format, Then removes the error state as before (regression)', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onValidityChange(null, 'cardNumber');
+
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+    });
+
+    test('Given cardBinIsValid is false, When onValidityChange is called for a different field (cardholderName), Then is not affected by the cardNumber guard', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      cardForm.cardBinIsValid = false;
+      CheckoutPage.verifyCardholderName = jest.fn(() => true);
+
+      callbacks.onValidityChange(null, 'cardholderName');
+
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+    });
+
+    test('Given cardBinIsValid is false from a previous mount, When onReady runs again (remount), Then resets cardBinIsValid to true', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      cardForm.cardBinIsValid = false;
+
+      callbacks.onReady({ cardNumber: { on: jest.fn() }, expirationDate: { on: jest.fn() }, securityCode: { on: jest.fn() } });
+
+      expect(cardForm.cardBinIsValid).toBe(true);
+    });
+
+    test('Given a falsy value is thrown while processing a recognized payment method, When the catch displays the error, Then cardBinIsValid is set to false to stay consistent with the visible error', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      CheckoutPage.clearInputs.mockImplementationOnce(() => { throw undefined; });
+
+      callbacks.onPaymentMethodsReceived(null, [mockPaymentMethod]);
+
+      expect(cardForm.cardBinIsValid).toBe(false);
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('fcCardNumberContainer', 'add', 'mp-error');
+    });
+
+    describe('behavior scenarios — real callback sequences', () => {
+      test('Given an invalid BIN was detected, When the buyer deletes and retypes a digit (two consecutive valid-format checks), Then the error is never removed', () => {
+        const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+        callbacks.onPaymentMethodsReceived('No payment methods found', null);
+        callbacks.onValidityChange(null, 'cardNumber'); // deleting a digit — still within the accepted length range
+        expect(CheckoutPage.setDisplayOfError).not.toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+
+        callbacks.onValidityChange(null, 'cardNumber'); // retyping the digit
+        expect(CheckoutPage.setDisplayOfError).not.toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+      });
+
+      test('Given a valid card was recognized, When the buyer switches to an invalid BIN and format stays valid, Then the error is kept visible', () => {
+        const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+        callbacks.onPaymentMethodsReceived(null, [mockPaymentMethod]);
+        callbacks.onPaymentMethodsReceived('No payment methods found', null);
+        callbacks.onValidityChange(null, 'cardNumber');
+
+        expect(CheckoutPage.setDisplayOfError).not.toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+      });
+
+      test('Given an invalid BIN whose brand length the SDK knows, When the buyer shortens (invalid_length) and retypes the same BIN (valid format), Then the error is NOT removed — the invalid-BIN lock survives the length event', () => {
+        const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+        // Complete invalid BIN detected — the SDK reports "no payment methods"
+        callbacks.onPaymentMethodsReceived('No payment methods found', null);
+        expect(cardForm.cardBinIsValid).toBe(false);
+
+        // Shorten one digit → the SDK knows the brand length and fires invalid_length
+        callbacks.onValidityChange([{ code: 'invalid_length' }], 'cardNumber');
+        // The lock must survive: the flag stays false (no reset)
+        expect(cardForm.cardBinIsValid).toBe(false);
+
+        // Retype the same BIN → format valid again; onPaymentMethodsReceived does NOT re-fire (same BIN)
+        callbacks.onValidityChange(null, 'cardNumber');
+
+        // The error must never be removed, so the pre-submit gate keeps blocking the invalid card
+        expect(CheckoutPage.setDisplayOfError).not.toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+      });
+
+      test('Given an invalid BIN was detected, When the buyer corrects it to a recognized card, Then the error is removed normally', () => {
+        const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+        callbacks.onPaymentMethodsReceived('No payment methods found', null);
+        callbacks.onPaymentMethodsReceived(null, [mockPaymentMethod]);
+        callbacks.onValidityChange(null, 'cardNumber');
+
+        expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+      });
+
+      test('Given an invalid BIN error happened before a remount, When the form remounts and the buyer types a new card, Then the stale error state does not leak into the new attempt', () => {
+        const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+        callbacks.onPaymentMethodsReceived('No payment methods found', null);
+        callbacks.onReady({ cardNumber: { on: jest.fn() }, expirationDate: { on: jest.fn() }, securityCode: { on: jest.fn() } });
+        callbacks.onValidityChange(null, 'cardNumber');
+
+        expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+      });
+
+      test('Given the form remounts after an invalid BIN (e.g. updated_checkout), When the buyer re-enters an invalid BIN into the freshly recreated fields, Then onPaymentMethodsReceived re-applies the error — the onReady reset to true is safe because a remount forces re-evaluation from an empty field', () => {
+        const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+        callbacks.onPaymentMethodsReceived('No payment methods found', null);
+        expect(cardForm.cardBinIsValid).toBe(false);
+
+        // remount (updated_checkout): onReady resets the flag; the SDK recreates the card number iframe empty
+        callbacks.onReady({ cardNumber: { on: jest.fn() }, expirationDate: { on: jest.fn() }, securityCode: { on: jest.fn() } });
+        expect(cardForm.cardBinIsValid).toBe(true);
+
+        // re-entry into the empty field triggers a fresh BIN evaluation that re-blocks
+        callbacks.onPaymentMethodsReceived('No payment methods found', null);
+        expect(cardForm.cardBinIsValid).toBe(false);
+
+        CheckoutPage.setDisplayOfError.mockClear();
+        callbacks.onValidityChange(null, 'cardNumber');
+        expect(CheckoutPage.setDisplayOfError).not.toHaveBeenCalledWith(expect.anything(), 'removed', 'mp-error');
+      });
     });
   });
 

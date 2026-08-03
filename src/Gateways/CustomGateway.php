@@ -1491,8 +1491,13 @@ window.mpSdkInstance = null;",
                 'raw_url' => $this->mercadopago->helpers->url->getMercadoPagoSdkUrl(),
             ],
             [
+                'handle' => 'wc_mercadopago_custom_card_form_error_codes',
+                'path' => 'checkouts/custom/entities/mp-card-form-error-codes',
+            ],
+            [
                 'handle' => 'wc_mercadopago_custom_card_form',
                 'path' => 'checkouts/custom/entities/card-form',
+                'deps' => ['wc_mercadopago_custom_card_form_error_codes'],
                 'localize' => [
                     'security_code_placeholder_text_3_digits' => $this->storeTranslations['security_code_placeholder_text_3_digits'],
                 ],

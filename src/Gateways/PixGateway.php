@@ -532,9 +532,10 @@ class PixGateway extends AbstractGateway
                 'wc_mercadopago_pix_pooling',
                 $scriptUrl,
                 [
-                    'order_id' => $order->get_id(),
-                    'ajax_url' => \WC_AJAX::get_endpoint(self::PIX_PAYMENT_STATUS_ENDPOINT),
-                    'nonce' => wp_create_nonce(self::PIX_STATUS_NONCE)
+                    'order_id'  => $order->get_id(),
+                    'order_key' => $order->get_order_key(),
+                    'ajax_url'  => \WC_AJAX::get_endpoint(self::PIX_PAYMENT_STATUS_ENDPOINT),
+                    'nonce'     => wp_create_nonce(self::PIX_STATUS_NONCE)
                 ]
             );
         }
@@ -604,15 +605,44 @@ class PixGateway extends AbstractGateway
      */
     private function getOrderFromRequest(): \WC_Order
     {
-        $orderId = Form::sanitizedPostData('order_id');
-        $order = wc_get_order($orderId);
+        $orderId  = Form::sanitizedPostData('order_id');
+        $orderKey = Form::sanitizedPostData('order_key');
+        $order    = wc_get_order($orderId);
 
         if (!$order) {
-            wp_send_json_error(['message' => 'Order not found'], 404);
-            throw new Exception('Order not found');
+            $this->rejectPixStatusRequest('order_not_found');
+        }
+
+        $orderKey = is_string($orderKey) ? $orderKey : '';
+
+        if (!$orderKey || !hash_equals($order->get_order_key(), $orderKey)) {
+            $this->rejectPixStatusRequest(!$orderKey ? 'missing_order_key' : 'invalid_order_key');
         }
 
         return $order;
+    }
+
+    /**
+     * Reject a Pix status request with a uniform 403 so a caller cannot tell an
+     * absent order from a wrong key; the real reason is recorded only server-side.
+     *
+     * @param string $reason
+     * @return never
+     * @throws Exception
+     */
+    private function rejectPixStatusRequest(string $reason): void
+    {
+        try {
+            $this->datadog->sendEvent('pix_status_access', $reason, null, 'pix', [
+                'site_id'     => $this->mercadopago->sellerConfig->getSiteId(),
+                'environment' => $this->mercadopago->storeConfig->isTestMode() ? 'homol' : 'prod',
+                'cust_id'     => $this->mercadopago->sellerConfig->getCustIdFromAT(),
+            ]);
+        } catch (\Throwable $telemetryFailure) {
+            // Telemetry must never prevent the 403 that blocks the request.
+        }
+        wp_send_json_error(['message' => 'Forbidden'], 403);
+        throw new Exception('Pix status request rejected: ' . $reason);
     }
 
     /**

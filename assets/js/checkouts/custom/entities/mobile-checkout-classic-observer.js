@@ -9,12 +9,14 @@ class MobileCheckoutClassicObserver {
         this._onCheckoutUpdate            = onCheckoutUpdate;
         this._onOrderPayInit              = onOrderPayInit;
         this._updateInFlight              = false;
+        this._recoveryInFlight            = false;
         this._checkoutUpdateReceived      = false;
         this._structure                   = this._getCheckoutStructureLabel();
 
         this._boundGuardedUpdate = this._guardedUpdate.bind(this);
         jQuery(document.body).on('cfw_pre_updated_checkout', this._boundGuardedUpdate);
         jQuery(document).on('updated_checkout', this._boundGuardedUpdate);
+        jQuery(document.body).on('payment_method_selected', this._boundGuardedUpdate);
 
         this._emitCheckoutStartedMetric();
         this._scheduleInitFailureDetector();
@@ -26,13 +28,22 @@ class MobileCheckoutClassicObserver {
         clearTimeout(this._initTimeout);
         if (this._updateInFlight) return;
         this._updateInFlight = true;
+        const wasRecovery = this._recoveryInFlight;
+        this._recoveryInFlight = false;
+        let errored = false;
         Promise.resolve()
             .then(() => this._onCheckoutUpdate())
             .catch((error) => {
+                errored = true;
                 this._cardForm?.removeLoadSpinner?.();
                 this._emitUpdateErrorMetric(error);
             })
-            .finally(() => { this._updateInFlight = false; });
+            .finally(() => {
+                this._updateInFlight = false;
+                if (wasRecovery && !errored) {
+                    this._emitRecoveredMetric(!!this._cardForm?.formMounted);
+                }
+            });
     }
 
     _emitCheckoutStartedMetric() {
@@ -56,6 +67,16 @@ class MobileCheckoutClassicObserver {
         }
     }
 
+    _emitRecoveredMetric(mounted) {
+        if (typeof sendMetric === 'function') {
+            sendMetric(
+                this._getDeviceLabel(),
+                `${this._structure}/mounted:${mounted ? 'yes' : 'no'}`,
+                'mp_custom_checkout_mobile_recovered',
+            );
+        }
+    }
+
     _scheduleInitFailureDetector() {
         this._initTimeout = setTimeout(() => {
             if (!this._cardForm?.formMounted && this._isChoCustomInitiallySelected?.()) {
@@ -66,6 +87,10 @@ class MobileCheckoutClassicObserver {
                         `${this._structure}/event_received:${checkoutUpdateLabel}`,
                         'mp_custom_checkout_mobile_timeout'
                     );
+                }
+                if (!this._checkoutUpdateReceived) {
+                    this._recoveryInFlight = true;
+                    this._guardedUpdate();
                 }
             }
         }, this.INIT_TIMEOUT_DELAY);
@@ -112,5 +137,6 @@ class MobileCheckoutClassicObserver {
         clearTimeout(this._initTimeout);
         jQuery(document.body).off('cfw_pre_updated_checkout', this._boundGuardedUpdate);
         jQuery(document).off('updated_checkout', this._boundGuardedUpdate);
+        jQuery(document.body).off('payment_method_selected', this._boundGuardedUpdate);
     }
 }

@@ -142,27 +142,9 @@ const Content = (props) => {
         case 'wallet_button':
           break;
         default:
-          if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.verifyDocument === 'function') {
-            const docContainers = document.querySelectorAll('#form-checkout__identificationNumber-container');
-            const hasDocError = Array.from(docContainers).some(
-              (el) => el.classList.contains('mp-error') || el.classList.contains('mp-error-2px')
-            );
-
-            if (!CheckoutPage.verifyDocument() || hasDocError) {
-              const docInput = document.querySelector('#form-checkout__identificationNumber');
-              const reason = (!docInput?.value || docInput.value === '-1') ? 'empty_field' : 'invalid_format';
-              if (typeof sendMetric === 'function') {
-                sendMetric(
-                  'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
-                  reason,
-                  'mp_custom_document_validation',
-                  { reason }
-                );
-              }
-              CheckoutPage.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
-              CheckoutPage.setDisplayOfInputHelper('mp-doc-number', 'flex');
-              document.querySelector('#mp-doc-div')?.scrollIntoView({ behavior: 'smooth' });
-              window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
+          if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.runPreSubmitGates === 'function') {
+            const gate = CheckoutPage.runPreSubmitGates(window.mpCustomCheckoutHandler?.cardForm);
+            if (!gate.passed) {
               return { type: emitResponse.responseTypes.ERROR };
             }
           }
@@ -173,18 +155,19 @@ const Content = (props) => {
               () => window.mpCustomCheckoutHandler.cardForm.form.createCardToken(),
               'createCardToken'
             );
+            if (!cardToken?.token) {
+              if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.emitGateBlockedMetric === 'function') {
+                CheckoutPage.emitGateBlockedMetric('CARD', 'mp_custom_card_validation', 'empty_token');
+              }
+              window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
+              window.mpCustomCheckoutHandler?.cardForm?.scrollToCardForm();
+              return { type: emitResponse.responseTypes.ERROR };
+            }
             document.querySelector('#cardTokenId').value = cardToken.token;
           } catch (error) {
             console.warn('token creation error after submit: ', error);
-            window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
-            window.mpCustomCheckoutHandler.cardForm.scrollToCardForm();
-            return { type: emitResponse.responseTypes.ERROR };
-          }
-
-          if (typeof CheckoutPage !== 'undefined' && !CheckoutPage.installmentsWasSelected()) {
-            window.mpCustomCheckoutHandler.cardForm.removeLoadSpinner();
-            CheckoutPage.setInstallmentsErrorState(true);
-            window.mpCustomCheckoutHandler.cardForm.scrollToCardForm();
+            window.mpCustomCheckoutHandler?.cardForm?.removeLoadSpinner();
+            window.mpCustomCheckoutHandler?.cardForm?.scrollToCardForm();
             return { type: emitResponse.responseTypes.ERROR };
           }
           break;

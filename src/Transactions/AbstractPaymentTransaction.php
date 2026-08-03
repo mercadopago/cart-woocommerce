@@ -46,12 +46,16 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
             $this->transaction->session_id = $this->checkout['session_id'];
         }
 
+        $apiRoute = $this->transaction->getUris()['post'] ?? 'unknown';
+
         try {
             $data = $this->transaction->save();
             $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
+            $this->sendPaymentCreateResultMetric($apiRoute, null, $data);
             return $data;
         } catch (Exception $e) {
-            $this->sendApiErrorMetric($this->transaction->getUris()['post'] ?? 'unknown', $e);
+            $this->sendApiErrorMetric($apiRoute, $e);
+            $this->sendPaymentCreateResultMetric($apiRoute, $e);
             throw $e;
         }
     }

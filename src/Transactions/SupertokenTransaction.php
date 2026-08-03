@@ -63,12 +63,16 @@ class SupertokenTransaction extends AbstractPaymentTransaction
     {
         $this->updateTransactionItems();
 
+        $apiRoute = $this->transaction->getUris()['post'] ?? 'unknown';
+
         try {
             $data = $this->transaction->saveWithSuperToken($this->superToken, $this->paymentTypeId);
             $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
+            $this->sendPaymentCreateResultMetric($apiRoute, null, $data);
             return $data;
         } catch (Exception $e) {
-            $this->sendApiErrorMetric($this->transaction->getUris()['post'] ?? 'unknown', $e);
+            $this->sendApiErrorMetric($apiRoute, $e);
+            $this->sendPaymentCreateResultMetric($apiRoute, $e);
             throw $e;
         }
     }

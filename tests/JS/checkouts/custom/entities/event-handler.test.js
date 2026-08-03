@@ -424,6 +424,36 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
   });
 
   // =========================================================================
+  // handleUpdatedCheckout() — Order Pay page ownership (PPSP-1592)
+  // =========================================================================
+  describe('handleUpdatedCheckout() — Order Pay page', () => {
+    beforeEach(() => {
+      handler.cardForm.getAmount = jest.fn().mockReturnValue('100.00');
+      handler.cardForm.amount = '100.00';
+      handler.getSuperTokenDeps = jest.fn().mockReturnValue({ superTokenTriggerHandler: null });
+      handler.isCheckoutCustomPaymentMethodSelected = jest.fn().mockReturnValue(true);
+    });
+
+    it('Given Order Pay page, When handleUpdatedCheckout fires, Then it skips the mount path (owned by the dedicated Order Pay flow)', async () => {
+      handler.isOrderPayPage = jest.fn().mockReturnValue(true);
+
+      await handler.handleUpdatedCheckout();
+
+      expect(handler.cardForm.createLoadSpinner).not.toHaveBeenCalled();
+      expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+    });
+
+    it('Given a regular (non Order Pay) checkout with custom selected, When handleUpdatedCheckout fires, Then it runs the mount path', async () => {
+      handler.isOrderPayPage = jest.fn().mockReturnValue(false);
+
+      await handler.handleUpdatedCheckout();
+
+      expect(handler.cardForm.createLoadSpinner).toHaveBeenCalledTimes(1);
+      expect(handler.cardForm.initCardForm).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // =========================================================================
   // handleCheckoutError()
   // =========================================================================
   describe('handleCheckoutError()', () => {
@@ -578,6 +608,7 @@ describe('MPEventHandler - createToken (T05 mp_api_error instrumentation)', () =
       createLoadSpinner: jest.fn(),
       removeLoadSpinner: jest.fn(),
       scrollToCardForm: jest.fn(),
+      removeBlockOverlay: jest.fn(),
       form: {
         createCardToken: jest.fn(),
       },
@@ -633,6 +664,88 @@ describe('MPEventHandler - createToken (T05 mp_api_error instrumentation)', () =
 
     expect(cardFormMock.scrollToCardForm).toHaveBeenCalled();
     expect(cardFormMock.removeLoadSpinner).toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// Observabilidade do token vazio — createCardToken resolve sem token
+// =============================================================================
+describe('MPEventHandler - createToken (empty token observability)', () => {
+  let MPEventHandlerLocal;
+  let handler;
+  let cardFormMock;
+  let checkoutPageMock;
+  const sdkMetricsPath = resolveAlias('assets/js/checkouts/mp-sdk-metrics.js');
+
+  beforeAll(() => {
+    const callSdkWithMetrics = loadFile(sdkMetricsPath, 'callSdkWithMetrics', {
+      window: { sendMetric: jest.fn() },
+    });
+    global.window.callSdkWithMetrics = callSdkWithMetrics;
+
+    // A emissão da métrica passa pelo CheckoutPage.emitGateBlockedMetric (fonte única);
+    // a emissão real de sendMetric é testada em mp-custom-page.test.js. Aqui só verificamos a delegação.
+    checkoutPageMock = {
+      runPreSubmitGates: jest.fn(),
+      emitGateBlockedMetric: jest.fn(),
+    };
+
+    MPEventHandlerLocal = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
+      jQuery: global.jQuery,
+      wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
+      MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
+      CheckoutPage: checkoutPageMock,
+    });
+  });
+
+  beforeEach(() => {
+    document.body.innerHTML = '<input type="hidden" id="cardTokenId">';
+    checkoutPageMock.runPreSubmitGates = jest.fn().mockReturnValue({ passed: true });
+    checkoutPageMock.emitGateBlockedMetric = jest.fn();
+
+    cardFormMock = {
+      formMounted: false,
+      initCardForm: jest.fn(),
+      createLoadSpinner: jest.fn(),
+      removeLoadSpinner: jest.fn(),
+      scrollToCardForm: jest.fn(),
+      removeBlockOverlay: jest.fn(),
+      form: {
+        createCardToken: jest.fn(),
+      },
+    };
+
+    handler = new MPEventHandlerLocal(cardFormMock, {
+      set3dsStatusValidationListener: jest.fn(),
+    });
+  });
+
+  test('Given createCardToken resolves without a token, When createToken runs, Then delegates the empty_token metric to CheckoutPage and still recovers the UI', async () => {
+    cardFormMock.form.createCardToken.mockResolvedValue({}); // resolve sem token
+
+    handler.createToken();
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(checkoutPageMock.emitGateBlockedMetric).toHaveBeenCalledWith(
+      'CARD',
+      'mp_custom_card_validation',
+      'empty_token'
+    );
+    expect(cardFormMock.scrollToCardForm).toHaveBeenCalled();
+    expect(cardFormMock.removeLoadSpinner).toHaveBeenCalled();
+    expect(cardFormMock.removeBlockOverlay).toHaveBeenCalled();
+  });
+
+  test('Given createCardToken resolves with a valid token, When createToken runs, Then does not emit the empty_token metric', async () => {
+    cardFormMock.form.createCardToken.mockResolvedValue({ token: 'abc123' });
+
+    handler.createToken();
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(checkoutPageMock.emitGateBlockedMetric).not.toHaveBeenCalled();
   });
 });
 
@@ -760,34 +873,24 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
 });
 
 // =============================================================================
-// T06 — Gate de validação de documento antes de createCardToken (PSW-3990)
-// verifyDocument() deve ser invocada antes de createCardToken() no Classic.
-// CheckoutPage.verifyDocument é um método de mp-custom-page.js disponível
-// globalmente — segue o mesmo padrão de guard do gate de installments.
-//
-// CheckoutPage precisa ser passado no contexto do loadFile (não via global)
-// pois o vm.Script tem contexto próprio e não enxerga global.CheckoutPage
-// atribuído após a criação do sandbox.
+// createToken delega os gates pré-submit ao CheckoutPage.runPreSubmitGates (PSW-3963).
+// A lógica dos gates (cartão/parcelas/documento — ordem, reason e métrica) é testada
+// em mp-custom-page.test.js. Aqui verificamos apenas a delegação e o respeito ao
+// veredito { passed }.
 // =============================================================================
-describe('MPEventHandler - createToken (T06 document validation gate)', () => {
-  let MPEventHandlerForT06;
+describe('MPEventHandler - createToken (pre-submit gate delegation)', () => {
+  let MPEventHandlerForGate;
   let handler;
   let cardFormMock;
   let checkoutPageMock;
-  let sendMetricMock;
 
   beforeAll(() => {
-    sendMetricMock = jest.fn();
-
-    // Objeto mutável passado como referência no contexto do vm.
-    // As propriedades são atualizadas em cada teste — o módulo enxerga as mudanças
-    // porque mantém referência ao mesmo objeto.
     checkoutPageMock = {
-      verifyDocument: jest.fn(),
-      scrollToCheckoutCustomContainer: jest.fn(),
+      runPreSubmitGates: jest.fn(),
+      emitGateBlockedMetric: jest.fn(),
     };
 
-    MPEventHandlerForT06 = loadFile(eventHandlerPath, 'MPEventHandler', {
+    MPEventHandlerForGate = loadFile(eventHandlerPath, 'MPEventHandler', {
       MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
       jQuery: global.jQuery,
       wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
@@ -795,21 +898,13 @@ describe('MPEventHandler - createToken (T06 document validation gate)', () => {
       setTimeout: global.setTimeout,
       clearTimeout: global.clearTimeout,
       CheckoutPage: checkoutPageMock,
-      sendMetric: sendMetricMock,
     });
   });
 
   beforeEach(() => {
-    // #form-checkout__identificationNumber simula o hidden input com value vazio (campo não preenchido)
-    document.body.innerHTML = '<input type="hidden" id="cardTokenId">' +
-      '<input type="hidden" id="form-checkout__identificationNumber" value="">' +
-      '<div id="mp-doc-div"><div id="form-checkout__identificationNumber-container"></div></div>';
-    Element.prototype.scrollIntoView = jest.fn();
-    sendMetricMock.mockClear();
-    checkoutPageMock.verifyDocument = jest.fn();
-    checkoutPageMock.scrollToCheckoutCustomContainer = jest.fn();
-    checkoutPageMock.setDisplayOfError = jest.fn();
-    checkoutPageMock.setDisplayOfInputHelper = jest.fn();
+    document.body.innerHTML = '<input type="hidden" id="cardTokenId">';
+    checkoutPageMock.runPreSubmitGates = jest.fn();
+    checkoutPageMock.emitGateBlockedMetric = jest.fn();
 
     cardFormMock = {
       formMounted: false,
@@ -822,102 +917,258 @@ describe('MPEventHandler - createToken (T06 document validation gate)', () => {
       },
     };
 
-    handler = new MPEventHandlerForT06(cardFormMock, {
+    handler = new MPEventHandlerForGate(cardFormMock, {
       set3dsStatusValidationListener: jest.fn(),
     });
   });
 
-  test('TC-EH-DOC-01: verifyDocument() returns false → createCardToken is not called', () => {
-    checkoutPageMock.verifyDocument.mockReturnValue(false);
+  test('Given a gate blocks (passed:false), When createToken runs, Then runPreSubmitGates is called with the cardForm, createCardToken is not called, and it returns false', () => {
+    checkoutPageMock.runPreSubmitGates.mockReturnValue({ passed: false, gate: 'installments', reason: 'not_selected' });
 
-    handler.createToken();
+    const result = handler.createToken();
 
+    expect(checkoutPageMock.runPreSubmitGates).toHaveBeenCalledWith(cardFormMock);
     expect(cardFormMock.form.createCardToken).not.toHaveBeenCalled();
+    expect(result).toBe(false);
   });
 
-  test('TC-EH-DOC-02: verifyDocument() returns false → metric sent with reason empty_field', () => {
-    // DOM tem #form-checkout__identificationNumber com value="" → reason = 'empty_field'
-    checkoutPageMock.verifyDocument.mockReturnValue(false);
+  test('Given all gates pass (passed:true), When createToken runs, Then createCardToken is called', () => {
+    checkoutPageMock.runPreSubmitGates.mockReturnValue({ passed: true });
 
     handler.createToken();
 
-    expect(cardFormMock.removeLoadSpinner).toHaveBeenCalled();
-    expect(sendMetricMock).toHaveBeenCalledWith(
-      'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
-      'empty_field',
-      'mp_custom_document_validation',
-      { reason: 'empty_field' }
-    );
+    expect(checkoutPageMock.runPreSubmitGates).toHaveBeenCalledWith(cardFormMock);
+    expect(cardFormMock.form.createCardToken).toHaveBeenCalled();
   });
 
-  test('TC-EH-DOC-03: verifyDocument() returns false → document error and input-helper are shown', () => {
-    checkoutPageMock.setDisplayOfError = jest.fn();
-    checkoutPageMock.setDisplayOfInputHelper = jest.fn();
-    checkoutPageMock.verifyDocument.mockReturnValue(false);
-
-    handler.createToken();
-
-    expect(checkoutPageMock.setDisplayOfError).toHaveBeenCalledWith('fcIdentificationNumberContainer', 'add', 'mp-error');
-    expect(checkoutPageMock.setDisplayOfInputHelper).toHaveBeenCalledWith('mp-doc-number', 'flex');
-  });
-
-  test('TC-EH-DOC-04: verifyDocument() returns true and no CSS error class → createCardToken is called, no metric', () => {
-    checkoutPageMock.verifyDocument.mockReturnValue(true);
+  test('Given CheckoutPage.runPreSubmitGates is not a function, When createToken runs, Then the gate is skipped and createCardToken is called', () => {
+    delete checkoutPageMock.runPreSubmitGates;
 
     handler.createToken();
 
     expect(cardFormMock.form.createCardToken).toHaveBeenCalled();
-    expect(sendMetricMock).not.toHaveBeenCalled();
   });
 
-  test('TC-EH-DOC-06: verifyDocument() returns true but mp-error on container → metric sent with reason invalid_format', () => {
-    // Simula CPF inválido: container tem mp-error, input tem valor não-vazio
-    checkoutPageMock.verifyDocument.mockReturnValue(true);
-    document.querySelector('#form-checkout__identificationNumber').value = '12345678900';
-    document.querySelector('#form-checkout__identificationNumber-container').classList.add('mp-error');
+  test('Given the gate passes on the Order Pay page, When the card token is created, Then it delegates to the Order Pay 3DS submission (not the standard checkout submit)', async () => {
+    checkoutPageMock.runPreSubmitGates.mockReturnValue({ passed: true });
+    handler.mpFormId = 'order_review';
+    handler.handle3dsPayOrderFormSubmission = jest.fn();
 
     handler.createToken();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(cardFormMock.form.createCardToken).not.toHaveBeenCalled();
-    expect(cardFormMock.removeLoadSpinner).toHaveBeenCalled();
-    expect(sendMetricMock).toHaveBeenCalledWith(
-      'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
-      'invalid_format',
-      'mp_custom_document_validation',
-      { reason: 'invalid_format' }
-    );
+    expect(handler.handle3dsPayOrderFormSubmission).toHaveBeenCalled();
+    expect(handler.hasToken).toBe(true);
+  });
+});
+
+describe('MPEventHandler - Order Pay submit routing & SDK re-submit guard', () => {
+  let MPEventHandlerForSubmit;
+  let handler;
+  let cardFormMock;
+  let checkoutPageMock;
+
+  // Local jQuery stub: mercadoPagoFormHandler reads jQuery('#mp_checkout_type').val();
+  // the routing tests drive that value explicitly.
+  const jqueryStub = jest.fn((selector) => ({
+    val: jest.fn(() => (selector === '#mp_checkout_type' ? 'super_token' : '')),
+    on: jest.fn(),
+    submit: jest.fn(),
+    block: jest.fn(),
+    unblock: jest.fn(),
+  }));
+
+  beforeAll(() => {
+    checkoutPageMock = { runPreSubmitGates: jest.fn(), emitGateBlockedMetric: jest.fn() };
+
+    MPEventHandlerForSubmit = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
+      jQuery: jqueryStub,
+      wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
+      MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
+      setTimeout: global.setTimeout,
+      clearTimeout: global.clearTimeout,
+      CheckoutPage: checkoutPageMock,
+    });
   });
 
-  test('TC-EH-DOC-07: verifyDocument() returns true but mp-error-2px on second container (duplicate) → metric sent with reason invalid_format', () => {
-    // Simula containers duplicados: primeiro stale, segundo ativo com mp-error-2px
-    checkoutPageMock.verifyDocument.mockReturnValue(true);
-    document.querySelector('#form-checkout__identificationNumber').value = '543634600';
-    const activeContainer = document.createElement('div');
-    activeContainer.id = 'form-checkout__identificationNumber-container';
-    activeContainer.classList.add('mp-error-2px');
-    document.body.appendChild(activeContainer);
-
-    handler.createToken();
-
-    expect(cardFormMock.form.createCardToken).not.toHaveBeenCalled();
-    expect(sendMetricMock).toHaveBeenCalledWith(
-      'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
-      'invalid_format',
-      'mp_custom_document_validation',
-      { reason: 'invalid_format' }
-    );
-
-    document.body.removeChild(activeContainer);
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    checkoutPageMock.runPreSubmitGates = jest.fn();
+    cardFormMock = { formMounted: false, form: { unmount: jest.fn() } };
+    handler = new MPEventHandlerForSubmit(cardFormMock, { set3dsStatusValidationListener: jest.fn() });
   });
 
-  test('TC-EH-DOC-05: CheckoutPage.verifyDocument not defined → createCardToken is called, no metric', () => {
-    // Simula método ausente: typeof CheckoutPage.verifyDocument === 'function' é false
-    // beforeEach recria verifyDocument: jest.fn() antes de cada teste — restauração manual desnecessária
-    delete checkoutPageMock.verifyDocument;
+  describe('handleOrderReviewSubmit() — SDK programmatic re-submit', () => {
+    test('Given a re-submit with no submitter (the SDK requestSubmit re-fire) while the Custom method is selected, When handled, Then it stops the event (incl. WooCommerce\'s later same-form block handler) and does not route to mercadoPagoFormHandler', () => {
+      jest.spyOn(handler, 'isCheckoutCustomPaymentMethodSelected').mockReturnValue(true);
+      jest.spyOn(handler, 'mercadoPagoFormHandler');
+      const event = { preventDefault: jest.fn(), stopImmediatePropagation: jest.fn(), originalEvent: { submitter: null } };
 
-    handler.createToken();
+      const result = handler.handleOrderReviewSubmit(event);
 
-    expect(cardFormMock.form.createCardToken).toHaveBeenCalled();
-    expect(sendMetricMock).not.toHaveBeenCalled();
+      expect(event.stopImmediatePropagation).toHaveBeenCalled();
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(result).toBe(false);
+      expect(handler.mercadoPagoFormHandler).not.toHaveBeenCalled();
+    });
+
+    test('Given a no-submitter re-submit but the Custom method is NOT selected, When handled, Then the guard does not fire (no preventDefault) and it does not route to the Custom gate', () => {
+      jest.spyOn(handler, 'isCheckoutCustomPaymentMethodSelected').mockReturnValue(false);
+      jest.spyOn(handler, 'mercadoPagoFormHandler');
+      const event = { preventDefault: jest.fn(), originalEvent: { submitter: null } };
+
+      handler.handleOrderReviewSubmit(event);
+
+      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(handler.mercadoPagoFormHandler).not.toHaveBeenCalled();
+    });
+
+    test('Given a user-initiated submit (submitter present), When handled, Then it routes to mercadoPagoFormHandler', () => {
+      jest.spyOn(handler, 'isCheckoutCustomPaymentMethodSelected').mockReturnValue(true);
+      jest.spyOn(handler, 'mercadoPagoFormHandler').mockReturnValue(false);
+      const event = { preventDefault: jest.fn(), originalEvent: { submitter: document.createElement('button') } };
+
+      handler.handleOrderReviewSubmit(event);
+
+      expect(handler.mercadoPagoFormHandler).toHaveBeenCalledWith(event);
+    });
+  });
+
+  describe('mercadoPagoFormHandler() — Super Token does not touch the Custom gate', () => {
+    test('Given the checkout type is super_token on the Order Pay page, When mercadoPagoFormHandler runs, Then it routes to the Super Token flow and never calls the Custom pre-submit gate', () => {
+      document.body.innerHTML = '<form id="order_review"></form>';
+      jest.spyOn(handler, 'handleWithSuperTokenSubmit').mockImplementation(() => {});
+      const event = { preventDefault: jest.fn() };
+
+      const result = handler.mercadoPagoFormHandler(event);
+
+      expect(checkoutPageMock.runPreSubmitGates).not.toHaveBeenCalled();
+      expect(handler.handleWithSuperTokenSubmit).toHaveBeenCalled();
+      expect(result).toBe(false);
+    });
+  });
+});
+
+// =============================================================================
+// mercadoPagoFormHandler — roteamento de branch (PSW-4344)
+// A pré-validação server-side (validateCheckoutThenContinue) roda APENAS no
+// ramo super_token; o ramo custom (cartão) tokeniza direto, sem fetch.
+// =============================================================================
+describe('MPEventHandler - mercadoPagoFormHandler (branch routing)', () => {
+  let MPEventHandlerLocal;
+  let handler;
+  let checkoutType;
+
+  beforeAll(() => {
+    // jQuery mock cujo .val() lê/escreve o checkoutType corrente, permitindo
+    // controlar o valor de #mp_checkout_type por teste.
+    const jQueryMock = jest.fn(() => ({
+      on: jest.fn(),
+      submit: jest.fn(),
+      block: jest.fn(),
+      unblock: jest.fn(),
+      val: jest.fn((value) => {
+        if (value !== undefined) {
+          checkoutType = value;
+          return undefined;
+        }
+        return checkoutType;
+      }),
+    }));
+
+    MPEventHandlerLocal = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
+      jQuery: jQueryMock,
+      wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
+      MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
+      sendMetric: global.sendMetric,
+    });
+  });
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    checkoutType = '';
+
+    const cardForm = {
+      formMounted: false,
+      initCardForm: jest.fn(),
+      createLoadSpinner: jest.fn(),
+      removeLoadSpinner: jest.fn(),
+    };
+
+    handler = new MPEventHandlerLocal(cardForm, { set3dsStatusValidationListener: jest.fn() });
+    handler.setMercadoPagoSessionId = jest.fn();
+    handler.getSuperTokenDeps = jest.fn().mockReturnValue({});
+    jest.spyOn(handler, 'setPayerIdentificationInfo').mockImplementation(() => {});
+    jest.spyOn(handler, 'createToken').mockReturnValue(false);
+    jest.spyOn(handler, 'validateCheckoutThenContinue').mockImplementation(() => {});
+    global.window.fetch = jest.fn();
+  });
+
+  afterEach(() => {
+    delete global.window.fetch;
+  });
+
+  it('Given a custom (card) submit, When mercadoPagoFormHandler runs, Then it tokenizes directly without pre-validation and returns false', () => {
+    checkoutType = 'card';
+    const event = { preventDefault: jest.fn() };
+
+    const result = handler.mercadoPagoFormHandler(event, {});
+
+    expect(handler.validateCheckoutThenContinue).not.toHaveBeenCalled();
+    expect(global.window.fetch).not.toHaveBeenCalled();
+    expect(handler.setPayerIdentificationInfo).toHaveBeenCalledTimes(1);
+    expect(handler.createToken).toHaveBeenCalledTimes(1);
+    expect(result).toBe(false);
+  });
+
+  it('Given a super_token submit, When mercadoPagoFormHandler runs, Then it still runs the pre-validation and returns false (regression guard)', () => {
+    checkoutType = 'super_token';
+    const event = { preventDefault: jest.fn() };
+
+    const result = handler.mercadoPagoFormHandler(event, {});
+
+    expect(handler.validateCheckoutThenContinue).toHaveBeenCalledTimes(1);
+    expect(handler.createToken).not.toHaveBeenCalled();
+    expect(result).toBe(false);
+  });
+
+  it('Given the card already has a token, When mercadoPagoFormHandler runs the custom branch, Then it does not tokenize again and returns false', () => {
+    checkoutType = 'card';
+    handler.hasToken = true;
+    const event = { preventDefault: jest.fn() };
+
+    const result = handler.mercadoPagoFormHandler(event, {});
+
+    expect(handler.validateCheckoutThenContinue).not.toHaveBeenCalled();
+    expect(handler.setPayerIdentificationInfo).not.toHaveBeenCalled();
+    expect(handler.createToken).not.toHaveBeenCalled();
+    expect(result).toBe(false);
+  });
+
+  it('Given a submit already in progress (mercado_pago_submit=true), When mercadoPagoFormHandler runs, Then it returns true and neither validates nor tokenizes', () => {
+    checkoutType = 'card';
+    handler.mercado_pago_submit = true;
+    const event = { preventDefault: jest.fn() };
+
+    const result = handler.mercadoPagoFormHandler(event, {});
+
+    expect(handler.validateCheckoutThenContinue).not.toHaveBeenCalled();
+    expect(handler.createToken).not.toHaveBeenCalled();
+    expect(result).toBe(true);
+  });
+
+  it('Given the Order Pay page with the custom method, When mercadoPagoFormHandler runs, Then it tokenizes directly without pre-validation (Order Pay behavior unchanged)', () => {
+    checkoutType = 'card';
+    handler.isOrderPayPage = jest.fn().mockReturnValue(true);
+    const event = { preventDefault: jest.fn() };
+
+    const result = handler.mercadoPagoFormHandler(event, {});
+
+    expect(handler.validateCheckoutThenContinue).not.toHaveBeenCalled();
+    expect(global.window.fetch).not.toHaveBeenCalled();
+    expect(handler.createToken).toHaveBeenCalledTimes(1);
+    expect(result).toBe(false);
   });
 });

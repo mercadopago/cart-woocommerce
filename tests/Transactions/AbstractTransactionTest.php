@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Tests\Transactions;
 
 use Exception;
 use MercadoPago\PP\Sdk\Common\AbstractEntity;
+use MercadoPago\PP\Sdk\Exceptions\ApiException;
 use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Helpers\Arrays;
@@ -29,7 +30,7 @@ class AbstractTransactionTest extends TestCase
 
     private string $transactionClass = AbstractTransaction::class;
 
-    // TODO(PHP8.2): Change type hint from phpdoc to native
+    // On PHP 8.2 the phpdoc type hint below can become a native union type.
     /**
      * @var MockInterface|AbstractTransaction
      */
@@ -641,6 +642,242 @@ class AbstractTransactionTest extends TestCase
             ]);
 
         $method = new ReflectionMethod(AbstractTransaction::class, 'sendApiErrorMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    /**
+     * A successful creation (no exception) is a 2xx: the SDK only returns data on 200/201, throwing on 4xx/5xx.
+     * The response body carries the payment's business status, so payment_status reflects it (approved here).
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendPaymentCreateResultMetricRecordsApprovedPaymentAs2xx(): void
+    {
+        $flowId = random()->uuid();
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => 'credit_card'];
+
+        $apiRoute = '/checkout/preferences';
+        $siteId   = 'MLB';
+        $custId   = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_payment_create_result', '2xx', 'success', 'credit_card', [
+                'team'             => 'big',
+                'api_route'        => $apiRoute,
+                'site_id'          => $siteId,
+                'environment'      => 'prod',
+                'cust_id'          => $custId,
+                'sdk_instance_id'  => $flowId,
+                'alert_type'       => 'success',
+                'payment_status'   => 'approved',
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, null, ['status' => 'approved']);
+    }
+
+    /**
+     * A rejected card is NOT an API error: the API returns 2xx with status=rejected in the body. The metric must
+     * record it as a 2xx success whose payment_status is 'rejected' — not as a 4xx/5xx.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendPaymentCreateResultMetricRecordsRejectedPaymentAs2xx(): void
+    {
+        $flowId = random()->uuid();
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => 'credit_card'];
+
+        $apiRoute = '/checkout/preferences';
+        $siteId   = 'MLB';
+        $custId   = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_payment_create_result', '2xx', 'success', 'credit_card', [
+                'team'             => 'big',
+                'api_route'        => $apiRoute,
+                'site_id'          => $siteId,
+                'environment'      => 'prod',
+                'cust_id'          => $custId,
+                'sdk_instance_id'  => $flowId,
+                'alert_type'       => 'success',
+                'payment_status'   => 'rejected',
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, null, ['status' => 'rejected']);
+    }
+
+    /**
+     * An ApiException is only thrown for 4xx; no payment was created, so payment_status is null and the value
+     * carries the 4xx class.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendPaymentCreateResultMetricRecordsApiExceptionAs4xx(): void
+    {
+        $flowId = random()->uuid();
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => 'super_token'];
+
+        $apiRoute  = '/checkout/preferences';
+        $exception = new ApiException('Bad request', 'CPP_0001', 400, 'raw error chain');
+        $siteId    = 'MLB';
+        $custId    = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_payment_create_result', '4xx', 'Bad request', 'super_token', [
+                'team'             => 'big',
+                'api_route'        => $apiRoute,
+                'site_id'          => $siteId,
+                'environment'      => 'prod',
+                'cust_id'          => $custId,
+                'sdk_instance_id'  => $flowId,
+                'alert_type'       => 'error',
+                'payment_status'   => null,
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    /**
+     * Defensive: the SDK today only raises ApiException for 4xx, but the classification reads the status the
+     * exception carries (getApiStatus), so an ApiException flagged 5xx must map to '5xx', not '4xx'.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendPaymentCreateResultMetricClassifiesApiExceptionByCarriedStatus(): void
+    {
+        $flowId = random()->uuid();
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => 'credit_card'];
+
+        $apiRoute  = '/checkout/preferences';
+        $exception = new ApiException('Server Error', 'CPP_0002', 503, 'raw error chain');
+        $siteId    = 'MLB';
+        $custId    = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_payment_create_result', '5xx', 'Server Error', 'credit_card', [
+                'team'             => 'big',
+                'api_route'        => $apiRoute,
+                'site_id'          => $siteId,
+                'environment'      => 'prod',
+                'cust_id'          => $custId,
+                'sdk_instance_id'  => $flowId,
+                'alert_type'       => 'error',
+                'payment_status'   => null,
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    /**
+     * Any non-ApiException is the SDK's generic "Internal API Error" (5xx): no attributable status code.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendPaymentCreateResultMetricRecordsGenericExceptionAs5xx(): void
+    {
+        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction->metadata = ['flow_id' => null, 'checkout_type' => null];
+
+        $apiRoute  = '/checkout/preferences';
+        $exception = new Exception('Internal API Error');
+        $siteId    = 'MLB';
+        $custId    = random()->uuid();
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn($siteId)
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn($custId);
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent('mp_payment_create_result', '5xx', 'Internal API Error', null, [
+                'team'             => 'big',
+                'api_route'        => $apiRoute,
+                'site_id'          => $siteId,
+                'environment'      => 'prod',
+                'cust_id'          => $custId,
+                'sdk_instance_id'  => null,
+                'alert_type'       => 'error',
+                'payment_status'   => null,
+            ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
         $method->setAccessible(true);
         $method->invoke($this->transaction, $apiRoute, $exception);
     }

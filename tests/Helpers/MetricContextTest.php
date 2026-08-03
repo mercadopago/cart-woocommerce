@@ -16,7 +16,7 @@ class MetricContextTest extends TestCase
 
     public function testBuildApiErrorDetailsReturnsBaseDetailsWhenNoMercadopago(): void
     {
-        $details = MetricContext::buildApiErrorDetails('/v1/payments');
+        $details = MetricContext::buildBaseMetricDetails('/v1/payments');
 
         $this->assertEquals([
             'team'      => 'big',
@@ -28,7 +28,7 @@ class MetricContextTest extends TestCase
     {
         $uri = '/ppcore/prod/configurations-api/onboarding/v1/integration/123?code_verifier=secret-value';
 
-        $details = MetricContext::buildApiErrorDetails($uri);
+        $details = MetricContext::buildBaseMetricDetails($uri);
 
         $this->assertEquals(
             '/ppcore/prod/configurations-api/onboarding/v1/integration/{id}',
@@ -41,7 +41,7 @@ class MetricContextTest extends TestCase
 
     public function testBuildApiErrorDetailsParameterizesNumericSegments(): void
     {
-        $details = MetricContext::buildApiErrorDetails('/v1/payments/123456');
+        $details = MetricContext::buildBaseMetricDetails('/v1/payments/123456');
 
         // Numeric path segments are parameterized — keeps api_route low-cardinality.
         $this->assertEquals('/v1/payments/{id}', $details['api_route']);
@@ -51,7 +51,7 @@ class MetricContextTest extends TestCase
     {
         $uri = '/v1/preferences?foo=bar&baz=qux';
 
-        $details = MetricContext::buildApiErrorDetails($uri);
+        $details = MetricContext::buildBaseMetricDetails($uri);
 
         $this->assertEquals('/v1/preferences', $details['api_route']);
     }
@@ -60,7 +60,7 @@ class MetricContextTest extends TestCase
     {
         $mp = $this->makeMercadopagoMock('MLB', false, 'cust-123');
 
-        $details = MetricContext::buildApiErrorDetails('/v1/payments', $mp);
+        $details = MetricContext::buildBaseMetricDetails('/v1/payments', $mp);
 
         $this->assertEquals([
             'team'        => 'big',
@@ -75,7 +75,7 @@ class MetricContextTest extends TestCase
     {
         $GLOBALS['mercadopago'] = $this->makeMercadopagoMock('MLA', true, 'cust-456');
 
-        $details = MetricContext::buildApiErrorDetails('/v1/preferences');
+        $details = MetricContext::buildBaseMetricDetails('/v1/preferences');
 
         $this->assertEquals([
             'team'        => 'big',
@@ -91,7 +91,7 @@ class MetricContextTest extends TestCase
         $GLOBALS['mercadopago'] = $this->makeMercadopagoMock('GLOBAL_SITE', false, 'global-cust');
         $override = $this->makeMercadopagoMock('PARAM_SITE', true, 'param-cust');
 
-        $details = MetricContext::buildApiErrorDetails('/v1/test', $override);
+        $details = MetricContext::buildBaseMetricDetails('/v1/test', $override);
 
         $this->assertEquals('PARAM_SITE', $details['site_id']);
         $this->assertEquals('homol', $details['environment']);
@@ -219,7 +219,7 @@ class MetricContextTest extends TestCase
 
     public function testBuildApiErrorDetailsTemplatesApV2SubscriptionRoutesEvenWithQueryString(): void
     {
-        $details = MetricContext::buildApiErrorDetails(
+        $details = MetricContext::buildBaseMetricDetails(
             '/automatic-payments/v2/subscriptions/CPP-WSUB-real-id/payment-methods?foo=bar'
         );
 

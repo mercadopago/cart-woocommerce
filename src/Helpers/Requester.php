@@ -121,7 +121,7 @@ class Requester
     // $status = 0 is the convention for pre-response exceptions (connection/timeout); >= 400 for HTTP error responses.
     private function sendApiErrorMetric(string $uri, int $status, string $message): void
     {
-        $details = MetricContext::buildApiErrorDetails($uri);
+        $details = MetricContext::buildBaseMetricDetails($uri);
         $this->datadog->sendEvent('mp_api_error', (string) $status, $message, null, $details);
     }
 

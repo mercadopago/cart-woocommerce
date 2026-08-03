@@ -61,9 +61,17 @@ export function validationScenarios(site) {
 
         await page.locator("#place_order").click();
 
-        // Bloqueado pela validação de termos (client-side) — erro exibido e sem ir para o pedido.
-        await expect(page.locator(".woocommerce-error")).toBeVisible({ timeout: 10000 });
+        // Termos obrigatório desmarcado bloqueia o INÍCIO do pagamento: o pedido não é criado. Não
+        // afirmamos o .woocommerce-error específico — quando o ST está ativo (o email persiste na
+        // sessão WC entre testes) o bloqueio não passa pela notice clássica do WC.
+        // Espera um sinal POSITIVO estável primeiro: o botão #place_order continua visível (o checkout
+        // NÃO submeteu). Se tivesse ido pro order-received, o botão sumiria — então esse await também
+        // pega uma navegação tardia (evita o falso-positivo do not.toHaveURL, que passa na hora).
+        await expect(page.locator("#place_order")).toBeVisible({ timeout: 10000 });
         await expect(page).not.toHaveURL(/order-received/);
+        // Se o ST renderizou, garante que a autorização não disparou (app não aberto).
+        const pseudotoken = page.locator(SELECTORS.authorizedPseudotoken);
+        if (await pseudotoken.count()) await expect(pseudotoken).toHaveValue("");
       } finally {
         restoreBlocksCheckout();
       }
