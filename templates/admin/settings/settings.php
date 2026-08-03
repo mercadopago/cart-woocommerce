@@ -634,6 +634,7 @@ if (!defined('ABSPATH')) {
             const url = "<?php echo esc_url(admin_url('admin-ajax.php')); ?>";
             const params = new URLSearchParams();
             params.append('action', 'mp_download_log');
+            params.append('nonce', '<?php echo esc_js($downloadLogNonce); ?>');
             selectedFiles.forEach((file) => {
                 params.append('files[]', file);
             });

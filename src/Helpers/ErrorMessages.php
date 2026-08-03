@@ -253,6 +253,7 @@ class ErrorMessages
             "Installments attribute must be numeric"                                        => $this->storeTranslations->checkoutErrorMessages['invalid_installments'],
             "Not found card on whitelist"                                                   => $this->storeTranslations->checkoutErrorMessages['card_not_whitelisted'],
             "Not found payment_method"                                                      => $this->storeTranslations->checkoutErrorMessages['payment_method_unavailable'],
+            "bin_not_found"                                                                 => $this->storeTranslations->checkoutErrorMessages['card_details_incorrect'],
         ];
     }
 

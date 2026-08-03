@@ -33,7 +33,7 @@ if [ ! -d /var/lib/mysql/mysql ]; then
 fi
 
 chown -R mysql:mysql /var/lib/mysql
-mysqld --port=3306 --socket=/var/run/mysqld/mysqld.sock &
+mysqld --user=mysql --port=3306 --socket=/var/run/mysqld/mysqld.sock &
 
 # Wait for MariaDB to accept connections (polling instead of fixed sleep)
 for i in $(seq 1 30); do

@@ -316,9 +316,16 @@ class SupertokenTransactionTest extends TestCase
 
         $this->setPrivateSupertokenProperties($superToken, $paymentTypeId);
 
+        $apiRoute = '/v1/asgard/payments';
+
         $this->transaction
             ->expects()
             ->updateTransactionItems();
+
+        $this->transaction->transaction
+            ->expects()
+            ->getUris()
+            ->andReturn(['post' => $apiRoute]);
 
         $this->transaction->transaction
             ->expects()
@@ -331,6 +338,11 @@ class SupertokenTransactionTest extends TestCase
             ->expects()
             ->info('Payment created', '', $data)
             ->getMock();
+
+        $this->transaction
+            ->shouldAllowMockingProtectedMethods()
+            ->expects()
+            ->sendPaymentCreateResultMetric($apiRoute, null, $data);
 
         $this->assertEquals($data, $this->transaction->createPayment());
     }
@@ -361,7 +373,10 @@ class SupertokenTransactionTest extends TestCase
         $this->transaction
             ->shouldAllowMockingProtectedMethods()
             ->expects()
-            ->sendApiErrorMetric($apiRoute, $exception);
+            ->sendApiErrorMetric($apiRoute, $exception)
+            ->getMock()
+            ->expects()
+            ->sendPaymentCreateResultMetric($apiRoute, $exception);
 
         $this->expectExceptionObject($exception);
 

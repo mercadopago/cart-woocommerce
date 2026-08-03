@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_page_params CheckoutElements */
+/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_page_params, CheckoutElements, sendMetric */
 
 const CheckoutPage = {
   installmentsEnabled: false,
@@ -172,18 +172,20 @@ const CheckoutPage = {
     return inputHelperName[field];
   },
 
-  removeAdditionFields() {
+  removeAdditionFields(clearInstallmentsValue = true) {
     this.setElementDisplay('mpDocumentContainer', 'none');
     this.setElementDisplay('mpInstallmentsCard', 'none');
     this.setElementDisplay('mpIssuerContainer', 'none');
-    this.setValueOn('cardInstallments', '');
+    if (clearInstallmentsValue) {
+      this.setValueOn('cardInstallments', '');
+    }
   },
 
   getHelperMessage(field) {
     let query = 'input-helper[input-id=' + this.inputHelperName(field) + '-helper]';
     let divInputHelper = document.querySelector(query);
-    let helper = divInputHelper.querySelector('div[class=mp-helper]');
-    return helper.childNodes[1];
+    let helper = divInputHelper?.querySelector('div[class=mp-helper]');
+    return helper?.childNodes[1] ?? null;
   },
 
   verifyDocument() {
@@ -270,19 +272,40 @@ const CheckoutPage = {
     });
   },
 
-  clearInputs() {
-    this.hideErrors();
+  clearCardState() {
+    // In Super Token the Custom card form is unmounted as part of the ST takeover, but
+    // #paymentMethodId and #cardInstallments are owned by the Super Token flow
+    // (super-token-payment-methods sets #paymentMethodId; the trigger handler sets
+    // #cardInstallments). Wiping them on that unmount blanks the values the server needs
+    // and the payment is rejected before reaching the API.
+    const isSuperToken = document.querySelector('#mp_checkout_type')?.value === 'super_token';
+
+    if (!isSuperToken) {
+      this.setValueOn('paymentMethodId', '');
+    }
+    this.setValueOn('fcCardholderName', '');
     this.setBackground('fcCardNumberContainer', 'no-repeat #fff');
 
     const cardNumberContainer = document.querySelector(CheckoutElements.fcCardNumberContainer);
-
     if (cardNumberContainer) {
       cardNumberContainer.classList.remove('mp-card-icon-detected');
+    }
+
+    this.setInstallmentsErrorState(false);
+    this.clearInstallmentsComponent();
+    this.removeAdditionFields(!isSuperToken);
+  },
+
+  clearInputs() {
+    this.hideErrors();
+    this.clearCardState();
+
+    const cardNumberContainer = document.querySelector(CheckoutElements.fcCardNumberContainer);
+    if (cardNumberContainer) {
       this.setValueOn('fcCardNumberContainer', '');
       this.setDisplayOfError('fcCardNumberContainer', 'removed', 'mp-error');
     }
 
-    this.setValueOn('fcCardholderName', '');
     this.setDisplayOfError('fcCardholderName', 'removed', 'mp-error');
 
     this.setValueOn('fcCardExpirationDateContainer', '');
@@ -301,9 +324,6 @@ const CheckoutPage = {
     this.setDisplayOfInputHelper('mp-card-holder-name', 'none');
 
     this.setDisplayOfError('mpCardholderNameInputLabel', 'removed', 'mp-label-error-2x');
-
-    this.clearInstallmentsComponent();
-    this.setElementDisplay('mpInstallmentsCard', 'none');
 
     const inputDocument = document.querySelector('input[data-cy=input-document]');
     if (inputDocument) {
@@ -510,6 +530,18 @@ const CheckoutPage = {
     });
   },
 
+  clearDocumentLabelErrorOnInput() {
+    const docContainer = document.querySelector(CheckoutElements.mpDocumentContainer);
+    if (!docContainer || docContainer.dataset.mpDocLabelClearBound) return;
+    docContainer.dataset.mpDocLabelClearBound = 'true';
+
+    docContainer.addEventListener('input', (event) => {
+      if (event.target?.matches?.('[data-cy="input-document"]') && event.target.value.trim() !== '') {
+        this.setDisplayOfError('mpDocumentInputLabel', 'remove', 'mp-label-error');
+      }
+    });
+  },
+
   addDefaultOptionOnInstallmentsSelect(installmentsSelect) {
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
@@ -632,6 +664,22 @@ const CheckoutPage = {
     return !!installmentsSelect?.value;
   },
 
+  cardNumberHasError() {
+    const container = document.querySelector(CheckoutElements.fcCardNumberContainer);
+
+    return !!container && (
+      container.classList.contains('mp-error') || container.classList.contains('mp-error-2px')
+    );
+  },
+
+  cardholderNameHasError() {
+    const input = document.querySelector(CheckoutElements.fcCardholderName);
+
+    return !!input && (
+      input.classList.contains('mp-error') || input.classList.contains('mp-error-2px')
+    );
+  },
+
   scrollToCheckoutCustomContainer() {
     const checkoutCustomContainer = document.querySelector('.mp-checkout-custom-container');
     if (!checkoutCustomContainer) return;
@@ -666,6 +714,63 @@ const CheckoutPage = {
       this.toggleErrorBorder(installmentsSelect);
       installmentsLabel.classList.remove('mp-label-error');
     }
+  },
+
+  emitGateBlockedMetric(gate, target, reason) {
+    if (typeof sendMetric === 'function') {
+      sendMetric(`MP_CUSTOM_CHECKOUT_${gate}_VALIDATION_BLOCKED`, reason, target, { reason });
+    }
+  },
+
+  // Clears WooCommerce's Order Pay block overlay after a gate short-circuit. Deferred to a microtask so it runs after WC's blockOnSubmit (a later submit handler). See docs/agent/traps.md.
+  deferBlockOverlayRemoval(cardForm) {
+    Promise.resolve().then(() => cardForm?.removeBlockOverlay());
+  },
+
+  runPreSubmitGates(cardForm) {
+    if (this.cardNumberHasError()) {
+      const reason = typeof cardForm?.getCardValidationReason === 'function'
+        ? cardForm.getCardValidationReason()
+        : 'invalid_length';
+      this.emitGateBlockedMetric('CARD', 'mp_custom_card_validation', reason);
+      this.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
+      this.setDisplayOfInputHelper('mp-card-number', 'flex');
+      cardForm?.scrollToCardForm();
+      cardForm?.removeLoadSpinner();
+      this.deferBlockOverlayRemoval(cardForm);
+      return { passed: false, gate: 'card', reason };
+    }
+
+    if (!this.installmentsWasSelected()) {
+      this.emitGateBlockedMetric('INSTALLMENTS', 'mp_custom_installments_validation', 'not_selected');
+      this.setInstallmentsErrorState(true);
+      this.scrollToCheckoutCustomContainer();
+      cardForm?.removeLoadSpinner();
+      this.deferBlockOverlayRemoval(cardForm);
+      return { passed: false, gate: 'installments', reason: 'not_selected' };
+    }
+
+    if (typeof this.verifyDocument === 'function') {
+      const docContainers = document.querySelectorAll('#form-checkout__identificationNumber-container');
+      const hasDocError = Array.from(docContainers).some(
+        (el) => el.classList.contains('mp-error') || el.classList.contains('mp-error-2px')
+      );
+
+      if (!this.verifyDocument() || hasDocError) {
+        const docInput = document.querySelector('#form-checkout__identificationNumber');
+        const reason = (!docInput?.value || docInput.value === '-1') ? 'empty_field' : 'invalid_format';
+        this.emitGateBlockedMetric('DOCUMENT', 'mp_custom_document_validation', reason);
+        this.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
+        this.setDisplayOfError('mpDocumentInputLabel', 'add', 'mp-label-error');
+        this.setDisplayOfInputHelper('mp-doc-number', 'flex');
+        document.querySelector('#mp-doc-div')?.scrollIntoView({ behavior: 'smooth' });
+        cardForm?.removeLoadSpinner();
+        this.deferBlockOverlayRemoval(cardForm);
+        return { passed: false, gate: 'document', reason };
+      }
+    }
+
+    return { passed: true };
   },
 
   updateTaxInfoForSelect(selectedValue, containerId, payerCosts) {

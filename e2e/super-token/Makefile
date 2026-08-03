@@ -15,10 +15,12 @@ SITE ?=
 GROUP ?=
 GREP ?=
 N ?=
+STORE ?=
+INSTANCE ?=
 SHELL := /bin/bash
 
 .DEFAULT_GOAL := help
-.PHONY: help setup setup-device biometrics store list test status clean require-site
+.PHONY: help setup setup-device biometrics store store-remote list test status clean require-site require-store
 
 help:
 	@echo ""
@@ -33,6 +35,10 @@ help:
 	@echo "  make setup-device SITE=..  só o device (AVD + login Google/MP + snapshot)"
 	@echo "  make biometrics   SITE=..  cadastra PIN 1234 + digital no golden (já incluso no setup; obrigatório p/ o grupo authorization)"
 	@echo "  make store        SITE=..  só a loja local + túnel (re-rodar quando o túnel cair)"
+	@echo "  make store-remote STORE=.. prepara loja EXTERNA (cupom + Fluid Checkout) via SSH — sem túnel"
+	@echo "                             ex.: make store-remote STORE=prod"
+	@echo "                             depois: STORE=prod SHOP_URL=https://<prefix>-prod.ppolimpo.io make test SITE=mlb"
+	@echo "                             (passe STORE no test tb: habilita os cenários env — Fluid Checkout/termos — na loja remota)"
 	@echo "  make status                AVDs, device conectado e URL do túnel"
 	@echo "  make clean                 derruba o túnel cloudflared"
 	@echo ""
@@ -55,11 +61,17 @@ biometrics: require-site
 store: require-site
 	@./setup/setup-store.sh $(SITE)
 
+# Loja EXTERNA (homologação AWS): prepara cupom + Fluid Checkout via SSH, sem túnel.
+# STORE é o sufixo do container remoto wp-<STORE> (ex.: prod), não o país do teste.
+# INSTANCE opcional (default: HOMOLOG_INSTANCE do deploy/.deploy.env).
+store-remote: require-store
+	@./setup/setup-store-remote.sh $(STORE) $(INSTANCE)
+
 list: require-site
 	@./run/list-tests.sh $(SITE)
 
 test: require-site
-	@GROUP="$(GROUP)" GREP="$(GREP)" N="$(N)" ./run/run-e2e.sh $(SITE)
+	@GROUP="$(GROUP)" GREP="$(GREP)" N="$(N)" STORE="$(STORE)" INSTANCE="$(INSTANCE)" ./run/run-e2e.sh $(SITE)
 
 status:
 	@echo "== AVDs ==";        $(ANDROID_HOME)/emulator/emulator -list-avds 2>/dev/null || emulator -list-avds 2>/dev/null || true
@@ -72,3 +84,6 @@ clean:
 require-site:
 	@[ -n "$(SITE)" ] || { echo "!! defina SITE (ex.: make $(MAKECMDGOALS) SITE=mlb)"; exit 1; }
 	@[ -f config/countries.json ] || { echo "!! crie config/countries.json a partir de config/countries.example.json"; exit 1; }
+
+require-store:
+	@[ -n "$(STORE)" ] || { echo "!! defina STORE (sufixo do container wp-<STORE>, ex.: make store-remote STORE=prod)"; exit 1; }

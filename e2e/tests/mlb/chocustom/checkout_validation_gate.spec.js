@@ -2,46 +2,49 @@ import { test } from "@playwright/test";
 import { mlb } from "../../../data/meli_sites";
 import { successfulPaymentTest } from "../../../flows/chocustom";
 import {
-  validationGateBlocksTest,
-  validationGateInlineTest,
-  infiniteLoadingRecoveryTest,
-  infiniteLoadingRecoveryInlineTest,
+  invalidFormBlockedClassic,
+  invalidFormBlockedBlocks,
+  invalidCardRecoversClassic,
+  invalidCardRecoversBlocks,
 } from "../../../flows/checkout_validation_gate";
 
 /**
- * PSW-4057 — Server-side checkout pre-validation gate for the Custom Checkout
- * (card) Classic flow, run via wc_ajax_mp_validate_checkout before tokenization.
+ * Invalid-input handling in the Custom Checkout (card).
+ *
+ * PSW-4344 removed the MP server-side pre-validation gate
+ * (wc_ajax_mp_validate_checkout); the card now tokenizes directly and the
+ * checkout relies on WooCommerce's native submit validation.
  *
  * Covers:
- *   H1 — happy path is not broken by the new gate (regression guard).
- *   C1 — a required WC field cleared -> gate returns valid:false -> blocked.
+ *   H1 — happy path still reaches order-received (regression guard).
+ *   C1 — a required WC field cleared -> checkout blocked (native validation in
+ *        Classic; inline error in Blocks).
  *   C2 — a malformed value the CSS `required` check misses (bad email) ->
- *        validate_posted_data rejects it -> blocked.
- *   C3 — invalid/empty card -> checkout must recover with no stuck overlay,
- *        no order-received (guards the infinite-loading regression, whether the
- *        gate fails open or blocks).
+ *        checkout blocked.
+ *   C3 — invalid/empty card -> checkout recovers with no stuck overlay and never
+ *        reaches order-received.
  */
 
 const { shop_url, credit_card_scenarios, guestUserMLB } = mlb;
 const { APPROVED, INVALID_CARD } = credit_card_scenarios;
 
-// H1 — regression guard: the gate must let a fully valid checkout through.
-test('H1: valid form and valid card pass the validation gate and reach order-received', async ({ page }) => {
+// H1 — regression guard: a fully valid checkout still goes through.
+test('H1: valid form and valid card reach order-received', async ({ page }) => {
   await successfulPaymentTest(page, shop_url, guestUserMLB, APPROVED.master, APPROVED.form);
 });
 
 // C1 — a required field is cleared after being filled (mirrors a buyer who empties postcode right before paying).
-// Classic: server gate (mp_validate_checkout) returns valid:false.
+// Classic: WooCommerce native validation rejects the submission.
 // Blocks: client-side validation renders the inline error before submission.
-test('C1: clearing a required field (postcode) blocks checkout via the validation gate', async ({ page }) => {
+test('C1: clearing a required field (postcode) blocks checkout', async ({ page }) => {
   if (process.env.CHECKOUT === 'blocks') {
-    await validationGateInlineTest(
+    await invalidFormBlockedBlocks(
       page, shop_url, guestUserMLB, APPROVED.master, APPROVED.form,
       async (p) => { await p.locator('#shipping-postcode').fill(''); },
       '#validate-error-shipping_postcode'
     );
   } else {
-    await validationGateBlocksTest(
+    await invalidFormBlockedClassic(
       page, shop_url, guestUserMLB, APPROVED.master, APPROVED.form,
       async (p) => { await p.locator('#billing_postcode').fill(''); }
     );
@@ -51,15 +54,15 @@ test('C1: clearing a required field (postcode) blocks checkout via the validatio
 // C2 — a malformed email passes the browser's `required` check but fails validation.
 // Classic: WooCommerce validate_posted_data catches it server-side.
 // Blocks: client-side validation renders the inline error before submission.
-test('C2: a malformed email is rejected by the validation gate', async ({ page }) => {
+test('C2: a malformed email blocks checkout', async ({ page }) => {
   if (process.env.CHECKOUT === 'blocks') {
-    await validationGateInlineTest(
+    await invalidFormBlockedBlocks(
       page, shop_url, guestUserMLB, APPROVED.master, APPROVED.form,
       async (p) => { await p.locator('#email').fill('invalid-email-format'); },
       '#validate-error-billing_email'
     );
   } else {
-    await validationGateBlocksTest(
+    await invalidFormBlockedClassic(
       page, shop_url, guestUserMLB, APPROVED.master, APPROVED.form,
       async (p) => { await p.locator('#billing_email').fill('invalid-email-format'); }
     );
@@ -67,11 +70,11 @@ test('C2: a malformed email is rejected by the validation gate', async ({ page }
 });
 
 // C3 — invalid/empty card. The checkout must recover (no infinite loading) and
-// never reach order-received. Same invariant in both modes; only the mechanism differs (classic waits on the server gate, blocks validates client-side).
+// never reach order-received. Same invariant in both modes; only the mechanism differs.
 test('C3: invalid card recovers without infinite loading and never reaches order-received', async ({ page }) => {
   if (process.env.CHECKOUT === 'blocks') {
-    await infiniteLoadingRecoveryInlineTest(page, shop_url, guestUserMLB, INVALID_CARD.master, INVALID_CARD.form);
+    await invalidCardRecoversBlocks(page, shop_url, guestUserMLB, INVALID_CARD.master, INVALID_CARD.form);
   } else {
-    await infiniteLoadingRecoveryTest(page, shop_url, guestUserMLB, INVALID_CARD.master, INVALID_CARD.form);
+    await invalidCardRecoversClassic(page, shop_url, guestUserMLB, INVALID_CARD.master, INVALID_CARD.form);
   }
 });

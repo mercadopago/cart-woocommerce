@@ -40,7 +40,7 @@ REMOTE_DIR="${HOMOLOG_REMOTE_DIR:-/home/ubuntu/woo-homolog}"
 export PHP_VERSION="${PHP_VERSION:-7.4}"
 export HOMOLOG_PREFIX="$SUB_PREFIX"                 # consumido pelo docker-compose
 export HOMOLOG_BASE_DOMAIN="$BASE_DOMAIN"
-VALID_SITES="mlb mla mlm mco mlc mlu mpe"
+VALID_SITES="mlb mla mlm mco mlc mlu mpe mlb-zerada"
 
 SSH_OPTS=(-i "$SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30)
 INSTANCE_HOST=""

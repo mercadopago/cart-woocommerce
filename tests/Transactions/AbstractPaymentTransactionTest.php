@@ -18,7 +18,7 @@ class AbstractPaymentTransactionTest extends TestCase
 
     private string $transactionClass = AbstractPaymentTransaction::class;
 
-    // TODO(PHP8.2): Change type hint from phpdoc to native
+    // On PHP 8.2 the phpdoc type hint below can become a native union type.
     /**
      * @var MockInterface|AbstractPaymentTransaction
      */
@@ -39,6 +39,13 @@ class AbstractPaymentTransactionTest extends TestCase
             $this->setNotAccessibleProperty($this->transaction, 'checkout', $checkout);
         }
 
+        $apiRoute = '/v1/asgard/payments';
+
+        $this->transaction->transaction
+            ->expects()
+            ->getUris()
+            ->andReturn(['post' => $apiRoute]);
+
         $this->transaction->transaction
             ->expects()
             ->save()
@@ -50,6 +57,11 @@ class AbstractPaymentTransactionTest extends TestCase
             ->expects()
             ->info('Payment created', '', $data)
             ->getMock();
+
+        $this->transaction
+            ->shouldAllowMockingProtectedMethods()
+            ->expects()
+            ->sendPaymentCreateResultMetric($apiRoute, null, $data);
 
         $this->assertEquals($data, $this->transaction->createPayment());
         $this->assertEquals($checkout['session_id'] ?? null, $this->transaction->transaction->session_id);
@@ -77,7 +89,10 @@ class AbstractPaymentTransactionTest extends TestCase
         $this->transaction
             ->shouldAllowMockingProtectedMethods()
             ->expects()
-            ->sendApiErrorMetric($apiRoute, $exception);
+            ->sendApiErrorMetric($apiRoute, $exception)
+            ->getMock()
+            ->expects()
+            ->sendPaymentCreateResultMetric($apiRoute, $exception);
 
         $this->expectExceptionObject($exception);
 

@@ -3,9 +3,23 @@ const {
   enableGateway, setGatewaySetting,
   isContainerRunning, getCurrentStoreSite, resetStore,
 } = require('./helpers/wp-env');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
-const PORT = process.env.PORT || '8080';
+function detectPort() {
+  if (process.env.PORT) return process.env.PORT;
+  try {
+    const makefile = path.resolve(__dirname, '..', 'docker-flexible-environment', 'Makefile');
+    const content = fs.readFileSync(makefile, 'utf-8');
+    const match = content.match(/^PORT\s*\?=\s*(\S+)/m);
+    return match ? match[1] : '8080';
+  } catch {
+    return '8080';
+  }
+}
+
+const PORT = detectPort();
 const ADMIN_URL = `http://localhost:${PORT}/wp-admin/admin.php?page=mercadopago-settings`;
 
 // Credential environment: 'test' (default, sandbox) or 'prod' (production).

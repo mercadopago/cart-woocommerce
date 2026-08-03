@@ -7,6 +7,7 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
   let sendMetricMock;
   let jQueryMock;
   let handlers;
+  let offCalls;
   let cardForm;
   let isSelected;
   let onCheckoutUpdate;
@@ -36,11 +37,14 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
     jest.clearAllTimers();
 
     handlers = {};
+    offCalls = [];
     jQueryMock = jest.fn(() => ({
       on: jest.fn((event, handler) => {
         handlers[event] = handler;
       }),
-      off: jest.fn(),
+      off: jest.fn((event) => {
+        offCalls.push(event);
+      }),
     }));
 
     cardForm      = { formMounted: false };
@@ -98,6 +102,11 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
     it('should register updated_checkout listener on document', () => {
       new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
       expect(handlers['updated_checkout']).toBeDefined();
+    });
+
+    it('should register payment_method_selected listener on document body', () => {
+      new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+      expect(handlers['payment_method_selected']).toBeDefined();
     });
 
     it('should emit mp_custom_checkout_mobile_started on construction', () => {
@@ -170,6 +179,7 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
       jest.advanceTimersByTime(10000);
 
       expect(sendMetricMock).not.toHaveBeenCalled();
+      expect(onCheckoutUpdate).not.toHaveBeenCalled();
     });
 
     it('should not emit when custom checkout is not selected', () => {
@@ -180,6 +190,7 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
       jest.advanceTimersByTime(10000);
 
       expect(sendMetricMock).not.toHaveBeenCalled();
+      expect(onCheckoutUpdate).not.toHaveBeenCalled();
     });
 
     it('should not emit when form mounts after an update event fires', () => {
@@ -191,6 +202,75 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
       jest.advanceTimersByTime(10000);
 
       expect(sendMetricMock).not.toHaveBeenCalled();
+    });
+
+    it('should trigger a recovery update when the timeout fires and no update event has arrived', async () => {
+      new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      jest.advanceTimersByTime(10000);
+      await Promise.resolve();
+
+      expect(onCheckoutUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not trigger a duplicate recovery update when an update event already arrived before the timeout', async () => {
+      new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      handlers['updated_checkout'](); // marks _checkoutUpdateReceived = true and clears the timeout
+      await Promise.resolve();
+      onCheckoutUpdate.mockClear();
+
+      jest.advanceTimersByTime(10000);
+      await Promise.resolve();
+
+      expect(onCheckoutUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should emit mp_custom_checkout_mobile_recovered with mounted:yes when the recovery mounts the form', async () => {
+      onCheckoutUpdate.mockImplementation(() => { cardForm.formMounted = true; });
+      new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      jest.advanceTimersByTime(10000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringMatching(/\/mounted:yes$/),
+        'mp_custom_checkout_mobile_recovered'
+      );
+    });
+
+    it('should emit mp_custom_checkout_mobile_recovered with mounted:no when the recovery does not mount the form', async () => {
+      onCheckoutUpdate.mockImplementation(() => {}); // form stays unmounted
+      new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      jest.advanceTimersByTime(10000);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringMatching(/\/mounted:no$/),
+        'mp_custom_checkout_mobile_recovered'
+      );
+    });
+
+    it('should NOT emit mp_custom_checkout_mobile_recovered for a normal (non-recovery) update', async () => {
+      new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      handlers['updated_checkout'](); // normal update path, not a recovery
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(sendMetricMock).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'mp_custom_checkout_mobile_recovered'
+      );
     });
 
   });
@@ -209,6 +289,13 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
     it('should call onCheckoutUpdate once when only updated_checkout fires', async () => {
       new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
       handlers['updated_checkout']();
+      await Promise.resolve();
+      expect(onCheckoutUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onCheckoutUpdate once when only payment_method_selected fires', async () => {
+      new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+      handlers['payment_method_selected']();
       await Promise.resolve();
       expect(onCheckoutUpdate).toHaveBeenCalledTimes(1);
     });
@@ -330,6 +417,14 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
       obs.destroy();
       jest.advanceTimersByTime(10000);
       expect(sendMetricMock).not.toHaveBeenCalled();
+    });
+
+    it('should unbind cfw_pre_updated_checkout, updated_checkout and payment_method_selected', () => {
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+      obs.destroy();
+      expect(offCalls).toEqual(
+        expect.arrayContaining(['cfw_pre_updated_checkout', 'updated_checkout', 'payment_method_selected'])
+      );
     });
   });
 });

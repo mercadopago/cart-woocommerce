@@ -22,8 +22,21 @@ export const PENDING_BUYER = "no buyer configured for this country (pending Supe
 // redirect client-side do WC ("interrupted by another navigation") — a mutação do carrinho
 // acontece no servidor de qualquer forma, então toleramos a interrupção e seguimos para o checkout.
 async function addToCartThenCheckout(page, productId) {
-  await page.goto(`${BASE}/?add-to-cart=${productId}`, { waitUntil: "domcontentloaded" }).catch(() => {});
-  await page.goto(`${BASE}/checkout/`);
+  // add-to-cart dispara um redirect no servidor. Espera a navegação (com o redirect) ASSENTAR
+  // (`load`) antes de ir pro checkout — senão o redirect tardio interrompe o goto do /checkout/.
+  await page.goto(`${BASE}/?add-to-cart=${productId}`, { waitUntil: "load" }).catch(() => {});
+  // Rede-de-segurança p/ a corrida sob carga da suíte: se o redirect tardio do add-to-cart ainda
+  // interromper o goto ("interrupted by another navigation"), reintenta uma vez — a essa altura o
+  // carrinho já está populado e a navegação assenta. Só reintenta nesse erro específico.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await page.goto(`${BASE}/checkout/`, { waitUntil: "load" });
+      break;
+    } catch (e) {
+      if (attempt === 2 || !/interrupted by another navigation/.test(e?.message || "")) throw e;
+      await page.waitForTimeout(1000);
+    }
+  }
   // O WC redireciona /checkout/ → /cart/ quando o carrinho está vazio. Se caímos no cart, o
   // add-to-cart não populou o carrinho NESTE host — quase sempre desalinhamento túnel ↔ WP siteurl
   // (o canonical-redirect jogou a sessão noutro host). Falha com a causa explícita em vez de seguir

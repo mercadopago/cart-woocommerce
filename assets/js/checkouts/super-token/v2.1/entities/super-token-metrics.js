@@ -40,6 +40,16 @@ class MPSuperTokenMetrics {
     return 'prod';
   }
 
+  getAbVariant() {
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)mp_st_variant=([^;]+)/);
+      const variant = match ? decodeURIComponent(match[1]) : 'unknown';
+      return (variant === 'v2' || variant === 'v2.1') ? variant : 'unknown';
+    } catch (error) {
+      return 'unknown';
+    }
+  }
+
   sendMetric(metricName, value, message, errorCode = null) {
     const details = {
       site_id: this.SITE_ID,
@@ -47,6 +57,7 @@ class MPSuperTokenMetrics {
       sdk_instance_id: this.getSdkInstanceId(),
       cust_id: this.CUST_ID,
       js_version: this.SUPER_TOKEN_JS_VERSION,
+      ab_variant: this.getAbVariant(),
     };
 
     if (errorCode) {

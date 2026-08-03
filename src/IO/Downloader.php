@@ -167,9 +167,12 @@ class Downloader
     {
         $this->currentUser->validateUserNeededPermissions();
 
+        if (basename($filename) !== $filename) {
+            return false;
+        }
+
         return $this->hasAllowedExtension($filename) &&
-            $this->hasNoDisallowedCharacters($filename) &&
-            $this->containsExpectedTerms($filename);
+            $this->isKnownLogFile($filename);
     }
 
     private function hasAllowedExtension(string $filename): bool
@@ -178,15 +181,13 @@ class Downloader
         return  (bool)preg_match($allowed_pattern, $filename);
     }
 
-    private function hasNoDisallowedCharacters(string $filename): bool
+    private function isKnownLogFile(string $filename): bool
     {
-        $disallowed = array('..', '/', '\\', '.php', '.ini', '.exe', '.bat', '.sh', '.js', '.py', '.pl', '.sql', '.mdb', '.sqlite', '.zip', '.tar', '.gz', '.htaccess');
-        return empty(array_intersect($disallowed, array($filename)));
-    }
-
-    private function containsExpectedTerms(string $filename): bool
-    {
-        $allowed_pattern = '/mercadopago|MercadoPago|fatal-errors/';
-        return (bool)preg_match($allowed_pattern, $filename);
+        foreach ($this->pluginLogs as $logFile) {
+            if ($logFile->fileFullName === $filename) {
+                return true;
+            }
+        }
+        return false;
     }
 }

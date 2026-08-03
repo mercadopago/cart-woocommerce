@@ -3,6 +3,7 @@ import { SELECTORS } from "../selectors.js";
 import {
   startCustomCheckout,
   startCheckoutReadyToPay,
+  reopenCheckout,
   selectCustomCheckout,
   selectOtherPaymentMethod,
   selectFirstSavedCard,
@@ -21,7 +22,9 @@ const { buyerFor } = require("../data/country.js");
 const { skipIfNotSite } = require("../../helpers/site-guard.js");
 
 const RESET_COUPON = "super-token-test"; // criado pelo setup-store.sh
-const ACCOUNT_DATA = "**/*account-data*";
+// Dados/cartões da conta MP. Cobre os dois bundles: `account-data` (prod/v1) e
+// `account-payment-methods` (homol) — RegExp p/ não acoplar o teste a um bundle específico.
+const ACCOUNT_DATA = /account-data|account-payment-methods/;
 const ORDER_API = "**/wc/store/v1/checkout**";
 
 export function resetScenarios(site) {
@@ -64,8 +67,10 @@ export function resetScenarios(site) {
       await expectSuperTokenVisible(page);
 
       await faults.respondUrl(ACCOUNT_DATA, { status: 401, body: { error: "unauthorized" } });
-      await selectOtherPaymentMethod(page);
-      await selectCustomCheckout(page);
+      // Recarrega o checkout do zero (reload = "reloads the methods"): no bundle homol o soft-toggle
+      // (trocar método e voltar) não re-busca account-payment-methods — fica em cache JS. Só uma nova
+      // navegação re-inicializa o SDK e re-dispara o fetch, que agora pega o 401 → sem ST.
+      await reopenCheckout(page, buyer);
 
       await expectCustomCheckoutWithoutSuperToken(page);
     });

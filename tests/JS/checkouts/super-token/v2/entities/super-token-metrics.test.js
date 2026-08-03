@@ -1408,3 +1408,67 @@ describe('MPSuperTokenMetrics.waitForMelidata_() and timeout race (PSW-4050)', (
     expect(dispatchedEvents[0].detail.message).toBe('card declined');
   });
 });
+
+describe('MPSuperTokenMetrics — getAbVariant() and details.ab_variant', () => {
+  let fetchMockAb;
+
+  const buildMetrics = (cookie) => {
+    fetchMockAb = jest.fn(() => Promise.resolve());
+    const context = {
+      window: { location: { href: 'https://example.com/checkout' }, fetch: fetchMockAb },
+      document: { cookie, dispatchEvent: jest.fn() },
+      console,
+      fetch: fetchMockAb,
+      localStorage: mockLocalStorage,
+      CustomEvent: function CustomEvent(name, options) { return { type: name, detail: options?.detail }; },
+      wc_mercadopago_supertoken_bundle_params: {
+        plugin_version: '1.0.0',
+        platform_version: '6.0.0',
+        site_id: 'MLA',
+        cust_id: 'test-cust-id',
+        location: 'https://example.com',
+      },
+    };
+    const metricsCode = fs.readFileSync(superTokenMetricsPath, 'utf8');
+    const script = new vm.Script(`${metricsCode}\nMPSuperTokenMetrics;`);
+    const MetricsClass = script.runInNewContext(context);
+    return new MetricsClass({ getSDKInstanceId: () => 'test-sdk-instance-id' });
+  };
+
+  const getLastFetchBody = () => {
+    const lastCall = fetchMockAb.mock.calls[fetchMockAb.mock.calls.length - 1];
+    return JSON.parse(lastCall[1].body);
+  };
+
+  test('Given cookie mp_st_variant=v2, When getAbVariant() is called, Then returns v2', () => {
+    expect(buildMetrics('mp_st_variant=v2').getAbVariant()).toBe('v2');
+  });
+
+  test('Given cookie mp_st_variant=v2.1 among others, When getAbVariant() is called, Then returns v2.1', () => {
+    expect(buildMetrics('foo=bar; mp_st_variant=v2.1; baz=qux').getAbVariant()).toBe('v2.1');
+  });
+
+  test('Given no mp_st_variant cookie, When getAbVariant() is called, Then returns unknown', () => {
+    expect(buildMetrics('other=1').getAbVariant()).toBe('unknown');
+  });
+
+  test('Given an empty cookie string, When getAbVariant() is called, Then returns unknown', () => {
+    expect(buildMetrics('').getAbVariant()).toBe('unknown');
+  });
+
+  test('Given an unknown variant value, When getAbVariant() is called, Then returns unknown (cardinality guard)', () => {
+    expect(buildMetrics('mp_st_variant=v9').getAbVariant()).toBe('unknown');
+  });
+
+  test('Given an assigned variant, When sendMetric() is called, Then details.ab_variant carries the variant', () => {
+    const metrics = buildMetrics('mp_st_variant=v2.1');
+    metrics.sendMetric('super_token_click_on_place_order_button', 'true', '');
+    expect(getLastFetchBody().details.ab_variant).toBe('v2.1');
+  });
+
+  test('Given no assignment, When sendMetric() is called, Then details.ab_variant is unknown without throwing', () => {
+    const metrics = buildMetrics('');
+    expect(() => metrics.sendMetric('test_metric', 'v', 'm')).not.toThrow();
+    expect(getLastFetchBody().details.ab_variant).toBe('unknown');
+  });
+});

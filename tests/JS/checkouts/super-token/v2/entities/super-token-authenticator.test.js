@@ -140,6 +140,50 @@ describe('MPSuperTokenAuthenticator', () => {
     });
   });
 
+  describe('buildAuthenticator()', () => {
+    test('Given SDK resolves null without throwing, When buildAuthenticator() is called, Then should send super_token_authenticator_falsy metric and return null', async () => {
+      mockSdkInstance.authenticator.mockResolvedValue(null);
+
+      const result = await authenticator.buildAuthenticator(100, 'test@example.com');
+
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith(
+        'super_token_authenticator_falsy',
+        'null',
+        'typeof:object'
+      );
+      expect(result).toBeNull();
+      expect(mockMetrics.errorToBuildAuthenticator).not.toHaveBeenCalled();
+    });
+
+    test('Given SDK resolves false without throwing, When buildAuthenticator() is called, Then should report the returned value and its type and return null', async () => {
+      mockSdkInstance.authenticator.mockResolvedValue(false);
+
+      const result = await authenticator.buildAuthenticator(100, 'test@example.com');
+
+      expect(mockMetrics.sendMetric).toHaveBeenCalledWith(
+        'super_token_authenticator_falsy',
+        'false',
+        'typeof:boolean'
+      );
+      expect(result).toBeNull();
+      expect(mockMetrics.errorToBuildAuthenticator).not.toHaveBeenCalled();
+    });
+
+    test('Given SDK resolves a valid authenticator, When buildAuthenticator() is called, Then should not send super_token_authenticator_falsy metric and should return it', async () => {
+      const mockAuth = { getSimplifiedAuth: jest.fn() };
+      mockSdkInstance.authenticator.mockResolvedValue(mockAuth);
+
+      const result = await authenticator.buildAuthenticator(100, 'test@example.com');
+
+      expect(mockMetrics.sendMetric).not.toHaveBeenCalledWith(
+        'super_token_authenticator_falsy',
+        expect.any(String),
+        expect.any(String)
+      );
+      expect(result).toBe(mockAuth);
+    });
+  });
+
   describe('authorizePayment()', () => {
     test('Given stored authenticator returns no simplified auth, When authorizePayment() is called, Then should send super_token_auth_expired_on_submit metric', async () => {
       const mockAuth = {

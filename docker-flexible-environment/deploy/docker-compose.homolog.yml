@@ -128,6 +128,20 @@ services:
       - db-mpe-data:/var/lib/mysql
       - ./woocommerce-mercadopago:/woocommerce-mercadopago
 
+  wp-mlb-zerada:
+    <<: *wp
+    container_name: wp-mlb-zerada
+    profiles: ["mlb-zerada"]
+    environment:
+      - SITE=mlb
+      - PORT=80
+      - THEME=storefront
+      - MP_CUSTOM_DOMAIN=https://${HOMOLOG_PREFIX:-mp}-mlb-zerada.${HOMOLOG_BASE_DOMAIN:-ppolimpo.io}
+    volumes:
+      - wp-mlb-zerada-data:/var/www/html
+      - db-mlb-zerada-data:/var/lib/mysql
+      - ./woocommerce-mercadopago:/woocommerce-mercadopago
+
 networks:
   web:
 
@@ -148,3 +162,5 @@ volumes:
   db-mlu-data:
   wp-mpe-data:
   db-mpe-data:
+  wp-mlb-zerada-data:
+  db-mlb-zerada-data:

@@ -887,6 +887,9 @@ class PixGatewayTest extends TestCase
         $order->shouldReceive('get_id')
             ->andReturn($orderId);
 
+        $order->shouldReceive('get_order_key')
+            ->andReturn('wc_order_test123');
+
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getJsAsset')
             ->with('checkouts/pix/mp-pix-pooling')
@@ -907,7 +910,9 @@ class PixGatewayTest extends TestCase
             ->with(
                 'wc_mercadopago_pix_pooling',
                 'https://example.com/pix-pooling.js',
-                Mockery::type('array')
+                Mockery::on(function ($params) {
+                    return isset($params['order_key']) && $params['order_key'] === 'wc_order_test123';
+                })
             );
 
         $this->gateway->registerPixPoolingScript($order);
@@ -1117,6 +1122,9 @@ class PixGatewayTest extends TestCase
         $order->shouldReceive('get_id')
             ->andReturn($orderId);
 
+        $order->shouldReceive('get_order_key')
+            ->andReturn('wc_order_test123');
+
         $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
         $countryConfigsProperty->setAccessible(true);
         $countryConfigsProperty->setValue($this->gateway, [
@@ -1197,5 +1205,187 @@ class PixGatewayTest extends TestCase
         $gateway = new PixGateway();
 
         $this->assertFalse(isset($gateway->adminTranslations));
+    }
+
+    /**
+     * The owner of the order (matching order_key) reaches the status read.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testCheckPixPaymentStatusOwnerReadsStatus(): void
+    {
+        $order = Mockery::mock('WC_Order');
+
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedPostData')->with('nonce')->andReturn('valid-nonce');
+            $mock->shouldReceive('sanitizedPostData')->with('order_id')->andReturn(123);
+            $mock->shouldReceive('sanitizedPostData')->with('order_key')->andReturn('wc_order_correct');
+        });
+
+        \WP_Mock::userFunction('wp_verify_nonce')
+            ->with('valid-nonce', PixGateway::PIX_STATUS_NONCE)
+            ->andReturn(true);
+
+        \WP_Mock::userFunction('wc_get_order')
+            ->with(123)
+            ->andReturn($order);
+
+        $order->shouldReceive('get_order_key')->andReturn('wc_order_correct');
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getPaymentsIdMeta')
+            ->with($order)
+            ->andReturn('pay-123');
+
+        $response = Mockery::mock(\MercadoPago\PP\Sdk\HttpClient\Response::class);
+        $response->shouldReceive('getStatus')->andReturn(200);
+        $response->shouldReceive('getData')->andReturn(['status' => 'pending']);
+
+        $this->gateway->mercadopago->helpers->requester
+            ->shouldReceive('get')
+            ->with('/v1/payments/pay-123', Mockery::type('array'))
+            ->andReturn($response);
+
+        \WP_Mock::userFunction('wp_send_json_success')
+            ->once()
+            ->with(['status' => 'pending', 'message' => 'Payment pending']);
+
+        $this->gateway->checkPixPaymentStatus();
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * A third party sending a mismatched order_key is rejected with 403 and
+     * never reaches the payment read / processStatus path.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testCheckPixPaymentStatusRejectsMismatchedOrderKey(): void
+    {
+        $order = Mockery::mock('WC_Order');
+
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedPostData')->with('nonce')->andReturn('valid-nonce');
+            $mock->shouldReceive('sanitizedPostData')->with('order_id')->andReturn(123);
+            $mock->shouldReceive('sanitizedPostData')->with('order_key')->andReturn('wc_order_attacker');
+        });
+
+        \WP_Mock::userFunction('wp_verify_nonce')
+            ->with('valid-nonce', PixGateway::PIX_STATUS_NONCE)
+            ->andReturn(true);
+
+        \WP_Mock::userFunction('wc_get_order')
+            ->with(123)
+            ->andReturn($order);
+
+        $order->shouldReceive('get_order_key')->andReturn('wc_order_victim');
+
+        $this->gateway->mercadopago->sellerConfig->shouldReceive('getSiteId')->andReturn('MLB');
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('pix_status_access', 'invalid_order_key', null, 'pix', Mockery::type('array'));
+
+        \WP_Mock::userFunction('wp_send_json_error')
+            ->once()
+            ->with(['message' => 'Forbidden'], 403);
+
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('getPaymentsIdMeta')->never();
+
+        $this->expectException(ResponseStatusException::class);
+
+        $this->gateway->checkPixPaymentStatus();
+    }
+
+    /**
+     * A request without order_key is rejected with 403 and reported as missing.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testCheckPixPaymentStatusRejectsMissingOrderKey(): void
+    {
+        $order = Mockery::mock('WC_Order');
+
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedPostData')->with('nonce')->andReturn('valid-nonce');
+            $mock->shouldReceive('sanitizedPostData')->with('order_id')->andReturn(123);
+            $mock->shouldReceive('sanitizedPostData')->with('order_key')->andReturn(null);
+        });
+
+        \WP_Mock::userFunction('wp_verify_nonce')
+            ->with('valid-nonce', PixGateway::PIX_STATUS_NONCE)
+            ->andReturn(true);
+
+        \WP_Mock::userFunction('wc_get_order')
+            ->with(123)
+            ->andReturn($order);
+
+        $order->shouldReceive('get_order_key')->andReturn('wc_order_victim');
+
+        $this->gateway->mercadopago->sellerConfig->shouldReceive('getSiteId')->andReturn('MLB');
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('pix_status_access', 'missing_order_key', null, 'pix', Mockery::type('array'));
+
+        \WP_Mock::userFunction('wp_send_json_error')
+            ->once()
+            ->with(['message' => 'Forbidden'], 403);
+
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('getPaymentsIdMeta')->never();
+
+        $this->expectException(ResponseStatusException::class);
+
+        $this->gateway->checkPixPaymentStatus();
+    }
+
+    /**
+     * An unknown order is rejected with the same 403/Forbidden as a wrong key
+     * (no absent-vs-mismatch oracle), reported server-side as order_not_found.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testCheckPixPaymentStatusRejectsUnknownOrderWithoutOracle(): void
+    {
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedPostData')->with('nonce')->andReturn('valid-nonce');
+            $mock->shouldReceive('sanitizedPostData')->with('order_id')->andReturn(999);
+            $mock->shouldReceive('sanitizedPostData')->with('order_key')->andReturn('wc_order_whatever');
+        });
+
+        \WP_Mock::userFunction('wp_verify_nonce')
+            ->with('valid-nonce', PixGateway::PIX_STATUS_NONCE)
+            ->andReturn(true);
+
+        \WP_Mock::userFunction('wc_get_order')
+            ->with(999)
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->sellerConfig->shouldReceive('getSiteId')->andReturn('MLB');
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('pix_status_access', 'order_not_found', null, 'pix', Mockery::type('array'));
+
+        \WP_Mock::userFunction('wp_send_json_error')
+            ->once()
+            ->with(['message' => 'Forbidden'], 403);
+
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('getPaymentsIdMeta')->never();
+
+        $this->expectException(ResponseStatusException::class);
+
+        $this->gateway->checkPixPaymentStatus();
     }
 }

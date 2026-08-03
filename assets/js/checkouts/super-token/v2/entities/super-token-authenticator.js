@@ -91,6 +91,11 @@ class MPSuperTokenAuthenticator {
           'buildAuthenticator'
       );
 
+      if (!authenticator) {
+        this.mpSuperTokenMetrics.sendMetric('super_token_authenticator_falsy', String(authenticator), `typeof:${typeof authenticator}`);
+        return null;
+      }
+
       return authenticator;
     } catch (error) {
       this.mpSuperTokenMetrics.errorToBuildAuthenticator(error);

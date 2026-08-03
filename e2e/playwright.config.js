@@ -1,7 +1,21 @@
 // @ts-check
 const { defineConfig, devices } = require("@playwright/test");
+const fs = require("fs");
+const path = require("path");
 
 require("dotenv").config();
+
+function detectPort() {
+  if (process.env.PORT) return process.env.PORT;
+  try {
+    const makefile = path.resolve(__dirname, '..', 'docker-flexible-environment', 'Makefile');
+    const content = fs.readFileSync(makefile, 'utf-8');
+    const match = content.match(/^PORT\s*\?=\s*(\S+)/m);
+    return match ? match[1] : '8080';
+  } catch {
+    return '8080';
+  }
+}
 
 // Specs that mutate a store-wide option (e.g. the access token in the refund auth-error
 // scenario) are tagged @serial-store. Isolation is enforced by run-all-report.sh running
@@ -23,7 +37,7 @@ const chromiumUse = {
             // WC Blocks uses crypto.randomUUID() which requires Secure Context.
             // Inside Docker, Chromium accesses via host.docker.internal (not localhost),
             // which is not a Secure Context by default. This flag fixes it.
-            '--unsafely-treat-insecure-origin-as-secure=http://host.docker.internal:' + (process.env.PORT || '8080'),
+            '--unsafely-treat-insecure-origin-as-secure=http://host.docker.internal:' + detectPort(),
         ],
     },
 };

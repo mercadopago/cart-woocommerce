@@ -183,12 +183,10 @@ class MPEventHandler {
         } else {
             jQuery('#mp_checkout_type').val('custom');
 
-            this.validateCheckoutThenContinue(event, () => {
-                if (!this.hasToken) {
-                    this.setPayerIdentificationInfo();
-                    this.createToken();
-                }
-            });
+            if (!this.hasToken) {
+                this.setPayerIdentificationInfo();
+                this.createToken();
+            }
 
             return false;
         }
@@ -442,36 +440,9 @@ class MPEventHandler {
     }
 
     createToken() {
-        if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.installmentsWasSelected === 'function') {
-            if (!CheckoutPage.installmentsWasSelected()) {
-                CheckoutPage.setInstallmentsErrorState(true);
-                CheckoutPage.scrollToCheckoutCustomContainer();
-                this.cardForm.removeLoadSpinner();
-                return false;
-            }
-        }
-
-        if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.verifyDocument === 'function') {
-            const docContainers = document.querySelectorAll('#form-checkout__identificationNumber-container');
-            const hasDocError = Array.from(docContainers).some(
-                (el) => el.classList.contains('mp-error') || el.classList.contains('mp-error-2px')
-            );
-
-            if (!CheckoutPage.verifyDocument() || hasDocError) {
-                const docInput = document.querySelector('#form-checkout__identificationNumber');
-                const reason = (!docInput?.value || docInput.value === '-1') ? 'empty_field' : 'invalid_format';
-                if (typeof sendMetric === 'function') {
-                    sendMetric(
-                        'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
-                        reason,
-                        'mp_custom_document_validation',
-                        { reason }
-                    );
-                }
-                CheckoutPage.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
-                CheckoutPage.setDisplayOfInputHelper('mp-doc-number', 'flex');
-                document.querySelector('#mp-doc-div')?.scrollIntoView({ behavior: 'smooth' });
-                this.cardForm.removeLoadSpinner();
+        if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.runPreSubmitGates === 'function') {
+            const gate = CheckoutPage.runPreSubmitGates(this.cardForm);
+            if (!gate.passed) {
                 return false;
             }
         }
@@ -498,6 +469,9 @@ class MPEventHandler {
 
                     jQuery('form.checkout').submit();
                 } else {
+                    if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.emitGateBlockedMetric === 'function') {
+                        CheckoutPage.emitGateBlockedMetric('CARD', 'mp_custom_card_validation', 'empty_token');
+                    }
                     throw new Error('cardToken is empty');
                 }
             })
@@ -505,6 +479,7 @@ class MPEventHandler {
                 console.warn('Token creation error: ', error);
                 this.cardForm.scrollToCardForm();
                 this.cardForm.removeLoadSpinner();
+                this.cardForm.removeBlockOverlay();
             });
 
         return false;
@@ -554,10 +529,15 @@ class MPEventHandler {
 
     handleOrderReviewSubmit(event) {
         if (this.isCheckoutCustomPaymentMethodSelected()) {
-            // Não deve ocorrer o event.preventDefault antes do método mercadoPagoFormHandler ser chamado,
-            // pois em casos com mercado_pago_submit=true, por exemplo,
-            // iremos utilizar a submissão tradicional do formulário,
-            // e isso impediria o comportamento esperado.
+            // Ignore the SDK cardForm's programmatic re-submit (requestSubmit → submitter === null), so the pre-submit gate runs once per user click. Scoped to the Custom flow so it never interferes with other payment methods sharing #order_review. See docs/agent/traps.md.
+            if (event?.originalEvent && event.originalEvent.submitter === null) {
+
+                event.stopImmediatePropagation();
+                event.preventDefault();
+                return false;
+            }
+
+            // Do not call event.preventDefault before mercadoPagoFormHandler runs: in cases like mercado_pago_submit=true we rely on the form's native submission, and preventing it here would break the expected behavior.
             return this.mercadoPagoFormHandler(event);
         } else {
             if (this.cardForm.formMounted) {
@@ -584,6 +564,16 @@ class MPEventHandler {
     }
 
     handleUpdatedCheckout() {
+        // Order Pay has its own dedicated mounter (initCardFormWhenReady on init and
+        // onSelectCheckoutCustomInOrderPayPage on selection). The mobile observer also
+        // routes payment_method_selected here, so running this path on Order Pay is
+        // redundant and races with that mounter over cardForm.formMounted — both do a
+        // non-atomic check-then-act and formMounted only flips async in onFormMounted.
+        // Skip it there so the dedicated flow owns the mount. (PPSP-1592)
+        if (this.isOrderPayPage()) {
+            return Promise.resolve();
+        }
+
         if (this.isCheckoutCustomPaymentMethodSelected()) {
             clearTimeout(this.loadSpinnerTimeout);
             this.cardForm.createLoadSpinner();

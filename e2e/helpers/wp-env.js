@@ -1,7 +1,20 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 
-const CONTAINER = 'mp-wc-dev';
+const MAKEFILE = path.resolve(__dirname, '..', '..', 'docker-flexible-environment', 'Makefile');
+
+function readMakefile(variable, fallback) {
+  try {
+    const content = fs.readFileSync(MAKEFILE, 'utf-8');
+    const match = content.match(new RegExp(`^${variable}\\s*[?:]=\\s*(\\S+)`, 'm'));
+    return match ? match[1] : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+const CONTAINER = readMakefile('CONTAINER', 'mp-wc-dev');
 
 // Detect if running inside the Docker container (no docker CLI available)
 // or on the host (docker CLI available). This allows the same helpers to
@@ -63,8 +76,6 @@ function wpEval(php) {
     return null;
   }
 }
-
-const path = require('path');
 
 const DOCKER_DIR = path.resolve(__dirname, '..', '..', 'docker-flexible-environment');
 
