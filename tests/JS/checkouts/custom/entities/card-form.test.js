@@ -94,6 +94,12 @@ describe('MPCardForm', () => {
       NO_PAYMENT_METHODS_FOUND: 'No payment methods found',
     };
 
+    global.CARD_VALIDATION_REASON_BY_CODE = {
+      invalid_length: 'invalid_length',
+      invalid_type: 'empty_field',
+      invalid_value: 'rejected_luhn',
+    };
+
     global.window.mpCheckoutForm = '#checkout-form';
 
     global.window.mPmetrics = [];
@@ -781,13 +787,33 @@ describe('MPCardForm', () => {
       expect(global.sendMetric).toHaveBeenCalledWith('MP_CARDFORM_UNMOUNT_ERROR', 'iframe detached', 'mp_custom_checkout_security_fields_client');
     });
 
-    test('Given cardNumber becomes invalid for a reason other than invalid_length, When onValidityChange is called, Then calls clearInputs to reset residual card state', () => {
+    test('Given cardNumber becomes empty (invalid_type), When onValidityChange is called, Then calls clearInputs to reset residual card state', () => {
       const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
 
       callbacks.onValidityChange([{ code: 'invalid_type' }], 'cardNumber');
 
       expect(CheckoutPage.clearInputs).toHaveBeenCalledTimes(1);
       expect(CheckoutPage.setBackground).toHaveBeenCalledWith('fcCardNumberContainer', 'no-repeat #fff');
+    });
+
+    test('Given cardNumber fails the Luhn checksum (invalid_value), When onValidityChange is called, Then preserves the derived fields (BIN still valid) and still shows the error', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onValidityChange([{ code: 'invalid_value', message: 'card number rejected on Luhn Validation' }], 'cardNumber');
+
+      expect(CheckoutPage.clearInputs).not.toHaveBeenCalled();
+      expect(CheckoutPage.removeAdditionFields).not.toHaveBeenCalled();
+      expect(cardForm.cardNumberValidity).toBe('invalid_value');
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('container', 'add', 'mp-error');
+    });
+
+    test('Given the cardholder name is already in error, When onValidityChange fires a cardNumber error, Then does not re-show the cardholder-name helper info', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      CheckoutPage.cardholderNameHasError.mockReturnValueOnce(true);
+
+      callbacks.onValidityChange([{ code: 'invalid_length' }], 'cardNumber');
+
+      expect(CheckoutPage.setDisplayOfInputHelperInfo).not.toHaveBeenCalledWith('mp-card-holder-name', 'flex');
     });
 
     test('Given cardNumber is simply too short (invalid_length), When onValidityChange is called, Then does not call clearInputs (user is still typing)', () => {
@@ -823,6 +849,30 @@ describe('MPCardForm', () => {
       callbacks.onPaymentMethodsReceived('No payment methods found', null);
 
       expect(cardForm.cardBinIsValid).toBe(false);
+    });
+
+    test('Given the BIN is not recognized, When onPaymentMethodsReceived runs, Then cardBinInvalidMessage is the message without the SDK prefix', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onPaymentMethodsReceived(new Error('MercadoPago.js - No payment methods found'), null);
+
+      expect(cardForm.cardBinInvalidMessage).toBe('No payment methods found');
+    });
+
+    test('Given the BIN lookup fails (network/API), When onPaymentMethodsReceived runs, Then cardBinInvalidMessage carries the real error message', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onPaymentMethodsReceived(new Error('Request timed out'), null);
+
+      expect(cardForm.cardBinInvalidMessage).toBe('Request timed out');
+    });
+
+    test('Given the BIN lookup error has no message, When onPaymentMethodsReceived runs, Then cardBinInvalidMessage falls back to unknown', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onPaymentMethodsReceived(new Error(''), null);
+
+      expect(cardForm.cardBinInvalidMessage).toBe('unknown error message');
     });
 
     test('Given onPaymentMethodsReceived is called with null paymentMethods and no error, When it runs, Then sets cardBinIsValid to false', () => {
@@ -879,13 +929,24 @@ describe('MPCardForm', () => {
       expect(cardForm.cardNumberValidity).toBe('invalid_type');
     });
 
-    test('Given a cardNumber that becomes valid (no error), When onValidityChange runs, Then cardNumberValidity is cleared to null', () => {
+    test('Given onValidityChange fires an error with a code and message for cardNumber, Then stores both the code and the message', () => {
+      const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+
+      callbacks.onValidityChange([{ code: 'invalid_value', message: 'card number rejected on Luhn Validation' }], 'cardNumber');
+
+      expect(cardForm.cardNumberValidity).toBe('invalid_value');
+      expect(cardForm.cardNumberValidityMessage).toBe('card number rejected on Luhn Validation');
+    });
+
+    test('Given a cardNumber that becomes valid (no error), When onValidityChange runs, Then clears both the code and the message', () => {
       const callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
       cardForm.cardNumberValidity = 'invalid_length';
+      cardForm.cardNumberValidityMessage = "cardNumber should be of length '16'.";
 
       callbacks.onValidityChange(null, 'cardNumber');
 
       expect(cardForm.cardNumberValidity).toBeNull();
+      expect(cardForm.cardNumberValidityMessage).toBeNull();
     });
 
     test('Given the SDK passes an empty error array for cardNumber, When onValidityChange runs, Then does not throw, cardNumberValidity is null and emits unexpected_error_format metric', () => {
@@ -941,11 +1002,63 @@ describe('MPCardForm', () => {
         expect(cardForm.getCardValidationReason()).toBe('empty_field');
       });
 
-      test('Given an unforeseen SDK validity code (not length/type) and BIN not rejected, Then reports it as-is instead of masking it as empty_field', () => {
+      test('Given the card number fails the Luhn checksum (invalid_value) and BIN not rejected, Then returns rejected_luhn', () => {
         cardForm.cardBinIsValid = true;
         cardForm.cardNumberValidity = 'invalid_value';
 
-        expect(cardForm.getCardValidationReason()).toBe('invalid_value');
+        expect(cardForm.getCardValidationReason()).toBe('rejected_luhn');
+      });
+
+      test('Given an unforeseen SDK validity code (not length/type/value) and BIN not rejected, Then reports it as-is instead of masking it as empty_field', () => {
+        cardForm.cardBinIsValid = true;
+        cardForm.cardNumberValidity = 'some_future_code';
+
+        expect(cardForm.getCardValidationReason()).toBe('some_future_code');
+      });
+    });
+
+    describe('getCardValidationDetail()', () => {
+      test('Given the Luhn verdict (invalid_value) with message, Then returns code:message', () => {
+        cardForm.cardNumberValidity = 'invalid_value';
+        cardForm.cardNumberValidityMessage = 'card number rejected on Luhn Validation';
+
+        expect(cardForm.getCardValidationDetail()).toBe('invalid_value:card number rejected on Luhn Validation');
+      });
+
+      test('Given the empty-field verdict (invalid_type) with message, Then returns code:message', () => {
+        cardForm.cardNumberValidity = 'invalid_type';
+        cardForm.cardNumberValidityMessage = 'cardNumber should be a number.';
+
+        expect(cardForm.getCardValidationDetail()).toBe('invalid_type:cardNumber should be a number.');
+      });
+
+      test('Given the incomplete verdict (invalid_length) with message, Then returns code:message', () => {
+        cardForm.cardNumberValidity = 'invalid_length';
+        cardForm.cardNumberValidityMessage = "cardNumber should be of length '16'.";
+
+        expect(cardForm.getCardValidationDetail()).toBe("invalid_length:cardNumber should be of length '16'.");
+      });
+
+      test('Given a format verdict with a code but no message, Then returns just the code', () => {
+        cardForm.cardNumberValidity = 'invalid_length';
+        cardForm.cardNumberValidityMessage = null;
+
+        expect(cardForm.getCardValidationDetail()).toBe('invalid_length');
+      });
+
+      test('Given no format verdict but the BIN was rejected, Then returns just the (bounded) BIN message', () => {
+        cardForm.cardNumberValidity = null;
+        cardForm.cardBinIsValid = false;
+        cardForm.cardBinInvalidMessage = 'No payment methods found';
+
+        expect(cardForm.getCardValidationDetail()).toBe('No payment methods found');
+      });
+
+      test('Given no verdict at all, Then returns an empty string', () => {
+        cardForm.cardNumberValidity = null;
+        cardForm.cardBinIsValid = true;
+
+        expect(cardForm.getCardValidationDetail()).toBe('');
       });
     });
 
@@ -1093,6 +1206,12 @@ describe('MPCardForm', () => {
           customFonts: expect.any(Array),
         })
       );
+    });
+
+    test('When getCardFormConfig() is called, Then cardNumber enables Luhn validation', () => {
+      const config = cardForm.getCardFormConfig();
+
+      expect(config.cardNumber.enableLuhnValidation).toBe(true);
     });
   });
 });

@@ -164,6 +164,19 @@ class CustomGateway extends AbstractGateway
      */
     private function isSubscriptionPaymentContext(): bool
     {
+        // When the store runs manual renewals with automatic payments off, subscription
+        // orders are charged as a single payment on the DEFAULT credential — so the SDK
+        // public key must NOT be swapped to the Pre-approval one here, otherwise the token
+        // would be minted with the subscription key and charged with the default access
+        // token (credential mismatch → rejected). Keeps tokenization and processing aligned.
+        //
+        // Because this predicate is shared, the same guard ALSO leaves Super Token enqueued
+        // in this mode (dequeueSuperTokenForSubscriptionCheckout returns early) — correct: a
+        // single payment is not a recurrence, so Super Token is compatible.
+        if ($this->isAutomaticPaymentsOff()) {
+            return false;
+        }
+
         if ($this->mercadopago->helpers->url->validateGetVar('change_payment_method')) {
             return true;
         }
@@ -178,6 +191,21 @@ class CustomGateway extends AbstractGateway
 
         return class_exists('WC_Subscriptions_Cart')
             && \WC_Subscriptions_Cart::cart_contains_subscription();
+    }
+
+    /**
+     * True when the store never charges automatically: manual renewals enabled AND
+     * automatic payments turned off. WCS only honors turn_off_automatic_payments when
+     * accept_manual_renewals is also 'yes', so both must be checked (PPSP-1668).
+     *
+     * Shared by process_payment() (single-payment branch) and isSubscriptionPaymentContext()
+     * (skips the Pre-approval public-key override) so tokenization and processing stay on
+     * the same credential pair.
+     */
+    private function isAutomaticPaymentsOff(): bool
+    {
+        return get_option('woocommerce_subscriptions_accept_manual_renewals', 'no') === 'yes'
+            && get_option('woocommerce_subscriptions_turn_off_automatic_payments', 'no') === 'yes';
     }
 
     /**
@@ -306,8 +334,14 @@ window.mpSdkInstance = null;",
 
         // Scenario 1 — Initial payment for a new subscription.
         // WCS is guaranteed active here (early return above handles the absent case).
+        // "Accept Manual Renewals" only PERMITS manual renewal as a fallback (e.g. failed
+        // automatic charge); it does NOT disable automatic payments by itself. The real
+        // signal that a store never charges automatically is turn_off_automatic_payments,
+        // which WCS only honors when accept_manual_renewals is also 'yes'. Checking both
+        // (PPSP-1668) avoids breaking stores that legitimately run MP recurring payments
+        // while also keeping manual renewal enabled as a fallback.
         $order = wc_get_order($order_id);
-        if (wcs_order_contains_subscription($order)) {
+        if (wcs_order_contains_subscription($order) && !$this->isAutomaticPaymentsOff()) {
             try {
                 return $this->process_subscription_initial_payment($order);
             } catch (\Exception $e) {

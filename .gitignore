@@ -27,3 +27,5 @@ phpstan-baseline.neon
 # IA Files
 .personal-agents
 .claude/settings.local.json
+.claude/regression-v8.9.2.json
+e2e/plugins/

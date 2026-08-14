@@ -2,8 +2,8 @@
 type: Repository
 app: woocommerce-plugins-enablers
 archetype: wordpress-plugin
-version: f2d57be7
-validated: 2026-06-29
+version: 1aa9f644
+validated: 2026-07-29
 update_when: when the repo identity, reading order, or maintenance rule changes
 ---
 
@@ -22,6 +22,13 @@ Read the orientation guides under `docs/agent/` in this order:
 3. [contracts.md](docs/agent/contracts.md) — what it exposes and what it depends on.
 4. [runbook.md](docs/agent/runbook.md) — how to build/run/test and the Definition of Done.
 5. [traps.md](docs/agent/traps.md) — tacit gotchas not visible in the code.
+
+## Team hub (P&P)
+
+This repo belongs to the **Plugins & Payments (P&P)** team. To navigate the wider ecosystem from here:
+
+- **Domain hub — specs / SDD index, source of truth:** https://github.com/melisource/fury_mp-op-pp-sdd — see [`tech/architecture/sdd-index.md`](https://github.com/melisource/fury_mp-op-pp-sdd/blob/master/tech/architecture/sdd-index.md) for the features this plugin participates in. Details in [overview.md](docs/agent/overview.md).
+- **Process hub — DoR/DoD, code review, standards:** https://github.com/melisource/fury_mp-op-pp-development-cycle (also referenced in the DoR/DoD section below).
 
 ## Maintenance rule (read this before changing anything)
 

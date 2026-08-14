@@ -531,7 +531,6 @@ class MPEventHandler {
         if (this.isCheckoutCustomPaymentMethodSelected()) {
             // Ignore the SDK cardForm's programmatic re-submit (requestSubmit → submitter === null), so the pre-submit gate runs once per user click. Scoped to the Custom flow so it never interferes with other payment methods sharing #order_review. See docs/agent/traps.md.
             if (event?.originalEvent && event.originalEvent.submitter === null) {
-
                 event.stopImmediatePropagation();
                 event.preventDefault();
                 return false;

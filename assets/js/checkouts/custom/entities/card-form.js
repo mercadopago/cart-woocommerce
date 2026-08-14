@@ -1,4 +1,4 @@
-/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher, sendMetric, MPCardFormErrorCodes */
+/* globals wc_mercadopago_custom_checkout_params, wc_mercadopago_custom_card_form_params, MercadoPago, CheckoutPage, jQuery, MPCheckoutFieldsDispatcher, sendMetric, MPCardFormErrorCodes, CARD_VALIDATION_REASON_BY_CODE */
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 class MPCardForm {
     TIMEOUT_TO_WAIT_INIT_CARD_FORM = 10000;
@@ -18,6 +18,8 @@ class MPCardForm {
         this.lastTrackedAmount = null;
         this.cardBinIsValid = true;
         this.cardNumberValidity = null;
+        this.cardNumberValidityMessage = null;
+        this.cardBinInvalidMessage = null;
         this.lastVerdictBin = null;
         this.currentBin = null;
 
@@ -94,7 +96,8 @@ class MPCardForm {
                 id: 'form-checkout__cardNumber-container',
                 placeholder: '1234 1234 1234 1234',
                 style: baseStyle,
-                customFonts: [baseCustomFonts]
+                customFonts: [baseCustomFonts],
+                enableLuhnValidation: true
             },
             cardholderName: {
                 id: 'form-checkout__cardholderName',
@@ -136,6 +139,8 @@ class MPCardForm {
                 this.fields = fields;
                 this.cardBinIsValid = true;
                 this.cardNumberValidity = null;
+                this.cardNumberValidityMessage = null;
+                this.cardBinInvalidMessage = null;
                 this.lastVerdictBin = null;
                 this.currentBin = null;
                 this.setupSecureFieldsStylesAndAddListeners();
@@ -182,6 +187,7 @@ class MPCardForm {
                 this.currentBin = value;
                 if (value && value !== this.lastVerdictBin) {
                     this.cardBinIsValid = true;
+                    this.cardBinInvalidMessage = null;
                     CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'remove', 'mp-error');
                     CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'none');
                     if (document.querySelector('#mp_checkout_type')?.value !== 'super_token') {
@@ -195,11 +201,14 @@ class MPCardForm {
                 if (error) {
                     console.error('Payment methods handling error: ', error);
                     this.cardBinIsValid = false;
+                    const isInvalidBin = error?.message?.includes(MPCardFormErrorCodes.NO_PAYMENT_METHODS_FOUND)
+                        || error?.toString?.().includes(MPCardFormErrorCodes.NO_PAYMENT_METHODS_FOUND);
+                    // invalid-BIN gate has no SDK code (plain Error) — carry the error's own message
+                    // (minus the SDK prefix), or 'unknown error message' when the error has no message.
+                    this.cardBinInvalidMessage = (error?.message || '').replace('MercadoPago.js - ', '') || 'unknown error message';
                     CheckoutPage.clearCardState();
                     const helperMsg = CheckoutPage.getHelperMessage('cardNumber');
                     if (helperMsg) {
-                        const isInvalidBin = error?.message?.includes(MPCardFormErrorCodes.NO_PAYMENT_METHODS_FOUND)
-                            || error?.toString?.().includes(MPCardFormErrorCodes.NO_PAYMENT_METHODS_FOUND);
                         helperMsg.innerHTML = isInvalidBin
                             ? wc_mercadopago_custom_checkout_params.input_helper_message?.cardNumber?.invalid_value
                                 ?? wc_mercadopago_custom_checkout_params.input_helper_message?.cardNumber?.invalid_length
@@ -257,9 +266,11 @@ class MPCardForm {
                                 'mp_custom_card_validation', { reason: 'unexpected_error_format' });
                         }
                         this.cardNumberValidity = null;
+                        this.cardNumberValidityMessage = null;
                         return;
                     }
                     this.cardNumberValidity = error ? error[0].code : null;
+                    this.cardNumberValidityMessage = error ? error[0].message : null;
                 }
 
                 if (error) {
@@ -275,7 +286,8 @@ class MPCardForm {
                     }
 
                     if (field === 'cardNumber') {
-                        if (error[0].code !== 'invalid_length') {
+                        // Only the empty state (invalid_type) resets the derived fields; a Luhn failure (invalid_value) keeps a valid BIN, so preserve installments/issuer.
+                        if (error[0].code === 'invalid_type') {
                             const isSuperToken = document.querySelector('#mp_checkout_type')?.value === 'super_token';
                             CheckoutPage.setBackground('fcCardNumberContainer', 'no-repeat #fff');
                             CheckoutPage.removeAdditionFields(!isSuperToken);
@@ -354,19 +366,28 @@ class MPCardForm {
     }
 
     getCardValidationReason() {
-        if (this.cardNumberValidity === 'invalid_length') {
-            return 'invalid_length';
-        }
-        if (this.cardNumberValidity === 'invalid_type') {
-            return 'empty_field';
+        const mappedReason = CARD_VALIDATION_REASON_BY_CODE[this.cardNumberValidity];
+        if (mappedReason) {
+            return mappedReason;
         }
         if (this.cardBinIsValid === false) {
             return 'invalid_bin';
         }
-        if (!this.cardNumberValidity) {
-            return 'empty_field';
+        return this.cardNumberValidity || 'empty_field';
+    }
+
+    // Raw SDK verdict for the card number as `code:message` for observability alongside the classified reason.
+    // The invalid-BIN case has no SDK code (it is a plain Error), so it carries just the (bounded) message.
+    getCardValidationDetail() {
+        if (this.cardNumberValidity) {
+            return this.cardNumberValidityMessage
+                ? `${this.cardNumberValidity}:${this.cardNumberValidityMessage}`
+                : this.cardNumberValidity;
         }
-        return this.cardNumberValidity;
+        if (this.cardBinIsValid === false) {
+            return this.cardBinInvalidMessage || 'invalid_bin';
+        }
+        return '';
     }
 
     getAmount() {
