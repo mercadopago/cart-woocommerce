@@ -324,7 +324,7 @@ describe('CheckoutPage', () => {
       sendMetric = jest.fn();
     });
 
-    test('Given a gate/target/reason, When called, Then emits sendMetric with the unified gate contract', () => {
+    test('Given no reason detail, When called, Then emits sendMetric with 3 args (message only)', () => {
       const page = loadPageWithMetric();
 
       page.emitGateBlockedMetric('INSTALLMENTS', 'mp_custom_installments_validation', 'not_selected');
@@ -332,8 +332,20 @@ describe('CheckoutPage', () => {
       expect(sendMetric).toHaveBeenCalledWith(
         'MP_CUSTOM_CHECKOUT_INSTALLMENTS_VALIDATION_BLOCKED',
         'not_selected',
-        'mp_custom_installments_validation',
-        { reason: 'not_selected' }
+        'mp_custom_installments_validation'
+      );
+    });
+
+    test('Given a reason detail, When called, Then includes it as { reason } in details', () => {
+      const page = loadPageWithMetric();
+
+      page.emitGateBlockedMetric('CARD', 'mp_custom_card_validation', 'rejected_luhn', 'invalid_value:card number rejected on Luhn Validation');
+
+      expect(sendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_CARD_VALIDATION_BLOCKED',
+        'rejected_luhn',
+        'mp_custom_card_validation',
+        { reason: 'invalid_value:card number rejected on Luhn Validation' }
       );
     });
 
@@ -355,8 +367,10 @@ describe('CheckoutPage', () => {
         wc_mercadopago_custom_page_params: {},
         CheckoutElements: {
           customContent: '#mp-custom-content',
+          cardInstallments: '#cardInstallments',
           fcCardNumberContainer: '#form-checkout__cardNumber-container',
           fcIdentificationNumber: '#form-checkout__identificationNumber',
+          fcIdentificationNumberContainer: '#form-checkout__identificationNumber-container',
           mpDocumentContainer: '#mp-doc-div',
           mpDocumentInputLabel: '#mp-doc-label',
         },
@@ -368,6 +382,7 @@ describe('CheckoutPage', () => {
     function setupDom({
       cardError = false,
       installments = '3',
+      hiddenInstallments = '',
       docDisplay = 'none',
       docValue = '',
       docContainerError = false,
@@ -379,6 +394,7 @@ describe('CheckoutPage', () => {
           <option value="">placeholder</option>
           <option value="3">3</option>
         </select>
+        <input type="hidden" id="cardInstallments" value="${hiddenInstallments}" />
         <div id="mp-doc-div"></div>
         <input id="form-checkout__identificationNumber" />
         <div id="form-checkout__identificationNumber-container" class="${docContainerError ? 'mp-error' : ''}"></div>
@@ -392,6 +408,7 @@ describe('CheckoutPage', () => {
       sendMetric = jest.fn();
       cardForm = {
         getCardValidationReason: jest.fn(() => 'invalid_bin'),
+        getCardValidationDetail: jest.fn(() => 'No payment methods found'),
         scrollToCardForm: jest.fn(),
         removeLoadSpinner: jest.fn(),
         removeBlockOverlay: jest.fn(),
@@ -416,10 +433,29 @@ describe('CheckoutPage', () => {
         'MP_CUSTOM_CHECKOUT_CARD_VALIDATION_BLOCKED',
         'invalid_bin',
         'mp_custom_card_validation',
-        { reason: 'invalid_bin' }
+        { reason: 'No payment methods found' }
       );
       // Order Pay regression: a short-circuited gate must release WooCommerce's block overlay,
       // otherwise #order_review stays stuck. It is deferred to a microtask, so flush before asserting.
+      await Promise.resolve();
+      expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
+    });
+
+    test('Given the card number fails Luhn (rejected_luhn), When called, Then blocks on the card gate with reason rejected_luhn', async () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: true });
+      cardForm.getCardValidationReason.mockReturnValue('rejected_luhn');
+      cardForm.getCardValidationDetail.mockReturnValue('invalid_value:card number rejected on Luhn Validation');
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: false, gate: 'card', reason: 'rejected_luhn' });
+      expect(sendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_CARD_VALIDATION_BLOCKED',
+        'rejected_luhn',
+        'mp_custom_card_validation',
+        { reason: 'invalid_value:card number rejected on Luhn Validation' }
+      );
       await Promise.resolve();
       expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
     });
@@ -443,8 +479,7 @@ describe('CheckoutPage', () => {
       expect(sendMetric).toHaveBeenCalledWith(
         'MP_CUSTOM_CHECKOUT_INSTALLMENTS_VALIDATION_BLOCKED',
         'not_selected',
-        'mp_custom_installments_validation',
-        { reason: 'not_selected' }
+        'mp_custom_installments_validation'
       );
       await Promise.resolve();
       expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
@@ -460,8 +495,7 @@ describe('CheckoutPage', () => {
       expect(sendMetric).toHaveBeenCalledWith(
         'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
         'empty_field',
-        'mp_custom_document_validation',
-        { reason: 'empty_field' }
+        'mp_custom_document_validation'
       );
       await Promise.resolve();
       expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
@@ -477,8 +511,7 @@ describe('CheckoutPage', () => {
       expect(sendMetric).toHaveBeenCalledWith(
         'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
         'invalid_format',
-        'mp_custom_document_validation',
-        { reason: 'invalid_format' }
+        'mp_custom_document_validation'
       );
     });
 
@@ -516,6 +549,50 @@ describe('CheckoutPage', () => {
       page.runPreSubmitGates(cardForm);
 
       expect(document.getElementById('mp-doc-label').classList.contains('mp-label-error')).toBe(true);
+    });
+
+    // PSW-4385 (context: docs/agent/traps.md). iOS: picker selects without firing `change` → empty hidden.
+    test('Given the select has a value but the hidden #cardInstallments is empty (iOS, no change), When called, Then the hidden is synced from the select and all gates pass', () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: false, installments: '3', hiddenInstallments: '', docDisplay: 'none' });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(document.getElementById('cardInstallments').value).toBe('3');
+      expect(result).toEqual({ passed: true });
+    });
+
+    // PSW-4385. No select value → nothing to mirror; the placeholder still blocks the gate.
+    test('Given the select is on the placeholder (empty), When called, Then the hidden stays empty and the installments gate blocks', () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: false, installments: '', hiddenInstallments: '' });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(document.getElementById('cardInstallments').value).toBe('');
+      expect(result).toEqual({ passed: false, gate: 'installments', reason: 'not_selected' });
+    });
+
+    // PSW-4385. Stale hidden (installments reload leaves it behind) → the visible select wins.
+    test('Given the hidden holds a stale value diverging from the select, When called, Then the select value wins (posted value matches what the buyer sees)', () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: false, installments: '3', hiddenInstallments: '6', docDisplay: 'none' });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(document.getElementById('cardInstallments').value).toBe('3');
+      expect(result).toEqual({ passed: true });
+    });
+
+    // PSW-4385. Explicit choice (change keeps select=hidden) → the mirror is an idempotent no-op.
+    test('Given the select and hidden already match (explicit choice), When called, Then the value is preserved', () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: false, installments: '3', hiddenInstallments: '3', docDisplay: 'none' });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(document.getElementById('cardInstallments').value).toBe('3');
+      expect(result).toEqual({ passed: true });
     });
   });
 

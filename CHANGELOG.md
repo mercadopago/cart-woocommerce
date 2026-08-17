@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.9.2] 2026-08-17
+### Added
+- Block payment submission in Custom Checkout when the card number fails the check-digit (Luhn) validation, showing a specific error instead of a generic failure
+
+### Fixed
+- Fix card payments on iOS in Custom Checkout being rejected when the number of installments could be submitted empty; the selected installment is now always sent
+- Fix checkout being blocked for stores using WooCommerce Subscriptions with "Accept Manual Renewals" (without recurring-payment credentials): these orders, which started failing in v8.9.0, now process as regular one-time payments again
+
 ## [8.9.1] 2026-08-03
 ### Security
 - Restrict Pix payment-status polling to the order owner by validating the order key alongside the nonce, preventing unauthenticated access to other buyers' payment status

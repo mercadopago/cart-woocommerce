@@ -289,4 +289,170 @@ describe('callSdkWithMetrics — wrapper para chamadas ao SDK JS do Mercado Pago
       ).rejects.toBe(originalError); // erro ORIGINAL é propagado, não ReferenceError
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Caso 18-28: backstop de validação de campo do createCardToken (checkout Custom)
+  // O array de secure fields { cause, message, field, details:{ reason } } vai ao
+  // mp_api_error com message 'invalid_security_fields' e reason = campos que falharam.
+  // ---------------------------------------------------------------------------
+  describe('backstop de validação de campo (createCardToken, Custom)', () => {
+    const setCheckoutType = (value) => {
+      document.body.innerHTML = value === null ? '' : `<input id="mp_checkout_type" value="${value}" />`;
+    };
+
+    const emptyCardNumberErrors = [
+      { cause: 'invalid_type', message: 'cardNumber should be a number.', field: 'cardNumber', details: { reason: 'invalid_type' } },
+      { cause: 'invalid_value', message: 'cardNumber is empty.', field: 'cardNumber', details: { reason: 'empty_value' } },
+      { cause: 'invalid_length', message: "cardNumber should be of length between '8' and '19'.", field: 'cardNumber', details: { reason: 'invalid_length' } },
+    ];
+
+    beforeEach(() => setCheckoutType('custom'));
+    afterEach(() => setCheckoutType(null));
+
+    test('TC-CSM-18: form todo vazio → message invalid_security_fields, reason lista os campos em ordem', async () => {
+      const allEmpty = [
+        ...emptyCardNumberErrors,
+        { cause: 'invalid_value', message: 'securityCode is empty.', field: 'securityCode', details: { reason: 'empty_value' } },
+        { cause: 'invalid_value', message: 'expirationMonth is empty.', field: 'expirationMonth', details: { reason: 'empty_value' } },
+        { cause: 'invalid_value', message: 'expirationYear is empty.', field: 'expirationYear', details: { reason: 'empty_value' } },
+      ];
+      const sdkCall = jest.fn().mockRejectedValue(allEmpty);
+
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0',
+        'invalid_security_fields',
+        'mp_api_error',
+        { api_route: 'createCardToken', reason: 'cardNumber,expirationDate,securityCode' }
+      );
+    });
+
+    test('TC-CSM-19: só cardNumber (vazio) → reason cardNumber', async () => {
+      const sdkCall = jest.fn().mockRejectedValue(emptyCardNumberErrors);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'invalid_security_fields', 'mp_api_error',
+        { api_route: 'createCardToken', reason: 'cardNumber' }
+      );
+    });
+
+    test('TC-CSM-20: Luhn no cardNumber → reason cardNumber (message segue invalid_security_fields)', async () => {
+      const luhn = [{ cause: 'invalid_value', message: 'card number rejected on Luhn Validation', field: 'cardNumber', details: { reason: 'luhn' } }];
+      const sdkCall = jest.fn().mockRejectedValue(luhn);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'invalid_security_fields', 'mp_api_error',
+        { api_route: 'createCardToken', reason: 'cardNumber' }
+      );
+    });
+
+    test('TC-CSM-21: cartão OK, só CVV vazio → reason securityCode', async () => {
+      const cvv = [{ cause: 'invalid_value', message: 'securityCode is empty.', field: 'securityCode', details: { reason: 'empty_value' } }];
+      const sdkCall = jest.fn().mockRejectedValue(cvv);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'invalid_security_fields', 'mp_api_error',
+        { api_route: 'createCardToken', reason: 'securityCode' }
+      );
+    });
+
+    test('TC-CSM-22: cartão OK, CVV + expiration (month/year) → expiration colapsa em expirationDate, ordem determinística', async () => {
+      const errs = [
+        { cause: 'invalid_value', message: 'expirationMonth is empty.', field: 'expirationMonth', details: { reason: 'empty_value' } },
+        { cause: 'invalid_value', message: 'expirationYear is empty.', field: 'expirationYear', details: { reason: 'empty_value' } },
+        { cause: 'invalid_value', message: 'securityCode is empty.', field: 'securityCode', details: { reason: 'empty_value' } },
+      ];
+      const sdkCall = jest.fn().mockRejectedValue(errs);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'invalid_security_fields', 'mp_api_error',
+        { api_route: 'createCardToken', reason: 'expirationDate,securityCode' }
+      );
+    });
+
+    test('TC-CSM-23: checkout NÃO custom (super_token) → não reclassifica, segue mp_api_error opaco', async () => {
+      setCheckoutType('super_token');
+      const sdkCall = jest.fn().mockRejectedValue(emptyCardNumberErrors);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'Unknown SDK error', 'mp_api_error', { api_route: 'createCardToken' }
+      );
+    });
+
+    test('TC-CSM-24: sdkMethod !== createCardToken (yape.create) com array → não reclassifica', async () => {
+      const sdkCall = jest.fn().mockRejectedValue(emptyCardNumberErrors);
+      await callSdkWithMetrics(sdkCall, 'yape.create').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        expect.any(String), expect.any(String), 'mp_api_error', { api_route: 'yape.create' }
+      );
+    });
+
+    test('TC-CSM-25: non-PCI cardholderName vazio (code 221) → message invalid_cardholder_fields, reason = error.message', async () => {
+      const nonPci = [{ code: '221', message: 'parameter cardholderName can not be null/empty' }];
+      const sdkCall = jest.fn().mockRejectedValue(nonPci);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'invalid_cardholder_fields', 'mp_api_error',
+        { api_route: 'createCardToken', reason: 'parameter cardholderName can not be null/empty' }
+      );
+    });
+
+    test('TC-CSM-29: non-PCI documento (codes 212/214) → message invalid_cardholder_fields, reason = error.message(s) juntas', async () => {
+      const nonPci = [
+        { code: '212', message: 'parameter identificationType can not be null/empty' },
+        { code: '214', message: 'parameter identificationNumber can not be null/empty' },
+      ];
+      const sdkCall = jest.fn().mockRejectedValue(nonPci);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'invalid_cardholder_fields', 'mp_api_error',
+        { api_route: 'createCardToken', reason: 'parameter identificationType can not be null/empty,parameter identificationNumber can not be null/empty' }
+      );
+    });
+
+    test('TC-CSM-30: array com code NÃO mapeado → message segue "Unknown SDK error", reason = error.message (diagnosticável)', async () => {
+      const unmapped = [{ code: '999', message: 'parameter cardIssuerId can not be null/empty' }];
+      const sdkCall = jest.fn().mockRejectedValue(unmapped);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'Unknown SDK error', 'mp_api_error',
+        { api_route: 'createCardToken', reason: 'parameter cardIssuerId can not be null/empty' }
+      );
+    });
+
+    test('TC-CSM-31: cardholderName + documento juntos → message invalid_cardholder_fields, reason com os dois', async () => {
+      const nonPci = [
+        { code: '221', message: 'parameter cardholderName can not be null/empty' },
+        { code: '324', message: 'invalid parameter identificationNumber' },
+      ];
+      const sdkCall = jest.fn().mockRejectedValue(nonPci);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '0', 'invalid_cardholder_fields', 'mp_api_error',
+        { api_route: 'createCardToken', reason: 'parameter cardholderName can not be null/empty,invalid parameter identificationNumber' }
+      );
+    });
+
+
+    test('TC-CSM-26: erro real de API (objeto, não array) no createCardToken → mp_api_error normal', async () => {
+      const apiError = { message: 'Could not create card_token. Try again later...', status: 500 };
+      const sdkCall = jest.fn().mockRejectedValue(apiError);
+      await callSdkWithMetrics(sdkCall, 'createCardToken').catch(() => {});
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        '500', 'Could not create card_token. Try again later...', 'mp_api_error', { api_route: 'createCardToken' }
+      );
+    });
+
+    test('TC-CSM-27: erro (array) é re-lançado preservando a referência', async () => {
+      const sdkCall = jest.fn().mockRejectedValue(emptyCardNumberErrors);
+      await expect(callSdkWithMetrics(sdkCall, 'createCardToken')).rejects.toBe(emptyCardNumberErrors);
+    });
+
+    test('TC-CSM-28: window.sendMetric ausente + array custom → sem ReferenceError, re-throw do array', async () => {
+      const noSend = loadCallSdkWithMetricsWithoutSendMetric();
+      const sdkCall = jest.fn().mockRejectedValue(emptyCardNumberErrors);
+      await expect(noSend(sdkCall, 'createCardToken')).rejects.toBe(emptyCardNumberErrors);
+    });
+  });
 });

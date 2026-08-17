@@ -55,10 +55,10 @@ module.exports = defineConfig({
     fullyParallel: false,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
-    /* CI retries for infra noise; local retries absorb MP sandbox latency variance
-       on "successful payment" flows (payment approval/settlement can intermittently
-       exceed the per-test timeout — the same test passes on a re-attempt). */
-    retries: process.env.CI ? 3 : 2,
+    /* CI retries for infra noise; a single local retry absorbs MP sandbox latency
+       variance on "successful payment" flows (payment approval/settlement can
+       intermittently exceed the per-test timeout — the same test passes on a re-attempt). */
+    retries: process.env.CI ? 3 : 1,
     /* Each test gets an isolated browser context (separate cookies/session).
        Full-checkout flows hit a single shared store + the real MP sandbox API, so
        too many parallel workers cause contention (orders time out intermittently).

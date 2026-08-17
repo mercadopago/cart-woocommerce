@@ -716,9 +716,15 @@ const CheckoutPage = {
     }
   },
 
-  emitGateBlockedMetric(gate, target, reason) {
-    if (typeof sendMetric === 'function') {
-      sendMetric(`MP_CUSTOM_CHECKOUT_${gate}_VALIDATION_BLOCKED`, reason, target, { reason });
+  emitGateBlockedMetric(gate, target, message, reason) {
+    if (typeof sendMetric !== 'function') {
+      return;
+    }
+    const metricName = `MP_CUSTOM_CHECKOUT_${gate}_VALIDATION_BLOCKED`;
+    if (reason) {
+      sendMetric(metricName, message, target, { reason });
+    } else {
+      sendMetric(metricName, message, target);
     }
   },
 
@@ -727,12 +733,27 @@ const CheckoutPage = {
     Promise.resolve().then(() => cardForm?.removeBlockOverlay());
   },
 
+  // PSW-4385: the iOS picker auto-selects without firing `change`, so #cardInstallments
+  // can be empty/stale vs. the visible select. Mirror the select (source of truth) into
+  // the hidden at submit, unconditionally. Custom flow only — Super Token owns the field.
+  // Full context: docs/agent/traps.md and .claude/rules/checkout-resilience.md.
+  syncInstallmentsFromSelect() {
+    const installmentsSelect = document.getElementById('form-checkout__installments');
+    const cardInstallments = document.querySelector(CheckoutElements.cardInstallments);
+    if (installmentsSelect?.value && cardInstallments) {
+      cardInstallments.value = installmentsSelect.value;
+    }
+  },
+
   runPreSubmitGates(cardForm) {
     if (this.cardNumberHasError()) {
       const reason = typeof cardForm?.getCardValidationReason === 'function'
         ? cardForm.getCardValidationReason()
         : 'invalid_length';
-      this.emitGateBlockedMetric('CARD', 'mp_custom_card_validation', reason);
+      const detail = typeof cardForm?.getCardValidationDetail === 'function'
+        ? cardForm.getCardValidationDetail()
+        : '';
+      this.emitGateBlockedMetric('CARD', 'mp_custom_card_validation', reason, detail);
       this.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
       this.setDisplayOfInputHelper('mp-card-number', 'flex');
       cardForm?.scrollToCardForm();
@@ -740,6 +761,8 @@ const CheckoutPage = {
       this.deferBlockOverlayRemoval(cardForm);
       return { passed: false, gate: 'card', reason };
     }
+
+    this.syncInstallmentsFromSelect();
 
     if (!this.installmentsWasSelected()) {
       this.emitGateBlockedMetric('INSTALLMENTS', 'mp_custom_installments_validation', 'not_selected');
@@ -750,24 +773,22 @@ const CheckoutPage = {
       return { passed: false, gate: 'installments', reason: 'not_selected' };
     }
 
-    if (typeof this.verifyDocument === 'function') {
-      const docContainers = document.querySelectorAll('#form-checkout__identificationNumber-container');
-      const hasDocError = Array.from(docContainers).some(
-        (el) => el.classList.contains('mp-error') || el.classList.contains('mp-error-2px')
-      );
+    const docContainers = document.querySelectorAll(CheckoutElements.fcIdentificationNumberContainer);
+    const hasDocError = Array.from(docContainers).some(
+      (el) => el.classList.contains('mp-error') || el.classList.contains('mp-error-2px')
+    );
 
-      if (!this.verifyDocument() || hasDocError) {
-        const docInput = document.querySelector('#form-checkout__identificationNumber');
-        const reason = (!docInput?.value || docInput.value === '-1') ? 'empty_field' : 'invalid_format';
-        this.emitGateBlockedMetric('DOCUMENT', 'mp_custom_document_validation', reason);
-        this.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
-        this.setDisplayOfError('mpDocumentInputLabel', 'add', 'mp-label-error');
-        this.setDisplayOfInputHelper('mp-doc-number', 'flex');
-        document.querySelector('#mp-doc-div')?.scrollIntoView({ behavior: 'smooth' });
-        cardForm?.removeLoadSpinner();
-        this.deferBlockOverlayRemoval(cardForm);
-        return { passed: false, gate: 'document', reason };
-      }
+    if (!this.verifyDocument() || hasDocError) {
+      const docInput = document.querySelector(CheckoutElements.fcIdentificationNumber);
+      const reason = (!docInput?.value || docInput.value === '-1') ? 'empty_field' : 'invalid_format';
+      this.emitGateBlockedMetric('DOCUMENT', 'mp_custom_document_validation', reason);
+      this.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
+      this.setDisplayOfError('mpDocumentInputLabel', 'add', 'mp-label-error');
+      this.setDisplayOfInputHelper('mp-doc-number', 'flex');
+      document.querySelector(CheckoutElements.mpDocumentContainer)?.scrollIntoView({ behavior: 'smooth' });
+      cardForm?.removeLoadSpinner();
+      this.deferBlockOverlayRemoval(cardForm);
+      return { passed: false, gate: 'document', reason };
     }
 
     return { passed: true };

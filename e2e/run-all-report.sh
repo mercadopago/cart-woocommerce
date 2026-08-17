@@ -689,29 +689,36 @@ run_combination() {
   local playwright_args=("${target[@]}" "--reporter=${reporter}")
   [ "$WITH_RETRIES" -eq 0 ] && playwright_args+=("--retries=0")
   # shellcheck disable=SC2030,SC2031  # exports são intencionalmente locais ao subshell
-  # MLB: two-phase run for @serial-store isolation without forcing workers=1 on all tests.
+  # Two-phase run for @serial-store isolation without forcing workers=1 on all tests.
+  # Applies to any site that has @serial-store specs (detected via Playwright below).
   # Phase 1 — non-@serial-store specs (workers=2, fast parallel).
   # Phase 2 — @serial-store specs alone (workers=1, no concurrent spec corrupts shared state).
-  # The two JSONs are merged into MLB-<mode>.json so the stats parser below needs no changes.
+  # The two JSONs are merged into <SITE>-<mode>.json so the stats parser below needs no changes.
   # --rerun-failed falls through to the standard path: the set is small and workers=2 is safe.
-  if [ "$site" = "MLB" ] && [ "${#rerun_targets[@]}" -eq 0 ]; then
-    local mlb_rc=0
-    local mlb_retries_arg=()
-    [ "$WITH_RETRIES" -eq 0 ] && mlb_retries_arg+=(--retries=0)
+  #
+  # Detection asks Playwright itself (--list) whether the site has @serial-store tests, so
+  # it resolves the real describe titles — including those created by the shared factory
+  # (flows/manual_renewal_multicountry.js) — instead of relying on a marker string living
+  # in each spec file. --list does not run global-setup, so no store reset happens here.
+  if [ "${#rerun_targets[@]}" -eq 0 ] \
+     && ( cd "$E2E_DIR" && npx playwright test "tests/${site_lower}/" --grep "@serial-store" --list 2>/dev/null ) | grep -q "@serial-store"; then
+    local serial_rc=0
+    local serial_retries_arg=()
+    [ "$WITH_RETRIES" -eq 0 ] && serial_retries_arg+=(--retries=0)
     local nonserial_json="${json_file%.json}-nonserial.json"
     local serial_json="${json_file%.json}-serial.json"
 
-    # Phase 1 — all MLB tests EXCEPT @serial-store, workers=2.
-    echo "[E2E] MLB ${checkout} — fase 1/2: testes paralelos, workers=2 (exceto @serial-store)"
+    # Phase 1 — all ${site} tests EXCEPT @serial-store, workers=2.
+    echo "[E2E] ${site} ${checkout} — fase 1/2: testes paralelos, workers=2 (exceto @serial-store)"
     (
       cd "$E2E_DIR" || exit 1
       export PLAYWRIGHT_JSON_OUTPUT_NAME="$nonserial_json"
       export SITE="$site"
       export CHECKOUT="$checkout"
-      npx playwright test tests/mlb/ --grep-invert "@serial-store" \
-        --workers=2 "--reporter=${reporter}" "${mlb_retries_arg[@]+"${mlb_retries_arg[@]}"}"
+      npx playwright test "tests/${site_lower}/" --grep-invert "@serial-store" \
+        --workers=2 "--reporter=${reporter}" "${serial_retries_arg[@]+"${serial_retries_arg[@]}"}"
     ) 2>&1 | tee "$log_file"
-    [ "${PIPESTATUS[0]}" -ne 0 ] && mlb_rc=1
+    [ "${PIPESTATUS[0]}" -ne 0 ] && serial_rc=1
     if [ "$OPEN_REPORT" -eq 1 ] && [ -d "${E2E_DIR}/blob-report" ]; then
       mkdir -p "${RESULTS_DIR}/blobs"
       find "${E2E_DIR}/blob-report" -name "*.zip" \
@@ -719,23 +726,23 @@ run_combination() {
     fi
 
     # Phase 2 — @serial-store specs alone, workers=1.
-    echo "[E2E] MLB ${checkout} — fase 2/2: @serial-store (refund + amount_config), workers=1"
+    echo "[E2E] ${site} ${checkout} — fase 2/2: @serial-store (store-mutating specs), workers=1"
     (
       cd "$E2E_DIR" || exit 1
       export PLAYWRIGHT_JSON_OUTPUT_NAME="$serial_json"
       export SITE="$site"
       export CHECKOUT="$checkout"
-      npx playwright test tests/mlb/ --grep "@serial-store" \
-        --workers=1 "--reporter=${reporter}" "${mlb_retries_arg[@]+"${mlb_retries_arg[@]}"}"
+      npx playwright test "tests/${site_lower}/" --grep "@serial-store" \
+        --workers=1 "--reporter=${reporter}" "${serial_retries_arg[@]+"${serial_retries_arg[@]}"}"
     ) 2>&1 | tee -a "$log_file"
-    [ "${PIPESTATUS[0]}" -ne 0 ] && mlb_rc=1
+    [ "${PIPESTATUS[0]}" -ne 0 ] && serial_rc=1
     if [ "$OPEN_REPORT" -eq 1 ] && [ -d "${E2E_DIR}/blob-report" ]; then
       mkdir -p "${RESULTS_DIR}/blobs"
       find "${E2E_DIR}/blob-report" -name "*.zip" \
         -exec mv {} "${RESULTS_DIR}/blobs/${site}-${checkout}-serial.zip" \;
     fi
 
-    # Merge phase JSONs → MLB-<mode>.json (expected by the stats parser below).
+    # Merge phase JSONs → <SITE>-<mode>.json (expected by the stats parser below).
     if [ -f "$nonserial_json" ] && [ -f "$serial_json" ]; then
       jq -s '{
         config: .[0].config,
@@ -752,7 +759,7 @@ run_combination() {
     elif [ -f "$nonserial_json" ]; then mv "$nonserial_json" "$json_file"
     elif [ -f "$serial_json"    ]; then mv "$serial_json"    "$json_file"
     fi
-    run_rc=$mlb_rc
+    run_rc=$serial_rc
   else
     # Standard run: single invocation for all other countries (and MLB --rerun-failed).
     (

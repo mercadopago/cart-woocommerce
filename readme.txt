@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 8.9.1
+Stable tag: 8.9.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,21 +134,12 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.9.1 (03/08/2026) =
-### Security
-- Restrict Pix payment-status polling to the order owner by validating the order key alongside the nonce, preventing unauthenticated access to other buyers' payment status
-- Restrict the admin log-download endpoint to known Mercado Pago log files and require a valid nonce, closing path-traversal and CSRF risks
-
+= v8.9.2 (17/08/2026) =
 ### Added
-- Block payment submission in Custom Checkout when the card number is invalid (unrecognized BIN, incomplete, or empty), and show a specific error message instead of a generic one
+- Block payment submission in Custom Checkout when the card number fails the check-digit (Luhn) validation, showing a specific error instead of a generic failure
 
 ### Fixed
-- Fix card checkout (Custom) running a redundant server-side validation before tokenization that could incorrectly block payments on multi-step or customized stores
-- Fix the card form keeping stale data (brand, installments) and not showing an error for an unrecognized BIN; also fix the invalid-card indicator disappearing when the buyer edits the number without changing the BIN
-- Fix card tokenization starting in Blocks checkout when no installment is selected
-- Fix the document field label and the cardholder name helper text not updating correctly on validation errors at the card checkout
-- Fix the Custom Checkout card form staying stuck on the loading spinner on mobile when the payment method selection trigger does not fire
-- Fix a fatal error at checkout on stores using the Divi theme 5.9.0 on PHP 8.x
-- Fix a 403 error preventing Shop Manager users (and any role with the manage_woocommerce capability) from accessing the Mercado Pago settings page
+- Fix card payments on iOS in Custom Checkout being rejected when the number of installments could be submitted empty; the selected installment is now always sent
+- Fix checkout being blocked for stores using WooCommerce Subscriptions with "Accept Manual Renewals" (without recurring-payment credentials): these orders, which started failing in v8.9.0, now process as regular one-time payments again
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).
