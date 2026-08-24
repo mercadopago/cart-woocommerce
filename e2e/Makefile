@@ -48,10 +48,14 @@ run:
 stop:
 	$(DC) down
 
-# Run all tests (or a specific folder via `make tests folder=mlb`).
+# Run all tests (or a specific folder via `make tests folder=tests/mlu`).
+# Pass SITE to target a country (e.g. `SITE=MLU`) so global-setup configures the
+# matching store; otherwise the site-guard skips every country-specific spec.
+# Pass CHECKOUT=blocks to configure and exercise the Blocks checkout (default: classic);
+# specs with Classic/Blocks variants skip the variant that doesn't match.
 # npm install runs first to guarantee dependencies are present.
 tests: ensure-running
-	docker exec -it $(CONTAINER) sh -c "cd $(E2E_DIR) && npm install --silent && npx playwright install chromium && npx playwright test $(folder)"
+	docker exec -it $(CONTAINER) sh -c "cd $(E2E_DIR) && npm install --silent && npx playwright install chromium && SITE=$(SITE) CHECKOUT=$(CHECKOUT) npx playwright test $(folder)"
 
 # Shortcut: run only the Health Monitor integration tests.
 test-health: ensure-running

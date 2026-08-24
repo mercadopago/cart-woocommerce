@@ -26,6 +26,7 @@
             <directory suffix=".php">src/Helpers</directory>
             <directory suffix=".php">src/Order</directory>
             <directory suffix=".php">src/Notification</directory>
+            <directory suffix=".php">src/SuperToken</directory>
         </include>
         <report>
             <text outputFile="php://stdout" showOnlySummary="true"/>

@@ -239,7 +239,6 @@ class RefundExceptionTest extends TestCase
             'server_error' => [RefundException::TYPE_SERVER_ERROR],
             'unknown_error' => [RefundException::TYPE_UNKNOWN],
             'no_permission_error' => [RefundException::TYPE_NO_PERMISSION],
-            'supertoken_not_supported' => [RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED],
         ];
     }
 
@@ -348,26 +347,15 @@ class RefundExceptionTest extends TestCase
         $loggingContext = $exception->getLoggingContext();
         $this->assertEquals(500, $loggingContext['http_status_code']);
         $this->assertEquals(RefundException::TYPE_SERVER_ERROR, $loggingContext['error_type']);
-        $this->assertEquals($context, $loggingContext['context']);
+        $this->assertEquals([
+            'response_data' => [],
+            'attempt' => 3,
+            'timestamp' => '2024-11-24T10:30:00Z'
+        ], $loggingContext['context']);
 
         $responseData = $exception->getResponseData();
         $this->assertEquals('Internal server error', $responseData['message']);
         $this->assertEquals('database_timeout', $responseData['cause']);
-    }
-
-    /**
-     * Test supertoken not supported scenario
-     */
-    public function testSupertokenNotSupportedScenario()
-    {
-        $exception = new RefundException(
-            'Refunds not supported for supertoken payments',
-            RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED
-        );
-
-        $context = $exception->getLoggingContext();
-        $this->assertEquals(RefundException::TYPE_SUPERTOKEN_NOT_SUPPORTED, $context['error_type']);
-        $this->assertEquals('Refunds not supported for supertoken payments', $context['error_message']);
     }
 
     /**
@@ -442,12 +430,49 @@ class RefundExceptionTest extends TestCase
         );
 
         $context = $exception->getLoggingContext();
-        $this->assertEquals($complexContext, $context['context']);
+        $this->assertEquals([
+            'response_data' => ['status' => 'rejected'],
+            'request_metadata' => $complexContext['request_metadata'],
+            'retry_count' => 2,
+            'timestamp' => 1700828400
+        ], $context['context']);
 
         $responseData = $exception->getResponseData();
         $this->assertEquals(12345, $responseData['id']);
         $this->assertEquals('rejected', $responseData['status']);
         $this->assertIsArray($responseData['details']);
         $this->assertEquals('insufficient_funds', $responseData['details']['code']);
+    }
+
+    public function testLoggingContextRedactsSensitiveResponseFieldsButKeepsSafeDiagnostics(): void
+    {
+        $responseData = [
+            'status' => 'rejected',
+            'error' => 'invalid_request',
+            'message' => 'token=SECRET',
+            'access_token' => 'APP_USR-SECRET',
+            'cause' => [
+                ['code' => 'refund_not_allowed', 'description' => 'sensitive details'],
+                ['description' => 'entry without a diagnostic code']
+            ]
+        ];
+
+        $exception = new RefundException(
+            'Refund rejected',
+            RefundException::TYPE_VALIDATION,
+            400,
+            null,
+            'MP-123',
+            99,
+            400,
+            ['response_data' => $responseData]
+        );
+
+        $this->assertSame([
+            'status' => 'rejected',
+            'error' => 'invalid_request',
+            'cause' => [['code' => 'refund_not_allowed']]
+        ], $exception->getLoggingContext()['context']['response_data']);
+        $this->assertSame($responseData, $exception->getResponseData());
     }
 }

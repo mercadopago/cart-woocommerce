@@ -233,15 +233,40 @@ export async function fillSecurityCode(page, code) {
 // .showcoupon — clica no toggle antes de preencher. A submissão dispara o recálculo nativo do WC,
 // garantindo que a cadeia de eventos (update_checkout / cartTotal React prop) aconteça de verdade.
 export async function applyCoupon(page, couponCode) {
-  const toggle = page.locator('.showcoupon');
-  if (await toggle.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await toggle.click();
+  const input = page.locator(SELECTORS.couponInputVisible).first();
+
+  // Classic: o form pode ficar atrás do toggle ".showcoupon".
+  const classicToggle = page.locator('.showcoupon');
+  if (await classicToggle.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await classicToggle.click();
     await page.waitForTimeout(500);
   }
-  const input = page.locator(SELECTORS.couponInput).first();
+
+  // Blocks (mobile): o cupom vive dentro do "Order summary", que no mobile fica colapsado, e atrás
+  // do próprio painel "Adicionar cupom". Revela os dois — por role/texto (tolerante a locale) e por
+  // classe — só se o input ainda não estiver visível. Cliques best-effort (catch): a ordem/existência
+  // dos painéis varia por tema/viewport.
+  if (!(await input.isVisible({ timeout: 1000 }).catch(() => false))) {
+    const summaryToggle = page
+      .getByRole('button', { name: /order summary|resumo do pedido|resumen/i })
+      .first();
+    if (await summaryToggle.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await summaryToggle.click().catch(() => {});
+      await page.waitForTimeout(300);
+    }
+    const couponToggle = page
+      .locator(SELECTORS.couponToggleBlocks)
+      .or(page.getByRole('button', { name: /coupon|cupom|cupón/i }))
+      .first();
+    if (await couponToggle.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await couponToggle.click().catch(() => {});
+      await page.waitForTimeout(300);
+    }
+  }
+
   await input.waitFor({ state: 'visible', timeout: 8000 });
   await input.fill(couponCode);
-  await page.locator(SELECTORS.couponApply).first().click();
+  await page.locator(SELECTORS.couponApplyVisible).first().click();
 }
 
 // Confirma que o WC recalculou: espera o overlay aparecer e sumir (Classic).
@@ -257,6 +282,105 @@ export async function expectCheckoutLoading(page, timeout = 10000) {
 // Email de outra conta (local-part trocado) → hasEnrolledInstrument retorna false → sem ST.
 // Derivado em runtime do domínio do comprador (nenhum email literal no código-fonte).
 export const notEnrolledEmail = (email) => email.replace(/^[^@]+/, `not-enrolled-${Date.now()}`);
+
+const paymentMethodByType = (type) => `${SELECTORS.savedCardsList} .mp-super-token-payment-method[data-type="${type}"]`;
+
+// Forces the Super Token A/B variant for the next page load using three complementary mechanisms,
+// because the variant is resolved differently in bundle mode vs. dev/self-construct mode:
+//
+// 1. faults.respondUrl: intercepts the HTTP fetch for super-token-variants.js and returns a
+//    mocked config with 100% weight for the target variant. This handles the case where the
+//    browser makes a fresh request (cache miss or cache disabled by the route handler).
+//
+// 2. Page.addScriptToEvaluateOnNewDocument (via faults.inject): executes before any script
+//    (including the CDN loader) on the next navigation. It clears any stale mp_st_variant
+//    cookie and writes the target variant directly to document.cookie. This is the reliable
+//    mechanism in BUNDLE mode because the super-token-loader reads document.cookie synchronously
+//    at module load and caches it in a closure — by the time the async config fetch resolves, the
+//    cached value is already decided. If the CDN request is served from HTTP cache (no fetch),
+//    the respondUrl mock never fires, so the injected cookie is the only guarantee.
+//
+// 3. super_token_version override: in DEV/self-construct mode (USE_BUNDLE=false) the loader is not
+//    enqueued and the cookie is ignored — bootstrap.ts reads the variant from the localized param
+//    `wc_mercadopago_supertoken_bundle_params.super_token_version` (derived server-side from the
+//    MP_SUPER_TOKEN_VERSION constant), falling back to the cookie only when the param is absent. We
+//    install an accessor for that global BEFORE the WordPress localize inline script runs: the
+//    localize does `var wc_mercadopago_supertoken_bundle_params = {...}`, whose assignment goes
+//    through our setter, which pins super_token_version to the target variant. This lets a single
+//    run render each test's forced variant without flipping the store constant. (The per-variant
+//    stylesheet stays whatever the store constant enqueued — the suite asserts DOM/behaviour, not
+//    pixels — so a v2 DOM may carry v2.1 CSS when the store constant is v2.1; acceptable here.)
+export async function forceVariant(page, faults, variant) {
+  await faults.respondUrl(/super-token-variants\.js(?:[?#]|$)/, {
+    status: 200,
+    body: { active: true, default: variant, cookie_ttl_days: 30, variants: { [variant]: { weight: 100 } } },
+  });
+  await faults.inject(`
+    document.cookie = 'mp_st_variant=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    document.cookie = 'mp_st_variant=${variant}; path=/; max-age=86400';
+    (function () {
+      var KEY = 'wc_mercadopago_supertoken_bundle_params';
+      var forced = '${variant}';
+      var stored;
+      var pin = function (params) {
+        if (params && typeof params === 'object') {
+          params.super_token_version = forced;
+        }
+        return params;
+      };
+      Object.defineProperty(window, KEY, {
+        configurable: true,
+        get: function () { return stored; },
+        set: function (value) { stored = pin(value); },
+      });
+    })();
+  `);
+  await page.context().clearCookies({ name: "mp_st_variant" });
+  await page.context().addCookies([{ name: "mp_st_variant", value: variant, url: BASE }]);
+}
+
+// Verifies the forced variant actually loaded via the buyer email in the list header:
+// v2.1 shows it in the block header (block__email); v2 does not. The bundle is loaded
+// dynamically by the Super Token loader, so its URL is not observable in a static script tag.
+export async function expectVariantLoaded(page, variant, buyerEmail) {
+  const emailInList = page.locator(SELECTORS.savedCardsList).getByText(buyerEmail, { exact: false });
+  if (variant === "v2.1") {
+    await expect(emailInList.first()).toBeVisible({ timeout: 10000 });
+  } else {
+    await expect(emailInList).toHaveCount(0);
+  }
+}
+
+// Returns false if the buyer isn't eligible for this method — the caller skips rather than fails.
+export async function isMethodOffered(page, type) {
+  return page
+    .locator(paymentMethodByType(type))
+    .first()
+    .isVisible({ timeout: 8000 })
+    .catch(() => false);
+}
+
+export async function expectMethodVisibleInList(page, type) {
+  await expect(page.locator(paymentMethodByType(type)).first()).toBeVisible({ timeout: 15000 });
+}
+
+export async function selectPaymentMethodByType(page, type) {
+  await page.locator(paymentMethodByType(type)).first().click();
+}
+
+export async function expectMethodSelected(page, type) {
+  await expect(page.locator(paymentMethodByType(type)).first()).toHaveAttribute("aria-selected", "true", {
+    timeout: 15000,
+  });
+}
+
+// "New card" is an accordion section (role=option), not an article[data-type] like the other methods.
+export async function expectNewCardSelectable(page) {
+  const accordion = page.locator(SELECTORS.newCardAccordion).first();
+  await expect(accordion).toBeVisible({ timeout: 15000 });
+  await accordion.click();
+  await expect(accordion).toHaveAttribute("aria-selected", "true", { timeout: 15000 });
+}
 
 // --- asserções ----------------------------------------------------------------
 
@@ -294,9 +418,9 @@ export async function expectIdentityError(page, timeout = 60000) {
 }
 
 export async function expectCustomCheckoutWithoutSuperToken(page) {
-  await expect(page.locator(SELECTORS.customCheckoutRadio).first()).toBeVisible();
-  // Espera o form de cartão padrão montar (iframe ANEXADO — pode estar oculto se o painel está
-  // recolhido, então não exigimos visível) antes de afirmar a ausência do ST.
+  // Classic checkout hides the <input type="radio"> via CSS — only the label is visible.
+  // toBeAttached is enough: radio attached + standard card form mounted + no ST list proves fallback.
+  await expect(page.locator(SELECTORS.customCheckoutRadio).first()).toBeAttached({ timeout: 10000 });
   await expect(page.locator(SELECTORS.mpIframe).first()).toBeAttached({ timeout: 20000 });
   await expect(page.locator(SELECTORS.savedCardsList)).toHaveCount(0);
 }
@@ -321,4 +445,47 @@ export function recordMetrics(page) {
     if (match) seen.push(match[1]);
   });
   return { count: (name) => seen.filter((n) => n === name).length };
+}
+
+// Como recordMetrics, mas captura o CORPO de cada POST ao Core Monitor ({ name, payload }) para
+// asserções de contrato. O corpo é o JSON enviado por CoreMonitorMetricsAdapter.sendMetric (fetch).
+// A telemetria de A/B do VariantConfigAdapter usa sendBeacon (Blob) — o postData pode não estar
+// exposto no Playwright; nesse caso registramos payload:null (o consumidor filtra os não-legíveis).
+export function recordMetricPayloads(page) {
+  const captured = [];
+  page.on("request", (req) => {
+    const match = req.url().match(/\/monitor\/v1\/event\/datadog\/big\/([^?#/]+)/);
+    if (!match) return;
+    let payload = null;
+    try {
+      const body = req.postData();
+      if (body) payload = JSON.parse(body);
+    } catch {
+      payload = null; // beacon (Blob) sem postData legível — telemetria fire-and-forget
+    }
+    captured.push({ name: match[1], payload });
+  });
+  return {
+    all: () => captured.slice(),
+    byName: (name) => captured.filter((m) => m.name === name),
+    last: (name) => {
+      const hits = captured.filter((m) => m.name === name);
+      return hits.length ? hits[hits.length - 1].payload : null;
+    },
+  };
+}
+
+// Valida o contrato mínimo de uma métrica do checkout Super Token (CoreMonitorMetricsAdapter):
+// forma do payload do Core Monitor + a variante A/B lida do cookie mp_st_variant. A telemetria de
+// bootstrap do VariantConfigAdapter NÃO carrega details.ab_variant e não deve passar por aqui.
+export function assertMetricContract(payload, { expectedVariant } = {}) {
+  expect(payload, "metric payload must be a parsed object").toBeTruthy();
+  expect(typeof payload.value).toBe("string");
+  expect(typeof payload.message).toBe("string");
+  expect(payload.plugin_version).toBeTruthy();
+  expect(payload.platform?.name).toBe("woocommerce");
+  expect(payload.details?.site_id).toBeTruthy();
+  // cust_id pode ser string vazia (comprador não logado no lado do plugin) — só exige que exista.
+  expect(payload.details?.cust_id).not.toBe(undefined);
+  expect(payload.details?.ab_variant).toBe(expectedVariant);
 }

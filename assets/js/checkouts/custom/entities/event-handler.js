@@ -386,12 +386,53 @@ class MPEventHandler {
     }
 
     async handleWithSuperTokenSubmit(event, wc_checkout_form) {
+        event.preventDefault();
+        this.showCheckoutClassicLoader();
+
+        // Prefer the unified refactored finalization published by the refactored bundle. Fall back
+        // to the legacy inline flow if the bundle is absent, so the checkout never breaks when the
+        // refactored entry failed to load.
+        if (typeof window.mpSuperTokenFinalizeClassic === 'function') {
+            return this.finalizeSuperTokenWithRefactoredFlow(wc_checkout_form);
+        }
+
+        return this.legacyHandleWithSuperTokenSubmit(wc_checkout_form);
+    }
+
+    finalizeSuperTokenWithRefactoredFlow(wc_checkout_form) {
+        const { superTokenTriggerHandler, superTokenAuthenticator, superTokenPaymentMethods, superTokenErrorHandler } = this.getSuperTokenDeps();
+
+        return window.mpSuperTokenFinalizeClassic({
+            paymentMethods: superTokenPaymentMethods,
+            authenticator: superTokenAuthenticator,
+            triggerHandler: superTokenTriggerHandler,
+            errorHandler: superTokenErrorHandler,
+            isOrderPayPage: () => this.isOrderPayPage(),
+            markPaymentReady: () => { this.mercado_pago_submit = true; },
+            submitCheckoutForm: () => wc_checkout_form.$checkout_form.trigger('submit'),
+            submitOrderPayForm: () => this.handle3dsPayOrderFormSubmission(),
+            removeLoader: () => {
+                this.cardForm?.removeLoadSpinner();
+                this.hideCheckoutClassicLoader();
+            },
+        }).catch((exception) => {
+            // Safety net mirroring the legacy try/catch: the use case is fail-safe and the
+            // adapter's result branches own the loader, but if an unexpected exception still
+            // escapes, never leave the classic checkout frozen on the loader — and surface it.
+            window.mpSuperTokenMetrics?.sendMetric?.(
+                'super_token_finalize_unexpected_error',
+                exception?.message || 'unknown',
+                'An unexpected exception escaped the refactored Classic finalization'
+            );
+            this.cardForm?.removeLoadSpinner();
+            this.hideCheckoutClassicLoader();
+        });
+    }
+
+    async legacyHandleWithSuperTokenSubmit(wc_checkout_form) {
         const { superTokenTriggerHandler, superTokenAuthenticator, superTokenPaymentMethods, superTokenErrorHandler } = this.getSuperTokenDeps();
 
         try {
-            event.preventDefault();
-            this.showCheckoutClassicLoader();
-
             if (!superTokenPaymentMethods) throw new Error(MPSuperTokenErrorCodes.SUPER_TOKEN_PAYMENT_METHODS_NOT_FOUND);
             if (!superTokenAuthenticator) throw new Error(MPSuperTokenErrorCodes.SUPER_TOKEN_AUTHENTICATOR_NOT_FOUND);
 

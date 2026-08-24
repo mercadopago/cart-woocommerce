@@ -1,7 +1,7 @@
 import { test } from "@playwright/test";
 import { guestUserMLB } from "../../../data/buyer_data";
 import { mlb } from "../../../data/meli_sites";
-import { setupSubscriptionsEnvironment } from "../../../helpers/subscriptions-env";
+import { setupSubscriptionsEnvironment, cleanupSubscriptionProduct } from "../../../helpers/subscriptions-env";
 import { wpEval, wpOption } from "../../../helpers/wp-env";
 import { snapshotOptions, restoreOptions } from "../../../helpers/wp-options-snapshot";
 import {
@@ -95,6 +95,8 @@ test.describe("Subscription credential match on manual-renewal checkout @serial-
 
     test.afterAll(() => {
         restoreOptions(storeSnapshot);
+        // Remove o produto de subscription para não contaminar os testes de card/pix/ticket.
+        cleanupSubscriptionProduct();
     });
 
     test("Given a Pre-approval credential and manual renewals enabled, When a subscription is paid on the Classic checkout, Then it is approved without a credential mismatch", async ({ page }) => {

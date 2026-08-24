@@ -49,8 +49,13 @@ export function createPendingCardOrder(shopUrl, user) {
   const esc = (v) => String(v ?? '').replace(/["'\\]/g, '');
   const a = user.address;
   const out = wpEval(
+    // Use the configured product when it exists, else the first simple product — the
+    // hardcoded fallback ID varies per environment and a missing product yields an empty
+    // order (total 0), which WooCommerce refuses to pay ("this order cannot be paid for").
+    `$p = wc_get_product(${ORDER_PAY_PRODUCT_ID});` +
+    `if (!$p) { $ps = wc_get_products(["type" => "simple", "limit" => 1]); $p = $ps ? $ps[0] : null; }` +
     `$order = wc_create_order();` +
-    `$order->add_product(wc_get_product(${ORDER_PAY_PRODUCT_ID}), 1);` +
+    `$order->add_product($p, 1);` +
     `$order->set_address(array(` +
     `"first_name"=>"${esc(user.firstName)}","last_name"=>"${esc(user.lastName)}","email"=>"${esc(user.email)}",` +
     `"phone"=>"11999999999","address_1"=>"${esc(a.street)}","city"=>"${esc(a.city)}",` +

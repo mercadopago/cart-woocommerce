@@ -92,6 +92,22 @@ class Country
     }
 
     /**
+     * Whether the given site_id is a marketplace the plugin supports.
+     */
+    public static function isValidSiteId(string $siteId): bool
+    {
+        return in_array($siteId, [
+            self::SITE_ID_MLA,
+            self::SITE_ID_MLB,
+            self::SITE_ID_MLM,
+            self::SITE_ID_MLC,
+            self::SITE_ID_MLU,
+            self::SITE_ID_MCO,
+            self::SITE_ID_MPE,
+        ], true);
+    }
+
+    /**
      * Get Wordpress default language configured.
      *
      * @return string

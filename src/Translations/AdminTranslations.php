@@ -1553,7 +1553,6 @@ class AdminTranslations
             'payment_too_old'           => __('This payment is too old to be refunded. If you need help, please contact the Mercado Pago support team.', 'woocommerce-mercadopago'),
             'unauthorized'              => __('Your access credentials are incorrect or have expired. Please renew your credentials in the Mercado Pago settings and try again.', 'woocommerce-mercadopago'),
             'unknown_error'             => __('Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it.', 'woocommerce-mercadopago'),
-            'supertoken_not_supported'  => __('This payment was made using Fast Pay with Mercado Pago and does not yet support refunds through the WooCommerce order page. Please process the refund directly from your Mercado Pago payment details page.', 'woocommerce-mercadopago'),
         ];
     }
 }

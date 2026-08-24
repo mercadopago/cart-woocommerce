@@ -9,7 +9,7 @@
 #   make test  SITE=mlb GREP="3G"        filtra por trecho do título do teste
 #
 # Sites: mlb mla mlm  (precisam existir em config/countries.json)
-# Grupos: eligibility · authorization · reset · validation · resilience
+# Grupos: eligibility · authorization · reset · validation · resilience · alternative-methods · metrics-contract
 # ============================================================================
 SITE ?=
 GROUP ?=
@@ -42,7 +42,7 @@ help:
 	@echo "  make status                AVDs, device conectado e URL do túnel"
 	@echo "  make clean                 derruba o túnel cloudflared"
 	@echo ""
-	@echo "Grupos: eligibility · authorization · reset · validation · resilience"
+	@echo "Grupos: eligibility · authorization · reset · validation · resilience · alternative-methods · metrics-contract"
 	@echo "Sites válidos: definidos em config/countries.json"
 	@echo ""
 

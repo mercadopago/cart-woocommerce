@@ -26,7 +26,7 @@
                 name: 'woocommerce',
                 uri: wc_mercadopago_woocommerce_scripts_params.theme,
                 version: wc_mercadopago_woocommerce_scripts_params.platform_version,
-                url: window.location.href,
+                url: `${window.location.origin}${window.location.pathname}`,
             details: {
                 site_id: wc_mercadopago_woocommerce_scripts_params.site_id || '',
                 environment: 'prod',

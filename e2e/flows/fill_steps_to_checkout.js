@@ -5,8 +5,13 @@ export const fillStepsToCheckout = async function (page, url, user) {
 }
 
 async function addProductsToCart(page) {
-  await page.locator('#main .ajax_add_to_cart').first().waitFor({ state: 'visible', timeout: 30000 });
-  await page.locator('#main .ajax_add_to_cart').first().click();
+  // Add a SIMPLE product explicitly. Picking the first add-to-cart button breaks when the
+  // catalog also holds a subscription product (left behind by the subscriptions suite):
+  // MP gateways don't support subscriptions, so the checkout renders zero payment methods
+  // and every card/pix test times out. product_type_simple filters those out.
+  const addSimpleToCart = page.locator('#main .ajax_add_to_cart.product_type_simple').first();
+  await addSimpleToCart.waitFor({ state: 'visible', timeout: 30000 });
+  await addSimpleToCart.click();
 
   // Wait for AJAX add-to-cart to complete (the "View cart" link appears)
   await page.locator('#main .added_to_cart').waitFor({ state: 'visible', timeout: 10000 });
@@ -90,11 +95,14 @@ async function fillClassicBilling(page, user) {
 }
 
 async function fillBlocksBilling(page, user) {
-  const prefix = await page.locator('#shipping-first_name').isVisible({ timeout: 3000 })
-    .then(() => 'shipping')
-    .catch(() => 'billing');
-
+  // The Blocks checkout renders a shipping step only for shippable products; virtual/
+  // subscription products expose only #billing-*. isVisible() resolves to a boolean and never
+  // rejects, so the old `.then(() => 'shipping')` always chose 'shipping' — fine while a shipping
+  // step existed, but it hangs the whole test on subscription checkouts. Branch on the value.
   await page.waitForTimeout(2000);
+  const hasShipping = await page.locator('#shipping-first_name').isVisible().catch(() => false);
+  const prefix = hasShipping ? 'shipping' : 'billing';
+
   await page.locator('#email').fill(user.email);
   await page.locator(`#${prefix}-first_name`).fill(user.firstName);
   await page.locator(`#${prefix}-last_name`).fill(user.lastName);

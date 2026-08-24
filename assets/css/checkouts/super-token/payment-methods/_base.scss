@@ -1,0 +1,608 @@
+@use '../root' as *;
+
+@include st-root {
+  .mp-super-token-payment-method {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    background-color: white !important;
+    border: 1px solid #e5e5e5 !important;
+    margin: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__selected {
+    border: 2px solid #3483FA !important;
+    z-index: 1000 !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method:focus,
+  .mp-super-token-payment-method:active {
+    box-shadow: none !important;
+    outline: none !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    width: 100% !important;
+    container-type: inline-size !important;
+    container-name: mp-super-token-payment-method-header !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header:has(.mp-super-token-payment-method__value-prop) {
+    align-items: start !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__thumbnail {
+    min-width: 32px !important;
+    height: 24px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border-radius: 8px !important;
+    margin: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__thumbnail img {
+    /* Absolute max + auto preserves aspect ratio and fits the logo inside the 32x24 frame.
+           Percentage height on a flex-child <img> is dropped by iOS Safari, which let the logo
+           grow to its intrinsic height and overflow the stroke; absolute units avoid that. */
+    max-width: 32px !important;
+    max-height: 24px !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__content-title {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 4px !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__content-title .mp-super-token-payment-method__title {
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__content-title .mp-super-token-payment-method__last-four-digits {
+    font-weight: 600 !important;
+    text-align: right !important;
+    width: max-content !important;
+    white-space: nowrap !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__value-prop {
+    display: flex !important;
+    align-items: center !important;
+    color: #00A650 !important;
+    font-weight: 600 !important;
+    font-size: 10px !important;
+    border-radius: 8px !important;
+    background-color: #00a6501a !important;
+    height: 16px !important;
+    padding: 0 6px !important;
+    width: min-content !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details {
+    display: flex !important;
+    flex-direction: column !important;
+    opacity: 1 !important;
+    max-height: 1000px !important;
+    overflow: visible !important;
+    transition: opacity 300ms ease-in-out, max-height 300ms ease-in-out !important;
+    padding-top: 16px !important;
+    gap: 16px !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details.mp-super-token-hide {
+    opacity: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: opacity 300ms ease-in-out, max-height 300ms ease-in-out !important;
+    padding-top: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-security-code-container #mp-input-with-tooltip-helper-error {
+    color: #CC1818 !important;
+    font-family: var(--mp-font-inter);
+    margin-top: 4px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-left: 6px !important;
+    display: none;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-security-code-container #mp-input-with-tooltip-helper-error span {
+    color: #CC1818 !important;
+    font-weight: 600 !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-security-code-container #mp-input-with-tooltip-helper-error .mp-super-token-security-code-error-message {
+    color: var(--andes-error-red) !important;
+    font-family: var(--mp-font-inter) !important;
+    font-size: 13px !important;
+    font-style: normal !important;
+    font-weight: 600 !important;
+    line-height: 18px !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-input-label.mp-super-token-label-error,
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-input-label.mp-label-error {
+    color: var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-input-label {
+    display: flex !important;
+    color: var(--andes-gray-900) !important;
+    font-weight: normal !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input.mp-super-token-error {
+    border: 1px solid var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input.mp-super-token-error:focus {
+    border: 2px solid var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input.mp-error {
+    border: 1px solid var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input.mp-error:focus {
+    border: 2px solid var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-input-label.mp-label-error {
+    color: var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input {
+    height: 48px !important;
+    background: #fff !important;
+    border: 1px solid rgb(0 0 0 / 25%) !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input.mp-focus {
+    border: 2px solid var(--woocommerce-primary) !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input.mp-error {
+    border: 1px solid var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input.mp-error-2px {
+    border: 2px solid var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  #mp-doc-div input-label div.mp-input-label.mp-label-error {
+    color: var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-card-row input-label div.mp-input-label.mp-label-error,
+  #mp-card-holder-div .mp-input-label.mp-label-error {
+    color: var(--andes-error-red) !important;
+  }
+}
+
+.mp-input-label.mp-label-error,
+.mp-input-label.mp-super-token-label-error {
+  color: var(--andes-error-red) !important;
+}
+
+@include st-root(('#payment-method')) {
+  input-label:has(+ #form-checkout__cardNumber-container.mp-error) .mp-input-label,
+  input-label:has(+ #form-checkout__expirationDate-container.mp-error) .mp-input-label,
+  input-label:has(+ .mp-checkout-custom-security-code-container #form-checkout__securityCode-container.mp-error) .mp-input-label {
+    color: var(--andes-error-red) !important;
+  }
+}
+
+@include st-root(('#payment')) {
+  input-label:has(+ #form-checkout__cardNumber-container.mp-error) .mp-input-label,
+  input-label:has(+ #form-checkout__expirationDate-container.mp-error) .mp-input-label,
+  input-label:has(+ .mp-checkout-custom-security-code-container #form-checkout__securityCode-container.mp-error) .mp-input-label {
+    color: var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input .mp-document-select {
+    background: #fff !important;
+    font-family: var(--mp-font-inter) !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-size: 16px !important;
+    line-height: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    border: 0 !important;
+    margin: 0 8px 0 12px !important;
+    outline: none !important;
+    cursor: pointer !important;
+    letter-spacing: 0 !important;
+    color: black !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    min-width: fit-content !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input .mp-vertical-line {
+    height: 36px !important;
+    width: 1px !important;
+    border-left: 1px solid rgb(0 0 0 / 25%) !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input .mp-document {
+    background: #fff !important;
+    font-family: var(--mp-font-inter) !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-size: 16px !important;
+    line-height: 20px !important;
+    height: 20px !important;
+    padding: 0 14px !important;
+    border: 0 !important;
+    outline: none !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    color: #000 !important;
+    min-height: 38px !important;
+    flex-grow: 1 !important;
+    min-width: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input-document-helper {
+    position: static !important;
+    margin-top: 5px !important;
+    width: 327px !important;
+    height: 18px !important;
+    left: calc(50% - 327px / 2 + 9px) !important;
+    top: 0 !important;
+    font-family: var(--mp-font-inter) !important;
+    font-size: 13px !important;
+    line-height: 18px !important;
+    color: var(--andes-error-red) !important;
+    display: flex !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document .mp-input-document-helper .mp-input-document-helper-icon {
+    width: 15px !important;
+    height: 15px !important;
+    left: 0 !important;
+    top: 3px !important;
+    background: var(--andes-error-red) !important;
+    border-radius: 12px !important;
+    color: #fff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 1px 5px !important;
+  }
+}
+
+@include st-root {
+  .mp-document-select {
+    appearance: auto;
+    cursor: pointer !important;
+    letter-spacing: 0 !important;
+    margin: 0 8px !important;
+    width: 25% !important;
+  }
+}
+
+@include st-root {
+  .mp-document-select,
+  .mp-input-document {
+    background: var(--mp-color-white) !important;
+    border: 0 !important;
+    color: var(--mp-color-black) !important;
+    font-family: var(--mp-font-inter) !important;
+    font-size: var(--mp-font-size-base) !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    line-height: var(--mp-line-height-input) !important;
+    outline: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-input-document {
+    border-radius: var(--mp-border-radius-lg) !important;
+    box-shadow: none !important;
+    margin-bottom: 24px !important;
+    width: 100% !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-andes-input,
+  .mp-checkout-andes-input-error {
+    background: var(--mp-color-white) !important;
+    border: 1px solid var(--mp-color-border) !important;
+    border-radius: var(--mp-border-radius) !important;
+    color: var(--mp-color-black) !important;
+    flex-grow: 0;
+    flex-shrink: 0;
+    font-family: var(--mp-font-inter) !important;
+    font-size: var(--mp-font-size-input) !important;
+    font-weight: 400 !important;
+    height: var(--mp-input-height) !important;
+    line-height: var(--mp-line-height-input) !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    outline: 0 !important;
+    padding: 0 14px !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-andes-input:focus {
+    border-color: var(--mp-color-focus) !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-andes-input-error {
+    border-color: var(--mp-color-error) !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-andes-input-error:focus {
+    border: 2px solid var(--mp-color-border);
+  }
+}
+
+@include st-root {
+  .mp-test-mode-container {
+    padding: 0 0 25px !important;
+  }
+}
+
+@include st-root {
+  .mp-test-mode-card {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 16px !important;
+    background: rgb(0 0 0 / 4%) !important;
+    border-radius: 6px !important;
+    border-left-style: solid !important;
+    border-left-color: #f73 !important;
+    border-left-width: 4px !important;
+    margin-bottom: 24px !important;
+  }
+}
+
+@include st-root {
+  .mp-test-mode-badge {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #fff !important;
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    margin-right: 16px !important;
+    background: #f73 !important;
+    border-radius: 12px !important;
+  }
+}
+
+@include st-root {
+  .mp-test-mode-title {
+    font-family: var(--mp-font-inter);
+    font-style: normal !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    line-height: 120% !important;
+    margin-left: 16px !important;
+    color: rgb(0 0 0 / 90%) !important;
+    margin-block-start: 0 !important;
+    margin-block-end: 0 !important;
+    margin-inline-start: 0 !important;
+    margin-inline-end: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-test-mode-description {
+    font-family: var(--mp-font-inter);
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-size: 14px !important;
+    line-height: 120% !important;
+    padding-top: 4px !important;
+    padding-left: 32px !important;
+    margin-block-start: 0 !important;
+    margin-block-end: 0 !important;
+    margin-inline-start: 0 !important;
+    margin-inline-end: 0 !important;
+    color: black !important;
+  }
+}
+
+@include st-root {
+  .mp-test-mode-card-content {
+    display: flex !important;
+    justify-content: flex-start !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+  }
+}
+
+@include st-root {
+  .mp-test-mode-link {
+    font-family: var(--mp-font-inter) !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-size: 14px !important;
+    line-height: 16px !important;
+    color: #7f54b3 !important;
+    text-decoration: none !important;
+  }
+}
+
+@include st-root {
+  .mp-test-mode-link:hover {
+    color: #7249a5 !important;
+    transition: all 0.3ms !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container .mp-checkout-custom-card-flags {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+    margin-bottom: 32px !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container .mp-checkout-custom-card-input,
+  .mp-checkout-custom-container .mp-checkout-custom-security-code-input {
+    background: var(--andes-white) !important;
+    border: 1px solid var(--andes-gray-250) !important;
+    border-radius: 6px !important;
+    color: var(--andes-gray-900) !important;
+    font-family: var(--mp-font-inter) !important;
+    font-size: 16px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    height: 48px !important;
+    line-height: 20px !important;
+    text-align: left !important;
+    outline: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container input.mp-checkout-custom-card-input.mp-card-holder-name {
+    margin: 0 !important;
+    padding-left: 14px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container input.mp-checkout-custom-card-input.mp-card-holder-name::placeholder {
+    color: var(--andes-text-color-secondary) !important;
+    opacity: 1 !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container input.mp-checkout-custom-card-input.mp-card-holder-name.mp-focus {
+    border: 2px solid var(--woocommerce-primary) !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container input.mp-card-holder-name.mp-error-2px {
+    border: 2px solid var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-checkout-custom-container input.mp-card-holder-name.mp-error {
+    border: 1px solid var(--andes-error-red) !important;
+  }
+}

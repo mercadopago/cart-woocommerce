@@ -368,7 +368,7 @@ describe('mp-health-monitor', () => {
       expect(payload.platform.name).toBe('woocommerce');
       expect(payload.platform.uri).toBe('storefront');
       expect(payload.platform.version).toBe('8.0.0');
-      expect(typeof payload.platform.url).toBe('string');
+      expect(payload.platform.url).toBe(`${window.location.origin}${window.location.pathname}`);
       expect(payload.details.site_id).toBe('MLB');
       expect(payload.details.cust_id).toBe('cust-123');
       expect(payload.details.environment).toBe('prod');

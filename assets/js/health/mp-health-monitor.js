@@ -221,7 +221,7 @@
                 name: 'woocommerce',
                 uri: params.theme,
                 version: params.platform_version,
-                url: window.location.href,
+                url: `${window.location.origin}${window.location.pathname}`,
             },
             details: {
                 site_id: params.site_id || 'not_available',

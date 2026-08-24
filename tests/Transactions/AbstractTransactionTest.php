@@ -686,6 +686,7 @@ class AbstractTransactionTest extends TestCase
                 'sdk_instance_id'  => $flowId,
                 'alert_type'       => 'success',
                 'payment_status'   => 'approved',
+                'device'           => 'unknown',
             ]);
 
         $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
@@ -733,6 +734,7 @@ class AbstractTransactionTest extends TestCase
                 'sdk_instance_id'  => $flowId,
                 'alert_type'       => 'success',
                 'payment_status'   => 'rejected',
+                'device'           => 'unknown',
             ]);
 
         $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
@@ -781,6 +783,7 @@ class AbstractTransactionTest extends TestCase
                 'sdk_instance_id'  => $flowId,
                 'alert_type'       => 'error',
                 'payment_status'   => null,
+                'device'           => 'unknown',
             ]);
 
         $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
@@ -829,6 +832,7 @@ class AbstractTransactionTest extends TestCase
                 'sdk_instance_id'  => $flowId,
                 'alert_type'       => 'error',
                 'payment_status'   => null,
+                'device'           => 'unknown',
             ]);
 
         $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
@@ -875,6 +879,7 @@ class AbstractTransactionTest extends TestCase
                 'sdk_instance_id'  => null,
                 'alert_type'       => 'error',
                 'payment_status'   => null,
+                'device'           => 'unknown',
             ]);
 
         $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');

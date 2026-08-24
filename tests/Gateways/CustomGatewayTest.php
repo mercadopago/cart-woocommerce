@@ -1111,26 +1111,17 @@ class CustomGatewayTest extends TestCase
      */
     public function testRegisterSuperTokenStyles()
     {
-        $version = MP_SUPER_TOKEN_VERSION;
-
+        // A single compiled stylesheet serves both A/B variants: the runtime stamps data-variant
+        // on the root and each variant's rules are scoped to it, so one file (no version in the
+        // path) covers the shared rules and both variants.
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getCssAsset')
-            ->with("checkouts/super-token/{$version}/super-token-payment-methods")
+            ->with('checkouts/super-token/super-token.bundle')
             ->andReturn('test-css-url');
-
-        $this->gateway->mercadopago->helpers->url
-            ->shouldReceive('getCssAsset')
-            ->with("checkouts/super-token/{$version}/super-token-method-details-skeleton")
-            ->andReturn('test-skeleton-css-url');
 
         $this->gateway->mercadopago->hooks->scripts
             ->shouldReceive('registerCheckoutStyle')
             ->with('wc_mercadopago_supertoken_payment_methods', 'test-css-url')
-            ->once();
-
-        $this->gateway->mercadopago->hooks->scripts
-            ->shouldReceive('registerCheckoutStyle')
-            ->with('wc_mercadopago_supertoken_payment_method_details_skeleton', 'test-skeleton-css-url')
             ->once();
 
         $this->gateway->registerSuperTokenStyles();
@@ -1373,6 +1364,318 @@ class CustomGatewayTest extends TestCase
     }
 
     /**
+     * Self-construct mode (the PHPUnit default: MP_SUPER_TOKEN_USE_BUNDLE=false):
+     * registerCheckoutScripts must enqueue only the TS entry (no legacy v2/v2.1/shared scripts),
+     * retarget the localize to the TS entry handle, and flag self_construct in the localized params
+     * so bootstrap.ts flips into building the instances.
+     *
+     * @return void
+     */
+    public function testRegisterCheckoutScriptsInSelfConstructModeEnqueuesOnlyTheTsEntry()
+    {
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getCurrencyCode')->andReturn('BRL');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')->andReturn('test-css-url');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getMercadoPagoSdkUrl')->andReturn('https://sdk.mercadopago.com/js/v2');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getJsAsset')->andReturn('test-js-url');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')->andReturn('test-image-url');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getPluginFileUrl')->andReturn('https://example.com/build/super-token/bootstrap.ts.js');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->andReturn('test-public-key');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')->andReturn('test-cust-id');
+        $this->gateway->mercadopago->hooks->options
+            ->shouldReceive('getGatewayOption')->andReturn('cards_first');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getPaymentMethodsThumbnails')->andReturn([]);
+        $this->gateway->mercadopago->helpers->links
+            ->shouldReceive('getPrivacyPolicyLink')->andReturn('https://example.com/privacy');
+
+        $this->gateway->storeTranslations = [
+            'locale' => 'en-US',
+            'payment_methods_list_text' => 'Payment Methods',
+            'payment_methods_list_alt_text' => 'Payment Methods alt text',
+            'last_digits_text' => 'Last digits',
+            'new_card_text' => 'New card',
+            'saved_cards_title' => 'Saved cards',
+            'saved_card_title' => 'Saved card',
+            'mp_methods_title' => 'You can also use',
+            'account_money_balance_text' => 'Enough to pay for this purchase.',
+            'saved_payment_method_title' => 'Saved payment method',
+            'account_money_text' => 'Account Money',
+            'account_money_wallet_with_investment_text' => 'Wallet + Investment',
+            'account_money_wallet_text' => 'Wallet',
+            'account_money_investment_text' => 'Investment',
+            'account_money_available_text' => 'Available',
+            'interest_free_part_one_text' => 'Interest free',
+            'interest_free_part_two_text' => 'part two',
+            'interest_free_option_text' => 'Interest free option',
+            'security_code_input_title_text' => 'Security code',
+            'security_code_placeholder_text_3_digits' => '3 digits',
+            'security_code_placeholder_text_4_digits' => '4 digits',
+            'security_code_tooltip_text_3_digits' => '3 digits tooltip',
+            'security_code_tooltip_text_4_digits' => '4 digits tooltip',
+            'security_code_error_message_text' => 'Security code error',
+            'card_installments_label' => 'Installments',
+            'placeholders_issuer' => 'Issuer',
+            'placeholders_installments' => 'Installments',
+            'placeholders_card_expiration_date' => 'Expiration',
+            'placeholders_cardholder_name' => 'Cardholder Name',
+            'installments_required' => 'Required',
+            'card_installments_interest_text' => 'Interest text',
+            'input_helper_message_invalid_type' => 'Invalid type',
+            'input_helper_message_invalid_length' => 'Invalid length',
+            'input_helper_message_invalid_value' => 'Invalid value',
+            'input_helper_message_card_holder_name_221' => 'Card holder name 221',
+            'input_helper_message_card_holder_name_316' => 'Card holder name 316',
+            'input_helper_message_expiration_date_invalid_type' => 'Expiration date invalid type',
+            'input_helper_message_expiration_date_invalid_length' => 'Expiration date invalid length',
+            'input_helper_message_expiration_date_invalid_value' => 'Expiration date invalid value',
+            'input_helper_message_security_code_invalid_type' => 'Security code invalid type',
+            'input_helper_message_security_code_invalid_length' => 'Security code invalid length',
+            'default_error_message' => 'Default error message',
+            'installments_error_invalid_amount' => 'Invalid amount error',
+            'mercado_pago_card_name' => 'Mercado Pago Card',
+            'mercado_pago_credit_card_name' => 'Mercado Pago Credit Card',
+            'mercadopago_privacy_policy' => 'Privacy policy {link}',
+            'consumer_credits_due_date' => 'The first installment is due on',
+            'months_abbreviated' => 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
+            'mlb_installment_debit_auto_text' => 'MLB Installment Debit Auto',
+            'interest_rate_mlb_text' => 'Interest Rate MLB',
+            'effective_total_cost_mlb_text' => 'Effective Total Cost MLB',
+            'iof_mlb_text' => 'IOF MLB',
+            'borrowed_amount_mlb_text' => 'Borrowed Amount MLB',
+            'per_month' => 'per month',
+            'per_year' => 'per year',
+            'cat_mlm_text' => 'CAT MLM',
+            'no_iva_text' => 'No IVA',
+            'tna_mlm_text' => 'TNA MLM',
+            'system_amortization_mlm_text' => 'System Amortization MLM',
+            'cftea_mla_text' => 'CFTEA MLA',
+            'tna_mla_text' => 'TNA MLA',
+            'tea_mla_text' => 'TEA MLA',
+            'fixed_rate_text' => 'Fixed Rate',
+            'update_security_code_with_retry_error_text' => 'Update security code with retry error',
+            'update_security_code_no_retry_error_text' => 'Update security code no retry error',
+            'authorize_payment_method_with_retry_error_text' => 'Authorize payment method with retry error',
+            'authorize_payment_method_no_retry_error_text' => 'Authorize payment method no retry error',
+            'select_payment_method_error_text' => 'Select payment method error',
+        ];
+
+        $this->gateway->mercadopago->storeTranslations->threeDsTranslations = [
+            'title_loading_3ds_frame' => 'Loading 3DS',
+            'title_loading_3ds_frame2' => 'Loading 3DS 2',
+            'text_loading_3ds_frame' => 'Loading frame',
+            'title_loading_3ds_response' => 'Loading response',
+            'title_3ds_frame' => '3DS Frame',
+            'tooltip_3ds_frame' => '3DS Tooltip',
+            'message_3ds_declined' => '3DS Declined',
+        ];
+
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'intl' => 'en-US',
+            'site_id' => 'MLA',
+            'currency' => 'ARS'
+        ]);
+
+        $this->gateway->mercadopago->woocommerce->version = '8.0.0';
+        $this->gateway->shouldReceive('get_option')->andReturn('yes');
+        WP_Mock::userFunction('get_stylesheet')->andReturn('test-theme');
+        WP_Mock::userFunction('wp_get_current_user')
+            ->andReturn((object) ['ID' => 1, 'user_email' => 'test@example.com']);
+        WP_Mock::userFunction('wp_is_mobile')->andReturn(false);
+
+        // Capture every registered script handle to assert the enqueued set.
+        $registeredHandles = [];
+        $scripts = $this->gateway->mercadopago->hooks->scripts;
+        $scripts->shouldReceive('registerCheckoutStyle')->andReturnSelf();
+        $scripts->shouldReceive('registerCheckoutScript')
+            ->andReturnUsing(function ($handle) use (&$registeredHandles, $scripts) {
+                $registeredHandles[] = $handle;
+                return $scripts;
+            });
+
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        WP_Mock::userFunction('wp_localize_script')->andReturn(true);
+
+        $this->gateway->registerCheckoutScripts();
+
+        // self_construct is the param that flips bootstrap.ts into self-building; read it straight
+        // from the single source that feeds wp_localize_script.
+        $localizeMethod = new \ReflectionMethod(CustomGateway::class, 'getSuperTokenLocalizeData');
+        $localizeMethod->setAccessible(true);
+        $localizeData = $localizeMethod->invoke($this->gateway);
+
+        $this->assertContains('wc_mercadopago_supertoken_refactored', $registeredHandles, 'Self-construct deve enfileirar o entry TS');
+        $this->assertNotContains('wc_mercadopago_supertoken_trigger_handler', $registeredHandles, 'Self-construct nao deve enfileirar os scripts legados separados');
+        $this->assertNotContains('wc_mercadopago_supertoken', $registeredHandles, 'Self-construct nao deve enfileirar o loader legado (so o entry TS carrega a localize)');
+        $this->assertArrayHasKey('self_construct', $localizeData);
+        $this->assertTrue((bool) $localizeData['self_construct'], 'self_construct deve ser verdadeiro para acionar o flip no bootstrap.ts');
+        // The entry renders the variant matching the served stylesheet: bootstrap.ts follows this
+        // over the cookie in dev mode, so the DOM and the per-variant CSS line up.
+        $this->assertArrayHasKey('super_token_version', $localizeData);
+        $this->assertSame(MP_SUPER_TOKEN_VERSION, $localizeData['super_token_version']);
+    }
+
+    public function testRegisterCheckoutScriptsInBundleModeCoversTheBundlePath()
+    {
+        // Force the non-self-construct (bundle/production) branch, unreachable otherwise under the
+        // fixed test constant, so the bundle-mode registration path is exercised.
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('isSuperTokenSelfConstruct')->andReturn(false);
+
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getCurrencyCode')->andReturn('BRL');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getCssAsset')->andReturn('test-css-url');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getMercadoPagoSdkUrl')->andReturn('https://sdk.mercadopago.com/js/v2');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getJsAsset')->andReturn('test-js-url');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')->andReturn('test-image-url');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getPluginFileUrl')->andReturn('https://example.com/build/super-token/bootstrap.ts.js');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCredentialsPublicKey')->andReturn('test-public-key');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')->andReturn('test-cust-id');
+        $this->gateway->mercadopago->hooks->options
+            ->shouldReceive('getGatewayOption')->andReturn('cards_first');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getPaymentMethodsThumbnails')->andReturn([]);
+        $this->gateway->mercadopago->helpers->links
+            ->shouldReceive('getPrivacyPolicyLink')->andReturn('https://example.com/privacy');
+
+        $this->gateway->storeTranslations = [
+            'locale' => 'en-US',
+            'payment_methods_list_text' => 'Payment Methods',
+            'payment_methods_list_alt_text' => 'Payment Methods alt text',
+            'last_digits_text' => 'Last digits',
+            'new_card_text' => 'New card',
+            'saved_cards_title' => 'Saved cards',
+            'saved_card_title' => 'Saved card',
+            'mp_methods_title' => 'You can also use',
+            'account_money_balance_text' => 'Enough to pay for this purchase.',
+            'saved_payment_method_title' => 'Saved payment method',
+            'account_money_text' => 'Account Money',
+            'account_money_wallet_with_investment_text' => 'Wallet + Investment',
+            'account_money_wallet_text' => 'Wallet',
+            'account_money_investment_text' => 'Investment',
+            'account_money_available_text' => 'Available',
+            'interest_free_part_one_text' => 'Interest free',
+            'interest_free_part_two_text' => 'part two',
+            'interest_free_option_text' => 'Interest free option',
+            'security_code_input_title_text' => 'Security code',
+            'security_code_placeholder_text_3_digits' => '3 digits',
+            'security_code_placeholder_text_4_digits' => '4 digits',
+            'security_code_tooltip_text_3_digits' => '3 digits tooltip',
+            'security_code_tooltip_text_4_digits' => '4 digits tooltip',
+            'security_code_error_message_text' => 'Security code error',
+            'card_installments_label' => 'Installments',
+            'placeholders_issuer' => 'Issuer',
+            'placeholders_installments' => 'Installments',
+            'placeholders_card_expiration_date' => 'Expiration',
+            'placeholders_cardholder_name' => 'Cardholder Name',
+            'installments_required' => 'Required',
+            'card_installments_interest_text' => 'Interest text',
+            'input_helper_message_invalid_type' => 'Invalid type',
+            'input_helper_message_invalid_length' => 'Invalid length',
+            'input_helper_message_invalid_value' => 'Invalid value',
+            'input_helper_message_card_holder_name_221' => 'Card holder name 221',
+            'input_helper_message_card_holder_name_316' => 'Card holder name 316',
+            'input_helper_message_expiration_date_invalid_type' => 'Expiration date invalid type',
+            'input_helper_message_expiration_date_invalid_length' => 'Expiration date invalid length',
+            'input_helper_message_expiration_date_invalid_value' => 'Expiration date invalid value',
+            'input_helper_message_security_code_invalid_type' => 'Security code invalid type',
+            'input_helper_message_security_code_invalid_length' => 'Security code invalid length',
+            'default_error_message' => 'Default error message',
+            'installments_error_invalid_amount' => 'Invalid amount error',
+            'mercado_pago_card_name' => 'Mercado Pago Card',
+            'mercado_pago_credit_card_name' => 'Mercado Pago Credit Card',
+            'mercadopago_privacy_policy' => 'Privacy policy {link}',
+            'consumer_credits_due_date' => 'The first installment is due on',
+            'months_abbreviated' => 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
+            'mlb_installment_debit_auto_text' => 'MLB Installment Debit Auto',
+            'interest_rate_mlb_text' => 'Interest Rate MLB',
+            'effective_total_cost_mlb_text' => 'Effective Total Cost MLB',
+            'iof_mlb_text' => 'IOF MLB',
+            'borrowed_amount_mlb_text' => 'Borrowed Amount MLB',
+            'per_month' => 'per month',
+            'per_year' => 'per year',
+            'cat_mlm_text' => 'CAT MLM',
+            'no_iva_text' => 'No IVA',
+            'tna_mlm_text' => 'TNA MLM',
+            'system_amortization_mlm_text' => 'System Amortization MLM',
+            'cftea_mla_text' => 'CFTEA MLA',
+            'tna_mla_text' => 'TNA MLA',
+            'tea_mla_text' => 'TEA MLA',
+            'fixed_rate_text' => 'Fixed Rate',
+            'update_security_code_with_retry_error_text' => 'Update security code with retry error',
+            'update_security_code_no_retry_error_text' => 'Update security code no retry error',
+            'authorize_payment_method_with_retry_error_text' => 'Authorize payment method with retry error',
+            'authorize_payment_method_no_retry_error_text' => 'Authorize payment method no retry error',
+            'select_payment_method_error_text' => 'Select payment method error',
+        ];
+
+        $this->gateway->mercadopago->storeTranslations->threeDsTranslations = [
+            'title_loading_3ds_frame' => 'Loading 3DS',
+            'title_loading_3ds_frame2' => 'Loading 3DS 2',
+            'text_loading_3ds_frame' => 'Loading frame',
+            'title_loading_3ds_response' => 'Loading response',
+            'title_3ds_frame' => '3DS Frame',
+            'tooltip_3ds_frame' => '3DS Tooltip',
+            'message_3ds_declined' => '3DS Declined',
+        ];
+
+        $countryConfigsProperty = (new \ReflectionClass($this->gateway))->getProperty('countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, [
+            'intl' => 'en-US',
+            'site_id' => 'MLA',
+            'currency' => 'ARS'
+        ]);
+
+        $this->gateway->mercadopago->woocommerce->version = '8.0.0';
+        $this->gateway->shouldReceive('get_option')->andReturn('yes');
+        WP_Mock::userFunction('get_stylesheet')->andReturn('test-theme');
+        WP_Mock::userFunction('wp_get_current_user')
+            ->andReturn((object) ['ID' => 1, 'user_email' => 'test@example.com']);
+        WP_Mock::userFunction('wp_is_mobile')->andReturn(false);
+
+        $registeredHandles = [];
+        $scripts = $this->gateway->mercadopago->hooks->scripts;
+        $scripts->shouldReceive('registerCheckoutStyle')->andReturnSelf();
+        $scripts->shouldReceive('registerCheckoutScript')
+            ->andReturnUsing(function ($handle) use (&$registeredHandles, $scripts) {
+                $registeredHandles[] = $handle;
+                return $scripts;
+            });
+
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        WP_Mock::userFunction('wp_localize_script')->andReturn(true);
+
+        $this->gateway->registerCheckoutScripts();
+
+        $localizeMethod = new \ReflectionMethod(CustomGateway::class, 'getSuperTokenLocalizeData');
+        $localizeMethod->setAccessible(true);
+        $localizeData = $localizeMethod->invoke($this->gateway);
+
+        // In bundle mode the localize carries self_construct = false (the bootstrap keeps reusing
+        // the CDN runtime instead of self-building), confirming the bundle path executed.
+        $this->assertArrayHasKey('self_construct', $localizeData);
+        $this->assertFalse((bool) $localizeData['self_construct'], 'bundle mode nao deve acionar o self_construct');
+        $this->assertNotEmpty($registeredHandles, 'bundle mode deve enfileirar os scripts do Super Token');
+    }
+
+    /**
      * Test processReturnFail execution to increase coverage
      * This test ensures processReturnFail is actually executed (not mocked) to cover all lines
      */
@@ -1404,7 +1707,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id']);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id', 'device' => 'unknown']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -1471,7 +1774,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id']);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id', 'device' => 'unknown']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -1571,7 +1874,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id']);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id', 'device' => 'unknown']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -1651,7 +1954,7 @@ class CustomGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id']);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), CustomGateway::ID, ['cust_id' => 'test-cust-id', 'device' => 'unknown']);
 
         // Mock notices
         $this->gateway->mercadopago->helpers->notices
@@ -2351,128 +2654,6 @@ class CustomGatewayTest extends TestCase
     }
 
     /**
-     * Test that authorized_pseudotoken_mismatch metric is sent when tokens don't match
-     *
-     * Context: This test validates the security check introduced to detect when the
-     * authorized_pseudotoken (returned from the authorization flow) differs from the
-     * token originally sent in the checkout. This mismatch could indicate:
-     * - A potential security issue
-     * - Frontend/backend synchronization problems
-     * - Token manipulation attempts
-     *
-     * The metric helps track these anomalies for security monitoring and debugging.
-     * It compares:
-     * - checkoutCustomToken: The 'token' field from the checkout data
-     * - authorizedPseudotoken: The 'authorized_pseudotoken' field from checkout data
-     *
-     * When they differ, the metric is sent with both values for analysis.
-     *
-     * @dataProvider processPaymentSuperTokenPseudotokenMismatchProvider
-     * @runInSeparateProcess
-     * @preserveGlobalState disabled
-     */
-    public function testProcessPaymentSuperTokenSendsMetricWhenPseudotokenMismatch(
-        bool $isBlocks,
-        ?string $authorizedPseudotoken,
-        bool $shouldSendMetric
-    ): void {
-        $token = 'pseudotoken-sent-in-order';
-
-        $checkout = [
-            'checkout_type' => 'super_token',
-            'token' => $token,
-            'authorized_pseudotoken' => $token,
-            'amount' => 100,
-            'payment_method_id' => 'visa',
-            'payment_type_id' => 'credit_card',
-            'installments' => 1,
-            'super_token_validation' => 'true',
-        ];
-
-        if ($authorizedPseudotoken !== null) {
-            $checkout['authorized_pseudotoken'] = $authorizedPseudotoken;
-        }
-
-        $this->processPaymentMock($checkout, $isBlocks);
-
-        $this->order->shouldReceive('get_id')
-            ->andReturn(1)
-            ->byDefault();
-
-        $checkoutSessionData = ['_mp_flow_id' => 'test-flow-id-456'];
-
-        $superTokenTransactionMock = Mockery::mock('overload:' . SupertokenTransaction::class);
-        $superTokenTransactionMock
-            ->expects()
-            ->createPayment()
-            ->once()
-            ->andReturn(['status' => 'approved'])
-            ->getMock()
-            ->expects()
-            ->getInternalMetadata()
-            ->andReturn($paymentMetadata = Mockery::mock(PaymentMetadata::class));
-
-        $superTokenTransactionMock
-            ->shouldReceive('getCheckoutSessionData')
-            ->andReturn($checkoutSessionData);
-
-        $this->gateway->mercadopago->orderMetadata
-            ->expects()
-            ->setSupertokenMetadata($this->order, ['status' => 'approved'], $paymentMetadata);
-
-        $this->gateway->mercadopago->sellerConfig
-            ->shouldReceive('getSiteId')
-            ->andReturn('MLB');
-
-        $this->gateway->mercadopago->sellerConfig
-            ->shouldReceive('getCustIdFromAT')
-            ->andReturn('test-cust-id');
-
-        $this->gateway->mercadopago->storeConfig
-            ->shouldReceive('isTestMode')
-            ->andReturn(true);
-
-        if ($shouldSendMetric) {
-            $this->gateway->datadog
-                ->shouldReceive('sendEvent')
-                ->once()
-                ->with(
-                    'authorized_pseudotoken_mismatch',
-                    $token,
-                    $authorizedPseudotoken,
-                    'super_token',
-                    [
-                        'site_id' => 'MLB',
-                        'environment' => 'homol',
-                        'cust_id' => 'test-cust-id',
-                        'sdk_instance_id' => 'test-flow-id-456',
-                    ]
-                );
-        } else {
-            $this->gateway->datadog
-                ->shouldNotReceive('sendEvent')
-                ->with(
-                    'authorized_pseudotoken_mismatch',
-                    Mockery::any(),
-                    Mockery::any(),
-                    Mockery::any(),
-                    Mockery::any()
-                );
-        }
-
-        $this->handleResponseStatusMock(['status' => 'approved'], false);
-
-        $this->gateway->mercadopago->helpers->url
-            ->expects()
-            ->validateGetVar('pay_for_order')
-            ->andReturn(false);
-
-        $result = $this->gateway->process_payment(1);
-
-        $this->assertEquals('success', $result['result']);
-    }
-
-    /**
      * Test that metrics use 'Unknown' as fallback when flow ID is missing
      *
      * Context: The sdk_instance_id (flow ID) is used to track the user's journey through
@@ -2603,42 +2784,6 @@ class CustomGatewayTest extends TestCase
                 false,  // isBlocks
                 'true', // super_token_validation (string 'true' - no metric)
                 false,  // shouldSendMetric
-            ],
-        ];
-    }
-
-    /**
-     * Data provider for pseudotoken mismatch tests
-     *
-     * Tests the security check that compares checkout['token'] with checkout['authorized_pseudotoken'].
-     * The metric should only be sent when these values differ, indicating a potential issue.
-     *
-     * Note: In the test, $token is set to 'pseudotoken-sent-in-order', so when
-     * authorized_pseudotoken has the same value, they match (no metric).
-     * When authorized_pseudotoken has a different value, they mismatch (metric sent).
-     */
-    public function processPaymentSuperTokenPseudotokenMismatchProvider(): array
-    {
-        return [
-            'blocks checkout - pseudotoken mismatch' => [
-                true,                           // isBlocks
-                'different-pseudotoken-value',   // authorized_pseudotoken (differs from token)
-                true,                           // shouldSendMetric (mismatch detected)
-            ],
-            'classic checkout - pseudotoken mismatch' => [
-                false,                          // isBlocks
-                'different-pseudotoken-value',   // authorized_pseudotoken (differs from token)
-                true,                           // shouldSendMetric (mismatch detected)
-            ],
-            'blocks checkout - pseudotoken matches' => [
-                true,                           // isBlocks
-                'pseudotoken-sent-in-order',     // authorized_pseudotoken (SAME as $token in test)
-                false,                          // shouldSendMetric (no mismatch)
-            ],
-            'classic checkout - pseudotoken matches' => [
-                false,                          // isBlocks
-                'pseudotoken-sent-in-order',     // authorized_pseudotoken (SAME as $token in test)
-                false,                          // shouldSendMetric (no mismatch)
             ],
         ];
     }
@@ -3125,7 +3270,7 @@ class CustomGatewayTest extends TestCase
                         && str_contains($message, 'exception_type : invalidcheckoutdataexception');
                 }),
                 'woo-mercado-pago-custom',
-                ['cust_id' => 'test-cust-id']
+                ['cust_id' => 'test-cust-id', 'device' => 'unknown']
             );
 
         $this->gateway->mercadopago->helpers->url
@@ -3185,7 +3330,7 @@ class CustomGatewayTest extends TestCase
                         && !str_contains($message, 'missing_fields');
                 }),
                 'woo-mercado-pago-custom',
-                ['cust_id' => 'test-cust-id']
+                ['cust_id' => 'test-cust-id', 'device' => 'unknown']
             );
 
         $this->gateway->mercadopago->helpers->url
@@ -4044,5 +4189,47 @@ class CustomGatewayTest extends TestCase
         $this->assertStringContainsString('class=""', $html);
         $this->assertStringContainsString('Title', $html);
         $this->assertStringContainsString('Body', $html);
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testHandleResponseStatusUnmappedStatusRoutesToProcessReturnFail(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $response = ['status' => 'in_mediation'];
+
+        $this->gateway
+            ->shouldReceive('processReturnFail')
+            ->once()
+            ->with(Mockery::type(Exception::class), Mockery::any(), CustomGateway::LOG_SOURCE, $response, true)
+            ->andReturn($expected = ['result' => 'fail', 'redirect' => false]);
+
+        $this->assertSame($expected, $this->gateway->handleResponseStatus($order, $response));
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testHandleResponseStatusRejectedWithoutPayPageRoutesToProcessReturnFail(): void
+    {
+        $order = Mockery::mock('WC_Order');
+        $response = ['status' => 'rejected', 'status_detail' => 'cc_rejected_other_reason'];
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->with('pay_for_order')
+            ->andReturn(false);
+
+        $this->gateway->shouldReceive('handleWithRejectPayment')->once()->with($response);
+
+        $this->gateway
+            ->shouldReceive('processReturnFail')
+            ->once()
+            ->andReturn($expected = ['result' => 'fail', 'redirect' => false]);
+
+        $this->assertSame($expected, $this->gateway->handleResponseStatus($order, $response));
     }
 }

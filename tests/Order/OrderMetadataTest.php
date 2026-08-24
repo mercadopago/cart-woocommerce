@@ -64,6 +64,23 @@ class OrderMetadataTest extends TestCase
         $this->assertTrue($result);
     }
 
+    public function testGetCheckoutTypeReturnsStoredValue()
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'checkout_type')->andReturn('super_token');
+        $this->assertSame('super_token', $this->orderMetadata->getCheckoutType($this->orderMock));
+    }
+
+    public function testGetCheckoutTypeReturnsNullForLegacyOrder()
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'checkout_type')->andReturn('');
+        $this->assertNull($this->orderMetadata->getCheckoutType($this->orderMock));
+    }
+
+    public function testGetCheckoutTypeReturnsNullWhenOrderMissing()
+    {
+        $this->assertNull($this->orderMetadata->getCheckoutType(null));
+    }
+
     public function testGetDiscountData()
     {
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'Mercado Pago: discount')->andReturn(10);
@@ -1098,5 +1115,223 @@ class OrderMetadataTest extends TestCase
 
         $result = $this->orderMetadata->getMetadataFieldValue($order, 'Mercado Pago - Payment 123', 'Amount');
         $this->assertFalse($result);
+    }
+
+    // -------------------------------------------------------------------------
+    // Applied refund IDs (refund dedup barrier)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Empty / missing meta (legacy orders) resolves to an empty array.
+     */
+    public function testGetAppliedRefundIdsReturnsEmptyArrayWhenMetaAbsent(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn('');
+
+        $this->assertSame([], $this->orderMetadata->getAppliedRefundIds($this->orderMock));
+    }
+
+    /**
+     * A JSON-encoded list is decoded into a normalized array of strings.
+     */
+    public function testGetAppliedRefundIdsDecodesJsonListToStrings(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn(json_encode(['refund_1', 'refund_2', 12345]));
+
+        $result = $this->orderMetadata->getAppliedRefundIds($this->orderMock);
+
+        $this->assertSame(['refund_1', 'refund_2', '12345'], $result);
+    }
+
+    /**
+     * Corrupted meta (present but not a decodable JSON array) resolves to an empty array
+     * AND logs at error level so it surfaces in monitoring — returning [] silently would
+     * make the next notification re-create every already-applied refund.
+     */
+    public function testGetAppliedRefundIdsReturnsEmptyArrayForMalformedJson(): void
+    {
+        $this->orderMock->shouldReceive('get_id')->andReturn(77);
+
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn('not-json');
+
+        $this->logsMock->file->shouldReceive('error')
+            ->once()
+            ->with(Mockery::pattern('/Corrupted applied-refund-ids meta on order 77/'), Mockery::any());
+
+        $this->assertSame([], $this->orderMetadata->getAppliedRefundIds($this->orderMock));
+    }
+
+    /**
+     * When WP returns the meta as an already-decoded PHP array (WP serialization edge case),
+     * getAppliedRefundIds must handle it without json_decode and still normalize to strings.
+     */
+    public function testGetAppliedRefundIdsHandlesAlreadyDecodedArray(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn(['refund_1', 12345]);
+
+        $this->assertSame(['refund_1', '12345'], $this->orderMetadata->getAppliedRefundIds($this->orderMock));
+    }
+
+    /**
+     * addAppliedRefundId appends a new id, reloading meta first (HPOS-safe) and persisting JSON.
+     */
+    public function testAddAppliedRefundIdAppendsNewId(): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('wp_json_encode', [
+            'return' => function ($data) {
+                return json_encode($data);
+            },
+        ]);
+
+        // Reload-before-write barrier must be triggered.
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn(json_encode(['refund_1']));
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, '_mp_applied_refund_ids', json_encode(['refund_1', 'refund_2']))
+            ->once();
+
+        $this->orderMock->shouldReceive('save')->once();
+
+        $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_2');
+
+        $this->assertTrue(true);
+        \WP_Mock::tearDown();
+    }
+
+    /**
+     * addAppliedRefundId is a no-op when the id is already present (strict dedup),
+     * without writing or saving.
+     */
+    public function testAddAppliedRefundIdSkipsDuplicate(): void
+    {
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn(json_encode(['refund_1']));
+
+        $this->orderMetaMock->shouldNotReceive('update');
+        $this->orderMock->shouldNotReceive('save');
+
+        $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_1');
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * If wp_json_encode fails (e.g. invalid UTF-8 in a refund_id), addAppliedRefundId must
+     * NOT persist the literal "false" (which would later decode to null and wipe the whole
+     * dedup list). It bails out keeping the previous value and logs at error level.
+     */
+    public function testAddAppliedRefundIdDoesNotPersistWhenJsonEncodeFails(): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('wp_json_encode', [
+            'return' => false,
+        ]);
+
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+        $this->orderMock->shouldReceive('get_id')->andReturn(88);
+
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn(json_encode(['refund_1']));
+
+        // Must neither update the meta nor save when encoding failed.
+        $this->orderMetaMock->shouldNotReceive('update');
+        $this->orderMock->shouldNotReceive('save');
+
+        $this->logsMock->file->shouldReceive('error')
+            ->once()
+            ->with(Mockery::pattern('/Failed to JSON-encode applied refund ids for order 88/'), Mockery::any());
+
+        $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_2');
+
+        $this->assertTrue(true);
+        \WP_Mock::tearDown();
+    }
+
+    /**
+     * A persistence failure (save throws) must be swallowed and logged — never propagated —
+     * because the refund itself already succeeded and the caller (e.g. a multi-payment loop)
+     * must not abort. The value-based barrier remains the dedup safety net.
+     */
+    public function testAddAppliedRefundIdSwallowsAndLogsWhenSaveThrows(): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('wp_json_encode', [
+            'return' => function ($data) {
+                return json_encode($data);
+            },
+        ]);
+
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+        $this->orderMock->shouldReceive('get_id')->andReturn(99);
+
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn(json_encode(['refund_1']));
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, '_mp_applied_refund_ids', json_encode(['refund_1', 'refund_2']))
+            ->once();
+
+        // save() blows up (DB timeout / HPOS constraint / etc.).
+        $this->orderMock->shouldReceive('save')
+            ->once()
+            ->andThrow(new \Exception('DB write failed'));
+
+        $this->logsMock->file->shouldReceive('error')
+            ->once()
+            ->with(Mockery::pattern('/Failed to persist applied refund id refund_2 for order 99/'), Mockery::any());
+
+        // Must not throw.
+        $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_2');
+
+        $this->assertTrue(true);
+        \WP_Mock::tearDown();
+    }
+
+    /**
+     * addAppliedRefundId initializes the list for a legacy order (meta absent).
+     */
+    public function testAddAppliedRefundIdInitializesListForLegacyOrder(): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('wp_json_encode', [
+            'return' => function ($data) {
+                return json_encode($data);
+            },
+        ]);
+
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_mp_applied_refund_ids', true)
+            ->andReturn('');
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->with($this->orderMock, '_mp_applied_refund_ids', json_encode(['refund_1']))
+            ->once();
+
+        $this->orderMock->shouldReceive('save')->once();
+
+        $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_1');
+
+        $this->assertTrue(true);
+        \WP_Mock::tearDown();
     }
 }

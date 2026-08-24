@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { setupSubscriptionsEnvironment } from "../../helpers/subscriptions-env";
+import { setupSubscriptionsEnvironment, cleanupSubscriptionProduct } from "../../helpers/subscriptions-env";
 import { loginToWpAdmin } from "../../flows/subscriptions";
 
 const SETTINGS_URL = (base) =>
@@ -12,6 +12,7 @@ const TOKEN    = "#woocommerce_woo-mercado-pago-custom_subscriptions_access_toke
 const SAVE_BTN = "button.woocommerce-save-button";
 
 test.beforeAll(setupSubscriptionsEnvironment);
+test.afterAll(cleanupSubscriptionProduct);
 
 test("test subscriptions toggle cannot be enabled without Pre-approval scope, it must be blocked and show scope error", async ({ page }) => {
     test.setTimeout(60000);

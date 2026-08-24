@@ -152,6 +152,20 @@ function ensureSubscriptionProductExists() {
     );
 }
 
+/**
+ * Deleta o produto de subscription para ele não ficar no catálogo/carrinho e fazer os testes
+ * NÃO-subscription (card/pix/ticket) verem zero métodos de pagamento — um produto recorrente no
+ * carrinho esconde os gateways MP (sem credenciais de recorrência). Passar para test.afterAll().
+ */
+function cleanupSubscriptionProduct() {
+    const productUrl = process.env.SUBSCRIPTION_PRODUCT_URL || '/product/subscription-test-product/';
+    const slug = productUrl.replace(/^\/product\//, '').replace(/\/$/, '');
+    wpEval(
+        `$p = get_page_by_path("${slug}", OBJECT, "product");` +
+        `if ($p) { wp_delete_post($p->ID, true); echo "deleted:" . $p->ID; } else { echo "absent"; }`
+    );
+}
+
 // ── MP gateway subscription settings ─────────────────────────────────────────
 
 function ensureGatewaySettings() {
@@ -221,4 +235,4 @@ function getSubscriptionCardId(subscriptionId) {
     ) || null;
 }
 
-module.exports = { setupSubscriptionsEnvironment, assertSubscriptionHasNewCard, getSubscriptionCardId };
+module.exports = { setupSubscriptionsEnvironment, cleanupSubscriptionProduct, assertSubscriptionHasNewCard, getSubscriptionCardId };

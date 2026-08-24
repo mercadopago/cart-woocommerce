@@ -1,0 +1,300 @@
+@use '../root' as *;
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container {
+    width: 100% !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  &.mp-initial-state .mp-super-token-block--saved-cards {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 50ms !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--saved-cards {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 50ms !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  &.mp-initial-state .mp-super-token-block--other-mp {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 150ms !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--other-mp {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 150ms !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-payment-method {
+    padding: 20px 12px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-payment-method__selected .mp-super-token-payment-method__title,
+  .mp-super-token-payment-method__accordion.mp-super-token-payment-method__selected .mp-super-token-payment-method__accordion-title {
+    font-weight: 600 !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-payment-method__accordion {
+    min-height: 64px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__accordion-header {
+    height: auto !important;
+    padding: 20px 12px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-payment-method__accordion > .mp-checkout-custom-container {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text a {
+    color: #3483FA !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-privacy-policy-footer {
+    padding: 0 !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-payment-methods-list-horizontal-row {
+    margin: 8px 0 6px 0 !important;
+  }
+}
+
+@container mp-super-token-payment-method-header (max-width: 248px) {
+  @include st-root($variant: 'v2.1') {
+    .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__value-prop {
+      display: none !important;
+    }
+  }
+
+  @include st-root($variant: 'v2.1') {
+    .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__content-title .mp-super-token-payment-method__title {
+      width: 100% !important;
+    }
+  }
+
+  @include st-root($variant: 'v2.1') {
+    .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__content-title {
+      flex-wrap: wrap;
+    }
+  }
+
+  @include st-root($variant: 'v2.1') {
+    .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__thumbnail {
+      align-self: flex-start !important;
+    }
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--saved-cards + .mp-super-token-block--other-mp {
+    margin-top: 12px !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block__header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 4px !important;
+    gap: 12px !important;
+    margin-bottom: 4px !important;
+    container-type: inline-size !important;
+    container-name: mp-super-token-block-header !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block__header-info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block__title {
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    line-height: 18px !important;
+    color: rgba(0, 0, 0, 0.9) !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block__email {
+    font-size: 12px !important;
+    line-height: 15px !important;
+    color: rgba(0, 0, 0, 0.9) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+@container mp-super-token-block-header (max-width: 248px) {
+  @include st-root($variant: 'v2.1') {
+    .mp-super-token-block__email {
+      max-width: 157px !important;
+    }
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block__header-logo {
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    border-radius: 50% !important;
+    border: 1px solid rgba(0, 0, 0, 0.07) !important;
+    object-fit: cover !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--other-mp .mp-super-token-block__header {
+    justify-content: flex-start !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block ~ #mp-super-token-privacy-policy-footer {
+    margin-top: 8px !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-am-balance-text {
+    font-size: 12px !important;
+    line-height: 15px !important;
+    color: var(--andes-text-color-secondary) !important;
+    opacity: 0 !important;
+    max-height: 0 !important;
+    margin-top: 0 !important;
+    overflow: hidden !important;
+    transition: opacity 300ms ease-in-out, max-height 300ms ease-in-out, margin-top 300ms ease-in-out !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-am-balance-text--open {
+    opacity: 1 !important;
+    max-height: 40px !important;
+    margin-top: 6px !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block .mp-super-token-payment-method:not(.mp-super-token-payment-method__selected):has(.mp-super-token-payment-method__value-prop) {
+    padding: 12px !important;
+    align-items: flex-start !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block .mp-super-token-payment-method:not(.mp-super-token-payment-method__selected) {
+    min-height: 64px !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--other-mp .mp-super-token-payment-method__selected {
+    max-height: none !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--other-mp .mp-super-token-account-money-row {
+    transition: border-color 150ms ease-in-out, border-width 150ms ease-in-out !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--other-mp .mp-super-token-account-money-row .mp-super-token-payment-method__content {
+    gap: 0 !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--other-mp .mp-super-token-account-money-row .mp-super-token-payment-method__title {
+    transform: translateY(0) !important;
+    transition: transform 300ms ease-in-out !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--other-mp .mp-super-token-account-money-row.mp-super-token-account-money-row--open {
+    align-items: flex-start !important;
+  }
+}
+
+@include st-root($variant: 'v2.1') {
+  .mp-super-token-block--other-mp .mp-super-token-account-money-row.mp-super-token-account-money-row--open .mp-super-token-payment-method__title {
+    transform: translateY(-2px) !important;
+  }
+}

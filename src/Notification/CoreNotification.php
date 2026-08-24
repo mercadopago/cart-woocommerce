@@ -23,6 +23,7 @@ class CoreNotification extends AbstractNotification
     private const REFUND_METRIC_SUCCESS_MP = 'mp_refund_success';
     private const REFUND_METRIC_ERROR_MP = 'mp_refund_error';
     private const REFUND_ORIGIN_MP = 'origin_mercadopago';
+    private const CHECKOUT_TYPE_META_KEY = 'checkout_type';
 
     /**
      * Get Notification Id
@@ -148,7 +149,41 @@ class CoreNotification extends AbstractNotification
             $data['current_refund'] = [];
             $refundId = $refund['id'] ?? null;
 
-            if (!$this->isValidRefund($refund, $refundId, $data)) {
+            if (!$this->isValidRefund($refund, $refundId, $data, $order)) {
+                continue;
+            }
+
+            // $refundId comes straight from the webhook payload; strip CR/LF/TAB before it is
+            // concatenated into any log line so a malformed id cannot forge log entries or trip
+            // SIEM parsers (log injection). Used only for logging — lookups keep the raw value.
+            $safeRefundId = preg_replace('/[\r\n\t]/', '', (string) $refundId);
+
+            // Refund-id dedup: if this refund_id was already applied (persisted at refund
+            // time from the panel), skip the refund flow entirely. Still sync payment-details
+            // metadata (installments, last_four_digits, and the per-payment refunded amount)
+            // so order meta stays current. The sync runs in authoritative mode: the per-payment
+            // refunded total is recomputed from the MP payload (not incremented), which keeps it
+            // idempotent under webhook redelivery and is the only place panel-origin refunds
+            // update that metadata — RefundHandler persists only the refund_id. Leaving it stale
+            // would let a later multi-payment refund read an over-stated remaining balance for an
+            // already-refunded payment and issue a duplicate refund against it.
+            if ($this->orderStatus->isRefundIdApplied($order, (string) $refundId)) {
+                $this->logs->file->info('Refund already applied, skipping notification refund: ' . $safeRefundId, __CLASS__);
+                if (!empty($data['payments_details'])) {
+                    // Guard the metadata sync: a failure here must not abort the remaining
+                    // entries of the refunds_notifying loop (which would leave the MP webhook
+                    // retrying indefinitely on a 500).
+                    try {
+                        $this->updatePaymentDetails($order, $data, true);
+                        $order->save();
+                    } catch (Exception $e) {
+                        $this->logs->file->error(
+                            'Failed to sync payment details after dedup skip for refund '
+                            . $safeRefundId . ': ' . $e->getMessage(),
+                            __CLASS__
+                        );
+                    }
+                }
                 continue;
             }
 
@@ -164,9 +199,13 @@ class CoreNotification extends AbstractNotification
             if ($this->shouldProcessRefund($currentRefund)) {
                 $processedStatus = $this->getProcessedStatus($order, $data);
                 $this->logStatusChange($oldOrderStatus, $processedStatus);
-                $this->processStatus($processedStatus, $order, $data);
+                $refundApplied = $this->processStatus($processedStatus, $order, $data);
 
-                $this->sendRefundSuccessMetric();
+                // Only report success when the refund was actually applied. A wc_create_refund
+                // failure inside refundedFlow already emitted mp_refund_error and returns false.
+                if ($refundApplied) {
+                    $this->sendRefundSuccessMetric($order);
+                }
             } else {
                 if (!empty($data['payments_details'])) {
                     $this->updatePaymentDetails($order, $data);
@@ -182,26 +221,27 @@ class CoreNotification extends AbstractNotification
      * @param array $refund
      * @param string|null $refundId
      * @param mixed $data
+     * @param WC_Order $order
      *
      * @return bool
      */
-    private function isValidRefund($refund, $refundId, $data): bool
+    private function isValidRefund($refund, $refundId, $data, WC_Order $order): bool
     {
         if (!$refundId) {
             $this->logs->file->error('Refund ID not found in notification', __CLASS__, $data);
-            $this->sendRefundErrorMetric('validation_failed', 'Refund ID not found in notification');
+            $this->sendRefundErrorMetric('validation_failed', 'Refund ID not found in notification', $order);
             return false;
         }
 
         if (!isset($refund['amount']) || empty($refund['amount']) || $refund['amount'] <= 0.00) {
             $this->logs->file->error('Invalid refund amount: must be greater than 0', __CLASS__, $refund);
-            $this->sendRefundErrorMetric('validation_failed', 'Invalid refund amount: must be greater than 0');
+            $this->sendRefundErrorMetric('validation_failed', 'Invalid refund amount: must be greater than 0', $order);
             return false;
         }
 
         if (!$this->isValidPaymentsDetailsStructure($data)) {
             $this->logs->file->error('Invalid payments_details structure in notification', __CLASS__, $data);
-            $this->sendRefundErrorMetric('validation_failed', 'Invalid payments_details structure in notification');
+            $this->sendRefundErrorMetric('validation_failed', 'Invalid payments_details structure in notification', $order);
             return false;
         }
 
@@ -271,7 +311,7 @@ class CoreNotification extends AbstractNotification
      *
      * @return void
      */
-    public function updatePaymentDetails(WC_Order $order, array $data): void
+    public function updatePaymentDetails(WC_Order $order, array $data, bool $authoritativeRefund = false): void
     {
         $payment_ids = [];
 
@@ -284,7 +324,42 @@ class CoreNotification extends AbstractNotification
 
             $refundedAmount = $paymentData->refund ?? 0;
 
-            if (isset($data['current_refund']) && isset($payment['refunds'][$data['current_refund']['id']])) {
+            if ($authoritativeRefund) {
+                // Dedup-skip path: sync the per-payment refunded total from the MP payload. This
+                // is the ONLY place the per-payment refund metadata is updated for panel-origin
+                // refunds (RefundHandler persists just the refund_id, never the per-payment
+                // amount, so the normal incrementing path is never reached for them).
+                //
+                // The refund amount does NOT live in payment['refunds'] — that structure only
+                // carries id/status/notifying/metadata per refund. The amount lives in
+                // refunds_notifying[]. So we cross-reference by refund id to sum the amounts of
+                // this payment's refunds that are present in the current notification.
+                //
+                // A single notification only carries the amounts of the refunds it is notifying;
+                // amounts of previously-applied refunds are not in the payload. We therefore never
+                // reduce the stored total (max) — this keeps the sync idempotent under webhook
+                // redelivery and prevents a partial payload from zeroing out or shrinking a value
+                // that was already recorded.
+                $notifyingAmountById = [];
+                foreach ($data['refunds_notifying'] ?? [] as $notifyingRefund) {
+                    if (isset($notifyingRefund['id'], $notifyingRefund['amount']) && is_numeric($notifyingRefund['amount'])) {
+                        $notifyingAmountById[(string) $notifyingRefund['id']] = (float) $notifyingRefund['amount'];
+                    }
+                }
+
+                $notifyingTotal    = 0.0;
+                $hasNotifyingMatch = false;
+                foreach (array_keys($payment['refunds'] ?? []) as $paymentRefundId) {
+                    if (isset($notifyingAmountById[(string) $paymentRefundId])) {
+                        $notifyingTotal += $notifyingAmountById[(string) $paymentRefundId];
+                        $hasNotifyingMatch = true;
+                    }
+                }
+
+                if ($hasNotifyingMatch) {
+                    $refundedAmount = max((float) $refundedAmount, $notifyingTotal);
+                }
+            } elseif (isset($data['current_refund']) && isset($payment['refunds'][$data['current_refund']['id']])) {
                 $refundedAmount += $data['current_refund']['amount'];
             }
 
@@ -326,11 +401,33 @@ class CoreNotification extends AbstractNotification
     }
 
     /**
-     * Send refund success metric to Datadog
+     * Get the checkout_type from the order metadata so refund metrics can be
+     * segmented by product bucket (super_token, credit_card, pix…) in Datadog.
+     * Returns null for legacy orders that predate the checkout_type metadata.
+     *
+     * @param WC_Order|null $order
+     *
+     * @return string|null
      */
-    private function sendRefundSuccessMetric(): void
+    private function getCheckoutType(?WC_Order $order): ?string
     {
-        Datadog::getInstance()->sendEvent(self::REFUND_METRIC_SUCCESS_MP, 'refund_success', self::REFUND_ORIGIN_MP);
+        if (!$order) {
+            return null;
+        }
+
+        $checkoutType = $order->get_meta(self::CHECKOUT_TYPE_META_KEY);
+
+        return !empty($checkoutType) ? (string) $checkoutType : null;
+    }
+
+    /**
+     * Send refund success metric to Datadog
+     *
+     * @param WC_Order $order
+     */
+    private function sendRefundSuccessMetric(WC_Order $order): void
+    {
+        Datadog::getInstance()->sendEvent(self::REFUND_METRIC_SUCCESS_MP, 'refund_success', self::REFUND_ORIGIN_MP, $this->getCheckoutType($order));
     }
 
     /**
@@ -338,9 +435,10 @@ class CoreNotification extends AbstractNotification
      *
      * @param string $errorCode
      * @param string $errorMessage
+     * @param WC_Order|null $order
      */
-    private function sendRefundErrorMetric(string $errorCode, string $errorMessage): void
+    private function sendRefundErrorMetric(string $errorCode, string $errorMessage, ?WC_Order $order = null): void
     {
-        Datadog::getInstance()->sendEvent(self::REFUND_METRIC_ERROR_MP, $errorCode, $errorMessage);
+        Datadog::getInstance()->sendEvent(self::REFUND_METRIC_ERROR_MP, $errorCode, $errorMessage, $this->getCheckoutType($order));
     }
 }

@@ -140,6 +140,53 @@ export async function expectDocumentRejected(page) {
 }
 
 /**
+ * Asserts the document field surfaces the required-field error while empty.
+ *
+ * The empty error is real-time-WHILE-EDITING: setInvalidState shows it as the field
+ * becomes empty, and handleInputFocusOut clears it on blur. So we type one digit and
+ * delete it (firing the component's `input` listener with an empty value) and assert
+ * WITHOUT blurring. Keystrokes go through page.keyboard on the focused input: an
+ * invalid/partial value swaps the input's `name` to flag-error mid-edit, so a
+ * name-based locator would stop resolving between key presses.
+ */
+export async function expectEmptyDocumentError(page, docType) {
+  const docTypeSelect = page.locator(DOC_TYPE_SELECT);
+  await docTypeSelect.waitFor({ state: 'visible', timeout: 15000 });
+  await expect
+    .poll(
+      async () => {
+        await docTypeSelect.selectOption(docType).catch(() => {});
+        return docTypeSelect.inputValue();
+      },
+      { timeout: 15000, message: `identification-type select should hold "${docType}"` }
+    )
+    .toBe(docType);
+  await page.waitForTimeout(200);
+
+  const docInput = page.locator(DOC_NUMBER_INPUT);
+  await docInput.click();
+  await page.keyboard.type('1', { delay: 40 });
+  await page.keyboard.press('Backspace');
+  await page.waitForTimeout(200);
+
+  // Still focused (no blur): the empty state must carry the error class and show the helper.
+  await expect
+    .poll(
+      () =>
+        page.$$eval(DOC_CONTAINER, (els) =>
+          els.some((el) => /mp-error/.test(el.className))
+        ),
+      { timeout: 5000, message: 'document container should carry an mp-error class while empty and focused' }
+    )
+    .toBe(true);
+
+  const anyHelperVisible = await page.$$eval(DOC_HELPER, (els) =>
+    els.some((el) => window.getComputedStyle(el).display !== 'none')
+  );
+  expect(anyHelperVisible).toBe(true);
+}
+
+/**
  * Drives the full custom (card) checkout for MLB with a given CNPJ, intercepts the
  * WooCommerce checkout submit and returns the document payload the plugin sends:
  *   { docNumber, docType } parsed from `mercadopago_custom[doc_number|doc_type]`.

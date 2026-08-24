@@ -1,0 +1,132 @@
+@use '../root' as *;
+
+@include st-root($variant: 'v2') {
+  &.mp-initial-state > .mp-super-token-payment-method:nth-child(2) {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 50ms !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  > .mp-super-token-payment-method:nth-child(2) {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 50ms !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  &.mp-initial-state > .mp-super-token-payment-method:nth-child(3) {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 75ms !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  > .mp-super-token-payment-method:nth-child(3) {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 75ms !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  &.mp-initial-state > .mp-super-token-payment-method:nth-child(4) {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 100ms !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  > .mp-super-token-payment-method:nth-child(4) {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 100ms !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  &.mp-initial-state > .mp-super-token-payment-method:nth-child(5) {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 125ms !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  > .mp-super-token-payment-method:nth-child(5) {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 125ms !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  .mp-super-token-payment-method {
+    padding: 12px !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__accordion-header {
+    height: 48px !important;
+    padding: 12px !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  .mp-super-token-payment-method__accordion > .mp-checkout-custom-container {
+    padding-bottom: 12px !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  .mp-privacy-policy-footer {
+    padding: 16px !important;
+  }
+}
+
+@include st-root($variant: 'v2') {
+  .mp-payment-methods-list-horizontal-row {
+    margin: 0 0 8px 0 !important;
+  }
+}
+
+@container mp-super-token-payment-method-header (max-width: 248px) {
+  @include st-root($variant: 'v2') {
+    .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__value-prop {
+      display: none !important;
+    }
+  }
+
+  @include st-root($variant: 'v2') {
+    .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__content-title .mp-super-token-payment-method__title {
+      width: 105% !important;
+    }
+  }
+
+  @include st-root($variant: 'v2') {
+    .mp-super-token-payment-method .mp-super-token-payment-method__header .mp-super-token-payment-method__content .mp-super-token-payment-method__content-title {
+      flex-wrap: wrap;
+    }
+  }
+}

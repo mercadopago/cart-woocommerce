@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import { setupSubscriptionsEnvironment } from "../helpers/subscriptions-env";
+import { setupSubscriptionsEnvironment, cleanupSubscriptionProduct } from "../helpers/subscriptions-env";
 import { wpEval, wpOption } from "../helpers/wp-env";
 import { skipIfNotSite, getStoreSiteId } from "../helpers/site-guard";
 import { snapshotOptions, restoreOptions } from "../helpers/wp-options-snapshot";
@@ -112,6 +112,8 @@ export function registerManualRenewalSinglePaymentScenario(siteId, siteData, gue
 
     test.afterAll(() => {
       restoreOptions(storeSnapshot);
+      // Remove o produto de subscription para não contaminar os testes de card/pix/ticket.
+      cleanupSubscriptionProduct();
     });
 
     test(`Given a subscription without Pre-approval credentials and manual renewals enabled in ${siteId}, When it is paid on the Classic checkout, Then it is processed as a single payment and the order-received page is shown`, async ({ page }) => {

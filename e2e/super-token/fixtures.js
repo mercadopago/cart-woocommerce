@@ -54,6 +54,11 @@ export const test = base.extend({
   // Chrome é compartilhado entre cenários, então nada pode vazar de um teste para o outro.
   faults: async ({ page }, use) => {
     const client = await page.context().newCDPSession(page);
+    // Page.addScriptToEvaluateOnNewDocument is silently ignored on a fresh CDP session until the
+    // Page domain is enabled: the script is never registered and the injection is a no-op (the
+    // cookie side of forceVariant masked this because context.addCookies set it independently).
+    // Enable it once so faults.inject actually runs in the page's main world before page scripts.
+    await client.send("Page.enable");
     const injected = [];
     let throttled = false;
 

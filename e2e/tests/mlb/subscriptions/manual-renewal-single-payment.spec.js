@@ -1,7 +1,7 @@
 import { test } from "@playwright/test";
 import { guestUserMLB } from "../../../data/buyer_data";
 import { mlb } from "../../../data/meli_sites";
-import { setupSubscriptionsEnvironment } from "../../../helpers/subscriptions-env";
+import { setupSubscriptionsEnvironment, cleanupSubscriptionProduct } from "../../../helpers/subscriptions-env";
 import { wpEval, wpOption } from "../../../helpers/wp-env";
 import { snapshotOptions, restoreOptions } from "../../../helpers/wp-options-snapshot";
 import {
@@ -77,6 +77,8 @@ test.describe("Accept Manual Renewals single payment @serial-store", () => {
 
     test.afterAll(() => {
         restoreOptions(storeSnapshot);
+        // Remove o produto de subscription para não contaminar os testes de card/pix/ticket.
+        cleanupSubscriptionProduct();
     });
 
     test("Given a subscription without Pre-approval credentials and manual renewals enabled, When it is paid on the Classic checkout, Then it is processed as a single payment and the order-received page is shown", async ({ page }) => {

@@ -1,0 +1,24 @@
+// Root prefix declared once (RN-2). Every scoped rule nests inside via @include st-root.
+// The Super Token list is scoped to both the classic (#payment) and blocks (#payment-method)
+// checkout containers; the pair is emitted as a single grouped selector so specificity and
+// cascade match the legacy CSS exactly. A rule that only targets one context passes it
+// explicitly, e.g. @include st-root(('#payment')).
+$st-contexts: ('#payment', '#payment-method') !default;
+
+// A single stylesheet now serves both variants. Shared rules pass no $variant and match either
+// root; variant rules pass 'v2'/'v2.1', adding [data-variant] to their prefix. That attribute both
+// scopes the rule to its own root (v2 and v2.1 never co-match — the root carries one value) and
+// gives it +(0,1,0) over the shared rules, preserving the legacy per-file source-order last-wins.
+@mixin st-root($contexts: $st-contexts, $variant: null) {
+  $selector: '';
+  $variant-attr: if($variant == null, '', '[data-variant="#{$variant}"]');
+
+  @each $context in $contexts {
+    $prefix: '#{$context} #mp-checkout-super-token-root#{$variant-attr}.mp-super-token-payment-methods-list';
+    $selector: if($selector == '', $prefix, '#{$selector}, #{$prefix}');
+  }
+
+  #{$selector} {
+    @content;
+  }
+}

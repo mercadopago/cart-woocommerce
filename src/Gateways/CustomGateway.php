@@ -8,7 +8,6 @@ use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
-use MercadoPago\Woocommerce\Transactions\SupertokenTransaction;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\PP\Sdk\Exceptions\ApiException;
@@ -31,6 +30,10 @@ class CustomGateway extends AbstractGateway
     protected const WALLET_BUTTON_ENABLED_OPTION = 'wallet_button';
 
     protected const WALLET_BUTTON_ENABLED_DEFAULT = 'yes';
+
+    private const SUPER_TOKEN_BUNDLE_HANDLE = 'wc_mercadopago_supertoken';
+
+    private const SUPER_TOKEN_REFACTORED_HANDLE = 'wc_mercadopago_supertoken_refactored';
 
     /**
      * @const
@@ -259,9 +262,17 @@ window.mpSdkInstance = null;",
             return;
         }
 
-        foreach ($this->getSuperTokenScripts() as $script) {
-            wp_dequeue_script($script['handle']);
-            wp_deregister_script($script['handle']);
+        // Mode-agnostic: the bundle handle covers bundle mode (the CDN loader), the refactored
+        // entry covers self-construct (dev) and bundle+refactored. Dequeuing a handle that was
+        // never enqueued is a no-op, so the union is safe across every mode.
+        $handles = [
+            self::SUPER_TOKEN_BUNDLE_HANDLE,
+            self::SUPER_TOKEN_REFACTORED_HANDLE,
+        ];
+
+        foreach ($handles as $handle) {
+            wp_dequeue_script($handle);
+            wp_deregister_script($handle);
         }
     }
 
@@ -1366,16 +1377,13 @@ window.mpSdkInstance = null;",
      */
     public function registerSuperTokenStyles()
     {
-        $version = MP_SUPER_TOKEN_VERSION;
-
+        // Single compiled stylesheet serving both A/B variants: the runtime stamps
+        // data-variant on the root and each variant's rules are scoped to it, so one
+        // file covers the shared rules and both variants (no MP_SUPER_TOKEN_VERSION
+        // discriminator on the served file).
         $this->mercadopago->hooks->scripts->registerCheckoutStyle(
             'wc_mercadopago_supertoken_payment_methods',
-            $this->mercadopago->helpers->url->getCssAsset("checkouts/super-token/{$version}/super-token-payment-methods"),
-        );
-
-        $this->mercadopago->hooks->scripts->registerCheckoutStyle(
-            'wc_mercadopago_supertoken_payment_method_details_skeleton',
-            $this->mercadopago->helpers->url->getCssAsset("checkouts/super-token/{$version}/super-token-method-details-skeleton"),
+            $this->mercadopago->helpers->url->getCssAsset('checkouts/super-token/super-token.bundle'),
         );
     }
 
@@ -1390,24 +1398,59 @@ window.mpSdkInstance = null;",
 
         $this->registerCustomCheckoutScripts();
 
-        if (MP_SUPER_TOKEN_USE_BUNDLE) {
-            $this->registerSuperTokenBundleFiles();
-        } else {
-            $this->registerSuperTokenSeparatedFiles();
+        // Self-construct (dev mode): the TS entry (bootstrap.ts) builds and publishes the
+        // Super Token instances itself. The legacy v2/v2.1/shared scripts no longer exist,
+        // so dev mode always self-constructs — enqueue only the styles + the TS entry.
+        if ($this->isSuperTokenSelfConstruct()) {
+            $this->registerSuperTokenStyles();
+            $this->registerSuperTokenRefactoredEntry();
+            $this->registerSuperTokenLocalizeParams(self::SUPER_TOKEN_REFACTORED_HANDLE);
+            return;
         }
 
-        $this->registerSuperTokenLocalizeParams();
+        // Bundle mode (production): the A/B loader selects one refactored per-variant bundle from
+        // the retrocompatible CDN paths; that bundle is the whole runtime, so nothing else is enqueued. This path is
+        // unreachable in unit tests (self-construct early-returns above under the fixed PHPUnit
+        // constant); E2E covers it.
+        // @codeCoverageIgnoreStart
+        $this->registerSuperTokenBundleFiles();
+        $this->registerSuperTokenLocalizeParams(self::SUPER_TOKEN_BUNDLE_HANDLE);
+        // @codeCoverageIgnoreEnd
     }
 
     /**
-     * Summary of registerSuperTokenSeparatedFiles
+     * Which side builds the Super Token runtime: the local TS entry (self-construct) or the CDN
+     * bundle. This is the durable distinction the enqueue path branches on — not "refactored vs
+     * legacy" (a transitory state that loses meaning after the CDN cutover).
+     *
+     * True (self-construct, bundle off): the TS entry builds and publishes the Super Token
+     * instances itself, so only it (plus the styles) is enqueued. Since the legacy v2/v2.1/shared
+     * scripts were removed, dev mode always self-constructs.
+     * False (bundle on): the A/B loader selects a refactored per-variant CDN bundle, which is the
+     * whole runtime, so nothing else is enqueued. The unified path remains deferred to TASK-013.
+     *
+     * @return bool
+     */
+    protected function isSuperTokenSelfConstruct(): bool
+    {
+        return !MP_SUPER_TOKEN_USE_BUNDLE;
+    }
+
+    /**
+     * Registers the local refactored Super Token entrypoint (build/super-token/bootstrap.ts.js).
+     * Used in dev/self-construct mode only; in bundle mode the same runtime is the single CDN
+     * bundle loaded via the loader. Publishes all refactored orchestration entry points to
+     * window.*; any still-legacy classes remain as state-holders with delegate cascas.
+     *
+     * @codeCoverageIgnore
      * @return void
      */
-    private function registerSuperTokenSeparatedFiles(): void
+    private function registerSuperTokenRefactoredEntry(): void
     {
-        $this->registerSuperTokenStyles();
-
-        $this->registerSuperTokenScripts();
+        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+            self::SUPER_TOKEN_REFACTORED_HANDLE,
+            $this->mercadopago->helpers->url->getPluginFileUrl('build/super-token/bootstrap.ts.js')
+        );
     }
 
     /**
@@ -1420,30 +1463,13 @@ window.mpSdkInstance = null;",
     }
 
     /**
-     * Register all super token scripts
-     *
-     * This method is used to register all super token scripts.
-     *
-     * Should not be tested because it is only used to register scripts.
-     *
-     * @codeCoverageIgnore
-     * @return void
-     */
-    private function registerSuperTokenScripts()
-    {
-        foreach ($this->getSuperTokenScripts() as $script) {
-            $this->registerCheckoutScriptDefinition($script);
-        }
-    }
-
-    /**
      * Summary of registerSuperTokenBundleScripts
      * @return void
      */
     private function registerSuperTokenBundleScripts(): void
     {
         $this->mercadopago->hooks->scripts->registerCheckoutScript(
-            'wc_mercadopago_supertoken',
+            self::SUPER_TOKEN_BUNDLE_HANDLE,
             $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token-loader')
         );
     }
@@ -1452,15 +1478,15 @@ window.mpSdkInstance = null;",
      * Summary of registerSuperTokenLocalizeParams
      * @return void
      */
-    private function registerSuperTokenLocalizeParams(): void
+    private function registerSuperTokenLocalizeParams(string $targetHandle): void
     {
         $localizeData = $this->getSuperTokenLocalizeData();
         if (empty($localizeData)) {
             return;
         }
 
-        add_action('wp_enqueue_scripts', function () use ($localizeData) {
-            wp_localize_script('wc_mercadopago_supertoken', 'wc_mercadopago_supertoken_bundle_params', $localizeData);
+        add_action('wp_enqueue_scripts', function () use ($localizeData, $targetHandle) {
+            wp_localize_script($targetHandle, 'wc_mercadopago_supertoken_bundle_params', $localizeData);
         });
     }
 
@@ -1636,63 +1662,6 @@ window.mpSdkInstance = null;",
     }
 
     /**
-     * Summary of getSuperTokenScripts
-     * @return array<array|array{handle: string, path: string>}
-     */
-    private function getSuperTokenScripts(): array
-    {
-        $version = MP_SUPER_TOKEN_VERSION;
-
-        return [
-            [
-                'handle' => 'wc_mercadopago_supertoken_error_constants',
-                'path' => "checkouts/super-token/{$version}/errors/super-token-error-constants",
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken_error_handler',
-                'path' => "checkouts/super-token/{$version}/errors/super-token-error-handler",
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken_debounce',
-                'path' => "checkouts/super-token/{$version}/entities/debounce",
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken_email_listener',
-                'path' => "checkouts/super-token/{$version}/entities/email-listener",
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken_metrics',
-                'path' => "checkouts/super-token/{$version}/entities/super-token-metrics",
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken_trigger_handler',
-                'path' => "checkouts/super-token/{$version}/entities/super-token-trigger-handler",
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken_payment_methods',
-                'path' => "checkouts/super-token/{$version}/entities/super-token-payment-methods",
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken_authenticator',
-                'path' => "checkouts/super-token/{$version}/entities/super-token-authenticator",
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken_checkout_form_validator',
-                'path' => "checkouts/super-token/{$version}/validators/checkout-form-validator",
-            ],
-            [
-                // Version-agnostic (shared across A/B variants): no {$version} in the path.
-                'handle' => 'wc_mercadopago_supertoken_checkout_validation_resolver',
-                'path' => 'checkouts/super-token/shared/validators/checkout-validation-resolver',
-            ],
-            [
-                'handle' => 'wc_mercadopago_supertoken',
-                'path' => "checkouts/super-token/{$version}/mp-super-token",
-            ]
-        ];
-    }
-
-    /**
      * Returns the full array of super token localize data (single source of truth).
      * Used by getSuperTokenLocalizeParams() for the bundle script.
      *
@@ -1705,6 +1674,13 @@ window.mpSdkInstance = null;",
                 'platform_version' => $this->mercadopago->woocommerce->version,
                 'site_id' => $this->countryConfigs['site_id'],
                 'location' => '/checkout',
+                'self_construct' => $this->isSuperTokenSelfConstruct(),
+                // Dev/self-construct: the entry (bootstrap.ts) renders the variant matching this
+                // constant so the DOM lines up with the single stylesheet registerSuperTokenStyles()
+                // serves (both variants scoped by data-variant) — there is no loader cookie in dev
+                // mode. In bundle mode the variant is resolved at runtime inside the bundle
+                // (VariantConfigAdapter), not by the loader.
+                'super_token_version' => MP_SUPER_TOKEN_VERSION,
                 'plugin_js_base_url' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/'),
                 'theme' => get_stylesheet(),
                 'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
@@ -1870,123 +1846,54 @@ window.mpSdkInstance = null;",
     {
         $checkout = $this->getCheckoutFormData($order);
 
-        switch ($checkout['checkout_type']) {
-            case 'wallet_button':
-                $this->paymentMethodName = 'woo-mercado-pago-wallet-button';
-                $this->mercadopago->logs->file->info('Preparing to render wallet button checkout', self::LOG_SOURCE);
+        $handlers = [
+            'wallet_button' => fn() => $this->processWalletButtonCheckout($order),
+            'super_token'   => fn() => $this->mercadopago->superTokenPaymentProcessor->process($this, $order, $checkout),
+        ];
 
-                return [
-                    'result' => 'success',
-                    'redirect' => $this->mercadopago->helpers->url->setQueryVar(
-                        'wallet_button',
-                        'autoOpen',
-                        $order->get_checkout_payment_url(true)
-                    ),
-                ];
+        $handler = $handlers[$checkout['checkout_type']] ?? fn() => $this->processCustomCheckout($order, $checkout);
 
-            case 'super_token':
-                $this->paymentMethodName = 'woo-mercado-pago-super-token';
-                $this->mercadopago->logs->file->info('Preparing to get response of custom super token checkout', self::LOG_SOURCE);
+        return $handler();
+    }
 
-                $requiredFields = ['authorized_pseudotoken', 'amount', 'payment_method_id', 'payment_type_id'];
-                $missingFields = array_filter($requiredFields, fn($field) => empty($checkout[$field] ?? null));
+    private function processWalletButtonCheckout($order): array
+    {
+        $this->paymentMethodName = 'woo-mercado-pago-wallet-button';
+        $this->mercadopago->logs->file->info('Preparing to render wallet button checkout', self::LOG_SOURCE);
 
-                $isCreditCard = ($checkout['payment_type_id'] ?? '') === 'credit_card';
-                if ($isCreditCard && (empty($checkout['installments']) || $checkout['installments'] <= 0)) {
-                    $missingFields[] = 'installments_required_for_credit';
-                }
+        return [
+            'result' => 'success',
+            'redirect' => $this->mercadopago->helpers->url->setQueryVar(
+                'wallet_button',
+                'autoOpen',
+                $order->get_checkout_payment_url(true)
+            ),
+        ];
+    }
 
-                if (empty($missingFields)) {
-                    $checkout['super_token_validation'] = $checkout['super_token_validation'] ?? false;
+    private function processCustomCheckout($order, array $checkout): array
+    {
+        $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
 
-                    $this->transaction = new SupertokenTransaction($this, $order, $checkout);
-                    $flowId = $this->transaction->getCheckoutSessionData()['_mp_flow_id'] ?? 'Unknown';
-                    $checkoutCustomToken = $checkout['token'] ?? null;
-                    $authorizedPseudotoken = $checkout['authorized_pseudotoken'] ?? null;
+        $requiredFields = ['token', 'amount', 'payment_method_id', 'installments'];
+        $missingFields = array_filter($requiredFields, fn($field) => empty($checkout[$field] ?? null));
 
-                    if ($authorizedPseudotoken !== $checkoutCustomToken) {
-                        $this->datadog->sendEvent(
-                            'authorized_pseudotoken_mismatch',
-                            $checkoutCustomToken,
-                            $authorizedPseudotoken,
-                            'super_token',
-                            [
-                                'site_id' => $this->mercadopago->sellerConfig->getSiteId(),
-                                'environment' => $this->mercadopago->storeConfig->isTestMode() ? 'homol' : 'prod',
-                                'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
-                                'sdk_instance_id' => $flowId,
-                            ]
-                        );
-                    }
+        if (empty($missingFields)) {
+            $this->transaction = new CustomTransaction($this, $order, $checkout);
+            $response = $this->transaction->createPayment();
 
-                    if ($checkout['super_token_validation'] === 'false') {
-                        $this->datadog->sendEvent(
-                            'super_token_validation_failed',
-                            'true',
-                            'INCOMPLETE_SUPER_TOKEN_VALIDATION',
-                            'super_token',
-                            [
-                                'site_id' => $this->mercadopago->sellerConfig->getSiteId(),
-                                'environment' => $this->mercadopago->storeConfig->isTestMode() ? 'homol' : 'prod',
-                                'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
-                                'sdk_instance_id' => $flowId,
-                            ]
-                        );
-                    }
-
-                    try {
-                        $response = $this->transaction->createPayment();
-                    } catch (ApiException $e) {
-                        $errorCode = $this->mercadopago->helpers->errorMessages->findCodeInOriginalMessage($e->getOriginalMessage())
-                            ?? $e->getErrorCode()
-                            ?? $e->getMessage();
-
-                        return $this->processReturnFail(
-                            $e,
-                            $errorCode,
-                            self::LOG_SOURCE,
-                            [],
-                            true
-                        );
-                    }
-
-                    $this->mercadopago->orderMetadata->setSupertokenMetadata($order, $response, $this->transaction->getInternalMetadata());
-                    return $this->handleResponseStatus($order, $response);
-                }
-
-                throw new InvalidCheckoutDataException(
-                    'exception : Unable to process payment on ' . __METHOD__,
-                    0,
-                    null,
-                    [
-                        'missing_fields'  => implode(',', array_values($missingFields)),
-                        'payment_type_id' => $checkout['payment_type_id'] ?? 'unknown',
-                    ]
-                );
-
-            default:
-                $this->mercadopago->logs->file->info('Preparing to get response of custom checkout', self::LOG_SOURCE);
-
-                $requiredFields = ['token', 'amount', 'payment_method_id', 'installments'];
-                $missingFields = array_filter($requiredFields, fn($field) => empty($checkout[$field] ?? null));
-
-                if (empty($missingFields)) {
-                    $this->transaction = new CustomTransaction($this, $order, $checkout);
-                    $response = $this->transaction->createPayment();
-
-                    $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
-                    return $this->handleResponseStatus($order, $response);
-                }
-
-                throw new InvalidCheckoutDataException(
-                    'exception : Unable to process payment on ' . __METHOD__,
-                    0,
-                    null,
-                    [
-                        'missing_fields' => implode(',', array_values($missingFields)),
-                    ]
-                );
+            $this->mercadopago->orderMetadata->setCustomMetadata($order, $response);
+            return $this->handleResponseStatus($order, $response);
         }
+
+        throw new InvalidCheckoutDataException(
+            'exception : Unable to process payment on ' . __METHOD__,
+            0,
+            null,
+            [
+                'missing_fields' => implode(',', array_values($missingFields)),
+            ]
+        );
     }
 
     /**
@@ -2178,7 +2085,7 @@ window.mpSdkInstance = null;",
      *
      * @return array
      */
-    private function handleResponseStatus($order, array $response): array
+    public function handleResponseStatus($order, array $response): array
     {
         try {
             if (array_key_exists('status', $response)) {

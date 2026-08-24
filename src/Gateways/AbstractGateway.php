@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Gateways;
 use ArrayAccess;
 use Exception;
 use MercadoPago\Woocommerce\Helpers\Arrays;
+use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
@@ -44,13 +45,13 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     public string $checkoutCountry;
 
-    // TODO(PHP8.2): Change type hint from phpdoc to native
+    // TODO(PSW-2879): Change type hint from phpdoc to native once PHP min version is 8.2
     /**
      * @var array|ArrayAccess
      */
     public $adminTranslations;
 
-    // TODO(PHP8.2): Change type hint from phpdoc to native
+    // TODO(PSW-2879): Change type hint from phpdoc to native once PHP min version is 8.2
     /**
      * @var array|ArrayAccess
      */
@@ -62,7 +63,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     private static bool $amountCurrencyErrorSent = false;
 
-    // TODO(PHP8.2): Change type hint from phpdoc to native
+    // TODO(PSW-2879): Change type hint from phpdoc to native once PHP min version is 8.2
     /**
      * @var array|ArrayAccess
      */
@@ -740,7 +741,10 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
         }
         $datadogMessage = $originalMessage . ' ' . implode(' ', $tagParts);
 
-        $this->datadog->sendEvent('woo_checkout_error', $translatedMessage, $datadogMessage, $this->paymentMethodName, ['cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT()]);
+        $this->datadog->sendEvent('woo_checkout_error', $translatedMessage, $datadogMessage, $this->paymentMethodName, [
+            'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
+            'device'  => Device::getDeviceType(),
+        ]);
 
         if ($notice) {
             $this->mercadopago->helpers->notices->storeNotice($translatedMessage, 'error');
@@ -1275,5 +1279,10 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     public function getPaymentMethodName(): string
     {
         return $this->paymentMethodName;
+    }
+
+    public function setPaymentMethodName(string $paymentMethodName): void
+    {
+        $this->paymentMethodName = $paymentMethodName;
     }
 }

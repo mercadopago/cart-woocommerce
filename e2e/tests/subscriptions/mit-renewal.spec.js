@@ -1,7 +1,7 @@
 import { test } from "@playwright/test";
 import { guestUserMLB } from "../../data/buyer_data";
 import { mlb } from "../../data/meli_sites";
-import { setupSubscriptionsEnvironment } from "../../helpers/subscriptions-env";
+import { setupSubscriptionsEnvironment, cleanupSubscriptionProduct } from "../../helpers/subscriptions-env";
 import {
     trackCorsErrors,
     addSubscriptionToCartAndCheckout,
@@ -26,6 +26,7 @@ const origin     = new URL(process.env.SHOP_URL).origin;
 const productUrl = origin + process.env.SUBSCRIPTION_PRODUCT_URL;
 
 test.beforeAll(setupSubscriptionsEnvironment);
+test.afterAll(cleanupSubscriptionProduct);
 
 test("test successful subscription renewal as guest with visa, payment must be approved and renewal order must be processing", async ({ page }) => {
     // MIT renewal takes longer: CIT flow + WP admin navigation + renewal processing.

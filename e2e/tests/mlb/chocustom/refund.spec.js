@@ -98,7 +98,7 @@ test.describe("refund errors", () => {
     await setLineRefundAmount(page, 0);
     await clickApiRefund(page, dialog);
 
-    assertRefundError(dialog, /maior que zero/i, orderId);
+    assertRefundError(dialog, /maior que zero|greater than zero/i, orderId);
   });
 
   // binary_mode off keeps the CONT card in_process (non-approved) while still reaching order-received.
@@ -176,16 +176,51 @@ test.describe("refund errors", () => {
     });
   });
 
-  test("Given a Super Token payment, When the admin tries to refund, Should show a not-supported message", async ({ page }) => {
-    const dialog = attachRefundDialogHandler(page);
+});
+
+// PSW-4306 removed the preemptive TYPE_SUPERTOKEN_NOT_SUPPORTED block from RefundHandler.
+// These tests cover the new behaviour: ST orders refund through the standard flow.
+// The payment is a real approved card; markOrderAsSuperToken tags it as checkout_type=super_token
+// so RefundHandler segments the metric under "super_token" — same path the plugin takes for real ST.
+test.describe("Super Token refunds via WC admin", () => {
+  async function payWithSuperTokenSimulated(page) {
     const orderId = await payWithApprovedCardAndGetOrderId(page);
     markOrderAsSuperToken(orderId);
+    return orderId;
+  }
+
+  test("Given a Super Token payment (simulated), When the admin refunds half the amount, Should record the refund and keep the order in history", async ({ page }) => {
+    const dialog = attachRefundDialogHandler(page);
+    const orderId = await payWithSuperTokenSimulated(page);
     const half = roundMoney(getItemLineTotal(orderId) / 2);
 
     expect(await openRefundPanel(page, shop_url, orderId)).toBe(true);
     await setLineRefundAmount(page, half);
     await clickApiRefund(page, dialog);
 
-    assertRefundError(dialog, /Pagamentos rápidos|não suporta reembolso/i, orderId);
+    await assertRefundSuccess(page, orderId, half);
+    expect(getOrderStatus(orderId)).not.toBe("refunded");
+  });
+
+  test("Given a Super Token payment (simulated), When the admin refunds the full amount, Should change the order status to refunded", async ({ page }) => {
+    const dialog = attachRefundDialogHandler(page);
+    const orderId = await payWithSuperTokenSimulated(page);
+
+    expect(await openRefundPanel(page, shop_url, orderId)).toBe(true);
+    await setFullRefundAmounts(page, orderId);
+    await clickApiRefund(page, dialog);
+
+    await assertTotalRefunded(page, orderId);
+  });
+
+  test("Given a Super Token payment (simulated), When the admin tries to refund zero, Should show an MP API error and leave the order unchanged", async ({ page }) => {
+    const dialog = attachRefundDialogHandler(page);
+    const orderId = await payWithSuperTokenSimulated(page);
+
+    expect(await openRefundPanel(page, shop_url, orderId)).toBe(true);
+    await setLineRefundAmount(page, 0);
+    await clickApiRefund(page, dialog);
+
+    assertRefundError(dialog, /maior que zero|greater than zero/i, orderId);
   });
 });

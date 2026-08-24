@@ -1,7 +1,7 @@
 # Cenários — Super Token E2E
 
 Os cenários da planilha de regressão ("Cenários Super Token"), automatizados em Playwright
-(connectOverCDP no Chrome do emulador), organizados em **5 grupos**. Cada grupo é uma *suite*
+(connectOverCDP no Chrome do emulador), organizados em **6 grupos**. Cada grupo é uma *suite*
 compartilhada (`suites/<grupo>.js`) chamada por uma entrada fina por país
 (`tests/<país>/<grupo>.spec.js`). Super Token roda em **MLB, MLA e MLM**.
 
@@ -55,7 +55,7 @@ ar) já fazem a distinção. `SHOP_URL` é opcional — cai no túnel do `make s
 | **fault** | Roda sempre via fault injection (não depende de comprador apto) | — |
 | **env** | Depende de plugin/loja específicos | o teste faz `test.skip` se o pré-requisito não existir |
 
-## Matriz (15 cenários · grupo → pré-condição)
+## Matriz (15 cenários de regressão + E2E-2 · grupo → pré-condição)
 
 As métricas de erro deixaram de usar fault injection (inviável — o SDK isola a instância) e são
 verificadas nos **caminhos reais**, fundidas nos cenários funcionais correspondentes.
@@ -84,6 +84,26 @@ verificadas nos **caminhos reais**, fundidas nos cenários funcionais correspond
 **resilience** (2) — `suites/resilience.js`
 - Plugin de checkout de terceiro (**Fluid Checkout**, ativado/desativado via WP-CLI no teste) → o MP integra (multistep + radio custom no DOM) · **env** (skip se WP-CLI/plugin ausente; o setup instala o FC desativado)
 - Rede 3G → Super Token inicia · **eligible**
+
+**alternative-methods** (E2E-2 · 6 por país) — `suites/alternative-methods.js` · todos **eligible** — PSW-4265
+Rede de segurança de **meios alternativos × variante A/B** antes do refactor (épico PSW-4184).
+Profundidade: **exibição na lista do ST + seleção** (não finaliza pedido — não depende de saldo real
+/ elegibilidade de crédito). A variante é forçada por `forceVariant` (mocka o config A/B `active:true`
+com 100% de peso na variante + pré-seta o cookie `mp_st_variant`) — bundle `v2` → `/v1/`, `v2.1` → `/v2.1/`.
+Matriz: 2 meios (dinheiro em conta, créditos) × 2 variantes + novo cartão × 2 variantes. Cada cenário
+verifica que a variante forçada foi de fato carregada (`expectVariantLoaded`) antes de prosseguir.
+- Dinheiro em conta ofertado → exibido em `.mp-super-token-payment-methods-list`, selecionável (`aria-selected`) · **eligible** (skip se não ofertado — exceção RN-1)
+- Créditos ofertados → exibidos na lista, selecionáveis · **eligible** (skip se não ofertado — exceção RN-1)
+- Novo cartão (accordion) → exibido e selecionável (`aria-selected`) nas duas variantes · **eligible**
+
+> **Como a variante é forçada e verificada:** `forceVariant` mocka o config A/B (`active:true`, 100%
+> na variante) **e** grava o cookie `mp_st_variant` via `addCookies` (nível de browser — imune a timing
+> e sobrescreve o cookie de um teste anterior no contexto compartilhado). `expectVariantLoaded` confirma
+> por duas evidências: (a) o `src` do bundle (`#wc_mercadopago_supertoken_bundle_js`) aponta para `/v1/`
+> (v2) ou `/v2.1/`; (b) o v2.1 mostra o email do comprador no cabeçalho da lista (`block__email`) e o v2
+> não. Os bundles deployados diferem: **v2** = lista plana; **v2.1** = blocos (`--saved-cards`/`--other-mp`),
+> decoração de dinheiro em conta e email no cabeçalho. O baseline de DOM em Jest
+> (`super-token-payment-methods-dom-baseline.test.js`) guarda o render do **código local** contra o refactor.
 
 ## Não automatizados em E2E (justificativa)
 

@@ -53,6 +53,7 @@ if (!defined('ABSPATH')) {
         select-id='doc_type'
         flag-error='mercadopago_ticket[docNumberError]'
         documents='["CPF","CNPJ"]'
+        site-id="MLB"
         validate=true>
     </input-document>
 </div>

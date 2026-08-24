@@ -874,6 +874,7 @@ class CustomGatewaySubscriptionsTest extends TestCase
         $this->gateway->dequeueSuperTokenForSubscriptionCheckout();
 
         $this->assertContains('wc_mercadopago_supertoken', $dequeued, 'O loader/inicializador do Super Token deve ser removido');
+        $this->assertContains('wc_mercadopago_supertoken_refactored', $dequeued, 'O entry TS refatorado deve ser removido (self-construct)');
     }
 
     /**

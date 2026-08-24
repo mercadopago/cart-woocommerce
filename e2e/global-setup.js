@@ -217,6 +217,19 @@ module.exports = async function globalSetup() {
     'update_option("_mp_payment_methods_pix", isset($byType["bank_transfer"]) ? $byType["bank_transfer"] : []); '
   );
 
+  // Cart amount per site. MP requires a minimum transaction amount to offer installments;
+  // the fixed test price works as a nominal value in BRL/ARS/MXN/PEN/UYU but is far below the
+  // minimum in high-nominal currencies (COP/CLP), where the SDK then offers ZERO installment
+  // plans and every card payment is rejected ("card does not accept the number of installments
+  // selected"). Set every simple product to the per-site amount, deterministically each run so
+  // switching countries never leaks a stale price.
+  const SITE_AMOUNT = { MCO: 100000, MLC: 100000 };
+  const cartAmount = SITE_AMOUNT[site] || 400.37;
+  wpEval(
+    `foreach (wc_get_products(["type" => "simple", "limit" => -1]) as $p) { ` +
+    `$p->set_regular_price("${cartAmount}"); $p->set_price("${cartAmount}"); $p->save(); }`
+  );
+
   // Enable payment gateways
   const gateways = [
     'woo-mercado-pago-custom',
@@ -224,6 +237,8 @@ module.exports = async function globalSetup() {
     'woo-mercado-pago-pix',
     'woo-mercado-pago-ticket',
     'woo-mercado-pago-credits',
+    'woo-mercado-pago-yape',
+    'woo-mercado-pago-pse',
   ];
   for (const gw of gateways) {
     enableGateway(gw);

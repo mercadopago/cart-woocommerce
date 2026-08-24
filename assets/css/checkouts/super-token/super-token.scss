@@ -1,0 +1,9 @@
+// Single served stylesheet for the Super Token runtime. The refactored bundle stamps
+// `data-variant` on the root and both variants' rules coexist here: `index` emits the shared
+// rules (no data-variant, matching either root) and each variant partial scopes its own rules to
+// [data-variant]. `super-token-v2.scss` / `super-token-v2.1.scss` compile the same sources per
+// variant: they back the verify:super-token:scss equivalence check and are the CSS for the legacy
+// v1//v2.1/ CDN retrocompat bundles an older plugin's loader fetches (PSW-4417).
+@use 'index';
+@use 'variants/v2' as v2;
+@use 'variants/v2.1' as v21;

@@ -74,6 +74,22 @@ export function setCurrencyConversion(gatewayId, enabled) {
   setGatewaySetting(gatewayId, "currency_conversion", enabled ? "yes" : "no");
 }
 
+// global-setup.js prices every simple product at a per-site nominal amount tuned for that
+// site's NATIVE account currency (e.g. 100000 for MLC/MCO, since low nominal values in
+// high-nominal currencies like CLP/COP get zero installment plans — see SITE_AMOUNT there).
+// A currency-conversion scenario forces the STORE currency away from that native currency
+// (e.g. to USD), so re-applying the live ratio on top of an already high-nominal price
+// double-scales the converted amount (e.g. 100000 "USD" x ~928 CLP/USD): MP's payments API
+// then rejects the checkout's own 1x installment plan as "Invalid installments" because the
+// amount charged no longer matches the amount the installment plan was quoted for. Callers
+// exercising currency conversion must reprice to a value realistic for the STORE currency.
+export function setAllProductsPrice(price) {
+  return wpEval(
+    `foreach (wc_get_products(["type" => "simple", "limit" => -1]) as $p) { ` +
+    `$p->set_regular_price("${price}"); $p->set_price("${price}"); $p->save(); }`
+  );
+}
+
 // ---------------------------------------------------------------------------
 // WooCommerce coupons
 // ---------------------------------------------------------------------------
@@ -202,6 +218,73 @@ export function getOrderCommissionFee(orderId) {
 
 export function getOrderCurrencyRatio(orderId) {
   return parseFloat(wpEval(`echo wc_get_order(${orderId})->get_meta("_currency_ratio");`) || "0");
+}
+
+// ---------------------------------------------------------------------------
+// Currency conversion: ppcore exchange SDK proof helpers
+// ---------------------------------------------------------------------------
+
+// Independently queries the same ppcore endpoint the plugin's SDK calls
+// (MercadoPago\PP\Sdk\Entity\Exchange\Exchange::getExchangeRate ->
+// GET /ppcore/{scope}/payment-methods/v1/exchange?currency.id={fromCurrency}).
+// Used to prove the ratio the plugin stored on the order matches a live quote,
+// rather than trusting the plugin's own number in isolation.
+export async function fetchLiveExchangeRate(accessToken, fromCurrency, scope = "beta") {
+  const response = await fetch(
+    `https://api.mercadopago.com/ppcore/${scope}/payment-methods/v1/exchange?currency.id=${fromCurrency}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const body = await response.json();
+  if (typeof body?.rate !== "number") {
+    throw new Error(`[E2E] ppcore exchange endpoint did not return a rate: ${JSON.stringify(body)}`);
+  }
+  return body.rate;
+}
+
+// Validates RN-5 with HIGH confidence: the ratio the plugin stored on the order must match
+// (within rounding tolerance) a live quote fetched independently from the same ppcore
+// exchange endpoint the SDK calls. This proves the checkout charged the buyer using the
+// real current rate, not a stale/hardcoded/incorrect one.
+export async function assertCurrencyRatioMatchesLiveRate(orderId, accessToken, fromCurrency, scope = "beta") {
+  const storedRatio = getOrderCurrencyRatio(orderId);
+  const liveRate = await fetchLiveExchangeRate(accessToken, fromCurrency, scope);
+
+  expect(storedRatio).toBeGreaterThan(0);
+  expect(storedRatio).toBeCloseTo(liveRate, 2);
+
+  return { storedRatio, liveRate };
+}
+
+// Deliberately OUTSIDE test-results/: Playwright's default outputDir is wiped at the start
+// of every `npx playwright test` run, which would delete a prior country's proof the moment
+// the next country's run starts. evidence/ survives across the sequential per-country runs
+// this scenario requires (one country's store config at a time).
+function currencyProofDir() {
+  const path = require("path");
+  const fs = require("fs");
+  const dir = path.join(process.cwd(), "evidence", "currency-conversion");
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+// Saves a full-page screenshot to e2e/evidence/currency-conversion/, creating the directory
+// on first use. Filenames are caller-provided so each proof point is self-describing.
+export async function captureCurrencyScreenshot(page, filename) {
+  const path = require("path");
+  const filePath = path.join(currencyProofDir(), filename);
+  await page.screenshot({ path: filePath, fullPage: true });
+  return filePath;
+}
+
+// Writes the stored-vs-live ratio comparison to a JSON artifact next to the screenshots —
+// an auditable, non-console record of the exact numbers this scenario proves, instead of
+// a debug log line.
+export function writeCurrencyProof(filename, data) {
+  const path = require("path");
+  const fs = require("fs");
+  const filePath = path.join(currencyProofDir(), filename);
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  return filePath;
 }
 
 // ---------------------------------------------------------------------------

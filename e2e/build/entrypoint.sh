@@ -25,6 +25,16 @@ if [ ! -f "$INSTALL_FLAG" ]; then
     wp option update woocommerce_coming_soon no --allow-root
     ln -sfn "$TEMP_PLUGIN_DIR" "$WP_PLUGIN_DIR"
     wp plugin activate woocommerce-mercadopago --allow-root
+    # Pretty permalinks: the base image ships no .htaccess and `wp rewrite flush`
+    # can't regenerate it, so WooCommerce pages (/shop, /cart, /checkout) 404
+    # under /%postname%/. Write it explicitly (AllowOverride All + mod_rewrite are on).
+    wp option update permalink_structure '/%postname%/' --allow-root
+    printf '%s\n' '# BEGIN WordPress' '<IfModule mod_rewrite.c>' 'RewriteEngine On' \
+        'RewriteBase /' 'RewriteRule ^index\.php$ - [L]' \
+        'RewriteCond %{REQUEST_FILENAME} !-f' 'RewriteCond %{REQUEST_FILENAME} !-d' \
+        'RewriteRule . /index.php [L]' '</IfModule>' '# END WordPress' > /var/www/html/.htaccess
+    chown www-data:www-data /var/www/html/.htaccess
+    wp rewrite flush --allow-root
     cd "$TEMP_PLUGIN_DIR/e2e" && npm install --silent
     touch "$INSTALL_FLAG"
 fi

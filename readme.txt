@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 8.9.2
+Stable tag: 8.9.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,12 +134,17 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.9.2 (17/08/2026) =
+= v8.9.3 (19/08/2026) =
 ### Added
-- Block payment submission in Custom Checkout when the card number fails the check-digit (Luhn) validation, showing a specific error instead of a generic failure
+- Enable refunds for fast payment orders directly from the WooCommerce order panel — full or partial, like any other payment method
+- Format the document (ID) field per country in the card, ticket and PSE checkouts, and show the required-field message in real time when it is left empty
 
 ### Fixed
-- Fix card payments on iOS in Custom Checkout being rejected when the number of installments could be submitted empty; the selected installment is now always sent
-- Fix checkout being blocked for stores using WooCommerce Subscriptions with "Accept Manual Renewals" (without recurring-payment credentials): these orders, which started failing in v8.9.0, now process as regular one-time payments again
+- Fix the fast payment checkout freezing on block-based, hybrid and multi-step checkouts when a step before payment fails: the loading overlay is now cleared and an error is shown instead of leaving the spinner stuck
+- Prevent a checkout error caused by requesting the available payment methods before the store is fully configured
+- Fix currency conversion not being applied at checkout for stores whose account had been blocked from the previous conversion service, so orders in a different currency now convert correctly again
+
+### Security
+- Harden fast payment diagnostics so payment credentials are never included in telemetry data
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

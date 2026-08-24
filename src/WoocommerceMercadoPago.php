@@ -30,6 +30,7 @@ use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\HealthMonitor\FileIntegrityChecker;
+use MercadoPago\Woocommerce\SuperToken\SuperTokenPaymentProcessor;
 use WooCommerce;
 
 if (!defined('ABSPATH')) {
@@ -38,7 +39,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.9.2';
+    private const PLUGIN_VERSION = '8.9.3';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -91,6 +92,8 @@ class WoocommerceMercadoPago
     public Country $country;
 
     public \MercadoPago\Woocommerce\Helpers\SubscriptionsHelper $subscriptionsHelper;
+
+    public SuperTokenPaymentProcessor $superTokenPaymentProcessor;
 
     public \MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient $automaticPaymentsClient;
 
@@ -394,6 +397,9 @@ class WoocommerceMercadoPago
 
         $this->subscriptionsCredentialsValidator = $dependencies->subscriptionsCredentialsValidator;
         $this->subscriptionsHook                 = $dependencies->subscriptionsHook;
+
+        // Super Token
+        $this->superTokenPaymentProcessor = $dependencies->superTokenPaymentProcessor;
     }
 
     /**

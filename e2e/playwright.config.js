@@ -75,7 +75,11 @@ module.exports = defineConfig({
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: "on-first-retry",
         /* Save a screenshot whenever a test fails — stored in test-results/. */
-        screenshot: "only-on-failure"
+        screenshot: "only-on-failure",
+        /* Cap per-action waits so a stuck fill/click surfaces in ~20s instead of eating the
+           whole test timeout. Explicit waits (waitFor/waitForURL) pass their own timeout and
+           are unaffected — payment redirects still get their full budget. */
+        actionTimeout: 20000
     },
 
     /* Configure projects for major browsers (built above, conditional on CI). */

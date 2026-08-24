@@ -226,6 +226,26 @@ class MetricContextTest extends TestCase
         $this->assertSame('/automatic-payments/v2/subscriptions/{id}/payment-methods', $details['api_route']);
     }
 
+    public function testBuildBaseMetricDetailsSkipsSiteIdButKeepsOtherFieldsWhenReentrant(): void
+    {
+        $ref  = new \ReflectionClass(MetricContext::class);
+        $prop = $ref->getProperty('fetchingSiteId');
+        $prop->setAccessible(true);
+        $prop->setValue(null, true);
+
+        $mp = $this->makeMercadopagoMock('MLB', false, 'cust-123');
+
+        try {
+            $details = MetricContext::buildBaseMetricDetails('/users/me', $mp);
+        } finally {
+            $prop->setValue(null, false);
+        }
+
+        $this->assertArrayNotHasKey('site_id', $details);
+        $this->assertSame('prod', $details['environment']);
+        $this->assertSame('cust-123', $details['cust_id']);
+    }
+
     private function makeMercadopagoMock(string $siteId, bool $isTestMode, string $custId): object
     {
         $sellerConfig = Mockery::mock();

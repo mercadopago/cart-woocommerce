@@ -32,7 +32,7 @@ while IFS= read -r line; do ROWS+=("$line"); done < <(
 [ "${#ROWS[@]}" -gt 0 ] || { echo "!! nenhum teste encontrado em tests/$SITE" >&2; exit 1; }
 
 leaf()  { printf '%s' "${1##* › }"; }                                   # título após o último ' › '
-group() { echo "$1" | grep -oE 'suites/[a-z]+\.js' | head -1 | sed -E 's#suites/##;s#\.js##'; }
+group() { echo "$1" | grep -oE 'suites/[a-z-]+\.js' | head -1 | sed -E 's#suites/##;s#\.js##'; }
 
 if [ "$MODE" = "--resolve" ]; then
   [[ "$IDX" =~ ^[0-9]+$ ]] && [ "$IDX" -ge 1 ] && [ "$IDX" -le "${#ROWS[@]}" ] \

@@ -65,6 +65,7 @@ $container_state_class = $has_multiple_payment_methods
                             select-id='doc_type'
                             flag-error='mercadopago_ticket[docNumberError]'
                             documents='["CI","OTRO"]'
+                            site-id="<?= esc_attr($site_id); ?>"
                             validate=true>
                         </input-document>
                     </div>

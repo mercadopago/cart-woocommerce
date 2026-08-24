@@ -1,0 +1,171 @@
+@use '../root' as *;
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-checkout-custom-security-code-container {
+    position: relative !important;
+    overflow: visible !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-checkout-custom-security-code-tooltip {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 50% !important;
+    background: var(--andes-white) !important;
+    border: 2px solid var(--andes-text-color-secondary) !important;
+    color: var(--andes-text-color-secondary) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    outline: none !important;
+    position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 500 !important;
+    box-sizing: border-box !important;
+    user-select: none !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-checkout-custom-security-code-tooltip:hover::after {
+    content: attr(data-tooltip) !important;
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    background: var(--andes-gray-900-solid) !important;
+    width: 312px !important;
+    min-height: 68px !important;
+    color: #FFFFFF !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    font-family: var(--mp-font-inter) !important;
+    line-height: 17px !important;
+    white-space: normal !important;
+    margin-top: 12px !important;
+    box-shadow: 0 2px 8px 0 rgba(60, 60, 60, 0.15) !important;
+    padding: 16px !important;
+    font-weight: 400 !important;
+    z-index: 10 !important;
+    border: none !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    pointer-events: none !important;
+    user-select: none !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-checkout-custom-security-code-tooltip:hover::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 100% !important;
+    right: 8px !important;
+    border: 4px solid transparent !important;
+    border-bottom-color: var(--andes-gray-900-solid) !important;
+    margin-top: 4px !important;
+    z-index: 11 !important;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  @include st-root {
+    .mp-super-token-payment-method__accordion .mp-checkout-custom-security-code-tooltip:hover::after {
+      right: -50px !important;
+      width: 200px !important;
+    }
+  }
+
+  @include st-root {
+    .mp-super-token-payment-method__accordion .mp-checkout-custom-security-code-tooltip:hover::before {
+      right: 8px !important;
+    }
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion {
+    width: 100% !important;
+    border-radius: 5px !important;
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    margin-top: 2px !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__accordion-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    background-color: white !important;
+    border: 1px solid #e5e5e5 !important;
+    border-radius: 8px !important;
+    gap: 12px !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion.mp-super-token-payment-method__selected .mp-super-token-payment-method__accordion-header {
+    border: none !important;
+    box-shadow: none !important;
+    height: auto !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__accordion-header:focus,
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__accordion-header:active {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__accordion-header img {
+    width: 32px !important;
+    height: 24px !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion > .mp-checkout-custom-container {
+    border-radius: 5px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 16px 12px !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__accordion-title {
+    user-select: none !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-checkout-custom-container.mp-super-token-payment-method__accordion-content {
+    display: none !important;
+    opacity: 0 !important;
+    transform: translateY(-10px) !important;
+    transition: opacity 300ms ease-in-out, transform 300ms ease-in-out !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method__accordion .mp-checkout-custom-container.mp-super-token-payment-method__accordion-content.mp-super-token-payment-method__accordion-content--open {
+    display: block !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+}

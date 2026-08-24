@@ -8,6 +8,9 @@ if (!defined('ABSPATH')) {
 
 class MetricContext
 {
+    /** Prevents infinite recursion when getSiteId() triggers a metric that calls getSiteId() again. */
+    private static bool $fetchingSiteId = false;
+
     public static function buildBaseMetricDetails(string $apiRoute, ?object $mercadopago = null): array
     {
         $details = [
@@ -16,10 +19,18 @@ class MetricContext
         ];
 
         $mp = $mercadopago ?? ($GLOBALS['mercadopago'] ?? null);
-        if ($mp) {
-            $details['site_id']     = $mp->sellerConfig->getSiteId();
+        if ($mp && isset($mp->sellerConfig, $mp->storeConfig)) {
             $details['environment'] = $mp->storeConfig->isTestMode() ? 'homol' : 'prod';
             $details['cust_id']     = $mp->sellerConfig->getCustIdFromAT();
+
+            if (!self::$fetchingSiteId) {
+                self::$fetchingSiteId = true;
+                try {
+                    $details['site_id'] = $mp->sellerConfig->getSiteId();
+                } finally {
+                    self::$fetchingSiteId = false;
+                }
+            }
         }
 
         return $details;

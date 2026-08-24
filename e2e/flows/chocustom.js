@@ -36,7 +36,7 @@ export async function successfulPaymentTest(page, url, user, card, form) {
 
   // Fast-fail on CORS: check after 5s instead of waiting the full 60s timeout
   const result = await Promise.race([
-    page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 80000 }).then(() => 'ok'),
+    page.waitForURL(/order-received/, { waitUntil: 'domcontentloaded', timeout: 10000 }).then(() => 'ok'),
     page.waitForTimeout(5000).then(() => corsErrors.length > 0 ? 'cors' : null),
   ]);
 
@@ -44,7 +44,7 @@ export async function successfulPaymentTest(page, url, user, card, form) {
     assertNoCors(corsErrors);
   }
 
-  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible({ timeout: 80000 });
+  await expect(page.locator('.woocommerce-thankyou-order-received')).toBeVisible({ timeout: 10000 });
 }
 
 export async function rejectedPaymentTest(page, url, user, card, form) {
@@ -178,7 +178,11 @@ export async function fillCustomCardForm(page, card, form) {
 
     const installments = page.locator('#mp-checkout-custom-installments-card');
     if (form.name !== '' && await installments.isVisible().catch(() => false)) {
-      await page.locator('#form-checkout__installments').selectOption({ index: 1 });
+      // Select 1 installment (value "1") — always accepted by the MP API. A fixed index
+      // (e.g. index 1 = 2 installments) is rejected when the card/amount doesn't offer that
+      // plan (debit cards only allow 1; low amounts in high-nominal currencies like COP offer
+      // fewer or no plans) → "card does not accept the number of installments selected".
+      await page.locator('#form-checkout__installments').selectOption({ value: '1' });
     }
     await page.waitForLoadState();
   }

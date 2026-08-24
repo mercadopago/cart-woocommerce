@@ -76,7 +76,7 @@
                 name: 'woocommerce',
                 uri: scriptsParams.theme || '',
                 version: scriptsParams.platform_version || '',
-                url: window.location.href,
+                url: `${window.location.origin}${window.location.pathname}`,
             },
             details: {
                 site_id: scriptsParams.site_id || '',

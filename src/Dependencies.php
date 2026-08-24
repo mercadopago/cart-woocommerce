@@ -61,6 +61,10 @@ use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\IO\Downloader;
+use MercadoPago\Woocommerce\SuperToken\SuperTokenPaymentProcessor;
+use MercadoPago\Woocommerce\SuperToken\SuperTokenValidator;
+use MercadoPago\Woocommerce\SuperToken\Adapters\DefaultSuperTokenTransactionFactory;
+use MercadoPago\Woocommerce\SuperToken\Adapters\OrderMetadataSuperTokenWriter;
 use WooCommerce;
 
 if (!defined('ABSPATH')) {
@@ -185,6 +189,8 @@ class Dependencies
 
     public IntegrationWebhook $integrationWebhook;
 
+    public SuperTokenPaymentProcessor $superTokenPaymentProcessor;
+
     /**
      * Dependencies constructor
      */
@@ -214,6 +220,7 @@ class Dependencies
         $this->storeConfig             = $this->setStore();
         $this->logs                    = $this->setLogs();
         $this->orderMetadata           = $this->setOrderMetadata();
+        $this->superTokenPaymentProcessor = $this->setSuperTokenPaymentProcessor();
         $this->sellerConfig            = $this->setSeller();
         $this->countryHelper           = $this->setCountry();
         $this->urlHelper               = $this->setUrl();
@@ -260,6 +267,18 @@ class Dependencies
     private function setOrderMetadata(): OrderMetadata
     {
         return new OrderMetadata($this->orderMetaHook, $this->logs);
+    }
+
+    /**
+     * @return SuperTokenPaymentProcessor
+     */
+    private function setSuperTokenPaymentProcessor(): SuperTokenPaymentProcessor
+    {
+        return new SuperTokenPaymentProcessor(
+            new SuperTokenValidator(),
+            new DefaultSuperTokenTransactionFactory(),
+            new OrderMetadataSuperTokenWriter($this->orderMetadata)
+        );
     }
 
     /**
@@ -486,7 +505,6 @@ class Dependencies
             $this->cacheHelper,
             $this->countryHelper,
             $this->noticesHelper,
-            $this->requesterHelper,
             $this->sellerConfig,
             $this->optionsHook,
             $this->urlHelper,
