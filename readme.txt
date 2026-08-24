@@ -134,7 +134,7 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.9.3 (19/08/2026) =
+= v8.9.3 (24/08/2026) =
 ### Added
 - Enable refunds for fast payment orders directly from the WooCommerce order panel — full or partial, like any other payment method
 - Format the document (ID) field per country in the card, ticket and PSE checkouts, and show the required-field message in real time when it is left empty
