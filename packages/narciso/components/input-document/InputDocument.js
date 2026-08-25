@@ -1,6 +1,26 @@
+const DocumentHandlerFactory = require('./document-handlers/DocumentHandlerFactory');
+
 class InputDocument extends HTMLElement {
+  selectObserver = null;
+  selectObserverTimeout = null;
+
   connectedCallback() {
     this.build();
+  }
+
+  disconnectedCallback() {
+    this.cleanupSelectObserver();
+  }
+
+  cleanupSelectObserver() {
+    if (this.selectObserver) {
+      this.selectObserver.disconnect();
+      this.selectObserver = null;
+    }
+    if (this.selectObserverTimeout) {
+      clearTimeout(this.selectObserverTimeout);
+      this.selectObserverTimeout = null;
+    }
   }
 
   build() {
@@ -50,7 +70,7 @@ class InputDocument extends HTMLElement {
       // Clear the error helper when the document type changes
       helper.firstElementChild.style.display = 'none';
 
-      this.setInpuProperties(select, mpDocument);
+      this.setInputProperties(select, mpDocument, this.getAttribute('site-id'));
 
       this.setMaskInputDocument(select, mpDocument, hidden);
 
@@ -64,27 +84,84 @@ class InputDocument extends HTMLElement {
 
     this.setMaskInputDocument(select, mpDocument, hidden);
 
+    if (!documents || documents.length === 0) {
+      this.observeSelectPopulationFromSdk(select, mpDocument);
+    }
+
     return mpInput;
   }
 
-  setInpuProperties(select, mpDocument) {
-    if (select.value === 'CPF') {
-      mpDocument.value = '';
-      mpDocument.setAttribute('maxlength', '14');
-      mpDocument.setAttribute('placeholder', '999.999.999-99');
-    } else if (select.value === 'CNPJ') {
-      mpDocument.value = '';
-      mpDocument.setAttribute('maxlength', '18');
-      mpDocument.setAttribute('placeholder', '99.999.999/0001-99');
-    } else if (select.value === 'CI') {
-      mpDocument.value = '';
-      mpDocument.setAttribute('maxlength', '8');
-      mpDocument.setAttribute('placeholder', '99999999');
-    } else {
-      mpDocument.value = '';
-      mpDocument.setAttribute('maxlength', '20');
-      mpDocument.setAttribute('placeholder', '');
-    }
+  buildDocumentNameWithSiteId(documentName, siteId) {
+    const documentsInTwoCountries = ['CE', 'DNI', 'CI'];
+
+    const normalizedDocName = documentName.replace(/[^a-zA-Z0-9]/g, '');
+    // Match case-insensitively: the SDK may deliver the type in lower/mixed case
+    // (e.g. "dni"), and without the prefix the doc would fall back to GenericHandler
+    // and silently lose the per-site mask/validation.
+    const prefix = siteId && documentsInTwoCountries.includes(normalizedDocName.toUpperCase()) ? `${siteId}_` : '';
+
+    return `${prefix}${normalizedDocName}`.toUpperCase();
+  }
+
+  setInputProperties(select, mpDocument, siteId) {
+    const documentName = this.buildDocumentNameWithSiteId(select.value, siteId);
+    const handler = DocumentHandlerFactory.getHandler(documentName);
+
+    mpDocument.value = '';
+    mpDocument.setAttribute('maxlength', this.getPermissiveMaxLength(select.value, handler));
+    mpDocument.setAttribute('placeholder', handler.CONFIG.placeholder);
+  }
+
+  // maxlength must stay as permissive as develop, never the short Figma value.
+  // Develop's raw digit caps (never blocked): CPF 11, CNPJ 14, CI 8; everything
+  // else 20. Rendering that cap through the handler mask keeps the added
+  // separators from shrinking the digit allowance — see traps.md.
+  getPermissiveMaxLength(rawType, handler) {
+    const digitCap = { CPF: 11, CNPJ: 14, CI: 8 }[rawType] ?? 20;
+    return handler.mask('9'.repeat(digitCap)).length;
+  }
+
+  observeSelectPopulationFromSdk(select, mpDocument) {
+    this.cleanupSelectObserver();
+
+    const observer = new MutationObserver(() => {
+      if (!this.isConnected || select.options.length === 0) {
+        return;
+      }
+
+      const siteId = this.getAttribute('site-id');
+      const defaultKey = DocumentHandlerFactory.getDefaultCountryHandler(siteId);
+
+      // getDefaultCountryHandler returns the internal handler key, which for
+      // site-scoped documents (CE/DNI/CI) is prefixed (e.g. "MLA_DNI"), while the
+      // <select> options carry the raw SDK value ("DNI"). Match each option through
+      // buildDocumentNameWithSiteId so the default is selected regardless of prefix.
+      const defaultOption = defaultKey && Array.from(select.options).find(
+        opt => this.buildDocumentNameWithSiteId(opt.value, siteId) === defaultKey
+      );
+
+      select.value = defaultOption ? defaultOption.value : select.options[0].value;
+
+      this.setInputProperties(select, mpDocument, this.getAttribute('site-id'));
+      this.cleanupSelectObserver();
+    });
+
+    this.selectObserver = observer;
+
+    observer.observe(select, {
+      childList: true,
+      subtree: false
+    });
+
+    // Fallback cleanup only if the SDK never populates the select. The observer
+    // self-disconnects once it applies the default/maxlength, so this cap must
+    // outlast a slow SDK/API load (the e2e waits up to 15s) — 2s was too short and
+    // left the field with a generic maxlength / no default on slow loads.
+    this.selectObserverTimeout = setTimeout(() => {
+      if (this.isConnected) {
+        this.cleanupSelectObserver();
+      }
+    }, 15000);
   }
 
   createSelect(component, helper, documents, validate) {
@@ -96,10 +173,18 @@ class InputDocument extends HTMLElement {
     select.setAttribute('data-checkout', this.getAttribute('select-data-checkout'));
     select.setAttribute('data-cy', 'select-document');
 
-    if (documents) {
+    if (documents && documents.length > 0) {
       documents.forEach((doc) => {
         this.createOption(select, doc);
       });
+
+      const siteId = this.getAttribute('site-id');
+      const defaultKey = DocumentHandlerFactory.getDefaultCountryHandler(siteId);
+      const defaultDoc = defaultKey && documents.find(
+        doc => this.buildDocumentNameWithSiteId(doc, siteId) === defaultKey
+      );
+
+      select.value = defaultDoc || select.options[0].value;
     }
 
     if (validate) {
@@ -141,199 +226,6 @@ class InputDocument extends HTMLElement {
     return verticalLine;
   }
 
-  isValidCPF(cpf, helper) {
-    if (typeof cpf !== 'string') {
-      return false;
-    }
-
-    cpf = cpf.replace(/[\s.-]*/gim, '');
-
-    if (!cpf || cpf.length === 0) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
-      return false;
-    }
-
-    if (
-      cpf === '00000000000' ||
-      cpf === '11111111111' ||
-      cpf === '22222222222' ||
-      cpf === '33333333333' ||
-      cpf === '44444444444' ||
-      cpf === '55555555555' ||
-      cpf === '66666666666' ||
-      cpf === '77777777777' ||
-      cpf === '88888888888' ||
-      cpf === '99999999999'
-    ) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    if (parseInt(cpf, 10) === 0) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    if (!cpf || cpf.length !== 11) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-invalid'));
-      return false;
-    }
-
-    let soma = 0;
-    let resto;
-
-    for (let i = 1; i <= 9; i += 1) {
-      soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
-    }
-
-    resto = (soma * 10) % 11;
-
-    if (resto === 10 || resto === 11) {
-      resto = 0;
-    }
-
-    if (resto !== parseInt(cpf.substring(9, 10))) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    soma = 0;
-
-    for (let i = 1; i <= 10; i += 1) {
-      soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
-    }
-
-    resto = (soma * 10) % 11;
-
-    if (resto === 10 || resto === 11) {
-      resto = 0;
-    }
-
-    if (resto !== parseInt(cpf.substring(10, 11))) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    return true;
-  }
-
-  isValidCNPJ(cnpj, helper) {
-    cnpj = cnpj.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-
-    if (cnpj === '') {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
-      return false;
-    }
-
-    // Repeated-sequence check only applies when the length is correct (14 chars).
-    // This preserves 'helper-invalid' for short repeated inputs (e.g. 'A', 'AAAA')
-    // and shows 'helper-wrong' only for a full-length repeated sequence.
-    if (cnpj.length === 14 && cnpj.split('').every((c) => c === cnpj[0])) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    if (cnpj.length !== 14) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-invalid'));
-      return false;
-    }
-
-    // Validate charset: 12 alphanumeric positions + 2 numeric check digits
-    if (!/^[A-Z0-9]{12}[0-9]{2}$/.test(cnpj)) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    // Validate check digits
-    let tamanho = cnpj.length - 2;
-    let numeros = cnpj.substring(0, tamanho);
-
-    const digitos = cnpj.substring(tamanho);
-
-    let soma = 0;
-    let pos = tamanho - 7;
-
-    for (let i = tamanho; i >= 1; i -= 1) {
-      soma += (numeros.charCodeAt(tamanho - i) - 48) * pos--;
-
-      if (pos < 2) {
-        pos = 9;
-      }
-    }
-
-    let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
-
-    if (resultado !== Number(digitos.charAt(0))) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    tamanho += 1;
-    numeros = cnpj.substring(0, tamanho);
-    soma = 0;
-    pos = tamanho - 7;
-
-    for (let i = tamanho; i >= 1; i -= 1) {
-      soma += (numeros.charCodeAt(tamanho - i) - 48) * pos--;
-
-      if (pos < 2) {
-        pos = 9;
-      }
-    }
-
-    resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
-
-    if (resultado !== Number(digitos.charAt(1))) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    }
-
-    return true;
-  }
-
-  isValidCI(ci, helper) {
-    if (typeof ci !== 'string' || ci.length === 0) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
-      return false;
-    }
-
-    let x = 0;
-    let y = 0;
-    let docCI = 0;
-    const dig = ci[ci.length - 1];
-
-    if (ci.length <= 6) {
-      for (y = ci.length; y < 7; y += 1) {
-        ci = `0${ci}`;
-      }
-    }
-
-    for (y = 0; y < 7; y += 1) {
-      x += (parseInt('2987634'[y], 10) * parseInt(ci[y], 10)) % 10;
-    }
-
-    if (x % 10 === 0) {
-      docCI = 0;
-    } else {
-      docCI = 10 - (x % 10);
-    }
-
-    if (dig !== docCI.toString()) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-wrong'));
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  isValidGenericDocument(document, helper) {
-    if (typeof document !== 'string' || document.length === 0) {
-      this.updateHelperErrorMessage(helper, this.getAttribute('helper-empty'));
-      return false;
-    }
-    return true;
-  }
-
   setMaskInputDocument(select, input, hidden) {
     const masks = {
       CPF: (value) =>
@@ -355,9 +247,13 @@ class InputDocument extends HTMLElement {
     };
 
     input.addEventListener('input', (e) => {
-      if (typeof masks[select.value] !== 'undefined') {
-        e.target.value = masks[select.value](e.target.value);
+      const documentName = this.buildDocumentNameWithSiteId(select.value, this.getAttribute('site-id'));
+      const handler = DocumentHandlerFactory.getHandler(documentName);
+
+      if (handler && handler.mask) {
+        e.target.value = handler.mask(e.target.value);
       }
+
       if (hidden) {
         const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         hidden.value = value;
@@ -372,20 +268,14 @@ class InputDocument extends HTMLElement {
     const helper = component.parentElement.querySelector('input-helper');
     const label = component.parentElement.querySelector('input-label');
 
-    const validateDocument = {
-      CPF: (value) => this.isValidCPF(value, helper),
-      CNPJ: (value) => this.isValidCNPJ(value, helper),
-      CI: (value) => this.isValidCI(value, helper),
-      CC: (value) => this.isValidGenericDocument(value, helper),
-      CE: (value) => this.isValidGenericDocument(value, helper),
-      NIT: (value) => this.isValidGenericDocument(value, helper),
-    };
+    const documentName = this.buildDocumentNameWithSiteId(select.value, this.getAttribute('site-id'));
+    const isValid = DocumentHandlerFactory.validate(documentName, input.value);
 
-    const validator = validateDocument[select.value];
-    if (!validator) return;
+    if (!isValid.result) {
+      this.updateHelperErrorMessage(helper, this.getAttribute(`helper-${isValid.type}`));
+    }
 
-    const isValid = validator(input.value);
-    this.updateValidationState(isValid, input, component, helper, label);
+    this.updateValidationState(isValid.result, input, component, helper, label);
   }
 
   updateValidationState(isValid, input, component, helper, label) {
@@ -406,6 +296,10 @@ class InputDocument extends HTMLElement {
   setInvalidState(input, component, helper, label) {
     if (input.value.trim() === '') {
       component.classList.add('mp-error-2px');
+      // Show the empty helper alongside the red state so the error is never
+      // silent: the message mirrors the red border/label and clears together
+      // with them on blur. Empty-on-submit gating stays out of this component.
+      helper.firstElementChild.style.display = 'flex';
       input.setAttribute('name', this.getAttribute('input-name'));
       this.updateLabelState(label, true);
     } else {
@@ -429,7 +323,7 @@ class InputDocument extends HTMLElement {
     input.classList.add('mp-document');
     input.type = 'text';
     input.inputMode = 'text';
-    this.setInpuProperties(select, input);
+    this.setInputProperties(select, input, this.getAttribute('site-id'));
 
     input.addEventListener('focus', () => {
       this.handleInputFocus(component, helper, input, label);

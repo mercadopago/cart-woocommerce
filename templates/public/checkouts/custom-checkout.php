@@ -221,6 +221,7 @@ if (!defined('ABSPATH')) {
                             select-name="identificationType"
                             select-data-checkout="doc_type"
                             flag-error="docNumberError"
+                            site-id="<?= esc_attr($site_id); ?>"
                         >
                         </input-document>
                     </div>

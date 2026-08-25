@@ -12,7 +12,8 @@ const InputDocument = ({
   flagError,
   documents,
   validate,
-  inputId = ''
+  inputId = '',
+  siteId = ''
 }) => (
   <div className="mp-checkout-ticket-input-document">
     <input-document
@@ -30,6 +31,7 @@ const InputDocument = ({
       flag-error={flagError}
       documents={documents}
       validate={validate}
+      site-id={siteId}
     ></input-document>
   </div>
 

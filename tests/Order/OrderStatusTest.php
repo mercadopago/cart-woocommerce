@@ -52,6 +52,12 @@ class OrderStatusTest extends TestCase
         ];
 
         $this->orderMetadataMock = Mockery::mock(OrderMetadata::class);
+        // Refund dedup — default: no refund applied yet, persist is a no-op.
+        // Individual tests may override these to exercise the skip path.
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')->byDefault()->andReturn([]);
+        $this->orderMetadataMock->shouldReceive('addAppliedRefundId')->byDefault()->andReturnNull();
+        // checkout_type segmentation for refund metrics — default null (legacy order).
+        $this->orderMetadataMock->shouldReceive('getCheckoutType')->byDefault()->andReturnNull();
         $this->sellerMock = Mockery::mock(Seller::class);
         $this->requesterMock = Mockery::mock(Requester::class);
 
@@ -212,6 +218,7 @@ class OrderStatusTest extends TestCase
             ],
             'return' => true
         ]);
+        WP_Mock::userFunction('is_wp_error', ['return' => false]);
 
         $reflection = new \ReflectionClass($this->orderStatus);
         $method = $reflection->getMethod('refundedFlow');
@@ -219,6 +226,253 @@ class OrderStatusTest extends TestCase
 
         $method->invoke($this->orderStatus, $data, $orderMock);
         $this->assertTrue(true);
+    }
+
+    /**
+     * Dedup: when the notification's current_refund id is already in the applied-refunds
+     * list, refundedFlow skips it — no wc_create_refund, no order note, no re-persist.
+     */
+    public function testRefundedFlowSkipsWhenRefundIdAlreadyApplied(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_total')->andReturn(100.0);
+        $orderMock->shouldReceive('get_id')->andReturn(123);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
+
+        // Refund already recorded at refund time (e.g. originated from the panel).
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')
+            ->with($orderMock)
+            ->andReturn(['refund_123']);
+        // Must not persist again nor create a WC refund / order note.
+        $this->orderMetadataMock->shouldNotReceive('addAppliedRefundId');
+        $orderMock->shouldNotReceive('add_order_note');
+
+        $paymentsData = [
+            [
+                'id' => 'payment_123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 25.5
+            ]
+        ];
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('payment_123');
+
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
+            ->andReturn('access_token_123');
+
+        $responseMock = Mockery::mock(Response::class);
+        $responseMock->shouldReceive('getStatus')->andReturn(200);
+        $responseMock->shouldReceive('getData')->andReturn($paymentsData[0]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/payment_123', ['Authorization: Bearer access_token_123'])
+            ->andReturn($responseMock);
+
+        $data = [
+            'notification_id' => 'notification_123',
+            'transaction_amount' => 100.0,
+            'total_refunded' => 25.5,
+            'transaction_amount_refunded' => 25.5,
+            'current_refund' => ['id' => 'refund_123'],
+            'refunds_notifying' => [
+                ['id' => 'refund_123', 'amount' => 25.5]
+            ]
+        ];
+
+        // wc_create_refund must NOT be called on the skip path.
+        WP_Mock::userFunction('wc_create_refund', [
+            'times' => 0,
+            'return' => true
+        ]);
+
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('refundedFlow');
+        $method->setAccessible(true);
+
+        $method->invoke($this->orderStatus, $data, $orderMock);
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Dedup: a first-time refund persists its id after creating the WC refund.
+     */
+    public function testRefundedFlowPersistsRefundIdAfterCreatingRefund(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_total')->andReturn(100.0);
+        $orderMock->shouldReceive('get_id')->andReturn(123);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
+        // The order note is emitted exactly once, only after a successful wc_create_refund.
+        $orderMock->shouldReceive('add_order_note')->once()->with('Mercado Pago: Partially Refunded: 25.5');
+
+        $paymentsData = [
+            [
+                'id' => 'payment_123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 25.5
+            ]
+        ];
+
+        // No refund applied yet -> proceed and persist afterwards.
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')
+            ->with($orderMock)
+            ->andReturn([]);
+        $this->orderMetadataMock->shouldReceive('addAppliedRefundId')
+            ->once()
+            ->with($orderMock, 'refund_123');
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('payment_123');
+
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
+            ->andReturn('access_token_123');
+
+        $responseMock = Mockery::mock(Response::class);
+        $responseMock->shouldReceive('getStatus')->andReturn(200);
+        $responseMock->shouldReceive('getData')->andReturn($paymentsData[0]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/payment_123', ['Authorization: Bearer access_token_123'])
+            ->andReturn($responseMock);
+
+        $data = [
+            'notification_id' => 'notification_123',
+            'transaction_amount' => 100.0,
+            'total_refunded' => 25.5,
+            'transaction_amount_refunded' => 25.5,
+            'current_refund' => ['id' => 'refund_123'],
+            'refunds_notifying' => [
+                ['id' => 'refund_123', 'amount' => 25.5]
+            ]
+        ];
+
+        WP_Mock::userFunction('wc_create_refund', [
+            'times' => 1,
+            'args' => [
+                ['amount' => 25.5, 'reason' => 'Refunded', 'order_id' => 123]
+            ],
+            'return' => true
+        ]);
+        WP_Mock::userFunction('is_wp_error', [
+            'return' => false,
+        ]);
+
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('refundedFlow');
+        $method->setAccessible(true);
+
+        $method->invoke($this->orderStatus, $data, $orderMock);
+        $this->assertTrue(true);
+    }
+
+    /**
+     * When wc_create_refund returns a WP_Error, the refund_id must NOT be persisted — the
+     * next notification must still be able to retry refund creation. The "Partially Refunded"
+     * order note must NOT be emitted either, since no refund was actually created. The failure
+     * is also reported (mp_refund_error) and signalled to the caller (returns false).
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testRefundedFlowDoesNotPersistRefundIdWhenWcCreateRefundFails(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_total')->andReturn(100.0);
+        $orderMock->shouldReceive('get_id')->andReturn(123);
+        $orderMock->shouldReceive('get_total_refunded')->andReturn(0.0);
+        $orderMock->shouldReceive('get_meta')->with('_currency_ratio')->andReturn(1.0);
+        // No refund object created -> no "Partially Refunded" note may be added.
+        $orderMock->shouldNotReceive('add_order_note');
+
+        $paymentsData = [
+            [
+                'id' => 'payment_123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'transaction_amount' => 100.0,
+                'transaction_amount_refunded' => 25.5
+            ]
+        ];
+
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')
+            ->with($orderMock)
+            ->andReturn([]);
+
+        // addAppliedRefundId must NOT be called when WC refund creation fails.
+        $this->orderMetadataMock->shouldNotReceive('addAppliedRefundId');
+
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($orderMock)
+            ->andReturn('payment_123');
+
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($orderMock)
+            ->andReturn('no');
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessTokenTest')
+            ->andReturn('access_token_123');
+
+        $responseMock = Mockery::mock(Response::class);
+        $responseMock->shouldReceive('getStatus')->andReturn(200);
+        $responseMock->shouldReceive('getData')->andReturn($paymentsData[0]);
+
+        $this->requesterMock->shouldReceive('get')
+            ->with('/v1/payments/payment_123', ['Authorization: Bearer access_token_123'])
+            ->andReturn($responseMock);
+
+        $data = [
+            'notification_id' => 'notification_123',
+            'transaction_amount' => 100.0,
+            'total_refunded' => 25.5,
+            'transaction_amount_refunded' => 25.5,
+            'current_refund' => ['id' => 'refund_123'],
+            'refunds_notifying' => [
+                ['id' => 'refund_123', 'amount' => 25.5]
+            ]
+        ];
+
+        // Simulate wc_create_refund returning a WP_Error (e.g. insufficient stock/permissions).
+        // We use a Mockery double exposing get_error_message() and override is_wp_error to
+        // return true, since WP_Error is not defined in the base test bootstrap.
+        $wpError = Mockery::mock();
+        $wpError->shouldReceive('get_error_message')->andReturn('Refund creation failed');
+        WP_Mock::userFunction('wc_create_refund', [
+            'times' => 1,
+            'return' => $wpError,
+        ]);
+        WP_Mock::userFunction('is_wp_error', [
+            'return' => true,
+        ]);
+
+        // The failure path emits an mp_refund_error metric; stub the Datadog singleton.
+        $datadogMock = Mockery::mock('alias:MercadoPago\Woocommerce\Libraries\Metrics\Datadog');
+        $datadogMock->shouldReceive('getInstance')->andReturnSelf();
+        $datadogMock->shouldReceive('sendEvent')->once()
+            ->with('mp_refund_error', 'wc_create_refund_failed', 'Refund creation failed', null);
+
+        $reflection = new \ReflectionClass($this->orderStatus);
+        $method = $reflection->getMethod('refundedFlow');
+        $method->setAccessible(true);
+
+        // refundedFlow must signal failure (false) so the caller does not report success.
+        $this->assertFalse($method->invoke($this->orderStatus, $data, $orderMock));
     }
 
     /**
@@ -280,6 +534,7 @@ class OrderStatusTest extends TestCase
             ],
             'return' => true
         ]);
+        WP_Mock::userFunction('is_wp_error', ['return' => false]);
 
         $reflection = new \ReflectionClass($this->orderStatus);
         $method = $reflection->getMethod('refundedFlow');
@@ -359,6 +614,7 @@ class OrderStatusTest extends TestCase
             ],
             'return' => true
         ]);
+        WP_Mock::userFunction('is_wp_error', ['return' => false]);
 
         $reflection = new \ReflectionClass($this->orderStatus);
         $method = $reflection->getMethod('refundedFlow');
@@ -1288,6 +1544,7 @@ class OrderStatusTest extends TestCase
             ],
             'return' => true
         ]);
+        WP_Mock::userFunction('is_wp_error', ['return' => false]);
 
         $reflection = new \ReflectionClass($this->orderStatus);
         $method = $reflection->getMethod('refundedFlow');

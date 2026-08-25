@@ -10,13 +10,14 @@ use MercadoPago\Woocommerce\Helpers\Cache;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Currency;
 use MercadoPago\Woocommerce\Helpers\Notices;
-use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\PP\Sdk\Entity\Exchange\Exchange;
+use MercadoPago\PP\Sdk\Exceptions\ApiException;
+use MercadoPago\PP\Sdk\Sdk;
 use Exception;
 use Mockery;
 use PHPUnit\Framework\TestCase;
@@ -33,7 +34,6 @@ class CurrencyTest extends TestCase
     private $cache;
     private $country;
     private $notices;
-    private $requester;
     private $seller;
     private $options;
     private $url;
@@ -50,24 +50,22 @@ class CurrencyTest extends TestCase
         $this->cache = Mockery::mock(Cache::class);
         $this->country = Mockery::mock(Country::class);
         $this->notices = Mockery::mock(Notices::class);
-        $this->requester = Mockery::mock(Requester::class);
         $this->seller = Mockery::mock(Seller::class)->makePartial();
         $this->options = Mockery::mock(Options::class);
         $this->url = Mockery::mock(Url::class);
         $this->store = Mockery::mock(Store::class);
 
-        // Create Currency instance
-        $this->currency = new Currency(
+        // Partial mock so tests can stub fetchExchangeRate() while keeping all other methods real
+        $this->currency = Mockery::mock(Currency::class, [
             $this->adminTranslations,
             $this->cache,
             $this->country,
             $this->notices,
-            $this->requester,
             $this->seller,
             $this->options,
             $this->url,
-            $this->store
-        );
+            $this->store,
+        ])->makePartial()->shouldAllowMockingProtectedMethods();
     }
 
     public function tearDown(): void
@@ -75,6 +73,16 @@ class CurrencyTest extends TestCase
         Mockery::close();
         WP_Mock::tearDown();
         parent::tearDown();
+    }
+
+    public function testGetCurrencySymbolReturnsSymbolFromCountryConfig(): void
+    {
+        $this->country
+            ->shouldReceive('getCountryConfigs')
+            ->once()
+            ->andReturn(['currency' => 'BRL', 'currency_symbol' => 'R$']);
+
+        $this->assertEquals('R$', $this->currency->getCurrencySymbol());
     }
 
     /**
@@ -187,10 +195,10 @@ class CurrencyTest extends TestCase
         WP_Mock::userFunction('get_woocommerce_currency')
             ->andReturn('USD');
 
-        // Seller mocks for metric details
+        // Seller mocks for cache key and metric details
         $this->seller
-            ->shouldReceive('getCredentialsAccessToken')
-            ->andReturn('TEST-ACCESS-TOKEN');
+            ->shouldReceive('getClientId')
+            ->andReturn('TEST-CLIENT-ID');
 
         $this->seller
             ->shouldReceive('getSiteId')
@@ -222,15 +230,10 @@ class CurrencyTest extends TestCase
     {
         $this->setupGetRatioMocks();
 
-        // Mock API response with 403 error
-        $response = new Response();
-        $response->setStatus(403);
-        $response->setData(['message' => 'VEF/VES currency convertion is not allowed']);
-
-        $this->requester
-            ->shouldReceive('get')
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
             ->once()
-            ->andReturn($response);
+            ->andThrow(new ApiException('VEF/VES currency convertion is not allowed', null, 403, null));
 
         // Mock Datadog: byDefault() absorbs the active metric (diff/same) call,
         // while the specific expectation below validates the error metric.
@@ -267,9 +270,8 @@ class CurrencyTest extends TestCase
     {
         $this->setupGetRatioMocks();
 
-        // Mock requester throwing exception
-        $this->requester
-            ->shouldReceive('get')
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
             ->once()
             ->andThrow(new Exception('Connection timed out'));
 
@@ -282,7 +284,7 @@ class CurrencyTest extends TestCase
             ->once()
             ->with(
                 'mp_currency_conversion_error',
-                '0',
+                '500',
                 'Connection timed out',
                 null,
                 Mockery::on(function ($details) {
@@ -307,17 +309,12 @@ class CurrencyTest extends TestCase
     {
         $this->setupGetRatioMocks();
 
-        // Mock API response with 400 and message in body
-        $response = new Response();
-        $response->setStatus(400);
-        $response->setData(['message' => 'Invalid currency pair']);
-
-        $this->requester
-            ->shouldReceive('get')
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
             ->once()
-            ->andReturn($response);
+            ->andThrow(new ApiException('Invalid currency pair', null, 400, null));
 
-        // Expect message from API body, not generic "HTTP 400"
+        // Expect message from exception, not a generic fallback
         $datadogMock = Mockery::mock(Datadog::class);
         $datadogMock->shouldReceive('sendEvent')->byDefault();
         $datadogMock
@@ -344,17 +341,12 @@ class CurrencyTest extends TestCase
     {
         $this->setupGetRatioMocks();
 
-        // Mock API response with 500 and no message in body
-        $response = new Response();
-        $response->setStatus(500);
-        $response->setData(null);
-
-        $this->requester
-            ->shouldReceive('get')
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
             ->once()
-            ->andReturn($response);
+            ->andThrow(new ApiException('HTTP 500', null, 500, null));
 
-        // Expect fallback message
+        // Expect the exception message to be forwarded to the metric
         $datadogMock = Mockery::mock(Datadog::class);
         $datadogMock->shouldReceive('sendEvent')->byDefault();
         $datadogMock
@@ -381,15 +373,10 @@ class CurrencyTest extends TestCase
     {
         $this->setupGetRatioMocks();
 
-        // Mock successful API response
-        $response = new Response();
-        $response->setStatus(200);
-        $response->setData(['ratio' => 5.25]);
-
-        $this->requester
-            ->shouldReceive('get')
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
             ->once()
-            ->andReturn($response);
+            ->andReturn(5.25);
 
         // Datadog should receive the active metric (diff) but NOT the error metric
         $datadogMock = Mockery::mock(Datadog::class);
@@ -474,17 +461,103 @@ class CurrencyTest extends TestCase
         $this->assertEquals(1, $result);
     }
 
+    /* ─── new ppcore endpoint ─── */
+
+    /**
+     * Test that getCurrencyConversion delegates to fetchExchangeRate with the WooCommerce (from) currency
+     */
+    public function testGetCurrencyConversionCallsFetchExchangeRateWithFromCurrency(): void
+    {
+        $this->setupGetRatioMocks();
+
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
+            ->once()
+            ->with('USD')
+            ->andReturn(3.5);
+
+        $this->cache->shouldReceive('setCache')->byDefault();
+
+        $datadogMock = Mockery::mock(Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
+        $this->setNotAccessibleProperty($this->currency, 'datadog', $datadogMock);
+
+        $result = $this->currency->getCurrentRatio();
+
+        $this->assertEqualsWithDelta(3.5, $result, 0.001);
+    }
+
+    /**
+     * Test that the cache key is built with clientId (not access token)
+     */
+    public function testGetCurrencyConversionCacheKeyContainsClientId(): void
+    {
+        $this->setupGetRatioMocks();
+
+        $this->currency->shouldReceive('fetchExchangeRate')->andReturn(2.0);
+
+        $this->cache
+            ->shouldReceive('setCache')
+            ->once()
+            ->with('currency-conversion-TEST-CLIENT-ID-USD-beta', Mockery::type('array'));
+
+        $datadogMock = Mockery::mock(Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
+        $this->setNotAccessibleProperty($this->currency, 'datadog', $datadogMock);
+
+        $result = $this->currency->getCurrentRatio();
+
+        $this->assertEqualsWithDelta(2.0, $result, 0.001);
+    }
+
+    /**
+     * Test fetchExchangeRate() by mocking createSdk() — covers the real method lines.
+     * Uses a stdClass for the exchange result so that ->rate is a plain public property,
+     * avoiding Mockery quirks around protected-property access via __get.
+     */
+    public function testFetchExchangeRateUsesRateFromSdkExchange(): void
+    {
+        $this->setupGetRatioMocks();
+
+        // Exchange partial mock (no constructor call): real __get() returns $this->rate
+        $exchangeMock = Mockery::mock(Exchange::class)->makePartial();
+        $this->setNotAccessibleProperty($exchangeMock, 'rate', 5.5);
+        $exchangeMock->shouldReceive('getExchangeRate')->with('USD')->andReturnSelf();
+
+        $sdkMock = Mockery::mock(Sdk::class);
+        $sdkMock->shouldReceive('getExchangeInstance')->andReturn($exchangeMock);
+
+        $this->currency->shouldReceive('createSdk')->andReturn($sdkMock);
+
+        $this->cache->shouldReceive('setCache')->byDefault();
+
+        $result = $this->currency->getCurrentRatio();
+
+        $this->assertEqualsWithDelta(5.5, $result, 0.001);
+    }
+
+    /**
+     * Test createSdk() returns a Sdk instance configured with the seller access token.
+     */
+    public function testCreateSdkReturnsSdkInstance(): void
+    {
+        $this->seller->shouldReceive('getCredentialsAccessToken')->andReturn('TEST-TOKEN');
+        $this->store->shouldReceive('isTestMode')->andReturn(false);
+
+        $method = new \ReflectionMethod($this->currency, 'createSdk');
+        $method->setAccessible(true);
+        $sdk = $method->invoke($this->currency);
+
+        $this->assertInstanceOf(Sdk::class, $sdk);
+    }
+
     /* ─── getCurrentRatio ─── */
 
     public function testGetCurrentRatioReturnsRatioFromApi(): void
     {
         $this->setupGetRatioMocks();
 
-        $response = new Response();
-        $response->setStatus(200);
-        $response->setData(['ratio' => 5.177]);
-
-        $this->requester->shouldReceive('get')->once()->andReturn($response);
+        $this->currency->shouldReceive('fetchExchangeRate')->once()->andReturn(5.177);
 
         $datadogMock = Mockery::mock(Datadog::class);
         $datadogMock->shouldReceive('sendEvent')->byDefault();
@@ -495,15 +568,46 @@ class CurrencyTest extends TestCase
         $this->assertEqualsWithDelta(5.177, $result, 0.001);
     }
 
+    /**
+     * SDK throws plain \Exception (not ApiException) for 5xx transport errors.
+     * Metric must receive httpStatus='0' and getCurrencyConversion must return status=500.
+     */
+    public function testGetRatioSendsZeroHttpStatusOnSdkInternalError(): void
+    {
+        $this->setupGetRatioMocks();
+
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
+            ->once()
+            ->andThrow(new Exception('Internal API Error'));
+
+        $datadogMock = Mockery::mock(Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
+        $datadogMock
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'mp_currency_conversion_error',
+                '500',
+                'Internal API Error',
+                null,
+                Mockery::type('array')
+            );
+
+        $this->setNotAccessibleProperty($this->currency, 'datadog', $datadogMock);
+
+        $this->expectException(Exception::class);
+        $this->currency->getRatio($this->gateway);
+    }
+
     public function testGetCurrentRatioThrowsWhenApiReturnsError(): void
     {
         $this->setupGetRatioMocks();
 
-        $response = new Response();
-        $response->setStatus(500);
-        $response->setData(['message' => 'Service unavailable']);
-
-        $this->requester->shouldReceive('get')->once()->andReturn($response);
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
+            ->once()
+            ->andThrow(new ApiException('Service unavailable', null, 500, null));
 
         $datadogMock = Mockery::mock(Datadog::class);
         $datadogMock->shouldReceive('sendEvent')->byDefault();

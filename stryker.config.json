@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/api/schema/stryker-core.json",
+  "_comment": "Mutation-testing pilot (PSW-4301). Scoped to a single pure-logic module to evaluate whether mutation testing adds value here. Runs locally/manually via `npm run test:mutation` — NOT wired into CI (mutation runs are slow and non-deterministic; the blocking gate stays npm ci + type-check + lint + test).",
+  "packageManager": "npm",
+  "testRunner": "jest",
+  "jest": {
+    "projectType": "custom",
+    "configFile": "jest.config.js",
+    "enableFindRelatedTests": true
+  },
+  "mutate": [
+    "assets/js/checkouts/super-token/adapters/view/shared/paymentMethodPresentation.ts"
+  ],
+  "coverageAnalysis": "off",
+  "reporters": ["clear-text", "progress"],
+  "concurrency": 2,
+  "timeoutMS": 30000
+}

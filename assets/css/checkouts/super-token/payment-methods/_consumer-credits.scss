@@ -1,0 +1,107 @@
+@use '../root' as *;
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details {
+    gap: 8px !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-hint {
+    text-align: center !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details .mp-consumer-credits-due-date {
+    text-align: center !important;
+    color: var(--andes-text-color-secondary) !important;
+    font-size: 12px !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details .mp-consumer-credits-due-date span {
+    color: var(--andes-text-color-secondary) !important;
+    font-size: 12px !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details .mp-consumer-credits-due-date b {
+    color: var(--andes-text-color-secondary) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-consumer-credits-debit-auto-text {
+    text-align: center !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-consumer-credits-debit-auto-text span {
+    font-family: var(--mp-font-inter) !important;
+    color: var(--andes-text-color-secondary) !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text {
+    border-style: none !important;
+    border-width: 0 !important;
+    --form-padding: 0 !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text .legal-text-page {
+    max-width: 100% !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text :where(*) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text [role="text"] {
+    color: var(--andes-text-color-secondary) !important;
+    font-size: 12px !important;
+    line-height: 15px !important;
+    margin-bottom: 8px !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text a {
+    font-size: 12px !important;
+    text-decoration: none !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text form {
+    margin-bottom: 4px !important;
+  }
+}
+
+@include st-root {
+  #consumer_credits.mp-super-token-payment-method .mp-super-token-payment-method__details #mp-consumer-credits-legal-text .legal-text-page * {
+    padding: revert !important;
+    width: auto !important;
+    height: auto !important;
+    position: revert !important;
+    box-sizing: revert !important;
+    font-weight: revert !important;
+  }
+}

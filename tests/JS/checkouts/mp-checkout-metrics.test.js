@@ -20,7 +20,8 @@ function loadSendMetric(beaconMock, sessionStorageReturn = 'flow-uuid-test', par
     window: {
       location: {
         origin: 'https://example.com',
-        href: 'https://example.com/checkout',
+        pathname: '/checkout',
+        href: 'https://example.com/checkout?key=wc_order_SECRET#payment',
       },
       sessionStorage: {
         getItem: jest.fn().mockReturnValue(sessionStorageReturn),
@@ -53,6 +54,12 @@ describe('sendMetric — estendido com extraDetails (RFC v1.5.0)', () => {
   // Backward compatibility — chamadas com 3 args (call sites legados)
   // ---------------------------------------------------------------------------
   describe('backward compatibility (3 args)', () => {
+    test('TC-SM-00: platform URL excludes query parameters and fragments', () => {
+      sendMetric('MP_TEST', 'message', 'target_test');
+
+      expect(getPayload().platform.url).toBe('https://example.com/checkout');
+    });
+
     test('TC-SM-01: 3 args produzem payload com baseline details apenas', () => {
       sendMetric('MP_TEST', 'message', 'target_test');
 

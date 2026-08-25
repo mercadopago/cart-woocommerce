@@ -870,6 +870,73 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
       expect(superTokenAuthenticator.authorizePayment).not.toHaveBeenCalled();
     });
   });
+
+  // =========================================================================
+  // Refactored bundle present — delegate to the unified finalization
+  // =========================================================================
+  describe('given the refactored finalization bundle is present', () => {
+    afterEach(() => {
+      delete window.mpSuperTokenFinalizeClassic;
+      delete window.mpSuperTokenMetrics;
+    });
+
+    it('when window.mpSuperTokenFinalizeClassic exists, should delegate to it with the checkout callbacks and skip the legacy inline flow', async () => {
+      const mockEvent = { preventDefault: jest.fn() };
+      const finalizeClassic = jest.fn().mockResolvedValue(undefined);
+      window.mpSuperTokenFinalizeClassic = finalizeClassic;
+
+      const superTokenPaymentMethods = {
+        getActivePaymentMethod: jest.fn(),
+        isSelectedPaymentMethodValid: jest.fn(),
+        validateInstallmentSelection: jest.fn(),
+      };
+      handler.setSuperTokenDependencies({
+        triggerHandler: {},
+        authenticator: {},
+        paymentMethods: superTokenPaymentMethods,
+        metrics: { registerClickOnPlaceOrderButton: jest.fn() },
+        errorHandler: {},
+      });
+
+      await handler.handleWithSuperTokenSubmit(mockEvent, {});
+
+      expect(finalizeClassic).toHaveBeenCalledTimes(1);
+      const deps = finalizeClassic.mock.calls[0][0];
+      expect(deps.paymentMethods).toBe(superTokenPaymentMethods);
+      expect(typeof deps.isOrderPayPage).toBe('function');
+      expect(typeof deps.submitCheckoutForm).toBe('function');
+      expect(typeof deps.submitOrderPayForm).toBe('function');
+      expect(typeof deps.markPaymentReady).toBe('function');
+      expect(typeof deps.removeLoader).toBe('function');
+      // The legacy inline flow must not run when delegation is active.
+      expect(superTokenPaymentMethods.getActivePaymentMethod).not.toHaveBeenCalled();
+    });
+
+    it('when mpSuperTokenFinalizeClassic rejects unexpectedly, should remove the loader and report a metric instead of freezing the checkout', async () => {
+      const mockEvent = { preventDefault: jest.fn() };
+      window.mpSuperTokenFinalizeClassic = jest.fn().mockRejectedValue(new Error('boom'));
+      window.mpSuperTokenMetrics = { sendMetric: jest.fn() };
+      handler.hideCheckoutClassicLoader = jest.fn();
+      handler.setSuperTokenDependencies({
+        triggerHandler: {},
+        authenticator: {},
+        paymentMethods: {},
+        metrics: { registerClickOnPlaceOrderButton: jest.fn() },
+        errorHandler: {},
+      });
+
+      // The safety-net catch swallows the rejection so the promise resolves (checkout not frozen).
+      await expect(handler.handleWithSuperTokenSubmit(mockEvent, {})).resolves.toBeUndefined();
+
+      expect(handler.cardForm.removeLoadSpinner).toHaveBeenCalled();
+      expect(handler.hideCheckoutClassicLoader).toHaveBeenCalled();
+      expect(window.mpSuperTokenMetrics.sendMetric).toHaveBeenCalledWith(
+        'super_token_finalize_unexpected_error',
+        'boom',
+        expect.any(String),
+      );
+    });
+  });
 });
 
 // =============================================================================

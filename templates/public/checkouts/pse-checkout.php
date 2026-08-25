@@ -76,6 +76,7 @@ if (! defined('ABSPATH')) {
                         select-id='doc_type'
                         flag-error='mercadopago_pse[docNumberError]'
                         documents='["CC","CE","NIT"]'
+                        site-id="MCO"
                         validate=true>
                     </input-document>
                 </div>

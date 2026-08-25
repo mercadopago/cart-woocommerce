@@ -69,6 +69,48 @@ const Content = (props) => {
 
       switch (document.querySelector('#mp_checkout_type')?.value) {
         case 'super_token': {
+          // Prefer the unified refactored finalization; fall back to the legacy inline flow if the
+          // refactored bundle or its instances are absent, so the checkout never breaks. On success
+          // we break (not return) to keep the common success tail that assembles
+          // meta.paymentMethodData.
+          const canUseRefactoredSuperToken =
+            typeof window.mpSuperTokenFinalizeBlocks === 'function'
+            && window.mpSuperTokenPaymentMethods
+            && window.mpSuperTokenAuthenticator
+            && window.mpSuperTokenMetrics;
+
+          if (canUseRefactoredSuperToken) {
+            const response = await window.mpSuperTokenFinalizeBlocks({
+              paymentMethods: window.mpSuperTokenPaymentMethods,
+              authenticator: window.mpSuperTokenAuthenticator,
+              metrics: window.mpSuperTokenMetrics,
+              triggerHandler: window.mpSuperTokenTriggerHandler,
+              errorHandler: window.mpSuperTokenErrorHandler,
+              emitResponse,
+              hasValidationErrors: () => select(VALIDATION_STORE_KEY).hasValidationErrors(),
+              removeLoader: () => {
+                const cardForm = window.mpCustomCheckoutHandler?.cardForm;
+                if (cardForm?.removeLoadSpinner) {
+                  cardForm.removeLoadSpinner();
+                  return;
+                }
+                // Preserve the legacy observability: with the handler absent the spinner cleanup
+                // is a no-op, so surface it instead of failing silently (checkout-resilience).
+                window.mpSuperTokenMetrics?.sendMetric?.(
+                  'mp_custom_checkout_handler_missing',
+                  'blocks_place_order_cleanup',
+                  'mpCustomCheckoutHandler was undefined during Blocks place-order loader cleanup'
+                );
+              },
+            });
+
+            if (response.type === emitResponse.responseTypes.ERROR) {
+              return response;
+            }
+
+            break;
+          }
+
           try {
             const superTokenPaymentMethods = window.mpSuperTokenPaymentMethods;
             const superTokenAuthenticator = window.mpSuperTokenAuthenticator;

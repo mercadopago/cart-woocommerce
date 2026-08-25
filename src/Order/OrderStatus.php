@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -30,6 +31,7 @@ class OrderStatus
 
     private const PAYMENTS_ENDPOINT = '/v1/payments/';
     private const NOTIFICATION_ENDPOINT = '/v1/asgard/notification/';
+    private const REFUND_METRIC_ERROR_MP = 'mp_refund_error';
 
     /**
      * Order constructor
@@ -92,7 +94,7 @@ class OrderStatus
      * @return void
      * @throws Exception
      */
-    public function processStatus(string $processedStatus, array $data, WC_Order $order, string $usedGateway): void
+    public function processStatus(string $processedStatus, array $data, WC_Order $order, string $usedGateway): bool
     {
         switch ($processedStatus) {
             case 'approved':
@@ -108,8 +110,10 @@ class OrderStatus
                 $this->rejectedFlow($data, $order);
                 break;
             case 'refunded':
-                $this->refundedFlow($data, $order);
-                break;
+                // Propagate whether the refund was actually applied. A wc_create_refund failure
+                // returns false so the caller (CoreNotification) does not emit mp_refund_success
+                // for a refund that never happened.
+                return $this->refundedFlow($data, $order);
             case 'cancelled':
                 $this->cancelledFlow($data, $order);
                 break;
@@ -122,6 +126,8 @@ class OrderStatus
             default:
                 throw new Exception('Process Status - Invalid Status: ' . $processedStatus);
         }
+
+        return true;
     }
 
     /**
@@ -255,10 +261,10 @@ class OrderStatus
      * @return void
      * @throws Exception
      */
-    private function refundedFlow(array $data, WC_Order $order): void
+    private function refundedFlow(array $data, WC_Order $order): bool
     {
         if (!$this->isNotification($data)) {
-            return;
+            return true;
         }
 
         try {
@@ -266,9 +272,22 @@ class OrderStatus
             $refundStatus = $this->getRefundedStatusDetail($paymentsData);
 
             if ($refundStatus['description'] === 'partially_refunded') {
+                // Value-based dedup barrier (primary path for Super Token):
+                // compares totalRefundedMP vs totalRefundedWC. If MP total <= WC total the
+                // refund was already registered locally (e.g. via the panel), so the
+                // notification is skipped without creating a duplicate WC refund object.
+                // For non-Super-Token orders the refund_id barrier in CoreNotification normally
+                // catches duplicates first; this barrier serves as the safety net and the sole
+                // dedup mechanism for Super Token (where the endpoint returns no refund_id).
+                //
+                // Returning here does NOT drop the "[Refund X]" payment metadata: both callers
+                // sync it before reaching this point — WebhookNotification in getProcessedStatus
+                // (from transaction_amount_refunded) and CoreNotification in handleRefundNotification
+                // (via updatePaymentDetails). So the AC "does not create a WC refund, but updates
+                // order meta" holds for both the Webhook and the Core paths.
                 if ($this->refundAlreadyProcessed($order, $paymentsData)) {
                     $this->logs->file->info('Mercado Pago: Refund already processed, skipping...', __CLASS__);
-                    return;
+                    return true;
                 }
 
                 $refundAmount = 0;
@@ -276,6 +295,19 @@ class OrderStatus
 
                 if (isset($data['current_refund']['id'])) {
                     $refundId = $data['current_refund']['id'];
+
+                    // Refund-id dedup: if this refund_id was already applied (e.g. it
+                    // originated from the panel and was persisted at refund time), skip it —
+                    // do not create a duplicate refund nor an order note.
+                    // Metadata is NOT left stale by this skip: on the Webhook path
+                    // WebhookNotification::getProcessedStatus already wrote the authoritative
+                    // [Refund <transaction_amount_refunded>] before refundedFlow runs; on the Core
+                    // path the refund_id skip happens earlier in CoreNotification (with its own
+                    // authoritative updatePaymentDetails) and never reaches here. See traps.md.
+                    if ($this->isRefundIdApplied($order, (string) $refundId)) {
+                        $this->logs->file->info('Mercado Pago: Refund already applied, skipping...', __CLASS__);
+                        return true;
+                    }
 
                     $refund = array_filter($data['refunds_notifying'], function ($item) use ($refundId) {
                         return isset($item['id']) && $item['id'] == $refundId;
@@ -289,28 +321,58 @@ class OrderStatus
                     $refundAmount = $this->getUnprocessedRefundAmount($order, $paymentsData);
                     if ($refundAmount <= 0) {
                         $this->logs->file->info('Mercado Pago: No unprocessed refund amount found, skipping...', __CLASS__);
-                        return;
+                        return true;
                     }
                 }
 
-                wc_create_refund(array(
+                $wcRefund = wc_create_refund(array(
                     'amount'   => $refundAmount,
                     'reason'   => $this->translations['refunded'],
                     'order_id' => $order->get_id(),
                 ));
+
+                // If wc_create_refund returns a WP_Error, do NOT add an order note claiming the
+                // refund happened, and do NOT persist the id — the next notification must be able
+                // to retry the refund creation. Emit observability and signal the failure to the
+                // caller so a refund that was never created is not reported as mp_refund_success;
+                // the value-based barrier reconciles the retry.
+                if (is_wp_error($wcRefund)) {
+                    $this->logs->file->error(
+                        'Mercado Pago: wc_create_refund failed: ' . $wcRefund->get_error_message(),
+                        __CLASS__,
+                        ['order_id' => $order->get_id()]
+                    );
+                    Datadog::getInstance()->sendEvent(
+                        self::REFUND_METRIC_ERROR_MP,
+                        'wc_create_refund_failed',
+                        $wcRefund->get_error_message(),
+                        $this->orderMetadata->getCheckoutType($order)
+                    );
+                    return false;
+                }
+
+                // addAppliedRefundId never throws (it logs and swallows persistence errors), so a
+                // failure to store the marker cannot be swallowed by the outer catch and leave the
+                // flow half-done; the value-based barrier above still dedups the retry.
                 $order->add_order_note('Mercado Pago: ' . $this->translations['partial_refunded'] . Numbers::format($refundAmount));
 
-                return;
+                if (isset($data['current_refund']['id'])) {
+                    $this->orderMetadata->addAppliedRefundId($order, (string) $data['current_refund']['id']);
+                }
+
+                return true;
             }
         } catch (Exception $e) {
             $this->logs->file->error('Mercado Pago: Error processing refund validation: ' . $e->getMessage(), __CLASS__);
-            return;
+            return false;
         }
 
         $order->update_status(
             self::mapMpStatusToWoocommerceStatus('refunded'),
             'Mercado Pago: ' . $this->translations['refunded']
         );
+
+        return true;
     }
 
     /**
@@ -458,6 +520,20 @@ class OrderStatus
             'title' => 'refunded',
             'description' => 'refunded',
         ];
+    }
+
+    /**
+     * Whether the given refund_id was already applied to this order (persisted in
+     * _mp_applied_refund_ids at refund time or by a prior notification).
+     *
+     * @param WC_Order $order
+     * @param string $refundId
+     *
+     * @return bool
+     */
+    public function isRefundIdApplied(WC_Order $order, string $refundId): bool
+    {
+        return in_array($refundId, $this->orderMetadata->getAppliedRefundIds($order), true);
     }
 
     /**

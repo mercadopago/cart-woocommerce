@@ -131,6 +131,7 @@ const Content = (props) => {
     inputName: 'mercadopago_pse[docNumber]',
     selectName: 'mercadopago_pse[docType]',
     documents: '["CC","CE","NIT"]',
+    siteId: site_id,
   };
 
   useEffect(() => {

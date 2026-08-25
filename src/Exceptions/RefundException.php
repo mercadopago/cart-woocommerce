@@ -17,7 +17,6 @@ class RefundException extends Exception
     public const TYPE_SERVER_ERROR = 'server_error';
     public const TYPE_UNKNOWN = 'unknown';
     public const TYPE_NO_PERMISSION = 'no_permission';
-    public const TYPE_SUPERTOKEN_NOT_SUPPORTED = 'supertoken_not_supported';
 
     protected string $errorType;
     protected ?string $paymentId = null;
@@ -67,8 +66,37 @@ class RefundException extends Exception
             'order_id' => $this->orderId,
             'http_status_code' => $this->httpStatusCode,
             'error_message' => $this->getMessage(),
-            'context' => $this->context
+            'context' => $this->getSanitizedContext()
         ]);
+    }
+
+    /**
+     * Keep the API response available for user-facing error handling while limiting
+     * logs to stable diagnostic fields that cannot carry payment credentials.
+     */
+    private function getSanitizedContext(): array
+    {
+        $context = $this->context;
+        $responseData = $context['response_data'] ?? null;
+
+        if (!is_array($responseData)) {
+            return $context;
+        }
+
+        $sanitizedResponse = array_intersect_key($responseData, array_flip(['status', 'error']));
+        if (isset($responseData['cause']) && is_array($responseData['cause'])) {
+            $sanitizedResponse['cause'] = array_values(array_filter(array_map(
+                static function ($cause): array {
+                    return is_array($cause) && isset($cause['code'])
+                        ? ['code' => $cause['code']]
+                        : [];
+                },
+                $responseData['cause']
+            )));
+        }
+
+        $context['response_data'] = $sanitizedResponse;
+        return $context;
     }
 
     /**

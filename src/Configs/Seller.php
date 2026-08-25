@@ -5,6 +5,7 @@ namespace MercadoPago\Woocommerce\Configs;
 use Exception;
 use MercadoPago\Woocommerce\Endpoints\IntegrationWebhook;
 use MercadoPago\Woocommerce\Helpers\Cache;
+use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
@@ -50,6 +51,8 @@ class Seller
 
     private const DEVICE_FINGERPRINT = "_mp_device_fingerprint";
 
+    private const SITE_ID_RECOVERY_FAILED = '_site_id_recovery_failed';
+
     private Cache $cache;
 
     private Options $options;
@@ -59,6 +62,9 @@ class Seller
     private Store $store;
 
     private Logs $logs;
+
+    /** Per-request memo for getSiteId(): null = not yet computed, '' = computed as empty. */
+    private ?string $cachedSiteId = null;
 
     /**
      * Credentials constructor
@@ -84,11 +90,59 @@ class Seller
     }
 
     /**
+     * May perform one HTTP call to fetchUserData on the first request for merchants migrated
+     * from the old plugin where _site_id_v1 was never populated via OAuth. The recovered
+     * site_id is validated against the marketplaces the plugin supports before being persisted,
+     * so an unexpected upstream response can never poison the _site_id_v1 option nor, downstream,
+     * the /sites/{siteId}/payment_methods route. Results are memoized per-request; the negative
+     * memo is set before the network call so a metric emitted from within fetchUserData cannot
+     * re-enter this method and trigger a second /users/me call. Failed recoveries are gated by a
+     * 6-hour transient so fetchUserData is retried at most once per window rather than on every
+     * request.
+     *
      * @return string
      */
     public function getSiteId(): string
     {
-        return strtoupper($this->options->get(self::SITE_ID, ''));
+        if ($this->cachedSiteId !== null) {
+            return $this->cachedSiteId;
+        }
+
+        $siteId = strtoupper($this->options->get(self::SITE_ID, ''));
+        if (!empty($siteId)) {
+            return $this->cachedSiteId = $siteId;
+        }
+
+        $accessToken = $this->getCredentialsAccessTokenProd();
+        if (empty($accessToken)) {
+            return $this->cachedSiteId = '';
+        }
+
+        if ($this->cache->getCache(self::SITE_ID_RECOVERY_FAILED)) {
+            return $this->cachedSiteId = '';
+        }
+
+        $this->cachedSiteId = '';
+
+        try {
+            $userDataResponse = $this->fetchUserData($accessToken);
+            if ($userDataResponse['status'] === 200) {
+                $siteId = strtoupper((string) ($userDataResponse['data']['site_id'] ?? ''));
+                if (Country::isValidSiteId($siteId)) {
+                    $this->setSiteId($siteId);
+                    return $this->cachedSiteId = $siteId;
+                }
+            }
+            $this->cache->setCache(self::SITE_ID_RECOVERY_FAILED, true, 21600);
+        } catch (Exception $e) {
+            $this->logs->file->error(
+                "Mercado pago gave error to get site_id from /users/me: {$e->getMessage()}",
+                __CLASS__
+            );
+            $this->cache->setCache(self::SITE_ID_RECOVERY_FAILED, true, 21600);
+        }
+
+        return $this->cachedSiteId = '';
     }
 
     /**
@@ -96,6 +150,7 @@ class Seller
      */
     public function setSiteId(string $siteId): void
     {
+        $this->cachedSiteId = null;
         $this->options->set(self::SITE_ID, $siteId);
     }
 
@@ -488,6 +543,11 @@ class Seller
             $siteId = $this->getSiteId();
         }
 
+        if (empty($siteId)) {
+            $this->setSiteIdPaymentMethods([]);
+            return;
+        }
+
         $paymentMethodsResponseBySiteId = $this->getPaymentMethodsBySiteId($siteId);
 
         if ($paymentMethodsResponseBySiteId['status'] !== 200) {
@@ -681,13 +741,8 @@ class Seller
             $headers = ['Authorization: Bearer ' . $accessToken];
             $appIdUri = '/plugins-credentials-wrapper/credentials';
             $appDataUri = '/applications/';
-            $userDataUri    = '/users/me';
 
-            $userDataResponse = $this->requester->get($userDataUri, $headers);
-            $userDataSerializedResponse = [
-                'data'   => $userDataResponse->getData(),
-                'status' => $userDataResponse->getStatus(),
-            ];
+            $userDataSerializedResponse = $this->fetchUserData($accessToken);
 
             $appIdResponse = $this->requester->get($appIdUri, $headers);
             $appIdSerializedResponse = [
@@ -725,6 +780,20 @@ class Seller
                 'status' => 500,
             ];
         }
+    }
+
+    /**
+     * @param string $accessToken
+     *
+     * @return array
+     */
+    private function fetchUserData(string $accessToken): array
+    {
+        $response = $this->requester->get('/users/me', ['Authorization: Bearer ' . $accessToken]);
+        return [
+            'data'   => $response->getData(),
+            'status' => $response->getStatus(),
+        ];
     }
 
     /**

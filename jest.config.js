@@ -23,6 +23,8 @@ module.exports = {
   // Configuração de cobertura
   collectCoverageFrom: [
     'assets/js/**/*.js',
+    'assets/js/**/*.ts',
+    'packages/narciso/**/*.js',
     '!assets/js/**/*.min.js',
     '!assets/js/**/__tests__/**',
     '!assets/js/blocks/**',
@@ -30,8 +32,14 @@ module.exports = {
 
   // Configuração de mapeamento de nomes de arquivos
   moduleNameMapper: {
+    '^@super-token/(.*)$': '<rootDir>/assets/js/checkouts/super-token/$1',
     '^assets/js/(.*)$': '<rootDir>/assets/js/$1',
+    '^packages/narciso/(.*)$': '<rootDir>/packages/narciso/$1',
   },
+
+  // Resolve os módulos ES/TS do super-token (as classes globais legadas seguem
+  // sendo carregadas via vm/loadFile, que lê o source cru e ignora o resolver).
+  moduleFileExtensions: ['js', 'ts', 'json', 'node'],
 
   coverageDirectory: 'coverage',
 
@@ -45,8 +53,19 @@ module.exports = {
   // Setup de arquivos antes dos testes
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 
-  // Transformações (caso necessite de Babel no futuro)
-  transform: {},
+  // Só os arquivos .ts do super-token passam por Babel (apaga os tipos). Os testes
+  // legados em .js continuam sem transform — o coverage v8 os atribui via vm/loadFile.
+  // configFile/babelrc: false isola do Babel do wp-scripts (evita clobber no build dos blocks).
+  transform: {
+    '^.+\\.ts$': ['babel-jest', {
+      configFile: false,
+      babelrc: false,
+      presets: [
+        ['@babel/preset-env', { targets: { node: 'current' } }],
+        '@babel/preset-typescript',
+      ],
+    }],
+  },
 
   // Variáveis globais disponíveis nos testes
   globals: {

@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.9.3] 2026-08-24
+### Added
+- Enable refunds for fast payment orders directly from the WooCommerce order panel — full or partial, like any other payment method
+- Format the document (ID) field per country in the card, ticket and PSE checkouts, and show the required-field message in real time when it is left empty
+
+### Fixed
+- Fix the fast payment checkout freezing on block-based, hybrid and multi-step checkouts when a step before payment fails: the loading overlay is now cleared and an error is shown instead of leaving the spinner stuck
+- Prevent a checkout error caused by requesting the available payment methods before the store is fully configured
+- Fix currency conversion not being applied at checkout for stores whose account had been blocked from the previous conversion service, so orders in a different currency now convert correctly again
+- Reject Argentine and Uruguayan identity documents that exceed their configured maximum length
+
+### Security
+- Harden checkout and refund diagnostics so payment credentials, order keys and provider response details are not included in telemetry or logs
+
 ## [8.9.2] 2026-08-17
 ### Added
 - Block payment submission in Custom Checkout when the card number fails the check-digit (Luhn) validation, showing a specific error instead of a generic failure

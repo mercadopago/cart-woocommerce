@@ -52,12 +52,16 @@ use MercadoPago\Woocommerce\Hooks\Template;
 use MercadoPago\Woocommerce\IO\Downloader;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
+use MercadoPago\Woocommerce\SuperToken\SuperTokenPaymentProcessor;
+use MercadoPago\Woocommerce\SuperToken\SuperTokenValidator;
+use MercadoPago\Woocommerce\SuperToken\Adapters\DefaultSuperTokenTransactionFactory;
+use MercadoPago\Woocommerce\SuperToken\Adapters\OrderMetadataSuperTokenWriter;
 use Mockery;
 use Mockery\MockInterface;
 
 class MercadoPagoMock
 {
-    // TODO(PHP8.2): Change type hint from phpdoc to native
+    // TODO(PSW-2879): Change type hint from phpdoc to native once PHP min version is 8.2
     /**
      * @return MockInterface|WoocommerceMercadoPago
      */
@@ -165,6 +169,17 @@ class MercadoPagoMock
         // Order metadata mocks
         $mock->orderMetadata = Mockery::mock(OrderMetadata::class);
         $mock->orderMetadata->orderBilling = Mockery::mock(OrderBilling::class);
+        // Refund dedup — default no-op so refund flows don't require explicit
+        // expectations in every test; individual tests may override these.
+        $mock->orderMetadata->shouldReceive('getAppliedRefundIds')->byDefault()->andReturn([]);
+        $mock->orderMetadata->shouldReceive('addAppliedRefundId')->byDefault()->andReturnNull();
+
+        // Super Token processor (real service, mirrors Dependencies wiring)
+        $mock->superTokenPaymentProcessor = new SuperTokenPaymentProcessor(
+            new SuperTokenValidator(),
+            new DefaultSuperTokenTransactionFactory(),
+            new OrderMetadataSuperTokenWriter($mock->orderMetadata)
+        );
 
         // Country mocks
         $mock->country = Mockery::mock(Country::class);

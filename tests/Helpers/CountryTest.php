@@ -54,6 +54,32 @@ class CountryTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider siteIdCountryCodeList
+     */
+    public function testIsValidSiteIdAcceptsSupportedMarketplaces(string $siteId, string $countryCode)
+    {
+        $this->assertTrue(Country::isValidSiteId($siteId));
+    }
+
+    /**
+     * @dataProvider invalidSiteIdList
+     */
+    public function testIsValidSiteIdRejectsUnknownValues(string $siteId)
+    {
+        $this->assertFalse(Country::isValidSiteId($siteId));
+    }
+
+    public function invalidSiteIdList()
+    {
+        return [
+            'empty'          => [''],
+            'unknown site'   => ['FK'],
+            'lowercase'      => ['mlb'],
+            'path traversal' => ['../../admin'],
+        ];
+    }
+
     public function siteIdCountryCodeList()
     {
         return [

@@ -46,6 +46,14 @@ class AbstractGatewayTest extends TestCase
         $this->adminTranslationsMock = Mockery::mock(AdminTranslations::class);
     }
 
+    public function tearDown(): void
+    {
+        // backupGlobals is off in phpunit.xml, so a UA set by a device-bucket test would leak
+        // into sibling tests that expect the 'unknown' fallback.
+        unset($_SERVER['HTTP_USER_AGENT']);
+        parent::tearDown();
+    }
+
     public function testProcessPayment()
     {
         $order = Mockery::mock('WC_Order');
@@ -469,7 +477,6 @@ class AbstractGatewayTest extends TestCase
 
     /**
      * @testWith ["no_permission"]
-     *           ["supertoken_not_supported"]
      *           ["some_other_error", "unknown_error"]
      */
     public function testProcessRefundError(string $type, ?string $message = null)
@@ -750,7 +757,7 @@ class AbstractGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $expected_message, Mockery::type('string'), Mockery::any(), ['cust_id' => 'test-cust-id']);
+            ->with('woo_checkout_error', $expected_message, Mockery::type('string'), Mockery::any(), ['cust_id' => 'test-cust-id', 'device' => 'unknown']);
 
         // Mock notices only if with_notice is true
         if ($with_notice) {
@@ -815,7 +822,65 @@ class AbstractGatewayTest extends TestCase
                 $translatedMessage,
                 Mockery::type('string'),
                 Mockery::any(),
-                ['cust_id' => $custId]
+                ['cust_id' => $custId, 'device' => 'unknown']
+            );
+
+        $this->mercadopagoMock->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->never();
+
+        $exception = Mockery::mock(\Exception::class);
+        $exception->shouldReceive('getMessage')->andReturn($errorMessage);
+
+        $result = $this->gateway->processReturnFail($exception, $errorMessage, 'test_source');
+
+        $this->assertEquals('fail', $result['result']);
+    }
+
+    /**
+     * Guards the gateway → Device::getDeviceType() coupling end-to-end: the sibling tests all assert
+     * 'device' => 'unknown', which is the no-UA fallback, so on their own they cannot tell a real
+     * getDeviceType() call apart from a hardcoded literal. This one sets a buyer User-Agent and proves
+     * the resolved bucket is what reaches Datadog.
+     *
+     * GIVEN an iOS buyer User-Agent
+     * WHEN processReturnFail sends the woo_checkout_error event
+     * THEN the device tag propagated to Datadog is 'ios' (not the 'unknown' fallback)
+     */
+    public function testProcessReturnFailPropagatesDeviceBucketFromUserAgent()
+    {
+        WP_Mock::userFunction('sanitize_text_field', ['return_arg' => 0]);
+        WP_Mock::userFunction('wp_unslash', ['return_arg' => 0]);
+        $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15';
+
+        $errorMessage = 'test error';
+        $translatedMessage = 'translated test error';
+
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock->shouldReceive('error')->once()->andReturnNull();
+        $this->mercadopagoMock->logs->file = $logsFileMock;
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->once()
+            ->andReturn('test-cust-id');
+
+        $this->mercadopagoMock->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->with($errorMessage)
+            ->once()
+            ->andReturn($translatedMessage);
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'woo_checkout_error',
+                $translatedMessage,
+                Mockery::type('string'),
+                Mockery::any(),
+                ['cust_id' => 'test-cust-id', 'device' => 'ios']
             );
 
         $this->mercadopagoMock->helpers->notices
@@ -1383,7 +1448,7 @@ class AbstractGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), Mockery::any(), ['cust_id' => 'test-cust-id']);
+            ->with('woo_checkout_error', $translatedMessage, Mockery::type('string'), Mockery::any(), ['cust_id' => 'test-cust-id', 'device' => 'unknown']);
 
         // Mock notice storage for error handling
         $this->gateway->mercadopago->helpers->notices

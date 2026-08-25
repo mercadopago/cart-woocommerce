@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use Exception;
+use MercadoPago\PP\Sdk\Exceptions\ApiException;
+use MercadoPago\PP\Sdk\Sdk;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
@@ -30,8 +32,6 @@ class Currency
 
     private Notices $notices;
 
-    private Requester $requester;
-
     private Seller $seller;
 
     private Options $options;
@@ -49,7 +49,6 @@ class Currency
      * @param Cache             $cache
      * @param Country           $country
      * @param Notices           $notices
-     * @param Requester         $requester
      * @param Seller            $seller
      * @param Options           $options
      * @param Url               $url
@@ -60,7 +59,6 @@ class Currency
         Cache $cache,
         Country $country,
         Notices $notices,
-        Requester $requester,
         Seller $seller,
         Options $options,
         Url $url,
@@ -70,7 +68,6 @@ class Currency
         $this->cache        = $cache;
         $this->country      = $country;
         $this->notices      = $notices;
-        $this->requester    = $requester;
         $this->seller       = $seller;
         $this->options      = $options;
         $this->url          = $url;
@@ -238,8 +235,8 @@ class Currency
         if ($response['status'] !== 200) {
             throw new Exception(json_encode($response['data']));
         }
-        if (isset($response['data']['ratio']) && $response['data']['ratio'] > 0) {
-            return $response['data']['ratio'];
+        if (isset($response['data']['rate']) && $response['data']['rate'] > 0) {
+            return $response['data']['rate'];
         }
         return self::DEFAULT_RATIO;
     }
@@ -253,55 +250,79 @@ class Currency
     {
         $toCurrency   = $this->getCurrency();
         $fromCurrency = $this->getWoocommerceCurrency();
-        $accessToken  = $this->seller->getCredentialsAccessToken();
 
         try {
-            $key   = sprintf('%sat%s-%sto%s', __FUNCTION__, $accessToken, $fromCurrency, $toCurrency);
+            $env   = $this->store->isTestMode() ? 'beta' : 'prod';
+            $key   = sprintf('currency-conversion-%s-%s-%s', $this->seller->getClientId(), $fromCurrency, $env);
             $cache = $this->cache->getCache($key);
 
             if ($cache) {
                 return $cache;
             }
 
-            $uri     = sprintf('/currency_conversions/search?from=%s&to=%s', $fromCurrency, $toCurrency);
-            $headers = ['Authorization: Bearer ' . $accessToken];
+            $rate = $this->fetchExchangeRate($fromCurrency);
 
-            $response           = $this->requester->get($uri, $headers);
             $serializedResponse = [
-                'data'   => $response->getData(),
-                'status' => $response->getStatus(),
+                'data'   => ['rate' => $rate],
+                'status' => 200,
             ];
-
-            if ($response->getStatus() >= 400) {
-                $data = $response->getData();
-                $errorMessage = is_array($data) && isset($data['message']) && is_string($data['message']) ? $data['message'] : 'HTTP ' . $response->getStatus();
-
-                $this->sendCurrencyConversionErrorMetric(
-                    $fromCurrency,
-                    $toCurrency,
-                    $response->getStatus(),
-                    $errorMessage
-                );
-
-                return $serializedResponse;
-            }
 
             $this->cache->setCache($key, $serializedResponse);
 
             return $serializedResponse;
         } catch (Exception $e) {
+            // getApiStatus() reads the body-level "status" field, not the HTTP transport status.
+            // 5xx errors throw a plain \Exception from the SDK (no HTTP status available) → use 500 as proxy.
+            // Network errors (curl timeout etc.) also land here; 500 is a defensible approximation since
+            // errorMessage already differentiates the cases ("Connection timed out" vs "Internal API Error").
+            $httpStatus   = ($e instanceof ApiException) ? ($e->getApiStatus() ?? 0) : 500;
+            $errorMessage = $e->getMessage();
+
             $this->sendCurrencyConversionErrorMetric(
                 $fromCurrency,
                 $toCurrency,
-                0,
-                $e->getMessage()
+                $httpStatus,
+                $errorMessage
             );
 
             return [
                 'data'   => null,
-                'status' => 500,
+                'status' => $httpStatus ?: 500,
             ];
         }
+    }
+
+    /**
+     * Calls the SDK exchange endpoint and returns the conversion rate.
+     * Protected to allow mocking in tests.
+     *
+     * @param string $fromCurrency WooCommerce store currency
+     * @return float
+     * @throws Exception
+     */
+    protected function fetchExchangeRate(string $fromCurrency): float
+    {
+        $exchange = $this->createSdk()->getExchangeInstance()->getExchangeRate($fromCurrency);
+        return (float) $exchange->rate;
+    }
+
+    /**
+     * Builds a configured Sdk instance for the current environment.
+     * Protected to allow mocking in tests.
+     *
+     * @return Sdk
+     */
+    protected function createSdk(): Sdk
+    {
+        $urisScope = $this->store->isTestMode() ? 'beta' : null;
+        return new Sdk(
+            $this->seller->getCredentialsAccessToken(),
+            null,
+            null,
+            null,
+            null,
+            $urisScope
+        );
     }
 
     /**

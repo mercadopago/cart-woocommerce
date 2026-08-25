@@ -5,6 +5,7 @@ import pluginReact from "eslint-plugin-react";
 import pluginJsdoc from "eslint-plugin-jsdoc";
 import wordpressPlugin from "@wordpress/eslint-plugin";
 import typescriptPlugin from "@typescript-eslint/eslint-plugin";
+import typescriptParser from "@typescript-eslint/parser";
 import pluginImport from "eslint-plugin-import";
 import pluginJest from "eslint-plugin-jest";
 
@@ -30,6 +31,25 @@ export default [
       ...pluginJs.configs.recommended.rules,
       ...(woocommercePlugin.configs?.recommended?.rules ?? {}),
       "no-case-declarations": "off",
+    },
+  },
+  {
+    // Super Token ES module + TypeScript foundation (hexagonal architecture).
+    files: ["assets/js/checkouts/super-token/**/*.ts"],
+    languageOptions: {
+      parser: typescriptParser,
+      sourceType: "module",
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      "@typescript-eslint": typescriptPlugin,
+    },
+    rules: {
+      ...(typescriptPlugin.configs?.recommended?.rules ?? {}),
+      // Type resolution is TypeScript's job (tsc --noEmit gate), not ESLint's.
+      "no-undef": "off",
+      "no-unused-vars": "off",
     },
   },
   {

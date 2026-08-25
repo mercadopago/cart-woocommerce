@@ -114,12 +114,12 @@ abstract class AbstractNotification implements NotificationInterface
      * @param WC_Order $order
      * @param mixed $data
      *
-     * @return void
+     * @return bool true when the status was applied; false when a refund failed to be created
      * @throws Exception
      */
-    public function processStatus(string $processedStatus, WC_Order $order, $data): void
+    public function processStatus(string $processedStatus, WC_Order $order, $data): bool
     {
-        $this->orderStatus->processStatus($processedStatus, $data, $order, get_class($this->gateway));
+        return $this->orderStatus->processStatus($processedStatus, $data, $order, get_class($this->gateway));
     }
 
     /**

@@ -1,0 +1,578 @@
+@use 'root' as *;
+
+:root {
+  --andes-font-style: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+  --andes-gray-550: rgba(0, 0, 0, 0.55);
+  --andes-gray-250: rgba(0, 0, 0, 0.25);
+  --mp-font-inter: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --andes-error-red: #CC1818;
+  --woocommerce-primary: #7F54B3;
+  --andes-white: #fff;
+  --andes-gray-900: rgba(0, 0, 0, 0.9);
+  --andes-gray-250: rgba(0, 0, 0, 0.25);
+  --andes-text-color-secondary: var(--andes-gray-550, #0000008C);
+}
+
+@include st-root {
+  *:not(:where(#mp-consumer-credits-legal-text, #mp-consumer-credits-legal-text *)) {
+    font-family: var(--andes-font-style) !important;
+    font-size: var(--mp-font-size-base) !important;
+    font-style: normal !important;
+    line-height: var(--mp-line-height-base) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+}
+
+@include st-root {
+  *:not(svg):not(path):not(rect):not(circle):not(img):not(iframe):not(:where(#mp-consumer-credits-legal-text, #mp-consumer-credits-legal-text *)) {
+    vertical-align: baseline !important;
+    width: auto !important;
+  }
+}
+
+@include st-root {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding: 16px !important;
+  background-color: #f9f9f9 !important;
+  width: 100% !important;
+  position: relative !important;
+  z-index: 98 !important;
+  min-height: 288px !important;
+  box-sizing: border-box !important;
+  /* Animation: Box transition */
+  transition: max-height 1s ease-in-out !important;
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input,
+  #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input {
+    background: var(--andes-white) !important;
+    border: 1px solid var(--andes-gray-250) !important;
+    border-radius: 6px !important;
+    color: var(--andes-gray-550) !important;
+    font-family: var(--mp-font-inter) !important;
+    font-size: 16px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    height: 48px !important;
+    line-height: 20px !important;
+    outline: 0 !important;
+    padding: 12px !important;
+    text-align: left !important;
+    width: 100% !important;
+    margin: 0 !important;
+    box-shadow: unset !important;
+    /* Custom arrow repositioning for select */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='13' height='8' viewBox='0 0 13 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.70204 0.755972L6.49767 5.5516L11.2983 0.750977L12.1468 1.5995L6.49767 7.24866L0.853516 1.6045L1.70204 0.755972Z' fill='rgba(0,0,0,0.9)'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 40px !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input:has(option:not([disabled]):checked),
+  #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input:has(option:not([disabled]):checked) {
+    color: var(--andes-gray-900) !important;
+  }
+}
+
+@include st-root {
+  #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input option,
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input option {
+    color: var(--andes-gray-900) !important;
+  }
+}
+
+@include st-root {
+  #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input:focus,
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input:focus {
+    border: 2px solid var(--woocommerce-primary) !important;
+  }
+}
+
+@include st-root {
+  #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input.mp-error-2px:focus,
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input.mp-error-2px:focus {
+    border: 2px solid var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container :has(+ .mp-custom-checkout-select-input.mp-error-2px) span,
+  #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container:has(.mp-custom-checkout-select-input.mp-error) .mp-input-label span,
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container :has(+ .mp-custom-checkout-select-input.mp-error-2px) span,
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container:has(.mp-custom-checkout-select-input.mp-error) .mp-input-label span {
+    color: var(--andes-error-red) !important;
+  }
+}
+
+@include st-root {
+  .mp-helper {
+    margin: 4px 6px 0px !important;
+    display: none;
+    align-items: center !important;
+  }
+}
+
+@include st-root {
+  .mp-helper .mp-helper-message {
+    font-family: var(--mp-font-inter) !important;
+    font-size: 13px !important;
+    line-height: 18px !important;
+    text-align: left !important;
+  }
+}
+
+@include st-root {
+  .mp-helper .mp-helper-message.error {
+    color: var(--andes-error-red) !important;
+    font-weight: 600 !important;
+  }
+}
+
+@include st-root {
+  .mp-helper .mp-helper-message.info {
+    color: var(--andes-gray-550) !important;
+    font-weight: 400 !important;
+  }
+}
+
+@include st-root {
+  .mp-helper .mp-helper-message.message {
+    color: var(--andes-gray-550) !important;
+    font-weight: 400 !important;
+  }
+}
+
+@include st-root {
+  input-helper .mp-helper .mp-helper-icon {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    width: 12px !important;
+    height: 12px !important;
+    margin-right: 6px !important;
+  }
+}
+
+@include st-root {
+  input-helper .mp-helper .mp-helper-icon svg {
+    display: block !important;
+    flex-shrink: 0 !important;
+    width: 12px !important;
+    height: 12px !important;
+  }
+}
+
+@include st-root {
+  .mp-helper .helper .mp-helper-icon {
+    display: none;
+  }
+}
+
+@include st-root {
+  andes-notice#mp-fast-payments-error {
+    margin-bottom: 8px !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__thumbnail img,
+  .mp-super-token-payment-method__accordion .mp-super-token-payment-method__accordion-header img,
+  .mp-payment-methods-header img {
+    margin: 0 !important;
+  }
+}
+
+@include st-root {
+  &.mp-initial-state {
+    max-height: 326px;
+    transition: max-height 1s ease-in-out !important;
+  }
+}
+
+@include st-root {
+  &:has(.mp-checkout-custom-load:not(.mp-display-none)) {
+    padding: 0 !important;
+  }
+}
+
+@include st-root {
+  &.mp-initial-state > header.mp-payment-methods-header {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 50ms !important;
+  }
+}
+
+@include st-root {
+  > header.mp-payment-methods-header {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 50ms !important;
+  }
+}
+
+@include st-root {
+  &.mp-initial-state > .mp-privacy-policy-footer {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 150ms !important;
+  }
+}
+
+@include st-root {
+  > .mp-privacy-policy-footer {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 150ms !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+}
+
+@include st-root {
+  > footer.mp-privacy-policy-footer a {
+    color: var(--andes-accent-color) !important;
+    text-decoration: none !important;
+  }
+}
+
+@include st-root {
+  &.mp-initial-state > .mp-payment-methods-list-horizontal-row {
+    transform: translateY(-12px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 175ms !important;
+  }
+}
+
+@include st-root {
+  > .mp-payment-methods-list-horizontal-row {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 175ms !important;
+  }
+}
+
+@include st-root {
+  &.mp-initial-state > .mp-super-token-payment-method__accordion {
+    transform: translateY(-6px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 300ms !important;
+  }
+}
+
+@include st-root {
+  > .mp-super-token-payment-method__accordion {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 400ms ease-in-out, opacity 200ms ease-in-out !important;
+    transition-delay: 300ms !important;
+  }
+}
+
+@include st-root {
+  &:has(.mp-checkout-custom-load:not(.mp-display-none)) > [class*="super-token"],
+  &:has(.mp-checkout-custom-load:not(.mp-display-none)) > .mp-privacy-policy-footer,
+  &:has(.mp-checkout-custom-load:not(.mp-display-none)) > .mp-payment-methods-list-horizontal-row,
+  &:has(.mp-checkout-custom-load:not(.mp-display-none)) > .mp-payment-methods-header {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    border: none !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    overflow: hidden;
+  }
+}
+
+@include st-root {
+  &.payment_box {
+    background-color: #f9f9f9 !important;
+  }
+}
+
+@include st-root {
+  input:focus::-webkit-input-placeholder {
+    transition: none !important;
+    opacity: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method span,
+  .mp-super-token-payment-method__accordion span,
+  .mp-payment-methods-header span {
+    font-family: var(--andes-font-style);
+    font-weight: 400 !important;
+    /* Should not override childs font-weight */
+    font-size: 14px !important;
+    /* Should not override childs font-size */
+    line-height: 18px !important;
+    /* Should not override childs line-height */
+    letter-spacing: 0 !important;
+    color: #000000E5;
+    /* Should not override childs colors */
+  }
+}
+
+@include st-root {
+  &::before {
+    border: none !important;
+    display: none !important;
+  }
+}
+
+@include st-root {
+  .mp-payment-methods-header {
+    position: initial !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding-bottom: 12px !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    transition-delay: 0.25s !important;
+    transform: translateY(0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    max-height: 2000px !important;
+    transition-property: max-height, opacity, visibility, transform !important;
+  }
+}
+
+@include st-root {
+  .mp-payment-methods-header span {
+    font-family: var(--andes-font-style) !important;
+    color: var(--andes-text-color-primary) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 18px !important;
+  }
+}
+
+@include st-root {
+  .mp-payment-methods-header > .mp-payment-methods-header-logo {
+    width: 32px !important;
+    height: 26px !important;
+    max-height: 26px !important;
+    min-height: 26px !important;
+    max-width: 32px !important;
+    min-width: 32px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+  }
+}
+
+@include st-root {
+  .mp-privacy-policy-footer {
+    margin: 0 !important;
+  }
+}
+
+@include st-root {
+  .mp-payment-methods-list-horizontal-row {
+    height: 1px !important;
+    background-color: var(--andes-gray-color) !important;
+  }
+}
+
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-security-code-container .mp-super-token-security-code-input iframe {
+    display: block !important;
+    width: 100% !important;
+    height: 48px !important;
+    border: 0 !important;
+  }
+}
+
+.mp-box-shadow-none {
+  box-shadow: none !important;
+}
+
+@include st-root {
+  .mp-custom-checkout-select-input {
+    background: var(--andes-white) !important;
+    border: 1px solid var(--andes-gray-250) !important;
+    border-radius: 6px !important;
+    color: var(--andes-gray-900) !important;
+    font-family: var(--mp-font-inter) !important;
+    font-size: 16px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    height: 48px !important;
+    line-height: 20px !important;
+    outline: 0 !important;
+    padding: 12px !important;
+    text-align: left !important;
+    visibility: visible !important;
+    width: 100% !important;
+    margin: 0 !important;
+    box-shadow: unset !important;
+    /* Custom arrow repositioning for select */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='13' height='8' viewBox='0 0 13 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.70204 0.755972L6.49767 5.5516L11.2983 0.750977L12.1468 1.5995L6.49767 7.24866L0.853516 1.6045L1.70204 0.755972Z' fill='rgba(0,0,0,0.9)'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 40px !important;
+  }
+}
+
+@include st-root {
+  .mp-input-label {
+    width: 100% !important;
+    font-family: var(--mp-font-inter) !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-size: 14px !important;
+    line-height: 18px !important;
+    color: var(--andes-gray-900) !important;
+    padding-bottom: 4px !important;
+    padding-left: 6px !important;
+  }
+}
+
+@include st-root {
+  .mp-input-label b {
+    padding-left: 4px !important;
+  }
+}
+
+@include st-root {
+  .mp-fast-payments-error .mp-andes-notice-card.warning {
+    border-left-color: var(--andes-warning-color) !important;
+  }
+}
+
+@include st-root {
+  .mp-andes-notice-card {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 16px 16px 16px 12px !important;
+    background: rgb(0 0 0 / 4%) !important;
+    border-radius: 6px !important;
+    border-left-style: solid !important;
+    border-left-width: 4px !important;
+  }
+}
+
+@include st-root {
+  .mp-andes-notice-card.warning {
+    border-left-color: var(--andes-warning-color) !important;
+  }
+}
+
+@include st-root {
+  .mp-andes-notice-card.error {
+    border-left-color: var(--andes-error-color) !important;
+  }
+}
+
+@include st-root {
+  .mp-andes-notice-card-content {
+    display: flex !important;
+    justify-content: flex-start !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    gap: 16px !important;
+  }
+}
+
+@include st-root {
+  .mp-andes-notice-badge {
+    font-family: var(--mp-font-inter) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #fff !important;
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    border-radius: 12px !important;
+    font-size: small !important;
+  }
+}
+
+@include st-root {
+  .mp-andes-notice-badge.warning {
+    background: var(--andes-warning-color) !important;
+  }
+}
+
+@include st-root {
+  .mp-andes-notice-badge.error {
+    background: var(--andes-error-color) !important;
+    font-size: x-small !important;
+  }
+}
+
+@include st-root {
+  .mp-andes-notice-description {
+    font-family: var(--mp-font-inter) !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-size: 14px !important;
+    color: var(--andes-text-color-primary) !important;
+    color: var(--Text-andes-text-color-primary, rgba(0, 0, 0, 0.90));
+    font-weight: 400 !important;
+    line-height: 18px !important;
+  }
+}
+
+@include st-root {
+  .mp-privacy-policy-footer,
+  .mp-privacy-policy-footer * {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 15px !important;
+    font-family: var(--andes-font-style) !important;
+  }
+}
+
+@include st-root {
+  .mp-privacy-policy-footer {
+    text-align: center;
+    color: var(--andes-text-color-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+@include st-root {
+  .mp-privacy-policy-footer a {
+    color: var(--andes-accent-color) !important;
+    text-decoration: none !important;
+  }
+}

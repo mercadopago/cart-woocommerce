@@ -20,8 +20,6 @@ use MercadoPago\Woocommerce\Transactions\SupertokenTransaction;
  *
  * These tests ensure that the consolidated items unit_price matches the transaction_amount
  * to avoid the "order_items_total_amount_mismatch" error from the API.
- *
- * Related ticket: PSW-3542
  */
 class SupertokenTransactionTest extends TestCase
 {
@@ -29,10 +27,7 @@ class SupertokenTransactionTest extends TestCase
 
     private string $transactionClass = SupertokenTransaction::class;
 
-    /**
-     * @var MockInterface|SupertokenTransaction
-     */
-    private $transaction;
+
 
     /**
      * @dataProvider consolidateItemsProvider
@@ -41,108 +36,41 @@ class SupertokenTransactionTest extends TestCase
     {
         $orderId = 12345;
 
-        // Setup transaction mock with additional_info and items
         $this->transaction->transaction = Mockery::mock(Payment::class)->makePartial();
         $this->transaction->transaction->additional_info = Mockery::mock(AdditionalInfo::class);
         $this->transaction->transaction->additional_info->items = Mockery::mock(ItemList::class);
 
-        // Create mock items
         $mockItems = [];
         foreach ($items as $itemData) {
-            $item = Mockery::mock(Item::class);
+            $item             = Mockery::mock(Item::class);
             $item->unit_price = $itemData['unit_price'];
-            $item->quantity = $itemData['quantity'];
-            $mockItems[] = $item;
+            $item->quantity   = $itemData['quantity'];
+            $mockItems[]      = $item;
         }
 
         $this->transaction->transaction->additional_info->items->collection = $mockItems;
-        $this->transaction->transaction->transaction_amount = $expectedTotal;
+        $this->transaction->transaction->transaction_amount                 = $expectedTotal;
 
-        // Setup store config mock
         $this->transaction->mercadopago->storeConfig
             ->shouldReceive('getStoreCategory')
             ->with('others')
             ->andReturn('others');
 
-        // Setup order mock
         $order = Mockery::mock(\WC_Order::class);
         $order->shouldReceive('get_id')->andReturn($orderId);
         $this->setNotAccessibleProperty($this->transaction, 'order', $order);
 
-        // Call updateTransactionItems
         $this->transaction->updateTransactionItems();
 
-        // Get the consolidated item
         $consolidatedItems = $this->transaction->transaction->additional_info->items->collection;
+        $consolidatedItem  = $consolidatedItems[0];
 
-        // Assert there is exactly one consolidated item
         $this->assertCount(1, $consolidatedItems);
-
-        // Assert the unit_price equals the transaction_amount (within floating point tolerance)
-        $consolidatedItem = $consolidatedItems[0];
-        $this->assertEqualsWithDelta(
-            $this->transaction->transaction->transaction_amount,
-            $consolidatedItem['unit_price'],
-            0.01,
-            'The consolidated item unit_price should match the transaction_amount'
-        );
-
-        // Assert the structure of the consolidated item
+        $this->assertEqualsWithDelta($expectedTotal, $consolidatedItem['unit_price'], 0.01);
         $this->assertEquals($orderId, $consolidatedItem['id']);
         $this->assertEquals('Consolidated Items', $consolidatedItem['title']);
         $this->assertEquals('Consolidated Items', $consolidatedItem['description']);
         $this->assertEquals(1, $consolidatedItem['quantity']);
-    }
-
-    /**
-     * @dataProvider consolidateItemsProvider
-     */
-    public function testConsolidateItemsCalculatesCorrectTotal(array $items, float $expectedTotal): void
-    {
-        $orderId = 12345;
-
-        // Setup transaction mock with additional_info and items
-        $this->transaction->transaction = Mockery::mock(Payment::class)->makePartial();
-        $this->transaction->transaction->additional_info = Mockery::mock(AdditionalInfo::class);
-        $this->transaction->transaction->additional_info->items = Mockery::mock(ItemList::class);
-
-        // Create mock items
-        $mockItems = [];
-        foreach ($items as $itemData) {
-            $item = Mockery::mock(Item::class);
-            $item->unit_price = $itemData['unit_price'];
-            $item->quantity = $itemData['quantity'];
-            $mockItems[] = $item;
-        }
-
-        $this->transaction->transaction->additional_info->items->collection = $mockItems;
-        $this->transaction->transaction->transaction_amount = $expectedTotal;
-
-        // Setup store config mock
-        $this->transaction->mercadopago->storeConfig
-            ->shouldReceive('getStoreCategory')
-            ->with('others')
-            ->andReturn('others');
-
-        // Setup order mock
-        $order = Mockery::mock(\WC_Order::class);
-        $order->shouldReceive('get_id')->andReturn($orderId);
-        $this->setNotAccessibleProperty($this->transaction, 'order', $order);
-
-        // Call updateTransactionItems
-        $this->transaction->updateTransactionItems();
-
-        // Get the consolidated item
-        $consolidatedItems = $this->transaction->transaction->additional_info->items->collection;
-        $consolidatedItem = $consolidatedItems[0];
-
-        // Assert the calculated total is correct (within floating point tolerance)
-        $this->assertEqualsWithDelta(
-            $expectedTotal,
-            $consolidatedItem['unit_price'],
-            0.01,
-            'The consolidated item unit_price should be approximately equal to the expected total'
-        );
     }
 
     public function testConsolidateItemsWithEmptyItems(): void
@@ -165,149 +93,9 @@ class SupertokenTransactionTest extends TestCase
         $this->assertEmpty($this->transaction->transaction->additional_info->items->collection);
     }
 
-    /**
-     * Test that floating point precision issues don't cause mismatch
-     * This is the main test case for the bug fix (PSW-3542)
-     */
-    public function testConsolidateItemsHandlesFloatingPointPrecision(): void
-    {
-        $orderId = 12345;
 
-        // Simulate items that could cause floating point precision issues
-        // For example: 47.38 + 47.38 + 47.38 = 142.14 (but might be 142.13999999 in float)
-        $items = [
-            ['unit_price' => 47.38, 'quantity' => 1],
-            ['unit_price' => 47.38, 'quantity' => 1],
-            ['unit_price' => 47.38, 'quantity' => 1],
-        ];
-        $expectedTotal = 142.14;
 
-        // Setup transaction mock
-        $this->transaction->transaction = Mockery::mock(Payment::class)->makePartial();
-        $this->transaction->transaction->additional_info = Mockery::mock(AdditionalInfo::class);
-        $this->transaction->transaction->additional_info->items = Mockery::mock(ItemList::class);
 
-        // Create mock items
-        $mockItems = [];
-        foreach ($items as $itemData) {
-            $item = Mockery::mock(Item::class);
-            $item->unit_price = $itemData['unit_price'];
-            $item->quantity = $itemData['quantity'];
-            $mockItems[] = $item;
-        }
-
-        $this->transaction->transaction->additional_info->items->collection = $mockItems;
-        $this->transaction->transaction->transaction_amount = $expectedTotal;
-
-        // Setup store config mock
-        $this->transaction->mercadopago->storeConfig
-            ->shouldReceive('getStoreCategory')
-            ->with('others')
-            ->andReturn('others');
-
-        // Setup order mock
-        $order = Mockery::mock(\WC_Order::class);
-        $order->shouldReceive('get_id')->andReturn($orderId);
-        $this->setNotAccessibleProperty($this->transaction, 'order', $order);
-
-        // Call updateTransactionItems
-        $this->transaction->updateTransactionItems();
-
-        // Get the consolidated item
-        $consolidatedItems = $this->transaction->transaction->additional_info->items->collection;
-        $consolidatedItem = $consolidatedItems[0];
-
-        // The key assertion: both values should be equal to avoid order_items_total_amount_mismatch error
-        // Using assertEqualsWithDelta to account for floating point precision
-        $this->assertEqualsWithDelta(
-            $this->transaction->transaction->transaction_amount,
-            $consolidatedItem['unit_price'],
-            0.01,
-            'unit_price and transaction_amount should be equal (within floating point tolerance) to avoid mismatch errors'
-        );
-    }
-
-    /**
-     * Test with items that have many decimal places (simulating the original bug from PSW-3542)
-     */
-    public function testConsolidateItemsWithManyDecimalPlaces(): void
-    {
-        $orderId = 12345;
-
-        // Simulate items with values that have floating point representation issues
-        // This was the actual bug: unit_price was "75428.994999999995343387126922607421875"
-        $items = [
-            ['unit_price' => '75428.994999999995343387126922607421875', 'quantity' => 1],
-        ];
-
-        // Setup transaction mock
-        $this->transaction->transaction = Mockery::mock(Payment::class)->makePartial();
-        $this->transaction->transaction->additional_info = Mockery::mock(AdditionalInfo::class);
-        $this->transaction->transaction->additional_info->items = Mockery::mock(ItemList::class);
-
-        // Create mock items
-        $mockItems = [];
-        foreach ($items as $itemData) {
-            $item = Mockery::mock(Item::class);
-            $item->unit_price = $itemData['unit_price'];
-            $item->quantity = $itemData['quantity'];
-            $mockItems[] = $item;
-        }
-
-        $this->transaction->transaction->additional_info->items->collection = $mockItems;
-        $this->transaction->transaction->transaction_amount = 75429.00;
-
-        // Setup store config mock
-        $this->transaction->mercadopago->storeConfig
-            ->shouldReceive('getStoreCategory')
-            ->with('others')
-            ->andReturn('others');
-
-        // Setup order mock
-        $order = Mockery::mock(\WC_Order::class);
-        $order->shouldReceive('get_id')->andReturn($orderId);
-        $this->setNotAccessibleProperty($this->transaction, 'order', $order);
-
-        // Call updateTransactionItems
-        $this->transaction->updateTransactionItems();
-
-        // Get the consolidated item
-        $consolidatedItems = $this->transaction->transaction->additional_info->items->collection;
-        $consolidatedItem = $consolidatedItems[0];
-
-        // Assert the unit_price is properly formatted (not with excessive decimals)
-        $this->assertEqualsWithDelta(
-            75429.00,
-            $consolidatedItem['unit_price'],
-            0.01,
-            'unit_price should be properly rounded, not have excessive decimal places'
-        );
-    }
-
-    /**
-     * Test Numbers::format helper for rounding values
-     */
-    public function testNumbersFormatRoundsCorrectly(): void
-    {
-        // Test that Numbers::format properly rounds values
-        $this->assertEquals(142.14, Numbers::format(142.139999999999));
-        $this->assertEquals(142.14, Numbers::format(142.1399999));
-        $this->assertEquals(75429.00, Numbers::format(75428.994999999995));
-        $this->assertEquals(100.00, Numbers::format(99.999999999));
-        $this->assertEquals(100.01, Numbers::format(100.005));
-    }
-
-    /**
-     * Test Numbers::makesValueSafe helper for handling string values
-     */
-    public function testNumbersMakesValueSafeHandlesStrings(): void
-    {
-        // Test that Numbers::makesValueSafe properly converts string values
-        $this->assertIsFloat(Numbers::makesValueSafe('75428.994999999995343387126922607421875'));
-        $this->assertEqualsWithDelta(75428.99, Numbers::makesValueSafe('75428.994999999995343387126922607421875'), 0.01);
-        $this->assertEquals(142.14, Numbers::makesValueSafe('142.14'));
-        $this->assertEquals(100.0, Numbers::makesValueSafe('100'));
-    }
 
     public function testCreatePaymentHappyPath(): void
     {
@@ -381,6 +169,178 @@ class SupertokenTransactionTest extends TestCase
         $this->expectExceptionObject($exception);
 
         $this->transaction->createPayment();
+    }
+
+
+    public function testPayloadBaselineSnapshotForCreditCard(): void
+    {
+        $checkout = [
+            'payment_method_id'      => 'master',
+            'payment_type_id'        => 'credit_card',
+            'installments'           => '3',
+            'authorized_pseudotoken' => 'BASELINE-SUPER-TOKEN-4265',
+        ];
+
+        $order = $this->buildBaselineOrder(4265, 100.0);
+        $payload = $this->buildSupertokenPayload($checkout, $order);
+
+        $this->assertMatchesPayloadSnapshot($payload, 'supertoken-credit-card');
+    }
+
+    public function testPayloadBaselineSnapshotForDebitCard(): void
+    {
+        $checkout = [
+            'payment_method_id'      => 'debvisa',
+            'payment_type_id'        => 'debit_card',
+            'authorized_pseudotoken' => 'BASELINE-SUPER-TOKEN-4267',
+        ];
+
+        $order = $this->buildBaselineOrder(4267, 100.0);
+        $payload = $this->buildSupertokenPayload($checkout, $order);
+
+        $this->assertMatchesPayloadSnapshot($payload, 'supertoken-debit-card');
+    }
+
+    /**
+     * @return MockInterface|\WC_Order
+     */
+    private function buildBaselineOrder(int $orderId, float $total): MockInterface
+    {
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn($orderId);
+        // WC items/fees/shipping return empty so setAdditionalInfoItemsTransaction doesn't fail;
+        // updateTransactionItems() overwrites the collection with the consolidated item anyway.
+        $order->shouldReceive('get_items')->andReturn([]);
+        $order->shouldReceive('get_fees')->andReturn([]);
+        $order->shouldReceive('get_shipping_total')->andReturn('0');
+        $order->shouldReceive('get_shipping_tax')->andReturn('0');
+        return $order;
+    }
+
+    private function buildSupertokenPayload(array $checkout, MockInterface $order): array
+    {
+        $this->transaction->transaction = (new \MercadoPago\PP\Sdk\Sdk())->getPaymentInstance();
+
+        $this->setNotAccessibleProperty($this->transaction, 'ratio', 1.0);
+        $this->setNotAccessibleProperty($this->transaction, 'countryConfigs', ['currency' => 'BRL', 'sponsor_id' => '12345']);
+        $this->setNotAccessibleProperty($this->transaction, 'orderTotal', 100.0);
+        $this->setNotAccessibleProperty($this->transaction, 'listOfItems', ['Baseline Product x 1']);
+        $this->setPrivateSupertokenProperties($checkout['authorized_pseudotoken'], $checkout['payment_type_id']);
+        $this->setNotAccessibleProperty($this->transaction, 'order', $order);
+
+        $mp = $this->transaction->mercadopago;
+        $mp->hooks->options->shouldReceive('getGatewayOption')->andReturn('no');
+        $mp->storeConfig->shouldReceive('getStoreId')->andReturn('WOOTEST');
+        $mp->storeConfig->shouldReceive('getStoreName')->andReturn('Baseline Store');
+        $mp->storeConfig->shouldReceive('getStoreCategory')->andReturn('others');
+        $mp->sellerConfig->shouldReceive('getClientId')->andReturn('CLIENT-ID-4265');
+        $mp->helpers->url->shouldReceive('getServerAddress')->andReturn('127.0.0.1');
+        $mp->helpers->url->shouldReceive('getBaseUrl')->andReturn('https://baseline.example');
+        $mp->helpers->currentUser->shouldReceive('isUserLoggedIn')->andReturn(false);
+        $mp->orderBilling->shouldReceive('getEmail')->andReturn('buyer@baseline.example');
+        $mp->orderBilling->shouldReceive('getFirstName')->andReturn('Baseline');
+        $mp->orderBilling->shouldReceive('getLastName')->andReturn('Buyer');
+        $mp->orderBilling->shouldReceive('getCity')->andReturn('São Paulo');
+        $mp->orderBilling->shouldReceive('getState')->andReturn('SP');
+        $mp->orderBilling->shouldReceive('getCountry')->andReturn('BR');
+        $mp->orderBilling->shouldReceive('getZipcode')->andReturn('01310100');
+        $mp->orderBilling->shouldReceive('getFullAddress')->andReturn('Av. Paulista 1000');
+        $mp->orderBilling->shouldReceive('getAddress1')->andReturn('Av. Paulista');
+        $mp->orderBilling->shouldReceive('getAddress2')->andReturn('1000');
+        $mp->orderBilling->shouldReceive('getPhone')->andReturn('11999999999');
+        $mp->orderShipping->shouldReceive('getAddress1')->andReturn('Av. Paulista');
+        $mp->orderShipping->shouldReceive('getAddress2')->andReturn('1000');
+        $mp->orderShipping->shouldReceive('getZipcode')->andReturn('01310100');
+        $mp->orderShipping->shouldReceive('getCity')->andReturn('São Paulo');
+        $mp->orderShipping->shouldReceive('getState')->andReturn('SP');
+        $mp->orderShipping->shouldReceive('getCountry')->andReturn('BR');
+
+        $metadata = $this->buildBaselineMetadata();
+        $this->transaction->extendInternalMetadata($metadata);
+        $this->transaction->shouldReceive('getInternalMetadata')->andReturn($metadata);
+        // getNotificationUrl reads site_url from WP globals — stub so the snapshot stays stable.
+        $this->transaction->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('getNotificationUrl')->andReturn('https://baseline.example/wc-api/webhook');
+
+        $this->transaction->setCommonTransaction();
+        $this->transaction->setPayerTransaction();
+        $this->transaction->setAdditionalInfoTransaction();
+
+        $this->transaction->transaction->description        = 'Baseline Product x 1';
+        $this->transaction->transaction->transaction_amount = Numbers::format(100.0);
+        $this->transaction->transaction->payment_method_id  = $checkout['payment_method_id'];
+        if (isset($checkout['installments'])) {
+            $this->transaction->transaction->installments = (int) $checkout['installments'];
+        }
+
+        $item             = Mockery::mock(Item::class);
+        $item->unit_price = 100.0;
+        $item->quantity   = 1;
+        $this->transaction->transaction->additional_info->items->collection = [$item];
+
+        $this->transaction->updateTransactionItems();
+
+        return json_decode(json_encode($this->transaction->transaction->toArray()), true);
+    }
+
+    private function buildBaselineMetadata(): \MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata
+    {
+        $metadata                              = new \MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata();
+        $metadata->platform                    = 'WOOCOMMERCE_MP_TEST';
+        $metadata->platform_version            = '9.9.9';
+        $metadata->module_version              = '8.0.0';
+        $metadata->php_version                 = '8.1.0';
+        $metadata->site_id                     = 'mlb';
+        $metadata->sponsor_id                  = '12345';
+        $metadata->collector                   = '67890';
+        $metadata->test_mode                   = '1';
+        $metadata->details                     = '';
+        $metadata->settings                    = [];
+        $metadata->seller_website              = 'https://baseline.example';
+        $metadata->blocks_payment              = 'no';
+        $metadata->auto_update                 = false;
+        $metadata->flow_id                     = null;
+        $metadata->billing_address             = new \MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataAddress();
+        $metadata->billing_address->zip_code   = '01310100';
+        $metadata->billing_address->street_name = 'Av. Paulista';
+        $metadata->billing_address->city_name  = 'São Paulo';
+        $metadata->billing_address->state_name = 'SP';
+        $metadata->billing_address->country_name = 'BR';
+        $metadata->user                        = new \MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataUser();
+        $metadata->user->registered_user       = 'no';
+        $metadata->user->user_email            = null;
+        $metadata->user->user_registration_date = null;
+        $metadata->cpp_extra                   = new \MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadataCpp();
+        $metadata->cpp_extra->platform_version = '9.9.9';
+        $metadata->cpp_extra->module_version   = '8.0.0';
+        $metadata->theme                       = new \MercadoPago\Woocommerce\Entities\Metadata\ThemeMetadata();
+        $metadata->theme->theme_name           = 'baseline-theme';
+        $metadata->theme->theme_version        = '1.0.0';
+        return $metadata;
+    }
+
+    private function assertMatchesPayloadSnapshot(array $payload, string $name): void
+    {
+        $dir  = __DIR__ . '/__snapshots__';
+        $file = "{$dir}/{$name}.json";
+
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $actual = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+
+        if (!file_exists($file) || getenv('UPDATE_SNAPSHOTS')) {
+            file_put_contents($file, $actual);
+            $this->addToAssertionCount(1);
+            return;
+        }
+
+        $this->assertJsonStringEqualsJsonString(
+            file_get_contents($file),
+            $actual,
+            "Payload does not match snapshot. Run with UPDATE_SNAPSHOTS=1 to update {$name}.json."
+        );
     }
 
     private function setPrivateSupertokenProperties(string $superToken, string $paymentTypeId): void

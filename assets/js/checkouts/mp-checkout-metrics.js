@@ -9,7 +9,7 @@ function sendMetric(value, message, target, extraDetails = {}) {
       name: 'woocommerce',
       uri: `${window.location.origin}${storeParams.location}_${storeParams.theme}_${storeParams.site_id}_${storeParams.currency}`,
       version: storeParams.platform_version,
-      url: window.location.href,
+      url: `${window.location.origin}${window.location.pathname}`,
     },
     "details": {
       ...extraDetails,

@@ -270,4 +270,382 @@ class SellerTest extends TestCase
 
         $this->assertFalse($result);
     }
+
+    public function testGetSiteIdReturnsSiteIdFromOptionsWhenSet(): void
+    {
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldNotReceive('get');
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('mlb');
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('MLB', $seller->getSiteId());
+    }
+
+    public function testGetSiteIdReturnsEmptyStringWhenSiteIdEmptyAndNoProdToken(): void
+    {
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldNotReceive('get');
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('');
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('', $seller->getSiteId());
+    }
+
+    public function testGetSiteIdFetchesFromApiAndPersistsSiteIdWhenEmpty(): void
+    {
+        $mockResponse = Mockery::mock();
+        $mockResponse->shouldReceive('getStatus')->andReturn(200);
+        $mockResponse->shouldReceive('getData')->andReturn(['site_id' => 'mlb', 'id' => 123]);
+
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')
+            ->once()
+            ->with('/users/me', ['Authorization: Bearer test-prod-token'])
+            ->andReturn($mockResponse);
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('test-prod-token');
+        $mockOptions->shouldReceive('set')
+            ->once()
+            ->with('_site_id_v1', 'MLB')
+            ->andReturn(true);
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->once()->with('_site_id_recovery_failed')->andReturn(null);
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('MLB', $seller->getSiteId());
+    }
+
+    public function testGetSiteIdReturnsEmptyStringWhenApiReturnsNon200(): void
+    {
+        $mockResponse = Mockery::mock();
+        $mockResponse->shouldReceive('getStatus')->andReturn(500);
+        $mockResponse->shouldReceive('getData')->andReturn([]);
+
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')
+            ->once()
+            ->with('/users/me', ['Authorization: Bearer test-prod-token'])
+            ->andReturn($mockResponse);
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('test-prod-token');
+        $mockOptions->shouldNotReceive('set');
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->once()->with('_site_id_recovery_failed')->andReturn(null);
+        $mockCache->shouldReceive('setCache')->once()->with('_site_id_recovery_failed', true, 21600)->andReturn(null);
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('', $seller->getSiteId());
+    }
+
+    public function testGetSiteIdLogsErrorAndReturnsEmptyWhenApiThrowsException(): void
+    {
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')
+            ->once()
+            ->with('/users/me', ['Authorization: Bearer test-prod-token'])
+            ->andThrow(new \Exception('connection timeout'));
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('test-prod-token');
+        $mockOptions->shouldNotReceive('set');
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->once()->with('_site_id_recovery_failed')->andReturn(null);
+        $mockCache->shouldReceive('setCache')->once()->with('_site_id_recovery_failed', true, 21600)->andReturn(null);
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+
+        $mockLogsFile = Mockery::mock(File::class);
+        $mockLogsFile->shouldReceive('error')->once()->andReturn(null);
+
+        $mockLogs       = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+        $mockLogs->file = $mockLogsFile;
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('', $seller->getSiteId());
+    }
+
+    public function testUpdatePaymentMethodsBySiteIdClearsPaymentMethodsAndSkipsApiWhenSiteIdEmpty(): void
+    {
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldNotReceive('get');
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('set')
+            ->once()
+            ->with('_site_id_payment_methods', [])
+            ->andReturn(true);
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+        $seller->updatePaymentMethodsBySiteId();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testUpdatePaymentMethodsBySiteIdSkipsGuardWhenSiteIdProvidedAsArgument(): void
+    {
+        Mockery::mock('alias:' . Device::class)
+            ->shouldReceive('getDeviceProductId')
+            ->andReturn('');
+
+        $mockResponse = Mockery::mock();
+        $mockResponse->shouldReceive('getStatus')->andReturn(200);
+        $mockResponse->shouldReceive('getData')->andReturn([]);
+
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')
+            ->once()
+            ->with('/sites/MLB/payment_methods', [])
+            ->andReturn($mockResponse);
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')->andReturn([]);
+        $mockOptions->shouldReceive('set')->andReturn(true);
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->andReturn(null);
+        $mockCache->shouldReceive('setCache')->andReturn(null);
+
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+        $seller->updatePaymentMethodsBySiteId('MLB');
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testGetSiteIdDoesNotPersistWhenApiReturnsMissingSiteId(): void
+    {
+        $mockResponse = Mockery::mock();
+        $mockResponse->shouldReceive('getStatus')->andReturn(200);
+        $mockResponse->shouldReceive('getData')->andReturn(['id' => 123]);
+
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')
+            ->once()
+            ->with('/users/me', ['Authorization: Bearer test-prod-token'])
+            ->andReturn($mockResponse);
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('test-prod-token');
+        $mockOptions->shouldNotReceive('set');
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->once()->with('_site_id_recovery_failed')->andReturn(null);
+        $mockCache->shouldReceive('setCache')->once()->with('_site_id_recovery_failed', true, 21600)->andReturn(null);
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('', $seller->getSiteId());
+    }
+
+    public function testGetSiteIdDoesNotPersistUnexpectedSiteIdFromApi(): void
+    {
+        // An arbitrary upstream value must never reach setSiteId — otherwise it would flow into
+        // the /sites/{siteId}/payment_methods route. Only known marketplaces are accepted.
+        $mockResponse = Mockery::mock();
+        $mockResponse->shouldReceive('getStatus')->andReturn(200);
+        $mockResponse->shouldReceive('getData')->andReturn(['site_id' => '../../admin', 'id' => 123]);
+
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')
+            ->once()
+            ->with('/users/me', ['Authorization: Bearer test-prod-token'])
+            ->andReturn($mockResponse);
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('test-prod-token');
+        $mockOptions->shouldNotReceive('set');
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->once()->with('_site_id_recovery_failed')->andReturn(null);
+        $mockCache->shouldReceive('setCache')->once()->with('_site_id_recovery_failed', true, 21600)->andReturn(null);
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('', $seller->getSiteId());
+    }
+
+    public function testGetSiteIdFetchesUsersMeOnlyOnceWhenReentered(): void
+    {
+        // Reproduces the reentrancy path: a metric emitted from within fetchUserData() re-enters
+        // getSiteId(). The negative memo set before the network call must short-circuit the
+        // reentrant call so /users/me is hit exactly once.
+        $mockResponse = Mockery::mock();
+        $mockResponse->shouldReceive('getStatus')->andReturn(200);
+        $mockResponse->shouldReceive('getData')->andReturn(['site_id' => 'mlb', 'id' => 123]);
+
+        $seller          = null;
+        $reentrantResult = 'not-called';
+
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')
+            ->once()
+            ->with('/users/me', ['Authorization: Bearer test-prod-token'])
+            ->andReturnUsing(function () use (&$seller, &$reentrantResult, $mockResponse) {
+                $reentrantResult = $seller->getSiteId();
+                return $mockResponse;
+            });
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('test-prod-token');
+        $mockOptions->shouldReceive('set')
+            ->once()
+            ->with('_site_id_v1', 'MLB')
+            ->andReturn(true);
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->once()->with('_site_id_recovery_failed')->andReturn(null);
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('MLB', $seller->getSiteId());
+        $this->assertSame('', $reentrantResult);
+    }
+
+    public function testGetSiteIdSkipsApiWhenNegativeCacheIsSet(): void
+    {
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldNotReceive('get');
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('test-prod-token');
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')
+            ->once()
+            ->with('_site_id_recovery_failed')
+            ->andReturn(true);
+
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $this->assertSame('', $seller->getSiteId());
+    }
+
+    public function testGetSiteIdMemoizesResultPerRequest(): void
+    {
+        $mockResponse = Mockery::mock();
+        $mockResponse->shouldReceive('getStatus')->andReturn(200);
+        $mockResponse->shouldReceive('getData')->andReturn(['site_id' => 'mla', 'id' => 456]);
+
+        $mockRequester = Mockery::mock('overload:MercadoPago\Woocommerce\Helpers\Requester');
+        $mockRequester->shouldReceive('get')
+            ->once()
+            ->with('/users/me', ['Authorization: Bearer test-prod-token'])
+            ->andReturn($mockResponse);
+
+        $mockOptions = Mockery::mock('MercadoPago\Woocommerce\Hooks\Options');
+        $mockOptions->shouldReceive('get')
+            ->once()
+            ->with('_site_id_v1', '')
+            ->andReturn('');
+        $mockOptions->shouldReceive('get')
+            ->once()
+            ->with('_mp_access_token_prod', '')
+            ->andReturn('test-prod-token');
+        $mockOptions->shouldReceive('set')
+            ->once()
+            ->with('_site_id_v1', 'MLA')
+            ->andReturn(true);
+
+        $mockCache = Mockery::mock('MercadoPago\Woocommerce\Helpers\Cache');
+        $mockCache->shouldReceive('getCache')->once()->with('_site_id_recovery_failed')->andReturn(null);
+
+        $mockStore = Mockery::mock('MercadoPago\Woocommerce\Configs\Store');
+        $mockLogs  = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
+
+        $seller = new Seller($mockCache, $mockOptions, $mockRequester, $mockStore, $mockLogs);
+
+        $first  = $seller->getSiteId();
+        $second = $seller->getSiteId();
+
+        $this->assertSame('MLA', $first);
+        $this->assertSame('MLA', $second);
+    }
 }

@@ -56,6 +56,8 @@ class OrderMetadata
 
     public const CURRENCY_RATIO = '_currency_ratio';
 
+    public const APPLIED_REFUND_IDS = '_mp_applied_refund_ids';
+
     private OrderMeta $orderMeta;
 
     private Logs $logs;
@@ -80,6 +82,26 @@ class OrderMetadata
     public function getUsedGatewayData(WC_Order $order)
     {
         return $this->orderMeta->get($order, self::USED_GATEWAY);
+    }
+
+    /**
+     * Get the checkout_type stored on the order so refund metrics can be segmented by
+     * product bucket (super_token, credit_card, pix…) in Datadog. Returns null for legacy
+     * orders that predate the checkout_type metadata.
+     *
+     * @param WC_Order|null $order
+     *
+     * @return string|null
+     */
+    public function getCheckoutType(?WC_Order $order): ?string
+    {
+        if (!$order) {
+            return null;
+        }
+
+        $checkoutType = $this->orderMeta->get($order, self::CHECKOUT_TYPE);
+
+        return !empty($checkoutType) ? (string) $checkoutType : null;
     }
 
     /**
@@ -401,6 +423,112 @@ class OrderMetadata
     {
         $this->orderMeta->update($order, self::CURRENCY_RATIO, $value);
         $order->save();
+    }
+
+    /**
+     * Get the list of refund IDs already applied to the order (refund deduplication barrier).
+     *
+     * The metadata is stored as a JSON-encoded array of strings. Legacy orders (meta
+     * absent) and empty values resolve to an empty array. The return is always a
+     * normalized array of strings.
+     *
+     * @param WC_Order $order
+     *
+     * @return array
+     */
+    public function getAppliedRefundIds(WC_Order $order): array
+    {
+        $raw = $this->orderMeta->get($order, self::APPLIED_REFUND_IDS, true);
+
+        if (empty($raw)) {
+            return [];
+        }
+
+        if (is_array($raw)) {
+            $decoded = $raw;
+        } else {
+            $decoded = json_decode((string) $raw, true);
+            if (!is_array($decoded)) {
+                // Meta exists but is not a decodable JSON array (corrupted write or DB
+                // truncation). Returning [] here means "no refund applied yet", which is
+                // false and would let a later notification re-create every already-applied
+                // refund. Log at error level so it surfaces in monitoring; still fall back
+                // to [] because the value-based barrier (OrderStatus::refundedFlow) remains
+                // as the dedup safety net.
+                $this->logs->file->error(
+                    'Corrupted applied-refund-ids meta on order ' . $order->get_id()
+                    . '; expected JSON array, got: ' . (string) $raw,
+                    __CLASS__
+                );
+                return [];
+            }
+        }
+
+        return array_values(array_map('strval', $decoded));
+    }
+
+    /**
+     * Append a refund ID to the applied-refunds list, guarding against duplicates.
+     *
+     * Reloads the order meta from the store (HPOS-safe) before evaluating the current
+     * list, so concurrent notification/panel writes are observed. If the refund ID is
+     * already present (strict string comparison), nothing is written. Otherwise the ID
+     * is appended and the list is persisted as JSON before the caller completes the flow.
+     *
+     * HPOS approach: uses WC_Order CRUD methods exclusively (read_meta_data, update_meta_data,
+     * save). Under HPOS these operate on wc_orders_meta; under legacy storage they use
+     * wp_postmeta. No direct $wpdb query is needed because WC_Order::read_meta_data(true)
+     * bypasses the in-memory cache and fetches fresh rows from whichever backend is active.
+     *
+     * Failure handling: this method never throws. The refund itself has already been
+     * committed (MP + WooCommerce) by the time it runs, so a persistence failure here must
+     * not abort the caller (e.g. a multi-payment loop) nor be swallowed by an outer catch.
+     * Both failure modes are logged at error level and the value-based barrier in
+     * OrderStatus::refundedFlow (totalRefundedMP <= totalRefundedWC) remains as the dedup
+     * safety net for the next notification.
+     *
+     * @param WC_Order $order
+     * @param string $refundId
+     *
+     * @return void
+     */
+    public function addAppliedRefundId(WC_Order $order, string $refundId): void
+    {
+        // Force a fresh read from the data store (HPOS-safe) before appending, so
+        // concurrent notification/panel writes are observed.
+        $order->read_meta_data(true);
+
+        $appliedRefundIds = $this->getAppliedRefundIds($order);
+
+        if (in_array($refundId, $appliedRefundIds, true)) {
+            return;
+        }
+
+        $appliedRefundIds[] = $refundId;
+
+        $encoded = wp_json_encode($appliedRefundIds);
+        if ($encoded === false) {
+            // Never persist a literal "false": a later json_decode would yield null and
+            // getAppliedRefundIds would silently return [], wiping the whole dedup history.
+            // Bail out keeping the previous (valid) meta value untouched.
+            $this->logs->file->error(
+                'Failed to JSON-encode applied refund ids for order ' . $order->get_id()
+                . ' (refund_id=' . $refundId . '); keeping previous value',
+                __CLASS__
+            );
+            return;
+        }
+
+        try {
+            $this->orderMeta->update($order, self::APPLIED_REFUND_IDS, $encoded);
+            $order->save();
+        } catch (\Throwable $e) {
+            $this->logs->file->error(
+                'Failed to persist applied refund id ' . $refundId . ' for order '
+                . $order->get_id() . ': ' . $e->getMessage(),
+                __CLASS__
+            );
+        }
     }
 
     /**

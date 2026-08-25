@@ -513,6 +513,7 @@ abstract class AbstractTransaction
             $details['sdk_instance_id'] = $this->resolveMetadataField('flow_id');
             $details['alert_type']      = $alertType;
             $details['payment_status']  = $paymentStatus;
+            $details['device']          = Device::getDeviceType();
 
             $paymentMethod = $this->resolveMetadataField('checkout_type');
             Datadog::getInstance()->sendEvent('mp_payment_create_result', $statusClass, $message, $paymentMethod, $details);
