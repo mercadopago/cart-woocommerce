@@ -1,8 +1,0 @@
-{
-    auto_https disable_redirects
-}
-
-https://localhost:8443 {
-    tls internal
-    reverse_proxy wordpress:80
-}
