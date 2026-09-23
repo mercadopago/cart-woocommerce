@@ -3487,7 +3487,7 @@ msgstr "es-MX"
 
 #: ../../src/Translations/StoreTranslations.php:386
 msgid "As it spelled on the card."
-msgstr "Complétalo como aparece en la tarjeta."
+msgstr "Como aparece en la tarjeta."
 
 #: ../../src/Translations/StoreTranslations.php:387
 msgid "The first installment <b>is due on</b>"
@@ -4679,6 +4679,34 @@ msgid "Service temporarily unavailable. Please try again in a moment."
 msgstr ""
 "Servicio temporalmente no disponible. Por favor, inténtalo de nuevo en un "
 "momento."
+
+#: ../../src/Translations/StoreTranslations.php:387
+msgid "You can pay with card"
+msgstr "Puedes pagar con tarjeta"
+
+#: ../../src/Translations/StoreTranslations.php:388
+msgid "Card"
+msgstr "Tarjeta"
+
+#: ../../src/Translations/StoreTranslations.php:389
+msgid "Enter the {digits} numbers on your card."
+msgstr "Ingresa los {digits} números de tu tarjeta."
+
+#: ../../src/Translations/StoreTranslations.php:390
+msgid "Enter two digits for the month and two digits for the year."
+msgstr "Ingresa dos dígitos para el mes y dos dígitos para el año."
+
+#: ../../src/Translations/StoreTranslations.php:391
+msgid "Enter your {digits} digit code."
+msgstr "Ingresa tu código de {digits} dígitos."
+
+#: ../../src/Translations/StoreTranslations.php:392
+msgid "Enter between {min} and {max} digits for your ID number."
+msgstr "Ingresa entre {min} y {max} dígitos para tu número de documento."
+
+#: ../../src/Translations/StoreTranslations.php:393
+msgid "Enter the {digits} digits of your ID number."
+msgstr "Ingresa los {digits} dígitos de tu número de documento."
 
 #~ msgid ""
 #~ "By disabling it, you will disable all credit cards payments from Mercado "

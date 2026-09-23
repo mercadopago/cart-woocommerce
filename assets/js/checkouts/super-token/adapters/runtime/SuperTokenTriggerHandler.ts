@@ -32,10 +32,7 @@ import { ResetCustomCheckout } from '@super-token/useCases/ResetCustomCheckout';
 import { RestorePreloadedPaymentMethod } from '@super-token/useCases/RestorePreloadedPaymentMethod';
 import { ResetFlow } from '@super-token/useCases/ResetFlow';
 import { EnsureEmailListenerRegistered } from '@super-token/useCases/EnsureEmailListenerRegistered';
-import {
-  LegacyTriggerSession,
-  createFetchAndRenderMetrics,
-} from '@super-token/adapters/session/LegacyTriggerSession';
+import { LegacyTriggerSession, createFetchAndRenderMetrics } from '@super-token/adapters/session/LegacyTriggerSession';
 import {
   LegacyLoadOrchestrationSession,
   createLoadSuperTokenMetrics,
@@ -45,6 +42,7 @@ import { LegacyRestoreSession } from '@super-token/adapters/session/LegacyRestor
 import { LegacyResetSession } from '@super-token/adapters/session/LegacyResetSession';
 import { LegacyEmailListenerSession } from '@super-token/adapters/session/LegacyEmailListenerSession';
 import type { PaymentMethod } from '@super-token/types/external-globals';
+import { toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
 
 /** The subset of the ported authenticator the trigger handler reads and forwards to the sessions. */
 export interface TriggerHandlerAuthenticator {
@@ -216,7 +214,7 @@ export class SuperTokenTriggerHandler {
       } catch (error) {
         this.mpSuperTokenMetrics.sendMetric(
           RESTORE_ERROR_METRIC,
-          (error as { message?: string })?.message || 'unknown',
+          toTelemetryErrorMessage(error, 'unknown'),
           RESTORE_ERROR_MESSAGE,
         );
       }

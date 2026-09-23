@@ -9,11 +9,13 @@ jest.mock('sass', () => ({
   compile: jest.fn(() => ({ css: '.compiled{color:red}' })),
 }));
 jest.mock('minify', () => jest.fn(() => Promise.resolve('minified')));
+jest.mock('glob', () => ({ sync: jest.fn(() => []) }));
 
 const fs = require('fs');
 const path = require('path');
 const sass = require('sass');
 const minify = require('minify');
+const { sync: globSync } = require('glob');
 
 const main = require('../../../main.js');
 
@@ -46,8 +48,8 @@ describe('main.js — super-token asset build', () => {
       const contents = fs.writeFileSync.mock.calls.map(([, content]) => content);
       expect(contents).toEqual([
         '.compiled{color:red}',
-        ':root{--mp-super-token-loader-version:1.2.5}.compiled{color:red}',
-        ':root{--mp-super-token-loader-version:1.2.5}.compiled{color:red}',
+        ':root{--mp-super-token-loader-version:1.2.6}.compiled{color:red}',
+        ':root{--mp-super-token-loader-version:1.2.6}.compiled{color:red}',
       ]);
     });
 
@@ -128,8 +130,20 @@ describe('main.js — super-token asset build', () => {
 
   describe('SUPER_TOKEN_LOADER_VERSION (A/B variant list)', () => {
     it('declares a version for both A/B variants', () => {
-      expect(main.SUPER_TOKEN_LOADER_VERSION).toHaveProperty(['v2']);
-      expect(main.SUPER_TOKEN_LOADER_VERSION).toHaveProperty(['v2.1']);
+      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ v2: '1.2.6', 'v2.1': '1.2.6' });
+    });
+  });
+
+  describe('generateIntegrityManifest', () => {
+    it('excludes only the two literal Super Token CSS hand-offs', () => {
+      main.generateIntegrityManifest();
+
+      expect(globSync).toHaveBeenCalledWith('assets/**/*.min.{js,css}', {
+        ignore: [
+          'assets/css/checkouts/super-token/super-token-v2.bundle.min.css',
+          'assets/css/checkouts/super-token/super-token-v2.1.bundle.min.css',
+        ],
+      });
     });
   });
 });

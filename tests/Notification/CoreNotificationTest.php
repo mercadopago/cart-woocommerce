@@ -32,9 +32,14 @@ class CoreNotificationTest extends TestCase
 
     public function setUp(): void
     {
+        $logsMock = Mockery::mock(Logs::class);
+        $logsMock->file = Mockery::mock(File::class);
+        $logsMock->file->shouldReceive('info')->andReturn(null)->byDefault();
+        $logsMock->file->shouldReceive('error')->andReturn(null)->byDefault();
+
         $this->notification = new CoreNotification(
             Mockery::mock(MercadoPagoGatewayInterface::class),
-            Mockery::mock(Logs::class),
+            $logsMock,
             Mockery::mock(OrderStatus::class),
             Mockery::mock(Seller::class),
             Mockery::mock(Store::class)
@@ -141,140 +146,11 @@ class CoreNotificationTest extends TestCase
     }
 
     /**
-     * Dedup-skip metadata sync is authoritative: with authoritativeRefund=true the per-payment
-     * refunded total is synced from the MP payload rather than incremented. This keeps it correct
-     * for panel-origin refunds — RefundHandler persists only the refund_id, never the per-payment
-     * amount, so the normal incrementing path never runs for them.
-     *
-     * The refund amount lives in refunds_notifying[], NOT in payment['refunds'] (which only carries
-     * id/status/notifying/metadata). The sync cross-references by refund id: it sums the amounts of
-     * this payment's refunds that are present in refunds_notifying. Regression guard for the
-     * multi-payment double-refund risk (a stale per-payment total would let a later refund read an
-     * over-stated remaining balance).
+     * When the refund_id was already applied (persisted at refund time by RefundHandler, which
+     * also recorded the per-payment refunded amount), the notification must skip it entirely:
+     * no WooCommerce refund, no metadata sync, no save.
      */
-    public function testUpdatePaymentDetailsAuthoritativeRefundUsesNotifyingAmounts(): void
-    {
-        $paymentId = '123456';
-        $data = [
-            // The amounts live here, keyed by refund id — mirrors the real MP payload.
-            'refunds_notifying' => [
-                ['id' => 'r1', 'amount' => 4.00],
-                ['id' => 'r2', 'amount' => 6.00],
-            ],
-            'payments_details'  => [
-                [
-                    'id'              => $paymentId,
-                    'payment_type_id' => 'pix',
-                    // payment['refunds'] carries NO amount — only id/status/notifying/metadata,
-                    // exactly like the payload captured in homolog.
-                    'refunds'         => [
-                        'r1' => ['id' => 'r1', 'status' => 'approved', 'notifying' => true],
-                        'r2' => ['id' => 'r2', 'status' => 'approved', 'notifying' => true],
-                    ],
-                ],
-            ],
-        ];
-
-        // Stored value is lower than the payload sum — the sync must take the payload total.
-        $paymentData = (object) ['refund' => 4.00];
-        $expectedRefunded = 10.00; // 4.00 + 6.00 cross-referenced from refunds_notifying
-
-        Mockery::mock("overload:" . PaymentMetadata::class)
-            ->expects()->getPaymentMetaKey($paymentId)->andReturn("PaymentMetaKey")->getMock()
-            ->expects()->extractPaymentDataFromMeta(null)->andReturn($paymentData)->getMock()
-            ->expects()->formatPaymentMetadata(Mockery::type('array'), $expectedRefunded)
-            ->andReturn(["formatted"])->getMock();
-
-        $order = Mockery::mock(WC_Order::class)
-            ->expects()->get_meta("PaymentMetaKey")->getMock()
-            ->expects()->update_meta_data("PaymentMetaKey", ["formatted"])->getMock();
-
-        $this->notification->updatePaymentDetails($order, $data, true);
-    }
-
-    /**
-     * Regression guard (PSW-4213): payment['refunds'] in the real MP payload does NOT contain an
-     * `amount` key — only id/status/notifying/metadata. An earlier implementation summed
-     * array_column($payment['refunds'], 'amount'), which silently returned 0 and ZEROED a
-     * previously-recorded refunded amount on every webhook redelivery. The sync must never reduce
-     * the stored total when the payload carries no usable amount for the payment's refunds.
-     */
-    public function testUpdatePaymentDetailsAuthoritativeRefundDoesNotZeroWhenRefundsLackAmount(): void
-    {
-        $paymentId = '123456';
-        $data = [
-            'refunds_notifying' => [
-                // A different refund id than the one on the payment → no cross-reference match.
-                ['id' => 'other', 'amount' => 9.99],
-            ],
-            'payments_details'  => [
-                [
-                    'id'              => $paymentId,
-                    'payment_type_id' => 'account_money',
-                    // Real shape: refund present, but WITHOUT an amount key.
-                    'refunds'         => [
-                        'r1' => ['id' => 'r1', 'status' => 'approved', 'notifying' => true],
-                    ],
-                ],
-            ],
-        ];
-
-        $paymentData = (object) ['refund' => 14.90]; // must be preserved, not zeroed
-        $expectedRefunded = 14.90;
-
-        Mockery::mock("overload:" . PaymentMetadata::class)
-            ->expects()->getPaymentMetaKey($paymentId)->andReturn("PaymentMetaKey")->getMock()
-            ->expects()->extractPaymentDataFromMeta(null)->andReturn($paymentData)->getMock()
-            ->expects()->formatPaymentMetadata(Mockery::type('array'), $expectedRefunded)
-            ->andReturn(["formatted"])->getMock();
-
-        $order = Mockery::mock(WC_Order::class)
-            ->expects()->get_meta("PaymentMetaKey")->getMock()
-            ->expects()->update_meta_data("PaymentMetaKey", ["formatted"])->getMock();
-
-        $this->notification->updatePaymentDetails($order, $data, true);
-    }
-
-    /**
-     * Authoritative-sync guard: when the MP payload carries no refunds for a payment, the sync
-     * must NOT zero out a previously stored refunded amount (e.g. a multi-payment notification
-     * that only details the payment being refunded). The stored value is preserved.
-     */
-    public function testUpdatePaymentDetailsAuthoritativeRefundKeepsStoredWhenPayloadHasNoRefunds(): void
-    {
-        $paymentId = '123456';
-        $data = [
-            'refunds_notifying' => [['id' => 'r1', 'amount' => 4.00]],
-            'payments_details'  => [
-                [
-                    'id'              => $paymentId,
-                    'payment_type_id' => 'pix',
-                    'refunds'         => [], // no refunds for this payment in the payload
-                ],
-            ],
-        ];
-
-        $paymentData = (object) ['refund' => 3.00]; // must be preserved, not zeroed
-        $expectedRefunded = 3.00;
-
-        Mockery::mock("overload:" . PaymentMetadata::class)
-            ->expects()->getPaymentMetaKey($paymentId)->andReturn("PaymentMetaKey")->getMock()
-            ->expects()->extractPaymentDataFromMeta(null)->andReturn($paymentData)->getMock()
-            ->expects()->formatPaymentMetadata(Mockery::type('array'), $expectedRefunded)
-            ->andReturn(["formatted"])->getMock();
-
-        $order = Mockery::mock(WC_Order::class)
-            ->expects()->get_meta("PaymentMetaKey")->getMock()
-            ->expects()->update_meta_data("PaymentMetaKey", ["formatted"])->getMock();
-
-        $this->notification->updatePaymentDetails($order, $data, true);
-    }
-
-    /**
-     * When the refund_id was already applied (persisted at refund time), the notification
-     * must skip the full refund flow and still sync payment-details metadata.
-     */
-    public function testHandleRefundNotificationSkipsAndSyncsMetadataWhenRefundAlreadyApplied(): void
+    public function testHandleRefundNotificationSkipsWhenRefundAlreadyApplied(): void
     {
         // WP_Mock must be initialized BEFORE creating any Mockery mock: WP_Mock::setUp()
         // resets the Mockery container, which would orphan mocks created earlier.
@@ -299,7 +175,7 @@ class CoreNotificationTest extends TestCase
 
         $order = Mockery::mock(WC_Order::class);
         $order->shouldReceive('get_status')->andReturn('processing');
-        $order->shouldReceive('save')->once();
+        $order->shouldNotReceive('save');
 
         $orderStatusMock = Mockery::mock(OrderStatus::class);
         $orderStatusMock->shouldReceive('isRefundIdApplied')
@@ -320,17 +196,13 @@ class CoreNotificationTest extends TestCase
             Mockery::mock(Store::class),
         ])->makePartial();
 
-        // updatePaymentDetails must be called to sync metadata, but the refund flow
-        // (processStatus / wc_create_refund) must NOT run. The dedup skip syncs in
-        // authoritative mode (third arg true) so the per-payment refunded total is
-        // recomputed from the payload rather than incremented.
-        $notification->expects()
-            ->updatePaymentDetails($order, Mockery::type('array'), true)
-            ->once();
+        // The refund is fully accounted for at refund time (RefundHandler), so the dedup skip
+        // must NOT touch payment metadata or the order — it only logs and continues.
+        $notification->shouldNotReceive('updatePaymentDetails');
 
         $notification->handleSuccessfulRequestInternal($data, $order);
 
-        // Behavioural guarantees (save once, updatePaymentDetails once, isRefundIdApplied once,
+        // Behavioural guarantees (isRefundIdApplied once, no updatePaymentDetails, no save,
         // wc_create_refund never) are enforced by the Mockery/WP_Mock expectations verified here.
         \WP_Mock::tearDown();
         $this->assertTrue(true);
@@ -371,8 +243,8 @@ class CoreNotificationTest extends TestCase
 
         $order = Mockery::mock(WC_Order::class);
         $order->shouldReceive('get_status')->andReturn('processing');
-        // Both iterations sync metadata and save once each.
-        $order->shouldReceive('save')->twice();
+        // Only the second refund (new, panel-origin) syncs metadata and saves; the first is skipped.
+        $order->shouldReceive('save')->once();
 
         $orderStatusMock = Mockery::mock(OrderStatus::class);
         // isRefundIdApplied MUST be queried for BOTH ids — proof the loop continued past the skip.
@@ -392,14 +264,9 @@ class CoreNotificationTest extends TestCase
             Mockery::mock(Store::class),
         ])->makePartial();
 
-        // Both refunds land on updatePaymentDetails but through different paths:
-        //  - first (dedup skip) syncs in authoritative mode (third arg true);
-        //  - second (panel-origin, shouldProcessRefund=false) takes the normal incremental
-        //    path (two args, authoritativeRefund defaults to false).
+        // The first refund (already applied) is skipped — no updatePaymentDetails. The second
+        // (new, panel-origin, shouldProcessRefund=false) takes the incremental path (two args).
         // Neither creates a WC refund.
-        $notification->expects()
-            ->updatePaymentDetails($order, Mockery::type('array'), true)
-            ->once();
         $notification->expects()
             ->updatePaymentDetails($order, Mockery::type('array'))
             ->once();

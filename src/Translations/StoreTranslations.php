@@ -384,6 +384,13 @@ class StoreTranslations
             'card_number_validation_error'                        => __('Invalid card number. Please check the information provided.', 'woocommerce-mercadopago'),
             'locale'                                              => __('en-US', 'woocommerce-mercadopago'),
             'card_holder_input_helper_info'                       => __('As it spelled on the card.', 'woocommerce-mercadopago'),
+            'accepted_cards_label'                                => __('You can pay with card', 'woocommerce-mercadopago'),
+            'detected_card_label'                                 => __('Card', 'woocommerce-mercadopago'),
+            'card_number_instruction'                             => __('Enter the {digits} numbers on your card.', 'woocommerce-mercadopago'),
+            'card_expiration_instruction'                         => __('Enter two digits for the month and two digits for the year.', 'woocommerce-mercadopago'),
+            'security_code_instruction'                           => __('Enter your {digits} digit code.', 'woocommerce-mercadopago'),
+            'card_document_instruction_range'                     => __('Enter between {min} and {max} digits for your ID number.', 'woocommerce-mercadopago'),
+            'card_document_instruction_fixed'                     => __('Enter the {digits} digits of your ID number.', 'woocommerce-mercadopago'),
             'consumer_credits_due_date'                           => __('The first installment <b>is due on</b>', 'woocommerce-mercadopago'),
             'months_abbreviated' => [
                 'jan' => __('Jan', 'woocommerce-mercadopago'),
@@ -820,6 +827,7 @@ class StoreTranslations
             'IdempotencyKeyReused'   => __('A technical error occurred. Please contact support.', 'woocommerce-mercadopago'),
 
             // Stable Core P&P codes (spec §4.7 - "Códigos estáveis")
+            'CPP_TAAP_0000001'       => __('We could not process this card. Please try again.', 'woocommerce-mercadopago'),
             'CPP_TAAP_0602002'       => __('We could not complete the operation. Please try another card.', 'woocommerce-mercadopago'),
 
             // HTTP-level fallbacks

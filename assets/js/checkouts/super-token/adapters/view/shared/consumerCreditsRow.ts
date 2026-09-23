@@ -242,7 +242,13 @@ export function buildConsumerCreditsRow(
   hint: (installment: Installment) => string,
 ): HTMLElement {
   const row = buildInteractiveRow(paymentMethod, deps, presentation, session);
-  row.appendChild(buildDetailsSection(paymentMethod, deps, installmentOptions(paymentMethod)));
+  try {
+    row.appendChild(buildDetailsSection(paymentMethod, deps, installmentOptions(paymentMethod)));
+    session.recordConsumerCreditsDetails(true);
+  } catch (error) {
+    session.recordConsumerCreditsDetails(false);
+    throw error;
+  }
   wireConsumerCredits(row, paymentMethod, deps, session, hint);
   return row;
 }

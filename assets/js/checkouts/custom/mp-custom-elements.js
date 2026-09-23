@@ -4,7 +4,12 @@ const CheckoutElements = {
   fcCardholderName: '#form-checkout__cardholderName',
   fcCardNumberContainer: '#form-checkout__cardNumber-container',
   fcCardExpirationDateContainer: '#form-checkout__expirationDate-container',
+  // type="hidden": carries the submit value, never the target of an aria-* write.
   fcIdentificationNumber: '#form-checkout__identificationNumber',
+  // The control the buyer navigates. Matched by class, not by name or id — see traps.md.
+  fcIdentificationNumberInput: '.mp-checkout-custom-container input.mp-document',
+  // The component itself, which owns this field's description.
+  mpDocumentComponent: '.mp-checkout-custom-container input-document',
   fcIdentificationNumberContainer: '#form-checkout__identificationNumber-container',
   fcInputTableContainer: '#mp-checkout-custom-installments-container',
   fcSecurityNumberContainer: '#form-checkout__securityCode-container',
@@ -22,7 +27,8 @@ const CheckoutElements = {
   paymentMethodId: '#paymentMethodId',
   customContent: '.mp-checkout-custom-container',
   mpCardholderNameInputLabel: '#mp-card-holder-div .mp-input-label',
-  mpDocumentInputLabel: '#mp-doc-div input-label div.mp-input-label',
+  mpDocumentInputLabel: '#mp-doc-div input-label .mp-input-label',
   mpCardHolderNameHelper: '#mp-card-holder-div #mp-card-holder-name-helper',
   mpCardHolderNameHelperInfo: '#mp-card-holder-div #mp-card-holder-name-helper-info',
+  mpDetectedCardAnnouncement: '#mp-detected-card-announcement',
 };

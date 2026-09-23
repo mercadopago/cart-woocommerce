@@ -10,7 +10,7 @@
 /**
  * Injected into the init telemetry as `js_version`. Kept in sync with the CDN bundle's version.
  */
-export const SUPER_TOKEN_JS_VERSION = '1.2.5';
+export const SUPER_TOKEN_JS_VERSION = '1.2.6';
 
 export const V2_VARIANT = 'v2';
 export const V21_VARIANT = 'v2.1';

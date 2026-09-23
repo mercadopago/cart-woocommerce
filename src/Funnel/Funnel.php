@@ -13,6 +13,11 @@ use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 
 class Funnel
 {
+    // Generic message reported for the seller-contact step, instead of the real
+    // exception, since the SDK exception can echo the request body (which carries
+    // the seller's email) verbatim — see runWithTreatment().
+    private const SELLER_CONTACT_ERROR_MESSAGE = 'Error updating seller contact information';
+
     private Sdk $sdk;
 
     private Store $store;
@@ -58,6 +63,7 @@ class Funnel
             $createSellerFunnelBase->shop_url = site_url();
             $createSellerFunnelBase->platform_version = $this->getWoocommerceVersion();
             $createSellerFunnelBase->plugin_version = MP_VERSION;
+            $createSellerFunnelBase->site_id = $this->resolveSiteId();
             $response = $createSellerFunnelBase->save();
             $this->store->setInstallationId($response->id);
             $this->store->setInstallationKey($response->cpp_token);
@@ -74,6 +80,20 @@ class Funnel
             && !empty($this->store->getInstallationKey());
     }
 
+    /**
+     * Send the store's contact email and country so Product can identify sellers
+     * who installed the plugin but never added credentials — this step is chained
+     * from the $after callback of create(), not from updateStepCredentials(), since
+     * that step never runs for that audience.
+     */
+    public function updateStepSellerContact(?\Closure $after = null): void
+    {
+        $this->update([
+            'email'   => $this->getStoreEmail(),
+            'country' => Country::getWoocommerceDefaultCountry(),
+        ], $after, self::SELLER_CONTACT_ERROR_MESSAGE);
+    }
+
     public function updateStepCredentials(?\Closure $after = null): void
     {
         $this->update([
@@ -81,7 +101,7 @@ class Funnel
             'is_added_test_credential'       => !empty($this->seller->getCredentialsAccessTokenTest()),
             'plugin_mode'                    => $this->getPluginMode(),
             'cust_id'                        => $this->seller->getCustIdFromAT(),
-            'site_id'                        => $this->country::countryToSiteId($this->country->getPluginDefaultCountry()),
+            'site_id'                        => $this->resolveSiteId(),
         ], $after);
     }
 
@@ -129,8 +149,11 @@ class Funnel
      *
      * @param array $attrs Funnel attribute values map
      * @param \Closure $after Function to run after funnel updated, inside treatment
+     * @param string $sanitizedError Message to report instead of the exception —
+     *                               required for steps that carry PII (see
+     *                               runWithTreatment())
      */
-    private function update(array $attrs, ?\Closure $after = null): void
+    private function update(array $attrs, ?\Closure $after = null, ?string $sanitizedError = null): void
     {
         if (!$this->created()) {
             return;
@@ -153,7 +176,41 @@ class Funnel
             if (isset($after)) {
                 $after();
             }
-        });
+        }, $sanitizedError);
+    }
+
+    /**
+     * Read the store's contact email for the onboarding funnel.
+     *
+     * admin_email is the one address WordPress guarantees to exist. The installer's
+     * own address would fit the goal better, but it is unreachable from here — see
+     * traps.md. Kept isolated so swapping the source is a one-line change.
+     */
+    private function getStoreEmail(): string
+    {
+        return get_option('admin_email', '');
+    }
+
+    /**
+     * Allowlisted conversion — never the raw country code (CWE-99). A country outside the
+     * seven site ids resolves to '', normalized to null so the funnel column keeps one
+     * representation of "unknown". Shared by both steps that send it — see traps.md.
+     */
+    private function resolveSiteId(): ?string
+    {
+        $persistedSiteId = $this->seller->getSiteId();
+
+        // getPluginDefaultCountry() trusts the persisted site id without validating it, and
+        // siteIdToCountry() answers AR for anything it does not know — so an unsupported stored
+        // value would travel as MLA. Guarded here only: that helper also decides which payment
+        // methods a store is offered, which this step has no business changing. See traps.md.
+        $country = ($persistedSiteId === '' || Country::isValidSiteId($persistedSiteId))
+            ? $this->country->getPluginDefaultCountry()
+            : Country::getWoocommerceDefaultCountry();
+
+        $siteId = $this->country::countryToSiteId($country);
+
+        return $siteId !== '' ? $siteId : null;
     }
 
     private function canCreate(): bool
@@ -178,15 +235,25 @@ class Funnel
         return $this->sdk->getEntityInstance(UpdateSellerFunnelBase::class, Constants::BASEURL_MP);
     }
 
-    private function runWithTreatment(\Closure $callback): void
+    /**
+     * @param \Closure $callback
+     * @param string $sanitizedError When given, reported in place of the SDK
+     *                               exception, which can echo the request body
+     *                               verbatim (e.g. on a JSON encode failure) and
+     *                               leak PII into the plugin log and Datadog
+     */
+    private function runWithTreatment(\Closure $callback, ?string $sanitizedError = null): void
     {
         try {
             $callback();
 
             $this->sendSuccessEvent();
         } catch (Exception $ex) {
-            $GLOBALS['mercadopago']->logs->file->error(sprintf("Error on %s\n%s", __METHOD__, $ex), __CLASS__);
-            $this->sendErrorEvent($ex->getMessage());
+            $logDetail = $sanitizedError ?? (string) $ex;
+            $eventMessage = $sanitizedError ?? $ex->getMessage();
+
+            $GLOBALS['mercadopago']->logs->file->error(sprintf("Error on %s\n%s", __METHOD__, $logDetail), __CLASS__);
+            $this->sendErrorEvent($eventMessage);
         }
     }
 

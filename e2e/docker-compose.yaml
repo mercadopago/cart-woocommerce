@@ -1,0 +1,13 @@
+services:
+  wordpress:
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+      tags:
+        - woocommerce-mercadopago-e2e-img
+    container_name: woocommerce-mercadopago-e2e
+    ports:
+      - "8765:80"
+    volumes:
+      - ../:/woocommerce-mercadopago
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]

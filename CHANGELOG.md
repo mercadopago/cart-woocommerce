@@ -5,7 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [8.9.3] 2026-08-24
+## [8.9.4] 2026-09-17
+### Added
+- Add accessible descriptions to the card checkout fields, including the expected number of digits of the document per country and the expected format of the cardholder name
+- Add alternative text to the accepted card brand logos and announce the detected brand to screen readers
+
+### Changed
+- Standardize the document type labels shown in the card checkout across all supported countries while preserving the document values, order and selection provided by Mercado Pago
+- Update the cardholder name helper text in Spanish and Portuguese to match the checkout content guidelines
+- Change the card checkout fields to be announced by screen readers, including the document, issuer and installments fields
+- Change the card checkout error messages to be announced by screen readers when a field is left invalid, including why the document was rejected when the purchase is blocked
+- Change the card checkout helper texts to be announced by screen readers, with error messages announced immediately and supporting texts waiting their turn
+- Show a keyboard focus indicator on the issuer and installments fields of the card checkout
+- Announce the required state of the card checkout fields to screen readers
+- Align the card checkout form with the design specification: add the missing spacing between the installments selector and the bank interest disclaimer along with its typography, keep the expiration date and security code fields aligned when only one of them shows an error, and apply the standard spacing before the installments section in countries that do not display the document field
+- Standardize the document field placeholder color across the card, PSE and boleto checkouts, so it no longer inherits an inconsistent color from the store theme
+- Send the store marketplace, contact email and country when starting the onboarding funnel, so stores that install the plugin without finishing the setup can be identified and reached out to
+- Add diagnostics to help identify Custom Checkout initialization delays caused by slow-loading store scripts
+- Update the Mercado Pago PHP SDK to 3.7.0
+
+### Fixed
+- Allow card tokenization for an initial zero-dollar subscription authorization by keeping the fixed one-installment value without showing or validating an inapplicable installments choice or prematurely validating an untouched holder name
+- Complete approved zero-dollar subscription authorizations synchronously after validating and persisting the recurring profile, and surface incomplete responses consistently in Classic, Blocks and Order Pay without clearing the buyer's cart or waiting for a payment notification that is not emitted
+- Show the card retry message when the payment provider reports that the saved card is no longer valid during an initial subscription payment
+- Fix Custom Checkout initialization in Classic, Blocks and order-pay pages when optimization plugins defer script execution, including the Mercado Pago SDK, or render the checkout form after the Mercado Pago scripts load
+- Fix the card checkout security code hint stating three digits for card brands that use four
+- Fix per-payment refunded amount being incorrectly stuck after the first partial refund when multiple partial refunds arrive in separate webhook notifications for the same payment
+- Keep the fast payment checkout working when a single saved payment method fails to render, so one faulty row no longer blocks the rest of the list
+- Retry fast payment initialization, a bounded number of times, when the Mercado Pago SDK becomes available late
+
+### Security
+- Remove authorization headers, session cookies and other credentials from fast payment diagnostics before they are sent
+
+## [8.9.3] 2026-08-19
 ### Added
 - Enable refunds for fast payment orders directly from the WooCommerce order panel — full or partial, like any other payment method
 - Format the document (ID) field per country in the card, ticket and PSE checkouts, and show the required-field message in real time when it is left empty

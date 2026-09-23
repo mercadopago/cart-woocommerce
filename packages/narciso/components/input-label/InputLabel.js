@@ -8,12 +8,20 @@ class InputLabel extends HTMLElement {
   }
 
   createLabel() {
-    const label = document.createElement('div');
+    // Must stay a <label>: a <div> gives no accessible name — see traps.md.
+    const label = document.createElement('label');
     label.classList.add('mp-input-label');
     label.setAttribute('data-cy', 'input-label');
 
     const message = this.getAttribute('message');
-    label.innerHTML = message;
+    label.textContent = message;
+
+    // Absent for the SDK iframe fields, which have no id of ours to point to.
+    const forId = this.getAttribute('for');
+
+    if (forId) {
+      label.htmlFor = forId;
+    }
 
     let isOptional = this.getAttribute('isOptional');
 
@@ -23,7 +31,7 @@ class InputLabel extends HTMLElement {
 
     if (!isOptional) {
       const asterisco = document.createElement('b');
-      asterisco.innerHTML = '*';
+      asterisco.textContent = '*';
       asterisco.style = 'color: red';
       label.appendChild(asterisco);
     }

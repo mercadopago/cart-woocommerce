@@ -1,0 +1,68 @@
+(shared_store) {
+	handle /wp-admin/admin-ajax.php {
+		reverse_proxy {args[0]}
+	}
+	@private_admin path /wp-admin /wp-admin/* /wp-login.php /wp-login.php/* /xmlrpc.php /xmlrpc.php/* /wp-content/debug.log /wp-content/debug.log/*
+	handle @private_admin {
+		respond 403
+	}
+	handle {
+		reverse_proxy {args[0]}
+	}
+}
+
+e2e-staging-mla.ppolimpo.io {
+	import shared_store wp-staging-mla:80
+}
+
+e2e-homol-mla.ppolimpo.io {
+	import shared_store wp-homol-mla:80
+}
+
+e2e-staging-mlb.ppolimpo.io {
+	import shared_store wp-staging-mlb:80
+}
+
+e2e-homol-mlb.ppolimpo.io {
+	import shared_store wp-homol-mlb:80
+}
+
+e2e-staging-mlc.ppolimpo.io {
+	import shared_store wp-staging-mlc:80
+}
+
+e2e-homol-mlc.ppolimpo.io {
+	import shared_store wp-homol-mlc:80
+}
+
+e2e-staging-mlm.ppolimpo.io {
+	import shared_store wp-staging-mlm:80
+}
+
+e2e-homol-mlm.ppolimpo.io {
+	import shared_store wp-homol-mlm:80
+}
+
+e2e-staging-mco.ppolimpo.io {
+	import shared_store wp-staging-mco:80
+}
+
+e2e-homol-mco.ppolimpo.io {
+	import shared_store wp-homol-mco:80
+}
+
+e2e-staging-mlu.ppolimpo.io {
+	import shared_store wp-staging-mlu:80
+}
+
+e2e-homol-mlu.ppolimpo.io {
+	import shared_store wp-homol-mlu:80
+}
+
+e2e-staging-mpe.ppolimpo.io {
+	import shared_store wp-staging-mpe:80
+}
+
+e2e-homol-mpe.ppolimpo.io {
+	import shared_store wp-homol-mpe:80
+}

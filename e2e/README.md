@@ -20,6 +20,19 @@ npm run test:mlb:classic   # Brazil — Classic checkout
 npm run test:mlb:blocks    # Brazil — Blocks checkout
 ```
 
+## iOS Simulator / Safari (MLB)
+
+A suíte em [`ios/`](ios/README.md) controla o Safari real do iOS Simulator com Appium/XCUITest e cobre o Custom Checkout MLB em Classic e Blocks, incluindo a regressão nativa de parcelas:
+
+```bash
+cd e2e
+npm ci
+npm run doctor:ios
+npm run test:ios:mlb
+```
+
+Ela usa HTTPS local em `https://localhost:8443`, sem ngrok/trycloudflare, e grava evidências seguras em `ios/evidence/`. Consulte [`ios/README.md`](ios/README.md) para pré-requisitos, arquitetura e gate de estabilidade.
+
 ## Suíte completa / regressão (`run-all-report.sh`)
 
 Para rodar a **matriz completa** (7 países × 2 checkouts) com relatório consolidado
@@ -29,13 +42,58 @@ Para rodar a **matriz completa** (7 países × 2 checkouts) com relatório conso
 cd e2e
 bash run-all-report.sh            # matriz 7×2 + relatório consolidado
 bash run-all-report.sh --menu     # modo interativo (país / checkout / ambiente / PSE...)
-bash run-all-report.sh --release  # regressão oficial (PSE (MCO) + retries)
+bash run-all-report.sh --release  # regressão manual de release (matriz + PSE + retries + iOS)
 ```
+
+O autor da release executa `--release` ativamente em um Mac com Xcode. O comando chama a suíte
+iOS local após a matriz web e retorna falha se qualquer cenário do Safari no Simulator falhar;
+não existe gatilho automático de CI para essa etapa.
 
 Ajuda completa: `bash run-all-report.sh --help` (ou `--help --interactive` no browser).
 
 📚 **Guia rápido no Confluence:** [Script E2E Regression Runner (`run-all-report.sh`)](https://mercadolibre.atlassian.net/wiki/spaces/PLU/pages/4363812987/Script+E2E+Regression+Runner+run-all-report.sh)
 &nbsp;&nbsp;·&nbsp;&nbsp;SDD da task: [`docs/task-e2e-report-script.md`](docs/task-e2e-report-script.md)
+
+## Ambientes compartilhados staging × homol (PSW-4320)
+
+A execução começa no clone local, mas as lojas são compartilhadas pelo time. O Makefile da raiz é
+a interface canônica para developers e agentes. Para preparar produção × RC e executar Classic +
+Blocks com monitor:
+
+```bash
+SMOOTH_USER=<seu-usuario> make e2e-shared-release \
+  SITE=MLB PRODUCTION_VERSION=8.9.3
+```
+
+O comando gera e envia a RC atual para staging, baixa e instala a versão produtiva oficial em
+homol, valida as versões instaladas e compara as duas lanes. Resultados ficam em
+`results/dual/<run_id>/`. O lease é renovado durante toda a operação; se o ownership for perdido,
+os processos param e ambas as lanes são registradas como `LEASE_LOST`. Use
+`make e2e-shared-help` para comandos granulares.
+
+Antes de publicar ou testar, o fluxo consulta o IP atual de `big-shared-xlarge` com o `smooth` e
+confirma que os 14 domínios staging/homol resolvem somente para esse IPv4. A verificação isolada é
+`make e2e-shared-domain-check`; ela é somente leitura e, se houver divergência, imprime a correção
+correspondente com `smooth add-domain` sem executá-la automaticamente.
+
+Depois de publicar as versões nos sete países, a regressão completa usa quatro países concorrentes,
+timeouts `standard` e um retry por padrão:
+
+```bash
+SMOOTH_USER=<seu-usuario> make e2e-shared-test-matrix \
+  RC_VERSION=8.9.4 PRODUCTION_VERSION=8.9.3
+```
+
+O resumo fica em `results/matrix/<matrix_id>/report.md`. A operação, os parâmetros de fallback e
+o monitor são documentados somente no runbook do owner abaixo.
+
+A única documentação operacional do owner — acesso, bootstrap, secrets, rotação, publicação,
+monitor, resultados e troubleshooting — está em
+[`../docker-flexible-environment/deploy/README.md`](../docker-flexible-environment/deploy/README.md#ambientes-compartilhados-staging--homol-psw-4320).
+
+Os testes em [`tooling-tests/`](tooling-tests/README.md) são unitários da automação — configuração,
+download, publicação, lease e classificação — e não cenários de checkout Playwright. Specs
+`@serial-store` permanecem excluídas até existir snapshot/restore confiável.
 
 ## Prerequisites
 
@@ -234,6 +292,7 @@ e2e/
     debit_card_scenarios.js  # Debit card numbers
   global-setup.js            # Auto-configures store before all tests
   playwright.config.js       # Playwright config (4 workers, retries=0, 60s timeout)
+  ios/                       # Safari no iOS Simulator via Appium/XCUITest (MLB)
 ```
 
 ## Payment Methods by Country

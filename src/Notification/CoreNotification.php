@@ -158,32 +158,12 @@ class CoreNotification extends AbstractNotification
             // SIEM parsers (log injection). Used only for logging — lookups keep the raw value.
             $safeRefundId = preg_replace('/[\r\n\t]/', '', (string) $refundId);
 
-            // Refund-id dedup: if this refund_id was already applied (persisted at refund
-            // time from the panel), skip the refund flow entirely. Still sync payment-details
-            // metadata (installments, last_four_digits, and the per-payment refunded amount)
-            // so order meta stays current. The sync runs in authoritative mode: the per-payment
-            // refunded total is recomputed from the MP payload (not incremented), which keeps it
-            // idempotent under webhook redelivery and is the only place panel-origin refunds
-            // update that metadata — RefundHandler persists only the refund_id. Leaving it stale
-            // would let a later multi-payment refund read an over-stated remaining balance for an
-            // already-refunded payment and issue a duplicate refund against it.
+            // Refund-id dedup: if this refund_id was already applied (persisted at refund time from
+            // the panel), the refund is fully accounted for — RefundHandler recorded the per-payment
+            // refunded amount at refund time (PSW-4412), and the WooCommerce refund already exists.
+            // Skip the notification to avoid creating a duplicate refund or double-counting the amount.
             if ($this->orderStatus->isRefundIdApplied($order, (string) $refundId)) {
                 $this->logs->file->info('Refund already applied, skipping notification refund: ' . $safeRefundId, __CLASS__);
-                if (!empty($data['payments_details'])) {
-                    // Guard the metadata sync: a failure here must not abort the remaining
-                    // entries of the refunds_notifying loop (which would leave the MP webhook
-                    // retrying indefinitely on a 500).
-                    try {
-                        $this->updatePaymentDetails($order, $data, true);
-                        $order->save();
-                    } catch (Exception $e) {
-                        $this->logs->file->error(
-                            'Failed to sync payment details after dedup skip for refund '
-                            . $safeRefundId . ': ' . $e->getMessage(),
-                            __CLASS__
-                        );
-                    }
-                }
                 continue;
             }
 
@@ -311,7 +291,7 @@ class CoreNotification extends AbstractNotification
      *
      * @return void
      */
-    public function updatePaymentDetails(WC_Order $order, array $data, bool $authoritativeRefund = false): void
+    public function updatePaymentDetails(WC_Order $order, array $data): void
     {
         $payment_ids = [];
 
@@ -324,43 +304,23 @@ class CoreNotification extends AbstractNotification
 
             $refundedAmount = $paymentData->refund ?? 0;
 
-            if ($authoritativeRefund) {
-                // Dedup-skip path: sync the per-payment refunded total from the MP payload. This
-                // is the ONLY place the per-payment refund metadata is updated for panel-origin
-                // refunds (RefundHandler persists just the refund_id, never the per-payment
-                // amount, so the normal incrementing path is never reached for them).
-                //
-                // The refund amount does NOT live in payment['refunds'] — that structure only
-                // carries id/status/notifying/metadata per refund. The amount lives in
-                // refunds_notifying[]. So we cross-reference by refund id to sum the amounts of
-                // this payment's refunds that are present in the current notification.
-                //
-                // A single notification only carries the amounts of the refunds it is notifying;
-                // amounts of previously-applied refunds are not in the payload. We therefore never
-                // reduce the stored total (max) — this keeps the sync idempotent under webhook
-                // redelivery and prevents a partial payload from zeroing out or shrinking a value
-                // that was already recorded.
-                $notifyingAmountById = [];
-                foreach ($data['refunds_notifying'] ?? [] as $notifyingRefund) {
-                    if (isset($notifyingRefund['id'], $notifyingRefund['amount']) && is_numeric($notifyingRefund['amount'])) {
-                        $notifyingAmountById[(string) $notifyingRefund['id']] = (float) $notifyingRefund['amount'];
-                    }
-                }
-
-                $notifyingTotal    = 0.0;
-                $hasNotifyingMatch = false;
-                foreach (array_keys($payment['refunds'] ?? []) as $paymentRefundId) {
-                    if (isset($notifyingAmountById[(string) $paymentRefundId])) {
-                        $notifyingTotal += $notifyingAmountById[(string) $paymentRefundId];
-                        $hasNotifyingMatch = true;
-                    }
-                }
-
-                if ($hasNotifyingMatch) {
-                    $refundedAmount = max((float) $refundedAmount, $notifyingTotal);
-                }
-            } elseif (isset($data['current_refund']) && isset($payment['refunds'][$data['current_refund']['id']])) {
+            // MP-origin refund: the notification carries the current refund's amount, which is
+            // incremented into the per-payment total here. Panel-origin refunds do NOT reach this
+            // path — RefundHandler records their per-payment amount at refund time (PSW-4412), and
+            // their notification is recognised as already-applied and skipped in
+            // handleRefundNotification.
+            if (isset($data['current_refund']) && isset($payment['refunds'][$data['current_refund']['id']])) {
                 $refundedAmount += $data['current_refund']['amount'];
+                $this->logs->file->info(
+                    sprintf(
+                        'Accumulated MP-origin refund %s (%s) on payment %s; [Refund] -> %s',
+                        preg_replace('/[\r\n\t]/', '', (string) $data['current_refund']['id']),
+                        $data['current_refund']['amount'],
+                        preg_replace('/[\r\n\t]/', '', (string) $payment['id']),
+                        $refundedAmount
+                    ),
+                    __CLASS__
+                );
             }
 
             $order->update_meta_data(PaymentMetadata::getPaymentMetaKey($payment['id']), PaymentMetadata::formatPaymentMetadata($payment, $refundedAmount));

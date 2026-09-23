@@ -30,6 +30,8 @@ class MPCardForm {
         this.amount = amount;
         this.cardNumberFilledValidator = false;
 
+        this.stabilizeZeroDollarInitialCitInstallments();
+
         this.dispatchCheckoutAmountEvent(amount);
 
         if (!window.mpSdkInstance) {
@@ -55,6 +57,8 @@ class MPCardForm {
             this.sendMetric('MP_CARDFORM_SUCCESS', 'Security fields loaded', 'mp_custom_checkout_security_fields_client');
             CheckoutPage.verifyCardholderNameOnFocus();
             CheckoutPage.clearDocumentLabelErrorOnInput();
+            // onReady only fires once every field is mounted, so the iframes exist.
+            CheckoutPage.setSecureFieldInstructions();
         })
         .catch((error) => {
             this.clearTimeoutToWaitInitCardForm();
@@ -83,7 +87,7 @@ class MPCardForm {
             textAlign: 'left',
             fontFamily: 'Inter ',
             fontWeight: '400',
-            placeholderColor: ' #0000008C',
+            placeholderColor: '#0000008C',
         };
 
         const baseCustomFonts = {
@@ -158,6 +162,7 @@ class MPCardForm {
             onFormUnmounted: (error) => {
                 this.formMounted = false;
                 CheckoutPage.clearInputs();
+                this.stabilizeZeroDollarInitialCitInstallments();
                 resolve();
 
                 if (error) {
@@ -165,6 +170,14 @@ class MPCardForm {
                 }
             },
             onInstallmentsReceived: (error, installments) => {
+                const isExpectedZeroDollarInstallmentsResult = this.isZeroDollarInitialCitContext()
+                    && (!error || error?.message?.includes('payer_costs'));
+
+                if (isExpectedZeroDollarInstallmentsResult) {
+                    this.stabilizeZeroDollarInitialCitInstallments();
+                    return;
+                }
+
                 if (error) {
                     const messages = wc_mercadopago_custom_checkout_params.error_messages;
                     this.addErrorAlert(messages.installments[error.message] ?? messages.default);
@@ -207,6 +220,7 @@ class MPCardForm {
                     // (minus the SDK prefix), or 'unknown error message' when the error has no message.
                     this.cardBinInvalidMessage = (error?.message || '').replace('MercadoPago.js - ', '') || 'unknown error message';
                     CheckoutPage.clearCardState();
+                    this.stabilizeZeroDollarInitialCitInstallments();
                     const helperMsg = CheckoutPage.getHelperMessage('cardNumber');
                     if (helperMsg) {
                         helperMsg.innerHTML = isInvalidBin
@@ -228,7 +242,12 @@ class MPCardForm {
 
                         CheckoutPage.setValueOn('paymentMethodId', paymentMethod.id);
                         CheckoutPage.setCvvConfig(paymentMethod.settings[0].security_code);
-                        CheckoutPage.setImageCard(paymentMethod.secure_thumbnail || paymentMethod.thumbnail);
+                        CheckoutPage.setImageCard(paymentMethod.secure_thumbnail || paymentMethod.thumbnail, paymentMethod.name);
+                        // Amex changes both digit counts.
+                        CheckoutPage.setSecureFieldInstructions(
+                            paymentMethod.settings[0].card_number?.length,
+                            paymentMethod.settings[0].security_code?.length
+                        );
                         const additionalInfo = CheckoutPage.loadAdditionalInfo(paymentMethod.additional_info_needed);
                         CheckoutPage.additionalInfoHandler(additionalInfo);
                         CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'remove', 'mp-error');
@@ -238,9 +257,11 @@ class MPCardForm {
                         CheckoutPage.setDisplayOfInputHelper('mp-card-holder-name', 'none');
                         CheckoutPage.setDisplayOfInputHelperInfo('mp-card-holder-name', 'flex');
                         CheckoutPage.shouldEnableInstallmentsComponent(paymentMethod.payment_type_id);
+                        this.stabilizeZeroDollarInitialCitInstallments();
                     } else {
                         this.cardBinIsValid = false;
                         CheckoutPage.clearCardState();
+                        this.stabilizeZeroDollarInitialCitInstallments();
                         CheckoutPage.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
                         CheckoutPage.setDisplayOfInputHelper('mp-card-number', 'flex');
                     }
@@ -292,6 +313,7 @@ class MPCardForm {
                             CheckoutPage.setBackground('fcCardNumberContainer', 'no-repeat #fff');
                             CheckoutPage.removeAdditionFields(!isSuperToken);
                             CheckoutPage.clearInputs();
+                            this.stabilizeZeroDollarInitialCitInstallments();
                         }
                         if (!CheckoutPage.cardholderNameHasError()) {
                             CheckoutPage.setDisplayOfInputHelperInfo('mp-card-holder-name', 'flex');
@@ -322,7 +344,17 @@ class MPCardForm {
                 return CheckoutPage.setDisplayOfInputHelper(CheckoutPage.inputHelperName(field), 'none');
             },
             onError: (errors) => {
-                CheckoutPage.verifyCardholderName();
+                const hasOnlyExpectedZeroDollarInstallmentsErrors = this.isZeroDollarInitialCitContext()
+                    && errors.length > 0
+                    && errors.every((error) => error?.message?.includes('payer_costs'));
+
+                // The zero-dollar installments TypeError can also reach this global callback.
+                // Ignore only that isolated SDK failure here; all other errors keep the
+                // existing holder-name validation path.
+                if (!hasOnlyExpectedZeroDollarInstallmentsErrors) {
+                    CheckoutPage.verifyCardholderName();
+                }
+
                 errors.forEach((error) => {
                     this.removeBlockOverlay();
 
@@ -399,6 +431,35 @@ class MPCardForm {
 
         const amount = parseFloat(amountElement.value.replace(',', '.'));
         return String(amount);
+    }
+
+    isZeroDollarInitialCitContext() {
+        const amountElement = document.getElementById('mp-amount');
+        const checkoutType = document.querySelector('#mp_checkout_type')?.value;
+        const rawAmount = this.amount;
+
+        // This is only a client-side UX exception. The server-derived flag narrows it
+        // to the initial CIT route; the backend remains authoritative for amount/installments.
+        if (
+            checkoutType !== 'custom'
+            || amountElement?.dataset.mpCitInitialContext !== 'true'
+            || (typeof rawAmount !== 'string' && typeof rawAmount !== 'number')
+            || (typeof rawAmount === 'string' && rawAmount.trim() === '')
+        ) {
+            return false;
+        }
+
+        const amount = Number(rawAmount);
+        return Number.isFinite(amount) && amount === 0;
+    }
+
+    stabilizeZeroDollarInitialCitInstallments() {
+        if (!this.isZeroDollarInitialCitContext()) {
+            return false;
+        }
+
+        CheckoutPage.setZeroDollarInitialCitInstallmentsState();
+        return true;
     }
 
     formatTrackingAmount(amount = '') {

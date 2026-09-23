@@ -110,7 +110,7 @@ class AutomaticPaymentsClient
      *
      * @return Response
      *
-     * @throws \RuntimeException When subscription.id is absent from the response (orphan payment, AC-2).
+     * @throws \RuntimeException When subscription.id is absent from a paid 2xx CIT response (orphan payment, AC-2).
      * @throws \Exception        Propagated from {@see Requester} on network or HTTP >= 400 errors.
      */
     public function cit(string $accessToken, \WC_Order $order, array $payload): Response
@@ -140,9 +140,18 @@ class AutomaticPaymentsClient
             return $response;
         }
 
-        // Orphan detection: a 2xx without subscription.id means a charge was created
-        // without a registered subscription — unrecoverable orphan state.
-        // Logged as 'error' (WC Logger does not have a 'critical' level; 'error' is the highest).
+        $isZeroDollarCit = SubscriptionsHelper::isZeroDollarCit($payload);
+
+        // The gateway owns the complete ZDA response contract and its checkout-specific
+        // failure adapters. Return incomplete ZDA responses so it can report the exact
+        // allowlisted violation without exposing Core response details to the buyer.
+        if ($isZeroDollarCit && empty($data['subscription']['id'])) {
+            return $response;
+        }
+
+        // Paid-CIT orphan detection keeps its existing fail-closed behavior: a 2xx
+        // without subscription.id means a charge was created without a registered
+        // subscription. WC Logger has no critical level, so error is the highest.
         if (empty($data['subscription']['id'])) {
             $this->log('error', 'op=cit status=orphan_detected', [
                 'request_id'  => $requestId,

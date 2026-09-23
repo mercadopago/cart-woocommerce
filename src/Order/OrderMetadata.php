@@ -532,6 +532,89 @@ class OrderMetadata
     }
 
     /**
+     * Add a refunded amount to a payment's per-payment "[Refund X]" metadata.
+     *
+     * Source-of-truth write (PSW-4412): called by RefundHandler at panel-refund time, when the
+     * exact payment and amount are known. Recording the amount here — instead of reconstructing it
+     * later from an async notification — removes the need to tell a new order from a legacy one:
+     * the notification only has to recognise the already-applied refund and skip it.
+     *
+     * Increments the existing "[Refund X]" segment in place, preserving every other stored field,
+     * and reloads meta first (HPOS-safe) so a concurrent notification write is observed. Never
+     * throws — a persistence failure is logged and swallowed so a transient DB error cannot abort
+     * the refund flow; the WooCommerce order-level refunded total (get_total_refunded) remains the
+     * authoritative record.
+     *
+     * @param WC_Order $order
+     * @param string $paymentId
+     * @param float $amount amount refunded from this payment, in the MP account currency
+     *
+     * @return void
+     */
+    public function addRefundedAmountToPayment(WC_Order $order, string $paymentId, float $amount): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        // Force a fresh read (HPOS-safe) before updating so a concurrent notification write is observed.
+        $order->read_meta_data(true);
+
+        $metaKey = PaymentMetadata::getPaymentMetaKey($paymentId);
+        $stored  = (string) $order->get_meta($metaKey);
+
+        if ($stored === '' || strpos($stored, '[Refund') === false) {
+            // No per-payment metadata (or no [Refund] segment) to increment yet: the payment-details
+            // sync has not run for this payment. The order-level refunded total still records the
+            // refund, so bail out without corrupting the stored string.
+            $this->logs->file->info(
+                'No payment metadata to update refunded amount for payment ' . $paymentId
+                . ' on order ' . $order->get_id(),
+                __CLASS__
+            );
+            return;
+        }
+
+        $paymentData     = PaymentMetadata::extractPaymentDataFromMeta($stored);
+        $previousRefund  = (float) ($paymentData->refund ?? 0);
+        $newRefunded     = $previousRefund + $amount;
+
+        // Replace only the [Refund X] segment, preserving every other stored field. The pattern is
+        // static and $stored is guaranteed to contain a [Refund ...] segment (checked above), so
+        // preg_replace always returns the updated string; the `?? $stored` is a defensive no-op that
+        // keeps the value untouched in the impossible event of a PCRE failure.
+        $updated = preg_replace(
+            '/\[Refund [^\]]*\]/',
+            sprintf('[Refund %s]', $newRefunded),
+            $stored,
+            1
+        ) ?? $stored;
+
+        try {
+            $this->orderMeta->update($order, $metaKey, $updated);
+            $this->logs->file->info(
+                sprintf(
+                    'Recorded refund amount %s on payment %s at refund time; [Refund] %s -> %s (order %s)',
+                    $amount,
+                    preg_replace('/[\r\n\t]/', '', $paymentId),
+                    $previousRefund,
+                    $newRefunded,
+                    $order->get_id()
+                ),
+                __CLASS__
+            );
+        } catch (\Throwable $e) {
+            // Log only the exception class, never getMessage(): a wpdb/PDO exception can embed the
+            // failing SQL in the message and leak it into centralized logs.
+            $this->logs->file->error(
+                'Failed to persist refunded amount for payment ' . $paymentId
+                . ' on order ' . $order->get_id() . '; exception type: ' . get_class($e),
+                __CLASS__
+            );
+        }
+    }
+
+    /**
      * Update an order's payments metadata
      *
      * @param WC_Order $order

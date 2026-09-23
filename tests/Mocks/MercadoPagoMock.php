@@ -173,6 +173,7 @@ class MercadoPagoMock
         // expectations in every test; individual tests may override these.
         $mock->orderMetadata->shouldReceive('getAppliedRefundIds')->byDefault()->andReturn([]);
         $mock->orderMetadata->shouldReceive('addAppliedRefundId')->byDefault()->andReturnNull();
+        $mock->orderMetadata->shouldReceive('addRefundedAmountToPayment')->byDefault()->andReturnNull();
 
         // Super Token processor (real service, mirrors Dependencies wiring)
         $mock->superTokenPaymentProcessor = new SuperTokenPaymentProcessor(

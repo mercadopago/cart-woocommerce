@@ -691,7 +691,38 @@ class AutomaticPaymentsClientTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Erro interno. Tente novamente.');
 
-        $this->client->cit('TEST-TOKEN', $order, []);
+        $this->client->cit('TEST-TOKEN', $order, ['transaction' => ['amount' => 49.90]]);
+    }
+
+    public function testCitReturnsIncompleteZeroDollarResponseForGatewayContractValidation(): void
+    {
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(105);
+
+        $responseData = [
+            'payment'      => ['id' => 'MOCK-PAY-ZDA-INCOMPLETE', 'status' => 'approved'],
+            'subscription' => [],
+        ];
+        $response = new Response();
+        $response->setStatus(201);
+        $response->setData($responseData);
+
+        $this->subscriptionsHelperMock->shouldReceive('buildCitSeed')->andReturn('cit:105:1700000003');
+        $this->subscriptionsHelperMock->shouldReceive('generateIdempotencyKey')->andReturn('test-idem-key-zda-incomplete');
+        $this->requesterMock->shouldReceive('post')->andReturn($response);
+
+        // Only the sending log belongs to the client. The gateway records the
+        // allowlisted ZDA contract violation after receiving this response.
+        $this->fileTransportMock->shouldReceive('info')->once();
+
+        $result = $this->client->cit(
+            'TEST-TOKEN',
+            $order,
+            ['transaction' => ['amount' => 0.0]]
+        );
+
+        $this->assertSame($response, $result);
+        $this->assertArrayNotHasKey('id', $result->getData()['subscription']);
     }
 
     /**

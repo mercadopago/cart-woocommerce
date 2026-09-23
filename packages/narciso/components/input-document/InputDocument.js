@@ -1,5 +1,28 @@
 const DocumentHandlerFactory = require('./document-handlers/DocumentHandlerFactory');
 
+const DOCUMENT_TYPE_LABELS = {
+  CPF: 'CPF',
+  CNPJ: 'CNPJ',
+  DNI: 'DNI',
+  CI: 'CI',
+  LC: 'LC',
+  LE: 'LE',
+  OTRO: 'Otro',
+  RUT: 'RUT',
+  CC: 'CC',
+  CE: 'CE',
+  NIT: 'NIT',
+  RUC: 'RUC',
+};
+
+const DOCUMENT_TYPE_LABEL_OVERRIDES_BY_SITE = {
+  MPE: {
+    CE: 'C.E',
+  },
+};
+
+const normalizeDocumentValue = (value) => (value || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
 class InputDocument extends HTMLElement {
   selectObserver = null;
   selectObserverTimeout = null;
@@ -36,19 +59,89 @@ class InputDocument extends HTMLElement {
     const label = this.createLabel(this.getAttribute('label-message'));
     const helper = this.createHelper(this.getAttribute('helper-empty'));
     const hidden = this.createHiddenField(this.getAttribute('hidden-id'));
+    const instruction = this.createInstruction();
     const input = this.createInput(helper, hidden, label);
 
     inputDocument.appendChild(label);
     inputDocument.appendChild(input);
     inputDocument.appendChild(hidden);
     inputDocument.appendChild(helper);
+
+    if (instruction) {
+      inputDocument.appendChild(instruction);
+    }
+
     return inputDocument;
+  }
+
+  // Classic renders every payment box, so Custom and Ticket mount this component on
+  // the same page — ids must be per instance, not constants. See traps.md.
+  elementId(suffix) {
+    return `${this.getAttribute('select-id') || 'mp-doc-number'}-${suffix}`;
+  }
+
+  // Only the Custom checkout template provides these texts. Gateways that omit them
+  // must not end up referencing an empty description.
+  hasInstruction() {
+    return !!(this.getAttribute('instruction-range') || this.getAttribute('instruction-fixed'));
+  }
+
+  // Description (aria-describedby), never aria-label — see traps.md.
+  createInstruction() {
+    if (!this.hasInstruction()) {
+      return null;
+    }
+
+    const instruction = document.createElement('span');
+    instruction.setAttribute('id', this.elementId('instruction'));
+    instruction.classList.add('mp-sr-only');
+
+    // Kept as a reference: setInputProperties runs while still detached.
+    this.instructionElement = instruction;
+
+    return instruction;
+  }
+
+  updateInstruction(handler) {
+    const instruction = this.instructionElement;
+    if (!instruction) {
+      return;
+    }
+
+    const min = handler?.CONFIG?.min_length;
+    const max = handler?.CONFIG?.max_length;
+
+    if (!max) {
+      instruction.textContent = '';
+      return;
+    }
+
+    // An absent min means fixed length, not a range — see traps.md.
+    if (!min || min === max) {
+      instruction.textContent = (this.getAttribute('instruction-fixed') || '').replace('{digits}', max);
+      return;
+    }
+
+    instruction.textContent = (this.getAttribute('instruction-range') || '')
+      .replace('{min}', min)
+      .replace('{max}', max);
   }
 
   createLabel(labelMessage) {
     const label = document.createElement('input-label');
     label.setAttribute('message', labelMessage);
     label.setAttribute('isOptional', 'false');
+
+    // One visible label names a compound control: `for` focuses the type select,
+    // and the number input points here with aria-labelledby.
+    label.setAttribute('id', this.elementId('label'));
+
+    // Same id createSelect() puts on the <select>.
+    const selectId = this.getAttribute('select-id');
+
+    if (selectId) {
+      label.setAttribute('for', selectId);
+    }
 
     return label;
   }
@@ -66,16 +159,15 @@ class InputDocument extends HTMLElement {
 
     select.addEventListener('change', () => {
       mpInput.classList.remove('mp-focus');
-      mpInput.classList.remove('mp-error');
-      // Clear the error helper when the document type changes
-      helper.firstElementChild.style.display = 'none';
+
+      // The type change clears the value, so the accessible state goes with the
+      // visual one — see traps.md.
+      this.clearErrorStates(mpInput, helper, label);
+      this.setDocumentValidity(mpDocument, helper, false);
 
       this.setInputProperties(select, mpDocument, this.getAttribute('site-id'));
 
       this.setMaskInputDocument(select, mpDocument, hidden);
-
-      // Reset the label state when the document type changes
-      this.updateLabelState(label, false);
     });
 
     mpInput.appendChild(select);
@@ -94,11 +186,11 @@ class InputDocument extends HTMLElement {
   buildDocumentNameWithSiteId(documentName, siteId) {
     const documentsInTwoCountries = ['CE', 'DNI', 'CI'];
 
-    const normalizedDocName = documentName.replace(/[^a-zA-Z0-9]/g, '');
+    const normalizedDocName = normalizeDocumentValue(documentName);
     // Match case-insensitively: the SDK may deliver the type in lower/mixed case
     // (e.g. "dni"), and without the prefix the doc would fall back to GenericHandler
     // and silently lose the per-site mask/validation.
-    const prefix = siteId && documentsInTwoCountries.includes(normalizedDocName.toUpperCase()) ? `${siteId}_` : '';
+    const prefix = siteId && documentsInTwoCountries.includes(normalizedDocName) ? `${siteId}_` : '';
 
     return `${prefix}${normalizedDocName}`.toUpperCase();
   }
@@ -110,6 +202,7 @@ class InputDocument extends HTMLElement {
     mpDocument.value = '';
     mpDocument.setAttribute('maxlength', this.getPermissiveMaxLength(select.value, handler));
     mpDocument.setAttribute('placeholder', handler.CONFIG.placeholder);
+    this.updateInstruction(handler);
   }
 
   // maxlength must stay as permissive as develop, never the short Figma value.
@@ -131,6 +224,8 @@ class InputDocument extends HTMLElement {
 
       const siteId = this.getAttribute('site-id');
       const defaultKey = DocumentHandlerFactory.getDefaultCountryHandler(siteId);
+
+      this.normalizeDocumentOptionLabels(select, siteId);
 
       // getDefaultCountryHandler returns the internal handler key, which for
       // site-scoped documents (CE/DNI/CI) is prefixed (e.g. "MLA_DNI"), while the
@@ -164,6 +259,20 @@ class InputDocument extends HTMLElement {
     }, 15000);
   }
 
+  normalizeDocumentOptionLabels(select, siteId) {
+    const normalizedSiteId = (siteId || '').toUpperCase();
+    const siteOverrides = DOCUMENT_TYPE_LABEL_OVERRIDES_BY_SITE[normalizedSiteId] || {};
+
+    Array.from(select.options).forEach((option) => {
+      const normalizedType = normalizeDocumentValue(option.value);
+      const label = siteOverrides[normalizedType] || DOCUMENT_TYPE_LABELS[normalizedType];
+
+      if (label) {
+        option.textContent = label;
+      }
+    });
+  }
+
   createSelect(component, helper, documents, validate) {
     const select = document.createElement('select');
 
@@ -172,6 +281,8 @@ class InputDocument extends HTMLElement {
     select.setAttribute('id', this.getAttribute('select-id'));
     select.setAttribute('data-checkout', this.getAttribute('select-data-checkout'));
     select.setAttribute('data-cy', 'select-document');
+    // The red asterisk is a plain character to a screen reader — see traps.md.
+    select.setAttribute('aria-required', 'true');
 
     if (documents && documents.length > 0) {
       documents.forEach((doc) => {
@@ -205,7 +316,7 @@ class InputDocument extends HTMLElement {
   createOption(select, doc) {
     const option = document.createElement('option');
 
-    option.innerHTML = doc;
+    option.textContent = doc;
     option.value = doc;
 
     select.appendChild(option);
@@ -291,6 +402,24 @@ class InputDocument extends HTMLElement {
     helper.firstElementChild.style.display = 'none';
     input.setAttribute('name', this.getAttribute('input-name'));
     this.updateLabelState(label, false);
+    this.setDocumentValidity(input, helper, false);
+  }
+
+  setDocumentValidity(input, helper, hasError) {
+    input.setAttribute('aria-invalid', hasError ? 'true' : 'false');
+
+    // The error reference is toggled, the instruction is not — see traps.md.
+    const helperId = helper && helper.getAttribute('id');
+    const ids = [
+      this.hasInstruction() ? this.elementId('instruction') : null,
+      hasError ? helperId : null,
+    ].filter(Boolean);
+
+    if (ids.length) {
+      input.setAttribute('aria-describedby', ids.join(' '));
+    } else {
+      input.removeAttribute('aria-describedby');
+    }
   }
 
   setInvalidState(input, component, helper, label) {
@@ -308,6 +437,8 @@ class InputDocument extends HTMLElement {
       input.setAttribute('name', this.getAttribute('flag-error'));
       this.updateLabelState(label, true);
     }
+
+    this.setDocumentValidity(input, helper, true);
   }
 
   createDocument(component, select, helper, label) {
@@ -320,6 +451,14 @@ class InputDocument extends HTMLElement {
     input.setAttribute('name', this.getAttribute('input-name'));
     input.setAttribute('data-checkout', this.getAttribute('input-data-checkout'));
     input.setAttribute('data-cy', 'input-document');
+    // The visible label is associated with the type select, so the number input
+    // borrows it: without this its accessible name would be the mask placeholder.
+    input.setAttribute('aria-labelledby', this.elementId('label'));
+    input.setAttribute('aria-required', 'true');
+
+    if (this.hasInstruction()) {
+      input.setAttribute('aria-describedby', this.elementId('instruction'));
+    }
     input.classList.add('mp-document');
     input.type = 'text';
     input.inputMode = 'text';
@@ -347,6 +486,17 @@ class InputDocument extends HTMLElement {
     helper.firstElementChild.style.display = 'none';
     input.setAttribute('name', this.getAttribute('input-name'));
     this.updateLabelState(label, false);
+    this.setDocumentValidity(input, helper, false);
+  }
+
+  // Called by the submit gate, which marks this field without the buyer having typed.
+  // Only the component knows the per-instance ids — see traps.md.
+  markInvalidFromSubmit() {
+    const input = this.querySelector('input.mp-document');
+    const helper = this.querySelector('input-helper');
+    if (!input || !helper) return;
+
+    this.setDocumentValidity(input, helper, true);
   }
 
   handleInputFocusOut(component, helper, input, label) {
@@ -354,6 +504,7 @@ class InputDocument extends HTMLElement {
 
     if (input.value.trim() === '') {
       this.clearErrorStates(component, helper, label);
+      this.setDocumentValidity(input, helper, false);
     } else {
       this.handleNonEmptyInput(component);
     }
@@ -383,8 +534,7 @@ class InputDocument extends HTMLElement {
   }
 
   updateHelperErrorMessage(helper, message) {
-    helper.setAttribute('message', message);
-    helper.querySelector('.mp-helper-message').innerHTML = message;
+    helper.updateMessage(message);
   }
 
   createHelper(helperMessage) {
@@ -393,7 +543,9 @@ class InputDocument extends HTMLElement {
     helper.setAttribute('isVisible', false);
     helper.setAttribute('type', 'error');
     helper.setAttribute('message', helperMessage);
+    // Shared on purpose; ARIA uses the per-instance id below — see traps.md.
     helper.setAttribute('input-id', 'mp-doc-number-helper');
+    helper.setAttribute('id', this.elementId('helper'));
 
     return helper;
   }

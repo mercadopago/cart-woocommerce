@@ -99,8 +99,8 @@ export class V21SavedCardsView {
   // Per-type row factory: delegates to the shared dispatch so v2.1 and v2 build the identical
   // interactive row for a given method type. Only the v2.1 chrome (grouped blocks, e-mail header)
   // lives here; the row itself (presentation + selection wiring + card/credits details) is shared.
-  private rowFactory(context: SavedMethodsRenderContext): (paymentMethod: PaymentMethod) => HTMLElement {
-    return (paymentMethod: PaymentMethod): HTMLElement =>
+  private rowFactory(context: SavedMethodsRenderContext): (paymentMethod: PaymentMethod) => HTMLElement | null {
+    return (paymentMethod: PaymentMethod): HTMLElement | null =>
       buildTypedRow(paymentMethod, this.deps, this.rowPresentation, context);
   }
 
@@ -121,15 +121,21 @@ export class V21SavedCardsView {
     blockModifierClass: string,
     title: string,
     blockHeader: BlockHeaderData | null,
-    buildRow: (paymentMethod: PaymentMethod) => HTMLElement,
+    buildRow: (paymentMethod: PaymentMethod) => HTMLElement | null,
   ): void {
     if (!paymentMethods.length) {
+      return;
+    }
+    const rows = paymentMethods
+      .map(buildRow)
+      .filter((row): row is HTMLElement => row !== null);
+    if (!rows.length) {
       return;
     }
     const section = el('section', {
       classes: [V21_STYLES.BLOCK, blockModifierClass],
       attrs: { role: 'group', 'aria-label': title, tabindex: '0' },
-      children: [this.buildBlockHeader(title, blockHeader), ...paymentMethods.map(buildRow)],
+      children: [this.buildBlockHeader(title, blockHeader), ...rows],
     });
     container.insertBefore(section, container.firstChild);
   }

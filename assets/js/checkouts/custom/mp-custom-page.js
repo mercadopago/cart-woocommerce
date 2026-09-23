@@ -9,6 +9,28 @@ const CheckoutPage = {
     tea: { key: 'TEA_', label: 'TEA', bold: false },
   },
 
+  // Error class -> what exposes it to screen readers. sdkField means the control
+  // is inside the SDK iframe, so validity is pushed through the SDK instead.
+  A11Y_ERROR_TARGETS: {
+    fcCardholderName: {
+      control: 'fcCardholderName',
+      describedBy: 'mp-card-holder-name-helper',
+      describedByDefault: 'mp-card-holder-name-helper-info',
+      // Kept in every state: describedby displaces the placeholder — see traps.md.
+      describedByAlways: 'mp-card-holder-name-example',
+    },
+    // No describedBy: InputDocument owns this field's description (per-instance ids).
+    // The control is the visible input, not the hidden value field — see traps.md.
+    fcIdentificationNumberContainer: {
+      control: 'fcIdentificationNumberInput',
+    },
+    // Cross-origin control: the SDK carries aria-invalid, the container carries the
+    // message — see traps.md.
+    fcCardNumberContainer: { sdkField: 'cardNumber', describedBy: 'mp-card-number-helper' },
+    fcCardExpirationDateContainer: { sdkField: 'cardExpirationDate', describedBy: 'mp-expiration-date-helper' },
+    fcSecurityNumberContainer: { sdkField: 'securityCode', describedBy: 'mp-security-code-helper' },
+  },
+
   setElementDisplay(element, operator) {
     const elementToSet = document.querySelector(CheckoutElements[element]);
     if (!elementToSet) return;
@@ -37,12 +59,53 @@ const CheckoutPage = {
     elementToSet.style.setProperty('background', background, 'important');
   },
 
-  setImageCard(secureThumbnail) {
+  setImageCard(secureThumbnail, cardName) {
     const cardNumberContainer = document.querySelector(CheckoutElements.fcCardNumberContainer);
     if (!cardNumberContainer) return;
 
     cardNumberContainer.style.setProperty('--card-brand-icon', `url(${secureThumbnail})`, 'important');
     cardNumberContainer.classList.add('mp-card-icon-detected');
+    this.announceDetectedCard(cardName);
+  },
+
+  // The brand icon is a CSS background, invisible to screen readers.
+  announceDetectedCard(cardName) {
+    const region = document.querySelector(CheckoutElements.mpDetectedCardAnnouncement);
+    if (!region) return;
+
+    const label = wc_mercadopago_custom_page_params.detected_card_label;
+    region.textContent = cardName ? `${label} ${cardName}` : '';
+  },
+
+  // The iframe title is the only description we can give these fields — see traps.md.
+  SECURE_FIELD_INSTRUCTIONS: {
+    fcCardNumberContainer: { param: 'card_number_instruction', defaultDigits: 16 },
+    fcCardExpirationDateContainer: { param: 'card_expiration_instruction' },
+    fcSecurityNumberContainer: { param: 'security_code_instruction', defaultDigits: 3 },
+  },
+
+  setSecureFieldInstruction(elementName, digits) {
+    const config = this.SECURE_FIELD_INSTRUCTIONS[elementName];
+    if (!config) return;
+
+    const container = document.querySelector(CheckoutElements[elementName]);
+    const iframe = container?.querySelector('iframe');
+    if (!iframe) return;
+
+    const template = wc_mercadopago_custom_page_params[config.param];
+    if (!template) return;
+
+    // Falsy, not nullish: the API can report a length of 0, and substituting it
+    // would leave the {digits} placeholder unreplaced for a screen reader to read.
+    const value = digits || config.defaultDigits;
+    iframe.title = value ? template.replace('{digits}', value) : template;
+  },
+
+  // Called with defaults when the fields mount, then per brand (Amex uses 15/4).
+  setSecureFieldInstructions(cardNumberDigits, securityCodeDigits) {
+    this.setSecureFieldInstruction('fcCardNumberContainer', cardNumberDigits);
+    this.setSecureFieldInstruction('fcCardExpirationDateContainer');
+    this.setSecureFieldInstruction('fcSecurityNumberContainer', securityCodeDigits);
   },
 
   findContainerField(field) {
@@ -63,6 +126,75 @@ const CheckoutPage = {
       } else {
         element.classList.remove(`${className}`);
       }
+
+      // Only the field classes mean "this field is invalid"; mp-label-error* are cosmetic.
+      if (className === 'mp-error' || className === 'mp-error-2px') {
+        this.syncFieldValidity(elementName, element);
+      }
+    }
+  },
+
+  // Reads the resulting classes, not the operator — see traps.md.
+  syncFieldValidity(elementName, element) {
+    const target = this.A11Y_ERROR_TARGETS[elementName];
+    if (!target) return;
+
+    const hasError = element.classList.contains('mp-error') || element.classList.contains('mp-error-2px');
+
+    if (target.sdkField) {
+      this.setSecureFieldValidity(target.sdkField, hasError);
+      // aria-invalid is all the SDK can carry, so the message is attached here.
+      this.setDescription(element, hasError ? target.describedBy : null);
+      return;
+    }
+
+    const control = document.querySelector(CheckoutElements[target.control]);
+    this.setControlValidity(control, hasError, target);
+  },
+
+  setDescription(element, describedById) {
+    if (!element) return;
+
+    if (describedById) {
+      element.setAttribute('aria-describedby', describedById);
+    } else {
+      element.removeAttribute('aria-describedby');
+    }
+  },
+
+  setControlValidity(control, hasError, target = {}) {
+    if (!control) return;
+
+    control.setAttribute('aria-invalid', hasError ? 'true' : 'false');
+
+    // Fields whose component owns the description (the document) declare no ids
+    // here, and must be left alone instead of having it stripped.
+    if (!target.describedBy && !target.describedByDefault && !target.describedByAlways) {
+      return;
+    }
+
+    // The error reference is toggled, describedByAlways is not — see traps.md.
+    const state = hasError ? target.describedBy : target.describedByDefault;
+    const ids = [state, target.describedByAlways].filter(Boolean);
+
+    if (ids.length) {
+      control.setAttribute('aria-describedby', ids.join(' '));
+    } else {
+      control.removeAttribute('aria-describedby');
+    }
+  },
+
+  // Cross-origin input: only the SDK can forward aria-invalid. Never let it throw.
+  setSecureFieldValidity(sdkField, hasError) {
+    const cardForm = window.mpCustomCheckoutHandler?.cardForm;
+
+    // The SDK keeps the form wrapper after unmount, but update() logs warnings for missing Secure Fields.
+    if (cardForm?.formMounted !== true) return;
+
+    try {
+      cardForm.form?.update(sdkField, { invalid: hasError });
+    } catch (error) {
+      // Field not mounted yet or SDK unavailable: nothing to annotate.
     }
   },
 
@@ -113,11 +245,17 @@ const CheckoutPage = {
   },
 
   setCvvHint(cvvLength) {
-    if (cvvLength === 3) {
-      document.querySelector(CheckoutElements.mpSecurityCodeInfo).setAttribute('data-tooltip', wc_mercadopago_custom_page_params.security_code_tooltip_text_3_digits);
-    } else {
-      document.querySelector(CheckoutElements.mpSecurityCodeInfo).setAttribute('data-tooltip', wc_mercadopago_custom_page_params.security_code_tooltip_text_4_digits);
-    }
+    const tooltip = document.querySelector(CheckoutElements.mpSecurityCodeInfo);
+    if (!tooltip) return;
+
+    const hint = cvvLength === 3
+      ? wc_mercadopago_custom_page_params.security_code_tooltip_text_3_digits
+      : wc_mercadopago_custom_page_params.security_code_tooltip_text_4_digits;
+
+    // data-tooltip is the visual text; aria-label is what the screen reader reads.
+    // Updating only the first left Amex announcing "3 digits" — see traps.md.
+    tooltip.setAttribute('data-tooltip', hint);
+    tooltip.setAttribute('aria-label', hint);
   },
 
   additionalInfoHandler(additionalInfoNeeded) {
@@ -290,6 +428,10 @@ const CheckoutPage = {
     if (cardNumberContainer) {
       cardNumberContainer.classList.remove('mp-card-icon-detected');
     }
+
+    // Both are brand-specific and must not describe a card that is gone.
+    this.announceDetectedCard('');
+    this.setSecureFieldInstructions();
 
     this.setInstallmentsErrorState(false);
     this.clearInstallmentsComponent();
@@ -481,6 +623,9 @@ const CheckoutPage = {
       }
       this.toggleErrorBorder(input, document.activeElement === input);
     }
+
+    // toggleErrorBorder bypasses setDisplayOfError, so sync it here — see traps.md.
+    this.setControlValidity(input, !isValid, this.A11Y_ERROR_TARGETS.fcCardholderName);
   },
 
   verifyCardholderNameOnFocus() {
@@ -602,6 +747,31 @@ const CheckoutPage = {
     this.setElementDisplay('mpInstallmentsCard', 'block');
   },
 
+  setZeroDollarInitialCitInstallmentsState() {
+    // Keep this reset installments-only: issuer/document and Super Token own separate state.
+    this.installmentsItemsData = [];
+    this.setInstallmentsErrorState(false);
+    this.clearInstallmentsComponent();
+
+    const installmentsSelect = document.getElementById('form-checkout__installments');
+    if (installmentsSelect) {
+      while (installmentsSelect.firstChild) {
+        installmentsSelect.removeChild(installmentsSelect.firstChild);
+      }
+    }
+
+    document.getElementById('mp-installments-bank-interest-hint')?.remove();
+
+    const taxInfo = document.getElementById('mp-installments-tax-info');
+    if (taxInfo) {
+      taxInfo.textContent = '';
+      taxInfo.style.display = 'none';
+    }
+
+    this.setValueOn('cardInstallments', '1');
+    this.setElementDisplay('mpInstallmentsCard', 'none');
+  },
+
   replaceInstallmentsOptions(installmentsSelect, installmentsData) {
     const customItems = this.getInstallments(installmentsData);
     if (!customItems.length) return;
@@ -703,6 +873,8 @@ const CheckoutPage = {
 
     if (!installmentsSelect || !installmentsLabel || !installmentsErrorHelper) return;
 
+    this.setControlValidity(installmentsSelect, hasError, { describedBy: 'mp-installments-error' });
+
     if (hasError) {
       const isFocused = document.activeElement === installmentsSelect;
 
@@ -762,15 +934,24 @@ const CheckoutPage = {
       return { passed: false, gate: 'card', reason };
     }
 
-    this.syncInstallmentsFromSelect();
+    const isZeroDollarInitialCit = typeof cardForm?.isZeroDollarInitialCitContext === 'function'
+      && cardForm.isZeroDollarInitialCitContext();
 
-    if (!this.installmentsWasSelected()) {
-      this.emitGateBlockedMetric('INSTALLMENTS', 'mp_custom_installments_validation', 'not_selected');
-      this.setInstallmentsErrorState(true);
-      this.scrollToCheckoutCustomContainer();
-      cardForm?.removeLoadSpinner();
-      this.deferBlockOverlayRemoval(cardForm);
-      return { passed: false, gate: 'installments', reason: 'not_selected' };
+    if (isZeroDollarInitialCit) {
+      // The SDK may return no payer_costs for a zero amount, but tokenization still needs the
+      // server-required hidden value. Card and document gates remain unchanged.
+      this.setZeroDollarInitialCitInstallmentsState();
+    } else {
+      this.syncInstallmentsFromSelect();
+
+      if (!this.installmentsWasSelected()) {
+        this.emitGateBlockedMetric('INSTALLMENTS', 'mp_custom_installments_validation', 'not_selected');
+        this.setInstallmentsErrorState(true);
+        this.scrollToCheckoutCustomContainer();
+        cardForm?.removeLoadSpinner();
+        this.deferBlockOverlayRemoval(cardForm);
+        return { passed: false, gate: 'installments', reason: 'not_selected' };
+      }
     }
 
     const docContainers = document.querySelectorAll(CheckoutElements.fcIdentificationNumberContainer);
@@ -785,6 +966,8 @@ const CheckoutPage = {
       this.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
       this.setDisplayOfError('mpDocumentInputLabel', 'add', 'mp-label-error');
       this.setDisplayOfInputHelper('mp-doc-number', 'flex');
+      // The component owns this field's description — see traps.md.
+      document.querySelector(CheckoutElements.mpDocumentComponent)?.markInvalidFromSubmit?.();
       document.querySelector(CheckoutElements.mpDocumentContainer)?.scrollIntoView({ behavior: 'smooth' });
       cardForm?.removeLoadSpinner();
       this.deferBlockOverlayRemoval(cardForm);

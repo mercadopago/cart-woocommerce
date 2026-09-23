@@ -9,16 +9,18 @@ class InputHelper extends HTMLElement {
 
   createHelper() {
     const helper = document.createElement('div');
+    const type = this.getAttribute('type') || 'error';
 
     helper.classList.add('mp-helper');
     helper.setAttribute('id', this.getAttribute('input-id'));
     helper.setAttribute('data-cy', 'helper-container');
-    helper.setAttribute('role', 'alert');
+    // Only an error interrupts: alert is assertive, so using it for supporting
+    // text made the hint cut off whatever was being announced — see traps.md.
+    helper.setAttribute('role', type === 'error' ? 'alert' : 'status');
 
     this.validateVisibility(helper);
 
     const message = this.getAttribute('message');
-    const type = this.getAttribute('type') || 'error';
     const helperMessage = this.createHelperMessage(message, type);
 
     if (type === 'error') {
@@ -53,8 +55,8 @@ class InputHelper extends HTMLElement {
     helperMessage.classList.add('mp-helper-message');
     helperMessage.classList.add(type);
     helperMessage.setAttribute('data-cy', 'helper-message');
-    helperMessage.setAttribute('tabindex', '-1');
-    helperMessage.setAttribute('aria-hidden', 'true');
+    // No aria-hidden/tabindex: this is the only content of the role="alert"
+    // container, so hiding it silenced the alert — see traps.md.
 
     return helperMessage;
   }

@@ -83,10 +83,9 @@ class CustomGatewayCitHandlerTest extends TestCase
     }
 
     /**
-     * AC-1: status=approved → persiste 6 metas + chama payment_complete + retorna success.
-     *
+     * An approved paid CIT keeps the existing webhook completion flow.
      */
-    public function testApprovedCitPersistsMetasAndCompletesPayment(): void
+    public function testApprovedPaidCitPersistsMetasAndKeepsWebhookFlow(): void
     {
         [$order, $subscription, $response] = $this->buildOrderAndSubscriptionMocks([
             'payment'      => ['id' => 'PAY-1', 'status' => 'approved'],
@@ -98,7 +97,10 @@ class CustomGatewayCitHandlerTest extends TestCase
 
 
         $this->gateway->shouldAllowMockingProtectedMethods();
-        $this->gateway->shouldReceive('buildCitPayload')->andReturn(['token' => 'tok_abc']);
+        $this->gateway->shouldReceive('buildCitPayload')->andReturn([
+            'token'       => 'tok_abc',
+            'transaction' => ['amount' => 99.90],
+        ]);
         $this->gateway->shouldReceive('getCheckoutFormData')->andReturn([
             'token'             => 'tok_abc',
             'payment_method_id' => 'visa',
@@ -148,6 +150,308 @@ class CustomGatewayCitHandlerTest extends TestCase
     }
 
     /**
+     * An approved ZDA with an active recurring profile is final and must
+     * complete synchronously, because Core does not emit a payment notification for it.
+     */
+    public function testApprovedZeroDollarCitCompletesSynchronously(): void
+    {
+        [$order, $subscription, $response] = $this->buildOrderAndSubscriptionMocks([
+            'payment'       => ['id' => 'PAY-ZDA-1', 'status' => 'approved', 'status_detail' => 'accredited'],
+            'subscription'  => ['id' => 'CPP-WSUB-ZDA-1'],
+            'customer'      => ['id' => 'CUST-ZDA-1'],
+            'card'          => ['id' => 'CARD-ZDA-1', 'last_four_digits' => '4242', 'payment_method' => 'visa'],
+            'profile'       => ['id' => 'PROFILE-ZDA-1', 'status' => 'active'],
+            'three_ds_info' => null,
+        ]);
+        $this->wireSubscription($subscription);
+
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('buildCitPayload')->andReturn([
+            'token'       => 'tok_zda',
+            'transaction' => ['amount' => 0.0],
+        ]);
+        $this->gateway->shouldReceive('getCheckoutFormData')->andReturn([
+            'token'             => 'tok_zda',
+            'payment_method_id' => 'visa',
+            'doc_number'        => '12345678900',
+        ]);
+
+        $client = Mockery::mock(AutomaticPaymentsClient::class);
+        $client->shouldReceive('cit')->once()->andReturn($response);
+        $this->gateway->mercadopago->automaticPaymentsClient = $client;
+
+        $helper = Mockery::mock(SubscriptionsHelper::class);
+        $helper->shouldReceive('resolveAccessToken')->byDefault()->andReturn('APP_USR-preapproval');
+        $helper->shouldReceive('setSubscriptionMeta')->times(6);
+        $this->gateway->mercadopago->subscriptionsHelper = $helper;
+
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('emptyCart')->once();
+        $this->gateway->mercadopago->helpers->url->shouldReceive('validateGetVar')->byDefault()->andReturn(false);
+        $this->gateway->mercadopago->orderStatus->shouldReceive('getOrderStatusMessage')->once()->andReturn('Aprovado');
+        $this->gateway->mercadopago->helpers->notices->shouldReceive('storeApprovedStatusNotice')->once();
+        $this->gateway->mercadopago->orderStatus->shouldNotReceive('setOrderStatus');
+
+        $order->shouldReceive('payment_complete')->once()->with('PAY-ZDA-1');
+        $order->shouldReceive('get_checkout_order_received_url')->once()->andReturn('https://shop.example/order-received');
+        $order->shouldNotReceive('update_status');
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('setCustomMetadata')
+            ->once()
+            ->with($order, Mockery::on(fn($data) => ($data['id'] ?? null) === 'PAY-ZDA-1'));
+
+        $result = $this->invokeHandler($this->gateway, $order);
+
+        $this->assertSame('success', $result['result']);
+        $this->assertSame('https://shop.example/order-received', $result['redirect']);
+    }
+
+    /**
+     * A zero-dollar response with an unfinished profile is not sufficient proof
+     * that the recurring payment method is ready, so it must not mark the order paid.
+     */
+    public function testApprovedZeroDollarCitWithPendingProfileFailsWithoutClearingCart(): void
+    {
+        [$order, $subscription, $response] = $this->buildOrderAndSubscriptionMocks([
+            'payment'       => ['id' => 'PAY-ZDA-2', 'status' => 'approved', 'status_detail' => 'accredited'],
+            'subscription'  => ['id' => 'CPP-WSUB-ZDA-2'],
+            'customer'      => ['id' => 'CUST-ZDA-2'],
+            'card'          => ['id' => 'CARD-ZDA-2', 'last_four_digits' => '4242', 'payment_method' => 'visa'],
+            'profile'       => ['id' => null, 'status' => 'pending_creation'],
+            'three_ds_info' => null,
+        ]);
+        $this->wireSubscription($subscription);
+
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('buildCitPayload')->andReturn([
+            'token'       => 'tok_zda_pending',
+            'transaction' => ['amount' => 0.0],
+        ]);
+        $this->gateway->shouldReceive('getCheckoutFormData')->andReturn([
+            'token'             => 'tok_zda_pending',
+            'payment_method_id' => 'visa',
+        ]);
+
+        $client = Mockery::mock(AutomaticPaymentsClient::class);
+        $client->shouldReceive('cit')->once()->andReturn($response);
+        $this->gateway->mercadopago->automaticPaymentsClient = $client;
+
+        $helper = Mockery::mock(SubscriptionsHelper::class);
+        $helper->shouldReceive('resolveAccessToken')->byDefault()->andReturn('APP_USR-preapproval');
+        $helper->shouldReceive('setSubscriptionMeta')->times(6);
+        $this->gateway->mercadopago->subscriptionsHelper = $helper;
+
+        $logFile = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $this->gateway->mercadopago->logs->file = $logFile;
+        $logFile
+            ->shouldReceive('warning')
+            ->once()
+            ->with(
+                'op=cit step=zda_contract_violation reason=profile_not_active http_status=201 order_id=42',
+                CustomGateway::LOG_SOURCE
+            );
+
+        $this->gateway->storeTranslations['wcs_cit_failed_generic'] = 'Não foi possível ativar sua assinatura.';
+        $this->gateway->mercadopago->helpers->cart->shouldNotReceive('emptyCart');
+        $this->gateway->mercadopago->orderStatus->shouldNotReceive('getOrderStatusMessage');
+        $this->gateway->mercadopago->helpers->notices->shouldNotReceive('storeApprovedStatusNotice');
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with('Não foi possível ativar sua assinatura.', 'error');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->once()
+            ->with('pay_for_order')
+            ->andReturn(false);
+        $this->gateway->mercadopago->orderStatus->shouldNotReceive('setOrderStatus');
+
+        $order->shouldNotReceive('payment_complete');
+        $order->shouldNotReceive('get_checkout_order_received_url');
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('setCustomMetadata')->once();
+
+        $result = $this->invokeHandler($this->gateway, $order);
+
+        $this->assertSame('fail', $result['result']);
+        $this->assertSame('', $result['redirect']);
+        $this->assertSame('Não foi possível ativar sua assinatura.', $result['message']);
+    }
+
+    /**
+     * @dataProvider incompleteZeroDollarCitContractProvider
+     */
+    public function testZeroDollarCitContractRejectsIncompleteCoreResponse(
+        array $responseData,
+        int $httpStatus,
+        ?string $expectedReason
+    ): void {
+        $reflection = new \ReflectionClass(CustomGateway::class);
+        $method     = $reflection->getMethod('getZeroDollarCitContractViolation');
+        $method->setAccessible(true);
+
+        $this->assertSame($expectedReason, $method->invoke($this->gateway, $responseData, $httpStatus));
+    }
+
+    public function incompleteZeroDollarCitContractProvider(): array
+    {
+        $validResponse = [
+            'payment'       => ['id' => 'PAY-ZDA-3', 'status' => 'approved'],
+            'subscription'  => ['id' => 'CPP-WSUB-ZDA-3'],
+            'customer'      => ['id' => 'CUST-ZDA-3'],
+            'card'          => ['id' => 'CARD-ZDA-3'],
+            'profile'       => ['id' => 'PROFILE-ZDA-3', 'status' => 'active'],
+            'three_ds_info' => null,
+        ];
+
+        $with = static function (array $path, $value) use ($validResponse): array {
+            $response = $validResponse;
+            $target   = &$response;
+            foreach ($path as $key) {
+                $target = &$target[$key];
+            }
+            $target = $value;
+            return $response;
+        };
+
+        $withoutThreeDsInfo = $validResponse;
+        unset($withoutThreeDsInfo['three_ds_info']);
+
+        return [
+            'active profile is valid'   => [$validResponse, 201, null],
+            'unexpected HTTP status' => [$validResponse, 302, 'unexpected_http_status'],
+            'payment not approved'   => [$with(['payment', 'status'], 'pending'), 201, 'payment_not_approved'],
+            'payment id missing'     => [$with(['payment', 'id'], null), 201, 'payment_id_missing'],
+            'payment id zero integer' => [$with(['payment', 'id'], 0), 201, 'payment_id_missing'],
+            'payment id zero string' => [$with(['payment', 'id'], '0'), 201, 'payment_id_missing'],
+            'payment id negative integer' => [$with(['payment', 'id'], -1), 201, 'payment_id_missing'],
+            'payment id negative string' => [$with(['payment', 'id'], '-1'), 201, 'payment_id_missing'],
+            'subscription id missing' => [$with(['subscription', 'id'], null), 201, 'subscription_id_missing'],
+            'customer id missing'    => [$with(['customer', 'id'], null), 201, 'customer_id_missing'],
+            'card id missing'        => [$with(['card', 'id'], null), 201, 'card_id_missing'],
+            'ready profile is invalid' => [$with(['profile', 'status'], 'ready'), 201, 'profile_not_active'],
+            'profile not active'      => [$with(['profile', 'status'], 'pending_creation'), 201, 'profile_not_active'],
+            'profile id missing'     => [$with(['profile', 'id'], null), 201, 'profile_id_missing'],
+            '3DS field missing'      => [$withoutThreeDsInfo, 201, 'unexpected_three_ds_info'],
+            'unexpected 3DS data'    => [$with(['three_ds_info'], ['creq' => 'mock']), 201, 'unexpected_three_ds_info'],
+        ];
+    }
+
+    /**
+     * @dataProvider citIdentifierProvider
+     * @param mixed $value
+     */
+    public function testCitIdentifierValidation($value, bool $expected): void
+    {
+        $this->assertSame($expected, $this->callProtected($this->gateway, 'hasCitIdentifier', [$value]));
+    }
+
+    public function citIdentifierProvider(): array
+    {
+        return [
+            'positive integer'        => [1, true],
+            'positive numeric string' => ['176907514186', true],
+            'opaque customer id'      => ['1548407952-0ZhQwuw2NjyQhO', true],
+            'UUID'                    => ['232f9ffd-83e0-4f18-a7e8-da02419bc1e1', true],
+            'zero integer'            => [0, false],
+            'zero string'             => ['0', false],
+            'negative integer'        => [-1, false],
+            'negative numeric string' => ['-1', false],
+            'whitespace'              => ['   ', false],
+            'null'                    => [null, false],
+            'array'                   => [[], false],
+        ];
+    }
+
+    /**
+     * An approved ZDA on the Order Pay page returns the same result as
+     * JSON because that checkout flow consumes the response through AJAX.
+     */
+    public function testApprovedZeroDollarCitOutputsJsonOnOrderPayPage(): void
+    {
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('payment_complete')->once()->with('PAY-ZDA-ORDER-PAY');
+        $order->shouldReceive('get_checkout_order_received_url')
+            ->once()
+            ->andReturn('https://shop.example/order-received');
+
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('emptyCart')->once();
+        $this->gateway->mercadopago->orderStatus
+            ->shouldReceive('getOrderStatusMessage')
+            ->once()
+            ->with('accredited')
+            ->andReturn('Aprovado');
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeApprovedStatusNotice')
+            ->once()
+            ->with('Aprovado');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->once()
+            ->with('pay_for_order')
+            ->andReturn(true);
+
+        $expected = [
+            'result'   => 'success',
+            'redirect' => 'https://shop.example/order-received',
+        ];
+
+        WP_Mock::userFunction('wp_json_encode')
+            ->once()
+            ->with($expected)
+            ->andReturn(json_encode($expected));
+
+        $this->expectOutputString(json_encode($expected));
+
+        $result = $this->callProtected(
+            $this->gateway,
+            'completeApprovedZeroDollarCit',
+            [$order, 'PAY-ZDA-ORDER-PAY']
+        );
+
+        $this->assertSame($expected, $result);
+    }
+
+    /**
+     * An invalid ZDA on the Order Pay page must use the JSON contract consumed
+     * by the custom checkout instead of letting WooCommerce return HTML.
+     */
+    public function testInvalidZeroDollarCitOutputsFailureJsonOnOrderPayPage(): void
+    {
+        $message = 'Não foi possível ativar sua assinatura.';
+
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with($message, 'error');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->once()
+            ->with('pay_for_order')
+            ->andReturn(true);
+
+        $jsonResponse = [
+            'result'   => 'fail',
+            'redirect' => false,
+            'messages' => $message,
+        ];
+
+        WP_Mock::userFunction('wp_json_encode')
+            ->once()
+            ->with($jsonResponse)
+            ->andReturn(json_encode($jsonResponse));
+
+        $this->expectOutputString(json_encode($jsonResponse));
+
+        $result = $this->callProtected($this->gateway, 'failInitialCit', [$message]);
+
+        $this->assertSame([
+            'result'   => 'fail',
+            'redirect' => '',
+            'message'  => $message,
+        ], $result);
+    }
+
+    /**
      * AC-2: status=rejected → order não vai para processing, mensagem amigável.
      *
      */
@@ -161,7 +465,10 @@ class CustomGatewayCitHandlerTest extends TestCase
 
 
         $this->gateway->shouldAllowMockingProtectedMethods();
-        $this->gateway->shouldReceive('buildCitPayload')->andReturn(['token' => 'tok_abc']);
+        $this->gateway->shouldReceive('buildCitPayload')->andReturn([
+            'token'       => 'tok_abc',
+            'transaction' => ['amount' => 0.0],
+        ]);
         $this->gateway->shouldReceive('getCheckoutFormData')->andReturn([
             'token' => 'tok_abc', 'payment_method_id' => 'visa', 'doc_number' => '12345678900',
         ]);
@@ -175,7 +482,7 @@ class CustomGatewayCitHandlerTest extends TestCase
         $helper->shouldNotReceive('setSubscriptionMeta');
         $this->gateway->mercadopago->subscriptionsHelper = $helper;
 
-        $this->gateway->mercadopago->logs->file->shouldReceive('warning')->byDefault();
+        $this->gateway->mercadopago->logs->file->shouldNotReceive('warning');
         $this->gateway->mercadopago->logs->file->shouldReceive('info')->byDefault();
         $this->gateway->mercadopago->logs->file->shouldReceive('error')->byDefault();
 
@@ -445,6 +752,7 @@ class CustomGatewayCitHandlerTest extends TestCase
         $this->assertSame('BRL', $payload['transaction']['currency']);
         $this->assertSame(1, $payload['transaction']['installments']);
         $this->assertSame('optional', $payload['transaction']['three_d_secure_mode']);
+        $this->assertArrayHasKey('notification_url', $payload);
         $this->assertSame('WC-42', $payload['transaction']['external_reference']);
         $this->assertSame('WC-SUB-7', $payload['subscription']['external_id']);
         $this->assertSame('1-month', $payload['subscription']['frequency']);
@@ -465,17 +773,24 @@ class CustomGatewayCitHandlerTest extends TestCase
     }
 
     /**
-     * 4xx response (e.g. InvalidToken): handler maps $data['error'] correctly,
-     * not hardcoded 'PaymentRejected'.
+     * Core returns a stable top-level code for a missing card token. The handler
+     * must forward that code to the allowlisted mapper instead of treating a
+     * payment status detail as an API code.
      */
-    public function testHttpErrorResponseMapsApiErrorField(): void
+    public function testHttpErrorResponseMapsStableApiCode(): void
     {
         [$order, $subscription] = $this->buildOrderAndSubscriptionMocks([]);
         $this->wireSubscription($subscription);
 
-        $response422 = Mockery::mock(Response::class);
-        $response422->shouldReceive('getData')->andReturn(['error' => 'InvalidToken', 'message' => 'Card token expired']);
-        $response422->shouldReceive('getStatus')->andReturn(422);
+        $response400 = Mockery::mock(Response::class);
+        $response400->shouldReceive('getData')->andReturn([
+            'code'             => 'CPP_TAAP_0000001',
+            'status'           => 400,
+            'message'          => 'Card token not found',
+            'error'            => 'Card token not found',
+            'original_message' => 'ErrorOnCreatePaymentAP | Card token not found',
+        ]);
+        $response400->shouldReceive('getStatus')->andReturn(400);
 
 
         $this->gateway->shouldAllowMockingProtectedMethods();
@@ -485,23 +800,33 @@ class CustomGatewayCitHandlerTest extends TestCase
         $this->gateway->shouldReceive('buildCitPayload')->andReturn(['token' => 'tok']);
 
         $client = Mockery::mock(AutomaticPaymentsClient::class);
-        $client->shouldReceive('cit')->once()->andReturn($response422);
+        $client->shouldReceive('cit')->once()->andReturn($response400);
         $this->gateway->mercadopago->automaticPaymentsClient = $client;
 
         $helper = Mockery::mock(SubscriptionsHelper::class);
         $helper->shouldReceive('resolveAccessToken')->byDefault()->andReturn('APP_USR-preapproval');
         $helper->shouldReceive('mapApiErrorToUserMessage')
-            ->with(422, 'InvalidToken', null)
+            ->with(400, 'Card token not found', 'CPP_TAAP_0000001')
             ->andReturn('Token de cartão inválido. Tente novamente.');
         $this->gateway->mercadopago->subscriptionsHelper = $helper;
 
         $this->gateway->mercadopago->logs->file->shouldReceive('warning')->byDefault()->andReturnNull();
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with('Token de cartão inválido. Tente novamente.', 'error');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->once()
+            ->with('pay_for_order')
+            ->andReturn(false);
         $order->shouldNotReceive('payment_complete');
 
         $result = $this->invokeHandler($this->gateway, $order);
 
-        $this->assertSame('failure', $result['result']);
-        $this->assertSame('Token de cartão inválido. Tente novamente.', $result['messages']);
+        $this->assertSame('fail', $result['result']);
+        $this->assertSame('', $result['redirect']);
+        $this->assertSame('Token de cartão inválido. Tente novamente.', $result['message']);
     }
 
     /**
@@ -639,6 +964,9 @@ class CustomGatewayCitHandlerTest extends TestCase
 
         $this->assertSame('CNPJ', $payload['payer']['identification']['type']);
         $this->assertSame('3-month', $payload['subscription']['frequency']);
+        $this->assertSame(0.0, $payload['transaction']['amount']);
+        $this->assertArrayNotHasKey('three_d_secure_mode', $payload['transaction']);
+        $this->assertArrayNotHasKey('notification_url', $payload);
         $this->assertSame('', $payload['point_of_interaction']['location']['state_id']);
     }
 

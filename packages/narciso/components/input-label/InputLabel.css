@@ -1,4 +1,6 @@
 .mp-checkout-container .mp-input-label {
+  /* <label> is inline by default, which would drop width and bottom spacing. */
+  display: block !important;
   width: 100% !important;
   font-family: var(--mp-font-inter) !important;
   font-style: normal !important;

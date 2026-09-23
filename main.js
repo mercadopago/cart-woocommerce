@@ -4,6 +4,7 @@ const path = require('path');
 const minify = require('minify');
 const wpPot = require('wp-pot');
 const { sync: globSync } = require('glob');
+const { INTEGRITY_IGNORED_ASSETS } = require('./bin/integrity-assets');
 
 /**
  * Minify JS and CSS files
@@ -66,7 +67,7 @@ function getActiveSuperTokenVersion () {
  * setupSuperToken prompt to offer the dev variant choice. The CDN folder mapping
  * and the per-variant bundle publish live in the scripts repo now (TASK-013).
  */
-const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.5', 'v2.1': '1.2.5' };
+const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.6', 'v2.1': '1.2.6' };
 
 /**
  * Compile one Super Token SCSS entry into a compressed CSS file (both under
@@ -263,12 +264,10 @@ async function setupSuperToken() {
 function generateIntegrityManifest () {
   const crypto = require('crypto');
 
-  // The per-variant Super Token stylesheets (super-token-v{2,2.1}.bundle.min.css) are a gitignored
-  // CDN hand-off for the legacy v1//v2.1/ paths, not served by the plugin, so they must not enter the
-  // integrity manifest — unlike the served single super-token.bundle.min.css (PSW-4417). The JS
-  // hand-off already escapes this glob: it is staged unminified (.bundle.js, no .min).
+  // The per-variant Super Token stylesheets are CDN hand-offs, not served by the plugin. Both the
+  // generator and verifier consume the same literal allowlist so they cannot disagree about them.
   const criticalFiles = globSync('assets/**/*.min.{js,css}', {
-    ignore: ['assets/css/checkouts/super-token/super-token-v*.bundle.min.css'],
+    ignore: INTEGRITY_IGNORED_ASSETS,
   });
 
   const manifest = {};

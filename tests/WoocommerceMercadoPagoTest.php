@@ -2,7 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Tests;
 
+use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use Mockery;
+use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use WP_Mock;
@@ -20,6 +24,7 @@ class WoocommerceMercadoPagoTest extends TestCase
 
     protected function tearDown(): void
     {
+        Mockery::close();
         WP_Mock::tearDown();
     }
 
@@ -137,5 +142,86 @@ class WoocommerceMercadoPagoTest extends TestCase
 
         $this->assertFalse($deleted, 'Cache must not be cleared for stores already above the release version');
         $this->assertTrue($updated, 'Installed version should still be recorded');
+    }
+
+    /**
+     * Builds the plugin with only the collaborators activatePlugin() touches. Both are
+     * public properties, so no reflection is needed beyond skipping the constructor.
+     *
+     * @param MockInterface|Funnel $funnel
+     * @param MockInterface|Store $store
+     */
+    private function newPluginWiredTo($funnel, $store): WoocommerceMercadoPago
+    {
+        $plugin = $this->newPluginWithoutConstructor();
+        $plugin->funnel = $funnel;
+        $plugin->storeConfig = $store;
+
+        return $plugin;
+    }
+
+    /**
+     * The seller contact step reaches production through exactly one line — the callback
+     * activatePlugin() hands to create(). Every other test drives updateStepSellerContact()
+     * directly, so dropping or reordering that callback keeps the whole suite green while
+     * the feature silently stops running.
+     */
+    public function testGivenFunnelNotCreatedWhenPluginActivatesThenContactStepRunsRightAfterTheFlagIsCleared(): void
+    {
+        $calls = [];
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('created')->once()->andReturn(false);
+        $funnel->shouldReceive('updateStepActivate')->never();
+        $funnel->shouldReceive('create')->once()->andReturnUsing(
+            function (\Closure $after) use (&$calls) {
+                $calls[] = 'create';
+                $after();
+            }
+        );
+        $funnel->shouldReceive('updateStepSellerContact')->once()->andReturnUsing(
+            function () use (&$calls) {
+                $calls[] = 'seller-contact';
+            }
+        );
+
+        $store = Mockery::mock(Store::class);
+        $store->shouldReceive('setExecuteActivate')->once()->with(false)->andReturnUsing(
+            function () use (&$calls) {
+                $calls[] = 'activation-flag-off';
+            }
+        );
+
+        $this->newPluginWiredTo($funnel, $store)->activatePlugin();
+
+        // Order matters: the flag has to be cleared before the second HTTP call, so a failure
+        // there cannot leave the activation armed and fire the whole funnel again.
+        $this->assertSame(['create', 'activation-flag-off', 'seller-contact'], $calls);
+    }
+
+    public function testGivenFunnelAlreadyCreatedWhenPluginActivatesThenNeitherCreateNorContactRuns(): void
+    {
+        $flagCleared = false;
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('created')->once()->andReturn(true);
+        $funnel->shouldReceive('create')->never();
+        $funnel->shouldReceive('updateStepSellerContact')->never();
+        $funnel->shouldReceive('updateStepActivate')->once()->andReturnUsing(
+            function (\Closure $after) {
+                $after();
+            }
+        );
+
+        $store = Mockery::mock(Store::class);
+        $store->shouldReceive('setExecuteActivate')->once()->with(false)->andReturnUsing(
+            function () use (&$flagCleared) {
+                $flagCleared = true;
+            }
+        );
+
+        $this->newPluginWiredTo($funnel, $store)->activatePlugin();
+
+        $this->assertTrue($flagCleared, 'an already created funnel must still disarm the activation flag');
     }
 }

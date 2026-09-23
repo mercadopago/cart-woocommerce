@@ -2,8 +2,8 @@
 type: Repository
 app: woocommerce-plugins-enablers
 archetype: wordpress-plugin
-version: 1aa9f644
-validated: 2026-07-29
+version: 75dcc298
+validated: 2026-08-28
 update_when: when the repo identity, reading order, or maintenance rule changes
 ---
 
@@ -22,6 +22,17 @@ Read the orientation guides under `docs/agent/` in this order:
 3. [contracts.md](docs/agent/contracts.md) — what it exposes and what it depends on.
 4. [runbook.md](docs/agent/runbook.md) — how to build/run/test and the Definition of Done.
 5. [traps.md](docs/agent/traps.md) — tacit gotchas not visible in the code.
+
+## AI-ready operational workflows
+
+- Shared release E2E: use the root target `make e2e-shared-release`; owner setup and maintenance
+  have a single source in
+  [docker-flexible-environment/deploy/README.md](docker-flexible-environment/deploy/README.md#ambientes-compartilhados-staging--homol-psw-4320).
+- Plugin release process: invoke the repository skill
+  [.agents/skills/release-plugin/SKILL.md](.agents/skills/release-plugin/SKILL.md), which points to
+  the same canonical workflow used by Claude Code.
+- Do not bypass these public entrypoints with direct SSH/Docker/Node commands unless the runbook
+  explicitly calls for diagnosis or recovery.
 
 ## Team hub (P&P)
 

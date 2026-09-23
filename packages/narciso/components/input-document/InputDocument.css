@@ -28,11 +28,11 @@
   border: 2px solid var(--andes-error-red) !important;
 }
 
-.mp-checkout-container #mp-doc-div input-label div.mp-input-label.mp-label-error {
+.mp-checkout-container #mp-doc-div input-label .mp-input-label.mp-label-error {
   color: var(--andes-error-red) !important;
 }
 
-.mp-checkout-container .mp-checkout-custom-card-row input-label div.mp-input-label.mp-label-error {
+.mp-checkout-container .mp-checkout-custom-card-row input-label .mp-input-label.mp-label-error {
   color: var(--andes-error-red) !important;
 }
 
@@ -79,6 +79,12 @@
   min-height: 38px !important;
   flex-grow: 1 !important;
   min-width: 0 !important;
+}
+
+/* Without this the document mask inherits the store theme placeholder color. */
+.mp-checkout-container .mp-input-document .mp-input .mp-document::placeholder {
+  color: var(--andes-text-color-secondary, rgba(0, 0, 0, 0.55)) !important;
+  opacity: 1 !important;
 }
 
 .mp-checkout-container .mp-input-document .mp-input-document-helper {

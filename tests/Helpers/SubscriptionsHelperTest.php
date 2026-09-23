@@ -39,6 +39,7 @@ class SubscriptionsHelperTest extends TestCase
             'AlreadyDefault'       => '',
             'SaveCardFailed'       => 'We could not save the card. Please try again.',
             'IdempotencyKeyReused' => 'A technical error occurred. Please contact support.',
+            'CPP_TAAP_0000001'     => 'We could not process this card. Please try again.',
             'CPP_TAAP_0602002'     => 'We could not complete the operation. Please try another card.',
             'http_unavailable'     => 'Service temporarily unavailable. Please try again in a moment.',
             'generic'              => 'A technical error occurred. Please contact support.',
@@ -65,6 +66,32 @@ class SubscriptionsHelperTest extends TestCase
     public function testIsSubscriptionOrderReturnsFalseForNonWcOrderObject(): void
     {
         $this->assertFalse($this->helper->isSubscriptionOrder(new \stdClass()));
+    }
+
+    /* ───────────────────────── isZeroDollarCit ───────────────────────── */
+
+    /**
+     * @dataProvider zeroDollarCitPayloadProvider
+     */
+    public function testIsZeroDollarCitUsesServerTransactionAmount(array $payload, bool $expected): void
+    {
+        $this->assertSame($expected, SubscriptionsHelper::isZeroDollarCit($payload));
+    }
+
+    public function zeroDollarCitPayloadProvider(): array
+    {
+        return [
+            'integer zero'         => [['transaction' => ['amount' => 0]], true],
+            'float zero'           => [['transaction' => ['amount' => 0.0]], true],
+            'numeric string zero'  => [['transaction' => ['amount' => '0.00']], true],
+            'transaction missing'  => [[], false],
+            'transaction not array' => [['transaction' => 'invalid'], false],
+            'amount missing'       => [['transaction' => []], false],
+            'amount null'          => [['transaction' => ['amount' => null]], false],
+            'amount not numeric'   => [['transaction' => ['amount' => 'free']], false],
+            'positive amount'      => [['transaction' => ['amount' => 10]], false],
+            'negative amount'      => [['transaction' => ['amount' => -10]], false],
+        ];
     }
 
     /* ───────────────────────── getSubscriptionMeta ───────────────────────── */
@@ -234,6 +261,17 @@ class SubscriptionsHelperTest extends TestCase
             'We could not complete the operation. Please try another card.',
             $message
         );
+    }
+
+    public function testMapApiErrorToUserMessageRecognizesCoreCardTokenNotFoundCode(): void
+    {
+        $message = $this->helper->mapApiErrorToUserMessage(
+            400,
+            'Card token not found',
+            'CPP_TAAP_0000001'
+        );
+
+        $this->assertSame('We could not process this card. Please try again.', $message);
     }
 
     public function testMapApiErrorToUserMessageHttp5xxReturnsUnavailable(): void

@@ -14,8 +14,8 @@ if (!defined('ABSPATH')) {
  *
  * Utilities for the WooCommerce Subscriptions integration with Mercado Pago
  * Automatic Payments (Pre-approval). Centralizes subscription order detection,
- * subscription metadata read/write, deterministic idempotency key generation
- * and the error → buyer-message mapping.
+ * subscription metadata read/write, zero-dollar CIT detection, deterministic
+ * idempotency key generation and the error → buyer-message mapping.
  *
  * @package MercadoPago\Woocommerce\Helpers
  */
@@ -81,6 +81,27 @@ class SubscriptionsHelper
     {
         return class_exists('WC_Subscriptions')
             && function_exists('wcs_order_contains_subscription');
+    }
+
+    /**
+     * Identifies a ZDA from the amount calculated in the server-side CIT payload.
+     *
+     * Both the Automatic Payments client and the gateway must use this shared
+     * predicate so incomplete ZDA responses are routed to the same contract
+     * validator. Checkout input and response amounts are not authoritative.
+     */
+    public static function isZeroDollarCit(array $payload): bool
+    {
+        if (
+            !isset($payload['transaction'])
+            || !is_array($payload['transaction'])
+            || !array_key_exists('amount', $payload['transaction'])
+            || !is_numeric($payload['transaction']['amount'])
+        ) {
+            return false;
+        }
+
+        return (float) $payload['transaction']['amount'] === 0.0;
     }
 
     /**

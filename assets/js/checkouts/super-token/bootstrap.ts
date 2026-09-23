@@ -56,9 +56,11 @@ const metrics = new CoreMonitorMetricsAdapter(
 );
 
 if (domainParams) {
-  composeRuntime(domainParams, recompose, metrics);
+  // The SDK watcher must observe the real variant-bound callback. Starting it before this Promise
+  // settles can mark an empty callback as initialized when the SDK was already present.
+  void composeRuntime(domainParams, recompose, metrics).then(() => {
+    startInitializationResilience(recompose, metrics);
+  });
+} else {
+  startInitializationResilience(recompose, metrics);
 }
-
-// Initialization resilience (Phase 2): runs synchronously after the (async) runtime composition,
-// mirroring the original module order.
-startInitializationResilience(recompose, metrics);

@@ -24,14 +24,21 @@ export class V2SavedCardsView {
     const { container, paymentMethods } = context;
     // Build each row through the shared per-type dispatch so v2 wires selection (and card
     // installments / credits) exactly like v2.1, differing only in the flat-list chrome below.
-    const buildRow = (paymentMethod: PaymentMethod): HTMLElement =>
+    const buildRow = (paymentMethod: PaymentMethod): HTMLElement | null =>
       buildTypedRow(paymentMethod, this.deps, V2_ROW_PRESENTATION, context);
     // Insert each row at the top in reverse so the first method ends up first, then prepend the
     // single list header above them all (faithful to the legacy insert order).
+    let renderedRows = 0;
     [...paymentMethods].reverse().forEach((paymentMethod) => {
-      container.insertBefore(buildRow(paymentMethod), container.firstChild);
+      const row = buildRow(paymentMethod);
+      if (row) {
+        container.insertBefore(row, container.firstChild);
+        renderedRows += 1;
+      }
     });
-    container.insertBefore(this.buildListHeader(), container.firstChild);
+    if (renderedRows > 0) {
+      container.insertBefore(this.buildListHeader(), container.firstChild);
+    }
   }
 
   reset(container: HTMLElement): void {

@@ -1043,6 +1043,18 @@ class RefundHandlerTest extends TestCase
 
         $this->mockDatadogSuccess(2);
 
+        // Source of truth (PSW-4412): each payment's refunded amount is recorded per-payment at
+        // refund time — payment1 fully (100), payment2 partially (80) — so the async notifications
+        // only skip. This is what keeps a later multi-payment refund from over-refunding a payment.
+        $this->mercadopagoMock->orderMetadata
+            ->shouldReceive('addRefundedAmountToPayment')
+            ->once()
+            ->with($this->order, '123456789', 100.00);
+        $this->mercadopagoMock->orderMetadata
+            ->shouldReceive('addRefundedAmountToPayment')
+            ->once()
+            ->with($this->order, '987654321', 80.00);
+
         // Act
         $result = $this->refundHandler->processRefund($totalRefundAmount, $reason);
 
@@ -1648,9 +1660,12 @@ class RefundHandlerTest extends TestCase
 
         $this->requester->shouldReceive('post')->once()->andReturn($response);
 
-        // addAppliedRefundId must never be called when the body is empty.
+        // With an empty body (no refund_id) neither the dedup marker nor the per-payment amount is
+        // recorded here — Super Token relies on the value-based barrier in the notification flow.
         $this->mercadopagoMock->orderMetadata
             ->shouldNotReceive('addAppliedRefundId');
+        $this->mercadopagoMock->orderMetadata
+            ->shouldNotReceive('addRefundedAmountToPayment');
 
         $this->mockDatadogSuccess();
 
@@ -1700,6 +1715,48 @@ class RefundHandlerTest extends TestCase
         $this->mockDatadogSuccess();
 
         $result = $this->refundHandler->processRefund(100.00, 'Test refund');
+
+        $this->assertEquals('approved', $result['status']);
+    }
+
+    /**
+     * Source-of-truth (PSW-4412): on a successful non-Super-Token refund, the handler records the
+     * per-payment refunded amount via OrderMetadata::addRefundedAmountToPayment at refund time, so
+     * the async notification only has to recognise the already-applied refund and skip it.
+     */
+    public function testSuccessfulRefundRecordsPerPaymentRefundedAmount(): void
+    {
+        $paymentId = '123456789';
+        $accessToken = 'TEST-123456789';
+
+        $this->order->shouldReceive('get_meta')
+            ->once()
+            ->with('_Mercado_Pago_Payment_IDs')
+            ->andReturn($paymentId);
+        $this->order->shouldReceive('get_id')->andReturn(1);
+        $this->order->shouldReceive('get_total_refunded')->andReturn(0.0);
+
+        $this->sellerConfig->shouldReceive('getCredentialsAccessToken')
+            ->once()
+            ->andReturn($accessToken);
+
+        $responseData = ['id' => 'refund_123', 'amount' => 40.00, 'status' => 'approved'];
+
+        $response = Mockery::mock(Response::class);
+        $response->shouldReceive('getStatus')->andReturn(201);
+        $response->shouldReceive('getData')->andReturn($responseData);
+
+        $this->requester->shouldReceive('post')->once()->andReturn($response);
+
+        // The exact per-payment amount (40.00) is recorded against the single payment at refund time.
+        $this->mercadopagoMock->orderMetadata
+            ->shouldReceive('addRefundedAmountToPayment')
+            ->once()
+            ->with($this->order, $paymentId, 40.00);
+
+        $this->mockDatadogSuccess();
+
+        $result = $this->refundHandler->processRefund(40.00, 'Test refund');
 
         $this->assertEquals('approved', $result['status']);
     }

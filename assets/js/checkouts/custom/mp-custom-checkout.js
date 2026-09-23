@@ -1,4 +1,12 @@
-/* globals wc_mercadopago_custom_checkout_params, MercadoPago, CheckoutPage, MP_DEVICE_SESSION_ID */
+/* globals jQuery, MercadoPago, MPCardForm, MPThreeDSHandler, MPEventHandler, CheckoutPage, CheckoutElements */
+
+function isCustomCheckoutPage() {
+  const bodyClasses = document.body?.classList;
+
+  return bodyClasses?.contains('woocommerce-checkout') ||
+    bodyClasses?.contains('woocommerce-order-pay') ||
+    bodyClasses?.contains('woocommerce-add-payment-method');
+}
 
 class MPCustomCheckoutHandler {
   static FORM_SELECTORS = {
@@ -13,6 +21,59 @@ class MPCustomCheckoutHandler {
     PAY_FOR_ORDER: 'order_review'
   };
 
+  static FORM_DISCOVERY_TIMEOUT_MS = 30000;
+
+  static FORM_DISCOVERY_RETRY_INTERVAL_MS = 500;
+
+  static hasDependencies() {
+    return typeof MPCardForm === 'function' &&
+      typeof MPThreeDSHandler === 'function' &&
+      typeof MPEventHandler === 'function' &&
+      typeof CheckoutPage === 'object' &&
+      typeof CheckoutElements === 'object' &&
+      this.hasSdkDependency();
+  }
+
+  static hasSdkDependency() {
+    return typeof window.mpSdkInstance?.cardForm === 'function' || typeof MercadoPago === 'function';
+  }
+
+  static waitForDependencies() {
+    if (this.hasDependencies()) {
+      return Promise.resolve(true);
+    }
+
+    return new Promise((resolve) => {
+      let elapsedTime = 0;
+
+      const waitForDependencies = () => {
+        if (this.hasDependencies()) {
+          resolve(true);
+          return;
+        }
+
+        elapsedTime += this.FORM_DISCOVERY_RETRY_INTERVAL_MS;
+
+        if (elapsedTime >= this.FORM_DISCOVERY_TIMEOUT_MS) {
+          resolve(false);
+          return;
+        }
+
+        setTimeout(waitForDependencies, this.FORM_DISCOVERY_RETRY_INTERVAL_MS);
+      };
+
+      waitForDependencies();
+    });
+  }
+
+  static reportInitializationFailure(reason) {
+    if (typeof window.sendMetric !== 'function') {
+      return;
+    }
+
+    window.sendMetric(reason, 'custom_checkout_initialization', 'mp_custom_checkout_initialization_error');
+  }
+
   constructor(cardForm, threeDSHandler, eventHandler) {
     this.cardForm = cardForm;
     this.threeDSHandler = threeDSHandler;
@@ -22,7 +83,23 @@ class MPCustomCheckoutHandler {
   }
 
   async init() {
-    await this.setupFormConfiguration();
+    if (!this.isCheckoutPage()) {
+      return;
+    }
+
+    const formConfigured = await this.setupFormConfiguration();
+
+    if (!formConfigured) {
+      return;
+    }
+
+    const jQueryAvailable = await this.waitForJQuery();
+
+    if (!jQueryAvailable) {
+      MPCustomCheckoutHandler.reportInitializationFailure('jquery_timeout');
+      console.error('Mercado Pago checkout dependencies did not become available in time.');
+      return;
+    }
 
     if (!this.eventHandler.triggeredPaymentMethodSelectedEvent) {
       jQuery('body').trigger('payment_method_selected');
@@ -40,57 +117,130 @@ class MPCustomCheckoutHandler {
       }
 
       this.syncFormIds(formConfig.formId);
+      return true;
     } catch (error) {
-      console.error('Failed to configure checkout form:', error);
+      MPCustomCheckoutHandler.reportInitializationFailure('form_discovery_timeout');
+      console.error('Mercado Pago checkout form was not rendered in time.');
+      return false;
     }
   }
 
   getFormConfig() {
+    const formConfig = this.findFormConfig();
+
+    if (formConfig) {
+      return Promise.resolve(formConfig);
+    }
+
     return new Promise((resolve, reject) => {
-      const maxTries = 10;
-      const intervalMs = 500;
-      let tries = 0;
+      let observer;
+      let retryTimeout;
+      let timeout;
 
-      const tryFindForm = () => {
-        tries++;
-
-        const classicForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.CLASSIC);
-        const blocksForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.BLOCKS);
-        const orderReviewForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.ORDER_REVIEW);
-
-        if (classicForm) {
-          resolve({
-            element: classicForm,
-            formId: MPCustomCheckoutHandler.FORM_IDS.CLASSIC_CHECKOUT,
-          });
-          return;
+      const cleanup = () => {
+        if (observer) {
+          observer.disconnect();
         }
 
-        if (blocksForm) {
-          resolve({
-            element: blocksForm,
-            formId: MPCustomCheckoutHandler.FORM_IDS.BLOCKS_CHECKOUT,
-          });
-          return;
-        }
-
-        if (orderReviewForm) {
-          resolve({
-            element: orderReviewForm,
-            formId: MPCustomCheckoutHandler.FORM_IDS.PAY_FOR_ORDER,
-          });
-          return;
-        }
-
-        if (tries >= maxTries) {
-          reject(new Error(`No checkout form found after ${maxTries} attempts`));
-          return;
-        }
-
-        setTimeout(tryFindForm, intervalMs);
+        clearTimeout(retryTimeout);
+        clearTimeout(timeout);
       };
 
-      tryFindForm();
+      const resolveWhenFormIsAvailable = () => {
+        const availableFormConfig = this.findFormConfig();
+
+        if (!availableFormConfig) {
+          return false;
+        }
+
+        cleanup();
+        resolve(availableFormConfig);
+        return true;
+      };
+
+      const retryWhenMutationObserverIsUnavailable = () => {
+        if (!resolveWhenFormIsAvailable()) {
+          retryTimeout = setTimeout(
+            retryWhenMutationObserverIsUnavailable,
+            MPCustomCheckoutHandler.FORM_DISCOVERY_RETRY_INTERVAL_MS
+          );
+        }
+      };
+
+      timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error('Checkout form discovery timed out.'));
+      }, MPCustomCheckoutHandler.FORM_DISCOVERY_TIMEOUT_MS);
+
+      if (typeof MutationObserver !== 'undefined') {
+        observer = new MutationObserver(resolveWhenFormIsAvailable);
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+        resolveWhenFormIsAvailable();
+        return;
+      }
+
+      retryWhenMutationObserverIsUnavailable();
+    });
+  }
+
+  isCheckoutPage() {
+    return isCustomCheckoutPage();
+  }
+
+  findFormConfig() {
+    const classicForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.CLASSIC);
+    const blocksForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.BLOCKS);
+    const orderReviewForm = document.querySelector(MPCustomCheckoutHandler.FORM_SELECTORS.ORDER_REVIEW);
+
+    if (classicForm) {
+      return {
+        element: classicForm,
+        formId: MPCustomCheckoutHandler.FORM_IDS.CLASSIC_CHECKOUT,
+      };
+    }
+
+    if (blocksForm) {
+      return {
+        element: blocksForm,
+        formId: MPCustomCheckoutHandler.FORM_IDS.BLOCKS_CHECKOUT,
+      };
+    }
+
+    if (orderReviewForm) {
+      return {
+        element: orderReviewForm,
+        formId: MPCustomCheckoutHandler.FORM_IDS.PAY_FOR_ORDER,
+      };
+    }
+
+    return null;
+  }
+
+  waitForJQuery() {
+    if (typeof jQuery === 'function') {
+      return Promise.resolve(true);
+    }
+
+    return new Promise((resolve) => {
+      let elapsedTime = 0;
+
+      const waitForJQuery = () => {
+        if (typeof jQuery === 'function') {
+          resolve(true);
+          return;
+        }
+
+        elapsedTime += MPCustomCheckoutHandler.FORM_DISCOVERY_RETRY_INTERVAL_MS;
+
+        if (elapsedTime >= MPCustomCheckoutHandler.FORM_DISCOVERY_TIMEOUT_MS) {
+          resolve(false);
+          return;
+        }
+
+        setTimeout(waitForJQuery, MPCustomCheckoutHandler.FORM_DISCOVERY_RETRY_INTERVAL_MS);
+      };
+
+      waitForJQuery();
     });
   }
 
@@ -100,7 +250,22 @@ class MPCustomCheckoutHandler {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+async function initializeCustomCheckout() {
+  if (!isCustomCheckoutPage() || window.mpCustomCheckoutHandler || window.mpCustomCheckoutInitializationInProgress) {
+    return;
+  }
+
+  window.mpCustomCheckoutInitializationInProgress = true;
+
+  try {
+    const dependenciesAvailable = await MPCustomCheckoutHandler.waitForDependencies();
+
+    if (!dependenciesAvailable) {
+      MPCustomCheckoutHandler.reportInitializationFailure('dependencies_timeout');
+      console.error('Mercado Pago checkout dependencies did not become available in time.');
+      return;
+    }
+
     const cardForm = new MPCardForm();
     const threeDSHandler = new MPThreeDSHandler();
     const eventHandler = new MPEventHandler(cardForm, threeDSHandler);
@@ -108,4 +273,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const mpCustomCheckoutHandler = new MPCustomCheckoutHandler(cardForm, threeDSHandler, eventHandler);
     window.mpCustomCheckoutHandler = mpCustomCheckoutHandler;
     window.mpEventHandler = eventHandler;
-});
+  } finally {
+    window.mpCustomCheckoutInitializationInProgress = false;
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeCustomCheckout, { once: true });
+} else {
+  initializeCustomCheckout();
+}

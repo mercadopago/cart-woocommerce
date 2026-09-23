@@ -8,6 +8,7 @@ import {
 } from '@super-token/adapters/platform/constants';
 import { sendToCoreMonitor } from './coreMonitorPayload';
 import type { CoreMonitorPayload } from './coreMonitorPayload';
+import { toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
 
 interface AbConfig {
   active?: unknown;
@@ -84,7 +85,8 @@ export class VariantConfigAdapter implements VariantConfigPort {
       if (!abConfig.active) {
         // active === false — Kill switch: clears cookie and returns default for ALL visitors.
         this.clearVariantCookie();
-        const defaultVariant = abConfig.default && this.isAllowed(abConfig.default) ? abConfig.default : SUPER_TOKEN_FALLBACK_VARIANT;
+        const defaultVariant =
+          abConfig.default && this.isAllowed(abConfig.default) ? abConfig.default : SUPER_TOKEN_FALLBACK_VARIANT;
         this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, defaultVariant, 'source:kill_switch');
         return defaultVariant;
       }
@@ -112,16 +114,20 @@ export class VariantConfigAdapter implements VariantConfigPort {
         return SUPER_TOKEN_FALLBACK_VARIANT;
       }
 
-      const cookieTtlDays = abConfig.cookie_ttl_days && abConfig.cookie_ttl_days > 0
-        ? abConfig.cookie_ttl_days
-        : this.SUPER_TOKEN_VARIANT_COOKIE_DEFAULT_TTL_DAYS;
+      const cookieTtlDays =
+        abConfig.cookie_ttl_days && abConfig.cookie_ttl_days > 0
+          ? abConfig.cookie_ttl_days
+          : this.SUPER_TOKEN_VARIANT_COOKIE_DEFAULT_TTL_DAYS;
 
       this.setVariantCookie(assignedVariant, cookieTtlDays);
       this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, assignedVariant, 'source:assigned');
       return assignedVariant;
     } catch (error) {
-      const errorMessage = (error as { message?: string })?.message || 'async_error';
-      this.trackMetric(this.METRIC_LOAD_SUPER_TOKEN_BUNDLE, this.METRIC_STATUS_FAILURE, errorMessage);
+      this.trackMetric(
+        this.METRIC_LOAD_SUPER_TOKEN_BUNDLE,
+        this.METRIC_STATUS_FAILURE,
+        toTelemetryErrorMessage(error, 'async_error'),
+      );
       return SUPER_TOKEN_FALLBACK_VARIANT;
     }
   }
@@ -163,21 +169,23 @@ export class VariantConfigAdapter implements VariantConfigPort {
   private setVariantCookie(variantValue: string, ttlInDays: number): void {
     try {
       const expiration = new Date(Date.now() + ttlInDays * this.MILLISECONDS_PER_DAY).toUTCString();
-      document.cookie = SUPER_TOKEN_VARIANT_COOKIE + '=' + variantValue
-        + ';expires=' + expiration + ';path=/;SameSite=Lax;Secure';
+      document.cookie =
+        SUPER_TOKEN_VARIANT_COOKIE + '=' + variantValue + ';expires=' + expiration + ';path=/;SameSite=Lax;Secure';
     } catch (_) {
       // Intentionally swallow cookie errors to avoid breaking checkout flow.
     }
   }
 
   private clearVariantCookie(): void {
-    document.cookie = SUPER_TOKEN_VARIANT_COOKIE
-      + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax;Secure';
+    document.cookie = SUPER_TOKEN_VARIANT_COOKIE + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax;Secure';
   }
 
   private selectVariantByWeight(variants: Record<string, { weight?: number }>): string {
     const variantNames = Object.keys(variants);
-    const totalWeight = variantNames.reduce((weightSum, variantName) => weightSum + (variants[variantName].weight || 0), 0);
+    const totalWeight = variantNames.reduce(
+      (weightSum, variantName) => weightSum + (variants[variantName].weight || 0),
+      0,
+    );
 
     if (totalWeight <= 0) {
       return SUPER_TOKEN_FALLBACK_VARIANT;
@@ -215,7 +223,8 @@ export class VariantConfigAdapter implements VariantConfigPort {
           }
           return null;
         }
-        return response.json()
+        return response
+          .json()
           .then((parsedConfig: AbConfig) => {
             // Guard: if timeout already fired, discard result to avoid
             // emitting both 'timeout' and 'success' metrics for the same request.
@@ -225,16 +234,16 @@ export class VariantConfigAdapter implements VariantConfigPort {
             this.trackMetric(this.METRIC_FETCH_AB_CONFIG_TIME, elapsedMs, '');
             return parsedConfig;
           })
-          .catch(() => {
+          .catch((error) => {
             if (!hasFetchTimedOut) {
-              this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'error', 'invalid_json');
+              this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'error', toTelemetryErrorMessage(error, 'invalid_json'));
             }
             return null;
           });
       })
-      .catch(() => {
+      .catch((error) => {
         if (!hasFetchTimedOut) {
-          this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'error', 'network_or_cors');
+          this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'error', toTelemetryErrorMessage(error, 'network_or_cors'));
         }
         return null;
       });

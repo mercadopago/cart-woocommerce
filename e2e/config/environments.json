@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "allowedHosts": [
+    "big-shared-xlarge.ppolimpo.io",
+    "e2e-staging-mla.ppolimpo.io",
+    "e2e-staging-mlb.ppolimpo.io",
+    "e2e-staging-mlc.ppolimpo.io",
+    "e2e-staging-mlm.ppolimpo.io",
+    "e2e-staging-mco.ppolimpo.io",
+    "e2e-staging-mlu.ppolimpo.io",
+    "e2e-staging-mpe.ppolimpo.io",
+    "e2e-homol-mla.ppolimpo.io",
+    "e2e-homol-mlb.ppolimpo.io",
+    "e2e-homol-mlc.ppolimpo.io",
+    "e2e-homol-mlm.ppolimpo.io",
+    "e2e-homol-mco.ppolimpo.io",
+    "e2e-homol-mlu.ppolimpo.io",
+    "e2e-homol-mpe.ppolimpo.io"
+  ],
+  "lock": {
+    "sshHost": "big-shared-xlarge.ppolimpo.io",
+    "sshUser": "ubuntu",
+    "name": "woocommerce-e2e-shared-pair",
+    "ttlSeconds": 14400,
+    "heartbeatSeconds": 60
+  },
+  "environments": {
+    "staging": {
+      "role": "candidate",
+      "sites": {
+        "MLA": {
+          "containerName": "wp-staging-mla",
+          "shopUrl": "https://e2e-staging-mla.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-staging-mla.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-staging-mla.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MLB": {
+          "containerName": "wp-staging-mlb",
+          "shopUrl": "https://e2e-staging-mlb.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-staging-mlb.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-staging-mlb.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MLC": {
+          "containerName": "wp-staging-mlc",
+          "shopUrl": "https://e2e-staging-mlc.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-staging-mlc.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-staging-mlc.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MLM": {
+          "containerName": "wp-staging-mlm",
+          "shopUrl": "https://e2e-staging-mlm.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-staging-mlm.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-staging-mlm.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MCO": {
+          "containerName": "wp-staging-mco",
+          "shopUrl": "https://e2e-staging-mco.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-staging-mco.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-staging-mco.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MLU": {
+          "containerName": "wp-staging-mlu",
+          "shopUrl": "https://e2e-staging-mlu.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-staging-mlu.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-staging-mlu.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MPE": {
+          "containerName": "wp-staging-mpe",
+          "shopUrl": "https://e2e-staging-mpe.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-staging-mpe.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-staging-mpe.ppolimpo.io/checkout-blocks/"
+          }
+        }
+      }
+    },
+    "homol": {
+      "role": "baseline",
+      "sites": {
+        "MLA": {
+          "containerName": "wp-homol-mla",
+          "shopUrl": "https://e2e-homol-mla.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-homol-mla.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-homol-mla.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MLB": {
+          "containerName": "wp-homol-mlb",
+          "shopUrl": "https://e2e-homol-mlb.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-homol-mlb.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-homol-mlb.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MLC": {
+          "containerName": "wp-homol-mlc",
+          "shopUrl": "https://e2e-homol-mlc.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-homol-mlc.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-homol-mlc.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MLM": {
+          "containerName": "wp-homol-mlm",
+          "shopUrl": "https://e2e-homol-mlm.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-homol-mlm.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-homol-mlm.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MCO": {
+          "containerName": "wp-homol-mco",
+          "shopUrl": "https://e2e-homol-mco.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-homol-mco.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-homol-mco.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MLU": {
+          "containerName": "wp-homol-mlu",
+          "shopUrl": "https://e2e-homol-mlu.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-homol-mlu.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-homol-mlu.ppolimpo.io/checkout-blocks/"
+          }
+        },
+        "MPE": {
+          "containerName": "wp-homol-mpe",
+          "shopUrl": "https://e2e-homol-mpe.ppolimpo.io/shop/",
+          "checkoutUrls": {
+            "classic": "https://e2e-homol-mpe.ppolimpo.io/checkout-classic/",
+            "blocks": "https://e2e-homol-mpe.ppolimpo.io/checkout-blocks/"
+          }
+        }
+      }
+    }
+  }
+}

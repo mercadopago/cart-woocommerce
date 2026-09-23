@@ -28,12 +28,13 @@ interface BufferedErrorEvent {
  *
  * Note: `super-token-metrics.js` (legacy) mirrored `MPCustomEventDispatcher`
  * (`mp-checkout-error-dispatcher.js`) with a per-event `waitForMelidata` + 5s race.
- * This buffer approach intentionally diverges from that mirror; aligning the
- * canonical dispatcher is a separate follow-up.
+ * This adapter keeps one 5s deadline for the whole FIFO buffer rather than one timer
+ * per event, preventing a never-settled readiness promise from retaining events forever.
  */
 export class MelidataAdapter {
   private readonly MELIDATA_ERROR_EVENT_NAME = 'mp_checkout_error';
   private readonly MELIDATA_LOAD_TIMEOUT_METRIC = 'mp_melidata_load_timeout';
+  private readonly MELIDATA_LOAD_TIMEOUT_MS = 5000;
 
   private readonly sendMetric: MetricSender;
   /**
@@ -48,6 +49,7 @@ export class MelidataAdapter {
   private failed = false;
   private readinessArmed = false;
   private loadListenerAdded = false;
+  private readinessTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(sendMetric: MetricSender) {
     this.sendMetric = sendMetric;
@@ -87,6 +89,8 @@ export class MelidataAdapter {
       return;
     }
 
+    this.armTimeout();
+
     if (window.melidataReady && typeof window.melidataReady.then === 'function') {
       window.melidataReady.then(() => this.onReady()).catch(() => this.onFailure());
       return;
@@ -105,27 +109,49 @@ export class MelidataAdapter {
     // new `{ once: true }` listener. Re-arming happens inside the callback, not here.
     if (!this.loadListenerAdded) {
       this.loadListenerAdded = true;
-      window.addEventListener('load', () => {
-        this.readinessArmed = false;
-        this.armReadiness();
-      }, { once: true });
+      window.addEventListener(
+        'load',
+        () => {
+          this.readinessArmed = false;
+          this.armReadiness();
+        },
+        { once: true },
+      );
     }
   }
 
+  private armTimeout(): void {
+    if (this.readinessTimer || this.ready || this.failed) {
+      return;
+    }
+    this.readinessTimer = setTimeout(() => this.onFailure(), this.MELIDATA_LOAD_TIMEOUT_MS);
+  }
+
+  private clearTimeout(): void {
+    if (!this.readinessTimer) {
+      return;
+    }
+    clearTimeout(this.readinessTimer);
+    this.readinessTimer = null;
+  }
+
   private onReady(): void {
+    if (this.ready || this.failed) {
+      return;
+    }
     this.ready = true;
+    this.clearTimeout();
     this.flush();
   }
 
   private onFailure(): void {
+    if (this.ready || this.failed) {
+      return;
+    }
     this.failed = true;
-    // Intentional divergence from the legacy `waitForMelidata_` + 5s race (super-token-metrics.js).
-    // Legacy: each event raced independently, so mp_melidata_load_timeout fired once per event
-    //   with message = cleanMessage (the actual error text).
-    // Here: one metric fires for the whole buffer with message = 'buffered:N'.
-    //   Benefit: N tells the consumer how many events were lost, which is more actionable
-    //   than a per-event timeout race; side-effect: the original error text is not in the metric.
-    // Consumers of mp_melidata_load_timeout should expect this new shape from this adapter forward.
+    this.clearTimeout();
+    // The deadline belongs to the buffer, not to each buffered event. Emit one timeout signal
+    // and keep the individual diagnostics on their original Core Monitor metrics + FIFO events.
     this.sendMetric(this.MELIDATA_LOAD_TIMEOUT_METRIC, 'true', `buffered:${this.buffer.length}`);
     this.flush();
   }
