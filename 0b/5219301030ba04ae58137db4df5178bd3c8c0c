@@ -1,0 +1,999 @@
+AGENTS.md
+  s_a10c7849c10b44::t_3f5c2011af128b 5-6,26-36
+CHANGELOG.md
+  s_a10c7849c10b44::t_e4e3a4ce51c716 8-40
+README.md
+  s_a10c7849c10b44::t_4d395e9f141b6a 124-137
+assets/css/checkouts/mp-plugins-components.min.css
+  s_a10c7849c10b44::t_14adcd1d0b22a5 1
+assets/css/checkouts/super-token/super-token-v2.1.bundle.min.css
+  s_a10c7849c10b44::t_d05f2fb89c9599 1
+assets/css/checkouts/super-token/super-token-v2.bundle.min.css
+  s_a10c7849c10b44::t_c7a761a66d006e 1
+assets/js/checkouts/custom/entities/card-form.js
+  s_a10c7849c10b44::t_365403e4d99a73 33-34,60-61,90,165,173-180,223,245-250,260,264,316,347-357,436-464
+assets/js/checkouts/custom/entities/card-form.min.js
+  s_a10c7849c10b44::t_8a4aaf900ddd45 1
+assets/js/checkouts/custom/mp-custom-checkout.js
+  s_a10c7849c10b44::t_6f8661e61456b4 1-9,24-76,86-102,120,122-124,129-134,136-142,145-153,156-229,233-236,240,243,253-268,276-285
+assets/js/checkouts/custom/mp-custom-checkout.min.js
+  s_a10c7849c10b44::t_b474e4d9db5e53 1
+assets/js/checkouts/custom/mp-custom-elements.js
+  s_a10c7849c10b44::t_1924993be79c74 7,9-12,30,33
+assets/js/checkouts/custom/mp-custom-elements.min.js
+  s_a10c7849c10b44::t_f79e81f9a6d755 1
+assets/js/checkouts/custom/mp-custom-page.js
+  s_a10c7849c10b44::t_c885c2f82b6af5 12-33,62,68-108,129-197,248-258,432-435,626-628,750-774,876-877,937-938,940-954,969-970
+assets/js/checkouts/custom/mp-custom-page.min.js
+  s_a10c7849c10b44::t_c0f947617e4a36 1
+assets/js/checkouts/mp-plugins-components.min.js
+  s_a10c7849c10b44::t_05956e1317a9d9 1
+assets/js/checkouts/super-token/adapters/platform/CoreMonitorMetricsAdapter.ts
+  s_a10c7849c10b44::t_6578f327823e6c 8-11,75,145,149,182-187,243-247,249,265-269,278-282,288-292,296-300,304-308,316-320,337-340,396,496,509-513,529-533
+assets/js/checkouts/super-token/adapters/platform/MelidataAdapter.ts
+  s_a10c7849c10b44::t_27df6dbad77b2e 31-32,37,52,92-93,112-119,123-137,139-141,143,148-150,152-154
+assets/js/checkouts/super-token/adapters/platform/SdkReadinessWatcher.ts
+  s_a10c7849c10b44::t_cc60cc32bf8493 7,26,32-33,49,51-53,63-64,75-78,83,87-89,99,109-111,153-161
+assets/js/checkouts/super-token/adapters/platform/VariantConfigAdapter.ts
+  s_a10c7849c10b44::t_7646ed17c162fe 11,88-89,117-120,126-130,172-173,180,185-188,226-227,237,239,244,246
+assets/js/checkouts/super-token/adapters/platform/constants.ts
+  s_a10c7849c10b44::t_66098927bbe844 13
+assets/js/checkouts/super-token/adapters/runtime/SuperTokenPaymentMethods.ts
+  s_a10c7849c10b44::t_11fc1d7b5d7b6b 32-33,339,414,433-435,460-462,469-471,502,504,506,508,510,512,514,516,572-573,590-593,609-616,645-649,696-698,705-707,722,739-746,750-752,778,781-783,787-789,818-822,845-849,858-860,866-870,908-911,929-933,936-939,1002,1007-1012,1032-1036,1040-1044,1067-1070,1075-1079,1103-1107,1115,1128,1139,1150-1154,1181-1183,1190-1193,1209-1213,1217-1222,1232-1235,1245,1347-1350,1373-1375,1381-1389,1426-1430,1442-1456,1460-1471,1476,1482-1492,1508-1509,1511-1512,1533-1536,1553-1554,1581-1586,1602-1604,1633-1637,1647-1649,1655-1658,1685-1689,1697-1699,1726-1728,1730-1735,1744-1748,1797-1799,1833-1835,1892,1895-1897,1903,1920-1923
+assets/js/checkouts/super-token/adapters/runtime/SuperTokenTriggerHandler.ts
+  s_a10c7849c10b44::t_913d55d51d08d6 35,45,217
+assets/js/checkouts/super-token/adapters/session/LegacyRenderSession.ts
+  s_a10c7849c10b44::t_1c20bc7a6c9562 26,32,36-38,85-89,93-97,141-144
+assets/js/checkouts/super-token/adapters/validation/checkoutValidationResolver.ts
+  s_a10c7849c10b44::t_b14b3b20d2e3c2 19-20,89-92,165-170,236-237,242,245
+assets/js/checkouts/super-token/adapters/view/shared/consumerCreditsRow.ts
+  s_a10c7849c10b44::t_1809f3ca50fa1d 245-251
+assets/js/checkouts/super-token/adapters/view/shared/typedRow.ts
+  s_a10c7849c10b44::t_d16491b3c0ded7 38-42,44-46,48-62,64-78
+assets/js/checkouts/super-token/adapters/view/v2.1/SavedCardsView.ts
+  s_a10c7849c10b44::t_2252f604547b60 102-103,124,129-134,138
+assets/js/checkouts/super-token/adapters/view/v2/SavedCardsView.ts
+  s_a10c7849c10b44::t_4064057fcfe16f 27,31,33-37,39-41
+assets/js/checkouts/super-token/bootstrap.ts
+  s_a10c7849c10b44::t_849a8ac2417b2f 59-65
+assets/js/checkouts/super-token/composition/initializationResilience.ts
+  s_a10c7849c10b44::t_99fedf7cef2010 14,19-25,60-87
+assets/js/checkouts/super-token/composition/runtimeComposition.ts
+  s_a10c7849c10b44::t_031246df98aeb4 18,20-21,53-60,92,127-130,145,149-154,158,167-174,205-209,223,228,231-236
+assets/js/checkouts/super-token/core/checkoutSession/ErrorClassification.ts
+  s_a10c7849c10b44::t_4d60ebdf6e467d 27,39-176,239,241
+assets/js/checkouts/super-token/core/paymentMethods/BasePaymentMethodWithInstallments.ts
+  s_a10c7849c10b44::t_d932b52430e553 61,97
+assets/js/checkouts/super-token/ports/VariantViewPort.ts
+  s_a10c7849c10b44::t_72e4f5b70aa765 43-44,62-63
+assets/js/checkouts/super-token/super-token-v2.1.bundle.js
+  s_a10c7849c10b44::t_8f5a415f673b19 1-7784
+assets/js/checkouts/super-token/super-token-v2.bundle.js
+  s_a10c7849c10b44::t_a22cb7cab0ceca 1-7784
+build/super-token-v2.1/index.php
+  s_a10c7849c10b44::t_45bfac3ad1e0c5 1-13
+build/super-token-v2/index.php
+  s_a10c7849c10b44::t_025e8124bfef37 1-13
+build/super-token/index.php
+  s_a10c7849c10b44::t_053dfb9e6f44f7 1-13
+changelog.log
+  s_a10c7849c10b44::t_9cde9d4f559eb6 5-37
+composer.json
+  s_a10c7849c10b44::t_5bc405c7094dbf 49
+composer.lock
+  s_a10c7849c10b44::t_fd1ccdb8bdd589 7,11,15,19-20,52,54
+docker-flexible-environment/Caddyfile.ios
+  s_a10c7849c10b44::t_0df4c509bf6a59 1-8
+docker-flexible-environment/Dockerfile
+  s_a10c7849c10b44::t_4e6d91a4745529 1-133
+docker-flexible-environment/Makefile
+  s_a10c7849c10b44::t_d62ac3c38c4632 1-417
+docker-flexible-environment/README.md
+  s_a10c7849c10b44::t_280f67f554cac2 1-495
+docker-flexible-environment/configure-interactive-store.sh
+  s_a10c7849c10b44::t_88bd41c86935a8 1-209
+docker-flexible-environment/deploy/Caddyfile.e2e
+  s_a10c7849c10b44::t_78d9594bbcb2a4 1-68
+docker-flexible-environment/deploy/Makefile
+  s_a10c7849c10b44::t_db77d6b0ad1689 1-120
+docker-flexible-environment/deploy/README.md
+  s_a10c7849c10b44::t_b800501a8ef5dd 1-613
+docker-flexible-environment/deploy/deploy.sh
+  s_a10c7849c10b44::t_f916bdb84994a5 1-253
+docker-flexible-environment/deploy/docker-compose.e2e-poc.yml
+  s_a10c7849c10b44::t_2bce1c7e2cf8bc 1-170
+docker-flexible-environment/deploy/docker-compose.homolog.yml
+  s_a10c7849c10b44::t_ef45bfdf6f44b8 1-166
+docker-flexible-environment/deploy/examples/credentials/README.md
+  s_a10c7849c10b44::t_0126e89d3fed80 1-22
+docker-flexible-environment/deploy/examples/credentials/mco.env.example
+  s_a10c7849c10b44::t_f0a7c7cb3e3421 1-6
+docker-flexible-environment/deploy/examples/credentials/mla.env.example
+  s_a10c7849c10b44::t_8a7cbf37b6edd7 1-6
+docker-flexible-environment/deploy/examples/credentials/mlb.env.example
+  s_a10c7849c10b44::t_42158597a5bd5e 1-6
+docker-flexible-environment/deploy/examples/credentials/mlc.env.example
+  s_a10c7849c10b44::t_50418ce98d375b 1-6
+docker-flexible-environment/deploy/examples/credentials/mlm.env.example
+  s_a10c7849c10b44::t_6a5b482598e250 1-6
+docker-flexible-environment/deploy/examples/credentials/mlu.env.example
+  s_a10c7849c10b44::t_4811b73c2511b7 1-6
+docker-flexible-environment/deploy/examples/credentials/mpe.env.example
+  s_a10c7849c10b44::t_5ed96e1051f074 1-6
+docker-flexible-environment/deploy/test-shared-caddy-live.sh
+  s_a10c7849c10b44::t_fc71a184d09464 1-48
+docker-flexible-environment/deploy/validate-shared-secrets.sh
+  s_a10c7849c10b44::t_bf5442ddc733d7 1-110
+docker-flexible-environment/docker-compose.yml
+  s_a10c7849c10b44::t_eaf1359481b68d 1-59
+docker-flexible-environment/entrypoint.sh
+  s_a10c7849c10b44::t_41d3871832e51f 1-287
+docker-flexible-environment/install-woocommerce-locale.sh
+  s_a10c7849c10b44::t_0e9a44c7bad212 1-62
+docker-flexible-environment/setup-checkout-pages.php
+  s_a10c7849c10b44::t_ef643b54dacb97 1-78
+docker-flexible-environment/setup-interactive.sh
+  s_a10c7849c10b44::t_e96be46d100a5a 1-622
+docker-flexible-environment/setup-store.sh
+  s_a10c7849c10b44::t_9ba8541a17affc 1-284
+docker-flexible-environment/sync-runtime-config.php
+  s_a10c7849c10b44::t_112bed23de1b6f 1-154
+docker-flexible-environment/test-install-woocommerce-locale.sh
+  s_a10c7849c10b44::t_3c7bd1e886046f 1-60
+docker-flexible-environment/test-setup-checkout-pages.php
+  s_a10c7849c10b44::t_098f9fc6ee4951 1-59
+docker-flexible-environment/test-sync-runtime-config.php
+  s_a10c7849c10b44::t_a1705c1defe3d8 1-180
+docker-flexible-environment/test-validate-shared-secrets.sh
+  s_a10c7849c10b44::t_1b67d1ba1fe505 1-49
+docker-flexible-environment/test-wp-cli.sh
+  s_a10c7849c10b44::t_68d6c32e7fceb0 1-36
+docker-flexible-environment/tests/README.md
+  s_a10c7849c10b44::t_8c880d4723777f 1-13
+docker-flexible-environment/tests/fixtures/quoted-policy-bypass.env.example
+  s_a10c7849c10b44::t_2df751fd8d0777 1-5
+docker-flexible-environment/tests/fixtures/short-password.env.example
+  s_a10c7849c10b44::t_ea3c8e7f04d408 1-5
+docker-flexible-environment/tests/fixtures/valid-shared-secrets.env.example
+  s_a10c7849c10b44::t_d32c1b4e551024 1-5
+docker-flexible-environment/wp-cli.sh
+  s_a10c7849c10b44::t_ea25a96156febd 1-10
+docs/agent/architecture.md
+  s_a10c7849c10b44::t_80b0d2e9a08f78 1-140
+docs/agent/contracts.md
+  s_a10c7849c10b44::t_5fcbd545dbda84 1-144
+docs/agent/overview.md
+  s_a10c7849c10b44::t_9d3d2b75ebfe84 1-88
+docs/agent/runbook.md
+  s_a10c7849c10b44::t_7bfbdf56cca42b 1-436
+docs/agent/traps.md
+  s_a10c7849c10b44::t_5b0b99a8f6613c 1-787
+e2e/Makefile
+  s_a10c7849c10b44::t_6ab2f4bea6fb54 1-62
+e2e/README.md
+  s_a10c7849c10b44::t_331eff5eb1b04c 23-35,45,48-51,57-97,295
+e2e/bootstrap-shared-artifacts.js
+  s_a10c7849c10b44::t_7806759be23ba1 1-246
+e2e/build/Dockerfile
+  s_a10c7849c10b44::t_4a088e46097c77 1-96
+e2e/build/entrypoint.sh
+  s_a10c7849c10b44::t_666ba6387a90a7 1-42
+e2e/check-shared-domains.js
+  s_a10c7849c10b44::t_5d43f684e336a0 1-165
+e2e/config/environments.json
+  s_a10c7849c10b44::t_4b4cb4d6665515 1-151
+e2e/config/shared-capabilities.json
+  s_a10c7849c10b44::t_d1daaec62cbde0 1-15
+e2e/data/buyer_data.js
+  s_a10c7849c10b44::t_b6364072a6ab40 1-132
+e2e/data/credit_card_scenarios.js
+  s_a10c7849c10b44::t_8ba751bb093f43 1-126
+e2e/data/debit_card_scenarios.js
+  s_a10c7849c10b44::t_986c116843f459 1-101
+e2e/data/generate_card_scenarios.js
+  s_a10c7849c10b44::t_262693009d0bc6 1-76
+e2e/data/meli_sites.js
+  s_a10c7849c10b44::t_937eda7ac9b273 1-69
+e2e/docker-compose.yaml
+  s_a10c7849c10b44::t_87e9f5315a672c 1-13
+e2e/docs/known-limitations.md
+  s_a10c7849c10b44::t_782ab416b36b99 1-51
+e2e/docs/task-e2e-report-script.md
+  s_a10c7849c10b44::t_5c202059f5cf35 1-113
+e2e/fetch-production-artifact.js
+  s_a10c7849c10b44::t_ed090120947c45 1-164
+e2e/flows/amount_config.js
+  s_a10c7849c10b44::t_5de7b612c4144f 1-358
+e2e/flows/checkout_request.helper.js
+  s_a10c7849c10b44::t_123dac18b62e16 1-52
+e2e/flows/checkout_validation_gate.js
+  s_a10c7849c10b44::t_db724c42404a2f 1-134
+e2e/flows/chocustom.js
+  s_a10c7849c10b44::t_26937d2834c8c6 1-246
+e2e/flows/chopro.js
+  s_a10c7849c10b44::t_9f37f9c9d3478f 1-122
+e2e/flows/cnpj_document.js
+  s_a10c7849c10b44::t_cab27d4ca27ea3 1-240
+e2e/flows/cnpj_document_ticket.js
+  s_a10c7849c10b44::t_360f531b123c13 1-197
+e2e/flows/credentials_gate.js
+  s_a10c7849c10b44::t_52b785df4a237a 1-60
+e2e/flows/credits.js
+  s_a10c7849c10b44::t_3f98fffd67ba24 1-39
+e2e/flows/document_field_suite.js
+  s_a10c7849c10b44::t_e458d98b50bba9 1-73
+e2e/flows/fill_steps_to_checkout.js
+  s_a10c7849c10b44::t_123834c08515de 1-138
+e2e/flows/installments_gate.js
+  s_a10c7849c10b44::t_621f96b3726216 1-115
+e2e/flows/luhn_multicountry.js
+  s_a10c7849c10b44::t_a7c8576771aa93 1-38
+e2e/flows/luhn_validation.js
+  s_a10c7849c10b44::t_aadd567f130bf6 1-157
+e2e/flows/manual_renewal_multicountry.js
+  s_a10c7849c10b44::t_65bad101d251a4 1-138
+e2e/flows/order_pay.js
+  s_a10c7849c10b44::t_52ea24952b9df8 1-151
+e2e/flows/pix.js
+  s_a10c7849c10b44::t_6b7f53f80dfe21 1-26
+e2e/flows/place_order.helper.js
+  s_a10c7849c10b44::t_359fbf3a32e555 1-29
+e2e/flows/pse.js
+  s_a10c7849c10b44::t_d051ce70a6a4e7 1-44
+e2e/flows/refund.js
+  s_a10c7849c10b44::t_55a0f6a0424388 1-250
+e2e/flows/subscription-blocks.js
+  s_a10c7849c10b44::t_4692ea46f0cda5 1-51
+e2e/flows/subscriptions.js
+  s_a10c7849c10b44::t_71dc8e3c766b18 1-466
+e2e/flows/ticket.js
+  s_a10c7849c10b44::t_e40d63d4777772 1-110
+e2e/flows/tokenization_observability.js
+  s_a10c7849c10b44::t_6664cffd818ad8 1-194
+e2e/flows/yape.js
+  s_a10c7849c10b44::t_ea9e7f0711f933 1-34
+e2e/global-setup.js
+  s_a10c7849c10b44::t_dd9ce487a1463d 1-263
+e2e/helpers/capability-guard.js
+  s_a10c7849c10b44::t_287567ceb050e3 1-52
+e2e/helpers/config-status.js
+  s_a10c7849c10b44::t_921287f2479462 1-24
+e2e/helpers/dual-progress.js
+  s_a10c7849c10b44::t_4298e71a2b2613 1-218
+e2e/helpers/dual-report.js
+  s_a10c7849c10b44::t_09097ca190aa8c 1-342
+e2e/helpers/environment-config.js
+  s_a10c7849c10b44::t_45c6585cddbd13 1-340
+e2e/helpers/fetch-site-id.mjs
+  s_a10c7849c10b44::t_7d3924b8f64abb 1-98
+e2e/helpers/installed-version.js
+  s_a10c7849c10b44::t_b3e5056a11a207 1-56
+e2e/helpers/lease-heartbeat.js
+  s_a10c7849c10b44::t_191a275645b51f 1-59
+e2e/helpers/progress-reporter.js
+  s_a10c7849c10b44::t_569483a0684c45 1-171
+e2e/helpers/refund-field-map.php
+  s_a10c7849c10b44::t_0ea8e96d1f1b14 1-50
+e2e/helpers/runtime-timeouts.js
+  s_a10c7849c10b44::t_5aec6778d7e04e 1-29
+e2e/helpers/site-guard.js
+  s_a10c7849c10b44::t_9f9101575bd134 1-64
+e2e/helpers/ssh-options.js
+  s_a10c7849c10b44::t_f9ab63ddf1c6f7 1-64
+e2e/helpers/subscriptions-env.js
+  s_a10c7849c10b44::t_6e8770f533a6ce 1-339
+e2e/helpers/wp-env.js
+  s_a10c7849c10b44::t_1afdd19b3a4893 1-130
+e2e/helpers/wp-options-snapshot.js
+  s_a10c7849c10b44::t_7e139dea4ed8eb 1-40
+e2e/ios/Makefile
+  s_a10c7849c10b44::t_eab37e93b80c6f 1-69
+e2e/ios/README.md
+  s_a10c7849c10b44::t_5687a1b880ea7e 1-118
+e2e/ios/evidence/README.md
+  s_a10c7849c10b44::t_8a8ef697f2d924 1-6
+e2e/ios/fixtures.js
+  s_a10c7849c10b44::t_ea9b6d490087a5 1-80
+e2e/ios/flows/checkout-data.js
+  s_a10c7849c10b44::t_3f079d4c98473e 1-48
+e2e/ios/flows/custom-checkout.js
+  s_a10c7849c10b44::t_f37b373cb5916e 1-95
+e2e/ios/global-setup.js
+  s_a10c7849c10b44::t_9a24a212e3bd3e 1-17
+e2e/ios/helpers/evidence.js
+  s_a10c7849c10b44::t_6eab43d1631324 1-194
+e2e/ios/helpers/simulator.mjs
+  s_a10c7849c10b44::t_1c2f2f9f5afcdc 1-170
+e2e/ios/pages/base.page.js
+  s_a10c7849c10b44::t_d6207446649bc7 1-77
+e2e/ios/pages/checkout.page.js
+  s_a10c7849c10b44::t_346c23d8eeb483 1-195
+e2e/ios/pages/custom-card.page.js
+  s_a10c7849c10b44::t_c918fff94e2df8 1-171
+e2e/ios/pages/store.page.js
+  s_a10c7849c10b44::t_63ccd6fda89232 1-37
+e2e/ios/playwright.config.js
+  s_a10c7849c10b44::t_1004c6bcd29c1d 1-31
+e2e/ios/run/run-e2e.sh
+  s_a10c7849c10b44::t_11511aaf8239d9 1-188
+e2e/ios/tests/mlb/approved-credit-card-blocks.spec.js
+  s_a10c7849c10b44::t_255adcf971a06b 1-9
+e2e/ios/tests/mlb/approved-credit-card-classic.spec.js
+  s_a10c7849c10b44::t_d05a26425a83da 1-9
+e2e/ios/tests/mlb/installments-sync-blocks.spec.js
+  s_a10c7849c10b44::t_fd8febcfa25e5f 1-9
+e2e/ios/tests/mlb/installments-sync-classic.spec.js
+  s_a10c7849c10b44::t_40efb68ff7d7a5 1-9
+e2e/ios/tests/mlb/rejected-credit-card-classic.spec.js
+  s_a10c7849c10b44::t_a6cb0697f16351 1-9
+e2e/package-lock.json
+  s_a10c7849c10b44::t_ae447d1a04778e 1-8623
+e2e/package.json
+  s_a10c7849c10b44::t_7bbab43f9f871e 1-53
+e2e/playwright.config.js
+  s_a10c7849c10b44::t_cc5b674ff3894d 1-100
+e2e/preflight-shared-lanes.js
+  s_a10c7849c10b44::t_88bd7308b84e29 1-258
+e2e/prepare-release-comparison.js
+  s_a10c7849c10b44::t_adf7bc9c6a6095 1-147
+e2e/publish-baseline.js
+  s_a10c7849c10b44::t_9142f9295e7e5b 1-37
+e2e/publish-candidate.js
+  s_a10c7849c10b44::t_6f8d2ca13ff976 1-356
+e2e/rerun-failed.sh
+  s_a10c7849c10b44::t_2f5474ce678dc6 1-95
+e2e/run-all-report.sh
+  s_a10c7849c10b44::t_a155e6709fc119 1-993
+e2e/run-all-report/help.html
+  s_a10c7849c10b44::t_717cd8a5ad41fb 1-288
+e2e/run-all-report/usage.md
+  s_a10c7849c10b44::t_0a86d7cbaf4896 1-112
+e2e/run-dual-matrix.js
+  s_a10c7849c10b44::t_1debe987895f6e 1-355
+e2e/run-dual-report.js
+  s_a10c7849c10b44::t_057bccdca1169d 1-625
+e2e/run-pse.sh
+  s_a10c7849c10b44::t_f7c03483b96dec 1-180
+e2e/run-release-comparison.js
+  s_a10c7849c10b44::t_4399c2e17d81e4 1-134
+e2e/super-token/CLAUDE.md
+  s_a10c7849c10b44::t_6f32d1812a23e6 1-53
+e2e/super-token/Makefile
+  s_a10c7849c10b44::t_70c0c7d95c269c 1-89
+e2e/super-token/README.md
+  s_a10c7849c10b44::t_269c90a83b639c 1-229
+e2e/super-token/config/countries.example.json
+  s_a10c7849c10b44::t_a6275fe0d04f4f 1-33
+e2e/super-token/data/country.js
+  s_a10c7849c10b44::t_7a55f6d06938ef 1-21
+e2e/super-token/data/shop.js
+  s_a10c7849c10b44::t_ee82444bf41418 1-21
+e2e/super-token/docs/how-it-works.md
+  s_a10c7849c10b44::t_db0a915f6ac4c6 1-84
+e2e/super-token/docs/limitations.md
+  s_a10c7849c10b44::t_1b7dbd27a0a10c 1-58
+e2e/super-token/docs/scenarios.md
+  s_a10c7849c10b44::t_78466cd27724d8 1-167
+e2e/super-token/fixtures.js
+  s_a10c7849c10b44::t_4ef78ea85522ba 1-96
+e2e/super-token/flows/super-token.js
+  s_a10c7849c10b44::t_64133f8955cb6a 1-491
+e2e/super-token/helpers/device.js
+  s_a10c7849c10b44::t_9605b9d4877c5e 1-110
+e2e/super-token/helpers/store.js
+  s_a10c7849c10b44::t_13b4a1db3c69f1 1-132
+e2e/super-token/playwright.config.js
+  s_a10c7849c10b44::t_407dd04ddcd4ee 1-37
+e2e/super-token/run/list-tests.sh
+  s_a10c7849c10b44::t_10638a1d073edc 1-54
+e2e/super-token/run/run-e2e.sh
+  s_a10c7849c10b44::t_41b0efa2bdc278 1-192
+e2e/super-token/selectors.js
+  s_a10c7849c10b44::t_da10617798733e 1-28
+e2e/super-token/setup/setup-biometrics.sh
+  s_a10c7849c10b44::t_d5682840b2b7e0 1-60
+e2e/super-token/setup/setup-device.sh
+  s_a10c7849c10b44::t_517796f59bcacb 1-115
+e2e/super-token/setup/setup-store-remote.sh
+  s_a10c7849c10b44::t_5f70c5e7143c63 1-100
+e2e/super-token/setup/setup-store.sh
+  s_a10c7849c10b44::t_5dd446497368de 1-160
+e2e/super-token/suites/alternative-methods.js
+  s_a10c7849c10b44::t_6d7eda1c4488e0 1-318
+e2e/super-token/suites/authorization.js
+  s_a10c7849c10b44::t_ef23e40da37278 1-92
+e2e/super-token/suites/eligibility.js
+  s_a10c7849c10b44::t_b5ac5f044f80e4 1-60
+e2e/super-token/suites/metrics-contract.js
+  s_a10c7849c10b44::t_0333b1d90ecdb5 1-140
+e2e/super-token/suites/reset.js
+  s_a10c7849c10b44::t_4775df06f6a672 1-95
+e2e/super-token/suites/resilience.js
+  s_a10c7849c10b44::t_a53fbb612af92c 1-247
+e2e/super-token/suites/validation.js
+  s_a10c7849c10b44::t_818aaa92f1d362 1-80
+e2e/super-token/tests/mla/alternative-methods.spec.js
+  s_a10c7849c10b44::t_c6a835d3d1de1b 1-3
+e2e/super-token/tests/mla/authorization.spec.js
+  s_a10c7849c10b44::t_aa5d15846d8ba4 1-3
+e2e/super-token/tests/mla/eligibility.spec.js
+  s_a10c7849c10b44::t_d27f01636e68a8 1-3
+e2e/super-token/tests/mla/metrics-contract.spec.js
+  s_a10c7849c10b44::t_120c99bd1cce7a 1-3
+e2e/super-token/tests/mla/reset.spec.js
+  s_a10c7849c10b44::t_bb0d90a7ea377d 1-3
+e2e/super-token/tests/mla/resilience.spec.js
+  s_a10c7849c10b44::t_1f47bf121e7e4c 1-3
+e2e/super-token/tests/mla/validation.spec.js
+  s_a10c7849c10b44::t_38dd9d2b956b13 1-3
+e2e/super-token/tests/mlb/alternative-methods.spec.js
+  s_a10c7849c10b44::t_6535233c2877f6 1-3
+e2e/super-token/tests/mlb/authorization.spec.js
+  s_a10c7849c10b44::t_ed576993055ca7 1-3
+e2e/super-token/tests/mlb/eligibility.spec.js
+  s_a10c7849c10b44::t_723f6d97a43258 1-3
+e2e/super-token/tests/mlb/metrics-contract.spec.js
+  s_a10c7849c10b44::t_3baa93c2b9cd80 1-3
+e2e/super-token/tests/mlb/reset.spec.js
+  s_a10c7849c10b44::t_fab78593544870 1-3
+e2e/super-token/tests/mlb/resilience.spec.js
+  s_a10c7849c10b44::t_d0f7bf8c6ed04b 1-3
+e2e/super-token/tests/mlb/validation.spec.js
+  s_a10c7849c10b44::t_80d4786e8a5898 1-3
+e2e/super-token/tests/mlm/alternative-methods.spec.js
+  s_a10c7849c10b44::t_f3b6a78b972ec3 1-3
+e2e/super-token/tests/mlm/authorization.spec.js
+  s_a10c7849c10b44::t_b135a8fb5287d2 1-3
+e2e/super-token/tests/mlm/eligibility.spec.js
+  s_a10c7849c10b44::t_3de303241e89b9 1-3
+e2e/super-token/tests/mlm/metrics-contract.spec.js
+  s_a10c7849c10b44::t_aee945dc6f0ab7 1-3
+e2e/super-token/tests/mlm/reset.spec.js
+  s_a10c7849c10b44::t_ecb8d97d2694bb 1-3
+e2e/super-token/tests/mlm/resilience.spec.js
+  s_a10c7849c10b44::t_6886217b698e94 1-3
+e2e/super-token/tests/mlm/validation.spec.js
+  s_a10c7849c10b44::t_b76d79d7d21b66 1-3
+e2e/tests/health/health-monitor.spec.js
+  s_a10c7849c10b44::t_0d37a963622275 1-370
+e2e/tests/mco/chocustom/chocustom_credit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_f7d8acb237e3b7 1-35
+e2e/tests/mco/chocustom/chocustom_debit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_9d03bce68b4c20 1-30
+e2e/tests/mco/chocustom/chocustom_payment_binary_on.spec.js
+  s_a10c7849c10b44::t_de1ad037b6ba50 1-31
+e2e/tests/mco/chocustom/currency_conversion.spec.js
+  s_a10c7849c10b44::t_aeecf79430606e 1-84
+e2e/tests/mco/chocustom/debit_forces_single_installment.spec.js
+  s_a10c7849c10b44::t_e6cf7315fd239b 1-22
+e2e/tests/mco/chocustom/document_masks.spec.js
+  s_a10c7849c10b44::t_e1ce0bf088fdac 1-17
+e2e/tests/mco/chocustom/luhn_validation.spec.js
+  s_a10c7849c10b44::t_236b2e26256d25 1-5
+e2e/tests/mco/chopro/modal/chopro_payment_modal_binary_off.spec.js
+  s_a10c7849c10b44::t_13e58ce2a2c07c 1-26
+e2e/tests/mco/chopro/modal/chopro_payment_modal_binary_on.spec.js
+  s_a10c7849c10b44::t_2af704ea959800 1-18
+e2e/tests/mco/chopro/redirect/chopro_payment_redirect_binary_off.spec.js
+  s_a10c7849c10b44::t_8e390063138fc3 1-26
+e2e/tests/mco/chopro/redirect/chopro_payment_redirect_binary_on.spec.js
+  s_a10c7849c10b44::t_b015e480489115 1-18
+e2e/tests/mco/pse/pse_payment.spec.js
+  s_a10c7849c10b44::t_b74de3bca5dffe 1-39
+e2e/tests/mco/subscriptions/manual-renewal-single-payment.spec.js
+  s_a10c7849c10b44::t_49496bad555d12 1-5
+e2e/tests/mco/ticket/ticket_payment.spec.js
+  s_a10c7849c10b44::t_c841c81cf59978 1-14
+e2e/tests/mla/chocredits/credits_payment.spec.js
+  s_a10c7849c10b44::t_e14c0de9c6b900 1-14
+e2e/tests/mla/chocustom/chocustom_credit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_21ad86df056bea 1-35
+e2e/tests/mla/chocustom/chocustom_debit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_6cd52629f813d5 1-30
+e2e/tests/mla/chocustom/chocustom_payment_binary_on.spec.js
+  s_a10c7849c10b44::t_b72ad3a7dbddd3 1-31
+e2e/tests/mla/chocustom/currency_conversion.spec.js
+  s_a10c7849c10b44::t_e609b2bb060d1f 1-78
+e2e/tests/mla/chocustom/document_masks.spec.js
+  s_a10c7849c10b44::t_d745f3924a4a53 1-19
+e2e/tests/mla/chocustom/luhn_validation.spec.js
+  s_a10c7849c10b44::t_78140b0b8a79ca 1-5
+e2e/tests/mla/chopro/modal/chopro_payment_modal_binary_off.spec.js
+  s_a10c7849c10b44::t_d4a38dee8798b3 1-26
+e2e/tests/mla/chopro/modal/chopro_payment_modal_binary_on.spec.js
+  s_a10c7849c10b44::t_d8409e127f2f2b 1-18
+e2e/tests/mla/chopro/redirect/chopro_payment_redirect_binary_off.spec.js
+  s_a10c7849c10b44::t_b1b67ddf6ca048 1-26
+e2e/tests/mla/chopro/redirect/chopro_payment_redirect_bynary_on.spec.js
+  s_a10c7849c10b44::t_e0dbf7be26ae6a 1-18
+e2e/tests/mla/subscriptions/manual-renewal-single-payment.spec.js
+  s_a10c7849c10b44::t_46f33c9dff2fd4 1-5
+e2e/tests/mla/ticket/ticket_payment.spec.js
+  s_a10c7849c10b44::t_74b8c4fd402159 1-18
+e2e/tests/mlb/chocredits/credits_payment.spec.js
+  s_a10c7849c10b44::t_59f06a9fa0ef11 1-9
+e2e/tests/mlb/chocustom/amount_config.spec.js
+  s_a10c7849c10b44::t_80fead089674e5 1-177
+e2e/tests/mlb/chocustom/checkout_validation_gate.spec.js
+  s_a10c7849c10b44::t_ba5084b63cb737 1-80
+e2e/tests/mlb/chocustom/credentials_gate.spec.js
+  s_a10c7849c10b44::t_79924bbf7d7cab 1-32
+e2e/tests/mlb/chocustom/credit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_16f84d7ce2ea38 1-30
+e2e/tests/mlb/chocustom/credit_card_payment_binary_on.spec.js
+  s_a10c7849c10b44::t_5a20d872fd12f3 1-21
+e2e/tests/mlb/chocustom/debit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_d36267785c97e1 1-32
+e2e/tests/mlb/chocustom/document_masks.spec.js
+  s_a10c7849c10b44::t_1fde9e98bd7d9e 1-19
+e2e/tests/mlb/chocustom/installments_gate.spec.js
+  s_a10c7849c10b44::t_8339cc93a7a1b6 1-25
+e2e/tests/mlb/chocustom/luhn_validation.spec.js
+  s_a10c7849c10b44::t_5b2b4aa6696140 1-38
+e2e/tests/mlb/chocustom/order_pay.spec.js
+  s_a10c7849c10b44::t_7160795202ceca 1-31
+e2e/tests/mlb/chocustom/refund.spec.js
+  s_a10c7849c10b44::t_7b6cab526082d3 1-230
+e2e/tests/mlb/chocustom/tokenization_observability.spec.js
+  s_a10c7849c10b44::t_8fd51088163cd8 1-40
+e2e/tests/mlb/chopro/modal/chopro_payment_modal_binary_off.spec.js
+  s_a10c7849c10b44::t_552668d85299d3 1-21
+e2e/tests/mlb/chopro/modal/chopro_payment_modal_binary_on.spec.js
+  s_a10c7849c10b44::t_c03134a21a0ace 1-13
+e2e/tests/mlb/chopro/redirect/chopro_payment_redirect_binary_off.spec.js
+  s_a10c7849c10b44::t_a9fb03398e447f 1-17
+e2e/tests/mlb/chopro/redirect/chopro_payment_redirect_bynary_on.spec.js
+  s_a10c7849c10b44::t_b805ac99507f25 1-9
+e2e/tests/mlb/cnpj-alphanumeric.spec.js
+  s_a10c7849c10b44::t_99972553d77145 1-158
+e2e/tests/mlb/pix/pix_payment.spec.js
+  s_a10c7849c10b44::t_58d837adebb53c 1-24
+e2e/tests/mlb/subscriptions/manual-renewal-single-payment.spec.js
+  s_a10c7849c10b44::t_503f6c98f0d232 1-112
+e2e/tests/mlb/subscriptions/subscription-credential-match.spec.js
+  s_a10c7849c10b44::t_dd7aac67f17061 1-129
+e2e/tests/mlb/subscriptions/zero-dollar-initial-cit.spec.js
+  s_a10c7849c10b44::t_31a8110d520975 1-239
+e2e/tests/mlb/ticket/cnpj-alphanumeric-ticket.spec.js
+  s_a10c7849c10b44::t_a98369b00de163 1-128
+e2e/tests/mlb/ticket/ticket_payment.spec.js
+  s_a10c7849c10b44::t_69572c930cdd4f 1-9
+e2e/tests/mlc/chocustom/chocustom_credit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_328b81b1d2e9e2 1-35
+e2e/tests/mlc/chocustom/chocustom_debit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_c0fadd996cbb91 1-30
+e2e/tests/mlc/chocustom/chocustom_payment_binary_on.spec.js
+  s_a10c7849c10b44::t_16033b1b19e49e 1-31
+e2e/tests/mlc/chocustom/currency_conversion.spec.js
+  s_a10c7849c10b44::t_76d4539a03bc70 1-84
+e2e/tests/mlc/chocustom/document_masks.spec.js
+  s_a10c7849c10b44::t_66f5cbccbcf774 1-16
+e2e/tests/mlc/chocustom/luhn_validation.spec.js
+  s_a10c7849c10b44::t_a3639175c206bf 1-5
+e2e/tests/mlc/chopro/modal/chopro_payment_modal.spec.js
+  s_a10c7849c10b44::t_ad20b756bc0118 1-22
+e2e/tests/mlc/chopro/redirect/chopro_payment_redirect.spec.js
+  s_a10c7849c10b44::t_277357ff22bb23 1-22
+e2e/tests/mlc/subscriptions/manual-renewal-single-payment.spec.js
+  s_a10c7849c10b44::t_9087dca10805b4 1-5
+e2e/tests/mlm/chocredits/credits_payment.spec.js
+  s_a10c7849c10b44::t_7abbdcae8df583 1-14
+e2e/tests/mlm/chocustom/luhn_validation.spec.js
+  s_a10c7849c10b44::t_7d3059ff6eb07b 1-5
+e2e/tests/mlm/chopro/modal/chopro_payment_modal.spec.js
+  s_a10c7849c10b44::t_acc064dfc3cb4c 1-26
+e2e/tests/mlm/chopro/redirect/chopro_payment_redirect.spec.js
+  s_a10c7849c10b44::t_15af226e72a938 1-26
+e2e/tests/mlm/subscriptions/manual-renewal-single-payment.spec.js
+  s_a10c7849c10b44::t_71107b0528486c 1-5
+e2e/tests/mlm/ticket/ticket_payment.spec.js
+  s_a10c7849c10b44::t_ecc98caa92d284 1-14
+e2e/tests/mlu/chocustom/credit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_6a0b7546ea8b17 1-51
+e2e/tests/mlu/chocustom/debit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_d4ee21eac6e2df 1-30
+e2e/tests/mlu/chocustom/document_masks.spec.js
+  s_a10c7849c10b44::t_027cce67f40741 1-16
+e2e/tests/mlu/chocustom/luhn_validation.spec.js
+  s_a10c7849c10b44::t_f63619dee28e3d 1-5
+e2e/tests/mlu/chocustom/payment_binary_on.spec.js
+  s_a10c7849c10b44::t_0376fad62c8f35 1-35
+e2e/tests/mlu/chopro/modal/chopro_payment_modal_creditcard.spec.js
+  s_a10c7849c10b44::t_826f7ee97d05b3 1-22
+e2e/tests/mlu/chopro/redirect/chopro_payment_redirect_creditcard.spec.js
+  s_a10c7849c10b44::t_9a6af37f5d8ca4 1-22
+e2e/tests/mlu/subscriptions/manual-renewal-single-payment.spec.js
+  s_a10c7849c10b44::t_a78766b44c5b9f 1-5
+e2e/tests/mlu/ticket/ticket_payment.spec.js
+  s_a10c7849c10b44::t_a32d7a77e6615d 1-18
+e2e/tests/mpe/chocustom/chocustom_credit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_7cb220f2c7ddf6 1-35
+e2e/tests/mpe/chocustom/chocustom_debit_card_payment_binary_off.spec.js
+  s_a10c7849c10b44::t_75b824e7f358da 1-30
+e2e/tests/mpe/chocustom/chocustom_payment_binary_on.spec.js
+  s_a10c7849c10b44::t_a062833ef5ecdc 1-31
+e2e/tests/mpe/chocustom/document_masks.spec.js
+  s_a10c7849c10b44::t_cf4f32da4729e7 1-17
+e2e/tests/mpe/chocustom/luhn_validation.spec.js
+  s_a10c7849c10b44::t_a40b7131c70e8a 1-5
+e2e/tests/mpe/chopro/chopro_payment_modal.spec.js
+  s_a10c7849c10b44::t_c8299346a60510 1-14
+e2e/tests/mpe/chopro/chopro_payment_redirect.spec.js
+  s_a10c7849c10b44::t_fe3f5fcf7f1c58 1-14
+e2e/tests/mpe/subscriptions/manual-renewal-single-payment.spec.js
+  s_a10c7849c10b44::t_3f07a9a201850b 1-5
+e2e/tests/mpe/ticket/ticket_payment.spec.js
+  s_a10c7849c10b44::t_2ca8ad29d96e9a 1-14
+e2e/tests/mpe/yape/yape_payment.spec.js
+  s_a10c7849c10b44::t_dddb8cb3e60737 1-74
+e2e/tests/subscriptions/card-change.spec.js
+  s_a10c7849c10b44::t_99821bd7ea0b38 1-69
+e2e/tests/subscriptions/cit-approve.spec.js
+  s_a10c7849c10b44::t_81a661cf004e7a 1-45
+e2e/tests/subscriptions/credential-no-scope.spec.js
+  s_a10c7849c10b44::t_74fc6edc6397d2 1-59
+e2e/tests/subscriptions/mit-renewal.spec.js
+  s_a10c7849c10b44::t_0f15ddc36449a5 1-66
+e2e/tooling-tests/README.md
+  s_a10c7849c10b44::t_a5d0143f91ec32 1-30
+e2e/tooling-tests/bootstrap-shared-artifacts.test.js
+  s_a10c7849c10b44::t_8d52a002e105a8 1-128
+e2e/tooling-tests/capability-guard.test.js
+  s_a10c7849c10b44::t_5b290a5aa6b597 1-30
+e2e/tooling-tests/check-shared-domains.test.js
+  s_a10c7849c10b44::t_19316225b97015 1-93
+e2e/tooling-tests/dual-progress.test.js
+  s_a10c7849c10b44::t_55618423c6121b 1-106
+e2e/tooling-tests/dual-report.test.js
+  s_a10c7849c10b44::t_979553bf1db393 1-195
+e2e/tooling-tests/environment-config.test.js
+  s_a10c7849c10b44::t_df083c154ec282 1-238
+e2e/tooling-tests/fetch-production-artifact.test.js
+  s_a10c7849c10b44::t_03faba2e5844a3 1-32
+e2e/tooling-tests/fetch-site-id.test.js
+  s_a10c7849c10b44::t_c42035479c210f 1-82
+e2e/tooling-tests/installed-version.test.js
+  s_a10c7849c10b44::t_06f638f5be92b5 1-56
+e2e/tooling-tests/lease-heartbeat.test.js
+  s_a10c7849c10b44::t_46f36dcf45c77e 1-66
+e2e/tooling-tests/preflight-shared-lanes.test.js
+  s_a10c7849c10b44::t_3284c19e1cb500 1-101
+e2e/tooling-tests/prepare-release-comparison.test.js
+  s_a10c7849c10b44::t_491f67729be59c 1-99
+e2e/tooling-tests/progress-reporter.test.js
+  s_a10c7849c10b44::t_22e3ec583d67ae 1-73
+e2e/tooling-tests/publish-candidate.test.js
+  s_a10c7849c10b44::t_0a337c37ba246c 1-73
+e2e/tooling-tests/publish-release-swap.test.js
+  s_a10c7849c10b44::t_4f3b17461cb26c 1-300
+e2e/tooling-tests/remote-lock-script.test.js
+  s_a10c7849c10b44::t_6c5828461c60ac 1-57
+e2e/tooling-tests/run-dual-matrix.test.js
+  s_a10c7849c10b44::t_3919c1a2036ff9 1-102
+e2e/tooling-tests/run-dual-report.test.js
+  s_a10c7849c10b44::t_4af2a723ebe38d 1-228
+e2e/tooling-tests/run-release-comparison.test.js
+  s_a10c7849c10b44::t_5f5b2fd26058d8 1-106
+e2e/tooling-tests/runtime-timeouts.test.js
+  s_a10c7849c10b44::t_173f7a3c5c0f22 1-48
+e2e/tooling-tests/shared-caddy.test.js
+  s_a10c7849c10b44::t_2bfba995c89a06 1-30
+e2e/tooling-tests/shared-runtime-security.test.js
+  s_a10c7849c10b44::t_a7e4f09829ad1e 1-100
+e2e/tooling-tests/site-guard.test.js
+  s_a10c7849c10b44::t_8df2e2a65948b3 1-46
+e2e/tooling-tests/ssh-options.test.js
+  s_a10c7849c10b44::t_c0f56d0e5312bb 1-83
+i18n/languages/woocommerce-mercadopago-es.po
+  s_a10c7849c10b44::t_5e4a1805d9859d 3489,4680-4707
+i18n/languages/woocommerce-mercadopago-es_MX.po
+  s_a10c7849c10b44::t_372ea6701c084c 3490,4683-4710
+i18n/languages/woocommerce-mercadopago-pt.po
+  s_a10c7849c10b44::t_88296845a750a7 3496,4697-4724
+i18n/languages/woocommerce-mercadopago.pot
+  s_a10c7849c10b44::t_d5d15f696bdafc 10,19,23,27,31,35,39,43,47,51,55,59,64,68,72,76,80,85,90,94,98,102,106,110,114,118,122,126,130,134,138,142,146,150,154,158,162,166,170-174,178,182,186,191,195,1820,2312,2316,2320,2332,2480,2695-2699,2703,2707,2711,2715,2719,2723-2746,2750,2754,2758,2762,2766,2770,2774,2778,2782,2786,2790,2794,2798,2802,2806,2810,2814,2818,2822,2826,2830,2834,2838,2842,2846,2850,2854,2858,2862,2866,2870,2874,2878,2882,2886,2890,2894,2898,2902,2906,2910,2914,2918,2922,2926,2930,2934,2938,2942,2946,2950,2954,2958,2962,2966,2970,2974,2978,2982,2986,2990,2994,2998,3002,3006,3010,3014,3018,3022,3026,3030,3034,3038,3042,3046,3050,3054,3058,3062,3066,3070,3074,3078,3082,3086,3090,3094,3098,3102,3106,3110,3114,3118,3122,3126,3130,3134,3138,3142,3146,3150,3154,3158,3162,3166,3170,3174,3178,3182,3186,3190,3194,3198,3202,3206,3210,3214,3218,3222,3226,3230,3234,3238,3242,3246,3250,3254,3258,3262,3266,3270,3274,3278,3282,3286,3290,3294,3298,3302,3306,3310,3314,3318,3322,3326,3330,3334,3338,3342,3346,3350,3354,3358,3362,3366,3370,3374,3378,3382,3386,3390,3394,3398,3402,3406,3410,3414,3418,3422,3426,3430,3434,3438,3442,3446,3450,3454,3458,3462,3466,3470,3474,3478,3482,3486,3490,3494,3498,3502,3506,3510,3514,3518,3522,3526,3530,3534,3538,3542,3546,3550,3554,3558,3562
+integrity-manifest.json
+  s_a10c7849c10b44::t_0fd33881ef66e5 7,20,25-27,33
+main.js
+  s_a10c7849c10b44::t_0aecbf181e1584 7,70,267-268,270
+package-lock.json
+  s_a10c7849c10b44::t_7731742a5771ae 3,9
+package.json
+  s_a10c7849c10b44::t_e55b657e579b7b 4
+packages/narciso/components/input-document/InputDocument.css
+  s_a10c7849c10b44::t_809bcee18f325a 31,35,84-89
+packages/narciso/components/input-document/InputDocument.js
+  s_a10c7849c10b44::t_3b7e202d325185 3-25,62,69-73,77-129,135-145,162-166,189,193,205,228-229,262-275,284-285,319,405-422,440-441,454-461,489-499,507,537,546,548
+packages/narciso/components/input-helper/InputHelper.js
+  s_a10c7849c10b44::t_915e701081c377 12,17-19,58-59
+packages/narciso/components/input-label/InputLabel.css
+  s_a10c7849c10b44::t_4b87f4732f3a25 2-3
+packages/narciso/components/input-label/InputLabel.js
+  s_a10c7849c10b44::t_9306e246e264e1 11-12,17-24,34
+packages/narciso/styles/checkout-custom.css
+  s_a10c7849c10b44::t_8b9bc57fc736e1 21-25,42,195-203,245-250,266,664-668,672
+packages/narciso/styles/common.css
+  s_a10c7849c10b44::t_759f49dc63aa40 129-145
+readme.txt
+  s_a10c7849c10b44::t_c78ca88d9da58b 7,137,139-154,157-164,167
+src/Funnel/Funnel.php
+  s_a10c7849c10b44::t_ae7e0aafe45a28 16-20,66,83-96,104,152-154,156,179-213,238-245,252-256
+src/Funnel/UpdateSellerFunnelBase.php
+  s_a10c7849c10b44::t_28096b41f91760 7-10
+src/Gateways/CustomGateway.php
+  s_a10c7849c10b44::t_4039c940586422 91-109,218-255,803-804,809-810,835-858,860,867-993,1121-1137,1140,1174,1182-1188,1782-1786,1794,1803-1806,1814,1821-1824,1834-1839,2065,2070-2074,2077-2079
+src/Helpers/AutomaticPaymentsClient.php
+  s_a10c7849c10b44::t_8f771903149bab 113,143-154
+src/Helpers/SubscriptionsHelper.php
+  s_a10c7849c10b44::t_ad937f865ebd73 17-18,86-106
+src/Notification/CoreNotification.php
+  s_a10c7849c10b44::t_2fffd1b4d48b5f 161-164,294,307-312,314-323
+src/Order/OrderMetadata.php
+  s_a10c7849c10b44::t_e973ef5fb1ff6c 534-616
+src/Refund/RefundHandler.php
+  s_a10c7849c10b44::t_158af8acb48436 182-186
+src/Translations/StoreTranslations.php
+  s_a10c7849c10b44::t_16239d50e939f4 387-393,830
+src/WoocommerceMercadoPago.php
+  s_a10c7849c10b44::t_6abeb0fd76e2f6 42,338,340-351
+templates/public/checkouts/custom-checkout.php
+  s_a10c7849c10b44::t_6760e66fa7aedf 31,39-44,64-70,72-74,126,130,145,155-156,159-161,184,191,208,213,247-248,260,266,281,300
+tests/Funnel/FunnelTest.php
+  s_a10c7849c10b44::t_12332e401fbff9 1-419
+tests/Gateways/CustomGatewayCitHandlerTest.php
+  s_a10c7849c10b44::t_50947c1ed84897 86,88,100-103,152-453,468-471,485,755,776-778,780,785-793,803,809,814-822,827-829,967-969
+tests/Gateways/CustomGatewayInitialCitContextTest.php
+  s_a10c7849c10b44::t_e6ba2756850535 1-261
+tests/Gateways/CustomGatewayTest.php
+  s_a10c7849c10b44::t_c9e99f734d67d2 675-681,750-752,776,794-820,1107-1109,1297-1303,1465-1471,1545,1549,1551,1569-1594,1658-1664,2512-2514,2539-2540,2600-2602,3102-3108
+tests/Helpers/AutomaticPaymentsClientTest.php
+  s_a10c7849c10b44::t_a7dff726cf7887 694-725
+tests/Helpers/SubscriptionsHelperTest.php
+  s_a10c7849c10b44::t_5d24bd3b16abb0 42,71-96,266-276
+tests/Integration/Subscriptions/CitFlowTest.php
+  s_a10c7849c10b44::t_9a5b53b2068f62 7,178,181,193,246,259-342,388-397,410-411,415-416,418,423-424,436-442,444-476,482,486-510,512,514-516
+tests/Integration/Subscriptions/fixtures/cit-zda-approve.json
+  s_a10c7849c10b44::t_78d3898f4cf841 1-26
+tests/JS/checkouts/custom/entities/card-form.test.js
+  s_a10c7849c10b44::t_f84472bdf6bb20 65,69,122-123,180-242,681-853,926-948,994
+tests/JS/checkouts/custom/mp-custom-checkout.test.js
+  s_a10c7849c10b44::t_39a5edfaf8dffa 1-344
+tests/JS/checkouts/custom/mp-custom-page.test.js
+  s_a10c7849c10b44::t_d80a94ef7947d2 215-370,467-542,603-604,610-611,626-627,629-639,641-652,665,726-772,789-799,816-847,1020-1404
+tests/JS/checkouts/super-token/adapters/checkout/BlocksCheckout.test.js
+  s_a10c7849c10b44::t_e3af2b7663c6b4 1-124
+tests/JS/checkouts/super-token/adapters/checkout/CheckoutTranslation.parity.test.js
+  s_a10c7849c10b44::t_a1e84c6d956d19 1-105
+tests/JS/checkouts/super-token/adapters/checkout/ClassicCheckout.test.js
+  s_a10c7849c10b44::t_6ba960a2cc9dca 1-84
+tests/JS/checkouts/super-token/adapters/legacy/globalBridge.test.js
+  s_a10c7849c10b44::t_ad11512acca55f 1-115
+tests/JS/checkouts/super-token/adapters/platform/CoreMonitorMetricsAdapter.test.js
+  s_a10c7849c10b44::t_8353d9942ac98b 1-432
+tests/JS/checkouts/super-token/adapters/platform/InitializationHealthChecker.test.js
+  s_a10c7849c10b44::t_1d88702c70aac7 1-193
+tests/JS/checkouts/super-token/adapters/platform/MelidataAdapter.test.js
+  s_a10c7849c10b44::t_63b684f93a778d 1-145
+tests/JS/checkouts/super-token/adapters/platform/MpSdkAdapter.test.js
+  s_a10c7849c10b44::t_d03dce3d522461 1-58
+tests/JS/checkouts/super-token/adapters/platform/SdkReadinessWatcher.test.js
+  s_a10c7849c10b44::t_e0247a4dbcbe49 1-344
+tests/JS/checkouts/super-token/adapters/platform/VariantConfigAdapter.test.js
+  s_a10c7849c10b44::t_86f3330fd12d19 1-176
+tests/JS/checkouts/super-token/adapters/platform/WooDomAdapter.test.js
+  s_a10c7849c10b44::t_af5da63c8d87d5 1-174
+tests/JS/checkouts/super-token/adapters/platform/constants.test.js
+  s_a10c7849c10b44::t_684502eb0d266d 1-7
+tests/JS/checkouts/super-token/adapters/platform/coreMonitorPayload.test.js
+  s_a10c7849c10b44::t_afd17baec71067 1-77
+tests/JS/checkouts/super-token/adapters/platform/createDomainConfig.test.js
+  s_a10c7849c10b44::t_16a403993cb89f 1-117
+tests/JS/checkouts/super-token/adapters/platform/createPlatformAdapters.test.js
+  s_a10c7849c10b44::t_77b2b912f628f5 1-68
+tests/JS/checkouts/super-token/adapters/runtime/SuperTokenAuthenticator.test.js
+  s_a10c7849c10b44::t_19b9f8a1efb60e 1-318
+tests/JS/checkouts/super-token/adapters/runtime/SuperTokenDebounce.test.js
+  s_a10c7849c10b44::t_4448aec0c0a36d 1-34
+tests/JS/checkouts/super-token/adapters/runtime/SuperTokenEmailListener.test.js
+  s_a10c7849c10b44::t_6571a6d468c8d2 1-126
+tests/JS/checkouts/super-token/adapters/runtime/SuperTokenErrorHandler.test.js
+  s_a10c7849c10b44::t_7dd330686a1082 1-95
+tests/JS/checkouts/super-token/adapters/runtime/SuperTokenPaymentMethods.test.js
+  s_a10c7849c10b44::t_c9551a12997fc2 1-1404
+tests/JS/checkouts/super-token/adapters/runtime/SuperTokenTriggerHandler.test.js
+  s_a10c7849c10b44::t_bc3a73e1bbae2c 1-503
+tests/JS/checkouts/super-token/adapters/session/LegacyAuthenticatorSession.test.js
+  s_a10c7849c10b44::t_a04361c60e3099 1-103
+tests/JS/checkouts/super-token/adapters/session/LegacyEmailListenerSession.test.js
+  s_a10c7849c10b44::t_ffe550ccd805e5 1-118
+tests/JS/checkouts/super-token/adapters/session/LegacyErrorHandlerSession.test.js
+  s_a10c7849c10b44::t_54ad8053cca309 1-58
+tests/JS/checkouts/super-token/adapters/session/LegacyLoadOrchestrationSession.test.js
+  s_a10c7849c10b44::t_7be1c28e3e88ed 1-101
+tests/JS/checkouts/super-token/adapters/session/LegacyRenderSession.test.js
+  s_a10c7849c10b44::t_eb42f114105b8d 1-110
+tests/JS/checkouts/super-token/adapters/session/LegacyResetCustomCheckoutSession.test.js
+  s_a10c7849c10b44::t_39cb2a0c6ec9b1 1-123
+tests/JS/checkouts/super-token/adapters/session/LegacyResetSession.test.js
+  s_a10c7849c10b44::t_633c1eb6ead198 1-95
+tests/JS/checkouts/super-token/adapters/session/LegacyRestoreSession.test.js
+  s_a10c7849c10b44::t_199b92f318c747 1-142
+tests/JS/checkouts/super-token/adapters/session/LegacySelectionSession.test.js
+  s_a10c7849c10b44::t_a8cb95e4607116 1-100
+tests/JS/checkouts/super-token/adapters/session/LegacyTriggerSession.test.js
+  s_a10c7849c10b44::t_29566ac3c37503 1-116
+tests/JS/checkouts/super-token/adapters/session/index.php
+  s_a10c7849c10b44::t_32edb65fc13f99 1-13
+tests/JS/checkouts/super-token/adapters/validation/checkoutValidationResolver.test.js
+  s_a10c7849c10b44::t_9cb2ea07523a97 1-490
+tests/JS/checkouts/super-token/adapters/validation/wooCommerceValidationErrors.test.js
+  s_a10c7849c10b44::t_da73bec49453bd 1-311
+tests/JS/checkouts/super-token/adapters/view/AccountMoneyDecoration.parity.test.js
+  s_a10c7849c10b44::t_868567431cf958 1-79
+tests/JS/checkouts/super-token/adapters/view/SavedCardsView.parity.test.js
+  s_a10c7849c10b44::t_26b57cc50b49ab 1-102
+tests/JS/checkouts/super-token/adapters/view/VariantViewFactory.test.js
+  s_a10c7849c10b44::t_c677fac429681f 1-53
+tests/JS/checkouts/super-token/adapters/view/cardRow.test.js
+  s_a10c7849c10b44::t_43ae0a656b639c 1-138
+tests/JS/checkouts/super-token/adapters/view/consumerCreditsRow.test.js
+  s_a10c7849c10b44::t_cf6642da245983 1-142
+tests/JS/checkouts/super-token/adapters/view/createVariantViewDeps.test.js
+  s_a10c7849c10b44::t_71e75beb9e9f74 1-124
+tests/JS/checkouts/super-token/adapters/view/fixtures.js
+  s_a10c7849c10b44::t_40d37b5013001a 1-62
+tests/JS/checkouts/super-token/adapters/view/index.php
+  s_a10c7849c10b44::t_79fc10362e6b4b 1-13
+tests/JS/checkouts/super-token/adapters/view/interactiveRow.test.js
+  s_a10c7849c10b44::t_642641e13c89e2 1-55
+tests/JS/checkouts/super-token/adapters/view/securityCodeField.test.js
+  s_a10c7849c10b44::t_932dc27b7fba04 1-41
+tests/JS/checkouts/super-token/adapters/view/shared/dom.test.js
+  s_a10c7849c10b44::t_e5e21fd02acf96 1-48
+tests/JS/checkouts/super-token/adapters/view/shared/index.php
+  s_a10c7849c10b44::t_88d11071c87a5e 1-13
+tests/JS/checkouts/super-token/adapters/view/shared/installmentsDom.test.js
+  s_a10c7849c10b44::t_4b466a8e3dcf81 1-119
+tests/JS/checkouts/super-token/adapters/view/shared/paymentMethodPresentation.test.js
+  s_a10c7849c10b44::t_1efca11c1f720b 1-223
+tests/JS/checkouts/super-token/adapters/view/shared/paymentMethodRow.test.js
+  s_a10c7849c10b44::t_2554c6d351feb7 1-127
+tests/JS/checkouts/super-token/adapters/view/shared/typedRow.test.js
+  s_a10c7849c10b44::t_c245cccf23bee1 1-159
+tests/JS/checkouts/super-token/adapters/view/v2.1/AccountMoneyDecoration.test.js
+  s_a10c7849c10b44::t_ad490293bd373d 1-150
+tests/JS/checkouts/super-token/adapters/view/v2.1/SavedCardsView.test.js
+  s_a10c7849c10b44::t_d1add752c820db 1-309
+tests/JS/checkouts/super-token/adapters/view/v2.1/V21View.test.js
+  s_a10c7849c10b44::t_f7690b29410e45 1-63
+tests/JS/checkouts/super-token/adapters/view/v2.1/index.php
+  s_a10c7849c10b44::t_cdfe50399f1084 1-13
+tests/JS/checkouts/super-token/adapters/view/v2/AccountMoneyDecoration.test.js
+  s_a10c7849c10b44::t_17c3d03d73e492 1-20
+tests/JS/checkouts/super-token/adapters/view/v2/SavedCardsView.test.js
+  s_a10c7849c10b44::t_455ab9243d010f 1-163
+tests/JS/checkouts/super-token/adapters/view/v2/V2View.test.js
+  s_a10c7849c10b44::t_d8af65d0091a4e 1-60
+tests/JS/checkouts/super-token/adapters/view/v2/index.php
+  s_a10c7849c10b44::t_7703fdf0f2150f 1-13
+tests/JS/checkouts/super-token/bootstrap.customHandlerMissing.test.js
+  s_a10c7849c10b44::t_7eb7383f2be90f 1-134
+tests/JS/checkouts/super-token/bootstrap.recovery.test.js
+  s_a10c7849c10b44::t_d450fb0848220d 1-107
+tests/JS/checkouts/super-token/bootstrap.selfConstruct.test.js
+  s_a10c7849c10b44::t_92467c0e713b23 1-115
+tests/JS/checkouts/super-token/bootstrap.test.js
+  s_a10c7849c10b44::t_c68b365a44dc0b 1-113
+tests/JS/checkouts/super-token/composition/initializationResilience.test.js
+  s_a10c7849c10b44::t_78d987af55e4b2 1-126
+tests/JS/checkouts/super-token/composition/legacyDelegationSeams.test.js
+  s_a10c7849c10b44::t_7e0c2a7210d852 1-51
+tests/JS/checkouts/super-token/composition/runtimeComposition.test.js
+  s_a10c7849c10b44::t_148993f68cb368 1-79
+tests/JS/checkouts/super-token/composition/variantRuntime.test.js
+  s_a10c7849c10b44::t_53e72312cdd7eb 1-98
+tests/JS/checkouts/super-token/core/AccountMoneyMethod.test.js
+  s_a10c7849c10b44::t_9a96e0c7454d04 1-86
+tests/JS/checkouts/super-token/core/BasePaymentMethodWithInstallments.test.js
+  s_a10c7849c10b44::t_c9069ad965516a 1-148
+tests/JS/checkouts/super-token/core/ConsumerCreditsMethod.test.js
+  s_a10c7849c10b44::t_72d13b26f858ba 1-99
+tests/JS/checkouts/super-token/core/CreditCardMethod.test.js
+  s_a10c7849c10b44::t_d74564c55ee0ce 1-93
+tests/JS/checkouts/super-token/core/DebitCardMethod.test.js
+  s_a10c7849c10b44::t_b0d346eab6c33b 1-68
+tests/JS/checkouts/super-token/core/ErrorClassification.test.js
+  s_a10c7849c10b44::t_dbed8ed1031fa7 1-182
+tests/JS/checkouts/super-token/core/NewCardMethod.test.js
+  s_a10c7849c10b44::t_c17dea7dd29468 1-42
+tests/JS/checkouts/super-token/core/PaymentMethodCatalog.test.js
+  s_a10c7849c10b44::t_918f5394e68d91 1-46
+tests/JS/checkouts/super-token/core/PaymentMethodClassifier.test.js
+  s_a10c7849c10b44::t_72d167ae534075 1-69
+tests/JS/checkouts/super-token/core/PaymentMethodEligibility.test.js
+  s_a10c7849c10b44::t_77e37c8985d5aa 1-85
+tests/JS/checkouts/super-token/core/PrepaidCardMethod.test.js
+  s_a10c7849c10b44::t_69c1226466a24f 1-76
+tests/JS/checkouts/super-token/core/SuperTokenState.test.js
+  s_a10c7849c10b44::t_a62ad392a2074a 1-93
+tests/JS/checkouts/super-token/core/escapeHtml.test.js
+  s_a10c7849c10b44::t_9517b9a70891ba 1-11
+tests/JS/checkouts/super-token/core/fixtures.js
+  s_a10c7849c10b44::t_597bfdc51b5863 1-142
+tests/JS/checkouts/super-token/core/formatting.test.js
+  s_a10c7849c10b44::t_33d6035e1c57e3 1-28
+tests/JS/checkouts/super-token/core/index.php
+  s_a10c7849c10b44::t_de8aad54197556 1-13
+tests/JS/checkouts/super-token/core/registry.test.js
+  s_a10c7849c10b44::t_8a0e1a00ba635c 1-129
+tests/JS/checkouts/super-token/super-token-loader.test.js
+  s_a10c7849c10b44::t_b704d87b6644fb 1-162
+tests/JS/checkouts/super-token/useCases/AuthorizePayment.test.js
+  s_a10c7849c10b44::t_ee273426ebea66 1-84
+tests/JS/checkouts/super-token/useCases/CancelLoad.test.js
+  s_a10c7849c10b44::t_7242bfd028e53b 1-35
+tests/JS/checkouts/super-token/useCases/EnsureEmailListenerRegistered.test.js
+  s_a10c7849c10b44::t_be3763220f0dc6 1-100
+tests/JS/checkouts/super-token/useCases/FetchAndRenderPaymentMethods.test.js
+  s_a10c7849c10b44::t_4f73f6d1d6bf7d 1-139
+tests/JS/checkouts/super-token/useCases/FinalizeSuperTokenPayment.test.js
+  s_a10c7849c10b44::t_775d2c9969018a 1-201
+tests/JS/checkouts/super-token/useCases/GetAccountPaymentMethods.test.js
+  s_a10c7849c10b44::t_e88b287732dab9 1-119
+tests/JS/checkouts/super-token/useCases/HandleError.test.js
+  s_a10c7849c10b44::t_4febc614c529ad 1-69
+tests/JS/checkouts/super-token/useCases/LoadPaymentMethods.test.js
+  s_a10c7849c10b44::t_b07f1047fb33fb 1-56
+tests/JS/checkouts/super-token/useCases/LoadSuperToken.test.js
+  s_a10c7849c10b44::t_d6e0e6b7637771 1-98
+tests/JS/checkouts/super-token/useCases/ResetCustomCheckout.test.js
+  s_a10c7849c10b44::t_c6b7f045f268d4 1-78
+tests/JS/checkouts/super-token/useCases/ResetFlow.test.js
+  s_a10c7849c10b44::t_81cfb3a792330f 1-62
+tests/JS/checkouts/super-token/useCases/RestorePreloadedPaymentMethod.test.js
+  s_a10c7849c10b44::t_7b5a63e28dddc7 1-131
+tests/JS/checkouts/super-token/useCases/SelectSavedPaymentMethod.test.js
+  s_a10c7849c10b44::t_ce6c4ab8f2de14 1-73
+tests/JS/narciso/components/input-label/input-label.test.js
+  s_a10c7849c10b44::t_3d4333c7ba3796 1-89
+tests/JS/narciso/input-document.test.js
+  s_a10c7849c10b44::t_17e728d1a5c7c3 18-20,117-299,315,360-362,367-370,394-395,406-408,414,434-988
+tests/JS/narciso/input-helper.test.js
+  s_a10c7849c10b44::t_185da2093c5feb 1-146
+tests/JS/scripts/interactive-store.test.js
+  s_a10c7849c10b44::t_8c23dd9e7fbe3e 1-164
+tests/JS/scripts/main.test.js
+  s_a10c7849c10b44::t_7d76698c60ede6 12,18,51-52,133-146
+tests/JS/scripts/verify-integrity.cli.test.js
+  s_a10c7849c10b44::t_59e701abeb7b09 20-21,102-114
+tests/JS/scripts/verify-integrity.test.js
+  s_a10c7849c10b44::t_e83e0c6f154446 21-23,129-157
+tests/Mocks/MercadoPagoMock.php
+  s_a10c7849c10b44::t_2e79307b308f8c 176
+tests/Notification/CoreNotificationTest.php
+  s_a10c7849c10b44::t_ab7708f6f47a75 35-39,42,149-151,153,178,199-201,205,246-247,267-268
+tests/Order/OrderMetadataTest.php
+  s_a10c7849c10b44::t_efa4d402a6f880 35,1338-1429
+tests/Refund/RefundHandlerTest.php
+  s_a10c7849c10b44::t_4fff65428e3939 1046-1057,1663-1664,1667-1668,1722-1763
+tests/WoocommerceMercadoPagoTest.php
+  s_a10c7849c10b44::t_22c79071a5b543 5-6,8-9,27,146-226
+woocommerce-mercadopago.php
+  s_a10c7849c10b44::t_a42469e0163a1b 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0b5219301030ba04ae58137db4df5178bd3c8c0c",
+  "prompts": {},
+  "sessions": {
+    "s_a10c7849c10b44": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0d054-22cd-7551-8b56-e58d2fef54c7",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Fernando Lira <fernando.lira@mercadolivre.com>"
+    }
+  }
+}
