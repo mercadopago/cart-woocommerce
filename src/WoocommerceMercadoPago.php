@@ -39,7 +39,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.9.3';
+    private const PLUGIN_VERSION = '8.9.4';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -335,9 +335,20 @@ class WoocommerceMercadoPago
      */
     public function activatePlugin(): void
     {
-        $after = fn() => $this->storeConfig->setExecuteActivate(false);
+        $disableActivate = fn() => $this->storeConfig->setExecuteActivate(false);
 
-        $this->funnel->created() ? $this->funnel->updateStepActivate($after) : $this->funnel->create($after);
+        if ($this->funnel->created()) {
+            $this->funnel->updateStepActivate($disableActivate);
+            return;
+        }
+
+        // Chained inside create()'s $after, not updateStepCredentials(): the seller
+        // contact step must reach sellers who install the plugin but never add
+        // credentials, and updateStepCredentials() never runs for that audience.
+        $this->funnel->create(function () use ($disableActivate) {
+            $disableActivate();
+            $this->funnel->updateStepSellerContact();
+        });
     }
 
     /**

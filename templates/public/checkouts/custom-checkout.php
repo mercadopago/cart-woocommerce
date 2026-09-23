@@ -28,6 +28,7 @@ use MercadoPago\Woocommerce\Helpers\Template;
  * @var string $card_issuer_input_label
  * @var string $card_installments_label
  * @var string $amount
+ * @var bool $is_cit_initial_context
  * @var string $currency_ratio
  * @var string $message_error_amount
  * @var string $security_code_tooltip_text_3_digits
@@ -35,6 +36,12 @@ use MercadoPago\Woocommerce\Helpers\Template;
  * @var string $installments_required_message
  * @var string $interest_free_option_text
  * @var string $bank_interest_hint_text
+ * @var bool $wallet_button_enabled
+ * @var string $card_holder_input_helper_info
+ * @var string $accepted_cards_label
+ * @var string $card_document_instruction_range
+ * @var string $card_document_instruction_fixed
+ * @var array $cardFlags list of ['url' => string, 'name' => string]
  *
  * @see \MercadoPago\Woocommerce\Gateways\CustomGateway
  */
@@ -54,11 +61,17 @@ if (!defined('ABSPATH')) {
         <?php Template::render('public/checkouts/alert-message', ['message' => $message_error_amount]) ?>
     <?php else : ?>
         <div class="mp-checkout-custom-container">
-            <div class="mp-checkout-custom-card-flags">
-                <?php foreach ($cardFlagIconUrls as $cardFlagIconUrl) : ?>
-                    <img src="<?= esc_url($cardFlagIconUrl); ?>">
-                <?php endforeach; ?>
+            <div class="mp-checkout-custom-card-flags" role="group" aria-labelledby="mp-accepted-cards-label">
+                <span id="mp-accepted-cards-label" class="mp-sr-only"><?= esc_html($accepted_cards_label); ?></span>
+                <ul class="mp-checkout-custom-card-flags-list">
+                    <?php foreach ($cardFlags as $cardFlag) : ?>
+                        <li><img src="<?= esc_url($cardFlag['url']); ?>" alt="<?= esc_attr($cardFlag['name']); ?>"></li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
+
+            <?php // The brand icon is a CSS background, invisible to screen readers. ?>
+            <span id="mp-detected-card-announcement" class="mp-sr-only" aria-live="polite"></span>
             <?php if ($test_mode) : ?>
                 <test-mode
                     title="<?= esc_html($test_mode_title) ?>"
@@ -110,11 +123,11 @@ if (!defined('ABSPATH')) {
                         <input-label
                             isOptinal=false
                             message="<?= esc_html($card_number_input_label); ?>"
-                            for='mp-card-number'
+                            id='mp-card-number-label'
                         >
                         </input-label>
 
-                        <div class="mp-checkout-custom-card-input" id="form-checkout__cardNumber-container"></div>
+                        <div class="mp-checkout-custom-card-input" id="form-checkout__cardNumber-container" aria-labelledby="mp-card-number-label"></div>
 
                         <input-helper
                             isVisible=false
@@ -129,6 +142,7 @@ if (!defined('ABSPATH')) {
                         <input-label
                             message="<?= esc_html($card_holder_name_input_label); ?>"
                             isOptinal=false
+                            for='form-checkout__cardholderName'
                         >
                         </input-label>
 
@@ -138,7 +152,12 @@ if (!defined('ABSPATH')) {
                             id="form-checkout__cardholderName"
                             name="mp-card-holder-name"
                             data-checkout="cardholderName"
+                            aria-describedby="mp-card-holder-name-helper-info mp-card-holder-name-example"
+                            aria-required="true"
                         />
+
+                        <?php // aria-describedby displaces the placeholder — see traps.md. ?>
+                        <span id="mp-card-holder-name-example" class="mp-sr-only"><?= esc_html($placeholders_cardholder_name); ?></span>
 
                         <input-helper
                             isVisible=true
@@ -162,12 +181,14 @@ if (!defined('ABSPATH')) {
                             <input-label
                                 message="<?= esc_html($card_expiration_input_label); ?>"
                                 isOptinal=false
+                                id='mp-expiration-date-label'
                             >
                             </input-label>
 
                             <div
                                 id="form-checkout__expirationDate-container"
                                 class="mp-checkout-custom-card-input mp-checkout-custom-left-card-input"
+                                aria-labelledby="mp-expiration-date-label"
                             >
                             </div>
 
@@ -184,11 +205,12 @@ if (!defined('ABSPATH')) {
                             <input-label
                                 message="<?= esc_html($card_security_code_input_label); ?>"
                                 isOptinal=false
+                                id='mp-security-code-label'
                             >
                             </input-label>
 
                             <div class="mp-checkout-custom-security-code-container">
-                                <div id="form-checkout__securityCode-container" class="mp-checkout-custom-security-code-input"></div>
+                                <div id="form-checkout__securityCode-container" class="mp-checkout-custom-security-code-input" aria-labelledby="mp-security-code-label"></div>
                                 <span
                                     id="mp-security-code-info"
                                     tabindex="0"
@@ -222,6 +244,8 @@ if (!defined('ABSPATH')) {
                             select-data-checkout="doc_type"
                             flag-error="docNumberError"
                             site-id="<?= esc_attr($site_id); ?>"
+                            instruction-range="<?= esc_attr($card_document_instruction_range); ?>"
+                            instruction-fixed="<?= esc_attr($card_document_instruction_fixed); ?>"
                         >
                         </input-document>
                     </div>
@@ -233,13 +257,13 @@ if (!defined('ABSPATH')) {
                             <input-label
                                 isOptinal=false
                                 message="<?= esc_html($card_issuer_input_label); ?>"
-                                for='mp-issuer'
+                                for='form-checkout__issuer'
                             >
                             </input-label>
                         </div>
 
                         <div class="mp-input-select-input">
-                            <select name="issuer" id="form-checkout__issuer" class="mp-custom-checkout-select-input"></select>
+                            <select name="issuer" id="form-checkout__issuer" class="mp-custom-checkout-select-input" aria-required="true"></select>
                         </div>
                     </div>
 
@@ -254,6 +278,7 @@ if (!defined('ABSPATH')) {
                             name="installments"
                             id="form-checkout__installments"
                             class="mp-custom-checkout-select-input"
+                            aria-required="true"
                         >
                         </select>
                         <input-helper
@@ -272,7 +297,7 @@ if (!defined('ABSPATH')) {
 </div>
 
 <div id="mercadopago-utilities" style="display:none;">
-    <input type="hidden" id="mp-amount" value='<?= esc_textarea($amount); ?>' name="mercadopago_custom[amount]"/>
+    <input type="hidden" id="mp-amount" value='<?= esc_textarea($amount); ?>' name="mercadopago_custom[amount]" data-mp-cit-initial-context="<?= esc_attr(!empty($is_cit_initial_context) ? 'true' : 'false'); ?>"/>
     <input type="hidden" id="currency_ratio" value='<?= esc_textarea($currency_ratio); ?>' name="mercadopago_custom[currency_ratio]"/>
     <input type="hidden" id="paymentMethodId" name="mercadopago_custom[payment_method_id]"/>
     <input type="hidden" id="mp_checkout_type" name="mercadopago_custom[checkout_type]" value="custom"/>

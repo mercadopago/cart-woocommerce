@@ -15,12 +15,10 @@ import { SuperTokenErrorHandler } from '@super-token/adapters/runtime/SuperToken
 import { SuperTokenEmailListener } from '@super-token/adapters/runtime/SuperTokenEmailListener';
 import { SuperTokenTriggerHandler } from '@super-token/adapters/runtime/SuperTokenTriggerHandler';
 import { SuperTokenDebounce } from '@super-token/adapters/runtime/SuperTokenDebounce';
-import {
-  CoreMonitorMetricsAdapter,
-  createDomainConfig,
-} from '@super-token/adapters/platform';
+import { CoreMonitorMetricsAdapter, createDomainConfig } from '@super-token/adapters/platform';
 import type { SuperTokenDomainParams } from '@super-token/adapters/platform';
-import { SUPER_TOKEN_JS_VERSION } from '@super-token/adapters/platform/constants';
+import { SUPER_TOKEN_FALLBACK_VARIANT, SUPER_TOKEN_JS_VERSION } from '@super-token/adapters/platform/constants';
+import { toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
 import { PaymentMethodCatalog } from '@super-token/core/checkoutSession/PaymentMethodCatalog';
 import { PaymentMethodRegistry } from '@super-token/core/paymentMethods/registry';
 import { CreditCardMethod } from '@super-token/core/paymentMethods/CreditCardMethod';
@@ -52,10 +50,14 @@ function whenSdkReady(run: () => void): void {
   }, FALLBACK_POLL_INTERVAL_MS);
   // Clear the poll here too: without it, if the ready event fires first the interval keeps
   // ticking (no-ops) until the timeout, and run() could fire twice (event + a later poll tick).
-  document.addEventListener(MP_SDK_INSTANCE_READY_EVENT, () => {
-    clearInterval(poll);
-    run();
-  }, { once: true });
+  document.addEventListener(
+    MP_SDK_INSTANCE_READY_EVENT,
+    () => {
+      clearInterval(poll);
+      run();
+    },
+    { once: true },
+  );
   setTimeout(() => clearInterval(poll), FALLBACK_POLL_MAX_WAIT_MS);
 }
 
@@ -87,7 +89,7 @@ export function composeRuntime(
   domainParams: SuperTokenDomainParams,
   recompose: { current: () => void },
   metrics: CoreMonitorMetricsAdapter,
-): void {
+): Promise<void> {
   const viewParams = domainParams as unknown as SuperTokenViewParams;
 
   const composeWithVariant = (variant: string): void => {
@@ -122,8 +124,10 @@ export function composeRuntime(
         return;
       }
 
-      const bundleParams = window.wc_mercadopago_supertoken_bundle_params as unknown as
-        SuperTokenPaymentMethodsParams & { platform_id: string };
+      const bundleParams =
+        window.wc_mercadopago_supertoken_bundle_params as unknown as SuperTokenPaymentMethodsParams & {
+          platform_id: string;
+        };
       const entityMetrics = new CoreMonitorMetricsAdapter(
         sdk,
         SUPER_TOKEN_JS_VERSION,
@@ -138,16 +142,20 @@ export function composeRuntime(
       // so the closure can be a constructor argument without a construction-order cycle.
       let paymentMethods: SuperTokenPaymentMethods;
 
-      const renderSavedMethods = (container: HTMLElement, methods: PaymentMethod[]): void => {
-        // One stylesheet serves both variants; the root's data-variant scopes each variant's rules.
-        container.setAttribute('data-variant', variant);
+      const getView = (): VariantViewPort => {
         if (!view) {
           view = createVariantView(variant, createVariantViewDeps(viewParams, emailListener as EmailListenerPort));
         }
+        return view;
+      };
+
+      const renderSavedMethods = (container: HTMLElement, methods: PaymentMethod[]): void => {
+        // One stylesheet serves both variants; the root's data-variant scopes each variant's rules.
+        container.setAttribute('data-variant', variant);
         // The view builds every row itself now (createPaymentMethodElement is dropped), so buildRow
         // is omitted; the render session only supplies the interactive-row behaviour primitives.
         const session = new LegacyRenderSession(paymentMethods as unknown as LegacyRenderController);
-        view.renderSavedPaymentMethods({
+        getView().renderSavedPaymentMethods({
           container,
           paymentMethods: orderAndDecorate(methods),
           rowSession: session,
@@ -156,7 +164,14 @@ export function composeRuntime(
         });
       };
 
-      paymentMethods = new SuperTokenPaymentMethods(sdk, entityMetrics, bundleParams, renderSavedMethods, emailListener);
+      paymentMethods = new SuperTokenPaymentMethods(
+        sdk,
+        entityMetrics,
+        bundleParams,
+        renderSavedMethods,
+        emailListener,
+        getView(),
+      );
       const authenticator = new SuperTokenAuthenticator(sdk, paymentMethods, entityMetrics, bundleParams.platform_id);
       const errorHandler = new SuperTokenErrorHandler(paymentMethods, entityMetrics);
       const triggerHandler = new SuperTokenTriggerHandler(
@@ -187,7 +202,11 @@ export function composeRuntime(
       // false-positives here. Fire-and-forget: reporting is a side effect, not a composition gate.
       void waitForCustomCheckoutHandler().then((handlerFound) => {
         if (!handlerFound) {
-          entityMetrics.sendMetric('MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS', 'mp_super_token_init', 'mp_super_token_init_error');
+          entityMetrics.sendMetric(
+            'MP_CUSTOM_CHECKOUT_HANDLER_NOT_EXISTS',
+            'mp_super_token_init',
+            'mp_super_token_init_error',
+          );
         }
       });
     };
@@ -201,16 +220,19 @@ export function composeRuntime(
       try {
         buildAndPublishInstances();
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', message);
+        metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', toTelemetryErrorMessage(error));
       }
     });
   };
 
-  resolveSuperTokenVariant()
+  return resolveSuperTokenVariant()
     .then(composeWithVariant)
     .catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : String(error);
-      metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', message);
+      metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', toTelemetryErrorMessage(error));
+      try {
+        composeWithVariant(SUPER_TOKEN_FALLBACK_VARIANT);
+      } catch (fallbackError: unknown) {
+        metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', toTelemetryErrorMessage(fallbackError));
+      }
     });
 }

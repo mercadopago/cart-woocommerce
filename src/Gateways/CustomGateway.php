@@ -89,6 +89,25 @@ class CustomGateway extends AbstractGateway
     ];
 
     /**
+     * Alt text of each accepted card logo. Brand names are not translatable.
+     */
+    protected const CARD_FLAG_NAMES = [
+        'amex'      => 'American Express',
+        'cabal'     => 'Cabal',
+        'codensa'   => 'Codensa',
+        'diners'    => 'Diners Club',
+        'elo'       => 'Elo',
+        'hypercard' => 'Hipercard',
+        'lider'     => 'Lider',
+        'maestro'   => 'Maestro',
+        'master'    => 'Mastercard',
+        'naranjax'  => 'Naranja X',
+        'oca'       => 'OCA',
+        'redcompra' => 'Redcompra',
+        'visa'      => 'Visa',
+    ];
+
+    /**
      * CustomGateway constructor
      * @throws Exception
      */
@@ -190,6 +209,44 @@ class CustomGateway extends AbstractGateway
             return $order
                 && function_exists('wcs_order_contains_subscription')
                 && \wcs_order_contains_subscription($order, 'any');
+        }
+
+        return class_exists('WC_Subscriptions_Cart')
+            && \WC_Subscriptions_Cart::cart_contains_subscription();
+    }
+
+    /**
+     * Returns whether the rendered card form belongs to the initial subscription
+     * payment branch handled by process_payment().
+     *
+     * This is presentation context only. The browser combines it with the current
+     * checkout amount to avoid requiring installments for a zero-dollar CIT, but
+     * it must never be treated as authorization or payment input by the backend.
+     *
+     * Unlike isSubscriptionPaymentContext(), this deliberately excludes payment-
+     * method changes and renewal orders. The default order types accepted by
+     * wcs_order_contains_subscription() mirror the existing initial-CIT branch in
+     * process_payment(); passing "any" here would also include renewals.
+     */
+    private function isInitialSubscriptionPaymentContext(): bool
+    {
+        if (!SubscriptionsHelper::isWcsActive() || $this->isAutomaticPaymentsOff()) {
+            return false;
+        }
+
+        $isPaymentMethodChange = (
+            class_exists('WC_Subscriptions_Change_Payment_Gateway')
+            && !empty(\WC_Subscriptions_Change_Payment_Gateway::$is_request_to_change_payment)
+        ) || $this->mercadopago->helpers->url->validateGetVar('change_payment_method');
+
+        if ($isPaymentMethodChange) {
+            return false;
+        }
+
+        $orderId = (int) get_query_var('order-pay');
+        if ($orderId > 0) {
+            $order = wc_get_order($orderId);
+            return $order && \wcs_order_contains_subscription($order);
         }
 
         return class_exists('WC_Subscriptions_Cart')
@@ -743,14 +800,14 @@ window.mpSdkInstance = null;",
 
         // Hard API failure (4xx/5xx) — subscription was likely not created.
         if ($httpStatus >= 400) {
-            $apiError = $data['error'] ?? null;
-            $detail   = $data['payment']['status_detail'] ?? null;
+            $apiError = is_string($data['error'] ?? null) ? $data['error'] : null;
+            $apiCode  = is_string($data['code'] ?? null) ? $data['code'] : null;
             $logger->warning(
                 "op=cit step=api_error http_status={$httpStatus} order_id={$orderId}",
                 $logSource
             );
-            $msg = $helper->mapApiErrorToUserMessage($httpStatus, $apiError, $detail);
-            return ['result' => 'failure', 'messages' => $msg];
+            $msg = $helper->mapApiErrorToUserMessage($httpStatus, $apiError, $apiCode);
+            return $this->failInitialCit($msg);
         }
 
         // Persist AP metadata only for statuses that can eventually succeed.
@@ -775,12 +832,163 @@ window.mpSdkInstance = null;",
             $this->mercadopago->orderMetadata->setCustomMetadata($order, $data['payment'] ?? []);
         }
 
+        // A zero-dollar authorization (ZDA) does not generate a payment webhook.
+        // Complete it synchronously only when Core confirms the full recurring
+        // profile contract. The amount comes from the server-built CIT payload,
+        // never from checkout input.
+        if (SubscriptionsHelper::isZeroDollarCit($payload) && $paymentStatus !== 'rejected') {
+            $contractViolation = $this->getZeroDollarCitContractViolation($data, $httpStatus);
+
+            if ($contractViolation === null) {
+                $logger->info(
+                    "op=cit step=zda_completed http_status={$httpStatus} order_id={$orderId}",
+                    $logSource
+                );
+
+                return $this->completeApprovedZeroDollarCit($order, (string) $paymentId);
+            }
+
+            $logger->warning(
+                "op=cit step=zda_contract_violation reason={$contractViolation} http_status={$httpStatus} order_id={$orderId}",
+                $logSource
+            );
+
+            return $this->failInitialCit($translations['wcs_cit_failed_generic'] ?? '');
+        }
+
         // Delegate all 2xx status handling to the shared method:
-        //   approved          → redirect (payment_complete handled by MP webhook)
+        //   approved paid     → redirect (payment_complete handled by MP webhook)
         //   pending_challenge → 3DS modal flow
         //   pending/in_process → redirect to order received
         //   rejected          → buyerRefusedMessages (same UX as normal checkout)
         return $this->handleResponseStatus($order, $this->normalizeCitResponse($data));
+    }
+
+    /**
+     * Validates the Core response contract required to finish a ZDA without a webhook.
+     *
+     * Returns a stable, non-sensitive reason for observability, or null when valid.
+     */
+    private function getZeroDollarCitContractViolation(array $data, int $httpStatus): ?string
+    {
+        if ($httpStatus < 200 || $httpStatus >= 300) {
+            return 'unexpected_http_status';
+        }
+
+        if (($data['payment']['status'] ?? null) !== 'approved') {
+            return 'payment_not_approved';
+        }
+
+        if (!$this->hasCitIdentifier($data['payment']['id'] ?? null)) {
+            return 'payment_id_missing';
+        }
+
+        if (!$this->hasCitIdentifier($data['subscription']['id'] ?? null)) {
+            return 'subscription_id_missing';
+        }
+
+        if (!$this->hasCitIdentifier($data['customer']['id'] ?? null)) {
+            return 'customer_id_missing';
+        }
+
+        if (!$this->hasCitIdentifier($data['card']['id'] ?? null)) {
+            return 'card_id_missing';
+        }
+
+        if (($data['profile']['status'] ?? null) !== 'active') {
+            return 'profile_not_active';
+        }
+
+        if (!$this->hasCitIdentifier($data['profile']['id'] ?? null)) {
+            return 'profile_id_missing';
+        }
+
+        if (!array_key_exists('three_ds_info', $data) || $data['three_ds_info'] !== null) {
+            return 'unexpected_three_ds_info';
+        }
+
+        return null;
+    }
+
+    /**
+     * Accepts Core's numeric and opaque identifier formats while rejecting empty,
+     * non-scalar and non-positive numeric values.
+     *
+     * @param mixed $value
+     */
+    private function hasCitIdentifier($value): bool
+    {
+        if (is_int($value)) {
+            return $value > 0;
+        }
+
+        if (!is_string($value)) {
+            return false;
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return false;
+        }
+
+        // Core identifiers use different formats (numeric, UUID and opaque strings).
+        // Reject only known-invalid numeric values without constraining opaque formats.
+        return !is_numeric($value) || (float) $value > 0;
+    }
+
+    /**
+     * Completes a valid approved ZDA after its AP metadata has been persisted.
+     *
+     * @param \WC_Order $order
+     * @return array{result:string, redirect:string}
+     */
+    private function completeApprovedZeroDollarCit($order, string $paymentId): array
+    {
+        $order->payment_complete($paymentId);
+        $this->mercadopago->helpers->cart->emptyCart();
+
+        $urlReceived = $order->get_checkout_order_received_url();
+        $orderStatus = $this->mercadopago->orderStatus->getOrderStatusMessage('accredited');
+
+        $this->mercadopago->helpers->notices->storeApprovedStatusNotice($orderStatus);
+
+        $return = [
+            'result'   => 'success',
+            'redirect' => $urlReceived,
+        ];
+
+        if ($this->isOrderPayPage()) {
+            $this->handlePayForOrderRequest($return);
+        }
+
+        return $return;
+    }
+
+    /**
+     * Return an initial CIT failure using the response contract expected by
+     * Classic Checkout, Blocks and the Order Pay page.
+     *
+     * @return array{result:string, redirect:string, message:string}
+     */
+    private function failInitialCit(string $message): array
+    {
+        $this->mercadopago->helpers->notices->storeNotice($message, 'error');
+
+        $return = [
+            'result'   => 'fail',
+            'redirect' => '',
+            'message'  => $message,
+        ];
+
+        if ($this->isOrderPayPage()) {
+            $this->handlePayForOrderRequest([
+                'result'   => 'fail',
+                'redirect' => false,
+                'messages' => $message,
+            ]);
+        }
+
+        return $return;
     }
 
     /**
@@ -910,18 +1118,26 @@ window.mpSdkInstance = null;",
             ];
         }
 
-        return [
+        $formattedTransactionAmount = (float) Numbers::formatByCurrency($currency, $transactionAmount);
+        $transaction = [
+            'amount'               => $formattedTransactionAmount,
+            'currency'             => $currency,
+            'description'          => $this->buildSubscriptionDescription($order),
+            'external_reference'   => get_option('_mp_store_identificator', 'WC-') . $order->get_id(),
+            'installments'         => 1, // RN-08: subscriptions are incompatible with installment payments.
+            'statement_descriptor' => $storeConfig->getStoreName('Mercado Pago'),
+        ];
+
+        // Core rejects 3DS configuration on zero-dollar authorization requests.
+        // The amount is calculated server-side, so buyers cannot disable 3DS on paid CITs.
+        if ($formattedTransactionAmount > 0.0) {
+            $transaction['three_d_secure_mode'] = 'optional';
+        }
+
+        $payload = [
             'token' => $checkout['token'],
             'payer' => $payer,
-            'transaction' => [
-                'amount'              => (float) Numbers::formatByCurrency($currency, $transactionAmount),
-                'currency'            => $currency,
-                'description'         => $this->buildSubscriptionDescription($order),
-                'external_reference'  => get_option('_mp_store_identificator', 'WC-') . $order->get_id(),
-                'installments'        => 1, // RN-08: subscriptions are incompatible with installment payments.
-                'statement_descriptor' => $storeConfig->getStoreName('Mercado Pago'),
-                'three_d_secure_mode' => 'optional',
-            ],
+            'transaction' => $transaction,
             'subscription' => [
                 'external_id' => 'WC-SUB-' . $subscription->get_id(),
                 'frequency'   => $interval . '-' . $period,
@@ -955,8 +1171,7 @@ window.mpSdkInstance = null;",
                     'runtime_version'  => PHP_VERSION,
                 ],
             ],
-            'sponsor_id'      => $this->countryConfigs['sponsor_id'] ?? null,
-            'notification_url' => $this->buildCitNotificationUrl(),
+            'sponsor_id' => $this->countryConfigs['sponsor_id'] ?? null,
             'point_of_interaction' => [
                 'location' => [
                     'source'   => 'payer',
@@ -964,6 +1179,13 @@ window.mpSdkInstance = null;",
                 ],
             ],
         ];
+
+        // ZDA is final synchronously and Core rejects notification_url for amount zero.
+        if ($formattedTransactionAmount > 0.0) {
+            $payload['notification_url'] = $this->buildCitNotificationUrl();
+        }
+
+        return $payload;
     }
 
     /**
@@ -1557,7 +1779,11 @@ window.mpSdkInstance = null;",
             [
                 'handle' => 'wc_mercadopago_custom_card_form',
                 'path' => 'checkouts/custom/entities/card-form',
-                'deps' => ['wc_mercadopago_custom_card_form_error_codes'],
+                'deps' => [
+                    'wc_mercadopago_sdk',
+                    'wc_mercadopago_custom_card_form_error_codes',
+                    'wc_mercadopago_custom_page',
+                ],
                 'localize' => [
                     'security_code_placeholder_text_3_digits' => $this->storeTranslations['security_code_placeholder_text_3_digits'],
                 ],
@@ -1565,6 +1791,7 @@ window.mpSdkInstance = null;",
             [
                 'handle' => 'wc_mercadopago_custom_three_ds_handler',
                 'path' => 'checkouts/custom/entities/three-ds-handler',
+                'deps' => ['wc_mercadopago_custom_page'],
             ],
             [
                 'handle' => 'wc_mercadopago_custom_mobile_checkout_classic_observer',
@@ -1573,7 +1800,10 @@ window.mpSdkInstance = null;",
             [
                 'handle' => 'wc_mercadopago_custom_event_handler',
                 'path' => 'checkouts/custom/entities/event-handler',
-                'deps' => ['wc_mercadopago_custom_mobile_checkout_classic_observer'],
+                'deps' => [
+                    'wc_mercadopago_custom_mobile_checkout_classic_observer',
+                    'wc_mercadopago_custom_page',
+                ],
                 'localize' => [
                     'is_mobile' => Device::isMobile(),
                 ],
@@ -1581,12 +1811,17 @@ window.mpSdkInstance = null;",
             [
                 'handle' => 'wc_mercadopago_custom_page',
                 'path' => 'checkouts/custom/mp-custom-page',
+                'deps' => ['wc_mercadopago_custom_elements'],
                 'localize' => [
                     'security_code_placeholder_text_3_digits' => $this->storeTranslations['security_code_placeholder_text_3_digits'],
                     'security_code_placeholder_text_4_digits' => $this->storeTranslations['security_code_placeholder_text_4_digits'],
                     'security_code_tooltip_text_3_digits' => $this->storeTranslations['security_code_tooltip_text_3_digits'],
                     'security_code_tooltip_text_4_digits' => $this->storeTranslations['security_code_tooltip_text_4_digits'],
                     'installments_select_placeholder_text' => $this->storeTranslations['placeholders_installments'],
+                    'detected_card_label' => $this->storeTranslations['detected_card_label'],
+                    'card_number_instruction' => $this->storeTranslations['card_number_instruction'],
+                    'card_expiration_instruction' => $this->storeTranslations['card_expiration_instruction'],
+                    'security_code_instruction' => $this->storeTranslations['security_code_instruction'],
                 ],
             ],
             [
@@ -1596,6 +1831,12 @@ window.mpSdkInstance = null;",
             [
                 'handle' => 'wc_mercadopago_custom_checkout',
                 'path' => 'checkouts/custom/mp-custom-checkout',
+                'deps' => [
+                    'wc_mercadopago_custom_page',
+                    'wc_mercadopago_custom_card_form',
+                    'wc_mercadopago_custom_three_ds_handler',
+                    'wc_mercadopago_custom_event_handler',
+                ],
                 'localize' => [
                     'public_key' => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
                     'locale' => $this->storeTranslations['locale'],
@@ -1821,14 +2062,21 @@ window.mpSdkInstance = null;",
             'card_issuer_input_label' => $this->storeTranslations['card_issuer_input_label'],
             'card_installments_label' => $this->storeTranslations['card_installments_label'],
             'amount' => $amountAndCurrencyRatio['amount'],
+            'is_cit_initial_context' => $this->isInitialSubscriptionPaymentContext(),
             'currency_ratio' => $amountAndCurrencyRatio['currencyRatio'],
             'message_error_amount' => $this->storeTranslations['message_error_amount'],
             'security_code_tooltip_text_3_digits' => $this->storeTranslations['security_code_tooltip_text_3_digits'],
             'placeholders_cardholder_name' => $this->storeTranslations['placeholders_cardholder_name'],
-            'cardFlagIconUrls' => array_map(
-                fn($icon) => $this->mercadopago->helpers->url->getImageAsset("checkouts/custom/card-flags/$icon"),
+            'cardFlags' => array_map(
+                fn($icon) => [
+                    'url'  => $this->mercadopago->helpers->url->getImageAsset("checkouts/custom/card-flags/$icon"),
+                    'name' => static::CARD_FLAG_NAMES[$icon] ?? $icon,
+                ],
                 static::CARD_FLAGS_BY_COUNTRY[$this->mercadopago->sellerConfig->getSiteId()] ?? []
             ),
+            'accepted_cards_label' => $this->storeTranslations['accepted_cards_label'],
+            'card_document_instruction_range' => $this->storeTranslations['card_document_instruction_range'],
+            'card_document_instruction_fixed' => $this->storeTranslations['card_document_instruction_fixed'],
             'card_holder_input_helper_info' => $this->storeTranslations['card_holder_input_helper_info'],
             'mercadopago_privacy_policy' => str_replace(
                 '{link}',

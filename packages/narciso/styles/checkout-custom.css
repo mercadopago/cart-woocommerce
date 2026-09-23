@@ -18,6 +18,11 @@
     padding: 0 0 !important
 }
 
+/* The card form already spaces its rows with gap: 32px, so the shared input-document bottom margin would stack on top of it. */
+#mp-checkout-custom-root #mp-custom-checkout-form-container .mp-checkout-custom-card-form #mp-doc-div .mp-input-document {
+    margin-bottom: 0 !important;
+}
+
 #mp-checkout-custom-root #mp-custom-checkout-form-container #mp-checkout-custom-issuers-container.mp-checkout-custom-issuers-container {
     display: block;
     padding: 0 0 32px !important
@@ -34,7 +39,7 @@
 
 #mp-checkout-custom-root #mp-custom-checkout-form-container #mp-checkout-custom-installments-card.mp-checkout-custom-installments-display-none {
     display: none;
-    margin-top: 8px !important;
+    margin-top: 32px !important;
 }
 
 #mp-checkout-custom-root #mp-custom-checkout-form-container #form-checkout__expirationDate-container.mp-checkout-custom-left-card-input {
@@ -187,6 +192,15 @@
     padding-left: 6px !important;
 }
 
+#mp-checkout-custom-root #mp-custom-checkout-form-container .mp-installments-bank-interest-hint {
+    margin-top: 4px !important;
+    color: var(--andes-text-color-secondary, rgba(0, 0, 0, 0.55)) !important;
+    font-family: var(--primary-font-family) !important;
+    font-size: 13px !important;
+    line-height: 18px !important;
+    padding-left: 6px !important;
+}
+
 
 #mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input,
 #mp-checkout-custom-root #mp-checkout-custom-issuers-container .mp-custom-checkout-select-input {
@@ -228,6 +242,12 @@
     color: var(--andes-gray-900) !important;
 }
 
+/* The rule above clears the native outline; this restores a keyboard indicator. */
+#mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-custom-checkout-select-input:focus-visible,
+#mp-checkout-custom-root #mp-checkout-custom-issuers-container .mp-custom-checkout-select-input:focus-visible {
+    border: 2px solid var(--woocommerce-primary) !important;
+}
+
 #mp-checkout-custom-root #mp-checkout-custom-installments-card .mp-checkout-custom-installments-select-container .mp-input-label.mp-label-error {
     color: var(--andes-error-red) !important;
 }
@@ -243,7 +263,7 @@
 #mp-checkout-custom-root #mp-custom-checkout-form-container .mp-checkout-custom-card-form .mp-checkout-custom-card-column {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     width: 50% !important;
 }
 
@@ -322,15 +342,6 @@ input-label:has(+ .mp-checkout-custom-security-code-container #form-checkout__se
     background-repeat: no-repeat !important;
     background-size: 32px 24px !important;
     pointer-events: none !important;
-}
-
-#mp-checkout-custom-root #mp-custom-checkout-form-container #form-checkout__cardNumber-container .mp-checkout-custom-card-input::placeholder {
-    color: var(--andes-text-color-secondary) !important;
-}
-
-#mp-checkout-custom-root #mp-custom-checkout-form-container #form-checkout__cardNumber-container .mp-checkout-custom-card-input:focus::placeholder {
-    transition: none !important;
-    opacity: 1 !important;
 }
 
 /* .mp-checkout-custom-card-input-iframe {
@@ -649,11 +660,16 @@ input-label:has(+ .mp-checkout-custom-security-code-container #form-checkout__se
 }
 
 #mp-checkout-custom-root .mp-checkout-custom-container .mp-checkout-custom-card-flags {
-    display: flex !important;
     margin-bottom: 32px !important;
+}
+
+/* Row layout lives on the list, not the wrapper. list-style is not in the reset. */
+#mp-checkout-custom-root .mp-checkout-custom-container .mp-checkout-custom-card-flags-list {
+    display: flex !important;
     flex-wrap: wrap !important;
     justify-content: flex-start !important;
     gap: 8px !important;
+    list-style: none !important;
 }
 
 

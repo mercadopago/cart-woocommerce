@@ -121,6 +121,20 @@ You can see more on the github wiki page.
 
 This project uses [PHPUnit](https://phpunit.de/) for automated testing and generating code coverage reports. Follow the instructions below to run tests and generate coverage reports.
 
+### Shared release E2E
+
+To compare the current release candidate with the official productive version on the shared stores:
+
+```bash
+SMOOTH_USER=<network-user> make e2e-shared-release SITE=MLB PRODUCTION_VERSION=8.9.3
+```
+
+The command builds and publishes the RC to staging, downloads and publishes the official production
+ZIP to homol, then runs Classic and Blocks with a live paired monitor. Run
+`make e2e-shared-help` for the supported interface. Owner setup and credential maintenance are
+documented only in
+[`docker-flexible-environment/deploy/README.md`](docker-flexible-environment/deploy/README.md#ambientes-compartilhados-staging--homol-psw-4320).
+
 ### Requirements
 
 Ensure that all dependencies are installed by running:

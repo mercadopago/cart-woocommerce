@@ -212,6 +212,162 @@ describe('CheckoutPage', () => {
     });
   });
 
+  describe('setDisplayOfError() — the document field is marked on the control the buyer navigates', () => {
+    // Two inputs: the hidden one carries the submit value, the visible one is the
+    // only one in the accessibility tree — see traps.md.
+    function loadPageWithBothDocumentInputs() {
+      const page = loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+        wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: {} },
+        wc_mercadopago_custom_page_params: {},
+        CheckoutElements: {
+          customContent: '.mp-checkout-custom-container',
+          fcIdentificationNumber: '#form-checkout__identificationNumber',
+          fcIdentificationNumberInput: '.mp-checkout-custom-container input.mp-document',
+          fcIdentificationNumberContainer: '#form-checkout__identificationNumber-container',
+        },
+      });
+
+      document.body.innerHTML = `
+        <div class="mp-checkout-custom-container">
+          <div id="form-checkout__identificationNumber-container">
+            <input class="mp-document" data-cy="input-document" type="text" name="identificationNumber" />
+            <input id="form-checkout__identificationNumber" type="hidden" />
+          </div>
+        </div>
+      `;
+
+      return {
+        page,
+        visivel: document.querySelector('input.mp-document'),
+        escondido: document.getElementById('form-checkout__identificationNumber'),
+      };
+    }
+
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    describe('given the submit gate rejects the document', () => {
+      test('when the error is displayed, then the visible input is the one announced as invalid', () => {
+        const { page, visivel, escondido } = loadPageWithBothDocumentInputs();
+
+        page.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
+
+        expect(visivel.getAttribute('aria-invalid')).toBe('true');
+        expect(escondido.hasAttribute('aria-invalid')).toBe(false);
+      });
+    });
+
+    describe('given the document is corrected', () => {
+      test('when the error is removed, then the visible input goes back to valid', () => {
+        const { page, visivel } = loadPageWithBothDocumentInputs();
+        page.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
+
+        page.setDisplayOfError('fcIdentificationNumberContainer', 'removed', 'mp-error');
+
+        expect(visivel.getAttribute('aria-invalid')).toBe('false');
+      });
+    });
+
+    describe('given the component swapped the input name to its error flag', () => {
+      // setInvalidState rewrites `name` to the flag-error value while the document is
+      // invalid and not empty, so the field must not be matched by its name.
+      test('when the error is displayed, then the field is still found and marked', () => {
+        const { page, visivel } = loadPageWithBothDocumentInputs();
+        visivel.setAttribute('name', 'docNumberError');
+
+        page.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
+
+        expect(visivel.getAttribute('aria-invalid')).toBe('true');
+      });
+    });
+
+    describe('given the component owns this field description', () => {
+      test('when the error is displayed, then no aria-describedby is written over it', () => {
+        const { page, visivel } = loadPageWithBothDocumentInputs();
+        visivel.setAttribute('aria-describedby', 'form-checkout__identificationType-instruction');
+
+        page.setDisplayOfError('fcIdentificationNumberContainer', 'add', 'mp-error');
+
+        expect(visivel.getAttribute('aria-describedby')).toBe('form-checkout__identificationType-instruction');
+      });
+    });
+  });
+
+  describe('verifyCardholderName() — the accessible state follows the visible one', () => {
+    // The visible state of this field is written by toggleErrorBorder, which does not
+    // go through setDisplayOfError, so the sync has to happen in the shared funnel.
+    function loadPageWithCardholderField() {
+      const page = loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+        wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: {} },
+        wc_mercadopago_custom_page_params: {},
+        CheckoutElements: {
+          fcCardholderName: '#form-checkout__cardholderName',
+          mpCardHolderNameHelper: '#mp-card-holder-div #mp-card-holder-name-helper',
+          mpCardHolderNameHelperInfo: '#mp-card-holder-div #mp-card-holder-name-helper-info',
+          mpCardholderNameInputLabel: '#mp-card-holder-div .mp-input-label',
+        },
+      });
+
+      document.body.innerHTML = `
+        <div id="mp-card-holder-div">
+          <div class="mp-input-label"></div>
+          <input id="form-checkout__cardholderName" aria-invalid="false"
+                 aria-describedby="mp-card-holder-name-helper-info mp-card-holder-name-example" />
+          <div id="mp-card-holder-name-helper-info"></div>
+          <div id="mp-card-holder-name-helper"></div>
+          <span id="mp-card-holder-name-example"></span>
+        </div>
+      `;
+
+      return { page, input: document.getElementById('form-checkout__cardholderName') };
+    }
+
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    describe('given a cardholder name the plugin rejects', () => {
+      test('when it is verified, then the field is announced as invalid and described by the error', () => {
+        const { page, input } = loadPageWithCardholderField();
+        input.value = '1';
+
+        expect(page.verifyCardholderName()).toBe(false);
+
+        expect(input.getAttribute('aria-invalid')).toBe('true');
+        expect(input.getAttribute('aria-describedby')).toBe('mp-card-holder-name-helper mp-card-holder-name-example');
+      });
+    });
+
+    describe('given a valid cardholder name', () => {
+      test('when it is verified, then the field goes back to the informative description', () => {
+        const { page, input } = loadPageWithCardholderField();
+        input.value = '1';
+        page.verifyCardholderName();
+
+        input.value = 'Maria Lopes';
+
+        expect(page.verifyCardholderName()).toBe(true);
+
+        expect(input.getAttribute('aria-invalid')).toBe('false');
+        expect(input.getAttribute('aria-describedby')).toBe('mp-card-holder-name-helper-info mp-card-holder-name-example');
+      });
+    });
+
+    describe('given the field is invalid and the visible state is red', () => {
+      test('when it is verified, then the class and the announced state agree', () => {
+        const { page, input } = loadPageWithCardholderField();
+        input.value = '1';
+
+        page.verifyCardholderName();
+
+        const estaVermelho = input.classList.contains('mp-error') || input.classList.contains('mp-error-2px');
+        expect(estaVermelho).toBe(true);
+        expect(input.getAttribute('aria-invalid')).toBe('true');
+      });
+    });
+  });
+
   describe('clearCardState() — Super Token field ownership (PSW-4342)', () => {
     function loadCheckoutPageForCardState() {
       return loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
@@ -308,6 +464,82 @@ describe('CheckoutPage', () => {
     });
   });
 
+  describe('setZeroDollarInitialCitInstallmentsState()', () => {
+    function loadPageForZeroDollarInstallments() {
+      return loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+        wc_mercadopago_custom_checkout_params: { site_id: 'MLC', input_helper_message: {} },
+        wc_mercadopago_custom_page_params: {},
+        CheckoutElements: {
+          cardInstallments: '#cardInstallments',
+          mpInstallmentsCard: '#mp-installments-card',
+          mpInstallmentsContainer: '#mp-installments-container',
+        },
+      });
+    }
+
+    function setupZeroDollarInstallmentsDom() {
+      document.body.innerHTML = `
+        <div id="mp-installments-card" style="display: block">
+          <div id="mp-installments-container"><div id="sdk-installments-ui"></div></div>
+          <div class="mp-checkout-custom-installments-select-container">
+            <label class="mp-input-label mp-label-error"></label>
+            <select id="form-checkout__installments" class="mp-error" aria-invalid="true" aria-describedby="mp-installments-error">
+              <option value="">placeholder</option>
+              <option value="3" selected>3</option>
+            </select>
+            <div id="mp-installments-error" style="display: flex"></div>
+            <div id="mp-installments-bank-interest-hint">bank hint</div>
+            <div id="mp-installments-tax-info" style="display: block">tax hint</div>
+          </div>
+        </div>
+        <input id="cardInstallments" value="6" />
+        <input id="paymentMethodId" value="visa" />
+        <div id="mp-doc-div" style="display: block">document state</div>
+        <div id="mp-issuers" style="display: block">issuer state</div>
+      `;
+    }
+
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    test('Given stale installment UI, When zero-dollar CIT state is applied, Then it fixes one installment and clears only installment visuals and hints', () => {
+      const page = loadPageForZeroDollarInstallments();
+      setupZeroDollarInstallmentsDom();
+      page.installmentsItemsData = { payer_costs: [{ installments: 6 }] };
+
+      page.setZeroDollarInitialCitInstallmentsState();
+
+      const select = document.getElementById('form-checkout__installments');
+      expect(document.getElementById('cardInstallments').value).toBe('1');
+      expect(document.getElementById('mp-installments-card').style.display).toBe('none');
+      expect(document.getElementById('mp-installments-container').children).toHaveLength(0);
+      expect(select.options).toHaveLength(0);
+      expect(select.classList.contains('mp-error')).toBe(false);
+      expect(select.getAttribute('aria-invalid')).toBe('false');
+      expect(select.hasAttribute('aria-describedby')).toBe(false);
+      expect(document.querySelector('.mp-input-label').classList.contains('mp-label-error')).toBe(false);
+      expect(document.getElementById('mp-installments-error').style.display).toBe('none');
+      expect(document.getElementById('mp-installments-bank-interest-hint')).toBeNull();
+      expect(document.getElementById('mp-installments-tax-info').style.display).toBe('none');
+      expect(document.getElementById('mp-installments-tax-info').textContent).toBe('');
+      expect(page.installmentsItemsData).toEqual([]);
+    });
+
+    test('Given document, issuer and payment-method state coexist, When zero-dollar installments are stabilized, Then unrelated fields remain unchanged', () => {
+      const page = loadPageForZeroDollarInstallments();
+      setupZeroDollarInstallmentsDom();
+
+      page.setZeroDollarInitialCitInstallmentsState();
+
+      expect(document.getElementById('paymentMethodId').value).toBe('visa');
+      expect(document.getElementById('mp-doc-div').style.display).toBe('block');
+      expect(document.getElementById('mp-doc-div').textContent).toBe('document state');
+      expect(document.getElementById('mp-issuers').style.display).toBe('block');
+      expect(document.getElementById('mp-issuers').textContent).toBe('issuer state');
+    });
+  });
+
   describe('emitGateBlockedMetric()', () => {
     let sendMetric;
 
@@ -368,11 +600,15 @@ describe('CheckoutPage', () => {
         CheckoutElements: {
           customContent: '#mp-custom-content',
           cardInstallments: '#cardInstallments',
+          mpInstallmentsCard: '#mp-installments-card',
+          mpInstallmentsContainer: '#mp-installments-container',
           fcCardNumberContainer: '#form-checkout__cardNumber-container',
           fcIdentificationNumber: '#form-checkout__identificationNumber',
           fcIdentificationNumberContainer: '#form-checkout__identificationNumber-container',
           mpDocumentContainer: '#mp-doc-div',
           mpDocumentInputLabel: '#mp-doc-label',
+          mpDocumentComponent: '#mp-custom-content input-document',
+          fcIdentificationNumberInput: '#mp-custom-content input.mp-document',
         },
         sendMetric,
       });
@@ -387,17 +623,34 @@ describe('CheckoutPage', () => {
       docValue = '',
       docContainerError = false,
     } = {}) {
+      // Same nesting as the rendered checkout: the document field lives inside the
+      // Custom container, which is what setDisplayOfError scopes its lookup to.
       document.body.innerHTML = `
-        <div id="mp-custom-content"><div id="mp-doc-label" class="mp-input-label"></div></div>
+        <div id="mp-custom-content">
+          <div id="mp-doc-label" class="mp-input-label"></div>
+          <div id="mp-doc-div">
+            <input-document>
+              <div id="form-checkout__identificationNumber-container" class="${docContainerError ? 'mp-error' : ''}">
+                <input class="mp-document" type="text" />
+                <input type="hidden" id="form-checkout__identificationNumber" />
+              </div>
+            </input-document>
+          </div>
+        </div>
         <div id="form-checkout__cardNumber-container" class="${cardError ? 'mp-error' : ''}"></div>
-        <select id="form-checkout__installments">
-          <option value="">placeholder</option>
-          <option value="3">3</option>
-        </select>
+        <div id="mp-installments-card" style="display: block">
+          <div id="mp-installments-container"><div class="sdk-installments-ui"></div></div>
+          <div class="mp-checkout-custom-installments-select-container">
+            <label class="mp-input-label"></label>
+            <select id="form-checkout__installments">
+              <option value="">placeholder</option>
+              <option value="3">3</option>
+            </select>
+            <div id="mp-installments-error" style="display: none"></div>
+            <div id="mp-installments-tax-info" style="display: none"></div>
+          </div>
+        </div>
         <input type="hidden" id="cardInstallments" value="${hiddenInstallments}" />
-        <div id="mp-doc-div"></div>
-        <input id="form-checkout__identificationNumber" />
-        <div id="form-checkout__identificationNumber-container" class="${docContainerError ? 'mp-error' : ''}"></div>
       `;
       document.getElementById('form-checkout__installments').value = installments;
       document.getElementById('mp-doc-div').style.display = docDisplay;
@@ -409,6 +662,7 @@ describe('CheckoutPage', () => {
       cardForm = {
         getCardValidationReason: jest.fn(() => 'invalid_bin'),
         getCardValidationDetail: jest.fn(() => 'No payment methods found'),
+        isZeroDollarInitialCitContext: jest.fn(() => false),
         scrollToCardForm: jest.fn(),
         removeLoadSpinner: jest.fn(),
         removeBlockOverlay: jest.fn(),
@@ -469,6 +723,53 @@ describe('CheckoutPage', () => {
       expect(result).toEqual({ passed: false, gate: 'card', reason: 'invalid_length' });
     });
 
+    test('Given zero-dollar initial CIT with no visible installment, When called, Then fixes one installment and continues after the installments gate', () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: false, installments: '', hiddenInstallments: '6', docDisplay: 'none' });
+      cardForm.isZeroDollarInitialCitContext.mockReturnValue(true);
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: true });
+      expect(document.getElementById('cardInstallments').value).toBe('1');
+      expect(document.getElementById('mp-installments-card').style.display).toBe('none');
+      expect(document.getElementById('form-checkout__installments').options).toHaveLength(0);
+      expect(sendMetric).not.toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_INSTALLMENTS_VALIDATION_BLOCKED',
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    test('Given zero-dollar initial CIT with invalid document, When called, Then skips only installments and still blocks on document', () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: false, installments: '', hiddenInstallments: '', docDisplay: 'block', docValue: '' });
+      cardForm.isZeroDollarInitialCitContext.mockReturnValue(true);
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: false, gate: 'document', reason: 'empty_field' });
+      expect(document.getElementById('cardInstallments').value).toBe('1');
+      expect(sendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_DOCUMENT_VALIDATION_BLOCKED',
+        'empty_field',
+        'mp_custom_document_validation'
+      );
+    });
+
+    test('Given zero-dollar initial CIT with invalid card, When called, Then card remains the first gate and installments state is not changed', () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: true, installments: '', hiddenInstallments: '6' });
+      cardForm.isZeroDollarInitialCitContext.mockReturnValue(true);
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: false, gate: 'card', reason: 'invalid_bin' });
+      expect(cardForm.isZeroDollarInitialCitContext).not.toHaveBeenCalled();
+      expect(document.getElementById('cardInstallments').value).toBe('6');
+      expect(document.getElementById('mp-installments-card').style.display).toBe('block');
+    });
+
     test('Given the card is valid but no installment is selected, When called, Then blocks on the installments gate with reason not_selected', async () => {
       const page = loadPageForGates();
       setupDom({ cardError: false, installments: '' });
@@ -485,6 +786,17 @@ describe('CheckoutPage', () => {
       expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
     });
 
+    test('Given a non-eligible checkout has stale hidden installment one and no visible selection, When called, Then it preserves the regular installments gate', () => {
+      const page = loadPageForGates();
+      setupDom({ cardError: false, installments: '', hiddenInstallments: '1' });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: false, gate: 'installments', reason: 'not_selected' });
+      expect(document.getElementById('cardInstallments').value).toBe('1');
+      expect(document.getElementById('mp-installments-card').style.display).toBe('block');
+    });
+
     test('Given card and installments are valid but the document is empty, When called, Then blocks on the document gate with reason empty_field', async () => {
       const page = loadPageForGates();
       setupDom({ cardError: false, installments: '3', docDisplay: 'block', docValue: '' });
@@ -499,6 +811,38 @@ describe('CheckoutPage', () => {
       );
       await Promise.resolve();
       expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
+    });
+
+    describe('given the document gate blocks and the buyer never touched the field', () => {
+      test('when it blocks, then the visible input is announced as invalid', () => {
+        const page = loadPageForGates();
+        setupDom({ cardError: false, installments: '3', docDisplay: 'block', docValue: '' });
+
+        page.runPreSubmitGates(cardForm);
+
+        expect(document.querySelector('input.mp-document').getAttribute('aria-invalid')).toBe('true');
+      });
+
+      test('when it blocks, then the component is asked to describe the error', () => {
+        const page = loadPageForGates();
+        setupDom({ cardError: false, installments: '3', docDisplay: 'block', docValue: '' });
+        const componente = document.querySelector('input-document');
+        componente.markInvalidFromSubmit = jest.fn();
+
+        page.runPreSubmitGates(cardForm);
+
+        expect(componente.markInvalidFromSubmit).toHaveBeenCalledTimes(1);
+      });
+
+      test('when the component has not been upgraded yet, then the gate still blocks without throwing', () => {
+        const page = loadPageForGates();
+        setupDom({ cardError: false, installments: '3', docDisplay: 'block', docValue: '' });
+        // A plain element has no component method at all.
+        delete document.querySelector('input-document').markInvalidFromSubmit;
+
+        expect(() => page.runPreSubmitGates(cardForm)).not.toThrow();
+        expect(page.runPreSubmitGates(cardForm)).toEqual({ passed: false, gate: 'document', reason: 'empty_field' });
+      });
     });
 
     test('Given the document container shows an error and the field has a value, When called, Then blocks on the document gate with reason invalid_format', () => {
@@ -670,6 +1014,391 @@ describe('CheckoutPage', () => {
       page.clearDocumentLabelErrorOnInput();
 
       expect(addSpy.mock.calls.filter(([type]) => type === 'input')).toHaveLength(1);
+    });
+  });
+});
+
+describe('CheckoutPage - error state exposed to screen readers', () => {
+  const CHECKOUT_ELEMENTS = {
+    customContent: '.mp-checkout-custom-container',
+    fcCardholderName: '#form-checkout__cardholderName',
+    fcCardNumberContainer: '#form-checkout__cardNumber-container',
+    fcCardExpirationDateContainer: '#form-checkout__expirationDate-container',
+    fcSecurityNumberContainer: '#form-checkout__securityCode-container',
+    mpCardholderNameInputLabel: '#mp-card-holder-div .mp-input-label',
+  };
+
+  function loadPageWithForm() {
+    document.body.innerHTML = `
+      <div class="mp-checkout-custom-container">
+        <div id="mp-card-holder-div">
+          <label class="mp-input-label" for="form-checkout__cardholderName">Titular</label>
+          <input id="form-checkout__cardholderName" aria-describedby="mp-card-holder-name-helper-info" />
+        </div>
+        <div id="form-checkout__cardNumber-container"></div>
+        <div id="form-checkout__expirationDate-container"></div>
+        <div id="form-checkout__securityCode-container"></div>
+      </div>
+    `;
+
+    return loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+      wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: { installments: {} } },
+      wc_mercadopago_custom_page_params: { installments_select_placeholder_text: '' },
+      CheckoutElements: CHECKOUT_ELEMENTS,
+    });
+  }
+
+  afterEach(() => {
+    delete window.mpCustomCheckoutHandler;
+    document.body.innerHTML = '';
+  });
+
+  describe('given a field with a control of our own', () => {
+    test('when it enters the error state, then the control is flagged invalid and points at the error message', () => {
+      const page = loadPageWithForm();
+
+      page.setDisplayOfError('fcCardholderName', 'add', 'mp-error');
+
+      const input = document.getElementById('form-checkout__cardholderName');
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(input.getAttribute('aria-describedby')).toBe('mp-card-holder-name-helper mp-card-holder-name-example');
+    });
+
+    test('when the error is cleared, then the control is no longer flagged and the informative helper is described again', () => {
+      const page = loadPageWithForm();
+
+      page.setDisplayOfError('fcCardholderName', 'add', 'mp-error');
+      page.setDisplayOfError('fcCardholderName', 'remove', 'mp-error');
+
+      const input = document.getElementById('form-checkout__cardholderName');
+      expect(input.getAttribute('aria-invalid')).toBe('false');
+      expect(input.getAttribute('aria-describedby')).toBe('mp-card-holder-name-helper-info mp-card-holder-name-example');
+    });
+
+    test('when the error is toggled, then the expected-format example is never dropped from the description', () => {
+      const page = loadPageWithForm();
+      const input = document.getElementById('form-checkout__cardholderName');
+
+      page.setDisplayOfError('fcCardholderName', 'add', 'mp-error');
+      expect(input.getAttribute('aria-describedby')).toContain('mp-card-holder-name-example');
+
+      page.setDisplayOfError('fcCardholderName', 'remove', 'mp-error');
+      expect(input.getAttribute('aria-describedby')).toContain('mp-card-holder-name-example');
+    });
+
+    test('when the error classes are swapped across a focus transition, then the resulting DOM decides the flag', () => {
+      const page = loadPageWithForm();
+
+      page.setDisplayOfError('fcCardholderName', 'add', 'mp-error-2px');
+      page.setDisplayOfError('fcCardholderName', 'remove', 'mp-error');
+
+      const input = document.getElementById('form-checkout__cardholderName');
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+    });
+  });
+
+  describe('given a cosmetic label class', () => {
+    test('when it is applied, then no field is flagged invalid', () => {
+      const page = loadPageWithForm();
+
+      page.setDisplayOfError('mpCardholderNameInputLabel', 'add', 'mp-label-error');
+
+      const input = document.getElementById('form-checkout__cardholderName');
+      expect(input.hasAttribute('aria-invalid')).toBe(false);
+    });
+  });
+
+  describe('given a field whose control lives in the SDK iframe', () => {
+    test('when it enters the error state, then the validity is pushed into the iframe through the SDK', () => {
+      const update = jest.fn();
+      window.mpCustomCheckoutHandler = { cardForm: { formMounted: true, form: { update } } };
+      const page = loadPageWithForm();
+
+      page.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
+
+      expect(update).toHaveBeenCalledWith('cardNumber', { invalid: true });
+    });
+
+    test('when the error is cleared, then the SDK is told the field is valid again', () => {
+      const update = jest.fn();
+      window.mpCustomCheckoutHandler = { cardForm: { formMounted: true, form: { update } } };
+      const page = loadPageWithForm();
+
+      page.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
+      page.setDisplayOfError('fcCardNumberContainer', 'remove', 'mp-error');
+
+      expect(update).toHaveBeenLastCalledWith('cardNumber', { invalid: false });
+    });
+
+    test('when the SDK is not mounted yet, then the checkout is not broken by the accessibility hint', () => {
+      const page = loadPageWithForm();
+
+      expect(() => page.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error')).not.toThrow();
+    });
+
+    test('when the SDK form object remains after unmount, then clearInputs does not update any missing secure field', () => {
+      const update = jest.fn();
+      window.mpCustomCheckoutHandler = { cardForm: { formMounted: false, form: { update } } };
+      const page = loadPageWithForm();
+
+      page.clearInputs();
+
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    test('when the SDK throws, then the failure is swallowed instead of blocking the flow', () => {
+      window.mpCustomCheckoutHandler = {
+        cardForm: { formMounted: true, form: { update: () => { throw new Error('field not mounted'); } } },
+      };
+      const page = loadPageWithForm();
+
+      expect(() => page.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error')).not.toThrow();
+    });
+  });
+});
+
+describe('CheckoutPage - accessible instruction of the SDK secure fields', () => {
+  const CHECKOUT_ELEMENTS = {
+    customContent: '.mp-checkout-custom-container',
+    fcCardNumberContainer: '#form-checkout__cardNumber-container',
+    fcCardExpirationDateContainer: '#form-checkout__expirationDate-container',
+    fcSecurityNumberContainer: '#form-checkout__securityCode-container',
+    mpDetectedCardAnnouncement: '#mp-detected-card-announcement',
+  };
+
+  const PARAMS = {
+    installments_select_placeholder_text: '',
+    detected_card_label: 'Cartão',
+    card_number_instruction: 'Enter the {digits} numbers on your card.',
+    card_expiration_instruction: 'Enter two digits for the month and two digits for the year.',
+    security_code_instruction: 'Enter your {digits} digit code.',
+  };
+
+  // The iframes are what the SDK injects; the instruction goes on the iframe element
+  // itself, so a container without one must be tolerated.
+  function loadPageWithSecureFields({ withIframes = true } = {}) {
+    const iframe = withIframes ? '<iframe></iframe>' : '';
+    document.body.innerHTML = `
+      <div class="mp-checkout-custom-container">
+        <div id="form-checkout__cardNumber-container">${iframe}</div>
+        <div id="form-checkout__expirationDate-container">${iframe}</div>
+        <div id="form-checkout__securityCode-container">${iframe}</div>
+        <span id="mp-detected-card-announcement"></span>
+      </div>
+    `;
+
+    return loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+      wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: { installments: {} } },
+      wc_mercadopago_custom_page_params: PARAMS,
+      CheckoutElements: CHECKOUT_ELEMENTS,
+    });
+  }
+
+  const titleOf = (id) => document.getElementById(id).querySelector('iframe').getAttribute('title');
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('given the secure fields were just mounted', () => {
+    test('when no brand is known yet, then each field describes the default digit counts', () => {
+      const page = loadPageWithSecureFields();
+
+      page.setSecureFieldInstructions();
+
+      expect(titleOf('form-checkout__cardNumber-container')).toBe('Enter the 16 numbers on your card.');
+      expect(titleOf('form-checkout__expirationDate-container')).toBe('Enter two digits for the month and two digits for the year.');
+      expect(titleOf('form-checkout__securityCode-container')).toBe('Enter your 3 digit code.');
+    });
+  });
+
+  describe('given a brand with different digit counts is detected', () => {
+    test('when the instructions are refreshed, then they describe that brand', () => {
+      const page = loadPageWithSecureFields();
+
+      page.setSecureFieldInstructions(15, 4);
+
+      expect(titleOf('form-checkout__cardNumber-container')).toBe('Enter the 15 numbers on your card.');
+      expect(titleOf('form-checkout__securityCode-container')).toBe('Enter your 4 digit code.');
+    });
+  });
+
+  describe('given a brand with different digit counts was detected and the card is cleared', () => {
+    test('when the state is reset, then the instructions stop describing the card that is gone', () => {
+      const page = loadPageWithSecureFields();
+      page.setSecureFieldInstructions(15, 4);
+
+      page.setSecureFieldInstructions();
+
+      expect(titleOf('form-checkout__cardNumber-container')).toBe('Enter the 16 numbers on your card.');
+      expect(titleOf('form-checkout__securityCode-container')).toBe('Enter your 3 digit code.');
+    });
+  });
+
+  describe('given the payment method reports a digit length of zero', () => {
+    test('when the instructions are refreshed, then the default length is announced instead of the raw placeholder', () => {
+      const page = loadPageWithSecureFields();
+
+      page.setSecureFieldInstructions(0, 0);
+
+      expect(titleOf('form-checkout__cardNumber-container')).toBe('Enter the 16 numbers on your card.');
+      expect(titleOf('form-checkout__securityCode-container')).toBe('Enter your 3 digit code.');
+      expect(titleOf('form-checkout__securityCode-container')).not.toContain('{digits}');
+    });
+  });
+
+  describe('given the SDK has not injected the iframes yet', () => {
+    test('when the instructions are applied, then nothing is thrown and no title is invented', () => {
+      const page = loadPageWithSecureFields({ withIframes: false });
+
+      expect(() => page.setSecureFieldInstructions()).not.toThrow();
+      expect(document.getElementById('form-checkout__cardNumber-container').querySelector('iframe')).toBeNull();
+    });
+  });
+
+  describe('given a store whose translations are missing', () => {
+    test('when the instructions are applied, then the iframe is left without a title instead of showing a broken string', () => {
+      document.body.innerHTML = '<div id="form-checkout__cardNumber-container"><iframe></iframe></div>';
+      const page = loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+        wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: { installments: {} } },
+        wc_mercadopago_custom_page_params: { installments_select_placeholder_text: '' },
+        CheckoutElements: CHECKOUT_ELEMENTS,
+      });
+
+      page.setSecureFieldInstructions();
+
+      expect(titleOf('form-checkout__cardNumber-container')).toBeNull();
+    });
+  });
+});
+
+describe('CheckoutPage - error message of the SDK secure fields', () => {
+  const CHECKOUT_ELEMENTS = {
+    customContent: '.mp-checkout-custom-container',
+    fcCardNumberContainer: '#form-checkout__cardNumber-container',
+    mpSecurityCodeInfo: '#mp-security-code-info',
+  };
+
+  function loadPage() {
+    document.body.innerHTML = `
+      <div class="mp-checkout-custom-container">
+        <div id="form-checkout__cardNumber-container" aria-labelledby="mp-card-number-label"></div>
+        <span id="mp-card-number-helper">Preencha este campo.</span>
+      </div>
+    `;
+
+    return loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+      wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: { installments: {} } },
+      wc_mercadopago_custom_page_params: { installments_select_placeholder_text: '' },
+      CheckoutElements: CHECKOUT_ELEMENTS,
+    });
+  }
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  // The control lives in a cross-origin iframe: the SDK forwards aria-invalid but
+  // cannot carry the message text, so the container is described instead.
+  describe('given a field whose control lives in the SDK iframe', () => {
+    test('when it enters the error state, then the container points at the visible message', () => {
+      const page = loadPage();
+
+      page.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
+
+      expect(document.getElementById('form-checkout__cardNumber-container').getAttribute('aria-describedby'))
+        .toBe('mp-card-number-helper');
+    });
+
+    test('when the error is cleared, then the description is dropped instead of lingering', () => {
+      const page = loadPage();
+      page.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
+
+      page.setDisplayOfError('fcCardNumberContainer', 'remove', 'mp-error');
+
+      expect(document.getElementById('form-checkout__cardNumber-container').hasAttribute('aria-describedby'))
+        .toBe(false);
+    });
+
+    test('when it enters the error state, then the label association is untouched', () => {
+      const page = loadPage();
+
+      page.setDisplayOfError('fcCardNumberContainer', 'add', 'mp-error');
+
+      expect(document.getElementById('form-checkout__cardNumber-container').getAttribute('aria-labelledby'))
+        .toBe('mp-card-number-label');
+    });
+  });
+});
+
+describe('CheckoutPage - security code hint per brand', () => {
+  const CHECKOUT_ELEMENTS = {
+    customContent: '.mp-checkout-custom-container',
+    mpSecurityCodeInfo: '#mp-security-code-info',
+  };
+
+  const PARAMS = {
+    installments_select_placeholder_text: '',
+    security_code_tooltip_text_3_digits: 'É um número de 3 dígitos.',
+    security_code_tooltip_text_4_digits: 'É um número de 4 dígitos.',
+  };
+
+  function loadPage() {
+    document.body.innerHTML = `
+      <div class="mp-checkout-custom-container">
+        <span id="mp-security-code-info" role="tooltip"
+              aria-label="É um número de 3 dígitos." data-tooltip="É um número de 3 dígitos.">?</span>
+      </div>
+    `;
+
+    return loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+      wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: { installments: {} } },
+      wc_mercadopago_custom_page_params: PARAMS,
+      CheckoutElements: CHECKOUT_ELEMENTS,
+    });
+  }
+
+  const tooltip = () => document.getElementById('mp-security-code-info');
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  // data-tooltip is the visual text, aria-label is what the screen reader reads.
+  // Updating only the first left Amex announcing "3 digits" while showing "4".
+  describe('given a brand with a four digit security code', () => {
+    test('when the hint is refreshed, then both the visual and the announced text change', () => {
+      const page = loadPage();
+
+      page.setCvvHint(4);
+
+      expect(tooltip().getAttribute('data-tooltip')).toBe('É um número de 4 dígitos.');
+      expect(tooltip().getAttribute('aria-label')).toBe('É um número de 4 dígitos.');
+    });
+  });
+
+  describe('given a brand with a three digit security code', () => {
+    test('when the hint is refreshed, then both texts go back to three digits', () => {
+      const page = loadPage();
+      page.setCvvHint(4);
+
+      page.setCvvHint(3);
+
+      expect(tooltip().getAttribute('data-tooltip')).toBe('É um número de 3 dígitos.');
+      expect(tooltip().getAttribute('aria-label')).toBe('É um número de 3 dígitos.');
+    });
+  });
+
+  describe('given a store whose tooltip element is absent', () => {
+    test('when the hint is refreshed, then the checkout is not broken', () => {
+      document.body.innerHTML = '<div class="mp-checkout-custom-container"></div>';
+      const page = loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+        wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: { installments: {} } },
+        wc_mercadopago_custom_page_params: PARAMS,
+        CheckoutElements: CHECKOUT_ELEMENTS,
+      });
+
+      expect(() => page.setCvvHint(4)).not.toThrow();
     });
   });
 });

@@ -29,7 +29,8 @@
  * SDK/metrics/e-mail-listener collaborators and the localized bundle params, then publishes it
  * through `globalBridge.publish`.
  */
-import { MPSuperTokenErrorCodes } from '@super-token/core/checkoutSession/ErrorClassification';
+import { MPSuperTokenErrorCodes, toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
+import type { VariantViewPort } from '@super-token/ports';
 import { SelectSavedPaymentMethod } from '@super-token/useCases/SelectSavedPaymentMethod';
 import {
   LegacySelectionSession,
@@ -307,7 +308,6 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   PAYMENT_METHODS_ORDER_TYPE_ACCOUNT_MONEY_FIRST = 'account_money_first';
   MAX_ATTEMPTS_BY_ERROR_CODE = 3;
   GET_PAYMENT_METHOD_TIMEOUT_MS = 5000;
-  ACCOUNT_MONEY_ANIMATION_MS = 300;
 
   // Attributes
   paymentMethods: PaymentMethod[] = [];
@@ -336,6 +336,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     params: SuperTokenPaymentMethodsParams,
     private readonly renderSavedMethods: RenderSavedMethods,
     public wcEmailListener: PaymentMethodsEmailListener | null = null,
+    private readonly variantView: VariantViewPort | null = null,
   ) {
     this.YELLOW_WALLET_PATH = params.yellow_wallet_path;
     this.YELLOW_MONEY_PATH = params.yellow_money_path;
@@ -410,6 +411,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   reset(): void {
+    const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
     this.isRendering = false;
     this.paymentMethods = [];
     this.attemptsByErrorCode = {};
@@ -428,7 +430,9 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     this.removeMercadoPagoPrivacyPolicyFooter();
     this.removeHorizontalRow();
     this.removePaymentMethodsListClasses();
-    document.querySelectorAll(`.${this.SUPER_TOKEN_STYLES.BLOCK}`).forEach(blockElement => blockElement.remove());
+    if (customCheckoutEntireElement) {
+      this.variantView?.reset(customCheckoutEntireElement);
+    }
   }
 
   storePaymentMethodsInMemory(accountPaymentMethods: PaymentMethod[]): void {
@@ -453,14 +457,18 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
 
   getSelectedPreloadedPaymentMethodFromActivePaymentMethods(): PaymentMethod | undefined {
     return this.paymentMethods.find(
-      paymentMethod => this.paymentMethodIdentifier(paymentMethod) === this.paymentMethodIdentifier(this.selectedPreloadedPaymentMethod),
+      (paymentMethod) =>
+        this.paymentMethodIdentifier(paymentMethod) ===
+        this.paymentMethodIdentifier(this.selectedPreloadedPaymentMethod),
     );
   }
 
   paymentMethodIdentifier(paymentMethod: PaymentMethod | null): string {
     if (!paymentMethod) return '';
 
-    return `${paymentMethod?.id}${('card' in paymentMethod ? paymentMethod.card?.card_number?.last_four_digits : undefined) || ''}`;
+    return `${paymentMethod?.id}${
+      ('card' in paymentMethod ? paymentMethod.card?.card_number?.last_four_digits : undefined) || ''
+    }`;
   }
 
   setSuperToken(token: string | null): void {
@@ -491,21 +499,21 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     this.storeAttemptByErrorCode(errorCode);
 
     const errorMessages: Record<string, { withRetry: string; withoutRetry: string }> = {
-      'UPDATE_SECURITY_CODE_ERROR': {
+      UPDATE_SECURITY_CODE_ERROR: {
         withRetry: this.UPDATE_SECURITY_CODE_WITH_RETRY_ERROR_TEXT,
-        withoutRetry: this.UPDATE_SECURITY_CODE_NO_RETRY_ERROR_TEXT
+        withoutRetry: this.UPDATE_SECURITY_CODE_NO_RETRY_ERROR_TEXT,
       },
-      'AUTHORIZE_PAYMENT_METHOD_ERROR': {
+      AUTHORIZE_PAYMENT_METHOD_ERROR: {
         withRetry: this.AUTHORIZE_PAYMENT_METHOD_WITH_RETRY_ERROR_TEXT,
-        withoutRetry: this.AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT
+        withoutRetry: this.AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT,
       },
-      'AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED': {
+      AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED: {
         withRetry: this.AUTHORIZE_PAYMENT_METHOD_WITH_RETRY_ERROR_TEXT,
-        withoutRetry: this.AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT
+        withoutRetry: this.AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT,
       },
-      'SELECT_PAYMENT_METHOD_ERROR': {
+      SELECT_PAYMENT_METHOD_ERROR: {
         withRetry: this.SELECT_PAYMENT_METHOD_ERROR_TEXT,
-        withoutRetry: this.SELECT_PAYMENT_METHOD_ERROR_TEXT
+        withoutRetry: this.SELECT_PAYMENT_METHOD_ERROR_TEXT,
       },
     };
 
@@ -561,7 +569,8 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
    */
   excludeRecaptchaFromPreValidation(): void {
     const metrics = this.mpSuperTokenMetrics;
-    const CAPTCHA_SELECTOR = '[name^="g-recaptcha-response"], [name^="h-captcha-response"], [name^="cf-turnstile-response"]';
+    const CAPTCHA_SELECTOR =
+      '[name^="g-recaptcha-response"], [name^="h-captcha-response"], [name^="cf-turnstile-response"]';
 
     try {
       // form.checkout exists only on the standard Classic checkout — absent on Blocks and on
@@ -578,7 +587,10 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
 
       const jq = window.jQuery as unknown as JQueryWithFn | undefined;
       if (!jq?.fn || typeof jq.fn.serialize !== 'function') {
-        metrics?.errorToExcludeRecaptchaFromPreValidation('serialize_unavailable', 'jQuery.fn.serialize is not available');
+        metrics?.errorToExcludeRecaptchaFromPreValidation(
+          'serialize_unavailable',
+          'jQuery.fn.serialize is not available',
+        );
         return;
       }
 
@@ -594,12 +606,14 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
         // collection .serialize() was called on. On the real submit (mercado_pago_submit ===
         // true) keep the token; otherwise omit it, scoping the disable to this call (finally).
         const serializedForm = this ? (this as Record<number, HTMLFormElement | undefined>)[0] : undefined;
-        const isCheckoutForm = !!serializedForm
-          && typeof serializedForm.matches === 'function'
-          && serializedForm.matches('form.checkout');
-        const captchaFields = serializedForm && isCheckoutForm && !window.mpEventHandler?.mercado_pago_submit
-          ? Array.from(serializedForm.querySelectorAll<HTMLInputElement>(CAPTCHA_SELECTOR)).filter((field) => !field.disabled)
-          : [];
+        const isCheckoutForm =
+          !!serializedForm && typeof serializedForm.matches === 'function' && serializedForm.matches('form.checkout');
+        const captchaFields =
+          serializedForm && isCheckoutForm && !window.mpEventHandler?.mercado_pago_submit
+            ? Array.from(serializedForm.querySelectorAll<HTMLInputElement>(CAPTCHA_SELECTOR)).filter(
+                (field) => !field.disabled,
+              )
+            : [];
 
         if (!captchaFields.length) {
           return originalSerialize.apply(this, args);
@@ -628,9 +642,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   getCustomCheckoutEntireElement(): HTMLElement | null {
-    return document.querySelector<HTMLElement>(`#${this.SUPER_TOKEN_STYLES.ROOT_ID}`)
-      || document.querySelector<HTMLElement>(this.CUSTOM_CHECKOUT_BLOCKS_SELECTOR)
-      || document.querySelector<HTMLElement>(this.CUSTOM_CHECKOUT_CLASSIC_SELECTOR);
+    return (
+      document.querySelector<HTMLElement>(`#${this.SUPER_TOKEN_STYLES.ROOT_ID}`) ||
+      document.querySelector<HTMLElement>(this.CUSTOM_CHECKOUT_BLOCKS_SELECTOR) ||
+      document.querySelector<HTMLElement>(this.CUSTOM_CHECKOUT_CLASSIC_SELECTOR)
+    );
   }
 
   getWalletButtonElement(): HTMLElement | null {
@@ -677,14 +693,18 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     const accordionElement = document.querySelector(`.${this.SUPER_TOKEN_STYLES.ACCORDION}`);
     const accordionHeader = document.querySelector(`.${this.SUPER_TOKEN_STYLES.ACCORDION_HEADER}`);
 
-    accordionElement?.querySelector(this.CHECKOUT_CUSTOM_CONTAINER_SELECTOR)?.classList.remove(this.SUPER_TOKEN_STYLES.ACCORDION_CONTENT);
+    accordionElement
+      ?.querySelector(this.CHECKOUT_CUSTOM_CONTAINER_SELECTOR)
+      ?.classList.remove(this.SUPER_TOKEN_STYLES.ACCORDION_CONTENT);
     accordionElement?.classList.remove(this.SUPER_TOKEN_STYLES.ACCORDION);
     accordionHeader?.remove();
   }
 
   removePaymentMethodsListClasses(): void {
     const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
-    const checkoutContainer = customCheckoutEntireElement?.querySelector<HTMLElement>(this.NEW_CHECKOUT_CONTAINER_SELECTOR) ?? customCheckoutEntireElement?.querySelector<HTMLElement>(this.OLD_CHECKOUT_CONTAINER_SELECTOR);
+    const checkoutContainer =
+      customCheckoutEntireElement?.querySelector<HTMLElement>(this.NEW_CHECKOUT_CONTAINER_SELECTOR) ??
+      customCheckoutEntireElement?.querySelector<HTMLElement>(this.OLD_CHECKOUT_CONTAINER_SELECTOR);
 
     if (checkoutContainer) {
       checkoutContainer.style.height = 'auto';
@@ -699,9 +719,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   removePaymentMethodElements(): void {
-    document
-      .querySelectorAll(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD}`)
-      .forEach(element => element.remove());
+    document.querySelectorAll(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD}`).forEach((element) => element.remove());
   }
 
   closeAccordion(): void {
@@ -718,20 +736,20 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   deselectAllPaymentMethods(): void {
-    document
-      .querySelectorAll<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_SELECTED}`)
-      .forEach(element => {
-        element.classList.remove(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_SELECTED);
-        element.setAttribute('aria-selected', 'false');
-        if (element.dataset?.type === this.ACCOUNT_MONEY_TYPE && this.ACCOUNT_MONEY_BALANCE_TEXT) {
-          element.setAttribute('aria-label', element.dataset.baseAriaLabel ?? '');
-        }
-      });
-    this.removeAccountMoneyBalanceLine();
+    const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
+    document.querySelectorAll<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_SELECTED}`).forEach((element) => {
+      element.classList.remove(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_SELECTED);
+      element.setAttribute('aria-selected', 'false');
+    });
+    if (customCheckoutEntireElement) {
+      this.variantView?.clearSelectionDecoration(customCheckoutEntireElement);
+    }
   }
 
   selectNewCardAccordion(): void {
-    const accordionElement = document.querySelector<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_ACCORDION}`);
+    const accordionElement = document.querySelector<HTMLElement>(
+      `.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_ACCORDION}`,
+    );
     const accordionContent = document.querySelector<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.ACCORDION_CONTENT}`);
     const accordionHeader = document.querySelector<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.ACCORDION_HEADER}`);
 
@@ -757,16 +775,18 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   selectPaymentMethod(paymentMethodElement: HTMLElement): void {
     paymentMethodElement.classList.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_SELECTED);
     paymentMethodElement.setAttribute('aria-selected', 'true');
-    if (paymentMethodElement.dataset?.type === this.ACCOUNT_MONEY_TYPE) {
-      this.applyAccountMoneySelectionDecoration(paymentMethodElement);
-    }
+    this.variantView?.decorateSelection(paymentMethodElement);
   }
 
-  getPaymentMethodSelectedFromDOMToAccountPaymentMethods(accountPaymentMethods: PaymentMethod[]): PaymentMethod | null | undefined {
+  getPaymentMethodSelectedFromDOMToAccountPaymentMethods(
+    accountPaymentMethods: PaymentMethod[],
+  ): PaymentMethod | null | undefined {
     const paymentMethodSelected = document.querySelector(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_SELECTED}`) || null;
     if (!paymentMethodSelected) return null;
 
-    return accountPaymentMethods.find(paymentMethod => this.paymentMethodIdentifier(paymentMethod) === paymentMethodSelected.id);
+    return accountPaymentMethods.find(
+      (paymentMethod) => this.paymentMethodIdentifier(paymentMethod) === paymentMethodSelected.id,
+    );
   }
 
   getPaymentMethodElementFromDOM(paymentMethod: PaymentMethod): HTMLElement | null {
@@ -795,7 +815,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       securityCodeTooltip?.setAttribute('tabindex', '0');
     }
 
-    const installmentsDropdown = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethodElement as unknown as PaymentMethod)}`);
+    const installmentsDropdown = paymentMethodElement.querySelector(
+      `#mp-super-token-installments-select-${this.paymentMethodIdentifier(
+        paymentMethodElement as unknown as PaymentMethod,
+      )}`,
+    );
 
     if (!installmentsDropdown) return;
 
@@ -818,7 +842,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       securityCodeTooltip?.setAttribute('tabindex', '-1');
     }
 
-    const installmentsDropdown = paymentMethodElement.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethodElement as unknown as PaymentMethod)}`);
+    const installmentsDropdown = paymentMethodElement.querySelector(
+      `#mp-super-token-installments-select-${this.paymentMethodIdentifier(
+        paymentMethodElement as unknown as PaymentMethod,
+      )}`,
+    );
 
     if (!installmentsDropdown) return;
 
@@ -827,23 +855,19 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   showPaymentMethodDetails(paymentMethodElement: HTMLElement): void {
-    paymentMethodElement.querySelector(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS}`)
-      ?.classList
-      ?.remove(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
+    paymentMethodElement
+      .querySelector(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS}`)
+      ?.classList?.remove(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
 
     this.setPaymentMethodChildrenAriaVisible(paymentMethodElement);
   }
 
   hideAllPaymentMethodDetails(): void {
-    document
-      .querySelectorAll<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS}`)
-      ?.forEach(element => {
-        element
-          ?.classList
-          ?.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
+    document.querySelectorAll<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_DETAILS}`)?.forEach((element) => {
+      element?.classList?.add(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_HIDE);
 
-        this.setPaymentMethodChildrenAriaHidden(element);
-      });
+      this.setPaymentMethodChildrenAriaHidden(element);
+    });
   }
 
   fillCardTokenFields(paymentMethod: PaymentMethod): void {
@@ -881,7 +905,10 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   formatSelectedPaymentMethodName(paymentMethod: PaymentMethod): string {
-    if (this.paymentMethodIdentifier(paymentMethod) === this.paymentMethodIdentifier({ id: this.NEW_CARD_TYPE } as unknown as PaymentMethod)) {
+    if (
+      this.paymentMethodIdentifier(paymentMethod) ===
+      this.paymentMethodIdentifier({ id: this.NEW_CARD_TYPE } as unknown as PaymentMethod)
+    ) {
       return 'new_credit_card';
     }
 
@@ -899,10 +926,17 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   emitEventFromSelectPaymentMethod(paymentMethod: PaymentMethod): void {
     const formattedPaymentMethodName = this.formatSelectedPaymentMethodName(paymentMethod);
 
-    document.dispatchEvent(new CustomEvent(this.SELECTED_SUPERTOKEN_METHOD_EVENT, { detail: { payment_method: formattedPaymentMethodName } }));
+    document.dispatchEvent(
+      new CustomEvent(this.SELECTED_SUPERTOKEN_METHOD_EVENT, {
+        detail: { payment_method: formattedPaymentMethodName },
+      }),
+    );
   }
 
-  async onSelectSuperTokenPaymentMethod(paymentMethodElement: HTMLElement, paymentMethod: PaymentMethod): Promise<void> {
+  async onSelectSuperTokenPaymentMethod(
+    paymentMethodElement: HTMLElement,
+    paymentMethod: PaymentMethod,
+  ): Promise<void> {
     await this.selectUseCase.execute({
       session: new LegacySelectionSession(this),
       metrics: this.mpSuperTokenMetrics,
@@ -965,21 +999,17 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     }, 50);
 
     setTimeout(() => {
-      document.dispatchEvent(
-        this.selectedSupertokenMethodEvent(true)
-      );
+      document.dispatchEvent(this.selectedSupertokenMethodEvent(true));
     }, 50);
   }
 
   selectedSupertokenMethodEvent = (isNewCardSelected: boolean): CustomEvent => {
-    return new CustomEvent('supertoken_payment_method_selected',
-      {
-        detail: {
-          new_card_selected: isNewCardSelected,
-          checkout_type: (document.querySelector('#mp_checkout_type') as HTMLInputElement | null)?.value,
-        }
-      }
-    );
+    return new CustomEvent('supertoken_payment_method_selected', {
+      detail: {
+        new_card_selected: isNewCardSelected,
+        checkout_type: (document.querySelector('#mp_checkout_type') as HTMLInputElement | null)?.value,
+      },
+    });
   };
 
   isCreditCard(paymentMethod: PaymentMethod): paymentMethod is CreditCardPaymentMethod {
@@ -999,94 +1029,23 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   isMercadoPagoCard(paymentMethod: PaymentMethod): paymentMethod is PrepaidCardPaymentMethod {
-    return paymentMethod?.type === this.PREPAID_CARD_TYPE && 'issuer' in paymentMethod && !!paymentMethod?.issuer?.name?.toLowerCase()?.includes(this.MERCADO_PAGO_ISSUER_NAME);
+    return (
+      paymentMethod?.type === this.PREPAID_CARD_TYPE &&
+      'issuer' in paymentMethod &&
+      !!paymentMethod?.issuer?.name?.toLowerCase()?.includes(this.MERCADO_PAGO_ISSUER_NAME)
+    );
   }
 
   isMercadoPagoCreditCard(paymentMethod: PaymentMethod): paymentMethod is CreditCardPaymentMethod {
-    return paymentMethod?.type === this.CREDIT_CARD_TYPE && 'issuer' in paymentMethod && !!paymentMethod?.issuer?.name?.toLowerCase()?.includes(this.MERCADO_PAGO_ISSUER_NAME);
+    return (
+      paymentMethod?.type === this.CREDIT_CARD_TYPE &&
+      'issuer' in paymentMethod &&
+      !!paymentMethod?.issuer?.name?.toLowerCase()?.includes(this.MERCADO_PAGO_ISSUER_NAME)
+    );
   }
 
   isConsumerCredits(paymentMethod: PaymentMethod): paymentMethod is ConsumerCreditsPaymentMethod {
     return paymentMethod?.type === this.CONSUMER_CREDITS_TYPE;
-  }
-
-  applyAccountMoneySelectionDecoration(paymentMethodRow: HTMLElement): void {
-    // Remove any leftover balance line synchronously before appending the new one.
-    // The close removal is deferred (~transition duration), so a fast AM -> other -> AM
-    // toggle could otherwise leave two balance nodes coexisting and strand an --open
-    // node on a deselected row. Normal deselection still animates via removeAccountMoneyBalanceLine().
-    this.getCustomCheckoutEntireElement()
-      ?.querySelectorAll(`.${this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_BALANCE_LINE}`)
-      .forEach(node => node.remove());
-    const contentSection = paymentMethodRow?.querySelector(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_CONTENT}`);
-    if (!contentSection) return;
-    const balanceParagraph = document.createElement('p');
-    balanceParagraph.classList.add(this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_BALANCE_LINE);
-    balanceParagraph.setAttribute('aria-live', 'polite');
-    balanceParagraph.textContent = this.ACCOUNT_MONEY_BALANCE_TEXT;
-    contentSection.appendChild(balanceParagraph);
-
-    // Trigger row/title and balance line transitions in the same frame.
-    // Stale-frame guard: if another method gets selected before this frame runs,
-    // the AM row is no longer selected/connected — skip reopening it (avoids an
-    // orphan --open state on an unselected row).
-    requestAnimationFrame(() => {
-      if (!paymentMethodRow?.isConnected
-        || !paymentMethodRow.classList.contains(this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_SELECTED)) {
-        return;
-      }
-      paymentMethodRow.classList.add(this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_ROW_OPEN);
-      balanceParagraph.classList.add(this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_BALANCE_LINE_OPEN);
-    });
-
-    const currentLabel = paymentMethodRow?.getAttribute('aria-label') ?? '';
-    if (this.ACCOUNT_MONEY_BALANCE_TEXT && !currentLabel.includes(this.ACCOUNT_MONEY_BALANCE_TEXT)) {
-      paymentMethodRow?.setAttribute('aria-label', `${currentLabel}. ${this.ACCOUNT_MONEY_BALANCE_TEXT}`);
-    }
-  }
-
-  removeAccountMoneyBalanceLine(): void {
-    const customCheckoutRoot = this.getCustomCheckoutEntireElement();
-    if (!customCheckoutRoot) return;
-
-    const accountMoneyRow = customCheckoutRoot
-      .querySelector(`.${this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_ROW_OPEN}`)
-      ?? customCheckoutRoot.querySelector(`.${this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_ROW}`);
-
-    accountMoneyRow?.classList.remove(this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_ROW_OPEN);
-
-    const balanceLine = customCheckoutRoot
-      .querySelector<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_BALANCE_LINE}`);
-    if (!balanceLine) return;
-
-    // Already closing — avoid duplicate listeners/timers on the same node (fast toggle).
-    if (balanceLine.dataset.closing === '1') return;
-    balanceLine.dataset.closing = '1';
-
-    balanceLine.classList.remove(this.SUPER_TOKEN_STYLES.ACCOUNT_MONEY_BALANCE_LINE_OPEN);
-
-    // Remove the node only after the close transition actually finishes (event-driven),
-    // so the DOM removal never lands a frame before the animation ends — which is what
-    // caused the title to nudge at the end of the close. A timeout fallback guarantees
-    // cleanup if transitionend never fires (reduced motion, detached node, etc.).
-    let removed = false;
-    let fallbackTimer: ReturnType<typeof setTimeout>;
-    const finalize = () => {
-      if (removed) return;
-      removed = true;
-      balanceLine.remove();
-    };
-    // Listen until the max-height transition ends specifically — opacity/margin-top end
-    // separately, so we can't use { once: true } (it would fire on the wrong property).
-    const onTransitionEnd = function handleTransitionEnd(event: TransitionEvent) {
-      if (event.target === balanceLine && event.propertyName === 'max-height') {
-        clearTimeout(fallbackTimer);
-        balanceLine.removeEventListener('transitionend', handleTransitionEnd);
-        finalize();
-      }
-    };
-    balanceLine.addEventListener('transitionend', onTransitionEnd);
-    fallbackTimer = setTimeout(finalize, this.ACCOUNT_MONEY_ANIMATION_MS + 50);
   }
 
   getMpIconPaths(): { blue: string; dark: string } {
@@ -1105,14 +1064,19 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     return securityCodeSettings?.mode === 'mandatory';
   }
 
-  shouldFetchPaymentMethodAgain(paymentMethod: PaymentMethod | null, paymentMethodElement: HTMLElement | null): boolean {
+  shouldFetchPaymentMethodAgain(
+    paymentMethod: PaymentMethod | null,
+    paymentMethodElement: HTMLElement | null,
+  ): boolean {
     if (!paymentMethod || !paymentMethodElement) throw new Error(MPSuperTokenErrorCodes.PAYMENT_METHOD_NOT_EXISTS);
 
     if (paymentMethodElement.hasAttribute('data-cvv-is-required-double-check')) return false;
 
-    return (this.isCreditCard(paymentMethod) || this.isDebitCard(paymentMethod))
-      && this.securityCodeIsRequired(paymentMethod.security_code_settings)
-      && paymentMethod.has_esc === true;
+    return (
+      (this.isCreditCard(paymentMethod) || this.isDebitCard(paymentMethod)) &&
+      this.securityCodeIsRequired(paymentMethod.security_code_settings) &&
+      paymentMethod.has_esc === true
+    );
   }
 
   getSkipReason(paymentMethod: PaymentMethod, paymentMethodElement: HTMLElement | null): string {
@@ -1136,9 +1100,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   hasMissingEsc(paymentMethod: PaymentMethod): boolean {
-    return (this.isCreditCard(paymentMethod) || this.isDebitCard(paymentMethod))
-      && this.securityCodeIsRequired(paymentMethod?.security_code_settings)
-      && typeof paymentMethod?.has_esc === 'undefined';
+    return (
+      (this.isCreditCard(paymentMethod) || this.isDebitCard(paymentMethod)) &&
+      this.securityCodeIsRequired(paymentMethod?.security_code_settings) &&
+      typeof paymentMethod?.has_esc === 'undefined'
+    );
   }
 
   getPaymentMethodElementByIdentifier(paymentMethod: PaymentMethod): HTMLElement | null {
@@ -1146,9 +1112,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   timeoutRequest(errorCode: string, timeoutMs = 5000): Promise<never> {
-    return new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(errorCode)), timeoutMs)
-    );
+    return new Promise<never>((_, reject) => setTimeout(() => reject(new Error(errorCode)), timeoutMs));
   }
 
   parseMsToSeconds(milliseconds: number): string {
@@ -1161,7 +1125,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     const REQUEST_START_TIME = Date.now();
     const result = await Promise.race([
       this.mpSdkInstance.getAccountPaymentMethod(this.getSuperToken() as string, paymentMethod.token),
-      this.timeoutRequest(MPSuperTokenErrorCodes.GET_PAYMENT_METHOD_TIMEOUT_ERROR, this.GET_PAYMENT_METHOD_TIMEOUT_MS)
+      this.timeoutRequest(MPSuperTokenErrorCodes.GET_PAYMENT_METHOD_TIMEOUT_ERROR, this.GET_PAYMENT_METHOD_TIMEOUT_MS),
     ]);
 
     const updatedPaymentMethod = result?.data;
@@ -1172,7 +1136,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
 
     this.mpSuperTokenMetrics.getPaymentMethodLoadingTime(
       currentPaymentMethodIdentifier,
-      this.parseMsToSeconds(Date.now() - REQUEST_START_TIME)
+      this.parseMsToSeconds(Date.now() - REQUEST_START_TIME),
     );
 
     return updatedPaymentMethod;
@@ -1183,11 +1147,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       throw new Error(MPSuperTokenErrorCodes.UPDATE_PAYMENT_METHOD_WITH_ESC_FAILED_EMPTY_METHODS);
     }
 
-    const updatedPaymentMethodList = this.paymentMethods
-      .map((pm) => this
-        .paymentMethodIdentifier(pm) === this.paymentMethodIdentifier(updatedPaymentMethod)
-        ? updatedPaymentMethod : pm
-      );
+    const updatedPaymentMethodList = this.paymentMethods.map((pm) =>
+      this.paymentMethodIdentifier(pm) === this.paymentMethodIdentifier(updatedPaymentMethod)
+        ? updatedPaymentMethod
+        : pm,
+    );
 
     this.paymentMethods = updatedPaymentMethodList;
   }
@@ -1214,14 +1178,19 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   removeSecurityCodeField(paymentMethod: PaymentMethod): void {
-    const securityCodeContainer = document.getElementById(`mp-super-token-security-code-container-${paymentMethod.token}`);
+    const securityCodeContainer = document.getElementById(
+      `mp-super-token-security-code-container-${paymentMethod.token}`,
+    );
 
     if (securityCodeContainer) {
       securityCodeContainer.remove();
     }
   }
 
-  async handleWithEscPaymentMethod(paymentMethod: PaymentMethod, paymentMethodElement: HTMLElement): Promise<PaymentMethod | null> {
+  async handleWithEscPaymentMethod(
+    paymentMethod: PaymentMethod,
+    paymentMethodElement: HTMLElement,
+  ): Promise<PaymentMethod | null> {
     try {
       if (this.shouldFetchPaymentMethodAgain(paymentMethod, paymentMethodElement)) {
         this.showDetailsSkeleton(paymentMethodElement);
@@ -1237,17 +1206,20 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
         this.updatePaymentMethodInList(updatedPaymentMethod);
         this.storeActivePaymentMethod(updatedPaymentMethod);
 
-        if (!this.securityCodeIsRequired('security_code_settings' in updatedPaymentMethod ? updatedPaymentMethod.security_code_settings : undefined)) {
+        if (
+          !this.securityCodeIsRequired(
+            'security_code_settings' in updatedPaymentMethod ? updatedPaymentMethod.security_code_settings : undefined,
+          )
+        ) {
           this.removeSecurityCodeField(updatedPaymentMethod);
         }
 
-        this.mpSuperTokenMetrics
-          .fetchPaymentMethodSuccess(
-            this.paymentMethodIdentifier(updatedPaymentMethod),
-            ('security_code_settings' in updatedPaymentMethod && updatedPaymentMethod.security_code_settings)
-              ? this.securityCodeIsRequired(updatedPaymentMethod.security_code_settings)
-              : null
-          );
+        this.mpSuperTokenMetrics.fetchPaymentMethodSuccess(
+          this.paymentMethodIdentifier(updatedPaymentMethod),
+          'security_code_settings' in updatedPaymentMethod && updatedPaymentMethod.security_code_settings
+            ? this.securityCodeIsRequired(updatedPaymentMethod.security_code_settings)
+            : null,
+        );
 
         this.hideDetailsSkeleton(paymentMethodElement);
 
@@ -1257,11 +1229,10 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
 
         return paymentMethod;
       } else {
-        this.mpSuperTokenMetrics
-          .fetchPaymentMethodSkipped(
-            this.paymentMethodIdentifier(paymentMethod),
-            this.getSkipReason(paymentMethod, paymentMethodElement)
-          );
+        this.mpSuperTokenMetrics.fetchPaymentMethodSkipped(
+          this.paymentMethodIdentifier(paymentMethod),
+          this.getSkipReason(paymentMethod, paymentMethodElement),
+        );
 
         return paymentMethod;
       }
@@ -1271,7 +1242,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       if ((error as { message?: string })?.message === MPSuperTokenErrorCodes.GET_PAYMENT_METHOD_TIMEOUT_ERROR) {
         this.mpSuperTokenMetrics.getPaymentMethodLoadingTime(
           this.paymentMethodIdentifier(paymentMethod),
-          this.parseMsToSeconds(this.GET_PAYMENT_METHOD_TIMEOUT_MS)
+          this.parseMsToSeconds(this.GET_PAYMENT_METHOD_TIMEOUT_MS),
         );
 
         this.mpSuperTokenMetrics.fetchPaymentMethodTimeout(this.paymentMethodIdentifier(paymentMethod));
@@ -1373,8 +1344,10 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     const paymentMethod = this.activePaymentMethod;
 
     if (
-      !paymentMethod
-      || !this.securityCodeIsRequired('security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined)
+      !paymentMethod ||
+      !this.securityCodeIsRequired(
+        'security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined,
+      )
     ) {
       return;
     }
@@ -1397,15 +1370,23 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   toggleSecurityCodeErrorMessage(errorMessage: string, paymentMethod: PaymentMethod): void {
-    const securityCodeContainerElement = document.getElementById(`mp-super-token-security-code-container-${paymentMethod.token}`);
+    const securityCodeContainerElement = document.getElementById(
+      `mp-super-token-security-code-container-${paymentMethod.token}`,
+    );
     if (!securityCodeContainerElement) {
       return;
     }
 
     const securityCodeLabelElement = securityCodeContainerElement.querySelector('label') as HTMLElement;
-    const securityCodeErrorMessageElement = securityCodeContainerElement.querySelector('#mp-super-token-security-code-error-message') as HTMLElement;
-    const helperErrorElement = securityCodeContainerElement.querySelector('#mp-input-with-tooltip-helper-error') as HTMLElement;
-    const securityCodeInputElement = securityCodeContainerElement.querySelector('.mp-super-token-security-code-input') as HTMLElement;
+    const securityCodeErrorMessageElement = securityCodeContainerElement.querySelector(
+      '#mp-super-token-security-code-error-message',
+    ) as HTMLElement;
+    const helperErrorElement = securityCodeContainerElement.querySelector(
+      '#mp-input-with-tooltip-helper-error',
+    ) as HTMLElement;
+    const securityCodeInputElement = securityCodeContainerElement.querySelector(
+      '.mp-super-token-security-code-input',
+    ) as HTMLElement;
 
     // Clean up
     securityCodeLabelElement.classList.remove('error');
@@ -1442,7 +1423,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   mountSecurityCodeField(paymentMethod: PaymentMethod): void {
-    if (!this.securityCodeIsRequired('security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined)) {
+    if (
+      !this.securityCodeIsRequired(
+        'security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined,
+      )
+    ) {
       return;
     }
 
@@ -1454,38 +1439,57 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       if (document.getElementById(`mp-super-token-security-code-input-${paymentMethod.token}`)) {
         clearInterval(waitSecurityCodeFieldMountInterval);
 
-        const securityCodePlaceholderText = ('security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined)?.length === 3
-          ? this.SECURITY_CODE_PLACEHOLDER_TEXT_3_DIGITS
-          : this.SECURITY_CODE_PLACEHOLDER_TEXT_4_DIGITS;
+        const securityCodePlaceholderText =
+          ('security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined)?.length === 3
+            ? this.SECURITY_CODE_PLACEHOLDER_TEXT_3_DIGITS
+            : this.SECURITY_CODE_PLACEHOLDER_TEXT_4_DIGITS;
 
-        if (!window.MPCheckoutFieldsDispatcher && typeof window.sendMetric === 'function' && !this.securityFieldDispatcherMissingReported) {
-          window.sendMetric('MP_CHECKOUT_FIELDS_DISPATCHER_MISSING', 'super_token_cvv_mount', 'mp_super_token_init_error');
+        if (
+          !window.MPCheckoutFieldsDispatcher &&
+          typeof window.sendMetric === 'function' &&
+          !this.securityFieldDispatcherMissingReported
+        ) {
+          window.sendMetric(
+            'MP_CHECKOUT_FIELDS_DISPATCHER_MISSING',
+            'super_token_cvv_mount',
+            'mp_super_token_init_error',
+          );
           this.securityFieldDispatcherMissingReported = true;
         }
 
-        const securityCodeField = this.mpSdkInstance.fields.create('securityCode', {
-          placeholder: securityCodePlaceholderText,
-          ariaRequired: true,
-          style: {
-            'font-size': '16px',
-            height: '48px',
-            padding: '12px',
-            fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif'
-          }
-        })
+        const securityCodeField = this.mpSdkInstance.fields
+          .create('securityCode', {
+            placeholder: securityCodePlaceholderText,
+            ariaRequired: true,
+            style: {
+              'font-size': '16px',
+              height: '48px',
+              padding: '12px',
+              fontFamily:
+                'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
+            },
+          })
           .mount(`mp-super-token-security-code-input-${paymentMethod.token}`)
           .on('error', (e) => this.mpSuperTokenMetrics.errorToMountCVVField(e, paymentMethod))
           .on('ready', () => {
             securityCodeField.update({
-              settings: ('security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined)
+              settings: 'security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined,
             });
 
             this.mpSuperTokenMetrics.sendMetric('super_token_cvv_field_ready', 'true', '');
             this.storeActiveSecurityCodeInstance(securityCodeField);
 
-            if (this.securityCodeIsRequired('security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined)) {
-              const securityCodeTooltip = document.querySelector(`#mp-super-token-security-code-container-${paymentMethod.token} .mp-super-token-security-code-tooltip`);
-              const securityCodeInput = document.querySelector(`#mp-super-token-security-code-input-${paymentMethod.token}`);
+            if (
+              this.securityCodeIsRequired(
+                'security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined,
+              )
+            ) {
+              const securityCodeTooltip = document.querySelector(
+                `#mp-super-token-security-code-container-${paymentMethod.token} .mp-super-token-security-code-tooltip`,
+              );
+              const securityCodeInput = document.querySelector(
+                `#mp-super-token-security-code-input-${paymentMethod.token}`,
+              );
 
               if (!securityCodeTooltip || !securityCodeInput) return;
 
@@ -1501,11 +1505,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
               if (window.MPCheckoutFieldsDispatcher) {
                 window.MPCheckoutFieldsDispatcher.addEventListenerDispatcher(
                   null,
-                  "focusout",
-                  "super_token_cvv_filled",
+                  'focusout',
+                  'super_token_cvv_filled',
                   {
-                    onlyDispatch: true
-                  }
+                    onlyDispatch: true,
+                  },
                 );
               }
 
@@ -1526,8 +1530,10 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   handleInstallmentsWithoutFeePillVisibility(): void {
     const allPaymentMethods = document.querySelectorAll<HTMLElement>('.mp-super-token-payment-method');
 
-    allPaymentMethods.forEach(paymentMethodElement => {
-      const valuePropPill = paymentMethodElement.querySelector<HTMLElement>(`.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_VALUE_PROP}`);
+    allPaymentMethods.forEach((paymentMethodElement) => {
+      const valuePropPill = paymentMethodElement.querySelector<HTMLElement>(
+        `.${this.SUPER_TOKEN_STYLES.PAYMENT_METHOD_VALUE_PROP}`,
+      );
       if (!valuePropPill) {
         return;
       }
@@ -1544,7 +1550,8 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   removeMercadoPagoPrivacyPolicyFooter(): void {
-    const footer = this.getCustomCheckoutEntireElement()?.querySelector('#mp-super-token-privacy-policy-footer') ?? null;
+    const footer =
+      this.getCustomCheckoutEntireElement()?.querySelector('#mp-super-token-privacy-policy-footer') ?? null;
     if (!footer) {
       return;
     }
@@ -1571,8 +1578,12 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   setInstallmentsErrorState(paymentMethod: PaymentMethod | null, hasError: boolean): void {
     const paymentMethodIdentifier = this.paymentMethodIdentifier(paymentMethod);
     const installmentsSelect = document.getElementById(`mp-super-token-installments-select-${paymentMethodIdentifier}`);
-    const installmentsLabel = document.querySelector<HTMLElement>(`label[for="mp-super-token-installments-select-${paymentMethodIdentifier}"]`);
-    const installmentsErrorHelper = document.querySelector<HTMLElement>(`#mp-super-token-installments-error-${paymentMethodIdentifier}`);
+    const installmentsLabel = document.querySelector<HTMLElement>(
+      `label[for="mp-super-token-installments-select-${paymentMethodIdentifier}"]`,
+    );
+    const installmentsErrorHelper = document.querySelector<HTMLElement>(
+      `#mp-super-token-installments-error-${paymentMethodIdentifier}`,
+    );
 
     if (!installmentsSelect || !installmentsLabel || !installmentsErrorHelper) return;
 
@@ -1588,7 +1599,9 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   forceSecurityCodeValidation(paymentMethod: PaymentMethod): void {
-    const securityCodeContainer = document.getElementById(`mp-super-token-security-code-container-${paymentMethod.token}`);
+    const securityCodeContainer = document.getElementById(
+      `mp-super-token-security-code-container-${paymentMethod.token}`,
+    );
     if (!securityCodeContainer) {
       return;
     }
@@ -1617,7 +1630,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       return;
     }
 
-    if (!this.isCreditCard(paymentMethod) && !this.isDebitCard(paymentMethod) && !this.isConsumerCredits(paymentMethod)) {
+    if (
+      !this.isCreditCard(paymentMethod) &&
+      !this.isDebitCard(paymentMethod) &&
+      !this.isConsumerCredits(paymentMethod)
+    ) {
       return;
     }
 
@@ -1627,13 +1644,18 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     }
 
     if (
-      this.securityCodeIsRequired('security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined) &&
+      this.securityCodeIsRequired(
+        'security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined,
+      ) &&
       !this.verifyIsSecurityCodeReferenceTrue(paymentMethod)
     ) {
       this.forceSecurityCodeValidation(paymentMethod);
     }
 
-    if ((this.isCreditCard(paymentMethod) || this.isConsumerCredits(paymentMethod)) && !this.installmentsWasSelected(paymentMethod)) {
+    if (
+      (this.isCreditCard(paymentMethod) || this.isConsumerCredits(paymentMethod)) &&
+      !this.installmentsWasSelected(paymentMethod)
+    ) {
       this.setInstallmentsErrorState(paymentMethod, true);
     }
 
@@ -1660,7 +1682,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
         return false;
       }
 
-      if (!this.securityCodeIsRequired('security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined)) {
+      if (
+        !this.securityCodeIsRequired(
+          'security_code_settings' in paymentMethod ? paymentMethod.security_code_settings : undefined,
+        )
+      ) {
         return true;
       }
 
@@ -1668,7 +1694,9 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
         return false;
       }
 
-      const securityCodeContainer = document.getElementById(`mp-super-token-security-code-container-${paymentMethod.token}`);
+      const securityCodeContainer = document.getElementById(
+        `mp-super-token-security-code-container-${paymentMethod.token}`,
+      );
       if (!securityCodeContainer) {
         return false;
       }
@@ -1695,9 +1723,16 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     try {
       const paymentMethod = this.activePaymentMethod;
       const paymentMethodElement = document.getElementById(this.paymentMethodIdentifier(paymentMethod));
-      const installmentsDropdown = paymentMethodElement?.querySelector(`#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}`);
+      const installmentsDropdown = paymentMethodElement?.querySelector(
+        `#mp-super-token-installments-select-${this.paymentMethodIdentifier(paymentMethod)}`,
+      );
 
-      if (installmentsDropdown && paymentMethod && (this.isCreditCard(paymentMethod) || this.isConsumerCredits(paymentMethod)) && !this.installmentsWasSelected(paymentMethod)) {
+      if (
+        installmentsDropdown &&
+        paymentMethod &&
+        (this.isCreditCard(paymentMethod) || this.isConsumerCredits(paymentMethod)) &&
+        !this.installmentsWasSelected(paymentMethod)
+      ) {
         const paymentMethodType = this.isConsumerCredits(paymentMethod) ? 'consumer_credits' : 'credit_card';
         this.mpSuperTokenMetrics.errorToSubmitWithoutInstallmentSelected(paymentMethodType);
         this.forceShowValidationErrors();
@@ -1706,7 +1741,11 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
 
       return true;
     } catch (error) {
-      this.mpSuperTokenMetrics?.sendMetric('error_to_validate_installment_selection', 'true', (error as Error)?.message ?? 'unknown');
+      this.mpSuperTokenMetrics?.sendMetric(
+        'error_to_validate_installment_selection',
+        'true',
+        toTelemetryErrorMessage(error, 'unknown'),
+      );
       try {
         this.forceShowValidationErrors();
       } catch (uiError) {
@@ -1755,8 +1794,9 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   convertCreditCardFormToPaymentMethodElement(customCheckoutEntireElement: HTMLElement): void {
-    const creditCardFormElement = customCheckoutEntireElement.querySelector<HTMLElement>(this.NEW_CHECKOUT_CONTAINER_SELECTOR)
-      ?? customCheckoutEntireElement.querySelector<HTMLElement>(this.OLD_CHECKOUT_CONTAINER_SELECTOR);
+    const creditCardFormElement =
+      customCheckoutEntireElement.querySelector<HTMLElement>(this.NEW_CHECKOUT_CONTAINER_SELECTOR) ??
+      customCheckoutEntireElement.querySelector<HTMLElement>(this.OLD_CHECKOUT_CONTAINER_SELECTOR);
     if (!creditCardFormElement) return;
 
     const createAccordionHeader = (): HTMLElement => {
@@ -1790,7 +1830,9 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
 
     const addAccordionClasses = (accordionElement: HTMLElement): void => {
       accordionElement.classList.add(this.SUPER_TOKEN_STYLES.ACCORDION);
-      accordionElement.querySelector(this.CHECKOUT_CUSTOM_CONTAINER_SELECTOR)?.classList.add(this.SUPER_TOKEN_STYLES.ACCORDION_CONTENT);
+      accordionElement
+        .querySelector(this.CHECKOUT_CUSTOM_CONTAINER_SELECTOR)
+        ?.classList.add(this.SUPER_TOKEN_STYLES.ACCORDION_CONTENT);
     };
 
     addAccordionClasses(creditCardFormElement);
@@ -1847,25 +1889,27 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   renderAccountPaymentMethods(accountPaymentMethods: PaymentMethod[], amount: string | null): void {
+    let ownsRenderingLock = false;
     try {
       this.storeAmount(amount);
-      this.storeActivePaymentMethod(this.getPaymentMethodSelectedFromDOMToAccountPaymentMethods(accountPaymentMethods) ?? null);
+      this.storeActivePaymentMethod(
+        this.getPaymentMethodSelectedFromDOMToAccountPaymentMethods(accountPaymentMethods) ?? null,
+      );
 
       if (this.paymentMethodsAreRendered() || this.isRendering) return;
 
       if (!this.hasStoredPaymentMethods()) this.storePaymentMethodsInMemory(accountPaymentMethods);
       this.isRendering = true;
+      ownsRenderingLock = true;
 
       const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
 
       if (!customCheckoutEntireElement) {
-        this.isRendering = false;
         throw new Error(MPSuperTokenErrorCodes.CUSTOM_CHECKOUT_ENTIRE_ELEMENT_NOT_FOUND);
       }
 
       this.onCustomCheckoutWasRendered(customCheckoutEntireElement, accountPaymentMethods);
 
-      this.isRendering = false;
       setTimeout(() => {
         const sdkInstanceId = this.mpSuperTokenMetrics.getSdkInstanceId();
         this.mpSuperTokenMetrics.sendMetric('super_token_methods_ready', 'true', '');
@@ -1873,6 +1917,10 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       }, 500);
     } catch (error) {
       this.mpSuperTokenMetrics.errorToRenderAccountPaymentMethods(error);
+    } finally {
+      if (ownsRenderingLock) {
+        this.isRendering = false;
+      }
     }
   }
 }

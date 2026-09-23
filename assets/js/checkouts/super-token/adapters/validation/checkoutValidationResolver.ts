@@ -16,6 +16,8 @@
  * composition edge.
  */
 
+import { toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
+
 const METRIC_DETAIL = 'validate_checkout_then_continue';
 const MAX_ANCESTOR_DEPTH = 20;
 const SUPER_TOKEN_CHECKOUT_TYPE = 'super_token';
@@ -84,9 +86,10 @@ function getFieldNodesByName(fieldName: string): Element[] {
   try {
     // WooCommerce field names follow billing_*/shipping_*/terms conventions and never
     // contain quotes or CSS-special characters, so the fallback is safe without escaping.
-    const selector = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
-      ? `[name=${CSS.escape(fieldName)}]`
-      : `[name="${fieldName}"]`;
+    const selector =
+      typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? `[name=${CSS.escape(fieldName)}]`
+        : `[name="${fieldName}"]`;
     return Array.from(document.querySelectorAll(selector));
   } catch {
     return [];
@@ -159,7 +162,12 @@ function crossCheckErrorsAgainstDom(errors: unknown): { realErrors: ValidationEr
 }
 
 function joinErrorFields(errors: ValidationError[]): string {
-  return errors.map((error) => error?.field).filter(Boolean).join('/') || 'unknown';
+  return (
+    errors
+      .map((error) => error?.field)
+      .filter(Boolean)
+      .join('/') || 'unknown'
+  );
 }
 
 function readCheckoutType(): { checkoutType: string | null; metricValue: string } {
@@ -225,16 +233,16 @@ export function resolveCheckoutValidation(
       return { action: VALIDATION_ACTION.BLOCK, errors: realErrors };
     }
 
-    emitMetric(VALIDATION_METRIC.UNEXPECTED_RESPONSE, res?.data?.error || 'unknown');
+    const responseError = toTelemetryErrorMessage(res?.data?.error, FAIL_OPEN_REASON.UNEXPECTED_RESPONSE);
+    emitMetric(VALIDATION_METRIC.UNEXPECTED_RESPONSE, responseError);
 
     return {
       action: VALIDATION_ACTION.FAIL_OPEN,
       reason: FAIL_OPEN_REASON.UNEXPECTED_RESPONSE,
-      detail: res?.data?.error,
+      detail: responseError,
     };
   } catch (error) {
-    const errorMessage = (error as Error)?.message || FAIL_OPEN_REASON.UNEXPECTED_ERROR;
-
+    const errorMessage = toTelemetryErrorMessage(error, FAIL_OPEN_REASON.UNEXPECTED_ERROR);
     emitMetric(VALIDATION_METRIC.UNEXPECTED_ERROR, errorMessage);
 
     return {

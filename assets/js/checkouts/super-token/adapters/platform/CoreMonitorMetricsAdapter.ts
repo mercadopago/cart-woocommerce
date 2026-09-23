@@ -5,6 +5,10 @@ import type { CoreMonitorPayload } from './coreMonitorPayload';
 import { MelidataAdapter } from './MelidataAdapter';
 import { SUPER_TOKEN_ALLOWED_VARIANTS, SUPER_TOKEN_VARIANT_COOKIE } from '@super-token/adapters/platform/constants';
 import type { RestoreErrorReason } from '@super-token/useCases/RestorePreloadedPaymentMethod';
+import {
+  toTelemetryErrorMessage,
+  toSafeTelemetryErrorCode,
+} from '@super-token/core/checkoutSession/ErrorClassification';
 
 /**
  * Platform adapter: Super Token observability (RN-2). Implements `MetricsPort`
@@ -68,9 +72,7 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
     this.LOCATION = params.location;
     this.PLUGIN_JS_BASE_URL = params.plugin_js_base_url;
 
-    this.melidata = new MelidataAdapter((metricName, value, message) =>
-      this.sendMetric(metricName, value, message),
-    );
+    this.melidata = new MelidataAdapter((metricName, value, message) => this.sendMetric(metricName, value, message));
   }
 
   getSdkInstanceId(): string {
@@ -140,20 +142,11 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
   }
 
   private normalizeErrorMessage(error: unknown): string {
-    if (!error) return 'Unknown error';
-
-    const errorMessage =
-      (error as { message?: string })?.message ||
-      (typeof error === 'string' ? error : JSON.stringify(error));
-    const normalizedErrorMessage = errorMessage?.includes('email')
-      ? 'invalid_email_address_provided'
-      : errorMessage;
-
-    return normalizedErrorMessage || 'Unknown error';
+    return toTelemetryErrorMessage(error);
   }
 
   private errorCodeOf(error: unknown): string {
-    return (error as { errorCode?: string })?.errorCode || 'unknown';
+    return toSafeTelemetryErrorCode(error);
   }
 
   /** Send an error metric + dispatch a melidata event. Covers ~20 methods. */
@@ -186,7 +179,12 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
   errorToUpdateSecurityCode(error: unknown, paymentMethod: { id: string } | null): void {
     const errorMessage = this.normalizeErrorMessage(error);
     this.melidata.dispatchMelidataErrorEvent(errorMessage, this.CUSTOM_CHECKOUT_STEPS.POST_SUBMIT);
-    this.sendMetric('error_to_update_security_code', paymentMethod?.id || 'unknown', errorMessage, this.errorCodeOf(error));
+    this.sendMetric(
+      'error_to_update_security_code',
+      paymentMethod?.id || 'unknown',
+      errorMessage,
+      this.errorCodeOf(error),
+    );
   }
 
   updateSecurityCodeSuccess(): void {
@@ -242,9 +240,13 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
   }
 
   errorOnSubmit(errorCode: string, error: unknown, shouldNormalizeError = true): void {
-    const errorMessage = shouldNormalizeError ? this.normalizeErrorMessage(error) : (error as string);
+    // Keep the legacy argument for binary compatibility. Both paths preserve the diagnostic text;
+    // the shared formatter only redacts credential/PII values.
+    void shouldNormalizeError;
+    const reportedErrorCode = toTelemetryErrorMessage(errorCode, 'UNKNOWN_ERROR');
+    const errorMessage = this.normalizeErrorMessage(error);
     this.melidata.dispatchMelidataErrorEvent(errorMessage, this.CUSTOM_CHECKOUT_STEPS.POST_SUBMIT);
-    this.sendMetric('error_on_submit_super_token', errorCode, errorMessage);
+    this.sendMetric('error_on_submit_super_token', reportedErrorCode, errorMessage);
   }
 
   registerClickOnPlaceOrderButton(): void {
@@ -260,7 +262,11 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
   }
 
   registerAuthorizedPseudotoken(authorizedPseudotokenInputExists: boolean): void {
-    this.sendMetric('authorized_pseudotoken', 'true', `input_exists:${authorizedPseudotokenInputExists ? 'true' : 'false'}`);
+    this.sendMetric(
+      'authorized_pseudotoken',
+      'true',
+      `input_exists:${authorizedPseudotokenInputExists ? 'true' : 'false'}`,
+    );
   }
 
   errorToRenderAccountPaymentMethods(error: unknown): void {
@@ -269,21 +275,37 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
   }
 
   hasEscNotExists(paymentMethodIdentifier: string): void {
-    this.sendMetric('has_esc_not_exists', paymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD', 'has_esc attribute not found in payment method');
+    this.sendMetric(
+      'has_esc_not_exists',
+      paymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD',
+      'has_esc attribute not found in payment method',
+    );
   }
 
   getPaymentMethodFail(error: unknown, currentPaymentMethodIdentifier: string): void {
     const errorMessage = this.normalizeErrorMessage(error);
     this.melidata.dispatchMelidataErrorEvent(errorMessage, this.CUSTOM_CHECKOUT_STEPS.SELECT_PAYMENT_METHOD);
-    this.sendMetric('get_payment_method_fail', currentPaymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD', errorMessage);
+    this.sendMetric(
+      'get_payment_method_fail',
+      currentPaymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD',
+      errorMessage,
+    );
   }
 
   getPaymentMethodLoadingTime(currentPaymentMethodIdentifier: string, durationSeconds: string): void {
-    this.sendMetric('get_payment_method_loading_time', currentPaymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD', `${durationSeconds}s`);
+    this.sendMetric(
+      'get_payment_method_loading_time',
+      currentPaymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD',
+      `${durationSeconds}s`,
+    );
   }
 
   fetchPaymentMethodSuccess(paymentMethodIdentifier: string, cvvIsMandatory: boolean | null): void {
-    this.sendMetric('fetch_payment_method_success', paymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD', `cvv_is_mandatory_${cvvIsMandatory}`);
+    this.sendMetric(
+      'fetch_payment_method_success',
+      paymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD',
+      `cvv_is_mandatory_${cvvIsMandatory}`,
+    );
   }
 
   fetchPaymentMethodSkipped(paymentMethodIdentifier: string, reason: string): void {
@@ -291,7 +313,11 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
   }
 
   fetchPaymentMethodTimeout(paymentMethodIdentifier: string): void {
-    this.sendMetric('fetch_payment_method_timeout', paymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD', 'Fetch payment method timed out');
+    this.sendMetric(
+      'fetch_payment_method_timeout',
+      paymentMethodIdentifier || 'UNKNOWN_PAYMENT_METHOD',
+      'Fetch payment method timed out',
+    );
   }
 
   isNotSimplifiedAuth(): void {
@@ -308,7 +334,10 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
 
   renderConsumerCreditsDetailsInnerHTML(success: boolean): void {
     if (!success) {
-      this.melidata.dispatchMelidataErrorEvent('render_consumer_credits_details_inner_html_failed', this.CUSTOM_CHECKOUT_STEPS.SELECT_PAYMENT_METHOD);
+      this.melidata.dispatchMelidataErrorEvent(
+        'render_consumer_credits_details_inner_html_failed',
+        this.CUSTOM_CHECKOUT_STEPS.SELECT_PAYMENT_METHOD,
+      );
     }
     this.sendMetric('render_consumer_credits_details_inner_html', success, '');
   }
@@ -364,7 +393,7 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
   }
 
   superTokenInitializationError(error: unknown, dispatchedFrom: string): void {
-    const errorMessage = (error as { message?: string })?.message ?? String(error);
+    const errorMessage = this.normalizeErrorMessage(error);
     this.sendMetric(
       'SUPER_TOKEN_INITIALIZATION_ERROR',
       'true',
@@ -464,9 +493,7 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
 
     // Use injected params (same object the constructor received) to stay consistent with
     // the rest of the class — avoids re-reading window.* after the constructor resolved it.
-    const basePath =
-      this.PLUGIN_JS_BASE_URL ||
-      '/wp-content/plugins/woocommerce-mercadopago/assets/js/';
+    const basePath = this.PLUGIN_JS_BASE_URL || '/wp-content/plugins/woocommerce-mercadopago/assets/js/';
     const files = [
       'checkouts/custom/entities/card-form.min.js',
       'checkouts/custom/entities/event-handler.min.js',
@@ -479,7 +506,11 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
         try {
           let response = await fetch(basePath + file, { method: 'HEAD', cache: 'no-store' });
           if (response.status === 405) {
-            response = await fetch(basePath + file, { method: 'GET', cache: 'no-store', headers: { Range: 'bytes=0-0' } });
+            response = await fetch(basePath + file, {
+              method: 'GET',
+              cache: 'no-store',
+              headers: { Range: 'bytes=0-0' },
+            });
           }
           if (!response.ok) return;
 
@@ -495,7 +526,11 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
 
           const fileName = (file.split('/').pop() as string).replace('.min.js', '');
           const lastModifiedDate = lastModified ? new Date(lastModified).toISOString().slice(0, 10) : 'unknown';
-          this.sendMetric('mp_js_cache_age', String(ageDays), `file : ${fileName} age_days : ${ageDays} last_modified : ${lastModifiedDate}`);
+          this.sendMetric(
+            'mp_js_cache_age',
+            String(ageDays),
+            `file : ${fileName} age_days : ${ageDays} last_modified : ${lastModifiedDate}`,
+          );
         } catch {
           // Silence errors — must not impact checkout
         }

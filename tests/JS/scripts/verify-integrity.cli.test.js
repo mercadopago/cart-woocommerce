@@ -17,6 +17,8 @@ const hashOf = (content) => crypto.createHash('sha256').update(content).digest('
 
 const ASSET_JS = 'assets/js/checkouts/mp-plugins-components.min.js';
 const ASSET_CSS = 'assets/css/checkouts/mp-plugins-components.min.css';
+const SUPER_TOKEN_V2_CSS = 'assets/css/checkouts/super-token/super-token-v2.bundle.min.css';
+const SUPER_TOKEN_V21_CSS = 'assets/css/checkouts/super-token/super-token-v2.1.bundle.min.css';
 const CONTENT_JS = 'console.log("mp-plugins-components");';
 const CONTENT_CSS = '.mp-checkout{color:#009ee3}';
 
@@ -95,6 +97,19 @@ describe('verify-integrity CLI — exit codes e mensagens (PPSP-1529)', () => {
     expect(status).toBe(1);
     expect(stderr).toContain('FORA do manifest');
     expect(stderr).toContain('assets/js/checkouts/orphan.min.js');
+  });
+
+  test('exit 0 quando somente os dois CSS de hand-off estão fora do manifest', () => {
+    writeAsset(ASSET_JS, CONTENT_JS);
+    writeAsset(SUPER_TOKEN_V2_CSS, CONTENT_CSS);
+    writeAsset(SUPER_TOKEN_V21_CSS, CONTENT_CSS);
+    writeManifest({ [ASSET_JS]: hashOf(CONTENT_JS) });
+
+    const { status, stdout, stderr } = run();
+
+    expect(status).toBe(0);
+    expect(stdout).toContain('OK: 1 assets');
+    expect(stderr).toBe('');
   });
 
   test('exit 1 quando o manifest está ausente', () => {

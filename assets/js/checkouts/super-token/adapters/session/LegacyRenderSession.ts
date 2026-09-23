@@ -23,17 +23,19 @@ const CONSUMER_CREDITS_METHOD_TYPE = 'consumer_credits';
 
 /** The legacy metrics instance methods the render session forwards to. */
 interface LegacyRenderMetrics {
+  errorToRenderAccountPaymentMethods(error: unknown): void;
   installmentsFilled(methodType: string): void;
   renderCreditsContract(success: boolean, error?: unknown): void;
   registerOpenCreditsInfoModal(linkText: string): void;
   renderConsumerCreditsHint(success: boolean, error?: unknown): void;
   renderConsumerCreditsDueDate(success: boolean, error?: unknown): void;
+  renderConsumerCreditsDetailsInnerHTML(success: boolean): void;
   errorToUpdateCreditsContract(error: unknown): void;
 }
 
-// Module-level, mirroring the legacy per-controller `installmentsDispatcherMissingReported` flag so
-// the missing-dispatcher metric is emitted once even across re-renders (new session per render).
-let dispatcherMissingReported = false;
+// Module-level so a context is reported once even across re-renders (new session per render), while
+// keeping card and consumer-credits diagnostics independent from one another.
+const dispatcherMissingContexts = new Set<string>();
 
 /**
  * The subset of the legacy `MPSuperTokenPaymentMethods` controller the render sequence calls.
@@ -80,11 +82,19 @@ export class LegacyRenderSession implements RenderRowSession {
   }
 
   reportInstallmentDispatcherMissing(context: string): void {
-    if (window.MPCheckoutFieldsDispatcher || typeof window.sendMetric !== 'function' || dispatcherMissingReported) {
+    if (
+      window.MPCheckoutFieldsDispatcher ||
+      typeof window.sendMetric !== 'function' ||
+      dispatcherMissingContexts.has(context)
+    ) {
       return;
     }
     window.sendMetric(DISPATCHER_MISSING_METRIC, context, DISPATCHER_MISSING_MESSAGE);
-    dispatcherMissingReported = true;
+    dispatcherMissingContexts.add(context);
+  }
+
+  recordPaymentMethodRowFailure(error: unknown): void {
+    this.legacy.mpSuperTokenMetrics.errorToRenderAccountPaymentMethods(error);
   }
 
   getFastPaymentToken(): string {
@@ -127,5 +137,9 @@ export class LegacyRenderSession implements RenderRowSession {
 
   recordConsumerCreditsDueDate(success: boolean, error?: unknown): void {
     this.legacy.mpSuperTokenMetrics.renderConsumerCreditsDueDate(success, error);
+  }
+
+  recordConsumerCreditsDetails(success: boolean): void {
+    this.legacy.mpSuperTokenMetrics.renderConsumerCreditsDetailsInnerHTML(success);
   }
 }

@@ -672,12 +672,13 @@ class CustomGatewayTest extends TestCase
     public function testPaymentFieldsAndParams(): void
     {
         $siteId = 'MLB';
-        $expectedIconUrls = [
-            'url/master.png',
-            'url/visa.png',
-            'url/elo.png',
-            'url/amex.png',
-            'url/hypercard.png'
+        // Each flag carries the brand name so the logo can expose an alt text.
+        $expectedCardFlags = [
+            ['url' => 'url/master.png', 'name' => 'Mastercard'],
+            ['url' => 'url/visa.png', 'name' => 'Visa'],
+            ['url' => 'url/elo.png', 'name' => 'Elo'],
+            ['url' => 'url/amex.png', 'name' => 'American Express'],
+            ['url' => 'url/hypercard.png', 'name' => 'Hipercard'],
         ];
 
         $this->gateway->mercadopago->sellerConfig->shouldReceive('getSiteId')->andReturn($siteId);
@@ -746,6 +747,9 @@ class CustomGatewayTest extends TestCase
             'interest_free_option_text' => 'Interest Free Option Text',
             'card_installments_interest_text' => 'Card Installments Interest Text',
             'card_installments_label' => 'Card Installments Label',
+            'accepted_cards_label' => 'You can pay with card',
+            'card_document_instruction_range' => 'Enter between {min} and {max} digits for your ID number.',
+            'card_document_instruction_fixed' => 'Enter the {digits} digits of your ID number.',
         ];
 
         // Mock links using reflection
@@ -769,7 +773,7 @@ class CustomGatewayTest extends TestCase
 
         $params = $this->gateway->getPaymentFieldsParams();
 
-        $this->assertEquals($expectedIconUrls, $params['cardFlagIconUrls']);
+        $this->assertEquals($expectedCardFlags, $params['cardFlags']);
         $this->assertEquals($siteId, $params['site_id']);
         $this->assertEquals(true, $params['wallet_button_enabled']);
         $this->assertEquals('https://example.com/wallet-button-logo.svg', $params['wallet_button_image']);
@@ -785,6 +789,33 @@ class CustomGatewayTest extends TestCase
 
         // Test payment_fields method
         $this->gateway->payment_fields();
+    }
+
+    /**
+     * An unmapped icon falls back to its own identifier, which a screen reader would
+     * read literally ("naranjax" instead of "Naranja X"). Guard every country at once,
+     * so adding a flag to a single country cannot slip through unnamed.
+     *
+     * @return void
+     */
+    public function testEveryAcceptedCardFlagHasABrandName(): void
+    {
+        $constants = (new \ReflectionClass(CustomGateway::class))->getConstants();
+        $flagsByCountry = $constants['CARD_FLAGS_BY_COUNTRY'];
+        $names = $constants['CARD_FLAG_NAMES'];
+
+        $this->assertNotEmpty($flagsByCountry);
+
+        foreach ($flagsByCountry as $siteId => $icons) {
+            foreach ($icons as $icon) {
+                $this->assertArrayHasKey(
+                    $icon,
+                    $names,
+                    sprintf('Flag "%s" of %s has no brand name for the logo alt text.', $icon, $siteId)
+                );
+                $this->assertNotSame('', trim($names[$icon]));
+            }
+        }
     }
 
     /**
@@ -1073,6 +1104,9 @@ class CustomGatewayTest extends TestCase
             'interest_free_option_text' => 'Interest Free Option Text',
             'card_installments_interest_text' => 'Card Installments Interest Text',
             'card_installments_label' => 'Card Installments Label',
+            'accepted_cards_label' => 'You can pay with card',
+            'card_document_instruction_range' => 'Enter between {min} and {max} digits for your ID number.',
+            'card_document_instruction_fixed' => 'Enter the {digits} digits of your ID number.',
         ];
 
         // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods
@@ -1260,6 +1294,13 @@ class CustomGatewayTest extends TestCase
             'security_code_tooltip_text_3_digits' => '3 digits tooltip',
             'security_code_tooltip_text_4_digits' => '4 digits tooltip',
             'security_code_error_message_text' => 'Security code error',
+            'accepted_cards_label' => 'You can pay with card',
+            'detected_card_label' => 'Card',
+            'card_number_instruction' => 'Enter the {digits} numbers on your card.',
+            'card_expiration_instruction' => 'Enter two digits for the month and two digits for the year.',
+            'security_code_instruction' => 'Enter your {digits} digit code.',
+            'card_document_instruction_range' => 'Enter between {min} and {max} digits for your ID number.',
+            'card_document_instruction_fixed' => 'Enter the {digits} digits of your ID number.',
             'card_installments_label' => 'Installments',
             'placeholders_issuer' => 'Issuer',
             'placeholders_installments' => 'Installments',
@@ -1421,6 +1462,13 @@ class CustomGatewayTest extends TestCase
             'security_code_tooltip_text_3_digits' => '3 digits tooltip',
             'security_code_tooltip_text_4_digits' => '4 digits tooltip',
             'security_code_error_message_text' => 'Security code error',
+            'accepted_cards_label' => 'You can pay with card',
+            'detected_card_label' => 'Card',
+            'card_number_instruction' => 'Enter the {digits} numbers on your card.',
+            'card_expiration_instruction' => 'Enter two digits for the month and two digits for the year.',
+            'security_code_instruction' => 'Enter your {digits} digit code.',
+            'card_document_instruction_range' => 'Enter between {min} and {max} digits for your ID number.',
+            'card_document_instruction_fixed' => 'Enter the {digits} digits of your ID number.',
             'card_installments_label' => 'Installments',
             'placeholders_issuer' => 'Issuer',
             'placeholders_installments' => 'Installments',
@@ -1494,11 +1542,13 @@ class CustomGatewayTest extends TestCase
 
         // Capture every registered script handle to assert the enqueued set.
         $registeredHandles = [];
+        $registeredDependencies = [];
         $scripts = $this->gateway->mercadopago->hooks->scripts;
         $scripts->shouldReceive('registerCheckoutStyle')->andReturnSelf();
         $scripts->shouldReceive('registerCheckoutScript')
-            ->andReturnUsing(function ($handle) use (&$registeredHandles, $scripts) {
+            ->andReturnUsing(function ($handle, $file, $variables = [], $dependencies = []) use (&$registeredHandles, &$registeredDependencies, $scripts) {
                 $registeredHandles[] = $handle;
+                $registeredDependencies[$handle] = $dependencies;
                 return $scripts;
             });
 
@@ -1516,6 +1566,32 @@ class CustomGatewayTest extends TestCase
         $this->assertContains('wc_mercadopago_supertoken_refactored', $registeredHandles, 'Self-construct deve enfileirar o entry TS');
         $this->assertNotContains('wc_mercadopago_supertoken_trigger_handler', $registeredHandles, 'Self-construct nao deve enfileirar os scripts legados separados');
         $this->assertNotContains('wc_mercadopago_supertoken', $registeredHandles, 'Self-construct nao deve enfileirar o loader legado (so o entry TS carrega a localize)');
+        $this->assertSame([
+            'wc_mercadopago_custom_page',
+            'wc_mercadopago_custom_card_form',
+            'wc_mercadopago_custom_three_ds_handler',
+            'wc_mercadopago_custom_event_handler',
+        ], $registeredDependencies['wc_mercadopago_custom_checkout']);
+        $this->assertSame(
+            ['wc_mercadopago_custom_elements'],
+            $registeredDependencies['wc_mercadopago_custom_page']
+        );
+        $this->assertSame(
+            [
+                'wc_mercadopago_sdk',
+                'wc_mercadopago_custom_card_form_error_codes',
+                'wc_mercadopago_custom_page',
+            ],
+            $registeredDependencies['wc_mercadopago_custom_card_form']
+        );
+        $this->assertSame(
+            ['wc_mercadopago_custom_page'],
+            $registeredDependencies['wc_mercadopago_custom_three_ds_handler']
+        );
+        $this->assertSame(
+            ['wc_mercadopago_custom_mobile_checkout_classic_observer', 'wc_mercadopago_custom_page'],
+            $registeredDependencies['wc_mercadopago_custom_event_handler']
+        );
         $this->assertArrayHasKey('self_construct', $localizeData);
         $this->assertTrue((bool) $localizeData['self_construct'], 'self_construct deve ser verdadeiro para acionar o flip no bootstrap.ts');
         // The entry renders the variant matching the served stylesheet: bootstrap.ts follows this
@@ -1579,6 +1655,13 @@ class CustomGatewayTest extends TestCase
             'security_code_tooltip_text_3_digits' => '3 digits tooltip',
             'security_code_tooltip_text_4_digits' => '4 digits tooltip',
             'security_code_error_message_text' => 'Security code error',
+            'accepted_cards_label' => 'You can pay with card',
+            'detected_card_label' => 'Card',
+            'card_number_instruction' => 'Enter the {digits} numbers on your card.',
+            'card_expiration_instruction' => 'Enter two digits for the month and two digits for the year.',
+            'security_code_instruction' => 'Enter your {digits} digit code.',
+            'card_document_instruction_range' => 'Enter between {min} and {max} digits for your ID number.',
+            'card_document_instruction_fixed' => 'Enter the {digits} digits of your ID number.',
             'card_installments_label' => 'Installments',
             'placeholders_issuer' => 'Issuer',
             'placeholders_installments' => 'Installments',
@@ -2426,6 +2509,9 @@ class CustomGatewayTest extends TestCase
                 'interest_free_option_text' => 'Interest Free Option Text',
                 'card_installments_interest_text' => 'Card Installments Interest Text',
                 'card_installments_label' => 'Card Installments Label',
+                'accepted_cards_label' => 'You can pay with card',
+                'card_document_instruction_range' => 'Enter between {min} and {max} digits for your ID number.',
+                'card_document_instruction_fixed' => 'Enter the {digits} digits of your ID number.',
             ];
 
             // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods
@@ -2450,8 +2536,8 @@ class CustomGatewayTest extends TestCase
             $params = $this->gateway->getPaymentFieldsParams();
 
             $this->assertIsArray($params);
-            $this->assertArrayHasKey('cardFlagIconUrls', $params);
-            $this->assertIsArray($params['cardFlagIconUrls']);
+            $this->assertArrayHasKey('cardFlags', $params);
+            $this->assertIsArray($params['cardFlags']);
         }
     }
 
@@ -2511,6 +2597,9 @@ class CustomGatewayTest extends TestCase
             'interest_free_option_text' => 'Interest Free Option Text',
             'card_installments_interest_text' => 'Card Installments Interest Text',
             'card_installments_label' => 'Card Installments Label',
+            'accepted_cards_label' => 'You can pay with card',
+            'card_document_instruction_range' => 'Enter between {min} and {max} digits for your ID number.',
+            'card_document_instruction_fixed' => 'Enter the {digits} digits of your ID number.',
         ];
 
         // Mock getAmountAndCurrency method using shouldAllowMockingProtectedMethods
@@ -3010,6 +3099,13 @@ class CustomGatewayTest extends TestCase
             'security_code_tooltip_text_3_digits' => '3 digits tooltip',
             'security_code_tooltip_text_4_digits' => '4 digits tooltip',
             'security_code_error_message_text' => 'Security code error',
+            'accepted_cards_label' => 'You can pay with card',
+            'detected_card_label' => 'Card',
+            'card_number_instruction' => 'Enter the {digits} numbers on your card.',
+            'card_expiration_instruction' => 'Enter two digits for the month and two digits for the year.',
+            'security_code_instruction' => 'Enter your {digits} digit code.',
+            'card_document_instruction_range' => 'Enter between {min} and {max} digits for your ID number.',
+            'card_document_instruction_fixed' => 'Enter the {digits} digits of your ID number.',
             'card_installments_label' => 'Installments',
             'placeholders_issuer' => 'Issuer',
             'placeholders_installments' => 'Installments',

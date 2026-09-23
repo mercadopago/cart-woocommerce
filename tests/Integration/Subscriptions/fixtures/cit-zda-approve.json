@@ -1,0 +1,26 @@
+{
+  "payment": {
+    "id": "MOCK-PAY-ZDA-1002",
+    "status": "approved",
+    "status_detail": "accredited",
+    "transaction_amount": 0.0,
+    "currency_id": "BRL"
+  },
+  "customer": {
+    "id": "MOCK-CUST-ZDA-2002"
+  },
+  "card": {
+    "id": "MOCK-CARD-ZDA-3002",
+    "last_four_digits": "4242",
+    "payment_method": "visa"
+  },
+  "profile": {
+    "id": "MOCK-PROFILE-ZDA-4002",
+    "status": "active"
+  },
+  "subscription": {
+    "id": "CPP-WSUB-ZDA-1002",
+    "external_id": "WC-SUB-790"
+  },
+  "three_ds_info": null
+}

@@ -32,6 +32,7 @@ class OrderMetadataTest extends TestCase
         $this->logsMock->remote = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote');
 
         $this->logsMock->file->shouldReceive('error')->andReturn(null)->byDefault();
+        $this->logsMock->file->shouldReceive('info')->andReturn(null)->byDefault();
 
         $this->orderMetadata = new OrderMetadata($this->orderMetaMock, $this->logsMock);
     }
@@ -1333,5 +1334,97 @@ class OrderMetadataTest extends TestCase
 
         $this->assertTrue(true);
         \WP_Mock::tearDown();
+    }
+
+    // -------------------------------------------------------------------------
+    // Per-payment refunded amount (source-of-truth write at refund time) — PSW-4412
+    // -------------------------------------------------------------------------
+
+    /**
+     * A positive amount is added to the existing [Refund X] segment and persisted,
+     * preserving every other stored field.
+     */
+    public function testAddRefundedAmountToPaymentIncrementsAndPersists(): void
+    {
+        $paymentId = '12345';
+        $metaKey   = 'Mercado Pago - Payment 12345';
+        $stored    = '[Date 2026-01-01 10:00:00]/[Amount 100]/[Payment Type credit_card]/[Payment Method visa]/[Paid 100]/[Coupon 0]/[Refund 9]';
+
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+        $this->orderMock->shouldReceive('get_meta')->with($metaKey)->andReturn($stored);
+        $this->orderMock->shouldReceive('get_id')->andReturn(1);
+
+        // 9 + 5 = 14; only the [Refund] segment changes, other fields are preserved.
+        $this->orderMetaMock->shouldReceive('update')
+            ->with(
+                $this->orderMock,
+                $metaKey,
+                Mockery::on(function ($value) {
+                    return strpos($value, '[Refund 14]') !== false
+                        && strpos($value, '[Amount 100]') !== false
+                        && strpos($value, '[Refund 9]') === false;
+                })
+            )
+            ->once();
+
+        $this->orderMetadata->addRefundedAmountToPayment($this->orderMock, $paymentId, 5.0);
+        $this->assertTrue(true);
+    }
+
+    /**
+     * A non-positive amount is a no-op — no meta read or write.
+     */
+    public function testAddRefundedAmountToPaymentIsNoOpForNonPositiveAmount(): void
+    {
+        $this->orderMock->shouldNotReceive('read_meta_data');
+        $this->orderMetaMock->shouldNotReceive('update');
+
+        $this->orderMetadata->addRefundedAmountToPayment($this->orderMock, '12345', 0.0);
+        $this->assertTrue(true);
+    }
+
+    /**
+     * When there is no per-payment metadata yet, it logs and does not persist
+     * (the order-level refunded total still records the refund).
+     */
+    public function testAddRefundedAmountToPaymentBailsWhenNoMetadata(): void
+    {
+        $metaKey = 'Mercado Pago - Payment 12345';
+
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+        $this->orderMock->shouldReceive('get_meta')->with($metaKey)->andReturn('');
+        $this->orderMock->shouldReceive('get_id')->andReturn(7);
+
+        $this->orderMetaMock->shouldNotReceive('update');
+        $this->logsMock->file->shouldReceive('info')->once();
+
+        $this->orderMetadata->addRefundedAmountToPayment($this->orderMock, '12345', 5.0);
+        $this->assertTrue(true);
+    }
+
+    /**
+     * A persistence failure is swallowed and logged — never propagated — so the
+     * refund flow can complete.
+     */
+    public function testAddRefundedAmountToPaymentSwallowsAndLogsWhenUpdateThrows(): void
+    {
+        $paymentId = '12345';
+        $metaKey   = 'Mercado Pago - Payment 12345';
+        $stored    = '[Date 2026-01-01 10:00:00]/[Amount 100]/[Payment Type credit_card]/[Payment Method visa]/[Paid 100]/[Coupon 0]/[Refund 9]';
+
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+        $this->orderMock->shouldReceive('get_meta')->with($metaKey)->andReturn($stored);
+        $this->orderMock->shouldReceive('get_id')->andReturn(66);
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->once()
+            ->andThrow(new \Exception('DB write failed'));
+
+        $this->logsMock->file->shouldReceive('error')
+            ->once()
+            ->with(Mockery::pattern('/Failed to persist refunded amount for payment 12345/'), Mockery::any());
+
+        $this->orderMetadata->addRefundedAmountToPayment($this->orderMock, $paymentId, 5.0);
+        $this->assertTrue(true);
     }
 }

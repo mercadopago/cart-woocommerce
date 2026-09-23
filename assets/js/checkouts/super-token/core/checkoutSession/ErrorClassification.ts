@@ -24,8 +24,7 @@ export const MPSuperTokenErrorCodes = {
   GET_PAYMENT_METHOD_TIMEOUT_ERROR: 'GET_PAYMENT_METHOD_TIMEOUT_ERROR',
   FETCH_PAYMENT_METHOD_NOT_FOUND: 'FETCH_PAYMENT_METHOD_NOT_FOUND',
   PAYMENT_METHOD_NOT_EXISTS: 'PAYMENT_METHOD_NOT_EXISTS',
-  UPDATE_PAYMENT_METHOD_WITH_ESC_FAILED_EMPTY_METHODS:
-    'UPDATE_PAYMENT_METHOD_WITH_ESC_FAILED_EMPTY_METHODS',
+  UPDATE_PAYMENT_METHOD_WITH_ESC_FAILED_EMPTY_METHODS: 'UPDATE_PAYMENT_METHOD_WITH_ESC_FAILED_EMPTY_METHODS',
 
   // System errors
   SUPER_TOKEN_PAYMENT_METHODS_NOT_FOUND: 'SUPER_TOKEN_PAYMENT_METHODS_NOT_FOUND',
@@ -37,8 +36,144 @@ export const MPSuperTokenErrorCodes = {
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 } as const;
 
-export type SuperTokenErrorCode =
-  (typeof MPSuperTokenErrorCodes)[keyof typeof MPSuperTokenErrorCodes];
+export type SuperTokenErrorCode = (typeof MPSuperTokenErrorCodes)[keyof typeof MPSuperTokenErrorCodes];
+
+const KNOWN_ERROR_CODES: readonly SuperTokenErrorCode[] = Object.values(MPSuperTokenErrorCodes);
+
+const SENSITIVE_ERROR_KEY_NAMES =
+  'authorization|access_token|refresh_token|id_token|token|authorized_pseudotoken|pseudotoken|password|client[_-]?secret|x[_-]?api[_-]?key|api[_-]?key|secret|security_code|cvv|card_number|cookie|set[_-]?cookie|session(?:[_-]?(?:id|token))?|jwt';
+const SENSITIVE_ERROR_KEY = new RegExp(`^(?:${SENSITIVE_ERROR_KEY_NAMES})$`, 'i');
+const EMAIL_ADDRESS_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
+const BEARER_TOKEN_PATTERN = /\b(Bearer\s+)[A-Z0-9._~+/-]+=*/gi;
+const COOKIE_HEADER_PATTERN = /\b((?:Set-Cookie|Cookie)\s*[:=]\s*)[^\r\n]*/gi;
+// Authorization schemes may contain spaces and Base64 padding (`==`), which can look like the
+// start of another keyed field to the generic pattern below. Consume the complete header line
+// first so no credential fragment survives under Basic, Bearer, Digest or future schemes.
+const AUTHORIZATION_HEADER_PATTERN = /\b((?:Proxy-)?Authorization\s*:\s*)[^\r\n]*/gi;
+const AUTHORIZATION_REDACTION_PLACEHOLDER = '__MP_AUTHORIZATION_REDACTED__';
+const JWT_TOKEN_PATTERN = /\beyJ[A-Z0-9_-]*\.[A-Z0-9_-]+\.[A-Z0-9_-]+\b/gi;
+const KEYED_SECRET_PATTERN = new RegExp(
+  `((["']?(?:${SENSITIVE_ERROR_KEY_NAMES})["']?)\\s*[:=]\\s*)(?:"([^"\\r\\n]*)"|'([^'\\r\\n]*)'|([^,;\\r\\n}\\]&]*?))(?=\\s+[A-Z_][A-Z0-9_.-]*\\s*[:=]|[,;\\r\\n}\\]&]|$)`,
+  'gi',
+);
+
+const redactKeyedSecret = (
+  _match: string,
+  prefix: string,
+  _key: string,
+  doubleQuotedValue?: string,
+  singleQuotedValue?: string,
+): string => {
+  if (doubleQuotedValue !== undefined) {
+    return `${prefix}"[REDACTED]"`;
+  }
+  if (singleQuotedValue !== undefined) {
+    return `${prefix}'[REDACTED]'`;
+  }
+  return `${prefix}[REDACTED]`;
+};
+
+const redactSensitiveTelemetryValues = (message: string): string =>
+  message
+    .replace(EMAIL_ADDRESS_PATTERN, '[REDACTED_EMAIL]')
+    // Use a neutral marker because the generic redactor treats the closing `]` in [REDACTED]
+    // as a value delimiter and would otherwise process this header a second time.
+    .replace(AUTHORIZATION_HEADER_PATTERN, `$1${AUTHORIZATION_REDACTION_PLACEHOLDER}`)
+    .replace(KEYED_SECRET_PATTERN, redactKeyedSecret)
+    // Reconsume the complete header so semicolon-delimited cookie attributes cannot escape.
+    .replace(COOKIE_HEADER_PATTERN, '$1[REDACTED]')
+    .replace(BEARER_TOKEN_PATTERN, '$1[REDACTED]')
+    .replace(JWT_TOKEN_PATTERN, '[REDACTED_JWT]')
+    .split(AUTHORIZATION_REDACTION_PLACEHOLDER)
+    .join('[REDACTED]');
+
+/**
+ * Preserves the real error text needed for production troubleshooting while redacting only
+ * credential/PII values. Error names, SDK codes, HTTP statuses and surrounding diagnostic context
+ * remain intact. Objects without a message are serialized with sensitive keys replaced.
+ */
+export const toTelemetryErrorMessage = (error: unknown, fallback = 'Unknown error'): string => {
+  try {
+    if (typeof error === 'string' && error.trim()) {
+      return redactSensitiveTelemetryValues(error);
+    }
+
+    if (error && typeof error === 'object') {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) {
+        return redactSensitiveTelemetryValues(message);
+      }
+
+      const errorCode = (error as { errorCode?: unknown }).errorCode;
+      if (typeof errorCode === 'string' && errorCode.trim()) {
+        return redactSensitiveTelemetryValues(errorCode);
+      }
+
+      const seenObjects = new WeakSet<object>();
+      const serialized = JSON.stringify(error, (key, value) => {
+        if (SENSITIVE_ERROR_KEY.test(key)) {
+          return '[REDACTED]';
+        }
+        if (typeof value === 'string') {
+          return redactSensitiveTelemetryValues(value);
+        }
+        if (typeof value === 'bigint') {
+          return String(value);
+        }
+        if (value && typeof value === 'object') {
+          if (seenObjects.has(value)) {
+            return '[Circular]';
+          }
+          seenObjects.add(value);
+        }
+        return value;
+      });
+      if (serialized && serialized !== '{}') {
+        return serialized;
+      }
+    }
+
+    if (error !== null && error !== undefined) {
+      const stringified = String(error);
+      if (stringified && stringified !== '[object Object]') {
+        return redactSensitiveTelemetryValues(stringified);
+      }
+    }
+  } catch {
+    // A malformed SDK object may throw from a getter or during serialization.
+  }
+
+  return fallback;
+};
+
+/**
+ * Classifies an arbitrary exception into the allowlisted Super Token catalog. This is an auxiliary
+ * dimension for grouping; the diagnostic message is produced independently by
+ * `toTelemetryErrorMessage`, so an unknown code does not erase the real failure context.
+ */
+export const toSafeTelemetryErrorCode = (error: unknown): SuperTokenErrorCode => {
+  const candidates: unknown[] = [error];
+
+  if (error && typeof error === 'object') {
+    try {
+      candidates.push((error as { errorCode?: unknown }).errorCode, (error as { message?: unknown }).message);
+    } catch {
+      return MPSuperTokenErrorCodes.UNKNOWN_ERROR;
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') {
+      continue;
+    }
+    const knownCode = KNOWN_ERROR_CODES.find((code) => candidate.includes(code));
+    if (knownCode) {
+      return knownCode;
+    }
+  }
+
+  return MPSuperTokenErrorCodes.UNKNOWN_ERROR;
+};
 
 /**
  * Single source of truth for the recoverable-error list (RN-2). Migrated 1:1 from the
@@ -101,14 +236,9 @@ const errorMessagesFor = (copy: ErrorMessageCopy): Record<string, ErrorMessagePa
  * match is preserved from the legacy implementation. `allowRetry` is decided by the
  * caller from the retry counter (SuperTokenState.shouldAllowRetry).
  */
-export const resolveErrorMessage = (
-  errorCode: string,
-  allowRetry: boolean,
-  copy: ErrorMessageCopy,
-): string => {
+export const resolveErrorMessage = (errorCode: string, allowRetry: boolean, copy: ErrorMessageCopy): string => {
   const errorMessages = errorMessagesFor(copy);
-  const errorConfig =
-    Object.entries(errorMessages).find(([key]) => errorCode.includes(key))?.[1] ?? null;
+  const errorConfig = Object.entries(errorMessages).find(([key]) => errorCode.includes(key))?.[1] ?? null;
 
   if (!errorConfig) {
     return copy.genericErrorText;

@@ -58,7 +58,7 @@ export abstract class BasePaymentMethodWithInstallments extends BasePaymentMetho
     const installmentsWithoutFee = paymentMethod.installments.filter(
       (installment) =>
         installment.installment_rate === 0 &&
-        installment.installment_rate_collector.includes('MERCADOPAGO'),
+        (installment.installment_rate_collector ?? []).includes('MERCADOPAGO'),
     );
     return installmentsWithoutFee.length > 0
       ? installmentsWithoutFee[installmentsWithoutFee.length - 1].installments
@@ -94,7 +94,7 @@ export abstract class BasePaymentMethodWithInstallments extends BasePaymentMetho
     const installmentNumber = installment.installments;
     const installmentAmount = this.formatAmount(installment.installment_amount);
     const hasRate = installment.installment_rate !== 0;
-    const isThirdParty = installment.installment_rate_collector.includes('THIRD_PARTY');
+    const isThirdParty = (installment.installment_rate_collector ?? []).includes('THIRD_PARTY');
     const totalAmount = this.formatAmount(installment.total_amount);
 
     if (installmentNumber === 1) {

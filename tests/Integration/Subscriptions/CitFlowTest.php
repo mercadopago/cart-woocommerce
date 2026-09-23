@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Tests\Integration\Subscriptions;
 
 use MercadoPago\PP\Sdk\HttpClient\Response;
 use MercadoPago\Woocommerce\Gateways\CustomGateway;
+use MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
@@ -174,10 +175,10 @@ class CitFlowTest extends TestCase
     }
 
     /**
-     * AC-1: CIT approved -> metadata persisted on subscription, payment_complete() called.
+     * A paid CIT keeps the existing webhook completion flow.
      * AC-3: Handler does NOT emit Datadog metrics directly (delegated to Requester layer).
      */
-    public function testCitApprovedPersistsMetadataAndCompletesPayment(): void
+    public function testPaidCitApprovedPersistsMetadataAndKeepsWebhookFlow(): void
     {
         $orderId = 101;
         $subId   = 789;
@@ -189,6 +190,7 @@ class CitFlowTest extends TestCase
 
         $order->shouldReceive('get_checkout_order_received_url')
             ->andReturn('https://store.test/order-received');
+        $order->shouldNotReceive('payment_complete');
 
         $GLOBALS['__wcs_subscriptions'] = [$subscription];
 
@@ -241,12 +243,96 @@ class CitFlowTest extends TestCase
 
         $this->gateway->shouldReceive('buildCitPayload')
             ->once()
-            ->andReturn(['token' => 'tok_123']);
+            ->andReturn(['token' => 'tok_123', 'transaction' => ['amount' => 49.90]]);
 
         $this->gateway->mercadopago->orderMetadata
             ->shouldReceive('setCustomMetadata')
             ->once()
             ->with($order, Mockery::on(fn($data) => ($data['id'] ?? null) === $stubArr['payment']['id']));
+
+        $result = $this->invokeInitialPayment($order);
+
+        $this->assertSame('success', $result['result']);
+        $this->assertSame('https://store.test/order-received', $result['redirect']);
+    }
+
+    /**
+     * A complete approved ZDA response persists its identifiers before
+     * payment_complete() and finishes without the generic pending/webhook path.
+     */
+    public function testZeroDollarCitApprovedCompletesSynchronouslyAfterPersistingMetadata(): void
+    {
+        $orderId = 104;
+        $subId   = 790;
+        $stubArr = $this->loadStubAsArray('cit-zda-approve');
+        $stub    = $this->loadStub('cit-zda-approve');
+
+        $order        = $this->makeOrderMock($orderId);
+        $subscription = $this->makeSubscriptionMock($subId);
+        $metadataPersisted = false;
+
+        $order->shouldReceive('get_checkout_order_received_url')
+            ->once()
+            ->andReturn('https://store.test/order-received');
+        $order->shouldReceive('payment_complete')
+            ->once()
+            ->with($stubArr['payment']['id'])
+            ->andReturnUsing(function () use (&$metadataPersisted) {
+                $this->assertTrue($metadataPersisted, 'Payment metadata must be persisted before payment_complete().');
+                return true;
+            });
+
+        $GLOBALS['__wcs_subscriptions'] = [$subscription];
+
+        $this->gateway->mercadopago->subscriptionsHelper
+            ->shouldReceive('resolveAccessToken')
+            ->once()
+            ->andReturn('TEST-preapproval-token');
+
+        $expectedMetas = [
+            '_mp_subscription_id'       => $stubArr['subscription']['id'],
+            '_mp_customer_id'           => $stubArr['customer']['id'],
+            '_mp_active_card_id'        => $stubArr['card']['id'],
+            '_mp_active_card_last_four' => $stubArr['card']['last_four_digits'],
+            '_mp_active_card_brand'     => $stubArr['card']['payment_method'],
+        ];
+        foreach ($expectedMetas as $key => $value) {
+            $this->gateway->mercadopago->subscriptionsHelper
+                ->shouldReceive('setSubscriptionMeta')
+                ->once()
+                ->with($subscription, $key, $value);
+        }
+        $this->gateway->mercadopago->subscriptionsHelper
+            ->shouldReceive('setSubscriptionMeta')
+            ->once()
+            ->with($subscription, '_mp_subscription_created_at', Mockery::type('string'));
+
+        $this->gateway->mercadopago->automaticPaymentsClient
+            ->shouldReceive('cit')
+            ->once()
+            ->andReturn($this->makeResponse(201, $stub));
+
+        $this->gateway->shouldReceive('getCheckoutFormData')
+            ->once()
+            ->andReturn(['token' => 'tok_zda_123', 'payment_method_id' => 'visa']);
+        $this->gateway->shouldReceive('buildCitPayload')
+            ->once()
+            ->andReturn(['token' => 'tok_zda_123', 'transaction' => ['amount' => 0.0]]);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('setCustomMetadata')
+            ->once()
+            ->with($order, Mockery::on(fn($payment) => ($payment['id'] ?? null) === $stubArr['payment']['id']))
+            ->andReturnUsing(function () use (&$metadataPersisted): void {
+                $metadataPersisted = true;
+            });
+
+        $this->gateway->mercadopago->helpers->cart->shouldReceive('emptyCart')->once();
+        $this->gateway->mercadopago->helpers->url->shouldReceive('validateGetVar')->byDefault()->andReturn(false);
+        $this->gateway->mercadopago->orderStatus->shouldReceive('getOrderStatusMessage')->once()->andReturn('Aprovado');
+        $this->gateway->mercadopago->helpers->notices->shouldReceive('storeApprovedStatusNotice')->once();
+        $this->gateway->mercadopago->orderStatus->shouldNotReceive('setOrderStatus');
+        $this->datadogMock->shouldNotReceive('sendEvent');
 
         $result = $this->invokeInitialPayment($order);
 
@@ -299,6 +385,16 @@ class CitFlowTest extends TestCase
             ->once()
             ->andReturn('Pagamento recusado pelo emissor do cartão.');
 
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with('Pagamento recusado pelo emissor do cartão.', 'error');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->once()
+            ->with('pay_for_order')
+            ->andReturn(false);
+
         $this->datadogMock->shouldNotReceive('sendEvent');
 
         $this->gateway->shouldReceive('getCheckoutFormData')
@@ -311,25 +407,20 @@ class CitFlowTest extends TestCase
 
         $result = $this->invokeInitialPayment($order);
 
-        $this->assertSame('failure', $result['result']);
-        $this->assertStringContainsString('recusado', $result['messages']);
+        $this->assertSame('fail', $result['result']);
+        $this->assertStringContainsString('recusado', $result['message']);
     }
 
     /**
-     * CIT orphan (no subscription.id in response) -> CRITICAL log, generic error to user.
-     *
-     * The orphan detection happens INSIDE AutomaticPaymentsClient::cit() — when the AP v2 API
-     * returns 2xx but without subscription.id, the client logs an error and throws RuntimeException.
-     * The handler catches this and returns failure to the user.
-     *
-     * AC-3: Handler does NOT emit Datadog metrics directly. For orphan detection (2xx without
-     * subscription.id), no mp_api_error is emitted since HTTP was successful - the error is
-     * logged at the application layer instead.
+     * A ZDA 2xx without subscription.id must cross the real client boundary so
+     * the gateway can emit its stable reason and use the controlled failure adapter.
      */
-    public function testCitOrphanLogsErrorAndAbortsWithGenericMessage(): void
+    public function testIncompleteZeroDollarCitReachesGatewayControlledFailure(): void
     {
         $orderId = 103;
         $subId   = 791;
+
+        WP_Mock::userFunction('wp_is_mobile')->andReturn(false);
 
         $order        = $this->makeOrderMock($orderId);
         $subscription = $this->makeSubscriptionMock($subId);
@@ -342,29 +433,87 @@ class CitFlowTest extends TestCase
             ->shouldReceive('resolveAccessToken')
             ->once()
             ->andReturn('TEST-preapproval-token');
-
-        $this->gateway->mercadopago->automaticPaymentsClient
-            ->shouldReceive('cit')
+        $this->gateway->mercadopago->subscriptionsHelper
+            ->shouldReceive('buildCitSeed')
             ->once()
-            ->andThrow(new \RuntimeException('Erro ao processar pagamento.'));
+            ->with($order, 'tok_zda_incomplete')
+            ->andReturn('cit:103:zda-incomplete');
+        $this->gateway->mercadopago->subscriptionsHelper
+            ->shouldReceive('generateIdempotencyKey')
+            ->once()
+            ->with('cit:103:zda-incomplete')
+            ->andReturn('idem-zda-incomplete');
+        $this->gateway->mercadopago->subscriptionsHelper
+            ->shouldNotReceive('setSubscriptionMeta');
+
+        $response = $this->makeResponse(201, (object) [
+            'payment'       => ['id' => 'PAY-ZDA-INCOMPLETE', 'status' => 'approved'],
+            'subscription'  => [],
+            'customer'      => ['id' => 'CUST-ZDA-INCOMPLETE'],
+            'card'          => ['id' => 'CARD-ZDA-INCOMPLETE'],
+            'profile'       => ['id' => 'PROFILE-ZDA-INCOMPLETE', 'status' => 'active'],
+            'three_ds_info' => null,
+        ]);
+
+        $this->gateway->mercadopago->helpers->requester
+            ->shouldReceive('post')
+            ->once()
+            ->with(
+                Mockery::on(fn($path) => str_ends_with($path, '/intents/cit')),
+                Mockery::type('array'),
+                Mockery::type('array')
+            )
+            ->andReturn($response);
+
+        $this->gateway->mercadopago->automaticPaymentsClient = new AutomaticPaymentsClient(
+            $this->gateway->mercadopago->helpers->requester,
+            $this->gateway->mercadopago->subscriptionsHelper,
+            $this->gateway->mercadopago->logs
+        );
+
+        $logFile = Mockery::mock(File::class);
+        $logFile->shouldReceive('info')->byDefault();
+        $this->gateway->mercadopago->logs->file = $logFile;
 
         $this->datadogMock->shouldNotReceive('sendEvent');
 
         $this->gateway->shouldReceive('getCheckoutFormData')
             ->once()
-            ->andReturn(['token' => 'tok_789', 'payment_method_id' => 'amex', 'doc_number' => '11122233344']);
+            ->andReturn(['token' => 'tok_zda_incomplete', 'payment_method_id' => 'amex']);
 
         $this->gateway->shouldReceive('buildCitPayload')
             ->once()
-            ->andReturn(['token' => 'tok_789']);
+            ->andReturn([
+                'token'       => 'tok_zda_incomplete',
+                'transaction' => ['amount' => 0.0],
+            ]);
 
-        // RuntimeException from cit() propagates out of the private method; process_payment()'s
-        // try-catch converts it to a failure result. When testing the private method directly
-        // via reflection we assert the propagated exception instead.
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Erro ao processar pagamento.');
+        $this->gateway->storeTranslations['wcs_cit_failed_generic'] = 'Não foi possível ativar sua assinatura.';
+        $logFile
+            ->shouldReceive('warning')
+            ->once()
+            ->with(
+                'op=cit step=zda_contract_violation reason=subscription_id_missing http_status=201 order_id=103',
+                CustomGateway::LOG_SOURCE
+            );
+        $this->gateway->mercadopago->helpers->notices
+            ->shouldReceive('storeNotice')
+            ->once()
+            ->with('Não foi possível ativar sua assinatura.', 'error');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('validateGetVar')
+            ->once()
+            ->with('pay_for_order')
+            ->andReturn(false);
+        $this->gateway->mercadopago->helpers->cart->shouldNotReceive('emptyCart');
+        $this->gateway->mercadopago->orderMetadata->shouldNotReceive('setCustomMetadata');
+        $order->shouldNotReceive('get_checkout_order_received_url');
 
-        $this->invokeInitialPayment($order);
+        $result = $this->invokeInitialPayment($order);
+
+        $this->assertSame('fail', $result['result']);
+        $this->assertSame('', $result['redirect']);
+        $this->assertSame('Não foi possível ativar sua assinatura.', $result['message']);
     }
 
     /**

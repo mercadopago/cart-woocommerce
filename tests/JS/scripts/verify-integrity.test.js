@@ -18,6 +18,9 @@ const hashOf = (content) => crypto.createHash('sha256').update(content).digest('
 // Os dois assets que sumiram na v8.7.23.
 const ASSET_JS = 'assets/js/checkouts/mp-plugins-components.min.js';
 const ASSET_CSS = 'assets/css/checkouts/mp-plugins-components.min.css';
+const SUPER_TOKEN_CSS = 'assets/css/checkouts/super-token/super-token.bundle.min.css';
+const SUPER_TOKEN_V2_CSS = 'assets/css/checkouts/super-token/super-token-v2.bundle.min.css';
+const SUPER_TOKEN_V21_CSS = 'assets/css/checkouts/super-token/super-token-v2.1.bundle.min.css';
 const CONTENT_JS = 'console.log("mp-plugins-components");';
 const CONTENT_CSS = '.mp-checkout{color:#009ee3}';
 
@@ -121,6 +124,35 @@ describe('verify-integrity — gate de integridade dos assets (PPSP-1529)', () =
     expect(result.orphans).toContain('assets/js/checkouts/orphan.min.js');
     expect(result.missing).toEqual([]);
     expect(result.mismatched).toEqual([]);
+  });
+
+  test('ignora somente os dois CSS de hand-off e mantém o CSS servido como órfão', () => {
+    const manifest = { [ASSET_JS]: hashOf(CONTENT_JS) };
+    const manifestJson = JSON.stringify(manifest);
+
+    fs.existsSync.mockImplementation((p) => {
+      const value = String(p);
+      return value.endsWith('integrity-manifest.json')
+        || value.endsWith(`${path.sep}assets`)
+        || value.endsWith(ASSET_JS);
+    });
+    fs.statSync.mockReturnValue({ isFile: () => true });
+    fs.readFileSync.mockImplementation((p) => (
+      String(p).endsWith('integrity-manifest.json') ? manifestJson : Buffer.from(CONTENT_JS)
+    ));
+    fs.readdirSync.mockReturnValue([
+      path.join('js', 'checkouts', 'mp-plugins-components.min.js'),
+      path.join('css', 'checkouts', 'super-token', 'super-token.bundle.min.css'),
+      path.join('css', 'checkouts', 'super-token', 'super-token-v2.bundle.min.css'),
+      path.join('css', 'checkouts', 'super-token', 'super-token-v2.1.bundle.min.css'),
+    ]);
+
+    const result = verifyIntegrity();
+
+    expect(result.ok).toBe(false);
+    expect(result.orphans).toEqual([SUPER_TOKEN_CSS]);
+    expect(result.orphans).not.toContain(SUPER_TOKEN_V2_CSS);
+    expect(result.orphans).not.toContain(SUPER_TOKEN_V21_CSS);
   });
 
   test('trata caminho existente que não é arquivo como ausente', () => {

@@ -11,11 +11,18 @@ import {
   CARD_FORM_MOUNTED_EVENT,
 } from '@super-token/adapters/platform';
 import type { SuperTokenInstances } from '@super-token/types/instances';
+import { toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
 
 // The health check validates the composed instances. In the hybrid they are the legacy globals
 // the CDN bundle builds; return null until they exist so the checker can re-evaluate later.
 function readLegacyInstances(): SuperTokenInstances | null {
-  const { mpSuperTokenTriggerHandler, mpSuperTokenAuthenticator, mpSuperTokenPaymentMethods, mpSuperTokenMetrics, mpSuperTokenErrorHandler } = window;
+  const {
+    mpSuperTokenTriggerHandler,
+    mpSuperTokenAuthenticator,
+    mpSuperTokenPaymentMethods,
+    mpSuperTokenMetrics,
+    mpSuperTokenErrorHandler,
+  } = window;
   if (!mpSuperTokenTriggerHandler) {
     return null;
   }
@@ -50,12 +57,32 @@ export function startInitializationResilience(
   // the stateful classes), but in self-construct — and after the cutover — the tree composes, so the
   // watcher's card-form recovery path must re-run the composition for a late SDK that arrived after
   // the poll window closed. The watcher also owns the SDK-readiness signals.
-  watcher.start(() => {
-    try {
-      recompose.current();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      metrics.sendMetric('super_token_recovery_compose_failed', 'mp_super_token_init', message);
-    }
-  });
+  let firstComposeFailureReported = false;
+  let lastComposeError: unknown;
+  watcher.start(
+    () => {
+      try {
+        recompose.current();
+        return true;
+      } catch (error) {
+        lastComposeError = error;
+        if (!firstComposeFailureReported) {
+          metrics.sendMetric(
+            'super_token_recovery_compose_failed',
+            'mp_super_token_init',
+            toTelemetryErrorMessage(error),
+          );
+          firstComposeFailureReported = true;
+        }
+        return false;
+      }
+    },
+    (attempts) => {
+      metrics.sendMetric(
+        'super_token_recovery_compose_failed',
+        'mp_super_token_init',
+        `retry_exhausted:${attempts}; last_error:${toTelemetryErrorMessage(lastComposeError)}`,
+      );
+    },
+  );
 }

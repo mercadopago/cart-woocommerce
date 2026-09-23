@@ -62,9 +62,11 @@ describe('MPCardForm', () => {
       clearInputs: jest.fn(),
       clearCardState: jest.fn(),
       setChangeEventOnInstallments: jest.fn(),
+      setZeroDollarInitialCitInstallmentsState: jest.fn(),
       setValueOn: jest.fn(),
       setCvvConfig: jest.fn(),
       setImageCard: jest.fn(),
+      setSecureFieldInstructions: jest.fn(),
       loadAdditionalInfo: jest.fn(() => ({})),
       additionalInfoHandler: jest.fn(),
       setDisplayOfError: jest.fn(),
@@ -117,7 +119,8 @@ describe('MPCardForm', () => {
     cardForm = new MPCardForm();
 
     document.body.innerHTML = `
-      <input id="mp-amount" value="100.50" />
+      <input id="mp-amount" value="100.50" data-mp-cit-initial-context="false" />
+      <input id="mp_checkout_type" value="custom" />
     `;
 
     window.mPmetrics = [];
@@ -172,6 +175,69 @@ describe('MPCardForm', () => {
         expect(typeof amount).toBe('string');
       }
     );
+  });
+
+  describe('zero-dollar initial CIT context', () => {
+    function setContext({ amount, isInitialCit = 'true', checkoutType = 'custom' }) {
+      cardForm.amount = amount;
+      document.getElementById('mp-amount').dataset.mpCitInitialContext = isInitialCit;
+      document.getElementById('mp_checkout_type').value = checkoutType;
+    }
+
+    test.each([
+      { amount: '0', expected: true, description: 'zero string' },
+      { amount: '0.00', expected: true, description: 'zero decimal string' },
+      { amount: 0, expected: true, description: 'zero number' },
+      { amount: '0.01', expected: false, description: 'positive amount' },
+      { amount: '-0.01', expected: false, description: 'negative amount' },
+      { amount: 'NaN', expected: false, description: 'NaN string' },
+      { amount: '', expected: false, description: 'empty string' },
+      { amount: null, expected: false, description: 'null' },
+      { amount: undefined, expected: false, description: 'undefined' },
+      { amount: Infinity, expected: false, description: 'infinite number' },
+    ])(
+      'Given initial CIT Custom checkout with $description, When the context is evaluated, Then returns $expected',
+      ({ amount, expected }) => {
+        setContext({ amount });
+
+        expect(cardForm.isZeroDollarInitialCitContext()).toBe(expected);
+      }
+    );
+
+    test.each([
+      { isInitialCit: 'false', checkoutType: 'custom', description: 'server flag is false' },
+      { isInitialCit: 'TRUE', checkoutType: 'custom', description: 'server flag is not the exact true contract' },
+      { isInitialCit: 'true', checkoutType: 'super_token', description: 'checkout is Super Token' },
+      { isInitialCit: 'true', checkoutType: 'wallet_button', description: 'checkout is Wallet Button' },
+    ])(
+      'Given amount is zero but $description, When the context is evaluated, Then it is not eligible',
+      ({ isInitialCit, checkoutType }) => {
+        setContext({ amount: '0', isInitialCit, checkoutType });
+
+        expect(cardForm.isZeroDollarInitialCitContext()).toBe(false);
+      }
+    );
+
+    test('Given the server context attribute is absent, When amount is zero, Then it is not eligible', () => {
+      setContext({ amount: '0' });
+      document.getElementById('mp-amount').removeAttribute('data-mp-cit-initial-context');
+
+      expect(cardForm.isZeroDollarInitialCitContext()).toBe(false);
+    });
+
+    test('Given an eligible context, When stabilized, Then delegates the installments-only state and returns true', () => {
+      setContext({ amount: '0' });
+
+      expect(cardForm.stabilizeZeroDollarInitialCitInstallments()).toBe(true);
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given a non-eligible context, When stabilization is attempted, Then it leaves installments untouched', () => {
+      setContext({ amount: '10' });
+
+      expect(cardForm.stabilizeZeroDollarInitialCitInstallments()).toBe(false);
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).not.toHaveBeenCalled();
+    });
   });
 
   describe('handleCardFormErrors()', () => {
@@ -612,6 +678,179 @@ describe('MPCardForm', () => {
     });
   });
 
+  describe('onInstallmentsReceived callback — zero-dollar initial CIT', () => {
+    let callbacks;
+    let warnSpy;
+
+    function setContext({ amount = '0', isInitialCit = 'true', checkoutType = 'custom' } = {}) {
+      cardForm.amount = amount;
+      document.getElementById('mp-amount').dataset.mpCitInitialContext = isInitialCit;
+      document.getElementById('mp_checkout_type').value = checkoutType;
+    }
+
+    beforeEach(() => {
+      callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    test('Given eligible zero-dollar CIT and SDK installment error, When callback runs, Then fixes one installment without buyer alert or raw error log', () => {
+      setContext();
+      const addErrorAlertSpy = jest.spyOn(cardForm, 'addErrorAlert').mockImplementation(() => {});
+
+      callbacks.onInstallmentsReceived(new TypeError("Cannot destructure property 'payer_costs'"), undefined);
+
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.setChangeEventOnInstallments).not.toHaveBeenCalled();
+      expect(addErrorAlertSpy).not.toHaveBeenCalled();
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    test('Given eligible zero-dollar CIT and an unexpected installments error, When callback runs, Then preserves the existing alert and warning behavior', () => {
+      setContext();
+      const error = new Error('invalid_installment');
+      const addErrorAlertSpy = jest.spyOn(cardForm, 'addErrorAlert').mockImplementation(() => {});
+
+      callbacks.onInstallmentsReceived(error, undefined);
+
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).not.toHaveBeenCalled();
+      expect(addErrorAlertSpy).toHaveBeenCalledWith('Parcela inválida');
+      expect(warnSpy).toHaveBeenCalledWith('Installments handling error: ', error);
+    });
+
+    test.each([
+      { installments: { payer_costs: [] }, description: 'normalized empty payer_costs' },
+      { installments: [], description: 'empty raw SDK response' },
+    ])(
+      'Given eligible zero-dollar CIT and $description, When callback succeeds, Then keeps the fixed installment state hidden',
+      ({ installments }) => {
+        setContext();
+
+        callbacks.onInstallmentsReceived(null, installments);
+
+        expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).toHaveBeenCalledTimes(1);
+        expect(CheckoutPage.setChangeEventOnInstallments).not.toHaveBeenCalled();
+        expect(warnSpy).not.toHaveBeenCalled();
+      }
+    );
+
+    test('Given eligible zero-dollar CIT returns payer_costs, When callback runs, Then still keeps installments fixed at one', () => {
+      setContext();
+      const installments = { payer_costs: [{ installments: 1 }] };
+
+      callbacks.onInstallmentsReceived(null, installments);
+
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.setChangeEventOnInstallments).not.toHaveBeenCalled();
+    });
+
+    test('Given positive initial CIT and SDK installment error, When callback runs, Then preserves the existing alert and warning behavior', () => {
+      setContext({ amount: '10' });
+      const error = new Error('invalid_installment');
+      const addErrorAlertSpy = jest.spyOn(cardForm, 'addErrorAlert').mockImplementation(() => {});
+
+      callbacks.onInstallmentsReceived(error, undefined);
+
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).not.toHaveBeenCalled();
+      expect(addErrorAlertSpy).toHaveBeenCalledWith('Parcela inválida');
+      expect(warnSpy).toHaveBeenCalledWith('Installments handling error: ', error);
+    });
+
+    test.each([
+      { isInitialCit: 'false', checkoutType: 'custom', description: 'server flag is false' },
+      { isInitialCit: 'true', checkoutType: 'super_token', description: 'checkout is Super Token' },
+    ])(
+      'Given amount is zero but $description, When SDK returns an error, Then preserves the existing error behavior',
+      ({ isInitialCit, checkoutType }) => {
+        setContext({ isInitialCit, checkoutType });
+        const error = new Error('invalid_installment');
+        const addErrorAlertSpy = jest.spyOn(cardForm, 'addErrorAlert').mockImplementation(() => {});
+
+        callbacks.onInstallmentsReceived(error, undefined);
+
+        expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).not.toHaveBeenCalled();
+        expect(addErrorAlertSpy).toHaveBeenCalledWith('Parcela inválida');
+        expect(warnSpy).toHaveBeenCalledWith('Installments handling error: ', error);
+      }
+    );
+
+    test('Given a zero-dollar CIT becomes positive, When another installments callback arrives, Then normal payer_costs rendering resumes', () => {
+      setContext();
+      callbacks.onInstallmentsReceived(null, { payer_costs: [] });
+      jest.clearAllMocks();
+
+      cardForm.amount = '49.90';
+      const installments = { payer_costs: [{ installments: 1 }] };
+      callbacks.onInstallmentsReceived(null, installments);
+
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).not.toHaveBeenCalled();
+      expect(CheckoutPage.setChangeEventOnInstallments).toHaveBeenCalledWith(installments);
+    });
+
+    test('Given a positive CIT becomes zero, When another installments callback arrives, Then it switches to the fixed state', () => {
+      setContext({ amount: '49.90' });
+      callbacks.onInstallmentsReceived(null, { payer_costs: [{ installments: 1 }] });
+      jest.clearAllMocks();
+
+      cardForm.amount = '0';
+      callbacks.onInstallmentsReceived(null, { payer_costs: [] });
+
+      expect(CheckoutPage.setChangeEventOnInstallments).not.toHaveBeenCalled();
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('onError callback — zero-dollar initial CIT cardholder-name isolation', () => {
+    let callbacks;
+
+    function setContext({ amount = '0', isInitialCit = 'true', checkoutType = 'custom' } = {}) {
+      cardForm.amount = amount;
+      document.getElementById('mp-amount').dataset.mpCitInitialContext = isInitialCit;
+      document.getElementById('mp_checkout_type').value = checkoutType;
+    }
+
+    beforeEach(() => {
+      callbacks = cardForm.getCardFormCallbacks(jest.fn(), jest.fn());
+    });
+
+    test('Given untouched holder name and the expected zero-dollar payer_costs error, When the SDK reports it globally, Then holder name stays pristine', () => {
+      setContext();
+
+      callbacks.onError([new TypeError("Cannot destructure property 'payer_costs'")]);
+
+      expect(CheckoutPage.verifyCardholderName).not.toHaveBeenCalled();
+    });
+
+    test('Given a positive amount and the payer_costs SDK error, When onError runs, Then it preserves the existing holder-name validation behavior', () => {
+      setContext({ amount: '10' });
+
+      callbacks.onError([new TypeError("Cannot destructure property 'payer_costs'")]);
+
+      expect(CheckoutPage.verifyCardholderName).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given zero-dollar CIT and an unrelated global SDK error, When onError runs, Then it preserves the existing holder-name validation behavior', () => {
+      setContext();
+
+      callbacks.onError([new Error('unexpected SDK error')]);
+
+      expect(CheckoutPage.verifyCardholderName).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given zero-dollar CIT and an actual cardholderName error, When onError runs, Then holder name is still validated and displayed as invalid', () => {
+      setContext();
+
+      callbacks.onError([new Error('cardholderName is invalid')]);
+
+      expect(CheckoutPage.verifyCardholderName).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.setDisplayOfError).toHaveBeenCalledWith('fcCardholderName', 'add', 'mp-error');
+      expect(CheckoutPage.setDisplayOfInputHelper).toHaveBeenCalledWith('mp-card-holder-name', 'flex');
+    });
+  });
+
   describe('onPaymentMethodsReceived callback', () => {
     let onPaymentMethodsReceived;
 
@@ -684,6 +923,29 @@ describe('MPCardForm', () => {
       expect(CheckoutPage.clearInputs).toHaveBeenCalledTimes(1);
       expect(CheckoutPage.setValueOn).toHaveBeenCalledWith('paymentMethodId', 'master');
     });
+
+    test('Given a valid BIN in zero-dollar initial CIT, When the BIN reset clears shared fields, Then the fixed installment state is restored afterwards', () => {
+      document.getElementById('mp-amount').dataset.mpCitInitialContext = 'true';
+      cardForm.amount = '0';
+      const mockPaymentMethod = {
+        id: 'master',
+        settings: [{
+          card_number: { length: 16 },
+          security_code: { length: 3 },
+        }],
+        secure_thumbnail: 'https://example.com/master.png',
+        thumbnail: 'https://example.com/master.png',
+        additional_info_needed: [],
+        payment_type_id: 'credit_card',
+      };
+
+      onPaymentMethodsReceived(null, [mockPaymentMethod]);
+
+      expect(CheckoutPage.clearInputs).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.setZeroDollarInitialCitInstallmentsState).toHaveBeenCalledTimes(1);
+      expect(CheckoutPage.clearInputs.mock.invocationCallOrder[0])
+        .toBeLessThan(CheckoutPage.setZeroDollarInitialCitInstallmentsState.mock.invocationCallOrder[0]);
+    });
   });
 
   describe('onBinChange callback (early BIN-change reset)', () => {
@@ -729,7 +991,7 @@ describe('MPCardForm', () => {
     });
 
     test('Given the Super Token flow, When onBinChange runs on a new BIN, Then it clears the error but never clears paymentMethodId (Super Token owns that shared field)', () => {
-      document.body.innerHTML += '<input type="hidden" id="mp_checkout_type" value="super_token" />';
+      document.getElementById('mp_checkout_type').value = 'super_token';
       cardForm.lastVerdictBin = null;
 
       callbacks.onBinChange('42356477');

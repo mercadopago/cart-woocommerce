@@ -4,6 +4,7 @@ export const MP_SDK_INSTANCE_READY_EVENT = 'mp_sdk_instance_ready';
 export const CARD_FORM_MOUNTED_EVENT = 'mp_card_form_mounted';
 export const FALLBACK_POLL_INTERVAL_MS = 50;
 export const FALLBACK_POLL_MAX_WAIT_MS = 15000;
+export const COMPOSE_RETRY_INTERVAL_MS = 1000;
 
 export const INIT_SOURCE = {
   ALREADY_READY: 'already_ready',
@@ -22,14 +23,14 @@ export interface SdkReadinessWatcherDeps {
 }
 
 /**
- * Watches for the MP SDK instance and triggers Super Token composition exactly once,
+ * Watches for the MP SDK instance and completes Super Token composition exactly once,
  * using three tiers in order of availability:
  *
  *   1. Already present at construction time  → compose immediately (ALREADY_READY)
  *   2. Arrives via `mp_sdk_instance_ready`   → compose on event (SDK_INSTANCE_EVENT
  *                                               or SDK_INSTANCE_EVENT_AFTER_LEGACY_WINDOW if >15s)
- *   3. Appears in `window.mpSdkInstance`     → compose on 50ms poll (FALLBACK_POLL),
- *                                               poll capped at 15s
+ *   3. Appears in `window.mpSdkInstance`     → discover on the 50ms poll (FALLBACK_POLL),
+ *                                               retry failed composition every 1s, capped at 15s
  *
  * After the poll cap, temporary load delays can still be recovered via
  * recoverIfSdkIsNowAvailable() — call it at natural page checkpoints
@@ -45,8 +46,11 @@ export class SdkReadinessWatcher {
   private readonly startedAt: number;
 
   private initialized = false;
-  private pendingCompose: (() => void) | null = null;
+  private pendingCompose: (() => void | boolean) | null = null;
   private activePoll: ReturnType<typeof setInterval> | null = null;
+  private nextComposeAttemptAt = 0;
+  private failedComposeAttempts = 0;
+  private reportRetryExhausted: ((attempts: number) => void) | null = null;
 
   constructor(deps: SdkReadinessWatcherDeps) {
     this.metrics = deps.metrics;
@@ -56,7 +60,8 @@ export class SdkReadinessWatcher {
   }
 
   /**
-   * Begins watching for SDK availability and calls `compose` exactly once.
+   * Begins watching for SDK availability and retries `compose` at a bounded cadence until the
+   * first successful composition.
    * The compose callback is stored so recoverIfSdkIsNowAvailable() can use it later.
    *
    * Idempotent: a second call is silently ignored to guard against accidental
@@ -67,15 +72,21 @@ export class SdkReadinessWatcher {
    * try-catch at the bundle entrypoint so a temporary compose failure does not abort
    * the bundle bootstrap before recoverIfSdkIsNowAvailable() has a chance to retry.
    */
-  start(compose: () => void): void {
+  start(
+    compose: () => void | boolean,
+    reportRetryExhausted?: (attempts: number) => void,
+  ): void {
     if (this.pendingCompose !== null) {
       return;
     }
     this.pendingCompose = compose;
+    this.reportRetryExhausted = reportRetryExhausted ?? null;
 
     if (this.readSdkInstance()) {
       this.composeWith(INIT_SOURCE.ALREADY_READY);
-      return;
+      if (this.initialized) {
+        return;
+      }
     }
 
     document.addEventListener(
@@ -85,7 +96,7 @@ export class SdkReadinessWatcher {
     );
 
     this.activePoll = setInterval(() => {
-      if (this.readSdkInstance()) {
+      if (this.readSdkInstance() && this.now() >= this.nextComposeAttemptAt) {
         this.composeWith(INIT_SOURCE.FALLBACK_POLL);
       }
     }, FALLBACK_POLL_INTERVAL_MS);
@@ -94,6 +105,9 @@ export class SdkReadinessWatcher {
       if (this.activePoll !== null) {
         clearInterval(this.activePoll);
         this.activePoll = null;
+      }
+      if (!this.initialized && this.failedComposeAttempts > 0) {
+        this.reportRetryExhausted?.(this.failedComposeAttempts);
       }
     }, FALLBACK_POLL_MAX_WAIT_MS);
   }
@@ -136,12 +150,20 @@ export class SdkReadinessWatcher {
       return;
     }
 
+    const composed = this.pendingCompose();
+    if (composed === false) {
+      this.failedComposeAttempts += 1;
+      // The 50 ms poll discovers SDK availability; it must not also hammer a failing composition.
+      // Keep recovery automatic, but retry the expensive construction at a bounded cadence.
+      this.nextComposeAttemptAt = this.now() + COMPOSE_RETRY_INTERVAL_MS;
+      return;
+    }
+
     if (this.activePoll !== null) {
       clearInterval(this.activePoll);
       this.activePoll = null;
     }
 
-    this.pendingCompose();
     this.initialized = true;
     this.metrics.superTokenSdkLoaded();
     this.reportInitSource(source);

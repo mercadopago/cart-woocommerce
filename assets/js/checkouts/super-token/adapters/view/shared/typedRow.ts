@@ -35,32 +35,45 @@ export function buildTypedRow(
   deps: VariantViewDeps,
   presentation: RowPresentation,
   context: SavedMethodsRenderContext,
-): HTMLElement {
-  if (isAccountMoney(paymentMethod) && context.rowSession) {
-    return buildInteractiveRow(paymentMethod, deps, presentation, context.rowSession);
-  }
+): HTMLElement | null {
+  try {
+    if (isAccountMoney(paymentMethod) && context.rowSession) {
+      return buildInteractiveRow(paymentMethod, deps, presentation, context.rowSession);
+    }
 
-  if (isCard(paymentMethod) && context.rowSession && context.installmentOptions) {
-    return buildCardRow(paymentMethod, deps, presentation, context.rowSession, context.installmentOptions);
-  }
+    if (isCard(paymentMethod) && context.rowSession && context.installmentOptions) {
+      return buildCardRow(paymentMethod, deps, presentation, context.rowSession, context.installmentOptions);
+    }
 
-  if (
-    isConsumerCredits(paymentMethod) &&
-    context.rowSession &&
-    context.installmentOptions &&
-    context.consumerCreditsHint
-  ) {
-    return buildConsumerCreditsRow(
-      paymentMethod,
-      deps,
-      presentation,
-      context.rowSession,
-      context.installmentOptions,
-      context.consumerCreditsHint,
-    );
-  }
+    if (
+      isConsumerCredits(paymentMethod) &&
+      context.rowSession &&
+      context.installmentOptions &&
+      context.consumerCreditsHint
+    ) {
+      return buildConsumerCreditsRow(
+        paymentMethod,
+        deps,
+        presentation,
+        context.rowSession,
+        context.installmentOptions,
+        context.consumerCreditsHint,
+      );
+    }
 
-  return context.buildRow
-    ? context.buildRow(paymentMethod)
-    : buildPaymentMethodRow(paymentMethod, deps, presentation);
+    return context.buildRow
+      ? context.buildRow(paymentMethod)
+      : buildPaymentMethodRow(paymentMethod, deps, presentation);
+  } catch (error) {
+    context.rowSession?.recordPaymentMethodRowFailure?.(error);
+    try {
+      // Keep the method visible even when its interactive details fail. This fallback contains
+      // presentation only, so the broken row cannot interrupt the remaining methods.
+      return buildPaymentMethodRow(paymentMethod, deps, presentation);
+    } catch {
+      // A malformed row must never abort the list. If even its presentation cannot be built,
+      // omit only this method and let the variant render every other row.
+      return null;
+    }
+  }
 }

@@ -40,6 +40,8 @@ export interface RenderRowSession {
   installmentSelected(methodType: string): void;
   /** Reports (once) that MPCheckoutFieldsDispatcher is unavailable at installments setup. */
   reportInstallmentDispatcherMissing(context: string): void;
+  /** Reports a row build failure before the view falls back or skips only that row. */
+  recordPaymentMethodRowFailure(error: unknown): void;
 
   // ─── Consumer credits (async SDK contract + state + metrics) ───
   /** The fast-payment token (legacy controller state) used as the contract parameter. */
@@ -57,6 +59,8 @@ export interface RenderRowSession {
   recordOpenCreditsInfoModal(linkText: string): void;
   recordConsumerCreditsHint(success: boolean, error?: unknown): void;
   recordConsumerCreditsDueDate(success: boolean, error?: unknown): void;
+  /** Records whether the consumer-credits details section was constructed successfully. */
+  recordConsumerCreditsDetails(success: boolean): void;
 }
 
 export interface SavedMethodsRenderContext {

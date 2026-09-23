@@ -179,6 +179,11 @@ class RefundHandler
         $refundId = $result['data']['id'] ?? null;
         if ($refundId !== null) {
             $this->mercadopago->orderMetadata->addAppliedRefundId($this->order, (string) $refundId);
+            // Source of truth (PSW-4412): record the per-payment refunded amount now, at refund time.
+            // The async notification recognises this refund_id as already applied and skips it, so the
+            // amount is never double-counted. $amount is already in the MP account currency (scaled by
+            // the currency ratio in processRefund), matching the stored per-payment total.
+            $this->mercadopago->orderMetadata->addRefundedAmountToPayment($this->order, $paymentId, $amount);
         } else {
             $this->mercadopago->logs->file->info(
                 'Refund response has no id (Super Token / empty body); relying on value-based dedup',
