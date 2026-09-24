@@ -51,7 +51,16 @@ phpstan-baseline.neon
 
 # IA Files
 .personal-agents
+.codex/tasks/
 .claude/settings.local.json
 .claude/tasks/
 .claude/regression-*.json
+/meli/wip/**/verdicts/security.json
 e2e/plugins/
+
+# iOS E2E runtime artifacts (certificates, Appium state, screenshots and reports)
+/e2e/ios/.runtime/
+/e2e/ios/evidence/*
+!/e2e/ios/evidence/README.md
+/e2e/ios/playwright-report/
+/e2e/ios/test-results/

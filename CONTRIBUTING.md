@@ -3,6 +3,18 @@
 
 Thank you for  contributing to our project! Here are some guidelines to help streamline the process and ensure that your contributions are effective.
 
+## Team standards (P&P hub)
+
+This repository follows the centralized standards of the **Plugins & Payments (P&P)** team:
+
+- **Domain hub — specs / SDD index:** https://github.com/melisource/fury_mp-op-pp-sdd
+- **Process hub — code review, coding & logging standards, DoR/DoD:** https://github.com/melisource/fury_mp-op-pp-development-cycle
+  - Code review guide: [`docs/CODE_REVIEW_GUIDE.md`](https://github.com/melisource/fury_mp-op-pp-development-cycle/blob/master/docs/CODE_REVIEW_GUIDE.md)
+  - Coding standards: [`docs/CODING_STANDARDS.md`](https://github.com/melisource/fury_mp-op-pp-development-cycle/blob/master/docs/CODING_STANDARDS.md)
+  - Definition of Ready / Done: [`docs/DEFINITION_OF_READY.md`](https://github.com/melisource/fury_mp-op-pp-development-cycle/blob/master/docs/DEFINITION_OF_READY.md) · [`docs/DEFINITION_OF_DONE.md`](https://github.com/melisource/fury_mp-op-pp-development-cycle/blob/master/docs/DEFINITION_OF_DONE.md) — see also the repo-local DoD in [`docs/agent/runbook.md`](docs/agent/runbook.md) and [`AGENTS.md`](AGENTS.md).
+
+The sections below cover the local build/test/PR flow specific to this plugin.
+
 ## Requirements
 
 - php: See the `composer.json` file to know the required php version
@@ -57,6 +69,7 @@ See `Makefile` for more make commands info.
 - `npm run watch:make-mo`: Run wp-cli `make-mo` command on `.po` files change
 - `npm run build`: Build assets
 - `npm run build:{command}`: Asset related commands
+- `npm run setup:st`: Configure the local Super Token dev environment — active variant, `USE_BUNDLE` toggle and SDK env (see [Super Token](#super-token-ab-variants--local-development))
 
 See `package.json` for more npm commands info.
 
@@ -101,6 +114,56 @@ When submitting a pull request, please ensure the following:
 
 We appreciate your contributions and adherence to these guidelines. They help maintain the quality and consistency of our project. Happy coding!
 
+## Technical Implementation Notes
+
+### Order Sync Button and Metabox
+
+**Internal Implementation:**
+- **Location**: `src/Hooks/Order.php::syncOrderStatus()` - Syncs the order in woocommerce to mercadopago
+- **Location**: `src/Hooks/Order.php::getMetaboxData()` - Get the data to be renreded on the Status Sync Metabox
+
+**Technical Details - Dev Internal Notes:**
+- The sync button queries the **Notification API** and works with all Mercado Pago payment flows, but is particularly useful for payments made with **Checkout API or Checkout PRO - credit and debit cards**, where approved payment triggers the notification flow
+- The **Notification API** brings information from the last notification saved in **KVS (fury)**
+- The **Metabox displays payment information** through the **Payments API**
+- **Edge case**: Some internally approved payments (Ticket and PIX) may not trigger the notification flow, so the sync button may bring the last notification with pending status to the WooCommerce Order Notes, bringing a different status than the payment that was previously approved.
+
+### Super Token (A/B variants — local development)
+
+Super Token runs as an A/B experiment with two variants — `v2` (control) and `v2.1` (treatment). In production the loader is served from the CDN bundle; for local development the plugin can load the individual variant files instead.
+
+**Active variant — single source of truth:**
+- The active variant lives in **one** place: the `PLUGIN_SUPER_TOKEN_VERSION` constant in `src/WoocommerceMercadoPago.php`.
+- The build script (`main.js` via `getActiveSuperTokenVersion()`), the Jest config (`jest.config.js`) and the PHPUnit bootstrap (`tests/bootstrap.php`) all derive from it — there is no value to keep in sync by hand.
+
+**Configuring the dev environment — `npm run setup:st`:**
+
+Use the interactive helper instead of editing constants manually. It prompts for, and writes to the PHP source of truth:
+
+| Prompt | Constant | Effect |
+|---|---|---|
+| Variant (`v2` / `v2.1`) | `PLUGIN_SUPER_TOKEN_VERSION` | Which variant the plugin (and the test suite) targets |
+| Use the CDN bundle? (`s`/`n`) | `PLUGIN_SUPER_TOKEN_USE_BUNDLE` | `n` = dev mode: load the individual variant files; `s` = load the CDN bundle |
+| JS SDK env (`prod`/`beta`/`gama`) | `PLUGIN_SDK_ENV` | Mercado Pago JS SDK environment |
+
+- `setup:st` only configures the dev runtime — it does **not** set the loader version. Bumping the loader version is a release task (edit the `SUPER_TOKEN_LOADER_VERSION` map in `main.js` and rebuild the bundle).
+- The runtime always loads the minified files (`*.min.js`). If you edit a Super Token source file, run `npm run build:js` (or `make build` in the docker dev environment) so the change is reflected. Just switching variant/mode via `setup:st` needs no rebuild — the committed `.min.js` already match.
+- **Testing the A/B variant cookie locally:** the `mp_st_variant` cookie is set with the `Secure` flag, so browsers do **not** persist it over plain HTTP (e.g. `http://localhost`). In dev mode (`setup:st` → `USE_BUNDLE=false`) this is a non-issue — the loader/cookie A/B logic isn't exercised (the variant files load directly). To test the cookie/variant-assignment logic directly, serve the store over **HTTPS** (e.g. the docker dev environment's tunnel).
+
+**Bundle destination — `npm run build:super-token:bundle`:**
+
+Concatenates the active variant's files and copies the bundle into the `woocommerce-scripts` repo. The destination is resolved in this order:
+
+1. `SUPER_TOKEN_SCRIPTS_REPO_PATH` environment variable (explicit override), if set;
+2. a sibling directory — `fury_mp-op-pp-woocommerce-scripts` (preferred) or `mp-op-pp-woocommerce-scripts`.
+
+If none is found, the build fails with a clear error instead of copying to a stale folder.
+
+```bash
+# Example: point the bundle copy at a specific scripts repo checkout
+SUPER_TOKEN_SCRIPTS_REPO_PATH=/path/to/fury_mp-op-pp-woocommerce-scripts npm run build:super-token:bundle
+```
+
 ## Tranlating using make commands
 
 After adding the new texts in the code:
@@ -108,3 +171,4 @@ After adding the new texts in the code:
 1. Run `make update-po` to update the `.pot` and `.po` files with the new texts.
 2. Edit the `.pot` files adding the translations.
 3. Run `make make-mo` to update the `.mo` files.
+

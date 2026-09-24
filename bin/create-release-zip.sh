@@ -15,7 +15,7 @@ if [ ! -d "$TMP_DIR" ]; then
 	mkdir $TMP_DIR
 fi
 
-cd $BASE_DIR
+cd "$BASE_DIR"
 cp -r assets build i18n src templates index.php readme.txt woocommerce-mercadopago.php composer.json composer.lock $TMP_DIR
 
 cd $TMP_DIR
@@ -32,8 +32,18 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
+# Gate de integridade (PPSP-1529): valida os assets do pacote contra o
+# integrity-manifest.json (fonte de verdade na raiz do repo). Bloqueia a
+# criação do zip se algum asset crítico estiver ausente ou divergente.
+echo "[+] Validando integridade dos assets contra integrity-manifest.json"
+if ! node "$BIN_DIR/verify-integrity.js" --root "$TMP_DIR" --manifest "$BASE_DIR/integrity-manifest.json"; then
+	echo "Error: asset integrity validation failed. Aborting package creation."
+	rm -rf "$TMP_DIR"
+	exit 1
+fi
+
 cd $TMP_DIR/.. && zip -rX woocommerce-mercadopago.zip woocommerce-mercadopago -x "**/.DS_Store" -x "*/.git/*"
-mv $TMP_DIR/../woocommerce-mercadopago.zip $BASE_DIR
+mv $TMP_DIR/../woocommerce-mercadopago.zip "$BASE_DIR"
 rm -rf $TMP_DIR
 
 echo "Package created successfully"
