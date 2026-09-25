@@ -89,7 +89,9 @@ class MPCustomCheckoutHandler {
 
     const formConfigured = await this.setupFormConfiguration();
 
-    if (!formConfigured) {
+    // Integrations that override setupFormConfiguration() may complete without
+    // returning a value. Only our explicit failure result stops initialization.
+    if (formConfigured === false) {
       return;
     }
 

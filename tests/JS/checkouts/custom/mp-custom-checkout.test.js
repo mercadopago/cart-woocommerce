@@ -4,6 +4,8 @@ require('assets/js/checkouts/custom/mp-custom-checkout.js');
 require('assets/js/checkouts/custom/mp-custom-checkout.min.js');
 
 const customCheckoutPath = resolveAlias('assets/js/checkouts/custom/mp-custom-checkout.js');
+const minifiedCustomCheckoutPath = resolveAlias('assets/js/checkouts/custom/mp-custom-checkout.min.js');
+const eventHandlerPath = resolveAlias('assets/js/checkouts/custom/entities/event-handler.js');
 
 describe('MPCustomCheckoutHandler - form discovery', () => {
   let MPCustomCheckoutHandler;
@@ -139,6 +141,110 @@ describe('MPCustomCheckoutHandler - form discovery', () => {
     await handler.init();
 
     expect(eventHandler.bindEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it('binds payment events when a third-party form override returns undefined', async () => {
+    const form = document.createElement('form');
+    form.name = 'checkout';
+    document.body.append(form);
+    const handler = Object.create(MPCustomCheckoutHandler.prototype);
+    const eventHandler = { triggeredPaymentMethodSelectedEvent: true, bindEvents: jest.fn() };
+    handler.eventHandler = eventHandler;
+    handler.cardForm = {};
+    handler.isCheckoutPage = jest.fn().mockReturnValue(true);
+    handler.setupFormConfiguration = async function () {
+      const formConfig = await this.getFormConfig();
+      formConfig.element.id = formConfig.formId;
+      this.syncFormIds(formConfig.formId);
+    };
+    handler.waitForJQuery = jest.fn().mockResolvedValue(true);
+
+    await handler.init();
+
+    expect(form.id).toBe('checkout');
+    expect(handler.cardForm.mpFormId).toBe('checkout');
+    expect(handler.waitForJQuery).toHaveBeenCalledTimes(1);
+    expect(eventHandler.bindEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['source', customCheckoutPath],
+    ['minified release asset', minifiedCustomCheckoutPath],
+  ])('registers the card submit event with the %s when FunnelKit returns nothing', async (_name, assetPath) => {
+    const form = document.createElement('form');
+    form.name = 'checkout';
+    document.body.append(form);
+    const CheckoutHandler = loadFile(assetPath, 'MPCustomCheckoutHandler', {
+      MPCardForm: class {},
+      MPThreeDSHandler: class {},
+      MPEventHandler: class {},
+      CheckoutPage: {},
+      CheckoutElements: {},
+      MercadoPago: class {},
+      document: {
+        readyState: 'loading',
+        addEventListener: jest.fn(),
+        querySelector: global.document.querySelector.bind(global.document),
+        documentElement: global.document.documentElement,
+        body: global.document.body,
+      },
+      MutationObserver: global.MutationObserver,
+      setTimeout: global.setTimeout,
+      clearTimeout: global.clearTimeout,
+    });
+    const checkoutEvents = new Map();
+    const jQuery = (selector) => ({
+      on: (eventName, callback) => {
+        if (selector === 'form.checkout') checkoutEvents.set(eventName, callback);
+      },
+      submit: jest.fn(),
+      ready: (callback) => callback(),
+    });
+    const MPEventHandler = loadFile(eventHandlerPath, 'MPEventHandler', {
+      jQuery,
+      wc_mercadopago_custom_event_handler_params: { is_mobile: false },
+      MobileCheckoutClassicObserver: class {},
+    });
+    const cardForm = {};
+    const threeDSHandler = { set3dsStatusValidationListener: jest.fn() };
+    const eventHandler = new MPEventHandler(cardForm, threeDSHandler);
+    eventHandler.triggeredPaymentMethodSelectedEvent = true;
+    eventHandler.initCardFormWhenReady = jest.fn();
+
+    const handler = Object.create(CheckoutHandler.prototype);
+    handler.cardForm = cardForm;
+    handler.eventHandler = eventHandler;
+    handler.isCheckoutPage = jest.fn().mockReturnValue(true);
+    handler.waitForJQuery = jest.fn().mockResolvedValue(true);
+    handler.setupFormConfiguration = async function () {
+      const formConfig = await this.getFormConfig();
+      formConfig.element.id = formConfig.formId;
+      this.syncFormIds(formConfig.formId);
+    };
+
+    await handler.init();
+
+    const onSubmit = checkoutEvents.get('checkout_place_order_woo-mercado-pago-custom');
+    expect(onSubmit).toEqual(expect.any(Function));
+    const paymentHandler = jest.spyOn(eventHandler, 'mercadoPagoFormHandler').mockReturnValue(false);
+    const event = { type: 'checkout_place_order_woo-mercado-pago-custom' };
+    onSubmit(event, form);
+    expect(paymentHandler).toHaveBeenCalledWith(event, form);
+    expect(eventHandler.mpFormId).toBe('checkout');
+  });
+
+  it('does not bind payment events when form configuration explicitly fails', async () => {
+    const handler = Object.create(MPCustomCheckoutHandler.prototype);
+    const eventHandler = { triggeredPaymentMethodSelectedEvent: true, bindEvents: jest.fn() };
+    handler.eventHandler = eventHandler;
+    handler.isCheckoutPage = jest.fn().mockReturnValue(true);
+    handler.setupFormConfiguration = jest.fn().mockResolvedValue(false);
+    handler.waitForJQuery = jest.fn();
+
+    await handler.init();
+
+    expect(handler.waitForJQuery).not.toHaveBeenCalled();
+    expect(eventHandler.bindEvents).not.toHaveBeenCalled();
   });
 
   it('waits for Custom Checkout dependencies that become available later', async () => {
