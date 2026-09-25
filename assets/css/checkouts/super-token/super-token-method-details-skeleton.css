@@ -1,0 +1,47 @@
+@keyframes mp-skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+#payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-skeleton,
+#payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-skeleton {
+  display: block !important;
+  position: relative !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  height: 120px !important;
+  border-radius: 6px !important;
+  background-color: #e0e0e0 !important;
+  box-sizing: border-box !important;
+  margin-top: 8px !important;
+}
+
+#payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-skeleton::after,
+#payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-skeleton::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%) !important;
+  animation: mp-skeleton-shimmer 1.5s ease-in-out infinite !important;
+}
+
+#payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper--loading .mp-checkout-custom-installments-select-container,
+#payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper--loading .mp-checkout-custom-installments-select-container,
+#payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper--loading .mp-super-token-security-code-container,
+#payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper--loading .mp-super-token-security-code-container {
+  display: none !important;
+}
+
+#payment #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper,
+#payment-method #mp-checkout-super-token-root.mp-super-token-payment-methods-list .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-super-token-method-details-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
