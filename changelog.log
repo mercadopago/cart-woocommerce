@@ -2,6 +2,11 @@ CHANGELOG:
 
 == Changelog
 
+= v8.9.5 (25/09/2026) =
+* Fixed
+- Restore card payments on checkout pages built with FunnelKit
+- Fix fast payment on block-based checkout pages where the payment form could remain loading
+
 = v8.9.4 (17/09/2026) =
 * Added
 - Add accessible descriptions to the card checkout fields, including the expected number of digits of the document per country and the expected format of the cardholder name
