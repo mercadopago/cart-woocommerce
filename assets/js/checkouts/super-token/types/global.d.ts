@@ -18,6 +18,15 @@ import type { ClassicCheckoutDeps } from '../adapters/checkout/ClassicCheckout';
 import type { BlocksCheckoutDeps, BlocksResponse } from '../adapters/checkout/BlocksCheckout';
 import type { CheckoutValidationVerdict } from '../adapters/validation/checkoutValidationResolver';
 
+/** Custom-checkout bank-hint params (`window.wc_mercadopago_custom_checkout_params`). */
+export interface CustomCheckoutParams {
+  input_helper_message?: {
+    installments?: { bank_interest_hint_text?: string; [key: string]: unknown };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 declare global {
   interface Window {
     mpSuperTokenTriggerHandler?: SuperTokenTriggerHandler;
@@ -116,6 +125,7 @@ declare global {
     // WooCommerce Blocks registry — used for Classic/Blocks checkout detection.
     wc?: { wcBlocksRegistry?: WcBlocksRegistry };
     wc_mercadopago_supertoken_bundle_params?: SuperTokenBundleParams;
+    wc_mercadopago_custom_checkout_params?: CustomCheckoutParams;
     wc_mercadopago_woocommerce_scripts_params?: WoocommerceScriptsParams;
 
     // Legacy checkout globals the transitional render session forwards to (installments wiring).

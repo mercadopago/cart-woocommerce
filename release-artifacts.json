@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "public_git": {
+      "requiredFiles": [
+        "build/basic.block.asset.php",
+        "build/basic.block.js",
+        "build/credits.block.asset.php",
+        "build/credits.block.js",
+        "build/custom.block.asset.php",
+        "build/custom.block.js",
+        "build/pix.block.asset.php",
+        "build/pix.block.js",
+        "build/pse.block.asset.php",
+        "build/pse.block.js",
+        "build/super-token/bootstrap.ts.asset.php",
+        "build/super-token/bootstrap.ts.js",
+        "build/ticket.block.asset.php",
+        "build/ticket.block.js",
+        "build/yape.block.asset.php",
+        "build/yape.block.js"
+      ]
+    },
+    "package": {
+      "requiredFiles": [
+        "build/basic.block.asset.php",
+        "build/basic.block.js",
+        "build/credits.block.asset.php",
+        "build/credits.block.js",
+        "build/custom.block.asset.php",
+        "build/custom.block.js",
+        "build/pix.block.asset.php",
+        "build/pix.block.js",
+        "build/pse.block.asset.php",
+        "build/pse.block.js",
+        "build/super-token/bootstrap.ts.asset.php",
+        "build/super-token/bootstrap.ts.js",
+        "build/super-token-v2/bootstrap.ts.asset.php",
+        "build/super-token-v2/bootstrap.ts.js",
+        "build/super-token-v2.1/bootstrap.ts.asset.php",
+        "build/super-token-v2.1/bootstrap.ts.js",
+        "build/ticket.block.asset.php",
+        "build/ticket.block.js",
+        "build/yape.block.asset.php",
+        "build/yape.block.js"
+      ]
+    }
+  }
+}

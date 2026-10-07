@@ -18,6 +18,7 @@ export interface SuperTokenDomainParams {
   currency: string;
   payment_methods_order?: string;
   account_money_text: string;
+  account_money_balance_text?: string;
   account_money_wallet_with_investment_text: string;
   account_money_wallet_text: string;
   account_money_investment_text: string;
@@ -31,6 +32,7 @@ export interface SuperTokenDomainParams {
   input_helper_message?: {
     installments?: {
       interest_free_option_text?: string;
+      bank_interest_hint_text?: string;
     };
   };
   interest_rate_mlb_text: string;

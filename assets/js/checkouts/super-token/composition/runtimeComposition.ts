@@ -15,7 +15,7 @@ import { SuperTokenErrorHandler } from '@super-token/adapters/runtime/SuperToken
 import { SuperTokenEmailListener } from '@super-token/adapters/runtime/SuperTokenEmailListener';
 import { SuperTokenTriggerHandler } from '@super-token/adapters/runtime/SuperTokenTriggerHandler';
 import { SuperTokenDebounce } from '@super-token/adapters/runtime/SuperTokenDebounce';
-import { CoreMonitorMetricsAdapter, createDomainConfig } from '@super-token/adapters/platform';
+import { CoreMonitorMetricsAdapter, createDomainConfig, resolveMlcCopy } from '@super-token/adapters/platform';
 import type { SuperTokenDomainParams } from '@super-token/adapters/platform';
 import { SUPER_TOKEN_FALLBACK_VARIANT, SUPER_TOKEN_JS_VERSION } from '@super-token/adapters/platform/constants';
 import { toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
@@ -28,6 +28,8 @@ import type { SuperTokenInstances } from '@super-token/types/instances';
 import { LegacyRenderSession } from '@super-token/adapters/session/LegacyRenderSession';
 import type { LegacyRenderController } from '@super-token/adapters/session/LegacyRenderSession';
 import * as globalBridge from '@super-token/adapters/legacy/globalBridge';
+import { syncMlcCopyToLegacy } from '@super-token/adapters/legacy/syncMlcCopyToLegacy';
+import type { LegacyCopyFields } from '@super-token/adapters/legacy/syncMlcCopyToLegacy';
 import { resolveSuperTokenVariant } from '@super-token/composition/variantRuntime';
 
 // SDK-readiness gate, mirroring the legacy v2.1/mp-super-token.js: run once the SDK instance
@@ -90,11 +92,20 @@ export function composeRuntime(
   recompose: { current: () => void },
   metrics: CoreMonitorMetricsAdapter,
 ): Promise<void> {
-  const viewParams = domainParams as unknown as SuperTokenViewParams;
+  const localizedParams = resolveMlcCopy(domainParams);
+  // window.* reads kept at the composition edge (matches legacyDelegationSeams.ts); the adapter
+  // itself stays free of window.*.
+  syncMlcCopyToLegacy(
+    domainParams,
+    localizedParams,
+    window.mpSuperTokenPaymentMethods as unknown as LegacyCopyFields | undefined,
+    window.wc_mercadopago_custom_checkout_params,
+  );
+  const viewParams = localizedParams as unknown as SuperTokenViewParams;
 
   const composeWithVariant = (variant: string): void => {
-    const domainConfig = createDomainConfig(domainParams, variant);
-    const catalog = new PaymentMethodCatalog(domainConfig.paymentMethodsOrder);
+    const domainConfig = createDomainConfig(localizedParams, variant);
+    const catalog = new PaymentMethodCatalog(domainConfig.paymentMethodsOrder, domainConfig.siteId);
     const registry = new PaymentMethodRegistry(domainConfig);
 
     const orderAndDecorate = (paymentMethods: PaymentMethod[]): PaymentMethod[] =>
@@ -125,7 +136,7 @@ export function composeRuntime(
       }
 
       const bundleParams =
-        window.wc_mercadopago_supertoken_bundle_params as unknown as SuperTokenPaymentMethodsParams & {
+        localizedParams as unknown as SuperTokenPaymentMethodsParams & {
           platform_id: string;
         };
       const entityMetrics = new CoreMonitorMetricsAdapter(
@@ -172,7 +183,13 @@ export function composeRuntime(
         emailListener,
         getView(),
       );
-      const authenticator = new SuperTokenAuthenticator(sdk, paymentMethods, entityMetrics, bundleParams.platform_id);
+      const authenticator = new SuperTokenAuthenticator(
+        sdk,
+        paymentMethods,
+        entityMetrics,
+        bundleParams.platform_id,
+        domainConfig.siteId,
+      );
       const errorHandler = new SuperTokenErrorHandler(paymentMethods, entityMetrics);
       const triggerHandler = new SuperTokenTriggerHandler(
         authenticator,

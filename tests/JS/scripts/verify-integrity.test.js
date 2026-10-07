@@ -1,5 +1,5 @@
 /**
- * Testes do gate de integridade dos assets (PPSP-1529) — bin/verify-integrity.js.
+ * Testes do gate de integridade dos assets (PPSP-1529) — scripts/public/verify-integrity.js.
  *
  * Follow-up do postmortem da v8.7.23: garante que o verificador bloqueia a
  * release quando um asset do integrity-manifest.json está ausente ou divergente.
@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const { verifyIntegrity, parseArgs, main } = require('../../../bin/verify-integrity.js');
+const { verifyIntegrity, parseArgs, main } = require('../../../scripts/public/verify-integrity.js');
 
 const hashOf = (content) => crypto.createHash('sha256').update(content).digest('hex');
 

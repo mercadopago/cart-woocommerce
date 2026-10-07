@@ -4,7 +4,7 @@ const path = require('path');
 const minify = require('minify');
 const wpPot = require('wp-pot');
 const { sync: globSync } = require('glob');
-const { INTEGRITY_IGNORED_ASSETS } = require('./bin/integrity-assets');
+const { INTEGRITY_IGNORED_ASSETS } = require('./scripts/public/integrity-assets');
 
 /**
  * Minify JS and CSS files
@@ -67,7 +67,7 @@ function getActiveSuperTokenVersion () {
  * setupSuperToken prompt to offer the dev variant choice. The CDN folder mapping
  * and the per-variant bundle publish live in the scripts repo now (TASK-013).
  */
-const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.6', 'v2.1': '1.2.6' };
+const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.7', 'v2.1': '1.2.7' };
 
 /**
  * Compile one Super Token SCSS entry into a compressed CSS file (both under

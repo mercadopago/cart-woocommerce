@@ -80,6 +80,7 @@ class ErrorMessages
 
         $messageWithoutSlashes = stripslashes($message);
         foreach ($allErrorMessages as $keyword => $replacement) {
+            $keyword = (string) $keyword;
             if (stripos($message, $keyword) !== false || stripos($messageWithoutSlashes, $keyword) !== false) {
                 return $replacement;
             }

@@ -7,6 +7,17 @@ const rawIntl = (value, intl, currency) =>
   new Intl.NumberFormat(intl, { currency, style: 'currency', currencyDisplay: 'narrowSymbol' }).format(value);
 
 describe('formatCurrency', () => {
+  it('Given MLC with CLP, When formatted, Then it uses the Chilean currency output without decimal places', () => {
+    const formatted = formatCurrency(123456.78, {
+      intl: 'es-CL',
+      currency: 'CLP',
+      siteId: 'MLC',
+    });
+
+    expect(formatted).toBe(rawIntl(123456.78, 'es-CL', 'CLP'));
+    expect(formatted).toMatch(/^\$123\.457$/);
+  });
+
   it('Given a non-MLM site, When formatted, Then it returns the Intl currency output unchanged', () => {
     const raw = rawIntl(1234.5, 'pt-BR', 'BRL');
     expect(formatCurrency(1234.5, { intl: 'pt-BR', currency: 'BRL', siteId: 'MLB' })).toBe(raw);

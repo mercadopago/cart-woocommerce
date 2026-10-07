@@ -18,6 +18,7 @@ import type { PaymentMethod } from '@super-token/types/external-globals';
 export interface FetchAndRenderSession {
   getBuyerEmail(): string | null | undefined;
   isValidEmail(email: string): boolean;
+  bumpLoadGeneration(): void;
   setFetching(isFetching: boolean): void;
   getLoadGeneration(): number;
   currentAmount(): string | null;
@@ -56,6 +57,8 @@ export class FetchAndRenderPaymentMethods {
     }
 
     metrics.emailCaptured();
+    // Every new fetch supersedes the previous one, even when the previous SDK call is still pending.
+    session.bumpLoadGeneration();
     session.setFetching(true);
 
     const generation = session.getLoadGeneration();

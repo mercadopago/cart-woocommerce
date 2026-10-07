@@ -39,7 +39,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.9.5';
+    private const PLUGIN_VERSION = '8.9.6';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -126,7 +126,7 @@ class WoocommerceMercadoPago
 
         $locale = $location_splitted[0];
         $country = $location_splitted[1] ?? '';
-        $locale = in_array($country, ['MX']) ? $locale . '_' . $country : $locale;
+        $locale = in_array($country, ['MX', 'CL']) ? $locale . '_' . $country : $locale;
 
         load_textdomain($textDomain, Paths::basePath(Paths::join($this->pluginMetadata('DomainPath'), "woocommerce-mercadopago-$locale.mo")));
     }
@@ -253,6 +253,7 @@ class WoocommerceMercadoPago
         }
 
         $this->setProperties();
+        add_action('mp_reconcile_payment_refund', [$this->orderStatus, 'retryPaymentRefundReconciliation'], 10, 4);
         $this->setPluginSettingsLink();
 
         if (version_compare(PHP_VERSION, self::PLUGIN_MIN_PHP, '<')) {

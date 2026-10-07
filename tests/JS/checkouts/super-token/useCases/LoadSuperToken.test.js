@@ -1,12 +1,13 @@
 const { LoadSuperToken } = require('@super-token/useCases/LoadSuperToken');
 
 const buildSession = (overrides = {}) => ({
-  formatAmount: jest.fn((amount) => `formatted:${amount}`),
+  formatAmount: jest.fn((amount) => amount),
   setCurrentAmount: jest.fn(),
-  currentAmount: jest.fn(() => 'formatted:100.00'),
+  currentAmount: jest.fn(() => '100.00'),
   isFetching: jest.fn(() => false),
   amountHasChanged: jest.fn(() => false),
   emailHasChanged: jest.fn(() => false),
+  cancelInvalidAmount: jest.fn(),
   resetFlow: jest.fn(),
   isMethodsLoaded: jest.fn(() => false),
   renderStored: jest.fn(),
@@ -18,6 +19,7 @@ const buildSession = (overrides = {}) => ({
 
 const buildMetrics = (overrides = {}) => ({
   resetOnAmountChange: jest.fn(),
+  invalidAmount: jest.fn(),
   ...overrides,
 });
 
@@ -25,6 +27,17 @@ const run = (session, metrics, currentAmount = '100.00') =>
   new LoadSuperToken().execute({ session, metrics, currentAmount });
 
 describe('LoadSuperToken', () => {
+  it('Given a normalized MLC integer amount, When loaded, Then it fetches payment methods', async () => {
+    const session = buildSession();
+    const metrics = buildMetrics();
+
+    await run(session, metrics, '1234');
+
+    expect(session.setCurrentAmount).toHaveBeenCalledWith('1234');
+    expect(session.fetchAndRender).toHaveBeenCalledTimes(1);
+    expect(metrics.invalidAmount).not.toHaveBeenCalled();
+  });
+
   it('Given a fresh load, When executed, Then it formats+stores the amount, registers the listener, fetches+renders, and dispatches stale metrics', async () => {
     const session = buildSession();
     const metrics = buildMetrics();
@@ -32,7 +45,7 @@ describe('LoadSuperToken', () => {
     await run(session, metrics);
 
     expect(session.formatAmount).toHaveBeenCalledWith('100.00');
-    expect(session.setCurrentAmount).toHaveBeenCalledWith('formatted:100.00');
+    expect(session.setCurrentAmount).toHaveBeenCalledWith('100.00');
     expect(session.ensureEmailListenerRegistered).toHaveBeenCalledTimes(1);
     expect(session.fetchAndRender).toHaveBeenCalledTimes(1);
     expect(session.dispatchStaleCacheMetricsOnce).toHaveBeenCalledTimes(1);
@@ -80,7 +93,7 @@ describe('LoadSuperToken', () => {
 
     await run(session, metrics);
 
-    expect(session.renderStored).toHaveBeenCalledWith('formatted:100.00');
+    expect(session.renderStored).toHaveBeenCalledWith('100.00');
     expect(session.ensureEmailListenerRegistered).not.toHaveBeenCalled();
     expect(session.fetchAndRender).not.toHaveBeenCalled();
     expect(session.dispatchStaleCacheMetricsOnce).not.toHaveBeenCalled();
@@ -94,5 +107,38 @@ describe('LoadSuperToken', () => {
 
     expect(session.resetFlow).not.toHaveBeenCalled();
     expect(metrics.resetOnAmountChange).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [null, null],
+    ['', null],
+    ['NaN', null],
+    ['abc', null],
+    ['Infinity', 'Infinity'],
+    ['1e309', '1e309'],
+  ])('Given %p formats to %p, When loaded, Then it cancels without fetching', async (input, formatted) => {
+    const session = buildSession({ formatAmount: jest.fn(() => formatted), isFetching: jest.fn(() => true) });
+    const metrics = buildMetrics();
+
+    await run(session, metrics, input);
+
+    expect(session.setCurrentAmount).toHaveBeenCalledWith(formatted);
+    expect(session.cancelInvalidAmount).toHaveBeenCalledTimes(1);
+    expect(metrics.invalidAmount).toHaveBeenCalledTimes(1);
+    expect(session.fetchAndRender).not.toHaveBeenCalled();
+    expect(session.renderStored).not.toHaveBeenCalled();
+  });
+
+  it('Given an invalid load, When a valid amount arrives, Then it fetches normally', async () => {
+    const session = buildSession({ formatAmount: jest.fn().mockReturnValueOnce(null).mockReturnValueOnce('10.50') });
+    const metrics = buildMetrics();
+
+    await run(session, metrics, null);
+    await run(session, metrics, '10.50');
+
+    expect(session.cancelInvalidAmount).toHaveBeenCalledTimes(1);
+    expect(metrics.invalidAmount).toHaveBeenCalledTimes(1);
+    expect(session.fetchAndRender).toHaveBeenCalledTimes(1);
+    expect(session.setCurrentAmount).toHaveBeenLastCalledWith('10.50');
   });
 });

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Mercado Pago payments for WooCommerce\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-"
 "mercadopago\n"
-"POT-Creation-Date: 2026-06-30 16:56+0000\n"
+"POT-Creation-Date: 2026-08-26 21:16+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -13,70 +13,70 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.9\n"
 
-#: ../../src/WoocommerceMercadoPago.php:545,
+#: ../../src/WoocommerceMercadoPago.php:551,
 #: ../../src/Translations/AdminTranslations.php:219
 msgid "Activate WooCommerce"
 msgstr "Activar WooCommerce"
 
-#: ../../src/WoocommerceMercadoPago.php:546,
+#: ../../src/WoocommerceMercadoPago.php:552,
 #: ../../src/Translations/AdminTranslations.php:220
 msgid "Install WooCommerce"
 msgstr "Instalar WooCommerce"
 
-#: ../../src/WoocommerceMercadoPago.php:547,
+#: ../../src/WoocommerceMercadoPago.php:553,
 #: ../../src/Translations/AdminTranslations.php:221
 msgid "See WooCommerce"
 msgstr "Ver WooCommerce"
 
-#: ../../src/WoocommerceMercadoPago.php:549,
+#: ../../src/WoocommerceMercadoPago.php:555,
 #: ../../src/Translations/AdminTranslations.php:210
 msgid "The Mercado Pago module needs an active version of %s in order to work!"
 msgstr ""
 "¡El módulo de Mercado Pago necesita una versión de %s activa para funcionar!"
 
-#: ../../src/Gateways/CustomGateway.php:306
+#: ../../src/Gateways/CustomGateway.php:388
 msgid "Could not load the subscription to change the payment method."
 msgstr "No fue posible cargar la suscripción para cambiar el medio de pago."
 
-#: ../../src/Gateways/CustomGateway.php:321
+#: ../../src/Gateways/CustomGateway.php:403
 msgid "Subscription is not linked to Mercado Pago yet."
 msgstr "La suscripción todavía no está vinculada a Mercado Pago."
 
-#: ../../src/Gateways/CustomGateway.php:329
+#: ../../src/Gateways/CustomGateway.php:411
 msgid "Please enter the new card data to continue."
 msgstr "Ingresá los datos de la nueva tarjeta para continuar."
 
-#: ../../src/Gateways/CustomGateway.php:340
+#: ../../src/Gateways/CustomGateway.php:422
 msgid ""
 "Recurring Payments credential is missing. Contact the store administrator."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:366
+#: ../../src/Gateways/CustomGateway.php:448
 msgid ""
 "We could not process the card change. Please try again in a few minutes."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:379
+#: ../../src/Gateways/CustomGateway.php:461
 msgid "We could not add the new card. Please try a different card."
 msgstr "No pudimos agregar la nueva tarjeta. Probá con otra tarjeta."
 
-#: ../../src/Gateways/CustomGateway.php:389,
-#: ../../src/Gateways/CustomGateway.php:440
+#: ../../src/Gateways/CustomGateway.php:471,
+#: ../../src/Gateways/CustomGateway.php:524
 msgid "Payment method updated successfully."
 msgstr "Medio de pago actualizado correctamente."
 
 #. translators: %s = subscription id
-#: ../../src/Gateways/CustomGateway.php:521
+#: ../../src/Gateways/CustomGateway.php:604
 msgid ""
 "Mercado Pago: critical inconsistency removing the old card on subscription "
 "%s. Please check WC > Status > Logs (channel: mercadopago-subscriptions)."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:913
+#: ../../src/Gateways/CustomGateway.php:995
 msgid "Subscription"
 msgstr "Suscripción"
 
-#: ../../src/Gateways/CustomGateway.php:1047
+#: ../../src/Gateways/CustomGateway.php:1129
 msgid ""
 "Please fill in at least one Pre-approval Access Token to activate Recurring "
 "Payments."
@@ -84,16 +84,16 @@ msgstr ""
 "Complete al menos un Access Token de Pre-aprobación para activar los Pagos "
 "Recurrentes."
 
-#: ../../src/Gateways/CustomGateway.php:1061
+#: ../../src/Gateways/CustomGateway.php:1147
 msgid "Sandbox"
 msgstr "Sandbox"
 
-#: ../../src/Gateways/CustomGateway.php:1062
+#: ../../src/Gateways/CustomGateway.php:1148
 msgid "Production"
 msgstr "Producción"
 
 #. translators: %s: environment name (Production or Sandbox)
-#: ../../src/Gateways/CustomGateway.php:1068
+#: ../../src/Gateways/CustomGateway.php:1154
 msgid ""
 "Please fill in the %s Pre-approval Access Token to activate Recurring "
 "Payments in this environment."
@@ -102,43 +102,43 @@ msgstr ""
 "Recurrentes en este entorno."
 
 #. translators: %s: environment name (Production or Sandbox)
-#: ../../src/Gateways/CustomGateway.php:1130
+#: ../../src/Gateways/CustomGateway.php:1162
 msgid ""
-"Please fill in the %s Pre-approval Public Key to activate Recurring "
-"Payments in this environment."
+"Please fill in the %s Pre-approval Public Key to activate Recurring Payments "
+"in this environment."
 msgstr ""
 "Complete la Clave Pública de Pre-aprobación de %s para activar los Pagos "
 "Recurrentes en este entorno."
 
-#: ../../src/Gateways/CustomGateway.php:1083
+#: ../../src/Gateways/CustomGateway.php:1183
 msgid "Recurring credential"
 msgstr "Credencial de recurrencia"
 
-#: ../../src/Gateways/CustomGateway.php:1090
+#: ../../src/Gateways/CustomGateway.php:1190
 msgid "Test credential"
 msgstr "Credencial de prueba"
 
-#: ../../src/Gateways/CustomGateway.php:1151
+#: ../../src/Gateways/CustomGateway.php:1251
 msgid "Error validating recurring payments credential."
 msgstr "Error al validar la credencial de Pagos Recurrentes."
 
-#: ../../src/Gateways/CustomGateway.php:1146
+#: ../../src/Gateways/CustomGateway.php:1246
 msgid "Pre-approval credentials validated successfully"
 msgstr "Credenciales Pre-aprobación validadas exitosamente"
 
-#: ../../src/Gateways/CustomGateway.php:1147
+#: ../../src/Gateways/CustomGateway.php:1247
 msgid "Application"
 msgstr "Aplicación"
 
-#: ../../src/Gateways/CustomGateway.php:1167
+#: ../../src/Gateways/CustomGateway.php:1267
 msgid "Invalid Token format."
 msgstr "Formato de Token inválido."
 
-#: ../../src/Gateways/CustomGateway.php:1168
+#: ../../src/Gateways/CustomGateway.php:1268
 msgid "Invalid or expired Token."
 msgstr "Token inválido o vencido."
 
-#: ../../src/Gateways/CustomGateway.php:1169
+#: ../../src/Gateways/CustomGateway.php:1269
 msgid ""
 "This Access Token does not belong to the expected application. Contact your "
 "Mercado Pago commercial consultant."
@@ -146,16 +146,16 @@ msgstr ""
 "Este token no pertenece a la aplicación esperada. Contactá a tu consultor "
 "comercial de Mercado Pago."
 
-#: ../../src/Gateways/CustomGateway.php:1170
+#: ../../src/Gateways/CustomGateway.php:1270
 msgid "Credential application not found. Please check if the token is valid."
 msgstr ""
 "Aplicación de la credencial no encontrada. Verificá si el token es válido."
 
-#: ../../src/Gateways/CustomGateway.php:1171
+#: ../../src/Gateways/CustomGateway.php:1271
 msgid "Could not validate the credential at this time. Please try again."
 msgstr "No fue posible validar la credencial ahora. Intentá nuevamente."
 
-#: ../../src/Gateways/CustomGateway.php:1172
+#: ../../src/Gateways/CustomGateway.php:1272
 msgid ""
 "Could not verify application scopes. Please contact your Mercado Pago "
 "commercial consultant."
@@ -163,7 +163,7 @@ msgstr ""
 "No fue posible verificar los alcances (scopes) de la aplicación. Contactá a "
 "tu consultor comercial de Mercado Pago."
 
-#: ../../src/Gateways/CustomGateway.php:1173
+#: ../../src/Gateways/CustomGateway.php:1273
 msgid ""
 "This credential does not have the required Pre-approval scope. Please "
 "request activation from your Mercado Pago commercial consultant."
@@ -171,7 +171,7 @@ msgstr ""
 "Esta credencial no tiene el alcance Pre-approval necesario. Solicitá la "
 "habilitación a tu consultor comercial de Mercado Pago."
 
-#: ../../src/Gateways/CustomGateway.php:1174
+#: ../../src/Gateways/CustomGateway.php:1274
 msgid ""
 "This application is inactive in Mercado Pago. Contact your Mercado Pago "
 "commercial consultant."
@@ -179,7 +179,7 @@ msgstr ""
 "Esta aplicación está inactiva en Mercado Pago. Contactá a tu consultor "
 "comercial de Mercado Pago."
 
-#: ../../src/Gateways/CustomGateway.php:1175
+#: ../../src/Gateways/CustomGateway.php:1275
 msgid ""
 "This application is blocked in Mercado Pago. Contact your Mercado Pago "
 "commercial consultant."
@@ -187,7 +187,7 @@ msgstr ""
 "Esta aplicación está bloqueada en Mercado Pago. Contactá a tu consultor "
 "comercial de Mercado Pago."
 
-#: ../../src/Gateways/CustomGateway.php:1176
+#: ../../src/Gateways/CustomGateway.php:1276
 msgid ""
 "This application is disabled in Mercado Pago. Contact your Mercado Pago "
 "commercial consultant."
@@ -195,40 +195,48 @@ msgstr ""
 "Esta aplicación está deshabilitada en Mercado Pago. Contactá a tu consultor "
 "comercial de Mercado Pago."
 
-#: ../../src/Gateways/CustomGateway.php:1177
+#: ../../src/Gateways/CustomGateway.php:1277
 msgid "Unexpected response when validating the credential."
 msgstr "Respuesta inesperada al validar la credencial."
 
-#: ../../src/Gateways/CustomGateway.php:1180
+#: ../../src/Gateways/CustomGateway.php:1280
 msgid "An error occurred while validating the credential."
 msgstr "Ocurrió un error al validar la credencial."
 
-#: ../../src/Hooks/Subscriptions.php:130
+#: ../../src/Hooks/Subscriptions.php:145
 msgid "Mercado Pago: subscription data incomplete — no subscription ID found."
 msgstr ""
 "Mercado Pago: datos de suscripción incompletos — no se encontró ID de "
 "suscripción."
 
-#: ../../src/Hooks/Subscriptions.php:144
+#: ../../src/Hooks/Subscriptions.php:159
 msgid "Mercado Pago: subscription access token not configured."
 msgstr "Mercado Pago: token de acceso para suscripciones no configurado."
 
-#: ../../src/Hooks/Subscriptions.php:163
+#: ../../src/Hooks/Subscriptions.php:182
+msgid ""
+"Mercado Pago: renewal failed — could not determine conversion rate. WCS will "
+"retry."
+msgstr ""
+"Mercado Pago: la renovación falló — no fue posible determinar el tipo de "
+"cambio. WCS volverá a intentarlo."
+
+#: ../../src/Hooks/Subscriptions.php:197
 msgid ""
 "Mercado Pago: renewal failed due to a connectivity error. WCS will retry."
 msgstr ""
 "Mercado Pago: la renovación falló por un error de conectividad. WCS "
 "reintentará."
 
-#: ../../src/Hooks/Subscriptions.php:171
+#: ../../src/Hooks/Subscriptions.php:205
 msgid "Mercado Pago: subscription credentials invalid or revoked."
 msgstr "Mercado Pago: credenciales de suscripción inválidas o revocadas."
 
-#: ../../src/Hooks/Subscriptions.php:190
+#: ../../src/Hooks/Subscriptions.php:232
 msgid "Mercado Pago: awaiting payment confirmation."
 msgstr "Mercado Pago: esperando confirmación de pago."
 
-#: ../../src/Hooks/Subscriptions.php:282
+#: ../../src/Hooks/Subscriptions.php:330
 msgid ""
 "Your Pre-approval credentials are invalid or lost scope. Subscription "
 "renewals are failing. Go to Settings > Recurring Payments to reconfigure."
@@ -238,7 +246,7 @@ msgstr ""
 "Recurrentes para reconfigurar."
 
 #. translators: %d: number of subscriptions with incomplete data
-#: ../../src/Hooks/Subscriptions.php:295
+#: ../../src/Hooks/Subscriptions.php:343
 msgid ""
 "We found %d subscriptions with incomplete data. Renewals for these "
 "subscriptions will not work. Contact support."
@@ -246,7 +254,7 @@ msgstr ""
 "Encontramos %d suscripciones con datos incompletos. Las renovaciones de "
 "estas suscripciones no funcionarán. Contacte al soporte."
 
-#: ../../src/Hooks/Subscriptions.php:392
+#: ../../src/Hooks/Subscriptions.php:470
 msgid "Subscription renewal"
 msgstr "Renovación de suscripción"
 
@@ -3014,17 +3022,6 @@ msgstr ""
 "Tus credenciales de acceso son incorrectas o expiraron. Renueva tus "
 "credenciales en la configuración de Mercado Pago e intenta de nuevo."
 
-#: ../../src/Translations/AdminTranslations.php:1556
-msgid ""
-"This payment was made using Fast Pay with Mercado Pago and does not yet "
-"support refunds through the WooCommerce order page. Please process the "
-"refund directly from your Mercado Pago payment details page."
-msgstr ""
-"Este pago se realizó usando Pagos rápidos de Mercado Pago y aún no admite "
-"reembolsos a través de la página del pedido de WooCommerce. Por favor, "
-"procesa el reembolso directamente desde la página de detalles del pago en "
-"Mercado Pago."
-
 #: ../../src/Translations/StoreTranslations.php:167
 msgid "discount of"
 msgstr "descuento de"
@@ -4590,7 +4587,8 @@ msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:772
 msgid "Card data is incomplete. Please review and try again."
-msgstr "Los datos de la tarjeta están incompletos. Verificá e intentá nuevamente."
+msgstr ""
+"Los datos de la tarjeta están incompletos. Verificá e intentá nuevamente."
 
 #: ../../src/Translations/StoreTranslations.php:773
 msgid "Pre-approval access token is not configured."
@@ -4704,6 +4702,16 @@ msgstr "Ingresa entre {min} y {max} dígitos para tu número de documento."
 #: ../../src/Translations/StoreTranslations.php:393
 msgid "Enter the {digits} digits of your ID number."
 msgstr "Ingresa los {digits} dígitos de tu número de documento."
+
+#~ msgid ""
+#~ "This payment was made using Fast Pay with Mercado Pago and does not yet "
+#~ "support refunds through the WooCommerce order page. Please process the "
+#~ "refund directly from your Mercado Pago payment details page."
+#~ msgstr ""
+#~ "Este pago se realizó usando Pagos rápidos de Mercado Pago y aún no admite "
+#~ "reembolsos a través de la página del pedido de WooCommerce. Por favor, "
+#~ "procesa el reembolso directamente desde la página de detalles del pago en "
+#~ "Mercado Pago."
 
 #~ msgid ""
 #~ "By disabling it, you will disable all credit cards payments from Mercado "

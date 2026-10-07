@@ -257,6 +257,62 @@ describe('SuperTokenTriggerHandler', () => {
   });
 
   describe('loadSuperToken (LoadSuperToken use case)', () => {
+    it('Given a pending load, When the amount becomes invalid, Then its result is dropped and a later valid amount fetches', async () => {
+      let resolveFirstLoad;
+      const firstLoad = new Promise((resolve) => { resolveFirstLoad = resolve; });
+      const newerMethods = [{ token: 'NEW' }];
+      const authenticator = buildAuthenticator({
+        getAccountPaymentMethods: jest.fn().mockReturnValueOnce(firstLoad).mockResolvedValueOnce(newerMethods),
+      });
+      const { handler, paymentMethods, metrics } = build({ authenticator });
+
+      const pending = handler.loadSuperToken('10.00');
+      expect(handler.isFetchingPaymentMethods).toBe(true);
+
+      await handler.loadSuperToken(null);
+      expect(handler.currentAmount).toBeNull();
+      expect(handler.isFetchingPaymentMethods).toBe(false);
+      expect(paymentMethods.reset).toHaveBeenCalledTimes(1);
+      expect(authenticator.reset).toHaveBeenCalledTimes(1);
+      expect(metrics.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_amount', 'true', '');
+
+      resolveFirstLoad([{ token: 'STALE' }]);
+      await pending;
+      expect(paymentMethods.renderAccountPaymentMethods).not.toHaveBeenCalled();
+
+      await handler.loadSuperToken('10.50');
+      expect(authenticator.getAccountPaymentMethods).toHaveBeenLastCalledWith('10.50', CURRENT_USER_EMAIL);
+      expect(paymentMethods.renderAccountPaymentMethods).toHaveBeenCalledWith(newerMethods, '10.50');
+    });
+
+    it('Given overlapping loads, When Pix is chosen after the older response, Then the newer load cannot render', async () => {
+      let resolveFirstLoad;
+      let resolveSecondLoad;
+      const firstLoad = new Promise((resolve) => { resolveFirstLoad = resolve; });
+      const secondLoad = new Promise((resolve) => { resolveSecondLoad = resolve; });
+      const authenticator = buildAuthenticator({
+        getAmountUsed: jest.fn().mockReturnValue('10.00'),
+        getAccountPaymentMethods: jest.fn().mockReturnValueOnce(firstLoad).mockReturnValueOnce(secondLoad),
+      });
+      const { handler, paymentMethods } = build({ authenticator });
+
+      const pendingFirst = handler.loadSuperToken('10.00');
+      const pendingSecond = handler.loadSuperToken('20.00');
+      expect(handler.isFetchingPaymentMethods).toBe(true);
+
+      resolveFirstLoad(null);
+      await pendingFirst;
+      expect(handler.isFetchingPaymentMethods).toBe(true);
+
+      // MPEventHandler.handlePaymentMethodSelected() cancels the pending load when Pix is selected.
+      if (handler.isFetchingPaymentMethods) handler.cancelLoad();
+      resolveSecondLoad([{ token: 'STALE' }]);
+      await pendingSecond;
+
+      expect(handler.isFetchingPaymentMethods).toBe(false);
+      expect(paymentMethods.renderAccountPaymentMethods).not.toHaveBeenCalled();
+    });
+
     it('Given a fetch already in flight for the same amount and e-mail, When loaded, Then it short-circuits without fetching', async () => {
       const { handler, authenticator, emailListener } = build();
       handler.isFetchingPaymentMethods = true;
@@ -410,7 +466,8 @@ describe('SuperTokenTriggerHandler', () => {
 
       expect(paymentMethods.hideSuperTokenError).toHaveBeenCalledTimes(1);
       expect(authenticator.setSuperTokenValidation).toHaveBeenCalledWith(false);
-      expect(authenticator.reset).toHaveBeenCalledTimes(1);
+      // The reset head and the subsequent invalid-amount load each invalidate the SDK generation.
+      expect(authenticator.reset).toHaveBeenCalledTimes(2);
     });
 
     it('Given stored methods, When reset, Then it remounts the card form', () => {

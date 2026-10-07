@@ -62,16 +62,19 @@ class OrderMetadata
 
     private Logs $logs;
 
+    private RefundReconciliationLock $refundReconciliationLock;
+
     /**
      * Metadata constructor
      *
      * @param OrderMeta $orderMeta
      * @param Logs $logs
      */
-    public function __construct(OrderMeta $orderMeta, Logs $logs)
+    public function __construct(OrderMeta $orderMeta, Logs $logs, ?RefundReconciliationLock $refundReconciliationLock = null)
     {
         $this->orderMeta = $orderMeta;
         $this->logs = $logs;
+        $this->refundReconciliationLock = $refundReconciliationLock ?? new RefundReconciliationLock();
     }
 
     /**
@@ -611,6 +614,66 @@ class OrderMetadata
                 . ' on order ' . $order->get_id() . '; exception type: ' . get_class($e),
                 __CLASS__
             );
+        }
+    }
+
+    /**
+     * Raise only the per-payment refund segment after a validated remote snapshot.
+     * Use the observed local value as a floor and verify the saved value.
+     * Serialize repair writes for the same order/payment. Other refund writers
+     * retain their existing paths (PSW-4413).
+     */
+    public function replaceRefundedAmountForPayment(
+        WC_Order $order,
+        string $paymentId,
+        float $remoteTotal,
+        array $payment
+    ): bool {
+        if (!is_finite($remoteTotal) || $remoteTotal < 0) {
+            return false;
+        }
+
+        $lock = null;
+        try {
+            $lock = $this->refundReconciliationLock->acquire($order->get_id(), $paymentId);
+            if ($lock === null) {
+                return false;
+            }
+
+            $order->read_meta_data(true);
+            $key = PaymentMetadata::getPaymentMetaKey($paymentId);
+            $stored = (string) $order->get_meta($key);
+            $localTotal = $stored === '' ? 0 : (float) (PaymentMetadata::extractPaymentDataFromMeta($stored)->refund ?? 0);
+            $total = max($localTotal, $remoteTotal);
+
+            if ($stored === '') {
+                $updated = PaymentMetadata::formatPaymentMetadata($payment, $total);
+            } elseif (preg_match('/\[Refund [^\]]*\]/', $stored)) {
+                $updated = preg_replace('/\[Refund [^\]]*\]/', '[Refund ' . $total . ']', $stored, 1);
+            } else {
+                $updated = $stored . '/[Refund ' . $total . ']';
+            }
+            // A fixed, linear pattern should not fail in normal operation. Keep the
+            // guard for PCRE resource errors that cannot be reliably unit-tested.
+            // @codeCoverageIgnoreStart
+            if ($updated === null) {
+                return false;
+            }
+            // @codeCoverageIgnoreEnd
+            if ($updated === $stored) {
+                return true;
+            }
+
+            $this->orderMeta->update($order, $key, $updated);
+            $order->read_meta_data(true);
+            return (string) $order->get_meta($key) === $updated;
+        } catch (\Throwable $e) {
+            $this->logs->file->error('Refund reconciliation write failed: ' . get_class($e), __CLASS__);
+            return false;
+        } finally {
+            if ($lock !== null && !$this->refundReconciliationLock->release($lock)) {
+                $this->logs->file->error('Refund reconciliation lock release failed', __CLASS__);
+            }
         }
     }
 

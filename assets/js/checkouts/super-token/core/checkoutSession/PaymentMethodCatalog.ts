@@ -8,6 +8,7 @@
 
 import type { PaymentMethod } from '@super-token/types/external-globals';
 import {
+  CHILE_ACCRONYM,
   MAX_CREDIT_CARDS,
   PAYMENT_METHODS_ORDER_TYPE_ACCOUNT_MONEY_FIRST,
   PAYMENT_METHODS_ORDER_TYPE_CARDS_FIRST,
@@ -22,15 +23,23 @@ import {
 
 export class PaymentMethodCatalog {
   private readonly order: string;
+  private readonly siteId?: string;
 
-  constructor(paymentMethodsOrder?: string) {
+  constructor(paymentMethodsOrder?: string, siteId?: string) {
     this.order = paymentMethodsOrder || PAYMENT_METHODS_ORDER_TYPE_CARDS_FIRST;
+    this.siteId = siteId;
   }
 
   reorderAccountPaymentMethods(accountPaymentMethods: PaymentMethod[]): PaymentMethod[] {
     const limitedCards = this.limitCardOptions(accountPaymentMethods);
     const accountMoneyOption = accountPaymentMethods.find((pm) => isAccountMoney(pm));
-    const consumerCreditsOption = accountPaymentMethods.find((pm) => isConsumerCredits(pm));
+    // Chile has no approved per-installment legal hint/rate content yet (the hint builder
+    // returns '' for that site) — keep Consumer Credits out of the list rather than show
+    // it without the required disclosure.
+    const consumerCreditsOption =
+      this.siteId?.toUpperCase() === CHILE_ACCRONYM
+        ? undefined
+        : accountPaymentMethods.find((pm) => isConsumerCredits(pm));
 
     const isAccountMoneyFirst =
       this.order === PAYMENT_METHODS_ORDER_TYPE_ACCOUNT_MONEY_FIRST && !!accountMoneyOption;

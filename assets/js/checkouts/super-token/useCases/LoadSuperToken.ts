@@ -22,6 +22,7 @@ export interface LoadSuperTokenSession {
   isFetching(): boolean;
   amountHasChanged(): boolean;
   emailHasChanged(): boolean;
+  cancelInvalidAmount(): void;
   resetFlow(): void;
   isMethodsLoaded(): boolean;
   renderStored(amount: string | null): void;
@@ -33,6 +34,7 @@ export interface LoadSuperTokenSession {
 /** Subset of `MPSuperTokenMetrics` emitted by the load orchestration. */
 export interface LoadSuperTokenMetrics {
   resetOnAmountChange(): void;
+  invalidAmount(): void;
 }
 
 export interface LoadSuperTokenContext {
@@ -45,7 +47,15 @@ export class LoadSuperToken {
   async execute(ctx: LoadSuperTokenContext): Promise<void> {
     const { session, metrics, currentAmount } = ctx;
 
-    session.setCurrentAmount(session.formatAmount(currentAmount));
+    const normalizedAmount = session.formatAmount(currentAmount);
+    session.setCurrentAmount(normalizedAmount);
+
+    // MLC has no decimal places; other sites normalize to two.
+    if (normalizedAmount === null || !/^(?:0|[1-9]\d*)(?:\.\d{2})?$/.test(normalizedAmount) || !Number.isFinite(Number(normalizedAmount))) {
+      session.cancelInvalidAmount();
+      metrics.invalidAmount();
+      return;
+    }
 
     // Prevent unnecessary re-fetching of payment methods.
     if (session.isFetching() && !session.amountHasChanged() && !session.emailHasChanged()) {

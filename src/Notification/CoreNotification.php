@@ -145,6 +145,7 @@ class CoreNotification extends AbstractNotification
      */
     private function handleRefundNotification(WC_Order $order, string $oldOrderStatus, $data): void
     {
+        $queuedPayments = [];
         foreach ($data['refunds_notifying'] as $refund) {
             $data['current_refund'] = [];
             $refundId = $refund['id'] ?? null;
@@ -158,11 +159,26 @@ class CoreNotification extends AbstractNotification
             // SIEM parsers (log injection). Used only for logging — lookups keep the raw value.
             $safeRefundId = preg_replace('/[\r\n\t]/', '', (string) $refundId);
 
-            // Refund-id dedup: if this refund_id was already applied (persisted at refund time from
-            // the panel), the refund is fully accounted for — RefundHandler recorded the per-payment
-            // refunded amount at refund time (PSW-4412), and the WooCommerce refund already exists.
-            // Skip the notification to avoid creating a duplicate refund or double-counting the amount.
+            // Skip the WooCommerce refund object, but repair a possible failed panel
+            // metadata write after the panel has finished. Queue once per payment.
             if ($this->orderStatus->isRefundIdApplied($order, (string) $refundId)) {
+                $paymentId = null;
+                foreach ($data['payments_details'] as $payment) {
+                    if (isset($payment['refunds'][$refundId])) {
+                        $paymentId = (string) $payment['id'];
+                        break;
+                    }
+                }
+                if ($paymentId === null) {
+                    $ids = array_filter(array_map('trim', explode(',', (string) $order->get_meta(PaymentMetadata::PAYMENT_IDS_META_KEY))));
+                    if (count($ids) === 1) {
+                        $paymentId = (string) reset($ids);
+                    }
+                }
+                if ($paymentId !== null && !isset($queuedPayments[$paymentId])) {
+                    $this->orderStatus->queuePaymentRefundReconciliation($order, $paymentId, (string) $refundId);
+                    $queuedPayments[$paymentId] = true;
+                }
                 $this->logs->file->info('Refund already applied, skipping notification refund: ' . $safeRefundId, __CLASS__);
                 continue;
             }

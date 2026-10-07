@@ -11,6 +11,7 @@ jest.mock('@super-token/adapters/legacy/globalBridge');
 jest.mock('@super-token/adapters/platform', () => ({
   CoreMonitorMetricsAdapter: jest.fn(),
   createDomainConfig: jest.fn(() => ({ paymentMethodsOrder: 'cards_first' })),
+  resolveMlcCopy: jest.fn((params) => params),
 }));
 jest.mock('@super-token/core/checkoutSession/PaymentMethodCatalog', () => ({
   PaymentMethodCatalog: jest.fn(() => ({ reorderAccountPaymentMethods: (m) => m })),
@@ -75,5 +76,29 @@ describe('composeRuntime', () => {
 
     expect(recompose.current).not.toBe(initial);
     expect(typeof recompose.current).toBe('function');
+  });
+
+  it('Given an MLC hybrid store where an older plugin already built the legacy controller (guard tripped), When composed, Then the legacy controller still receives the bundle MLC copy', async () => {
+    // RN-2: the trigger-handler guard makes buildAndPublishInstances a no-op here, so
+    // this is the only place the legacy controller's copy gets refreshed for this hybrid scenario.
+    const platform = require('@super-token/adapters/platform');
+    platform.resolveMlcCopy.mockImplementation((params) => ({
+      ...params,
+      account_money_text: 'Dinero disponible en Mercado Pago',
+    }));
+    mockResolveVariant.mockResolvedValue('v2');
+    window.mpSdkInstance = {};
+    window.mpSuperTokenTriggerHandler = {};
+    window.mpSuperTokenPaymentMethods = { ACCOUNT_MONEY_TEXT: 'Texto genérico es.mo' };
+
+    await composeRuntime(
+      { site_id: 'MLC', account_money_text: 'Texto genérico es.mo' },
+      recompose,
+      metrics,
+    );
+
+    expect(window.mpSuperTokenPaymentMethods.ACCOUNT_MONEY_TEXT).toBe('Dinero disponible en Mercado Pago');
+
+    delete window.mpSuperTokenPaymentMethods;
   });
 });

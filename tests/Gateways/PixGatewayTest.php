@@ -512,6 +512,167 @@ class PixGatewayTest extends TestCase
 
 
     /**
+     * Test generatePixImage with missing order id returns error image
+     *
+     * @return void
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testGeneratePixImageWithMissingOrderId(): void
+    {
+        $metricDetails = [
+            'site_id' => 'MLB',
+            'environment' => 'homol',
+            'cust_id' => '123456',
+        ];
+
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedGetData')->with('id')->andReturn(null);
+        });
+
+        \WP_Mock::userFunction('wc_get_order')->never();
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLB');
+
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('123456');
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('pix_qr_access', 'missing_order_id', null, 'pix', $metricDetails);
+
+        $this->gateway->mercadopago->helpers->images
+            ->shouldReceive('getErrorImage')
+            ->once()
+            ->andThrow(new \RuntimeException('exit'));
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->gateway->generatePixImage();
+    }
+
+    /**
+     * Test generatePixImage with missing order returns error image
+     *
+     * @return void
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testGeneratePixImageWithMissingOrder(): void
+    {
+        $orderId = 123;
+        $metricDetails = [
+            'site_id' => 'MLB',
+            'environment' => 'homol',
+            'cust_id' => '123456',
+        ];
+
+        $this->mockFormWithCustomSetup(function ($mock) use ($orderId) {
+            $mock->shouldReceive('sanitizedGetData')->with('id')->andReturn($orderId);
+        });
+
+        \WP_Mock::userFunction('wc_get_order')
+            ->with($orderId)
+            ->andReturn(false);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLB');
+
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('123456');
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('pix_qr_access', 'order_not_found', null, 'pix', $metricDetails);
+
+        $this->gateway->mercadopago->helpers->images
+            ->shouldReceive('getErrorImage')
+            ->once()
+            ->andThrow(new \RuntimeException('exit'));
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->gateway->generatePixImage();
+    }
+
+    /**
+     * Test generatePixImage with missing QR code returns error image
+     *
+     * @return void
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testGeneratePixImageWithMissingQrCode(): void
+    {
+        $orderId = 123;
+        $orderKey = 'wc_order_test123';
+        $order = Mockery::mock('WC_Order');
+        $metricDetails = [
+            'site_id' => 'MLB',
+            'environment' => 'homol',
+            'cust_id' => '123456',
+        ];
+
+        $this->mockFormWithCustomSetup(function ($mock) use ($orderId, $orderKey) {
+            $mock->shouldReceive('sanitizedGetData')->with('id')->andReturn($orderId);
+            $mock->shouldReceive('sanitizedGetData')->with('key')->andReturn($orderKey);
+        });
+
+        \WP_Mock::userFunction('wc_get_order')
+            ->with($orderId)
+            ->andReturn($order);
+
+        $order->shouldReceive('get_order_key')
+            ->andReturn($orderKey);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('getPixQrBase64Meta')
+            ->with($order)
+            ->andReturn(null);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getSiteId')
+            ->andReturn('MLB');
+
+        $this->gateway->mercadopago->storeConfig
+            ->shouldReceive('isTestMode')
+            ->andReturn(true);
+
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->andReturn('123456');
+
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with('pix_qr_access', 'qr_not_found', null, 'pix', $metricDetails);
+
+        $this->gateway->mercadopago->helpers->images
+            ->shouldReceive('getErrorImage')
+            ->once()
+            ->andThrow(new \RuntimeException('exit'));
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->gateway->generatePixImage();
+    }
+
+    /**
      * Test generatePixImage with array qrCodeBase64
      *
      * @return void
@@ -524,6 +685,11 @@ class PixGatewayTest extends TestCase
         $orderKey = 'wc_order_test123';
         $order = Mockery::mock('WC_Order');
         $qrCodeBase64 = ['base64_string_1', 'base64_string_2'];
+        $metricDetails = [
+            'site_id' => 'MLB',
+            'environment' => 'homol',
+            'cust_id' => '123456',
+        ];
 
         $this->mockFormWithCustomSetup(function ($mock) use ($orderId, $orderKey) {
             $mock->shouldReceive('sanitizedGetData')->with('id')->andReturn($orderId);
@@ -557,7 +723,7 @@ class PixGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('pix_qr_access', 'authorized', null, 'pix', Mockery::type('array'));
+            ->with('pix_qr_access', 'authorized', null, 'pix', $metricDetails);
 
         $this->gateway->mercadopago->helpers->images
             ->shouldReceive('getBase64Image')
@@ -582,6 +748,11 @@ class PixGatewayTest extends TestCase
         $orderKey = 'wc_order_test123';
         $order = Mockery::mock('WC_Order');
         $qrCodeBase64 = 'base64_string';
+        $metricDetails = [
+            'site_id' => 'MLB',
+            'environment' => 'homol',
+            'cust_id' => '123456',
+        ];
 
         $this->mockFormWithCustomSetup(function ($mock) use ($orderId, $orderKey) {
             $mock->shouldReceive('sanitizedGetData')->with('id')->andReturn($orderId);
@@ -615,7 +786,7 @@ class PixGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('pix_qr_access', 'authorized', null, 'pix', Mockery::type('array'));
+            ->with('pix_qr_access', 'authorized', null, 'pix', $metricDetails);
 
         $this->gateway->mercadopago->helpers->images
             ->shouldReceive('getBase64Image')
@@ -638,6 +809,11 @@ class PixGatewayTest extends TestCase
     {
         $orderId = 123;
         $order = Mockery::mock('WC_Order');
+        $metricDetails = [
+            'site_id' => 'MLB',
+            'environment' => 'homol',
+            'cust_id' => '123456',
+        ];
 
         $this->mockFormWithCustomSetup(function ($mock) use ($orderId) {
             $mock->shouldReceive('sanitizedGetData')->with('id')->andReturn($orderId);
@@ -666,7 +842,7 @@ class PixGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('pix_qr_access', 'invalid_order_key', null, 'pix', Mockery::type('array'));
+            ->with('pix_qr_access', 'invalid_order_key', null, 'pix', $metricDetails);
 
         // getErrorImage() calls exit() in production, so we simulate it with an exception
         $this->gateway->mercadopago->helpers->images
@@ -690,6 +866,11 @@ class PixGatewayTest extends TestCase
     {
         $orderId = 123;
         $order = Mockery::mock('WC_Order');
+        $metricDetails = [
+            'site_id' => 'MLB',
+            'environment' => 'homol',
+            'cust_id' => '123456',
+        ];
 
         $this->mockFormWithCustomSetup(function ($mock) use ($orderId) {
             $mock->shouldReceive('sanitizedGetData')->with('id')->andReturn($orderId);
@@ -715,7 +896,7 @@ class PixGatewayTest extends TestCase
         $this->gateway->datadog
             ->shouldReceive('sendEvent')
             ->once()
-            ->with('pix_qr_access', 'missing_order_key', null, 'pix', Mockery::type('array'));
+            ->with('pix_qr_access', 'missing_order_key', null, 'pix', $metricDetails);
 
         // getErrorImage() calls exit() in production, so we simulate it with an exception
         $this->gateway->mercadopago->helpers->images

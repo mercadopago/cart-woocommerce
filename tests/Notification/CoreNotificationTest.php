@@ -147,8 +147,8 @@ class CoreNotificationTest extends TestCase
 
     /**
      * When the refund_id was already applied (persisted at refund time by RefundHandler, which
-     * also recorded the per-payment refunded amount), the notification must skip it entirely:
-     * no WooCommerce refund, no metadata sync, no save.
+     * also recorded the per-payment refunded amount), the notification skips the WooCommerce
+     * refund while scheduling a repair for a possible failed amount write.
      */
     public function testHandleRefundNotificationSkipsWhenRefundAlreadyApplied(): void
     {
@@ -167,7 +167,7 @@ class CoreNotificationTest extends TestCase
             'payments_details' => [
                 [
                     'id'              => '123456',
-                    'refunds'         => [],
+                    'refunds'         => [$refundId => ['id' => $refundId]],
                     'payment_type_id' => 'credit_card',
                 ],
             ],
@@ -182,6 +182,8 @@ class CoreNotificationTest extends TestCase
             ->once()
             ->with($order, $refundId)
             ->andReturn(true);
+        $orderStatusMock->shouldReceive('queuePaymentRefundReconciliation')
+            ->once()->with($order, '123456', $refundId);
 
         $fileMock = Mockery::mock(File::class);
         $fileMock->shouldIgnoreMissing();
@@ -196,14 +198,58 @@ class CoreNotificationTest extends TestCase
             Mockery::mock(Store::class),
         ])->makePartial();
 
-        // The refund is fully accounted for at refund time (RefundHandler), so the dedup skip
-        // must NOT touch payment metadata or the order — it only logs and continues.
+        // The applied ID must not create another WooCommerce refund or increment metadata.
         $notification->shouldNotReceive('updatePaymentDetails');
 
         $notification->handleSuccessfulRequestInternal($data, $order);
 
         // Behavioural guarantees (isRefundIdApplied once, no updatePaymentDetails, no save,
         // wc_create_refund never) are enforced by the Mockery/WP_Mock expectations verified here.
+        \WP_Mock::tearDown();
+        $this->assertTrue(true);
+    }
+
+    public function testAppliedRefundUsesSingleOrderPaymentWhenNotificationOmitsMapping(): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('wc_create_refund', ['times' => 0]);
+
+        $refundId = '99999';
+        $data = [
+            'refunds_notifying' => [['id' => $refundId, 'amount' => 10.00]],
+            'payments_details' => [[
+                'id' => '123456',
+                'refunds' => [],
+                'payment_type_id' => 'credit_card',
+            ]],
+        ];
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_status')->andReturn('processing');
+        $order->shouldReceive('get_meta')->with(PaymentMetadata::PAYMENT_IDS_META_KEY)
+            ->once()->andReturn('123456');
+        $order->shouldNotReceive('save');
+
+        $orderStatusMock = Mockery::mock(OrderStatus::class);
+        $orderStatusMock->shouldReceive('isRefundIdApplied')
+            ->once()->with($order, $refundId)->andReturn(true);
+        $orderStatusMock->shouldReceive('queuePaymentRefundReconciliation')
+            ->once()->with($order, '123456', $refundId);
+
+        $fileMock = Mockery::mock(File::class);
+        $fileMock->shouldIgnoreMissing();
+        $logsMock = Mockery::mock(Logs::class);
+        $logsMock->file = $fileMock;
+        $notification = Mockery::mock(CoreNotification::class, [
+            Mockery::mock(MercadoPagoGatewayInterface::class),
+            $logsMock,
+            $orderStatusMock,
+            Mockery::mock(Seller::class),
+            Mockery::mock(Store::class),
+        ])->makePartial();
+        $notification->shouldNotReceive('updatePaymentDetails');
+
+        $notification->handleSuccessfulRequestInternal($data, $order);
+
         \WP_Mock::tearDown();
         $this->assertTrue(true);
     }
@@ -235,6 +281,7 @@ class CoreNotificationTest extends TestCase
                     // The new refund carries a panel origin so shouldProcessRefund() returns
                     // false and the flow lands on updatePaymentDetails (no processStatus mock needed).
                     'refunds'         => [
+                        $appliedId => ['id' => $appliedId],
                         $newId => ['id' => $newId, 'amount' => 7.00, 'metadata' => ['origin' => 'painel_woocommerce']],
                     ],
                 ],
@@ -250,6 +297,8 @@ class CoreNotificationTest extends TestCase
         // isRefundIdApplied MUST be queried for BOTH ids — proof the loop continued past the skip.
         $orderStatusMock->shouldReceive('isRefundIdApplied')->once()->with($order, $appliedId)->andReturn(true);
         $orderStatusMock->shouldReceive('isRefundIdApplied')->once()->with($order, $newId)->andReturn(false);
+        $orderStatusMock->shouldReceive('queuePaymentRefundReconciliation')
+            ->once()->with($order, '123456', $appliedId);
 
         $fileMock = Mockery::mock(File::class);
         $fileMock->shouldIgnoreMissing();

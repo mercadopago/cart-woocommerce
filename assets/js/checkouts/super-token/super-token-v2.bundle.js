@@ -210,7 +210,7 @@ class MelidataAdapter {
 /**
  * Injected into the init telemetry as `js_version`. Kept in sync with the CDN bundle's version.
  */
-const SUPER_TOKEN_JS_VERSION = '1.2.6';
+const SUPER_TOKEN_JS_VERSION = '1.2.7';
 const V2_VARIANT = 'v2';
 const V21_VARIANT = 'v2.1';
 
@@ -1076,6 +1076,43 @@ function createDomainConfig(params, variant) {
     }
   };
 }
+;// ./assets/js/checkouts/super-token/adapters/platform/resolveMlcCopy.ts
+/** Chilean checkout copy shipped with the CDN bundle for existing plugin installations. */
+const MLC_COPY = {
+  accountMoneyText: 'Dinero disponible en Mercado Pago',
+  accountMoneyBalanceText: 'Suficiente para pagar esta compra.',
+  interestFreePartOneText: 'Hasta',
+  interestFreePartTwoText: 'cuotas sin interés',
+  interestFreeOptionText: 'sin interés',
+  bankInterestHintText: 'Si hay intereses, los aplicará y cobrará tu banco.'
+};
+/** Preserve all other sites and all unrelated localized params unchanged. */
+function resolveMlcCopy(params) {
+  var _source$input_helper_, _helper$installments;
+  if (typeof params.site_id !== 'string' || params.site_id.toUpperCase() !== 'MLC') {
+    return params;
+  }
+  const source = params;
+  const helper = (_source$input_helper_ = source.input_helper_message) !== null && _source$input_helper_ !== void 0 ? _source$input_helper_ : {};
+  const installments = (_helper$installments = helper.installments) !== null && _helper$installments !== void 0 ? _helper$installments : {};
+  const interestFreeOptionText = MLC_COPY.interestFreeOptionText;
+  return {
+    ...params,
+    account_money_text: MLC_COPY.accountMoneyText,
+    account_money_balance_text: MLC_COPY.accountMoneyBalanceText,
+    interest_free_part_one_text: MLC_COPY.interestFreePartOneText,
+    interest_free_part_two_text: MLC_COPY.interestFreePartTwoText,
+    interest_free_option_text: interestFreeOptionText,
+    input_helper_message: {
+      ...helper,
+      installments: {
+        ...installments,
+        interest_free_option_text: interestFreeOptionText,
+        bank_interest_hint_text: MLC_COPY.bankInterestHintText
+      }
+    }
+  };
+}
 ;// ./assets/js/checkouts/super-token/adapters/platform/createPlatformAdapters.ts
 
 
@@ -1362,6 +1399,7 @@ class InitializationHealthChecker {
 
 
 
+
 ;// ./assets/js/checkouts/super-token/useCases/FinalizeSuperTokenPayment.ts
 /**
  * Canonical Super Token finalization (RN-1) — the single source shared by the Classic
@@ -1552,11 +1590,14 @@ class GetAccountPaymentMethods {
     } = ctx;
     try {
       const authenticator = await session.buildAuthenticator(amount, buyerEmail);
-      if (!authenticator) {
+      if (!session.isCurrentLoad() || !authenticator) {
         return null;
       }
       session.storeAuthenticator(authenticator);
       const isSimplified = await session.getSimplifiedAuth(authenticator);
+      if (!session.isCurrentLoad()) {
+        return null;
+      }
       if (!isSimplified) {
         metrics.isNotSimplifiedAuth();
         return null;
@@ -1564,18 +1605,26 @@ class GetAccountPaymentMethods {
       session.notifyBehaviorTrackingInit();
       metrics.canUseSuperToken(true);
       const fastPaymentToken = await session.getFastPaymentToken(authenticator);
+      if (!session.isCurrentLoad()) {
+        return null;
+      }
       if (!fastPaymentToken) {
         metrics.cannotGetFastPaymentToken();
         return null;
       }
       session.storeFastPaymentToken(fastPaymentToken);
       const accountPaymentMethods = await session.fetchAccountPaymentMethods(fastPaymentToken);
+      if (!session.isCurrentLoad()) {
+        return null;
+      }
       if (!accountPaymentMethods?.data?.length) {
         throw new Error(ErrorClassification_MPSuperTokenErrorCodes.EMPTY_ACCOUNT_PAYMENT_METHODS);
       }
       return accountPaymentMethods.data;
     } catch (error) {
-      metrics.errorToGetAccountPaymentMethods(error);
+      if (session.isCurrentLoad()) {
+        metrics.errorToGetAccountPaymentMethods(error);
+      }
       return null;
     }
   }
@@ -1674,6 +1723,8 @@ class FetchAndRenderPaymentMethods {
       return;
     }
     metrics.emailCaptured();
+    // Every new fetch supersedes the previous one, even when the previous SDK call is still pending.
+    session.bumpLoadGeneration();
     session.setFetching(true);
     const generation = session.getLoadGeneration();
     let paymentMethods;
@@ -1798,7 +1849,15 @@ class LoadSuperToken {
       metrics,
       currentAmount
     } = ctx;
-    session.setCurrentAmount(session.formatAmount(currentAmount));
+    const normalizedAmount = session.formatAmount(currentAmount);
+    session.setCurrentAmount(normalizedAmount);
+
+    // MLC has no decimal places; other sites normalize to two.
+    if (normalizedAmount === null || !/^(?:0|[1-9]\d*)(?:\.\d{2})?$/.test(normalizedAmount) || !Number.isFinite(Number(normalizedAmount))) {
+      session.cancelInvalidAmount();
+      metrics.invalidAmount();
+      return;
+    }
 
     // Prevent unnecessary re-fetching of payment methods.
     if (session.isFetching() && !session.amountHasChanged() && !session.emailHasChanged()) {
@@ -1859,6 +1918,10 @@ class LegacyLoadOrchestrationSession {
   emailHasChanged() {
     return this.triggerHandler.emailHasChanged();
   }
+  cancelInvalidAmount() {
+    this.triggerHandler.cancelLoad();
+    this.triggerHandler.mpSuperTokenAuthenticator.reset();
+  }
   resetFlow() {
     this.triggerHandler.resetFlow();
   }
@@ -1882,6 +1945,7 @@ class LegacyLoadOrchestrationSession {
 
 /** Legacy `sendMetric` name from super-token-trigger-handler.js:294. */
 const RESET_ON_AMOUNT_CHANGE_METRIC = 'super_token_reset_on_amount_change';
+const SKIPPED_INVALID_AMOUNT_METRIC = 'super_token_skipped_invalid_amount';
 
 /** The subset of the legacy `MPSuperTokenMetrics` the load orchestration reports through. */
 
@@ -1891,7 +1955,8 @@ const RESET_ON_AMOUNT_CHANGE_METRIC = 'super_token_reset_on_amount_change';
  */
 function createLoadSuperTokenMetrics(metrics) {
   return {
-    resetOnAmountChange: () => metrics.sendMetric(RESET_ON_AMOUNT_CHANGE_METRIC, 'true', '')
+    resetOnAmountChange: () => metrics.sendMetric(RESET_ON_AMOUNT_CHANGE_METRIC, 'true', ''),
+    invalidAmount: () => metrics.sendMetric(SKIPPED_INVALID_AMOUNT_METRIC, 'true', '')
   };
 }
 ;// ./assets/js/checkouts/super-token/useCases/CancelLoad.ts
@@ -2638,9 +2703,13 @@ const AUTHORIZE_PAYMENT_SDK_METHOD = 'authorizePayment';
 /** The one method of the legacy controller the load flow needs — the account fetch. */
 
 class LegacyAuthenticatorSession {
-  constructor(authenticator, paymentMethods) {
+  constructor(authenticator, paymentMethods, isCurrent = () => true) {
     this.authenticator = authenticator;
     this.paymentMethods = paymentMethods;
+    this.isCurrent = isCurrent;
+  }
+  isCurrentLoad() {
+    return this.isCurrent();
   }
   buildAuthenticator(amount, buyerEmail) {
     return this.authenticator.buildAuthenticator(amount, buyerEmail);
@@ -3642,6 +3711,7 @@ const MERCADO_PAGO_ISSUER_NAME = 'mercado pago';
 const COLOMBIA_ACCRONYM = 'MCO';
 const MEXICO_ACCRONYM = 'MLM';
 const BRAZIL_ACCRONYM = 'MLB';
+const CHILE_ACCRONYM = 'MLC';
 const ARGENTINA_ACCRONYM = 'MLA';
 
 /** Sites whose installment titles carry the third-party bank-interest asterisk (RN-5). */
@@ -3716,6 +3786,7 @@ const SHARED_STYLES = {
   INSTALLMENTS_SELECT_CONTAINER: 'mp-checkout-custom-installments-select-container',
   INPUT_LABEL: 'mp-input-label',
   SELECT_INPUT: 'mp-custom-checkout-select-input',
+  BANK_INTEREST_HINT: 'mp-installments-bank-interest-hint',
   INSTALLMENTS_TAX_INFO: 'mp-installments-tax-info',
   INSTALLMENTS_ERROR: 'mp-super-token-error',
   INSTALLMENTS_LABEL_ERROR: 'mp-super-token-label-error',
@@ -3772,6 +3843,8 @@ function buildConsumerCreditsName(siteId) {
       return `Meses sin Tarjeta con Mercado${NBSP}Pago`;
     case BRAZIL_ACCRONYM:
       return `Linha de Crédito Mercado${NBSP}Pago`;
+    case CHILE_ACCRONYM:
+      return `Cuotas sin Tarjeta de Mercado${NBSP}Pago`;
     default:
       return `Cuotas sin Tarjeta con Mercado${NBSP}Pago`;
   }
@@ -4175,6 +4248,7 @@ function syncCardInstallments(value) {
 
 
 
+
 const INSTALLMENTS_FILLED_METHOD_TYPE = 'credit_card';
 const DISPATCHER_MISSING_CONTEXT = 'super_token_installments_setup';
 
@@ -4222,10 +4296,10 @@ function buildInstallmentsField(paymentMethod, deps, options) {
     })]
   });
 }
-function buildCardDetailsSection(paymentMethod, deps, installmentOptions) {
+function buildCardDetailsSection(paymentMethod, deps, options) {
   const wrapperChildren = [];
   if (PaymentMethodClassifier_isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
-    wrapperChildren.push(buildInstallmentsField(paymentMethod, deps, installmentOptions(paymentMethod)));
+    wrapperChildren.push(buildInstallmentsField(paymentMethod, deps, options));
   }
   wrapperChildren.push(buildSecurityCodeField(paymentMethod, deps));
   const wrapper = el('div', {
@@ -4237,7 +4311,24 @@ function buildCardDetailsSection(paymentMethod, deps, installmentOptions) {
     children: [wrapper]
   });
 }
-function wireInstallments(row, paymentMethod, installments, session) {
+function updateBankInterestHint(row, paymentMethod, selectedValue, options, deps) {
+  row.querySelector(`.${SHARED_STYLES.BANK_INTEREST_HINT}`)?.remove();
+  const selectedOption = options.find(option => option.value === selectedValue);
+  const shouldRender = COUNTRIES_WITH_BANK_INTEREST_DISCLAIMER.includes(deps.siteId) && !!deps.copy.bankInterestHintText && selectedOption?.hasBankInterestDisclaimer === true;
+  if (!shouldRender) {
+    return;
+  }
+  const taxInfo = row.querySelector(`#${CSS.escape(taxInfoElementId(paymentMethod))}`);
+  const container = taxInfo?.parentElement;
+  if (!container) {
+    return;
+  }
+  container.insertBefore(el('div', {
+    classes: [SHARED_STYLES.BANK_INTEREST_HINT],
+    text: `*${deps.copy.bankInterestHintText}`
+  }), taxInfo);
+}
+function wireInstallments(row, paymentMethod, installments, options, deps, session) {
   const dropdown = findInstallmentsSelect(row, paymentMethod);
   if (!dropdown) {
     return;
@@ -4245,6 +4336,7 @@ function wireInstallments(row, paymentMethod, installments, session) {
   session.reportInstallmentDispatcherMissing(DISPATCHER_MISSING_CONTEXT);
   dropdown.addEventListener('change', event => {
     const selected = event.target.value;
+    updateBankInterestHint(row, paymentMethod, selected, options, deps);
     if (!selected) {
       return;
     }
@@ -4258,16 +4350,18 @@ function wireInstallments(row, paymentMethod, installments, session) {
   });
 
   // Restore the tax info + shared field when a value is already selected (e.g. after a payment error).
+  updateBankInterestHint(row, paymentMethod, dropdown.value, options, deps);
   if (dropdown.value) {
     syncCardInstallments(dropdown.value);
     session.updateInstallmentsTaxInfo(dropdown.value, taxInfoElementId(paymentMethod), installments);
   }
 }
 function buildCardRow(paymentMethod, deps, presentation, session, installmentOptions) {
+  const options = PaymentMethodClassifier_isCreditCard(paymentMethod) && paymentMethod.installments?.length ? installmentOptions(paymentMethod) : [];
   const row = buildInteractiveRow(paymentMethod, deps, presentation, session);
-  row.appendChild(buildCardDetailsSection(paymentMethod, deps, installmentOptions));
+  row.appendChild(buildCardDetailsSection(paymentMethod, deps, options));
   if (PaymentMethodClassifier_isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
-    wireInstallments(row, paymentMethod, paymentMethod.installments, session);
+    wireInstallments(row, paymentMethod, paymentMethod.installments, options, deps, session);
   }
   return row;
 }
@@ -5027,7 +5121,7 @@ function createVariantView(variant, deps) {
  */
 
 function createVariantViewDeps(params, emailListener) {
-  var _params$saved_cards_t, _params$saved_card_ti, _params$mp_methods_ti, _params$saved_payment, _params$account_money, _params$mercado_pago_, _params$mp_logo_blue_, _params$mp_logo_dark_;
+  var _params$saved_cards_t, _params$saved_card_ti, _params$mp_methods_ti, _params$saved_payment, _params$account_money, _params$mercado_pago_, _params$input_helper_, _params$mp_logo_blue_, _params$mp_logo_dark_;
   return {
     // Uppercased once here so the views compare it directly (VariantViewDeps contract).
     siteId: params.site_id.toUpperCase(),
@@ -5053,6 +5147,7 @@ function createVariantViewDeps(params, emailListener) {
       accountMoneyAvailableText: params.account_money_available_text,
       installmentsInputTitle: params.input_title.installments,
       installmentsRequiredMessage: params.input_helper_message.installments.required,
+      bankInterestHintText: (_params$input_helper_ = params.input_helper_message.installments.bank_interest_hint_text) !== null && _params$input_helper_ !== void 0 ? _params$input_helper_ : '',
       securityCodeInputTitle: params.security_code_input_title_text,
       securityCodeTooltip3Digits: params.security_code_tooltip_text_3_digits,
       securityCodeTooltip4Digits: params.security_code_tooltip_text_4_digits,
@@ -5304,6 +5399,7 @@ class SuperTokenPaymentMethods {
     return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
   reset() {
+    this.escSelectionGeneration++;
     const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
     this.isRendering = false;
     this.paymentMethods = [];
@@ -5727,6 +5823,7 @@ class SuperTokenPaymentMethods {
     })) {
       return;
     }
+    this.escSelectionGeneration++;
     this.mpSuperTokenMetrics.sendMetric('super_token_withdraw', 'true', '');
     this.emitEventFromSelectPaymentMethod({
       id: this.NEW_CARD_TYPE
@@ -5825,13 +5922,12 @@ class SuperTokenPaymentMethods {
   parseMsToSeconds(milliseconds) {
     return (milliseconds / 1000).toFixed(2);
   }
-  async fetchPaymentMethod(paymentMethod, paymentMethodElement) {
+  async fetchPaymentMethod(paymentMethod) {
     const currentPaymentMethodIdentifier = this.paymentMethodIdentifier(paymentMethod);
     const REQUEST_START_TIME = Date.now();
     const result = await Promise.race([this.mpSdkInstance.getAccountPaymentMethod(this.getSuperToken(), paymentMethod.token), this.timeoutRequest(ErrorClassification_MPSuperTokenErrorCodes.GET_PAYMENT_METHOD_TIMEOUT_ERROR, this.GET_PAYMENT_METHOD_TIMEOUT_MS)]);
     const updatedPaymentMethod = result?.data;
     if (!updatedPaymentMethod) throw new Error(ErrorClassification_MPSuperTokenErrorCodes.FETCH_PAYMENT_METHOD_NOT_FOUND);
-    paymentMethodElement.setAttribute('data-cvv-is-required-double-check', 'true');
     this.mpSuperTokenMetrics.getPaymentMethodLoadingTime(currentPaymentMethodIdentifier, this.parseMsToSeconds(Date.now() - REQUEST_START_TIME));
     return updatedPaymentMethod;
   }
@@ -5864,15 +5960,19 @@ class SuperTokenPaymentMethods {
     }
   }
   async handleWithEscPaymentMethod(paymentMethod, paymentMethodElement) {
+    // Every selection supersedes an ESC lookup still pending for an earlier one.
+    const currentGeneration = ++this.escSelectionGeneration;
     try {
       if (this.shouldFetchPaymentMethodAgain(paymentMethod, paymentMethodElement)) {
         this.showDetailsSkeleton(paymentMethodElement);
-        const currentGeneration = ++this.escSelectionGeneration;
-        const updatedPaymentMethod = await this.fetchPaymentMethod(paymentMethod, paymentMethodElement);
+        const updatedPaymentMethod = await this.fetchPaymentMethod(paymentMethod);
         if (currentGeneration !== this.escSelectionGeneration) {
           this.hideDetailsSkeleton(paymentMethodElement);
           return null;
         }
+
+        // Only an accepted response marks the card as checked; a discarded one must be fetched again.
+        paymentMethodElement.setAttribute('data-cvv-is-required-double-check', 'true');
         this.updatePaymentMethodInList(updatedPaymentMethod);
         this.storeActivePaymentMethod(updatedPaymentMethod);
         if (!this.securityCodeIsRequired('security_code_settings' in updatedPaymentMethod ? updatedPaymentMethod.security_code_settings : undefined)) {
@@ -5890,6 +5990,9 @@ class SuperTokenPaymentMethods {
       }
     } catch (error) {
       this.hideDetailsSkeleton(paymentMethodElement);
+      if (currentGeneration !== this.escSelectionGeneration) {
+        return null;
+      }
       if (error?.message === ErrorClassification_MPSuperTokenErrorCodes.GET_PAYMENT_METHOD_TIMEOUT_ERROR) {
         this.mpSuperTokenMetrics.getPaymentMethodLoadingTime(this.paymentMethodIdentifier(paymentMethod), this.parseMsToSeconds(this.GET_PAYMENT_METHOD_TIMEOUT_MS));
         this.mpSuperTokenMetrics.fetchPaymentMethodTimeout(this.paymentMethodIdentifier(paymentMethod));
@@ -6409,25 +6512,31 @@ class SuperTokenPaymentMethods {
 
 
 
+
 /** Superset of the metrics the load use case, the submit use case and the primitives emit. */
 
 class SuperTokenAuthenticator {
   SUPER_TOKEN_VALIDATION_ELEMENT_ID = 'super_token_validation';
   AUTHORIZED_PSEUDOTOKEN_ELEMENT_ID = 'authorized_pseudotoken';
   AUTHENTICATOR_VERSION = 2;
+  DEFAULT_AMOUNT_DECIMAL_PLACES = 2;
+  MLC_AMOUNT_DECIMAL_PLACES = 0;
   amountUsed = null;
   emailUsed = null;
   authenticator = null;
   fastPaymentToken = null;
+  loadGeneration = 0;
   getAccountPaymentMethodsUseCase = new GetAccountPaymentMethods();
   authorizePaymentUseCase = new AuthorizePayment();
-  constructor(mpSdkInstance, paymentMethods, metrics, platformId) {
+  constructor(mpSdkInstance, paymentMethods, metrics, platformId, siteId) {
     this.mpSdkInstance = mpSdkInstance;
     this.paymentMethods = paymentMethods;
     this.metrics = metrics;
     this.platformId = platformId;
+    this.siteId = siteId;
   }
   reset() {
+    this.loadGeneration++;
     this.authenticator = null;
     this.fastPaymentToken = null;
   }
@@ -6453,7 +6562,8 @@ class SuperTokenAuthenticator {
     this.fastPaymentToken = token;
   }
   formatAmount(amount = '') {
-    const rawValue = amount?.replace(/[^\d.,]/g, '');
+    if (typeof amount !== 'string') return null;
+    const rawValue = amount.replace(/[^\d.,]/g, '');
     if (!rawValue) return null;
     const lastCommaIndex = rawValue.lastIndexOf(',');
     const lastDotIndex = rawValue.lastIndexOf('.');
@@ -6464,10 +6574,24 @@ class SuperTokenAuthenticator {
       }
       return match === '.' ? '.' : '';
     });
-    const value = parseFloat(normalizedValue);
-    return isNaN(value) ? null : value.toFixed(2);
+    if (!/^\d+(?:\.\d+)?$/.test(normalizedValue)) return null;
+    const value = Number(normalizedValue);
+    const decimalPlaces = this.siteId === CHILE_ACCRONYM ? this.MLC_AMOUNT_DECIMAL_PLACES : this.DEFAULT_AMOUNT_DECIMAL_PLACES;
+    if (!Number.isFinite(value)) return null;
+    const formatted = value.toFixed(decimalPlaces);
+    return this.isNormalizedAmount(formatted) ? formatted : null;
+  }
+
+  // MLC has no decimal places; other sites use exactly two.
+  isNormalizedAmount(amount) {
+    const normalizedPattern = this.siteId === CHILE_ACCRONYM ? /^(?:0|[1-9]\d*)$/ : /^(?:0|[1-9]\d*)\.\d{2}$/;
+    return normalizedPattern.test(amount) && Number.isFinite(Number(amount));
   }
   async buildAuthenticator(amount, buyerEmail) {
+    if (amount === null || !this.isNormalizedAmount(amount)) {
+      this.metrics.sendMetric('super_token_skipped_invalid_amount', 'true', '');
+      return null;
+    }
     try {
       var _window$callSdkWithMe;
       this.amountUsed = amount;
@@ -6519,8 +6643,9 @@ class SuperTokenAuthenticator {
     }
   }
   getAccountPaymentMethods(amount, buyerEmail) {
+    const generation = ++this.loadGeneration;
     return this.getAccountPaymentMethodsUseCase.execute({
-      session: new LegacyAuthenticatorSession(this, this.paymentMethods),
+      session: new LegacyAuthenticatorSession(this, this.paymentMethods, () => generation === this.loadGeneration),
       metrics: this.metrics,
       amount,
       buyerEmail
@@ -6685,8 +6810,8 @@ class SuperTokenTriggerHandler {
   LOADING_ANIMATION_FINISH_DELAY = 500;
   AVOID_INSTANT_REMOVAL_LOADER_DELAY = 500;
 
-  // State. `currentAmount` is the formatted amount; formatAmount returns null for an empty/NaN
-  // input (parity with the legacy) and that null flows through to the SDK exactly as before.
+  // State. `currentAmount` is the formatted amount; invalid input normalizes to null.
+  // LoadSuperToken cancels that attempt before the SDK receives the amount.
   wcBuyerEmail = null;
   currentAmount = '';
   isAlreadyListeningForm = false;
@@ -6852,13 +6977,17 @@ class SuperTokenDebounce {
 
 
 class PaymentMethodCatalog {
-  constructor(paymentMethodsOrder) {
+  constructor(paymentMethodsOrder, siteId) {
     this.order = paymentMethodsOrder || PAYMENT_METHODS_ORDER_TYPE_CARDS_FIRST;
+    this.siteId = siteId;
   }
   reorderAccountPaymentMethods(accountPaymentMethods) {
     const limitedCards = this.limitCardOptions(accountPaymentMethods);
     const accountMoneyOption = accountPaymentMethods.find(pm => isAccountMoney(pm));
-    const consumerCreditsOption = accountPaymentMethods.find(pm => isConsumerCredits(pm));
+    // Chile has no approved per-installment legal hint/rate content yet (the hint builder
+    // returns '' for that site) — keep Consumer Credits out of the list rather than show
+    // it without the required disclosure.
+    const consumerCreditsOption = this.siteId?.toUpperCase() === CHILE_ACCRONYM ? undefined : accountPaymentMethods.find(pm => isConsumerCredits(pm));
     const isAccountMoneyFirst = this.order === PAYMENT_METHODS_ORDER_TYPE_ACCOUNT_MONEY_FIRST && !!accountMoneyOption;
     const moneySpecializedOptions = [];
     if (accountMoneyOption) moneySpecializedOptions.push(accountMoneyOption);
@@ -6940,7 +7069,7 @@ class BasePaymentMethod {
 
 
 
-/** One option of the installment `<select>`: the number of installments and its display title. */
+/** One option of the installment `<select>`, including whether its title carries the bank-interest marker. */
 
 class BasePaymentMethodWithInstallments extends BasePaymentMethod {
   requiresInstallments() {
@@ -6984,7 +7113,8 @@ class BasePaymentMethodWithInstallments extends BasePaymentMethod {
   normalizedInstallments(installments) {
     return this.getInstallmentsLimit(installments).map(installment => ({
       value: `${installment.installments}`,
-      title: this.buildInstallmentTitle(installment)
+      title: this.buildInstallmentTitle(installment),
+      hasBankInterestDisclaimer: this.hasBankInterestDisclaimer(installment)
     }));
   }
 
@@ -6993,11 +7123,9 @@ class BasePaymentMethodWithInstallments extends BasePaymentMethod {
    * third-party interest-free installment on sites that show the bank disclaimer.
    */
   buildInstallmentTitle(installment) {
-    var _installment$installm2;
     const installmentNumber = installment.installments;
     const installmentAmount = this.formatAmount(installment.installment_amount);
     const hasRate = installment.installment_rate !== 0;
-    const isThirdParty = ((_installment$installm2 = installment.installment_rate_collector) !== null && _installment$installm2 !== void 0 ? _installment$installm2 : []).includes('THIRD_PARTY');
     const totalAmount = this.formatAmount(installment.total_amount);
     if (installmentNumber === 1) {
       return `${installmentNumber}x ${totalAmount}`;
@@ -7005,7 +7133,7 @@ class BasePaymentMethodWithInstallments extends BasePaymentMethod {
     if (hasRate) {
       return `${installmentNumber}x ${installmentAmount} (${totalAmount})`;
     }
-    if (this.needsBankInterestDisclaimer() && isThirdParty && !hasRate) {
+    if (this.hasBankInterestDisclaimer(installment)) {
       return `${installmentNumber}x ${installmentAmount} (${totalAmount})*`;
     }
     return `${installmentNumber}x ${installmentAmount} ${this.config.copy.installmentsInterestFreeOptionText}`;
@@ -7016,6 +7144,9 @@ class BasePaymentMethodWithInstallments extends BasePaymentMethod {
       currency: this.config.currency,
       siteId: this.config.siteId
     });
+  }
+  hasBankInterestDisclaimer(installment) {
+    return installment.installments !== 1 && this.needsBankInterestDisclaimer() && installment.installment_rate === 0 && Array.isArray(installment.installment_rate_collector) && installment.installment_rate_collector.includes('THIRD_PARTY');
   }
 }
 ;// ./assets/js/checkouts/super-token/core/paymentMethods/CreditCardMethod.ts
@@ -7186,6 +7317,8 @@ class ConsumerCreditsMethod extends BasePaymentMethodWithInstallments {
         return 'Meses sin Tarjeta con Mercado&nbsp;Pago';
       case BRAZIL_ACCRONYM:
         return 'Linha de Crédito Mercado&nbsp;Pago';
+      case CHILE_ACCRONYM:
+        return 'Cuotas sin Tarjeta de Mercado&nbsp;Pago';
       default:
         return 'Cuotas sin Tarjeta con Mercado&nbsp;Pago';
     }
@@ -7244,6 +7377,10 @@ class ConsumerCreditsMethod extends BasePaymentMethodWithInstallments {
           }
           return '';
         }
+      case CHILE_ACCRONYM:
+        // Do not fall through to the Argentina branch below — implement Chile's real rates/legal
+        // line here once the real condition keys are known from the API.
+        return '';
       default:
         {
           const argParts = [];
@@ -7421,6 +7558,138 @@ class LegacyRenderSession {
     this.legacy.mpSuperTokenMetrics.renderConsumerCreditsDetailsInnerHTML(success);
   }
 }
+;// ./assets/js/checkouts/super-token/adapters/legacy/syncMlcCopyToLegacy.ts
+/** Keep older plugin controllers on the bundle's Chilean copy without replacing checkout state. */
+
+/** Legacy controller's SCREAMING_CASE copy fields (`window.mpSuperTokenPaymentMethods`, cast by the caller). */
+
+/** The account-money row's only marker shared by v2 and v2.1 — v2 never adds the
+ *  `.mp-super-token-account-money-row` class (its `RowPresentation.extraClasses` is empty). */
+const ACCOUNT_MONEY_ROW_SELECTOR = '[data-type="account_money"]';
+
+/** Plugin catalogs carry the raw `&nbsp;` entity; pre-refactor `innerHTML` renderers decode it to
+ *  a real NBSP (U+00A0) in the DOM. Collapse both forms to a plain space so either side matches. */
+function normalizeNbsp(text) {
+  return text.replace(/&nbsp;|\u00a0/g, ' ');
+}
+
+/** Substring replace that treats `&nbsp;` and a real NBSP as a plain space on both sides. Null when no match. */
+function replaceNormalized(text, previous, next) {
+  const normalizedText = normalizeNbsp(text);
+  const normalizedPrevious = normalizeNbsp(previous);
+  if (!normalizedText.includes(normalizedPrevious)) {
+    return null;
+  }
+  return normalizedText.replace(normalizedPrevious, normalizeNbsp(next));
+}
+function replaceVisibleText(selector, previous, next) {
+  if (!previous || !next || previous === next) {
+    return;
+  }
+  document.querySelectorAll(selector).forEach(element => {
+    const current = element.textContent;
+    const updated = current && replaceNormalized(current, previous, next);
+    if (updated !== null && updated !== undefined) {
+      element.textContent = updated;
+    }
+  });
+}
+
+/**
+ * Composition-edge callers (`runtimeComposition.ts`) read `window.mpSuperTokenPaymentMethods` and
+ * `window.wc_mercadopago_custom_checkout_params` and pass them in — this adapter stays free of
+ * `window.*`, matching the `legacyDelegationSeams.ts` convention.
+ */
+function syncMlcCopyToLegacy(original, localized, controller, customParams) {
+  // The resolver returns the same object for every non-MLC site.
+  if (original === localized || typeof original.site_id !== 'string' || original.site_id.toUpperCase() !== 'MLC') {
+    return;
+  }
+  const previousAccountMoney = original.account_money_text;
+  const previousBalance = original.account_money_balance_text;
+  const previousInterestFreePartOne = original.interest_free_part_one_text;
+  const previousInterestFreePartTwo = original.interest_free_part_two_text;
+  const previousInterestFreeOption = original.input_helper_message?.installments?.interest_free_option_text;
+  const bankHint = localized.input_helper_message?.installments?.bank_interest_hint_text;
+
+  // Old controllers can be constructed after this bundle runs, so retain the original global
+  // object's identity while writing only the MLC copy fields, never unrelated plugin parameters.
+  original.account_money_text = localized.account_money_text;
+  original.account_money_balance_text = localized.account_money_balance_text;
+  original.interest_free_part_one_text = localized.interest_free_part_one_text;
+  original.interest_free_part_two_text = localized.interest_free_part_two_text;
+  original.interest_free_option_text = localized.interest_free_option_text;
+  original.input_helper_message = localized.input_helper_message;
+  if (customParams && bankHint) {
+    var _customParams$input_h;
+    const helper = (_customParams$input_h = customParams.input_helper_message) !== null && _customParams$input_h !== void 0 ? _customParams$input_h : {};
+    customParams.input_helper_message = {
+      ...helper,
+      installments: {
+        ...helper.installments,
+        bank_interest_hint_text: bankHint
+      }
+    };
+  }
+
+  // Old controllers capture these values in class fields when constructed. Keep the existing
+  // instance and its payment state; the guarded runtime must never create a second controller.
+  if (controller) {
+    controller.ACCOUNT_MONEY_TEXT = localized.account_money_text;
+    controller.ACCOUNT_MONEY_BALANCE_TEXT = localized.account_money_balance_text;
+    controller.INTEREST_FREE_PART_ONE_TEXT = localized.interest_free_part_one_text;
+    controller.INTEREST_FREE_PART_TWO_TEXT = localized.interest_free_part_two_text;
+    controller.INSTALLMENTS_INTEREST_FREE_OPTION_TEXT = localized.input_helper_message?.installments?.interest_free_option_text;
+    controller.BANK_INTEREST_HINT_TEXT = bankHint;
+  }
+
+  // If the older runtime rendered before the CDN bundle arrived, refresh only known copy nodes.
+  // textContent avoids interpreting plugin catalog strings as HTML.
+  replaceVisibleText(`${ACCOUNT_MONEY_ROW_SELECTOR} .mp-super-token-payment-method__title`, previousAccountMoney, localized.account_money_text);
+  replaceVisibleText('.mp-super-token-am-balance-text', previousBalance, localized.account_money_balance_text);
+  replaceVisibleText('.mp-super-token-payment-method__value-prop', previousInterestFreePartOne, localized.interest_free_part_one_text);
+  replaceVisibleText('.mp-super-token-payment-method__value-prop', previousInterestFreePartTwo, localized.interest_free_part_two_text);
+  replaceVisibleText('select[id^="mp-super-token-installments-select-"] option', previousInterestFreeOption, localized.input_helper_message?.installments?.interest_free_option_text);
+
+  // Both Super Token's own renderer (cardRow.ts) and the Custom checkout's equivalent remove this
+  // node outright for a non-qualifying installment rather than leaving it empty, so presence alone
+  // already means the current selection qualifies (hasBankInterestDisclaimer === true) — refresh it.
+  // hideAllPaymentMethodDetails() only hides a deselected card's details (PAYMENT_METHOD_HIDE), it
+  // never removes them, so a previously selected card's hint can still be in the DOM (hidden) beside
+  // the active card's own hint — update every match, not just the first in document order.
+  if (bankHint) {
+    document.querySelectorAll('.mp-installments-bank-interest-hint').forEach(hint => {
+      hint.textContent = `*${bankHint}`;
+    });
+  }
+  // v2.1 restores `aria-label` from `data-base-aria-label` on every deselect
+  // (V21AccountMoneyDecoration.clear()); keep both in sync or the next selection cycle reverts to
+  // the stale copy. The base label never includes the balance line (only appended while selected).
+  document.querySelectorAll(ACCOUNT_MONEY_ROW_SELECTOR).forEach(row => {
+    const label = row.getAttribute('aria-label');
+    if (label) {
+      let updated = label;
+      if (previousAccountMoney) {
+        var _replaceNormalized;
+        updated = (_replaceNormalized = replaceNormalized(updated, previousAccountMoney, localized.account_money_text)) !== null && _replaceNormalized !== void 0 ? _replaceNormalized : updated;
+      }
+      if (previousBalance && localized.account_money_balance_text) {
+        var _replaceNormalized2;
+        updated = (_replaceNormalized2 = replaceNormalized(updated, previousBalance, localized.account_money_balance_text)) !== null && _replaceNormalized2 !== void 0 ? _replaceNormalized2 : updated;
+      }
+      if (updated !== label) {
+        row.setAttribute('aria-label', updated);
+      }
+    }
+    const baseLabel = row.dataset.baseAriaLabel;
+    if (baseLabel && previousAccountMoney) {
+      const updatedBaseLabel = replaceNormalized(baseLabel, previousAccountMoney, localized.account_money_text);
+      if (updatedBaseLabel !== null && updatedBaseLabel !== baseLabel) {
+        row.dataset.baseAriaLabel = updatedBaseLabel;
+      }
+    }
+  });
+}
 ;// ./assets/js/checkouts/super-token/composition/variantRuntime.ts
 /**
  * A/B variant resolution for the composition root. Bundle/prod resolves the variant through
@@ -7470,6 +7739,7 @@ function resolveSuperTokenVariant() {
  * render (Phase 6). In the pre-cutover hybrid the legacy bundle may build the instances first; the
  * window.mpSuperTokenTriggerHandler guard makes this a no-op then.
  */
+
 
 
 
@@ -7540,10 +7810,14 @@ async function waitForCustomCheckoutHandler() {
  * keeps its inline reorder + normalize (the decoration would lack its copy/thumbnails).
  */
 function composeRuntime(domainParams, recompose, metrics) {
-  const viewParams = domainParams;
+  const localizedParams = resolveMlcCopy(domainParams);
+  // window.* reads kept at the composition edge (matches legacyDelegationSeams.ts); the adapter
+  // itself stays free of window.*.
+  syncMlcCopyToLegacy(domainParams, localizedParams, window.mpSuperTokenPaymentMethods, window.wc_mercadopago_custom_checkout_params);
+  const viewParams = localizedParams;
   const composeWithVariant = variant => {
-    const domainConfig = createDomainConfig(domainParams, variant);
-    const catalog = new PaymentMethodCatalog(domainConfig.paymentMethodsOrder);
+    const domainConfig = createDomainConfig(localizedParams, variant);
+    const catalog = new PaymentMethodCatalog(domainConfig.paymentMethodsOrder, domainConfig.siteId);
     const registry = new PaymentMethodRegistry(domainConfig);
     const orderAndDecorate = paymentMethods => registry.decorateAccountPaymentMethods(catalog.reorderAccountPaymentMethods(paymentMethods));
     publishOrderAndDecorate({
@@ -7567,7 +7841,7 @@ function composeRuntime(domainParams, recompose, metrics) {
       if (!sdk || window.mpSuperTokenTriggerHandler) {
         return;
       }
-      const bundleParams = window.wc_mercadopago_supertoken_bundle_params;
+      const bundleParams = localizedParams;
       const entityMetrics = new CoreMonitorMetricsAdapter_CoreMonitorMetricsAdapter(sdk, SUPER_TOKEN_JS_VERSION, window.wc_mercadopago_supertoken_bundle_params);
       const emailListener = new SuperTokenEmailListener(new SuperTokenDebounce());
 
@@ -7598,7 +7872,7 @@ function composeRuntime(domainParams, recompose, metrics) {
         });
       };
       paymentMethods = new SuperTokenPaymentMethods(sdk, entityMetrics, bundleParams, renderSavedMethods, emailListener, getView());
-      const authenticator = new SuperTokenAuthenticator(sdk, paymentMethods, entityMetrics, bundleParams.platform_id);
+      const authenticator = new SuperTokenAuthenticator(sdk, paymentMethods, entityMetrics, bundleParams.platform_id, domainConfig.siteId);
       const errorHandler = new SuperTokenErrorHandler(paymentMethods, entityMetrics);
       const triggerHandler = new SuperTokenTriggerHandler(authenticator, emailListener, paymentMethods, errorHandler, entityMetrics, bundleParams.current_user_email);
       const instances = {

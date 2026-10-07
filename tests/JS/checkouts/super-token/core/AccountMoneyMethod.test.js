@@ -34,6 +34,21 @@ describe('AccountMoneyMethod', () => {
   });
 
   describe('decorate — sets the display name and thumbnail', () => {
+    it('Given an MLC Account Money payload, When decorated, Then it uses the expected localized name and wallet icon', () => {
+      const decorated = new AccountMoneyMethod(buildConfig({
+        siteId: 'MLC',
+        intl: 'es-CL',
+        currency: 'CLP',
+        copy: { accountMoneyText: 'Dinero disponible en Mercado&nbsp;Pago' },
+      })).decorate(accountMoney({
+        has_account_money: true,
+        has_account_money_invested: false,
+      }));
+
+      expect(decorated.thumbnail).toBe('/wallet.png');
+      expect(decorated.name).toBe('Dinero disponible en Mercado&nbsp;Pago');
+    });
+
     it('Given account money outside Mexico, When decorated, Then it gets the wallet icon and the generic name', () => {
       const decorated = new AccountMoneyMethod(buildConfig({ siteId: 'MLB' })).decorate(
         accountMoney(),

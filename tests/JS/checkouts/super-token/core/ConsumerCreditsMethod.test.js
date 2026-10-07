@@ -54,6 +54,14 @@ describe('ConsumerCreditsMethod', () => {
         new ConsumerCreditsMethod(buildConfig()).buildConsumerCreditsHint({ labels: [] }),
       ).toThrow('no_installment_conditions');
     });
+
+    it('Given MLC with Argentina-shaped labels, When built, Then it does not fall back to the Argentina legal line and returns empty pending approved Chile copy (PSW-4448)', () => {
+      const installment = { labels: ['cftea_120|tna_80|tea_90'], consumer_credits: { conditions: {} } };
+
+      const hint = new ConsumerCreditsMethod(buildConfig({ siteId: 'MLC' })).buildConsumerCreditsHint(installment);
+
+      expect(hint).toBe('');
+    });
   });
 
   describe('requiresCvv', () => {
@@ -63,6 +71,14 @@ describe('ConsumerCreditsMethod', () => {
   });
 
   describe('decorate — sets the display name and thumbnail', () => {
+    it('Given consumer credits in Chile, When decorated, Then it gets the approved MLC name', () => {
+      const decorated = new ConsumerCreditsMethod(buildConfig({ siteId: 'MLC' })).decorate(
+        consumerCredits(),
+      );
+
+      expect(decorated.name).toBe('Cuotas sin Tarjeta de Mercado&nbsp;Pago');
+    });
+
     it('Given consumer credits in Brazil, When decorated, Then it gets the money icon and the BR name', () => {
       const decorated = new ConsumerCreditsMethod(buildConfig({ siteId: 'MLB' })).decorate(
         consumerCredits(),

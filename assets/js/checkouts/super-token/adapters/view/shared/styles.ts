@@ -22,6 +22,7 @@ export const SHARED_STYLES = {
   INSTALLMENTS_SELECT_CONTAINER: 'mp-checkout-custom-installments-select-container',
   INPUT_LABEL: 'mp-input-label',
   SELECT_INPUT: 'mp-custom-checkout-select-input',
+  BANK_INTEREST_HINT: 'mp-installments-bank-interest-hint',
   INSTALLMENTS_TAX_INFO: 'mp-installments-tax-info',
   INSTALLMENTS_ERROR: 'mp-super-token-error',
   INSTALLMENTS_LABEL_ERROR: 'mp-super-token-label-error',

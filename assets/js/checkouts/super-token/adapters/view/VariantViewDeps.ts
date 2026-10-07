@@ -37,6 +37,7 @@ export interface SuperTokenViewCopy {
   // Card detail accordion (installments + security code).
   installmentsInputTitle: string;
   installmentsRequiredMessage: string;
+  bankInterestHintText: string;
   securityCodeInputTitle: string;
   securityCodeTooltip3Digits: string;
   securityCodeTooltip4Digits: string;

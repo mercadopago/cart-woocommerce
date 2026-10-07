@@ -4,6 +4,8 @@ namespace MercadoPago\Woocommerce\Tests\Order;
 
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
+use MercadoPago\Woocommerce\Order\RefundReconciliationLock;
+use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
@@ -90,6 +92,180 @@ class OrderStatusTest extends TestCase
 
         $message = $this->orderStatus->getOrderStatusMessage('unknown_status');
         $this->assertEquals('Default Message', $message);
+    }
+
+    private function expectRefundReconciliationSnapshot(WC_Order $order, float $total, array $refunds): void
+    {
+        $order->shouldReceive('read_meta_data')->with(true)->atLeast()->once();
+        $this->orderMetadataMock->shouldReceive('getPaymentsIdMeta')
+            ->with($order)->atLeast()->once()->andReturn('12345');
+        $this->orderMetadataMock->shouldReceive('getIsProductionModeData')
+            ->with($order)->once()->andReturn(null);
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')->once()->andReturn('test-token');
+
+        $paymentResponse = Mockery::mock(Response::class);
+        $paymentResponse->shouldReceive('getStatus')->andReturn(200);
+        $paymentResponse->shouldReceive('getData')->andReturn([
+            'id' => 12345,
+            'transaction_amount' => 100,
+            'transaction_amount_refunded' => $total,
+        ]);
+        $refundsResponse = Mockery::mock(Response::class);
+        $refundsResponse->shouldReceive('getStatus')->andReturn(200);
+        $refundsResponse->shouldReceive('getData')->andReturn($refunds);
+        $headers = ['Authorization: Bearer test-token'];
+        $this->requesterMock->shouldReceive('get')
+            ->once()->with('/v1/payments/12345', $headers)->andReturn($paymentResponse);
+        $this->requesterMock->shouldReceive('get')
+            ->once()->with('/v1/payments/12345/refunds', $headers)->andReturn($refundsResponse);
+    }
+
+    public function testReconcilePaymentRefundRepairsAppliedRefundOnly(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->expectRefundReconciliationSnapshot($order, 9.0, [
+            ['id' => 101, 'payment_id' => 12345, 'amount' => 9, 'status' => 'approved'],
+        ]);
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')
+            ->with($order)->andReturn(['101']);
+        $this->orderMetadataMock->shouldReceive('replaceRefundedAmountForPayment')
+            ->once()->with($order, '12345', 9.0, Mockery::type('array'))->andReturn(true);
+
+        $this->assertTrue($this->orderStatus->reconcilePaymentRefund($order, '12345', '101'));
+    }
+
+    public function testReconcilePaymentRefundRejectsNonNumericIdentifiersBeforeRequest(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->requesterMock->shouldNotReceive('get');
+        $this->assertFalse($this->orderStatus->reconcilePaymentRefund($order, 'not-a-payment', '101'));
+        $this->assertFalse($this->orderStatus->reconcilePaymentRefund($order, '12345', 'not-a-refund'));
+    }
+
+    public function testReconcilePaymentRefundDoesNotPrecountPendingRefund(): void
+    {
+        WP_Mock::userFunction('wp_next_scheduled', ['times' => 1, 'return' => false]);
+        WP_Mock::userFunction('wp_schedule_single_event', ['times' => 1, 'return' => true]);
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(7);
+        $this->expectRefundReconciliationSnapshot($order, 14.0, [
+            ['id' => 101, 'payment_id' => 12345, 'amount' => 9, 'status' => 'approved'],
+            ['id' => 102, 'payment_id' => 12345, 'amount' => 5, 'status' => 'approved'],
+        ]);
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')
+            ->with($order)->andReturn(['101']);
+        $this->orderMetadataMock->shouldNotReceive('replaceRefundedAmountForPayment');
+
+        $this->assertFalse($this->orderStatus->reconcilePaymentRefund($order, '12345', '101'));
+    }
+
+    public function testReconcilePaymentRefundRepairsAfterSecondRefundApplied(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->expectRefundReconciliationSnapshot($order, 14.0, [
+            ['id' => 101, 'payment_id' => 12345, 'amount' => 9, 'status' => 'approved'],
+            ['id' => 102, 'payment_id' => 12345, 'amount' => 5, 'status' => 'approved'],
+        ]);
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')
+            ->with($order)->andReturn(['101', '102']);
+        $this->orderMetadataMock->shouldReceive('replaceRefundedAmountForPayment')
+            ->once()->with($order, '12345', 14.0, Mockery::type('array'))->andReturn(true);
+
+        $this->assertTrue($this->orderStatus->reconcilePaymentRefund($order, '12345', '102'));
+    }
+
+    public function testAppliedSecondRefundRepairsPersistedNineToFourteen(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $stored = '[Amount 100]/[Paid 100]/[Refund 9]';
+        $order->shouldReceive('get_id')->andReturn(7);
+        $order->shouldReceive('read_meta_data')->with(true)->atLeast()->once();
+        $order->shouldReceive('get_meta')->with('Mercado Pago - Payment 12345')
+            ->andReturnUsing(function () use (&$stored): string {
+                return $stored;
+            });
+
+        $orderMeta = Mockery::mock(OrderMeta::class);
+        $orderMeta->shouldReceive('get')->with($order, OrderMetadata::APPLIED_REFUND_IDS, true)
+            ->andReturn('["101","102"]');
+        $orderMeta->shouldReceive('update')->once()
+            ->with($order, 'Mercado Pago - Payment 12345', '[Amount 100]/[Paid 100]/[Refund 14]')
+            ->andReturnUsing(function ($order, $key, $value) use (&$stored): void {
+                $stored = $value;
+            });
+        $lock = Mockery::mock(RefundReconciliationLock::class);
+        $token = ['name' => 'test-lock', 'value' => 'test-owner'];
+        $lock->shouldReceive('acquire')->with(7, '12345')->twice()->andReturn($token);
+        $lock->shouldReceive('release')->with($token)->twice()->andReturn(true);
+        $metadata = Mockery::mock(OrderMetadata::class, [$orderMeta, $this->logsMock, $lock])->makePartial();
+        $metadata->shouldReceive('getPaymentsIdMeta')->with($order)->andReturn('12345');
+        $metadata->shouldReceive('getIsProductionModeData')->with($order)->andReturn(null);
+        $status = new OrderStatus(
+            $this->storeTranslationsMock,
+            $metadata,
+            $this->sellerMock,
+            $this->requesterMock,
+            $this->logsMock
+        );
+
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')->once()->andReturn('test-token');
+        $paymentResponse = Mockery::mock(Response::class);
+        $paymentResponse->shouldReceive('getStatus')->andReturn(200);
+        $paymentResponse->shouldReceive('getData')->andReturn([
+            'id' => 12345,
+            'transaction_amount' => 100,
+            'transaction_amount_refunded' => 14,
+        ]);
+        $refundsResponse = Mockery::mock(Response::class);
+        $refundsResponse->shouldReceive('getStatus')->andReturn(200);
+        $refundsResponse->shouldReceive('getData')->andReturn([
+            ['id' => 101, 'payment_id' => 12345, 'amount' => 9, 'status' => 'approved'],
+            ['id' => 102, 'payment_id' => 12345, 'amount' => 5, 'status' => 'approved'],
+        ]);
+        $headers = ['Authorization: Bearer test-token'];
+        $this->requesterMock->shouldReceive('get')->twice()
+            ->andReturn($paymentResponse, $refundsResponse);
+
+        $this->assertTrue($status->reconcilePaymentRefund($order, '12345', '102'));
+        $this->assertSame('[Amount 100]/[Paid 100]/[Refund 14]', $stored);
+        // Redelivery with the same remote snapshot leaves the metadata unchanged.
+        $this->requesterMock->shouldReceive('get')->twice()
+            ->andReturn($paymentResponse, $refundsResponse);
+        $this->sellerMock->shouldReceive('getCredentialsAccessToken')->once()->andReturn('test-token');
+        $this->assertTrue($status->reconcilePaymentRefund($order, '12345', '102'));
+        $this->assertSame('[Amount 100]/[Paid 100]/[Refund 14]', $stored);
+    }
+
+    public function testReconcilePaymentRefundRejectsIncompleteList(): void
+    {
+        WP_Mock::userFunction('wp_next_scheduled', ['times' => 1, 'return' => false]);
+        WP_Mock::userFunction('wp_schedule_single_event', ['times' => 1, 'return' => true]);
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(7);
+        $this->expectRefundReconciliationSnapshot($order, 14.0, [
+            ['id' => 101, 'payment_id' => 12345, 'amount' => 9, 'status' => 'approved'],
+        ]);
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')
+            ->with($order)->andReturn(['101']);
+        $this->orderMetadataMock->shouldNotReceive('replaceRefundedAmountForPayment');
+
+        $this->assertFalse($this->orderStatus->reconcilePaymentRefund($order, '12345', '101'));
+    }
+
+    public function testReconcilePaymentRefundRejectsWrongPaymentInList(): void
+    {
+        WP_Mock::userFunction('wp_next_scheduled', ['times' => 1, 'return' => false]);
+        WP_Mock::userFunction('wp_schedule_single_event', ['times' => 1, 'return' => true]);
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(7);
+        $this->expectRefundReconciliationSnapshot($order, 9.0, [
+            ['id' => 101, 'payment_id' => 99999, 'amount' => 9, 'status' => 'approved'],
+        ]);
+        $this->orderMetadataMock->shouldReceive('getAppliedRefundIds')
+            ->with($order)->andReturn(['101']);
+        $this->orderMetadataMock->shouldNotReceive('replaceRefundedAmountForPayment');
+
+        $this->assertFalse($this->orderStatus->reconcilePaymentRefund($order, '12345', '101'));
     }
 
     public function testMapMpStatusToWoocommerceStatusReturnsCorrectWoocommerceStatus(): void

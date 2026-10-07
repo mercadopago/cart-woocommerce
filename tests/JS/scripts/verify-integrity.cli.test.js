@@ -1,5 +1,5 @@
 /**
- * Testes de integração do CLI bin/verify-integrity.js (PPSP-1529).
+ * Testes de integração do CLI scripts/public/verify-integrity.js (PPSP-1529).
  *
  * Executa o binário como subprocesso (Node real, sem mocks) para cobrir o
  * caminho main() — o contrato de exit code (0/1) e as mensagens consumidos
@@ -12,7 +12,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 
-const BIN = path.resolve(__dirname, '../../../bin/verify-integrity.js');
+const BIN = path.resolve(__dirname, '../../../scripts/public/verify-integrity.js');
 const hashOf = (content) => crypto.createHash('sha256').update(content).digest('hex');
 
 const ASSET_JS = 'assets/js/checkouts/mp-plugins-components.min.js';
