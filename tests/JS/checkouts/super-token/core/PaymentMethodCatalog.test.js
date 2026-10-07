@@ -43,4 +43,31 @@ describe('PaymentMethodCatalog', () => {
 
     expect(result.map((pm) => pm.id)).toEqual(['c1', 'coc1']);
   });
+
+  it('Given site MLC, When reordering, Then Consumer Credits is excluded but every other method stays (no approved legal hint content yet)', () => {
+    const catalog = new PaymentMethodCatalog('cards_first', 'MLC');
+    const methods = [creditCard({ id: 'c1' }), accountMoney(), consumerCredits()];
+
+    const result = catalog.reorderAccountPaymentMethods(methods);
+
+    expect(result.map((pm) => pm.id)).toEqual(['c1', 'am1']);
+  });
+
+  it('Given site MLC in lowercase, When reordering, Then Consumer Credits is still excluded (case-insensitive match)', () => {
+    const catalog = new PaymentMethodCatalog('cards_first', 'mlc');
+    const methods = [consumerCredits()];
+
+    const result = catalog.reorderAccountPaymentMethods(methods);
+
+    expect(result).toEqual([]);
+  });
+
+  it('Given a non-MLC site, When reordering, Then Consumer Credits is kept', () => {
+    const catalog = new PaymentMethodCatalog('cards_first', 'MLB');
+    const methods = [consumerCredits()];
+
+    const result = catalog.reorderAccountPaymentMethods(methods);
+
+    expect(result.map((pm) => pm.id)).toEqual(['coc1']);
+  });
 });

@@ -108,8 +108,8 @@ export class SuperTokenTriggerHandler {
   private readonly LOADING_ANIMATION_FINISH_DELAY = 500;
   private readonly AVOID_INSTANT_REMOVAL_LOADER_DELAY = 500;
 
-  // State. `currentAmount` is the formatted amount; formatAmount returns null for an empty/NaN
-  // input (parity with the legacy) and that null flows through to the SDK exactly as before.
+  // State. `currentAmount` is the formatted amount; invalid input normalizes to null.
+  // LoadSuperToken cancels that attempt before the SDK receives the amount.
   wcBuyerEmail: string | null = null;
   currentAmount: string | null = '';
   isAlreadyListeningForm = false;

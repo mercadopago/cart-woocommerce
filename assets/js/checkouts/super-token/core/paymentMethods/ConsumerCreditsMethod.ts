@@ -8,7 +8,11 @@
  */
 
 import type { Installment, PaymentMethod } from '@super-token/types/external-globals';
-import { BRAZIL_ACCRONYM, MEXICO_ACCRONYM } from '@super-token/core/constants';
+import {
+  BRAZIL_ACCRONYM,
+  CHILE_ACCRONYM,
+  MEXICO_ACCRONYM,
+} from '@super-token/core/constants';
 import { isConsumerCredits } from '@super-token/core/checkoutSession/PaymentMethodClassifier';
 import { escapeHtml } from '@super-token/core/shared/escapeHtml';
 import { BasePaymentMethodWithInstallments } from '@super-token/core/paymentMethods/BasePaymentMethodWithInstallments';
@@ -34,6 +38,8 @@ export class ConsumerCreditsMethod extends BasePaymentMethodWithInstallments {
         return 'Meses sin Tarjeta con Mercado&nbsp;Pago';
       case BRAZIL_ACCRONYM:
         return 'Linha de Crédito Mercado&nbsp;Pago';
+      case CHILE_ACCRONYM:
+        return 'Cuotas sin Tarjeta de Mercado&nbsp;Pago';
       default:
         return 'Cuotas sin Tarjeta con Mercado&nbsp;Pago';
     }
@@ -93,6 +99,10 @@ export class ConsumerCreditsMethod extends BasePaymentMethodWithInstallments {
         }
         return '';
       }
+      case CHILE_ACCRONYM:
+        // Do not fall through to the Argentina branch below — implement Chile's real rates/legal
+        // line here once the real condition keys are known from the API.
+        return '';
       default: {
         const argParts: string[] = [];
         if (conditions.cftea) {

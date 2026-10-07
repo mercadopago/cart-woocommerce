@@ -72,6 +72,21 @@ const buildParams = (overrides = {}) => ({
   ...overrides,
 });
 
+const buildMlcErrorParams = () =>
+  buildParams({
+    site_id: 'MLC',
+    update_security_code_with_retry_error_text:
+      'No se pudo hacer el pago. Intenta de nuevo o paga con otro medio.',
+    update_security_code_no_retry_error_text:
+      'No se pudo hacer el pago. Por favor, paga con otro medio.',
+    authorize_payment_method_with_retry_error_text:
+      'No fue posible validar tu identidad. Intenta de nuevo o paga con otro medio.',
+    authorize_payment_method_no_retry_error_text:
+      'No fue posible validar tu identidad. Por favor, paga con otro medio.',
+    select_payment_method_error_text:
+      'Selecciona un medio de pago para finalizar tu compra.',
+  });
+
 const buildMetrics = (overrides = {}) => ({
   sendMetric: jest.fn(),
   registerSelectPaymentMethod: jest.fn(),
@@ -279,6 +294,52 @@ describe('SuperTokenPaymentMethods', () => {
 
       expect(controller.convertErrorCodeToErrorMessage('SOMETHING_ELSE')).toBe('CVV retry text');
     });
+
+    describe('MLC neutral Spanish error copy', () => {
+      it.each([
+        [
+          'UPDATE_SECURITY_CODE_ERROR',
+          1,
+          'No se pudo hacer el pago. Intenta de nuevo o paga con otro medio.',
+        ],
+        [
+          'UPDATE_SECURITY_CODE_ERROR',
+          3,
+          'No se pudo hacer el pago. Por favor, paga con otro medio.',
+        ],
+        [
+          'AUTHORIZE_PAYMENT_METHOD_ERROR',
+          1,
+          'No fue posible validar tu identidad. Intenta de nuevo o paga con otro medio.',
+        ],
+        [
+          'AUTHORIZE_PAYMENT_METHOD_ERROR',
+          3,
+          'No fue posible validar tu identidad. Por favor, paga con otro medio.',
+        ],
+        [
+          'AUTHORIZE_PAYMENT_METHOD_USER_CANCELLED',
+          1,
+          'No fue posible validar tu identidad. Intenta de nuevo o paga con otro medio.',
+        ],
+        [
+          'SELECT_PAYMENT_METHOD_ERROR',
+          1,
+          'Selecciona un medio de pago para finalizar tu compra.',
+        ],
+      ])(
+        'Given %s on attempt %s, When the MLC runtime controller converts it, Then it returns the neutral Spanish message',
+        (errorCode, attempt, expected) => {
+          const { controller } = build({ params: buildMlcErrorParams() });
+
+          for (let currentAttempt = 1; currentAttempt < attempt; currentAttempt += 1) {
+            controller.convertErrorCodeToErrorMessage(errorCode);
+          }
+
+          expect(controller.convertErrorCodeToErrorMessage(errorCode)).toBe(expected);
+        },
+      );
+    });
   });
 
   describe('security code reference flags', () => {
@@ -295,6 +356,17 @@ describe('SuperTokenPaymentMethods', () => {
   });
 
   describe('checkout type + error surface primitives', () => {
+    it('Given saved methods are active, When reset, Then conventional checkout is restored', () => {
+      document.body.innerHTML = '<input id="mp_checkout_type" value="super_token" />';
+      const { controller } = build();
+      controller.storePaymentMethodsInMemory([creditCard()]);
+
+      controller.reset();
+
+      expect(document.querySelector('#mp_checkout_type').value).toBe('custom');
+      expect(controller.hasStoredPaymentMethods()).toBe(false);
+    });
+
     it('Given the checkout type field, When set, Then its value is updated', () => {
       document.body.innerHTML = '<input id="mp_checkout_type" value="custom" />';
       const { controller } = build();
@@ -364,6 +436,246 @@ describe('SuperTokenPaymentMethods', () => {
 
       expect(metrics.sendMetric).not.toHaveBeenCalled();
       expect(metrics.registerSelectPaymentMethod).not.toHaveBeenCalled();
+    });
+
+    it('Given an ESC lookup in flight, When the checkout resets, Then the saved card cannot mount its CVV field', async () => {
+      let resolveFetch;
+      const sdk = buildSdk({
+        getAccountPaymentMethod: jest.fn(() => new Promise((resolve) => { resolveFetch = resolve; })),
+      });
+      const { controller } = build({ sdk });
+      const card = creditCard();
+      const element = renderSelectableMethod(card, controller);
+      const mountSecurityCodeField = jest.spyOn(controller, 'mountSecurityCodeField');
+
+      const pendingSelection = controller.onSelectSuperTokenPaymentMethod(element, card);
+      expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(1);
+
+      controller.reset();
+      resolveFetch({ data: creditCard() });
+      await pendingSelection;
+
+      expect(mountSecurityCodeField).not.toHaveBeenCalled();
+      expect(document.querySelector('#mp_checkout_type').value).toBe('custom');
+    });
+
+    it('Given an ESC lookup in flight, When it rejects after reset, Then the conventional card form stays available', async () => {
+      let rejectFetch;
+      const sdk = buildSdk({
+        getAccountPaymentMethod: jest.fn(() => new Promise((_, reject) => { rejectFetch = reject; })),
+      });
+      const { controller, metrics } = build({ sdk });
+      const card = creditCard();
+      const element = renderSelectableMethod(card, controller);
+      const mountSecurityCodeField = jest.spyOn(controller, 'mountSecurityCodeField');
+      const unmountCardForm = jest.spyOn(controller, 'unmountCardForm');
+
+      const pendingSelection = controller.onSelectSuperTokenPaymentMethod(element, card);
+      expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(1);
+
+      controller.reset();
+      rejectFetch(new Error('SDK lookup failed'));
+      await pendingSelection;
+
+      expect(mountSecurityCodeField).not.toHaveBeenCalled();
+      expect(unmountCardForm).not.toHaveBeenCalled();
+      expect(metrics.getPaymentMethodFail).not.toHaveBeenCalled();
+      expect(document.querySelector('#mp_checkout_type').value).toBe('custom');
+    });
+
+    it('Given an ESC lookup in flight, When it times out after reset, Then the conventional card form stays available', async () => {
+      jest.useFakeTimers();
+
+      try {
+        const sdk = buildSdk({ getAccountPaymentMethod: jest.fn(() => new Promise(() => {})) });
+        const { controller, metrics } = build({ sdk });
+        const card = creditCard();
+        const element = renderSelectableMethod(card, controller);
+        const mountSecurityCodeField = jest.spyOn(controller, 'mountSecurityCodeField');
+        const unmountCardForm = jest.spyOn(controller, 'unmountCardForm');
+
+        const pendingSelection = controller.onSelectSuperTokenPaymentMethod(element, card);
+        expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(1);
+
+        controller.reset();
+        await jest.advanceTimersByTimeAsync(5000);
+        await pendingSelection;
+
+        expect(mountSecurityCodeField).not.toHaveBeenCalled();
+        expect(unmountCardForm).not.toHaveBeenCalled();
+        expect(metrics.fetchPaymentMethodTimeout).not.toHaveBeenCalled();
+        expect(document.querySelector('#mp_checkout_type').value).toBe('custom');
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('Given an ESC lookup in flight, When the buyer selects a method without an ESC lookup, Then the earlier card cannot become active or mount its CVV field', async () => {
+      let resolveFetch;
+      const sdk = buildSdk({
+        getAccountPaymentMethod: jest.fn(() => new Promise((resolve) => { resolveFetch = resolve; })),
+      });
+      const { controller } = build({ sdk });
+      const card = creditCard();
+      const cardElement = renderSelectableMethod(card, controller);
+      const method = accountMoney();
+      const methodElement = document.createElement('article');
+      methodElement.id = controller.paymentMethodIdentifier(method);
+      methodElement.classList.add('mp-super-token-payment-method');
+      document.body.appendChild(methodElement);
+      const mountSecurityCodeField = jest.spyOn(controller, 'mountSecurityCodeField').mockImplementation(() => {});
+
+      const pendingSelection = controller.onSelectSuperTokenPaymentMethod(cardElement, card);
+      expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(1);
+
+      await controller.onSelectSuperTokenPaymentMethod(methodElement, method);
+      resolveFetch({ data: creditCard() });
+      await pendingSelection;
+
+      expect(mountSecurityCodeField).toHaveBeenCalledTimes(1);
+      expect(mountSecurityCodeField).toHaveBeenCalledWith(method);
+      expect(controller.getActivePaymentMethod()).toBe(method);
+    });
+
+    it('Given an ESC lookup in flight, When the buyer selects a new card, Then the saved card cannot mount its CVV field over the card form', async () => {
+      jest.useFakeTimers();
+
+      try {
+        let resolveFetch;
+        const sdk = buildSdk({
+          getAccountPaymentMethod: jest.fn(() => new Promise((resolve) => { resolveFetch = resolve; })),
+        });
+        const { controller } = build({ sdk });
+        const card = creditCard();
+        const element = renderSelectableMethod(card, controller);
+        const mountSecurityCodeField = jest.spyOn(controller, 'mountSecurityCodeField').mockImplementation(() => {});
+        jest.spyOn(controller, 'mountCardForm').mockImplementation(() => {});
+        jest.spyOn(controller, 'unmountCardForm').mockImplementation(() => {});
+
+        const pendingSelection = controller.onSelectSuperTokenPaymentMethod(element, card);
+        expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(1);
+
+        controller.onSelectNewCardPaymentMethod();
+        resolveFetch({ data: creditCard() });
+        await pendingSelection;
+        await jest.advanceTimersByTimeAsync(50);
+
+        expect(mountSecurityCodeField).not.toHaveBeenCalled();
+        expect(controller.getActivePaymentMethod()).toEqual({ id: 'new_card' });
+        expect(document.querySelector('#mp_checkout_type').value).toBe('custom');
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('Given an ESC lookup discarded after a switch, When the buyer selects the card again, Then the card is looked up again', async () => {
+      let resolveFirstFetch;
+      const sdk = buildSdk({
+        getAccountPaymentMethod: jest.fn()
+          .mockImplementationOnce(() => new Promise((resolve) => { resolveFirstFetch = resolve; }))
+          .mockResolvedValueOnce({ data: creditCard() }),
+      });
+      const { controller } = build({ sdk });
+      const card = creditCard();
+      const cardElement = renderSelectableMethod(card, controller);
+      const method = accountMoney();
+      const methodElement = document.createElement('article');
+      methodElement.id = controller.paymentMethodIdentifier(method);
+      methodElement.classList.add('mp-super-token-payment-method');
+      document.body.appendChild(methodElement);
+      jest.spyOn(controller, 'mountSecurityCodeField').mockImplementation(() => {});
+
+      const pendingSelection = controller.onSelectSuperTokenPaymentMethod(cardElement, card);
+      await controller.onSelectSuperTokenPaymentMethod(methodElement, method);
+      resolveFirstFetch({ data: creditCard() });
+      await pendingSelection;
+
+      expect(cardElement.hasAttribute('data-cvv-is-required-double-check')).toBe(false);
+
+      await controller.onSelectSuperTokenPaymentMethod(cardElement, card);
+
+      expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(2);
+      expect(cardElement.hasAttribute('data-cvv-is-required-double-check')).toBe(true);
+    });
+
+    it('Given an accepted ESC lookup, When the buyer switches away and selects the card again, Then the card is not looked up again', async () => {
+      const sdk = buildSdk({ getAccountPaymentMethod: jest.fn().mockResolvedValue({ data: creditCard() }) });
+      const { controller } = build({ sdk });
+      const card = creditCard();
+      const cardElement = renderSelectableMethod(card, controller);
+      const method = accountMoney();
+      const methodElement = document.createElement('article');
+      methodElement.id = controller.paymentMethodIdentifier(method);
+      methodElement.classList.add('mp-super-token-payment-method');
+      document.body.appendChild(methodElement);
+      jest.spyOn(controller, 'mountSecurityCodeField').mockImplementation(() => {});
+
+      await controller.onSelectSuperTokenPaymentMethod(cardElement, card);
+      await controller.onSelectSuperTokenPaymentMethod(methodElement, method);
+      await controller.onSelectSuperTokenPaymentMethod(cardElement, card);
+
+      expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(1);
+      expect(cardElement.hasAttribute('data-cvv-is-required-double-check')).toBe(true);
+    });
+
+    it('Given an ESC lookup in flight, When it rejects after the buyer selects a method without an ESC lookup, Then the earlier card cannot become active or mount its CVV field', async () => {
+      let rejectFetch;
+      const sdk = buildSdk({
+        getAccountPaymentMethod: jest.fn(() => new Promise((_, reject) => { rejectFetch = reject; })),
+      });
+      const { controller, metrics } = build({ sdk });
+      const card = creditCard();
+      const cardElement = renderSelectableMethod(card, controller);
+      const method = accountMoney();
+      const methodElement = document.createElement('article');
+      methodElement.id = controller.paymentMethodIdentifier(method);
+      methodElement.classList.add('mp-super-token-payment-method');
+      document.body.appendChild(methodElement);
+      const mountSecurityCodeField = jest.spyOn(controller, 'mountSecurityCodeField').mockImplementation(() => {});
+
+      const pendingSelection = controller.onSelectSuperTokenPaymentMethod(cardElement, card);
+      expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(1);
+
+      await controller.onSelectSuperTokenPaymentMethod(methodElement, method);
+      rejectFetch(new Error('SDK lookup failed'));
+      await pendingSelection;
+
+      expect(mountSecurityCodeField).toHaveBeenCalledTimes(1);
+      expect(mountSecurityCodeField).toHaveBeenCalledWith(method);
+      expect(metrics.getPaymentMethodFail).not.toHaveBeenCalled();
+      expect(controller.getActivePaymentMethod()).toBe(method);
+    });
+
+    it('Given an ESC lookup in flight, When it rejects after the buyer selects a new card, Then the saved card cannot mount its CVV field over the card form', async () => {
+      jest.useFakeTimers();
+
+      try {
+        let rejectFetch;
+        const sdk = buildSdk({
+          getAccountPaymentMethod: jest.fn(() => new Promise((_, reject) => { rejectFetch = reject; })),
+        });
+        const { controller, metrics } = build({ sdk });
+        const card = creditCard();
+        const element = renderSelectableMethod(card, controller);
+        const mountSecurityCodeField = jest.spyOn(controller, 'mountSecurityCodeField').mockImplementation(() => {});
+        jest.spyOn(controller, 'mountCardForm').mockImplementation(() => {});
+        jest.spyOn(controller, 'unmountCardForm').mockImplementation(() => {});
+
+        const pendingSelection = controller.onSelectSuperTokenPaymentMethod(element, card);
+        expect(sdk.getAccountPaymentMethod).toHaveBeenCalledTimes(1);
+
+        controller.onSelectNewCardPaymentMethod();
+        rejectFetch(new Error('SDK lookup failed'));
+        await pendingSelection;
+        await jest.advanceTimersByTimeAsync(50);
+
+        expect(mountSecurityCodeField).not.toHaveBeenCalled();
+        expect(metrics.getPaymentMethodFail).not.toHaveBeenCalled();
+        expect(controller.getActivePaymentMethod()).toEqual({ id: 'new_card' });
+        expect(document.querySelector('#mp_checkout_type').value).toBe('custom');
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 
@@ -1157,6 +1469,23 @@ describe('SuperTokenPaymentMethods', () => {
     });
 
     describe('addMercadoPagoPrivacyPolicyFooter', () => {
+      it('Given the MLC privacy copy, When adding the footer, Then it renders the Chilean privacy link', () => {
+        const root = appendCustomCheckoutRoot();
+        const privacyPolicy =
+          'Conoce&nbsp;<a href="https://www.mercadopago.cl/privacidad" target="_blank">cómo cuidamos tu privacidad</a>.';
+        const { controller } = build({
+          params: buildParams({ site_id: 'MLC', mercadopago_privacy_policy: privacyPolicy }),
+        });
+
+        controller.addMercadoPagoPrivacyPolicyFooter();
+
+        const footer = root.querySelector('#mp-super-token-privacy-policy-footer');
+        const link = footer.querySelector('a');
+        expect(footer.textContent).toBe('Conoce\u00a0cómo cuidamos tu privacidad.');
+        expect(link.href).toBe('https://www.mercadopago.cl/privacidad');
+        expect(link.target).toBe('_blank');
+      });
+
       it('Given the checkout root, When adding the footer, Then it is prepended as the first child', () => {
         const root = appendCustomCheckoutRoot();
         root.appendChild(document.createElement('div'));

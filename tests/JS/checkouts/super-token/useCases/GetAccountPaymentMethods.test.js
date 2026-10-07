@@ -5,6 +5,7 @@ const FAST_TOKEN = 'fast-token-1';
 const METHODS = [{ token: 'tok-1', type: 'credit_card' }];
 
 const buildSession = (overrides = {}) => ({
+  isCurrentLoad: jest.fn(() => true),
   buildAuthenticator: jest.fn(async () => AUTHENTICATOR),
   storeAuthenticator: jest.fn(),
   getSimplifiedAuth: jest.fn(async () => true),
@@ -57,6 +58,33 @@ describe('GetAccountPaymentMethods', () => {
     expect(result).toBeNull();
     expect(session.storeAuthenticator).not.toHaveBeenCalled();
     expect(session.getSimplifiedAuth).not.toHaveBeenCalled();
+  });
+
+  it('Given a load was cancelled while building, When the SDK returns, Then it stores no handle', async () => {
+    const session = buildSession({ isCurrentLoad: jest.fn(() => false) });
+    const metrics = buildMetrics();
+
+    await expect(run(session, metrics)).resolves.toBeNull();
+
+    expect(session.storeAuthenticator).not.toHaveBeenCalled();
+    expect(session.getSimplifiedAuth).not.toHaveBeenCalled();
+    expect(metrics.errorToGetAccountPaymentMethods).not.toHaveBeenCalled();
+  });
+
+  it('Given a load was cancelled while getting the fast token, When it returns, Then it stores no token', async () => {
+    const isCurrentLoad = jest.fn(() => true);
+    const session = buildSession({
+      isCurrentLoad,
+      getFastPaymentToken: jest.fn(async () => {
+        isCurrentLoad.mockReturnValue(false);
+        return FAST_TOKEN;
+      }),
+    });
+
+    await expect(run(session, buildMetrics())).resolves.toBeNull();
+
+    expect(session.storeFastPaymentToken).not.toHaveBeenCalled();
+    expect(session.fetchAccountPaymentMethods).not.toHaveBeenCalled();
   });
 
   it('Given the auth is not simplified, When executed, Then it reports the metric and returns null without proceeding', async () => {

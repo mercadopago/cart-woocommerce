@@ -23,6 +23,7 @@ export const MERCADO_PAGO_ISSUER_NAME = 'mercado pago';
 export const COLOMBIA_ACCRONYM = 'MCO';
 export const MEXICO_ACCRONYM = 'MLM';
 export const BRAZIL_ACCRONYM = 'MLB';
+export const CHILE_ACCRONYM = 'MLC';
 export const ARGENTINA_ACCRONYM = 'MLA';
 
 /** Sites whose installment titles carry the third-party bank-interest asterisk (RN-5). */

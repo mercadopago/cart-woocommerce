@@ -28,7 +28,12 @@ const buildParams = (overrides = {}) => ({
   payment_methods_thumbnails: { visa: '/visa.png' },
   current_user_email: 'buyer@example.com',
   input_title: { installments: 'Parcelas' },
-  input_helper_message: { installments: { required: 'Selecione as parcelas' } },
+  input_helper_message: {
+    installments: {
+      required: 'Selecione as parcelas',
+      bank_interest_hint_text: 'Se houver juros, eles serão aplicados pelo banco.',
+    },
+  },
   security_code_input_title_text: 'Código de segurança',
   security_code_tooltip_text_3_digits: '3 dígitos no verso',
   security_code_tooltip_text_4_digits: '4 dígitos na frente',
@@ -64,6 +69,7 @@ describe('createVariantViewDeps', () => {
       accountMoneyAvailableText: 'Em conta',
       installmentsInputTitle: 'Parcelas',
       installmentsRequiredMessage: 'Selecione as parcelas',
+      bankInterestHintText: 'Se houver juros, eles serão aplicados pelo banco.',
       securityCodeInputTitle: 'Código de segurança',
       securityCodeTooltip3Digits: '3 dígitos no verso',
       securityCodeTooltip4Digits: '4 dígitos na frente',
@@ -108,6 +114,7 @@ describe('createVariantViewDeps', () => {
         mercado_pago_credit_card_name: undefined,
         mp_logo_blue_path: undefined,
         mp_logo_dark_path: undefined,
+        input_helper_message: { installments: { required: 'Selecione as parcelas' } },
       }),
       null,
     );
@@ -118,6 +125,7 @@ describe('createVariantViewDeps', () => {
     expect(deps.copy.savedPaymentMethodTitle).toBe('');
     expect(deps.copy.accountMoneyBalanceText).toBe('');
     expect(deps.copy.mercadoPagoCreditCardName).toBe('');
+    expect(deps.copy.bankInterestHintText).toBe('');
     expect(deps.thumbnails.mpLogoBluePath).toBe('');
     expect(deps.thumbnails.mpLogoDarkPath).toBe('');
   });

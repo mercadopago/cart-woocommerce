@@ -46,7 +46,12 @@ export class LegacyAuthenticatorSession implements AuthenticatorSession, Authori
   constructor(
     private readonly authenticator: LegacyAuthenticator,
     private readonly paymentMethods: LegacyAccountPaymentMethodsSource,
+    private readonly isCurrent: () => boolean = () => true,
   ) {}
+
+  isCurrentLoad(): boolean {
+    return this.isCurrent();
+  }
 
   buildAuthenticator(amount: string, buyerEmail: string): Promise<RawSdkAuthenticator | null> {
     return this.authenticator.buildAuthenticator(amount, buyerEmail);

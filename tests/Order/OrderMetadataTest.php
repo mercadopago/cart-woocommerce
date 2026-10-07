@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
+use MercadoPago\Woocommerce\Order\RefundReconciliationLock;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use Mockery;
 use WC_Order;
@@ -22,10 +23,18 @@ class OrderMetadataTest extends TestCase
 
     private OrderMetadata $orderMetadata;
 
+    private RefundReconciliationLock $refundLockMock;
+
     public function setUp(): void
     {
         $this->orderMetaMock = Mockery::mock(OrderMeta::class);
         $this->orderMock = Mockery::mock('WC_Order');
+        $this->orderMock->shouldReceive('get_id')->andReturn(1)->byDefault();
+
+        $this->refundLockMock = Mockery::mock(RefundReconciliationLock::class);
+        $this->refundLockMock->shouldReceive('acquire')
+            ->andReturn(['name' => 'test-lock', 'value' => 'test-owner'])->byDefault();
+        $this->refundLockMock->shouldReceive('release')->andReturn(true)->byDefault();
 
         $this->logsMock = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Logs');
         $this->logsMock->file = Mockery::mock('MercadoPago\Woocommerce\Libraries\Logs\Transports\File');
@@ -34,7 +43,7 @@ class OrderMetadataTest extends TestCase
         $this->logsMock->file->shouldReceive('error')->andReturn(null)->byDefault();
         $this->logsMock->file->shouldReceive('info')->andReturn(null)->byDefault();
 
-        $this->orderMetadata = new OrderMetadata($this->orderMetaMock, $this->logsMock);
+        $this->orderMetadata = new OrderMetadata($this->orderMetaMock, $this->logsMock, $this->refundLockMock);
     }
 
     /**
@@ -1339,6 +1348,131 @@ class OrderMetadataTest extends TestCase
     // -------------------------------------------------------------------------
     // Per-payment refunded amount (source-of-truth write at refund time) — PSW-4412
     // -------------------------------------------------------------------------
+
+    public function testReconciliationNeverLowersNewerLocalRefundTotal(): void
+    {
+        $key = 'Mercado Pago - Payment 12345';
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once();
+        $this->orderMock->shouldReceive('get_meta')->with($key)
+            ->andReturn('[Amount 100]/[Refund 19]');
+        $this->orderMetaMock->shouldNotReceive('update');
+
+        $this->assertTrue($this->orderMetadata->replaceRefundedAmountForPayment(
+            $this->orderMock, '12345', 14.0, []
+        ));
+    }
+
+    public function testReconciliationRetriesWhenAnotherJobOwnsThePaymentLock(): void
+    {
+        $this->refundLockMock->shouldReceive('acquire')->with(1, '12345')->once()->andReturn(null);
+        $this->refundLockMock->shouldNotReceive('release');
+        $this->orderMock->shouldNotReceive('read_meta_data');
+        $this->orderMetaMock->shouldNotReceive('update');
+
+        $this->assertFalse($this->orderMetadata->replaceRefundedAmountForPayment(
+            $this->orderMock, '12345', 14.0, []
+        ));
+    }
+
+    public function testOverlappingReconciliationsFinishWithTheHigherRefundTotal(): void
+    {
+        $key = 'Mercado Pago - Payment 12345';
+        $stored = '[Amount 100]/[Refund 9]';
+        $secondJobDeferred = null;
+        $token = ['name' => 'test-lock', 'value' => 'test-owner'];
+        $lock = Mockery::mock(RefundReconciliationLock::class);
+        $lock->shouldReceive('acquire')->with(1, '12345')->times(3)
+            ->andReturn($token, null, $token);
+        $lock->shouldReceive('release')->with($token)->twice()->andReturn(true);
+        $metadata = new OrderMetadata($this->orderMetaMock, $this->logsMock, $lock);
+
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->times(4);
+        $this->orderMock->shouldReceive('get_meta')->with($key)
+            ->andReturnUsing(function () use (&$stored): string {
+                return $stored;
+            });
+        $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, $key, Mockery::type('string'))
+            ->twice()->andReturnUsing(function ($order, $metaKey, $value) use (&$stored, &$secondJobDeferred, $metadata): void {
+                if ($secondJobDeferred === null) {
+                    // The 19 snapshot arrives while the first job is about to save 14.
+                    $secondJobDeferred = $metadata->replaceRefundedAmountForPayment($order, '12345', 19.0, []);
+                }
+                $stored = $value;
+            });
+
+        $this->assertTrue($metadata->replaceRefundedAmountForPayment($this->orderMock, '12345', 14.0, []));
+        $this->assertFalse($secondJobDeferred);
+        $this->assertTrue($metadata->replaceRefundedAmountForPayment($this->orderMock, '12345', 19.0, []));
+        $this->assertSame('[Amount 100]/[Refund 19]', $stored);
+    }
+
+    public function testReconciliationRejectsNegativeRemoteTotal(): void
+    {
+        $this->orderMock->shouldNotReceive('read_meta_data');
+        $this->orderMetaMock->shouldNotReceive('update');
+
+        $this->assertFalse($this->orderMetadata->replaceRefundedAmountForPayment(
+            $this->orderMock, '12345', -1.0, []
+        ));
+    }
+
+    public function testReconciliationBuildsMissingPaymentMetadata(): void
+    {
+        $key = 'Mercado Pago - Payment 12345';
+        $stored = '';
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->twice();
+        $this->orderMock->shouldReceive('get_meta')->with($key)
+            ->andReturnUsing(function () use (&$stored): string {
+                return $stored;
+            });
+        $this->orderMetaMock->shouldReceive('update')->once()
+            ->with($this->orderMock, $key, Mockery::on(function ($value): bool {
+                return strpos($value, '[Amount 100]') !== false
+                    && strpos($value, '[Refund 10]') !== false;
+            }))
+            ->andReturnUsing(function ($order, $metaKey, $value) use (&$stored): void {
+                $stored = $value;
+            });
+
+        $this->assertTrue($this->orderMetadata->replaceRefundedAmountForPayment(
+            $this->orderMock, '12345', 10.0, ['date' => '2026-09-30', 'total_amount' => 100]
+        ));
+        $this->assertStringContainsString('[Refund 10]', $stored);
+    }
+
+    public function testReconciliationAddsMissingRefundSegment(): void
+    {
+        $key = 'Mercado Pago - Payment 12345';
+        $stored = '[Amount 100]';
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->twice();
+        $this->orderMock->shouldReceive('get_meta')->with($key)
+            ->andReturnUsing(function () use (&$stored): string {
+                return $stored;
+            });
+        $this->orderMetaMock->shouldReceive('update')->once()
+            ->with($this->orderMock, $key, '[Amount 100]/[Refund 10]')
+            ->andReturnUsing(function ($order, $metaKey, $value) use (&$stored): void {
+                $stored = $value;
+            });
+
+        $this->assertTrue($this->orderMetadata->replaceRefundedAmountForPayment(
+            $this->orderMock, '12345', 10.0, []
+        ));
+        $this->assertSame('[Amount 100]/[Refund 10]', $stored);
+    }
+
+    public function testReconciliationReportsMetadataReadFailure(): void
+    {
+        $this->orderMock->shouldReceive('read_meta_data')->with(true)->once()
+            ->andThrow(new \RuntimeException('simulated metadata read failure'));
+        $this->orderMetaMock->shouldNotReceive('update');
+        $this->logsMock->file->shouldReceive('error')->once()
+            ->with('Refund reconciliation write failed: RuntimeException', OrderMetadata::class);
+
+        $this->assertFalse($this->orderMetadata->replaceRefundedAmountForPayment(
+            $this->orderMock, '12345', 10.0, []
+        ));
+    }
 
     /**
      * A positive amount is added to the existing [Refund X] segment and persisted,

@@ -18,6 +18,7 @@ jest.mock('@super-token/adapters/platform', () => ({
   InitializationHealthChecker: jest.fn().mockImplementation(() => ({ check: jest.fn() })),
   CARD_FORM_MOUNTED_EVENT: 'mp_card_form_mounted',
   createDomainConfig: jest.fn(() => ({ paymentMethodsOrder: 'cards_first', copy: {}, thumbnails: {} })),
+  resolveMlcCopy: jest.fn((params) => params),
 }));
 
 jest.mock('@super-token/adapters/legacy/globalBridge', () => ({

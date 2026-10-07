@@ -28,6 +28,7 @@ const buildViewDeps = (overrides = {}) => {
       accountMoneyAvailableText: 'Em conta',
       installmentsInputTitle: 'Parcelas',
       installmentsRequiredMessage: 'Selecione as parcelas',
+      bankInterestHintText: 'Se houver juros, eles serão aplicados e cobrados pelo seu banco.',
       securityCodeInputTitle: 'Código de segurança',
       securityCodeTooltip3Digits: '3 dígitos no verso',
       securityCodeTooltip4Digits: '4 dígitos na frente',

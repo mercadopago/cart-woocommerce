@@ -2,9 +2,9 @@
 Contributors: mercadopago
 Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 8.9.5
+Stable tag: 8.9.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,9 +134,17 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.9.5 (25/09/2026) =
-### Fixed
-- Restore card payments on checkout pages built with FunnelKit
-- Fix fast payment on block-based checkout pages where the payment form could remain loading
+= v8.9.6 (07/10/2026) =
+* Added
+- Add the bank-interest disclaimer to Chilean fast payment saved-card installments, displaying it only while the buyer has selected the option marked with an asterisk
+
+* Changed
+- Use neutral Spanish messages for Chilean fast payment saved-method errors
+
+* Fixed
+- Keep standard card checkout available when the fast payment purchase amount is missing or invalid
+- Keep the card form available when the buyer switches payment method while a saved card is still loading in the fast payment checkout
+- Automatically correct the refunded amount recorded for each payment when saving it fails after a refund made from the order page, without counting the same refund twice
+- Keep the rejected-payment response readable on PHP 7.4 stores with error display enabled, when the error message has no mapped translation
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

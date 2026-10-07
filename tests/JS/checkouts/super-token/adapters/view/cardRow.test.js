@@ -29,10 +29,14 @@ const cardWithInstallments = (overrides = {}) =>
     ...overrides,
   });
 
-const installmentOptions = () => [
-  { value: '1', title: '1x R$100' },
-  { value: '3', title: '3x R$40 (R$120)' },
-];
+const installmentOptions = (paymentMethod) => paymentMethod.installments.map((item) => ({
+  value: `${item.installments}`,
+  title: `${item.installments}x`,
+  hasBankInterestDisclaimer:
+    item.installments !== 1
+    && item.installment_rate === 0
+    && item.installment_rate_collector.includes('THIRD_PARTY'),
+}));
 
 describe('buildCardRow (credit card)', () => {
   let cardInstallments;
@@ -61,6 +65,120 @@ describe('buildCardRow (credit card)', () => {
     expect(row.querySelector(`#${TAX_INFO_ID}`)).not.toBeNull();
     expect(row.querySelector(`.${SHARED_STYLES.SECURITY_CODE_CONTAINER}`)).not.toBeNull();
     expect(row.querySelector(`.${SHARED_STYLES.PAYMENT_METHOD_DETAILS}`).classList.contains(SHARED_STYLES.PAYMENT_METHOD_HIDE)).toBe(true);
+  });
+
+  it('Given an MLC card with a starred installment, When that installment is selected, Then it renders the localized bank-interest hint', () => {
+    const card = cardWithInstallments({
+      installments: [
+        installment({
+          installments: 1,
+          installment_amount: 10000,
+          total_amount: 10000,
+        }),
+        installment({
+          installments: 3,
+          installment_rate: 0,
+          installment_rate_collector: ['THIRD_PARTY'],
+          installment_amount: 3333.33,
+          total_amount: 10000,
+        }),
+      ],
+    });
+    const deps = buildViewDeps({
+      siteId: 'MLC',
+      copy: { bankInterestHintText: 'Si hay intereses, los aplicará y cobrará tu banco.' },
+    });
+    const row = buildCardRow(card, deps, presentation, buildSession(), installmentOptions);
+    document.body.appendChild(row);
+
+    expect(row.querySelector(`.${SHARED_STYLES.BANK_INTEREST_HINT}`)).toBeNull();
+
+    const select = row.querySelector(`#${SELECT_ID}`);
+    select.value = '3';
+    select.dispatchEvent(new Event('change'));
+
+    const hint = row.querySelector(`.${SHARED_STYLES.BANK_INTEREST_HINT}`);
+    expect(hint).not.toBeNull();
+    expect(hint.textContent).toBe('*Si hay intereses, los aplicará y cobrará tu banco.');
+    expect(hint.nextElementSibling.id).toBe(TAX_INFO_ID);
+
+    select.value = '1';
+    select.dispatchEvent(new Event('change'));
+
+    expect(row.querySelector(`.${SHARED_STYLES.BANK_INTEREST_HINT}`)).toBeNull();
+  });
+
+  it.each([
+    ['MLA', 0, ['THIRD_PARTY']],
+    ['MLB', 0, ['THIRD_PARTY']],
+    ['MLM', 0, ['THIRD_PARTY']],
+    ['MLC', 0, ['MERCADOPAGO']],
+    ['MLC', 0.1, ['THIRD_PARTY']],
+  ])('Given site %s, rate %s and collector %j, When built, Then it does not render the bank-interest hint', (siteId, installmentRate, collectors) => {
+    const card = cardWithInstallments({
+      installments: [
+        installment({
+          installments: 3,
+          installment_rate: installmentRate,
+          installment_rate_collector: collectors,
+        }),
+      ],
+    });
+    const row = buildCardRow(
+      card,
+      buildViewDeps({ siteId }),
+      presentation,
+      buildSession(),
+      installmentOptions,
+    );
+
+    expect(row.querySelector(`.${SHARED_STYLES.BANK_INTEREST_HINT}`)).toBeNull();
+  });
+
+  it('Given a card without CVV and only a bank-interest installment, When built, Then it renders the hint without a security-code field', () => {
+    const card = cardWithInstallments({
+      security_code_settings: { mode: 'optional', length: 3 },
+      installments: [
+        installment({
+          installments: 3,
+          installment_rate: 0,
+          installment_rate_collector: ['THIRD_PARTY'],
+        }),
+      ],
+    });
+    const row = buildCardRow(
+      card,
+      buildViewDeps({ siteId: 'MLC' }),
+      presentation,
+      buildSession(),
+      installmentOptions,
+    );
+
+    expect(row.querySelector(`.${SHARED_STYLES.BANK_INTEREST_HINT}`)).not.toBeNull();
+    expect(row.querySelector(`.${SHARED_STYLES.SECURITY_CODE_CONTAINER}`)).toBeNull();
+  });
+
+  it('Given a card with a bank-interest installment and mandatory CVV, When built, Then it renders both the hint and security-code field', () => {
+    const card = cardWithInstallments({
+      security_code_settings: { mode: 'mandatory', length: 3 },
+      installments: [
+        installment({
+          installments: 3,
+          installment_rate: 0,
+          installment_rate_collector: ['THIRD_PARTY'],
+        }),
+      ],
+    });
+    const row = buildCardRow(
+      card,
+      buildViewDeps({ siteId: 'MLC' }),
+      presentation,
+      buildSession(),
+      installmentOptions,
+    );
+
+    expect(row.querySelector(`.${SHARED_STYLES.BANK_INTEREST_HINT}`)).not.toBeNull();
+    expect(row.querySelector(`.${SHARED_STYLES.SECURITY_CODE_CONTAINER}`)).not.toBeNull();
   });
 
   it('Given a value already selected, When built, Then it syncs #cardInstallments and refreshes the tax info once', () => {

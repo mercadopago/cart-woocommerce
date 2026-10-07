@@ -23,18 +23,20 @@ import type { PaymentMethod } from '@super-token/types/external-globals';
 
 /** The subset of the legacy trigger handler (and the collaborators it holds) the load orchestration calls. */
 export interface LegacyLoadOrchestrationTriggerHandler {
-  // formatAmount returns null for an empty/NaN amount (parity with the legacy); the null flows
-  // through the amount fields to the SDK exactly as before, so the types own it end to end.
   currentAmount: string | null;
   isFetchingPaymentMethods: boolean;
   amountHasChanged(): boolean;
   emailHasChanged(): boolean;
+  cancelLoad(): void;
   resetFlow(): void;
   isSuperTokenPaymentMethodsLoaded(): boolean;
   ensureEmailListenerRegistered(): void;
   fetchAndRenderSuperTokenPaymentMethods(): Promise<void>;
   dispatchStaleCacheMetricsOnce(): void;
-  mpSuperTokenAuthenticator: { formatAmount(amount: string | null): string | null };
+  mpSuperTokenAuthenticator: {
+    formatAmount(amount: string | null): string | null;
+    reset(): void;
+  };
   mpSuperTokenPaymentMethods: {
     getStoredPaymentMethods(): PaymentMethod[];
     renderAccountPaymentMethods(paymentMethods: PaymentMethod[], amount: string | null): void;
@@ -68,6 +70,11 @@ export class LegacyLoadOrchestrationSession implements LoadSuperTokenSession {
     return this.triggerHandler.emailHasChanged();
   }
 
+  cancelInvalidAmount(): void {
+    this.triggerHandler.cancelLoad();
+    this.triggerHandler.mpSuperTokenAuthenticator.reset();
+  }
+
   resetFlow(): void {
     this.triggerHandler.resetFlow();
   }
@@ -96,6 +103,7 @@ export class LegacyLoadOrchestrationSession implements LoadSuperTokenSession {
 
 /** Legacy `sendMetric` name from super-token-trigger-handler.js:294. */
 const RESET_ON_AMOUNT_CHANGE_METRIC = 'super_token_reset_on_amount_change';
+const SKIPPED_INVALID_AMOUNT_METRIC = 'super_token_skipped_invalid_amount';
 
 /** The subset of the legacy `MPSuperTokenMetrics` the load orchestration reports through. */
 export interface LegacyLoadOrchestrationMetrics {
@@ -111,5 +119,6 @@ export function createLoadSuperTokenMetrics(
 ): LoadSuperTokenMetrics {
   return {
     resetOnAmountChange: () => metrics.sendMetric(RESET_ON_AMOUNT_CHANGE_METRIC, 'true', ''),
+    invalidAmount: () => metrics.sendMetric(SKIPPED_INVALID_AMOUNT_METRIC, 'true', ''),
   };
 }

@@ -144,5 +144,34 @@ describe('BasePaymentMethodWithInstallments', () => {
 
       expect(title.endsWith('*')).toBe(false);
     });
+
+    it('Given MLC installments, When normalized, Then only the option that carries the asterisk requests the bank-interest hint', () => {
+      const options = new CreditCardMethod(buildConfig({ siteId: 'MLC' })).normalizedInstallments([
+        installment({
+          installments: 1,
+          installment_rate: 0,
+          installment_rate_collector: ['THIRD_PARTY'],
+        }),
+        installment({
+          installments: 3,
+          installment_rate: 0,
+          installment_rate_collector: ['MERCADOPAGO'],
+        }),
+        installment({
+          installments: 6,
+          installment_rate: 0,
+          installment_rate_collector: ['THIRD_PARTY'],
+        }),
+      ]);
+
+      expect(options.map(({ title, hasBankInterestDisclaimer }) => ({
+        hasAsterisk: title.endsWith('*'),
+        hasBankInterestDisclaimer,
+      }))).toEqual([
+        { hasAsterisk: false, hasBankInterestDisclaimer: false },
+        { hasAsterisk: false, hasBankInterestDisclaimer: false },
+        { hasAsterisk: true, hasBankInterestDisclaimer: true },
+      ]);
+    });
   });
 });

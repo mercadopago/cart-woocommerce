@@ -4,6 +4,7 @@ export { MelidataAdapter } from './MelidataAdapter';
 export { WooDomAdapter } from './WooDomAdapter';
 export { VariantConfigAdapter } from './VariantConfigAdapter';
 export { createDomainConfig } from './createDomainConfig';
+export { resolveMlcCopy } from './resolveMlcCopy';
 export type { SuperTokenDomainParams } from './createDomainConfig';
 export { createPlatformAdapters } from './createPlatformAdapters';
 export type { PlatformAdapters, PlatformAdaptersOptions } from './createPlatformAdapters';

@@ -2,6 +2,19 @@ CHANGELOG:
 
 == Changelog
 
+= v8.9.6 (07/10/2026) =
+* Added
+- Add the bank-interest disclaimer to Chilean fast payment saved-card installments, displaying it only while the buyer has selected the option marked with an asterisk
+
+* Changed
+- Use neutral Spanish messages for Chilean fast payment saved-method errors
+
+* Fixed
+- Keep standard card checkout available when the fast payment purchase amount is missing or invalid
+- Keep the card form available when the buyer switches payment method while a saved card is still loading in the fast payment checkout
+- Automatically correct the refunded amount recorded for each payment when saving it fails after a refund made from the order page, without counting the same refund twice
+- Keep the rejected-payment response readable on PHP 7.4 stores with error display enabled, when the error message has no mapped translation
+
 = v8.9.5 (25/09/2026) =
 * Fixed
 - Restore card payments on checkout pages built with FunnelKit

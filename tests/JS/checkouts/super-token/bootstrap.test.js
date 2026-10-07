@@ -28,6 +28,7 @@ jest.mock('@super-token/adapters/platform', () => ({
   createDomainConfig: jest.fn(() => ({ paymentMethodsOrder: 'cards_first', copy: {}, thumbnails: {} })),
   // Bundle/prod resolves the A/B variant here before composing; the wiring is unblocked once it resolves.
   VariantConfigAdapter: jest.fn().mockImplementation(() => ({ resolve: jest.fn().mockResolvedValue('v2') })),
+  resolveMlcCopy: jest.fn((params) => params),
 }));
 
 jest.mock('@super-token/adapters/legacy/globalBridge', () => ({

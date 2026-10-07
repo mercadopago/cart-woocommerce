@@ -114,6 +114,22 @@
   }
 }
 
+// The universal reset above (line 16) zeroes font/margin/padding on every element inside the
+// root with higher specificity than the shared, unscoped rule in mp-plugins-components.min.css.
+// Re-declare the same values here, scoped to the Super Token structural chain — do not
+// zero/restore them on the bare shared class, which is also rendered unscoped by the Custom
+// checkout (mp-custom-page.js) with its own cascade.
+@include st-root {
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-installments-bank-interest-hint,
+  .mp-super-token-payment-method .mp-super-token-payment-method__details .mp-checkout-custom-installments-select-container .mp-installments-tax-info {
+    font-family: var(--primary-font-family) !important;
+    font-size: 13px !important;
+    line-height: 18px !important;
+    margin-top: 4px !important;
+    padding-left: 6px !important;
+  }
+}
+
 @include st-root {
   .mp-helper {
     margin: 4px 6px 0px !important;

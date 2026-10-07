@@ -32,6 +32,7 @@ import type {
   RawSdkAuthenticator,
   RawMpSdkInstance,
 } from '@super-token/types/external-globals';
+import { CHILE_ACCRONYM } from '@super-token/core/constants';
 
 /** Superset of the metrics the load use case, the submit use case and the primitives emit. */
 export interface SuperTokenAuthenticatorMetrics extends AuthenticatorMetrics, AuthorizePaymentMetrics {
@@ -45,11 +46,14 @@ export class SuperTokenAuthenticator {
   private readonly SUPER_TOKEN_VALIDATION_ELEMENT_ID = 'super_token_validation';
   private readonly AUTHORIZED_PSEUDOTOKEN_ELEMENT_ID = 'authorized_pseudotoken';
   private readonly AUTHENTICATOR_VERSION = 2;
+  private readonly DEFAULT_AMOUNT_DECIMAL_PLACES = 2;
+  private readonly MLC_AMOUNT_DECIMAL_PLACES = 0;
 
   private amountUsed: string | null = null;
   private emailUsed: string | null = null;
   private authenticator: RawSdkAuthenticator | null = null;
   private fastPaymentToken: string | null = null;
+  private loadGeneration = 0;
 
   private readonly getAccountPaymentMethodsUseCase = new GetAccountPaymentMethods();
   private readonly authorizePaymentUseCase = new AuthorizePayment();
@@ -59,9 +63,11 @@ export class SuperTokenAuthenticator {
     private readonly paymentMethods: LegacyAccountPaymentMethodsSource,
     private readonly metrics: SuperTokenAuthenticatorMetrics,
     private readonly platformId: string,
+    private readonly siteId: string,
   ) {}
 
   reset(): void {
+    this.loadGeneration++;
     this.authenticator = null;
     this.fastPaymentToken = null;
   }
@@ -94,7 +100,9 @@ export class SuperTokenAuthenticator {
   }
 
   formatAmount(amount: string | null | undefined = ''): string | null {
-    const rawValue = amount?.replace(/[^\d.,]/g, '');
+    if (typeof amount !== 'string') return null;
+
+    const rawValue = amount.replace(/[^\d.,]/g, '');
     if (!rawValue) return null;
 
     const lastCommaIndex = rawValue.lastIndexOf(',');
@@ -108,12 +116,30 @@ export class SuperTokenAuthenticator {
       return match === '.' ? '.' : '';
     });
 
-    const value = parseFloat(normalizedValue);
+    if (!/^\d+(?:\.\d+)?$/.test(normalizedValue)) return null;
 
-    return isNaN(value) ? null : value.toFixed(2);
+    const value = Number(normalizedValue);
+    const decimalPlaces =
+      this.siteId === CHILE_ACCRONYM ? this.MLC_AMOUNT_DECIMAL_PLACES : this.DEFAULT_AMOUNT_DECIMAL_PLACES;
+
+    if (!Number.isFinite(value)) return null;
+
+    const formatted = value.toFixed(decimalPlaces);
+    return this.isNormalizedAmount(formatted) ? formatted : null;
+  }
+
+  // MLC has no decimal places; other sites use exactly two.
+  private isNormalizedAmount(amount: string): boolean {
+    const normalizedPattern = this.siteId === CHILE_ACCRONYM ? /^(?:0|[1-9]\d*)$/ : /^(?:0|[1-9]\d*)\.\d{2}$/;
+    return normalizedPattern.test(amount) && Number.isFinite(Number(amount));
   }
 
   async buildAuthenticator(amount: string | null, buyerEmail: string): Promise<RawSdkAuthenticator | null> {
+    if (amount === null || !this.isNormalizedAmount(amount)) {
+      this.metrics.sendMetric('super_token_skipped_invalid_amount', 'true', '');
+      return null;
+    }
+
     try {
       this.amountUsed = amount;
       this.emailUsed = buyerEmail;
@@ -180,8 +206,9 @@ export class SuperTokenAuthenticator {
   }
 
   getAccountPaymentMethods(amount: string | null, buyerEmail: string): Promise<PaymentMethod[] | null> {
+    const generation = ++this.loadGeneration;
     return this.getAccountPaymentMethodsUseCase.execute({
-      session: new LegacyAuthenticatorSession(this, this.paymentMethods),
+      session: new LegacyAuthenticatorSession(this, this.paymentMethods, () => generation === this.loadGeneration),
       metrics: this.metrics,
       amount,
       buyerEmail,

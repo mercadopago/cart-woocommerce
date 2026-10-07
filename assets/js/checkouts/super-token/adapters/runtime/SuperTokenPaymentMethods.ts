@@ -411,6 +411,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   }
 
   reset(): void {
+    this.escSelectionGeneration++;
     const customCheckoutEntireElement = this.getCustomCheckoutEntireElement();
     this.isRendering = false;
     this.paymentMethods = [];
@@ -982,6 +983,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       return;
     }
 
+    this.escSelectionGeneration++;
     this.mpSuperTokenMetrics.sendMetric('super_token_withdraw', 'true', '');
     this.emitEventFromSelectPaymentMethod({ id: this.NEW_CARD_TYPE } as unknown as PaymentMethod);
     this.storeActivePaymentMethod({ id: this.NEW_CARD_TYPE } as unknown as PaymentMethod);
@@ -1119,7 +1121,7 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     return (milliseconds / 1000).toFixed(2);
   }
 
-  async fetchPaymentMethod(paymentMethod: PaymentMethod, paymentMethodElement: HTMLElement): Promise<PaymentMethod> {
+  async fetchPaymentMethod(paymentMethod: PaymentMethod): Promise<PaymentMethod> {
     const currentPaymentMethodIdentifier = this.paymentMethodIdentifier(paymentMethod);
 
     const REQUEST_START_TIME = Date.now();
@@ -1131,8 +1133,6 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     const updatedPaymentMethod = result?.data;
 
     if (!updatedPaymentMethod) throw new Error(MPSuperTokenErrorCodes.FETCH_PAYMENT_METHOD_NOT_FOUND);
-
-    paymentMethodElement.setAttribute('data-cvv-is-required-double-check', 'true');
 
     this.mpSuperTokenMetrics.getPaymentMethodLoadingTime(
       currentPaymentMethodIdentifier,
@@ -1191,18 +1191,22 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     paymentMethod: PaymentMethod,
     paymentMethodElement: HTMLElement,
   ): Promise<PaymentMethod | null> {
+    // Every selection supersedes an ESC lookup still pending for an earlier one.
+    const currentGeneration = ++this.escSelectionGeneration;
+
     try {
       if (this.shouldFetchPaymentMethodAgain(paymentMethod, paymentMethodElement)) {
         this.showDetailsSkeleton(paymentMethodElement);
 
-        const currentGeneration = ++this.escSelectionGeneration;
-        const updatedPaymentMethod = await this.fetchPaymentMethod(paymentMethod, paymentMethodElement);
+        const updatedPaymentMethod = await this.fetchPaymentMethod(paymentMethod);
 
         if (currentGeneration !== this.escSelectionGeneration) {
           this.hideDetailsSkeleton(paymentMethodElement);
           return null;
         }
 
+        // Only an accepted response marks the card as checked; a discarded one must be fetched again.
+        paymentMethodElement.setAttribute('data-cvv-is-required-double-check', 'true');
         this.updatePaymentMethodInList(updatedPaymentMethod);
         this.storeActivePaymentMethod(updatedPaymentMethod);
 
@@ -1238,6 +1242,10 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
       }
     } catch (error) {
       this.hideDetailsSkeleton(paymentMethodElement);
+
+      if (currentGeneration !== this.escSelectionGeneration) {
+        return null;
+      }
 
       if ((error as { message?: string })?.message === MPSuperTokenErrorCodes.GET_PAYMENT_METHOD_TIMEOUT_ERROR) {
         this.mpSuperTokenMetrics.getPaymentMethodLoadingTime(

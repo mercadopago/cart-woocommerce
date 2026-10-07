@@ -10,12 +10,16 @@ const buildTriggerHandler = (overrides = {}) => ({
   isFetchingPaymentMethods: true,
   amountHasChanged: jest.fn(() => false),
   emailHasChanged: jest.fn(() => true),
+  cancelLoad: jest.fn(),
   resetFlow: jest.fn(),
   isSuperTokenPaymentMethodsLoaded: jest.fn(() => true),
   ensureEmailListenerRegistered: jest.fn(),
   fetchAndRenderSuperTokenPaymentMethods: jest.fn(async () => {}),
   dispatchStaleCacheMetricsOnce: jest.fn(),
-  mpSuperTokenAuthenticator: { formatAmount: jest.fn((amount) => `formatted:${amount}`) },
+  mpSuperTokenAuthenticator: {
+    formatAmount: jest.fn((amount) => `formatted:${amount}`),
+    reset: jest.fn(),
+  },
   mpSuperTokenPaymentMethods: {
     getStoredPaymentMethods: jest.fn(() => STORED),
     renderAccountPaymentMethods: jest.fn(),
@@ -62,6 +66,32 @@ describe('LegacyLoadOrchestrationSession', () => {
     expect(triggerHandler.resetFlow).toHaveBeenCalledTimes(1);
   });
 
+  it('Given an invalid amount, When cancelled, Then it cancels the load and clears the authenticator', () => {
+    const triggerHandler = buildTriggerHandler();
+    const session = new LegacyLoadOrchestrationSession(triggerHandler);
+
+    session.cancelInvalidAmount();
+
+    expect(triggerHandler.cancelLoad).toHaveBeenCalledTimes(1);
+    expect(triggerHandler.mpSuperTokenAuthenticator.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it('Given no pending load, When cancelled, Then it still invalidates an SDK request', () => {
+    const triggerHandler = buildTriggerHandler({
+      isFetchingPaymentMethods: false,
+      mpSuperTokenAuthenticator: {
+        formatAmount: jest.fn(),
+        reset: jest.fn(),
+      },
+    });
+    const session = new LegacyLoadOrchestrationSession(triggerHandler);
+
+    session.cancelInvalidAmount();
+
+    expect(triggerHandler.cancelLoad).toHaveBeenCalledTimes(1);
+    expect(triggerHandler.mpSuperTokenAuthenticator.reset).toHaveBeenCalledTimes(1);
+  });
+
   it('Given the cache short-circuit, When rendering stored, Then it renders the stored methods at the given amount', () => {
     const triggerHandler = buildTriggerHandler();
     const session = new LegacyLoadOrchestrationSession(triggerHandler);
@@ -97,5 +127,14 @@ describe('createLoadSuperTokenMetrics', () => {
     metrics.resetOnAmountChange();
 
     expect(legacy.sendMetric).toHaveBeenCalledWith('super_token_reset_on_amount_change', 'true', '');
+  });
+
+  it('Given an invalid amount, When reported, Then only fixed metric fields are sent', () => {
+    const legacy = { sendMetric: jest.fn() };
+    const metrics = createLoadSuperTokenMetrics(legacy);
+
+    metrics.invalidAmount();
+
+    expect(legacy.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_amount', 'true', '');
   });
 });

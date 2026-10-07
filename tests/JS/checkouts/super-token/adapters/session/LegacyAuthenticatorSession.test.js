@@ -23,6 +23,14 @@ const buildPaymentMethods = (overrides = {}) => ({
 });
 
 describe('LegacyAuthenticatorSession', () => {
+  it('Given a load generation guard, When queried, Then it returns the current status', () => {
+    const isCurrent = jest.fn(() => false);
+    const session = new LegacyAuthenticatorSession(buildAuthenticatorInstance(), buildPaymentMethods(), isCurrent);
+
+    expect(session.isCurrentLoad()).toBe(false);
+    expect(isCurrent).toHaveBeenCalledTimes(1);
+  });
+
   it('Given an amount and e-mail, When building the authenticator, Then it forwards them to the legacy instance', async () => {
     const authenticator = buildAuthenticatorInstance();
     const session = new LegacyAuthenticatorSession(authenticator, buildPaymentMethods());

@@ -62,6 +62,24 @@ describe('V21AccountMoneyDecoration (RN-2: v2.1 decorates the account-money sele
     expect(row.getAttribute('aria-label')).toContain('Saldo disponível');
   });
 
+  it('Given an MLC account-money row, When decorated, Then it displays the sufficient-balance message', () => {
+    const row = buildAccountMoneyRow();
+    row.dataset.baseAriaLabel = 'Dinero disponible en Mercado Pago';
+    row.setAttribute('aria-label', 'Dinero disponible en Mercado Pago');
+    container.appendChild(row);
+    decoration = new V21AccountMoneyDecoration(buildViewDeps({
+      siteId: 'MLC',
+      copy: { accountMoneyBalanceText: 'Suficiente para pagar esta compra.' },
+    }));
+
+    decoration.decorate(row);
+
+    const balanceLine = row.querySelector(`.${V21_STYLES.ACCOUNT_MONEY_BALANCE_LINE}`);
+    expect(balanceLine.textContent).toBe('Suficiente para pagar esta compra.');
+    expect(balanceLine.getAttribute('aria-live')).toBe('polite');
+    expect(row.getAttribute('aria-label')).toContain('Suficiente para pagar esta compra.');
+  });
+
   it('Given a connected, selected row, When the frame runs, Then the open classes are applied', () => {
     const row = buildAccountMoneyRow();
     container.appendChild(row);

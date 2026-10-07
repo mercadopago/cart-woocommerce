@@ -7,6 +7,7 @@ const METHODS = [{ token: 'tok-1', type: 'credit_card' }];
 const buildSession = (overrides = {}) => ({
   getBuyerEmail: jest.fn(() => EMAIL),
   isValidEmail: jest.fn(() => true),
+  bumpLoadGeneration: jest.fn(),
   setFetching: jest.fn(),
   getLoadGeneration: jest.fn(() => 0),
   currentAmount: jest.fn(() => AMOUNT),
@@ -33,6 +34,7 @@ describe('FetchAndRenderPaymentMethods', () => {
     await run(session, metrics);
 
     expect(metrics.emailCaptured).toHaveBeenCalledTimes(1);
+    expect(session.bumpLoadGeneration).toHaveBeenCalledTimes(1);
     expect(session.setFetching).toHaveBeenNthCalledWith(1, true);
     expect(session.fetchAccountPaymentMethods).toHaveBeenCalledWith(AMOUNT, EMAIL);
     expect(session.setFetching).toHaveBeenNthCalledWith(2, false);

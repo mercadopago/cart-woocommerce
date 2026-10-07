@@ -22,7 +22,12 @@ import {
   userHasAccountMoney,
   userHasAccountMoneyInvested,
 } from '@super-token/core/checkoutSession/PaymentMethodClassifier';
-import { BRAZIL_ACCRONYM, MEXICO_ACCRONYM, MP_CARD_BLUE_SITES } from '@super-token/core/constants';
+import {
+  BRAZIL_ACCRONYM,
+  CHILE_ACCRONYM,
+  MEXICO_ACCRONYM,
+  MP_CARD_BLUE_SITES,
+} from '@super-token/core/constants';
 import type { VariantViewDeps } from '../VariantViewDeps';
 
 /** Non-breaking space, kept in the consumer-credits copy so "Mercado Pago" never wraps. */
@@ -76,6 +81,8 @@ export function buildConsumerCreditsName(siteId: string): string {
       return `Meses sin Tarjeta con Mercado${NBSP}Pago`;
     case BRAZIL_ACCRONYM:
       return `Linha de Crédito Mercado${NBSP}Pago`;
+    case CHILE_ACCRONYM:
+      return `Cuotas sin Tarjeta de Mercado${NBSP}Pago`;
     default:
       return `Cuotas sin Tarjeta con Mercado${NBSP}Pago`;
   }

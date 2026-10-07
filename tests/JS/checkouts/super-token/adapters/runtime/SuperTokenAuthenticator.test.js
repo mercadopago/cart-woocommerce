@@ -1,6 +1,8 @@
 const { SuperTokenAuthenticator } = require('@super-token/adapters/runtime/SuperTokenAuthenticator');
+const { LegacyLoadOrchestrationSession } = require('@super-token/adapters/session/LegacyLoadOrchestrationSession');
 
 const PLATFORM_ID = 'BP1';
+const SITE_ID = 'MLB';
 
 const buildMetrics = (overrides = {}) => ({
   sendMetric: jest.fn(),
@@ -16,8 +18,8 @@ const buildMetrics = (overrides = {}) => ({
   ...overrides,
 });
 
-const build = ({ sdk = {}, paymentMethods = {}, metrics = buildMetrics() } = {}) => {
-  const authenticator = new SuperTokenAuthenticator(sdk, paymentMethods, metrics, PLATFORM_ID);
+const build = ({ sdk = {}, paymentMethods = {}, metrics = buildMetrics(), siteId = SITE_ID } = {}) => {
+  const authenticator = new SuperTokenAuthenticator(sdk, paymentMethods, metrics, PLATFORM_ID, siteId);
   return { authenticator, sdk, paymentMethods, metrics };
 };
 
@@ -32,9 +34,15 @@ describe('SuperTokenAuthenticator', () => {
       ['1.234,56', '1234.56'], // European: dot thousands, comma decimal
       ['1,234.56', '1234.56'], // US: comma thousands, dot decimal
       ['R$ 10,00', '10.00'], // strips currency symbol, comma decimal
+      ['0', '0.00'], // a real zero remains distinct from an empty amount
       ['10.5', '10.50'], // plain dot decimal
+      ['1..2', null], // malformed decimal must not be parsed as 1
+      ['1.2.3', null], // reject a partially parseable amount
       ['', null], // empty
       ['abc', null], // no digits
+      [null, null],
+      [NaN, null], // reject a non-string runtime value instead of throwing
+      ['999999999999999999999999', null], // toFixed would return exponential notation
     ])('Given %p, When formatted, Then it returns %p', (input, expected) => {
       const { authenticator } = build();
       expect(authenticator.formatAmount(input)).toBe(expected);
@@ -43,6 +51,24 @@ describe('SuperTokenAuthenticator', () => {
     it('Given no argument, When formatted, Then it returns null', () => {
       const { authenticator } = build();
       expect(authenticator.formatAmount()).toBeNull();
+    });
+
+    it('Given an MLC amount with decimal places, When formatted, Then it omits the decimal fraction', () => {
+      const { authenticator } = build({ siteId: 'MLC' });
+
+      expect(authenticator.formatAmount('1234.00')).toBe('1234');
+    });
+
+    it('Given a very large MLC amount, When formatted, Then it rejects exponential notation', () => {
+      const { authenticator } = build({ siteId: 'MLC' });
+
+      expect(authenticator.formatAmount('999999999999999999999999')).toBeNull();
+    });
+
+    it('Given a non-MLC amount with decimal places, When formatted, Then it keeps two decimal places', () => {
+      const { authenticator } = build({ siteId: 'MLA' });
+
+      expect(authenticator.formatAmount('1234')).toBe('1234.00');
     });
   });
 
@@ -103,6 +129,28 @@ describe('SuperTokenAuthenticator', () => {
   });
 
   describe('buildAuthenticator', () => {
+    it('Given a normalized MLC integer amount, When built, Then it calls the SDK', async () => {
+      const sdk = { authenticator: jest.fn().mockResolvedValue({}) };
+      const { authenticator } = build({ sdk, siteId: 'MLC' });
+
+      await authenticator.buildAuthenticator('1234', 'buyer@example.com');
+
+      expect(sdk.authenticator).toHaveBeenCalledWith('1234', 'buyer@example.com', {
+        platformId: PLATFORM_ID,
+        version: 2,
+      });
+    });
+
+    it('Given a fractional MLC amount, When built directly, Then it blocks the SDK call', async () => {
+      const sdk = { authenticator: jest.fn() };
+      const { authenticator, metrics } = build({ sdk, siteId: 'MLC' });
+
+      await expect(authenticator.buildAuthenticator('1234.00', 'buyer@example.com')).resolves.toBeNull();
+
+      expect(sdk.authenticator).not.toHaveBeenCalled();
+      expect(metrics.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_amount', 'true', '');
+    });
+
     it('Given a valid SDK, When built, Then it calls the SDK with the injected platform id and version 2', async () => {
       const handle = { id: 'HANDLE' };
       const sdk = { authenticator: jest.fn().mockResolvedValue(handle) };
@@ -115,6 +163,21 @@ describe('SuperTokenAuthenticator', () => {
         version: 2,
       });
       expect(result).toBe(handle);
+    });
+
+    it.each([null, '', 'NaN', 'abc', 'Infinity', '1e309', '10', '000.00'])('Given invalid amount %p, When built directly, Then the SDK is not called', async (amount) => {
+      window.callSdkWithMetrics = jest.fn((sdkCall) => sdkCall());
+      const sdk = { authenticator: jest.fn() };
+      const metrics = buildMetrics();
+      const { authenticator } = build({ sdk, metrics });
+
+      await expect(authenticator.buildAuthenticator(amount, 'buyer@example.com')).resolves.toBeNull();
+
+      expect(sdk.authenticator).not.toHaveBeenCalled();
+      expect(window.callSdkWithMetrics).not.toHaveBeenCalled();
+      expect(metrics.errorToBuildAuthenticator).not.toHaveBeenCalled();
+      expect(metrics.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_amount', 'true', '');
+      expect(authenticator.getAmountUsed()).toBeNull();
     });
 
     it('Given callSdkWithMetrics is present, When built, Then the SDK call is wrapped with the metric label', async () => {
@@ -222,6 +285,62 @@ describe('SuperTokenAuthenticator', () => {
       };
       return { authenticator: jest.fn().mockResolvedValue(handle), handle };
     };
+
+    it('Given an SDK call is pending, When reset and a newer load completes, Then the old handle cannot replace it', async () => {
+      let resolveOldSdkCall;
+      const oldSdkCall = new Promise((resolve) => { resolveOldSdkCall = resolve; });
+      const oldHandle = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(true),
+        getFastPaymentToken: jest.fn().mockResolvedValue('OLD_FAST'),
+      };
+      const newHandle = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(true),
+        getFastPaymentToken: jest.fn().mockResolvedValue('NEW_FAST'),
+      };
+      const sdk = { authenticator: jest.fn().mockReturnValueOnce(oldSdkCall).mockResolvedValueOnce(newHandle) };
+      const paymentMethods = { getAccountPaymentMethods: jest.fn().mockResolvedValue({ data: [{ token: 'NEW' }] }) };
+      const { authenticator } = build({ sdk, paymentMethods });
+
+      const oldLoad = authenticator.getAccountPaymentMethods('10.00', 'buyer@example.com');
+      authenticator.reset();
+      await authenticator.getAccountPaymentMethods('20.00', 'buyer@example.com');
+      resolveOldSdkCall(oldHandle);
+      await oldLoad;
+
+      expect(authenticator.getStoredAuthenticator()).toBe(newHandle);
+      expect(oldHandle.getSimplifiedAuth).not.toHaveBeenCalled();
+      expect(paymentMethods.getAccountPaymentMethods).toHaveBeenCalledTimes(1);
+      expect(paymentMethods.getAccountPaymentMethods).toHaveBeenCalledWith('NEW_FAST');
+    });
+
+    it('Given a pending SDK call with the fetching flag cleared, When an invalid amount cancels it, Then the late response stores no handle or token', async () => {
+      let resolveSdkCall;
+      const pendingSdkCall = new Promise((resolve) => { resolveSdkCall = resolve; });
+      const lateHandle = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(true),
+        getFastPaymentToken: jest.fn().mockResolvedValue('STALE_FAST'),
+      };
+      const sdk = { authenticator: jest.fn().mockReturnValue(pendingSdkCall) };
+      const paymentMethods = { getAccountPaymentMethods: jest.fn() };
+      const { authenticator } = build({ sdk, paymentMethods });
+      const pendingLoad = authenticator.getAccountPaymentMethods('20.00', 'buyer@example.com');
+      const triggerHandler = {
+        isFetchingPaymentMethods: false,
+        cancelLoad: jest.fn(),
+        mpSuperTokenAuthenticator: authenticator,
+      };
+
+      new LegacyLoadOrchestrationSession(triggerHandler).cancelInvalidAmount();
+      resolveSdkCall(lateHandle);
+      await pendingLoad;
+
+      expect(triggerHandler.cancelLoad).toHaveBeenCalledTimes(1);
+      expect(authenticator.getStoredAuthenticator()).toBeNull();
+      expect(authenticator.fastPaymentToken).toBeNull();
+      expect(lateHandle.getSimplifiedAuth).not.toHaveBeenCalled();
+      expect(lateHandle.getFastPaymentToken).not.toHaveBeenCalled();
+      expect(paymentMethods.getAccountPaymentMethods).not.toHaveBeenCalled();
+    });
 
     it('Given a full happy path, When loading, Then it stores the handle/token and returns the account methods', async () => {
       const sdk = buildLoadSdk();

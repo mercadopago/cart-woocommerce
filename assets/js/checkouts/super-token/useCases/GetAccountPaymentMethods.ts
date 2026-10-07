@@ -20,6 +20,7 @@ import type {
 
 /** Subset of `MPSuperTokenAuthenticator`/`MPSuperTokenPaymentMethods` used to load methods. */
 export interface AuthenticatorSession {
+  isCurrentLoad(): boolean;
   buildAuthenticator(amount: string | null, buyerEmail: string): Promise<RawSdkAuthenticator | null>;
   storeAuthenticator(authenticator: RawSdkAuthenticator): void;
   getSimplifiedAuth(authenticator: RawSdkAuthenticator): Promise<boolean>;
@@ -51,13 +52,16 @@ export class GetAccountPaymentMethods {
 
     try {
       const authenticator = await session.buildAuthenticator(amount, buyerEmail);
-      if (!authenticator) {
+      if (!session.isCurrentLoad() || !authenticator) {
         return null;
       }
 
       session.storeAuthenticator(authenticator);
 
       const isSimplified = await session.getSimplifiedAuth(authenticator);
+      if (!session.isCurrentLoad()) {
+        return null;
+      }
       if (!isSimplified) {
         metrics.isNotSimplifiedAuth();
         return null;
@@ -67,6 +71,9 @@ export class GetAccountPaymentMethods {
       metrics.canUseSuperToken(true);
 
       const fastPaymentToken = await session.getFastPaymentToken(authenticator);
+      if (!session.isCurrentLoad()) {
+        return null;
+      }
       if (!fastPaymentToken) {
         metrics.cannotGetFastPaymentToken();
         return null;
@@ -75,13 +82,18 @@ export class GetAccountPaymentMethods {
       session.storeFastPaymentToken(fastPaymentToken);
 
       const accountPaymentMethods = await session.fetchAccountPaymentMethods(fastPaymentToken);
+      if (!session.isCurrentLoad()) {
+        return null;
+      }
       if (!accountPaymentMethods?.data?.length) {
         throw new Error(MPSuperTokenErrorCodes.EMPTY_ACCOUNT_PAYMENT_METHODS);
       }
 
       return accountPaymentMethods.data;
     } catch (error) {
-      metrics.errorToGetAccountPaymentMethods(error);
+      if (session.isCurrentLoad()) {
+        metrics.errorToGetAccountPaymentMethods(error);
+      }
       return null;
     }
   }

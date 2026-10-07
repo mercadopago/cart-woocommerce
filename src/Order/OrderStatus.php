@@ -6,6 +6,7 @@ use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Numbers;
+use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
@@ -280,11 +281,9 @@ class OrderStatus
                 // catches duplicates first; this barrier serves as the safety net and the sole
                 // dedup mechanism for Super Token (where the endpoint returns no refund_id).
                 //
-                // Returning here does NOT drop the "[Refund X]" payment metadata: both callers
-                // sync it before reaching this point — WebhookNotification in getProcessedStatus
-                // (from transaction_amount_refunded) and CoreNotification in handleRefundNotification
-                // (via updatePaymentDetails). So the AC "does not create a WC refund, but updates
-                // order meta" holds for both the Webhook and the Core paths.
+                // Metadata is handled separately from the WC refund object:
+                // Webhook writes its absolute snapshot, while Core handles its
+                // payment details and queues a guarded repair when appropriate.
                 if ($this->refundAlreadyProcessed($order, $paymentsData)) {
                     $this->logs->file->info('Mercado Pago: Refund already processed, skipping...', __CLASS__);
                     return true;
@@ -299,11 +298,9 @@ class OrderStatus
                     // Refund-id dedup: if this refund_id was already applied (e.g. it
                     // originated from the panel and was persisted at refund time), skip it —
                     // do not create a duplicate refund nor an order note.
-                    // Metadata is NOT left stale by this skip: on the Webhook path
-                    // WebhookNotification::getProcessedStatus already wrote the authoritative
-                    // [Refund <transaction_amount_refunded>] before refundedFlow runs; on the Core
-                    // path the refund_id skip happens earlier in CoreNotification (with its own
-                    // authoritative updatePaymentDetails) and never reaches here. See traps.md.
+                    // Webhook already wrote its payment snapshot before this path.
+                    // Core handles an applied ID earlier and queues a guarded
+                    // metadata repair without reaching this branch.
                     if ($this->isRefundIdApplied($order, (string) $refundId)) {
                         $this->logs->file->info('Mercado Pago: Refund already applied, skipping...', __CLASS__);
                         return true;
@@ -611,6 +608,153 @@ class OrderStatus
         }
 
         return $result;
+    }
+
+    /**
+     * Repair a per-payment total only when the provider's complete refund list
+     * proves that every refund included in it has already been applied locally.
+     */
+    public function reconcilePaymentRefund(
+        WC_Order $order,
+        string $paymentId,
+        string $requiredRefundId,
+        int $attempt = 0
+    ): bool {
+        if (!ctype_digit($paymentId) || !ctype_digit($requiredRefundId)) {
+            $this->logs->file->error('Invalid refund reconciliation identifier', __CLASS__);
+            return false;
+        }
+
+        try {
+            $order->read_meta_data(true);
+            $orderPaymentIds = array_filter(array_map(
+                'trim',
+                explode(',', (string) $this->orderMetadata->getPaymentsIdMeta($order))
+            ));
+            if (
+                ($orderPaymentIds && !in_array($paymentId, $orderPaymentIds, true))
+                || (!$orderPaymentIds && !$order->get_meta(PaymentMetadata::getPaymentMetaKey($paymentId)))
+            ) {
+                throw new Exception('Payment does not belong to order');
+            }
+
+            $headers = ['Authorization: Bearer ' . $this->getAccessTokenForOrder($order)];
+            $paymentResponse = $this->requester->get(self::PAYMENTS_ENDPOINT . $paymentId, $headers);
+            $payment = (array) $paymentResponse->getData();
+            if (
+                $paymentResponse->getStatus() !== 200
+                || (string) ($payment['id'] ?? '') !== $paymentId
+                || !is_numeric($payment['transaction_amount'] ?? null)
+                || !is_numeric($payment['transaction_amount_refunded'] ?? null)
+            ) {
+                throw new Exception('Invalid payment snapshot');
+            }
+
+            $paid = (float) $payment['transaction_amount'];
+            $total = (float) $payment['transaction_amount_refunded'];
+            if (!is_finite($paid) || !is_finite($total) || $total < 0 || $total > $paid) {
+                throw new Exception('Invalid payment totals');
+            }
+
+            $refundsResponse = $this->requester->get(self::PAYMENTS_ENDPOINT . $paymentId . '/refunds', $headers);
+            $refunds = $refundsResponse->getData();
+            if ($refundsResponse->getStatus() !== 200) {
+                throw new Exception('Refund list unavailable');
+            }
+            $refunds = (array) $refunds;
+            if (isset($refunds['results'])) {
+                $refunds = (array) $refunds['results'];
+            } elseif (isset($refunds['id'])) {
+                $refunds = [$refunds];
+            }
+
+            $seen = [];
+            $sumCents = 0;
+            foreach ($refunds as $refund) {
+                $refund = (array) $refund;
+                $id = (string) ($refund['id'] ?? '');
+                $amount = $refund['amount'] ?? null;
+                if (
+                    !ctype_digit($id) || isset($seen[$id])
+                    || (string) ($refund['payment_id'] ?? '') !== $paymentId
+                    || ($refund['status'] ?? '') !== 'approved'
+                    || !is_numeric($amount) || !is_finite((float) $amount) || (float) $amount < 0
+                ) {
+                    throw new Exception('Invalid refund list entry');
+                }
+                $seen[$id] = true;
+                $sumCents += (int) round((float) $amount * 100);
+            }
+
+            if (!isset($seen[$requiredRefundId]) || $sumCents !== (int) round($total * 100)) {
+                throw new Exception('Incomplete refund list');
+            }
+
+            $details = (array) ($payment['transaction_details'] ?? []);
+            $paymentMetadata = [
+                'date' => $payment['date_created'] ?? '',
+                'total_amount' => $payment['transaction_amount'],
+                'payment_type_id' => $payment['payment_type_id'] ?? '',
+                'payment_method_id' => $payment['payment_method_id'] ?? '',
+                'paid_amount' => $details['total_paid_amount'] ?? $payment['transaction_amount'],
+                'coupon_amount' => $payment['coupon_amount'] ?? 0,
+            ];
+            $order->read_meta_data(true);
+            $appliedIds = $this->orderMetadata->getAppliedRefundIds($order);
+            foreach (array_keys($seen) as $refundId) {
+                if (!in_array((string) $refundId, $appliedIds, true)) {
+                    throw new Exception('Refund list includes a pending ID');
+                }
+            }
+            if ($this->orderMetadata->replaceRefundedAmountForPayment($order, $paymentId, $total, $paymentMetadata)) {
+                return true;
+            }
+            throw new Exception('Refund total was not persisted');
+        } catch (\Throwable $e) {
+            // Exception messages and provider payloads can contain credentials or PII.
+            $this->logs->file->error('Refund reconciliation deferred: ' . get_class($e), __CLASS__);
+            $this->schedulePaymentRefundReconciliation($order->get_id(), $paymentId, $requiredRefundId, $attempt + 1);
+            return false;
+        }
+    }
+
+    public function queuePaymentRefundReconciliation(WC_Order $order, string $paymentId, string $refundId): void
+    {
+        if (ctype_digit($paymentId) && ctype_digit($refundId)) {
+            $this->schedulePaymentRefundReconciliation($order->get_id(), $paymentId, $refundId, 1);
+        }
+    }
+
+    private function schedulePaymentRefundReconciliation(
+        int $orderId,
+        string $paymentId,
+        string $refundId,
+        int $attempt
+    ): void {
+        if ($attempt > 10 || !function_exists('wp_schedule_single_event')) {
+            $this->logs->file->error('Refund reconciliation retries exhausted', __CLASS__);
+            return;
+        }
+        $args = [$orderId, $paymentId, $refundId, $attempt];
+        if (wp_next_scheduled('mp_reconcile_payment_refund', $args)) {
+            return;
+        }
+        $delay = min(3600, 60 * (2 ** min($attempt - 1, 6)));
+        if (wp_schedule_single_event(time() + $delay, 'mp_reconcile_payment_refund', $args) !== true) {
+            $this->logs->file->error('Could not schedule refund reconciliation', __CLASS__);
+        }
+    }
+
+    public function retryPaymentRefundReconciliation(
+        int $orderId,
+        string $paymentId,
+        string $refundId,
+        int $attempt
+    ): void {
+        $order = wc_get_order($orderId);
+        if ($order instanceof WC_Order) {
+            $this->reconcilePaymentRefund($order, $paymentId, $refundId, $attempt);
+        }
     }
 
     /**

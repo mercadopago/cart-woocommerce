@@ -213,6 +213,25 @@ class ErrorMessagesTest extends TestCase
         $this->assertEquals('<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method.', $result);
     }
 
+    public function testUnknownErrorDoesNotEmitDeprecationForNumericMappingKeys(): void
+    {
+        set_error_handler(static function ($severity, $message): bool {
+            if ($severity === E_DEPRECATED) {
+                throw new \ErrorException($message, 0, $severity);
+            }
+            return false;
+        });
+
+        try {
+            $this->assertSame(
+                $this->errorMessages->getDefaultErrorMessage(),
+                $this->errorMessages->findErrorMessage('Unknown Super Token API response')
+            );
+        } finally {
+            restore_error_handler();
+        }
+    }
+
     /**
      * Test getDefaultErrorMessage
      */

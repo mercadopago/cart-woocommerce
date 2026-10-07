@@ -68,6 +68,12 @@ describe('buildAccountMoneyName', () => {
 });
 
 describe('buildConsumerCreditsName', () => {
+  it('Given MLC, Then it returns the approved Chilean copy with a non-breaking space', () => {
+    expect(buildConsumerCreditsName('MLC')).toBe(
+      `Cuotas sin Tarjeta de Mercado${NBSP}Pago`,
+    );
+  });
+
   it('Given MLM, Then it returns the Mexican copy with a non-breaking space', () => {
     expect(buildConsumerCreditsName('MLM')).toBe(`Meses sin Tarjeta con Mercado${NBSP}Pago`);
   });
@@ -132,6 +138,16 @@ describe('installmentsWithoutFee', () => {
 
 describe('resolvePaymentMethodView', () => {
   const deps = buildViewDeps({ siteId: 'MLB' });
+
+  it('Given MLC consumer credits, Then the rendered view uses the approved Chilean name', () => {
+    const view = resolvePaymentMethodView(
+      consumerCredits(),
+      buildViewDeps({ siteId: 'MLC' }),
+      presentation(),
+    );
+
+    expect(view.name).toBe(`Cuotas sin Tarjeta de Mercado${NBSP}Pago`);
+  });
 
   it('Given account money, Then it uses the account-money name, yellow wallet and the presentation classes', () => {
     const view = resolvePaymentMethodView(accountMoney(), deps, presentation());

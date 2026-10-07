@@ -145,6 +145,54 @@ class WoocommerceMercadoPagoTest extends TestCase
     }
 
     /**
+     * @dataProvider localeCatalogProvider
+     */
+    public function testLoadPluginTextDomainUsesCountrySpecificOrGenericCatalog(string $wordpressLocale, string $catalogLocale): void
+    {
+        if (!defined('MP_PLUGIN_FILE')) {
+            define('MP_PLUGIN_FILE', '/tmp/woocommerce-mercadopago.php');
+        }
+
+        WP_Mock::userFunction('get_plugin_data', [
+            'return' => [
+                'TextDomain' => 'woocommerce-mercadopago',
+                'DomainPath' => 'i18n/languages',
+            ],
+        ]);
+        WP_Mock::userFunction('unload_textdomain', [
+            'args' => ['woocommerce-mercadopago'],
+        ]);
+        WP_Mock::userFunction('get_locale', ['return' => $wordpressLocale]);
+        WP_Mock::onFilter('plugin_locale')
+            ->with($wordpressLocale, 'woocommerce-mercadopago')
+            ->reply($wordpressLocale);
+        $loaded = false;
+        WP_Mock::userFunction('load_textdomain', [
+            'args' => [
+                'woocommerce-mercadopago',
+                dirname(\MP_PLUGIN_FILE) . "/i18n/languages/woocommerce-mercadopago-$catalogLocale.mo",
+            ],
+            'return' => function () use (&$loaded) {
+                $loaded = true;
+                return true;
+            },
+        ]);
+
+        $this->newPluginWithoutConstructor()->loadPluginTextDomain();
+
+        $this->assertTrue($loaded);
+    }
+
+    public function localeCatalogProvider(): array
+    {
+        return [
+            'Chile uses the Chilean catalog'    => ['es_CL', 'es_CL'],
+            'Mexico uses the Mexican catalog'   => ['es_MX', 'es_MX'],
+            'Argentina uses the generic catalog' => ['es_AR', 'es'],
+        ];
+    }
+
+    /**
      * Builds the plugin with only the collaborators activatePlugin() touches. Both are
      * public properties, so no reflection is needed beyond skipping the constructor.
      *

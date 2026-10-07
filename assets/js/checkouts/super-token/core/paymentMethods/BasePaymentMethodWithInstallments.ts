@@ -21,10 +21,11 @@ import {
 import { formatCurrency } from '@super-token/core/shared/formatting';
 import { BasePaymentMethod } from '@super-token/core/paymentMethods/BasePaymentMethod';
 
-/** One option of the installment `<select>`: the number of installments and its display title. */
+/** One option of the installment `<select>`, including whether its title carries the bank-interest marker. */
 export interface InstallmentOption {
   value: string;
   title: string;
+  hasBankInterestDisclaimer: boolean;
 }
 
 export abstract class BasePaymentMethodWithInstallments extends BasePaymentMethod {
@@ -83,6 +84,7 @@ export abstract class BasePaymentMethodWithInstallments extends BasePaymentMetho
     return this.getInstallmentsLimit(installments).map((installment) => ({
       value: `${installment.installments}`,
       title: this.buildInstallmentTitle(installment),
+      hasBankInterestDisclaimer: this.hasBankInterestDisclaimer(installment),
     }));
   }
 
@@ -94,7 +96,6 @@ export abstract class BasePaymentMethodWithInstallments extends BasePaymentMetho
     const installmentNumber = installment.installments;
     const installmentAmount = this.formatAmount(installment.installment_amount);
     const hasRate = installment.installment_rate !== 0;
-    const isThirdParty = (installment.installment_rate_collector ?? []).includes('THIRD_PARTY');
     const totalAmount = this.formatAmount(installment.total_amount);
 
     if (installmentNumber === 1) {
@@ -105,7 +106,7 @@ export abstract class BasePaymentMethodWithInstallments extends BasePaymentMetho
       return `${installmentNumber}x ${installmentAmount} (${totalAmount})`;
     }
 
-    if (this.needsBankInterestDisclaimer() && isThirdParty && !hasRate) {
+    if (this.hasBankInterestDisclaimer(installment)) {
       return `${installmentNumber}x ${installmentAmount} (${totalAmount})*`;
     }
 
@@ -118,5 +119,13 @@ export abstract class BasePaymentMethodWithInstallments extends BasePaymentMetho
       currency: this.config.currency,
       siteId: this.config.siteId,
     });
+  }
+
+  private hasBankInterestDisclaimer(installment: Installment): boolean {
+    return installment.installments !== 1
+      && this.needsBankInterestDisclaimer()
+      && installment.installment_rate === 0
+      && Array.isArray(installment.installment_rate_collector)
+      && installment.installment_rate_collector.includes('THIRD_PARTY');
   }
 }

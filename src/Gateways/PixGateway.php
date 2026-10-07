@@ -362,23 +362,25 @@ class PixGateway extends AbstractGateway
      */
     public function generatePixImage(): void
     {
+        $metricDetails = [
+            'site_id' => $this->mercadopago->sellerConfig->getSiteId(),
+            'environment' => $this->mercadopago->storeConfig->isTestMode() ? 'homol' : 'prod',
+            'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
+        ];
+
         $orderId = Form::sanitizedGetData('id');
         if (!$orderId) {
+            $this->datadog->sendEvent('pix_qr_access', 'missing_order_id', null, 'pix', $metricDetails);
             $this->mercadopago->helpers->images->getErrorImage();
             return;
         }
 
         $order = wc_get_order($orderId);
         if (!$order) {
+            $this->datadog->sendEvent('pix_qr_access', 'order_not_found', null, 'pix', $metricDetails);
             $this->mercadopago->helpers->images->getErrorImage();
             return;
         }
-
-        $metricDetails = [
-            'site_id' => $this->mercadopago->sellerConfig->getSiteId(),
-            'environment' => $this->mercadopago->storeConfig->isTestMode() ? 'homol' : 'prod',
-            'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
-        ];
 
         $orderKey = Form::sanitizedGetData('key');
         if (!$orderKey || $order->get_order_key() !== $orderKey) {
@@ -394,6 +396,7 @@ class PixGateway extends AbstractGateway
         }
 
         if (!$qrCodeBase64) {
+            $this->datadog->sendEvent('pix_qr_access', 'qr_not_found', null, 'pix', $metricDetails);
             $this->mercadopago->helpers->images->getErrorImage();
             return;
         }

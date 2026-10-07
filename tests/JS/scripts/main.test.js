@@ -48,8 +48,8 @@ describe('main.js — super-token asset build', () => {
       const contents = fs.writeFileSync.mock.calls.map(([, content]) => content);
       expect(contents).toEqual([
         '.compiled{color:red}',
-        ':root{--mp-super-token-loader-version:1.2.6}.compiled{color:red}',
-        ':root{--mp-super-token-loader-version:1.2.6}.compiled{color:red}',
+        ':root{--mp-super-token-loader-version:1.2.7}.compiled{color:red}',
+        ':root{--mp-super-token-loader-version:1.2.7}.compiled{color:red}',
       ]);
     });
 
@@ -130,7 +130,7 @@ describe('main.js — super-token asset build', () => {
 
   describe('SUPER_TOKEN_LOADER_VERSION (A/B variant list)', () => {
     it('declares a version for both A/B variants', () => {
-      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ v2: '1.2.6', 'v2.1': '1.2.6' });
+      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ v2: '1.2.7', 'v2.1': '1.2.7' });
     });
   });
 

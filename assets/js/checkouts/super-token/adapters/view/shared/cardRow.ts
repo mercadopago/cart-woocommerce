@@ -12,6 +12,7 @@
 import type { Installment, PaymentMethod } from '@super-token/types/external-globals';
 import type { RenderRowSession } from '@super-token/ports';
 import { isCreditCard } from '@super-token/core/checkoutSession/PaymentMethodClassifier';
+import { COUNTRIES_WITH_BANK_INTEREST_DISCLAIMER } from '@super-token/core/constants';
 import type { InstallmentOption } from '@super-token/core/paymentMethods/BasePaymentMethodWithInstallments';
 import type { VariantViewDeps } from '../VariantViewDeps';
 import { el } from './dom';
@@ -78,12 +79,12 @@ function buildInstallmentsField(
 function buildCardDetailsSection(
   paymentMethod: PaymentMethod,
   deps: VariantViewDeps,
-  installmentOptions: (paymentMethod: PaymentMethod) => InstallmentOption[],
+  options: InstallmentOption[],
 ): HTMLElement {
   const wrapperChildren: (Node | null)[] = [];
 
   if (isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
-    wrapperChildren.push(buildInstallmentsField(paymentMethod, deps, installmentOptions(paymentMethod)));
+    wrapperChildren.push(buildInstallmentsField(paymentMethod, deps, options));
   }
   wrapperChildren.push(buildSecurityCodeField(paymentMethod, deps));
 
@@ -98,10 +99,44 @@ function buildCardDetailsSection(
   });
 }
 
+function updateBankInterestHint(
+  row: HTMLElement,
+  paymentMethod: PaymentMethod,
+  selectedValue: string,
+  options: InstallmentOption[],
+  deps: VariantViewDeps,
+): void {
+  row.querySelector(`.${SHARED_STYLES.BANK_INTEREST_HINT}`)?.remove();
+
+  const selectedOption = options.find((option) => option.value === selectedValue);
+  const shouldRender = COUNTRIES_WITH_BANK_INTEREST_DISCLAIMER.includes(deps.siteId)
+    && !!deps.copy.bankInterestHintText
+    && selectedOption?.hasBankInterestDisclaimer === true;
+  if (!shouldRender) {
+    return;
+  }
+
+  const taxInfo = row.querySelector(`#${CSS.escape(taxInfoElementId(paymentMethod))}`);
+  const container = taxInfo?.parentElement;
+  if (!container) {
+    return;
+  }
+
+  container.insertBefore(
+    el('div', {
+      classes: [SHARED_STYLES.BANK_INTEREST_HINT],
+      text: `*${deps.copy.bankInterestHintText}`,
+    }),
+    taxInfo,
+  );
+}
+
 function wireInstallments(
   row: HTMLElement,
   paymentMethod: PaymentMethod,
   installments: Installment[],
+  options: InstallmentOption[],
+  deps: VariantViewDeps,
   session: RenderRowSession,
 ): void {
   const dropdown = findInstallmentsSelect(row, paymentMethod);
@@ -113,6 +148,7 @@ function wireInstallments(
 
   dropdown.addEventListener('change', (event) => {
     const selected = (event.target as HTMLSelectElement).value;
+    updateBankInterestHint(row, paymentMethod, selected, options, deps);
     if (!selected) {
       return;
     }
@@ -127,6 +163,7 @@ function wireInstallments(
   });
 
   // Restore the tax info + shared field when a value is already selected (e.g. after a payment error).
+  updateBankInterestHint(row, paymentMethod, dropdown.value, options, deps);
   if (dropdown.value) {
     syncCardInstallments(dropdown.value);
     session.updateInstallmentsTaxInfo(dropdown.value, taxInfoElementId(paymentMethod), installments);
@@ -140,11 +177,14 @@ export function buildCardRow(
   session: RenderRowSession,
   installmentOptions: (paymentMethod: PaymentMethod) => InstallmentOption[],
 ): HTMLElement {
+  const options = isCreditCard(paymentMethod) && paymentMethod.installments?.length
+    ? installmentOptions(paymentMethod)
+    : [];
   const row = buildInteractiveRow(paymentMethod, deps, presentation, session);
-  row.appendChild(buildCardDetailsSection(paymentMethod, deps, installmentOptions));
+  row.appendChild(buildCardDetailsSection(paymentMethod, deps, options));
 
   if (isCreditCard(paymentMethod) && paymentMethod.installments?.length) {
-    wireInstallments(row, paymentMethod, paymentMethod.installments, session);
+    wireInstallments(row, paymentMethod, paymentMethod.installments, options, deps, session);
   }
 
   return row;

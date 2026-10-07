@@ -39,7 +39,12 @@ export interface SuperTokenViewParams {
   payment_methods_thumbnails: Record<string, string>;
   current_user_email: string;
   input_title: { installments: string };
-  input_helper_message: { installments: { required: string } };
+  input_helper_message: {
+    installments: {
+      required: string;
+      bank_interest_hint_text?: string;
+    };
+  };
   security_code_input_title_text: string;
   security_code_tooltip_text_3_digits: string;
   security_code_tooltip_text_4_digits: string;
@@ -78,6 +83,7 @@ export function createVariantViewDeps(
       accountMoneyAvailableText: params.account_money_available_text,
       installmentsInputTitle: params.input_title.installments,
       installmentsRequiredMessage: params.input_helper_message.installments.required,
+      bankInterestHintText: params.input_helper_message.installments.bank_interest_hint_text ?? '',
       securityCodeInputTitle: params.security_code_input_title_text,
       securityCodeTooltip3Digits: params.security_code_tooltip_text_3_digits,
       securityCodeTooltip4Digits: params.security_code_tooltip_text_4_digits,
