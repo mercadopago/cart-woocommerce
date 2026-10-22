@@ -3,17 +3,16 @@
 namespace MercadoPago\Woocommerce\Tests\Transactions;
 
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
+use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
 use MercadoPago\Woocommerce\Transactions\PseTransaction;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
-use stdClass;
+use Mockery;
+use WC_Order;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class PseTransactionTest extends TestCase
 {
     use TransactionMock;
@@ -25,6 +24,68 @@ class PseTransactionTest extends TestCase
      * @var MockInterface|PseTransaction
      */
     private $transaction;
+
+    public function testConstructorInitializesPaymentPayloadAndPseFields(): void
+    {
+        $gateway = Mockery::mock(AbstractGateway::class);
+        $order = Mockery::mock(WC_Order::class);
+        $mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
+        $mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($gateway)
+            ->andReturn(1.0);
+        $mercadopago->helpers->country
+            ->shouldReceive('getCountryConfigs')
+            ->once()
+            ->andReturn(['currency' => 'COP']);
+        $GLOBALS['mercadopago'] = $mercadopago;
+
+        $transaction = new class ($gateway, $order, ['bank' => '1001']) extends PseTransaction {
+            public int $commonCalls = 0;
+            public int $payerCalls = 0;
+            public int $additionalInfoCalls = 0;
+            public int $psePropertiesCalls = 0;
+
+            public function setCommonTransaction(): void
+            {
+                $this->commonCalls++;
+            }
+
+            public function setPayerTransaction(): void
+            {
+                $this->payerCalls++;
+            }
+
+            public function setAdditionalInfoTransaction(): void
+            {
+                $this->additionalInfoCalls++;
+            }
+
+            public function setPsePropertiesTransaction(): void
+            {
+                $this->psePropertiesCalls++;
+            }
+
+            public function getTransactionType(): string
+            {
+                return $this->transactionType;
+            }
+        };
+
+        $this->assertSame('Payment', $transaction->getTransactionType());
+        $this->assertSame(PseTransaction::ID, $transaction->transaction['payment_method_id']);
+        $this->assertSame(1, $transaction->transaction['installments']);
+        $this->assertSame('', $transaction->transaction['description']);
+        $this->assertSame(0.0, $transaction->transaction['transaction_amount']);
+        $this->assertSame([], $transaction->transaction['payer']['address']);
+        $this->assertSame([], $transaction->transaction['additional_info']['items']);
+        $this->assertSame([], $transaction->transaction['point_of_interaction']['transaction_data']);
+        $this->assertSame(1, $transaction->commonCalls);
+        $this->assertSame(2, $transaction->payerCalls);
+        $this->assertSame(1, $transaction->additionalInfoCalls);
+        $this->assertSame(1, $transaction->psePropertiesCalls);
+    }
 
     public function testExtendInternalMetadata(): void
     {
@@ -87,15 +148,14 @@ class PseTransactionTest extends TestCase
             ->getStreetNumberInFullAddress('', '00')
             ->andReturn($expected['payer']['address']['street_number']);
 
-        $this->transaction->transaction = new stdClass();
-        $this->transaction->transaction->transaction_details = new stdClass();
-        $this->transaction->transaction->payer = new stdClass();
-        $this->transaction->transaction->payer->phone = new stdClass();
-        $this->transaction->transaction->payer->address = new stdClass();
+        $this->transaction->transaction = [
+            'transaction_details' => [],
+            'payer' => ['phone' => [], 'address' => []],
+        ];
 
         $this->transaction->setPsePropertiesTransaction();
 
-        $this->assertObjectEqualsArray($expected, $this->transaction->transaction);
+        $this->assertEquals($expected, $this->transaction->transaction);
     }
 
     public function testSetPayerTransaction(): void
@@ -112,10 +172,10 @@ class PseTransactionTest extends TestCase
             'doc_number' => $expected['identification']['number']
         ]);
 
-        $this->transaction->transaction->payer->identification = new stdClass();
+        $this->transaction->transaction['payer']['identification'] = [];
 
         $this->transaction->setPayerTransaction();
 
-        $this->assertObjectEqualsArray($expected, $this->transaction->transaction->payer);
+        $this->assertEquals($expected, $this->transaction->transaction['payer']);
     }
 }

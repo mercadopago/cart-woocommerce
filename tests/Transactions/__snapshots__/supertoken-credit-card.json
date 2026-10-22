@@ -1,42 +1,14 @@
 {
-    "id": null,
-    "status": null,
     "date_of_expiration": null,
     "operation_type": null,
     "issuer_id": null,
     "payment_method_id": "master",
-    "payment_type_id": null,
     "three_d_secure_mode": null,
     "description": "Baseline Product x 1",
     "sponsor_id": null,
     "counter_currency": null,
     "shipping_amount": null,
     "store_id": null,
-    "payer": {
-        "entity_type": null,
-        "type": null,
-        "id": null,
-        "email": "buyer@baseline.example",
-        "identification": {
-            "type": null,
-            "number": null
-        },
-        "first_name": "Baseline",
-        "last_name": "Buyer",
-        "operator_id": null,
-        "address": {
-            "street_name": "Av. Paulista 1000",
-            "street_number": null,
-            "neighborhood": null,
-            "city": "São Paulo",
-            "federal_unit": "SP",
-            "zip_code": "01310100"
-        },
-        "phone": {
-            "number": null,
-            "area_code": null
-        }
-    },
     "metadata": {
         "platform": "WOOCOMMERCE_MP_TEST",
         "platform_version": "9.9.9",
@@ -75,22 +47,57 @@
         },
         "flow_id": null
     },
+    "external_reference": "WOOTEST4265",
+    "transaction_amount": 100,
+    "coupon_amount": null,
+    "differential_pricing_id": null,
+    "installments": 3,
+    "binary_mode": false,
+    "statement_descriptor": "Baseline Store",
+    "notification_url": "https://baseline.example/wc-api/webhook",
+    "processing_mode": null,
+    "merchant_account_id": null,
+    "brand_id": null,
+    "reserve_id": null,
+    "collector": null,
+    "callback_url": null,
+    "application_fee": null,
+    "campaign_id": null,
+    "capture": null,
+    "coupon_code": null,
+    "token": null,
+    "payment_type_id": "credit_card",
+    "payer": {
+        "entity_type": null,
+        "type": null,
+        "id": null,
+        "email": "buyer@baseline.example",
+        "first_name": "Baseline",
+        "last_name": "Buyer",
+        "operator_id": null,
+        "identification": {
+            "type": null,
+            "number": null
+        },
+        "address": {
+            "street_name": "Av. Paulista 1000",
+            "street_number": null,
+            "neighborhood": null,
+            "city": "São Paulo",
+            "federal_unit": "SP",
+            "zip_code": "01310100"
+        },
+        "phone": {
+            "number": null,
+            "area_code": null
+        }
+    },
     "additional_info": {
         "ip_address": "127.0.0.1",
         "referral_url": "https://baseline.example",
         "drop_shipping": null,
         "delivery_promise": null,
         "contrated_plan": null,
-        "items": [
-            {
-                "id": 4265,
-                "title": "Consolidated Items",
-                "description": "Consolidated Items",
-                "category_id": "others",
-                "quantity": 1,
-                "unit_price": 100
-            }
-        ],
         "payer": {
             "first_name": "Baseline",
             "last_name": "Buyer",
@@ -185,26 +192,24 @@
                 "floor": null,
                 "apartment": "1000"
             }
-        }
+        },
+        "items": [
+            {
+                "id": 4265,
+                "title": "Consolidated Items",
+                "description": "Consolidated Items",
+                "picture_url": null,
+                "category_id": "others",
+                "quantity": 1,
+                "unit_price": 100
+            }
+        ]
     },
-    "external_reference": "WOOTEST4265",
-    "transaction_amount": 100,
-    "coupon_amount": null,
-    "differential_pricing_id": null,
-    "installments": 3,
     "transaction_details": {
         "financial_institution": null,
         "bank_transfer_id": null,
-        "transaction_id": null,
-        "total_paid_amount": null,
-        "installment_amount": null,
-        "external_resource_url": null
+        "transaction_id": null
     },
-    "binary_mode": false,
-    "statement_descriptor": "Baseline Store",
-    "notification_url": "https://baseline.example/wc-api/webhook",
-    "processing_mode": null,
-    "merchant_account_id": null,
     "point_of_interaction": {
         "type": null,
         "sub_type": null,
@@ -216,22 +221,11 @@
         "transaction_data": {
             "bank_info": {
                 "origin_bank_id": null
-            },
-            "qr_code_base64": null,
-            "qr_code": null
+            }
         },
         "location": {
             "source": null,
             "state_id": null
         }
-    },
-    "brand_id": null,
-    "reserve_id": null,
-    "collector": null,
-    "callback_url": null,
-    "application_fee": null,
-    "campaign_id": null,
-    "capture": null,
-    "coupon_code": null,
-    "token": null
+    }
 }

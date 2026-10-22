@@ -184,7 +184,6 @@ function mpGetRequirements() {
       const requirements = {
         ssl: document.getElementById('mp-req-ssl'),
         gd_ext: document.getElementById('mp-req-gd'),
-        curl_ext: document.getElementById('mp-req-curl'),
       };
 
       for (let i in requirements) {

@@ -4,56 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2cbef7d43bc272823d4d80b299eb68ed",
-    "packages": [
-        {
-            "name": "mp-plugins/php-sdk",
-            "version": "3.7.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/mercadopago/pp-php-sdk.git",
-                "reference": "e705530643386942790ba96c04eecf5aa3e199fd"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/mercadopago/pp-php-sdk/zipball/e705530643386942790ba96c04eecf5aa3e199fd",
-                "reference": "e705530643386942790ba96c04eecf5aa3e199fd",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "php": ">=7"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "9.5.27",
-                "squizlabs/php_codesniffer": "3.7.2"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "MercadoPago\\PP\\Sdk\\": [
-                        "src"
-                    ]
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "proprietary"
-            ],
-            "authors": [
-                {
-                    "name": "Mercado Pago SMB",
-                    "email": "pp_smb@mercadolivre.com"
-                }
-            ],
-            "description": "Mercado Pago Plugins PHP-SDK",
-            "support": {
-                "issues": "https://github.com/mercadopago/pp-php-sdk/issues",
-                "source": "https://github.com/mercadopago/pp-php-sdk/tree/v3.7.0"
-            },
-            "time": "2026-09-03T13:31:37+00:00"
-        }
-    ],
+    "content-hash": "c1de69b76030d115c5b8ac0d51904f46",
+    "packages": [],
     "packages-dev": [
         {
             "name": "10up/wp_mock",

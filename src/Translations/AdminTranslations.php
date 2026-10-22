@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Translations;
 
 use ArrayAccess;
+use MercadoPago\Woocommerce\Helpers\CreditsPresentation;
 use MercadoPago\Woocommerce\Helpers\Links;
 
 if (!defined('ABSPATH')) {
@@ -214,7 +215,6 @@ class AdminTranslations
         $this->notices = [
             'miss_woocommerce'          => $missWoocommerce,
             'php_wrong_version'         => __('Mercado Pago payments for WooCommerce requires PHP version 7.4 or later. Please update your PHP version.', 'woocommerce-mercadopago'),
-            'missing_curl'              => __('Mercado Pago Error: PHP Extension CURL is not installed.', 'woocommerce-mercadopago'),
             'missing_gd_extensions'     => __('Mercado Pago Error: PHP Extension GD is not installed. Installation of GD extension is required to send QR Code Pix by email.', 'woocommerce-mercadopago'),
             'activate_woocommerce'      => __('Activate WooCommerce', 'woocommerce-mercadopago'),
             'install_woocommerce'       => __('Install WooCommerce', 'woocommerce-mercadopago'),
@@ -296,14 +296,12 @@ class AdminTranslations
 
         $this->headerSettings = [
             'ssl'                      => __('SSL', 'woocommerce-mercadopago'),
-            'curl'                     => __('Curl', 'woocommerce-mercadopago'),
             'gd_extension'             => __('GD Extensions', 'woocommerce-mercadopago'),
             'title_header'             => $titleHeader,
             'title_requirements'       => __('Technical requirements', 'woocommerce-mercadopago'),
             'title_installments'       => __('Collections and installments', 'woocommerce-mercadopago'),
             'title_questions'          => __('More information', 'woocommerce-mercadopago'),
             'description_ssl'          => __('Implementation responsible for transmitting data to Mercado Pago in a secure and encrypted way.', 'woocommerce-mercadopago'),
-            'description_curl'         => __('It is an extension responsible for making payments via requests from the plugin to Mercado Pago.', 'woocommerce-mercadopago'),
             'description_gd_extension' => __('These extensions are responsible for the implementation and operation of Pix in your store.', 'woocommerce-mercadopago'),
             'description_installments' => $installmentsDescription,
             'description_questions'    => __('Check our documentation to learn more about integrating our plug-in.', 'woocommerce-mercadopago'),
@@ -567,25 +565,25 @@ class AdminTranslations
     {
         $gatewayDescriptionEnabled = sprintf(
             '%s <b>%s</b>.',
-            __('“Installments without cards through Mercado Pago” is', 'woocommerce-mercadopago'),
+            __('“Up to 12 installments with {credits_name}” is', 'woocommerce-mercadopago'),
             __('enabled', 'woocommerce-mercadopago')
         );
 
         $gatewayDescriptionDisabled = sprintf(
             '%s <b>%s</b>.',
-            __('“Installments without cards through Mercado Pago” is', 'woocommerce-mercadopago'),
+            __('“Up to 12 installments with {credits_name}” is', 'woocommerce-mercadopago'),
             __('disabled', 'woocommerce-mercadopago')
         );
 
         $bannerDescriptionEnabled = sprintf(
             '%s <b>%s</b>.',
-            __('“Up to 12 installments without cards through Mercado Pago” is', 'woocommerce-mercadopago'),
+            __('“Up to 12 installments with {credits_name}” is', 'woocommerce-mercadopago'),
             __('enabled', 'woocommerce-mercadopago')
         );
 
         $bannerDescriptionDisabled = sprintf(
             '%s <b>%s</b>.',
-            __('“Up to 12 installments without cards through Mercado Pago” is', 'woocommerce-mercadopago'),
+            __('“Up to 12 installments with {credits_name}” is', 'woocommerce-mercadopago'),
             __('disabled', 'woocommerce-mercadopago')
         );
 
@@ -602,11 +600,11 @@ class AdminTranslations
         );
 
         $this->creditsGatewaySettings = [
-            'gateway_title'                             => __('Payments without a Mercado Pago card', 'woocommerce-mercadopago'),
+            'gateway_title'                             => CreditsPresentation::productName(),
             'gateway_description'                       => __('Your customers finish their payments on Mercado Pago with a credit line.', 'woocommerce-mercadopago'),
-            'gateway_method_title'                      => __('Mercado Pago - Checkout Pro Pagos sin Tarjeta', 'woocommerce-mercadopago'),
+            'gateway_method_title'                      => CreditsPresentation::productName(),
             'gateway_method_description'                => __('Your customers finish their payments on Mercado Pago with a credit line.', 'woocommerce-mercadopago'),
-            'header_title'                              => __('Up to 12 installments without cards through Mercado Pago', 'woocommerce-mercadopago'),
+            'header_title'                              => __('Up to 12 installments with {credits_name}', 'woocommerce-mercadopago'),
             'header_description'                        => __('With this alternative, you’ll be able to sell in installments without cards and receive the money immediately with the same fees as with credit cards. Your sales are protected and guaranteed by Mercado Pago.', 'woocommerce-mercadopago'),
             'card_settings_title'                       => __('Mercado Pago plugin general settings', 'woocommerce-mercadopago'),
             'card_settings_subtitle'                    => __('Set the deadlines and fees, test your store or access the Plugin manual.', 'woocommerce-mercadopago'),
@@ -621,14 +619,14 @@ class AdminTranslations
             'enabled_toggle_pill_text'                  => __('PREVIEW', 'woocommerce-mercadopago'),
             'title_title'                               => __('Title in the checkout', 'woocommerce-mercadopago'),
             'title_description'                         => __('We recommend using the default title. Maximum characters: 85.', 'woocommerce-mercadopago'),
-            'title_default'                             => __('Checkout without card', 'woocommerce-mercadopago'),
+            'title_default'                             => CreditsPresentation::productName(),
             'title_desc_tip'                            => __('The text inserted here will not be translated to other languages', 'woocommerce-mercadopago'),
             'currency_conversion_title'                 => __('Convert Currency', 'woocommerce-mercadopago'),
             'currency_conversion_subtitle'              => __('Activate this option so that the value of the currency set in WooCommerce is compatible with the value of the currency you use in Mercado Pago.', 'woocommerce-mercadopago'),
             'currency_conversion_descriptions_enabled'  => $currencyConversionDescriptionsEnabled,
             'currency_conversion_descriptions_disabled' => $currencyConversionDescriptionsDisabled,
             'credits_banner_title'                      => __('Promote the payment of your products with Mercado Pago', 'woocommerce-mercadopago'),
-            'credits_banner_subtitle'                   => __('Activate this promotional banner to offer the option of paying in installments without cards through Mercado Pago within product pages.', 'woocommerce-mercadopago'),
+            'credits_banner_subtitle'                   => __('Activate this promotional banner to offer “{credits_name}” within product pages.', 'woocommerce-mercadopago'),
             'credits_banner_descriptions_enabled'       => $bannerDescriptionEnabled,
             'credits_banner_descriptions_disabled'      => $bannerDescriptionDisabled,
             'credits_banner_desktop'                    => __('Banner on the product page | Computer version', 'woocommerce-mercadopago'),
@@ -645,9 +643,11 @@ class AdminTranslations
             'commission_title'                          => __('Commission in Mercado Pago Checkouts', 'woocommerce-mercadopago'),
             'commission_description'                    => __('Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago.', 'woocommerce-mercadopago'),
             'commission_checkbox_label'                 => __('Activate and show this information on Mercado Pago Checkout', 'woocommerce-mercadopago'),
-            'tooltip_component_title'                   => __('Choose how to promote “Pagos sin Tarjeta de Mercado Pago” on your store', 'woocommerce-mercadopago'),
+            'tooltip_component_title'                   => __('Choose how to promote “{credits_name}” on your store', 'woocommerce-mercadopago'),
             'tooltip_component_desc'                    => __('You can only select one alternative and you may edit it whenever you want.', 'woocommerce-mercadopago'),
-            'tooltip_component_example'                 => __('Example:', 'woocommerce-mercadopago')
+            'tooltip_component_example'                 => __('Example:', 'woocommerce-mercadopago'),
+            'credits_promotion_name'                    => _x('Buy now, pay later', 'credits seller promotion name', 'woocommerce-mercadopago'),
+            'credits_alternative_name'                  => _x('Buy now, pay later', 'credits seller alternative name', 'woocommerce-mercadopago')
         ];
         $this->creditsGatewaySettings  = array_merge($this->creditsGatewaySettings, $this->setSupportLinkTranslations());
         $this->creditsGatewaySettings = array_merge($this->creditsGatewaySettings, $this->setCreditsTooltipSelectionTranslations());
@@ -662,27 +662,27 @@ class AdminTranslations
     {
         $tooltipComponentOption1 = sprintf(
             '<b>%s</b> %s',
-            __('Up to 12 installments without cards', 'woocommerce-mercadopago'),
-            __('through Mercado Pago. Learn more', 'woocommerce-mercadopago')
+            _x('Up to 12 installments', 'credits banner', 'woocommerce-mercadopago'),
+            _x('through {credits_promotion_name}. Learn more', 'credits seller banner', 'woocommerce-mercadopago')
         );
 
         $tooltipComponentOption2 = sprintf(
             '<b>%s</b> %s',
-            __('Buy now, pay later', 'woocommerce-mercadopago'),
-            __('through Mercado Pago. Learn more', 'woocommerce-mercadopago')
+            _x('Buy now, pay later', 'credits seller banner', 'woocommerce-mercadopago'),
+            _x('through {credits_alternative_name}. Learn more', 'credits seller banner', 'woocommerce-mercadopago')
         );
 
         $tooltipComponentOption3 = sprintf(
             '%s <b>%s</b>. %s',
-            __('With Mercado Pago,', 'woocommerce-mercadopago'),
-            __('get it now and pay month by month', 'woocommerce-mercadopago'),
+            _x('With {credits_alternative_name},', 'credits seller banner', 'woocommerce-mercadopago'),
+            _x('get it now and pay month by month', 'credits banner', 'woocommerce-mercadopago'),
             __(' Learn more', 'woocommerce-mercadopago')
         );
 
         $tooltipComponentOption4 = sprintf(
             '<b>%s</b> %s',
-            __('Pay in up to 12 installments', 'woocommerce-mercadopago'),
-            __('without credit card. Learn more', 'woocommerce-mercadopago')
+            _x('Pay in up to 12 installments', 'credits banner', 'woocommerce-mercadopago'),
+            _x('without credit card. Learn more', 'credits seller banner', 'woocommerce-mercadopago')
         );
 
         return [

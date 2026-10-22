@@ -32,6 +32,8 @@ class OrderMetadata
 
     private const PAYMENTS_IDS = '_Mercado_Pago_Payment_IDs';
 
+    public const PREFERENCE_IDS = '_Mercado_Pago_Preference_IDs';
+
     private const MERCADOPAGO_PAYMENT = 'Mercado Pago - Payment';
 
     private const PAYMENT_DETAILS = 'PAYMENT_ID: DATE';
@@ -285,6 +287,184 @@ class OrderMetadata
     public function setPaymentsIdData(WC_Order $order, $value): void
     {
         $this->orderMeta->add($order, self::PAYMENTS_IDS, $value);
+    }
+
+    /**
+     * Get all valid Mercado Pago payment IDs associated with the order.
+     *
+     * @param WC_Order $order
+     *
+     * @return string[]
+     */
+    public function getPaymentIds(WC_Order $order): array
+    {
+        $currentPaymentIds = $this->normalizePaymentIds(
+            $this->orderMeta->get($order, self::PAYMENTS_IDS, false)
+        );
+        $historicalPaymentIds = $this->getHistoricalPaymentIds($order);
+
+        return array_values(array_unique(array_merge($currentPaymentIds, $historicalPaymentIds)));
+    }
+
+    /**
+     * Recover payment IDs from the append-only attempt history.
+     *
+     * `_Mercado_Pago_Payment_IDs` may contain only the latest attempt, while
+     * `PAYMENT_ID: DATE` keeps the previous direct payment attempts required by
+     * reconciliation.
+     *
+     * @param WC_Order $order
+     *
+     * @return string[]
+     */
+    private function getHistoricalPaymentIds(WC_Order $order): array
+    {
+        $storedPaymentDetails = $this->orderMeta->get($order, self::PAYMENT_DETAILS);
+        if (!is_string($storedPaymentDetails) || $storedPaymentDetails === '') {
+            return [];
+        }
+
+        $paymentIds = [];
+        foreach (explode(",\n", $storedPaymentDetails) as $paymentDetail) {
+            $parts = explode(': ', trim($paymentDetail), 2);
+            $paymentId = trim($parts[0]);
+
+            if (count($parts) === 2 && ctype_digit($paymentId)) {
+                $paymentIds[$paymentId] = $paymentId;
+            }
+        }
+
+        return array_values($paymentIds);
+    }
+
+    /**
+     * Replace the stored payment ID list with a normalized, deduplicated snapshot.
+     *
+     * @param WC_Order $order
+     * @param array $paymentIds
+     *
+     * @return bool
+     */
+    public function replacePaymentIds(WC_Order $order, array $paymentIds): bool
+    {
+        $paymentIds = $this->normalizePaymentIds($paymentIds);
+        if (empty($paymentIds)) {
+            return false;
+        }
+
+        $this->orderMeta->update($order, self::PAYMENTS_IDS, PaymentMetadata::joinPaymentIds($paymentIds));
+
+        return true;
+    }
+
+    private function normalizePaymentIds($storedPaymentIds): array
+    {
+        if (!is_array($storedPaymentIds)) {
+            $storedPaymentIds = [$storedPaymentIds];
+        }
+
+        $paymentIds = [];
+        foreach ($storedPaymentIds as $storedPaymentId) {
+            if ($storedPaymentId instanceof \WC_Meta_Data) {
+                $storedPaymentId = $storedPaymentId->get_data()['value'] ?? null;
+            }
+
+            if (is_array($storedPaymentId)) {
+                $candidates = $storedPaymentId;
+            } elseif (is_string($storedPaymentId) || is_int($storedPaymentId)) {
+                $candidates = explode(',', (string) $storedPaymentId);
+            } else {
+                continue;
+            }
+
+            foreach ($candidates as $paymentId) {
+                if (!is_string($paymentId) && !is_int($paymentId)) {
+                    continue;
+                }
+
+                $paymentId = trim((string) $paymentId);
+                if (ctype_digit($paymentId)) {
+                    $paymentIds[$paymentId] = $paymentId;
+                }
+            }
+        }
+
+        return array_values($paymentIds);
+    }
+
+    /**
+     * Get the Checkout Pro preference IDs associated with the order.
+     *
+     * @param WC_Order $order
+     *
+     * @return string[]
+     */
+    public function getPreferenceIds(WC_Order $order): array
+    {
+        $preferenceIds = [];
+        $this->collectPreferenceIds(
+            $this->orderMeta->get($order, self::PREFERENCE_IDS, false),
+            $preferenceIds
+        );
+
+        return array_values($preferenceIds);
+    }
+
+    private function collectPreferenceIds($storedPreferenceIds, array &$preferenceIds): void
+    {
+        if ($storedPreferenceIds instanceof \WC_Meta_Data) {
+            $storedPreferenceIds = $storedPreferenceIds->get_data()['value'] ?? null;
+        }
+
+        if (is_array($storedPreferenceIds)) {
+            foreach ($storedPreferenceIds as $storedPreferenceId) {
+                $this->collectPreferenceIds($storedPreferenceId, $preferenceIds);
+            }
+
+            return;
+        }
+
+        if (!is_string($storedPreferenceIds)) {
+            return;
+        }
+
+        foreach (explode(',', $storedPreferenceIds) as $preferenceId) {
+            $preferenceId = trim($preferenceId);
+            if ($this->isValidPreferenceId($preferenceId)) {
+                $preferenceIds[$preferenceId] = $preferenceId;
+            }
+        }
+    }
+
+    /**
+     * Persist a Checkout Pro preference ID without replacing previous attempts.
+     *
+     * @param WC_Order $order
+     * @param mixed $preferenceId
+     *
+     * @return bool True when a new ID was persisted.
+     */
+    public function addPreferenceId(WC_Order $order, $preferenceId): bool
+    {
+        $preferenceId = (string) $preferenceId;
+        if (!$this->isValidPreferenceId($preferenceId)) {
+            return false;
+        }
+
+        $preferenceIds = $this->getPreferenceIds($order);
+        if (in_array($preferenceId, $preferenceIds, true)) {
+            return false;
+        }
+
+        $this->orderMeta->add($order, self::PREFERENCE_IDS, $preferenceId);
+        $order->save();
+
+        return true;
+    }
+
+    private function isValidPreferenceId(string $preferenceId): bool
+    {
+        return preg_match('/\A[A-Za-z0-9_-]{1,128}\z/D', $preferenceId) === 1;
     }
 
     /**
@@ -1007,6 +1187,23 @@ class OrderMetadata
     {
         $paymentIds = array_column($paymentsData, 'id');
         $this->setPaymentsIdData($order, PaymentMetadata::joinPaymentIds($paymentIds));
+
+        $this->updatePaymentCustomFields($order, $paymentsData);
+    }
+
+    public function updateOrderCustomFieldsAfterReconciliation(WC_Order $order, array $paymentsData): bool
+    {
+        if (!$this->replacePaymentIds($order, array_column($paymentsData, 'id'))) {
+            return false;
+        }
+
+        $this->updatePaymentCustomFields($order, $paymentsData);
+
+        return true;
+    }
+
+    private function updatePaymentCustomFields(WC_Order $order, array $paymentsData): void
+    {
 
         foreach ($paymentsData as $payment) {
             $metaPrefix = 'Mercado Pago - ' . $payment['id'];

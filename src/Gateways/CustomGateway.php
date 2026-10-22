@@ -10,7 +10,7 @@ use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
-use MercadoPago\PP\Sdk\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\SubscriptionsHelper;
 use MercadoPago\Woocommerce\Helpers\WebhookUrl;
@@ -34,6 +34,11 @@ class CustomGateway extends AbstractGateway
     private const SUPER_TOKEN_BUNDLE_HANDLE = 'wc_mercadopago_supertoken';
 
     private const SUPER_TOKEN_REFACTORED_HANDLE = 'wc_mercadopago_supertoken_refactored';
+
+    private const WALLET_BUTTON_PREVIEW_LOCALES = ['en-us', 'es-ar', 'es-cl', 'es-mx', 'pt-br'];
+
+    private const WALLET_BUTTON_PREVIEW_FALLBACK_LOCALE = 'es-mx';
+
 
     /**
      * @const
@@ -740,6 +745,8 @@ window.mpSdkInstance = null;",
         if (($this->settings['currency_conversion'] ?? 'no') === 'yes') {
             $ratio = $this->mercadopago->helpers->currency->getRatio($this);
             if ($ratio > 0) {
+                // buildCitPayload() uses this property to convert the payment items.
+                $this->ratio = $ratio;
                 $this->mercadopago->orderMetadata->setCurrencyRatioData($order, $ratio);
             } else {
                 $this->mercadopago->logs->file->warning(
@@ -1910,6 +1917,8 @@ window.mpSdkInstance = null;",
      */
     private function getSuperTokenLocalizeData(): array
     {
+        $superTokenTranslations = $this->mercadopago->storeTranslations->superTokenCheckout;
+
         return [
                 'plugin_version' => MP_VERSION,
                 'platform_version' => $this->mercadopago->woocommerce->version,
@@ -1922,68 +1931,71 @@ window.mpSdkInstance = null;",
                 // mode. In bundle mode the variant is resolved at runtime inside the bundle
                 // (VariantConfigAdapter), not by the loader.
                 'super_token_version' => MP_SUPER_TOKEN_VERSION,
+                // Tells the CDN bundle that this plugin's catalogs already carry the store-language
+                // copy for every site, so it must not apply its legacy per-site copy override.
+                'store_language_copy' => true,
                 'plugin_js_base_url' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/'),
                 'theme' => get_stylesheet(),
                 'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),
                 'current_user_email' => $this->getCheckoutEmailIfAvailable(),
                 'wallet_button_enabled' => $this->getWalletButtonEnabled(),
                 'yellow_wallet_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-yellow-wallet'),
-                'yellow_money_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-yellow-money'),
+                'yellow_money_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-credits-fast-payment.svg'),
                 'white_card_path' => $this->mercadopago->helpers->url->getImageAsset('icons/icon-white-card'),
                 'new_mp_logo_path' => $this->mercadopago->helpers->url->getImageAsset('logos/new-mp-logo'),
                 'mp_logo_blue_path' => $this->mercadopago->helpers->url->getImageAsset('logos/mp-logo-blue'),
                 'mp_logo_dark_path' => $this->mercadopago->helpers->url->getImageAsset('logos/mp-logo-dark'),
-                'saved_cards_title' => $this->storeTranslations['saved_cards_title'],
-                'saved_card_title' => $this->storeTranslations['saved_card_title'],
-                'mp_methods_title' => $this->storeTranslations['mp_methods_title'],
-                'account_money_balance_text' => $this->storeTranslations['account_money_balance_text'],
-                'saved_payment_method_title' => $this->storeTranslations['saved_payment_method_title'],
+                'saved_cards_title' => $superTokenTranslations['saved_cards_title'],
+                'saved_card_title' => $superTokenTranslations['saved_card_title'],
+                'mp_methods_title' => $superTokenTranslations['mp_methods_title'],
+                'account_money_balance_text' => $superTokenTranslations['account_money_balance_text'],
+                'saved_payment_method_title' => $superTokenTranslations['saved_payment_method_title'],
                 'payment_methods_order' => $this->mercadopago->hooks->options->getGatewayOption($this, 'payment_methods_order', 'cards_first'),
                 'payment_methods_thumbnails' => $this->mercadopago->sellerConfig->getPaymentMethodsThumbnails(),
                 'intl' => $this->countryConfigs['intl'],
                 'currency' => $this->countryConfigs['currency'],
-                'payment_methods_list_text' => $this->storeTranslations['payment_methods_list_text'],
-                'payment_methods_list_alt_text' => $this->storeTranslations['payment_methods_list_alt_text'],
-                'last_digits_text' => $this->storeTranslations['last_digits_text'],
-                'new_card_text' => $this->storeTranslations['new_card_text'],
+                'payment_methods_list_text' => $superTokenTranslations['payment_methods_list_text'],
+                'payment_methods_list_alt_text' => $superTokenTranslations['payment_methods_list_alt_text'],
+                'last_digits_text' => $superTokenTranslations['last_digits_text'],
+                'new_card_text' => $superTokenTranslations['new_card_text'],
                 'account_money_text' => $this->storeTranslations['locale'] === 'en-US'
                     ? $this->storeTranslations['account_money_text'] . ' in Mercado&nbsp;Pago'
                     : $this->storeTranslations['account_money_text'],
-                'account_money_wallet_with_investment_text' => $this->storeTranslations['account_money_wallet_with_investment_text'],
-                'account_money_wallet_text' => $this->storeTranslations['account_money_wallet_text'],
-                'account_money_investment_text' => $this->storeTranslations['account_money_investment_text'],
-                'account_money_available_text' => $this->storeTranslations['account_money_available_text'],
-                'interest_free_part_one_text' => $this->storeTranslations['interest_free_part_one_text'],
-                'interest_free_part_two_text' => $this->storeTranslations['interest_free_part_two_text'],
-                'interest_free_option_text' => $this->storeTranslations['interest_free_option_text'],
-                'security_code_input_title_text' => $this->storeTranslations['security_code_input_title_text'],
-                'security_code_placeholder_text_3_digits' => $this->storeTranslations['security_code_placeholder_text_3_digits'],
-                'security_code_placeholder_text_4_digits' => $this->storeTranslations['security_code_placeholder_text_4_digits'],
-                'security_code_tooltip_text_3_digits' => $this->storeTranslations['security_code_tooltip_text_3_digits'],
-                'security_code_tooltip_text_4_digits' => $this->storeTranslations['security_code_tooltip_text_4_digits'],
-                'security_code_error_message_text' => $this->storeTranslations['security_code_error_message_text'],
+                'account_money_wallet_with_investment_text' => $superTokenTranslations['account_money_wallet_with_investment_text'],
+                'account_money_wallet_text' => $superTokenTranslations['account_money_wallet_text'],
+                'account_money_investment_text' => $superTokenTranslations['account_money_investment_text'],
+                'account_money_available_text' => $superTokenTranslations['account_money_available_text'],
+                'interest_free_part_one_text' => $superTokenTranslations['interest_free_part_one_text'],
+                'interest_free_part_two_text' => $superTokenTranslations['interest_free_part_two_text'],
+                'interest_free_option_text' => $superTokenTranslations['interest_free_option_text'],
+                'security_code_input_title_text' => $superTokenTranslations['security_code_input_title_text'],
+                'security_code_placeholder_text_3_digits' => $superTokenTranslations['security_code_placeholder_text_3_digits'],
+                'security_code_placeholder_text_4_digits' => $superTokenTranslations['security_code_placeholder_text_4_digits'],
+                'security_code_tooltip_text_3_digits' => $superTokenTranslations['security_code_tooltip_text_3_digits'],
+                'security_code_tooltip_text_4_digits' => $superTokenTranslations['security_code_tooltip_text_4_digits'],
+                'security_code_error_message_text' => $superTokenTranslations['security_code_error_message_text'],
                 'input_title' => [
-                    'installments' => $this->storeTranslations['card_installments_label'],
+                    'installments' => $superTokenTranslations['card_installments_label'],
                 ],
                 'placeholders' => [
-                    'issuer' => $this->storeTranslations['placeholders_issuer'],
-                    'installments' => $this->storeTranslations['placeholders_installments'],
-                    'cardExpirationDate' => $this->storeTranslations['placeholders_card_expiration_date'],
+                    'issuer' => $superTokenTranslations['placeholders_issuer'],
+                    'installments' => $superTokenTranslations['placeholders_installments'],
+                    'cardExpirationDate' => $superTokenTranslations['placeholders_card_expiration_date'],
                 ],
                 'input_helper_message' => [
                     'installments' => [
-                        'required' => $this->storeTranslations['installments_required'],
-                        'interest_free_option_text' => $this->storeTranslations['interest_free_option_text'],
-                        'bank_interest_hint_text' => $this->storeTranslations['card_installments_interest_text'],
+                        'required' => $superTokenTranslations['installments_required'],
+                        'interest_free_option_text' => $superTokenTranslations['interest_free_option_text'],
+                        'bank_interest_hint_text' => $superTokenTranslations['card_installments_interest_text'],
                     ],
                     'securityCode' => [
-                        'invalid_type' => $this->storeTranslations['input_helper_message_security_code_invalid_type'],
-                        'invalid_length' => $this->storeTranslations['input_helper_message_security_code_invalid_length'],
+                        'invalid_type' => $superTokenTranslations['input_helper_message_security_code_invalid_type'],
+                        'invalid_length' => $superTokenTranslations['input_helper_message_security_code_invalid_length'],
                     ],
                 ],
                 'mercado_pago_card_name' => $this->storeTranslations['mercado_pago_card_name'],
                 'mercado_pago_credit_card_name' => $this->storeTranslations['mercado_pago_credit_card_name'],
-                'consumer_credits_due_date' => $this->storeTranslations['consumer_credits_due_date'],
+                'consumer_credits_due_date' => $superTokenTranslations['consumer_credits_due_date'],
                 'months_abbreviated' => $this->storeTranslations['months_abbreviated'],
                 'mlb_installment_debit_auto_text' => $this->storeTranslations['mlb_installment_debit_auto_text'],
                 'interest_rate_mlb_text' => $this->storeTranslations['interest_rate_mlb_text'],
@@ -2000,16 +2012,17 @@ window.mpSdkInstance = null;",
                 'tna_mla_text' => $this->storeTranslations['tna_mla_text'],
                 'tea_mla_text' => $this->storeTranslations['tea_mla_text'],
                 'fixed_rate_text' => $this->storeTranslations['fixed_rate_text'],
-                'mercadopago_privacy_policy' => str_replace(
+                // The bundle renders this footer with innerHTML: allow only the markup the classic template allows.
+                'mercadopago_privacy_policy' => wp_kses_post(str_replace(
                     '{link}',
                     $this->mercadopago->helpers->links->getPrivacyPolicyLink($this->countryConfigs['site_id']),
-                    $this->storeTranslations['mercadopago_privacy_policy']
-                ),
-                'update_security_code_with_retry_error_text' => $this->storeTranslations['update_security_code_with_retry_error_text'],
-                'update_security_code_no_retry_error_text' => $this->storeTranslations['update_security_code_no_retry_error_text'],
-                'authorize_payment_method_with_retry_error_text' => $this->storeTranslations['authorize_payment_method_with_retry_error_text'],
-                'authorize_payment_method_no_retry_error_text' => $this->storeTranslations['authorize_payment_method_no_retry_error_text'],
-                'select_payment_method_error_text' => $this->storeTranslations['select_payment_method_error_text'],
+                    $superTokenTranslations['mercadopago_privacy_policy']
+                )),
+                'update_security_code_with_retry_error_text' => $superTokenTranslations['update_security_code_with_retry_error_text'],
+                'update_security_code_no_retry_error_text' => $superTokenTranslations['update_security_code_no_retry_error_text'],
+                'authorize_payment_method_with_retry_error_text' => $superTokenTranslations['authorize_payment_method_with_retry_error_text'],
+                'authorize_payment_method_no_retry_error_text' => $superTokenTranslations['authorize_payment_method_no_retry_error_text'],
+                'select_payment_method_error_text' => $superTokenTranslations['select_payment_method_error_text'],
                 'platform_id' => MP_PLATFORM_ID,
                 'public_key' => $this->mercadopago->sellerConfig->getCredentialsPublicKey(),
             ];
@@ -2190,6 +2203,9 @@ window.mpSdkInstance = null;",
     private function getWalletButtonPreviewUrl(): string
     {
         $locale = strtolower($this->storeTranslations['locale']);
+        if (!in_array($locale, self::WALLET_BUTTON_PREVIEW_LOCALES, true)) {
+            $locale = self::WALLET_BUTTON_PREVIEW_FALLBACK_LOCALE;
+        }
 
         return $this->mercadopago->helpers->url->getImageAsset(
             'gateways/wallet-button/preview-' . $locale,
@@ -2212,6 +2228,9 @@ window.mpSdkInstance = null;",
             $this->transaction = new WalletButtonTransaction($this, $order);
 
             $preference = $this->transaction->createPreference();
+            if (isset($preference['id'])) {
+                $this->mercadopago->orderMetadata->addPreferenceId($order, $preference['id']);
+            }
 
             $this->mercadopago->hooks->template->getWoocommerceTemplate(
                 'public/receipt/preference-modal.php',

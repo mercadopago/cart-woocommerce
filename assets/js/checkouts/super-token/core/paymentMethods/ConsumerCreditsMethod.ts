@@ -1,7 +1,6 @@
 /**
  * Consumer credits ("digital_currency") — has installments (RN-8). Decorated with the
- * yellow money icon and a site-specific name. The names are hardcoded literals in the
- * legacy code (not localized params), preserved verbatim including the &nbsp; entity.
+ * approved Credits thumbnail and a site-specific product name, independent of store language.
  *
  * Preserved from MPSuperTokenPaymentMethods (v2.1): buildConsumerCreditsName 1018-1027,
  * normalize consumer-credits branch 2264-2267.
@@ -15,6 +14,7 @@ import {
 } from '@super-token/core/constants';
 import { isConsumerCredits } from '@super-token/core/checkoutSession/PaymentMethodClassifier';
 import { escapeHtml } from '@super-token/core/shared/escapeHtml';
+import { resolveConsumerCreditsName } from '@super-token/core/shared/consumerCreditsName';
 import { BasePaymentMethodWithInstallments } from '@super-token/core/paymentMethods/BasePaymentMethodWithInstallments';
 
 const TWO_DECIMALS = 2;
@@ -33,16 +33,7 @@ export class ConsumerCreditsMethod extends BasePaymentMethodWithInstallments {
   }
 
   private buildConsumerCreditsName(): string {
-    switch (this.config.siteId) {
-      case MEXICO_ACCRONYM:
-        return 'Meses sin Tarjeta con Mercado&nbsp;Pago';
-      case BRAZIL_ACCRONYM:
-        return 'Linha de Crédito Mercado&nbsp;Pago';
-      case CHILE_ACCRONYM:
-        return 'Cuotas sin Tarjeta de Mercado&nbsp;Pago';
-      default:
-        return 'Cuotas sin Tarjeta con Mercado&nbsp;Pago';
-    }
+    return resolveConsumerCreditsName(this.config.siteId);
   }
 
   /**

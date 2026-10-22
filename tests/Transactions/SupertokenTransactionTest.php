@@ -3,10 +3,12 @@
 namespace MercadoPago\Woocommerce\Tests\Transactions;
 
 use Exception;
-use MercadoPago\PP\Sdk\Entity\Payment\AdditionalInfo;
-use MercadoPago\PP\Sdk\Entity\Payment\Item;
-use MercadoPago\PP\Sdk\Entity\Payment\ItemList;
-use MercadoPago\PP\Sdk\Entity\Payment\Payment;
+use MercadoPago\Woocommerce\Api\Core\CoreApiClient;
+use MercadoPago\Woocommerce\Api\Core\CoreRequestContext;
+use MercadoPago\Woocommerce\Api\Core\Models\Payment;
+use MercadoPago\Woocommerce\Api\Core\PaymentsClient;
+use MercadoPago\Woocommerce\Api\Http\HttpClientInterface;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
@@ -14,6 +16,7 @@ use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Transactions\SupertokenTransaction;
+use WP_Mock;
 
 /**
  * Tests for SupertokenTransaction class
@@ -27,7 +30,18 @@ class SupertokenTransactionTest extends TestCase
 
     private string $transactionClass = SupertokenTransaction::class;
 
+    protected function setUp(): void
+    {
+        WP_Mock::setUp();
+        WP_Mock::userFunction('wp_json_encode')->andReturnUsing(function ($data) {
+            return json_encode($data);
+        });
+    }
 
+    protected function tearDown(): void
+    {
+        WP_Mock::tearDown();
+    }
 
     /**
      * @dataProvider consolidateItemsProvider
@@ -36,20 +50,10 @@ class SupertokenTransactionTest extends TestCase
     {
         $orderId = 12345;
 
-        $this->transaction->transaction = Mockery::mock(Payment::class)->makePartial();
-        $this->transaction->transaction->additional_info = Mockery::mock(AdditionalInfo::class);
-        $this->transaction->transaction->additional_info->items = Mockery::mock(ItemList::class);
-
-        $mockItems = [];
-        foreach ($items as $itemData) {
-            $item             = Mockery::mock(Item::class);
-            $item->unit_price = $itemData['unit_price'];
-            $item->quantity   = $itemData['quantity'];
-            $mockItems[]      = $item;
-        }
-
-        $this->transaction->transaction->additional_info->items->collection = $mockItems;
-        $this->transaction->transaction->transaction_amount                 = $expectedTotal;
+        $this->transaction->transaction = [
+            'additional_info' => ['items' => $items],
+            'transaction_amount' => $expectedTotal,
+        ];
 
         $this->transaction->mercadopago->storeConfig
             ->shouldReceive('getStoreCategory')
@@ -62,7 +66,7 @@ class SupertokenTransactionTest extends TestCase
 
         $this->transaction->updateTransactionItems();
 
-        $consolidatedItems = $this->transaction->transaction->additional_info->items->collection;
+        $consolidatedItems = $this->transaction->transaction['additional_info']['items'];
         $consolidatedItem  = $consolidatedItems[0];
 
         $this->assertCount(1, $consolidatedItems);
@@ -75,11 +79,7 @@ class SupertokenTransactionTest extends TestCase
 
     public function testConsolidateItemsWithEmptyItems(): void
     {
-        // Setup transaction mock with additional_info and empty items
-        $this->transaction->transaction = Mockery::mock(Payment::class)->makePartial();
-        $this->transaction->transaction->additional_info = Mockery::mock(AdditionalInfo::class);
-        $this->transaction->transaction->additional_info->items = Mockery::mock(ItemList::class);
-        $this->transaction->transaction->additional_info->items->collection = [];
+        $this->transaction->transaction = ['additional_info' => ['items' => []]];
 
         // Setup order mock
         $order = Mockery::mock(\WC_Order::class);
@@ -90,7 +90,7 @@ class SupertokenTransactionTest extends TestCase
         $this->transaction->updateTransactionItems();
 
         // Assert empty array is returned for empty items
-        $this->assertEmpty($this->transaction->transaction->additional_info->items->collection);
+        $this->assertEmpty($this->transaction->transaction['additional_info']['items']);
     }
 
 
@@ -110,21 +110,31 @@ class SupertokenTransactionTest extends TestCase
             ->expects()
             ->updateTransactionItems();
 
-        $this->transaction->transaction
+        $context = new CoreRequestContext();
+        $this->transaction->shouldAllowMockingProtectedMethods()
+            ->expects()->getCoreRequestContext()->andReturn($context);
+        $data = [
+            'id' => '123',
+            'status' => 'approved',
+            'status_detail' => 'accredited',
+            'payment_method_id' => 'master',
+            'payment_type_id' => 'credit_card',
+            'payer' => ['email' => 'buyer@example.com'],
+        ];
+        $this->transaction->mercadopago->coreApi->payments
             ->expects()
-            ->getUris()
-            ->andReturn(['post' => $apiRoute]);
-
-        $this->transaction->transaction
-            ->expects()
-            ->saveWithSuperToken($superToken, $paymentTypeId)
-            ->andReturn($data = [
-                'random' => random()->word(),
-            ]);
+            ->create($this->transaction->transaction, $context, null, $superToken, $paymentTypeId)
+            ->andReturn(Payment::fromArray($data));
 
         $this->transaction->mercadopago->logs->file = Mockery::mock(File::class)
             ->expects()
-            ->info('Payment created', '', $data)
+            ->info('Payment created', '', [
+                'id' => '123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'payment_method_id' => 'master',
+                'payment_type_id' => 'credit_card',
+            ])
             ->getMock();
 
         $this->transaction
@@ -148,15 +158,13 @@ class SupertokenTransactionTest extends TestCase
             ->expects()
             ->updateTransactionItems();
 
-        $this->transaction->transaction
+        $context = new CoreRequestContext();
+        $this->transaction->shouldAllowMockingProtectedMethods()
+            ->expects()->getCoreRequestContext()->andReturn($context);
+        $this->transaction->mercadopago->coreApi->payments
             ->expects()
-            ->saveWithSuperToken($superToken, $paymentTypeId)
+            ->create($this->transaction->transaction, $context, null, $superToken, $paymentTypeId)
             ->andThrow($exception);
-
-        $this->transaction->transaction
-            ->expects()
-            ->getUris()
-            ->andReturn(['post' => $apiRoute]);
 
         $this->transaction
             ->shouldAllowMockingProtectedMethods()
@@ -219,7 +227,17 @@ class SupertokenTransactionTest extends TestCase
 
     private function buildSupertokenPayload(array $checkout, MockInterface $order): array
     {
-        $this->transaction->transaction = (new \MercadoPago\PP\Sdk\Sdk())->getPaymentInstance();
+        $this->transaction->transaction = [
+            'payer' => ['address' => [], 'identification' => [], 'phone' => []],
+            'additional_info' => [
+                'items' => [],
+                'shipments' => ['receiver_address' => []],
+                'payer' => ['phone' => [], 'mobile' => [], 'address' => [], 'identification' => []],
+                'seller' => [],
+            ],
+            'transaction_details' => [],
+            'point_of_interaction' => ['transaction_data' => []],
+        ];
 
         $this->setNotAccessibleProperty($this->transaction, 'ratio', 1.0);
         $this->setNotAccessibleProperty($this->transaction, 'countryConfigs', ['currency' => 'BRL', 'sponsor_id' => '12345']);
@@ -266,21 +284,49 @@ class SupertokenTransactionTest extends TestCase
         $this->transaction->setPayerTransaction();
         $this->transaction->setAdditionalInfoTransaction();
 
-        $this->transaction->transaction->description        = 'Baseline Product x 1';
-        $this->transaction->transaction->transaction_amount = Numbers::format(100.0);
-        $this->transaction->transaction->payment_method_id  = $checkout['payment_method_id'];
+        $this->transaction->transaction['description'] = 'Baseline Product x 1';
+        $this->transaction->transaction['transaction_amount'] = Numbers::format(100.0);
+        $this->transaction->transaction['payment_method_id'] = $checkout['payment_method_id'];
         if (isset($checkout['installments'])) {
-            $this->transaction->transaction->installments = (int) $checkout['installments'];
+            $this->transaction->transaction['installments'] = (int) $checkout['installments'];
         }
 
-        $item             = Mockery::mock(Item::class);
-        $item->unit_price = 100.0;
-        $item->quantity   = 1;
-        $this->transaction->transaction->additional_info->items->collection = [$item];
+        $this->transaction->transaction['additional_info']['items'] = [[
+            'unit_price' => 100.0,
+            'quantity' => 1,
+        ]];
 
         $this->transaction->updateTransactionItems();
 
-        return json_decode(json_encode($this->transaction->transaction->toArray()), true);
+        $serializedBody = null;
+        $httpClient = Mockery::mock(HttpClientInterface::class);
+        $httpClient->expects()
+            ->request(
+                'POST',
+                PaymentsClient::CREATE_PATH,
+                Mockery::on(function (array $headers) use ($checkout): bool {
+                    return $headers['x-super-token'] === $checkout['authorized_pseudotoken']
+                        && $headers['Content-Type'] === 'application/json';
+                }),
+                Mockery::on(function (string $body) use (&$serializedBody): bool {
+                    $serializedBody = $body;
+                    return true;
+                })
+            )
+            ->andReturn(new HttpResponse(201, [], '', ['id' => 123]));
+
+        (new PaymentsClient(new CoreApiClient($httpClient)))->create(
+            $this->transaction->transaction,
+            new CoreRequestContext(),
+            null,
+            $checkout['authorized_pseudotoken'],
+            $checkout['payment_type_id']
+        );
+
+        $payload = json_decode((string) $serializedBody, true);
+        $this->assertIsArray($payload);
+
+        return $payload;
     }
 
     private function buildBaselineMetadata(): \MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata

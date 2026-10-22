@@ -23,15 +23,11 @@ import {
   userHasAccountMoneyInvested,
 } from '@super-token/core/checkoutSession/PaymentMethodClassifier';
 import {
-  BRAZIL_ACCRONYM,
-  CHILE_ACCRONYM,
   MEXICO_ACCRONYM,
   MP_CARD_BLUE_SITES,
 } from '@super-token/core/constants';
 import type { VariantViewDeps } from '../VariantViewDeps';
-
-/** Non-breaking space, kept in the consumer-credits copy so "Mercado Pago" never wraps. */
-const NBSP = '\u00a0';
+import { resolveConsumerCreditsName } from '@super-token/core/shared/consumerCreditsName';
 
 /** The per-variant row seam. v2 = no MP credit-card case, no account-money class. */
 export interface RowPresentation {
@@ -73,19 +69,9 @@ export function buildAccountMoneyName(
   return deps.copy.accountMoneyAvailableText;
 }
 
-// Hardcoded copy in the legacy source. The legacy emitted the &nbsp; entity inside innerHTML;
-// here the name is rendered via textContent, so NBSP is the real non-breaking-space character.
+// Legacy fallbacks use a real non-breaking space because rows render names via textContent.
 export function buildConsumerCreditsName(siteId: string): string {
-  switch (siteId) {
-    case MEXICO_ACCRONYM:
-      return `Meses sin Tarjeta con Mercado${NBSP}Pago`;
-    case BRAZIL_ACCRONYM:
-      return `Linha de Crédito Mercado${NBSP}Pago`;
-    case CHILE_ACCRONYM:
-      return `Cuotas sin Tarjeta de Mercado${NBSP}Pago`;
-    default:
-      return `Cuotas sin Tarjeta con Mercado${NBSP}Pago`;
-  }
+  return resolveConsumerCreditsName(siteId);
 }
 
 /** Largest interest-free installment count offered (drives the value-prop pill). Pure. */

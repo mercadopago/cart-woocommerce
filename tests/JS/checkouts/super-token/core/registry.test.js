@@ -51,7 +51,7 @@ describe('PaymentMethodRegistry', () => {
       const decorated = registry.decorate(consumerCredits());
 
       expect(decorated.thumbnail).toBe('/money.png');
-      expect(decorated.name).toBe('Linha de Crédito Mercado&nbsp;Pago');
+      expect(decorated.name).toBe('Mercado Parcelado');
     });
 
     it('Given a regular credit card, When decorated, Then the issuer name gets the Crédito suffix', () => {

@@ -3,12 +3,17 @@
 namespace MercadoPago\Woocommerce\Notification;
 
 use Exception;
-use MercadoPago\PP\Sdk\Sdk;
+use MercadoPago\Woocommerce\Api\Core\CoreRequestContext;
+use MercadoPago\Woocommerce\Api\Core\NotificationsClient;
+use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
-use MercadoPago\Woocommerce\WoocommerceMercadoPago;
+use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Order\OrderStatus;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -17,13 +22,26 @@ if (!defined('ABSPATH')) {
 
 class CoreNotification extends AbstractNotification
 {
-    protected WoocommerceMercadoPago $mercadopago;
+    private NotificationsClient $notificationsClient;
 
     private const REFUND_ORIGIN_PANEL = 'painel_woocommerce';
     private const REFUND_METRIC_SUCCESS_MP = 'mp_refund_success';
     private const REFUND_METRIC_ERROR_MP = 'mp_refund_error';
     private const REFUND_ORIGIN_MP = 'origin_mercadopago';
     private const CHECKOUT_TYPE_META_KEY = 'checkout_type';
+
+    public function __construct(
+        MercadoPagoGatewayInterface $gateway,
+        Logs $logs,
+        OrderStatus $orderStatus,
+        Seller $seller,
+        Store $store,
+        NotificationsClient $notificationsClient
+    ) {
+        parent::__construct($gateway, $logs, $orderStatus, $seller, $store);
+
+        $this->notificationsClient = $notificationsClient;
+    }
 
     /**
      * Get Notification Id
@@ -62,17 +80,14 @@ class CoreNotification extends AbstractNotification
         return preg_match('/^[PM]-\\d+$/', $notification_id) === 1;
     }
 
-    /**
-     * Get SDK instance
-     */
-    public function getSdkInstance(): Sdk
+    private function getRequestContext(): CoreRequestContext
     {
         $platformId   = MP_PLATFORM_ID;
         $productId    = Device::getDeviceProductId();
         $integratorId = $this->store->getIntegratorId();
         $accessToken  = $this->seller->getCredentialsAccessToken();
 
-        return new Sdk($accessToken, $platformId, $productId, $integratorId);
+        return new CoreRequestContext($accessToken, $platformId, $productId, $integratorId);
     }
 
     /**
@@ -86,7 +101,6 @@ class CoreNotification extends AbstractNotification
     {
         parent::handleReceivedNotification($data);
 
-        $sdkNotification = $this->getSdkInstance()->getNotificationInstance();
         $notification_id = $this->getNotificationId();
 
         if (!$this->validateNotificationId($notification_id)) {
@@ -97,11 +111,10 @@ class CoreNotification extends AbstractNotification
         }
 
         try {
-            $notificationEntity = $sdkNotification->read([
-                'id' => $notification_id
-            ]);
+            $notification = $this->notificationsClient
+                ->find($notification_id, $this->getRequestContext());
 
-            $this->handleSuccessfulRequest($notificationEntity->toArray());
+            $this->handleSuccessfulRequest($notification->toArray());
         } catch (Exception $e) {
             $this->logs->file->error($e->getMessage(), __CLASS__, $data);
             $this->setResponse(500, $e->getMessage());
@@ -131,7 +144,7 @@ class CoreNotification extends AbstractNotification
      */
     private function isRefundNotification($data): bool
     {
-        return isset($data['refunds_notifying']) && is_array($data['refunds_notifying']);
+        return !empty($data['refunds_notifying']) && is_array($data['refunds_notifying']);
     }
 
     /**
@@ -351,7 +364,7 @@ class CoreNotification extends AbstractNotification
             }
         }
 
-        if (!isset($data['refunds_notifying'])) {
+        if (empty($data['refunds_notifying'])) {
             $order->update_meta_data(PaymentMetadata::PAYMENT_IDS_META_KEY, PaymentMetadata::joinPaymentIds($payment_ids));
         }
     }
@@ -370,7 +383,7 @@ class CoreNotification extends AbstractNotification
             sprintf(
                 'Changing order status from %s to %s',
                 $oldStatus,
-                $this->orderStatus->mapMpStatusToWoocommerceStatus(str_replace('_', '', $newStatus))
+                OrderStatus::mapMpStatusToWoocommerceStatus(str_replace('_', '', $newStatus))
             ),
             __CLASS__
         );

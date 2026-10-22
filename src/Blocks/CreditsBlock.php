@@ -38,4 +38,14 @@ class CreditsBlock extends AbstractBlock
             'icon' => $this->gateway->icon
         ];
     }
+
+    public function get_payment_method_data(): array
+    {
+        $data = parent::get_payment_method_data();
+        if ($this->gateway instanceof \MercadoPago\Woocommerce\Gateways\CreditsGateway) {
+            $data['title'] = $this->gateway->title;
+        }
+
+        return $data;
+    }
 }

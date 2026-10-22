@@ -11,7 +11,6 @@ jest.mock('@super-token/adapters/platform', () => ({
   SdkReadinessWatcher: MockSdkReadinessWatcher,
   InitializationHealthChecker: MockInitializationHealthChecker,
   CARD_FORM_MOUNTED_EVENT: mockCardFormMountedEvent,
-  resolveMlcCopy: jest.fn((params) => params),
 }));
 
 const { startInitializationResilience } = require('@super-token/composition/initializationResilience');

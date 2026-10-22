@@ -1,0 +1,30 @@
+{
+    "source": {
+        "directories": ["src/Helpers"],
+        "excludes": ["/(?:^|\\/)(?!Numbers\\.php$)[^\\/]+\\.php$/"]
+    },
+    "phpUnit": {
+        "configDir": ".",
+        "customPath": "vendor/bin/phpunit"
+    },
+    "testFramework": "phpunit",
+    "bootstrap": "tests/bootstrap.php",
+    "testFrameworkOptions": "--filter=NumbersTest",
+    "timeout": 10,
+    "tmpDir": "reports/mutation/php/tmp",
+    "logs": {
+        "text": "reports/mutation/php/infection.log",
+        "summary": "reports/mutation/php/summary.log",
+        "json": "reports/mutation/php/infection.json"
+    },
+    "mutators": {
+        "@default": true,
+        "global-ignore": [
+            "MercadoPago\\Woocommerce\\Helpers\\Numbers::makesValueSafe",
+            "MercadoPago\\Woocommerce\\Helpers\\Numbers::removeNonNumericPrefix",
+            "MercadoPago\\Woocommerce\\Helpers\\Numbers::formatWithCurrencySymbol",
+            "MercadoPago\\Woocommerce\\Helpers\\Numbers::formatByCurrency",
+            "MercadoPago\\Woocommerce\\Helpers\\Numbers::getPercentageFromParcialValue"
+        ]
+    }
+}

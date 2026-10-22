@@ -3,6 +3,8 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use Exception;
+use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\CreditsPresentation;
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 
 if (!defined('ABSPATH')) {
@@ -203,9 +205,15 @@ class BasicGateway extends AbstractGateway
      */
     public function getPaymentFieldsParams(): array
     {
+        $i18n = array_merge($this->mercadopago->storeTranslations->commonCheckout, $this->storeTranslations);
+        if (($this->countryConfigs['site_id'] ?? '') === Country::SITE_ID_MLB && isset($i18n['second_benefit_credits_description'])) {
+            $name = CreditsPresentation::productName();
+            $i18n['second_benefit_description'] = strtr($i18n['second_benefit_credits_description'], ['{credits_name}' => $name]);
+        }
+
         return [
             'url'             => $this->mercadopago->helpers->url,
-            'i18n'            => array_merge($this->mercadopago->storeTranslations->commonCheckout, $this->storeTranslations),
+            'i18n'            => $i18n,
             'links'           => $this->links,
             'method'          => $this->mercadopago->hooks->options->getGatewayOption($this, 'method', 'redirect'),
             'amount'          => $this->getAmountAndCurrency('amount'),
@@ -234,6 +242,7 @@ class BasicGateway extends AbstractGateway
 
             $this->transaction = new BasicTransaction($this, $order);
             $preference = $this->transaction->createPreference();
+            $this->persistPreferenceId($order, $preference);
             $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
             return [
                 'result'   => 'success',
@@ -417,6 +426,7 @@ class BasicGateway extends AbstractGateway
         $order             = wc_get_order($order_id);
         $this->transaction = new BasicTransaction($this, $order);
         $preference        = $this->transaction->createPreference();
+        $this->persistPreferenceId($order, $preference);
 
         $this->mercadopago->hooks->template->getWoocommerceTemplate(
             'public/receipt/preference-modal.php',
@@ -428,5 +438,14 @@ class BasicGateway extends AbstractGateway
                 'cancel_url_text'     => $this->storeTranslations['cancel_url_text'],
             ]
         );
+    }
+
+    private function persistPreferenceId($order, array $preference): void
+    {
+        if (!isset($preference['id'])) {
+            return;
+        }
+
+        $this->mercadopago->orderMetadata->addPreferenceId($order, $preference['id']);
     }
 }

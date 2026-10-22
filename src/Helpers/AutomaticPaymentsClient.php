@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Helpers;
 
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 
 if (!defined('ABSPATH')) {
@@ -108,18 +108,18 @@ class AutomaticPaymentsClient
      * @param \WC_Order $order       WC order being paid — used to derive the idempotency seed.
      * @param array     $payload     Full AP v2 body: token, payer, transaction, subscription, device.
      *
-     * @return Response
+     * @return HttpResponse
      *
      * @throws \RuntimeException When subscription.id is absent from a paid 2xx CIT response (orphan payment, AC-2).
      * @throws \Exception        Propagated from {@see Requester} on network or HTTP >= 400 errors.
      */
-    public function cit(string $accessToken, \WC_Order $order, array $payload): Response
+    public function cit(string $accessToken, \WC_Order $order, array $payload): HttpResponse
     {
         $idemKey = $this->subscriptionsHelper->generateIdempotencyKey(
             $this->subscriptionsHelper->buildCitSeed($order, (string) ($payload['token'] ?? ''))
         );
         $headers   = $this->buildHeaders($accessToken, $idemKey);
-        // request_id ties the three log lines (sending/approved|orphan) for a single CIT call.
+        // request_id ties the three log lines (sending/response|orphan) for a single CIT call.
         $requestId = $idemKey;
         $startedAt = microtime(true);
 
@@ -135,7 +135,7 @@ class AutomaticPaymentsClient
         $durationMs  = (int) round((microtime(true) - $startedAt) * 1000);
 
         // For 4xx/5xx responses: return immediately so the caller (handler) can map
-        // the API error payload. Orphan detection and approved-log do not apply here.
+        // the API error payload. Orphan detection and response logging do not apply here.
         if ($httpStatus >= 400) {
             return $response;
         }
@@ -164,15 +164,32 @@ class AutomaticPaymentsClient
             );
         }
 
-        $this->log('info', 'op=cit status=approved', [
+        $paymentStatus = $this->normalizeCitPaymentStatusForLog($data['payment']['status'] ?? null);
+
+        $this->log('info', 'op=cit http_status=' . $httpStatus, [
             'request_id'      => $requestId,
             'http_status'     => $httpStatus,
+            'payment_status'  => $paymentStatus,
             'duration_ms'     => $durationMs,
             'payment_id'      => $data['payment']['id'] ?? null,
             'subscription_id' => $data['subscription']['id'],
         ]);
 
         return $response;
+    }
+
+    /**
+     * Normalizes the external payment status before including it in a log message.
+     *
+     * @param mixed $status
+     */
+    private function normalizeCitPaymentStatusForLog($status): string
+    {
+        $allowedStatuses = ['approved', 'pending', 'in_process', 'rejected'];
+
+        return is_string($status) && in_array($status, $allowedStatuses, true)
+            ? $status
+            : 'unknown';
     }
 
     /**
@@ -506,11 +523,11 @@ class AutomaticPaymentsClient
     }
 
     /**
-     * Normaliza o payload do {@see Response} para array associativo.
+     * Normaliza o payload do {@see HttpResponse} para array associativo.
      *
      * @return array<string, mixed>
      */
-    private function responseToArray(Response $response): array
+    private function responseToArray(HttpResponse $response): array
     {
         $data = $response->getData();
         if (is_array($data)) {
@@ -533,7 +550,7 @@ class AutomaticPaymentsClient
      * Unknown levels are treated as `warning` rather than silently downgraded to `info`.
      *
      * @param string               $level   One of `info`, `warning`, `error`, `debug`.
-     * @param string               $message Short structured message (e.g. `"op=cit status=approved"`).
+     * @param string               $message Short structured message (e.g. `"op=cit http_status=201"`).
      * @param array<string, mixed> $context Key=value pairs — scrubbed before writing.
      */
     public function log(string $level, string $message, array $context = []): void

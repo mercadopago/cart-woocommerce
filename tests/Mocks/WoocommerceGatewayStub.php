@@ -31,6 +31,23 @@ if (!class_exists('WC_Subscription')) {
     }
 }
 
+if (!class_exists('WC_Meta_Data')) {
+    class WC_Meta_Data
+    {
+        private array $data;
+
+        public function __construct(array $meta = [])
+        {
+            $this->data = $meta;
+        }
+
+        public function get_data(): array
+        {
+            return $this->data;
+        }
+    }
+}
+
 if (!class_exists('WC_Payment_Gateway')) {
     abstract class WC_Payment_Gateway extends WC_Settings_API
     {

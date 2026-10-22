@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Tests\Libraries\Metrics;
 
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 use WP_Mock;
 
@@ -12,6 +13,8 @@ use WP_Mock;
  */
 class DatadogTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
+
     protected function setUp(): void
     {
         WP_Mock::setUp();
@@ -199,6 +202,7 @@ class DatadogTest extends TestCase
     public function testSendEventSilentlyHandlesExceptions(): void
     {
         WP_Mock::userFunction('wp_json_encode', [
+            'times' => 1,
             'return' => function () {
                 throw new \Exception('encoding failed');
             },
@@ -207,7 +211,91 @@ class DatadogTest extends TestCase
         WP_Mock::userFunction('wp_remote_post', ['times' => 0]);
 
         Datadog::getInstance()->sendEvent('test_event', 'value');
+    }
 
-        $this->assertTrue(true);
+    public function testSendEventUsesEmptyPlatformVersionWhenWoocommerceIsUnavailable(): void
+    {
+        unset($GLOBALS['woocommerce']);
+        $capturedArgs = $this->captureRequest();
+
+        Datadog::getInstance()->sendEvent('diagnostic_event', 'value');
+
+        $payload = json_decode($capturedArgs->value['body'], true);
+        $this->assertSame('', $payload['platform']['version']);
+    }
+
+    /**
+     * @dataProvider eventDetails
+     */
+    public function testSendEventPreservesDetailsAndTheirExplicitPaymentMethodPrecedence(
+        ?string $paymentMethod,
+        array $details,
+        array $expectedDetails
+    ): void {
+        $capturedArgs = $this->captureRequest();
+
+        Datadog::getInstance()->sendEvent('diagnostic_event', 'value', null, $paymentMethod, $details);
+
+        $payload = json_decode($capturedArgs->value['body'], true);
+        $this->assertSame($expectedDetails, $payload['details']);
+    }
+
+    public static function eventDetails(): array
+    {
+        return [
+            'payment method only' => ['pix', [], ['payment_method' => 'pix']],
+            'details only' => [null, ['attempt' => 2], ['attempt' => 2]],
+            'explicit details override method' => [
+                'pix',
+                ['payment_method' => 'ticket', 'attempt' => 2],
+                ['payment_method' => 'ticket', 'attempt' => 2],
+            ],
+        ];
+    }
+
+    public function testSendEventAbsorbsTheWordPressHttpException(): void
+    {
+        WP_Mock::userFunction('wp_json_encode', [
+            'times' => 1,
+            'return' => function (array $data) {
+                return json_encode($data);
+            },
+        ]);
+        $capturedArgs = null;
+        WP_Mock::userFunction('wp_remote_post', [
+            'times' => 1,
+            'args' => [
+                'https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/smb/diagnostic_event',
+                WP_Mock\Functions::type('array'),
+            ],
+        ])->andReturnUsing(function ($url, array $args) use (&$capturedArgs) {
+            $capturedArgs = $args;
+            throw new \RuntimeException('Synthetic WordPress HTTP failure');
+        });
+
+        Datadog::getInstance()->sendEvent('diagnostic_event', 'value');
+
+        $this->assertSame(false, $capturedArgs['blocking']);
+        $this->assertSame('value', json_decode($capturedArgs['body'], true)['value']);
+    }
+
+    private function captureRequest(): \stdClass
+    {
+        $capturedArgs = (object) ['value' => null];
+        WP_Mock::userFunction('wp_json_encode', [
+            'times' => 1,
+            'return' => function (array $data) {
+                return json_encode($data);
+            },
+        ]);
+        WP_Mock::userFunction('wp_remote_post', [
+            'times' => 1,
+            'args' => [WP_Mock\Functions::type('string'), WP_Mock\Functions::type('array')],
+        ])->andReturnUsing(function ($url, array $args) use ($capturedArgs) {
+            $capturedArgs->value = $args;
+            return [];
+        });
+
+        return $capturedArgs;
     }
 }

@@ -24,8 +24,8 @@ class YapeTransaction extends AbstractPaymentTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->transaction->payment_method_id   = self::ID;
-        $this->transaction->installments        = 1;
+        $this->transaction['payment_method_id'] = self::ID;
+        $this->transaction['installments'] = 1;
 
         $this->setTokenTransaction();
     }
@@ -44,7 +44,7 @@ class YapeTransaction extends AbstractPaymentTransaction
     public function setTokenTransaction(): void
     {
         if (array_key_exists('token', $this->checkout)) {
-            $this->transaction->token = $this->checkout['token'];
+            $this->transaction['token'] = $this->checkout['token'];
         }
     }
 }

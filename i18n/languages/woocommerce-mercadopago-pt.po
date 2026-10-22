@@ -1307,7 +1307,7 @@ msgstr "“Até 12x sem cartão com a Linha de Crédito” está"
 
 #: ../../src/Translations/AdminTranslations.php:605
 msgid "Payments without a Mercado Pago card"
-msgstr "Linha de Crédito Mercado Crédito"
+msgstr "Mercado Parcelado"
 
 #: ../../src/Translations/AdminTranslations.php:606,
 #: ../../src/Translations/AdminTranslations.php:608
@@ -1319,7 +1319,7 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:607
 msgid "Mercado Pago - Checkout Pro Pagos sin Tarjeta"
-msgstr "Mercado Pago - Checkout Pro Linha de Crédito"
+msgstr "Mercado Parcelado"
 
 #: ../../src/Translations/AdminTranslations.php:609
 msgid "Up to 12 installments without cards through Mercado Pago"
@@ -1373,12 +1373,11 @@ msgstr "Recomendamos que você use o título padrão. Máximo de caracteres: 85.
 
 #: ../../src/Translations/AdminTranslations.php:624
 msgid "Checkout without card"
-msgstr "Parcelado sem cartão com Mercado Pago"
+msgstr "Mercado Parcelado"
 
 #: ../../src/Translations/AdminTranslations.php:630
 msgid "Promote the payment of your products with Mercado Pago"
-msgstr ""
-"Promova o pagamento dos seus produtos com a Linha de Crédito Mercado Pago"
+msgstr "Promova o pagamento dos seus produtos com Mercado Pago"
 
 #: ../../src/Translations/AdminTranslations.php:631
 msgid ""
@@ -2365,6 +2364,11 @@ msgstr "Ocorreu um erro. Por favor, cole sua chave novamente."
 msgid "Fill out this field."
 msgstr "Preencha este campo."
 
+#: ../../src/Translations/StoreTranslations.php:456
+msgctxt "super token"
+msgid "Fill out this field."
+msgstr "Preencha este campo."
+
 #: ../../src/Translations/AdminTranslations.php:1277
 msgid "This is a production key, please paste a test key instead."
 msgstr "Esta chave é de produção. Por favor, cole uma de teste."
@@ -3120,8 +3124,7 @@ msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:195
 msgid "<b>Buy safely</b> with your preferred payment method."
-msgstr ""
-"<b>Você tem uma Linha de Crédito</b> para comprar agora e pagar depois."
+msgstr "<b>Compre com segurança</b> usando seu meio de pagamento preferido."
 
 #: ../../src/Translations/StoreTranslations.php:196
 msgid "We'll take you to Mercado&nbsp;Pago"
@@ -3141,17 +3144,15 @@ msgstr "Parcelado sem cartão em Modo Teste"
 
 #: ../../src/Translations/StoreTranslations.php:213
 msgid "Buy in up to 12 installments without credit cards"
-msgstr "Compre em até 12x sem cartão de crédito"
+msgstr "Compre agora e pague depois em até 12x"
 
 #: ../../src/Translations/StoreTranslations.php:214
 msgid "We will take you to Mercado Pago"
-msgstr "Vamos te redirecionar para o Mercado Pago"
+msgstr "Vamos te levar ao Mercado Pago"
 
 #: ../../src/Translations/StoreTranslations.php:215
 msgid "If you don't have a credits line yet, active it when paying."
-msgstr ""
-"Se você ainda não tiver a Linha de Crédito Mercado Pago, basta ativá-la na "
-"hora de pagar."
+msgstr "Se você ainda não tem a Linha de Crédito, ative-a na hora de pagar."
 
 #: ../../src/Translations/StoreTranslations.php:216
 msgid "Checkout Pro redirect info image"
@@ -3163,7 +3164,7 @@ msgstr "Saiba mais"
 
 #: ../../src/Translations/StoreTranslations.php:220
 msgid "Buy through Mercado Pago without cards and pay month by month"
-msgstr "Compre com o Mercado Crédito sem cartão e pague por mês"
+msgstr "Compre com Mercado Pago sem cartão e pague por mês"
 
 #: ../../src/Translations/StoreTranslations.php:221
 msgid ""
@@ -3175,16 +3176,16 @@ msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:222
 msgid "Log in to Mercado Pago."
-msgstr "Inicie sessão no Mercado Pago."
+msgstr "Inicie uma sessão no Mercado Pago."
 
 #: ../../src/Translations/StoreTranslations.php:223
 msgid ""
 "Choose the amount of installments that best suit you and you’re all set!"
-msgstr "Escolha o número de parcelas que melhor se adapte a você e pronto!"
+msgstr "Escolha a quantidade de parcelas que melhor se adaptam a você e pronto!"
 
 #: ../../src/Translations/StoreTranslations.php:224
 msgid "Any Questions? Check our "
-msgstr "Dúvidas? Confira nossa página de "
+msgstr "Tem dúvidas? Consulte nossa "
 
 #: ../../src/Translations/StoreTranslations.php:225
 msgid "Help"
@@ -3192,11 +3193,11 @@ msgstr "Ajuda"
 
 #: ../../src/Translations/StoreTranslations.php:226
 msgid "Credit subject to approval."
-msgstr "Crédito sujeito a aprovação."
+msgstr "Crédito sujeito à aprovação."
 
 #: ../../src/Translations/StoreTranslations.php:242
 msgid "Find out the available limit"
-msgstr "Saiba o limite disponível"
+msgstr "Conheça o limite disponível"
 
 #: ../../src/Translations/StoreTranslations.php:243
 msgid "of your Línea de Crédito and"
@@ -3204,23 +3205,23 @@ msgstr "da sua Linha de Crédito e"
 
 #: ../../src/Translations/StoreTranslations.php:244
 msgid "choose the number of installments"
-msgstr "escolha o número de parcelas"
+msgstr "escolha a quantidade de parcelas"
 
 #: ../../src/Translations/StoreTranslations.php:249
 msgid "Confirm your payment,"
-msgstr "Confirme seu pagamento."
+msgstr "Confirme seu pagamento,"
 
 #: ../../src/Translations/StoreTranslations.php:250
 msgid "which is credited right away and is 100% protected"
-msgstr "Ele é aprovado na hora e é 100% protegido"
+msgstr "ele é creditado na hora e está 100% protegido"
 
 #: ../../src/Translations/StoreTranslations.php:255
 msgid "Pay month by month"
-msgstr "Pague todo mês"
+msgstr "Pague mês a mês"
 
 #: ../../src/Translations/StoreTranslations.php:256
 msgid "from the Mercado Pago app with your preferred payment method"
-msgstr "pela sua conta Mercado Pago com o meio de pagamento que preferir"
+msgstr "pelo app do Mercado Pago com o meio que preferir"
 
 #: ../../src/Translations/StoreTranslations.php:276,
 #: ../../src/Translations/StoreTranslations.php:282
@@ -3274,7 +3275,13 @@ msgstr "Insira o documento completo."
 msgid "Type in a valid ID."
 msgstr "Insira um documento válido."
 
-#: ../../src/Translations/StoreTranslations.php:329
+#: ../../src/Translations/StoreTranslations.php:340
+msgctxt "card checkout"
+msgid "Installments"
+msgstr "Parcelas"
+
+#: ../../src/Translations/StoreTranslations.php:445
+msgctxt "super token"
 msgid "Installments"
 msgstr "Parcelas"
 
@@ -3283,7 +3290,17 @@ msgstr "Parcelas"
 msgid "Issuer"
 msgstr "Banco emissor"
 
+#: ../../src/Translations/StoreTranslations.php:447
+msgctxt "super token"
+msgid "Issuer"
+msgstr "Banco emissor"
+
 #: ../../src/Translations/StoreTranslations.php:331
+msgid "If there is any interest, it will be applied and charged by your bank."
+msgstr "Se houver juros, eles serão aplicados e cobrados pelo seu banco."
+
+#: ../../src/Translations/StoreTranslations.php:446
+msgctxt "super token"
 msgid "If there is any interest, it will be applied and charged by your bank."
 msgstr "Se houver juros, eles serão aplicados e cobrados pelo seu banco."
 
@@ -3291,7 +3308,17 @@ msgstr "Se houver juros, eles serão aplicados e cobrados pelo seu banco."
 msgid "Select an option"
 msgstr "Selecione uma opção"
 
+#: ../../src/Translations/StoreTranslations.php:448
+msgctxt "super token"
+msgid "Select an option"
+msgstr "Selecione uma opção"
+
 #: ../../src/Translations/StoreTranslations.php:333
+msgid "MM/YY"
+msgstr "MM/AA"
+
+#: ../../src/Translations/StoreTranslations.php:449
+msgctxt "super token"
 msgid "MM/YY"
 msgstr "MM/AA"
 
@@ -3331,6 +3358,11 @@ msgstr "Insira uma data válida."
 msgid "Type in the complete code."
 msgstr "Insira o código completo."
 
+#: ../../src/Translations/StoreTranslations.php:457
+msgctxt "super token"
+msgid "Type in the complete code."
+msgstr "Insira o código completo."
+
 #: ../../src/Translations/StoreTranslations.php:348
 msgid "Cost of installments"
 msgstr "Custo do parcelamento"
@@ -3359,39 +3391,48 @@ msgstr ""
 "Algo deu errado, recomendamos que você tente novamente ou pague com outro "
 "meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:356
+#: ../../src/Translations/StoreTranslations.php:428
+msgctxt "super token"
 msgid "Saved payment methods"
 msgstr "Meios de pagamento salvos"
 
-#: ../../src/Translations/StoreTranslations.php:357
+#: ../../src/Translations/StoreTranslations.php:429
+msgctxt "super token"
 msgid "Saved payment methods in your Mercado Pago account."
 msgstr "Meios de pagamento salvos na sua conta Mercado Pago."
 
-#: ../../src/Translations/StoreTranslations.php:358
+#: ../../src/Translations/StoreTranslations.php:430
+msgctxt "super token"
 msgid "ending in"
 msgstr "terminado em"
 
-#: ../../src/Translations/StoreTranslations.php:359
+#: ../../src/Translations/StoreTranslations.php:431
+msgctxt "super token"
 msgid "New card"
 msgstr "Novo cartão"
 
-#: ../../src/Translations/StoreTranslations.php:360
+#: ../../src/Translations/StoreTranslations.php:432
+msgctxt "super token"
 msgid "Saved cards"
 msgstr "Cartões salvos"
 
-#: ../../src/Translations/StoreTranslations.php:361
+#: ../../src/Translations/StoreTranslations.php:433
+msgctxt "super token"
 msgid "Saved card"
 msgstr "Cartão salvo"
 
-#: ../../src/Translations/StoreTranslations.php:362
+#: ../../src/Translations/StoreTranslations.php:434
+msgctxt "super token"
 msgid "You can also use"
 msgstr "Você também pode usar"
 
-#: ../../src/Translations/StoreTranslations.php:363
+#: ../../src/Translations/StoreTranslations.php:435
+msgctxt "super token"
 msgid "Enough to pay for this purchase."
 msgstr "Suficiente para pagar esta compra."
 
-#: ../../src/Translations/StoreTranslations.php:364
+#: ../../src/Translations/StoreTranslations.php:436
+msgctxt "super token"
 msgid "Saved payment method"
 msgstr "Meio de pagamento salvo"
 
@@ -3399,45 +3440,57 @@ msgstr "Meio de pagamento salvo"
 msgid "Account Money"
 msgstr "Saldo no Mercado&nbsp;Pago"
 
-#: ../../src/Translations/StoreTranslations.php:366
+#: ../../src/Translations/StoreTranslations.php:437
+msgctxt "super token"
 msgid "Balance in Mercado Pago Wallet + Generating returns in GBM"
 msgstr "Saldo no Mercado Pago Wallet + Gerando rendimentos no GBM"
 
-#: ../../src/Translations/StoreTranslations.php:367
+#: ../../src/Translations/StoreTranslations.php:438
+msgctxt "super token"
 msgid "Balance in Mercado Pago Wallet"
 msgstr "Saldo no Mercado Pago Wallet"
 
-#: ../../src/Translations/StoreTranslations.php:368
+#: ../../src/Translations/StoreTranslations.php:439
+msgctxt "super token"
 msgid "Balance generating returns in GBM through Mercado Pago"
 msgstr "Saldo gerando rendimentos no GBM através do Mercado Pago"
 
-#: ../../src/Translations/StoreTranslations.php:369
+#: ../../src/Translations/StoreTranslations.php:440
+msgctxt "super token"
 msgid "Money available at Mercado Pago"
 msgstr "Saldo no Mercado Pago"
 
-#: ../../src/Translations/StoreTranslations.php:370
+#: ../../src/Translations/StoreTranslations.php:441
+msgctxt "super token"
 msgid "Up to"
 msgstr "Até"
 
-#: ../../src/Translations/StoreTranslations.php:371
-msgctxt "frontend checkout display"
+#: ../../src/Translations/StoreTranslations.php:442
+msgctxt "super token"
 msgid "interest-free installments"
 msgstr "sem acréscimo"
 
-#: ../../src/Translations/StoreTranslations.php:372
-msgctxt "installments without interest"
+#: ../../src/Translations/StoreTranslations.php:367
+msgctxt "card checkout installment option"
 msgid "interest-free installments"
 msgstr "sem acréscimo"
 
-#: ../../src/Translations/StoreTranslations.php:373
-msgid "installments"
-msgstr "juros"
+#: ../../src/Translations/StoreTranslations.php:443
+msgctxt "super token installment option"
+msgid "interest-free installments"
+msgstr "sem acréscimo"
 
 #: ../../src/Translations/StoreTranslations.php:374
 msgid "Select an option."
 msgstr "Selecione uma opção."
 
-#: ../../src/Translations/StoreTranslations.php:375
+#: ../../src/Translations/StoreTranslations.php:444
+msgctxt "super token"
+msgid "Select an option."
+msgstr "Selecione uma opção."
+
+#: ../../src/Translations/StoreTranslations.php:450
+msgctxt "super token"
 msgid "Security code"
 msgstr "Código de segurança"
 
@@ -3445,7 +3498,17 @@ msgstr "Código de segurança"
 msgid "E.g.: 123"
 msgstr "Ex.: 123"
 
+#: ../../src/Translations/StoreTranslations.php:451
+msgctxt "super token"
+msgid "E.g.: 123"
+msgstr "Ex.: 123"
+
 #: ../../src/Translations/StoreTranslations.php:377
+msgid "E.g.: 1234"
+msgstr "Ex.: 1234"
+
+#: ../../src/Translations/StoreTranslations.php:452
+msgctxt "super token"
 msgid "E.g.: 1234"
 msgstr "Ex.: 1234"
 
@@ -3457,6 +3520,11 @@ msgstr ""
 "É um número de 3 dígitos. Você o encontra na parte de trás do seu cartão ou "
 "no app do seu banco ou carteira digital."
 
+#: ../../src/Translations/StoreTranslations.php:453
+msgctxt "super token"
+msgid "It’s a 3 digit number. You can find it on the back of your card or on the app of your bank or digital wallet."
+msgstr "É um número de 3 dígitos. Você o encontra na parte de trás do seu cartão ou no app do seu banco ou carteira digital."
+
 #: ../../src/Translations/StoreTranslations.php:379
 msgid ""
 "It’s a 4 digit number. You can find it on the front of your card or on the "
@@ -3465,7 +3533,13 @@ msgstr ""
 "É um número de 4 dígitos. Você o encontra na parte da frente do seu cartão "
 "ou no app do seu banco ou carteira digital."
 
-#: ../../src/Translations/StoreTranslations.php:380
+#: ../../src/Translations/StoreTranslations.php:454
+msgctxt "super token"
+msgid "It’s a 4 digit number. You can find it on the front of your card or on the app of your bank or digital wallet."
+msgstr "É um número de 4 dígitos. Você o encontra na parte da frente do seu cartão ou no app do seu banco ou carteira digital."
+
+#: ../../src/Translations/StoreTranslations.php:455
+msgctxt "super token"
 msgid "Security code is required"
 msgstr "Código de segurança é obrigatório"
 
@@ -3485,15 +3559,12 @@ msgstr "Cartão de Crédito Mercado Pago"
 msgid "Invalid card number. Please check the information provided."
 msgstr "Número do cartão inválido. Verifique os dados informados."
 
-#: ../../src/Translations/StoreTranslations.php:385
-msgid "en-US"
-msgstr "pt-BR"
-
 #: ../../src/Translations/StoreTranslations.php:386
 msgid "As it spelled on the card."
 msgstr "Conforme aparece no cartão."
 
-#: ../../src/Translations/StoreTranslations.php:387
+#: ../../src/Translations/StoreTranslations.php:458
+msgctxt "super token"
 msgid "The first installment <b>is due on</b>"
 msgstr "A primeira parcela <b>vence em</b>"
 
@@ -3609,45 +3680,38 @@ msgstr "TEA"
 msgid "Fixed rate"
 msgstr "Taxa fixa"
 
-#: ../../src/Translations/StoreTranslations.php:417
-msgid ""
-"Learn more about&nbsp;<a href=\"{link}\" target=\"_blank\">how we protect "
-"your privacy</a>."
-msgstr ""
-"Saiba&nbsp;<a href=\"{link}\" target=\"_blank\">como cuidamos da sua "
-"privacidade</a>."
+#: ../../src/Translations/StoreTranslations.php:416
+msgctxt "card checkout"
+msgid "Learn more about&nbsp;<a href=\"{link}\" target=\"_blank\">how we protect your privacy</a>."
+msgstr "Saiba&nbsp;<a href=\"{link}\" target=\"_blank\">como cuidamos da sua privacidade</a>."
 
-#: ../../src/Translations/StoreTranslations.php:418
-msgid ""
-"The payment could not be completed. Please try again or pay with another "
-"method."
-msgstr ""
-"Não foi possível realizar o pagamento. Tente novamente ou use outro meio de "
-"pagamento."
+#: ../../src/Translations/StoreTranslations.php:459
+msgctxt "super token"
+msgid "Learn more about&nbsp;<a href=\"{link}\" target=\"_blank\" rel=\"noopener noreferrer\">how we protect your privacy</a>."
+msgstr "Saiba&nbsp;<a href=\"{link}\" target=\"_blank\" rel=\"noopener noreferrer\">como cuidamos da sua privacidade</a>."
 
-#: ../../src/Translations/StoreTranslations.php:419
+#: ../../src/Translations/StoreTranslations.php:460
+msgctxt "super token"
+msgid "The payment could not be completed. Please try again or pay with another method."
+msgstr "Não foi possível realizar o pagamento. Tente novamente ou use outro meio de pagamento."
+
+#: ../../src/Translations/StoreTranslations.php:461
+msgctxt "super token"
 msgid "The payment could not be completed. Please pay with another method."
-msgstr ""
-"Não foi possível realizar o pagamento. Por favor, use outro meio de "
-"pagamento."
+msgstr "Não foi possível realizar o pagamento. Por favor, use outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:420
-msgid ""
-"It was not possible to validate your identity. Please try again or pay with "
-"another method."
-msgstr ""
-"Não foi possível validar sua identidade. Tente novamente ou use outro meio "
-"de pagamento."
+#: ../../src/Translations/StoreTranslations.php:462
+msgctxt "super token"
+msgid "It was not possible to validate your identity. Please try again or pay with another method."
+msgstr "Não foi possível validar sua identidade. Tente novamente ou use outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:421
-msgid ""
-"It was not possible to validate your identity. Please pay with another "
-"method."
-msgstr ""
-"Não foi possível validar sua identidade. Por favor, use outro meio de "
-"pagamento."
+#: ../../src/Translations/StoreTranslations.php:463
+msgctxt "super token"
+msgid "It was not possible to validate your identity. Please pay with another method."
+msgstr "Não foi possível validar sua identidade. Por favor, use outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:422
+#: ../../src/Translations/StoreTranslations.php:464
+msgctxt "super token"
 msgid "Select a payment method to complete your purchase."
 msgstr "Selecione um meio de pagamento para finalizar sua compra."
 
@@ -4044,13 +4108,10 @@ msgid "A problem was occurred when processing your payment. Please, try again."
 msgstr ""
 "Ocorreu um problema ao processar seu pagamento. Por favor, tente novamente."
 
-#: ../../src/Translations/StoreTranslations.php:611
-msgid ""
-"<strong>Your payment was declined because something went wrong</"
-"strong><br>Please make sure all the information was entered correctly."
-msgstr ""
-"<strong>Seu pagamento foi recusado devido a um erro</strong><br>Verifique se "
-"todas as informações foram inseridas corretamente.\""
+#: ../../src/Translations/StoreTranslations.php:653
+msgctxt "card checkout"
+msgid "<strong>Your payment was declined because something went wrong</strong><br>Please make sure all the information was entered correctly."
+msgstr "<strong>Seu pagamento foi recusado devido a um erro</strong><br>Verifique se todas as informações foram inseridas corretamente.\""
 
 #: ../../src/Translations/StoreTranslations.php:612
 msgid ""
@@ -4163,117 +4224,65 @@ msgstr ""
 msgid "This payment method cannot process your payment."
 msgstr "Este método de pagamento não pôde processar o seu pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:644,
-#: ../../src/Translations/StoreTranslations.php:714
-msgid ""
-"<strong>Your bank needs you to authorize the payment</strong><br>Please call "
-"the telephone number on your card or pay with another method."
-msgstr ""
-"<strong>Seu banco precisa que você autorize o pagamento</strong><br>Para "
-"autorizar, acesse o app do banco ou ligue para o telefone que está no "
-"cartão. Se preferir, você também pode pagar com outro meio."
+#: ../../src/Translations/StoreTranslations.php:686, ../../src/Translations/StoreTranslations.php:756
+msgctxt "card checkout"
+msgid "<strong>Your bank needs you to authorize the payment</strong><br>Please call the telephone number on your card or pay with another method."
+msgstr "<strong>Seu banco precisa que você autorize o pagamento</strong><br>Para autorizar, acesse o app do banco ou ligue para o telefone que está no cartão. Se preferir, você também pode pagar com outro meio."
 
-#: ../../src/Translations/StoreTranslations.php:645,
-#: ../../src/Translations/StoreTranslations.php:646
-msgid ""
-"<strong>For safety reasons, your payment was declined</strong><br>We "
-"recommended paying with your usual payment method and device for online "
-"purchases."
-msgstr ""
-"<b>O banco emissor do cartão recusou o pagamento</b><br>Recomendamos que "
-"você pague com o meio de pagamento e dispositivo que costuma usar para "
-"compras on-line."
+#: ../../src/Translations/StoreTranslations.php:687, ../../src/Translations/StoreTranslations.php:688
+msgctxt "card checkout"
+msgid "<strong>For safety reasons, your payment was declined</strong><br>We recommended paying with your usual payment method and device for online purchases."
+msgstr "<b>O banco emissor do cartão recusou o pagamento</b><br>Recomendamos que você pague com o meio de pagamento e dispositivo que costuma usar para compras on-line."
 
-#: ../../src/Translations/StoreTranslations.php:647,
-#: ../../src/Translations/StoreTranslations.php:648,
-#: ../../src/Translations/StoreTranslations.php:649,
-#: ../../src/Translations/StoreTranslations.php:650
-msgid ""
-"<strong>One or more card details were entered incorrectly</strong><br>Please "
-"enter them again as they appear on the card to complete the payment."
-msgstr ""
-"<strong>Você inseriu um ou mais dados do cartão incorretamente</"
-"strong><br>Insira os dados de forma como aparecem no cartão ou no app do seu "
-"banco para concluir o pagamento."
+#: ../../src/Translations/StoreTranslations.php:689, ../../src/Translations/StoreTranslations.php:690, ../../src/Translations/StoreTranslations.php:691, ../../src/Translations/StoreTranslations.php:692
+msgctxt "card checkout"
+msgid "<strong>One or more card details were entered incorrectly</strong><br>Please enter them again as they appear on the card to complete the payment."
+msgstr "<strong>Você inseriu um ou mais dados do cartão incorretamente</strong><br>Insira os dados de forma como aparecem no cartão ou no app do seu banco para concluir o pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:651
-msgid ""
-"<strong>Your credit card has no available limit</strong><br>Please pay using "
-"another card or choose another payment method."
-msgstr ""
-"<strong>O banco emissor do cartão recusou seu pagamento</strong><br>Pague "
-"com outro cartão ou escolha outro meio de pagamento."
+#: ../../src/Translations/StoreTranslations.php:693
+msgctxt "card checkout"
+msgid "<strong>Your credit card has no available limit</strong><br>Please pay using another card or choose another payment method."
+msgstr "<strong>O banco emissor do cartão recusou seu pagamento</strong><br>Pague com outro cartão ou escolha outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:652
-msgid ""
-"<strong>Your debit card has insufficient funds</strong><br>Please pay using "
-"another card or choose another payment method."
-msgstr ""
-"<strong>O banco emissor do cartão recusou seu pagamento</strong><br>Pague "
-"com outro cartão ou escolha outro meio de pagamento."
+#: ../../src/Translations/StoreTranslations.php:694
+msgctxt "card checkout"
+msgid "<strong>Your debit card has insufficient funds</strong><br>Please pay using another card or choose another payment method."
+msgstr "<strong>O banco emissor do cartão recusou seu pagamento</strong><br>Pague com outro cartão ou escolha outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:653,
-#: ../../src/Translations/StoreTranslations.php:691
-msgid ""
-"<strong>Your card does not accept the number of installments selected</"
-"strong><br>Please choose a different number of installments or use a "
-"different payment method."
-msgstr ""
-"<strong>Seu cartão não aceita o parcelamento selecionado</strong><br>Escolha "
-"uma opção de parcelamento diferente ou use outro meio de pagamento."
+#: ../../src/Translations/StoreTranslations.php:695, ../../src/Translations/StoreTranslations.php:733
+msgctxt "card checkout"
+msgid "<strong>Your card does not accept the number of installments selected</strong><br>Please choose a different number of installments or use a different payment method."
+msgstr "<strong>Seu cartão não aceita o parcelamento selecionado</strong><br>Escolha uma opção de parcelamento diferente ou use outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:654
-msgid ""
-"<strong>You need to activate your card</strong><br>Please contact your bank "
-"by calling the number on the back of your card or choose another payment "
-"method."
-msgstr ""
-"<strong>Seu cartão está bloqueado</strong><br>Acesse o app ou entre em "
-"contato com o banco para desbloquear ou pague com outro meio."
+#: ../../src/Translations/StoreTranslations.php:696
+msgctxt "card checkout"
+msgid "<strong>You need to activate your card</strong><br>Please contact your bank by calling the number on the back of your card or choose another payment method."
+msgstr "<strong>Seu cartão está bloqueado</strong><br>Acesse o app ou entre em contato com o banco para desbloquear ou pague com outro meio."
 
-#: ../../src/Translations/StoreTranslations.php:655
-msgid ""
-"<strong>You reached the limit of payment attempts with this card</"
-"strong><br>Please pay using another card or choose another payment method."
-msgstr ""
-"<strong>Você alcançou o limite de tentativas de pagamento com este cartão</"
-"strong><br>Pague com outro cartão ou escolha outro meio de pagamento."
+#: ../../src/Translations/StoreTranslations.php:697
+msgctxt "card checkout"
+msgid "<strong>You reached the limit of payment attempts with this card</strong><br>Please pay using another card or choose another payment method."
+msgstr "<strong>Você alcançou o limite de tentativas de pagamento com este cartão</strong><br>Pague com outro cartão ou escolha outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:656
-msgid ""
-"<strong>Your payment was declined because you already paid for this "
-"purchase</strong><br>Check your card transactions to verify it."
-msgstr ""
-"<strong>Seu pagamento foi recusado porque você já pagou esta compra</"
-"strong><br>Consulte os gastos do seu cartão para confirmar a transação."
+#: ../../src/Translations/StoreTranslations.php:698
+msgctxt "card checkout"
+msgid "<strong>Your payment was declined because you already paid for this purchase</strong><br>Check your card transactions to verify it."
+msgstr "<strong>Seu pagamento foi recusado porque você já pagou esta compra</strong><br>Consulte os gastos do seu cartão para confirmar a transação."
 
-#: ../../src/Translations/StoreTranslations.php:657,
-#: ../../src/Translations/StoreTranslations.php:658,
-#: ../../src/Translations/StoreTranslations.php:659
-msgid ""
-"<strong>The card issuing bank declined the payment</strong><br>We "
-"recommended paying with another payment method or contact your bank."
-msgstr ""
-"<strong>O banco emissor do cartão recusou seu pagamento</"
-"strong><br>Recomendamos que você pague com outro meio de pagamento ou entre "
-"em contato com seu banco."
+#: ../../src/Translations/StoreTranslations.php:699, ../../src/Translations/StoreTranslations.php:700, ../../src/Translations/StoreTranslations.php:701
+msgctxt "card checkout"
+msgid "<strong>The card issuing bank declined the payment</strong><br>We recommended paying with another payment method or contact your bank."
+msgstr "<strong>O banco emissor do cartão recusou seu pagamento</strong><br>Recomendamos que você pague com outro meio de pagamento ou entre em contato com seu banco."
 
-#: ../../src/Translations/StoreTranslations.php:660
-msgid ""
-"<strong>For safety reasons, the card issuing bank declined the payment</"
-"strong><br>We recommended paying with your usual payment method and device "
-"for online purchases."
-msgstr ""
-"<strong>Seu pagamento foi recusado</strong><br>Recomendamos que você pague "
-"com o meio de pagamento e dispositivo que costuma usar para compras on-line."
+#: ../../src/Translations/StoreTranslations.php:702
+msgctxt "card checkout"
+msgid "<strong>For safety reasons, the card issuing bank declined the payment</strong><br>We recommended paying with your usual payment method and device for online purchases."
+msgstr "<strong>Seu pagamento foi recusado</strong><br>Recomendamos que você pague com o meio de pagamento e dispositivo que costuma usar para compras on-line."
 
-#: ../../src/Translations/StoreTranslations.php:661
-msgid ""
-"<strong>Your payment was declined because something went wrong</"
-"strong><br>We recommended trying again or paying with another method."
-msgstr ""
-"<strong>Seu pagamento foi recusado devido a um erro</strong><br>Por favor, "
-"tente novamente ou use outro meio de pagamento."
+#: ../../src/Translations/StoreTranslations.php:703
+msgctxt "card checkout"
+msgid "<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method."
+msgstr "<strong>Seu pagamento foi recusado devido a um erro</strong><br>Por favor, tente novamente ou use outro meio de pagamento."
 
 #: ../../src/Translations/StoreTranslations.php:662
 msgid ""
@@ -4323,278 +4332,168 @@ msgstr ""
 "possível pagar com o Yape após inserir os códigos de aprovação "
 "incorretamente 3 vezes. Pague com outro meio ou tente novamente em 24 horas."
 
-#: ../../src/Translations/StoreTranslations.php:678
-msgid ""
-"<strong>Choose the number of installments to complete the payment</strong>"
-msgstr ""
-"<strong>Escolha o número de parcelas para finalizar o pagamento</strong>"
+#: ../../src/Translations/StoreTranslations.php:720
+msgctxt "card checkout"
+msgid "<strong>Choose the number of installments to complete the payment</strong>"
+msgstr "<strong>Escolha o número de parcelas para finalizar o pagamento</strong>"
 
-#: ../../src/Translations/StoreTranslations.php:679
-msgid ""
-"<strong>One or more of the buyer details were entered incorrectly</"
-"strong><br>Please check the identification number and try again."
-msgstr ""
-"<strong>Um ou mais dados do comprador foram informados incorretamente</"
-"strong><br>Verifique o número de identificação e tente novamente."
+#: ../../src/Translations/StoreTranslations.php:721
+msgctxt "card checkout"
+msgid "<strong>One or more of the buyer details were entered incorrectly</strong><br>Please check the identification number and try again."
+msgstr "<strong>Um ou mais dados do comprador foram informados incorretamente</strong><br>Verifique o número de identificação e tente novamente."
 
-#: ../../src/Translations/StoreTranslations.php:680,
-#: ../../src/Translations/StoreTranslations.php:719
-msgid ""
-"<strong>One or more card details were entered incorrectly</strong><br>Please "
-"enter them again exactly as they appear on the card to complete the payment."
-msgstr ""
-"<strong>Você inseriu um ou mais dados do cartão incorretamente</"
-"strong><br>Insira os dados da forma como aparecem no cartão ou no app do seu "
-"banco para concluir o pagamento."
+#: ../../src/Translations/StoreTranslations.php:722, ../../src/Translations/StoreTranslations.php:761
+msgctxt "card checkout"
+msgid "<strong>One or more card details were entered incorrectly</strong><br>Please enter them again exactly as they appear on the card to complete the payment."
+msgstr "<strong>Você inseriu um ou mais dados do cartão incorretamente</strong><br>Insira os dados da forma como aparecem no cartão ou no app do seu banco para concluir o pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:681,
-#: ../../src/Translations/StoreTranslations.php:708
-msgid ""
-"<strong>For safety reasons, the card issuing bank declined the payment</"
-"strong><br>We recommend paying with your usual payment method and device for "
-"online purchases."
-msgstr ""
-"<strong>O banco emissor do cartão recusou o pagamento</"
-"strong><br>Recomendamos que você pague com o meio de pagamento e dispositivo "
-"que costuma usar para compras online."
+#: ../../src/Translations/StoreTranslations.php:723, ../../src/Translations/StoreTranslations.php:750
+msgctxt "card checkout"
+msgid "<strong>For safety reasons, the card issuing bank declined the payment</strong><br>We recommend paying with your usual payment method and device for online purchases."
+msgstr "<strong>O banco emissor do cartão recusou o pagamento</strong><br>Recomendamos que você pague com o meio de pagamento e dispositivo que costuma usar para compras online."
 
-#: ../../src/Translations/StoreTranslations.php:682
-msgid ""
-"<strong>The amount to be paid is outside the allowed limit for this payment "
-"method</strong><br>Enter an amount within the limits or use another payment "
-"method."
-msgstr ""
-"<strong>O valor a pagar está fora do limite permitido para este meio de "
-"pagamento</strong><br>Insira um valor dentro do limite ou pague com outro "
-"meio."
+#: ../../src/Translations/StoreTranslations.php:724
+msgctxt "card checkout"
+msgid "<strong>The amount to be paid is outside the allowed limit for this payment method</strong><br>Enter an amount within the limits or use another payment method."
+msgstr "<strong>O valor a pagar está fora do limite permitido para este meio de pagamento</strong><br>Insira um valor dentro do limite ou pague com outro meio."
 
-#: ../../src/Translations/StoreTranslations.php:683
-msgid ""
-"<strong>The discount code is not valid</strong><br>Check the code you "
-"entered and try again."
-msgstr ""
-"<strong>O cupom de desconto não é válido</strong><br>Verifique o código "
-"inserido e tente novamente."
+#: ../../src/Translations/StoreTranslations.php:725
+msgctxt "card checkout"
+msgid "<strong>The discount code is not valid</strong><br>Check the code you entered and try again."
+msgstr "<strong>O cupom de desconto não é válido</strong><br>Verifique o código inserido e tente novamente."
 
-#: ../../src/Translations/StoreTranslations.php:684
-msgid ""
-"<strong>The discount amount must be a number</strong><br>Enter a valid value "
-"to continue."
-msgstr ""
-"<strong>O valor do desconto deve ser um número</strong><br>Insira um valor "
-"válido para continuar."
+#: ../../src/Translations/StoreTranslations.php:726
+msgctxt "card checkout"
+msgid "<strong>The discount amount must be a number</strong><br>Enter a valid value to continue."
+msgstr "<strong>O valor do desconto deve ser um número</strong><br>Insira um valor válido para continuar."
 
-#: ../../src/Translations/StoreTranslations.php:685
-msgid ""
-"<strong>Credentials don’t match the environment</strong><br>Enter the "
-"correct test or production keys to complete the payment."
-msgstr ""
+#: ../../src/Translations/StoreTranslations.php:727
+msgctxt "card checkout"
+msgid "<strong>Credentials don’t match the environment</strong><br>Enter the correct test or production keys to complete the payment."
+msgstr "<strong>As credenciais não correspondem ao ambiente</strong><br>Insira as chaves corretas de teste ou de produção para finalizar o pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:686
-msgid ""
-"<strong>The e-mail is incorrect</strong><br>Make sure to enter it correctly "
-"to complete the payment."
-msgstr ""
-"<strong>O e-mail está incorreto</strong><br>Certifique-se de digitá-lo "
-"corretamente para concluir o pagamento."
+#: ../../src/Translations/StoreTranslations.php:728
+msgctxt "card checkout"
+msgid "<strong>The e-mail is incorrect</strong><br>Make sure to enter it correctly to complete the payment."
+msgstr "<strong>O e-mail está incorreto</strong><br>Certifique-se de digitá-lo corretamente para concluir o pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:687
-msgid ""
-"<strong>The e-mail isn't valid for payment</strong><br>Enter another e-mail "
-"to complete the payment."
-msgstr ""
-"<strong>O e-mail não é válido para o pagamento</strong><br>Insira outro e-"
-"mail para finalizar o pagamento."
+#: ../../src/Translations/StoreTranslations.php:729
+msgctxt "card checkout"
+msgid "<strong>The e-mail isn't valid for payment</strong><br>Enter another e-mail to complete the payment."
+msgstr "<strong>O e-mail não é válido para o pagamento</strong><br>Insira outro e-mail para finalizar o pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:688,
-#: ../../src/Translations/StoreTranslations.php:716
-msgid ""
-"<strong>The payment method you selected is not available</strong><br>Choose "
-"another method to complete your purchase."
-msgstr ""
-"<strong>O meio de pagamento selecionado não está disponível</"
-"strong><br>Escolha outro meio para finalizar a compra."
+#: ../../src/Translations/StoreTranslations.php:730, ../../src/Translations/StoreTranslations.php:758
+msgctxt "card checkout"
+msgid "<strong>The payment method you selected is not available</strong><br>Choose another method to complete your purchase."
+msgstr "<strong>O meio de pagamento selecionado não está disponível</strong><br>Escolha outro meio para finalizar a compra."
 
-#: ../../src/Translations/StoreTranslations.php:689,
-#: ../../src/Translations/StoreTranslations.php:703,
-#: ../../src/Translations/StoreTranslations.php:704
-msgid ""
-"<strong>Your payment was declined because something went wrong</"
-"strong><br>We recommend trying again or paying with another method."
-msgstr ""
-"<strong>Seu pagamento foi recusado devido a um erro</strong><br>Por favor, "
-"tente novamente ou use outro meio de pagamento."
+#: ../../src/Translations/StoreTranslations.php:731, ../../src/Translations/StoreTranslations.php:745, ../../src/Translations/StoreTranslations.php:746
+msgctxt "card checkout"
+msgid "<strong>Your payment was declined because something went wrong</strong><br>We recommend trying again or paying with another method."
+msgstr "<strong>Seu pagamento foi recusado devido a um erro</strong><br>Por favor, tente novamente ou use outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:690,
-#: ../../src/Translations/StoreTranslations.php:705
-msgid ""
-"<strong>Your payment was declined by the store</strong><br>Try another "
-"payment method or contact the seller."
-msgstr ""
-"<strong>Seu pagamento foi recusado pela loja</strong><br>Tente outro meio de "
-"pagamento ou entre em contato com o vendedor."
+#: ../../src/Translations/StoreTranslations.php:732, ../../src/Translations/StoreTranslations.php:747
+msgctxt "card checkout"
+msgid "<strong>Your payment was declined by the store</strong><br>Try another payment method or contact the seller."
+msgstr "<strong>Seu pagamento foi recusado pela loja</strong><br>Tente outro meio de pagamento ou entre em contato com o vendedor."
 
-#: ../../src/Translations/StoreTranslations.php:706
-msgid ""
-"<strong>Your payment was declined because you already paid for this "
-"purchase</strong><br>Please check your card transactions to verify it."
-msgstr ""
-"<strong>Seu pagamento foi recusado porque você já pagou esta compra</"
-"strong><br>Consulte os gastos do seu cartão para confirmar a transação."
+#: ../../src/Translations/StoreTranslations.php:748
+msgctxt "card checkout"
+msgid "<strong>Your payment was declined because you already paid for this purchase</strong><br>Please check your card transactions to verify it."
+msgstr "<strong>Seu pagamento foi recusado porque você já pagou esta compra</strong><br>Consulte os gastos do seu cartão para confirmar a transação."
 
-#: ../../src/Translations/StoreTranslations.php:707
-msgid ""
-"<strong>For safety reasons, your payment was declined</strong><br>We "
-"recommend paying with your usual payment method and device for online "
-"purchases."
-msgstr ""
-"<strong>Seu pagamento foi recusado</strong><br>Recomendamos que você use o "
-"dispositivo e meio de pagamento que costuma usar para compras online."
+#: ../../src/Translations/StoreTranslations.php:749
+msgctxt "card checkout"
+msgid "<strong>For safety reasons, your payment was declined</strong><br>We recommend paying with your usual payment method and device for online purchases."
+msgstr "<strong>Seu pagamento foi recusado</strong><br>Recomendamos que você use o dispositivo e meio de pagamento que costuma usar para compras online."
 
-#: ../../src/Translations/StoreTranslations.php:709
-msgid ""
-"<strong>For safety reasons, your payment was declined</strong><br>We "
-"recommend paying with your usual payment method and device for online "
-"purchases. "
-msgstr ""
-"<strong>Seu pagamento foi recusado</strong><br>Recomendamos que você use o "
-"dispositivo e meio de pagamento que costuma usar para compras online."
+#: ../../src/Translations/StoreTranslations.php:751
+msgctxt "card checkout"
+msgid "<strong>For safety reasons, your payment was declined</strong><br>We recommend paying with your usual payment method and device for online purchases. "
+msgstr "<strong>Seu pagamento foi recusado</strong><br>Recomendamos que você use o dispositivo e meio de pagamento que costuma usar para compras online."
 
-#: ../../src/Translations/StoreTranslations.php:710
-msgid ""
-"<strong>It was not possible to complete the payment</strong><br>Please use "
-"another method to complete the purchase."
-msgstr ""
-"<strong>Não foi possível concluir o pagamento</strong><br>Por favor, use "
-"outro método para concluir a compra."
+#: ../../src/Translations/StoreTranslations.php:752
+msgctxt "card checkout"
+msgid "<strong>It was not possible to complete the payment</strong><br>Please use another method to complete the purchase."
+msgstr "<strong>Não foi possível concluir o pagamento</strong><br>Por favor, use outro método para concluir a compra."
 
-#: ../../src/Translations/StoreTranslations.php:711
-msgid ""
-"<strong>Your credit card has no available limit</strong><br>Choose another "
-"payment method."
-msgstr ""
-"<strong>Seu cartão de crédito não tem limite disponível</strong><br>Escolha "
-"outro meio de pagamento."
+#: ../../src/Translations/StoreTranslations.php:753
+msgctxt "card checkout"
+msgid "<strong>Your credit card has no available limit</strong><br>Choose another payment method."
+msgstr "<strong>Seu cartão de crédito não tem limite disponível</strong><br>Escolha outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:712
-msgid ""
-"<strong>You have to activate your card</strong><br>Please contact your bank "
-"by calling the number on the back of your card or choose another payment "
-"method."
-msgstr ""
-"<strong>Seu cartão ainda está bloqueado</strong><br>Acesse o app ou entre em "
-"contato com o banco para desbloquear ou use outro meio de pagamento."
-
-#: ../../src/Translations/StoreTranslations.php:713
-msgid ""
-"<strong>You reached the limit of payment attempts with this card</"
-"strong><br>Please pay with another card or choose another payment method."
-msgstr ""
-"<strong>Você alcançou o limite de tentativas de pagamento com este cartão</"
-"strong><br>Pague com outro cartão ou escolha outro meio de pagamento."
-
-#: ../../src/Translations/StoreTranslations.php:715
-msgid ""
-"<strong>The card issuing bank declined the payment</strong><br>We recommend "
-"using another payment method or contacting your bank."
-msgstr ""
-"<strong>O banco emissor do cartão recusou seu pagamento</"
-"strong><br>Recomendamos pagar com outro meio de pagamento ou entrar em "
-"contato com seu banco."
-
-#: ../../src/Translations/StoreTranslations.php:717
-msgid ""
-"<strong>The test e-mail you entered is not valid</strong><br>Enter a valid "
-"email to complete the payment."
-msgstr ""
-"<strong>O e-mail de teste que você inseriu não é válido</strong><br>Insira "
-"um e-mail válido para finalizar o pagamento."
-
-#: ../../src/Translations/StoreTranslations.php:718
-msgid ""
-"<strong>The email you entered is not valid</strong><br>Enter a valid email "
-"to complete the payment."
-msgstr ""
-"<strong>O e-mail que você inseriu não é válido</strong><br>Insira um e-mail "
-"válido para finalizar o pagamento."
-
-#: ../../src/Translations/StoreTranslations.php:734
-msgid ""
-"<strong>It wasn't possible to validate the payment</strong><br>Try again in "
-"a moment. If the issue persists, please contact the seller for next steps."
-msgstr ""
-"<strong>Não foi possível validar o pagamento</strong><br>Tente novamente em "
-"alguns instantes. Se continuar, fale com o vendedor para saber como seguir."
-
-#: ../../src/Translations/StoreTranslations.php:735
-msgid ""
-"<strong>Your payment was declined due to an error</strong><br>Please try "
-"again or use a different payment method."
-msgstr ""
-"<strong>Seu pagamento foi recusado devido a um erro</strong><br>Por favor, "
-"tente novamente ou use outro meio de pagamento."
-
-#: ../../src/Translations/StoreTranslations.php:736
-msgid ""
-"<strong>This payment method isn't available</strong><br>Please use a "
-"different payment method to complete your purchase."
-msgstr ""
-"<strong>Este meio de pagamento não está disponível</strong><br>Por favor, "
-"use outro meio de pagamento para concluir a compra."
-
-#: ../../src/Translations/StoreTranslations.php:737
-msgid ""
-"<strong>Something went wrong while processing your payment</strong><br>Check "
-"if the charge appears on your card. If not, please try again or use a "
-"different payment method."
-msgstr ""
-"<strong>Houve um problema ao processar seu pagamento</strong><br>Verifique "
-"se houve cobrança no seu cartão. Caso contrário, tente novamente ou use "
-"outro meio de pagamento."
-
-#: ../../src/Translations/StoreTranslations.php:738
-msgid ""
-"<strong>It wasn't possible to validate your card</strong><br>Check if you "
-"have available credit or use a different payment method."
-msgstr ""
-"<strong>Não foi possível validar seu cartão</strong><br>Verifique se há "
-"limite disponível ou use outro meio de pagamento."
-
-#: ../../src/Translations/StoreTranslations.php:739,
-#: ../../src/Translations/StoreTranslations.php:740
-msgid ""
-"<strong>For security reasons, your payment was declined</strong><br>We "
-"recommend using your usual payment method and device for online purchases."
-msgstr ""
-"<strong>Por motivos de segurança, seu pagamento foi recusado</"
-"strong><br>Recomendamos que você pague com o meio de pagamento e dispositivo "
-"que costuma usar para compras online."
-
-#: ../../src/Translations/StoreTranslations.php:741
-msgid ""
-"<strong>The purchase amount exceeds the limit for this payment method</"
-"strong><br>Please use a different payment method to complete your purchase."
-msgstr ""
-"<strong>O valor da compra excede o limite deste meio de pagamento</"
-"strong><br>Por favor, use outro meio de pagamento para concluir a compra."
-
-#: ../../src/Translations/StoreTranslations.php:742
-msgid ""
-"<strong>Some card details are incorrect</strong><br>Please review the "
-"information entered to complete the payment."
-msgstr ""
-"<strong>Algum dado do cartão está incorreto</strong><br>Revise as "
-"informações inseridas para finalizar o pagamento."
+#: ../../src/Translations/StoreTranslations.php:754
+msgctxt "card checkout"
+msgid "<strong>You have to activate your card</strong><br>Please contact your bank by calling the number on the back of your card or choose another payment method."
+msgstr "<strong>Seu cartão ainda está bloqueado</strong><br>Acesse o app ou entre em contato com o banco para desbloquear ou use outro meio de pagamento."
 
 #: ../../src/Translations/StoreTranslations.php:755
-msgid ""
-"<strong>Your payment session has expired</strong><br>Please try again to "
-"complete your purchase."
-msgstr ""
-"<strong>Sua sessão de pagamento expirou</strong><br>Tente novamente para "
-"concluir sua compra."
+msgctxt "card checkout"
+msgid "<strong>You reached the limit of payment attempts with this card</strong><br>Please pay with another card or choose another payment method."
+msgstr "<strong>Você alcançou o limite de tentativas de pagamento com este cartão</strong><br>Pague com outro cartão ou escolha outro meio de pagamento."
 
-#: ../../src/Translations/StoreTranslations.php:770
+#: ../../src/Translations/StoreTranslations.php:757
+msgctxt "card checkout"
+msgid "<strong>The card issuing bank declined the payment</strong><br>We recommend using another payment method or contacting your bank."
+msgstr "<strong>O banco emissor do cartão recusou seu pagamento</strong><br>Recomendamos pagar com outro meio de pagamento ou entrar em contato com seu banco."
+
+#: ../../src/Translations/StoreTranslations.php:759
+msgctxt "card checkout"
+msgid "<strong>The test e-mail you entered is not valid</strong><br>Enter a valid email to complete the payment."
+msgstr "<strong>O e-mail de teste que você inseriu não é válido</strong><br>Insira um e-mail válido para finalizar o pagamento."
+
+#: ../../src/Translations/StoreTranslations.php:760
+msgctxt "card checkout"
+msgid "<strong>The email you entered is not valid</strong><br>Enter a valid email to complete the payment."
+msgstr "<strong>O e-mail que você inseriu não é válido</strong><br>Insira um e-mail válido para finalizar o pagamento."
+
+#: ../../src/Translations/StoreTranslations.php:776
+msgctxt "super token"
+msgid "<strong>It wasn't possible to validate the payment</strong><br>Try again in a moment. If the issue persists, please contact the seller for next steps."
+msgstr "<strong>Não foi possível validar o pagamento</strong><br>Tente novamente em alguns instantes. Se continuar, fale com o vendedor para saber como seguir."
+
+#: ../../src/Translations/StoreTranslations.php:777
+msgctxt "super token"
+msgid "<strong>Your payment was declined due to an error</strong><br>Please try again or use a different payment method."
+msgstr "<strong>Seu pagamento foi recusado devido a um erro</strong><br>Por favor, tente novamente ou use outro meio de pagamento."
+
+#: ../../src/Translations/StoreTranslations.php:778
+msgctxt "super token"
+msgid "<strong>This payment method isn't available</strong><br>Please use a different payment method to complete your purchase."
+msgstr "<strong>Este meio de pagamento não está disponível</strong><br>Por favor, use outro meio de pagamento para concluir a compra."
+
+#: ../../src/Translations/StoreTranslations.php:779
+msgctxt "super token"
+msgid "<strong>Something went wrong while processing your payment</strong><br>Check if the charge appears on your card. If not, please try again or use a different payment method."
+msgstr "<strong>Houve um problema ao processar seu pagamento</strong><br>Verifique se houve cobrança no seu cartão. Caso contrário, tente novamente ou use outro meio de pagamento."
+
+#: ../../src/Translations/StoreTranslations.php:780
+msgctxt "super token"
+msgid "<strong>It wasn't possible to validate your card</strong><br>Check if you have available credit or use a different payment method."
+msgstr "<strong>Não foi possível validar seu cartão</strong><br>Verifique se há limite disponível ou use outro meio de pagamento."
+
+#: ../../src/Translations/StoreTranslations.php:781, ../../src/Translations/StoreTranslations.php:782
+msgctxt "super token"
+msgid "<strong>For security reasons, your payment was declined</strong><br>We recommend using your usual payment method and device for online purchases."
+msgstr "<strong>Por motivos de segurança, seu pagamento foi recusado</strong><br>Recomendamos que você pague com o meio de pagamento e dispositivo que costuma usar para compras online."
+
+#: ../../src/Translations/StoreTranslations.php:783
+msgctxt "super token"
+msgid "<strong>The purchase amount exceeds the limit for this payment method</strong><br>Please use a different payment method to complete your purchase."
+msgstr "<strong>O valor da compra excede o limite deste meio de pagamento</strong><br>Por favor, use outro meio de pagamento para concluir a compra."
+
+#: ../../src/Translations/StoreTranslations.php:784
+msgctxt "super token"
+msgid "<strong>Some card details are incorrect</strong><br>Please review the information entered to complete the payment."
+msgstr "<strong>Algum dado do cartão está incorreto</strong><br>Revise as informações inseridas para finalizar o pagamento."
+
+#: ../../src/Translations/StoreTranslations.php:797
+msgctxt "super token"
+msgid "<strong>Your payment session has expired</strong><br>Please try again to complete your purchase."
+msgstr "<strong>Sua sessão de pagamento expirou</strong><br>Tente novamente para concluir sua compra."
+
+#: ../../src/Translations/StoreTranslations.php:812
+msgctxt "card checkout"
 msgid "We could not activate your subscription. Please try again."
 msgstr "Não foi possível ativar sua assinatura. Tente novamente."
 
@@ -4604,7 +4503,8 @@ msgid ""
 msgstr ""
 "Credencial de pagamentos recorrentes não configurada. Contate o lojista."
 
-#: ../../src/Translations/StoreTranslations.php:772
+#: ../../src/Translations/StoreTranslations.php:814
+msgctxt "card checkout"
 msgid "Card data is incomplete. Please review and try again."
 msgstr "Dados do cartão incompletos. Verifique e tente novamente."
 
@@ -4761,3 +4661,110 @@ msgstr "Insira os {digits} dígitos do número do seu documento."
 #~ msgstr ""
 #~ "<strong>As credenciais não correspondem ao ambiente</strong><br>Insira as "
 #~ "chaves corretas de teste ou de produção para finalizar o pagamento."
+
+#: ../../src/Translations/AdminTranslations.php:606
+msgid "Up to 12 installments with {credits_name}"
+msgstr "Até 12x sem cartão com {credits_name}."
+
+#: ../../src/Translations/AdminTranslations.php:567, ../../src/Translations/AdminTranslations.php:573, ../../src/Translations/AdminTranslations.php:579, ../../src/Translations/AdminTranslations.php:585
+msgid "“Up to 12 installments with {credits_name}” is"
+msgstr "“Até 12x sem cartão com {credits_name}” está"
+
+#: ../../src/Translations/AdminTranslations.php:628
+msgid "Activate this promotional banner to offer “{credits_name}” within product pages."
+msgstr "Ative este banner promocional para oferecer a opção “{credits_name}” nas páginas dos seus produtos."
+
+#: ../../src/Translations/AdminTranslations.php:645
+msgid "Choose how to promote “{credits_name}” on your store"
+msgstr "Escolha como divulgar “{credits_name}” na sua loja"
+
+#: ../../src/Translations/StoreTranslations.php:233
+msgid "Add your product to the cart and, for the payment, select “{credits_name}”."
+msgstr "Adicione seu produto ao carrinho e, na hora de pagar, escolha “{credits_name}”."
+
+#: ../../src/Translations/AdminTranslations.php:664, ../../src/Translations/StoreTranslations.php:287
+msgctxt "credits banner"
+msgid "Up to 12 installments"
+msgstr "Até 12x"
+
+#: ../../src/Translations/AdminTranslations.php:677, ../../src/Translations/StoreTranslations.php:300
+msgctxt "credits banner"
+msgid "get it now and pay month by month"
+msgstr "leve agora e pague mensalmente"
+
+#: ../../src/Translations/AdminTranslations.php:683, ../../src/Translations/StoreTranslations.php:305
+msgctxt "credits banner"
+msgid "Pay in up to 12 installments"
+msgstr "Pague em até 12x"
+
+#: ../../src/Translations/StoreTranslations.php:293
+msgctxt "credits buyer banner"
+msgid "Buy now, pay later"
+msgstr "Compre agora, pague depois"
+
+#: ../../src/Translations/StoreTranslations.php:288, ../../src/Translations/StoreTranslations.php:294
+msgctxt "credits buyer banner"
+msgid "through {credits_name}"
+msgstr "com {credits_name}"
+
+#: ../../src/Translations/StoreTranslations.php:299
+msgctxt "credits buyer banner"
+msgid "With {credits_name},"
+msgstr "Com {credits_name},"
+
+#: ../../src/Translations/StoreTranslations.php:306
+msgctxt "credits buyer banner"
+msgid "without credit card"
+msgstr "sem cartão"
+
+#: ../../src/Translations/AdminTranslations.php:670
+msgctxt "credits seller banner"
+msgid "Buy now, pay later"
+msgstr "Compre agora, pague depois"
+
+#: ../../src/Translations/AdminTranslations.php:665
+msgctxt "credits seller banner"
+msgid "through {credits_promotion_name}. Learn more"
+msgstr "com {credits_promotion_name}. Saiba mais"
+
+#: ../../src/Translations/AdminTranslations.php:671
+msgctxt "credits seller banner"
+msgid "through {credits_alternative_name}. Learn more"
+msgstr "com {credits_alternative_name}. Saiba mais"
+
+#: ../../src/Translations/AdminTranslations.php:676
+msgctxt "credits seller banner"
+msgid "With {credits_alternative_name},"
+msgstr "Com {credits_alternative_name},"
+
+#: ../../src/Translations/AdminTranslations.php:684
+msgctxt "credits seller banner"
+msgid "without credit card. Learn more"
+msgstr "sem cartão. Saiba mais"
+
+#: ../../src/Translations/AdminTranslations.php:648
+msgctxt "credits seller banner"
+msgid "Credit from Mercado Pago"
+msgstr "Crédito de Mercado Pago"
+
+#: ../../src/Translations/AdminTranslations.php:649
+msgctxt "credits seller banner"
+msgid "Credit from Mercado Parcelado"
+msgstr "Crédito de Mercado Parcelado"
+
+#: ../../src/Translations/StoreTranslations.php:207
+msgctxt "credits checkout pro"
+msgid "<b>You have {credits_name}</b> to buy now and pay later."
+msgstr "<b>Você tem o {credits_name}</b> para comprar agora e pagar depois."
+
+msgctxt "credits product name"
+msgid "Buy now, pay later"
+msgstr "Mercado Parcelado"
+
+msgctxt "credits seller promotion name"
+msgid "Buy now, pay later"
+msgstr "Mercado Parcelado"
+
+msgctxt "credits seller alternative name"
+msgid "Buy now, pay later"
+msgstr "Mercado Parcelado"

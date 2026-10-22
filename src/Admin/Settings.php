@@ -358,14 +358,12 @@ class Settings
     {
         $this->validateAjaxNonce();
 
-        $hasCurl = in_array('curl', get_loaded_extensions(), true);
         $hasGD   = in_array('gd', get_loaded_extensions(), true);
         $hasSSL  = is_ssl();
 
         wp_send_json_success([
-            'ssl'      => $hasSSL,
-            'gd_ext'   => $hasGD,
-            'curl_ext' => $hasCurl
+            'ssl'    => $hasSSL,
+            'gd_ext' => $hasGD
         ]);
     }
 

@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 8.9.6
+Stable tag: 8.9.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,17 +134,33 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.9.6 (07/10/2026) =
+= v8.9.7 (22/10/2026) =
 * Added
-- Add the bank-interest disclaimer to Chilean fast payment saved-card installments, displaying it only while the buyer has selected the option marked with an asterisk
+- Preserve every Checkout Pro payment attempt so paid orders can be recovered before automatic cancellation
 
 * Changed
-- Use neutral Spanish messages for Chilean fast payment saved-method errors
+- Update fast payment Credits names, icon and installment copy, using Mercado Crédito as the default and Mercado Parcelado for Brazil
+- Rename Credits and localize seller previews, product banners and Classic/Blocks checkout, preserving seller-chosen titles
+- Show the localized Credits benefit in Brazilian Checkout Pro while preserving the generic benefit in other markets
+- Use neutral Spanish in the card checkout for Spanish locales without a country-specific translation, preserving country-specific catalogs
+- Use the store language for supported payment form locales, with Mexican Spanish as the fallback for unsupported Spanish variants
+- Show Chilean fast payment texts in the store's configured language
 
 * Fixed
-- Keep standard card checkout available when the fast payment purchase amount is missing or invalid
-- Keep the card form available when the buyer switches payment method while a saved card is still loading in the fast payment checkout
-- Automatically correct the refunded amount recorded for each payment when saving it fails after a refund made from the order page, without counting the same refund twice
-- Keep the rejected-payment response readable on PHP 7.4 stores with error display enabled, when the error message has no mapped translation
+- Keep checkout available when currency conversion lookup fails, and retry the conversion when processing the payment
+- Keep the default Credits title following the store language after saving settings, including stores with a legacy title
+- Use neutral Spanish in the Credits buyer banner and expanded checkout heading
+- Keep seller Credits banner icons beside the text on smaller screens
+- Display fast payment Credits due-date emphasis without visible HTML tags
+- Preserve fast payment text in the store language for Chilean stores
+- Remove a stray quotation mark from a Mexican Spanish payment error message
+- Translate card form instructions for stores in Chilean Spanish
+- Check payment status before automatically cancelling unpaid orders, preserving paid orders and orders whose payment status cannot be confirmed
+- Report the actual payment status for subscription authorizations
+
+* Security
+- Prevent subscription payment credentials from being copied into payment metadata and transaction logs
+- Remove credentials from refund diagnostics before logging
+
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

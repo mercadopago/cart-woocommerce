@@ -1,5 +1,5 @@
 {
-  "assets/css/admin/credits/example-info.min.css": "881bd7fb5301514760d301d36a503ece3a69f7b243423fc0d1ecfd2729f448cf",
+  "assets/css/admin/credits/example-info.min.css": "7534c374c0f762bc8a5f8156830cbd8915f70ddde1c5ea556399312473d4d3b3",
   "assets/css/admin/mp-admin-configs.min.css": "57485aa19a9ce038ebc4351a44a8e1428f506ec6bd4480ba768c61a03f5399d1",
   "assets/css/admin/mp-admin-notices.min.css": "9b6454e18db9c655ed82666d4c053db412910d70887ef0bfa73c2862b6bd1a46",
   "assets/css/admin/mp-admin-settings.min.css": "ba4c45f104680907fa4c7b4163e11a3652bbfc9dc40380a5738ea1a98701cb0b",
@@ -14,7 +14,7 @@
   "assets/js/admin/credits/example-info.min.js": "fc7bb354df63668c1925fb57ba352a719f05a127e602a73621ca34ab70998747",
   "assets/js/admin/mp-admin-configs.min.js": "306590eecaac41a13dad8db8891f89d356723eb204b475c17623dd36998c4a68",
   "assets/js/admin/mp-admin-notices.min.js": "4804df4cef0dd98d9d00b3fd07a37c0cb7f3b7eb287ccf4e0d3206141a2ab02d",
-  "assets/js/admin/mp-admin-settings.min.js": "758e17774bf17ad3b6861d438017c682e2306c096cf9a0aece8cd18b6473a28b",
+  "assets/js/admin/mp-admin-settings.min.js": "b00803de8ad3088756aadbd58c0edddfdcf00c1f9fedbab95107ded456c7774e",
   "assets/js/admin/order/payment-status-sync.min.js": "53740f7c20741e92d94ad44b0f92b9a5b9340938d3195cf63f80a891779a2fcc",
   "assets/js/caronte/caronte-client.min.js": "6b1e29e8e0d4b954068631ccb22e48c36b26fd6457794b3300118d32ba9771ff",
   "assets/js/checkouts/custom/entities/card-form.min.js": "40da860a4788019b6321a037529fd4d16ada7c64e444be06b53b65d4db56c427",

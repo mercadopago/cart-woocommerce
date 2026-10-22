@@ -12,14 +12,17 @@ use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery;
 use WP_Mock;
 use WC_Order;
 
 class OrderStatusTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
+
     private OrderStatus $orderStatus;
     private StoreTranslations $storeTranslationsMock;
     private OrderMetadata $orderMetadataMock;
@@ -291,37 +294,42 @@ class OrderStatusTest extends TestCase
     {
         $orderMock = Mockery::mock(WC_Order::class);
         $orderMock->shouldReceive('get_status')->andReturn('pending');
-        $orderMock->shouldReceive('update_status')->with('on-hold');
-        $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: In Mediation');
+        $orderMock->shouldReceive('update_status')->with('on-hold')->once();
+        $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: In Mediation')->once();
 
         $reflection = new \ReflectionClass($this->orderStatus);
         $method = $reflection->getMethod('inMediationFlow');
         $method->setAccessible(true);
 
         $method->invoke($this->orderStatus, $orderMock);
-        $this->assertTrue(true);
     }
 
     public function testChargedBackFlowAddsOrderNotesAndUpdatesStatus(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
         $orderMock->shouldReceive('get_status')->andReturn('pending');
-        $orderMock->shouldReceive('update_status')->with('refunded');
-        $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: Charged Back');
+        $orderMock->shouldReceive('update_status')->with('refunded')->once();
+        $orderMock->shouldReceive('add_order_note')->with('Mercado Pago: Charged Back')->once();
 
         $reflection = new \ReflectionClass($this->orderStatus);
         $method = $reflection->getMethod('chargedBackFlow');
         $method->setAccessible(true);
 
         $method->invoke($this->orderStatus, $orderMock);
-        $this->assertTrue(true);
     }
 
     public function testRefundedFlowFullRefundUpdatesOrderStatus(): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
         $orderMock->shouldReceive('get_total')->andReturn(100.0);
-        $orderMock->shouldReceive('update_status')->with('refunded', 'Mercado Pago: Refunded');
+        $orderMock->shouldReceive('update_status')->with('refunded', 'Mercado Pago: Refunded')->once();
+        $this->orderMetadataMock->expects()->getPaymentsIdMeta($orderMock)->andReturn('123');
+        $this->orderMetadataMock->expects()->getIsProductionModeData($orderMock)->andReturn('no');
+        $this->sellerMock->expects()->getCredentialsAccessTokenTest()->andReturn('fixture-token');
+        $response = Mockery::mock(Response::class);
+        $response->shouldReceive('getStatus')->andReturn(200);
+        $response->expects()->getData()->andReturn(['status' => 'refunded', 'status_detail' => 'refunded']);
+        $this->requesterMock->expects()->get('/v1/payments/123', ['Authorization: Bearer fixture-token'])->andReturn($response);
 
         $data = [
             'notification_id' => 'notification_123',
@@ -334,8 +342,7 @@ class OrderStatusTest extends TestCase
         $method = $reflection->getMethod('refundedFlow');
         $method->setAccessible(true);
 
-        $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue(true);
+        $this->assertTrue($method->invoke($this->orderStatus, $data, $orderMock));
     }
 
     public function testRefundedFlowPartialRefundCreatesRefundAndAddsNote(): void
@@ -401,7 +408,6 @@ class OrderStatusTest extends TestCase
         $method->setAccessible(true);
 
         $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue(true);
     }
 
     /**
@@ -475,7 +481,6 @@ class OrderStatusTest extends TestCase
         $method->setAccessible(true);
 
         $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue(true);
     }
 
     /**
@@ -555,7 +560,6 @@ class OrderStatusTest extends TestCase
         $method->setAccessible(true);
 
         $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue(true);
     }
 
     /**
@@ -717,7 +721,6 @@ class OrderStatusTest extends TestCase
         $method->setAccessible(true);
 
         $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue(true);
     }
 
     public static function currencyRatioFallbackProvider(): array
@@ -797,7 +800,6 @@ class OrderStatusTest extends TestCase
         $method->setAccessible(true);
 
         $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue(true);
     }
 
     public function testGetRefundedStatusDetailBasedOnPaymentStatus(): void
@@ -1126,7 +1128,6 @@ class OrderStatusTest extends TestCase
         $method->setAccessible(true);
 
         $method->invoke($this->orderStatus, $data, $orderMock);
-        $this->assertTrue(true);
     }
 
     public function testCalculateTotalRefundedWithMultiplePayments(): void
@@ -1483,8 +1484,7 @@ class OrderStatusTest extends TestCase
         ];
 
         foreach ($validStatuses as $status) {
-            $this->orderStatus->processStatus($status, $data, $orderMock, $usedGateway);
-            $this->assertTrue(true);
+            $this->assertTrue($this->orderStatus->processStatus($status, $data, $orderMock, $usedGateway), $status);
         }
     }
 

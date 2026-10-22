@@ -1,67 +1,74 @@
-const { resolveMlcCopy } = require('@super-token/adapters/platform/resolveMlcCopy');
+const { resolveMlcCopy, usesLegacyMlcCopy } = require('@super-token/adapters/platform/resolveMlcCopy');
 
-const BUNDLE_ACCOUNT_MONEY_TEXT = 'Dinero disponible en Mercado Pago';
-const BUNDLE_BANK_INTEREST_HINT_TEXT = 'Si hay intereses, los aplicará y cobrará tu banco.';
+function storeParams(overrides = {}) {
+  return {
+    site_id: 'MLC',
+    mp_methods_title: 'Además, podés utilizar',
+    account_money_text: 'Texto genérico es.mo',
+    mercadopago_privacy_policy: 'Conocé cómo cuidamos tu privacidad.',
+    untouched: 'keep me',
+    input_title: { installments: 'Cuotas', other: 'keep me' },
+    placeholders: { installments: 'Seleccioná una opción', other: 'keep me' },
+    input_helper_message: {
+      installments: { required: 'Seleccioná una opción.', other: 'keep me' },
+      securityCode: { invalid_type: 'Completá este campo.', other: 'keep me' },
+      other: 'keep me',
+    },
+    ...overrides,
+  };
+}
 
 describe('resolveMlcCopy', () => {
-  it('Given a non-MLC site, When resolved, Then the same params are returned unchanged', () => {
-    const params = { site_id: 'MLB', account_money_text: 'Dinheiro na conta' };
+  it.each([true, 1, '1'])('Given MLC with store_language_copy=%p, When resolved, Then the same params are returned unchanged', (storeLanguageCopy) => {
+    const params = storeParams({ store_language_copy: storeLanguageCopy });
 
     expect(resolveMlcCopy(params)).toBe(params);
   });
 
-  it('Given MLC on an older plugin, When resolved, Then the bundle copy replaces generic plugin copy', () => {
-    const params = {
-      site_id: 'MLC',
-      account_money_text: 'Texto genérico es.mo',
-    };
+  it.each(['MLA', 'MLB', 'MLM'])('Given %s on an older plugin, When resolved, Then the same params are returned unchanged', (siteId) => {
+    const params = storeParams({ site_id: siteId });
+
+    expect(resolveMlcCopy(params)).toBe(params);
+  });
+
+  it('Given MLC on an older plugin, When resolved, Then the bundle Chilean copy replaces the plugin copy without mutating it', () => {
+    const params = storeParams({ site_id: 'mlc' });
 
     const resolved = resolveMlcCopy(params);
 
-    expect(resolved.account_money_text).toBe(BUNDLE_ACCOUNT_MONEY_TEXT);
-  });
-
-  it('Given MLC with a plugin locale marker, When resolved, Then the bundle copy still wins', () => {
-    const params = {
-      site_id: 'mlc',
-      super_token_copy_locale: 'es_CL',
-      account_money_text: 'Dinero disponible en tu cuenta de Mercado Pago',
-    };
-
-    const resolved = resolveMlcCopy(params);
-
-    expect(resolved.account_money_text).toBe(BUNDLE_ACCOUNT_MONEY_TEXT);
-  });
-
-  it('Given MLC with empty plugin copy, When resolved, Then the bundle copy is used', () => {
-    const params = {
-      site_id: 'MLC',
-      account_money_text: '',
-    };
-
-    const resolved = resolveMlcCopy(params);
-
-    expect(resolved.account_money_text).toBe(BUNDLE_ACCOUNT_MONEY_TEXT);
-  });
-
-  it('Given nested installment copy, When resolved, Then interest_free_option_text and bank_interest_hint_text are mapped under input_helper_message.installments', () => {
-    const params = {
-      site_id: 'MLC',
+    expect(resolved).not.toBe(params);
+    expect(resolved).toMatchObject({
+      mp_methods_title: 'Además, puedes utilizar',
+      account_money_text: 'Dinero disponible en Mercado Pago',
+      untouched: 'keep me',
+      input_title: { installments: 'Cuotas', other: 'keep me' },
+      placeholders: { installments: 'Selecciona una opción', other: 'keep me' },
       input_helper_message: {
-        someOtherKey: 'kept',
-        installments: { unrelatedKey: 'kept-too' },
-      },
-    };
-
-    const resolved = resolveMlcCopy(params);
-
-    expect(resolved.input_helper_message).toEqual({
-      someOtherKey: 'kept',
-      installments: {
-        unrelatedKey: 'kept-too',
-        interest_free_option_text: 'sin interés',
-        bank_interest_hint_text: BUNDLE_BANK_INTEREST_HINT_TEXT,
+        installments: {
+          required: 'Selecciona una opción.',
+          interest_free_option_text: 'sin interés',
+          bank_interest_hint_text: 'Si hay intereses, los aplicará y cobrará tu banco.',
+          other: 'keep me',
+        },
+        securityCode: { invalid_type: 'Completa este campo.', invalid_length: 'Ingresa el código completo.', other: 'keep me' },
+        other: 'keep me',
       },
     });
+    expect(resolved.mercadopago_privacy_policy).toContain('https://www.mercadopago.cl/privacidad');
+    expect(params.mp_methods_title).toBe('Además, podés utilizar');
+  });
+});
+
+describe('usesLegacyMlcCopy', () => {
+  it.each([
+    [{ site_id: 'MLC' }, true],
+    [{ site_id: 'mlc', store_language_copy: false }, true],
+    [{ site_id: 'MLC', store_language_copy: true }, false],
+    [{ site_id: 'MLC', store_language_copy: 1 }, false],
+    [{ site_id: 'MLC', store_language_copy: '1' }, false],
+    [{ site_id: 'MLA' }, false],
+    [{}, false],
+  ])('Given %p, When checked, Then it returns %p', (params, expected) => {
+    expect(usesLegacyMlcCopy(params)).toBe(expected);
   });
 });

@@ -6,6 +6,8 @@ use Exception;
 use MercadoPago\Woocommerce\Hooks\Order;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Order\PaymentReconciliation;
+use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
@@ -25,6 +27,10 @@ class OrderTest extends TestCase
     private OrderStatus $orderStatusMock;
 
     private OrderMetadata $orderMetadataMock;
+
+    private PaymentReconciliation $paymentReconciliationMock;
+
+    private Store $storeMock;
 
     private AdminTranslations $adminTranslationsMock;
 
@@ -63,6 +69,9 @@ class OrderTest extends TestCase
         $this->orderMetadataMock = Mockery::mock(OrderMetadata::class);
         $this->orderMetadataMock->shouldIgnoreMissing();
 
+        $this->paymentReconciliationMock = Mockery::mock(PaymentReconciliation::class);
+        $this->storeMock = Mockery::mock(Store::class);
+
         $this->adminTranslationsMock = Mockery::mock(AdminTranslations::class);
         $this->adminTranslationsMock->statusSync = $this->statusSyncTranslations;
         $this->adminTranslationsMock->links = ['reasons_refusals' => 'https://www.mercadopago.com/reasons'];
@@ -79,9 +88,63 @@ class OrderTest extends TestCase
 
         $this->setPrivateProperty('orderStatus', $this->orderStatusMock);
         $this->setPrivateProperty('orderMetadata', $this->orderMetadataMock);
+        $this->setPrivateProperty('paymentReconciliation', $this->paymentReconciliationMock);
+        $this->setPrivateProperty('store', $this->storeMock);
         $this->setPrivateProperty('adminTranslations', $this->adminTranslationsMock);
         $this->setPrivateProperty('url', $this->urlMock);
         $this->setPrivateProperty('logs', $this->logsMock);
+    }
+
+    public function testUnpaidCancellationKeepsOriginalFalseDecisionWithoutReconciliation(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->paymentReconciliationMock->shouldNotReceive('canCancelOrder');
+
+        $this->assertFalse($this->order->reconcileUnpaidOrderCancellation(false, $order));
+    }
+
+    public function testUnpaidCancellationDoesNotChangeNonMercadoPagoOrder(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->orderMetadataMock->shouldReceive('getUsedGatewayData')->with($order)->andReturn('');
+        $order->shouldReceive('get_payment_method')->andReturn('cod');
+        $this->paymentReconciliationMock->shouldNotReceive('canCancelOrder');
+
+        $this->assertTrue($this->order->reconcileUnpaidOrderCancellation(true, $order));
+    }
+
+    public function testUnpaidCancellationUsesConfiguredLegacyExternalReference(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->orderMetadataMock->shouldReceive('getUsedGatewayData')
+            ->with($order)
+            ->andReturn('woo-mercado-pago-basic');
+        $order->shouldReceive('get_payment_method')->andReturn('woo-mercado-pago-basic');
+        $order->shouldReceive('get_id')->andReturn(75);
+        $this->storeMock->shouldReceive('getStoreId')->once()->andReturn('STORE-');
+        $this->paymentReconciliationMock->shouldReceive('canCancelOrder')
+            ->once()
+            ->with($order, 'STORE-75', 'woo-mercado-pago-basic')
+            ->andReturn(false);
+
+        $this->assertFalse($this->order->reconcileUnpaidOrderCancellation(true, $order));
+    }
+
+    public function testUnpaidCancellationContinuesWhenReconciliationProvesNoPayment(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->orderMetadataMock->shouldReceive('getUsedGatewayData')
+            ->with($order)
+            ->andReturn('woo-mercado-pago-pix');
+        $order->shouldReceive('get_payment_method')->andReturn('woo-mercado-pago-pix');
+        $order->shouldReceive('get_id')->andReturn(76);
+        $this->storeMock->shouldReceive('getStoreId')->once()->andReturn('WC-');
+        $this->paymentReconciliationMock->shouldReceive('canCancelOrder')
+            ->once()
+            ->with($order, 'WC-76', 'woo-mercado-pago-pix')
+            ->andReturn(true);
+
+        $this->assertTrue($this->order->reconcileUnpaidOrderCancellation(true, $order));
     }
 
     public function tearDown(): void

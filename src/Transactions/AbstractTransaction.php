@@ -3,13 +3,11 @@
 namespace MercadoPago\Woocommerce\Transactions;
 
 use Exception;
-use MercadoPago\PP\Sdk\Entity\Payment\Payment;
-use MercadoPago\PP\Sdk\Entity\Preference\Preference;
-use MercadoPago\PP\Sdk\Exceptions\ApiException;
-use MercadoPago\PP\Sdk\Sdk;
+use MercadoPago\Woocommerce\Api\Core\CoreRequestContext;
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Http\TransportException;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
-use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\MetricContext;
@@ -29,16 +27,57 @@ use MercadoPago\Woocommerce\Helpers\Form;
 
 abstract class AbstractTransaction
 {
+    private const REDACTED_LOG_VALUE = '[redacted]';
+
+    private const SENSITIVE_LOG_FIELDS = [
+        'access_token',
+        'authorization',
+        'card_number',
+        'card_token',
+        'client_secret',
+        'cvv',
+        'customer_id',
+        'device_fingerprint',
+        'doc_number',
+        'document',
+        'email',
+        'external_reference',
+        'first_name',
+        'flow_id',
+        'last_name',
+        'name',
+        'number',
+        'platform_email',
+        'registration_date',
+        'session_id',
+        'security_code',
+        'surname',
+        'token',
+        'user_agent',
+        'user_email',
+        'user_id',
+    ];
+
+    private const SENSITIVE_LOG_CONTAINERS = [
+        'address',
+        'billing_address',
+        'card',
+        'mobile',
+        'phone',
+        'receiver_address',
+        'user',
+    ];
+
+    private const SAFE_LOG_URL_QUERY_FIELDS = [
+        'source_news',
+        'wc-api',
+    ];
+
     public WoocommerceMercadoPago $mercadopago;
 
-    private Sdk $sdk;
+    public array $transaction = [];
 
-    /**
-     * Transaction
-     *
-     * @var Payment|Preference
-     */
-    public $transaction;
+    protected string $transactionType = 'Transaction';
 
     public AbstractGateway $gateway;
 
@@ -78,9 +117,9 @@ abstract class AbstractTransaction
         $this->orderTotal     = 0;
     }
 
-    public function getSdk(): Sdk
+    protected function getCoreRequestContext(): CoreRequestContext
     {
-        return $this->sdk ??= new Sdk(
+        return new CoreRequestContext(
             $this->mercadopago->sellerConfig->getCredentialsAccessToken(),
             MP_PLATFORM_ID,
             Device::getDeviceProductId(),
@@ -90,11 +129,87 @@ abstract class AbstractTransaction
 
     public function logTransactionPayload(): void
     {
+        $payload = $this->sanitizePayloadForLog($this->transaction);
+        unset($payload['token']);
+
         $this->mercadopago->logs->file->info(
-            Arrays::last(explode('\\', get_class($this->transaction))) . ' payload',
+            $this->transactionType . ' payload',
             $this->gateway::LOG_SOURCE,
-            Arrays::except($this->transaction->toArray(), ['token'])
+            $payload
         );
+    }
+
+    private function sanitizePayloadForLog(array $payload, bool $redactValues = false): array
+    {
+        $sanitized = [];
+
+        foreach ($payload as $key => $value) {
+            $field = strtolower((string) $key);
+            $redactField = $redactValues
+                || in_array($field, self::SENSITIVE_LOG_FIELDS, true)
+                || in_array($field, self::SENSITIVE_LOG_CONTAINERS, true);
+
+            if (is_object($value)) {
+                $value = (array) $value;
+            }
+
+            if (is_array($value)) {
+                $sanitized[$key] = $this->sanitizePayloadForLog($value, $redactField);
+                continue;
+            }
+
+            if ($value === null || $value === '') {
+                $sanitized[$key] = $value;
+                continue;
+            }
+
+            if (substr($field, -4) === '_url' && is_string($value)) {
+                $sanitized[$key] = $this->sanitizeUrlForLog($value);
+                continue;
+            }
+
+            $sanitized[$key] = $redactField ? self::REDACTED_LOG_VALUE : $value;
+        }
+
+        return $sanitized;
+    }
+
+    private function sanitizeUrlForLog(string $url): string
+    {
+        $parts = parse_url($url);
+        if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
+            return self::REDACTED_LOG_VALUE;
+        }
+
+        $sanitized = $parts['scheme'] . '://' . $parts['host'];
+        if (isset($parts['port'])) {
+            $sanitized .= ':' . $parts['port'];
+        }
+
+        $sanitized .= $parts['path'] ?? '';
+
+        if (!empty($parts['query'])) {
+            $queryFields = [];
+            foreach (explode('&', $parts['query']) as $parameter) {
+                $field = strstr($parameter, '=', true);
+                $field = $field === false ? $parameter : $field;
+                if ($field !== '' && preg_match('/^[A-Za-z0-9_.\[\]-]+$/', $field)) {
+                    $value = strstr($parameter, '=');
+                    $value = $value === false ? '' : substr($value, 1);
+                    $queryFields[] = $field . '=' . (
+                        in_array($field, self::SAFE_LOG_URL_QUERY_FIELDS, true)
+                            ? $value
+                            : self::REDACTED_LOG_VALUE
+                    );
+                }
+            }
+
+            if ($queryFields) {
+                $sanitized .= '?' . implode('&', $queryFields);
+            }
+        }
+
+        return $sanitized;
     }
 
     /**
@@ -104,11 +219,11 @@ abstract class AbstractTransaction
      */
     public function setCommonTransaction(): void
     {
-        $this->transaction->binary_mode          = $this->getBinaryMode();
-        $this->transaction->external_reference   = $this->getExternalReference();
-        $this->transaction->notification_url     = $this->getNotificationUrl();
-        $this->transaction->metadata             = (array) $this->getInternalMetadata();
-        $this->transaction->statement_descriptor = $this->mercadopago->storeConfig->getStoreName('Mercado Pago');
+        $this->transaction['binary_mode']          = $this->getBinaryMode();
+        $this->transaction['external_reference']   = $this->getExternalReference();
+        $this->transaction['notification_url']     = $this->getNotificationUrl();
+        $this->transaction['metadata']             = (array) $this->getInternalMetadata();
+        $this->transaction['statement_descriptor'] = $this->mercadopago->storeConfig->getStoreName('Mercado Pago');
     }
 
     /**
@@ -239,18 +354,18 @@ abstract class AbstractTransaction
     /**
      * Set additional shipments information
      *
-     * @param $shipments
+     * @param array $shipments
      *
      * @return void
      */
-    public function setShipmentsTransaction($shipments): void
+    public function setShipmentsTransaction(array &$shipments): void
     {
-        $shipments->receiver_address->street_name = $this->mercadopago->orderShipping->getAddress1($this->order);
-        $shipments->receiver_address->zip_code    = $this->mercadopago->orderShipping->getZipcode($this->order);
-        $shipments->receiver_address->city        = $this->mercadopago->orderShipping->getCity($this->order);
-        $shipments->receiver_address->state       = $this->mercadopago->orderShipping->getState($this->order);
-        $shipments->receiver_address->country     = $this->mercadopago->orderShipping->getCountry($this->order);
-        $shipments->receiver_address->apartment   = $this->mercadopago->orderShipping->getAddress2($this->order);
+        $shipments['receiver_address']['street_name'] = $this->mercadopago->orderShipping->getAddress1($this->order);
+        $shipments['receiver_address']['zip_code']    = $this->mercadopago->orderShipping->getZipcode($this->order);
+        $shipments['receiver_address']['city']        = $this->mercadopago->orderShipping->getCity($this->order);
+        $shipments['receiver_address']['state']       = $this->mercadopago->orderShipping->getState($this->order);
+        $shipments['receiver_address']['country']     = $this->mercadopago->orderShipping->getCountry($this->order);
+        $shipments['receiver_address']['apartment']   = $this->mercadopago->orderShipping->getAddress2($this->order);
     }
 
     /**
@@ -264,7 +379,7 @@ abstract class AbstractTransaction
         $this->checkout = $checkout;
 
         // Recreate metadata with the new checkout data
-        $this->transaction->metadata = (array) $this->getInternalMetadata();
+        $this->transaction['metadata'] = (array) $this->getInternalMetadata();
 
         return $this;
     }
@@ -272,11 +387,11 @@ abstract class AbstractTransaction
     /**
      * Set items on transaction
      *
-     * @param $items
+     * @param array $items
      *
      * @return void
      */
-    public function setItemsTransaction($items): void
+    public function setItemsTransaction(array &$items): void
     {
         /** @var WC_Order_Item_Product $item */
         foreach ($this->order->get_items() as $item) {
@@ -306,18 +421,18 @@ abstract class AbstractTransaction
                 'quantity'    => 1,
             ];
 
-            $items->add($item);
+            $items[] = $item;
         }
     }
 
     /**
      * Set shipping
      *
-     * @param $items
+     * @param array $items
      *
      * @return void
      */
-    public function setShippingTransaction($items): void
+    public function setShippingTransaction(array &$items): void
     {
         $shipTotal = Numbers::format((float) $this->order->get_shipping_total());
         $shipTaxes = Numbers::format((float) $this->order->get_shipping_tax());
@@ -338,18 +453,18 @@ abstract class AbstractTransaction
                 'quantity'    => 1,
             ];
 
-            $items->add($item);
+            $items[] = $item;
         }
     }
 
     /**
      * Set fee
      *
-     * @param $items
+     * @param array $items
      *
      * @return void
      */
-    public function setFeeTransaction($items): void
+    public function setFeeTransaction(array &$items): void
     {
         foreach ($this->order->get_fees() as $fee) {
             $feeTotal = Numbers::format((float) $fee->get_total());
@@ -370,7 +485,7 @@ abstract class AbstractTransaction
                 'quantity'    => 1,
             ];
 
-            $items->add($item);
+            $items[] = $item;
         }
     }
 
@@ -395,8 +510,8 @@ abstract class AbstractTransaction
      */
     public function setAdditionalInfoBaseInfoTransaction(): void
     {
-        $this->transaction->additional_info->ip_address = $this->mercadopago->helpers->url->getServerAddress();
-        $this->transaction->additional_info->referral_url = $this->mercadopago->helpers->url->getBaseUrl();
+        $this->transaction['additional_info']['ip_address'] = $this->mercadopago->helpers->url->getServerAddress();
+        $this->transaction['additional_info']['referral_url'] = $this->mercadopago->helpers->url->getBaseUrl();
     }
 
     /**
@@ -406,11 +521,9 @@ abstract class AbstractTransaction
      */
     public function setAdditionalInfoItemsTransaction(): void
     {
-        $items = $this->transaction->additional_info->items;
-
-        $this->setItemsTransaction($items);
-        $this->setShippingTransaction($items);
-        $this->setFeeTransaction($items);
+        $this->setItemsTransaction($this->transaction['additional_info']['items']);
+        $this->setShippingTransaction($this->transaction['additional_info']['items']);
+        $this->setFeeTransaction($this->transaction['additional_info']['items']);
     }
 
     /**
@@ -420,7 +533,7 @@ abstract class AbstractTransaction
      */
     public function setAdditionalInfoShipmentsTransaction(): void
     {
-        $this->setShipmentsTransaction($this->transaction->additional_info->shipments);
+        $this->setShipmentsTransaction($this->transaction['additional_info']['shipments']);
     }
 
     /**
@@ -430,14 +543,12 @@ abstract class AbstractTransaction
      */
     public function setAdditionalInfoSellerTransaction(): void
     {
-        $seller = $this->transaction->additional_info->seller;
-
-        $seller->store_id      = $this->mercadopago->storeConfig->getStoreId();
-        $seller->business_type = $this->mercadopago->storeConfig->getStoreCategory('others');
-        $seller->collector     = $this->mercadopago->sellerConfig->getClientId();
-        $seller->website       = $this->mercadopago->helpers->url->getBaseUrl();
-        $seller->platform_url  = $this->mercadopago->helpers->url->getBaseUrl();
-        $seller->referral_url  = $this->mercadopago->helpers->url->getBaseUrl();
+        $this->transaction['additional_info']['seller']['store_id'] = $this->mercadopago->storeConfig->getStoreId();
+        $this->transaction['additional_info']['seller']['business_type'] = $this->mercadopago->storeConfig->getStoreCategory('others');
+        $this->transaction['additional_info']['seller']['collector'] = $this->mercadopago->sellerConfig->getClientId();
+        $this->transaction['additional_info']['seller']['website'] = $this->mercadopago->helpers->url->getBaseUrl();
+        $this->transaction['additional_info']['seller']['platform_url'] = $this->mercadopago->helpers->url->getBaseUrl();
+        $this->transaction['additional_info']['seller']['referral_url'] = $this->mercadopago->helpers->url->getBaseUrl();
     }
 
     /**
@@ -447,44 +558,42 @@ abstract class AbstractTransaction
      */
     public function setAdditionalInfoPayerTransaction(): void
     {
-        $payer = $this->transaction->additional_info->payer;
-
-        $payer->first_name           = $this->mercadopago->orderBilling->getFirstName($this->order);
-        $payer->last_name            = $this->mercadopago->orderBilling->getLastName($this->order);
-        $payer->user_email           = $this->mercadopago->orderBilling->getEmail($this->order);
-        $payer->phone->number        = $this->mercadopago->orderBilling->getPhone($this->order);
-        $payer->mobile->number       = $this->mercadopago->orderBilling->getPhone($this->order);
-        $payer->address->city        = $this->mercadopago->orderBilling->getCity($this->order);
-        $payer->address->state       = $this->mercadopago->orderBilling->getState($this->order);
-        $payer->address->country     = $this->mercadopago->orderBilling->getCountry($this->order);
-        $payer->address->zip_code    = $this->mercadopago->orderBilling->getZipcode($this->order);
-        $payer->address->street_name = $this->mercadopago->orderBilling->getAddress1($this->order);
-        $payer->address->apartment   = $this->mercadopago->orderBilling->getAddress2($this->order);
+        $this->transaction['additional_info']['payer']['first_name'] = $this->mercadopago->orderBilling->getFirstName($this->order);
+        $this->transaction['additional_info']['payer']['last_name'] = $this->mercadopago->orderBilling->getLastName($this->order);
+        $this->transaction['additional_info']['payer']['user_email'] = $this->mercadopago->orderBilling->getEmail($this->order);
+        $this->transaction['additional_info']['payer']['phone']['number'] = $this->mercadopago->orderBilling->getPhone($this->order);
+        $this->transaction['additional_info']['payer']['mobile']['number'] = $this->mercadopago->orderBilling->getPhone($this->order);
+        $this->transaction['additional_info']['payer']['address']['city'] = $this->mercadopago->orderBilling->getCity($this->order);
+        $this->transaction['additional_info']['payer']['address']['state'] = $this->mercadopago->orderBilling->getState($this->order);
+        $this->transaction['additional_info']['payer']['address']['country'] = $this->mercadopago->orderBilling->getCountry($this->order);
+        $this->transaction['additional_info']['payer']['address']['zip_code'] = $this->mercadopago->orderBilling->getZipcode($this->order);
+        $this->transaction['additional_info']['payer']['address']['street_name'] = $this->mercadopago->orderBilling->getAddress1($this->order);
+        $this->transaction['additional_info']['payer']['address']['apartment'] = $this->mercadopago->orderBilling->getAddress2($this->order);
 
         if ($this->mercadopago->helpers->currentUser->isUserLoggedIn()) {
-            $payer->registered_user        = true;
-            $payer->identification->number = $this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_document', true);
-            $payer->registration_date      = $this->mercadopago->helpers->currentUser->getCurrentUserData()->user_registered;
-            $payer->platform_email         = $this->mercadopago->helpers->currentUser->getCurrentUserData()->user_email;
-            $payer->register_updated_at    = $this->mercadopago->helpers->currentUser->getCurrentUserData()->__get('user_modified');
+            $this->transaction['additional_info']['payer']['registered_user'] = true;
+            $this->transaction['additional_info']['payer']['identification']['number'] = $this->mercadopago->helpers->currentUser->getCurrentUserMeta('billing_document', true);
+            $this->transaction['additional_info']['payer']['registration_date'] = $this->mercadopago->helpers->currentUser->getCurrentUserData()->user_registered;
+            $this->transaction['additional_info']['payer']['platform_email'] = $this->mercadopago->helpers->currentUser->getCurrentUserData()->user_email;
+            $this->transaction['additional_info']['payer']['register_updated_at'] = $this->mercadopago->helpers->currentUser->getCurrentUserData()->__get('user_modified');
         }
     }
 
-    // Datadog value reflects $e->getCode(), which may be 0 when the SDK cannot attribute the failure to an HTTP status.
+    // Datadog value reflects the HTTP status when the Core client can attribute one.
     protected function sendApiErrorMetric(string $apiRoute, Exception $e): void
     {
         $details = MetricContext::buildBaseMetricDetails($apiRoute, $this->mercadopago ?? null);
         $details['sdk_instance_id'] = $this->resolveMetadataField('flow_id');
+        $details = $this->addTransportMetricDetails($details, $e);
         // payment_method carries checkout_type — the product bucket (super_token, credit_card, pix…), not the card brand. Intentional: PSW-3760 needs the SuperToken flow identifiable in API errors.
         $paymentMethod = $this->resolveMetadataField('checkout_type');
         Datadog::getInstance()->sendEvent('mp_api_error', (string) $e->getCode(), $e->getMessage(), $paymentMethod, $details);
     }
 
     // Records every payment-creation outcome (success and error) so it can be cross-referenced with the Core P&P funnel.
-    // The HTTP status class is inferred from control flow: the SDK only returns data on 2xx (handleResponse throws on
-    // non-2xx), so a returned call is a success. On an ApiException the class comes from the status it carries
-    // (getApiStatus), which keeps 5xx correct even if the SDK later raises ApiException for it; any other Exception is
-    // the SDK's generic "Internal API Error", i.e. a 5xx. A rejected card is NOT an API error — it is a 2xx whose
+    // The HTTP status class is inferred from control flow: the Core client only returns data on 2xx. On an
+    // ApiException the class comes from the status it carries; any other Exception is treated as a 5xx. A rejected
+    // card is NOT an API error — it is a 2xx whose
     // business outcome lives in the response body, so on success payment_status carries that outcome
     // (approved/rejected/pending/in_process/…). This runs on the successful payment return path, so it must never
     // affect the flow: any failure here is swallowed silently (no block, no log) — a missing metric must never cost a payment.
@@ -514,6 +623,9 @@ abstract class AbstractTransaction
             $details['alert_type']      = $alertType;
             $details['payment_status']  = $paymentStatus;
             $details['device']          = Device::getDeviceType();
+            if ($e !== null) {
+                $details = $this->addTransportMetricDetails($details, $e);
+            }
 
             $paymentMethod = $this->resolveMetadataField('checkout_type');
             Datadog::getInstance()->sendEvent('mp_payment_create_result', $statusClass, $message, $paymentMethod, $details);
@@ -526,9 +638,18 @@ abstract class AbstractTransaction
     // If a failure occurs before that point, the field will be absent and the value degrades to null — by design.
     private function resolveMetadataField(string $field): ?string
     {
-        $metadata = $this->transaction->metadata ?? null;
+        $metadata = $this->transaction['metadata'] ?? null;
         $value    = is_array($metadata) ? ($metadata[$field] ?? null) : null;
 
         return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    private function addTransportMetricDetails(array $details, Exception $e): array
+    {
+        if ($e instanceof TransportException) {
+            $details['transport_code'] = $e->getTransportCode();
+        }
+
+        return $details;
     }
 }

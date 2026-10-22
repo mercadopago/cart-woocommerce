@@ -210,7 +210,7 @@ class MelidataAdapter {
 /**
  * Injected into the init telemetry as `js_version`. Kept in sync with the CDN bundle's version.
  */
-const SUPER_TOKEN_JS_VERSION = '1.2.7';
+const SUPER_TOKEN_JS_VERSION = '1.2.11';
 const V2_VARIANT = 'v2';
 const V21_VARIANT = 'v2.1';
 
@@ -664,6 +664,11 @@ class CoreMonitorMetricsAdapter_CoreMonitorMetricsAdapter {
   cannotGetFastPaymentToken() {
     this.successBoolean('cannot_get_fast_payment_token');
   }
+
+  /** Value: the store language; message: the credential site it diverges from (site_id is in the details too). */
+  storeLanguageDivergesFromSite(storeLanguage, siteId) {
+    this.sendMetric('super_token_store_language_divergence', storeLanguage, siteId.toUpperCase());
+  }
   installmentsFilled(paymentMethodType) {
     this.sendMetric('super_token_installments_filled', true, paymentMethodType);
   }
@@ -1076,43 +1081,6 @@ function createDomainConfig(params, variant) {
     }
   };
 }
-;// ./assets/js/checkouts/super-token/adapters/platform/resolveMlcCopy.ts
-/** Chilean checkout copy shipped with the CDN bundle for existing plugin installations. */
-const MLC_COPY = {
-  accountMoneyText: 'Dinero disponible en Mercado Pago',
-  accountMoneyBalanceText: 'Suficiente para pagar esta compra.',
-  interestFreePartOneText: 'Hasta',
-  interestFreePartTwoText: 'cuotas sin interés',
-  interestFreeOptionText: 'sin interés',
-  bankInterestHintText: 'Si hay intereses, los aplicará y cobrará tu banco.'
-};
-/** Preserve all other sites and all unrelated localized params unchanged. */
-function resolveMlcCopy(params) {
-  var _source$input_helper_, _helper$installments;
-  if (typeof params.site_id !== 'string' || params.site_id.toUpperCase() !== 'MLC') {
-    return params;
-  }
-  const source = params;
-  const helper = (_source$input_helper_ = source.input_helper_message) !== null && _source$input_helper_ !== void 0 ? _source$input_helper_ : {};
-  const installments = (_helper$installments = helper.installments) !== null && _helper$installments !== void 0 ? _helper$installments : {};
-  const interestFreeOptionText = MLC_COPY.interestFreeOptionText;
-  return {
-    ...params,
-    account_money_text: MLC_COPY.accountMoneyText,
-    account_money_balance_text: MLC_COPY.accountMoneyBalanceText,
-    interest_free_part_one_text: MLC_COPY.interestFreePartOneText,
-    interest_free_part_two_text: MLC_COPY.interestFreePartTwoText,
-    interest_free_option_text: interestFreeOptionText,
-    input_helper_message: {
-      ...helper,
-      installments: {
-        ...installments,
-        interest_free_option_text: interestFreeOptionText,
-        bank_interest_hint_text: MLC_COPY.bankInterestHintText
-      }
-    }
-  };
-}
 ;// ./assets/js/checkouts/super-token/adapters/platform/createPlatformAdapters.ts
 
 
@@ -1389,7 +1357,6 @@ class InitializationHealthChecker {
   }
 }
 ;// ./assets/js/checkouts/super-token/adapters/platform/index.ts
-
 
 
 
@@ -3798,6 +3765,13 @@ const SHARED_STYLES = {
   INPUT_TOOLTIP_HELPER_ERROR: 'mp-input-with-tooltip-helper-error',
   SECURITY_CODE_ERROR_MESSAGE: 'mp-super-token-security-code-error-message'
 };
+;// ./assets/js/checkouts/super-token/core/shared/consumerCreditsName.ts
+
+
+/** Product names follow the credential site for every consumer of the updated runtime. */
+function resolveConsumerCreditsName(siteId) {
+  return siteId === BRAZIL_ACCRONYM ? 'Mercado Parcelado' : 'Mercado Crédito';
+}
 ;// ./assets/js/checkouts/super-token/adapters/view/shared/paymentMethodPresentation.ts
 /**
  * Presentation resolution shared by both variant views: the display name and thumbnail
@@ -3814,8 +3788,7 @@ const SHARED_STYLES = {
 
 
 
-/** Non-breaking space, kept in the consumer-credits copy so "Mercado Pago" never wraps. */
-const NBSP = '\u00a0';
+
 
 /** The per-variant row seam. v2 = no MP credit-card case, no account-money class. */
 
@@ -3835,19 +3808,9 @@ function buildAccountMoneyName(paymentMethod, deps) {
   return deps.copy.accountMoneyAvailableText;
 }
 
-// Hardcoded copy in the legacy source. The legacy emitted the &nbsp; entity inside innerHTML;
-// here the name is rendered via textContent, so NBSP is the real non-breaking-space character.
+// Legacy fallbacks use a real non-breaking space because rows render names via textContent.
 function buildConsumerCreditsName(siteId) {
-  switch (siteId) {
-    case MEXICO_ACCRONYM:
-      return `Meses sin Tarjeta con Mercado${NBSP}Pago`;
-    case BRAZIL_ACCRONYM:
-      return `Linha de Crédito Mercado${NBSP}Pago`;
-    case CHILE_ACCRONYM:
-      return `Cuotas sin Tarjeta de Mercado${NBSP}Pago`;
-    default:
-      return `Cuotas sin Tarjeta con Mercado${NBSP}Pago`;
-  }
+  return resolveConsumerCreditsName(siteId);
 }
 
 /** Largest interest-free installment count offered (drives the value-prop pill). Pure. */
@@ -4483,6 +4446,27 @@ function buildDetailsSection(paymentMethod, deps, options) {
   });
 }
 
+// Only the catalog's exact bold markers create elements; all other content stays text.
+function buildDueDateCopy(copy) {
+  let bold = false;
+  return (typeof copy === 'string' ? copy : '').split(/(<\/?b>)/).flatMap(part => {
+    if (part === '<b>') {
+      bold = true;
+      return [];
+    }
+    if (part === '</b>') {
+      bold = false;
+      return [];
+    }
+    return [bold ? el('b', {
+      attrs: {
+        style: 'font-weight: 600 !important;'
+      },
+      text: part
+    }) : document.createTextNode(part)];
+  });
+}
+
 // Fills the due-date slot via DOM APIs (the date comes from the SDK, so it must never reach an
 // HTML sink); throws when the slot is absent (mirrors the legacy method, whose throw is caught
 // by the change handler to record the due-date failure metric).
@@ -4497,7 +4481,7 @@ function renderDueDate(paymentMethod, deps) {
     attrs: {
       style: 'font-weight: 400 !important;'
     },
-    children: [document.createTextNode(`${deps.copy.consumerCreditsDueDateText} `), el('b', {
+    children: [...buildDueDateCopy(deps.copy.consumerCreditsDueDateText), document.createTextNode(' '), el('b', {
       attrs: {
         style: 'font-weight: 600 !important;'
       },
@@ -6965,6 +6949,129 @@ class SuperTokenDebounce {
     };
   }
 }
+;// ./assets/js/checkouts/super-token/adapters/platform/resolveMlcCopy.ts
+/**
+ * Chilean copy for plugin versions released before the plugin catalogs carried it (CDN 1.2.8).
+ * The CDN bundle is shared by every installed plugin version, so it stays until those versions are gone.
+ */
+const MLC_COPY = {
+  flat: {
+    payment_methods_list_text: 'Medios de pago guardados',
+    payment_methods_list_alt_text: 'Medios de pago guardados en tu cuenta de Mercado Pago.',
+    saved_cards_title: 'Tarjetas guardadas',
+    saved_card_title: 'Tarjeta guardada',
+    mp_methods_title: 'Además, puedes utilizar',
+    saved_payment_method_title: 'Medio de pago guardado',
+    last_digits_text: 'terminada en',
+    new_card_text: 'Nueva tarjeta',
+    account_money_text: 'Dinero disponible en Mercado Pago',
+    account_money_balance_text: 'Suficiente para pagar esta compra.',
+    mercado_pago_card_name: 'Tarjeta Prepago Mercado Pago',
+    mercado_pago_credit_card_name: 'Tarjeta de Crédito Mercado Pago',
+    interest_free_part_one_text: 'Hasta',
+    interest_free_part_two_text: 'cuotas sin interés',
+    interest_free_option_text: 'sin interés',
+    security_code_input_title_text: 'Código de seguridad',
+    security_code_placeholder_text_3_digits: 'Ej.: 123',
+    security_code_placeholder_text_4_digits: 'Ej.: 1234',
+    security_code_tooltip_text_3_digits: 'Es un número de 3 dígitos. Lo encuentras al dorso de tu tarjeta o en la app de tu banco o billetera.',
+    security_code_tooltip_text_4_digits: 'Es un número de 4 dígitos. Lo encuentras al frente de tu tarjeta o en la app de tu banco o billetera.',
+    mercadopago_privacy_policy: 'Conoce&nbsp;<a href="https://www.mercadopago.cl/privacidad" target="_blank" rel="noopener noreferrer">cómo cuidamos tu privacidad</a>.',
+    update_security_code_with_retry_error_text: 'No se pudo hacer el pago. Intenta de nuevo o paga con otro medio.',
+    update_security_code_no_retry_error_text: 'No se pudo hacer el pago. Por favor, paga con otro medio.',
+    authorize_payment_method_with_retry_error_text: 'No fue posible validar tu identidad. Intenta de nuevo o paga con otro medio.',
+    authorize_payment_method_no_retry_error_text: 'No fue posible validar tu identidad. Por favor, paga con otro medio.',
+    select_payment_method_error_text: 'Selecciona un medio de pago para finalizar tu compra.'
+  },
+  inputTitle: {
+    installments: 'Cuotas'
+  },
+  placeholders: {
+    installments: 'Selecciona una opción'
+  },
+  installments: {
+    required: 'Selecciona una opción.',
+    interest_free_option_text: 'sin interés',
+    bank_interest_hint_text: 'Si hay intereses, los aplicará y cobrará tu banco.'
+  },
+  securityCode: {
+    invalid_type: 'Completa este campo.',
+    invalid_length: 'Ingresa el código completo.'
+  }
+};
+
+/** Values observed after WordPress serializes `store_language_copy` for JavaScript. */
+
+/**
+ * True only for MLC on a plugin that does not send `store_language_copy`: newer plugins already
+ * deliver the store-language copy for every site, so the bundle must leave it untouched.
+ */
+function usesLegacyMlcCopy(params) {
+  const storeLanguageCopyEnabled = params.store_language_copy === true || params.store_language_copy === 1 || params.store_language_copy === '1';
+  return !storeLanguageCopyEnabled && typeof params.site_id === 'string' && params.site_id.toUpperCase() === 'MLC';
+}
+
+/** Returns the same object whenever the legacy override does not apply. */
+function resolveMlcCopy(params) {
+  var _source$input_helper_;
+  if (!usesLegacyMlcCopy(params)) {
+    return params;
+  }
+  const source = params;
+  const helper = (_source$input_helper_ = source.input_helper_message) !== null && _source$input_helper_ !== void 0 ? _source$input_helper_ : {};
+  return {
+    ...params,
+    ...MLC_COPY.flat,
+    input_title: {
+      ...source.input_title,
+      ...MLC_COPY.inputTitle
+    },
+    placeholders: {
+      ...source.placeholders,
+      ...MLC_COPY.placeholders
+    },
+    input_helper_message: {
+      ...helper,
+      installments: {
+        ...helper.installments,
+        ...MLC_COPY.installments
+      },
+      securityCode: {
+        ...helper.securityCode,
+        ...MLC_COPY.securityCode
+      }
+    }
+  };
+}
+;// ./assets/js/checkouts/super-token/adapters/platform/storeLanguage.ts
+/** The language a store is expected to use for each credential site. */
+const EXPECTED_STORE_LANGUAGE_BY_SITE = {
+  MLA: 'es-ar',
+  MLB: 'pt-br',
+  MLC: 'es-cl',
+  MCO: 'es-co',
+  MLM: 'es-mx',
+  MPE: 'es-pe',
+  MLU: 'es-uy'
+};
+const UNKNOWN_STORE_LANGUAGE = 'unknown';
+
+/**
+ * The store language when it differs from the one expected for the credential site, or null when
+ * it matches or the site is unknown. Reads the `<html lang>` WordPress prints (e.g. "es-ES"), which
+ * every plugin version renders, so the divergence is measured for installs that never updated.
+ */
+function divergentStoreLanguage(siteId, htmlLang) {
+  const expected = typeof siteId === 'string' ? EXPECTED_STORE_LANGUAGE_BY_SITE[siteId.toUpperCase()] : undefined;
+  if (!expected) {
+    return null;
+  }
+  const storeLanguage = (htmlLang !== null && htmlLang !== void 0 ? htmlLang : '').trim().toLowerCase();
+  if (storeLanguage === expected) {
+    return null;
+  }
+  return storeLanguage || UNKNOWN_STORE_LANGUAGE;
+}
 ;// ./assets/js/checkouts/super-token/core/checkoutSession/PaymentMethodCatalog.ts
 /**
  * Ordering and capping of the fetched account payment methods (RN-1). Caps saved
@@ -7289,12 +7396,12 @@ function escapeHtml(value) {
 ;// ./assets/js/checkouts/super-token/core/paymentMethods/ConsumerCreditsMethod.ts
 /**
  * Consumer credits ("digital_currency") — has installments (RN-8). Decorated with the
- * yellow money icon and a site-specific name. The names are hardcoded literals in the
- * legacy code (not localized params), preserved verbatim including the &nbsp; entity.
+ * approved Credits thumbnail and a site-specific product name, independent of store language.
  *
  * Preserved from MPSuperTokenPaymentMethods (v2.1): buildConsumerCreditsName 1018-1027,
  * normalize consumer-credits branch 2264-2267.
  */
+
 
 
 
@@ -7312,16 +7419,7 @@ class ConsumerCreditsMethod extends BasePaymentMethodWithInstallments {
     return paymentMethod;
   }
   buildConsumerCreditsName() {
-    switch (this.config.siteId) {
-      case MEXICO_ACCRONYM:
-        return 'Meses sin Tarjeta con Mercado&nbsp;Pago';
-      case BRAZIL_ACCRONYM:
-        return 'Linha de Crédito Mercado&nbsp;Pago';
-      case CHILE_ACCRONYM:
-        return 'Cuotas sin Tarjeta de Mercado&nbsp;Pago';
-      default:
-        return 'Cuotas sin Tarjeta con Mercado&nbsp;Pago';
-    }
+    return resolveConsumerCreditsName(this.config.siteId);
   }
 
   /**
@@ -7561,16 +7659,52 @@ class LegacyRenderSession {
 ;// ./assets/js/checkouts/super-token/adapters/legacy/syncMlcCopyToLegacy.ts
 /** Keep older plugin controllers on the bundle's Chilean copy without replacing checkout state. */
 
-/** Legacy controller's SCREAMING_CASE copy fields (`window.mpSuperTokenPaymentMethods`, cast by the caller). */
+
+
+/** The localized params as the legacy sync reads and writes them (flat copy plus the nested groups). */
+
+/** Legacy controller (`window.mpSuperTokenPaymentMethods`, cast by the caller): only its copy fields are written. */
+
+/** The legacy controller's SCREAMING_CASE copy field for each flat localized key. */
+const CONTROLLER_COPY_FIELDS = {
+  PAYMENT_METHODS_LIST_TEXT: 'payment_methods_list_text',
+  PAYMENT_METHODS_LIST_ALT_TEXT: 'payment_methods_list_alt_text',
+  SAVED_CARDS_TITLE: 'saved_cards_title',
+  SAVED_CARD_TITLE: 'saved_card_title',
+  MP_METHODS_TITLE: 'mp_methods_title',
+  SAVED_PAYMENT_METHOD_TITLE: 'saved_payment_method_title',
+  LAST_DIGITS_TEXT: 'last_digits_text',
+  NEW_CARD_TEXT: 'new_card_text',
+  ACCOUNT_MONEY_TEXT: 'account_money_text',
+  ACCOUNT_MONEY_BALANCE_TEXT: 'account_money_balance_text',
+  MERCADO_PAGO_CARD_NAME: 'mercado_pago_card_name',
+  MERCADO_PAGO_CREDIT_CARD_NAME: 'mercado_pago_credit_card_name',
+  INTEREST_FREE_PART_ONE_TEXT: 'interest_free_part_one_text',
+  INTEREST_FREE_PART_TWO_TEXT: 'interest_free_part_two_text',
+  SECURITY_CODE_INPUT_TITLE_TEXT: 'security_code_input_title_text',
+  SECURITY_CODE_PLACEHOLDER_TEXT_3_DIGITS: 'security_code_placeholder_text_3_digits',
+  SECURITY_CODE_PLACEHOLDER_TEXT_4_DIGITS: 'security_code_placeholder_text_4_digits',
+  SECURITY_CODE_TOOLTIP_TEXT_3_DIGITS: 'security_code_tooltip_text_3_digits',
+  SECURITY_CODE_TOOLTIP_TEXT_4_DIGITS: 'security_code_tooltip_text_4_digits',
+  MERCADO_PAGO_PRIVACY_POLICY: 'mercadopago_privacy_policy',
+  UPDATE_SECURITY_CODE_WITH_RETRY_ERROR_TEXT: 'update_security_code_with_retry_error_text',
+  UPDATE_SECURITY_CODE_NO_RETRY_ERROR_TEXT: 'update_security_code_no_retry_error_text',
+  AUTHORIZE_PAYMENT_METHOD_WITH_RETRY_ERROR_TEXT: 'authorize_payment_method_with_retry_error_text',
+  AUTHORIZE_PAYMENT_METHOD_NO_RETRY_ERROR_TEXT: 'authorize_payment_method_no_retry_error_text',
+  SELECT_PAYMENT_METHOD_ERROR_TEXT: 'select_payment_method_error_text',
+  SUBMIT_SUPER_TOKEN_GENERIC_ERROR_TEXT: 'update_security_code_with_retry_error_text'
+};
 
 /** The account-money row's only marker shared by v2 and v2.1 — v2 never adds the
  *  `.mp-super-token-account-money-row` class (its `RowPresentation.extraClasses` is empty). */
 const ACCOUNT_MONEY_ROW_SELECTOR = '[data-type="account_money"]';
+const PRIVACY_FOOTER_ID = 'mp-super-token-privacy-policy-footer';
+const MLC_PRIVACY_POLICY_URL = 'https://www.mercadopago.cl/privacidad';
 
 /** Plugin catalogs carry the raw `&nbsp;` entity; pre-refactor `innerHTML` renderers decode it to
  *  a real NBSP (U+00A0) in the DOM. Collapse both forms to a plain space so either side matches. */
 function normalizeNbsp(text) {
-  return text.replace(/&nbsp;|\u00a0/g, ' ');
+  return text.replace(/&nbsp;| /g, ' ');
 }
 
 /** Substring replace that treats `&nbsp;` and a real NBSP as a plain space on both sides. Null when no match. */
@@ -7594,6 +7728,118 @@ function replaceVisibleText(selector, previous, next) {
     }
   });
 }
+function replaceVisibleAttribute(selector, attribute, previous, next) {
+  if (!previous || !next || previous === next) {
+    return;
+  }
+  document.querySelectorAll(selector).forEach(element => {
+    const current = element.getAttribute(attribute);
+    const updated = current && replaceNormalized(current, previous, next);
+    if (updated !== null && updated !== undefined) {
+      element.setAttribute(attribute, updated);
+    }
+  });
+}
+
+/** Built with DOM APIs so no plugin-supplied markup is parsed. */
+function setMlcPrivacyFooter(footer) {
+  const span = document.createElement('span');
+  const link = document.createElement('a');
+  link.href = MLC_PRIVACY_POLICY_URL;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = 'cómo cuidamos tu privacidad';
+  span.append('Conoce ', link, '.');
+  footer.replaceChildren(span);
+}
+function syncController(controller, localized) {
+  Object.entries(CONTROLLER_COPY_FIELDS).forEach(([field, key]) => {
+    controller[field] = localized[key];
+  });
+  controller.INSTALLMENTS_INPUT_TITLE = localized.input_title?.installments;
+  controller.INSTALLMENTS_PLACEHOLDER = localized.placeholders?.installments;
+  controller.INSTALLMENTS_REQUIRED_MESSAGE = localized.input_helper_message?.installments?.required;
+  controller.INSTALLMENTS_INTEREST_FREE_OPTION_TEXT = localized.input_helper_message?.installments?.interest_free_option_text;
+  controller.BANK_INTEREST_HINT_TEXT = localized.input_helper_message?.installments?.bank_interest_hint_text;
+  controller.SECURITY_CODE_ERROR_MESSAGES = localized.input_helper_message?.securityCode;
+
+  // Refactored views retain their own copy object even when the controller is reused.
+  const viewCopy = controller.variantView?.savedCardsView?.deps?.copy;
+  if (viewCopy) {
+    Object.assign(viewCopy, createVariantViewDeps(localized, null).copy);
+  }
+}
+function refreshRenderedCopy(previous, localized) {
+  var _previous$input_helpe, _localized$input_help, _previous$input_helpe2, _localized$input_help2;
+  const titleSelector = '.mp-super-token-block__title, .mp-payment-methods-header span';
+  const titleKeys = ['payment_methods_list_text', 'saved_cards_title', 'saved_card_title', 'mp_methods_title', 'saved_payment_method_title'];
+  const text = (params, key) => params[key];
+  titleKeys.forEach(key => {
+    replaceVisibleText(titleSelector, text(previous, key), text(localized, key));
+    replaceVisibleAttribute('.mp-super-token-block', 'aria-label', text(previous, key), text(localized, key));
+  });
+  replaceVisibleAttribute('#mp-checkout-super-token-root', 'aria-label', text(previous, 'payment_methods_list_alt_text'), text(localized, 'payment_methods_list_alt_text'));
+  replaceVisibleText('.mp-super-token-payment-method__accordion-title', text(previous, 'new_card_text'), text(localized, 'new_card_text'));
+  replaceVisibleAttribute('.mp-super-token-payment-method__accordion-header', 'aria-label', text(previous, 'new_card_text'), text(localized, 'new_card_text'));
+  ['mercado_pago_card_name', 'mercado_pago_credit_card_name', 'account_money_text'].forEach(key => {
+    replaceVisibleText('.mp-super-token-payment-method__title', text(previous, key), text(localized, key));
+  });
+  replaceVisibleText('.mp-super-token-am-balance-text', text(previous, 'account_money_balance_text'), text(localized, 'account_money_balance_text'));
+  replaceVisibleText('.mp-super-token-payment-method__value-prop', text(previous, 'interest_free_part_one_text'), text(localized, 'interest_free_part_one_text'));
+  replaceVisibleText('.mp-super-token-payment-method__value-prop', text(previous, 'interest_free_part_two_text'), text(localized, 'interest_free_part_two_text'));
+  const previousInstallments = (_previous$input_helpe = previous.input_helper_message?.installments) !== null && _previous$input_helpe !== void 0 ? _previous$input_helpe : {};
+  const localizedInstallments = (_localized$input_help = localized.input_helper_message?.installments) !== null && _localized$input_help !== void 0 ? _localized$input_help : {};
+  replaceVisibleText('label[for^="mp-super-token-installments-select-"]', previous.input_title?.installments, localized.input_title?.installments);
+  replaceVisibleText('select[id^="mp-super-token-installments-select-"] option', previous.placeholders?.installments, localized.placeholders?.installments);
+  replaceVisibleText('select[id^="mp-super-token-installments-select-"] option', previousInstallments.interest_free_option_text, localizedInstallments.interest_free_option_text);
+  replaceVisibleAttribute('input-helper[input-id^="mp-super-token-installments-error-"]', 'message', previousInstallments.required, localizedInstallments.required);
+  replaceVisibleText('.mp-super-token-security-code-label', text(previous, 'security_code_input_title_text'), text(localized, 'security_code_input_title_text'));
+  ['security_code_tooltip_text_3_digits', 'security_code_tooltip_text_4_digits'].forEach(key => {
+    replaceVisibleAttribute('.mp-super-token-security-code-tooltip', 'aria-label', text(previous, key), text(localized, key));
+    replaceVisibleAttribute('.mp-super-token-security-code-tooltip', 'data-tooltip', text(previous, key), text(localized, key));
+  });
+  const previousSecurityCode = (_previous$input_helpe2 = previous.input_helper_message?.securityCode) !== null && _previous$input_helpe2 !== void 0 ? _previous$input_helpe2 : {};
+  const localizedSecurityCode = (_localized$input_help2 = localized.input_helper_message?.securityCode) !== null && _localized$input_help2 !== void 0 ? _localized$input_help2 : {};
+  ['invalid_type', 'invalid_length'].forEach(key => {
+    replaceVisibleText('.mp-super-token-security-code-error-message', previousSecurityCode[key], localizedSecurityCode[key]);
+  });
+  ['update_security_code_with_retry_error_text', 'update_security_code_no_retry_error_text', 'authorize_payment_method_with_retry_error_text', 'authorize_payment_method_no_retry_error_text', 'select_payment_method_error_text'].forEach(key => {
+    replaceVisibleAttribute('#mp-fast-payments-error', 'description', text(previous, key), text(localized, key));
+  });
+
+  // Both renderers remove a non-qualifying installment's hint outright, so any match is current.
+  const bankHint = localizedInstallments.bank_interest_hint_text;
+  if (bankHint) {
+    document.querySelectorAll('.mp-installments-bank-interest-hint').forEach(hint => {
+      hint.textContent = `*${bankHint}`;
+    });
+  }
+  const privacyFooter = document.getElementById(PRIVACY_FOOTER_ID);
+  if (privacyFooter) {
+    setMlcPrivacyFooter(privacyFooter);
+  }
+
+  // v2.1 restores `aria-label` from `data-base-aria-label` on every deselect, so refresh both.
+  document.querySelectorAll(ACCOUNT_MONEY_ROW_SELECTOR).forEach(row => {
+    ['account_money_text', 'account_money_balance_text'].forEach(key => {
+      const oldValue = text(previous, key);
+      const newValue = text(localized, key);
+      if (!oldValue || !newValue) {
+        return;
+      }
+      const label = row.getAttribute('aria-label');
+      const updatedLabel = label && replaceNormalized(label, oldValue, newValue);
+      if (updatedLabel !== null && updatedLabel !== undefined) {
+        row.setAttribute('aria-label', updatedLabel);
+      }
+      const baseLabel = row.dataset.baseAriaLabel;
+      const updatedBaseLabel = baseLabel && replaceNormalized(baseLabel, oldValue, newValue);
+      if (updatedBaseLabel !== null && updatedBaseLabel !== undefined) {
+        row.dataset.baseAriaLabel = updatedBaseLabel;
+      }
+    });
+  });
+}
 
 /**
  * Composition-edge callers (`runtimeComposition.ts`) read `window.mpSuperTokenPaymentMethods` and
@@ -7601,25 +7847,36 @@ function replaceVisibleText(selector, previous, next) {
  * `window.*`, matching the `legacyDelegationSeams.ts` convention.
  */
 function syncMlcCopyToLegacy(original, localized, controller, customParams) {
-  // The resolver returns the same object for every non-MLC site.
-  if (original === localized || typeof original.site_id !== 'string' || original.site_id.toUpperCase() !== 'MLC') {
+  // The resolver returns the same object whenever the legacy override does not apply.
+  if (original === localized || !usesLegacyMlcCopy(original)) {
     return;
   }
-  const previousAccountMoney = original.account_money_text;
-  const previousBalance = original.account_money_balance_text;
-  const previousInterestFreePartOne = original.interest_free_part_one_text;
-  const previousInterestFreePartTwo = original.interest_free_part_two_text;
-  const previousInterestFreeOption = original.input_helper_message?.installments?.interest_free_option_text;
-  const bankHint = localized.input_helper_message?.installments?.bank_interest_hint_text;
+  const previous = {
+    ...original,
+    input_title: {
+      ...original.input_title
+    },
+    placeholders: {
+      ...original.placeholders
+    },
+    input_helper_message: {
+      ...original.input_helper_message,
+      installments: {
+        ...original.input_helper_message?.installments
+      },
+      securityCode: {
+        ...original.input_helper_message?.securityCode
+      }
+    }
+  };
 
   // Old controllers can be constructed after this bundle runs, so retain the original global
-  // object's identity while writing only the MLC copy fields, never unrelated plugin parameters.
-  original.account_money_text = localized.account_money_text;
-  original.account_money_balance_text = localized.account_money_balance_text;
-  original.interest_free_part_one_text = localized.interest_free_part_one_text;
-  original.interest_free_part_two_text = localized.interest_free_part_two_text;
-  original.interest_free_option_text = localized.interest_free_option_text;
+  // object's identity while writing only the copy fields, never unrelated plugin parameters.
+  Object.assign(original, MLC_COPY.flat);
+  original.input_title = localized.input_title;
+  original.placeholders = localized.placeholders;
   original.input_helper_message = localized.input_helper_message;
+  const bankHint = localized.input_helper_message?.installments?.bank_interest_hint_text;
   if (customParams && bankHint) {
     var _customParams$input_h;
     const helper = (_customParams$input_h = customParams.input_helper_message) !== null && _customParams$input_h !== void 0 ? _customParams$input_h : {};
@@ -7631,64 +7888,10 @@ function syncMlcCopyToLegacy(original, localized, controller, customParams) {
       }
     };
   }
-
-  // Old controllers capture these values in class fields when constructed. Keep the existing
-  // instance and its payment state; the guarded runtime must never create a second controller.
   if (controller) {
-    controller.ACCOUNT_MONEY_TEXT = localized.account_money_text;
-    controller.ACCOUNT_MONEY_BALANCE_TEXT = localized.account_money_balance_text;
-    controller.INTEREST_FREE_PART_ONE_TEXT = localized.interest_free_part_one_text;
-    controller.INTEREST_FREE_PART_TWO_TEXT = localized.interest_free_part_two_text;
-    controller.INSTALLMENTS_INTEREST_FREE_OPTION_TEXT = localized.input_helper_message?.installments?.interest_free_option_text;
-    controller.BANK_INTEREST_HINT_TEXT = bankHint;
+    syncController(controller, localized);
   }
-
-  // If the older runtime rendered before the CDN bundle arrived, refresh only known copy nodes.
-  // textContent avoids interpreting plugin catalog strings as HTML.
-  replaceVisibleText(`${ACCOUNT_MONEY_ROW_SELECTOR} .mp-super-token-payment-method__title`, previousAccountMoney, localized.account_money_text);
-  replaceVisibleText('.mp-super-token-am-balance-text', previousBalance, localized.account_money_balance_text);
-  replaceVisibleText('.mp-super-token-payment-method__value-prop', previousInterestFreePartOne, localized.interest_free_part_one_text);
-  replaceVisibleText('.mp-super-token-payment-method__value-prop', previousInterestFreePartTwo, localized.interest_free_part_two_text);
-  replaceVisibleText('select[id^="mp-super-token-installments-select-"] option', previousInterestFreeOption, localized.input_helper_message?.installments?.interest_free_option_text);
-
-  // Both Super Token's own renderer (cardRow.ts) and the Custom checkout's equivalent remove this
-  // node outright for a non-qualifying installment rather than leaving it empty, so presence alone
-  // already means the current selection qualifies (hasBankInterestDisclaimer === true) — refresh it.
-  // hideAllPaymentMethodDetails() only hides a deselected card's details (PAYMENT_METHOD_HIDE), it
-  // never removes them, so a previously selected card's hint can still be in the DOM (hidden) beside
-  // the active card's own hint — update every match, not just the first in document order.
-  if (bankHint) {
-    document.querySelectorAll('.mp-installments-bank-interest-hint').forEach(hint => {
-      hint.textContent = `*${bankHint}`;
-    });
-  }
-  // v2.1 restores `aria-label` from `data-base-aria-label` on every deselect
-  // (V21AccountMoneyDecoration.clear()); keep both in sync or the next selection cycle reverts to
-  // the stale copy. The base label never includes the balance line (only appended while selected).
-  document.querySelectorAll(ACCOUNT_MONEY_ROW_SELECTOR).forEach(row => {
-    const label = row.getAttribute('aria-label');
-    if (label) {
-      let updated = label;
-      if (previousAccountMoney) {
-        var _replaceNormalized;
-        updated = (_replaceNormalized = replaceNormalized(updated, previousAccountMoney, localized.account_money_text)) !== null && _replaceNormalized !== void 0 ? _replaceNormalized : updated;
-      }
-      if (previousBalance && localized.account_money_balance_text) {
-        var _replaceNormalized2;
-        updated = (_replaceNormalized2 = replaceNormalized(updated, previousBalance, localized.account_money_balance_text)) !== null && _replaceNormalized2 !== void 0 ? _replaceNormalized2 : updated;
-      }
-      if (updated !== label) {
-        row.setAttribute('aria-label', updated);
-      }
-    }
-    const baseLabel = row.dataset.baseAriaLabel;
-    if (baseLabel && previousAccountMoney) {
-      const updatedBaseLabel = replaceNormalized(baseLabel, previousAccountMoney, localized.account_money_text);
-      if (updatedBaseLabel !== null && updatedBaseLabel !== baseLabel) {
-        row.dataset.baseAriaLabel = updatedBaseLabel;
-      }
-    }
-  });
+  refreshRenderedCopy(previous, localized);
 }
 ;// ./assets/js/checkouts/super-token/composition/variantRuntime.ts
 /**
@@ -7758,6 +7961,8 @@ function resolveSuperTokenVariant() {
 
 
 
+
+
 // SDK-readiness gate, mirroring the legacy v2.1/mp-super-token.js: run once the SDK instance
 // exists (immediately if already there, else on the ready event, with a bounded poll fallback for
 // stores where the event fired before this module loaded — see checkout-resilience rules).
@@ -7804,12 +8009,27 @@ async function waitForCustomCheckoutHandler() {
   return true;
 }
 
+// Telemetry is fail-open: a reporting error must never block the composition that follows.
+function reportStoreLanguageDivergence(siteId, metrics) {
+  try {
+    const storeLanguage = divergentStoreLanguage(siteId, document.documentElement?.lang);
+    if (storeLanguage) {
+      metrics.storeLanguageDivergesFromSite(storeLanguage, siteId);
+    }
+  } catch {
+    // best-effort telemetry
+  }
+}
+
 /**
  * Resolve the variant, then compose the order+decorate seam and the runtime instances. Called only
  * when the localized domain params are present; otherwise the legacy organizePaymentMethodsElements
  * keeps its inline reorder + normalize (the decoration would lack its copy/thumbnails).
  */
 function composeRuntime(domainParams, recompose, metrics) {
+  reportStoreLanguageDivergence(domainParams.site_id, metrics);
+
+  // Plugins that predate `store_language_copy` keep the bundle's Chilean copy (see resolveMlcCopy).
   const localizedParams = resolveMlcCopy(domainParams);
   // window.* reads kept at the composition edge (matches legacyDelegationSeams.ts); the adapter
   // itself stays free of window.*.

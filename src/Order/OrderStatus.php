@@ -859,7 +859,7 @@ class OrderStatus
      *
      * @return string
      */
-    private function getAccessTokenForOrder(WC_Order $order): string
+    public function getAccessTokenForOrder(WC_Order $order): string
     {
         $isProductionMode = $this->orderMetadata->getIsProductionModeData($order);
         if ($isProductionMode !== null && $isProductionMode !== '') {

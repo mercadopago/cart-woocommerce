@@ -449,6 +449,8 @@ class RefundExceptionTest extends TestCase
         $responseData = [
             'status' => 'rejected',
             'error' => 'invalid_request',
+            'code' => 'CPP_TAST_0000002',
+            'original_message' => 'ErrorRefundSuperTokenOrderST | 404 order_not_found',
             'message' => 'token=SECRET',
             'access_token' => 'APP_USR-SECRET',
             'cause' => [
@@ -471,8 +473,173 @@ class RefundExceptionTest extends TestCase
         $this->assertSame([
             'status' => 'rejected',
             'error' => 'invalid_request',
+            'code' => 'CPP_TAST_0000002',
+            'original_message' => 'ErrorRefundSuperTokenOrderST | 404 order_not_found',
             'cause' => [['code' => 'refund_not_allowed']]
         ], $exception->getLoggingContext()['context']['response_data']);
         $this->assertSame($responseData, $exception->getResponseData());
+    }
+
+    public function testLoggingContextSanitizesOriginalMessageDiagnostics(): void
+    {
+        $originalMessage = implode(' ', [
+            'buyer@example.com',
+            'Authorization: Bearer bearer-secret',
+            'access_token=APP_USR-secret',
+            'token="card-secret"',
+            'eyJheader.payload.signature',
+            '192.168.0.10',
+            'document=12345678909',
+        ]);
+
+        $exception = new RefundException(
+            'Refund rejected',
+            RefundException::TYPE_VALIDATION,
+            400,
+            null,
+            'MP-123',
+            99,
+            400,
+            ['response_data' => ['original_message' => $originalMessage]]
+        );
+
+        $loggedMessage = $exception->getLoggingContext()['context']['response_data']['original_message'];
+
+        $this->assertStringContainsString('[redacted_email]', $loggedMessage);
+        $this->assertStringContainsString('Authorization: [redacted]', $loggedMessage);
+        $this->assertStringContainsString('access_token=[redacted]', $loggedMessage);
+        $this->assertStringContainsString('token=[redacted]', $loggedMessage);
+        $this->assertStringContainsString('[redacted_jwt]', $loggedMessage);
+        $this->assertStringContainsString('[redacted_ip]', $loggedMessage);
+        $this->assertStringContainsString('[redacted_number]', $loggedMessage);
+        $this->assertStringNotContainsString('bearer-secret', $loggedMessage);
+        $this->assertStringNotContainsString('APP_USR-secret', $loggedMessage);
+        $this->assertStringNotContainsString('card-secret', $loggedMessage);
+    }
+
+    public function testLoggingContextSanitizesJsonOriginalMessageDiagnostics(): void
+    {
+        $originalMessage = implode(' ', [
+            '{"pseudotoken":"opaquePseudotoken","password":"opaquePassword"}',
+            '{"Authorization":"Bearer opaqueAuthorization","Cookie":"session=opaqueCookie"}',
+            '{\"access_token\":\"opaqueEscapedToken\",\"client_secret\":\"opaqueEscapedSecret\"}',
+        ]);
+
+        $exception = new RefundException(
+            'Refund rejected',
+            RefundException::TYPE_VALIDATION,
+            400,
+            null,
+            'MP-123',
+            99,
+            400,
+            ['response_data' => ['original_message' => $originalMessage]]
+        );
+
+        $loggedMessage = $exception->getLoggingContext()['context']['response_data']['original_message'];
+
+        $this->assertStringContainsString('{"pseudotoken":"[redacted]"', $loggedMessage);
+        $this->assertStringContainsString('"Authorization":"[redacted]"', $loggedMessage);
+        $this->assertStringContainsString('{\"access_token\":\"[redacted]\"', $loggedMessage);
+        $this->assertStringNotContainsString('opaque', $loggedMessage);
+    }
+
+    public function testLoggingContextSanitizesJsonSecretCutByDiagnosticLimit(): void
+    {
+        $secret = str_repeat('opaqueSecretValue', 10);
+        $originalMessage = str_repeat('x', 1960) . '{"pseudotoken":"' . $secret . '"}';
+
+        $exception = new RefundException(
+            'Refund rejected',
+            RefundException::TYPE_VALIDATION,
+            400,
+            null,
+            'MP-123',
+            99,
+            400,
+            ['response_data' => ['original_message' => $originalMessage]]
+        );
+
+        $loggedMessage = $exception->getLoggingContext()['context']['response_data']['original_message'];
+
+        $this->assertLessThanOrEqual(2000, strlen($loggedMessage));
+        $this->assertStringEndsWith('{"pseudotoken":"[redacted]', $loggedMessage);
+        $this->assertStringNotContainsString('opaque', $loggedMessage);
+    }
+
+    public function testLoggingContextSanitizesIncompleteJsonSecret(): void
+    {
+        $exception = new RefundException(
+            'Refund rejected',
+            RefundException::TYPE_VALIDATION,
+            400,
+            null,
+            'MP-123',
+            99,
+            400,
+            ['response_data' => ['original_message' => '{"client_secret":"opaqueIncomplete']]
+        );
+
+        $loggedMessage = $exception->getLoggingContext()['context']['response_data']['original_message'];
+
+        $this->assertSame('{"client_secret":"[redacted]', $loggedMessage);
+        $this->assertStringNotContainsString('opaque', $loggedMessage);
+    }
+
+    public function testLoggingContextSanitizesJsonSecretContainingEscapedQuote(): void
+    {
+        $exception = new RefundException(
+            'Refund rejected',
+            RefundException::TYPE_VALIDATION,
+            400,
+            null,
+            'MP-123',
+            99,
+            400,
+            ['response_data' => ['original_message' => '{"password":"syntheticPrefix\\"syntheticSuffix"}']]
+        );
+
+        $loggedMessage = $exception->getLoggingContext()['context']['response_data']['original_message'];
+
+        $this->assertSame('{"password":"[redacted]"}', $loggedMessage);
+        $this->assertStringNotContainsString('synthetic', $loggedMessage);
+    }
+
+    public function testLoggingContextIgnoresNonScalarOriginalMessage(): void
+    {
+        $exception = new RefundException(
+            'Refund rejected',
+            RefundException::TYPE_VALIDATION,
+            400,
+            null,
+            'MP-123',
+            99,
+            400,
+            ['response_data' => ['original_message' => ['unexpected']]]
+        );
+
+        $this->assertSame([], $exception->getLoggingContext()['context']['response_data']);
+    }
+
+    public function testLoggingContextDropsOriginalMessageWhenSanitizationFails(): void
+    {
+        $previousBacktrackLimit = ini_set('pcre.backtrack_limit', '0');
+
+        try {
+            $exception = new RefundException(
+                'Refund rejected',
+                RefundException::TYPE_VALIDATION,
+                400,
+                null,
+                'MP-123',
+                99,
+                400,
+                ['response_data' => ['original_message' => 'buyer@example.com']]
+            );
+
+            $this->assertSame([], $exception->getLoggingContext()['context']['response_data']);
+        } finally {
+            ini_set('pcre.backtrack_limit', (string) $previousBacktrackLimit);
+        }
     }
 }

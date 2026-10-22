@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { buildConsumerCreditsRow } = require('@super-token/adapters/view/shared/consumerCreditsRow');
 const { SHARED_STYLES } = require('@super-token/adapters/view/shared/styles');
 const { buildViewDeps } = require('./fixtures');
@@ -111,6 +113,61 @@ describe('buildConsumerCreditsRow', () => {
     expect(cardInstallments.value).toBe('3');
     expect(session.updateCreditsContract).toHaveBeenCalledWith(controller, '3');
     expect(session.recordConsumerCreditsHint).toHaveBeenCalledWith(true, undefined);
+  });
+
+  async function selectInstallment(copy, methodOverrides = {}) {
+    let onContractRendered;
+    const contractReady = new Promise((resolve) => { onContractRendered = resolve; });
+    const session = buildSession(undefined, { recordCreditsContractRendered: jest.fn(onContractRendered) });
+    const row = buildConsumerCreditsRow(
+      cc(methodOverrides), buildViewDeps({ copy: { consumerCreditsDueDateText: copy } }),
+      presentation, session, options, hint,
+    );
+    document.body.appendChild(row);
+    await contractReady;
+    expect(session.recordCreditsContractRendered).toHaveBeenCalledWith(true);
+    const select = row.querySelector(`#${SELECT_ID}`);
+    select.value = '3';
+    select.dispatchEvent(new Event('change'));
+    expect(session.recordConsumerCreditsDueDate).toHaveBeenCalledWith(true);
+    return row.querySelector('#mp-consumer-credits-due-date');
+  }
+
+  const dueDateCopies = [
+    ['en', 'The first installment <b>is due on</b>'],
+    ...['es', 'es_AR', 'es_MX', 'pt'].map((locale) => {
+      const catalog = fs.readFileSync(path.resolve(__dirname, '../../../../../../i18n/languages', `woocommerce-mercadopago-${locale}.po`), 'utf8');
+      const match = catalog.match(/msgid "The first installment <b>is due on<\/b>"\nmsgstr "([^"\n]+)"/);
+      if (!match) throw new Error(`Missing Credits due-date translation: ${locale}`);
+      return [locale, match[1]];
+    }),
+  ];
+
+  it.each(dueDateCopies)('Given the real %s due-date copy, When an installment is selected, Then bold renders without literal tags', async (locale, copy) => {
+    const dueDate = await selectInstallment(copy);
+    expect(dueDate.textContent).toBe(`${copy.replace(/<\/?b>/g, '')} 15/mar.`);
+    expect([...dueDate.querySelectorAll('b')].map((node) => node.textContent)).toEqual([
+      copy.match(/<b>(.*?)<\/b>/)[1], '15/mar',
+    ]);
+    expect(dueDate.textContent).not.toContain('<b>');
+    expect(dueDate.style.display).toBe('block');
+  });
+
+  it.each(['Primeira parcela em', '', null, undefined])('Given unformatted or missing copy %p, When selected, Then the date remains readable', async (copy) => {
+    const dueDate = await selectInstallment(copy);
+    expect(dueDate.textContent).toBe(`${copy ?? ''} 15/mar.`);
+    expect([...dueDate.querySelectorAll('b')].map((node) => node.textContent)).toEqual(['15/mar']);
+  });
+
+  it('Given unexpected markup in the copy and date, When selected, Then only exact bold markers create elements', async () => {
+    const copy = 'First <b>due <img src=x onerror=alert(1)></b> <script>alert(1)</script>';
+    const date = '<img src=x onerror=alert(1)>';
+    const dueDate = await selectInstallment(copy, { next_due_date: date });
+    expect(dueDate.textContent).toBe(`First due <img src=x onerror=alert(1)> <script>alert(1)</script> ${date}.`);
+    expect(dueDate.querySelector('img, script, [onerror]')).toBeNull();
+    expect([...dueDate.querySelectorAll('b')].map((node) => node.textContent)).toEqual([
+      'due <img src=x onerror=alert(1)>', date,
+    ]);
   });
 
   it('Given a Brazilian site, When an installment is chosen, Then the debit-auto legal text is a DOM span (not raw HTML)', async () => {

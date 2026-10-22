@@ -15,7 +15,9 @@ import { SuperTokenErrorHandler } from '@super-token/adapters/runtime/SuperToken
 import { SuperTokenEmailListener } from '@super-token/adapters/runtime/SuperTokenEmailListener';
 import { SuperTokenTriggerHandler } from '@super-token/adapters/runtime/SuperTokenTriggerHandler';
 import { SuperTokenDebounce } from '@super-token/adapters/runtime/SuperTokenDebounce';
-import { CoreMonitorMetricsAdapter, createDomainConfig, resolveMlcCopy } from '@super-token/adapters/platform';
+import { CoreMonitorMetricsAdapter, createDomainConfig } from '@super-token/adapters/platform';
+import { resolveMlcCopy } from '@super-token/adapters/platform/resolveMlcCopy';
+import { divergentStoreLanguage } from '@super-token/adapters/platform/storeLanguage';
 import type { SuperTokenDomainParams } from '@super-token/adapters/platform';
 import { SUPER_TOKEN_FALLBACK_VARIANT, SUPER_TOKEN_JS_VERSION } from '@super-token/adapters/platform/constants';
 import { toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
@@ -29,7 +31,7 @@ import { LegacyRenderSession } from '@super-token/adapters/session/LegacyRenderS
 import type { LegacyRenderController } from '@super-token/adapters/session/LegacyRenderSession';
 import * as globalBridge from '@super-token/adapters/legacy/globalBridge';
 import { syncMlcCopyToLegacy } from '@super-token/adapters/legacy/syncMlcCopyToLegacy';
-import type { LegacyCopyFields } from '@super-token/adapters/legacy/syncMlcCopyToLegacy';
+import type { LegacyCopyFields, LegacyCopyParams } from '@super-token/adapters/legacy/syncMlcCopyToLegacy';
 import { resolveSuperTokenVariant } from '@super-token/composition/variantRuntime';
 
 // SDK-readiness gate, mirroring the legacy v2.1/mp-super-token.js: run once the SDK instance
@@ -82,6 +84,18 @@ async function waitForCustomCheckoutHandler(): Promise<boolean> {
   return true;
 }
 
+// Telemetry is fail-open: a reporting error must never block the composition that follows.
+function reportStoreLanguageDivergence(siteId: string, metrics: CoreMonitorMetricsAdapter): void {
+  try {
+    const storeLanguage = divergentStoreLanguage(siteId, document.documentElement?.lang);
+    if (storeLanguage) {
+      metrics.storeLanguageDivergesFromSite(storeLanguage, siteId);
+    }
+  } catch {
+    // best-effort telemetry
+  }
+}
+
 /**
  * Resolve the variant, then compose the order+decorate seam and the runtime instances. Called only
  * when the localized domain params are present; otherwise the legacy organizePaymentMethodsElements
@@ -92,12 +106,15 @@ export function composeRuntime(
   recompose: { current: () => void },
   metrics: CoreMonitorMetricsAdapter,
 ): Promise<void> {
+  reportStoreLanguageDivergence(domainParams.site_id, metrics);
+
+  // Plugins that predate `store_language_copy` keep the bundle's Chilean copy (see resolveMlcCopy).
   const localizedParams = resolveMlcCopy(domainParams);
   // window.* reads kept at the composition edge (matches legacyDelegationSeams.ts); the adapter
   // itself stays free of window.*.
   syncMlcCopyToLegacy(
-    domainParams,
-    localizedParams,
+    domainParams as unknown as LegacyCopyParams,
+    localizedParams as unknown as LegacyCopyParams,
     window.mpSuperTokenPaymentMethods as unknown as LegacyCopyFields | undefined,
     window.wc_mercadopago_custom_checkout_params,
   );

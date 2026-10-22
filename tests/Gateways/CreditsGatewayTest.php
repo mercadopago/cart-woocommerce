@@ -14,6 +14,17 @@ class CreditsGatewayTest extends TestCase
 {
     use GatewayMock;
 
+    private const PREVIEW_GIFS = [
+        'pt' => [
+            'desktop' => 'https://http2.mlstatic.com/storage/cpp/static-files/8afbe775-e8c3-4fa1-b013-ab7f079872b7.gif',
+            'mobile' => 'https://http2.mlstatic.com/storage/cpp/static-files/8bcbd873-6ec3-45eb-bccf-47bdcd9af255.gif',
+        ],
+        'es' => [
+            'desktop' => 'https://http2.mlstatic.com/storage/cpp/static-files/e6af4c4b-bede-4a6a-8711-b3d19fe423e3.gif',
+            'mobile' => 'https://http2.mlstatic.com/storage/cpp/static-files/a91b365a-73dc-461a-9f3f-f8b3329ae5d2.gif',
+        ],
+    ];
+
     private string $gatewayClass = CreditsGateway::class;
 
     /**
@@ -28,6 +39,8 @@ class CreditsGatewayTest extends TestCase
      */
     public function testGetCreditsGifMobilePath(string $siteId, string $url)
     {
+        WP_Mock::userFunction('get_locale')->andReturn('en_US');
+        WP_Mock::onFilter('plugin_locale')->with('en_US', 'woocommerce-mercadopago')->reply('en_US');
         $this->assertEquals($url, $this->gateway->getCreditsGifMobilePath($siteId));
     }
 
@@ -38,7 +51,61 @@ class CreditsGatewayTest extends TestCase
      */
     public function testGetCreditsGifDesktopPath(string $siteId, string $url)
     {
+        WP_Mock::userFunction('get_locale')->andReturn('en_US');
+        WP_Mock::onFilter('plugin_locale')->with('en_US', 'woocommerce-mercadopago')->reply('en_US');
         $this->assertEquals($url, $this->gateway->getCreditsGifDesktopPath($siteId));
+    }
+
+    /** @dataProvider previewLocaleProvider */
+    public function testCheckoutPreviewUsesStoreLanguage(string $site, $locale, string $expected, ?string $filteredLocale = null): void
+    {
+        WP_Mock::userFunction('get_locale')->andReturn($locale);
+        WP_Mock::onFilter('plugin_locale')->with($locale, 'woocommerce-mercadopago')->reply($filteredLocale ?? $locale);
+        $this->gateway->icon = '';
+        $this->gateway->mercadopago->sellerConfig->shouldReceive('getSiteId')->andReturn($site);
+        $this->gateway->mercadopago->helpers->url->shouldReceive('getImageAsset')->andReturnUsing(function ($path) {
+            return 'https://fixture.test/' . $path . '.png';
+        });
+        $this->gateway->mercadopago->helpers->url->shouldReceive('getCssAsset', 'getJsAsset')->andReturn('https://fixture.test/asset');
+        $scriptParams = [];
+        $templateParams = [];
+        $this->gateway->mercadopago->hooks->scripts->shouldReceive('registerCreditsAdminStyle');
+        $this->gateway->mercadopago->hooks->scripts->shouldReceive('registerCreditsAdminScript')
+            ->andReturnUsing(function ($name, $file, $params) use (&$scriptParams) {
+                $scriptParams = $params;
+            });
+        $this->gateway->mercadopago->hooks->template->shouldReceive('getWoocommerceTemplateHtml')
+            ->andReturnUsing(function ($template, $params) use (&$templateParams) {
+                if ($template === 'admin/components/credits-info-example.php') {
+                    $templateParams = $params;
+                }
+                return '';
+            });
+        $this->gateway->mercadopago->hooks->options->shouldReceive('getGatewayOption')->andReturn(1);
+
+        $fields = $this->gateway->formFieldsMainSection();
+        $this->assertSame('https://fixture.test/checkouts/credits/' . $expected . '_checkout_preview.png', $fields['checkout_visualization']['image']);
+        $this->assertSame(self::PREVIEW_GIFS[$expected]['desktop'], $scriptParams['viewDesktop']);
+        $this->assertSame(self::PREVIEW_GIFS[$expected]['mobile'], $scriptParams['viewMobile']);
+        $this->assertSame(self::PREVIEW_GIFS[$expected]['desktop'], $templateParams['viewDesktop']);
+    }
+
+    public function previewLocaleProvider(): array
+    {
+        $cases = [];
+        foreach (['MLA', 'MLM', 'MLB'] as $site) {
+            foreach (['pt_BR' => 'pt', 'pt_PT' => 'pt', 'es' => 'es', 'es_AR' => 'es', 'es_MX' => 'es', 'es_ES' => 'es', 'en_US' => 'es', 'fr_FR' => 'es'] as $locale => $image) {
+                $expected = !in_array($locale, ['en_US', 'fr_FR'], true) ? $image : ($site === 'MLB' ? 'pt' : 'es');
+                $cases[$site . '/' . $locale] = [$site, $locale, $expected];
+            }
+        }
+        foreach (['empty' => '', 'null' => null, 'array' => [], 'path' => '../../pt'] as $key => $locale) {
+            $cases['unexpected locale/' . $key] = ['MLB', $locale, 'pt'];
+        }
+        $cases['plugin locale filter'] = ['MLA', 'es_AR', 'pt', 'pt_BR'];
+        $cases['MLC preview fallback'] = ['MLC', 'en_US', 'es'];
+        $cases['unknown site fallback'] = ['UNKNOWN', 'en_US', 'es'];
+        return $cases;
     }
 
     public function testGetCheckoutName(): void
@@ -46,9 +113,110 @@ class CreditsGatewayTest extends TestCase
         $this->assertSame($this->gateway->getCheckoutName(), 'checkout-credits');
     }
 
+    /** @dataProvider presentationNamesProvider */
+    public function testCopyUsesTranslatedNamesForEachSurface(string $name, string $promotion, string $alternative): void
+    {
+        $this->gateway->mercadopago->sellerConfig->shouldNotReceive('getSiteId');
+        $this->gateway->adminTranslations = [
+            'gateway_title' => $name,
+            'gateway_method_title' => 'Old method title',
+            'title_default' => 'Checkout without card',
+            'credits_promotion_name' => $promotion,
+            'credits_alternative_name' => $alternative,
+            'header_title' => '12 {credits_name}',
+            'tooltip_component_option1' => '12 {credits_promotion_name}',
+            'tooltip_component_option2' => 'Buy {credits_alternative_name}',
+            'guarantee' => '100% protected by Mercado Pago',
+        ];
+        $this->gateway->storeTranslations = [
+            'tooltip_component_option1' => '12 {credits_name}',
+            'modal_step_1' => 'Select {credits_name}',
+        ];
+        $prepare = new \ReflectionMethod(CreditsGateway::class, 'prepareCreditsCopy');
+        $prepare->setAccessible(true);
+        $prepare->invoke($this->gateway);
+
+        foreach (['gateway_title', 'gateway_method_title', 'title_default'] as $key) {
+            $this->assertSame($name, $this->gateway->adminTranslations[$key]);
+        }
+        $this->assertSame('12 ' . $name, $this->gateway->adminTranslations['header_title']);
+        $this->assertSame('12 ' . $promotion, $this->gateway->adminTranslations['tooltip_component_option1']);
+        $this->assertSame('Buy ' . $alternative, $this->gateway->adminTranslations['tooltip_component_option2']);
+        $this->assertSame('12 ' . $name, $this->gateway->storeTranslations['tooltip_component_option1']);
+        $this->assertSame('Select ' . $name, $this->gateway->storeTranslations['modal_step_1']);
+        $this->assertSame('100% protected by Mercado Pago', $this->gateway->adminTranslations['guarantee']);
+    }
+
+    public function presentationNamesProvider(): array
+    {
+        return [
+            'Spanish' => ['Mercado Crédito', 'Crédito de Mercado Pago', 'Crédito de Mercado Pago'],
+            'Portuguese' => ['Mercado Parcelado', 'Crédito de Mercado Parcelado', 'Mercado Parcelado'],
+            'English' => ['Buy now, pay later', 'Buy now, pay later', 'Buy now, pay later'],
+        ];
+    }
+
     public function testValidateFields(): void
     {
         $this->assertSame($this->gateway->validate_fields(), true);
+    }
+
+    public function testSavingTheLocalizedDefaultStoresEmptyAndPreservesOtherProductNames(): void
+    {
+        $this->gateway->adminTranslations = ['gateway_title' => 'Mercado Crédito'];
+        $this->gateway->shouldReceive('validate_text_field')->once()
+            ->with('title', ' Mercado Crédito ')->andReturn('Mercado Crédito');
+        $this->gateway->shouldReceive('validate_text_field')->once()
+            ->with('title', 'Mercado Parcelado')->andReturn('Mercado Parcelado');
+        $before = $this->gateway->settings;
+
+        $this->assertSame('', $this->gateway->validate_title_field('title', ' Mercado Crédito '));
+        $this->assertSame('Mercado Parcelado', $this->gateway->validate_title_field('title', 'Mercado Parcelado'));
+        $this->assertSame($before, $this->gateway->settings);
+    }
+
+    /** @dataProvider rawTitleProvider */
+    public function testReadingTheTitlePreservesTheRawSettings(?string $raw, ?string $global, string $expected): void
+    {
+        $this->gateway->adminTranslations = ['gateway_title' => 'Mercado Parcelado'];
+        if ($raw === null) {
+            unset($this->gateway->settings['title']);
+        } else {
+            $this->gateway->settings['title'] = $raw;
+        }
+        $before = $this->gateway->settings;
+        $this->gateway->mercadopago->hooks->options->shouldReceive('get')
+            ->with('title', 'Mercado Parcelado')->andReturn($global ?? 'Mercado Parcelado');
+
+        $this->assertSame($expected, $this->gateway->get_option('title'));
+        $this->assertSame($before, $this->gateway->settings);
+    }
+
+    public function rawTitleProvider(): array
+    {
+        return [
+            'legacy gateway title' => ['Checkout without card', null, 'Mercado Parcelado'],
+            'empty gateway title' => ['', null, 'Mercado Parcelado'],
+            'empty gateway title overrides global' => ['', 'My legacy credit method', 'Mercado Parcelado'],
+            'legacy global fallback without gateway title' => [null, 'My legacy credit method', 'My legacy credit method'],
+        ];
+    }
+
+    public function testSavingTheDefaultKeepsFollowingTheLanguageDespiteALegacyGlobalTitle(): void
+    {
+        $this->gateway->adminTranslations = ['gateway_title' => 'Mercado Parcelado'];
+        $this->gateway->shouldReceive('validate_text_field')->once()
+            ->with('title', 'Mercado Parcelado')->andReturn('Mercado Parcelado');
+        $this->gateway->mercadopago->hooks->options->shouldReceive('get')
+            ->with('title', Mockery::any())->andReturn('My legacy credit method');
+
+        $this->gateway->settings['title'] = $this->gateway->validate_title_field('title', 'Mercado Parcelado');
+        $this->assertSame('', $this->gateway->settings['title']);
+        $this->assertSame('Mercado Parcelado', $this->gateway->get_option('title'));
+
+        $this->gateway->adminTranslations['gateway_title'] = 'Buy now, pay later';
+        $this->assertSame('Buy now, pay later', $this->gateway->get_option('title'));
+        $this->assertSame('', $this->gateway->settings['title']);
     }
 
     /**
@@ -87,9 +255,16 @@ class CreditsGatewayTest extends TestCase
             ->expects()
             ->createPreference()
             ->andReturn($redirect = [
+                'id' => '123456789-credits-preference',
                 'init_point' => random()->url(),
                 'sandbox_init_point' => random()->url(),
             ]);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('addPreferenceId')
+            ->once()
+            ->with($this->order, $redirect['id'])
+            ->andReturn(true);
 
         $this->gateway->mercadopago->storeConfig
             ->expects()
@@ -183,6 +358,8 @@ class CreditsGatewayTest extends TestCase
             ->once()
             ->with($order, 'no')
             ->andReturnSelf();
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldNotReceive('addPreferenceId');
 
         // Mock WordPress functions that may be called
         WP_Mock::userFunction('sanitize_post', [

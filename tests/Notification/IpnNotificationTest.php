@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Notification;
 
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;

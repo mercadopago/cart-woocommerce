@@ -434,7 +434,6 @@ describe('MPCustomCheckoutHandler - form discovery', () => {
   });
 
   it('reports a stable metric when the checkout form times out', async () => {
-    const handler = Object.create(MPCustomCheckoutHandler.prototype);
     const sendMetric = jest.fn();
     global.window.sendMetric = sendMetric;
 
@@ -446,5 +445,115 @@ describe('MPCustomCheckoutHandler - form discovery', () => {
       'mp_custom_checkout_initialization_error'
     );
     delete global.window.sendMetric;
+  });
+});
+
+describe('MPCustomCheckoutHandler - remaining bootstrap contracts', () => {
+  function loadRuntime({ readyState = 'loading', MPCardForm = jest.fn(() => ({})) } = {}) {
+    const eventHandler = { triggeredPaymentMethodSelectedEvent: false, bindEvents: jest.fn() };
+    const trigger = jest.fn();
+    const runtimeWindow = {};
+    const documentProxy = {
+      readyState,
+      addEventListener: jest.fn(),
+      querySelector: document.querySelector.bind(document),
+      documentElement: document.documentElement,
+      body: document.body,
+    };
+    const runtime = loadFile(customCheckoutPath,
+      '({ MPCustomCheckoutHandler, initializeCustomCheckout, globals: globalThis })', {
+        MPCardForm,
+        MPThreeDSHandler: jest.fn(() => ({})),
+        MPEventHandler: jest.fn(() => eventHandler),
+        CheckoutPage: {},
+        CheckoutElements: {},
+        MercadoPago: jest.fn(),
+        MutationObserver,
+        document: documentProxy,
+        window: runtimeWindow,
+        jQuery: jest.fn(() => ({ trigger })),
+        setTimeout,
+        clearTimeout,
+      });
+
+    return { ...runtime, runtimeWindow, documentProxy, eventHandler, trigger, MPCardForm };
+  }
+
+  beforeEach(() => {
+    document.body.replaceChildren();
+    document.body.className = 'woocommerce-checkout';
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.useRealTimers();
+    document.body.replaceChildren();
+    document.body.className = '';
+  });
+
+  test('rejects a real form discovery timeout and disconnects its observer', async () => {
+    const disconnect = jest.spyOn(MutationObserver.prototype, 'disconnect');
+    const runtime = loadRuntime();
+    const handler = Object.create(runtime.MPCustomCheckoutHandler.prototype);
+    const failure = expect(handler.getFormConfig()).rejects.toThrow('Checkout form discovery timed out.');
+
+    await jest.advanceTimersByTimeAsync(runtime.MPCustomCheckoutHandler.FORM_DISCOVERY_TIMEOUT_MS);
+    await failure;
+
+    expect(disconnect).toHaveBeenCalledTimes(1);
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  test('resolves the real jQuery wait when the global appears during a retry', async () => {
+    const runtime = loadRuntime();
+    runtime.globals.jQuery = undefined;
+    const handler = Object.create(runtime.MPCustomCheckoutHandler.prototype);
+    const available = handler.waitForJQuery();
+
+    runtime.globals.jQuery = jest.fn();
+    await jest.advanceTimersByTimeAsync(runtime.MPCustomCheckoutHandler.FORM_DISCOVERY_RETRY_INTERVAL_MS);
+
+    await expect(available).resolves.toBe(true);
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  test('starts immediately after DOM readiness and binds the existing checkout form', async () => {
+    const form = document.createElement('form');
+    form.name = 'checkout';
+    document.body.append(form);
+
+    const runtime = loadRuntime({ readyState: 'complete' });
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(runtime.documentProxy.addEventListener).not.toHaveBeenCalled();
+    expect(runtime.MPCardForm).toHaveBeenCalledTimes(1);
+    expect(form.id).toBe('checkout');
+    expect(runtime.runtimeWindow.mpCustomCheckoutHandler.cardForm.mpFormId).toBe('checkout');
+    expect(runtime.trigger).toHaveBeenCalledWith('payment_method_selected');
+    expect(runtime.eventHandler.bindEvents).toHaveBeenCalledTimes(1);
+    expect(runtime.runtimeWindow.mpCustomCheckoutInitializationInProgress).toBe(false);
+  });
+
+  test('releases the initialization guard after a constructor failure so a later attempt can succeed', async () => {
+    const form = document.createElement('form');
+    form.name = 'checkout';
+    document.body.append(form);
+    const MPCardForm = jest.fn()
+      .mockImplementationOnce(() => { throw new Error('synthetic SDK constructor failure'); })
+      .mockImplementation(() => ({}));
+    const runtime = loadRuntime({ MPCardForm });
+
+    await expect(runtime.initializeCustomCheckout()).rejects.toThrow('synthetic SDK constructor failure');
+    expect(runtime.runtimeWindow.mpCustomCheckoutInitializationInProgress).toBe(false);
+    expect(runtime.runtimeWindow.mpCustomCheckoutHandler).toBeUndefined();
+
+    await runtime.initializeCustomCheckout();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(MPCardForm).toHaveBeenCalledTimes(2);
+    expect(runtime.runtimeWindow.mpCustomCheckoutHandler).toBeDefined();
+    expect(runtime.eventHandler.bindEvents).toHaveBeenCalledTimes(1);
+    expect(runtime.runtimeWindow.mpCustomCheckoutInitializationInProgress).toBe(false);
   });
 });

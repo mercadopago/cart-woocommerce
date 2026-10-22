@@ -15,9 +15,9 @@ class CustomTransaction extends AbstractPaymentTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->transaction->payment_method_id   = $this->checkout['payment_method_id'];
-        $this->transaction->installments        = (int) $this->checkout['installments'];
-        $this->transaction->three_d_secure_mode = 'optional';
+        $this->transaction['payment_method_id']   = $this->checkout['payment_method_id'];
+        $this->transaction['installments']        = (int) $this->checkout['installments'];
+        $this->transaction['three_d_secure_mode'] = 'optional';
 
         $this->setTokenTransaction();
         $this->setPayerIdentificationInfo();
@@ -32,14 +32,14 @@ class CustomTransaction extends AbstractPaymentTransaction
     public function setTokenTransaction(): void
     {
         if (!empty($this->checkout['token'])) {
-            $this->transaction->token = $this->checkout['token'];
+            $this->transaction['token'] = $this->checkout['token'];
 
             if (isset($this->checkout['customer_id'])) {
-                $this->transaction->payer->id = $this->checkout['customer_id'];
+                $this->transaction['payer']['id'] = $this->checkout['customer_id'];
             }
 
             if (isset($this->checkout['issuer'])) {
-                $this->transaction->issuer_id = $this->checkout['issuer'];
+                $this->transaction['issuer_id'] = $this->checkout['issuer'];
             }
         }
     }
@@ -52,8 +52,8 @@ class CustomTransaction extends AbstractPaymentTransaction
                 'doc_number'
             ])
         ) {
-            $this->transaction->payer->identification->type   = $this->checkout['doc_type'];
-            $this->transaction->payer->identification->number = $this->checkout['doc_number'];
+            $this->transaction['payer']['identification']['type']   = $this->checkout['doc_type'];
+            $this->transaction['payer']['identification']['number'] = $this->checkout['doc_number'];
         }
     }
 }

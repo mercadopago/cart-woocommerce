@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Api\Core\CoreApi;
 use MercadoPago\Woocommerce\Blocks\BasicBlock;
 use MercadoPago\Woocommerce\Blocks\CustomBlock;
 use MercadoPago\Woocommerce\Blocks\CreditsBlock;
@@ -39,7 +40,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.9.6';
+    private const PLUGIN_VERSION = '8.9.7';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -101,6 +102,8 @@ class WoocommerceMercadoPago
 
     public SubscriptionsHook $subscriptionsHook;
 
+    public CoreApi $coreApi;
+
     private static bool $booted = false;
 
     /**
@@ -126,7 +129,7 @@ class WoocommerceMercadoPago
 
         $locale = $location_splitted[0];
         $country = $location_splitted[1] ?? '';
-        $locale = in_array($country, ['MX', 'CL']) ? $locale . '_' . $country : $locale;
+        $locale = in_array($country, ['MX', 'CL', 'AR']) ? $locale . '_' . $country : $locale;
 
         load_textdomain($textDomain, Paths::basePath(Paths::join($this->pluginMetadata('DomainPath'), "woocommerce-mercadopago-$locale.mo")));
     }
@@ -261,11 +264,6 @@ class WoocommerceMercadoPago
             return;
         }
 
-        if (!in_array('curl', get_loaded_extensions(), true)) {
-            $this->verifyCurlNotice();
-            return;
-        }
-
         if (!in_array('gd', get_loaded_extensions(), true)) {
             $this->verifyGdNotice();
         }
@@ -394,6 +392,7 @@ class WoocommerceMercadoPago
 
         $this->subscriptionsHelper     = $dependencies->subscriptionsHelper;
         $this->automaticPaymentsClient = $dependencies->automaticPaymentsClient;
+        $this->coreApi                 = $dependencies->coreApi;
 
         // Exclusive
         $this->settings = $dependencies->settings;
@@ -452,16 +451,6 @@ class WoocommerceMercadoPago
     public function verifyPhpVersionNotice(): void
     {
         $this->helpers->notices->adminNoticeError($this->adminTranslations->notices['php_wrong_version'], false);
-    }
-
-    /**
-     * Show curl missing notice
-     *
-     * @return void
-     */
-    public function verifyCurlNotice(): void
-    {
-        $this->helpers->notices->adminNoticeError($this->adminTranslations->notices['missing_curl'], false);
     }
 
     /**

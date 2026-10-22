@@ -11,12 +11,14 @@ use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use MercadoPago\Woocommerce\Transactions\PseTransaction;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use MercadoPago\Woocommerce\Gateways\PseGateway;
 use Mockery;
 use WP_Mock;
 
 class PseGatewayTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
     use GatewayMock;
     use FormMock;
 
@@ -426,8 +428,6 @@ class PseGatewayTest extends TestCase
         ];
 
         $this->gateway->registerCheckoutScripts();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -447,8 +447,6 @@ class PseGatewayTest extends TestCase
             ->with('public/checkouts/pse-checkout.php', ['test' => 'params']);
 
         $this->gateway->payment_fields();
-
-        $this->assertTrue(true);
     }
 
     /**

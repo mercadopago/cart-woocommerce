@@ -8,7 +8,6 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Transactions\CustomTransaction;
-use stdClass;
 
 /**
  * @runTestsInSeparateProcesses
@@ -49,16 +48,15 @@ class CustomTransactionTest extends TestCase
             'issuer_id' => null,
         ], $checkout, $expected);
 
-        $this->transaction->transaction = new stdClass();
-        $this->transaction->transaction->payer = new stdClass();
+        $this->transaction->transaction = ['payer' => []];
 
         $this->setNotAccessibleProperty($this->transaction, 'checkout', $checkout);
 
         $this->transaction->setTokenTransaction();
 
-        $this->assertEquals($expected['token'] ?? null, $this->transaction->transaction->token ?? null);
-        $this->assertEquals($expected['customer_id'] ?? null, $this->transaction->transaction->payer->id ?? null);
-        $this->assertEquals($expected['issuer'] ?? null, $this->transaction->transaction->issuer_id ?? null);
+        $this->assertEquals($expected['token'] ?? null, $this->transaction->transaction['token'] ?? null);
+        $this->assertEquals($expected['customer_id'] ?? null, $this->transaction->transaction['payer']['id'] ?? null);
+        $this->assertEquals($expected['issuer'] ?? null, $this->transaction->transaction['issuer_id'] ?? null);
     }
 
     public function setTokenTransactionProvider()

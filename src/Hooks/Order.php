@@ -16,6 +16,7 @@ use MercadoPago\Woocommerce\Helpers\PaymentStatus;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Order\PaymentReconciliation;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
@@ -34,6 +35,8 @@ class Order
     private OrderMetadata $orderMetadata;
 
     private OrderStatus $orderStatus;
+
+    private PaymentReconciliation $paymentReconciliation;
 
     private StoreTranslations $storeTranslations;
 
@@ -72,6 +75,7 @@ class Order
      * @param Template $template
      * @param OrderMetadata $orderMetadata
      * @param OrderStatus $orderStatus
+     * @param PaymentReconciliation $paymentReconciliation
      * @param AdminTranslations $adminTranslations
      * @param StoreTranslations $storeTranslations
      * @param Store $store
@@ -89,6 +93,7 @@ class Order
         Template $template,
         OrderMetadata $orderMetadata,
         OrderStatus $orderStatus,
+        PaymentReconciliation $paymentReconciliation,
         AdminTranslations $adminTranslations,
         StoreTranslations $storeTranslations,
         Store $store,
@@ -105,6 +110,7 @@ class Order
         $this->template          = $template;
         $this->orderMetadata     = $orderMetadata;
         $this->orderStatus       = $orderStatus;
+        $this->paymentReconciliation = $paymentReconciliation;
         $this->adminTranslations = $adminTranslations;
         $this->storeTranslations = $storeTranslations;
         $this->store             = $store;
@@ -121,7 +127,52 @@ class Order
 
         $this->registerStatusSyncMetaBox();
         $this->registerSyncPendingStatusOrdersAction();
+        add_filter(
+            'woocommerce_cancel_unpaid_order',
+            [$this, 'reconcileUnpaidOrderCancellation'],
+            10,
+            2
+        );
         $this->endpoints->registerAjaxEndpoint('mp_sync_payment_status', [$this, 'paymentStatusSync']);
+    }
+
+    /**
+     * Reconcile Mercado Pago attempts before WooCommerce cancels an unpaid order.
+     *
+     * @param mixed $shouldCancel
+     * @param mixed $order
+     *
+     * @return bool
+     */
+    public function reconcileUnpaidOrderCancellation($shouldCancel, $order): bool
+    {
+        if (!$shouldCancel || !$order instanceof WC_Order) {
+            return (bool) $shouldCancel;
+        }
+
+        $usedGateway = (string) $this->orderMetadata->getUsedGatewayData($order);
+        $paymentMethod = (string) $order->get_payment_method();
+        if (
+            !$this->isMercadoPagoGateway($usedGateway)
+            && !$this->isMercadoPagoGateway($paymentMethod)
+        ) {
+            return true;
+        }
+
+        $expectedExternalReference = $this->store->getStoreId() . $order->get_id();
+
+        return $this->paymentReconciliation->canCancelOrder(
+            $order,
+            $expectedExternalReference,
+            $usedGateway ?: $paymentMethod
+        );
+    }
+
+    private function isMercadoPagoGateway(string $gateway): bool
+    {
+        return strpos($gateway, 'woo-mercado-pago-') === 0
+            || strpos($gateway, 'WC_WooMercadoPago_') === 0
+            || strpos($gateway, 'MercadoPago\\Woocommerce\\Gateways\\') === 0;
     }
 
     /**

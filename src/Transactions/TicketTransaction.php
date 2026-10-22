@@ -21,9 +21,9 @@ class TicketTransaction extends AbstractPaymentTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->transaction->installments       = 1;
-        $this->transaction->date_of_expiration = Date::sumToNowDate($this->gateway->getCheckoutExpirationDate() . ' days');
-        $this->transaction->payment_method_id  = $this->countryConfigs['site_id'] === 'MPE'
+        $this->transaction['installments'] = 1;
+        $this->transaction['date_of_expiration'] = Date::sumToNowDate($this->gateway->getCheckoutExpirationDate() . ' days');
+        $this->transaction['payment_method_id'] = $this->countryConfigs['site_id'] === 'MPE'
             ? $this->checkout['payment_method_id']
             : $this->mercadopago->helpers->paymentMethods->getPaymentMethodId($this->checkout['payment_method_id']);
 
@@ -47,12 +47,12 @@ class TicketTransaction extends AbstractPaymentTransaction
             return;
         }
 
-        $this->transaction->transaction_details->financial_institution = '1234';
-        $this->transaction->callback_url                               = get_site_url();
-        $this->transaction->additional_info->ip_address                = '127.0.0.1';
-        $this->transaction->payer->identification->type                = 'RUT';
-        $this->transaction->payer->identification->number              = '0';
-        $this->transaction->payer->entity_type                         = 'individual';
+        $this->transaction['transaction_details']['financial_institution'] = '1234';
+        $this->transaction['callback_url'] = get_site_url();
+        $this->transaction['additional_info']['ip_address'] = '127.0.0.1';
+        $this->transaction['payer']['identification']['type'] = 'RUT';
+        $this->transaction['payer']['identification']['number'] = '0';
+        $this->transaction['payer']['entity_type'] = 'individual';
     }
 
     public function updatePayerTransaction(): void
@@ -67,24 +67,25 @@ class TicketTransaction extends AbstractPaymentTransaction
 
     private function setPayerIdentificationInfo(): void
     {
-        $this->transaction->payer->identification->type   = $this->checkout['doc_type'];
-        $this->transaction->payer->identification->number = $this->checkout['doc_number'];
+        $this->transaction['payer']['identification']['type'] = $this->checkout['doc_type'];
+        $this->transaction['payer']['identification']['number'] = $this->checkout['doc_number'];
     }
 
     private function setPayerAddressInfoFromCheckout(): void
     {
-        foreach (
-            [
-            $this->transaction->payer->address,
-            $this->transaction->additional_info->payer->address
-            ] as $address
-        ) {
-            $address->city          = $this->checkout['address_city'];
-            $address->federal_unit  = $this->checkout['address_federal_unit'];
-            $address->zip_code      = $this->checkout['address_zip_code'];
-            $address->street_name   = $this->checkout['address_street_name'];
-            $address->neighborhood  = $this->checkout['address_neighborhood'];
-            $address->street_number = $this->checkout['address_street_number'] ?: 'S/N';
-        }
+        $address = [
+            'city' => $this->checkout['address_city'],
+            'federal_unit' => $this->checkout['address_federal_unit'],
+            'zip_code' => $this->checkout['address_zip_code'],
+            'street_name' => $this->checkout['address_street_name'],
+            'neighborhood' => $this->checkout['address_neighborhood'],
+            'street_number' => $this->checkout['address_street_number'] ?: 'S/N',
+        ];
+
+        $this->transaction['payer']['address'] = array_merge($this->transaction['payer']['address'], $address);
+        $this->transaction['additional_info']['payer']['address'] = array_merge(
+            $this->transaction['additional_info']['payer']['address'],
+            $address
+        );
     }
 }

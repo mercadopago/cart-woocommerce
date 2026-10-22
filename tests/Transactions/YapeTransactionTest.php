@@ -8,7 +8,6 @@ use MercadoPago\Woocommerce\Transactions\YapeTransaction;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 /**
  * @runTestsInSeparateProcesses
@@ -46,10 +45,10 @@ class YapeTransactionTest extends TestCase
     {
         $this->setNotAccessibleProperty($this->transaction, 'checkout', $expected);
 
-        $this->transaction->transaction = new stdClass();
+        $this->transaction->transaction = [];
 
         $this->transaction->setTokenTransaction();
 
-        $this->assertObjectEqualsArray($expected, $this->transaction->transaction);
+        $this->assertSame($expected, $this->transaction->transaction);
     }
 }

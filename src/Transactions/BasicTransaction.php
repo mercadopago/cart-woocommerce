@@ -51,7 +51,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
     public function setInstallmentsTransaction(): void
     {
         $installments = (int) $this->mercadopago->hooks->options->getGatewayOption($this->gateway, 'installments', '24');
-        $this->transaction->payment_methods->installments = ($installments == 0) ? 12 : $installments;
+        $this->transaction['payment_methods']['installments'] = ($installments == 0) ? 12 : $installments;
     }
 
     /**
@@ -69,7 +69,7 @@ class BasicTransaction extends AbstractPreferenceTransaction
                     'id' => $excluded,
                 ];
 
-                $this->transaction->payment_methods->excluded_payment_methods->add($entity);
+                $this->transaction['payment_methods']['excluded_payment_methods'][] = $entity;
             }
         }
     }

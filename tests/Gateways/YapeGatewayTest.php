@@ -11,11 +11,13 @@ use MercadoPago\Woocommerce\Transactions\YapeTransaction;
 use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use MercadoPago\Woocommerce\Gateways\YapeGateway;
 use WP_Mock;
 
 class YapeGatewayTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
     use GatewayMock;
     use FormMock;
 
@@ -325,8 +327,6 @@ class YapeGatewayTest extends TestCase
         ];
 
         $this->gateway->registerCheckoutScripts();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -346,8 +346,6 @@ class YapeGatewayTest extends TestCase
             ->with('public/checkouts/yape-checkout.php', ['test' => 'params']);
 
         $this->gateway->payment_fields();
-
-        $this->assertTrue(true);
     }
 
     /**

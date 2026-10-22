@@ -76,7 +76,7 @@ describe('ConsumerCreditsMethod', () => {
         consumerCredits(),
       );
 
-      expect(decorated.name).toBe('Cuotas sin Tarjeta de Mercado&nbsp;Pago');
+      expect(decorated.name).toBe('Mercado Crédito');
     });
 
     it('Given consumer credits in Brazil, When decorated, Then it gets the money icon and the BR name', () => {
@@ -85,7 +85,7 @@ describe('ConsumerCreditsMethod', () => {
       );
 
       expect(decorated.thumbnail).toBe('/money.png');
-      expect(decorated.name).toBe('Linha de Crédito Mercado&nbsp;Pago');
+      expect(decorated.name).toBe('Mercado Parcelado');
     });
 
     it('Given consumer credits in Mexico, When decorated, Then it gets the MX name', () => {
@@ -93,15 +93,15 @@ describe('ConsumerCreditsMethod', () => {
         consumerCredits(),
       );
 
-      expect(decorated.name).toBe('Meses sin Tarjeta con Mercado&nbsp;Pago');
+      expect(decorated.name).toBe('Mercado Crédito');
     });
 
-    it('Given consumer credits on any other site, When decorated, Then it gets the default name', () => {
+    it('Given consumer credits in Argentina, When decorated, Then it gets the default name', () => {
       const decorated = new ConsumerCreditsMethod(buildConfig({ siteId: 'MLA' })).decorate(
         consumerCredits(),
       );
 
-      expect(decorated.name).toBe('Cuotas sin Tarjeta con Mercado&nbsp;Pago');
+      expect(decorated.name).toBe('Mercado Crédito');
     });
 
     it('Given a non-credits method, When decorated, Then it is returned unchanged', () => {

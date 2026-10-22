@@ -3,8 +3,8 @@
 namespace MercadoPago\Woocommerce\Tests\Helpers;
 
 use Exception;
-use MercadoPago\PP\Sdk\HttpClient\HttpClientInterface;
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpClientInterface;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +41,7 @@ class RequesterTest extends TestCase
             'return' => function ($data) {
                 return json_encode($data);
             },
-        ]);
+        ])->byDefault();
 
         WP_Mock::userFunction('wp_remote_post', [
             'return' => [],
@@ -74,12 +74,7 @@ class RequesterTest extends TestCase
 
     private function createResponse(int $status, $data = null): Response
     {
-        $response = new Response();
-        $response->setStatus($status);
-        if ($data !== null) {
-            $response->setData($data);
-        }
-        return $response;
+        return new Response($status, [], $data === null ? '' : json_encode($data), $data);
     }
 
     // --- Success cases: no metric sent ---
@@ -87,7 +82,7 @@ class RequesterTest extends TestCase
     public function testGetSuccessDoesNotSendMetric(): void
     {
         $response = $this->createResponse(200);
-        $this->httpClient->shouldReceive('get')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
         $this->datadogMock->shouldNotReceive('sendEvent');
 
         $result = $this->requester->get('/v1/payments', []);
@@ -98,7 +93,10 @@ class RequesterTest extends TestCase
     public function testPostSuccessDoesNotSendMetric(): void
     {
         $response = $this->createResponse(201);
-        $this->httpClient->shouldReceive('post')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')
+            ->once()
+            ->with('POST', '/v1/payments', ['Content-Type' => 'application/json'], '{"amount":100}')
+            ->andReturn($response);
         $this->datadogMock->shouldNotReceive('sendEvent');
 
         $result = $this->requester->post('/v1/payments', [], ['amount' => 100]);
@@ -109,7 +107,10 @@ class RequesterTest extends TestCase
     public function testPutSuccessDoesNotSendMetric(): void
     {
         $response = $this->createResponse(200);
-        $this->httpClient->shouldReceive('put')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')
+            ->once()
+            ->with('PUT', '/v1/payments/123', ['Content-Type' => 'application/json'], '{"status":"cancelled"}')
+            ->andReturn($response);
         $this->datadogMock->shouldNotReceive('sendEvent');
 
         $result = $this->requester->put('/v1/payments/123', [], ['status' => 'cancelled']);
@@ -117,12 +118,42 @@ class RequesterTest extends TestCase
         $this->assertEquals(200, $result->getStatus());
     }
 
+    public function testPostPreservesExistingAssociativeContentTypeHeader(): void
+    {
+        $response = $this->createResponse(201);
+        $headers = ['content-type' => 'application/problem+json'];
+        $this->httpClient->shouldReceive('request')
+            ->once()
+            ->with('POST', '/v1/payments', $headers, '{"amount":100}')
+            ->andReturn($response);
+        $this->datadogMock->shouldNotReceive('sendEvent');
+
+        $result = $this->requester->post('/v1/payments', $headers, ['amount' => 100]);
+
+        $this->assertSame(201, $result->getStatus());
+    }
+
+    public function testPostPreservesExistingNumericContentTypeHeader(): void
+    {
+        $response = $this->createResponse(201);
+        $headers = ['Content-Type: application/problem+json'];
+        $this->httpClient->shouldReceive('request')
+            ->once()
+            ->with('POST', '/v1/payments', $headers, '{"amount":100}')
+            ->andReturn($response);
+        $this->datadogMock->shouldNotReceive('sendEvent');
+
+        $result = $this->requester->post('/v1/payments', $headers, ['amount' => 100]);
+
+        $this->assertSame(201, $result->getStatus());
+    }
+
     // --- HTTP error cases: metric sent, response returned ---
 
     public function testPostWithHttp400SendsMetric(): void
     {
         $response = $this->createResponse(400, ['message' => 'Bad Request']);
-        $this->httpClient->shouldReceive('post')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -139,7 +170,7 @@ class RequesterTest extends TestCase
     public function testPostWithHttp400ObjectPayloadSendsMetricWithMessage(): void
     {
         $response = $this->createResponse(422, (object) ['message' => 'Unprocessable Entity']);
-        $this->httpClient->shouldReceive('post')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -156,7 +187,7 @@ class RequesterTest extends TestCase
     public function testGetWithHttp500SendsMetric(): void
     {
         $response = $this->createResponse(500);
-        $this->httpClient->shouldReceive('get')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -173,7 +204,7 @@ class RequesterTest extends TestCase
     public function testPutWithHttp404SendsMetric(): void
     {
         $response = $this->createResponse(404, ['message' => 'Not Found']);
-        $this->httpClient->shouldReceive('put')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -191,7 +222,7 @@ class RequesterTest extends TestCase
 
     public function testPostExceptionSendsMetricAndRethrows(): void
     {
-        $this->httpClient->shouldReceive('post')->once()->andThrow(new Exception('Connection timeout'));
+        $this->httpClient->shouldReceive('request')->once()->andThrow(new Exception('Connection timeout'));
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -206,9 +237,26 @@ class RequesterTest extends TestCase
         $this->requester->post('/v1/payments', [], []);
     }
 
+    public function testPutExceptionSendsMetricAndRethrows(): void
+    {
+        $this->httpClient->shouldReceive('request')->once()->andThrow(new Exception('Connection timeout'));
+
+        $this->datadogMock->shouldReceive('sendEvent')
+            ->once()
+            ->with('mp_api_error', '0', 'Connection timeout', null, [
+                'team'      => 'big',
+                'api_route' => '/v1/payments/{id}',
+            ]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Connection timeout');
+
+        $this->requester->put('/v1/payments/123', [], []);
+    }
+
     public function testGetExceptionSendsMetricAndRethrows(): void
     {
-        $this->httpClient->shouldReceive('get')->once()->andThrow(new Exception('DNS resolution failed'));
+        $this->httpClient->shouldReceive('request')->once()->andThrow(new Exception('DNS resolution failed'));
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -239,7 +287,7 @@ class RequesterTest extends TestCase
         ];
 
         $response = $this->createResponse(500);
-        $this->httpClient->shouldReceive('get')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -271,7 +319,7 @@ class RequesterTest extends TestCase
         ];
 
         $response = $this->createResponse(401);
-        $this->httpClient->shouldReceive('post')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -293,7 +341,7 @@ class RequesterTest extends TestCase
     public function testDeleteSuccessDoesNotSendMetric(): void
     {
         $response = $this->createResponse(204);
-        $this->httpClient->shouldReceive('send')->once()->with('DELETE', '/v1/subscriptions/123', [], null)->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->with('DELETE', '/v1/subscriptions/123', [], null)->andReturn($response);
         $this->datadogMock->shouldNotReceive('sendEvent');
 
         $result = $this->requester->delete('/v1/subscriptions/123', []);
@@ -304,7 +352,7 @@ class RequesterTest extends TestCase
     public function testDeleteWithHttp4xxSendsMetric(): void
     {
         $response = $this->createResponse(404, ['message' => 'Not Found']);
-        $this->httpClient->shouldReceive('send')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -321,9 +369,14 @@ class RequesterTest extends TestCase
     public function testDeleteWithBodySendsJsonPayload(): void
     {
         $response = $this->createResponse(200);
-        $this->httpClient->shouldReceive('send')
+        $this->httpClient->shouldReceive('request')
             ->once()
-            ->with('DELETE', '/v2/subscriptions/SUB-1/payment-methods', [], '{"card_ids":["CARD-1"]}')
+            ->with(
+                'DELETE',
+                '/v2/subscriptions/SUB-1/payment-methods',
+                ['Content-Type' => 'application/json'],
+                '{"card_ids":["CARD-1"]}'
+            )
             ->andReturn($response);
         $this->datadogMock->shouldNotReceive('sendEvent');
 
@@ -335,7 +388,7 @@ class RequesterTest extends TestCase
     public function testDeleteWithHttp422SendsMetric(): void
     {
         $response = $this->createResponse(422, ['code' => 'LastPaymentMethod', 'message' => 'last']);
-        $this->httpClient->shouldReceive('send')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock
             ->shouldReceive('sendEvent')
@@ -350,7 +403,7 @@ class RequesterTest extends TestCase
     public function testDeleteWithEmptyBodySendsNullPayload(): void
     {
         $response = $this->createResponse(204);
-        $this->httpClient->shouldReceive('send')
+        $this->httpClient->shouldReceive('request')
             ->once()
             ->with('DELETE', '/v2/subscriptions/SUB-1', [], null)
             ->andReturn($response);
@@ -362,7 +415,7 @@ class RequesterTest extends TestCase
 
     public function testDeleteExceptionSendsMetricAndRethrows(): void
     {
-        $this->httpClient->shouldReceive('send')->once()->andThrow(new Exception('Connection timeout'));
+        $this->httpClient->shouldReceive('request')->once()->andThrow(new Exception('Connection timeout'));
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -382,7 +435,7 @@ class RequesterTest extends TestCase
     public function testErrorResponseWithoutMessageFieldFallsBackToHttpStatus(): void
     {
         $response = $this->createResponse(502, ['error' => 'something']);
-        $this->httpClient->shouldReceive('get')->once()->andReturn($response);
+        $this->httpClient->shouldReceive('request')->once()->andReturn($response);
 
         $this->datadogMock->shouldReceive('sendEvent')
             ->once()
@@ -394,5 +447,35 @@ class RequesterTest extends TestCase
         $result = $this->requester->get('/v1/test', []);
 
         $this->assertEquals(502, $result->getStatus());
+    }
+
+    /**
+     * @dataProvider writeMethods
+     */
+    public function testEncodingFailureStopsTransportSendsMetricAndRethrows(string $method): void
+    {
+        $body = ['amount' => 19.95];
+        WP_Mock::userFunction('wp_json_encode')->once()->with($body)->andReturn(false);
+        $this->httpClient->shouldNotReceive('request');
+        $this->datadogMock->shouldReceive('sendEvent')->once()->with(
+            'mp_api_error',
+            '0',
+            'Unable to encode Mercado Pago API request.',
+            null,
+            ['team' => 'big', 'api_route' => '/v1/payments/{id}']
+        );
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Unable to encode Mercado Pago API request.');
+
+        $this->requester->{$method}('/v1/payments/123', [], $body);
+    }
+
+    public function writeMethods(): array
+    {
+        return [
+            'POST' => ['post'],
+            'PUT' => ['put'],
+            'DELETE with body' => ['delete'],
+        ];
     }
 }

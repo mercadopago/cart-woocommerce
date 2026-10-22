@@ -8,7 +8,6 @@ use MercadoPago\Woocommerce\Transactions\TicketTransaction;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 use WP_Mock;
 
 /**
@@ -64,11 +63,11 @@ class TicketTransactionTest extends TestCase
             'payment_method_id' => random()->word()
         ]);
 
-        $this->transaction->transaction = new stdClass();
+        $this->transaction->transaction = [];
 
         $this->transaction->setWebpayPropertiesTransaction();
 
-        $this->assertObjectEqualsArray([], $this->transaction->transaction);
+        $this->assertSame([], $this->transaction->transaction);
 
         $this->setNotAccessibleProperty($this->transaction, 'checkout', [
             'payment_method_id' => 'webpay'
@@ -76,28 +75,22 @@ class TicketTransactionTest extends TestCase
 
         WP_Mock::userFunction('get_site_url')->andReturn($callback = random()->url());
 
-        $this->transaction->transaction->transaction_details = new stdClass();
-        $this->transaction->transaction->additional_info = new stdClass();
-        $this->transaction->transaction->payer = new stdClass();
-        $this->transaction->transaction->payer->identification = new stdClass();
+        $this->transaction->transaction = [
+            'transaction_details' => [],
+            'additional_info' => [],
+            'payer' => ['identification' => []],
+        ];
 
         $this->transaction->setWebpayPropertiesTransaction();
 
-        $this->assertObjectSchema([
-            'transaction_details' => [
-                'financial_institution' => IsType::TYPE_STRING
-            ],
-            'callback_url' => $this->equalTo($callback),
-            'additional_info' => [
-                'ip_address' => IsType::TYPE_STRING
-            ],
+        $this->assertSame([
+            'transaction_details' => ['financial_institution' => '1234'],
+            'additional_info' => ['ip_address' => '127.0.0.1'],
             'payer' => [
-                'identification' => [
-                    'type' => IsType::TYPE_STRING,
-                    'number' => IsType::TYPE_STRING,
-                ],
-                'entity_type' => IsType::TYPE_STRING
+                'identification' => ['type' => 'RUT', 'number' => '0'],
+                'entity_type' => 'individual',
             ],
+            'callback_url' => $callback,
         ], $this->transaction->transaction);
     }
 
@@ -118,12 +111,10 @@ class TicketTransactionTest extends TestCase
             'address_street_number' => random()->optional()->randomNumber(4),
         ]);
 
-        $this->transaction->transaction->payer = new stdClass();
-        $this->transaction->transaction->payer->identification = new stdClass();
-        $this->transaction->transaction->payer->address = new stdClass();
-        $this->transaction->transaction->additional_info = new stdClass();
-        $this->transaction->transaction->additional_info->payer = new stdClass();
-        $this->transaction->transaction->additional_info->payer->address = new stdClass();
+        $this->transaction->transaction = [
+            'payer' => ['identification' => [], 'address' => []],
+            'additional_info' => ['payer' => ['address' => []]],
+        ];
 
         $expectedAddress = [
             'city' => $checkout['address_city'],
@@ -136,17 +127,17 @@ class TicketTransactionTest extends TestCase
 
         $this->transaction->updatePayerTransaction();
 
-        $this->assertObjectEqualsArray([
+        $this->assertSame([
             'identification' => [
                 'type' => $checkout['doc_type'],
                 'number' => $checkout['doc_number']
             ],
             'address' => $expectedAddress
-        ], $this->transaction->transaction->payer);
+        ], $this->transaction->transaction['payer']);
 
-        $this->assertObjectEqualsArray(
+        $this->assertSame(
             $expectedAddress,
-            $this->transaction->transaction->additional_info->payer->address
+            $this->transaction->transaction['additional_info']['payer']['address']
         );
     }
 
@@ -161,17 +152,16 @@ class TicketTransactionTest extends TestCase
             'doc_number' => random()->numerify('###########'),
         ]);
 
-        $this->transaction->transaction->payer = new stdClass();
-        $this->transaction->transaction->payer->identification = new stdClass();
+        $this->transaction->transaction = ['payer' => ['identification' => []]];
 
         $this->transaction->updatePayerTransaction();
 
-        $this->assertObjectEqualsArray([
+        $this->assertSame([
             'identification' => [
                 'type' => $checkout['doc_type'],
                 'number' => $checkout['doc_number']
             ],
-        ], $this->transaction->transaction->payer);
+        ], $this->transaction->transaction['payer']);
     }
 
     public function testUpdatePayerTransactionRola(): void
@@ -182,6 +172,6 @@ class TicketTransactionTest extends TestCase
 
         $this->transaction->updatePayerTransaction();
 
-        $this->assertNull($this->transaction->transaction->payer);
+        $this->assertArrayNotHasKey('payer', $this->transaction->transaction);
     }
 }
