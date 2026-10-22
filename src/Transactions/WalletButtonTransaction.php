@@ -23,8 +23,8 @@ class WalletButtonTransaction extends AbstractPreferenceTransaction
     {
         parent::__construct($gateway, $order);
 
-        $this->transaction->auto_return = null;
-        $this->transaction->purpose = 'wallet_purchase';
+        $this->transaction['auto_return'] = null;
+        $this->transaction['purpose'] = 'wallet_purchase';
     }
 
     public function extendInternalMetadata(PaymentMetadata $internalMetadata): void

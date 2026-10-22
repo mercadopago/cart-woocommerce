@@ -4,6 +4,8 @@ namespace MercadoPago\Woocommerce\Gateways;
 
 use ArrayAccess;
 use Exception;
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Http\TransportException;
 use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\Form;
@@ -59,6 +61,8 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     protected float $ratio;
 
+    private ?string $initialCurrencyRatioError = null;
+
     protected array $countryConfigs;
 
     private static bool $amountCurrencyErrorSent = false;
@@ -92,7 +96,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
         $this->checkoutCountry = $this->mercadopago->storeConfig->getCheckoutCountry();
         $this->countryConfigs  = $this->mercadopago->helpers->country->getCountryConfigs();
-        $this->ratio           = $this->mercadopago->helpers->currency->getRatio($this);
+        $this->ratio           = $this->getInitialCurrencyRatio();
         $this->links           = $this->mercadopago->helpers->links->getLinks();
 
         $this->has_fields = true;
@@ -105,6 +109,27 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
     }
 
     abstract public function getCheckoutName(): string;
+
+    /**
+     * Load the initial currency ratio without preventing the checkout UI from rendering.
+     * Payment calculations request the ratio again and retain their existing failure handling.
+     *
+     * @return float
+     */
+    protected function getInitialCurrencyRatio(): float
+    {
+        try {
+            return $this->mercadopago->helpers->currency->getRatio($this);
+        } catch (Exception $e) {
+            $this->initialCurrencyRatioError = $e->getMessage();
+            $this->mercadopago->logs->file->warning(
+                'Unable to initialize the currency conversion ratio.',
+                static::LOG_SOURCE
+            );
+
+            return 1.0;
+        }
+    }
 
     /**
      * Process blocks checkout data
@@ -726,7 +751,27 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             throw $e;
         }
 
-        $this->mercadopago->logs->file->error("Message: {$e->getMessage()} \n\n\nStacktrace: {$e->getTraceAsString()} \n\n\n", $source, $context);
+        $errorContext = [
+            'exception_type' => (new \ReflectionClass($e))->getShortName(),
+            'exception_code' => (string) $e->getCode(),
+            'exception_origin' => basename($e->getFile()) . ':' . $e->getLine(),
+            'context_fields' => array_keys($context),
+        ];
+        if ($e instanceof TransportException) {
+            $errorContext['transport_code'] = $e->getTransportCode();
+        }
+        if ($e instanceof ApiException) {
+            $errorContext['api_message'] = $e->getMessage();
+            $errorContext['http_status'] = $e->getHttpStatus();
+            $errorContext['api_status'] = $e->getApiStatus();
+            $errorContext['api_error_code'] = $e->getErrorCode();
+        }
+
+        $this->mercadopago->logs->file->error(
+            'Checkout processing failed',
+            $source,
+            $errorContext
+        );
 
         $originalMessage = $message;
 
@@ -772,20 +817,33 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
     /**
      * @return string
-     * @throws Exception
      */
     public function getFeeTitle(): string
     {
-        if ($this->mercadopago->helpers->cart->isAvailable()) {
-            $discount   = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
-            $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
+        if ($this->initialCurrencyRatioError !== null) {
+            $this->sendAmountCurrencyErrorMetric(null, 0.0, $this->initialCurrencyRatioError);
 
-            return $this->mercadopago->hooks->gateway->buildTitleWithDiscountAndCommission(
-                $discount,
-                $commission,
-                $this->mercadopago->storeTranslations->commonCheckout['discount_title'],
-                $this->mercadopago->storeTranslations->commonCheckout['fee_title']
+            return '';
+        }
+
+        try {
+            if ($this->mercadopago->helpers->cart->isAvailable()) {
+                $discount   = $this->mercadopago->helpers->cart->calculateSubtotalWithDiscount($this);
+                $commission = $this->mercadopago->helpers->cart->calculateSubtotalWithCommission($this);
+
+                return $this->mercadopago->hooks->gateway->buildTitleWithDiscountAndCommission(
+                    $discount,
+                    $commission,
+                    $this->mercadopago->storeTranslations->commonCheckout['discount_title'],
+                    $this->mercadopago->storeTranslations->commonCheckout['fee_title']
+                );
+            }
+        } catch (Exception $e) {
+            $this->mercadopago->logs->file->warning(
+                'Unable to build the payment fee title.',
+                static::LOG_SOURCE
             );
+            $this->sendAmountCurrencyErrorMetric(null, 0.0, $e->getMessage());
         }
 
         return '';

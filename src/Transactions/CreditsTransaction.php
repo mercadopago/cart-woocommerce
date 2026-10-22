@@ -23,7 +23,7 @@ class CreditsTransaction extends AbstractPreferenceTransaction
     {
         parent::__construct($gateway, $order);
 
-        $this->transaction->purpose = 'onboarding_credits';
+        $this->transaction['purpose'] = 'onboarding_credits';
     }
 
     public function extendInternalMetadata(PaymentMetadata $internalMetadata): void

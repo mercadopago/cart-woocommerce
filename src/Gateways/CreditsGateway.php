@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Gateways;
 
 use Exception;
+use MercadoPago\Woocommerce\Helpers\CreditsPresentation;
 use MercadoPago\Woocommerce\Helpers\Template;
 use MercadoPago\Woocommerce\Transactions\CreditsTransaction;
 
@@ -41,11 +42,12 @@ class CreditsGateway extends AbstractGateway
 
         $this->adminTranslations = $this->mercadopago->adminTranslations->creditsGatewaySettings;
         $this->storeTranslations = $this->mercadopago->storeTranslations->creditsCheckout;
+        $this->prepareCreditsCopy();
 
         $this->id        = self::ID;
         $this->icon      = $this->mercadopago->hooks->gateway->getGatewayIcon('icon-mp');
         $this->iconAdmin = $this->icon;
-        $this->title     = $this->mercadopago->storeConfig->getGatewayTitle($this, $this->adminTranslations['gateway_title']);
+        $this->title     = $this->getConfiguredCheckoutTitle();
 
         $this->init_form_fields();
         $this->payment_scripts($this->id);
@@ -73,6 +75,63 @@ class CreditsGateway extends AbstractGateway
         return 'checkout-credits';
     }
 
+    /**
+     * @param mixed $title WooCommerce settings can contain non-string values.
+     */
+    private function resolveCheckoutTitle($title): string
+    {
+        return CreditsPresentation::resolveTitle(
+            is_scalar($title) ? (string) $title : '',
+            $this->adminTranslations['gateway_title'] ?? ''
+        );
+    }
+
+    /** Read the localized title without changing WooCommerce's settings snapshot. */
+    public function get_option($key, $empty_value = null)
+    {
+        if ($key === 'title' && isset($this->adminTranslations['gateway_title'])) {
+            return $this->getConfiguredCheckoutTitle();
+        }
+
+        return parent::get_option($key, $empty_value);
+    }
+
+    /** Keep the current default language-dependent instead of saving its display text. */
+    public function validate_title_field($key, $value): string
+    {
+        $title = $this->validate_text_field($key, is_scalar($value) ? (string) $value : '');
+
+        return $title === $this->adminTranslations['gateway_title'] ? '' : $title;
+    }
+
+    private function getConfiguredCheckoutTitle(): string
+    {
+        if (empty($this->settings)) {
+            $this->init_settings();
+        }
+
+        // Persisted WooCommerce options can contain legacy non-string values.
+        $title = $this->settings['title'] ?? '';
+        if (!array_key_exists('title', $this->settings)) {
+            // Only gateways without their own title inherit the legacy global option.
+            $title = $this->mercadopago->hooks->options->get('title', $this->adminTranslations['gateway_title']);
+        }
+
+        return $this->resolveCheckoutTitle($title);
+    }
+
+    private function prepareCreditsCopy(): void
+    {
+        $name = $this->adminTranslations['gateway_title'];
+        $promotionName = $this->adminTranslations['credits_promotion_name'];
+        $alternativeName = $this->adminTranslations['credits_alternative_name'];
+        $this->adminTranslations = CreditsPresentation::formatCopy($this->adminTranslations, $name, $promotionName, $alternativeName);
+        $this->storeTranslations = CreditsPresentation::formatCopy($this->storeTranslations, $name, $promotionName, $alternativeName);
+        foreach (['gateway_title', 'gateway_method_title', 'title_default'] as $key) {
+            $this->adminTranslations[$key] = $name;
+        }
+    }
+
     public function formFieldsMainSection(): array
     {
         return [
@@ -82,7 +141,7 @@ class CreditsGateway extends AbstractGateway
                 'subtitle'  => $this->adminTranslations['enabled_toggle_subtitle'],
                 'footer'    => $this->adminTranslations['enabled_toggle_footer'],
                 'pill_text' => $this->adminTranslations['enabled_toggle_pill_text'],
-                'image'     => $this->getCreditsPreviewImage($this->getSiteId()),
+                'image'     => $this->getCreditsPreviewImage(),
             ],
             'currency_conversion' => [
                 'type'         => 'mp_toggle_switch',
@@ -203,6 +262,9 @@ class CreditsGateway extends AbstractGateway
 
             $this->mercadopago->logs->file->info('Customer being redirected to Mercado Pago.', self::LOG_SOURCE);
             $preference        = $this->transaction->createPreference();
+            if (isset($preference['id'])) {
+                $this->mercadopago->orderMetadata->addPreferenceId($order, $preference['id']);
+            }
 
             return [
                 'result'   => 'success',
@@ -240,11 +302,25 @@ class CreditsGateway extends AbstractGateway
     }
 
     /**
+     * Resolve the shared language for seller PNG and GIF previews.
+     */
+    private function getCreditsPreviewLanguage(string $siteId): string
+    {
+        $locale = apply_filters('plugin_locale', get_locale(), 'woocommerce-mercadopago');
+        $lang = is_string($locale) ? explode('_', $locale)[0] : '';
+        // Only PT and ES previews exist; other languages fall back to the credential site.
+        if (!in_array($lang, ['pt', 'es'], true)) {
+            $lang = $siteId === 'MLB' ? 'pt' : 'es';
+        }
+        return $lang;
+    }
+
+    /**
      * Get image path for mercado credits checkout preview
      */
-    private function getCreditsPreviewImage(string $siteId): string
+    private function getCreditsPreviewImage(): string
     {
-        $lang = $siteId === 'MLB' ? 'pt' : 'es';
+        $lang = $this->getCreditsPreviewLanguage($this->getSiteId());
         return $this->mercadopago->helpers->url->getImageAsset("checkouts/credits/{$lang}_checkout_preview");
     }
 
@@ -290,23 +366,30 @@ class CreditsGateway extends AbstractGateway
 
     /**
      * Get desktop gif image url for mercado credits demonstration
+     *
+     * @param string $siteId Credential site used as fallback when the store language is neither PT nor ES.
      */
     public function getCreditsGifDesktopPath(string $siteId): string
     {
         $paths = [
-            'MLB' => 'https://http2.mlstatic.com/storage/cpp/static-files/8afbe775-e8c3-4fa1-b013-ab7f079872b7.gif',
+            'pt' => 'https://http2.mlstatic.com/storage/cpp/static-files/8afbe775-e8c3-4fa1-b013-ab7f079872b7.gif',
         ];
 
-        return $paths[$siteId] ?? 'https://http2.mlstatic.com/storage/cpp/static-files/e6af4c4b-bede-4a6a-8711-b3d19fe423e3.gif';
+        return $paths[$this->getCreditsPreviewLanguage($siteId)] ?? 'https://http2.mlstatic.com/storage/cpp/static-files/e6af4c4b-bede-4a6a-8711-b3d19fe423e3.gif';
     }
 
+    /**
+     * Get mobile gif image url for mercado credits demonstration
+     *
+     * @param string $siteId Credential site used as fallback when the store language is neither PT nor ES.
+     */
     public function getCreditsGifMobilePath(string $siteId): string
     {
         $paths = [
-            'MLB' => 'https://http2.mlstatic.com/storage/cpp/static-files/8bcbd873-6ec3-45eb-bccf-47bdcd9af255.gif',
+            'pt' => 'https://http2.mlstatic.com/storage/cpp/static-files/8bcbd873-6ec3-45eb-bccf-47bdcd9af255.gif',
         ];
 
-        return $paths[$siteId] ?? 'https://http2.mlstatic.com/storage/cpp/static-files/a91b365a-73dc-461a-9f3f-f8b3329ae5d2.gif';
+        return $paths[$this->getCreditsPreviewLanguage($siteId)] ?? 'https://http2.mlstatic.com/storage/cpp/static-files/a91b365a-73dc-461a-9f3f-f8b3329ae5d2.gif';
     }
 
     /**

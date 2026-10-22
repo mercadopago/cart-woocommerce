@@ -3,8 +3,8 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use Exception;
-use MercadoPago\PP\Sdk\HttpClient\HttpClientInterface;
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpClientInterface;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 
 if (!defined('ABSPATH')) {
@@ -34,13 +34,13 @@ class Requester
      * @param string $uri
      * @param array $headers
      *
-     * @return Response
+     * @return HttpResponse
      * @throws Exception
      */
-    public function get(string $uri, array $headers = []): Response
+    public function get(string $uri, array $headers = []): HttpResponse
     {
         try {
-            $response = $this->httpClient->get($uri, $headers);
+            $response = $this->httpClient->request('GET', $uri, $headers);
             $this->checkResponseForErrors($response, $uri);
             return $response;
         } catch (Exception $e) {
@@ -54,13 +54,14 @@ class Requester
      * @param array $headers
      * @param array $body
      *
-     * @return Response
+     * @return HttpResponse
      * @throws Exception
      */
-    public function post(string $uri, array $headers = [], array $body = []): Response
+    public function post(string $uri, array $headers = [], array $body = []): HttpResponse
     {
         try {
-            $response = $this->httpClient->post($uri, $headers, json_encode($body));
+            $headers = $this->withJsonContentType($headers);
+            $response = $this->httpClient->request('POST', $uri, $headers, $this->encodeBody($body));
             $this->checkResponseForErrors($response, $uri);
             return $response;
         } catch (Exception $e) {
@@ -74,13 +75,14 @@ class Requester
      * @param array $headers
      * @param array $body
      *
-     * @return Response
+     * @return HttpResponse
      * @throws Exception
      */
-    public function put(string $uri, array $headers = [], array $body = []): Response
+    public function put(string $uri, array $headers = [], array $body = []): HttpResponse
     {
         try {
-            $response = $this->httpClient->put($uri, $headers, json_encode($body));
+            $headers = $this->withJsonContentType($headers);
+            $response = $this->httpClient->request('PUT', $uri, $headers, $this->encodeBody($body));
             $this->checkResponseForErrors($response, $uri);
             return $response;
         } catch (Exception $e) {
@@ -94,14 +96,17 @@ class Requester
      * @param array $headers
      * @param array $body
      *
-     * @return Response
+     * @return HttpResponse
      * @throws Exception
      */
-    public function delete(string $uri, array $headers = [], array $body = []): Response
+    public function delete(string $uri, array $headers = [], array $body = []): HttpResponse
     {
         try {
-            $payload = empty($body) ? null : json_encode($body);
-            $response = $this->httpClient->send('DELETE', $uri, $headers, $payload);
+            $payload = empty($body) ? null : $this->encodeBody($body);
+            if ($payload !== null) {
+                $headers = $this->withJsonContentType($headers);
+            }
+            $response = $this->httpClient->request('DELETE', $uri, $headers, $payload);
             $this->checkResponseForErrors($response, $uri);
             return $response;
         } catch (Exception $e) {
@@ -110,7 +115,7 @@ class Requester
         }
     }
 
-    private function checkResponseForErrors(Response $response, string $uri): void
+    private function checkResponseForErrors(HttpResponse $response, string $uri): void
     {
         $status = $response->getStatus();
         if ($status >= 400) {
@@ -125,7 +130,7 @@ class Requester
         $this->datadog->sendEvent('mp_api_error', (string) $status, $message, null, $details);
     }
 
-    private function extractErrorMessage(Response $response): string
+    private function extractErrorMessage(HttpResponse $response): string
     {
         $data = $response->getData();
 
@@ -138,5 +143,31 @@ class Requester
         }
 
         return 'HTTP ' . $response->getStatus();
+    }
+
+    private function encodeBody(array $body): string
+    {
+        $encodedBody = wp_json_encode($body);
+        if ($encodedBody === false) {
+            throw new Exception('Unable to encode Mercado Pago API request.');
+        }
+
+        return $encodedBody;
+    }
+
+    private function withJsonContentType(array $headers): array
+    {
+        foreach ($headers as $name => $value) {
+            if (is_int($name)) {
+                $name = strstr((string) $value, ':', true);
+            }
+
+            if (is_string($name) && strtolower(trim($name)) === 'content-type') {
+                return $headers;
+            }
+        }
+
+        $headers['Content-Type'] = 'application/json';
+        return $headers;
     }
 }

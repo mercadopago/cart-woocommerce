@@ -3,8 +3,9 @@
 namespace MercadoPago\Woocommerce\Helpers;
 
 use Exception;
-use MercadoPago\PP\Sdk\Exceptions\ApiException;
-use MercadoPago\PP\Sdk\Sdk;
+use MercadoPago\Woocommerce\Api\Core\CoreRequestContext;
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Core\ExchangeClient;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
@@ -42,6 +43,8 @@ class Currency
 
     private Store $store;
 
+    private ExchangeClient $exchangeClient;
+
     /**
      * Currency constructor
      *
@@ -53,6 +56,7 @@ class Currency
      * @param Options           $options
      * @param Url               $url
      * @param Store             $store
+     * @param ExchangeClient    $exchangeClient
      */
     public function __construct(
         AdminTranslations $adminTranslations,
@@ -62,7 +66,8 @@ class Currency
         Seller $seller,
         Options $options,
         Url $url,
-        Store $store
+        Store $store,
+        ExchangeClient $exchangeClient
     ) {
         $this->translations = $adminTranslations->currency;
         $this->cache        = $cache;
@@ -73,6 +78,7 @@ class Currency
         $this->url          = $url;
         $this->datadog      = Datadog::getInstance();
         $this->store        = $store;
+        $this->exchangeClient = $exchangeClient;
     }
 
     /**
@@ -233,7 +239,7 @@ class Currency
     {
         $response = $this->getCurrencyConversion();
         if ($response['status'] !== 200) {
-            throw new Exception(json_encode($response['data']));
+            throw new Exception($response['message'] ?? 'Currency conversion failed');
         }
         if (isset($response['data']['rate']) && $response['data']['rate'] > 0) {
             return $response['data']['rate'];
@@ -272,9 +278,7 @@ class Currency
             return $serializedResponse;
         } catch (Exception $e) {
             // getApiStatus() reads the body-level "status" field, not the HTTP transport status.
-            // 5xx errors throw a plain \Exception from the SDK (no HTTP status available) → use 500 as proxy.
-            // Network errors (curl timeout etc.) also land here; 500 is a defensible approximation since
-            // errorMessage already differentiates the cases ("Connection timed out" vs "Internal API Error").
+            // Transport and unexpected errors also land here; use 500 when no API status is available.
             $httpStatus   = ($e instanceof ApiException) ? ($e->getApiStatus() ?? 0) : 500;
             $errorMessage = $e->getMessage();
 
@@ -286,14 +290,15 @@ class Currency
             );
 
             return [
-                'data'   => null,
-                'status' => $httpStatus ?: 500,
+                'data'    => null,
+                'status'  => $httpStatus ?: 500,
+                'message' => $errorMessage,
             ];
         }
     }
 
     /**
-     * Calls the SDK exchange endpoint and returns the conversion rate.
+     * Calls the Core exchange endpoint and returns the conversion rate.
      * Protected to allow mocking in tests.
      *
      * @param string $fromCurrency WooCommerce store currency
@@ -302,27 +307,11 @@ class Currency
      */
     protected function fetchExchangeRate(string $fromCurrency): float
     {
-        $exchange = $this->createSdk()->getExchangeInstance()->getExchangeRate($fromCurrency);
-        return (float) $exchange->rate;
-    }
+        $context = new CoreRequestContext($this->seller->getCredentialsAccessToken());
 
-    /**
-     * Builds a configured Sdk instance for the current environment.
-     * Protected to allow mocking in tests.
-     *
-     * @return Sdk
-     */
-    protected function createSdk(): Sdk
-    {
-        $urisScope = $this->store->isTestMode() ? 'beta' : null;
-        return new Sdk(
-            $this->seller->getCredentialsAccessToken(),
-            null,
-            null,
-            null,
-            null,
-            $urisScope
-        );
+        return $this->exchangeClient
+            ->getRate($fromCurrency, $context, $this->store->isTestMode())
+            ->getRate();
     }
 
     /**

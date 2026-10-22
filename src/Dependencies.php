@@ -2,8 +2,10 @@
 
 namespace MercadoPago\Woocommerce;
 
-use MercadoPago\PP\Sdk\HttpClient\HttpClient;
-use MercadoPago\PP\Sdk\HttpClient\Requester\CurlRequester;
+use MercadoPago\Woocommerce\Api\Core\CoreApi;
+use MercadoPago\Woocommerce\Api\Core\CoreApiClient;
+use MercadoPago\Woocommerce\Api\Http\HttpClientInterface;
+use MercadoPago\Woocommerce\Api\Http\WordPressHttpClient;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
 use MercadoPago\Woocommerce\Endpoints\IntegrationWebhook;
@@ -58,6 +60,7 @@ use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
 use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Order\PaymentReconciliation;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\IO\Downloader;
@@ -161,6 +164,10 @@ class Dependencies
 
     public Requester $requesterHelper;
 
+    public HttpClientInterface $httpClient;
+
+    public CoreApi $coreApi;
+
     public Session $sessionHelper;
 
     public Strings $stringsHelper;
@@ -176,6 +183,8 @@ class Dependencies
     public OrderShipping $orderShipping;
 
     public OrderStatus $orderStatus;
+
+    public PaymentReconciliation $paymentReconciliation;
 
     public AdminTranslations $adminTranslations;
 
@@ -216,6 +225,8 @@ class Dependencies
         $this->stringsHelper           = new Strings();
         $this->orderBilling            = new OrderBilling();
         $this->orderShipping           = new OrderShipping();
+        $this->httpClient              = new WordPressHttpClient(Requester::BASEURL_MP);
+        $this->coreApi                 = new CoreApi(new CoreApiClient($this->httpClient));
         $this->requesterHelper         = $this->setRequester();
         $this->storeConfig             = $this->setStore();
         $this->logs                    = $this->setLogs();
@@ -236,6 +247,7 @@ class Dependencies
         $this->gatewayHook             = $this->setGateway();
         $this->nonceHelper             = $this->setNonce();
         $this->orderStatus             = $this->setOrderStatus();
+        $this->paymentReconciliation   = $this->setPaymentReconciliation();
         $this->cronHelper              = $this->setCronHelper();
         $this->currentUserHelper       = $this->setCurrentUser();
         $this->orderHook               = $this->setOrder();
@@ -286,10 +298,7 @@ class Dependencies
      */
     private function setRequester(): Requester
     {
-        $curlRequester = new CurlRequester();
-        $httpClient    = new HttpClient(Requester::BASEURL_MP, $curlRequester);
-
-        return new Requester($httpClient);
+        return new Requester($this->httpClient);
     }
 
     /**
@@ -397,6 +406,16 @@ class Dependencies
         );
     }
 
+    private function setPaymentReconciliation(): PaymentReconciliation
+    {
+        return new PaymentReconciliation(
+            $this->orderMetadata,
+            $this->orderStatus,
+            $this->requesterHelper,
+            $this->logs
+        );
+    }
+
     /**
      * @return Cron
      */
@@ -454,6 +473,7 @@ class Dependencies
             $this->templateHook,
             $this->orderMetadata,
             $this->orderStatus,
+            $this->paymentReconciliation,
             $this->adminTranslations,
             $this->storeTranslations,
             $this->storeConfig,
@@ -508,7 +528,8 @@ class Dependencies
             $this->sellerConfig,
             $this->optionsHook,
             $this->urlHelper,
-            $this->storeConfig
+            $this->storeConfig,
+            $this->coreApi->exchange
         );
     }
 
@@ -557,6 +578,7 @@ class Dependencies
     private function setFunnel(): Funnel
     {
         return new Funnel(
+            $this->coreApi->funnel,
             $this->storeConfig,
             $this->sellerConfig,
             $this->countryHelper,

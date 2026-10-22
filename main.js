@@ -67,7 +67,7 @@ function getActiveSuperTokenVersion () {
  * setupSuperToken prompt to offer the dev variant choice. The CDN folder mapping
  * and the per-variant bundle publish live in the scripts repo now (TASK-013).
  */
-const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.7', 'v2.1': '1.2.7' };
+const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.11', 'v2.1': '1.2.11' };
 
 /**
  * Compile one Super Token SCSS entry into a compressed CSS file (both under
@@ -160,6 +160,77 @@ function generatePotFiles () {
     lastTranslator: 'Mercado Pago Developers <woocommerce.dev@mercadopago.com>',
     src: ['src/**/*.php', 'templates/**/*.php']
   });
+}
+
+const LANGUAGES_DIR = './i18n/languages';
+// Copy shown in the card checkout (Super Token block and new card form) shares one Spanish.
+const NEUTRAL_SPANISH_CONTEXT_PREFIXES = ['super token', 'card checkout'];
+const NEUTRAL_SPANISH_CREDITS_OVERRIDES = new Map([
+  [JSON.stringify({ context: 'credits buyer banner', msgid: 'Buy now, pay later' }), 'Compra ahora, paga después'],
+  [JSON.stringify({ context: null, msgid: 'Buy in up to 12 installments without credit cards' }), 'Compra ahora y paga después en hasta 12 cuotas'],
+]);
+
+function poEntryKey (entry) {
+  const lines = entry.split('\n');
+  const field = (name) => {
+    const values = [];
+    let current = null;
+    for (const line of lines) {
+      const keyword = line.match(/^(msgctxt|msgid|msgid_plural|msgstr(?:\[\d+\])?) "(.*)"$/);
+      if (keyword) {
+        current = keyword[1];
+        if (current === name) values.push(keyword[2]);
+        continue;
+      }
+      const continuation = line.match(/^"(.*)"$/);
+      if (continuation && current === name) values.push(continuation[1]);
+    }
+    return values.length ? values.join('') : null;
+  };
+  return { context: field('msgctxt'), msgid: field('msgid') };
+}
+
+function readPoEntries (locale) {
+  const content = fs.readFileSync(`${LANGUAGES_DIR}/woocommerce-mercadopago-${locale}.po`, 'utf8');
+  return content.replace(/\n+$/, '').split(/\n\s*\n/);
+}
+
+function usesNeutralSpanish (entry) {
+  const { context } = poEntryKey(entry);
+  return context !== null && NEUTRAL_SPANISH_CONTEXT_PREFIXES.some((prefix) => context.startsWith(prefix));
+}
+
+/**
+ * Generate the generic es catalog: the Argentine catalog for the whole plugin, with the
+ * card checkout copy (Super Token and new card form) taken from es_MX — the closest the plugin has
+ * to neutral Spanish. Two exact Credits entries use the neutral copy from the handoff.
+ */
+function generateGenericSpanishCatalog () {
+  const mexicanNeutralEntries = new Map(
+    readPoEntries('es_MX')
+      .filter(usesNeutralSpanish)
+      .map((entry) => [JSON.stringify(poEntryKey(entry)), entry])
+  );
+
+  const entries = readPoEntries('es_AR').map((entry, index) => {
+    if (index === 0) {
+      return entry.replace(/^"Language: es_AR\\n"$/m, '"Language: es\\n"');
+    }
+    const creditsCopy = NEUTRAL_SPANISH_CREDITS_OVERRIDES.get(JSON.stringify(poEntryKey(entry)));
+    if (creditsCopy !== undefined) {
+      return entry.replace(/^msgstr ".*"(?:\n".*")*/m, () => `msgstr ${JSON.stringify(creditsCopy)}`);
+    }
+    if (!usesNeutralSpanish(entry)) {
+      return entry;
+    }
+    const mexicanEntry = mexicanNeutralEntries.get(JSON.stringify(poEntryKey(entry)));
+    if (!mexicanEntry) {
+      throw new Error(`es_MX is missing the neutral Spanish entry: ${poEntryKey(entry).msgid}`);
+    }
+    return mexicanEntry;
+  });
+
+  fs.writeFileSync(`${LANGUAGES_DIR}/woocommerce-mercadopago-es.po`, `${entries.join('\n\n')}\n`);
 }
 
 /**
@@ -296,6 +367,7 @@ module.exports = {
   stageSuperTokenJsBundle,
   buildSuperTokenAssets,
   generatePotFiles,
+  generateGenericSpanishCatalog,
   generateIntegrityManifest,
   setupSuperToken
 };

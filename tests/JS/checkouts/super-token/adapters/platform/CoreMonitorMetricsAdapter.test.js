@@ -106,6 +106,15 @@ describe('CoreMonitorMetricsAdapter', () => {
     expect(lastFetch().body.value).toBe('false');
   });
 
+  it('Given a store language that diverges from the credential site, When reported, Then value is the language and message the site', () => {
+    buildAdapter().storeLanguageDivergesFromSite('es-es', 'mlc');
+
+    const { url, body } = lastFetch();
+    expect(url).toBe(`${CORE_MONITOR_URL}/super_token_store_language_divergence`);
+    expect(body.value).toBe('es-es');
+    expect(body.message).toBe('MLC');
+  });
+
   // Initialization resilience metrics (TASK-010) — names preserved 1:1 from the
   // legacy mp-super-token.js; the four check signals moved onto Core Monitor.
   describe('initialization resilience metrics', () => {

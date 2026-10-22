@@ -136,6 +136,71 @@ class AbstractBlockTest extends TestCase
         $this->assertEquals('test_value', $result['params']['test_param']);
     }
 
+    public function testGetPaymentMethodDataDoesNotPropagateFeeTitleConversionFailure(): void
+    {
+        $errorMessage = 'Currency conversion API unavailable';
+        $gatewayMock  = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->mercadopago = $this->mercadopago;
+        $gatewayMock->supports    = ['products'];
+        $gatewayMock->shouldAllowMockingProtectedMethods();
+        $gatewayMock
+            ->shouldReceive('sendAmountCurrencyErrorMetric')
+            ->once()
+            ->with(null, 0.0, $errorMessage);
+
+        $this->mercadopago->helpers->cart
+            ->shouldReceive('isAvailable')
+            ->once()
+            ->andReturn(true);
+        $this->mercadopago->helpers->cart
+            ->shouldReceive('calculateSubtotalWithDiscount')
+            ->once()
+            ->with($gatewayMock)
+            ->andThrow(new \Exception($errorMessage));
+        $this->mercadopago->helpers->cart
+            ->shouldNotReceive('calculateSubtotalWithCommission');
+
+        $this->block->gateway = $gatewayMock;
+
+        $result = $this->block->get_payment_method_data();
+
+        $this->assertSame('', $result['params']['fee_title']);
+        $this->assertSame(['products'], $result['supports']);
+    }
+
+    public function testGetPaymentMethodDataDoesNotRetryInitialCurrencyTimeout(): void
+    {
+        $errorMessage = 'Currency conversion request timed out';
+        $gatewayMock  = Mockery::mock(AbstractGateway::class)->makePartial();
+        $gatewayMock->mercadopago = $this->mercadopago;
+        $gatewayMock->supports    = ['products'];
+        $gatewayMock->shouldAllowMockingProtectedMethods();
+        $gatewayMock
+            ->shouldReceive('sendAmountCurrencyErrorMetric')
+            ->once()
+            ->with(null, 0.0, $errorMessage);
+
+        $this->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($gatewayMock)
+            ->andThrow(new \Exception($errorMessage));
+        $this->mercadopago->helpers->cart->shouldNotReceive('isAvailable');
+        $this->mercadopago->helpers->cart->shouldNotReceive('calculateSubtotalWithDiscount');
+        $this->mercadopago->helpers->cart->shouldNotReceive('calculateSubtotalWithCommission');
+
+        $initialRatioMethod = new \ReflectionMethod(AbstractGateway::class, 'getInitialCurrencyRatio');
+        $initialRatioMethod->setAccessible(true);
+        $this->assertSame(1.0, $initialRatioMethod->invoke($gatewayMock));
+
+        $this->block->gateway = $gatewayMock;
+        $result = $this->block->get_payment_method_data();
+
+        $this->assertSame('', $result['params']['fee_title']);
+        $this->assertSame('Test Title', $result['title']);
+        $this->assertSame(['products'], $result['supports']);
+    }
+
     public function testGetPaymentMethodDataDoesNotIncludeFeeTitleWhenGatewayIsNull(): void
     {
         $this->block->gateway = null;

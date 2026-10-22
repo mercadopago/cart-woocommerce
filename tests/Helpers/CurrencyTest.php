@@ -2,6 +2,10 @@
 
 namespace MercadoPago\Woocommerce\Tests\Helpers;
 
+use MercadoPago\Woocommerce\Api\Core\CoreRequestContext;
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Core\ExchangeClient;
+use MercadoPago\Woocommerce\Api\Core\Models\ExchangeRate;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
@@ -15,9 +19,6 @@ use MercadoPago\Woocommerce\Hooks\Options;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
-use MercadoPago\PP\Sdk\Entity\Exchange\Exchange;
-use MercadoPago\PP\Sdk\Exceptions\ApiException;
-use MercadoPago\PP\Sdk\Sdk;
 use Exception;
 use Mockery;
 use PHPUnit\Framework\TestCase;
@@ -38,6 +39,7 @@ class CurrencyTest extends TestCase
     private $options;
     private $url;
     private $store;
+    private $exchangeClient;
 
     public function setUp(): void
     {
@@ -54,6 +56,7 @@ class CurrencyTest extends TestCase
         $this->options = Mockery::mock(Options::class);
         $this->url = Mockery::mock(Url::class);
         $this->store = Mockery::mock(Store::class);
+        $this->exchangeClient = Mockery::mock(ExchangeClient::class);
 
         // Partial mock so tests can stub fetchExchangeRate() while keeping all other methods real
         $this->currency = Mockery::mock(Currency::class, [
@@ -65,6 +68,7 @@ class CurrencyTest extends TestCase
             $this->options,
             $this->url,
             $this->store,
+            $this->exchangeClient,
         ])->makePartial()->shouldAllowMockingProtectedMethods();
     }
 
@@ -172,6 +176,15 @@ class CurrencyTest extends TestCase
         $this->assertEquals('USD', $result);
     }
 
+    public function testOnlyGetRatioReturnsStoredRatioOrDefault(): void
+    {
+        $this->currency->setRatio('custom', 2.5);
+
+        $this->assertSame(2.5, $this->currency->onlyGetRatio('custom'));
+        $this->assertSame(1.0, $this->currency->onlyGetRatio('missing'));
+        $this->assertSame(1.0, $this->currency->onlyGetRatio());
+    }
+
     /**
      * Helper to set up common mocks for getRatio error metric tests
      */
@@ -263,6 +276,34 @@ class CurrencyTest extends TestCase
         $this->currency->getRatio($this->gateway);
     }
 
+    public function testGetRatioUsesFallbackStatusWhenApiStatusIsMissing(): void
+    {
+        $this->setupGetRatioMocks();
+
+        $this->currency
+            ->shouldReceive('fetchExchangeRate')
+            ->once()
+            ->andThrow(new ApiException('Malformed API error'));
+
+        $datadogMock = Mockery::mock(Datadog::class);
+        $datadogMock->shouldReceive('sendEvent')->byDefault();
+        $datadogMock
+            ->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'mp_currency_conversion_error',
+                '0',
+                'Malformed API error',
+                null,
+                Mockery::type('array')
+            );
+
+        $this->setNotAccessibleProperty($this->currency, 'datadog', $datadogMock);
+
+        $this->expectException(Exception::class);
+        $this->currency->getRatio($this->gateway);
+    }
+
     /**
      * Test that metric is sent when API call throws an exception
      */
@@ -331,6 +372,7 @@ class CurrencyTest extends TestCase
         $this->setNotAccessibleProperty($this->currency, 'datadog', $datadogMock);
 
         $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Invalid currency pair');
         $this->currency->getRatio($this->gateway);
     }
 
@@ -511,44 +553,26 @@ class CurrencyTest extends TestCase
     }
 
     /**
-     * Test fetchExchangeRate() by mocking createSdk() — covers the real method lines.
-     * Uses a stdClass for the exchange result so that ->rate is a plain public property,
-     * avoiding Mockery quirks around protected-property access via __get.
+     * Test fetchExchangeRate() through the Core exchange client.
      */
-    public function testFetchExchangeRateUsesRateFromSdkExchange(): void
+    public function testFetchExchangeRateUsesRateFromCoreExchange(): void
     {
         $this->setupGetRatioMocks();
 
-        // Exchange partial mock (no constructor call): real __get() returns $this->rate
-        $exchangeMock = Mockery::mock(Exchange::class)->makePartial();
-        $this->setNotAccessibleProperty($exchangeMock, 'rate', 5.5);
-        $exchangeMock->shouldReceive('getExchangeRate')->with('USD')->andReturnSelf();
-
-        $sdkMock = Mockery::mock(Sdk::class);
-        $sdkMock->shouldReceive('getExchangeInstance')->andReturn($exchangeMock);
-
-        $this->currency->shouldReceive('createSdk')->andReturn($sdkMock);
+        $this->seller->shouldReceive('getCredentialsAccessToken')->andReturn('TEST-TOKEN');
+        $this->exchangeClient
+            ->shouldReceive('getRate')
+            ->once()
+            ->with('USD', Mockery::on(function (CoreRequestContext $context) {
+                return $context->toHeaders() === ['Authorization' => 'Bearer TEST-TOKEN'];
+            }), true)
+            ->andReturn(ExchangeRate::fromArray(['rate' => 5.5]));
 
         $this->cache->shouldReceive('setCache')->byDefault();
 
         $result = $this->currency->getCurrentRatio();
 
         $this->assertEqualsWithDelta(5.5, $result, 0.001);
-    }
-
-    /**
-     * Test createSdk() returns a Sdk instance configured with the seller access token.
-     */
-    public function testCreateSdkReturnsSdkInstance(): void
-    {
-        $this->seller->shouldReceive('getCredentialsAccessToken')->andReturn('TEST-TOKEN');
-        $this->store->shouldReceive('isTestMode')->andReturn(false);
-
-        $method = new \ReflectionMethod($this->currency, 'createSdk');
-        $method->setAccessible(true);
-        $sdk = $method->invoke($this->currency);
-
-        $this->assertInstanceOf(Sdk::class, $sdk);
     }
 
     /* ─── getCurrentRatio ─── */
@@ -569,10 +593,9 @@ class CurrencyTest extends TestCase
     }
 
     /**
-     * SDK throws plain \Exception (not ApiException) for 5xx transport errors.
-     * Metric must receive httpStatus='0' and getCurrencyConversion must return status=500.
+     * Transport errors use status 500 when no API status is available.
      */
-    public function testGetRatioSendsZeroHttpStatusOnSdkInternalError(): void
+    public function testGetRatioSendsFallbackStatusOnTransportError(): void
     {
         $this->setupGetRatioMocks();
 

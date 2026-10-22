@@ -53,7 +53,8 @@ class NotificationFactory
             $mercadopago->logs,
             $mercadopago->orderStatus,
             $mercadopago->sellerConfig,
-            $mercadopago->storeConfig
+            $mercadopago->storeConfig,
+            $mercadopago->coreApi->notifications
         );
     }
 }

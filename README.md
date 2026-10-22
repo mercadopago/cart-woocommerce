@@ -78,6 +78,14 @@ To build and check the plugin from this source repository:
 
 2. Run `npm run build` to generate the runtime assets.
 3. Run `npm run verify:integrity` to confirm the generated assets match `integrity-manifest.json`.
+4. To build an installable ZIP with the same content rules as the WordPress.org package, run:
+
+   ```bash
+   bash scripts/public/create-release-zip.sh --output "$(cd .. && pwd)/woocommerce-mercadopago.zip"
+   ```
+
+   The output must be a new absolute path. The script works with or without a `.git` folder (for
+   example, after GitHub's "Download ZIP").
 
   
 

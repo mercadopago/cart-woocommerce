@@ -328,6 +328,11 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
     this.successBoolean('cannot_get_fast_payment_token');
   }
 
+  /** Value: the store language; message: the credential site it diverges from (site_id is in the details too). */
+  storeLanguageDivergesFromSite(storeLanguage: string, siteId: string): void {
+    this.sendMetric('super_token_store_language_divergence', storeLanguage, siteId.toUpperCase());
+  }
+
   installmentsFilled(paymentMethodType: string): void {
     this.sendMetric('super_token_installments_filled', true, paymentMethodType);
   }

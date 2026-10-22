@@ -2,8 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Tests\Traits;
 
-use MercadoPago\PP\Sdk\Entity\Payment\Payment;
-use MercadoPago\PP\Sdk\Entity\Preference\Preference;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
@@ -11,7 +9,6 @@ use MercadoPago\Woocommerce\Transactions\AbstractPaymentTransaction;
 use MercadoPago\Woocommerce\Transactions\AbstractTransaction;
 use Mockery;
 use Mockery\MockInterface;
-use stdClass;
 use WC_Order;
 
 trait TransactionMock
@@ -34,9 +31,7 @@ trait TransactionMock
         $this->transaction = Mockery::mock($this->transactionClass)->makePartial();
         $this->transaction->mercadopago = MercadoPagoMock::getWoocommerceMercadoPagoMock();
         $this->transaction->gateway = Mockery::mock(AbstractGateway::class);
-        $this->transaction->transaction = Mockery::mock(
-            $this->transaction instanceof AbstractPaymentTransaction ? Payment::class : Preference::class
-        );
+        $this->transaction->transaction = [];
     }
 
     private function setCommonTransactionMock(array $expected): void
@@ -88,9 +83,10 @@ trait TransactionMock
             ->getMock()->expects()->getZipcode($order)->andReturn($expected['address']['zip_code'])
             ->getMock()->expects()->getFullAddress($order)->andReturn($expected['address']['street_name']);
 
-        $this->transaction->transaction->payer = new stdClass();
-        $this->transaction->transaction->payer->phone = new stdClass();
-        $this->transaction->transaction->payer->address = new stdClass();
+        $this->transaction->transaction['payer'] = [
+            'phone' => [],
+            'address' => [],
+        ];
 
         return $expected;
     }
@@ -120,8 +116,7 @@ trait TransactionMock
             ->getMock()->expects()->getZipcode($order)->andReturn($expected['address']['zip_code'])
             ->getMock()->expects()->getFullAddress($order)->andReturn($expected['address']['street_name']);
 
-        $this->transaction->transaction->payer = new stdClass();
-        $this->transaction->transaction->payer->address = new stdClass();
+        $this->transaction->transaction['payer'] = ['address' => []];
 
         return $expected;
     }

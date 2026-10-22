@@ -3,6 +3,7 @@
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
@@ -13,6 +14,7 @@ use WC_Order;
 
 class OrderMetadataTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
     use WoocommerceMock;
 
     private OrderMeta $orderMetaMock;
@@ -140,6 +142,240 @@ class OrderMetadataTest extends TestCase
         $this->assertEquals('123', $result);
     }
 
+    public function testGetPaymentIdsNormalizesAllStoredMetadataEntries(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', false)
+            ->andReturn([
+                new \WC_Meta_Data([
+                    'key' => '_Mercado_Pago_Payment_IDs',
+                    'value' => '123, 456',
+                ]),
+                new \WC_Meta_Data([
+                    'key' => '_Mercado_Pago_Payment_IDs',
+                    'value' => '456',
+                ]),
+                new \WC_Meta_Data([
+                    'key' => '_Mercado_Pago_Payment_IDs',
+                    'value' => 'invalid',
+                ]),
+            ]);
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('');
+
+        $this->assertSame(['123', '456'], $this->orderMetadata->getPaymentIds($this->orderMock));
+    }
+
+    public function testGetPaymentIdsNormalizesLegacyScalarMetadata(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', false)
+            ->andReturn('123, 456');
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('');
+
+        $this->assertSame(['123', '456'], $this->orderMetadata->getPaymentIds($this->orderMock));
+    }
+
+    public function testGetPaymentIdsIncludesPreviousDirectPaymentAttempts(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', false)
+            ->andReturn('200');
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn(
+                "100: 2026-10-05T10:00:00.000-03:00,\n"
+                . "200: 2026-10-05T10:05:00.000-03:00,\n"
+                . 'invalid: 2026-10-05T10:10:00.000-03:00'
+            );
+
+        $this->assertSame(['200', '100'], $this->orderMetadata->getPaymentIds($this->orderMock));
+    }
+
+    public function testReplacePaymentIdsIgnoresUnsupportedNestedValues(): void
+    {
+        $this->orderMetaMock->shouldReceive('update')
+            ->once()
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123, 456');
+
+        $this->assertTrue(
+            $this->orderMetadata->replacePaymentIds(
+                $this->orderMock,
+                [['123', new \stdClass(), 456], new \stdClass()]
+            )
+        );
+    }
+
+    public function testReplacePaymentIdsPersistsNormalizedSnapshot(): void
+    {
+        $this->orderMetaMock->shouldReceive('update')
+            ->once()
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123, 456');
+
+        $this->assertTrue(
+            $this->orderMetadata->replacePaymentIds($this->orderMock, ['123', '456', '123', 'invalid'])
+        );
+    }
+
+    public function testReplacePaymentIdsRejectsSnapshotWithoutValidIdentifiers(): void
+    {
+        $this->orderMetaMock->shouldNotReceive('update');
+
+        $this->assertFalse($this->orderMetadata->replacePaymentIds($this->orderMock, ['', 'invalid']));
+    }
+
+    public function testGetPreferenceIdsNormalizesAndDeduplicatesStoredValues(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, OrderMetadata::PREFERENCE_IDS, false)
+            ->andReturn([
+                new \WC_Meta_Data([
+                    'key' => OrderMetadata::PREFERENCE_IDS,
+                    'value' => ['123456789-first', '123456789-first'],
+                ]),
+                new \WC_Meta_Data([
+                    'key' => OrderMetadata::PREFERENCE_IDS,
+                    'value' => '123456789_second',
+                ]),
+                new \WC_Meta_Data([
+                    'key' => OrderMetadata::PREFERENCE_IDS,
+                    'value' => 'invalid preference',
+                ]),
+            ]);
+
+        $this->assertSame(
+            ['123456789-first', '123456789_second'],
+            $this->orderMetadata->getPreferenceIds($this->orderMock)
+        );
+    }
+
+    public function testGetPreferenceIdsNormalizesLegacyCommaSeparatedMetadata(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, OrderMetadata::PREFERENCE_IDS, false)
+            ->andReturn([
+                new \WC_Meta_Data([
+                    'key' => OrderMetadata::PREFERENCE_IDS,
+                    'value' => '123456789-first, 123456789_second, 123456789-first',
+                ]),
+            ]);
+
+        $this->assertSame(
+            ['123456789-first', '123456789_second'],
+            $this->orderMetadata->getPreferenceIds($this->orderMock)
+        );
+    }
+
+    public function testGetPreferenceIdsRejectsUnsupportedMetadataType(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, OrderMetadata::PREFERENCE_IDS, false)
+            ->andReturn([
+                new \WC_Meta_Data([
+                    'key' => OrderMetadata::PREFERENCE_IDS,
+                    'value' => 123456789,
+                ]),
+            ]);
+
+        $this->assertSame([], $this->orderMetadata->getPreferenceIds($this->orderMock));
+    }
+
+    public function testAddPreferenceIdPreservesMultipleAttempts(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, OrderMetadata::PREFERENCE_IDS, false)
+            ->andReturn([], [
+                new \WC_Meta_Data([
+                    'key' => OrderMetadata::PREFERENCE_IDS,
+                    'value' => '123456789-first',
+                ]),
+            ]);
+        $this->orderMetaMock->shouldReceive('add')
+            ->once()
+            ->with($this->orderMock, OrderMetadata::PREFERENCE_IDS, '123456789-first');
+        $this->orderMetaMock->shouldReceive('add')
+            ->once()
+            ->with($this->orderMock, OrderMetadata::PREFERENCE_IDS, '123456789-second');
+        $this->orderMetaMock->shouldNotReceive('update');
+        $this->orderMock->shouldReceive('save')->twice();
+
+        $this->assertTrue($this->orderMetadata->addPreferenceId($this->orderMock, '123456789-first'));
+        $this->assertTrue($this->orderMetadata->addPreferenceId($this->orderMock, '123456789-second'));
+    }
+
+    public function testAddPreferenceIdPreservesConcurrentAppendsFromStaleSnapshots(): void
+    {
+        $persistedPreferenceIds = [];
+        $firstOrder = $this->concurrentPreferenceOrder($persistedPreferenceIds);
+        $secondOrder = $this->concurrentPreferenceOrder($persistedPreferenceIds);
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock, $this->refundLockMock);
+
+        $this->assertTrue($orderMetadata->addPreferenceId($firstOrder, '123456789-first'));
+        $this->assertTrue($orderMetadata->addPreferenceId($secondOrder, '123456789-second'));
+        $this->assertSame(
+            ['123456789-first', '123456789-second'],
+            $persistedPreferenceIds
+        );
+    }
+
+    public function testAddPreferenceIdDoesNotDuplicateExistingAttempt(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')
+            ->once()
+            ->with($this->orderMock, OrderMetadata::PREFERENCE_IDS, false)
+            ->andReturn([
+                new \WC_Meta_Data([
+                    'key' => OrderMetadata::PREFERENCE_IDS,
+                    'value' => '123456789-existing',
+                ]),
+            ]);
+        $this->orderMetaMock->shouldNotReceive('add');
+        $this->orderMetaMock->shouldNotReceive('update');
+        $this->orderMock->shouldNotReceive('save');
+
+        $this->assertFalse($this->orderMetadata->addPreferenceId($this->orderMock, '123456789-existing'));
+    }
+
+    public function testAddPreferenceIdRejectsInvalidValueWithoutWritingMetadata(): void
+    {
+        $this->orderMetaMock->shouldNotReceive('get');
+        $this->orderMetaMock->shouldNotReceive('add');
+        $this->orderMetaMock->shouldNotReceive('update');
+        $this->orderMock->shouldNotReceive('save');
+
+        $this->assertFalse($this->orderMetadata->addPreferenceId($this->orderMock, 'invalid preference'));
+        $this->assertFalse($this->orderMetadata->addPreferenceId($this->orderMock, ''));
+    }
+
+    private function concurrentPreferenceOrder(array &$persistedPreferenceIds): WC_Order
+    {
+        $pendingPreferenceIds = [];
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_meta')
+            ->once()
+            ->with(OrderMetadata::PREFERENCE_IDS, false)
+            ->andReturn([]);
+        $order->shouldReceive('add_meta_data')
+            ->once()
+            ->andReturnUsing(
+                static function (string $key, string $value) use (&$pendingPreferenceIds): void {
+                    $pendingPreferenceIds[] = $value;
+                }
+            );
+        $order->shouldReceive('save')
+            ->once()
+            ->andReturnUsing(
+                static function () use (&$persistedPreferenceIds, &$pendingPreferenceIds): void {
+                    array_push($persistedPreferenceIds, ...$pendingPreferenceIds);
+                }
+            );
+
+        return $order;
+    }
+
     public function testGetTicketTransactionDetailsMeta()
     {
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_transaction_details_ticket')->andReturn('ticket_details');
@@ -186,98 +422,84 @@ class OrderMetadataTest extends TestCase
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, '_used_gateway', 'test_gateway')->once();
         $this->orderMetadata->setUsedGatewayData($this->orderMock, 'test_gateway');
-        $this->assertTrue(true);
     }
 
     public function testSetIsProductionModeData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'is_production_mode', true)->once();
         $this->orderMetadata->setIsProductionModeData($this->orderMock, true);
-        $this->assertTrue(true);
     }
 
     public function testSetDiscountData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'Mercado Pago: discount', 10)->once();
         $this->orderMetadata->setDiscountData($this->orderMock, 10);
-        $this->assertTrue(true);
     }
 
     public function testSetCommissionData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'Mercado Pago: commission', 5)->once();
         $this->orderMetadata->setCommissionData($this->orderMock, 5);
-        $this->assertTrue(true);
     }
 
     public function testSetInstallmentsData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_installments', 12)->once();
         $this->orderMetadata->setInstallmentsData($this->orderMock, 12);
-        $this->assertTrue(true);
     }
 
     public function testSetTransactionDetailsData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_details', 'details')->once();
         $this->orderMetadata->setTransactionDetailsData($this->orderMock, 'details');
-        $this->assertTrue(true);
     }
 
     public function testSetTransactionAmountData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_transaction_amount', 100.00)->once();
         $this->orderMetadata->setTransactionAmountData($this->orderMock, 100.00);
-        $this->assertTrue(true);
     }
 
     public function testSetTotalPaidAmountData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_total_paid_amount', 95.00)->once();
         $this->orderMetadata->setTotalPaidAmountData($this->orderMock, 95.00);
-        $this->assertTrue(true);
     }
 
     public function testSetPaymentsIdData()
     {
         $this->orderMetaMock->shouldReceive('add')->with($this->orderMock, '_Mercado_Pago_Payment_IDs', '123')->once();
         $this->orderMetadata->setPaymentsIdData($this->orderMock, '123');
-        $this->assertTrue(true);
     }
 
     public function testSetTicketTransactionDetailsData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, '_transaction_details_ticket', 'ticket_details')->once();
         $this->orderMetadata->setTicketTransactionDetailsData($this->orderMock, 'ticket_details');
-        $this->assertTrue(true);
     }
 
     public function testSetPixQrBase64Data()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_pix_qr_base64', 'base64string')->once();
         $this->orderMetadata->setPixQrBase64Data($this->orderMock, 'base64string');
-        $this->assertTrue(true);
     }
 
     public function testSetPixQrCodeData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'mp_pix_qr_code', 'qrcode')->once();
         $this->orderMetadata->setPixQrCodeData($this->orderMock, 'qrcode');
-        $this->assertTrue(true);
     }
 
     public function testSetPixExpirationDateData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'checkout_pix_date_expiration', '2023-12-31')->once();
         $this->orderMetadata->setPixExpirationDateData($this->orderMock, '2023-12-31');
-        $this->assertTrue(true);
     }
 
     public function testSetPixOnData()
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'pix_on', true)->once();
         $this->orderMetadata->setPixOnData($this->orderMock, true);
-        $this->assertTrue(true);
     }
 
     /**
@@ -340,7 +562,6 @@ class OrderMetadataTest extends TestCase
     {
         $this->orderMetaMock->shouldReceive('update')->with($this->orderMock, 'blocks_payment', 'blocked')->once();
         $this->orderMetadata->markPaymentAsBlocks($this->orderMock, 'blocked');
-        $this->assertTrue(true);
     }
 
     public function testSetCustomMetadata()
@@ -374,7 +595,6 @@ class OrderMetadataTest extends TestCase
         $this->orderMock->shouldReceive('save')->once();
 
         $this->orderMetadata->setCustomMetadata($this->orderMock, $data);
-        $this->assertTrue(true);
     }
 
     public function testSetSupertokenMetadata()
@@ -418,7 +638,6 @@ class OrderMetadataTest extends TestCase
         $transactionMetadata->checkout_type = 'test_checkout_type';
 
         $this->orderMetadata->setSupertokenMetadata($this->orderMock, $data, $transactionMetadata);
-        $this->assertTrue(true);
     }
 
     public function testGetSyncCronErrorCountValueReturnsZeroWhenErrorCountIsNull()
@@ -482,7 +701,6 @@ class OrderMetadataTest extends TestCase
         $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
 
         // Assert
-        $this->assertTrue(true);
     }
 
     public function testUpdatePaymentsOrderMetadataWithExistingPayments()
@@ -523,7 +741,6 @@ class OrderMetadataTest extends TestCase
         $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
 
         // Assert
-        $this->assertTrue(true);
     }
 
     public function testUpdatePaymentsOrderMetadataWithInvalidPaymentFormat()
@@ -566,7 +783,6 @@ class OrderMetadataTest extends TestCase
         $orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
 
         // Assert
-        $this->assertTrue(true);
     }
     public function testUpdatePaymentsOrderMetadataWithFeeDetails()
     {
@@ -628,7 +844,6 @@ class OrderMetadataTest extends TestCase
         $this->orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
 
         // Assert
-        $this->assertTrue(true); // Mockery will verify all expectations
     }
 
     public function testUpdatePaymentsOrderMetadataWithoutFeeDetails()
@@ -677,7 +892,6 @@ class OrderMetadataTest extends TestCase
         $this->orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
 
         // Assert
-        $this->assertTrue(true); // Mockery will verify all expectations
     }
 
     public function testUpdatePaymentsOrderMetadataWithInvalidFeeDetails()
@@ -731,7 +945,6 @@ class OrderMetadataTest extends TestCase
         $this->orderMetadata->updatePaymentsOrderMetadata($this->orderMock, $paymentData);
 
         // Assert
-        $this->assertTrue(true); // Mockery will verify all expectations
     }
 
     /**
@@ -878,6 +1091,55 @@ class OrderMetadataTest extends TestCase
         $this->orderMetadata->updateOrderCustomFieldsAfterSync($order, $paymentsData);
 
         $this->assertTrue(true, 'updateOrderCustomFieldsAfterSync completed successfully for single payment');
+    }
+
+    public function testUpdateOrderCustomFieldsAfterReconciliationReplacesPaymentIds(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('save')->once();
+
+        $payment = [
+            'id' => '123',
+            'transaction_amount' => 100.0,
+            'payment_type_id' => 'account_money',
+            'payment_method_id' => 'account_money',
+            'coupon_amount' => 0,
+            'transaction_details' => [
+                'total_paid_amount' => 100.0,
+            ],
+            'transaction_amount_refunded' => 0,
+        ];
+
+        $this->orderMetaMock->shouldReceive('update')
+            ->once()
+            ->with($order, '_Mercado_Pago_Payment_IDs', '123');
+        $this->orderMetaMock->shouldReceive('update')
+            ->once()
+            ->with(
+                $order,
+                'Mercado Pago - Payment 123',
+                Mockery::pattern(
+                    '/\[Amount 100\]\/\[Payment Type account_money\]\/\[Payment Method account_money\]/'
+                )
+            );
+
+        $this->assertTrue(
+            $this->orderMetadata->updateOrderCustomFieldsAfterReconciliation($order, [$payment])
+        );
+    }
+
+    public function testUpdateOrderCustomFieldsAfterReconciliationRejectsPaymentsWithoutValidIds(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldNotReceive('save');
+        $this->orderMetaMock->shouldNotReceive('update');
+
+        $this->assertFalse(
+            $this->orderMetadata->updateOrderCustomFieldsAfterReconciliation(
+                $order,
+                [['status' => 'approved']]
+            )
+        );
     }
 
     /**
@@ -1195,7 +1457,6 @@ class OrderMetadataTest extends TestCase
      */
     public function testAddAppliedRefundIdAppendsNewId(): void
     {
-        \WP_Mock::setUp();
         \WP_Mock::userFunction('wp_json_encode', [
             'return' => function ($data) {
                 return json_encode($data);
@@ -1216,9 +1477,6 @@ class OrderMetadataTest extends TestCase
         $this->orderMock->shouldReceive('save')->once();
 
         $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_2');
-
-        $this->assertTrue(true);
-        \WP_Mock::tearDown();
     }
 
     /**
@@ -1237,8 +1495,6 @@ class OrderMetadataTest extends TestCase
         $this->orderMock->shouldNotReceive('save');
 
         $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_1');
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1248,7 +1504,6 @@ class OrderMetadataTest extends TestCase
      */
     public function testAddAppliedRefundIdDoesNotPersistWhenJsonEncodeFails(): void
     {
-        \WP_Mock::setUp();
         \WP_Mock::userFunction('wp_json_encode', [
             'return' => false,
         ]);
@@ -1269,9 +1524,6 @@ class OrderMetadataTest extends TestCase
             ->with(Mockery::pattern('/Failed to JSON-encode applied refund ids for order 88/'), Mockery::any());
 
         $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_2');
-
-        $this->assertTrue(true);
-        \WP_Mock::tearDown();
     }
 
     /**
@@ -1281,7 +1533,6 @@ class OrderMetadataTest extends TestCase
      */
     public function testAddAppliedRefundIdSwallowsAndLogsWhenSaveThrows(): void
     {
-        \WP_Mock::setUp();
         \WP_Mock::userFunction('wp_json_encode', [
             'return' => function ($data) {
                 return json_encode($data);
@@ -1310,9 +1561,6 @@ class OrderMetadataTest extends TestCase
 
         // Must not throw.
         $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_2');
-
-        $this->assertTrue(true);
-        \WP_Mock::tearDown();
     }
 
     /**
@@ -1320,7 +1568,6 @@ class OrderMetadataTest extends TestCase
      */
     public function testAddAppliedRefundIdInitializesListForLegacyOrder(): void
     {
-        \WP_Mock::setUp();
         \WP_Mock::userFunction('wp_json_encode', [
             'return' => function ($data) {
                 return json_encode($data);
@@ -1340,9 +1587,6 @@ class OrderMetadataTest extends TestCase
         $this->orderMock->shouldReceive('save')->once();
 
         $this->orderMetadata->addAppliedRefundId($this->orderMock, 'refund_1');
-
-        $this->assertTrue(true);
-        \WP_Mock::tearDown();
     }
 
     // -------------------------------------------------------------------------
@@ -1502,7 +1746,6 @@ class OrderMetadataTest extends TestCase
             ->once();
 
         $this->orderMetadata->addRefundedAmountToPayment($this->orderMock, $paymentId, 5.0);
-        $this->assertTrue(true);
     }
 
     /**
@@ -1514,7 +1757,6 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldNotReceive('update');
 
         $this->orderMetadata->addRefundedAmountToPayment($this->orderMock, '12345', 0.0);
-        $this->assertTrue(true);
     }
 
     /**
@@ -1533,7 +1775,6 @@ class OrderMetadataTest extends TestCase
         $this->logsMock->file->shouldReceive('info')->once();
 
         $this->orderMetadata->addRefundedAmountToPayment($this->orderMock, '12345', 5.0);
-        $this->assertTrue(true);
     }
 
     /**
@@ -1559,6 +1800,5 @@ class OrderMetadataTest extends TestCase
             ->with(Mockery::pattern('/Failed to persist refunded amount for payment 12345/'), Mockery::any());
 
         $this->orderMetadata->addRefundedAmountToPayment($this->orderMock, $paymentId, 5.0);
-        $this->assertTrue(true);
     }
 }

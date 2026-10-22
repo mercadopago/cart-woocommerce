@@ -2,6 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Helpers;
 
+use MercadoPago\Woocommerce\Api\Http\HttpResponse;
 use MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
@@ -129,9 +130,9 @@ class AutomaticPaymentsClientBaseUrlTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
-    private function makeResponse(int $status): \MercadoPago\PP\Sdk\HttpClient\Response
+    private function makeResponse(int $status): HttpResponse
     {
-        $response = \Mockery::mock(\MercadoPago\PP\Sdk\HttpClient\Response::class);
+        $response = \Mockery::mock(HttpResponse::class);
         $response->shouldReceive('getStatus')->andReturn($status);
         $response->shouldReceive('getData')->andReturn([]);
         return $response;

@@ -3,11 +3,10 @@
 namespace MercadoPago\Woocommerce\Tests\Transactions;
 
 use Exception;
-use MercadoPago\PP\Sdk\Common\AbstractEntity;
-use MercadoPago\PP\Sdk\Exceptions\ApiException;
-use MercadoPago\PP\Sdk\Sdk;
+use MercadoPago\Woocommerce\Api\Core\CoreRequestContext;
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Http\TransportException;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
-use MercadoPago\Woocommerce\Helpers\Arrays;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
@@ -68,40 +67,79 @@ class AbstractTransactionTest extends TestCase
      */
     public function testLogTransactionPayload()
     {
-        $this->transaction->transaction = Mockery::mock(AbstractEntity::class)
-            ->expects()
-            ->toArray()
-            ->andReturn([])
-            ->getMock();
-
-        Mockery::mock('alias:' . Arrays::class)
-            ->expects()
-            ->except([], ['token'])
-            ->andReturn([])
-            ->getMock()
-            ->expects()
-            ->last(Mockery::type('array'))
-            ->andReturn('Transaction');
+        $this->transaction->transaction = [
+            'token' => 'single-use-token',
+            'payer' => [
+                'email' => 'buyer@example.com',
+                'identification' => [
+                    'type' => 'CC',
+                    'number' => '1234567890',
+                ],
+                'phone' => [],
+            ],
+            'additional_info' => ['items' => [['id' => 'fixture']]],
+            'notification_url' => 'https://store.example?wc-api=WC_WooMercadoPago_Pse_Gateway&source_news=webhooks',
+            'callback_url' => 'https://store.example/checkout/order-received/597/?key=wc_order_secret',
+            'nullable_field' => null,
+            'metadata' => [
+                'platform' => 'woocommerce',
+                'platform_version' => '10.9.4',
+                'module_version' => '8.9.5',
+                'settings' => ['enabled' => 'yes'],
+                'billing_address' => (object) ['city_name' => 'Bogota'],
+                'flow_id' => 'checkout-flow-id',
+            ],
+            'payment_method_id' => 'pse',
+            'statement_descriptor' => '',
+            'transaction_amount' => 15000.0,
+        ];
 
         $this->transaction->mercadopago->logs->file = Mockery::mock(File::class)
             ->expects()
-            ->info('Transaction payload', '', [])
+            ->info('Transaction payload', '', [
+                'payer' => [
+                    'email' => '[redacted]',
+                    'identification' => [
+                        'type' => 'CC',
+                        'number' => '[redacted]',
+                    ],
+                    'phone' => [],
+                ],
+                'additional_info' => ['items' => [['id' => 'fixture']]],
+                'notification_url' => 'https://store.example?wc-api=WC_WooMercadoPago_Pse_Gateway&source_news=webhooks',
+                'callback_url' => 'https://store.example/checkout/order-received/597/?key=[redacted]',
+                'nullable_field' => null,
+                'metadata' => [
+                    'platform' => 'woocommerce',
+                    'platform_version' => '10.9.4',
+                    'module_version' => '8.9.5',
+                    'settings' => ['enabled' => 'yes'],
+                    'billing_address' => ['city_name' => '[redacted]'],
+                    'flow_id' => '[redacted]',
+                ],
+                'payment_method_id' => 'pse',
+                'statement_descriptor' => '',
+                'transaction_amount' => 15000.0,
+            ])
             ->getMock();
 
         $this->transaction->logTransactionPayload();
     }
 
-    public function testGetSdk(): void
+    public function testGetCoreRequestContext(): void
     {
         // Define constant if not exists (needed for Device::getDeviceProductId)
         if (!defined('MP_PRODUCT_ID_MOBILE')) {
             define('MP_PRODUCT_ID_MOBILE', 'BT7OFH09QS3001K5A0H0');
         }
 
+        $accessToken = random()->uuid();
+        $integratorId = random()->uuid();
+
         $this->transaction->mercadopago->sellerConfig
             ->expects()
             ->getCredentialsAccessToken()
-            ->andReturn(random()->uuid());
+            ->andReturn($accessToken);
 
         // Mock the underlying WordPress function instead of alias mocking Device class
         WP_Mock::userFunction('wp_is_mobile')
@@ -110,9 +148,19 @@ class AbstractTransactionTest extends TestCase
         $this->transaction->mercadopago->storeConfig
             ->expects()
             ->getIntegratorId()
-            ->andReturn(random()->uuid());
+            ->andReturn($integratorId);
 
-        $this->assertInstanceOf(Sdk::class, $this->transaction->getSdk());
+        $method = new ReflectionMethod(AbstractTransaction::class, 'getCoreRequestContext');
+        $method->setAccessible(true);
+        $context = $method->invoke($this->transaction);
+
+        $this->assertInstanceOf(CoreRequestContext::class, $context);
+        $this->assertSame([
+            'Authorization' => 'Bearer ' . $accessToken,
+            'x-platform-id' => MP_PLATFORM_ID,
+            'x-product-id' => MP_PRODUCT_ID_DESKTOP,
+            'x-integrator-id' => $integratorId,
+        ], $context->toHeaders());
     }
 
     /**
@@ -161,11 +209,11 @@ class AbstractTransactionTest extends TestCase
 
         $this->setCommonTransactionMock($expected);
 
-        $this->transaction->transaction = new \stdClass();
+        $this->transaction->transaction = [];
 
         $this->transaction->setCommonTransaction();
 
-        $this->assertObjectEqualsArray($expected, $this->transaction->transaction);
+        $this->assertSame($expected, $this->transaction->transaction);
     }
 
     /**
@@ -174,7 +222,7 @@ class AbstractTransactionTest extends TestCase
      * @testWith [true]
      *           [false]
      */
-    public function testGetInternalMetadata(bool $userExists): void
+    public function testSetCheckoutDataAssemblesAndSerializesRealMetadata(bool $userExists): void
     {
         $mockFlowId = random()->uuid();
 
@@ -336,7 +384,18 @@ class AbstractTransactionTest extends TestCase
 
         $expected['billing_address']['zip_code'] = str_replace('-', '', $expected['billing_address']['zip_code']);
 
-        $this->assertObjectEqualsArray($expected, $this->transaction->getInternalMetadata());
+        $this->transaction->transaction = ['metadata' => ['flow_id' => 'stale'], 'transaction_amount' => 123.45];
+        $this->assertSame($this->transaction, $this->transaction->setCheckoutData(['checkout_type' => 'wallet_button']));
+        $metadata = $this->transaction->transaction['metadata'];
+        // PaymentMetadata's string properties are serialized with their declared types.
+        $expected['sponsor_id'] = (string) $expected['sponsor_id'];
+        $expected['collector'] = (string) $expected['collector'];
+        $expected['test_mode'] = (string) $expected['test_mode'];
+        $serialized = json_decode(json_encode($metadata), true);
+        ksort($expected);
+        ksort($serialized);
+        $this->assertSame($expected, $serialized);
+        $this->assertSame(123.45, $this->transaction->transaction['transaction_amount']);
     }
 
     /**
@@ -352,8 +411,7 @@ class AbstractTransactionTest extends TestCase
         ];
 
         // Mock the transaction object
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = [];
+        $this->transaction->transaction = ['metadata' => []];
 
         // Create a mock PaymentMetadata object
         $mockMetadata = Mockery::mock(PaymentMetadata::class);
@@ -375,7 +433,7 @@ class AbstractTransactionTest extends TestCase
 
         // Assert that metadata was recreated with new data (cast to array as per the method)
         $expectedMetadataArray = (array) $mockMetadata;
-        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction->metadata);
+        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction['metadata']);
     }
 
     /**
@@ -389,8 +447,7 @@ class AbstractTransactionTest extends TestCase
         $checkoutData = ['_mp_flow_id' => 'new-flow-id-456'];
 
         // Mock the transaction object
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => 'old-flow-id'];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => 'old-flow-id']];
 
         // Create a mock PaymentMetadata object with updated flow_id
         $mockMetadata = Mockery::mock(PaymentMetadata::class);
@@ -412,8 +469,8 @@ class AbstractTransactionTest extends TestCase
 
         // Assert that metadata was recreated with updated data
         $expectedMetadataArray = (array) $mockMetadata;
-        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction->metadata);
-        $this->assertEquals('new-flow-id-456', $this->transaction->transaction->metadata['flow_id']);
+        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction['metadata']);
+        $this->assertEquals('new-flow-id-456', $this->transaction->transaction['metadata']['flow_id']);
     }
 
     /**
@@ -427,8 +484,7 @@ class AbstractTransactionTest extends TestCase
         $checkoutData = [];
 
         // Mock the transaction object
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = [];
+        $this->transaction->transaction = ['metadata' => []];
 
         // Create a mock PaymentMetadata object without flow_id
         $mockMetadata = Mockery::mock(PaymentMetadata::class);
@@ -450,8 +506,8 @@ class AbstractTransactionTest extends TestCase
 
         // Assert that metadata was recreated
         $expectedMetadataArray = (array) $mockMetadata;
-        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction->metadata);
-        $this->assertNull($this->transaction->transaction->metadata['flow_id']);
+        $this->assertEquals($expectedMetadataArray, $this->transaction->transaction['metadata']);
+        $this->assertNull($this->transaction->transaction['metadata']['flow_id']);
     }
 
     /**
@@ -463,8 +519,7 @@ class AbstractTransactionTest extends TestCase
     public function testSendApiErrorMetricDispatchesToDatadogWithContext(bool $isTestMode, string $expectedEnvironment): void
     {
         // No flow_id or checkout_type resolved on the transaction metadata → both degrade to null.
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => null, 'checkout_type' => null];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => null, 'checkout_type' => null]];
 
         $apiRoute  = '/checkout/preferences';
         $exception = new Exception('API failure', 400);
@@ -512,8 +567,7 @@ class AbstractTransactionTest extends TestCase
     public function testSendApiErrorMetricForwardsMetadataFieldsToDatadog(string $apiRoute, int $statusCode, string $checkoutType): void
     {
         $flowId = random()->uuid();
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => $checkoutType];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => $flowId, 'checkout_type' => $checkoutType]];
 
         $exception = new Exception('API failure', $statusCode);
         $siteId    = 'MLB';
@@ -564,8 +618,7 @@ class AbstractTransactionTest extends TestCase
      */
     public function testSendApiErrorMetricSendsNullSdkInstanceIdWhenMetadataHasNoFlowId(): void
     {
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = [];
+        $this->transaction->transaction = ['metadata' => []];
 
         $apiRoute  = '/checkout/preferences';
         $exception = new Exception('API failure', 422);
@@ -610,8 +663,7 @@ class AbstractTransactionTest extends TestCase
      */
     public function testSendApiErrorMetricCoercesEmptyFlowIdToNull(): void
     {
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => '', 'checkout_type' => ''];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => '', 'checkout_type' => '']];
 
         $apiRoute  = '/checkout/preferences';
         $exception = new Exception('API failure', 400);
@@ -647,7 +699,53 @@ class AbstractTransactionTest extends TestCase
     }
 
     /**
-     * A successful creation (no exception) is a 2xx: the SDK only returns data on 200/201, throwing on 4xx/5xx.
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendApiErrorMetricIncludesTransportCode(): void
+    {
+        $this->transaction->transaction = ['metadata' => []];
+
+        $apiRoute = '/v1/asgard/payments';
+        $exception = new TransportException('http_request_failed');
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn('MLB')
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn('cust-id');
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent(
+                'mp_api_error',
+                '0',
+                'Unable to connect to Mercado Pago API.',
+                null,
+                [
+                    'team' => 'big',
+                    'api_route' => $apiRoute,
+                    'site_id' => 'MLB',
+                    'environment' => 'prod',
+                    'cust_id' => 'cust-id',
+                    'sdk_instance_id' => null,
+                    'transport_code' => 'http_request_failed',
+                ]
+            );
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendApiErrorMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    /**
+     * A successful creation (no exception) is a 2xx: the Core client only returns data on 2xx.
      * The response body carries the payment's business status, so payment_status reflects it (approved here).
      *
      * @runInSeparateProcess
@@ -656,8 +754,7 @@ class AbstractTransactionTest extends TestCase
     public function testSendPaymentCreateResultMetricRecordsApprovedPaymentAs2xx(): void
     {
         $flowId = random()->uuid();
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => 'credit_card'];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => $flowId, 'checkout_type' => 'credit_card']];
 
         $apiRoute = '/checkout/preferences';
         $siteId   = 'MLB';
@@ -704,8 +801,7 @@ class AbstractTransactionTest extends TestCase
     public function testSendPaymentCreateResultMetricRecordsRejectedPaymentAs2xx(): void
     {
         $flowId = random()->uuid();
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => 'credit_card'];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => $flowId, 'checkout_type' => 'credit_card']];
 
         $apiRoute = '/checkout/preferences';
         $siteId   = 'MLB';
@@ -752,8 +848,7 @@ class AbstractTransactionTest extends TestCase
     public function testSendPaymentCreateResultMetricRecordsApiExceptionAs4xx(): void
     {
         $flowId = random()->uuid();
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => 'super_token'];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => $flowId, 'checkout_type' => 'super_token']];
 
         $apiRoute  = '/checkout/preferences';
         $exception = new ApiException('Bad request', 'CPP_0001', 400, 'raw error chain');
@@ -792,7 +887,7 @@ class AbstractTransactionTest extends TestCase
     }
 
     /**
-     * Defensive: the SDK today only raises ApiException for 4xx, but the classification reads the status the
+     * Defensive: the classification reads the status the
      * exception carries (getApiStatus), so an ApiException flagged 5xx must map to '5xx', not '4xx'.
      *
      * @runInSeparateProcess
@@ -801,8 +896,7 @@ class AbstractTransactionTest extends TestCase
     public function testSendPaymentCreateResultMetricClassifiesApiExceptionByCarriedStatus(): void
     {
         $flowId = random()->uuid();
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => $flowId, 'checkout_type' => 'credit_card'];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => $flowId, 'checkout_type' => 'credit_card']];
 
         $apiRoute  = '/checkout/preferences';
         $exception = new ApiException('Server Error', 'CPP_0002', 503, 'raw error chain');
@@ -841,15 +935,14 @@ class AbstractTransactionTest extends TestCase
     }
 
     /**
-     * Any non-ApiException is the SDK's generic "Internal API Error" (5xx): no attributable status code.
+     * Any non-ApiException is treated as a 5xx with no attributable status code.
      *
      * @runInSeparateProcess
      * @preserveGlobalState disabled
      */
     public function testSendPaymentCreateResultMetricRecordsGenericExceptionAs5xx(): void
     {
-        $this->transaction->transaction = new \stdClass();
-        $this->transaction->transaction->metadata = ['flow_id' => null, 'checkout_type' => null];
+        $this->transaction->transaction = ['metadata' => ['flow_id' => null, 'checkout_type' => null]];
 
         $apiRoute  = '/checkout/preferences';
         $exception = new Exception('Internal API Error');
@@ -881,6 +974,55 @@ class AbstractTransactionTest extends TestCase
                 'payment_status'   => null,
                 'device'           => 'unknown',
             ]);
+
+        $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
+        $method->setAccessible(true);
+        $method->invoke($this->transaction, $apiRoute, $exception);
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSendPaymentCreateResultMetricIncludesTransportCode(): void
+    {
+        $this->transaction->transaction = ['metadata' => []];
+
+        $apiRoute = '/v1/asgard/payments';
+        $exception = new TransportException('http_request_failed');
+
+        $this->transaction->mercadopago->sellerConfig
+            ->expects()->getSiteId()->andReturn('MLB')
+            ->getMock()
+            ->expects()->getCustIdFromAT()->andReturn('cust-id');
+
+        $this->transaction->mercadopago->storeConfig
+            ->expects()->isTestMode()->andReturn(false);
+
+        Mockery::mock('alias:' . Datadog::class)
+            ->expects()
+            ->getInstance()
+            ->andReturnSelf()
+            ->getMock()
+            ->expects()
+            ->sendEvent(
+                'mp_payment_create_result',
+                '5xx',
+                'Unable to connect to Mercado Pago API.',
+                null,
+                [
+                    'team' => 'big',
+                    'api_route' => $apiRoute,
+                    'site_id' => 'MLB',
+                    'environment' => 'prod',
+                    'cust_id' => 'cust-id',
+                    'sdk_instance_id' => null,
+                    'alert_type' => 'error',
+                    'payment_status' => null,
+                    'device' => 'unknown',
+                    'transport_code' => 'http_request_failed',
+                ]
+            );
 
         $method = new ReflectionMethod(AbstractTransaction::class, 'sendPaymentCreateResultMetric');
         $method->setAccessible(true);

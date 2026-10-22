@@ -2,13 +2,14 @@
 
 namespace MercadoPago\Woocommerce\Tests\Refund;
 
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Refund\RefundHandler;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Exceptions\RefundException;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery;
 use WP_Mock;
 
@@ -19,6 +20,7 @@ use WP_Mock;
 class RefundHandlerTest extends TestCase
 {
     use WoocommerceMock;
+    use MockeryPHPUnitIntegration;
 
     private RefundHandler $refundHandler;
     private Requester $requester;
@@ -2036,5 +2038,25 @@ class RefundHandlerTest extends TestCase
         $this->expectExceptionMessage(RefundException::TYPE_NO_PERMISSION);
 
         $this->refundHandler->processRefund(100.00);
+    }
+
+    public function testUnexpectedMetadataFailureIsRethrownWithoutRefundRequestOrPersistence(): void
+    {
+        $failure = new \RuntimeException('Metadata read failed', 17);
+        $this->order->shouldReceive('get_meta')->with('_Mercado_Pago_Payment_IDs')->once()->andThrow($failure);
+        $this->order->shouldNotReceive('update_meta_data');
+        $this->order->shouldNotReceive('save');
+        $this->requester->shouldNotReceive('post');
+        $this->mockDatadogError('17', 'Metadata read failed', 'woo_refund_error');
+        $this->mercadopagoMock->logs->file = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $this->mercadopagoMock->logs->file->shouldReceive('error')->once()
+            ->with('Unexpected refund error: Metadata read failed', 'MercadoPago_RefundHandler');
+
+        try {
+            $this->refundHandler->processRefund(100.00);
+            $this->fail('Unexpected metadata failure must be rethrown');
+        } catch (\RuntimeException $actual) {
+            $this->assertSame($failure, $actual);
+        }
     }
 }

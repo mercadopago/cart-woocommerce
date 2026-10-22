@@ -3,14 +3,14 @@
 namespace MercadoPago\Woocommerce\Tests\Transactions;
 
 use Exception;
-use MercadoPago\PP\Sdk\Entity\Payment\Payment;
+use MercadoPago\Woocommerce\Api\Core\CoreRequestContext;
+use MercadoPago\Woocommerce\Api\Core\Models\Payment;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Tests\Traits\TransactionMock;
 use MercadoPago\Woocommerce\Transactions\AbstractPaymentTransaction;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Mockery;
-use stdClass;
 
 class AbstractPaymentTransactionTest extends TestCase
 {
@@ -41,21 +41,31 @@ class AbstractPaymentTransactionTest extends TestCase
 
         $apiRoute = '/v1/asgard/payments';
 
-        $this->transaction->transaction
+        $context = new CoreRequestContext();
+        $this->transaction->shouldAllowMockingProtectedMethods()
+            ->expects()->getCoreRequestContext()->andReturn($context);
+        $data = [
+            'id' => '123',
+            'status' => 'approved',
+            'status_detail' => 'accredited',
+            'payment_method_id' => 'master',
+            'payment_type_id' => 'credit_card',
+            'payer' => ['email' => 'buyer@example.com'],
+        ];
+        $this->transaction->mercadopago->coreApi->payments
             ->expects()
-            ->getUris()
-            ->andReturn(['post' => $apiRoute]);
-
-        $this->transaction->transaction
-            ->expects()
-            ->save()
-            ->andReturn($data = [
-                'random' => random()->word()
-            ]);
+            ->create($this->transaction->transaction, $context, isset($checkout['session_id']) ? (string) $checkout['session_id'] : null)
+            ->andReturn(Payment::fromArray($data));
 
         $this->transaction->mercadopago->logs->file = Mockery::mock(File::class)
             ->expects()
-            ->info('Payment created', '', $data)
+            ->info('Payment created', '', [
+                'id' => '123',
+                'status' => 'approved',
+                'status_detail' => 'accredited',
+                'payment_method_id' => 'master',
+                'payment_type_id' => 'credit_card',
+            ])
             ->getMock();
 
         $this->transaction
@@ -64,7 +74,6 @@ class AbstractPaymentTransactionTest extends TestCase
             ->sendPaymentCreateResultMetric($apiRoute, null, $data);
 
         $this->assertEquals($data, $this->transaction->createPayment());
-        $this->assertEquals($checkout['session_id'] ?? null, $this->transaction->transaction->session_id);
     }
 
     public function testCreatePaymentSendsApiErrorMetricAndRethrowsOnException(): void
@@ -76,15 +85,13 @@ class AbstractPaymentTransactionTest extends TestCase
             ->expects()
             ->logTransactionPayload();
 
-        $this->transaction->transaction
+        $context = new CoreRequestContext();
+        $this->transaction->shouldAllowMockingProtectedMethods()
+            ->expects()->getCoreRequestContext()->andReturn($context);
+        $this->transaction->mercadopago->coreApi->payments
             ->expects()
-            ->save()
+            ->create($this->transaction->transaction, $context, null)
             ->andThrow($exception);
-
-        $this->transaction->transaction
-            ->expects()
-            ->getUris()
-            ->andReturn(['post' => $apiRoute]);
 
         $this->transaction
             ->shouldAllowMockingProtectedMethods()
@@ -105,6 +112,6 @@ class AbstractPaymentTransactionTest extends TestCase
 
         $this->transaction->setPayerTransaction();
 
-        $this->assertObjectEqualsArray($expected, $this->transaction->transaction->payer);
+        $this->assertEquals($expected, $this->transaction->transaction['payer']);
     }
 }

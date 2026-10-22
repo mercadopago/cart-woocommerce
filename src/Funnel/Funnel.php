@@ -3,8 +3,7 @@
 namespace MercadoPago\Woocommerce\Funnel;
 
 use Exception;
-use MercadoPago\PP\Sdk\Common\Constants;
-use MercadoPago\PP\Sdk\Sdk;
+use MercadoPago\Woocommerce\Api\Core\FunnelClient;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Gateways;
@@ -14,11 +13,11 @@ use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 class Funnel
 {
     // Generic message reported for the seller-contact step, instead of the real
-    // exception, since the SDK exception can echo the request body (which carries
+    // exception, since an upstream error can echo the request body (which carries
     // the seller's email) verbatim — see runWithTreatment().
     private const SELLER_CONTACT_ERROR_MESSAGE = 'Error updating seller contact information';
 
-    private Sdk $sdk;
+    private FunnelClient $client;
 
     private Store $store;
 
@@ -33,14 +32,15 @@ class Funnel
     /**
      * Funnel constructor
      *
+     * @param FunnelClient $client
      * @param Store $store
      * @param Seller $seller
      * @param Country $country
      * @param Gateways $gateways
      */
-    public function __construct(Store $store, Seller $seller, Country $country, Gateways $gateways)
+    public function __construct(FunnelClient $client, Store $store, Seller $seller, Country $country, Gateways $gateways)
     {
-        $this->sdk      = new Sdk();
+        $this->client   = $client;
         $this->store    = $store;
         $this->seller   = $seller;
         $this->country  = $country;
@@ -58,15 +58,15 @@ class Funnel
         }
 
         $this->runWithTreatment(function () use ($after) {
-            $createSellerFunnelBase = $this->sdk->getCreateSellerFunnelBaseInstance();
-            $createSellerFunnelBase->platform_id = MP_PLATFORM_ID;
-            $createSellerFunnelBase->shop_url = site_url();
-            $createSellerFunnelBase->platform_version = $this->getWoocommerceVersion();
-            $createSellerFunnelBase->plugin_version = MP_VERSION;
-            $createSellerFunnelBase->site_id = $this->resolveSiteId();
-            $response = $createSellerFunnelBase->save();
-            $this->store->setInstallationId($response->id);
-            $this->store->setInstallationKey($response->cpp_token);
+            $registration = $this->client->create([
+                'platform_id' => MP_PLATFORM_ID,
+                'shop_url' => site_url(),
+                'platform_version' => $this->getWoocommerceVersion(),
+                'plugin_version' => MP_VERSION,
+                'site_id' => $this->resolveSiteId(),
+            ]);
+            $this->store->setInstallationId($registration->getId());
+            $this->store->setInstallationKey($registration->getCppToken());
 
             if (isset($after)) {
                 $after();
@@ -159,19 +159,10 @@ class Funnel
             return;
         }
 
-        $attrs = array_merge($attrs, [
-            'id' => $this->store->getInstallationId(),
-            'cpp_token' => $this->store->getInstallationKey(),
-        ]);
+        $attrs['id'] = $this->store->getInstallationId();
 
         $this->runWithTreatment(function () use ($attrs, $after) {
-            $updateSellerFunnelBase = $this->getUpdateSellerFunnelBaseInstance();
-
-            foreach ($attrs as $attr => $value) {
-                $updateSellerFunnelBase->$attr = $value;
-            }
-
-            $updateSellerFunnelBase->update();
+            $this->client->update($attrs, $this->store->getInstallationKey());
 
             if (isset($after)) {
                 $after();
@@ -230,14 +221,9 @@ class Funnel
         return $GLOBALS['woocommerce']->version ?? "";
     }
 
-    private function getUpdateSellerFunnelBaseInstance(): UpdateSellerFunnelBase
-    {
-        return $this->sdk->getEntityInstance(UpdateSellerFunnelBase::class, Constants::BASEURL_MP);
-    }
-
     /**
      * @param \Closure $callback
-     * @param string $sanitizedError When given, reported in place of the SDK
+     * @param string $sanitizedError When given, reported in place of the upstream
      *                               exception, which can echo the request body
      *                               verbatim (e.g. on a JSON encode failure) and
      *                               leak PII into the plugin log and Datadog

@@ -67,6 +67,79 @@ class CartTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * @dataProvider convertedSubtotals
+     */
+    public function testConvertedSubtotalIncludesTaxAndUsesCountryRatio(
+        string $method,
+        string $percentageProperty,
+        float $percentage,
+        string $currency,
+        float $ratio,
+        float $expected
+    ): void {
+        $gateway = Mockery::mock(CartGatewayStub::class)->makePartial();
+        $gateway->{$percentageProperty} = $percentage;
+        $this->wcCart->shouldReceive('get_cart_contents_total')->once()->andReturn(100.0);
+        $this->wcCart->shouldReceive('get_cart_contents_tax')->once()->andReturn(20.0);
+        $this->currency->shouldReceive('getRatio')->once()->with($gateway)->andReturn($ratio);
+        $this->country->shouldReceive('getCountryConfigs')->once()->andReturn(['currency' => $currency]);
+
+        $this->assertSame($expected, $this->cart->{$method}($gateway));
+    }
+
+    public function convertedSubtotals(): array
+    {
+        return [
+            'BRL discount includes tax and ratio' => ['calculateSubtotalWithDiscount', 'discount', 10.0, 'BRL', 2.0, 24.0],
+            'BRL commission includes tax and ratio' => ['calculateSubtotalWithCommission', 'commission', 5.0, 'BRL', 2.0, 12.0],
+            'CLP discount rounds converted amount' => ['calculateSubtotalWithDiscount', 'discount', 10.0, 'CLP', 1.375, 17.0],
+            'COP commission rounds converted amount' => ['calculateSubtotalWithCommission', 'commission', 5.0, 'COP', 1.75, 11.0],
+        ];
+    }
+
+    public function testConvertedTotalUsesWooCommerceTotalCountryAndRatio(): void
+    {
+        $gateway = Mockery::mock(CartGatewayStub::class)->makePartial();
+        $this->wcCart->shouldReceive('__get')->once()->with('total')->andReturn(150.0);
+        $this->wcCart->shouldNotReceive('get_cart_contents_total');
+        $this->wcCart->shouldNotReceive('get_cart_contents_tax');
+        $this->currency->shouldReceive('getRatio')->once()->with($gateway)->andReturn(1.5);
+        $this->country->shouldReceive('getCountryConfigs')->once()->andReturn(['currency' => 'CLP']);
+
+        $this->assertSame(225.0, $this->cart->calculateTotalWithDiscountAndCommission($gateway));
+    }
+
+    /**
+     * @dataProvider conversionMethods
+     */
+    public function testConversionFailurePropagatesBeforeReadingCartAmount(string $method): void
+    {
+        $gateway = Mockery::mock(CartGatewayStub::class)->makePartial();
+        $failure = new Exception('Exchange rate unavailable');
+        $this->currency->shouldReceive('getRatio')->once()->with($gateway)->andThrow($failure);
+        $this->country->shouldNotReceive('getCountryConfigs');
+        $this->wcCart->shouldNotReceive('__get');
+        $this->wcCart->shouldNotReceive('get_cart_contents_total');
+        $this->wcCart->shouldNotReceive('get_cart_contents_tax');
+
+        try {
+            $this->cart->{$method}($gateway);
+            $this->fail('Expected the original exchange failure to propagate.');
+        } catch (Exception $exception) {
+            $this->assertSame($failure, $exception);
+        }
+    }
+
+    public function conversionMethods(): array
+    {
+        return [
+            'discount' => ['calculateSubtotalWithDiscount'],
+            'commission' => ['calculateSubtotalWithCommission'],
+            'total' => ['calculateTotalWithDiscountAndCommission'],
+        ];
+    }
+
     // -------------------------------------------------------------------------
     // addDiscountOnFees — only adds when discount > 0
     // -------------------------------------------------------------------------

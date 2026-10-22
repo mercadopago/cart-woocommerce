@@ -132,9 +132,8 @@ class SubscriptionsHelperTest extends TestCase
     public function testSetSubscriptionMetaNoOpsForNonObject(): void
     {
         // Should not throw — just return silently
-        $this->helper->setSubscriptionMeta(null, 'key', 'value');
-        $this->helper->setSubscriptionMeta('not-a-subscription', 'key', 'value');
-        $this->assertTrue(true);
+        $this->assertNull($this->helper->setSubscriptionMeta(null, 'key', 'value'));
+        $this->assertNull($this->helper->setSubscriptionMeta('not-a-subscription', 'key', 'value'));
     }
 
     public function testSetSubscriptionMetaPersistsValue(): void

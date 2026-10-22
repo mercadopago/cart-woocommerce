@@ -88,6 +88,24 @@ function buildDetailsSection(
   });
 }
 
+// Only the catalog's exact bold markers create elements; all other content stays text.
+function buildDueDateCopy(copy: string): Node[] {
+  let bold = false;
+  return (typeof copy === 'string' ? copy : '').split(/(<\/?b>)/).flatMap((part): Node[] => {
+    if (part === '<b>') {
+      bold = true;
+      return [];
+    }
+    if (part === '</b>') {
+      bold = false;
+      return [];
+    }
+    return [bold
+      ? el('b', { attrs: { style: 'font-weight: 600 !important;' }, text: part })
+      : document.createTextNode(part)];
+  });
+}
+
 // Fills the due-date slot via DOM APIs (the date comes from the SDK, so it must never reach an
 // HTML sink); throws when the slot is absent (mirrors the legacy method, whose throw is caught
 // by the change handler to record the due-date failure metric).
@@ -102,7 +120,8 @@ function renderDueDate(paymentMethod: PaymentMethod, deps: VariantViewDeps): voi
     el('span', {
       attrs: { style: 'font-weight: 400 !important;' },
       children: [
-        document.createTextNode(`${deps.copy.consumerCreditsDueDateText} `),
+        ...buildDueDateCopy(deps.copy.consumerCreditsDueDateText),
+        document.createTextNode(' '),
         el('b', {
           attrs: { style: 'font-weight: 600 !important;' },
           text: formatDateToDayAndMonth(nextDueDate, deps),

@@ -11,7 +11,6 @@ jest.mock('@super-token/adapters/legacy/globalBridge');
 jest.mock('@super-token/adapters/platform', () => ({
   CoreMonitorMetricsAdapter: jest.fn(),
   createDomainConfig: jest.fn(() => ({ paymentMethodsOrder: 'cards_first' })),
-  resolveMlcCopy: jest.fn((params) => params),
 }));
 jest.mock('@super-token/core/checkoutSession/PaymentMethodCatalog', () => ({
   PaymentMethodCatalog: jest.fn(() => ({ reorderAccountPaymentMethods: (m) => m })),
@@ -31,7 +30,8 @@ describe('composeRuntime', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    metrics = { sendMetric: jest.fn() };
+    metrics = { sendMetric: jest.fn(), storeLanguageDivergesFromSite: jest.fn() };
+    document.documentElement.lang = '';
     recompose = { current: () => {} };
     delete window.mpSdkInstance;
     delete window.mpSuperTokenTriggerHandler;
@@ -78,27 +78,57 @@ describe('composeRuntime', () => {
     expect(typeof recompose.current).toBe('function');
   });
 
-  it('Given an MLC hybrid store where an older plugin already built the legacy controller (guard tripped), When composed, Then the legacy controller still receives the bundle MLC copy', async () => {
-    // RN-2: the trigger-handler guard makes buildAndPublishInstances a no-op here, so
-    // this is the only place the legacy controller's copy gets refreshed for this hybrid scenario.
+  it('Given an MLC store on a plugin that sends store_language_copy, When composed, Then the plugin params reach the domain untouched', async () => {
     const platform = require('@super-token/adapters/platform');
-    platform.resolveMlcCopy.mockImplementation((params) => ({
-      ...params,
-      account_money_text: 'Dinero disponible en Mercado Pago',
-    }));
+    mockResolveVariant.mockResolvedValue('v2');
+    window.mpSdkInstance = {};
+    window.mpSuperTokenTriggerHandler = {};
+    window.mpSuperTokenPaymentMethods = { ACCOUNT_MONEY_TEXT: 'Account money in Mercado Pago' };
+    const params = { site_id: 'MLC', store_language_copy: true, account_money_text: 'Account money in Mercado Pago' };
+
+    await composeRuntime(params, recompose, metrics);
+
+    const [domainParams] = platform.createDomainConfig.mock.calls[0];
+    expect(domainParams).toBe(params);
+    expect(domainParams.account_money_text).toBe('Account money in Mercado Pago');
+    expect(window.mpSuperTokenPaymentMethods.ACCOUNT_MONEY_TEXT).toBe('Account money in Mercado Pago');
+
+    delete window.mpSuperTokenPaymentMethods;
+  });
+
+  it('Given an MLC store on an older plugin whose legacy controller is already built, When composed, Then the domain and the legacy controller get the bundle Chilean copy', async () => {
+    // The trigger-handler guard makes buildAndPublishInstances a no-op here, so this is the only
+    // place the legacy controller's copy gets refreshed for this hybrid scenario.
+    const platform = require('@super-token/adapters/platform');
     mockResolveVariant.mockResolvedValue('v2');
     window.mpSdkInstance = {};
     window.mpSuperTokenTriggerHandler = {};
     window.mpSuperTokenPaymentMethods = { ACCOUNT_MONEY_TEXT: 'Texto genérico es.mo' };
 
-    await composeRuntime(
-      { site_id: 'MLC', account_money_text: 'Texto genérico es.mo' },
-      recompose,
-      metrics,
-    );
+    await composeRuntime({ site_id: 'MLC', account_money_text: 'Texto genérico es.mo' }, recompose, metrics);
 
+    const [domainParams] = platform.createDomainConfig.mock.calls[0];
+    expect(domainParams.account_money_text).toBe('Dinero disponible en Mercado Pago');
     expect(window.mpSuperTokenPaymentMethods.ACCOUNT_MONEY_TEXT).toBe('Dinero disponible en Mercado Pago');
 
     delete window.mpSuperTokenPaymentMethods;
+  });
+
+  it('Given a store language that differs from the credential site, When composed, Then the divergence is reported', async () => {
+    mockResolveVariant.mockResolvedValue('v2');
+    document.documentElement.lang = 'es-ES';
+
+    await composeRuntime({ site_id: 'MLC', store_language_copy: true }, recompose, metrics);
+
+    expect(metrics.storeLanguageDivergesFromSite).toHaveBeenCalledWith('es-es', 'MLC');
+  });
+
+  it('Given the store language expected for the credential site, When composed, Then no divergence is reported', async () => {
+    mockResolveVariant.mockResolvedValue('v2');
+    document.documentElement.lang = 'es-CL';
+
+    await composeRuntime({ site_id: 'MLC', store_language_copy: true }, recompose, metrics);
+
+    expect(metrics.storeLanguageDivergesFromSite).not.toHaveBeenCalled();
   });
 });

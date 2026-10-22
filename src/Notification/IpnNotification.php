@@ -3,8 +3,6 @@
 namespace MercadoPago\Woocommerce\Notification;
 
 use Exception;
-use MercadoPago\PP\Sdk\Common\AbstractCollection;
-use MercadoPago\PP\Sdk\Common\AbstractEntity;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\Requester;
@@ -198,7 +196,7 @@ class IpnNotification extends AbstractNotification
      *
      * @param string $id
      *
-     * @return AbstractCollection|AbstractEntity|object|null
+     * @return mixed
      * @throws Exception
      */
     public function getPaymentInfo(string $id)

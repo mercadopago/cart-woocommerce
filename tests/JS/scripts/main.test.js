@@ -48,8 +48,8 @@ describe('main.js — super-token asset build', () => {
       const contents = fs.writeFileSync.mock.calls.map(([, content]) => content);
       expect(contents).toEqual([
         '.compiled{color:red}',
-        ':root{--mp-super-token-loader-version:1.2.7}.compiled{color:red}',
-        ':root{--mp-super-token-loader-version:1.2.7}.compiled{color:red}',
+        ':root{--mp-super-token-loader-version:1.2.11}.compiled{color:red}',
+        ':root{--mp-super-token-loader-version:1.2.11}.compiled{color:red}',
       ]);
     });
 
@@ -130,7 +130,7 @@ describe('main.js — super-token asset build', () => {
 
   describe('SUPER_TOKEN_LOADER_VERSION (A/B variant list)', () => {
     it('declares a version for both A/B variants', () => {
-      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ v2: '1.2.7', 'v2.1': '1.2.7' });
+      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ v2: '1.2.11', 'v2.1': '1.2.11' });
     });
   });
 
@@ -144,6 +144,46 @@ describe('main.js — super-token asset build', () => {
           'assets/css/checkouts/super-token/super-token-v2.1.bundle.min.css',
         ],
       });
+    });
+  });
+
+  describe('generateGenericSpanishCatalog', () => {
+    it('applies only the two Credits exceptions and preserves card copy and other contexts', () => {
+      const entry = (context, id, text) => [
+        ...(context === null ? [] : [`msgctxt "${context}"`]),
+        `msgid "${id}"`, `msgstr "${text}"`,
+      ].join('\n');
+      const header = 'msgid ""\nmsgstr ""\n"Language: es_AR\\n"';
+      const sharedId = 'Buy now, pay later';
+      const titleId = 'Buy in up to 12 installments without credit cards';
+      const untouched = [
+        entry(null, sharedId, 'Comprá ahora, pagá después'),
+        entry('credits seller promotion name', sharedId, 'Crédito de Mercado Pago'),
+        entry('other checkout', titleId, 'Otra traducción'),
+      ];
+      const argentine = [
+        header,
+        entry('credits buyer banner', sharedId, 'Comprá ahora, pagá después'),
+        entry(null, titleId, 'Comprá ahora y pagá después en hasta 12 cuotas'),
+        entry('card checkout', 'Installments', 'Cuotas'),
+        ...untouched,
+      ].join('\n\n');
+      const mexicanCard = entry('card checkout', 'Installments', 'Meses');
+      fs.readFileSync.mockImplementation((file) => String(file).endsWith('-es_AR.po')
+        ? argentine : [header, mexicanCard].join('\n\n'));
+
+      main.generateGenericSpanishCatalog();
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        './i18n/languages/woocommerce-mercadopago-es.po',
+        [
+          header.replace('es_AR', 'es'),
+          entry('credits buyer banner', sharedId, 'Compra ahora, paga después'),
+          entry(null, titleId, 'Compra ahora y paga después en hasta 12 cuotas'),
+          mexicanCard,
+          ...untouched,
+        ].join('\n\n') + '\n'
+      );
     });
   });
 });

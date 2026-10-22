@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Integration\Admin;
 
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\SubscriptionsCredentialsValidator;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;

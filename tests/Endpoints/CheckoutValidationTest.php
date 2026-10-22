@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Tests\Endpoints;
 
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use MercadoPago\Woocommerce\Endpoints\CheckoutValidation;
 use MercadoPago\Woocommerce\Helpers\CheckoutValidator;
 use MercadoPago\Woocommerce\Helpers\Form;
@@ -20,6 +21,7 @@ use WP_Mock;
  */
 class CheckoutValidationTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
     use WoocommerceMock;
 
     public function testRegistersWCAjaxEndpoint(): void
@@ -33,8 +35,6 @@ class CheckoutValidationTest extends TestCase
             ->withArgs([CheckoutValidation::VALIDATION_ENDPOINT, Mockery::type('callable')]);
 
         new CheckoutValidation($endpointsMock, $nonceMock);
-
-        $this->assertTrue(true);
     }
 
     public function testValidateCheckoutReturnsValidWhenNoErrors(): void
@@ -72,8 +72,6 @@ class CheckoutValidationTest extends TestCase
 
         $endpoint = new CheckoutValidation($endpointsMock, $nonceMock);
         $endpoint->mercadopagoValidateCheckout();
-
-        $this->assertTrue(true);
     }
 
     public function testValidateCheckoutReturnsErrorsWhenInvalidWithoutMeteringFormErrors(): void
@@ -121,8 +119,6 @@ class CheckoutValidationTest extends TestCase
 
         $endpoint = new CheckoutValidation($endpointsMock, $nonceMock);
         $endpoint->mercadopagoValidateCheckout();
-
-        $this->assertTrue(true);
     }
 
     public function testValidateCheckoutMetersUnexpectedErrorWithContextAndDoesNotBlock(): void
@@ -156,7 +152,5 @@ class CheckoutValidationTest extends TestCase
 
         $endpoint = new CheckoutValidation($endpointsMock, $nonceMock);
         $endpoint->mercadopagoValidateCheckout();
-
-        $this->assertTrue(true);
     }
 }

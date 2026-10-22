@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Integration\Subscriptions;
 
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use MercadoPago\Woocommerce\Gateways\CustomGateway;
 use MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
@@ -569,21 +569,51 @@ class CitFlowTest extends TestCase
     }
 
     /**
-     * When currency_conversion is active and getRatio() returns a positive value,
-     * setCurrencyRatioData() must be called with that ratio — regression guard for the
-     * fix that added this call to process_subscription_initial_payment().
+     * A successful payment-time retry must replace the constructor's 1.0 UI fallback,
+     * because buildCitPayload() converts payment items using the gateway ratio property.
+     * The same fresh ratio must also be persisted as order metadata.
      */
-    public function testCurrencyRatioIsStoredWhenCurrencyConversionIsActive(): void
+    public function testCurrencyRatioRetryRefreshesInitialFallbackUsedByPayload(): void
     {
         $this->gateway->settings['currency_conversion'] = 'yes';
 
-        $ratio = 5.177;
+        $ratio         = 5.177;
+        $ratioAttempts = 0;
         $this->gateway->mercadopago->helpers->currency
             ->shouldReceive('getRatio')
-            ->once()
-            ->andReturn($ratio);
+            ->twice()
+            ->with($this->gateway)
+            ->andReturnUsing(function () use (&$ratioAttempts, $ratio) {
+                if (++$ratioAttempts === 1) {
+                    throw new \Exception('Temporary currency conversion failure');
+                }
 
-        $order        = $this->makeOrderMock(999);
+                return $ratio;
+            });
+
+        $initialRatioMethod = new \ReflectionMethod(
+            \MercadoPago\Woocommerce\Gateways\AbstractGateway::class,
+            'getInitialCurrencyRatio'
+        );
+        $initialRatioMethod->setAccessible(true);
+        $initialRatio = $initialRatioMethod->invoke($this->gateway);
+
+        $ratioProperty = new \ReflectionProperty(CustomGateway::class, 'ratio');
+        $ratioProperty->setAccessible(true);
+        $ratioProperty->setValue($this->gateway, $initialRatio);
+
+        $this->assertSame(1.0, $initialRatio);
+
+        $this->gateway->shouldAllowMockingProtectedMethods();
+        $this->gateway->shouldReceive('sendAmountCurrencyErrorMetric')
+            ->once()
+            ->with(null, 0.0, 'Temporary currency conversion failure');
+        $this->gateway->mercadopago->helpers->cart->shouldNotReceive('isAvailable');
+        $this->assertSame('', $this->gateway->getFeeTitle());
+        $this->assertSame(1, $ratioAttempts);
+
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(999);
         $subscription = $this->makeSubscriptionMock(888);
 
         $this->gateway->mercadopago->orderMetadata
@@ -605,6 +635,54 @@ class CitFlowTest extends TestCase
         } catch (\MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException $e) {
             // expected — token is empty; not what this test is asserting
         }
+
+        $this->assertSame($ratio, $ratioProperty->getValue($this->gateway));
+        $this->assertSame(2, $ratioAttempts);
+
+        $product = Mockery::mock(\WC_Product::class);
+        $product->shouldReceive('get_description')->andReturn('Assinatura mensal');
+        $product->shouldReceive('get_image_id')->andReturn(0);
+
+        $item = Mockery::mock(\WC_Order_Item::class);
+        $item->shouldReceive('get_product')->andReturn($product);
+        $item->shouldReceive('get_name')->andReturn('Assinatura mensal');
+        $item->shouldReceive('get_product_id')->andReturn(123);
+        $item->shouldReceive('get_quantity')->andReturn(1);
+        $item->shouldReceive('get_total')->andReturn(10.00);
+        $item->shouldReceive('get_total_tax')->andReturn(0.0);
+
+        $order->shouldReceive('get_items')->andReturn([$item]);
+        $order->shouldReceive('get_shipping_total')->andReturn(0.0);
+        $order->shouldReceive('get_shipping_tax')->andReturn(0.0);
+        $order->shouldReceive('get_fees')->andReturn([]);
+        $order->shouldReceive('get_billing_email')->andReturn('buyer@example.com');
+        $order->shouldReceive('get_billing_first_name')->andReturn('Ana');
+        $order->shouldReceive('get_billing_last_name')->andReturn('Silva');
+        $order->shouldReceive('get_billing_country')->andReturn('BR');
+        $order->shouldReceive('get_billing_state')->andReturn('SP');
+        $order->shouldReceive('get_billing_phone')->andReturn('11999999999');
+        $order->shouldReceive('get_billing_address_1')->andReturn('Rua Teste, 123');
+        $order->shouldReceive('get_billing_city')->andReturn('São Paulo');
+        $order->shouldReceive('get_billing_postcode')->andReturn('01310-100');
+
+        $countryConfigsProperty = new \ReflectionProperty(CustomGateway::class, 'countryConfigs');
+        $countryConfigsProperty->setAccessible(true);
+        $countryConfigsProperty->setValue($this->gateway, ['currency' => 'BRL', 'sponsor_id' => null]);
+
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getStoreCategory')->andReturn('others');
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getStoreName')->andReturn('Minha Loja');
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getCustomDomain')->andReturn('');
+        $this->gateway->mercadopago->storeConfig->shouldReceive('getCustomDomainOptions')->andReturn('no');
+        $this->gateway->mercadopago->helpers->strings->shouldReceive('sanitizeAndTruncateText')->andReturnArg(0);
+        $this->gateway->mercadopago->woocommerce->shouldReceive('api_request_url')->andReturn('https://store.test/webhook');
+        WP_Mock::userFunction('wp_get_attachment_url')->andReturn('');
+        WP_Mock::userFunction('get_site_url')->andReturn('https://store.test');
+        WP_Mock::userFunction('get_option')->byDefault()->andReturn('WC-');
+
+        $payload = $this->gateway->buildCitPayload($order, $subscription, ['token' => 'tok_cit']);
+
+        $this->assertSame(51.77, $payload['transaction']['amount']);
+        $this->assertSame('51.77', $payload['additional_info']['items'][0]['unit_price']);
 
         // Mockery::close() in tearDown enforces the ->once() expectation above.
         $this->addToAssertionCount(1);

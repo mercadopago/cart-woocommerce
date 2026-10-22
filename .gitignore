@@ -57,6 +57,9 @@ phpstan-baseline.neon
 .claude/settings.local.json
 .claude/tasks/
 .claude/regression-*.json
+.claude/releases-archive/
+# Release state, map and archive (agent-neutral; the .claude/ lines keep releases started before the move ignored)
+/.release/
 /meli/wip/**/verdicts/security.json
 e2e/plugins/
 
@@ -66,3 +69,12 @@ e2e/plugins/
 !/e2e/ios/evidence/README.md
 /e2e/ios/playwright-report/
 /e2e/ios/test-results/
+# BEGIN AOC
+.claude/**
+!.claude/settings.json
+.agents/metadata/**
+.agents/skills/**
+!.codex/config.toml
+.aoc/**
+.aoc
+# END AOC

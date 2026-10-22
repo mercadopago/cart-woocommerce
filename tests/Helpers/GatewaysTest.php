@@ -51,6 +51,28 @@ class GatewaysTestLegacyWithoutCredentialsCheckStub
     public array $settings = ['enabled' => 'yes'];
 }
 
+class GatewaysTestMissingEnabledSettingStub
+{
+    public string $id = 'gateway-without-enabled';
+    public array $settings = [];
+
+    public function isMissingCredentials(): bool
+    {
+        throw new \LogicException('An unconfigured gateway must not check credentials');
+    }
+}
+
+class GatewaysTestNonYesEnabledSettingStub
+{
+    public string $id = 'gateway-with-boolean-enabled';
+    public array $settings = ['enabled' => true];
+
+    public function isMissingCredentials(): bool
+    {
+        throw new \LogicException('A gateway without enabled=yes must not check credentials');
+    }
+}
+
 class GatewaysTest extends TestCase
 {
     private Store $storeMock;
@@ -127,5 +149,16 @@ class GatewaysTest extends TestCase
             ['gateway-enabled-with-credentials'],
             $this->helper->getEnabledPaymentGateways()
         );
+    }
+
+    public function testUnconfiguredAndNonYesGatewaysAreExcludedBeforeCheckingCredentials(): void
+    {
+        $this->storeMock->shouldReceive('getAvailablePaymentGateways')->once()->andReturn([
+            GatewaysTestMissingEnabledSettingStub::class,
+            GatewaysTestNonYesEnabledSettingStub::class,
+            GatewaysTestEnabledWithCredentialsStub::class,
+        ]);
+
+        $this->assertSame(['gateway-enabled-with-credentials'], $this->helper->getEnabledPaymentGateways());
     }
 }

@@ -3,18 +3,13 @@
 namespace MercadoPago\Woocommerce\Transactions;
 
 use Exception;
+use MercadoPago\Woocommerce\Api\Core\PaymentsClient;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Helpers\Numbers;
-use MercadoPago\PP\Sdk\Entity\Payment\Payment;
 use WC_Order;
 
 abstract class AbstractPaymentTransaction extends AbstractTransaction
 {
-    /**
-     * @var Payment
-     */
-    public $transaction;
-
     /**
      * Payment Transaction constructor
      * @throws Exception
@@ -23,14 +18,34 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
     {
         parent::__construct($gateway, $order, $checkout);
 
-        $this->transaction = $this->getSdk()->getPaymentInstance();
+        $this->transactionType = 'Payment';
+        $this->transaction = [
+            'payer' => [
+                'address' => [],
+                'identification' => [],
+                'phone' => [],
+            ],
+            'additional_info' => [
+                'items' => [],
+                'shipments' => ['receiver_address' => []],
+                'payer' => [
+                    'phone' => [],
+                    'mobile' => [],
+                    'address' => [],
+                    'identification' => [],
+                ],
+                'seller' => [],
+            ],
+            'transaction_details' => [],
+            'point_of_interaction' => ['transaction_data' => []],
+        ];
 
         $this->setCommonTransaction();
         $this->setPayerTransaction();
         $this->setAdditionalInfoTransaction();
 
-        $this->transaction->description        = implode(', ', $this->listOfItems);
-        $this->transaction->transaction_amount = Numbers::format($this->orderTotal);
+        $this->transaction['description']        = implode(', ', $this->listOfItems);
+        $this->transaction['transaction_amount'] = Numbers::format($this->orderTotal);
     }
 
     /**
@@ -42,15 +57,20 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
     public function createPayment()
     {
         $this->logTransactionPayload();
-        if (!empty($this->checkout['session_id'])) {
-            $this->transaction->session_id = $this->checkout['session_id'];
-        }
-
-        $apiRoute = $this->transaction->getUris()['post'] ?? 'unknown';
+        $sessionId = !empty($this->checkout['session_id']) ? (string) $this->checkout['session_id'] : null;
+        $apiRoute = PaymentsClient::CREATE_PATH;
 
         try {
-            $data = $this->transaction->save();
-            $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, $data);
+            $data = $this->mercadopago->coreApi->payments
+                ->create($this->transaction, $this->getCoreRequestContext(), $sessionId)
+                ->toArray();
+            $this->mercadopago->logs->file->info('Payment created', $this->gateway::LOG_SOURCE, [
+                'id' => isset($data['id']) ? (string) $data['id'] : '',
+                'status' => (string) ($data['status'] ?? ''),
+                'status_detail' => (string) ($data['status_detail'] ?? ''),
+                'payment_method_id' => (string) ($data['payment_method_id'] ?? ''),
+                'payment_type_id' => (string) ($data['payment_type_id'] ?? ''),
+            ]);
             $this->sendPaymentCreateResultMetric($apiRoute, null, $data);
             return $data;
         } catch (Exception $e) {
@@ -67,19 +87,18 @@ abstract class AbstractPaymentTransaction extends AbstractTransaction
      */
     public function setPayerTransaction(): void
     {
-        $payer             = $this->transaction->payer;
-        $payer->email      = $this->mercadopago->orderBilling->getEmail($this->order);
-        $payer->first_name = $this->mercadopago->orderBilling->getFirstName($this->order);
-        $payer->last_name  = $this->mercadopago->orderBilling->getLastName($this->order);
+        $this->transaction['payer']['email'] = $this->mercadopago->orderBilling->getEmail($this->order);
+        $this->transaction['payer']['first_name'] = $this->mercadopago->orderBilling->getFirstName($this->order);
+        $this->transaction['payer']['last_name'] = $this->mercadopago->orderBilling->getLastName($this->order);
 
         $this->setPayerAddressInfo();
     }
 
     private function setPayerAddressInfo(): void
     {
-        $this->transaction->payer->address->city         = $this->mercadopago->orderBilling->getCity($this->order);
-        $this->transaction->payer->address->federal_unit = $this->mercadopago->orderBilling->getState($this->order);
-        $this->transaction->payer->address->zip_code     = $this->mercadopago->orderBilling->getZipcode($this->order);
-        $this->transaction->payer->address->street_name  = $this->mercadopago->orderBilling->getFullAddress($this->order);
+        $this->transaction['payer']['address']['city'] = $this->mercadopago->orderBilling->getCity($this->order);
+        $this->transaction['payer']['address']['federal_unit'] = $this->mercadopago->orderBilling->getState($this->order);
+        $this->transaction['payer']['address']['zip_code'] = $this->mercadopago->orderBilling->getZipcode($this->order);
+        $this->transaction['payer']['address']['street_name'] = $this->mercadopago->orderBilling->getFullAddress($this->order);
     }
 }

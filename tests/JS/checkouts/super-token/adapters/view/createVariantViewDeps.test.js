@@ -130,3 +130,19 @@ describe('createVariantViewDeps', () => {
     expect(deps.thumbnails.mpLogoDarkPath).toBe('');
   });
 });
+
+
+describe('Credits row from localized params without a capability flag', () => {
+  const { resolvePaymentMethodView } = require('@super-token/adapters/view/shared/paymentMethodPresentation');
+  const presentation = { mercadoPagoCreditCard: () => null, accountMoneyRowClasses: () => [] };
+
+  it.each([
+    ['MLA', 'Mercado Crédito'],
+    ['MLM', 'Mercado Crédito'],
+    ['MLB', 'Mercado Parcelado'],
+  ])('Given %s without a renaming signal, Then the row shows %s', (siteId, expectedName) => {
+    const deps = createVariantViewDeps(buildParams({ site_id: siteId }), null);
+    const method = { id: 'consumer_credits', type: 'digital_currency', installments: [] };
+    expect(resolvePaymentMethodView(method, deps, presentation).name).toBe(expectedName);
+  });
+});

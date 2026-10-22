@@ -68,22 +68,22 @@ describe('buildAccountMoneyName', () => {
 });
 
 describe('buildConsumerCreditsName', () => {
-  it('Given MLC, Then it returns the approved Chilean copy with a non-breaking space', () => {
+  it('Given MLC, Then it returns Mercado Crédito', () => {
     expect(buildConsumerCreditsName('MLC')).toBe(
-      `Cuotas sin Tarjeta de Mercado${NBSP}Pago`,
+      'Mercado Crédito',
     );
   });
 
-  it('Given MLM, Then it returns the Mexican copy with a non-breaking space', () => {
-    expect(buildConsumerCreditsName('MLM')).toBe(`Meses sin Tarjeta con Mercado${NBSP}Pago`);
+  it('Given MLM, Then it returns Mercado Crédito', () => {
+    expect(buildConsumerCreditsName('MLM')).toBe('Mercado Crédito');
   });
 
-  it('Given MLB, Then it returns the Brazilian copy with a non-breaking space', () => {
-    expect(buildConsumerCreditsName('MLB')).toBe(`Linha de Crédito Mercado${NBSP}Pago`);
+  it('Given MLB, Then it returns Mercado Parcelado', () => {
+    expect(buildConsumerCreditsName('MLB')).toBe('Mercado Parcelado');
   });
 
-  it('Given any other site, Then it returns the default Spanish copy', () => {
-    expect(buildConsumerCreditsName('MLA')).toBe(`Cuotas sin Tarjeta con Mercado${NBSP}Pago`);
+  it('Given MLA, Then it returns Mercado Crédito', () => {
+    expect(buildConsumerCreditsName('MLA')).toBe('Mercado Crédito');
   });
 });
 
@@ -91,6 +91,15 @@ describe('installmentsWithoutFee', () => {
   it('Given a non-card, non-credits method, Then it returns 0', () => {
     expect(installmentsWithoutFee(debitCard())).toBe(0);
     expect(installmentsWithoutFee(accountMoney())).toBe(0);
+  });
+
+  it('Given a debit card with interest-free installments, Then it returns 0', () => {
+    const pm = debitCard({
+      installments: [
+        installment({ installments: 6, installment_rate: 0, installment_rate_collector: ['MERCADOPAGO'] }),
+      ],
+    });
+    expect(installmentsWithoutFee(pm)).toBe(0);
   });
 
   it('Given a credit card without installments, Then it returns 0', () => {
@@ -146,7 +155,7 @@ describe('resolvePaymentMethodView', () => {
       presentation(),
     );
 
-    expect(view.name).toBe(`Cuotas sin Tarjeta de Mercado${NBSP}Pago`);
+    expect(view.name).toBe('Mercado Crédito');
   });
 
   it('Given account money, Then it uses the account-money name, yellow wallet and the presentation classes', () => {
@@ -159,7 +168,7 @@ describe('resolvePaymentMethodView', () => {
 
   it('Given consumer credits, Then it uses the credits name, yellow money, no extra classes and keeps the last four', () => {
     const view = resolvePaymentMethodView(consumerCredits(), deps, presentation());
-    expect(view.name).toBe(`Linha de Crédito Mercado${NBSP}Pago`);
+    expect(view.name).toBe('Mercado Parcelado');
     expect(view.thumbnail).toBe(deps.thumbnails.yellowMoneyPath);
     expect(view.extraClasses).toEqual([]);
     expect(view.suppressLastFour).toBe(false);

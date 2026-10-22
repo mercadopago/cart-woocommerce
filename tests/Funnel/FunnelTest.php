@@ -2,14 +2,11 @@
 
 namespace MercadoPago\Woocommerce\Tests\Funnel;
 
-use MercadoPago\PP\Sdk\Common\Constants;
-use MercadoPago\PP\Sdk\Entity\Identification\CreateSellerFunnelBase;
-use MercadoPago\PP\Sdk\Entity\Identification\ResponseCreateSellerFunnelBase;
-use MercadoPago\PP\Sdk\Sdk;
+use MercadoPago\Woocommerce\Api\Core\FunnelClient;
+use MercadoPago\Woocommerce\Api\Core\Models\FunnelRegistration;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Funnel\Funnel;
-use MercadoPago\Woocommerce\Funnel\UpdateSellerFunnelBase;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
@@ -36,8 +33,8 @@ class FunnelTest extends TestCase
     /** @var MockInterface|Gateways */
     private $gateways;
 
-    /** @var MockInterface|Sdk */
-    private $sdk;
+    /** @var MockInterface|FunnelClient */
+    private $client;
 
     /** @var MockInterface|Datadog */
     private $datadog;
@@ -60,15 +57,12 @@ class FunnelTest extends TestCase
         $this->country = new Country($this->seller);
         $this->gateways = Mockery::mock(Gateways::class);
 
-        $this->funnel = new Funnel($this->store, $this->seller, $this->country, $this->gateways);
+        $this->client = Mockery::mock(FunnelClient::class);
+        $this->funnel = new Funnel($this->client, $this->store, $this->seller, $this->country, $this->gateways);
 
-        // Sdk and Datadog are built internally by the Funnel constructor (new Sdk(),
-        // Datadog::getInstance()), so they are swapped afterward via reflection.
-        $this->sdk = Mockery::mock(Sdk::class);
         $this->datadog = Mockery::mock(Datadog::class);
         $this->datadog->shouldReceive('sendEvent')->byDefault();
 
-        $this->setNotAccessibleProperty($this->funnel, 'sdk', $this->sdk);
         $this->setNotAccessibleProperty($this->funnel, 'datadog', $this->datadog);
 
         $GLOBALS['mercadopago'] = (object) [
@@ -102,7 +96,7 @@ class FunnelTest extends TestCase
 
         $this->funnel->create();
 
-        $this->assertSame($expectedSiteId, $entity->site_id);
+        $this->assertSame($expectedSiteId, $entity->payload['site_id']);
     }
 
     /**
@@ -131,7 +125,7 @@ class FunnelTest extends TestCase
 
         $this->funnel->create();
 
-        $this->assertNull($entity->site_id);
+        $this->assertNull($entity->payload['site_id']);
     }
 
     /**
@@ -150,7 +144,7 @@ class FunnelTest extends TestCase
 
         $this->funnel->updateStepCredentials();
 
-        $this->assertNull($entity->toArray()['site_id']);
+        $this->assertNull($entity->payload['site_id']);
     }
 
     /**
@@ -173,35 +167,35 @@ class FunnelTest extends TestCase
 
         $this->funnel->create();
 
-        $this->assertSame('MLB', $entity->site_id);
+        $this->assertSame('MLB', $entity->payload['site_id']);
     }
 
-    public function testGivenFunnelAlreadyCreatedWhenCreateIsCalledThenSdkIsNeverRequested(): void
+    public function testGivenFunnelAlreadyCreatedWhenCreateIsCalledThenClientIsNeverRequested(): void
     {
         $this->markFunnelAsCreated();
 
-        $this->sdk->shouldReceive('getCreateSellerFunnelBaseInstance')->never();
+        $this->client->shouldReceive('create')->never();
 
         $this->assertNull($this->funnel->create());
     }
 
-    public function testGivenProductionCredentialsAlreadyPresentWhenCreateIsCalledThenSdkIsNeverRequested(): void
+    public function testGivenProductionCredentialsAlreadyPresentWhenCreateIsCalledThenClientIsNeverRequested(): void
     {
         $this->store->shouldReceive('getInstallationId')->andReturn('');
         $this->seller->shouldReceive('getCredentialsAccessTokenProd')->andReturn('APP_USR-access-token');
 
-        $this->sdk->shouldReceive('getCreateSellerFunnelBaseInstance')->never();
+        $this->client->shouldReceive('create')->never();
 
         $this->assertNull($this->funnel->create());
     }
 
-    public function testGivenPaymentGatewaysAlreadyEnabledWhenCreateIsCalledThenSdkIsNeverRequested(): void
+    public function testGivenPaymentGatewaysAlreadyEnabledWhenCreateIsCalledThenClientIsNeverRequested(): void
     {
         $this->store->shouldReceive('getInstallationId')->andReturn('');
         $this->seller->shouldReceive('getCredentialsAccessTokenProd')->andReturn('');
         $this->gateways->shouldReceive('getEnabledPaymentGateways')->andReturn(['woo-mercado-pago-pix']);
 
-        $this->sdk->shouldReceive('getCreateSellerFunnelBaseInstance')->never();
+        $this->client->shouldReceive('create')->never();
 
         $this->assertNull($this->funnel->create());
     }
@@ -233,7 +227,7 @@ class FunnelTest extends TestCase
 
         $this->funnel->updateStepSellerContact();
 
-        $payload = $entity->toArray();
+        $payload = $entity->payload;
         $this->assertSame('seller@example.com', $payload['email']);
         $this->assertSame('BR', $payload['country']);
     }
@@ -250,7 +244,7 @@ class FunnelTest extends TestCase
 
         $this->funnel->updateStepSellerContact();
 
-        $this->assertSame('', $entity->toArray()['country']);
+        $this->assertSame('', $entity->payload['country']);
     }
 
     public function testGivenStoreOutsideTheMercadoPagoSitesWhenSellerContactStepRunsThenIsoCountryStillReachesThePayload(): void
@@ -265,7 +259,7 @@ class FunnelTest extends TestCase
 
         // Unlike site_id on create(), country is not allowlisted — reaching sellers
         // outside the seven site ids is the whole point of this step.
-        $this->assertSame('PT', $entity->toArray()['country']);
+        $this->assertSame('PT', $entity->payload['country']);
     }
 
     public function testGivenUpdateFailsEchoingTheRequestBodyWhenSellerContactStepRunsThenEmailIsAbsentFromLogAndDatadog(): void
@@ -276,10 +270,10 @@ class FunnelTest extends TestCase
         $this->mockStoreEmail($email);
         $this->mockWoocommerceDefaultCountry('BR');
 
-        // The SDK can echo the request body verbatim (e.g. on a JSON encode failure),
+        // The API client can echo the request body verbatim (e.g. on a JSON encode failure),
         // which is the path that would carry the email into the log and Datadog.
-        $entity = $this->mockUpdateSellerFunnelBaseEntity();
-        $entity->shouldReceive('update')
+        $this->mockUpdateSellerFunnelBaseEntity();
+        $this->client->shouldReceive('update')
             ->once()
             ->andThrow(new \Exception('JSON Error [5] - Data: {"email":"' . $email . '"}'));
 
@@ -325,7 +319,7 @@ class FunnelTest extends TestCase
         // Asserting the payload keeps the never() expectation honest: without it an
         // early return would satisfy "update_option was never called" while proving
         // nothing, since the step would not have run at all.
-        $this->assertSame('persistence-check@example.com', $entity->toArray()['email']);
+        $this->assertSame('persistence-check@example.com', $entity->payload['email']);
     }
 
     /**
@@ -373,47 +367,37 @@ class FunnelTest extends TestCase
     }
 
     /**
-     * Builds a partial mock of the real SDK entity (real __set/__get from
-     * AbstractEntity keep running, only save() is stubbed), wires it as the instance
-     * returned by the mocked Sdk, and expects the resulting id/cpp_token to be
-     * persisted on the store — the same outcome production code relies on.
-     *
-     * @return MockInterface|CreateSellerFunnelBase
+     * Captures the create payload and returns a valid registration model.
      */
     private function mockCreateSellerFunnelBaseEntity(string $id = 'installation-id', string $cppToken = 'installation-key')
     {
-        $entity = Mockery::mock(CreateSellerFunnelBase::class)->makePartial();
-        $entity->shouldReceive('save')->once()->andReturn(new ResponseCreateSellerFunnelBase($id, $cppToken));
-
-        $this->sdk->shouldReceive('getCreateSellerFunnelBaseInstance')->once()->andReturn($entity);
+        $capture = (object) ['payload' => []];
+        $this->client->shouldReceive('create')->once()->andReturnUsing(
+            function (array $payload) use ($capture, $id, $cppToken) {
+                $capture->payload = $payload;
+                return new FunnelRegistration(['id' => $id], $cppToken);
+            }
+        );
         $this->store->shouldReceive('setInstallationId')->once()->with($id);
         $this->store->shouldReceive('setInstallationKey')->once()->with($cppToken);
 
-        return $entity;
+        return $capture;
     }
 
     /**
-     * Partial mock of the plugin's own UpdateSellerFunnelBase subclass, so assertions
-     * read the payload through the real toArray() instead of a property set on a bare
-     * double. That is what actually proves email/country survive the entity: an
-     * undeclared property is discarded in silence by AbstractEntity::__set(), so a
-     * full mock would pass even if the field never reached the request body.
-     *
-     * @return MockInterface|UpdateSellerFunnelBase
+     * Captures the update payload sent to the resource client.
      */
     private function mockUpdateSellerFunnelBaseEntity()
     {
-        // Partial mock naming only update(), plus the constructor argument: every
-        // other method has to run for real, because AbstractEntity's constructor
-        // initializes $excluded_properties and toArray() reads it.
-        $entity = Mockery::mock(UpdateSellerFunnelBase::class . '[update]', [null]);
-        $entity->shouldReceive('update')->once()->byDefault();
-
-        $this->sdk->shouldReceive('getEntityInstance')
+        $capture = (object) ['payload' => []];
+        $this->client->shouldReceive('update')
             ->once()
-            ->with(UpdateSellerFunnelBase::class, Constants::BASEURL_MP)
-            ->andReturn($entity);
+            ->with(Mockery::type('array'), 'installation-key')
+            ->andReturnUsing(function (array $payload) use ($capture) {
+                $capture->payload = $payload;
+            })
+            ->byDefault();
 
-        return $entity;
+        return $capture;
     }
 }

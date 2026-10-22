@@ -9,7 +9,7 @@ use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\RefundStatusCodes;
 use MercadoPago\Woocommerce\Exceptions\RefundException;
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 
@@ -282,10 +282,10 @@ class RefundHandler
      * @param array $headers
      * @param array $payload
      *
-     * @return Response
+     * @return HttpResponse
      * @throws Exception
      */
-    private function executeRefundRequest(string $paymentId, array $headers, array $payload): Response
+    private function executeRefundRequest(string $paymentId, array $headers, array $payload): HttpResponse
     {
         $endpoint = sprintf(self::REFUND_ENDPOINT, $paymentId);
 
@@ -295,13 +295,13 @@ class RefundHandler
     /**
      * Process refund response
      *
-     * @param Response $response
+     * @param HttpResponse $response
      * @param string $paymentId
      *
      * @return array
      * @throws RefundException
      */
-    private function processRefundResponse(Response $response, string $paymentId): array
+    private function processRefundResponse(HttpResponse $response, string $paymentId): array
     {
         $statusCode = $response->getStatus();
         $rawData = $response->getData();

@@ -13,12 +13,14 @@ use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use MercadoPago\Woocommerce\Transactions\TicketTransaction;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use MercadoPago\Woocommerce\Gateways\TicketGateway;
 use Mockery;
 use WP_Mock;
 
 class TicketGatewayTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
     use GatewayMock;
     use FormMock;
 
@@ -582,8 +584,6 @@ class TicketGatewayTest extends TestCase
         ];
 
         $this->gateway->registerCheckoutScripts();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -603,8 +603,6 @@ class TicketGatewayTest extends TestCase
             ->with('public/checkouts/ticket-checkout.php', ['test' => 'params']);
 
         $this->gateway->payment_fields();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -631,8 +629,6 @@ class TicketGatewayTest extends TestCase
             ->never();
 
         $this->gateway->renderThankYouPage($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -666,8 +662,6 @@ class TicketGatewayTest extends TestCase
             ->with('public/order/ticket-order-received.php', Mockery::type('array'));
 
         $this->gateway->renderThankYouPage($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**

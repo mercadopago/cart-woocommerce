@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Helpers;
 
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\SubscriptionsHelper;
@@ -156,7 +156,7 @@ class AutomaticPaymentsClientTest extends TestCase
             ->shouldReceive('info')
             ->once()
             ->with(
-                'op=cit status=approved',
+                'op=cit http_status=201',
                 AutomaticPaymentsClient::LOG_SOURCE,
                 Mockery::on(function ($context) {
                     return !isset($context['token'])
@@ -169,7 +169,7 @@ class AutomaticPaymentsClientTest extends TestCase
                 })
             );
 
-        $this->client->log('info', 'op=cit status=approved', [
+        $this->client->log('info', 'op=cit http_status=201', [
             'op'                 => 'cit',
             'http_status'        => 201,
             'token'              => 'this-should-be-stripped',
@@ -655,12 +655,96 @@ class AutomaticPaymentsClientTest extends TestCase
             )
             ->andReturn($response);
 
-        $this->fileTransportMock->shouldReceive('info')->twice();
+        $this->fileTransportMock->shouldReceive('info')->once()->with(
+            'op=cit status=sending',
+            AutomaticPaymentsClient::LOG_SOURCE,
+            Mockery::any()
+        );
+        $this->fileTransportMock->shouldReceive('info')->once()->with(
+            'op=cit http_status=201',
+            AutomaticPaymentsClient::LOG_SOURCE,
+            Mockery::on(function ($context) {
+                return ($context['http_status'] ?? null) === 201
+                    && ($context['payment_status'] ?? null) === 'approved'
+                    && ($context['payment_id'] ?? null) === 'MOCK-PAY-CIT-1001'
+                    && ($context['subscription_id'] ?? null) === 'CPP-WSUB-1001';
+            })
+        );
 
         $result = $this->client->cit('TEST-TOKEN', $order, ['token' => 'card-tok', 'transaction' => ['amount' => 49.90]]);
 
         $this->assertSame($response, $result);
         $this->assertSame('CPP-WSUB-1001', $result->getData()['subscription']['id']);
+    }
+
+    public function testCitLogsRejectedPaymentStatusFromSuccessfulHttpResponse(): void
+    {
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(106);
+
+        $response = new Response();
+        $response->setStatus(201);
+        $response->setData([
+            'payment'      => ['id' => 'MOCK-PAY-CIT-REJECTED', 'status' => 'rejected'],
+            'subscription' => ['id' => 'CPP-WSUB-REJECTED'],
+        ]);
+
+        $this->subscriptionsHelperMock->shouldReceive('buildCitSeed')->andReturn('cit:106:rejected');
+        $this->subscriptionsHelperMock->shouldReceive('generateIdempotencyKey')->andReturn('test-idem-key-rejected');
+        $this->requesterMock->shouldReceive('post')->andReturn($response);
+
+        $this->fileTransportMock->shouldReceive('info')->once()->with(
+            'op=cit status=sending',
+            AutomaticPaymentsClient::LOG_SOURCE,
+            Mockery::any()
+        );
+        $this->fileTransportMock->shouldReceive('info')->once()->with(
+            'op=cit http_status=201',
+            AutomaticPaymentsClient::LOG_SOURCE,
+            Mockery::on(function ($context) {
+                return ($context['http_status'] ?? null) === 201
+                    && ($context['payment_status'] ?? null) === 'rejected'
+                    && ($context['payment_id'] ?? null) === 'MOCK-PAY-CIT-REJECTED';
+            })
+        );
+
+        $result = $this->client->cit('TEST-TOKEN', $order, []);
+
+        $this->assertSame($response, $result);
+    }
+
+    public function testCitLogsUnknownWhenPaymentStatusIsMissing(): void
+    {
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(107);
+
+        $response = new Response();
+        $response->setStatus(201);
+        $response->setData([
+            'payment'      => ['id' => 'MOCK-PAY-CIT-UNKNOWN'],
+            'subscription' => ['id' => 'CPP-WSUB-UNKNOWN'],
+        ]);
+
+        $this->subscriptionsHelperMock->shouldReceive('buildCitSeed')->andReturn('cit:107:unknown');
+        $this->subscriptionsHelperMock->shouldReceive('generateIdempotencyKey')->andReturn('test-idem-key-unknown');
+        $this->requesterMock->shouldReceive('post')->andReturn($response);
+
+        $this->fileTransportMock->shouldReceive('info')->once()->with(
+            'op=cit status=sending',
+            AutomaticPaymentsClient::LOG_SOURCE,
+            Mockery::any()
+        );
+        $this->fileTransportMock->shouldReceive('info')->once()->with(
+            'op=cit http_status=201',
+            AutomaticPaymentsClient::LOG_SOURCE,
+            Mockery::on(function ($context) {
+                return ($context['payment_status'] ?? null) === 'unknown';
+            })
+        );
+
+        $result = $this->client->cit('TEST-TOKEN', $order, []);
+
+        $this->assertSame($response, $result);
     }
 
     public function testCitThrowsRuntimeExceptionWhenSubscriptionIdMissingOrphanDetection(): void
@@ -749,7 +833,7 @@ class AutomaticPaymentsClientTest extends TestCase
         $this->assertSame(422, $result->getStatus());
     }
 
-    public function testCitPropagatesExceptionFromRequesterWithoutLoggingApproved(): void
+    public function testCitPropagatesExceptionFromRequesterWithoutLoggingResponse(): void
     {
         $order = Mockery::mock(\WC_Order::class);
         $order->shouldReceive('get_id')->andReturn(103);
@@ -760,7 +844,7 @@ class AutomaticPaymentsClientTest extends TestCase
         $this->requesterMock->shouldReceive('post')->andThrow(new \Exception('HTTP 422 PaymentRejected'));
 
         $this->fileTransportMock->shouldReceive('info')->once();
-        $this->fileTransportMock->shouldReceive('info')->with(Mockery::pattern('/status=approved/'), Mockery::any(), Mockery::any())->never();
+        $this->fileTransportMock->shouldReceive('info')->with(Mockery::pattern('/http_status=/'), Mockery::any(), Mockery::any())->never();
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('HTTP 422 PaymentRejected');

@@ -3,7 +3,7 @@
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
 use Exception;
-use MercadoPago\PP\Sdk\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Funnel\Funnel;
@@ -18,12 +18,14 @@ use MercadoPago\Woocommerce\Transactions\SupertokenTransaction;
 use MercadoPago\Woocommerce\Transactions\WalletButtonTransaction;
 use Mockery;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WP_Mock;
 use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
 use PHPUnit\Framework\Constraint\IsType;
 
 class CustomGatewayTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
     use AssertArrayMap;
     use GatewayMock;
     use FormMock;
@@ -853,6 +855,12 @@ class CustomGatewayTest extends TestCase
             ->createPreference()
             ->andReturn(['id' => $preferenceId]);
 
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->addPreferenceId($order, $preferenceId)
+            ->once()
+            ->ordered();
+
         // Mock seller config
         $this->gateway->mercadopago->sellerConfig
             ->expects()
@@ -878,7 +886,8 @@ class CustomGatewayTest extends TestCase
                     'cancel_url_text'   => 'Cancel',
                 ]
             )
-            ->once();
+            ->once()
+            ->ordered();
 
         // Execute
         $result = $this->gateway->renderOrderForm($orderId);
@@ -920,6 +929,38 @@ class CustomGatewayTest extends TestCase
         $this->assertNull($result);
     }
 
+    public function testRenderOrderFormDoesNotPersistPreferenceWhenCreationFails(): void
+    {
+        $orderId = 457;
+
+        $this->gateway->mercadopago->helpers->url
+            ->expects()
+            ->validateQueryVar('wallet_button')
+            ->andReturn(true);
+
+        $order = Mockery::mock('WC_Order');
+        WP_Mock::userFunction('wc_get_order', [
+            'times' => 1,
+            'args' => [$orderId],
+            'return' => $order,
+        ]);
+
+        $transactionMock = Mockery::mock('overload:' . WalletButtonTransaction::class);
+        $transactionMock->expects()
+            ->createPreference()
+            ->andThrow(new Exception('Preference creation failed'));
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldNotReceive('addPreferenceId');
+        $this->gateway->mercadopago->hooks->template
+            ->shouldNotReceive('getWoocommerceTemplate');
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Preference creation failed');
+
+        $this->gateway->renderOrderForm($orderId);
+    }
+
     /**
      * Test renderOrderForm creates correct WalletButtonTransaction
      *
@@ -953,6 +994,11 @@ class CustomGatewayTest extends TestCase
         $transactionMock->expects()
             ->createPreference()
             ->andReturn(['id' => $preferenceId]);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->expects()
+            ->addPreferenceId($order, $preferenceId)
+            ->once();
 
         // Mock other dependencies
         $this->gateway->mercadopago->sellerConfig
@@ -1159,27 +1205,6 @@ class CustomGatewayTest extends TestCase
             ->once();
 
         $this->gateway->registerSuperTokenStyles();
-
-        $this->assertTrue(true);
-    }
-
-    public function testSuperTokenV21I18nKeysExistInStoreTranslations()
-    {
-        $requiredKeys = [
-            'saved_cards_title',
-            'saved_card_title',
-            'mp_methods_title',
-            'account_money_balance_text',
-            'saved_payment_method_title',
-        ];
-
-        foreach ($requiredKeys as $key) {
-            $this->assertArrayHasKey(
-                $key,
-                $this->gateway->storeTranslations,
-                "storeTranslations must contain '$key' for getSuperTokenLocalizeData() to pass it to the bundle"
-            );
-        }
     }
 
     /**
@@ -1206,6 +1231,26 @@ class CustomGatewayTest extends TestCase
         $result = $this->gateway->getWalletButtonPreview();
 
         $this->assertEquals('<div>Preview</div>', $result);
+    }
+
+    public function testGivenLocaleWithoutPreviewImageWhenGettingWalletButtonPreviewThenUsesNeutralSpanishImage()
+    {
+        $this->gateway->storeTranslations = [
+            'locale' => 'es-CO'
+        ];
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')
+            ->with('gateways/wallet-button/preview-es-mx')
+            ->once()
+            ->andReturn('test-preview-url');
+
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplateHtml')
+            ->with('admin/components/preview.php', Mockery::type('array'))
+            ->andReturn('<div>Preview</div>');
+
+        $this->assertEquals('<div>Preview</div>', $this->gateway->getWalletButtonPreview());
     }
 
     /**
@@ -1346,6 +1391,8 @@ class CustomGatewayTest extends TestCase
             'authorize_payment_method_no_retry_error_text' => 'Authorize payment method no retry error',
             'select_payment_method_error_text' => 'Select payment method error',
         ];
+        $this->gateway->mercadopago->storeTranslations->superTokenCheckout = $this->gateway->storeTranslations;
+        WP_Mock::userFunction('wp_kses_post')->andReturnArg(0);
 
         // Mock threeDsTranslations
         $this->gateway->mercadopago->storeTranslations->threeDsTranslations = [
@@ -1401,7 +1448,6 @@ class CustomGatewayTest extends TestCase
         $this->gateway->registerCheckoutScripts();
 
         // The test passes if no exceptions are thrown and getCurrencyCode was called
-        $this->expectNotToPerformAssertions();
     }
 
     /**
@@ -1423,7 +1469,10 @@ class CustomGatewayTest extends TestCase
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getJsAsset')->andReturn('test-js-url');
         $this->gateway->mercadopago->helpers->url
-            ->shouldReceive('getImageAsset')->andReturn('test-image-url');
+            ->shouldReceive('getImageAsset')->with('icons/icon-credits-fast-payment.svg')
+            ->andReturn('https://example.com/assets/images/icons/icon-credits-fast-payment.svg');
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')->andReturn('test-image-url')->byDefault();
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getPluginFileUrl')->andReturn('https://example.com/build/super-token/bootstrap.ts.js');
         $this->gateway->mercadopago->sellerConfig
@@ -1514,6 +1563,9 @@ class CustomGatewayTest extends TestCase
             'authorize_payment_method_no_retry_error_text' => 'Authorize payment method no retry error',
             'select_payment_method_error_text' => 'Select payment method error',
         ];
+        $this->gateway->mercadopago->storeTranslations->superTokenCheckout = $this->gateway->storeTranslations;
+        $this->gateway->mercadopago->storeTranslations->superTokenCheckout['card_installments_label'] = 'Super Token installments';
+        WP_Mock::userFunction('wp_kses_post')->andReturnArg(0);
 
         $this->gateway->mercadopago->storeTranslations->threeDsTranslations = [
             'title_loading_3ds_frame' => 'Loading 3DS',
@@ -1563,6 +1615,15 @@ class CustomGatewayTest extends TestCase
         $localizeMethod->setAccessible(true);
         $localizeData = $localizeMethod->invoke($this->gateway);
 
+        $this->assertSame(
+            'https://example.com/assets/images/icons/icon-credits-fast-payment.svg',
+            $localizeData['yellow_money_path']
+        );
+        $this->assertSame('test-image-url', $localizeData['yellow_wallet_path']);
+        $this->assertSame('test-image-url', $localizeData['white_card_path']);
+        $this->assertArrayNotHasKey('credits_renamed', $localizeData, 'Os novos nomes de Credits nao dependem de sinal do plugin');
+        $this->assertTrue($localizeData['store_language_copy'], 'O plugin deve avisar o bundle que os catalogos ja trazem o texto no idioma da loja');
+        $this->assertSame('Super Token installments', $localizeData['input_title']['installments'], 'O bundle deve receber o texto do contexto do Super Token');
         $this->assertContains('wc_mercadopago_supertoken_refactored', $registeredHandles, 'Self-construct deve enfileirar o entry TS');
         $this->assertNotContains('wc_mercadopago_supertoken_trigger_handler', $registeredHandles, 'Self-construct nao deve enfileirar os scripts legados separados');
         $this->assertNotContains('wc_mercadopago_supertoken', $registeredHandles, 'Self-construct nao deve enfileirar o loader legado (so o entry TS carrega a localize)');
@@ -1707,6 +1768,8 @@ class CustomGatewayTest extends TestCase
             'authorize_payment_method_no_retry_error_text' => 'Authorize payment method no retry error',
             'select_payment_method_error_text' => 'Select payment method error',
         ];
+        $this->gateway->mercadopago->storeTranslations->superTokenCheckout = $this->gateway->storeTranslations;
+        WP_Mock::userFunction('wp_kses_post')->andReturnArg(0);
 
         $this->gateway->mercadopago->storeTranslations->threeDsTranslations = [
             'title_loading_3ds_frame' => 'Loading 3DS',
@@ -2265,8 +2328,6 @@ class CustomGatewayTest extends TestCase
             ->with('public/order/custom-order-received.php', Mockery::type('array'));
 
         $this->gateway->renderInstallmentsRateDetails($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -2319,8 +2380,6 @@ class CustomGatewayTest extends TestCase
             ->never();
 
         $this->gateway->renderInstallmentsRateDetails($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -2372,8 +2431,6 @@ class CustomGatewayTest extends TestCase
             ->with('admin/order/generic-note.php', Mockery::type('array'));
 
         $this->gateway->registerInstallmentsFeeOnAdminOrder($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -2417,8 +2474,6 @@ class CustomGatewayTest extends TestCase
             ->never();
 
         $this->gateway->registerInstallmentsFeeOnAdminOrder($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -2452,8 +2507,6 @@ class CustomGatewayTest extends TestCase
             ->never();
 
         $this->gateway->registerInstallmentsFeeOnAdminOrder($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -3151,6 +3204,8 @@ class CustomGatewayTest extends TestCase
             'authorize_payment_method_no_retry_error_text' => 'Authorize payment method no retry error',
             'select_payment_method_error_text' => 'Select payment method error',
         ];
+        $this->gateway->mercadopago->storeTranslations->superTokenCheckout = $this->gateway->storeTranslations;
+        WP_Mock::userFunction('wp_kses_post')->andReturnArg(0);
 
         $this->gateway->mercadopago->storeTranslations->threeDsTranslations = [
             'title_loading_3ds_frame' => 'Loading 3DS',
@@ -3220,7 +3275,6 @@ class CustomGatewayTest extends TestCase
         $this->gateway->registerCheckoutScripts();
 
         // Verify no exceptions were thrown — the email was resolved from order key
-        $this->expectNotToPerformAssertions();
 
         unset($_GET['key']);
     }
@@ -3241,8 +3295,6 @@ class CustomGatewayTest extends TestCase
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
-
-        $this->expectNotToPerformAssertions();
     }
 
     /**
@@ -3270,8 +3322,6 @@ class CustomGatewayTest extends TestCase
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
-
-        $this->expectNotToPerformAssertions();
     }
 
     /**
@@ -3299,8 +3349,6 @@ class CustomGatewayTest extends TestCase
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
-
-        $this->expectNotToPerformAssertions();
     }
 
     /**
@@ -3330,7 +3378,6 @@ class CustomGatewayTest extends TestCase
 
         $this->gateway->registerCheckoutScripts();
 
-        $this->expectNotToPerformAssertions();
 
         unset($_GET['key']);
     }
@@ -4328,4 +4375,58 @@ class CustomGatewayTest extends TestCase
 
         $this->assertSame($expected, $this->gateway->handleResponseStatus($order, $response));
     }
+    public function testRealApprovedResponseReturnsOrderRedirectAndAppliesEffects(): void
+    {
+        // Bypass constructor hooks only; every response method remains production code.
+        $gateway = (new \ReflectionClass(CustomGateway::class))->newInstanceWithoutConstructor();
+        $gateway->mercadopago = $this->gateway->mercadopago;
+        $order = Mockery::mock('WC_Order');
+        $order->expects()->get_checkout_order_received_url()->andReturn('https://store.example/order-received/42');
+        $gateway->mercadopago->helpers->url->expects()->validateGetVar('pay_for_order')->andReturn(false);
+        $gateway->mercadopago->helpers->cart->expects()->emptyCart();
+        $gateway->mercadopago->orderStatus->expects()->getOrderStatusMessage('accredited')->andReturn('Payment approved');
+        $gateway->mercadopago->helpers->notices->expects()->storeApprovedStatusNotice('Payment approved');
+        $gateway->mercadopago->orderStatus->expects()->setOrderStatus($order, 'failed', 'pending');
+
+        $this->assertSame([
+            'result' => 'success',
+            'redirect' => 'https://store.example/order-received/42',
+        ], $gateway->handleResponseStatus($order, ['status' => 'approved']));
+    }
+
+    /**
+     * @testWith ["pending", "1234", "1234"]
+     *           ["in_process", "5678", "5678"]
+     */
+    public function testRealChallengeResponsePersistsSessionAndReturnsThreeDsFlow(string $status, string $digits, string $expectedDigits): void
+    {
+        $gateway = (new \ReflectionClass(CustomGateway::class))->newInstanceWithoutConstructor();
+        $gateway->mercadopago = $this->gateway->mercadopago;
+        $order = Mockery::mock('WC_Order');
+        $order->expects()->get_id()->andReturn(42);
+        $order->shouldNotReceive('get_checkout_order_received_url');
+        $gateway->mercadopago->helpers->url->expects()->validateGetVar('pay_for_order')->andReturn(false);
+        $gateway->mercadopago->helpers->cart->shouldNotReceive('emptyCart');
+        $session = $gateway->mercadopago->helpers->session;
+        $session->expects()->setSession('mp_3ds_url', 'https://challenge.example/step');
+        $session->expects()->setSession('mp_3ds_creq', 'challenge-request');
+        $session->expects()->setSession('mp_order_id', 42);
+        $session->expects()->setSession('mp_payment_id', 987);
+        $response = [
+            'status' => $status,
+            'status_detail' => 'pending_challenge',
+            'three_ds_info' => ['external_resource_url' => 'https://challenge.example/step', 'creq' => 'challenge-request'],
+            'id' => 987,
+            'card' => ['last_four_digits' => $digits],
+        ];
+
+        $this->assertSame([
+            'result' => 'success',
+            'three_ds_flow' => true,
+            'last_four_digits' => $expectedDigits,
+            'redirect' => false,
+            'messages' => '<script>window.mpCustomCheckoutHandler.threeDSHandler.load3DSFlow(' . $expectedDigits . ')</script>',
+        ], $gateway->handleResponseStatus($order, $response));
+    }
+
 }

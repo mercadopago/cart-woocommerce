@@ -88,4 +88,58 @@ class CurrentUserTest extends TestCase
 
         $this->addToAssertionCount(1);
     }
+
+    /** @dataProvider userMetadata */
+    public function testMetadataUsesTheCurrentUserIdAndSingleFlag(bool $single, $value): void
+    {
+        $user = Mockery::mock('WP_User');
+        $user->ID = 42;
+        WP_Mock::userFunction('wp_get_current_user')->once()->andReturn($user);
+        WP_Mock::userFunction('get_user_meta')->once()->with(42, 'billing_document', $single)->andReturn($value);
+
+        $result = $single
+            ? $this->currentUser->getCurrentUserMeta('billing_document', true)
+            : $this->currentUser->getCurrentUserMeta('billing_document');
+
+        $this->assertSame($value, $result);
+    }
+
+    public function userMetadata(): array
+    {
+        return ['default returns collection' => [false, ['document']], 'single returns scalar' => [true, 'document']];
+    }
+
+    public function testCurrentUserDataPreservesTheWordPressUserObject(): void
+    {
+        $user = Mockery::mock('WP_User');
+        $user->ID = 42;
+        $data = Mockery::mock('WP_User');
+        WP_Mock::userFunction('wp_get_current_user')->once()->andReturn($user);
+        WP_Mock::userFunction('get_userdata')->once()->with(42)->andReturn($data);
+
+        $this->assertSame($data, $this->currentUser->getCurrentUserData());
+    }
+
+    public function testCurrentUserDataPreservesMissingUserResult(): void
+    {
+        $user = Mockery::mock('WP_User');
+        $user->ID = 0;
+        WP_Mock::userFunction('wp_get_current_user')->once()->andReturn($user);
+        WP_Mock::userFunction('get_userdata')->once()->with(0)->andReturn(false);
+
+        $this->assertFalse($this->currentUser->getCurrentUserData());
+    }
+
+    /** @dataProvider loggedInStates */
+    public function testLoginStateIsReadFromWordPress(bool $loggedIn): void
+    {
+        WP_Mock::userFunction('is_user_logged_in')->once()->andReturn($loggedIn);
+
+        $this->assertSame($loggedIn, $this->currentUser->isUserLoggedIn());
+    }
+
+    public function loggedInStates(): array
+    {
+        return ['logged in' => [true], 'guest' => [false]];
+    }
 }

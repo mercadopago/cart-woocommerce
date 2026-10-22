@@ -69,7 +69,11 @@ class Metadata
             '_mp_public_key_prod',
             '_mp_public_key_test',
             '_mp_access_token_prod',
-            '_mp_access_token_test'
+            '_mp_access_token_test',
+            'subscriptions_public_key_prod',
+            'subscriptions_public_key_test',
+            'subscriptions_access_token_prod',
+            'subscriptions_access_token_test',
         ];
     }
 }

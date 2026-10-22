@@ -2,6 +2,12 @@
 
 namespace MercadoPago\Woocommerce\Tests\Mocks;
 
+use MercadoPago\Woocommerce\Api\Core\CoreApi;
+use MercadoPago\Woocommerce\Api\Core\ExchangeClient;
+use MercadoPago\Woocommerce\Api\Core\FunnelClient;
+use MercadoPago\Woocommerce\Api\Core\NotificationsClient;
+use MercadoPago\Woocommerce\Api\Core\PaymentsClient;
+use MercadoPago\Woocommerce\Api\Core\PreferencesClient;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use MercadoPago\Woocommerce\Admin\Settings;
 use MercadoPago\Woocommerce\Configs\Metadata;
@@ -160,6 +166,13 @@ class MercadoPagoMock
         $mock->subscriptionsHelper->shouldReceive('resolveAccessToken')->byDefault()->andReturn('APP_USR-preapproval');
         $mock->automaticPaymentsClient = Mockery::mock(\MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient::class);
 
+        $mock->coreApi = Mockery::mock(CoreApi::class);
+        $mock->coreApi->payments = Mockery::mock(PaymentsClient::class);
+        $mock->coreApi->preferences = Mockery::mock(PreferencesClient::class);
+        $mock->coreApi->notifications = Mockery::mock(NotificationsClient::class);
+        $mock->coreApi->exchange = Mockery::mock(ExchangeClient::class);
+        $mock->coreApi->funnel = Mockery::mock(FunnelClient::class);
+
         // Logs mocks
         $mock->logs = Mockery::mock(Logs::class);
         $mock->logs->file = Mockery::mock(File::class);
@@ -224,6 +237,7 @@ class MercadoPagoMock
             'basicCheckout',
             'creditsCheckout',
             'customCheckout',
+            'superTokenCheckout',
             'pixCheckout',
             'ticketCheckout',
             'pseCheckout',

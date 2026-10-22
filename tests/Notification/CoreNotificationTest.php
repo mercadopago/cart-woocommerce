@@ -2,7 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Tests\Notification;
 
-use MercadoPago\PP\Sdk\Sdk;
+use MercadoPago\Woocommerce\Api\Core\CoreRequestContext;
+use MercadoPago\Woocommerce\Api\Core\NotificationsClient;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
 use MercadoPago\Woocommerce\Helpers\Strings;
@@ -42,12 +43,14 @@ class CoreNotificationTest extends TestCase
             $logsMock,
             Mockery::mock(OrderStatus::class),
             Mockery::mock(Seller::class),
-            Mockery::mock(Store::class)
+            Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class)
         );
     }
 
     /**
      * @testWith [[],[]]
+     *           [{"refunds_notifying": []},[]]
      *           [{"refunds_notifying": "fake"},{"payment_type_id": "creditcard", "payment_method_info": {"installments": 2, "installment_amount": 10, "last_four_digits": "1234"}, "total_amount":10, "paid_amount": 10}]
      *           [{"current_refund": {"id": 1, "amount": 1}},{"refunds": {"1":{}}}]
      */
@@ -132,7 +135,7 @@ class CoreNotificationTest extends TestCase
                 );
         }
 
-        if (!isset($data["refunds_notifying"])) {
+        if (empty($data["refunds_notifying"])) {
             $paymentMetadata
                 ->expects()
                 ->joinPaymentIds([$payment["id"]])
@@ -152,9 +155,7 @@ class CoreNotificationTest extends TestCase
      */
     public function testHandleRefundNotificationSkipsWhenRefundAlreadyApplied(): void
     {
-        // WP_Mock must be initialized BEFORE creating any Mockery mock: WP_Mock::setUp()
-        // resets the Mockery container, which would orphan mocks created earlier.
-        \WP_Mock::setUp();
+        // The shared setup initializes WP_Mock before these expectations are created.
         // Explicit guarantee (not relying on the function being undefined): the dedup skip
         // must never create a WooCommerce refund object.
         \WP_Mock::userFunction('wc_create_refund', ['times' => 0]);
@@ -196,6 +197,7 @@ class CoreNotificationTest extends TestCase
             $orderStatusMock,
             Mockery::mock(Seller::class),
             Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class),
         ])->makePartial();
 
         // The applied ID must not create another WooCommerce refund or increment metadata.
@@ -205,13 +207,10 @@ class CoreNotificationTest extends TestCase
 
         // Behavioural guarantees (isRefundIdApplied once, no updatePaymentDetails, no save,
         // wc_create_refund never) are enforced by the Mockery/WP_Mock expectations verified here.
-        \WP_Mock::tearDown();
-        $this->assertTrue(true);
     }
 
     public function testAppliedRefundUsesSingleOrderPaymentWhenNotificationOmitsMapping(): void
     {
-        \WP_Mock::setUp();
         \WP_Mock::userFunction('wc_create_refund', ['times' => 0]);
 
         $refundId = '99999';
@@ -245,13 +244,12 @@ class CoreNotificationTest extends TestCase
             $orderStatusMock,
             Mockery::mock(Seller::class),
             Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class),
         ])->makePartial();
         $notification->shouldNotReceive('updatePaymentDetails');
 
         $notification->handleSuccessfulRequestInternal($data, $order);
 
-        \WP_Mock::tearDown();
-        $this->assertTrue(true);
     }
 
     /**
@@ -262,8 +260,6 @@ class CoreNotificationTest extends TestCase
      */
     public function testHandleRefundNotificationSkipsFirstButProcessesSecondRefund(): void
     {
-        // WP_Mock must be initialized BEFORE creating any Mockery mock (see note above).
-        \WP_Mock::setUp();
         \WP_Mock::userFunction('wc_create_refund', ['times' => 0]);
 
         $appliedId = 'already_applied_id';
@@ -311,6 +307,7 @@ class CoreNotificationTest extends TestCase
             $orderStatusMock,
             Mockery::mock(Seller::class),
             Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class),
         ])->makePartial();
 
         // The first refund (already applied) is skipped — no updatePaymentDetails. The second
@@ -324,8 +321,6 @@ class CoreNotificationTest extends TestCase
 
         // The continue-not-break guarantee is enforced by the two isRefundIdApplied
         // expectations (one per id) verified here; wc_create_refund is asserted never called.
-        \WP_Mock::tearDown();
-        $this->assertTrue(true);
     }
 
     /**
@@ -359,7 +354,7 @@ class CoreNotificationTest extends TestCase
         $this->assertEquals($expected, $this->notification->validateNotificationId($id));
     }
 
-    public function testGetSdkInstance()
+    public function testGetRequestContext()
     {
         $this->notification->seller
             ->expects()
@@ -382,12 +377,17 @@ class CoreNotificationTest extends TestCase
                 $integratorId = random()->uuid()
             );
 
-        Mockery::mock("overload:" . Sdk::class)
-            ->shouldReceive("__construct")
-            ->once()
-            ->with($accessToken, MP_PLATFORM_ID, $productId, $integratorId);
+        $method = new \ReflectionMethod(CoreNotification::class, 'getRequestContext');
+        $method->setAccessible(true);
+        $context = $method->invoke($this->notification);
 
-        $this->assertInstanceOf(Sdk::class, $this->notification->getSdkInstance());
+        $this->assertInstanceOf(CoreRequestContext::class, $context);
+        $this->assertSame([
+            'Authorization' => 'Bearer ' . $accessToken,
+            'x-platform-id' => MP_PLATFORM_ID,
+            'x-product-id' => $productId,
+            'x-integrator-id' => $integratorId,
+        ], $context->toHeaders());
     }
 
     /**
@@ -423,13 +423,44 @@ class CoreNotificationTest extends TestCase
         $notification->getProcessedStatus($order, $data);
     }
 
+    public function testEmptyRefundsNotifyingProcessesRegularPaymentStatus(): void
+    {
+        $data = [
+            'status' => 'approved',
+            'refunds_notifying' => [],
+        ];
+
+        $order = Mockery::mock(WC_Order::class);
+        $order->expects()->get_status()->andReturn('pending');
+        $order->expects()->save();
+
+        $orderStatus = Mockery::mock(OrderStatus::class)->makePartial();
+        $orderStatus->expects()
+            ->processStatus('approved', $data, $order, Mockery::type('string'))
+            ->andReturn(true);
+
+        $logs = Mockery::mock(Logs::class);
+        $logs->file = Mockery::mock(File::class);
+        $logs->file->shouldReceive('info')->andReturnNull();
+
+        $notification = new CoreNotification(
+            Mockery::mock(MercadoPagoGatewayInterface::class),
+            $logs,
+            $orderStatus,
+            Mockery::mock(Seller::class),
+            Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class)
+        );
+
+        $notification->handleSuccessfulRequestInternal($data, $order);
+    }
+
     /**
      * Tests that a successful refund notification emits mp_refund_success with
      * the order's checkout_type as the payment_method tag (PSW-4309).
      */
     public function testHandleRefundNotificationEmitsSuccessMetricWithCheckoutType(): void
     {
-        \WP_Mock::setUp();
         \WP_Mock::userFunction('wc_create_refund', ['times' => 0]);
 
         $refundId = 'mp_refund_123';
@@ -473,6 +504,7 @@ class CoreNotificationTest extends TestCase
             $orderStatusMock,
             Mockery::mock(Seller::class),
             Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class),
         ])->makePartial();
 
         $notification->shouldReceive('getProcessedStatus')->andReturn('refunded');
@@ -481,8 +513,6 @@ class CoreNotificationTest extends TestCase
 
         $notification->handleSuccessfulRequestInternal($data, $order);
 
-        \WP_Mock::tearDown();
-        $this->assertTrue(true);
     }
 
     /**
@@ -495,7 +525,6 @@ class CoreNotificationTest extends TestCase
      */
     public function testHandleRefundNotificationDoesNotEmitSuccessWhenRefundNotApplied(): void
     {
-        \WP_Mock::setUp();
         \WP_Mock::userFunction('wc_create_refund', ['times' => 0]);
 
         $refundId = 'mp_refund_456';
@@ -537,6 +566,7 @@ class CoreNotificationTest extends TestCase
             $orderStatusMock,
             Mockery::mock(Seller::class),
             Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class),
         ])->makePartial();
 
         $notification->shouldReceive('getProcessedStatus')->andReturn('refunded');
@@ -545,8 +575,6 @@ class CoreNotificationTest extends TestCase
 
         $notification->handleSuccessfulRequestInternal($data, $order);
 
-        \WP_Mock::tearDown();
-        $this->assertTrue(true);
     }
 
     /**
@@ -555,7 +583,6 @@ class CoreNotificationTest extends TestCase
      */
     public function testHandleRefundNotificationEmitsErrorMetricWhenRefundIdMissing(): void
     {
-        \WP_Mock::setUp();
 
         $data = [
             'refunds_notifying' => [
@@ -587,11 +614,10 @@ class CoreNotificationTest extends TestCase
             Mockery::mock(OrderStatus::class),
             Mockery::mock(Seller::class),
             Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class),
         ])->makePartial();
 
         $notification->handleSuccessfulRequestInternal($data, $order);
 
-        \WP_Mock::tearDown();
-        $this->assertTrue(true);
     }
 }

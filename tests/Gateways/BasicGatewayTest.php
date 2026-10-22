@@ -84,14 +84,49 @@ class BasicGatewayTest extends TestCase
         Mockery::mock('overload:' . BasicTransaction::class)
             ->shouldReceive('createPreference')
             ->andReturn([
+                'id' => '123456789-test-preference',
                 'init_point' => 'http://localhost',
             ]);
+
+        $this->gateway->mercadopago->orderMetadata
+            ->shouldReceive('addPreferenceId')
+            ->once()
+            ->with($this->order, '123456789-test-preference')
+            ->andReturn(true);
 
         $result = $this->gateway->process_payment(1);
         $this->assertEquals([
             'result' => 'success',
             'redirect' => 'http://localhost',
         ], $result);
+    }
+
+    public function testProcessPaymentDoesNotPersistPreferenceWhenCreationFails(): void
+    {
+        $this->processPaymentMock(false);
+
+        $this->order->shouldReceive('get_id')
+            ->andReturn(1)
+            ->byDefault();
+        $this->gateway->mercadopago->hooks->options->shouldReceive('getGatewayOption')
+            ->once()
+            ->andReturn('redirect');
+        $this->gateway->mercadopago->orderMetadata->shouldNotReceive('addPreferenceId');
+
+        Mockery::mock('overload:' . BasicTransaction::class)
+            ->shouldReceive('createPreference')
+            ->once()
+            ->andThrow(new \Exception('Preference creation failed'));
+
+        $this->gateway->shouldReceive('processReturnFail')
+            ->once()
+            ->andReturn([
+                'result' => 'fail',
+                'redirect' => '',
+                'message' => 'error',
+            ]);
+
+        $this->assertSame('fail', $this->gateway->process_payment(1)['result']);
     }
 
     public function testProcessPaymentFail()
@@ -234,6 +269,11 @@ class BasicGatewayTest extends TestCase
             ->shouldReceive('getCredentialsPublicKey')
             ->once()
             ->andReturn($publicKey);
+        $mercadopagoMock->orderMetadata
+            ->shouldReceive('addPreferenceId')
+            ->once()
+            ->with($order, (string) $preferenceId)
+            ->andReturn(true);
         $mercadopagoMock->hooks->template->shouldReceive('getWoocommerceTemplate')
             ->once()
             ->with('public/receipt/preference-modal.php', [

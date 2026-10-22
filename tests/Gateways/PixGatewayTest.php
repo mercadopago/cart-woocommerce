@@ -10,11 +10,13 @@ use MercadoPago\Woocommerce\Tests\Traits\FormMock;
 use MercadoPago\Woocommerce\Transactions\PixTransaction;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use MercadoPago\Woocommerce\Gateways\PixGateway;
 use Mockery;
 
 class PixGatewayTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
     use GatewayMock;
     use AssertArrayMap;
     use FormMock;
@@ -427,8 +429,6 @@ class PixGatewayTest extends TestCase
             ->with('public/checkouts/pix-checkout.php', ['test' => 'params']);
 
         $this->gateway->payment_fields();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -731,8 +731,6 @@ class PixGatewayTest extends TestCase
             ->with('base64_string_2'); // array_pop returns last element
 
         $this->gateway->generatePixImage();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -794,8 +792,6 @@ class PixGatewayTest extends TestCase
             ->with($qrCodeBase64);
 
         $this->gateway->generatePixImage();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -928,8 +924,6 @@ class PixGatewayTest extends TestCase
             ->never();
 
         $this->gateway->renderOrderReceivedTemplate($order);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -954,8 +948,6 @@ class PixGatewayTest extends TestCase
             ->never();
 
         $this->gateway->renderOrderReceivedTemplate($order);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1025,8 +1017,6 @@ class PixGatewayTest extends TestCase
             ->with('public/order/pix-order-received-image.php', Mockery::type('array'));
 
         $this->gateway->renderOrderReceivedTemplate($order);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1046,8 +1036,6 @@ class PixGatewayTest extends TestCase
             ->never();
 
         $this->gateway->registerPixPoolingScript($order);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1097,8 +1085,6 @@ class PixGatewayTest extends TestCase
             );
 
         $this->gateway->registerPixPoolingScript($order);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1119,8 +1105,6 @@ class PixGatewayTest extends TestCase
             ->with('mp_pix_appproved', 'https://example.com/pix-approved.css');
 
         $this->gateway->registerApprovedPaymentStyles();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1151,8 +1135,6 @@ class PixGatewayTest extends TestCase
             ->with('public/order/pix-payment-approved.php', Mockery::type('array'));
 
         $this->gateway->renderPixPaymentApprovedTemplate();
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1202,8 +1184,6 @@ class PixGatewayTest extends TestCase
             ->with('public/order/pix-payment-approved.php', Mockery::type('array'));
 
         $this->gateway->renderThankYouPage($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1252,8 +1232,6 @@ class PixGatewayTest extends TestCase
             ->never();
 
         $this->gateway->renderThankYouPage($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1369,8 +1347,6 @@ class PixGatewayTest extends TestCase
             ->with('public/order/pix-order-received.php', Mockery::type('array'));
 
         $this->gateway->renderThankYouPage($orderId);
-
-        $this->assertTrue(true);
     }
 
     /**
@@ -1419,7 +1395,7 @@ class PixGatewayTest extends TestCase
             ->with($order)
             ->andReturn('pay-123');
 
-        $response = Mockery::mock(\MercadoPago\PP\Sdk\HttpClient\Response::class);
+        $response = Mockery::mock(\MercadoPago\Woocommerce\Api\Http\HttpResponse::class);
         $response->shouldReceive('getStatus')->andReturn(200);
         $response->shouldReceive('getData')->andReturn(['status' => 'pending']);
 
@@ -1433,8 +1409,6 @@ class PixGatewayTest extends TestCase
             ->with(['status' => 'pending', 'message' => 'Payment pending']);
 
         $this->gateway->checkPixPaymentStatus();
-
-        $this->assertTrue(true);
     }
 
     /**

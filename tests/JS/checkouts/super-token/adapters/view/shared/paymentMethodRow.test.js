@@ -82,13 +82,9 @@ describe('mpCardThumbnailPath (RN-7: blue for MLA/MLM, dark elsewhere)', () => {
   });
 });
 
-describe('buildConsumerCreditsName (non-breaking space in the name)', () => {
-  it('Given BR, When built, Then the name uses a real NBSP, not the literal entity (renders right via textContent)', () => {
-    const name = buildConsumerCreditsName('MLB');
-
-    expect(name).toContain('\u00a0');
-    expect(name).not.toContain('&nbsp;');
-    expect(name).toBe('Linha de Crédito Mercado\u00a0Pago');
+describe('buildConsumerCreditsName', () => {
+  it('Given an unknown site, When built, Then the row uses Mercado Crédito', () => {
+    expect(buildConsumerCreditsName('UNKNOWN')).toBe('Mercado Crédito');
   });
 });
 

@@ -261,12 +261,14 @@
 
 .mp-tooltip-sample-image-container {
   display: flex;
-  width: 523px;
+  width: 570px;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 16px;
   align-items: center;
   align-content: center;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.04);
   background: #fff;
@@ -275,6 +277,11 @@
 .mp-tooltip-sample-image-container img {
   width: 32px !important;
   height: 32px !important;
+  flex-shrink: 0;
+}
+
+.mp-tooltip-sample-image-container #selected-option {
+  min-width: 0;
 }
 
 .mp-tooltip-sample-image-container .learn-more {

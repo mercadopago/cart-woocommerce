@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\SuperToken;
 
-use MercadoPago\PP\Sdk\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
 use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\SuperToken\Contracts\SuperTokenMetadataWriter;

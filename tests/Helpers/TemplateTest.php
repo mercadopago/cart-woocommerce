@@ -66,4 +66,39 @@ class TemplateTest extends TestCase
         $this->assertSame('', $capturedTemplatePath, 'Third argument ($template_path) must be an empty string, never null.');
         $this->assertSame($expectedHtml, $result);
     }
+
+    /** @dataProvider templateNames */
+    public function testRenderPassesTheCompleteTemplateContract(string $input, string $expectedName): void
+    {
+        $received = null;
+        $args = ['amount' => 100, 'method' => 'card'];
+        WP_Mock::userFunction('wc_get_template')->once()
+            ->andReturnUsing(function ($name, $arguments, $path, $defaultPath) use (&$received): void {
+                $received = [$name, $arguments, $path, $defaultPath];
+            });
+
+        Template::render($input, $args);
+
+        $this->assertSame([$expectedName, $args, '', dirname(MP_PLUGIN_FILE) . '/templates'], $received);
+    }
+
+    /** @dataProvider templateNames */
+    public function testHtmlPreservesNameArgumentsDefaultPathAndReturnedMarkup(string $input, string $expectedName): void
+    {
+        $args = ['amount' => 100, 'method' => 'card'];
+        $markup = '<section>Checkout content</section>';
+        WP_Mock::userFunction('wc_get_template_html')->once()
+            ->with($expectedName, $args, '', dirname(MP_PLUGIN_FILE) . '/templates')
+            ->andReturn($markup);
+
+        $this->assertSame($markup, Template::html($input, $args));
+    }
+
+    public function templateNames(): array
+    {
+        return [
+            'nested name gains php extension' => ['checkout/card', '/checkout/card.php'],
+            'existing extension is preserved' => ['checkout/card.php', '/checkout/card.php'],
+        ];
+    }
 }

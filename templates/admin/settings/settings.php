@@ -107,26 +107,6 @@ if (!defined('ABSPATH')) {
                         <div id="mp-req-gd" class="mp-settings-icon-success" style="filter: grayscale(1)"></div>
                     </div>
                 </div>
-                <hr>
-
-                <div class="mp-inner-container">
-                    <div>
-                        <p class="mp-settings-font-color mp-settings-subtitle-font-size">
-                            <?= wp_kses($headerTranslations['curl'], $allowedHtmlTags) ?>
-                        </p>
-                        <label class="mp-settings-icon-info mp-settings-tooltip">
-                            <span class="mp-settings-tooltip-text">
-                                <p class="mp-settings-subtitle-font-size">
-                                    <b><?= wp_kses($headerTranslations['curl'], $allowedHtmlTags) ?></b>
-                                </p>
-                                <?= wp_kses($headerTranslations['description_curl'], $allowedHtmlTags) ?>
-                            </span>
-                        </label>
-                    </div>
-                    <div>
-                        <div id="mp-req-curl" class="mp-settings-icon-success" style="filter: grayscale(1)"></div>
-                    </div>
-                </div>
             </div>
 
             <div class="mp-block mp-block-flex mp-settings-margin-left mp-settings-margin-right">

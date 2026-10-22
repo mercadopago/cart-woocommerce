@@ -7,7 +7,6 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
-use MercadoPago\Woocommerce\Tests\Mocks\SdkMock;
 use MercadoPago\Woocommerce\Transactions\BasicTransaction;
 use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Gateways\BasicGateway;
@@ -55,11 +54,11 @@ class BasicTransactionTest extends TestCase
             ->andReturn($expectedInstallments);
         $basic->mercadopago = $mercadopagoMock;
 
-        $basic->transaction = SdkMock::getPreferenceEntityMock();
+        $basic->transaction = ['payment_methods' => ['excluded_payment_methods' => []]];
         $basic->gateway = Mockery::mock(BasicGateway::class)->makePartial();
 
         $basic->setInstallmentsTransaction();
-        $this->assertEquals($expectedInstallments, $basic->transaction->payment_methods->installments);
+        $this->assertEquals($expectedInstallments, $basic->transaction['payment_methods']['installments']);
     }
 
     public function testSetExcludedPaymentMethodsTransaction()
@@ -73,19 +72,15 @@ class BasicTransactionTest extends TestCase
             ->andReturn(['visa', 'master', 'cabal']);
         $basic->mercadopago = $mercadopagoMock;
 
-        $basic->transaction = SdkMock::getPreferenceEntityMock();
-        $basic->transaction->payment_methods->excluded_payment_methods->shouldReceive('add')
-            ->with(['id' => 'visa'])
-            ->once();
-        $basic->transaction->payment_methods->excluded_payment_methods->shouldReceive('add')
-            ->with(['id' => 'master'])
-            ->once();
-        $basic->transaction->payment_methods->excluded_payment_methods->shouldReceive('add')
-            ->with(['id' => 'cabal'])
-            ->once();
+        $basic->transaction = ['payment_methods' => ['excluded_payment_methods' => []]];
 
         $basic->gateway = Mockery::mock(BasicGateway::class)->makePartial();
         $this->assertNull($basic->setExcludedPaymentMethodsTransaction());
+        $this->assertSame([
+            ['id' => 'visa'],
+            ['id' => 'master'],
+            ['id' => 'cabal'],
+        ], $basic->transaction['payment_methods']['excluded_payment_methods']);
     }
 
     public function testSetPaymentMethodsTransaction()

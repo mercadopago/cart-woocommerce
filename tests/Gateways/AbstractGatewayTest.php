@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
+use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
+use MercadoPago\Woocommerce\Api\Http\TransportException;
 use MercadoPago\Woocommerce\Refund\RefundHandler;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
 use MercadoPago\Woocommerce\Tests\Traits\AssertArrayMap;
@@ -11,6 +13,7 @@ use Mockery\MockInterface;
 use Mockery\Exception\MockeryExceptionInterface;
 use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
@@ -24,6 +27,7 @@ use WP_Mock;
 
 class AbstractGatewayTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
     use GatewayMock;
     use AssertArrayMap;
     use FormMock;
@@ -835,6 +839,104 @@ class AbstractGatewayTest extends TestCase
         $result = $this->gateway->processReturnFail($exception, $errorMessage, 'test_source');
 
         $this->assertEquals('fail', $result['result']);
+    }
+
+    public function testProcessReturnFailLogsApiExceptionMessageAndStructuredFields(): void
+    {
+        $apiException = new ApiException(
+            'BankTransfers Api fail',
+            'CPP_AT_0103070',
+            424,
+            'internal processor detail',
+            424
+        );
+        $exceptionOrigin = basename($apiException->getFile()) . ':' . $apiException->getLine();
+
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock
+            ->shouldReceive('error')
+            ->once()
+            ->with('Checkout processing failed', 'test_source', [
+                'exception_type' => 'ApiException',
+                'exception_code' => '424',
+                'exception_origin' => $exceptionOrigin,
+                'context_fields' => [],
+                'api_message' => 'BankTransfers Api fail',
+                'http_status' => 424,
+                'api_status' => 424,
+                'api_error_code' => 'CPP_AT_0103070',
+            ])
+            ->andReturnNull();
+        $this->mercadopagoMock->logs->file = $logsFileMock;
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $this->mercadopagoMock->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->once()
+            ->andReturn('test-cust-id');
+        $this->mercadopagoMock->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->with('BankTransfers Api fail')
+            ->once()
+            ->andReturn('translated error');
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once();
+
+        $result = $this->gateway->processReturnFail(
+            $apiException,
+            $apiException->getMessage(),
+            'test_source'
+        );
+
+        $this->assertSame('fail', $result['result']);
+    }
+
+    public function testProcessReturnFailLogsTransportCodeWithoutTransportMessage(): void
+    {
+        $transportException = new TransportException('http_request_failed');
+
+        $logsFileMock = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Logs\Transports\File::class);
+        $logsFileMock
+            ->shouldReceive('error')
+            ->once()
+            ->with(
+                'Checkout processing failed',
+                'test_source',
+                Mockery::on(function (array $context) use ($transportException): bool {
+                    return $context === [
+                        'exception_type' => 'TransportException',
+                        'exception_code' => '0',
+                        'exception_origin' => basename($transportException->getFile()) . ':' . $transportException->getLine(),
+                        'context_fields' => [],
+                        'transport_code' => 'http_request_failed',
+                    ];
+                })
+            )
+            ->andReturnNull();
+        $this->mercadopagoMock->logs->file = $logsFileMock;
+        $this->gateway->mercadopago = $this->mercadopagoMock;
+
+        $this->mercadopagoMock->sellerConfig
+            ->shouldReceive('getCustIdFromAT')
+            ->once()
+            ->andReturn('test-cust-id');
+        $this->mercadopagoMock->helpers->errorMessages
+            ->shouldReceive('findErrorMessage')
+            ->with('transport_error')
+            ->once()
+            ->andReturn('translated error');
+        $this->gateway->datadog
+            ->shouldReceive('sendEvent')
+            ->once();
+
+        $result = $this->gateway->processReturnFail(
+            $transportException,
+            'transport_error',
+            'test_source'
+        );
+
+        $this->assertSame('fail', $result['result']);
     }
 
     /**
@@ -2063,6 +2165,34 @@ class AbstractGatewayTest extends TestCase
         $this->assertSame(' (Desconto R$ 0,50)', $result);
     }
 
+    public function testInitialCurrencyRatioUsesSuccessfulConversion(): void
+    {
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($this->gateway)
+            ->andReturn(5.177);
+
+        $method = new \ReflectionMethod(AbstractGateway::class, 'getInitialCurrencyRatio');
+        $method->setAccessible(true);
+
+        $this->assertSame(5.177, $method->invoke($this->gateway));
+    }
+
+    public function testInitialCurrencyRatioFallsBackWhenConversionFails(): void
+    {
+        $this->gateway->mercadopago->helpers->currency
+            ->shouldReceive('getRatio')
+            ->once()
+            ->with($this->gateway)
+            ->andThrow(new \Exception('Currency conversion API unavailable'));
+
+        $method = new \ReflectionMethod(AbstractGateway::class, 'getInitialCurrencyRatio');
+        $method->setAccessible(true);
+
+        $this->assertSame(1.0, $method->invoke($this->gateway));
+    }
+
     public function testGetFeeTitleReturnEmptyWhenCartNotAvailable(): void
     {
         $this->gateway->mercadopago->helpers->cart
@@ -2198,8 +2328,6 @@ class AbstractGatewayTest extends TestCase
             ->byDefault();
 
         $this->gateway->registerCheckoutScripts();
-
-        $this->assertTrue(true);
     }
 
     public function testIsAvailableReturnsFalseWhenParentIsNotAvailable(): void

@@ -7,12 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.9.7] 2026-10-22
+### Added
+- Preserve every Checkout Pro payment attempt so paid orders can be recovered before automatic cancellation
+
+### Changed
+- Update fast payment Credits names, icon and installment copy, using Mercado Crédito as the default and Mercado Parcelado for Brazil
+- Rename Credits and localize seller previews, product banners and Classic/Blocks checkout, preserving seller-chosen titles
+- Show the localized Credits benefit in Brazilian Checkout Pro while preserving the generic benefit in other markets
+- Use neutral Spanish in the card checkout for Spanish locales without a country-specific translation, preserving country-specific catalogs
+- Use the store language for supported payment form locales, with Mexican Spanish as the fallback for unsupported Spanish variants
+- Show Chilean fast payment texts in the store's configured language
+
+### Fixed
+- Keep checkout available when currency conversion lookup fails, and retry the conversion when processing the payment
+- Keep the default Credits title following the store language after saving settings, including stores with a legacy title
+- Use neutral Spanish in the Credits buyer banner and expanded checkout heading
+- Keep seller Credits banner icons beside the text on smaller screens
+- Display fast payment Credits due-date emphasis without visible HTML tags
+- Preserve fast payment text in the store language for Chilean stores
+- Remove a stray quotation mark from a Mexican Spanish payment error message
+- Translate card form instructions for stores in Chilean Spanish
+- Check payment status before automatically cancelling unpaid orders, preserving paid orders and orders whose payment status cannot be confirmed
+- Report the actual payment status for subscription authorizations
+
+### Security
+- Prevent subscription payment credentials from being copied into payment metadata and transaction logs
+- Remove credentials from refund diagnostics before logging
+
+
 ## [8.9.6] 2026-10-07
 ### Added
 - Add the bank-interest disclaimer to Chilean fast payment saved-card installments, displaying it only while the buyer has selected the option marked with an asterisk
 
 ### Changed
 - Use neutral Spanish messages for Chilean fast payment saved-method errors
+- Prepare the localized "Cuotas sin Tarjeta de Mercado Pago" name for Consumer Credits in the Chilean fast payment checkout, shown once Consumer Credits becomes available in Chile
 
 ### Fixed
 - Keep standard card checkout available when the fast payment purchase amount is missing or invalid

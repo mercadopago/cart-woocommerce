@@ -2,7 +2,7 @@
 
 namespace MercadoPago\Woocommerce\Tests\Gateways;
 
-use MercadoPago\PP\Sdk\HttpClient\Response;
+use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use MercadoPago\Woocommerce\Gateways\CustomGateway;
 use MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient;
 use MercadoPago\Woocommerce\Helpers\SubscriptionsHelper;
