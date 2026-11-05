@@ -84,12 +84,12 @@ describe('PaymentMethodRegistry', () => {
       expect(decorated.thumbnail).toBe('/mp-dark.png');
     });
 
-    it('Given a Mercado Pago credit card on v2, When decorated, Then it stays a regular issuer card (no MP name/icon)', () => {
+    it('Given legacy variant metadata, When decorated, Then the canonical MP name and icon are used', () => {
       const registry = createPaymentMethodRegistry(buildConfig({ siteId: 'MLA', variant: 'v2' }));
       const decorated = registry.decorate(creditCard({ issuer: { name: 'Mercado Pago' } }));
 
-      expect(decorated.name).toBe('Mercado Pago Crédito');
-      expect(decorated.thumbnail).toBe('/white.png');
+      expect(decorated.name).toBe('Cartao Mercado Pago');
+      expect(decorated.thumbnail).toBe('/mp-blue.png');
     });
 
     it('Given a Mercado Pago prepaid card, When decorated, Then it gets both the MP name and the prepaid thumbnail (cumulative)', () => {

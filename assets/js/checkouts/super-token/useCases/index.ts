@@ -50,4 +50,5 @@ export type {
   LoadSuperTokenContext,
   LoadSuperTokenSession,
   LoadSuperTokenMetrics,
+  SuperTokenBlock,
 } from './LoadSuperToken';

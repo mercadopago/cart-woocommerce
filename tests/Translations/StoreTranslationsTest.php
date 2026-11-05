@@ -18,7 +18,9 @@ class StoreTranslationsTest extends TestCase
     {
         WP_Mock::setUp();
         WP_Mock::userFunction('__')->andReturnArg(0);
-        WP_Mock::userFunction('_x')->andReturnUsing(fn($text, $context) => "$context|$text");
+        WP_Mock::userFunction('_x')->andReturnUsing(function ($text, $context) {
+            return strpos($context, 'credits ') === 0 ? $text : "$context|$text";
+        });
         WP_Mock::userFunction('get_locale')->andReturn('es_CO');
         WP_Mock::onFilter('plugin_locale')->with('es_CO', 'woocommerce-mercadopago')->reply('es_CO');
     }
@@ -75,6 +77,26 @@ class StoreTranslationsTest extends TestCase
         $translations = $this->buildStoreTranslations();
 
         $this->assertSame('es-CO', $translations->customCheckout['locale']);
+    }
+
+    public function testEnglishCheckoutProBenefitDoesNotRepeatTheCreditsName(): void
+    {
+        $translations = $this->buildStoreTranslations();
+
+        $this->assertSame(
+            '<b>Buy safely</b> with your preferred payment method.',
+            $translations->basicCheckout['second_benefit_credits_description']
+        );
+    }
+
+    public function testEnglishSecondCreditsBannerChangesWithoutChangingOtherOptions(): void
+    {
+        $copy = $this->buildStoreTranslations()->creditsCheckout;
+
+        $this->assertSame('<b>Buy now, pay later</b> with Mercado Pago', $copy['tooltip_component_option2']);
+        $this->assertSame('<b>Up to 12 installments</b> through {credits_name}.', $copy['tooltip_component_option1']);
+        $this->assertSame('With {credits_name}, <b>get it now and pay month by month</b>.', $copy['tooltip_component_option3']);
+        $this->assertSame('<b>Pay in up to 12 installments</b> without credit card.', $copy['tooltip_component_option4']);
     }
 
     private function buildStoreTranslations(): StoreTranslations

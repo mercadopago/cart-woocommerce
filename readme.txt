@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 8.9.7
+Stable tag: 8.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,33 +134,21 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.9.7 (22/10/2026) =
+= v8.10.0 (05/11/2026) =
 * Added
-- Preserve every Checkout Pro payment attempt so paid orders can be recovered before automatic cancellation
+- Add Colombian Spanish: stores in Colombian Spanish now use their own translation instead of the generic Spanish one, with "Cuotas" and "cuotas sin interés" in the new card form and, once fast payment is available in Colombia, in the saved payment methods; card errors and admin credential messages in neutral Spanish; and a Colombian Wallet Button preview in the admin
+- Inform Mercado Pago when the plugin is uninstalled, if the store has an installation record
 
 * Changed
-- Update fast payment Credits names, icon and installment copy, using Mercado Crédito as the default and Mercado Parcelado for Brazil
-- Rename Credits and localize seller previews, product banners and Classic/Blocks checkout, preserving seller-chosen titles
-- Show the localized Credits benefit in Brazilian Checkout Pro while preserving the generic benefit in other markets
-- Use neutral Spanish in the card checkout for Spanish locales without a country-specific translation, preserving country-specific catalogs
-- Use the store language for supported payment form locales, with Mexican Spanish as the fallback for unsupported Spanish variants
-- Show Chilean fast payment texts in the store's configured language
+- Make the new fast payment experience the default for all stores, keeping compatibility with older plugin versions and translated saved payment method labels; outdated styles cached in the buyer's browser are repaired automatically without blocking checkout
+- Show Colombian peso amounts without decimal places in the fast payment installments, once fast payment is available in Colombia
 
 * Fixed
-- Keep checkout available when currency conversion lookup fails, and retry the conversion when processing the payment
-- Keep the default Credits title following the store language after saving settings, including stores with a legacy title
-- Use neutral Spanish in the Credits buyer banner and expanded checkout heading
-- Keep seller Credits banner icons beside the text on smaller screens
-- Display fast payment Credits due-date emphasis without visible HTML tags
-- Preserve fast payment text in the store language for Chilean stores
-- Remove a stray quotation mark from a Mexican Spanish payment error message
-- Translate card form instructions for stores in Chilean Spanish
-- Check payment status before automatically cancelling unpaid orders, preserving paid orders and orders whose payment status cannot be confirmed
-- Report the actual payment status for subscription authorizations
-
-* Security
-- Prevent subscription payment credentials from being copied into payment metadata and transaction logs
-- Remove credentials from refund diagnostics before logging
+- Load fast payment resources only on checkout and order payment pages, keeping pages that combine cart and checkout working
+- Correct order payment status when Mercado Pago coupons or unsuccessful payment attempts are included in Checkout Pro notifications
+- Validate the card data again when the buyer retries a Classic checkout card payment after an interrupted attempt, and stop incomplete card data from being submitted, including on the order payment page
+- Keep fast payment in the Classic checkout in sync when the buyer changes the selected payment method, and stop incomplete or outdated authorizations from being submitted at checkout and on the order payment page
+- Remove repeated Credits wording from English Checkout Pro benefits and the second promotional banner, preserving other languages
 
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

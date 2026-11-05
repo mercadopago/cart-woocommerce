@@ -126,7 +126,7 @@ describe('verify-integrity — gate de integridade dos assets (PPSP-1529)', () =
     expect(result.mismatched).toEqual([]);
   });
 
-  test('ignora somente os dois CSS de hand-off e mantém o CSS servido como órfão', () => {
+  test('reporta qualquer CSS fora do manifest, inclusive arquivos legados reintroduzidos', () => {
     const manifest = { [ASSET_JS]: hashOf(CONTENT_JS) };
     const manifestJson = JSON.stringify(manifest);
 
@@ -150,9 +150,7 @@ describe('verify-integrity — gate de integridade dos assets (PPSP-1529)', () =
     const result = verifyIntegrity();
 
     expect(result.ok).toBe(false);
-    expect(result.orphans).toEqual([SUPER_TOKEN_CSS]);
-    expect(result.orphans).not.toContain(SUPER_TOKEN_V2_CSS);
-    expect(result.orphans).not.toContain(SUPER_TOKEN_V21_CSS);
+    expect(result.orphans).toEqual([SUPER_TOKEN_CSS, SUPER_TOKEN_V2_CSS, SUPER_TOKEN_V21_CSS]);
   });
 
   test('trata caminho existente que não é arquivo como ausente', () => {

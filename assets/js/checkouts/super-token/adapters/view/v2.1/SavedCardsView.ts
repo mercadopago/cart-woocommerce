@@ -96,9 +96,9 @@ export class V21SavedCardsView {
     container.querySelectorAll(`.${V21_STYLES.BLOCK}`).forEach((block) => block.remove());
   }
 
-  // Per-type row factory: delegates to the shared dispatch so v2.1 and v2 build the identical
-  // interactive row for a given method type. Only the v2.1 chrome (grouped blocks, e-mail header)
-  // lives here; the row itself (presentation + selection wiring + card/credits details) is shared.
+  // Per-type row factory: delegates interactive rows to the shared dispatch.
+  // Grouped blocks and the e-mail header live here; row presentation, selection wiring
+  // and card/credits details stay in the shared builders.
   private rowFactory(context: SavedMethodsRenderContext): (paymentMethod: PaymentMethod) => HTMLElement | null {
     return (paymentMethod: PaymentMethod): HTMLElement | null =>
       buildTypedRow(paymentMethod, this.deps, this.rowPresentation, context);

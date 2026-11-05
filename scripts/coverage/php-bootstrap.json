@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "id": "woocommerce-declaration-context-v2",
+  "contextId": "coverage-bootstrap:dependency-declarations",
+  "composerName": "mp-plugins/woocommerce-plugins-enablers",
+  "namespace": "MercadoPago\\Woocommerce\\",
+  "dependencies": [
+    {
+      "class": "MercadoPago\\Woocommerce\\Helpers\\Numbers",
+      "path": "src/Helpers/Numbers.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Api\\Core\\PaymentsClient",
+      "path": "src/Api/Core/PaymentsClient.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Api\\Core\\PreferencesClient",
+      "path": "src/Api/Core/PreferencesClient.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Helpers\\Country",
+      "path": "src/Helpers/Country.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Blocks\\AbstractBlock",
+      "path": "src/Blocks/AbstractBlock.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Endpoints\\CheckoutValidation",
+      "path": "src/Endpoints/CheckoutValidation.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Exceptions\\RefundException",
+      "path": "src/Exceptions/RefundException.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Gateways\\CustomGateway",
+      "path": "src/Gateways/CustomGateway.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Helpers\\AutomaticPaymentsClient",
+      "path": "src/Helpers/AutomaticPaymentsClient.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Helpers\\RefundStatusCodes",
+      "path": "src/Helpers/RefundStatusCodes.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Libraries\\Logs\\LogLevels",
+      "path": "src/Libraries/Logs/LogLevels.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Order\\OrderMetadata",
+      "path": "src/Order/OrderMetadata.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Notification\\CoreNotification",
+      "path": "src/Notification/CoreNotification.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Helpers\\CreditsPresentation",
+      "path": "src/Helpers/CreditsPresentation.php",
+      "role": "guarded"
+    }
+  ],
+  "interface": {
+    "class": "MercadoPago\\Woocommerce\\Interfaces\\MercadoPagoPaymentBlockInterface",
+    "path": "src/Interfaces/MercadoPagoPaymentBlockInterface.php"
+  },
+  "parent": {
+    "class": "Automattic\\WooCommerce\\Blocks\\Payments\\Integrations\\AbstractPaymentMethodType",
+    "path": "tests/Mocks/WoocommerceBlocksStub.php"
+  },
+  "closure": [
+    {
+      "class": "MercadoPago\\Woocommerce\\Gateways\\AbstractGateway",
+      "path": "src/Gateways/AbstractGateway.php",
+      "role": "class-only"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Notification\\AbstractNotification",
+      "path": "src/Notification/AbstractNotification.php",
+      "role": "guarded"
+    }
+  ],
+  "interfaces": [
+    {
+      "class": "MercadoPago\\Woocommerce\\Interfaces\\MercadoPagoPaymentBlockInterface",
+      "path": "src/Interfaces/MercadoPagoPaymentBlockInterface.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Interfaces\\MercadoPagoGatewayInterface",
+      "path": "src/Interfaces/MercadoPagoGatewayInterface.php",
+      "role": "guarded"
+    },
+    {
+      "class": "MercadoPago\\Woocommerce\\Interfaces\\NotificationInterface",
+      "path": "src/Interfaces/NotificationInterface.php",
+      "role": "guarded"
+    }
+  ],
+  "parents": [
+    {
+      "class": "Automattic\\WooCommerce\\Blocks\\Payments\\Integrations\\AbstractPaymentMethodType",
+      "path": "tests/Mocks/WoocommerceBlocksStub.php"
+    },
+    {
+      "class": "WC_Payment_Gateway",
+      "path": "tests/Mocks/WoocommerceGatewayStub.php",
+      "parent": "WC_Settings_API",
+      "parentSource": "same stub"
+    },
+    {
+      "class": "Exception",
+      "internal": true
+    }
+  ],
+  "reservedClasses": [
+    "MercadoPago\\Woocommerce\\Helpers\\Date",
+    "MercadoPago\\Woocommerce\\Helpers\\Device",
+    "MercadoPago\\Woocommerce\\Helpers\\Form",
+    "MercadoPago\\Woocommerce\\Helpers\\PaymentMetadata",
+    "MercadoPago\\Woocommerce\\Libraries\\Metrics\\Datadog"
+  ]
+}

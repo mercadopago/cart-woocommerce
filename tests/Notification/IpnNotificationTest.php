@@ -209,6 +209,113 @@ class IpnNotificationTest extends TestCase
         $this->assertEquals($status, $this->notification->getProcessedStatus($order, $data));
     }
 
+    /**
+     * @dataProvider processedStatusCouponProvider
+     */
+    public function testGetProcessedStatusCountsOnlyApprovedCoupons(
+        float $total,
+        float $shipping,
+        array $attempts,
+        string $expectedStatus
+    ): void {
+        $order = Mockery::mock(WC_Order::class);
+        $order->expects()->save()->once();
+        $order->expects()->update_meta_data('_used_gateway', 'WC_WooMercadoPago_Basic_Gateway');
+
+        $this->notification->seller = Mockery::mock(Seller::class);
+        $this->notification->seller->shouldReceive('getCredentialsAccessToken')->andReturn('synthetic-ipn-credential');
+        $this->notification->requester = Mockery::mock(Requester::class);
+
+        $payments = [];
+        $paymentIds = [];
+        foreach ($attempts as $index => $attempt) {
+            [$status, $paid, $resource, $expectedCoupon, $refunded] = $attempt;
+            $id = (string) (101 + $index);
+            $paymentIds[] = $id;
+            $payments[] = [
+                'id' => $id,
+                'status' => $status,
+                'date_created' => '2026-10-27T12:00:00Z',
+                'transaction_amount' => $total,
+                'total_paid_amount' => $paid,
+                'amount_refunded' => $refunded,
+            ];
+
+            $this->notification->requester->expects()
+                ->get('/v1/payments/' . $id, ['Authorization: Bearer synthetic-ipn-credential'])
+                ->twice()
+                ->andReturn(new Response(200, [], '', $resource));
+            $order->expects()->update_meta_data(
+                'Mercado Pago - Payment ' . $id,
+                '[Date 2026-10-27 12:00:00]/[Amount ' . $total .
+                ']/[Paid ' . $paid . ']/[Coupon ' . $expectedCoupon . ']/[Refund ' . $refunded . ']'
+            );
+        }
+
+        $order->expects()->update_meta_data('_Mercado_Pago_Payment_IDs', implode(', ', $paymentIds));
+
+        $this->assertSame($expectedStatus, $this->notification->getProcessedStatus($order, [
+            'shipping_cost' => $shipping,
+            'total_amount' => $total,
+            'payments' => $payments,
+        ]));
+    }
+
+    public static function processedStatusCouponProvider(): array
+    {
+        $cases = [
+            'coupon covers remaining amount' => [100, 0, [['approved', 90, ['coupon_amount' => 10], 10, 0]], 'approved'],
+            'partial payment without coupon' => [100, 0, [['approved', 99, ['coupon_amount' => 0], 0, 0]], 'pending'],
+            'pending payment on low value order' => [1, 0, [['pending', 0, ['coupon_amount' => 0], 0, 0]], 'pending'],
+            'rejected payment on low value order' => [1, 0, [['rejected', 0, ['coupon_amount' => 0], 0, 0]], 'pending'],
+            'rejected attempt cannot cover shortfall' => [101, 0, [
+                ['approved', 99, ['coupon_amount' => 0], 0, 0],
+                ['rejected', 0, ['coupon_amount' => 0], 0, 0],
+            ], 'pending'],
+            'several unsuccessful attempts' => [101, 0, [
+                ['approved', 99, ['coupon_amount' => 0], 0, 0],
+                ['pending', 0, ['coupon_amount' => 100], 100, 0],
+                ['rejected', 0, ['coupon_amount' => 100], 100, 0],
+            ], 'pending'],
+            'full approved payment without coupon' => [100, 0, [['approved', 100, ['coupon_amount' => 0], 0, 0]], 'approved'],
+            'numeric string coupon' => [100, 0, [['approved', 89.5, ['coupon_amount' => '10.50'], 10.5, 0]], 'approved'],
+            'several approved payments and coupons' => [100, 0, [
+                ['approved', 40, ['coupon_amount' => 5], 5, 0],
+                ['approved', 50, ['coupon_amount' => 5], 5, 0],
+            ], 'approved'],
+            'shipping is covered' => [100, 10, [['approved', 100, ['coupon_amount' => 10], 10, 0]], 'approved'],
+            'shipping is not covered' => [100, 10, [['approved', 99, ['coupon_amount' => 10], 10, 0]], 'pending'],
+            'full refund including shipping' => [100, 10, [['refunded', 0, ['coupon_amount' => 10], 10, 110]], 'refunded'],
+            'partial refund does not approve order' => [100, 0, [['refunded', 0, ['coupon_amount' => 100], 100, 99]], 'pending'],
+        ];
+
+        foreach (['pending', 'rejected', 'in_process', 'authorized', 'cancelled', 'charged_back'] as $status) {
+            $cases[$status . ' ignores paid amount and positive coupon'] = [
+                1, 0, [[$status, 100, ['coupon_amount' => 100], 100, 0]], 'pending',
+            ];
+        }
+
+        $invalidCoupons = [
+            'absent' => [],
+            'null' => ['coupon_amount' => null],
+            'text' => ['coupon_amount' => 'not-a-number'],
+            'boolean' => ['coupon_amount' => true],
+            'array' => ['coupon_amount' => [10]],
+            'negative' => ['coupon_amount' => -10],
+            'infinite' => ['coupon_amount' => INF],
+            'nan' => ['coupon_amount' => NAN],
+            'overflow string' => ['coupon_amount' => '1e999'],
+            'null resource' => null,
+            'scalar resource' => 'invalid-resource',
+        ];
+        foreach ($invalidCoupons as $name => $resource) {
+            $cases[$name . ' coupon cannot cover partial payment'] = [100, 0, [['approved', 99, $resource, 0, 0]], 'pending'];
+            $cases[$name . ' coupon preserves full payment'] = [100, 0, [['approved', 100, $resource, 0, 0]], 'approved'];
+        }
+
+        return $cases;
+    }
+
     public function testGetPaymentInfo(): void
     {
         $this->notification->seller = Mockery::mock(Seller::class)
@@ -219,6 +326,8 @@ class IpnNotificationTest extends TestCase
 
         $id = random()->numberBetween();
 
+        $resource = ['id' => (string) $id, 'coupon_amount' => 10, 'status' => 'approved'];
+
         $this->notification->requester = Mockery::mock(Requester::class)
             ->expects()
             ->get("/v1/payments/$id", ["Authorization: Bearer $token"])
@@ -226,10 +335,11 @@ class IpnNotificationTest extends TestCase
                 Mockery::mock(Response::class)
                     ->expects()
                     ->getData()
+                    ->andReturn($resource)
                     ->getMock()
             )
             ->getMock();
 
-        $this->notification->getPaymentInfo($id);
+        $this->assertSame($resource, $this->notification->getPaymentInfo($id));
     }
 }

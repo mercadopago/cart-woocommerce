@@ -35,14 +35,25 @@ class Url
     }
 
     /**
-     * Get Mercado Pago SDK JS URL based on MP_SDK_ENV (prod, beta, gama).
+     * Get Mercado Pago SDK JS URL based on MP_SDK_ENV (prod, beta or gama).
      * Override via wp-config.php: define('MP_SDK_ENV', 'beta');
      *
      * @return string
      */
     public function getMercadoPagoSdkUrl(): string
     {
-        $env = defined('MP_SDK_ENV') ? MP_SDK_ENV : 'prod';
+        return $this->getMercadoPagoSdkUrlForEnv(defined('MP_SDK_ENV') ? MP_SDK_ENV : 'prod');
+    }
+
+    /**
+     * Map a supported SDK environment to its fixed URL. Unknown values fall back to prod.
+     *
+     * @param mixed $env
+     *
+     * @return string
+     */
+    public function getMercadoPagoSdkUrlForEnv($env): string
+    {
         $env = is_string($env) ? strtolower(trim($env)) : 'prod';
 
         $urls = [

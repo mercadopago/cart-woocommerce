@@ -2,11 +2,6 @@
 // SDK-readiness gate. The full happy-path instance wiring (the 6 runtime classes) is covered
 // end-to-end by the bootstrap.* suites; here the runtime classes are never reached because the
 // pre-cutover trigger-handler guard makes buildAndPublishInstances a no-op.
-const mockResolveVariant = jest.fn();
-
-jest.mock('@super-token/composition/variantRuntime', () => ({
-  resolveSuperTokenVariant: (...args) => mockResolveVariant(...args),
-}));
 jest.mock('@super-token/adapters/legacy/globalBridge');
 jest.mock('@super-token/adapters/platform', () => ({
   CoreMonitorMetricsAdapter: jest.fn(),
@@ -32,26 +27,26 @@ describe('composeRuntime', () => {
     jest.clearAllMocks();
     metrics = { sendMetric: jest.fn(), storeLanguageDivergesFromSite: jest.fn() };
     document.documentElement.lang = '';
+    delete window.wc_mercadopago_custom_checkout_params;
     recompose = { current: () => {} };
     delete window.mpSdkInstance;
     delete window.mpSuperTokenTriggerHandler;
   });
 
-  it('Given variant resolution rejects, When composed, Then it reports super_token_compose_failed', async () => {
-    mockResolveVariant.mockRejectedValue(new Error('variant boom'));
+  it('Given composition throws, When composed, Then it reports super_token_compose_failed', async () => {
+    require('@super-token/adapters/platform').createDomainConfig.mockImplementationOnce(() => { throw new Error('composition boom'); });
 
     await composeRuntime({}, recompose, metrics);
 
     expect(metrics.sendMetric).toHaveBeenCalledWith(
       'super_token_compose_failed',
       'mp_super_token_init',
-      'variant boom',
+      'composition boom',
     );
-    expect(globalBridge.publishOrderAndDecorate).toHaveBeenCalledTimes(1);
+    expect(globalBridge.publishOrderAndDecorate).not.toHaveBeenCalled();
   });
 
   it('Given a resolved variant, When composed, Then it publishes the order+decorate seam', async () => {
-    mockResolveVariant.mockResolvedValue('v2');
     // SDK present + legacy trigger handler already built → the hybrid no-op guard keeps the runtime
     // classes out of this unit (bootstrap.* covers that path).
     window.mpSdkInstance = {};
@@ -67,7 +62,6 @@ describe('composeRuntime', () => {
   });
 
   it('Given a resolved variant, When composed, Then recompose.current is set to the (guarded) rebuild', async () => {
-    mockResolveVariant.mockResolvedValue('v2');
     window.mpSdkInstance = {};
     window.mpSuperTokenTriggerHandler = {};
     const initial = recompose.current;
@@ -80,7 +74,6 @@ describe('composeRuntime', () => {
 
   it('Given an MLC store on a plugin that sends store_language_copy, When composed, Then the plugin params reach the domain untouched', async () => {
     const platform = require('@super-token/adapters/platform');
-    mockResolveVariant.mockResolvedValue('v2');
     window.mpSdkInstance = {};
     window.mpSuperTokenTriggerHandler = {};
     window.mpSuperTokenPaymentMethods = { ACCOUNT_MONEY_TEXT: 'Account money in Mercado Pago' };
@@ -89,7 +82,7 @@ describe('composeRuntime', () => {
     await composeRuntime(params, recompose, metrics);
 
     const [domainParams] = platform.createDomainConfig.mock.calls[0];
-    expect(domainParams).toBe(params);
+    expect(domainParams).toMatchObject(params);
     expect(domainParams.account_money_text).toBe('Account money in Mercado Pago');
     expect(window.mpSuperTokenPaymentMethods.ACCOUNT_MONEY_TEXT).toBe('Account money in Mercado Pago');
 
@@ -100,22 +93,30 @@ describe('composeRuntime', () => {
     // The trigger-handler guard makes buildAndPublishInstances a no-op here, so this is the only
     // place the legacy controller's copy gets refreshed for this hybrid scenario.
     const platform = require('@super-token/adapters/platform');
-    mockResolveVariant.mockResolvedValue('v2');
     window.mpSdkInstance = {};
     window.mpSuperTokenTriggerHandler = {};
     window.mpSuperTokenPaymentMethods = { ACCOUNT_MONEY_TEXT: 'Texto genérico es.mo' };
 
-    await composeRuntime({ site_id: 'MLC', account_money_text: 'Texto genérico es.mo' }, recompose, metrics);
+    document.documentElement.lang = 'en-US';
+    const params = {
+      site_id: 'MLC', account_money_text: 'Texto genérico es.mo',
+      saved_cards_title: 'Tarjetas guardadas', saved_card_title: 'Tarjeta guardada',
+      mp_methods_title: 'Además, podés utilizar', saved_payment_method_title: 'Medio de pago guardado',
+      account_money_balance_text: 'Suficiente para pagar esta compra.',
+      mercado_pago_credit_card_name: 'Tarjeta de Crédito Mercado Pago',
+    };
+    await composeRuntime(params, recompose, metrics);
 
     const [domainParams] = platform.createDomainConfig.mock.calls[0];
     expect(domainParams.account_money_text).toBe('Dinero disponible en Mercado Pago');
+    expect(domainParams.mp_methods_title).toBe('Además, puedes utilizar');
+    expect(window.mpSuperTokenPaymentMethods.MP_METHODS_TITLE).toBe('Además, puedes utilizar');
     expect(window.mpSuperTokenPaymentMethods.ACCOUNT_MONEY_TEXT).toBe('Dinero disponible en Mercado Pago');
 
     delete window.mpSuperTokenPaymentMethods;
   });
 
   it('Given a store language that differs from the credential site, When composed, Then the divergence is reported', async () => {
-    mockResolveVariant.mockResolvedValue('v2');
     document.documentElement.lang = 'es-ES';
 
     await composeRuntime({ site_id: 'MLC', store_language_copy: true }, recompose, metrics);
@@ -124,7 +125,6 @@ describe('composeRuntime', () => {
   });
 
   it('Given the store language expected for the credential site, When composed, Then no divergence is reported', async () => {
-    mockResolveVariant.mockResolvedValue('v2');
     document.documentElement.lang = 'es-CL';
 
     await composeRuntime({ site_id: 'MLC', store_language_copy: true }, recompose, metrics);

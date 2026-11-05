@@ -28,6 +28,24 @@ const buildTriggerHandler = (overrides = {}) => ({
 });
 
 describe('LegacyLoadOrchestrationSession', () => {
+  it('Given a blocked handler, When the gate is read, Then it forwards the block reason and the once-only report', () => {
+    const triggerHandler = buildTriggerHandler({
+      getBlock: jest.fn(() => ({ reason: 'outdated_plugin' })),
+      markBlockReported: jest.fn(() => true),
+    });
+    const session = new LegacyLoadOrchestrationSession(triggerHandler);
+
+    expect(session.getBlock()).toEqual({ reason: 'outdated_plugin' });
+    expect(session.markBlockReported()).toBe(true);
+  });
+
+  it('Given a handler from a runtime that predates the MCO gate, When the gate is read, Then it does not block nor report', () => {
+    const session = new LegacyLoadOrchestrationSession(buildTriggerHandler());
+
+    expect(session.getBlock()).toBeNull();
+    expect(session.markBlockReported()).toBe(false);
+  });
+
   it('Given an amount, When formatting, Then it forwards to the legacy authenticator', () => {
     const triggerHandler = buildTriggerHandler();
     const session = new LegacyLoadOrchestrationSession(triggerHandler);
@@ -136,5 +154,20 @@ describe('createLoadSuperTokenMetrics', () => {
     metrics.invalidAmount();
 
     expect(legacy.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_amount', 'true', '');
+  });
+
+  it('Given an outdated plugin for the site, When reported, Then only fixed metric fields are sent', () => {
+    const legacy = { sendMetric: jest.fn() };
+    const metrics = createLoadSuperTokenMetrics(legacy);
+
+    metrics.outdatedPlugin();
+
+    expect(legacy.sendMetric).toHaveBeenCalledWith('super_token_skipped_outdated_plugin', 'true', '');
+  });
+
+  it('Given the A/B test has ended, When the metrics are built, Then there is no variant skip to report', () => {
+    const metrics = createLoadSuperTokenMetrics({ sendMetric: jest.fn() });
+
+    expect(metrics).not.toHaveProperty('unsupportedVariant');
   });
 });

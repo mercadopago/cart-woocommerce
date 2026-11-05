@@ -68,7 +68,7 @@ class BasicBlockTest extends BlockTestCase
     }
 
     /** @dataProvider creditsBenefitProvider */
-    public function testCreditsBenefitIsShownOnlyForBrazil(string $site, string $expected): void
+    public function testEnglishBenefitIsPreservedAcrossSites(string $site, string $expected): void
     {
         $this->setSite($site);
         $this->setNotAccessibleProperty($this->gateway, 'countryConfigs', $this->plugin->helpers->country->getCountryConfigs());
@@ -81,7 +81,7 @@ class BasicBlockTest extends BlockTestCase
     {
         $generic = '<b>Buy safely</b> with your preferred payment method.';
         return [
-            'MLB in English' => ['MLB', '<b>You have Buy now, pay later</b> to buy now and pay later.'],
+            'MLB in English' => ['MLB', $generic],
             'MLA' => ['MLA', $generic],
             'MLM' => ['MLM', $generic],
             'MLC' => ['MLC', $generic],

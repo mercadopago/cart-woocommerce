@@ -23,10 +23,7 @@ export class CreditCardMethod extends BasePaymentMethodWithInstallments {
   decorate(paymentMethod: PaymentMethod): PaymentMethod {
     if (!isCreditCard(paymentMethod)) return paymentMethod;
 
-    // Only the v2.1 variant gives a Mercado Pago credit card the special MP name + blue/dark icon
-    // (RN-7); v2 treats every credit card as a regular issuer card. Gating it on the variant keeps
-    // the v2.1 presentation out of the v2 A/B cohort (which otherwise leaked via the mutated thumbnail).
-    if (this.config.variant === 'v2.1' && isMercadoPagoCreditCard(paymentMethod)) {
+    if (isMercadoPagoCreditCard(paymentMethod)) {
       paymentMethod.thumbnail = this.mercadoPagoCardThumbnail() || paymentMethod.thumbnail;
       paymentMethod.name = this.config.copy.mercadoPagoCreditCardName || paymentMethod.name;
       return paymentMethod;

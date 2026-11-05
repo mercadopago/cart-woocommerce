@@ -247,6 +247,29 @@ describe('SuperTokenPaymentMethods', () => {
     });
   });
 
+  describe('selectedSupertokenMethodEvent', () => {
+    it('Given the checkout input, When selecting a new card, Then the real event includes its checkout type', () => {
+      document.body.innerHTML = '<input id="mp_checkout_type" value="custom">';
+      const { controller } = build();
+
+      const event = controller.selectedSupertokenMethodEvent(true);
+
+      expect(event).toBeInstanceOf(CustomEvent);
+      expect(event.type).toBe('supertoken_payment_method_selected');
+      expect(event.detail).toEqual({ new_card_selected: true, checkout_type: 'custom' });
+    });
+
+    it('Given no checkout input, When selecting a saved method, Then the real event has an undefined checkout type', () => {
+      const { controller } = build();
+
+      const event = controller.selectedSupertokenMethodEvent(false);
+
+      expect(event).toBeInstanceOf(CustomEvent);
+      expect(event.type).toBe('supertoken_payment_method_selected');
+      expect(event.detail).toEqual({ new_card_selected: false, checkout_type: undefined });
+    });
+  });
+
   describe('paymentMethodIdentifier', () => {
     it('Given a card, When identified, Then it combines id and last four digits', () => {
       const { controller } = build();

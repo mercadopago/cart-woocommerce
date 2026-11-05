@@ -23,7 +23,12 @@ class SpanishCatalogParityTest extends TestCase
         'Buy in up to 12 installments without credit cards' => 'Compra ahora y paga después en hasta 12 cuotas',
     ];
 
-    private const LOCALES = ['es', 'es_AR', 'es_CL', 'es_MX', 'pt'];
+    private const LOCALES = ['es', 'es_AR', 'es_CL', 'es_CO', 'es_MX', 'pt'];
+
+    // Rioplatense voseo forms found in the catalogs. es_CO is a country catalog and must not carry them.
+    private const VOSEO = '/(?<!\\p{L})(?:podés|tenés|querés|sabés|solés|necesitás|hablá|pagá|ingresá|probá|verificá|intentá|'
+        . 'contactá|contactate|solicitá|elegí|revisá|usá|volvé|asegurate|seleccioná|completá|confirmá|esperá|accedé|'
+        . 'activá|agregá|comprá|hacé|conocé|escribí|tocá|guardá|cambiá)(?!\\p{L})/iu';
 
     public function testGivenGenericSpanishCatalogWhenComparedThenCardCheckoutCopyComesFromMexicanCatalog(): void
     {
@@ -48,6 +53,16 @@ class SpanishCatalogParityTest extends TestCase
             $this->otherEntries($generic),
             'Run `npm run i18n:generic-es`: outside card checkout and the two Credits exceptions, es must match es_AR.'
         );
+    }
+
+    public function testGivenColombianCatalogWhenCompiledThenItHasNoVoseo(): void
+    {
+        $catalog = $this->readMo('es_CO');
+
+        $this->assertSame('Cuotas', $catalog['super token' . self::CONTEXT_SEPARATOR . 'Installments']);
+        foreach ($catalog as $key => $value) {
+            $this->assertSame(0, preg_match(self::VOSEO, $value), "es_CO must use neutral Spanish, as es_CL does: $key");
+        }
     }
 
     public function testCompiledNeutralCreditsCopyMatchesTheApprovedWording(): void
@@ -99,6 +114,32 @@ class SpanishCatalogParityTest extends TestCase
         foreach (['credits buyer banner', 'credits seller banner'] as $context) {
             $this->assertSame($bannerCopy, $catalog[$context . self::CONTEXT_SEPARATOR . 'Buy now, pay later']);
         }
+    }
+
+    /** @dataProvider localeProvider */
+    public function testEnglishCreditsCopyChangesPreservePortugueseAndSpanish(string $locale): void
+    {
+        $catalog = $this->readMo($locale);
+        $isPortuguese = $locale === 'pt';
+        $benefit = $isPortuguese
+            ? '<b>Você tem o {credits_name}</b> para comprar agora e pagar depois.'
+            : '<b>Tienes {credits_name}</b> para comprar ahora y pagar después.';
+        $this->assertSame(
+            $benefit,
+            $catalog['credits checkout pro' . self::CONTEXT_SEPARATOR . '<b>Buy safely</b> with your preferred payment method.']
+        );
+        $this->assertSame(
+            $isPortuguese ? 'com {credits_name}.' : 'con {credits_name}.',
+            $catalog['credits buyer banner' . self::CONTEXT_SEPARATOR . 'with Mercado Pago']
+        );
+        $this->assertSame(
+            $isPortuguese ? 'com {credits_alternative_name}. Saiba mais' : 'con {credits_alternative_name}. Saber más',
+            $catalog['credits seller banner' . self::CONTEXT_SEPARATOR . 'with Mercado Pago. Learn more']
+        );
+        $this->assertSame(
+            $isPortuguese ? 'com {credits_name}' : 'con {credits_name}',
+            $catalog['credits buyer banner' . self::CONTEXT_SEPARATOR . 'through {credits_name}']
+        );
     }
 
     /** @dataProvider creditsCopyProvider */

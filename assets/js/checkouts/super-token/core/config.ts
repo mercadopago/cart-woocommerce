@@ -63,11 +63,6 @@ export interface SuperTokenDomainConfig {
   currency: string;
   /** Ordering preference: 'cards_first' (default) or 'account_money_first'. */
   paymentMethodsOrder?: string;
-  /**
-   * Resolved A/B variant ('v2' | 'v2.1'). Only the Mercado Pago credit-card decoration
-   * differs between variants (v2.1 gets the MP name + logo; v2 keeps the issuer card).
-   */
-  variant: string;
   copy: SuperTokenCopy;
   thumbnails: SuperTokenThumbnails;
 }

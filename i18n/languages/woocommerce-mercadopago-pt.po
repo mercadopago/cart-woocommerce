@@ -4729,7 +4729,7 @@ msgstr "com {credits_promotion_name}. Saiba mais"
 
 #: ../../src/Translations/AdminTranslations.php:671
 msgctxt "credits seller banner"
-msgid "through {credits_alternative_name}. Learn more"
+msgid "with Mercado Pago. Learn more"
 msgstr "com {credits_alternative_name}. Saiba mais"
 
 #: ../../src/Translations/AdminTranslations.php:676
@@ -4754,7 +4754,7 @@ msgstr "Crédito de Mercado Parcelado"
 
 #: ../../src/Translations/StoreTranslations.php:207
 msgctxt "credits checkout pro"
-msgid "<b>You have {credits_name}</b> to buy now and pay later."
+msgid "<b>Buy safely</b> with your preferred payment method."
 msgstr "<b>Você tem o {credits_name}</b> para comprar agora e pagar depois."
 
 msgctxt "credits product name"
@@ -4768,3 +4768,8 @@ msgstr "Mercado Parcelado"
 msgctxt "credits seller alternative name"
 msgid "Buy now, pay later"
 msgstr "Mercado Parcelado"
+
+#: ../../src/Translations/StoreTranslations.php:296
+msgctxt "credits buyer banner"
+msgid "with Mercado Pago"
+msgstr "com {credits_name}."

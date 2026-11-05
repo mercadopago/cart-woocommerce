@@ -32,24 +32,20 @@ describe('main.js — super-token asset build', () => {
   });
 
   describe('compileSuperTokenCss', () => {
-    it('Given the SCSS entries exist, When compiling, Then it writes the unified and both per-variant stylesheets', () => {
+    it('Given the SCSS entries exist, When compiling, Then it writes the canonical stylesheet', () => {
       main.compileSuperTokenCss();
 
       const entries = sass.compile.mock.calls.map(([entry]) => path.basename(String(entry)));
-      expect(entries).toEqual(['super-token.scss', 'super-token-v2.scss', 'super-token-v2.1.scss']);
+      expect(entries).toEqual(['super-token.scss']);
       sass.compile.mock.calls.forEach(([, options]) => expect(options).toEqual({ style: 'compressed' }));
 
       const outputs = fs.writeFileSync.mock.calls.map(([out]) => path.basename(String(out)));
       expect(outputs).toEqual([
         'super-token.bundle.min.css',
-        'super-token-v2.bundle.min.css',
-        'super-token-v2.1.bundle.min.css',
       ]);
       const contents = fs.writeFileSync.mock.calls.map(([, content]) => content);
       expect(contents).toEqual([
-        '.compiled{color:red}',
-        ':root{--mp-super-token-loader-version:1.2.11}.compiled{color:red}',
-        ':root{--mp-super-token-loader-version:1.2.11}.compiled{color:red}',
+        ':root{--mp-super-token-loader-version:1.2.12}.compiled{color:red}',
       ]);
     });
 
@@ -60,7 +56,7 @@ describe('main.js — super-token asset build', () => {
   });
 
   describe('stageSuperTokenJsBundle', () => {
-    it('Given the webpack outputs exist, When staging, Then it copies each build to its unminified hand-off (runtime + per-variant)', () => {
+    it('Given the webpack outputs exist, When staging, Then it copies the canonical build to its unminified handoff', () => {
       main.stageSuperTokenJsBundle();
 
       const copies = fs.copyFileSync.mock.calls.map(([source, target]) => ({
@@ -69,8 +65,6 @@ describe('main.js — super-token asset build', () => {
       }));
       expect(copies).toEqual([
         { source: expect.stringContaining(path.join('build', 'super-token', 'bootstrap.ts.js')), target: 'super-token.bundle.js' },
-        { source: expect.stringContaining(path.join('build', 'super-token-v2', 'bootstrap.ts.js')), target: 'super-token-v2.bundle.js' },
-        { source: expect.stringContaining(path.join('build', 'super-token-v2.1', 'bootstrap.ts.js')), target: 'super-token-v2.1.bundle.js' },
       ]);
       // Hand-off stays unminified (the scripts repo minifies).
       copies.forEach(({ target }) => expect(target.endsWith('.min.js')).toBe(false));
@@ -83,15 +77,13 @@ describe('main.js — super-token asset build', () => {
   });
 
   describe('buildSuperTokenAssets', () => {
-    it('compiles the three stylesheets and stages the three JS bundles (runtime + per-variant)', () => {
+    it('compiles one stylesheet and stages one JS bundle', () => {
       main.buildSuperTokenAssets();
 
       const paths = writtenPaths();
       expect(paths.some((p) => p.endsWith('super-token.bundle.min.css'))).toBe(true);
-      expect(paths.some((p) => p.endsWith('super-token-v2.bundle.min.css'))).toBe(true);
-      expect(paths.some((p) => p.endsWith('super-token-v2.1.bundle.min.css'))).toBe(true);
-      expect(sass.compile).toHaveBeenCalledTimes(3);
-      expect(fs.copyFileSync).toHaveBeenCalledTimes(3);
+      expect(sass.compile).toHaveBeenCalledTimes(1);
+      expect(fs.copyFileSync).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -116,34 +108,17 @@ describe('main.js — super-token asset build', () => {
     });
   });
 
-  describe('getActiveSuperTokenVersion (derived from the PHP source of truth)', () => {
-    it('reads PLUGIN_SUPER_TOKEN_VERSION from the PHP', () => {
-      fs.readFileSync.mockReturnValue("private const PLUGIN_SUPER_TOKEN_VERSION = 'v2.1';");
-      expect(main.getActiveSuperTokenVersion()).toBe('v2.1');
-    });
-
-    it('throws when PLUGIN_SUPER_TOKEN_VERSION is not found in the PHP', () => {
-      fs.readFileSync.mockReturnValue('<?php // no super token constant here');
-      expect(() => main.getActiveSuperTokenVersion()).toThrow(/PLUGIN_SUPER_TOKEN_VERSION not found/);
-    });
-  });
-
-  describe('SUPER_TOKEN_LOADER_VERSION (A/B variant list)', () => {
-    it('declares a version for both A/B variants', () => {
-      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ v2: '1.2.11', 'v2.1': '1.2.11' });
+  describe('SUPER_TOKEN_LOADER_VERSION (canonical runtime stamp)', () => {
+    it('declares only the official v2.1 version', () => {
+      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ 'v2.1': '1.2.12' });
     });
   });
 
   describe('generateIntegrityManifest', () => {
-    it('excludes only the two literal Super Token CSS hand-offs', () => {
+    it('includes every minified asset without legacy CSS exceptions', () => {
       main.generateIntegrityManifest();
 
-      expect(globSync).toHaveBeenCalledWith('assets/**/*.min.{js,css}', {
-        ignore: [
-          'assets/css/checkouts/super-token/super-token-v2.bundle.min.css',
-          'assets/css/checkouts/super-token/super-token-v2.1.bundle.min.css',
-        ],
-      });
+      expect(globSync).toHaveBeenCalledWith('assets/**/*.min.{js,css}');
     });
   });
 

@@ -1,6 +1,8 @@
 const { LoadSuperToken } = require('@super-token/useCases/LoadSuperToken');
 
 const buildSession = (overrides = {}) => ({
+  getBlock: jest.fn(() => null),
+  markBlockReported: jest.fn(() => true),
   formatAmount: jest.fn((amount) => amount),
   setCurrentAmount: jest.fn(),
   currentAmount: jest.fn(() => '100.00'),
@@ -20,6 +22,7 @@ const buildSession = (overrides = {}) => ({
 const buildMetrics = (overrides = {}) => ({
   resetOnAmountChange: jest.fn(),
   invalidAmount: jest.fn(),
+  outdatedPlugin: jest.fn(),
   ...overrides,
 });
 
@@ -27,6 +30,46 @@ const run = (session, metrics, currentAmount = '100.00') =>
   new LoadSuperToken().execute({ session, metrics, currentAmount });
 
 describe('LoadSuperToken', () => {
+  it('Given an MCO store on a plugin without the Colombian catalog, When loaded for the first time, Then it stays on the Custom Checkout and reports the skip once', async () => {
+    const session = buildSession({ getBlock: jest.fn(() => ({ reason: 'outdated_plugin' })) });
+    const metrics = buildMetrics();
+
+    await run(session, metrics, '50000');
+
+    expect(session.cancelInvalidAmount).toHaveBeenCalledTimes(1);
+    expect(metrics.outdatedPlugin).toHaveBeenCalledTimes(1);
+    expect(session.formatAmount).not.toHaveBeenCalled();
+    expect(session.setCurrentAmount).not.toHaveBeenCalled();
+    expect(session.ensureEmailListenerRegistered).not.toHaveBeenCalled();
+    expect(session.fetchAndRender).not.toHaveBeenCalled();
+    expect(metrics.invalidAmount).not.toHaveBeenCalled();
+  });
+
+  it('Given the skip was already reported, When an MCO store on an old plugin reloads, Then it cancels again without repeating the metric', async () => {
+    const session = buildSession({
+      getBlock: jest.fn(() => ({ reason: 'outdated_plugin' })),
+      markBlockReported: jest.fn(() => false),
+    });
+    const metrics = buildMetrics();
+
+    await run(session, metrics, '50000');
+
+    expect(session.cancelInvalidAmount).toHaveBeenCalledTimes(1);
+    expect(metrics.outdatedPlugin).not.toHaveBeenCalled();
+    expect(session.fetchAndRender).not.toHaveBeenCalled();
+  });
+
+  it('Given a plugin that serves the site copy, When loaded, Then the gate neither cancels nor reports', async () => {
+    const session = buildSession();
+    const metrics = buildMetrics();
+
+    await run(session, metrics);
+
+    expect(session.markBlockReported).not.toHaveBeenCalled();
+    expect(metrics.outdatedPlugin).not.toHaveBeenCalled();
+    expect(session.fetchAndRender).toHaveBeenCalledTimes(1);
+  });
+
   it('Given a normalized MLC integer amount, When loaded, Then it fetches payment methods', async () => {
     const session = buildSession();
     const metrics = buildMetrics();

@@ -18,12 +18,16 @@
 import type {
   LoadSuperTokenSession,
   LoadSuperTokenMetrics,
+  SuperTokenBlock,
 } from '@super-token/useCases/LoadSuperToken';
 import type { PaymentMethod } from '@super-token/types/external-globals';
 
 /** The subset of the legacy trigger handler (and the collaborators it holds) the load orchestration calls. */
 export interface LegacyLoadOrchestrationTriggerHandler {
   currentAmount: string | null;
+  // Optional: a handler published by another runtime build may predate the MCO gate.
+  getBlock?(): SuperTokenBlock | null;
+  markBlockReported?(): boolean;
   isFetchingPaymentMethods: boolean;
   amountHasChanged(): boolean;
   emailHasChanged(): boolean;
@@ -45,6 +49,14 @@ export interface LegacyLoadOrchestrationTriggerHandler {
 
 export class LegacyLoadOrchestrationSession implements LoadSuperTokenSession {
   constructor(private readonly triggerHandler: LegacyLoadOrchestrationTriggerHandler) {}
+
+  getBlock(): SuperTokenBlock | null {
+    return this.triggerHandler.getBlock?.() ?? null;
+  }
+
+  markBlockReported(): boolean {
+    return this.triggerHandler.markBlockReported?.() === true;
+  }
 
   formatAmount(amount: string | null): string | null {
     return this.triggerHandler.mpSuperTokenAuthenticator.formatAmount(amount);
@@ -104,6 +116,7 @@ export class LegacyLoadOrchestrationSession implements LoadSuperTokenSession {
 /** Legacy `sendMetric` name from super-token-trigger-handler.js:294. */
 const RESET_ON_AMOUNT_CHANGE_METRIC = 'super_token_reset_on_amount_change';
 const SKIPPED_INVALID_AMOUNT_METRIC = 'super_token_skipped_invalid_amount';
+const SKIPPED_OUTDATED_PLUGIN_METRIC = 'super_token_skipped_outdated_plugin';
 
 /** The subset of the legacy `MPSuperTokenMetrics` the load orchestration reports through. */
 export interface LegacyLoadOrchestrationMetrics {
@@ -120,5 +133,6 @@ export function createLoadSuperTokenMetrics(
   return {
     resetOnAmountChange: () => metrics.sendMetric(RESET_ON_AMOUNT_CHANGE_METRIC, 'true', ''),
     invalidAmount: () => metrics.sendMetric(SKIPPED_INVALID_AMOUNT_METRIC, 'true', ''),
+    outdatedPlugin: () => metrics.sendMetric(SKIPPED_OUTDATED_PLUGIN_METRIC, 'true', ''),
   };
 }

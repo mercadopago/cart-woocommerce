@@ -1200,7 +1200,7 @@ class CustomGatewayTest extends TestCase
             ->andReturn('test-css-url');
 
         $this->gateway->mercadopago->hooks->scripts
-            ->shouldReceive('registerCheckoutStyle')
+            ->shouldReceive('registerPaymentFormStyle')
             ->with('wc_mercadopago_supertoken_payment_methods', 'test-css-url')
             ->once();
 
@@ -1233,10 +1233,30 @@ class CustomGatewayTest extends TestCase
         $this->assertEquals('<div>Preview</div>', $result);
     }
 
-    public function testGivenLocaleWithoutPreviewImageWhenGettingWalletButtonPreviewThenUsesNeutralSpanishImage()
+    public function testGivenColombianLocaleWhenGettingWalletButtonPreviewThenUsesColombianImage()
     {
         $this->gateway->storeTranslations = [
             'locale' => 'es-CO'
+        ];
+
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getImageAsset')
+            ->with('gateways/wallet-button/preview-es-co')
+            ->once()
+            ->andReturn('test-preview-url');
+
+        $this->gateway->mercadopago->hooks->template
+            ->shouldReceive('getWoocommerceTemplateHtml')
+            ->with('admin/components/preview.php', Mockery::type('array'))
+            ->andReturn('<div>Preview</div>');
+
+        $this->assertEquals('<div>Preview</div>', $this->gateway->getWalletButtonPreview());
+    }
+
+    public function testGivenLocaleWithoutPreviewImageWhenGettingWalletButtonPreviewThenUsesNeutralSpanishImage()
+    {
+        $this->gateway->storeTranslations = [
+            'locale' => 'es-PE'
         ];
 
         $this->gateway->mercadopago->helpers->url
@@ -1428,13 +1448,6 @@ class CustomGatewayTest extends TestCase
         WP_Mock::userFunction('wp_get_current_user')
             ->andReturn((object) ['ID' => 1, 'user_email' => 'test@example.com']);
 
-        // Mock add_action for wp_enqueue_scripts (used in registerSuperTokenLocalizeParams)
-        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
-
-        // Mock wp_localize_script (called inside the closure)
-        WP_Mock::userFunction('wp_localize_script')
-            ->andReturn(true);
-
         // Mock scripts registration
         $this->gateway->mercadopago->hooks->scripts
             ->shouldReceive('registerCheckoutStyle')
@@ -1443,6 +1456,9 @@ class CustomGatewayTest extends TestCase
         $this->gateway->mercadopago->hooks->scripts
             ->shouldReceive('registerCheckoutScript')
             ->andReturnSelf();
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerPaymentFormScript', 'registerPaymentFormStyle');
 
         // Execute the method
         $this->gateway->registerCheckoutScripts();
@@ -1604,7 +1620,17 @@ class CustomGatewayTest extends TestCase
                 return $scripts;
             });
 
-        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        $localizedParams = [];
+        $scripts->shouldReceive('registerPaymentFormStyle')->once()
+            ->with('wc_mercadopago_supertoken_payment_methods', 'test-css-url');
+        $scripts->shouldReceive('registerPaymentFormScript')->once()
+            ->with('wc_mercadopago_supertoken_refactored', 'https://example.com/build/super-token/bootstrap.ts.js',
+                Mockery::type('array'), [], 'wc_mercadopago_supertoken_bundle_params')
+            ->andReturnUsing(function ($handle, $file, $variables) use (&$registeredHandles, &$localizedParams) {
+                $registeredHandles[] = $handle;
+                $localizedParams = $variables;
+            });
+
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
@@ -1623,6 +1649,7 @@ class CustomGatewayTest extends TestCase
         $this->assertSame('test-image-url', $localizeData['white_card_path']);
         $this->assertArrayNotHasKey('credits_renamed', $localizeData, 'Os novos nomes de Credits nao dependem de sinal do plugin');
         $this->assertTrue($localizeData['store_language_copy'], 'O plugin deve avisar o bundle que os catalogos ja trazem o texto no idioma da loja');
+        $this->assertTrue($localizeData['mco_store_language_copy'], 'O plugin deve avisar o bundle que traz o catalogo es_CO, liberando o Super Token em MCO');
         $this->assertSame('Super Token installments', $localizeData['input_title']['installments'], 'O bundle deve receber o texto do contexto do Super Token');
         $this->assertContains('wc_mercadopago_supertoken_refactored', $registeredHandles, 'Self-construct deve enfileirar o entry TS');
         $this->assertNotContains('wc_mercadopago_supertoken_trigger_handler', $registeredHandles, 'Self-construct nao deve enfileirar os scripts legados separados');
@@ -1655,10 +1682,8 @@ class CustomGatewayTest extends TestCase
         );
         $this->assertArrayHasKey('self_construct', $localizeData);
         $this->assertTrue((bool) $localizeData['self_construct'], 'self_construct deve ser verdadeiro para acionar o flip no bootstrap.ts');
-        // The entry renders the variant matching the served stylesheet: bootstrap.ts follows this
-        // over the cookie in dev mode, so the DOM and the per-variant CSS line up.
-        $this->assertArrayHasKey('super_token_version', $localizeData);
-        $this->assertSame(MP_SUPER_TOKEN_VERSION, $localizeData['super_token_version']);
+        $this->assertArrayNotHasKey('super_token_version', $localizeData);
+        $this->assertSame($localizeData, $localizedParams, 'Localize data must travel with the gated entrypoint');
     }
 
     public function testRegisterCheckoutScriptsInBundleModeCoversTheBundlePath()
@@ -1805,7 +1830,16 @@ class CustomGatewayTest extends TestCase
                 return $scripts;
             });
 
-        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        $localizedParams = [];
+        $scripts->shouldNotReceive('registerPaymentFormStyle');
+        $scripts->shouldReceive('registerPaymentFormScript')->once()
+            ->with('wc_mercadopago_supertoken', 'test-js-url', Mockery::type('array'), [],
+                'wc_mercadopago_supertoken_bundle_params')
+            ->andReturnUsing(function ($handle, $file, $variables) use (&$registeredHandles, &$localizedParams) {
+                $registeredHandles[] = $handle;
+                $localizedParams = $variables;
+            });
+
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
@@ -1818,7 +1852,9 @@ class CustomGatewayTest extends TestCase
         // the CDN runtime instead of self-building), confirming the bundle path executed.
         $this->assertArrayHasKey('self_construct', $localizeData);
         $this->assertFalse((bool) $localizeData['self_construct'], 'bundle mode nao deve acionar o self_construct');
-        $this->assertNotEmpty($registeredHandles, 'bundle mode deve enfileirar os scripts do Super Token');
+        $this->assertContains('wc_mercadopago_supertoken', $registeredHandles);
+        $this->assertNotContains('wc_mercadopago_supertoken_refactored', $registeredHandles);
+        $this->assertSame($localizeData, $localizedParams, 'Localize data must travel with the gated loader');
     }
 
     /**
@@ -3076,7 +3112,7 @@ class CustomGatewayTest extends TestCase
     /**
      * Helper to set up common mocks for registerCheckoutScripts email tests
      */
-    private function setupCheckoutEmailTestDependencies(): void
+    private function setupCheckoutEmailTestDependencies(string $expectedEmail): void
     {
         $expectedCurrency = 'BRL';
         $this->gateway->mercadopago->helpers->currency
@@ -3240,6 +3276,16 @@ class CustomGatewayTest extends TestCase
         $this->gateway->mercadopago->hooks->scripts
             ->shouldReceive('registerCheckoutScript')
             ->andReturnSelf();
+
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerPaymentFormStyle');
+        $this->gateway->mercadopago->hooks->scripts
+            ->shouldReceive('registerPaymentFormScript')->once()
+            ->with('wc_mercadopago_supertoken_refactored', Mockery::type('string'),
+                Mockery::on(function (array $variables) use ($expectedEmail) {
+                    $this->assertSame($expectedEmail, $variables['current_user_email']);
+                    return true;
+                }), [], 'wc_mercadopago_supertoken_bundle_params');
     }
 
     /**
@@ -3249,7 +3295,7 @@ class CustomGatewayTest extends TestCase
     {
         $_GET['key'] = 'wc_order_abc123';
 
-        $this->setupCheckoutEmailTestDependencies();
+        $this->setupCheckoutEmailTestDependencies('billing@example.com');
 
         WP_Mock::userFunction('sanitize_text_field')
             ->andReturnArg(0);
@@ -3269,12 +3315,9 @@ class CustomGatewayTest extends TestCase
             ->with(1150)
             ->andReturn($orderMock);
 
-        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
-
-        // Verify no exceptions were thrown — the email was resolved from order key
 
         unset($_GET['key']);
     }
@@ -3286,12 +3329,11 @@ class CustomGatewayTest extends TestCase
     {
         unset($_GET['key']);
 
-        $this->setupCheckoutEmailTestDependencies();
+        $this->setupCheckoutEmailTestDependencies('user@example.com');
 
         WP_Mock::userFunction('wp_get_current_user')
             ->andReturn((object) ['ID' => 1, 'user_email' => 'user@example.com']);
 
-        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
@@ -3304,7 +3346,7 @@ class CustomGatewayTest extends TestCase
     {
         unset($_GET['key']);
 
-        $this->setupCheckoutEmailTestDependencies();
+        $this->setupCheckoutEmailTestDependencies('customer@example.com');
 
         WP_Mock::userFunction('wp_get_current_user')
             ->andReturn((object) ['ID' => 0, 'user_email' => '']);
@@ -3318,7 +3360,6 @@ class CustomGatewayTest extends TestCase
         WP_Mock::userFunction('WC')
             ->andReturn($wcMock);
 
-        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
@@ -3331,7 +3372,7 @@ class CustomGatewayTest extends TestCase
     {
         unset($_GET['key']);
 
-        $this->setupCheckoutEmailTestDependencies();
+        $this->setupCheckoutEmailTestDependencies('');
 
         WP_Mock::userFunction('wp_get_current_user')
             ->andReturn((object) ['ID' => 0, 'user_email' => '']);
@@ -3345,7 +3386,6 @@ class CustomGatewayTest extends TestCase
         WP_Mock::userFunction('WC')
             ->andReturn($wcMock);
 
-        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();
@@ -3358,7 +3398,7 @@ class CustomGatewayTest extends TestCase
     {
         $_GET['key'] = 'wc_order_invalid';
 
-        $this->setupCheckoutEmailTestDependencies();
+        $this->setupCheckoutEmailTestDependencies('fallback@example.com');
 
         WP_Mock::userFunction('sanitize_text_field')
             ->andReturnArg(0);
@@ -3373,7 +3413,6 @@ class CustomGatewayTest extends TestCase
         WP_Mock::userFunction('wp_get_current_user')
             ->andReturn((object) ['ID' => 1, 'user_email' => 'fallback@example.com']);
 
-        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
         WP_Mock::userFunction('wp_localize_script')->andReturn(true);
 
         $this->gateway->registerCheckoutScripts();

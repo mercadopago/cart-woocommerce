@@ -4,6 +4,11 @@ const { loadFile } = require('../../helpers/load-file');
 
 describe('Ticket payment-method error helpers', () => {
   let page;
+  beforeAll(() => {
+    // Stateless helpers share one physical VM script; each case owns its DOM.
+    const elements = loadFile(resolveAlias('assets/js/checkouts/ticket/mp-ticket-elements.js'), 'CheckoutTicketElements');
+    page = loadFile(resolveAlias('assets/js/checkouts/ticket/mp-ticket-page.js'), 'CheckoutTicketPage', { CheckoutTicketElements: elements });
+  });
   beforeEach(() => {
     document.body.replaceChildren(
       createElement('div', { class: 'mp-checkout-ticket-container' },
@@ -17,8 +22,6 @@ describe('Ticket payment-method error helpers', () => {
       ),
       createElement('div', { 'data-cy': 'input-table-list', id: 'other-checkout' })
     );
-    const elements = loadFile(resolveAlias('assets/js/checkouts/ticket/mp-ticket-elements.js'), 'CheckoutTicketElements');
-    page = loadFile(resolveAlias('assets/js/checkouts/ticket/mp-ticket-page.js'), 'CheckoutTicketPage', { CheckoutTicketElements: elements });
   });
   afterEach(() => { document.body.replaceChildren(); });
   test('Given the real payment table, When error is set then cleared, Then only the Ticket target changes', () => {
@@ -39,7 +42,9 @@ describe('Ticket payment-method error helpers', () => {
   test('Given optional targets are missing, When helper API executes, Then it does not throw', () => {
     document.querySelector('.mp-checkout-ticket-container [data-cy]').remove();
     document.querySelector('input-helper').remove();
+    const before = document.body.innerHTML;
     expect(() => page.setDisplayOfError('fcInputTableContainer', 'add', 'mp-error')).not.toThrow();
     expect(() => page.setDisplayOfInputHelper('mp-payment-method', 'flex')).not.toThrow();
+    expect(document.body.innerHTML).toBe(before);
   });
 });

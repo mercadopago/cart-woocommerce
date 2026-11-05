@@ -18,6 +18,31 @@ describe('formatCurrency', () => {
     expect(formatted).toMatch(/^\$123\.457$/);
   });
 
+  it('Given MCO with COP, When formatted, Then it drops the decimal places Intl would show for COP', () => {
+    const formatted = formatCurrency(123456.78, {
+      intl: 'es-CO',
+      currency: 'COP',
+      siteId: 'MCO',
+    });
+
+    // Whether Intl shows COP cents depends on the ICU data of the runtime (two decimals in some
+    // Node/browser builds, none in others), so the zero fraction digits are forced, not inherited.
+    expect(formatted).toBe(
+      new Intl.NumberFormat('es-CO', {
+        currency: 'COP',
+        style: 'currency',
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(123456.78)
+    );
+    expect(formatted).toMatch(/^\$\s123\.457$/);
+  });
+
+  it('Given COP on a site that keeps decimals, When formatted, Then the decimal rule follows the site, not the currency', () => {
+    expect(formatCurrency(10.5, { intl: 'es-CO', currency: 'COP', siteId: 'MLA' })).toBe(rawIntl(10.5, 'es-CO', 'COP'));
+  });
+
   it('Given a non-MLM site, When formatted, Then it returns the Intl currency output unchanged', () => {
     const raw = rawIntl(1234.5, 'pt-BR', 'BRL');
     expect(formatCurrency(1234.5, { intl: 'pt-BR', currency: 'BRL', siteId: 'MLB' })).toBe(raw);

@@ -7,7 +7,7 @@
  * This is a thin orchestrator: it wires the three composition concerns and holds no logic itself.
  * Loading it (1) publishes every legacy-delegation seam to window.mpSuperToken* through the
  * transitional bridge so the still-legacy JS classes delegate each orchestration step to the TS use
- * cases, (2) resolves the A/B variant and — once the SDK exists — builds and publishes the stateful
+ * cases, (2) composes v2.1 and — once the SDK exists — builds and publishes the stateful
  * runtime instances + saved-methods render, and (3) starts the SDK-readiness/init-health resilience.
  *
  * In the pre-cutover hybrid the legacy `mp-super-token.js` still builds the stateful classes and
@@ -22,6 +22,7 @@ import type { SuperTokenBundleParams } from '@super-token/types/external-globals
 import { publishLegacyDelegationSeams } from '@super-token/composition/legacyDelegationSeams';
 import { composeRuntime } from '@super-token/composition/runtimeComposition';
 import { startInitializationResilience } from '@super-token/composition/initializationResilience';
+import { ensureSuperTokenCss } from '@super-token/adapters/platform/ensureSuperTokenCss';
 
 // Publish the legacy-delegation seams (synchronous, both modes).
 publishLegacyDelegationSeams();
@@ -34,7 +35,7 @@ const domainParams = window.wc_mercadopago_supertoken_bundle_params as unknown a
   | undefined;
 
 // Shared late-bound composition trigger. `buildAndPublishInstances` is a closure created only once
-// the A/B variant resolves (async), so it cannot be referenced when the resilience watcher starts at
+// the asynchronous composition runs, so it cannot be referenced when the resilience watcher starts at
 // module load. composeRuntime binds it here; the watcher's card-form recovery path re-invokes it for
 // a late SDK that missed the poll window. Idempotent via the trigger-handler guard (PSW-4277).
 const recompose: { current: () => void } = { current: () => {} };
@@ -55,8 +56,11 @@ const metrics = new CoreMonitorMetricsAdapter(
   window.wc_mercadopago_supertoken_bundle_params ?? PARAMS_FALLBACK,
 );
 
+// Check cached CDN CSS independently; rendering and SDK readiness never await this repair.
+ensureSuperTokenCss(metrics);
+
 if (domainParams) {
-  // The SDK watcher must observe the real variant-bound callback. Starting it before this Promise
+  // The SDK watcher must observe the real composition callback. Starting it before this Promise
   // settles can mark an empty callback as initialized when the SDK was already present.
   void composeRuntime(domainParams, recompose, metrics).then(() => {
     startInitializationResilience(recompose, metrics);

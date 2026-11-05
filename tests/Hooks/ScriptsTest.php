@@ -25,8 +25,20 @@ namespace MercadoPago\Woocommerce\Hooks;
 if (!function_exists('MercadoPago\\Woocommerce\\Hooks\\add_action')) {
     function add_action(string $tag, callable $callback, int $priority = 10, int $acceptedArgs = 1): bool
     {
+        if (!empty($GLOBALS['__test_capture_payment_form_assets']) && $tag === 'wp_enqueue_scripts') {
+            $GLOBALS['__test_payment_form_asset_callbacks'][] = $callback;
+        }
         if (isset($GLOBALS['__test_capture_wp_enqueue_scripts']) && $tag === 'wp_enqueue_scripts' && $priority === 20) {
             $GLOBALS['__test_captured_wp_enqueue_closure'] = $callback;
+        }
+        // Opt-in capture stores the real callable; it does not execute or replace it.
+        if (!empty($GLOBALS['__test_capture_script_actions'])) {
+            $GLOBALS['__test_captured_script_actions'][] = [
+                'tag' => $tag,
+                'callback' => $callback,
+                'priority' => $priority,
+                'accepted_args' => $acceptedArgs,
+            ];
         }
         \WP_Mock::onActionAdded($tag)->react($callback, $priority, $acceptedArgs);
         return true;
@@ -113,16 +125,157 @@ class ScriptsTest extends TestCase
         $GLOBALS['woocommerce'] = (object) ['version' => '8.0.0'];
 
         $this->urlMock->shouldReceive('getJsAsset')->with('melidata/melidata-client')->andReturn('path/to/melidata-client.js');
-        $this->urlMock->shouldReceive('assetVersion')->andReturn('1.0.0');
-        $this->sellerMock->shouldReceive('getSiteId')->andReturn('MLA');
-        $this->paymentMethodsMock->shouldReceive('getEnabledPaymentMethods')->andReturn([]);
+        $this->urlMock->shouldReceive('getJsAsset')->andReturnUsing(static fn(string $asset) => 'fixture/' . $asset . '.js')->byDefault();
+        $this->urlMock->shouldReceive('getCssAsset')->andReturnUsing(static fn(string $asset) => 'fixture/' . $asset . '.css')->byDefault();
+        $this->urlMock->shouldReceive('assetVersion')->andReturn('1.0.0')->byDefault();
+        $this->sellerMock->shouldReceive('getSiteId')->andReturn('MLA')->byDefault();
+        $this->sellerMock->shouldReceive('getCredentialsPublicKey')->andReturn('public-fixture')->byDefault();
+        $this->sellerMock->shouldReceive('getCustIdFromAT')->andReturn('cust-fixture')->byDefault();
+        $this->sellerMock->shouldReceive('isTestUser')->andReturn(false)->byDefault();
+        $this->paymentMethodsMock->shouldReceive('getEnabledPaymentMethods')->andReturn([])->byDefault();
     }
 
     public function tearDown(): void
     {
-        unset($GLOBALS['mercadopago']);
+        unset(
+            $GLOBALS['mercadopago'],
+            $GLOBALS['__test_capture_script_actions'],
+            $GLOBALS['__test_captured_script_actions'],
+            $GLOBALS['__captured_actions'],
+            $GLOBALS['__test_capture_wp_enqueue_scripts'],
+            $GLOBALS['__test_captured_wp_enqueue_closure'],
+            $GLOBALS['__test_capture_payment_form_assets'],
+            $GLOBALS['__test_payment_form_asset_callbacks']
+        );
         Mockery::close();
         parent::tearDown();
+    }
+
+    /**
+     * @dataProvider paymentFormContextProvider
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testPaymentFormAssetsUseTheResolvedPageContext(array $context, bool $expected): void
+    {
+        $GLOBALS['__test_capture_payment_form_assets'] = true;
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+
+        // Register before the query is resolved; the real callbacks must decide at enqueue time.
+        foreach (['wc_mercadopago_supertoken', 'wc_mercadopago_supertoken_refactored'] as $handle) {
+            $this->scripts->registerPaymentFormScript(
+                $handle,
+                $handle . '.js',
+                ['site_id' => 'MLA'],
+                ['wc_mercadopago_sdk'],
+                'wc_mercadopago_supertoken_bundle_params'
+            );
+        }
+        $this->scripts->registerPaymentFormStyle('supertoken-css', 'supertoken.css');
+
+        $this->mockPageContext($context);
+        $scripts = [];
+        $styles = [];
+        $localized = [];
+        WP_Mock::userFunction('wp_enqueue_script', ['return' => function (...$args) use (&$scripts) {
+            $scripts[] = $args;
+        }]);
+        WP_Mock::userFunction('wp_register_style', ['times' => $expected ? 1 : 0,
+            'args' => ['supertoken-css', 'supertoken.css', [], '1.0.0']]);
+        WP_Mock::userFunction('wp_enqueue_style', ['return' => function ($handle) use (&$styles) {
+            $styles[] = $handle;
+        }]);
+        WP_Mock::userFunction('wp_localize_script', ['return' => function (...$args) use (&$localized) {
+            $localized[] = $args;
+        }]);
+
+        $callbacks = $GLOBALS['__test_payment_form_asset_callbacks'] ?? [];
+        $this->assertCount(3, $callbacks);
+        foreach ($callbacks as $callback) {
+            $callback();
+        }
+
+        $handles = ['wc_mercadopago_supertoken', 'wc_mercadopago_supertoken_refactored'];
+        $this->assertSame($expected ? $handles : [], array_column($scripts, 0));
+        $this->assertSame($expected ? ['supertoken-css'] : [], $styles);
+        $this->assertSame($expected ? [
+            [$handles[0], 'wc_mercadopago_supertoken_bundle_params', ['site_id' => 'MLA']],
+            [$handles[1], 'wc_mercadopago_supertoken_bundle_params', ['site_id' => 'MLA']],
+        ] : [], $localized);
+        foreach ($scripts as $script) {
+            $this->assertSame([$script[0] . '.js', ['wc_mercadopago_sdk'], '1.0.0', true], array_slice($script, 1));
+        }
+
+        $tracked = new \ReflectionProperty(ScriptHealthMonitor::class, 'trackedHandles');
+        $tracked->setAccessible(true);
+        $this->assertSame($expected ? $handles : [], $tracked->getValue($this->scriptHealthMonitor));
+    }
+
+    public static function paymentFormContextProvider(): array
+    {
+        return [
+            'checkout' => [['is_checkout' => true], true],
+            'cart only' => [['is_cart' => true], false],
+            'combined checkout and cart' => [['is_checkout' => true, 'is_cart' => true], true],
+            'view order' => [['is_view_order_page' => true], false],
+            'view order despite checkout' => [['is_view_order_page' => true, 'is_checkout' => true], false],
+            'order received also matches checkout' => [['is_order_received_page' => true, 'is_checkout' => true], false],
+            'order pay helper' => [['is_checkout_pay_page' => true], true],
+            'order pay query variable' => [['order-pay' => '123'], true],
+            'order pay with cart' => [['is_checkout_pay_page' => true, 'is_cart' => true], true],
+            'confirmation overrides order pay' => [['is_order_received_page' => true, 'order-pay' => '123'], false],
+            'add payment method' => [['is_add_payment_method_page' => true], false],
+            'unrelated page' => [[], false],
+        ];
+    }
+
+    /**
+     * @dataProvider sharedCheckoutContextProvider
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testSharedCheckoutAssetsKeepTheirExistingScope(array $context): void
+    {
+        $GLOBALS['__test_capture_payment_form_assets'] = true;
+        WP_Mock::expectActionAdded('wp_enqueue_scripts', Mockery::type('Closure'));
+        $this->scripts->registerCheckoutScript('shared', 'shared.js', ['shared' => true]);
+        $this->scripts->registerCheckoutStyle('shared-css', 'shared.css');
+        $this->mockPageContext($context);
+
+        WP_Mock::userFunction('wp_enqueue_script', ['times' => 1,
+            'args' => ['shared', 'shared.js', [], '1.0.0', true]]);
+        WP_Mock::userFunction('wp_localize_script', ['times' => 1,
+            'args' => ['shared', 'shared_params', ['shared' => true]]]);
+        WP_Mock::userFunction('wp_register_style', ['times' => 1,
+            'args' => ['shared-css', 'shared.css', [], '1.0.0']]);
+        WP_Mock::userFunction('wp_enqueue_style', ['times' => 1, 'args' => ['shared-css']]);
+
+        $callbacks = $GLOBALS['__test_payment_form_asset_callbacks'] ?? [];
+        $this->assertCount(2, $callbacks);
+        foreach ($callbacks as $callback) {
+            $callback();
+        }
+    }
+
+    public static function sharedCheckoutContextProvider(): array
+    {
+        return [
+            'cart' => [['is_cart' => true]],
+            'view order' => [['is_view_order_page' => true]],
+            'confirmation' => [['is_order_received_page' => true]],
+            'add payment method' => [['is_add_payment_method_page' => true]],
+            'checkout' => [['is_checkout' => true]],
+            'order pay query' => [['order-pay' => '123']],
+        ];
+    }
+
+    private function mockPageContext(array $context): void
+    {
+        foreach (['is_checkout', 'is_checkout_pay_page', 'is_cart', 'is_view_order_page',
+            'is_order_received_page', 'is_add_payment_method_page'] as $function) {
+            WP_Mock::userFunction($function, ['return' => $context[$function] ?? false]);
+        }
+        WP_Mock::userFunction('get_query_var', ['args' => ['order-pay'], 'return' => $context['order-pay'] ?? false]);
     }
 
     /**
@@ -207,49 +360,21 @@ class ScriptsTest extends TestCase
         );
     }
 
-    /**
-     * TC-INT-01: registerCheckoutScript wires ScriptHealthMonitor correctly.
-     *
-     * Proves the integration between Scripts and ScriptHealthMonitor:
-     * 1) registerCheckoutScript registers a wp_enqueue_scripts action
-     * 2) Scripts exposes the SAME ScriptHealthMonitor instance injected via DI
-     * 3) trackEnqueued on that shared instance records handles for dequeue detection
-     *
-     * Note: WP_Mock's HookedCallbackResponder::react() invokes perform() with zero
-     * arguments, so the original closure cannot be captured and executed here.
-     * The closure body (`$this->scriptHealthMonitor->trackEnqueued($name)`) is
-     * verified through code review and the ScriptHealthMonitor unit-test suite.
-     */
+    /** The actual checkout callback must enqueue and then update the injected monitor. */
     public function testRegisterCheckoutScriptTracksHandleInScriptHealthMonitor(): void
     {
-        $hookRegistered = false;
+        $effects = $this->recordWordPressEffects();
+        $this->mockPaymentPage('checkout');
+        $callback = $this->captureAction(function () {
+            $this->scripts->registerCheckoutScript('wc_mercadopago_supertoken', 'path/to/supertoken.js', ['mode' => 'real'], ['sdk']);
+        });
 
-        WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
-            ->with(Mockery::type('callable'), 10, 1)
-            ->perform(function () use (&$hookRegistered) {
-                $hookRegistered = true;
-            });
+        $this->assertSame([], $this->trackedHandles());
+        $callback();
 
-        $this->scripts->registerCheckoutScript('wc_mercadopago_supertoken', 'path/to/supertoken.js');
-
-        // 1) The wp_enqueue_scripts hook was registered
-        $this->assertTrue($hookRegistered, 'registerCheckoutScript must add a wp_enqueue_scripts action');
-
-        // 2) The ScriptHealthMonitor accessible through Scripts is the same injected instance
-        $this->assertSame(
-            $this->scriptHealthMonitor,
-            $this->scripts->scriptHealthMonitor,
-            'Scripts must expose the injected ScriptHealthMonitor instance'
-        );
-
-        // 3) trackEnqueued on the shared instance records the handle
-        $this->scripts->scriptHealthMonitor->trackEnqueued('wc_mercadopago_supertoken');
-
-        $reflection = new \ReflectionProperty(ScriptHealthMonitor::class, 'trackedHandles');
-        $reflection->setAccessible(true);
-        $tracked = $reflection->getValue($this->scriptHealthMonitor);
-
-        $this->assertContains('wc_mercadopago_supertoken', $tracked);
+        $this->assertSame([['wc_mercadopago_supertoken', 'path/to/supertoken.js', ['sdk'], '1.0.0', true]], $effects->scripts);
+        $this->assertSame([['wc_mercadopago_supertoken', 'wc_mercadopago_supertoken_params', ['mode' => 'real']]], $effects->localized);
+        $this->assertSame(['wc_mercadopago_supertoken'], $this->trackedHandles());
     }
 
     /**
@@ -480,6 +605,278 @@ class ScriptsTest extends TestCase
             'registry registered'     => [true],
             'registry not registered' => [false],
         ];
+    }
+
+    public function testCheckoutAssetsDoNotEnqueueOrTrackOutsidePaymentPages(): void
+    {
+        $effects = $this->recordWordPressEffects();
+        $this->mockPaymentPage('unrelated');
+        $script = $this->captureAction(function () {
+            $this->scripts->registerCheckoutScript('checkout', 'checkout.js', ['key' => 'value']);
+        });
+        $style = $this->captureAction(function () {
+            $this->scripts->registerCheckoutStyle('checkout-style', 'checkout.css');
+        });
+
+        $script();
+        $style();
+
+        $this->assertSame([], $effects->scripts);
+        $this->assertSame([], $effects->localized);
+        $this->assertSame([], $effects->registeredStyles);
+        $this->assertSame([], $this->trackedHandles());
+    }
+
+    public function testStyleRegistrationsExecuteRealStoreAdminAndCheckoutPaths(): void
+    {
+        $effects = $this->recordWordPressEffects();
+        $this->mockPaymentPage('checkout');
+        $admin = $this->captureAction(function () {
+            $this->scripts->registerAdminStyle('admin-style', 'admin.css');
+        }, 'admin_enqueue_scripts');
+        $checkout = $this->captureAction(function () {
+            $this->scripts->registerCheckoutStyle('checkout-style', 'checkout.css');
+        });
+
+        $this->scripts->registerStoreStyle('store-style', 'store.css');
+        $admin();
+        $checkout();
+
+        $this->assertSame([
+            ['store-style', 'store.css', [], '1.0.0'],
+            ['admin-style', 'admin.css', [], '1.0.0'],
+            ['checkout-style', 'checkout.css', [], '1.0.0'],
+        ], $effects->registeredStyles);
+        $this->assertSame([['store-style'], ['admin-style'], ['checkout-style']], $effects->styles);
+    }
+
+    public function testAdminScriptExecutesItsRealCallbackAndOmitsEmptyLocalization(): void
+    {
+        $effects = $this->recordWordPressEffects();
+        $callback = $this->captureAction(function () {
+            $this->scripts->registerAdminScript('admin-script', 'admin.js');
+        }, 'admin_enqueue_scripts');
+
+        $this->assertSame([], $effects->scripts);
+        $callback();
+
+        $this->assertSame([['admin-script', 'admin.js', [], '1.0.0', true]], $effects->scripts);
+        $this->assertSame([], $effects->localized);
+    }
+
+    /** @dataProvider creditsSectionProvider */
+    public function testCreditsAssetsAreLimitedToTheirAdminSection(bool $matchesSection): void
+    {
+        $effects = $this->recordWordPressEffects();
+        $this->urlMock->shouldReceive('validateSection')->with('woo-mercado-pago-credits')->twice()->andReturn($matchesSection);
+
+        if ($matchesSection) {
+            $script = $this->captureAction(function () {
+                $this->scripts->registerCreditsAdminScript('credits', 'credits.js', ['enabled' => true]);
+            }, 'admin_enqueue_scripts');
+            $style = $this->captureAction(function () {
+                $this->scripts->registerCreditsAdminStyle('credits-style', 'credits.css');
+            }, 'admin_enqueue_scripts');
+            $script();
+            $style();
+            $this->assertSame([['credits', 'credits.js', [], '1.0.0', true]], $effects->scripts);
+            $this->assertSame([['credits', 'credits_params', ['enabled' => true]]], $effects->localized);
+            $this->assertSame([['credits-style', 'credits.css', [], '1.0.0']], $effects->registeredStyles);
+            $this->assertSame([['credits-style']], $effects->styles);
+        } else {
+            // Unexpected hook registration fails WP_Mock's strict boundary too.
+            $this->scripts->registerCreditsAdminScript('credits', 'credits.js');
+            $this->scripts->registerCreditsAdminStyle('credits-style', 'credits.css');
+            $this->assertSame([], $effects->scripts);
+            $this->assertSame([], $effects->registeredStyles);
+        }
+    }
+
+    public static function creditsSectionProvider(): array
+    {
+        return ['credits section' => [true], 'another section' => [false]];
+    }
+
+    /** @dataProvider adminClientProvider */
+    public function testAdminClientsLocalizeTheirActualPayloads(string $client): void
+    {
+        $effects = $this->recordWordPressEffects();
+        $this->sellerMock->shouldReceive('getSiteId')->andReturn('');
+        WP_Mock::userFunction('get_locale', ['return' => 'pt_BR']);
+        $common = ['site_id' => 'MLA', 'plugin_version' => MP_VERSION, 'platform_version' => '8.0.0'];
+
+        if ($client === 'notices') {
+            $method = 'registerNoticesAdminScript';
+            $handle = 'wc_mercadopago_notices';
+            $file = 'fixture/notices/notices-client.js';
+            $expected = array_merge($common, [
+                'container' => '#wpbody-content', 'public_key' => 'public-fixture', 'platform_id' => MP_PLATFORM_ID,
+            ]);
+        } elseif ($client === 'caronte') {
+            $method = 'registerCaronteAdminScript';
+            $handle = 'wc_mercadopago';
+            $file = 'fixture/caronte/caronte-client.js';
+            $expected = array_merge($common, [
+                'locale' => 'pt_BR', 'platform_id' => MP_PLATFORM_ID,
+                'public_key_element_id' => 'mp-public-key-prod', 'reference_element_id' => 'reference',
+            ]);
+        } else {
+            $method = 'registerMelidataAdminScript';
+            $handle = 'mercadopago_melidata';
+            $file = 'path/to/melidata-client.js';
+            $expected = array_merge($common, ['type' => 'seller', 'location' => '/settings', 'payment_method' => '']);
+        }
+        $callback = $this->captureAction(function () use ($method) {
+            $this->scripts->$method();
+        }, 'admin_enqueue_scripts');
+        $this->assertSame([], $effects->scripts);
+
+        $callback();
+
+        $this->assertSame([[$handle, $file, [], '1.0.0', true]], $effects->scripts);
+        $this->assertCount(1, $effects->localized);
+        $this->assertSame([$handle, $handle . '_params'], array_slice($effects->localized[0], 0, 2));
+        $this->assertPayload($expected, $effects->localized[0][2]);
+    }
+
+    public static function adminClientProvider(): array
+    {
+        return ['notices' => ['notices'], 'caronte' => ['caronte'], 'melidata seller' => ['melidata']];
+    }
+
+    public function testBehaviorTrackingUsesActualCheckoutCallbackAndFallbackData(): void
+    {
+        $effects = $this->recordWordPressEffects();
+        $this->mockPaymentPage('checkout');
+        $this->sellerMock->shouldReceive('getSiteId')->andReturn('');
+        $this->sellerMock->shouldReceive('getCustIdFromAT')->andReturn('');
+        WP_Mock::userFunction('get_stylesheet', ['return' => 'theme-fixture']);
+        $callback = $this->captureAction(function () {
+            $this->scripts->registerMpBehaviorTrackingScript();
+        });
+
+        $callback();
+
+        $this->assertSame([['wc_mercadopago_woocommerce_scripts', 'fixture/scripts/mp-behavior-tracking.js', [], '1.0.0', true]], $effects->scripts);
+        $this->assertPayload([
+            'site_id' => 'MLA', 'cust_id' => '', 'theme' => 'theme-fixture',
+            'plugin_version' => MP_VERSION, 'platform_version' => '8.0.0',
+        ], $effects->localized[0][2]);
+        $this->assertSame(['wc_mercadopago_woocommerce_scripts'], $this->trackedHandles());
+    }
+
+    /** @dataProvider healthPageProvider */
+    public function testHealthMonitorUsesActualPageContext(string $page, bool $block, bool $classic, bool $enqueued, bool $isCheckout): void
+    {
+        $effects = $this->recordWordPressEffects();
+        $this->mockPaymentPage($page, $classic);
+        WP_Mock::userFunction('has_block', ['args' => ['woocommerce/checkout'], 'return' => $block]);
+        WP_Mock::userFunction('get_stylesheet', ['return' => 'theme-fixture']);
+        $this->sellerMock->shouldReceive('getSiteId')->andReturn('');
+        $this->sellerMock->shouldReceive('getCustIdFromAT')->andReturn('');
+        $this->sellerMock->shouldReceive('isTestUser')->andReturn(true);
+        $this->paymentMethodsMock->shouldReceive('getEnabledPaymentMethods')->andReturn(['pix', 'visa']);
+        $callback = $this->captureAction(function () {
+            $this->scripts->registerHealthMonitorCheckoutScript();
+        });
+
+        $callback();
+
+        if (!$enqueued) {
+            $this->assertSame([], $effects->scripts);
+            $this->assertSame([], $effects->localized);
+            $this->assertSame([], $this->trackedHandles());
+            return;
+        }
+        $this->assertSame([['wc_mercadopago_health_monitor', 'fixture/health/mp-health-monitor.js', [], '1.0.0', true]], $effects->scripts);
+        $this->assertSame(['wc_mercadopago_health_monitor', 'wc_mercadopago_health_monitor_params'], array_slice($effects->localized[0], 0, 2));
+        $this->assertPayload([
+            'site_id' => 'not_available', 'theme' => 'theme-fixture', 'plugin_version' => MP_VERSION,
+            'platform_version' => '8.0.0', 'cust_id' => '', 'is_test' => true,
+            'is_checkout' => $isCheckout, 'payment_methods' => ['pix', 'visa'],
+        ], $effects->localized[0][2]);
+        $this->assertSame(['wc_mercadopago_health_monitor'], $this->trackedHandles());
+    }
+
+    public static function healthPageProvider(): array
+    {
+        return [
+            'Classic checkout' => ['checkout', false, true, true, true],
+            'Blocks checkout' => ['checkout', true, true, true, true],
+            'block-only payment context' => ['cart', true, false, true, true],
+            'order pay' => ['pay', false, false, true, true],
+            'thank you' => ['received', false, true, true, false],
+            'cart without checkout' => ['cart', false, false, true, false],
+            'unrelated page' => ['unrelated', false, false, false, false],
+        ];
+    }
+
+    public function testPaymentBlockRegistrationPreservesVersionDependenciesAndOptionalData(): void
+    {
+        $effects = $this->recordWordPressEffects();
+
+        $this->scripts->registerPaymentBlockScript('block-with-data', 'block.js', 'build-7', ['wc-blocks-registry'], ['enabled' => true]);
+        $this->scripts->registerPaymentBlockScript('block-without-data', 'empty.js', 'build-8');
+
+        $this->assertSame([
+            ['block-with-data', 'block.js', ['wc-blocks-registry'], 'build-7', true],
+            ['block-without-data', 'empty.js', [], 'build-8', true],
+        ], $effects->registeredScripts);
+        $this->assertSame([['block-with-data', 'block-with-data_params', ['enabled' => true]]], $effects->localized);
+    }
+
+    private function captureAction(callable $register, string $tag = 'wp_enqueue_scripts', int $priority = 10): callable
+    {
+        $GLOBALS['__test_capture_script_actions'] = true;
+        $GLOBALS['__test_captured_script_actions'] = [];
+        WP_Mock::onHookAdded($tag, 'action')->with(Mockery::type('callable'), $priority, 1)->perform(static function () {
+        });
+        try {
+            $register();
+            $captured = $GLOBALS['__test_captured_script_actions'];
+        } finally {
+            unset($GLOBALS['__test_capture_script_actions'], $GLOBALS['__test_captured_script_actions']);
+        }
+        $this->assertCount(1, $captured);
+        $this->assertSame($tag, $captured[0]['tag']);
+        $this->assertSame($priority, $captured[0]['priority']);
+        $this->assertSame(1, $captured[0]['accepted_args']);
+        $this->assertIsCallable($captured[0]['callback']);
+        return $captured[0]['callback'];
+    }
+
+    private function recordWordPressEffects(): \stdClass
+    {
+        $effects = (object) ['scripts' => [], 'localized' => [], 'registeredStyles' => [], 'styles' => [], 'registeredScripts' => []];
+        foreach (['wp_enqueue_script' => 'scripts', 'wp_localize_script' => 'localized', 'wp_register_style' => 'registeredStyles', 'wp_enqueue_style' => 'styles', 'wp_register_script' => 'registeredScripts'] as $function => $property) {
+            WP_Mock::userFunction($function, ['return' => static function (...$args) use ($effects, $property) {
+                $effects->$property[] = $args;
+                return true;
+            }]);
+        }
+        return $effects;
+    }
+
+    private function mockPaymentPage(string $page, ?bool $classic = null): void
+    {
+        foreach (['is_view_order_page' => 'view', 'is_cart' => 'cart', 'is_order_received_page' => 'received', 'is_checkout_pay_page' => 'pay', 'is_add_payment_method_page' => 'add', 'is_checkout' => 'checkout'] as $function => $matches) {
+            WP_Mock::userFunction($function, ['return' => $function === 'is_checkout' && $classic !== null ? $classic : $page === $matches]);
+        }
+        WP_Mock::userFunction('get_query_var', ['args' => ['order-pay'], 'return' => false]);
+    }
+
+    private function trackedHandles(): array
+    {
+        $property = new \ReflectionProperty(ScriptHealthMonitor::class, 'trackedHandles');
+        $property->setAccessible(true);
+        return $property->getValue($this->scriptHealthMonitor);
+    }
+
+    private function assertPayload(array $expected, array $actual): void
+    {
+        ksort($expected);
+        ksort($actual);
+        $this->assertSame($expected, $actual);
     }
 
     /**

@@ -1,7 +1,6 @@
 const mockMpSdkAdapter = jest.fn();
 const mockCoreMonitorMetricsAdapter = jest.fn();
 const mockWooDomAdapter = jest.fn();
-const mockVariantConfigAdapter = jest.fn();
 
 jest.mock('@super-token/adapters/platform/MpSdkAdapter', () => ({
   MpSdkAdapter: function (...args) { mockMpSdkAdapter(...args); this.kind = 'sdk'; },
@@ -11,9 +10,6 @@ jest.mock('@super-token/adapters/platform/CoreMonitorMetricsAdapter', () => ({
 }));
 jest.mock('@super-token/adapters/platform/WooDomAdapter', () => ({
   WooDomAdapter: function (...args) { mockWooDomAdapter(...args); this.kind = 'dom'; },
-}));
-jest.mock('@super-token/adapters/platform/VariantConfigAdapter', () => ({
-  VariantConfigAdapter: function (...args) { mockVariantConfigAdapter(...args); this.kind = 'variant'; },
 }));
 
 const { createPlatformAdapters } = require('@super-token/adapters/platform/createPlatformAdapters');
@@ -32,12 +28,11 @@ describe('createPlatformAdapters', () => {
     expect(() => createPlatformAdapters()).toThrow(/MP JS SDK instance unavailable/);
   });
 
-  it('Given an injected SDK, When called, Then it returns the four platform adapters', () => {
+  it('Given an injected SDK, When called, Then it returns the three platform adapters', () => {
     const adapters = createPlatformAdapters({ sdk });
     expect(adapters.paymentSdk.kind).toBe('sdk');
     expect(adapters.metrics.kind).toBe('metrics');
     expect(adapters.dom.kind).toBe('dom');
-    expect(adapters.variantConfig.kind).toBe('variant');
   });
 
   it('Given an injected SDK, When called, Then MpSdkAdapter and the metrics adapter are constructed with it', () => {
@@ -60,9 +55,4 @@ describe('createPlatformAdapters', () => {
     expect(params).toEqual({ plugin_version: '', platform_version: '', site_id: '', cust_id: '', location: '', platform_id: '' });
   });
 
-  it('Given scripts params, When called, Then the variant config adapter is built with them', () => {
-    const scriptsParams = { ab_variant: 'v2.1' };
-    createPlatformAdapters({ sdk, scriptsParams });
-    expect(mockVariantConfigAdapter).toHaveBeenCalledWith(scriptsParams);
-  });
 });

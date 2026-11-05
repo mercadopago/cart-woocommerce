@@ -1,14 +1,8 @@
 /**
- * Port: variant-specific rendering of the saved-payment-methods UI — the seam that
- * differs between A/B variants (today the `v2` and `v2.1` folders). The concrete
- * views live in `adapters/view/{v2,v2.1}` and are resolved once by the
- * `VariantViewFactory` (TASK-008, ADR-005).
- *
- * The seam has four behaviours because v2 and v2.1 diverge at four points of the
- * saved-methods lifecycle: the initial render, the decoration applied when a method
- * is selected, its removal on deselect, and the variant chrome removed on reset. A
- * variant with no behaviour at a given point (e.g. v2 has no account-money
- * decoration) implements it as a no-op, so consumers never branch on the variant.
+ * Saved-payment-methods view boundary used by the canonical v2.1 renderer.
+ * The port covers rendering, selection decoration, deselection and reset, keeping
+ * checkout orchestration independent of DOM presentation. Its existing name is
+ * retained for consumers; it does not select an A/B experience.
  */
 import type {
   Installment,

@@ -1,14 +1,15 @@
-// Active variant: env override (e.g. `SUPER_TOKEN_VERSION=v2.1 npm test` — CI, or an env without
-// the PHP file yet) → otherwise derived from the PHP source of truth (PLUGIN_SUPER_TOKEN_VERSION),
-// so there is no hardcoded value to keep in sync.
-const SUPER_TOKEN_VERSION = process.env.SUPER_TOKEN_VERSION || require('./main.js').getActiveSuperTokenVersion();
-const otherSuperTokenVersion = SUPER_TOKEN_VERSION === 'v2.1' ? 'v2' : 'v2.1';
+const coveragePolicy = require('./coverage-policy.json');
+const { jestThresholds } = require('./scripts/coverage/policy');
 
 module.exports = {
+  collectCoverage: true,
+  globalSetup: '<rootDir>/scripts/coverage/jest-global-setup.js',
+  // Root PATH aggregates every measured source, even when module PATHs overlap.
+  coverageThreshold: jestThresholds(coveragePolicy),
   // Ambiente de teste (jsdom simula o navegador)
   testEnvironment: 'jsdom',
 
-  // Cobre todos os arquivos de teste — a versão inativa do super-token é excluída abaixo
+  // Todas as suites usam a experiencia unica do Super Token.
   testMatch: ['**/tests/JS/**/*.test.js'],
 
   // Arquivos a serem ignorados
@@ -17,7 +18,6 @@ module.exports = {
     '/vendor/',
     '/build/',
     '/e2e/',
-    `tests/JS/checkouts/super-token/${otherSuperTokenVersion}/`,
   ],
 
   // Configuração de cobertura
@@ -27,7 +27,9 @@ module.exports = {
     'packages/narciso/**/*.js',
     '!assets/js/**/*.min.js',
     '!assets/js/**/__tests__/**',
-    '!assets/js/blocks/**',
+    '!assets/js/**/*.bundle.js',
+    '!assets/js/**/super-token.bundle.js',
+    '!assets/js/**/*.d.ts',
   ],
 
   // Configuração de mapeamento de nomes de arquivos
@@ -48,15 +50,20 @@ module.exports = {
   // still attributed to its real file (see tests/JS/helpers/load-file.js).
   coverageProvider: 'v8',
 
-  coverageReporters: ['text', 'lcov', 'html', 'json'],
+  coverageReporters: ['text', 'lcov', 'html', 'json', 'json-summary'],
 
   // Setup de arquivos antes dos testes
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js', '<rootDir>/scripts/coverage/jest-vm-metadata.js'],
 
   // Só os arquivos .ts do super-token passam por Babel (apaga os tipos). Os testes
   // legados em .js continuam sem transform — o coverage v8 os atribui via vm/loadFile.
   // configFile/babelrc: false isola do Babel do wp-scripts (evita clobber no build dos blocks).
   transform: {
+    '^.+/assets/js/blocks/.+\\.js$': ['babel-jest', {
+      configFile: false,
+      babelrc: false,
+      presets: [['@babel/preset-env', { targets: { node: 'current' } }], '@babel/preset-react'],
+    }],
     '^.+\\.ts$': ['babel-jest', {
       configFile: false,
       babelrc: false,
@@ -70,7 +77,6 @@ module.exports = {
   // Variáveis globais disponíveis nos testes
   globals: {
     window: {},
-    SUPER_TOKEN_VERSION,
   },
 
   // Tempo limite para testes (em ms)

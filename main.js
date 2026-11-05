@@ -4,7 +4,6 @@ const path = require('path');
 const minify = require('minify');
 const wpPot = require('wp-pot');
 const { sync: globSync } = require('glob');
-const { INTEGRITY_IGNORED_ASSETS } = require('./scripts/public/integrity-assets');
 
 /**
  * Minify JS and CSS files
@@ -39,39 +38,12 @@ function minifyFiles (extension) {
   });
 }
 
-/**
- * Reads the active super-token variant from the PHP source of truth
- * (PLUGIN_SUPER_TOKEN_VERSION in src/WoocommerceMercadoPago.php), so there is no
- * duplicated/"must match" constant to keep in sync.
- *
- * Read lazily as a function (not as a module-level constant) so unit tests that mock `fs`
- * can configure the mock before calling it. Note: jest.config.js calls this eagerly at Jest
- * startup — in a non-standard environment where the PHP file is absent/malformed, Jest fails
- * at config-load time.
- *
- * @returns {string} The active variant (e.g. 'v2.1').
- */
-function getActiveSuperTokenVersion () {
-  const phpPath = path.resolve(__dirname, 'src/WoocommerceMercadoPago.php');
-  const phpContent = fs.readFileSync(phpPath, 'utf8');
-  const match = phpContent.match(/private const PLUGIN_SUPER_TOKEN_VERSION\s*=\s*'([^']+)'/);
-  if (!match) {
-    throw new Error('PLUGIN_SUPER_TOKEN_VERSION not found in src/WoocommerceMercadoPago.php — cannot resolve the active super-token variant.');
-  }
-  return match[1];
-}
-
-/**
- * Super Token A/B variant list (single source of truth). Each key is a product
- * variant; the value is its loader version. Consumed by the interactive
- * setupSuperToken prompt to offer the dev variant choice. The CDN folder mapping
- * and the per-variant bundle publish live in the scripts repo now (TASK-013).
- */
-const SUPER_TOKEN_LOADER_VERSION = { 'v2': '1.2.11', 'v2.1': '1.2.11' };
+/** Canonical experience and JS/CSS telemetry stamp; not a runtime selector. */
+const SUPER_TOKEN_LOADER_VERSION = { 'v2.1': '1.2.12' };
 
 /**
  * Compile one Super Token SCSS entry into a compressed CSS file (both under
- * `assets/css/checkouts/super-token`). Shared by the unified and per-variant builds.
+ * `assets/css/checkouts/super-token`). Used only by the canonical build.
  */
 function compileScss (entryName, outputName, loaderVersion = null) {
   const stDir = './assets/css/checkouts/super-token';
@@ -89,20 +61,12 @@ function compileScss (entryName, outputName, loaderVersion = null) {
   return outputFilePath;
 }
 
-/**
- * Compile the Super Token stylesheets.
- *
- * - `super-token.bundle.min.css` — the unified hand-off for the future mp-super-token/ cutover:
- *   the refactored runtime stamps `data-variant` on the root and both variants' rules coexist here,
- *   scoped to it. Dev/self-construct mode serves this one file regardless of the active variant.
- * - `super-token-v2.bundle.min.css` / `super-token-v2.1.bundle.min.css` — per-variant, from the same
- *   SCSS sources, for the legacy CDN retrocompat bundles an older plugin's loader fetches from v1/
- *   (v2) and v2.1/. Hand-off only (gitignored, copied into the scripts repo); not served locally (PSW-4417).
- */
+/** Compile one transitional stylesheet for canonical v2.1 and independently cached older JS. */
 function compileSuperTokenCss () {
-  compileScss('super-token.scss', 'super-token.bundle.min.css');
-  compileScss('super-token-v2.scss', 'super-token-v2.bundle.min.css', SUPER_TOKEN_LOADER_VERSION.v2);
-  compileScss('super-token-v2.1.scss', 'super-token-v2.1.bundle.min.css', SUPER_TOKEN_LOADER_VERSION['v2.1']);
+  // TODO(PSW-4853): remove v2 selectors in the next Scripts release once
+  // js_version:1_2_11 stays near zero for several days after CDN publication.
+  // This is independent of retiring v1/, which serves the current v2.1 JS.
+  compileScss('super-token.scss', 'super-token.bundle.min.css', SUPER_TOKEN_LOADER_VERSION['v2.1']);
 }
 
 /**
@@ -120,30 +84,13 @@ function stageOneJsBundle (buildDir, targetName) {
   return targetPath;
 }
 
-/**
- * Stage the Super Token JS bundles — a local hand-off for the manual copy into the
- * woocommerce-scripts repo (the tracked CDN source), which owns minification and
- * obfuscation, so these stay readable. Built unminified (ST_UNMINIFIED). Nothing enqueues
- * them locally: dev/self-construct mode serves `build/super-token/bootstrap.ts.js`, bundle
- * mode loads from the CDN.
- *
- * - `super-token.bundle.js` — the runtime bundle for the future mp-super-token/ cutover, with the
- *   variant resolved at runtime. The 8.9.3 production loader still uses the per-variant paths.
- * - `super-token-v2.bundle.js` / `super-token-v2.1.bundle.js` — the same source built with the
- *   variant frozen (ST_FIXED_VARIANT), for the legacy CDN retrocompat paths v1/ (v2) and v2.1/,
- *   which an older plugin's A/B loader fetches (PSW-4417).
- *
- * Must run after `build:super-token:webpack`, which produces the three webpack outputs.
- */
+/** Stage the single readable webpack output; the Scripts repo owns CDN optimization and aliases. */
 function stageSuperTokenJsBundle () {
   stageOneJsBundle('super-token', 'super-token.bundle.js');
-  stageOneJsBundle('super-token-v2', 'super-token-v2.bundle.js');
-  stageOneJsBundle('super-token-v2.1', 'super-token-v2.1.bundle.js');
 }
 
 /**
- * Build the Super Token assets: the unified and per-variant CSS outputs plus their staged JS
- * bundles. Single entrypoint for `build:super-token:bundle`.
+ * Build the canonical Super Token CSS and staged JS handoff. Single entrypoint for `build:super-token:bundle`.
  */
 function buildSuperTokenAssets () {
   compileSuperTokenCss();
@@ -277,13 +224,6 @@ async function setupSuperToken() {
   });
   const ask = (question) => new Promise((resolve) => rl.question(question, resolve));
 
-  const variants = Object.keys(SUPER_TOKEN_LOADER_VERSION);
-  const variant = (await ask(`Qual variante do Super Token? (${variants.join(' = controle, ')} = tratamento): `)).trim();
-  if (!variants.includes(variant)) {
-    console.error(`Variante inválida. Use uma das: ${variants.join(', ')}`);
-    process.exit(1);
-  }
-
   const bundleAnswer = (await ask('Usar o bundle da CDN? (s/n — n = modo dev, carrega arquivos individuais): ')).trim().toLowerCase();
   if (!['s', 'n'].includes(bundleAnswer)) {
     console.error("Resposta inválida. Use 's' ou 'n'.");
@@ -299,16 +239,11 @@ async function setupSuperToken() {
 
   rl.close();
 
-  // Configure only the dev runtime constants in the PHP source of truth: active variant,
+  // Configure the dev runtime constants in the PHP source of truth:
   // bundle toggle and SDK env. The loader version is a release concern (bump the
   // SUPER_TOKEN_LOADER_VERSION map + rebuild the bundle), intentionally not handled here.
   const phpPath = 'src/WoocommerceMercadoPago.php';
   let phpContent = fs.readFileSync(phpPath, 'utf8');
-
-  phpContent = phpContent.replace(
-    /private const PLUGIN_SUPER_TOKEN_VERSION = '[^']*';/,
-    `private const PLUGIN_SUPER_TOKEN_VERSION = '${variant}';`
-  );
 
   phpContent = phpContent.replace(
     /private const PLUGIN_SUPER_TOKEN_USE_BUNDLE = \w+;/,
@@ -321,7 +256,6 @@ async function setupSuperToken() {
   );
 
   fs.writeFileSync(phpPath, phpContent, 'utf8');
-  console.log(`✔ ${phpPath}: PLUGIN_SUPER_TOKEN_VERSION = '${variant}'`);
   console.log(`✔ ${phpPath}: PLUGIN_SUPER_TOKEN_USE_BUNDLE = ${useBundle}`);
   console.log(`✔ ${phpPath}: PLUGIN_SDK_ENV = '${env}'`);
 
@@ -335,11 +269,8 @@ async function setupSuperToken() {
 function generateIntegrityManifest () {
   const crypto = require('crypto');
 
-  // The per-variant Super Token stylesheets are CDN hand-offs, not served by the plugin. Both the
-  // generator and verifier consume the same literal allowlist so they cannot disagree about them.
-  const criticalFiles = globSync('assets/**/*.min.{js,css}', {
-    ignore: INTEGRITY_IGNORED_ASSETS,
-  });
+  // Every minified plugin asset is covered, including the canonical Super Token CSS.
+  const criticalFiles = globSync('assets/**/*.min.{js,css}');
 
   const manifest = {};
 
@@ -361,7 +292,6 @@ function generateIntegrityManifest () {
 
 module.exports = {
   SUPER_TOKEN_LOADER_VERSION,
-  getActiveSuperTokenVersion,
   minifyFiles,
   compileSuperTokenCss,
   stageSuperTokenJsBundle,

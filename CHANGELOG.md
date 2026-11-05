@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.10.0] 2026-11-05
+### Added
+- Add Colombian Spanish: stores in Colombian Spanish now use their own translation instead of the generic Spanish one, with "Cuotas" and "cuotas sin interés" in the new card form and, once fast payment is available in Colombia, in the saved payment methods; card errors and admin credential messages in neutral Spanish; and a Colombian Wallet Button preview in the admin
+- Inform Mercado Pago when the plugin is uninstalled, if the store has an installation record
+
+### Changed
+- Make the new fast payment experience the default for all stores, keeping compatibility with older plugin versions and translated saved payment method labels; outdated styles cached in the buyer's browser are repaired automatically without blocking checkout
+- Show Colombian peso amounts without decimal places in the fast payment installments, once fast payment is available in Colombia
+
+### Fixed
+- Load fast payment resources only on checkout and order payment pages, keeping pages that combine cart and checkout working
+- Correct order payment status when Mercado Pago coupons or unsuccessful payment attempts are included in Checkout Pro notifications
+- Validate the card data again when the buyer retries a Classic checkout card payment after an interrupted attempt, and stop incomplete card data from being submitted, including on the order payment page
+- Keep fast payment in the Classic checkout in sync when the buyer changes the selected payment method, and stop incomplete or outdated authorizations from being submitted at checkout and on the order payment page
+- Remove repeated Credits wording from English Checkout Pro benefits and the second promotional banner, preserving other languages
+
 ## [8.9.7] 2026-10-22
 ### Added
 - Preserve every Checkout Pro payment attempt so paid orders can be recovered before automatic cancellation

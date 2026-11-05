@@ -10,7 +10,7 @@ const HEALTH_MONITOR_PATH = resolveAlias('assets/js/health/mp-health-monitor.js'
  */
 function loadHealthMonitor() {
   const code = fs.readFileSync(HEALTH_MONITOR_PATH, 'utf8');
-  const script = new vm.Script(code);
+  const script = new vm.Script(code, { filename: HEALTH_MONITOR_PATH });
   script.runInNewContext({
     window: global.window,
     document: global.document,

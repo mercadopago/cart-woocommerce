@@ -21,10 +21,7 @@ Implemented by **TASK-005** (PSW-4269):
   class/attr/style, tree moves, events, timers, `escapeHtml`) plus safe sinks
   (`setText`, `setImageSource`) that make the future view XSS-safe by construction
   (SEC-3). The legacy element builders are view concerns (TASK-008), not moved here.
-- `VariantConfigAdapter` → `VariantConfigPort` — resolves the A/B variant string
-  (cookie / remote config / kill switch / weighted / fallback), ported from
-  `super-token-loader.js`. Returns the variant only; it does not load the bundle
-  or pick a view.
+- `resolveLegacyPresentationCopy` supplies missing pre-8.8 presentation strings using the store language.
 - `createPlatformAdapters` — step 1 of the composition root: builds all adapters,
   reading `window.mpSdkInstance` once. Consumed by the domain in TASK-006.
 
@@ -71,3 +68,15 @@ TASK-013 pre-conditions to verify before wiring:
   threshold matches the legacy module-load baseline.
 
 Depends on: `ports/` (implements them). Nothing inward depends on this layer.
+
+PSW-4853: runtime selection/config cookies were removed. Core Monitor emits
+`ab_variant: "not_available"` and retains `js_version` for release identification.
+
+`ensureSuperTokenCss` checks the existing CDN stylesheet in parallel with composition.
+There is no work in local mode (no loader link). It waits at most five seconds for
+that link, then compares the root CSS stamp with `SUPER_TOKEN_JS_VERSION`. A mismatch,
+empty stamp or timeout triggers one additional link in the original folder, replacing
+the query with `?v=<expected stamp>`. The original link remains and no inline CSS is used.
+A second five-second deadline bounds the correction. The mismatch metric value is
+the original stamp, `empty`, or `timeout`; its message is `fixed folder:<original folder>` only after load and
+stamp verification, otherwise `fix_failed folder:<original folder>`. This does not block rendering/SDK readiness.

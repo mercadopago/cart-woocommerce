@@ -35,7 +35,7 @@ class CustomGateway extends AbstractGateway
 
     private const SUPER_TOKEN_REFACTORED_HANDLE = 'wc_mercadopago_supertoken_refactored';
 
-    private const WALLET_BUTTON_PREVIEW_LOCALES = ['en-us', 'es-ar', 'es-cl', 'es-mx', 'pt-br'];
+    private const WALLET_BUTTON_PREVIEW_LOCALES = ['en-us', 'es-ar', 'es-cl', 'es-co', 'es-mx', 'pt-br'];
 
     private const WALLET_BUTTON_PREVIEW_FALLBACK_LOCALE = 'es-mx';
 
@@ -1606,11 +1606,9 @@ window.mpSdkInstance = null;",
      */
     public function registerSuperTokenStyles()
     {
-        // Single compiled stylesheet serving both A/B variants: the runtime stamps
-        // data-variant on the root and each variant's rules are scoped to it, so one
-        // file covers the shared rules and both variants (no MP_SUPER_TOKEN_VERSION
-        // discriminator on the served file).
-        $this->mercadopago->hooks->scripts->registerCheckoutStyle(
+        // One stylesheet for canonical v2.1, with transitional v2 rules for cached older JS.
+        // The current runtime stamps data-variant="v2.1" on the root.
+        $this->mercadopago->hooks->scripts->registerPaymentFormStyle(
             'wc_mercadopago_supertoken_payment_methods',
             $this->mercadopago->helpers->url->getCssAsset('checkouts/super-token/super-token.bundle'),
         );
@@ -1633,18 +1631,11 @@ window.mpSdkInstance = null;",
         if ($this->isSuperTokenSelfConstruct()) {
             $this->registerSuperTokenStyles();
             $this->registerSuperTokenRefactoredEntry();
-            $this->registerSuperTokenLocalizeParams(self::SUPER_TOKEN_REFACTORED_HANDLE);
             return;
         }
 
-        // Bundle mode (production): the A/B loader selects one refactored per-variant bundle from
-        // the retrocompatible CDN paths; that bundle is the whole runtime, so nothing else is enqueued. This path is
-        // unreachable in unit tests (self-construct early-returns above under the fixed PHPUnit
-        // constant); E2E covers it.
-        // @codeCoverageIgnoreStart
+        // Bundle mode: the loader fetches the complete canonical runtime directly from CDN v1/ (production folder).
         $this->registerSuperTokenBundleFiles();
-        $this->registerSuperTokenLocalizeParams(self::SUPER_TOKEN_BUNDLE_HANDLE);
-        // @codeCoverageIgnoreEnd
     }
 
     /**
@@ -1655,8 +1646,8 @@ window.mpSdkInstance = null;",
      * True (self-construct, bundle off): the TS entry builds and publishes the Super Token
      * instances itself, so only it (plus the styles) is enqueued. Since the legacy v2/v2.1/shared
      * scripts were removed, dev mode always self-constructs.
-     * False (bundle on): the A/B loader selects a refactored per-variant CDN bundle, which is the
-     * whole runtime, so nothing else is enqueued. The unified path remains deferred to TASK-013.
+     * False (bundle on): the loader fetches the whole canonical v2.1 runtime from CDN v1/ (production folder),
+     * so the local entry is not enqueued.
      *
      * @return bool
      */
@@ -1671,14 +1662,16 @@ window.mpSdkInstance = null;",
      * bundle loaded via the loader. Publishes all refactored orchestration entry points to
      * window.*; any still-legacy classes remain as state-holders with delegate cascas.
      *
-     * @codeCoverageIgnore
      * @return void
      */
     private function registerSuperTokenRefactoredEntry(): void
     {
-        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+        $this->mercadopago->hooks->scripts->registerPaymentFormScript(
             self::SUPER_TOKEN_REFACTORED_HANDLE,
-            $this->mercadopago->helpers->url->getPluginFileUrl('build/super-token/bootstrap.ts.js')
+            $this->mercadopago->helpers->url->getPluginFileUrl('build/super-token/bootstrap.ts.js'),
+            $this->getSuperTokenLocalizeData(),
+            [],
+            'wc_mercadopago_supertoken_bundle_params'
         );
     }
 
@@ -1697,26 +1690,13 @@ window.mpSdkInstance = null;",
      */
     private function registerSuperTokenBundleScripts(): void
     {
-        $this->mercadopago->hooks->scripts->registerCheckoutScript(
+        $this->mercadopago->hooks->scripts->registerPaymentFormScript(
             self::SUPER_TOKEN_BUNDLE_HANDLE,
-            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token-loader')
+            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token-loader'),
+            $this->getSuperTokenLocalizeData(),
+            [],
+            'wc_mercadopago_supertoken_bundle_params'
         );
-    }
-
-    /**
-     * Summary of registerSuperTokenLocalizeParams
-     * @return void
-     */
-    private function registerSuperTokenLocalizeParams(string $targetHandle): void
-    {
-        $localizeData = $this->getSuperTokenLocalizeData();
-        if (empty($localizeData)) {
-            return;
-        }
-
-        add_action('wp_enqueue_scripts', function () use ($localizeData, $targetHandle) {
-            wp_localize_script($targetHandle, 'wc_mercadopago_supertoken_bundle_params', $localizeData);
-        });
     }
 
     /**
@@ -1911,7 +1891,7 @@ window.mpSdkInstance = null;",
 
     /**
      * Returns the full array of super token localize data (single source of truth).
-     * Used by getSuperTokenLocalizeParams() for the bundle script.
+     * Passed to the payment-form script registration in both loading modes.
      *
      * @return array<string, mixed>
      */
@@ -1925,15 +1905,12 @@ window.mpSdkInstance = null;",
                 'site_id' => $this->countryConfigs['site_id'],
                 'location' => '/checkout',
                 'self_construct' => $this->isSuperTokenSelfConstruct(),
-                // Dev/self-construct: the entry (bootstrap.ts) renders the variant matching this
-                // constant so the DOM lines up with the single stylesheet registerSuperTokenStyles()
-                // serves (both variants scoped by data-variant) — there is no loader cookie in dev
-                // mode. In bundle mode the variant is resolved at runtime inside the bundle
-                // (VariantConfigAdapter), not by the loader.
-                'super_token_version' => MP_SUPER_TOKEN_VERSION,
                 // Tells the CDN bundle that this plugin's catalogs already carry the store-language
                 // copy for every site, so it must not apply its legacy per-site copy override.
                 'store_language_copy' => true,
+                // Tells the CDN bundle that this plugin ships the es_CO catalog, so Colombian stores
+                // can use the Super Token; plugins without it stay on the Custom Checkout.
+                'mco_store_language_copy' => true,
                 'plugin_js_base_url' => $this->mercadopago->helpers->url->getPluginFileUrl('assets/js/'),
                 'theme' => get_stylesheet(),
                 'cust_id' => $this->mercadopago->sellerConfig->getCustIdFromAT(),

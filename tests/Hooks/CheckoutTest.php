@@ -14,6 +14,15 @@ if (!function_exists('MercadoPago\\Woocommerce\\Hooks\\add_action')) {
         // New hook tests: capture all actions indexed by tag
         $GLOBALS['__captured_actions'][$tag][] = ['callback' => $callback, 'priority' => $priority];
 
+        // Opt-in capture stores the real callable; it does not execute or replace it.
+        if (!empty($GLOBALS['__test_capture_script_actions'])) {
+            $GLOBALS['__test_captured_script_actions'][] = [
+                'tag' => $tag,
+                'callback' => $callback,
+                'priority' => $priority,
+                'accepted_args' => $acceptedArgs,
+            ];
+        }
         \WP_Mock::onActionAdded($tag)->react($callback, $priority, $acceptedArgs);
         return true;
     }

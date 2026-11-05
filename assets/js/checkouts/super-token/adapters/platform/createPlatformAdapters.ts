@@ -1,23 +1,20 @@
-import type { PaymentSdkPort, MetricsPort, DomPort, VariantConfigPort } from '@super-token/ports';
-import type { RawMpSdkInstance, SuperTokenBundleParams, WoocommerceScriptsParams } from '@super-token/types/external-globals';
+import type { PaymentSdkPort, MetricsPort, DomPort } from '@super-token/ports';
+import type { RawMpSdkInstance, SuperTokenBundleParams } from '@super-token/types/external-globals';
 import { MpSdkAdapter } from './MpSdkAdapter';
 import { CoreMonitorMetricsAdapter } from './CoreMonitorMetricsAdapter';
 import { WooDomAdapter } from './WooDomAdapter';
-import { VariantConfigAdapter } from './VariantConfigAdapter';
 
 /** The platform edge the domain (TASK-006) is built on. */
 export interface PlatformAdapters {
   paymentSdk: PaymentSdkPort;
   metrics: MetricsPort;
   dom: DomPort;
-  variantConfig: VariantConfigPort;
 }
 
 export interface PlatformAdaptersOptions {
   sdk?: RawMpSdkInstance;
   superTokenJsVersion?: string | null;
   params?: SuperTokenBundleParams;
-  scriptsParams?: WoocommerceScriptsParams;
 }
 
 const PARAMS_FALLBACK: SuperTokenBundleParams = {
@@ -48,12 +45,10 @@ export function createPlatformAdapters(options: PlatformAdaptersOptions = {}): P
   }
   const superTokenJsVersion = options.superTokenJsVersion ?? null;
   const params = options.params ?? window.wc_mercadopago_supertoken_bundle_params ?? PARAMS_FALLBACK;
-  const scriptsParams = options.scriptsParams ?? window.wc_mercadopago_woocommerce_scripts_params ?? {};
 
   return {
     paymentSdk: new MpSdkAdapter(sdk),
     metrics: new CoreMonitorMetricsAdapter(sdk, superTokenJsVersion, params),
     dom: new WooDomAdapter(),
-    variantConfig: new VariantConfigAdapter(scriptsParams),
   };
 }

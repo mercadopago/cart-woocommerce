@@ -359,7 +359,7 @@ const helperPath = path.resolve(__dirname, '../../../../assets/js/blocks/helpers
 
 function loadHelper(ctx) {
   const src = fs.readFileSync(helperPath, 'utf8').replace(/^export\s+\{[^}]+\};?\s*$/m, '');
-  const script = new vm.Script(src + '\n({ handleCartTotalChange, addDiscountAndCommission, removeDiscountAndCommission });');
+  const script = new vm.Script(src + '\n({ handleCartTotalChange, addDiscountAndCommission, removeDiscountAndCommission });', { filename: CART_UPDATE_HELPER_PATH });
   return script.runInNewContext({
     window: global.window,
     document: global.document,

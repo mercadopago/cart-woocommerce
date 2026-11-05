@@ -15,12 +15,10 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { INTEGRITY_IGNORED_ASSETS } = require('./integrity-assets');
 
 const DEFAULT_MANIFEST = 'integrity-manifest.json';
 
 const MIN_ASSET_RE = /\.min\.(js|css)$/;
-const ignoredAssets = new Set(INTEGRITY_IGNORED_ASSETS);
 
 /**
  * Lista os assets .min.{js,css} presentes sob <root>/assets (recursivo).
@@ -102,7 +100,6 @@ function verifyIntegrity (options = {}) {
   // integrity-manifest.json não teria hash para ser validado nem em runtime.
   const manifestKeys = new Set(Object.keys(manifest));
   const orphans = collectMinAssets(root)
-    .filter((relativePath) => !ignoredAssets.has(relativePath))
     .filter((relativePath) => !manifestKeys.has(relativePath));
 
   return {

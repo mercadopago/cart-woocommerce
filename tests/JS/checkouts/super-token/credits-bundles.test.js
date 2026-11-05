@@ -1,10 +1,10 @@
 const { createBundleRuntime } = require('../../helpers/bundle-runtime');
 
 // Literal module paths let Jest discover this suite with --findRelatedTests.
+// The canonical handoff (assets/js/checkouts/super-token/super-token.bundle.js) is a gitignored byte copy
+// of build/super-token/bootstrap.ts.js staged by build:super-token:bundle, so CI only has the build output.
 const VARIANTS = [
   ['local', () => jest.requireActual('../../../../build/super-token/bootstrap.ts.js')],
-  ['v2', () => jest.requireActual('../../../../assets/js/checkouts/super-token/super-token-v2.bundle.js')],
-  ['v2.1', () => jest.requireActual('../../../../assets/js/checkouts/super-token/super-token-v2.1.bundle.js')],
 ];
 const THUMBNAIL = '/assets/images/icons/icon-credits-fast-payment.svg';
 

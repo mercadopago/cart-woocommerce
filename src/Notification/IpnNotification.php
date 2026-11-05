@@ -127,13 +127,10 @@ class IpnNotification extends AbstractNotification
             $totalRefund = 0.00;
 
             foreach ($data['payments'] as $payment) {
-                $coupon = $this->getPaymentInfo($payment['id']);
-
-                if ($coupon > 0) {
-                    $totalPaid += (float) $coupon;
-                }
+                $paymentInfo = $this->getPaymentInfo($payment['id']);
 
                 if ($payment['status'] === 'approved') {
+                    $totalPaid += $this->getCouponAmount($paymentInfo);
                     $totalPaid += (float) $payment['total_paid_amount'];
                 } elseif ($payment['status'] === 'refunded') {
                     $totalRefund += (float) $payment['amount_refunded'];
@@ -167,7 +164,7 @@ class IpnNotification extends AbstractNotification
             $paymentIds = [];
 
             foreach ($data['payments'] as $payment) {
-                $coupon     = $this->getPaymentInfo($payment['id'])['coupon_amount'];
+                $coupon = $this->getCouponAmount($this->getPaymentInfo($payment['id']));
                 $paymentIds[] = $payment['id'];
 
                 $this->updateMeta(
@@ -189,6 +186,19 @@ class IpnNotification extends AbstractNotification
         $order->save();
 
         return $status;
+    }
+
+    private function getCouponAmount($paymentInfo): float
+    {
+        $coupon = is_array($paymentInfo) ? ($paymentInfo['coupon_amount'] ?? 0) : 0;
+
+        if (!is_numeric($coupon)) {
+            return 0.0;
+        }
+
+        $amount = (float) $coupon;
+
+        return is_finite($amount) && $amount > 0 ? $amount : 0.0;
     }
 
     /**

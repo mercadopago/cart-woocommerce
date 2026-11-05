@@ -130,6 +130,58 @@ describe('MPCardForm', () => {
     document.body.innerHTML = '';
   });
 
+  describe('sendMelidataTimeToLoadMetric()', () => {
+    let metric;
+    let previousMelidata;
+
+    beforeEach(() => {
+      previousMelidata = Object.getOwnPropertyDescriptor(window, 'melidata');
+      delete window.melidata;
+      jest.useFakeTimers({ now: 0 });
+      metric = jest.fn();
+      // VM contexts retain their timer bindings: load the real class with the
+      // current clock/timers so advancing Jest exercises its actual callbacks.
+      const LocalCardForm = loadFile(cardFormPath, 'MPCardForm', {
+        ...global, Date, setInterval, clearInterval, setTimeout, clearTimeout, sendMetric: metric,
+      });
+      new LocalCardForm();
+    });
+
+    afterEach(() => {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+      if (previousMelidata) Object.defineProperty(window, 'melidata', previousMelidata);
+      else delete window.melidata;
+    });
+
+    test('Given melidata becomes available, When polling observes it, Then elapsed time is measured once and timers finish', () => {
+      expect(jest.getTimerCount()).toBe(2);
+      jest.advanceTimersByTime(350);
+      expect(metric).not.toHaveBeenCalled();
+
+      window.melidata = {};
+      jest.advanceTimersByTime(50);
+
+      expect(metric).toHaveBeenCalledTimes(1);
+      expect(metric).toHaveBeenCalledWith(0.4, 'time in seconds to load melidata client', 'mp_custom_checkout_melidata_time_to_load');
+      expect(jest.getTimerCount()).toBe(1);
+      jest.advanceTimersByTime(19600);
+      expect(metric).toHaveBeenCalledTimes(1);
+      expect(jest.getTimerCount()).toBe(0);
+    });
+
+    test('Given melidata remains absent, When twenty seconds expire, Then polling stops without sending a metric', () => {
+      jest.advanceTimersByTime(20000);
+
+      expect(metric).not.toHaveBeenCalled();
+      expect(jest.getTimerCount()).toBe(0);
+      window.melidata = {};
+      jest.advanceTimersByTime(500);
+      expect(metric).not.toHaveBeenCalled();
+      expect(jest.getTimerCount()).toBe(0);
+    });
+  });
+
   describe('Initialization', () => {
     test('should create an instance of MPCardForm class', () => {
       expect(cardForm).toBeInstanceOf(MPCardForm);

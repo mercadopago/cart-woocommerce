@@ -26,6 +26,7 @@
  * metrics instance today is still the legacy one, which has no semantic methods).
  */
 import { LoadSuperToken } from '@super-token/useCases/LoadSuperToken';
+import type { SuperTokenBlock } from '@super-token/useCases/LoadSuperToken';
 import { FetchAndRenderPaymentMethods } from '@super-token/useCases/FetchAndRenderPaymentMethods';
 import { CancelLoad } from '@super-token/useCases/CancelLoad';
 import { ResetCustomCheckout } from '@super-token/useCases/ResetCustomCheckout';
@@ -118,6 +119,7 @@ export class SuperTokenTriggerHandler {
   customHandlerMissingReportedOnReset = false;
   loadGeneration = 0;
   cacheMetricsDispatched = false;
+  blockReported = false;
   savedInstallments: string | null = null;
 
   private readonly loadSuperTokenUseCase = new LoadSuperToken();
@@ -135,7 +137,21 @@ export class SuperTokenTriggerHandler {
     readonly mpSuperTokenErrorHandler: TriggerHandlerErrorHandler,
     readonly mpSuperTokenMetrics: TriggerHandlerMetrics,
     private readonly currentUserEmail: string,
+    // Set when Super Token cannot serve the site: MCO without es_CO, or MCO outside v2.1.
+    private readonly block: SuperTokenBlock | null = null,
   ) {}
+
+  getBlock(): SuperTokenBlock | null {
+    return this.block;
+  }
+
+  /** True only on the first call, so the skip metric is sent once per page, not on every refresh. */
+  markBlockReported(): boolean {
+    if (this.blockReported) return false;
+
+    this.blockReported = true;
+    return true;
+  }
 
   hasLastException(): boolean {
     return !!this.getLastException();
