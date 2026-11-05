@@ -12,6 +12,16 @@ import pluginJest from "eslint-plugin-jest";
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   {
+    // Local tooling runs on Node, separately from browser/payment sources.
+    files: ["scripts/quality-core.js", "scripts/quality-gate.js", "scripts/quality/**/*.js", "tooling-tests/quality-gate/**/*.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+      ecmaVersion: 2022,
+      globals: globals.node,
+    },
+    rules: pluginJs.configs.recommended.rules,
+  },
+  {
     files: ["assets/**/*.js"], // Restrict ESLint to assets folder
     languageOptions: {
       sourceType: "commonjs",

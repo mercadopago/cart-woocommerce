@@ -42,7 +42,7 @@ function loadAllInOneContext() {
   };
   const exposed = fileContent
     + '\n({ MPCustomEventDispatcher, MPClassicCheckoutErrorHandler, MPBlocksCheckoutErrorHandler, MPOrderPayCheckoutErrorHandler, MPDispatchedErrorTracker });';
-  return { ...new vm.Script(exposed).runInNewContext(ctx), onHandlers };
+  return { ...new vm.Script(exposed, { filename: DISPATCHER_PATH }).runInNewContext(ctx), onHandlers };
 }
 
 describe('MPCustomEventDispatcher.waitForMelidata()', () => {

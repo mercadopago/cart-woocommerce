@@ -1,14 +1,14 @@
 {
   "name": "woocommerce-mercadopago",
   "description": "Woocommerce MercadoPago Payment Gateway",
-  "version": "8.9.7",
+  "version": "8.10.0",
   "main": "main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/mercadopago/cart-woocommerce"
   },
   "engines": {
-    "node": "^20.0.0"
+    "node": "^22.23.4"
   },
   "scripts": {
     "setup:st": "node -e 'require(\"./main.js\").setupSuperToken()'",
@@ -20,17 +20,18 @@
     "build:super-token:bundle": "node -e 'require(\"./main.js\").buildSuperTokenAssets()'",
     "build:webpack": "wp-scripts build assets/js/blocks/**.js",
     "prebuild:super-token:webpack": "rm -rf build/super-token build/super-token-v2 build/super-token-v2.1",
-    "build:super-token:webpack": "ST_UNMINIFIED=1 wp-scripts build assets/js/checkouts/super-token/bootstrap.ts --output-path=build/super-token && ST_UNMINIFIED=1 ST_FIXED_VARIANT=v2 wp-scripts build assets/js/checkouts/super-token/bootstrap.ts --output-path=build/super-token-v2 && ST_UNMINIFIED=1 ST_FIXED_VARIANT=v2.1 wp-scripts build assets/js/checkouts/super-token/bootstrap.ts --output-path=build/super-token-v2.1",
-    "postbuild:super-token:webpack": "cp index.php build/super-token && cp index.php build/super-token-v2 && cp index.php build/super-token-v2.1",
+    "build:super-token:webpack": "ST_UNMINIFIED=1 wp-scripts build assets/js/checkouts/super-token/bootstrap.ts --output-path=build/super-token",
+    "postbuild:super-token:webpack": "cp index.php build/super-token",
     "postbuild:webpack": "cp index.php build",
     "type-check": "tsc --noEmit",
-    "lint": "eslint assets/**/*.js assets/**/*.ts",
+    "lint": "eslint assets/**/*.js assets/**/*.ts scripts/quality-core.js scripts/quality-gate.js \"scripts/quality/**/*.js\" \"tooling-tests/quality-gate/**/*.cjs\" --no-error-on-unmatched-pattern",
     "lint:fix": "eslint assets/**/*.js assets/**/*.ts --fix",
     "lint:css": "stylelint \"assets/css/checkouts/super-token/**/*.scss\"",
     "verify:super-token:scss": "node scripts/verify-super-token-scss-equivalence.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "node --no-compilation-cache ./node_modules/jest/bin/jest.js",
+    "posttest": "npm run test:quality:core",
+    "test:watch": "node --no-compilation-cache ./node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --no-compilation-cache ./node_modules/jest/bin/jest.js --coverage",
     "test:mutation": "npx --yes -p @stryker-mutator/core@^9.6 -p @stryker-mutator/jest-runner@^9.6 stryker run",
     "pot": "node -e 'require(\"./main.js\").generatePotFiles()'",
     "i18n:generic-es": "node -e 'require(\"./main.js\").generateGenericSpanishCatalog()'",
@@ -39,7 +40,14 @@
     "watch:logs": "SHELL=/bin/sh chokidar /var/www/html/wp-content/uploads/wc-logs /var/www/html/wp-content/debug.log -c 'cp /var/www/html/wp-content/uploads/wc-logs/*.log /var/www/html/wp-content/debug.log /var/www/html/wp-content/plugins/woocommerce-mercadopago/logs' --initial",
     "watch:make-mo": "SHELL=/bin/sh chokidar i18n/languages/*.po -c 'wp --allow-root i18n make-mo i18n/languages i18n/languages'",
     "logs:clear": "rm -f /var/www/html/wp-content/uploads/wc-logs/*.log /var/www/html/wp-content/debug.log /var/www/html/wp-content/plugins/woocommerce-mercadopago/logs/*.log",
-    "clean:min": "find assets/css assets/js -type f \\( -name '*.min.css' -o -name '*.min.js' \\) -delete"
+    "clean:min": "find assets/css assets/js -type f \\( -name '*.min.css' -o -name '*.min.js' \\) -delete",
+    "coverage:collect": "node scripts/coverage/run.js --collect-only",
+    "coverage:check": "node scripts/coverage/run.js",
+    "quality:staged": "node scripts/quality-gate.js pre-commit",
+    "quality:push": "node scripts/quality-gate.js pre-push",
+    "test:quality": "node --test tooling-tests/quality-gate/*.test.cjs",
+    "test:quality:core": "node scripts/quality-core.js",
+    "quality:doctor": "node scripts/quality/doctor.js"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.5",
@@ -60,6 +68,7 @@
     "globals": "^15.15.0",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
+    "js-yaml": "4.3.1",
     "minify": "^7.2.2",
     "sass": "~1.80.7",
     "stylelint": "^16.26.1",

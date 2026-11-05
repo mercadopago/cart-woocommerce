@@ -55,7 +55,7 @@ jest.mock('@super-token/adapters/runtime/SuperTokenDebounce', () => ({
 
 const mockCreateVariantView = jest.fn(() => ({ renderSavedPaymentMethods: jest.fn() }));
 jest.mock('@super-token/adapters/view', () => ({
-  createVariantView: mockCreateVariantView,
+  V21View: mockCreateVariantView,
   createVariantViewDeps: jest.fn(() => ({})),
 }));
 
@@ -66,7 +66,7 @@ const runtimeTriggerHandler = require('@super-token/adapters/runtime/SuperTokenT
 describe('super-token/bootstrap self-construct (flip, dev mode)', () => {
   let setSuperTokenDependencies;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     setSuperTokenDependencies = jest.fn();
     window.mpSdkInstance = { getSDKInstanceId: () => 'sdk-id' };
     window.mpCustomCheckoutHandler = {};
@@ -80,6 +80,8 @@ describe('super-token/bootstrap self-construct (flip, dev mode)', () => {
     };
     // SDK already present, so whenSdkReady builds synchronously on require.
     require('@super-token/bootstrap');
+    await Promise.resolve();
+    await Promise.resolve();
   });
 
   it('Given self_construct with the SDK ready, When bootstrap runs, Then it constructs the ported entities', () => {
@@ -105,11 +107,11 @@ describe('super-token/bootstrap self-construct (flip, dev mode)', () => {
     expect(setSuperTokenDependencies).toHaveBeenCalledWith(mockPublish.mock.calls[0][0]);
   });
 
-  it('Given a localized super_token_version, When the saved methods render, Then the view is built for that variant (dev follows the constant, not the cookie)', () => {
+  it('Given legacy configuration, When saved methods render, Then the canonical v2.1 view is constructed', () => {
     // renderSavedMethods is the 4th constructor argument of SuperTokenPaymentMethods.
     const renderSavedMethods = runtimePaymentMethods.SuperTokenPaymentMethods.mock.calls[0][3];
     renderSavedMethods(document.createElement('div'), []);
 
-    expect(mockCreateVariantView).toHaveBeenCalledWith('v2.1', expect.anything());
+    expect(mockCreateVariantView).toHaveBeenCalledWith(expect.anything());
   });
 });

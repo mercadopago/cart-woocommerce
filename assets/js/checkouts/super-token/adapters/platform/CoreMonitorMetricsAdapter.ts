@@ -1,9 +1,9 @@
 import type { MetricsPort } from '@super-token/ports';
 import type { RawMpSdkInstance, SuperTokenBundleParams } from '@super-token/types/external-globals';
 import { sendToCoreMonitor } from './coreMonitorPayload';
+import { SUPER_TOKEN_AB_VARIANT_NOT_AVAILABLE } from './constants';
 import type { CoreMonitorPayload } from './coreMonitorPayload';
 import { MelidataAdapter } from './MelidataAdapter';
-import { SUPER_TOKEN_ALLOWED_VARIANTS, SUPER_TOKEN_VARIANT_COOKIE } from '@super-token/adapters/platform/constants';
 import type { RestoreErrorReason } from '@super-token/useCases/RestorePreloadedPaymentMethod';
 import {
   toTelemetryErrorMessage,
@@ -87,28 +87,6 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
     return 'prod';
   }
 
-  // Reads the A/B experiment the loader set on the `mp_st_variant` cookie, so every metric
-  // carries which variant the buyer saw. Preserved 1:1 from the legacy `getAbVariant`:
-  // anything other than v2/v2.1 (including a missing cookie) reports 'unknown'.
-  private getAbVariant(): string {
-    const match =
-      typeof document !== 'undefined'
-        ? document.cookie.match(new RegExp('(?:^|;\\s*)' + SUPER_TOKEN_VARIANT_COOKIE + '=([^;]+)'))
-        : null;
-    // decodeURIComponent throws on a malformed cookie (e.g. a stray '%'); this runs inside
-    // sendMetric during checkout orchestration, so a bad cookie must not abort it. Guard like
-    // the legacy getAbVariant did and fall back to 'unknown'.
-    let variant = 'unknown';
-    if (match) {
-      try {
-        variant = decodeURIComponent(match[1]);
-      } catch {
-        variant = 'unknown';
-      }
-    }
-    return SUPER_TOKEN_ALLOWED_VARIANTS[variant] === true ? variant : 'unknown';
-  }
-
   private buildPayload(value: unknown, message: string, errorCode: string | null = null): CoreMonitorPayload {
     const details: CoreMonitorPayload['details'] = {
       site_id: this.SITE_ID,
@@ -116,7 +94,7 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
       sdk_instance_id: this.getSdkInstanceId(),
       cust_id: this.CUST_ID,
       js_version: this.SUPER_TOKEN_JS_VERSION,
-      ab_variant: this.getAbVariant(),
+      ab_variant: SUPER_TOKEN_AB_VARIANT_NOT_AVAILABLE,
     };
 
     if (errorCode) {

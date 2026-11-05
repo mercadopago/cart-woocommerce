@@ -71,11 +71,28 @@ class UrlTest extends TestCase
     }
 
     /**
-     * Note: Tests for getMercadoPagoSdkUrl with different environments (beta, gama, invalid)
-     * are not included because MP_SDK_ENV is a constant that cannot be redefined during test execution.
-     * These scenarios should be tested through integration tests or by setting the constant
-     * before running the test suite.
+     * MP_SDK_ENV is a constant that cannot be redefined during test execution, so the environment
+     * mapping is covered through getMercadoPagoSdkUrlForEnv.
+     *
+     * @dataProvider sdkEnvProvider
      */
+    public function testGetMercadoPagoSdkUrlForEnv($env, string $expected)
+    {
+        $this->assertEquals($expected, $this->url->getMercadoPagoSdkUrlForEnv($env));
+    }
+
+    public function sdkEnvProvider(): array
+    {
+        return [
+            'prod'                       => ['prod', 'https://sdk.mercadopago.com/js/v2'],
+            'beta'                       => ['beta', 'https://beta-sdk.mercadopago.com/js/v2'],
+            'gama'                       => ['gama', 'https://beta-sdk.mercadopago.com/gama/js/v2'],
+            'beta with spaces and case'  => [' BETA ', 'https://beta-sdk.mercadopago.com/js/v2'],
+            'unknown env'                => ['staging', 'https://sdk.mercadopago.com/js/v2'],
+            'empty'                      => ['', 'https://sdk.mercadopago.com/js/v2'],
+            'non-string'                 => [5, 'https://sdk.mercadopago.com/js/v2'],
+        ];
+    }
 
     // ========== Asset URL Tests ==========
 

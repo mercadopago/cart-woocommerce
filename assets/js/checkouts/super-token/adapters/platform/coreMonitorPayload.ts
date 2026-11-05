@@ -1,10 +1,8 @@
 /**
  * Shared contract for the Core Monitor POST payload.
  *
- * Both `CoreMonitorMetricsAdapter` and `VariantConfigAdapter` send metrics to
- * the same endpoint (`CORE_MONITOR_URL/{metricName}`) with the same schema.
- * Sharing the interface and the send function ensures the two callers never
- * diverge on structure or transport.
+ * `CoreMonitorMetricsAdapter` sends metrics to `CORE_MONITOR_URL/{metricName}`.
+ * The beacon transport remains available to installed integrations.
  */
 
 export const CORE_MONITOR_URL =
@@ -35,8 +33,8 @@ export interface CoreMonitorPayload {
 
 /**
  * Send a metric to Core Monitor. Prefers `fetch` (used by the Super Token metrics
- * adapter which needs to wait for the response); falls back to `sendBeacon`
- * (fire-and-forget, used by the variant config adapter for A/B telemetry).
+ * adapter which needs to wait for the response); the optional beacon transport
+ * sends fire-and-forget telemetry. Transport failures never block checkout.
  */
 export function sendToCoreMonitor(
   metricName: string,

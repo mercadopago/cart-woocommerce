@@ -1,3 +1,5 @@
+import { isLocalizedFlagEnabled } from '@super-token/adapters/platform/localizedFlag';
+
 /**
  * Chilean copy for plugin versions released before the plugin catalogs carried it (CDN 1.2.8).
  * The CDN bundle is shared by every installed plugin version, so it stays until those versions are gone.
@@ -74,13 +76,8 @@ interface MlcCopyParams {
  * deliver the store-language copy for every site, so the bundle must leave it untouched.
  */
 export function usesLegacyMlcCopy(params: { site_id?: unknown; store_language_copy?: unknown }): boolean {
-  const storeLanguageCopyEnabled =
-    params.store_language_copy === true ||
-    params.store_language_copy === 1 ||
-    params.store_language_copy === '1';
-
   return (
-    !storeLanguageCopyEnabled &&
+    !isLocalizedFlagEnabled(params.store_language_copy) &&
     typeof params.site_id === 'string' &&
     params.site_id.toUpperCase() === 'MLC'
   );

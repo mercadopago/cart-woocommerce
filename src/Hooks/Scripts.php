@@ -118,6 +118,38 @@ class Scripts
     }
 
     /**
+     * Register a script only where the checkout payment form can render.
+     */
+    public function registerPaymentFormScript(string $name, string $file, array $variables = [], array $deps = [], string $objectName = ''): void
+    {
+        add_action('wp_enqueue_scripts', function () use ($name, $file, $variables, $deps, $objectName) {
+            if ($this->isPaymentFormPage()) {
+                $this->registerScript($name, $file, $variables, $deps, $objectName);
+                $this->scriptHealthMonitor->trackEnqueued($name);
+            }
+        });
+    }
+
+    /**
+     * Register a stylesheet only where the checkout payment form can render.
+     */
+    public function registerPaymentFormStyle(string $name, string $file): void
+    {
+        add_action('wp_enqueue_scripts', function () use ($name, $file) {
+            if ($this->isPaymentFormPage()) {
+                $this->registerStyle($name, $file);
+            }
+        });
+    }
+
+    private function isPaymentFormPage(): bool
+    {
+        // A combined cart/checkout is valid; order confirmation also matches is_checkout().
+        return !is_view_order_page() && !is_order_received_page() &&
+            (is_checkout() || is_checkout_pay_page() || (bool) get_query_var('order-pay'));
+    }
+
+    /**
      * Returns if the user is on a payments related page
      *
      * @return bool
@@ -436,12 +468,12 @@ class Scripts
      *
      * @return void
      */
-    private function registerScript(string $name, string $file, array $variables = [], array $deps = []): void
+    private function registerScript(string $name, string $file, array $variables = [], array $deps = [], string $objectName = ''): void
     {
         wp_enqueue_script($name, $file, $deps, $this->url->assetVersion(), true);
 
         if ($variables) {
-            wp_localize_script($name, $name . self::SUFFIX, $variables);
+            wp_localize_script($name, $objectName ?: $name . self::SUFFIX, $variables);
         }
     }
 }

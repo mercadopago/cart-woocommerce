@@ -72,14 +72,14 @@ describe('CreditCardMethod', () => {
       expect(decorated.thumbnail).toBe('/mp-dark.png');
     });
 
-    it('Given a Mercado Pago credit card on v2, When decorated, Then it stays a regular issuer card (no MP name/icon)', () => {
+    it('Given legacy variant metadata, When decorated, Then the canonical MP name and icon are used', () => {
       const decorated = new CreditCardMethod(buildConfig({ siteId: 'MLA', variant: 'v2' })).decorate(
         creditCard({ issuer: { name: 'Mercado Pago' } }),
       );
 
-      expect(decorated.name).toBe('Mercado Pago Crédito');
-      expect(decorated.thumbnail).toBe('/white.png');
-      expect(decorated.thumbnail).not.toBe('/mp-blue.png');
+      expect(decorated.name).toBe('Cartao Mercado Pago');
+      expect(decorated.thumbnail).toBe('/mp-blue.png');
+      expect(decorated.thumbnail).toBe('/mp-blue.png');
     });
 
     it('Given a non-credit method, When decorated, Then it is returned unchanged', () => {

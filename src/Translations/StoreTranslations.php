@@ -204,7 +204,7 @@ class StoreTranslations
             'benefits_title'             => __('Discover how practical Mercado&nbsp;Pago is', 'woocommerce-mercadopago'),
             'first_benefit_description'  => __('<b>Pay with your saved cards</b> or account money without filling out personal details.', 'woocommerce-mercadopago'),
             'second_benefit_description' => __('<b>Buy safely</b> with your preferred payment method.', 'woocommerce-mercadopago'),
-            'second_benefit_credits_description' => _x('<b>You have {credits_name}</b> to buy now and pay later.', 'credits checkout pro', 'woocommerce-mercadopago'),
+            'second_benefit_credits_description' => _x('<b>Buy safely</b> with your preferred payment method.', 'credits checkout pro', 'woocommerce-mercadopago'),
             'redirect_title'             => __('We\'ll take you to Mercado&nbsp;Pago', 'woocommerce-mercadopago'),
             'redirect_description'       => __('If you don\'t have an account, you can use your email.', 'woocommerce-mercadopago'),
             'account_money'              => __('Account money', 'woocommerce-mercadopago'),
@@ -289,9 +289,9 @@ class StoreTranslations
         );
 
         $tooltipComponentOption2 = sprintf(
-            '<b>%s</b> %s.',
+            '<b>%s</b> %s',
             _x('Buy now, pay later', 'credits buyer banner', 'woocommerce-mercadopago'),
-            _x('through {credits_name}', 'credits buyer banner', 'woocommerce-mercadopago')
+            _x('with Mercado Pago', 'credits buyer banner', 'woocommerce-mercadopago')
         );
 
         $tooltipComponentOption3 = sprintf(

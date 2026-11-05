@@ -65,6 +65,16 @@ describe('SuperTokenAuthenticator', () => {
       expect(authenticator.formatAmount('999999999999999999999999')).toBeNull();
     });
 
+    it.each([
+      ['50000', '50000'], // Classic checkout: #mp-amount parsed with parseFloat
+      ['50000.00', '50000'], // Blocks checkout: cart total with two minor units
+      ['1234.56', '1235'], // a fractional COP amount rounds like the CLP one
+    ])('Given the MCO amount %p, When formatted, Then it omits the decimal fraction (%p)', (input, expected) => {
+      const { authenticator } = build({ siteId: 'MCO' });
+
+      expect(authenticator.formatAmount(input)).toBe(expected);
+    });
+
     it('Given a non-MLC amount with decimal places, When formatted, Then it keeps two decimal places', () => {
       const { authenticator } = build({ siteId: 'MLA' });
 
@@ -146,6 +156,28 @@ describe('SuperTokenAuthenticator', () => {
       const { authenticator, metrics } = build({ sdk, siteId: 'MLC' });
 
       await expect(authenticator.buildAuthenticator('1234.00', 'buyer@example.com')).resolves.toBeNull();
+
+      expect(sdk.authenticator).not.toHaveBeenCalled();
+      expect(metrics.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_amount', 'true', '');
+    });
+
+    it('Given a normalized MCO integer amount, When built, Then it calls the SDK with the integer amount', async () => {
+      const sdk = { authenticator: jest.fn().mockResolvedValue({}) };
+      const { authenticator } = build({ sdk, siteId: 'MCO' });
+
+      await authenticator.buildAuthenticator('50000', 'buyer@example.com');
+
+      expect(sdk.authenticator).toHaveBeenCalledWith('50000', 'buyer@example.com', {
+        platformId: PLATFORM_ID,
+        version: 2,
+      });
+    });
+
+    it('Given a fractional MCO amount, When built directly, Then it blocks the SDK call', async () => {
+      const sdk = { authenticator: jest.fn() };
+      const { authenticator, metrics } = build({ sdk, siteId: 'MCO' });
+
+      await expect(authenticator.buildAuthenticator('50000.00', 'buyer@example.com')).resolves.toBeNull();
 
       expect(sdk.authenticator).not.toHaveBeenCalled();
       expect(metrics.sendMetric).toHaveBeenCalledWith('super_token_skipped_invalid_amount', 'true', '');

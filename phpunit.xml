@@ -28,7 +28,28 @@
             <directory suffix=".php">src/Order</directory>
             <directory suffix=".php">src/Notification</directory>
             <directory suffix=".php">src/SuperToken</directory>
+            <directory suffix=".php">src/Refund</directory>
+            <directory suffix=".php">src/Hooks</directory>
+            <directory suffix=".php">src/HealthMonitor</directory>
+            <directory suffix=".php">src/Blocks</directory>
+            <directory suffix=".php">src/Libraries</directory>
         </include>
+        <exclude>
+            <file>src/Api/index.php</file>
+            <directory suffix="index.php">src/Api</directory>
+            <directory suffix="index.php">src/Gateways</directory>
+            <directory suffix="index.php">src/Transactions</directory>
+            <directory suffix="index.php">src/Exceptions</directory>
+            <directory suffix="index.php">src/Helpers</directory>
+            <directory suffix="index.php">src/Order</directory>
+            <directory suffix="index.php">src/Notification</directory>
+            <directory suffix="index.php">src/SuperToken</directory>
+            <directory suffix="index.php">src/Refund</directory>
+            <directory suffix="index.php">src/Hooks</directory>
+            <directory suffix="index.php">src/HealthMonitor</directory>
+            <directory suffix="index.php">src/Blocks</directory>
+            <directory suffix="index.php">src/Libraries</directory>
+        </exclude>
         <report>
             <text outputFile="php://stdout" showOnlySummary="true"/>
         </report>

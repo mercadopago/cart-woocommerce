@@ -248,7 +248,7 @@ export function syncMlcCopyToLegacy(
   controller: LegacyCopyFields | undefined,
   customParams: CustomCheckoutParams | undefined,
 ): void {
-  // The resolver returns the same object whenever the legacy override does not apply.
+  // Skip unmodified input or stores outside the legacy MLC copy contract.
   if (original === localized || !usesLegacyMlcCopy(original)) {
     return;
   }

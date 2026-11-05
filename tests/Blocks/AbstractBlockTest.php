@@ -6,6 +6,7 @@ use Mockery;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Blocks\AbstractBlock;
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
+use MercadoPago\Woocommerce\Helpers\Session;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Tests\Mocks\MercadoPagoMock;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
@@ -54,6 +55,46 @@ class AbstractBlockTest extends TestCase
     public function blockTearDown(): void
     {
         Mockery::close();
+    }
+
+    public function testResetCheckoutSessionClearsOnlyCheckoutStateAndIsIdempotent(): void
+    {
+        $storage = new class {
+            public array $values = [
+                'mercadopago_blocks_action'  => 'add',
+                'mercadopago_blocks_gateway' => 'mercadopago_custom',
+                'chosen_payment_method'     => 'mercadopago_pix',
+                'other_plugin_state'        => ['keep' => true],
+            ];
+
+            public function get(string $key)
+            {
+                return $this->values[$key] ?? null;
+            }
+
+            public function set(string $key, $value): void
+            {
+                $this->values[$key] = $value;
+            }
+        };
+        $this->mercadopago->helpers->session = new Session();
+        \WP_Mock::userFunction('WC')->andReturn((object) ['session' => $storage]);
+
+        $this->assertSame('add', $storage->get('mercadopago_blocks_action'));
+        $this->assertSame('mercadopago_custom', $storage->get('mercadopago_blocks_gateway'));
+        $this->assertSame('mercadopago_pix', $storage->get('chosen_payment_method'));
+        $expected = [
+            'mercadopago_blocks_action'  => null,
+            'mercadopago_blocks_gateway' => null,
+            'chosen_payment_method'     => null,
+            'other_plugin_state'        => ['keep' => true],
+        ];
+
+        $this->block->resetCheckoutSession();
+        $this->assertSame($expected, $storage->values);
+
+        $this->block->resetCheckoutSession();
+        $this->assertSame($expected, $storage->values);
     }
 
     /**

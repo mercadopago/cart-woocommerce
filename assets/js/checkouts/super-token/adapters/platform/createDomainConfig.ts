@@ -59,14 +59,12 @@ export interface SuperTokenDomainParams {
 
 export function createDomainConfig(
   params: SuperTokenDomainParams,
-  variant: string,
 ): SuperTokenDomainConfig {
   return {
     siteId: params.site_id.toUpperCase(),
     intl: params.intl,
     currency: params.currency,
     paymentMethodsOrder: params.payment_methods_order,
-    variant,
     // This mapper is the domain's boundary against the localized store params. Older plugin
     // versions still served the CDN bundle (< 8.8.0 for saved-methods/logo keys) may omit some
     // keys, so coalesce here to keep a literal "undefined" out of the rendered UI. The core

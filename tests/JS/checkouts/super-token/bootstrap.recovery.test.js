@@ -58,7 +58,7 @@ jest.mock('@super-token/adapters/runtime/SuperTokenDebounce', () => ({
   SuperTokenDebounce: jest.fn().mockImplementation(() => ({ kind: 'debounce' })),
 }));
 jest.mock('@super-token/adapters/view', () => ({
-  createVariantView: jest.fn(() => ({ renderSavedPaymentMethods: jest.fn() })),
+  V21View: jest.fn(() => ({ renderSavedPaymentMethods: jest.fn() })),
   createVariantViewDeps: jest.fn(() => ({})),
 }));
 

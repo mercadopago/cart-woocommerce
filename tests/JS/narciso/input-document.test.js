@@ -16,10 +16,69 @@ const InputDocument = loadFile(inputDocumentPath, 'InputDocument', {
   document: global.document,
   window: global.window,
   MutationObserver: global.MutationObserver,
-  setTimeout: global.setTimeout,
-  clearTimeout: global.clearTimeout,
+  setTimeout: (...args) => setTimeout(...args),
+  clearTimeout: (...args) => clearTimeout(...args),
   // InputDocument requires DocumentHandlerFactory at load time. Resolve it for real (relative to the source file) so mask() and validation work.
   require: (mod) => require(path.resolve(path.dirname(inputDocumentPath), mod)),
+});
+
+describe('InputDocument - real instance lifecycle', () => {
+  const tag = 'test-input-document-lifecycle';
+
+  beforeAll(() => customElements.define(tag, InputDocument));
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => {
+    document.body.replaceChildren();
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  test('initializes independent observer state on each real instance', () => {
+    const first = document.createElement(tag);
+    const second = document.createElement(tag);
+
+    for (const instance of [first, second]) {
+      expect(instance).toBeInstanceOf(InputDocument);
+      expect(Object.hasOwn(instance, 'selectObserver')).toBe(true);
+      expect(Object.hasOwn(instance, 'selectObserverTimeout')).toBe(true);
+      expect(instance.selectObserver).toBeNull();
+      expect(instance.selectObserverTimeout).toBeNull();
+    }
+
+    first.observeSelectPopulationFromSdk(document.createElement('select'), document.createElement('input'));
+
+    expect(first.selectObserver).toBeInstanceOf(MutationObserver);
+    expect(first.selectObserverTimeout).not.toBeNull();
+    expect(second.selectObserver).toBeNull();
+    expect(second.selectObserverTimeout).toBeNull();
+    expect(jest.getTimerCount()).toBe(1);
+
+    first.cleanupSelectObserver();
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  test('disconnecting the real element releases its observer and pending timeout', () => {
+    const component = document.createElement(tag);
+    component.setAttribute('site-id', 'MLA');
+    component.setAttribute('documents', '[]');
+    document.body.appendChild(component);
+
+    expect(component.isConnected).toBe(true);
+    expect(component.querySelector('select')).not.toBeNull();
+    expect(component.selectObserver).toBeInstanceOf(MutationObserver);
+    expect(jest.getTimerCount()).toBe(1);
+    const select = component.querySelector('select');
+    const observer = component.selectObserver;
+
+    component.remove();
+    select.appendChild(document.createElement('option'));
+
+    expect(component.isConnected).toBe(false);
+    expect(component.selectObserver).toBeNull();
+    expect(component.selectObserverTimeout).toBeNull();
+    expect(observer.takeRecords()).toEqual([]);
+    expect(jest.getTimerCount()).toBe(0);
+  });
 });
 
 describe('InputDocument - setMaskInputDocument (CNPJ)', () => {

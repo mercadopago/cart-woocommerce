@@ -669,15 +669,33 @@ class CustomGatewayCitHandlerTest extends TestCase
 
     public function testRegisterSuperTokenBundleFilesRegistersLoaderScript(): void
     {
+        $this->gateway->mercadopago->woocommerce->version = '8.0.0';
+        $this->setNotAccessibleProperty($this->gateway, 'countryConfigs', [
+            'site_id' => 'MLA', 'intl' => 'es-AR', 'currency' => 'ARS',
+        ]);
+        $this->gateway->mercadopago->helpers->url
+            ->shouldReceive('getPluginFileUrl', 'getImageAsset')->andReturn('https://store.test/asset');
+        $this->gateway->mercadopago->helpers->links
+            ->shouldReceive('getPrivacyPolicyLink')->andReturn('https://store.test/privacy');
+        $this->gateway->mercadopago->hooks->options
+            ->shouldReceive('getGatewayOption')->andReturn('cards_first');
+        $this->gateway->mercadopago->sellerConfig
+            ->shouldReceive('getPaymentMethodsThumbnails')->andReturn([]);
+        $this->gateway->shouldReceive('get_option')->andReturn('yes');
+        WP_Mock::userFunction('get_stylesheet')->andReturn('test-theme');
+        WP_Mock::userFunction('wp_get_current_user')->andReturn((object) ['ID' => 1, 'user_email' => 'buyer@example.test']);
+        WP_Mock::userFunction('wp_kses_post')->andReturnArg(0);
+
         $this->gateway->mercadopago->helpers->url
             ->shouldReceive('getJsAsset')
             ->with('checkouts/super-token-loader')
             ->andReturn('https://cdn.example/super-token-loader.js');
 
         $this->gateway->mercadopago->hooks->scripts
-            ->shouldReceive('registerCheckoutScript')
+            ->shouldReceive('registerPaymentFormScript')
             ->once()
-            ->with('wc_mercadopago_supertoken', 'https://cdn.example/super-token-loader.js');
+            ->with('wc_mercadopago_supertoken', 'https://cdn.example/super-token-loader.js',
+                Mockery::type('array'), [], 'wc_mercadopago_supertoken_bundle_params');
 
         $this->callProtected($this->gateway, 'registerSuperTokenBundleFiles');
 

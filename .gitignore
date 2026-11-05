@@ -2,7 +2,7 @@
 *.cache
 
 clover.xml
-coverage
+/coverage/
 coverage.xml
 
 # StrykerJS mutation-testing artifacts (npm run test:mutation) — sandbox + HTML report

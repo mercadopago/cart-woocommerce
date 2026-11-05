@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "precision": 2,
+  "tolerance": {
+    "floorBasisPoints": 10,
+    "baseComparisonBasisPoints": 10
+  },
+  "js": {
+    "global": {
+      "path": "./",
+      "floors": {
+        "lines": 73.82,
+        "branches": 88.48,
+        "functions": 80.96,
+        "statements": 73.82
+      }
+    },
+    "checkouts": {
+      "path": "assets/js/checkouts/",
+      "floors": {
+        "lines": 84.04,
+        "branches": 88.19,
+        "functions": 81.55,
+        "statements": 84.04
+      }
+    },
+    "super-token": {
+      "path": "assets/js/checkouts/super-token/",
+      "floors": {
+        "lines": 88.47,
+        "branches": 88.56,
+        "functions": 83.98,
+        "statements": 88.47
+      }
+    },
+    "blocks": {
+      "path": "assets/js/blocks/",
+      "floors": {
+        "lines": 7.47,
+        "branches": 65.57,
+        "functions": 25.92,
+        "statements": 7.47
+      }
+    },
+    "health": {
+      "path": "assets/js/health/",
+      "floors": {
+        "lines": 79.09,
+        "branches": 75.51,
+        "functions": 63.63,
+        "statements": 79.09
+      }
+    },
+    "narciso": {
+      "path": "packages/narciso/",
+      "floors": {
+        "lines": 44.94,
+        "branches": 85.59,
+        "functions": 79.66,
+        "statements": 44.94
+      }
+    },
+    "admin": {
+      "path": "assets/js/admin/",
+      "floors": {
+        "lines": 99.62,
+        "branches": 98.63,
+        "functions": 100,
+        "statements": 99.62
+      }
+    }
+  },
+  "php": {
+    "global": {
+      "path": "./",
+      "floors": {
+        "lines": 80.77,
+        "branches": 82.59,
+        "functions": 70.64,
+        "statements": 80.77
+      }
+    },
+    "Api": {
+      "path": "src/Api/",
+      "floors": {
+        "lines": 90.2,
+        "branches": 85.53,
+        "functions": 69.41,
+        "statements": 90.2
+      }
+    },
+    "Gateways": {
+      "path": "src/Gateways/",
+      "floors": {
+        "lines": 80.38,
+        "branches": 82.07,
+        "functions": 64.45,
+        "statements": 80.38
+      }
+    },
+    "Transactions": {
+      "path": "src/Transactions/",
+      "floors": {
+        "lines": 79.53,
+        "branches": 76.06,
+        "functions": 69.01,
+        "statements": 79.53
+      }
+    },
+    "Exceptions": {
+      "path": "src/Exceptions/",
+      "floors": {
+        "lines": 96.19,
+        "branches": 100,
+        "functions": 100,
+        "statements": 96.19
+      }
+    },
+    "Helpers": {
+      "path": "src/Helpers/",
+      "floors": {
+        "lines": 76.95,
+        "branches": 80.67,
+        "functions": 70.47,
+        "statements": 76.95
+      }
+    },
+    "Order": {
+      "path": "src/Order/",
+      "floors": {
+        "lines": 89.76,
+        "branches": 84.95,
+        "functions": 76.51,
+        "statements": 89.76
+      }
+    },
+    "Notification": {
+      "path": "src/Notification/",
+      "floors": {
+        "lines": 89.8,
+        "branches": 89.47,
+        "functions": 78.78,
+        "statements": 89.8
+      }
+    },
+    "SuperToken": {
+      "path": "src/SuperToken/",
+      "floors": {
+        "lines": 92.55,
+        "branches": 100,
+        "functions": 100,
+        "statements": 92.55
+      }
+    },
+    "Refund": {
+      "path": "src/Refund/",
+      "floors": {
+        "lines": 98.31,
+        "branches": 98.07,
+        "functions": 92.3,
+        "statements": 98.31
+      }
+    },
+    "Hooks": {
+      "path": "src/Hooks/",
+      "floors": {
+        "lines": 64.77,
+        "branches": 72.01,
+        "functions": 60.71,
+        "statements": 64.77
+      }
+    },
+    "HealthMonitor": {
+      "path": "src/HealthMonitor/",
+      "floors": {
+        "lines": 89.47,
+        "branches": 91.8,
+        "functions": 66.66,
+        "statements": 89.47
+      }
+    },
+    "Blocks": {
+      "path": "src/Blocks/",
+      "floors": {
+        "lines": 88.23,
+        "branches": 90.47,
+        "functions": 76.92,
+        "statements": 88.23
+      }
+    },
+    "Libraries": {
+      "path": "src/Libraries/",
+      "floors": {
+        "lines": 90,
+        "branches": 94.33,
+        "functions": 85.71,
+        "statements": 90
+      }
+    }
+  }
+}

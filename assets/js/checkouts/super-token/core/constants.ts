@@ -29,6 +29,9 @@ export const ARGENTINA_ACCRONYM = 'MLA';
 /** Sites whose installment titles carry the third-party bank-interest asterisk (RN-5). */
 export const COUNTRIES_WITH_BANK_INTEREST_DISCLAIMER = ['MCO', 'MPE', 'MLC'];
 
+/** Sites whose amounts have no decimal fraction (CLP, COP): shown and sent to the SDK as integers. */
+export const SITES_WITHOUT_DECIMAL_AMOUNTS = ['MLC', 'MCO'];
+
 /** Sites whose Mercado Pago credit-card icon is the blue variant; all others use dark (RN-7). */
 export const MP_CARD_BLUE_SITES = ['MLA', 'MLM'];
 

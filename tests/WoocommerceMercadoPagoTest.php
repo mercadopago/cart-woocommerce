@@ -190,7 +190,8 @@ class WoocommerceMercadoPagoTest extends TestCase
             'Mexico uses the Mexican catalog'   => ['es_MX', 'es_MX'],
             'Argentina uses the Argentine catalog' => ['es_AR', 'es_AR'],
             'Spain uses the neutral default catalog' => ['es_ES', 'es'],
-            'Colombia uses the neutral default catalog' => ['es_CO', 'es'],
+            'Colombia uses the Colombian catalog' => ['es_CO', 'es_CO'],
+            'Peru uses the neutral default catalog' => ['es_PE', 'es'],
         ];
     }
 

@@ -11,6 +11,64 @@ const eventHandlerPath = resolveAlias('assets/js/checkouts/custom/entities/event
 // so the observer never runs — a no-op class is sufficient to satisfy the reference.
 class MobileCheckoutClassicObserverStub { constructor() {} }
 
+function mountPaymentForm(checkoutType = 'custom', orderPay = false) {
+  document.body.replaceChildren();
+  document.body.className = '';
+  const form = document.createElement('form');
+  form.id = orderPay ? 'order_review' : 'checkout';
+  form.className = orderPay ? '' : 'checkout';
+  const values = {
+    checkout_type: checkoutType,
+    token: '',
+    amount: '10.00',
+    payment_method_id: 'visa',
+    installments: '1',
+    ...(checkoutType === 'super_token'
+      ? { authorized_pseudotoken: 'fixture-authorized-proof', payment_type_id: 'credit_card' } : {}),
+  };
+  const ids = {
+    checkout_type: 'mp_checkout_type', token: 'cardTokenId', amount: 'mp-amount',
+    payment_method_id: 'paymentMethodId', installments: 'cardInstallments',
+  };
+  Object.entries(values).forEach(([field, value]) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = `mercadopago_custom[${field}]`;
+    input.id = ids[field];
+    input.value = value;
+    form.append(input);
+  });
+  const radio = document.createElement('input');
+  radio.type = 'radio';
+  radio.name = 'payment_method';
+  radio.id = 'payment_method_woo-mercado-pago-custom';
+  radio.value = 'woo-mercado-pago-custom';
+  radio.checked = true;
+  form.append(radio);
+  document.body.append(form);
+  return form;
+}
+
+// jQuery is an external DOM/transport boundary. Read actual successful controls;
+// payment readiness, gates and callbacks remain real production methods.
+function checkoutJQuery(selector) {
+  const elements = typeof selector === 'string'
+    ? Array.from(document.querySelectorAll(selector)) : (selector ? [selector] : []);
+  return Object.assign(elements, {
+    val: (value) => {
+      if (value !== undefined) elements.forEach((element) => { element.value = value; });
+      return elements[0]?.value;
+    },
+    find: (query) => checkoutJQuery(elements[0]?.querySelector(query)),
+    serializeArray: () => elements.flatMap((element) => element?.tagName === 'FORM'
+      ? Array.from(new window.FormData(element), ([name, value]) => ({ name, value })) : []),
+    serialize: () => elements[0]?.tagName === 'FORM'
+      ? new URLSearchParams(new window.FormData(elements[0])).toString() : '',
+    on: jest.fn(), ready: jest.fn(), submit: jest.fn(), block: jest.fn(), unblock: jest.fn(),
+    prepend: (node) => elements[0]?.prepend(node),
+  });
+}
+
 describe('MPEventHandler - validateCheckoutThenContinue', () => {
   let handler;
   let MPEventHandler;
@@ -20,12 +78,7 @@ describe('MPEventHandler - validateCheckoutThenContinue', () => {
       is_mobile: false,
     };
 
-    global.jQuery = jest.fn(() => ({
-      on: jest.fn(),
-      submit: jest.fn(),
-      block: jest.fn(),
-      unblock: jest.fn(),
-    }));
+    global.jQuery = jest.fn(checkoutJQuery);
 
     global.MPSuperTokenErrorCodes = {
       SELECT_PAYMENT_METHOD_ERROR: 'SELECT_PAYMENT_METHOD_ERROR',
@@ -598,7 +651,7 @@ describe('MPEventHandler - createToken (T05 mp_api_error instrumentation)', () =
   });
 
   beforeEach(() => {
-    document.body.innerHTML = '';
+    mountPaymentForm();
     delete global.CheckoutPage; // evita short-circuit do installmentsWasSelected
     sendMetricMock.mockClear();
 
@@ -700,7 +753,7 @@ describe('MPEventHandler - createToken (empty token observability)', () => {
   });
 
   beforeEach(() => {
-    document.body.innerHTML = '<input type="hidden" id="cardTokenId">';
+    mountPaymentForm();
     checkoutPageMock.runPreSubmitGates = jest.fn().mockReturnValue({ passed: true });
     checkoutPageMock.emitGateBlockedMetric = jest.fn();
 
@@ -761,12 +814,7 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
   beforeAll(() => {
     global.wc_mercadopago_custom_event_handler_params = { is_mobile: false };
 
-    global.jQuery = jest.fn(() => ({
-      on: jest.fn(),
-      submit: jest.fn(),
-      block: jest.fn(),
-      unblock: jest.fn(),
-    }));
+    global.jQuery = jest.fn(checkoutJQuery);
 
     global.MPSuperTokenErrorCodes = {
       SELECT_PAYMENT_METHOD_NOT_VALID: 'SELECT_PAYMENT_METHOD_NOT_VALID',
@@ -784,14 +832,14 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
   });
 
   beforeEach(() => {
-    document.body.innerHTML = '';
-    document.body.className = '';
+    mountPaymentForm('super_token');
 
     cardForm = {
       formMounted: false,
       initCardForm: jest.fn(),
       createLoadSpinner: jest.fn(),
       removeLoadSpinner: jest.fn(),
+      removeBlockOverlay: jest.fn(),
     };
 
     handler = new MPEventHandler(cardForm, { set3dsStatusValidationListener: jest.fn() });
@@ -908,8 +956,8 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
       expect(typeof deps.submitOrderPayForm).toBe('function');
       expect(typeof deps.markPaymentReady).toBe('function');
       expect(typeof deps.removeLoader).toBe('function');
-      // The legacy inline flow must not run when delegation is active.
-      expect(superTokenPaymentMethods.getActivePaymentMethod).not.toHaveBeenCalled();
+      // Context capture reads the selection; legacy validation/authorization must not run.
+      expect(superTokenPaymentMethods.validateInstallmentSelection).not.toHaveBeenCalled();
     });
 
     it('when mpSuperTokenFinalizeClassic rejects unexpectedly, should remove the loader and report a metric instead of freezing the checkout', async () => {
@@ -921,7 +969,7 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
         triggerHandler: {},
         authenticator: {},
         paymentMethods: {},
-        metrics: { registerClickOnPlaceOrderButton: jest.fn() },
+        metrics: { registerClickOnPlaceOrderButton: jest.fn(), sendMetric: window.mpSuperTokenMetrics.sendMetric },
         errorHandler: {},
       });
 
@@ -932,7 +980,7 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
       expect(handler.hideCheckoutClassicLoader).toHaveBeenCalled();
       expect(window.mpSuperTokenMetrics.sendMetric).toHaveBeenCalledWith(
         'super_token_finalize_unexpected_error',
-        'boom',
+        'unexpected_error',
         expect.any(String),
       );
     });
@@ -969,7 +1017,7 @@ describe('MPEventHandler - createToken (pre-submit gate delegation)', () => {
   });
 
   beforeEach(() => {
-    document.body.innerHTML = '<input type="hidden" id="cardTokenId">';
+    mountPaymentForm();
     checkoutPageMock.runPreSubmitGates = jest.fn();
     checkoutPageMock.emitGateBlockedMetric = jest.fn();
 
@@ -979,6 +1027,7 @@ describe('MPEventHandler - createToken (pre-submit gate delegation)', () => {
       createLoadSpinner: jest.fn(),
       removeLoadSpinner: jest.fn(),
       scrollToCardForm: jest.fn(),
+      removeBlockOverlay: jest.fn(),
       form: {
         createCardToken: jest.fn().mockResolvedValue({ token: 'tok_test_123' }),
       },
@@ -1017,6 +1066,7 @@ describe('MPEventHandler - createToken (pre-submit gate delegation)', () => {
   });
 
   test('Given the gate passes on the Order Pay page, When the card token is created, Then it delegates to the Order Pay 3DS submission (not the standard checkout submit)', async () => {
+    mountPaymentForm('custom', true);
     checkoutPageMock.runPreSubmitGates.mockReturnValue({ passed: true });
     handler.mpFormId = 'order_review';
     handler.handle3dsPayOrderFormSubmission = jest.fn();
@@ -1035,15 +1085,7 @@ describe('MPEventHandler - Order Pay submit routing & SDK re-submit guard', () =
   let cardFormMock;
   let checkoutPageMock;
 
-  // Local jQuery stub: mercadoPagoFormHandler reads jQuery('#mp_checkout_type').val();
-  // the routing tests drive that value explicitly.
-  const jqueryStub = jest.fn((selector) => ({
-    val: jest.fn(() => (selector === '#mp_checkout_type' ? 'super_token' : '')),
-    on: jest.fn(),
-    submit: jest.fn(),
-    block: jest.fn(),
-    unblock: jest.fn(),
-  }));
+  const jqueryStub = jest.fn(checkoutJQuery);
 
   beforeAll(() => {
     checkoutPageMock = { runPreSubmitGates: jest.fn(), emitGateBlockedMetric: jest.fn() };
@@ -1104,7 +1146,7 @@ describe('MPEventHandler - Order Pay submit routing & SDK re-submit guard', () =
 
   describe('mercadoPagoFormHandler() — Super Token does not touch the Custom gate', () => {
     test('Given the checkout type is super_token on the Order Pay page, When mercadoPagoFormHandler runs, Then it routes to the Super Token flow and never calls the Custom pre-submit gate', () => {
-      document.body.innerHTML = '<form id="order_review"></form>';
+      mountPaymentForm('super_token', true);
       jest.spyOn(handler, 'handleWithSuperTokenSubmit').mockImplementation(() => {});
       const event = { preventDefault: jest.fn() };
 
@@ -1122,31 +1164,384 @@ describe('MPEventHandler - Order Pay submit routing & SDK re-submit guard', () =
 // A pré-validação server-side (validateCheckoutThenContinue) roda APENAS no
 // ramo super_token; o ramo custom (cartão) tokeniza direto, sem fetch.
 // =============================================================================
+describe('MPEventHandler - prepared checkout readiness', () => {
+  it('releases a complete prepared Super Token form with hasToken false without reauthorizing', () => {
+    mountPaymentForm('super_token');
+    const Handler = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub, jQuery: checkoutJQuery,
+    });
+    const sdkCreateToken = jest.fn();
+    const handler = new Handler({ form: { createCardToken: sdkCreateToken } }, {});
+    handler.setSuperTokenDependencies({
+      triggerHandler: {}, authenticator: {}, metrics: {}, errorHandler: {},
+      paymentMethods: {
+        getActivePaymentMethod: () => ({ token: 'fixture-authorized-proof' }), hideSuperTokenError: jest.fn(),
+      },
+    });
+    const authorize = jest.spyOn(handler, 'handleWithSuperTokenSubmit');
+    const validate = jest.spyOn(handler, 'validateCheckoutThenContinue');
+    handler.mercado_pago_submit = true;
+    handler.hasToken = false;
+
+    expect(handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {})).toBe(true);
+    expect(authorize).not.toHaveBeenCalled();
+    expect(validate).not.toHaveBeenCalled();
+    expect(sdkCreateToken).not.toHaveBeenCalled();
+    expect(handler.hasToken).toBe(false);
+    document.body.replaceChildren();
+  });
+
+  it('releases a complete prepared Custom form without tokenizing or validating again', () => {
+    const form = document.createElement('form');
+    form.className = 'checkout';
+    const fields = {
+      checkout_type: 'custom',
+      token: 'fixture-card-token',
+      amount: '10.00',
+      payment_method_id: 'visa',
+      installments: '1',
+    };
+    const ids = { checkout_type: 'mp_checkout_type', token: 'cardTokenId' };
+    Object.entries(fields).forEach(([field, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = `mercadopago_custom[${field}]`;
+      input.id = ids[field] || field;
+      input.value = value;
+      form.append(input);
+    });
+    document.body.replaceChildren(form);
+
+    const sdkCreateToken = jest.fn();
+    const MPEventHandlerLocal = loadFile(eventHandlerPath, 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
+      jQuery: checkoutJQuery,
+    });
+    const handler = new MPEventHandlerLocal({ form: { createCardToken: sdkCreateToken } }, {});
+    const validate = jest.spyOn(handler, 'validateCheckoutThenContinue');
+    handler.mercado_pago_submit = true;
+    handler.hasToken = true;
+
+    const result = handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+
+    expect(result).toBe(true);
+    expect(sdkCreateToken).not.toHaveBeenCalled();
+    expect(validate).not.toHaveBeenCalled();
+    expect(handler.mercado_pago_submit).toBe(true);
+    expect(handler.hasToken).toBe(true);
+    document.body.replaceChildren();
+  });
+});
+
+describe.each(['event-handler.js', 'event-handler.min.js'])('MPEventHandler - Custom readiness recovery with real gates (%s)', (asset) => {
+  let handler;
+  let form;
+  let cardForm;
+  let checkoutPage;
+  let submit;
+  let post;
+  let originalScroll;
+  let sdkMetricsWrapper;
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+  const field = (name) => form.elements.namedItem(`mercadopago_custom[${name}]`);
+
+  beforeAll(() => {
+    originalScroll = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = jest.fn();
+  });
+
+  afterAll(() => { Element.prototype.scrollIntoView = originalScroll; });
+
+  beforeEach(() => {
+    form = mountPaymentForm();
+    sdkMetricsWrapper = window.callSdkWithMetrics;
+    delete window.callSdkWithMetrics;
+    const container = document.createElement('div');
+    container.className = 'mp-checkout-custom-container';
+    ['form-checkout__cardNumber-container', 'mp-doc-div',
+      'form-checkout__identificationNumber', 'mp-installments-error'].forEach((id) => {
+      const element = document.createElement('div');
+      element.id = id;
+      container.append(element);
+    });
+    container.querySelector('#mp-doc-div').style.display = 'none';
+    const select = document.createElement('select');
+    select.id = 'form-checkout__installments';
+    ['', '1', '3'].forEach((value) => {
+      const option = document.createElement('option');
+      option.value = value;
+      select.append(option);
+    });
+    select.value = '3';
+    container.append(select);
+    form.append(container);
+    window.wc_mercadopago_custom_checkout_params = {
+      error_messages: { default: 'Fixture localized checkout error' },
+    };
+    const elements = loadFile(resolveAlias('assets/js/checkouts/custom/mp-custom-elements.js'), 'CheckoutElements', {});
+    checkoutPage = loadFile(resolveAlias('assets/js/checkouts/custom/mp-custom-page.js'), 'CheckoutPage', {
+      CheckoutElements: elements,
+      wc_mercadopago_custom_checkout_params: { site_id: 'MLB', input_helper_message: {} },
+      wc_mercadopago_custom_page_params: { installments_select_placeholder_text: 'Fixture installments' },
+      sendMetric: jest.fn(),
+    });
+    cardForm = {
+      form: { createCardToken: jest.fn().mockResolvedValue({ token: 'fixture-new-card-token' }) },
+      removeLoadSpinner: jest.fn(), removeBlockOverlay: jest.fn(), scrollToCardForm: jest.fn(),
+    };
+    submit = jest.fn(() => {
+      if (handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {}) === true) post();
+    });
+    post = jest.fn(() => ({ done: () => ({ error: jest.fn() }) }));
+    const jq = (selector) => Object.assign(checkoutJQuery(selector), { submit });
+    jq.post = post;
+    const Handler = loadFile(resolveAlias(`assets/js/checkouts/custom/entities/${asset}`), 'MPEventHandler', {
+      MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
+      jQuery: jq, CheckoutPage: checkoutPage,
+    });
+    handler = new Handler(cardForm, {});
+  });
+
+  afterEach(() => {
+    document.body.replaceChildren();
+    document.body.className = '';
+    delete window.wc_mercadopago_custom_checkout_params;
+    if (sdkMetricsWrapper) window.callSdkWithMetrics = sdkMetricsWrapper;
+  });
+
+  it('recovers a missing token despite stale flags and posts once with the new token', async () => {
+    handler.mercado_pago_submit = true;
+    handler.hasToken = true;
+    expect(handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {})).toBe(false);
+    await flush();
+    expect(cardForm.form.createCardToken).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(field('token').value).toBe('fixture-new-card-token');
+    expect(field('installments').value).toBe('3');
+  });
+
+  it.each(['payment_method_id', 'amount'])('stops after one tokenization if %s remains empty', async (name) => {
+    field(name).value = '';
+    field('token').value = 'fixture-previous-token';
+    handler.mercado_pago_submit = true;
+    handler.hasToken = true;
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    await flush();
+    expect(cardForm.form.createCardToken).toHaveBeenCalledTimes(1);
+    expect(submit).not.toHaveBeenCalled();
+    expect(post).not.toHaveBeenCalled();
+    expect(handler.mercado_pago_submit).toBe(false);
+    expect(handler.hasToken).toBe(false);
+    expect(cardForm.removeLoadSpinner).toHaveBeenCalled();
+    expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
+    expect(document.querySelector('.woocommerce-error').textContent).toContain('Fixture localized checkout error');
+  });
+
+  it('preserves the real installment gate without calling the SDK', () => {
+    document.getElementById('form-checkout__installments').value = '';
+    field('installments').value = '';
+    handler.mercado_pago_submit = true;
+    handler.hasToken = true;
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    expect(cardForm.form.createCardToken).not.toHaveBeenCalled();
+    expect(post).not.toHaveBeenCalled();
+    expect(handler.mercado_pago_submit).toBe(false);
+  });
+
+  it('preserves the real invalid-card gate without calling the SDK', () => {
+    document.getElementById('form-checkout__cardNumber-container').classList.add('mp-error');
+    handler.mercado_pago_submit = true;
+    handler.hasToken = true;
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    expect(cardForm.form.createCardToken).not.toHaveBeenCalled();
+    expect(post).not.toHaveBeenCalled();
+    expect(cardForm.scrollToCardForm).toHaveBeenCalled();
+  });
+
+  it('does not let hasToken alone hold an unprepared attempt', async () => {
+    handler.hasToken = true;
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    await flush();
+    expect(cardForm.form.createCardToken).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['missing', 'disabled', 'fieldset', 'duplicate', 'outside'])('rejects a %s token control', async (variant) => {
+    const token = field('token');
+    token.value = 'fixture-previous-token';
+    if (variant === 'missing') token.remove();
+    if (variant === 'disabled') token.disabled = true;
+    if (variant === 'fieldset') {
+      const fieldset = document.createElement('fieldset');
+      fieldset.disabled = true;
+      form.append(fieldset);
+      fieldset.append(token);
+    }
+    if (variant === 'duplicate') form.append(token.cloneNode());
+    if (variant === 'outside') document.body.append(token);
+    handler.mercado_pago_submit = true;
+    handler.hasToken = true;
+    expect(handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {})).toBe(false);
+    await flush();
+    expect(post).not.toHaveBeenCalled();
+    expect(handler.mercado_pago_submit).toBe(false);
+    expect(handler.hasToken).toBe(false);
+    expect(cardForm.form.createCardToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes the SDK token to the submitted form despite an outside duplicate ID', async () => {
+    const outside = field('token').cloneNode();
+    outside.value = 'fixture-outside-token';
+    document.body.prepend(outside);
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    await flush();
+    expect(field('token').value).toBe('fixture-new-card-token');
+    expect(outside.value).toBe('fixture-outside-token');
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('permits zero amount as presence without changing its financial meaning', () => {
+    field('token').value = 'fixture-prepared-token';
+    field('amount').value = '0';
+    handler.mercado_pago_submit = true;
+    expect(handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {})).toBe(true);
+    expect(cardForm.form.createCardToken).not.toHaveBeenCalled();
+  });
+
+  it('does not release prepared Custom data with literal zero installments', async () => {
+    field('token').value = 'fixture-prepared-token';
+    field('installments').value = '0';
+    handler.mercado_pago_submit = true;
+    expect(handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {})).toBe(false);
+    await flush();
+    expect(cardForm.form.createCardToken).toHaveBeenCalledTimes(1);
+    expect(field('installments').value).toBe('3');
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a disabled duplicate token control', () => {
+    field('token').value = 'fixture-prepared-token';
+    const duplicate = field('token').cloneNode();
+    duplicate.disabled = true;
+    form.append(duplicate);
+    handler.mercado_pago_submit = true;
+    expect(handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {})).toBe(true);
+    expect(cardForm.form.createCardToken).not.toHaveBeenCalled();
+  });
+
+  it('uses the submitted form radio despite an outside duplicate ID', async () => {
+    const outside = document.getElementById('payment_method_woo-mercado-pago-custom').cloneNode();
+    outside.checked = false;
+    document.body.prepend(outside);
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    await flush();
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['wallet_button'])('preserves prepared %s behavior without applying the Custom guard', (type) => {
+    field('checkout_type').value = type;
+    field('amount').value = '';
+    handler.mercado_pago_submit = true;
+    expect(handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {})).toBe(true);
+    expect(cardForm.form.createCardToken).not.toHaveBeenCalled();
+  });
+
+  it.each(['super_token', 'wallet_button', 'pix', 'replaced_form', 'replaced_sdk'])('discards a late token after %s takes over', async (change) => {
+    let resolveToken;
+    const sdk = cardForm.form.createCardToken;
+    sdk.mockReturnValue(new Promise((resolve) => { resolveToken = resolve; }));
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    if (change === 'replaced_form') form.replaceWith(form.cloneNode(true));
+    else if (change === 'replaced_sdk') cardForm.form = { createCardToken: jest.fn() };
+    else if (change === 'pix') document.getElementById('payment_method_woo-mercado-pago-custom').checked = false;
+    else field('checkout_type').value = change;
+    resolveToken({ token: 'fixture-obsolete-token' });
+    await flush();
+    expect(submit).not.toHaveBeenCalled();
+    expect(post).not.toHaveBeenCalled();
+    expect(handler.mercado_pago_submit).toBe(false);
+    expect(handler.customTokenRequest).toBeNull();
+  });
+
+  it('deduplicates clicks while SDK tokenization is pending', async () => {
+    let resolveToken;
+    cardForm.form.createCardToken.mockReturnValue(new Promise((resolve) => { resolveToken = resolve; }));
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    expect(cardForm.form.createCardToken).toHaveBeenCalledTimes(1);
+    resolveToken({ token: 'fixture-new-card-token' });
+    await flush();
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows a new SDK form to tokenize while an obsolete request remains unresolved', async () => {
+    let resolveObsolete;
+    cardForm.form.createCardToken.mockReturnValue(new Promise((resolve) => { resolveObsolete = resolve; }));
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    cardForm.form = { createCardToken: jest.fn().mockResolvedValue({ token: 'fixture-current-token' }) };
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    await flush();
+    expect(cardForm.form.createCardToken).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(field('token').value).toBe('fixture-current-token');
+    resolveObsolete({ token: 'fixture-obsolete-token' });
+    await flush();
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(field('token').value).toBe('fixture-current-token');
+  });
+
+  it('recovers a synchronous SDK failure and permits a later retry', async () => {
+    cardForm.form.createCardToken.mockImplementationOnce(() => { throw new Error('fixture failure'); });
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    expect(handler.customTokenRequest).toBeNull();
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() }, {});
+    await flush();
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['', 'fixture-prepared-token'])('protects the direct Order Pay path with token %s', (token) => {
+    form.className = '';
+    form.id = 'order_review';
+    field('token').value = token;
+    handler.handle3dsPayOrderFormSubmission();
+    expect(post).toHaveBeenCalledTimes(token ? 1 : 0);
+  });
+
+  it('does not submit an incomplete Order Pay form after SDK completion', async () => {
+    form.className = '';
+    form.id = 'order_review';
+    handler.mpFormId = 'order_review';
+    field('payment_method_id').value = '';
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() });
+    await flush();
+    expect(cardForm.form.createCardToken).toHaveBeenCalledTimes(1);
+    expect(post).not.toHaveBeenCalled();
+    expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
+  });
+
+  it('removes the later WooCommerce Order Pay overlay after a synchronous SDK failure', async () => {
+    form.className = '';
+    form.id = 'order_review';
+    let blocked = false;
+    cardForm.removeBlockOverlay.mockImplementation(() => { blocked = false; });
+    cardForm.form.createCardToken.mockImplementation(() => { throw new Error('fixture failure'); });
+    handler.mercadoPagoFormHandler({ preventDefault: jest.fn() });
+    // Model only WooCommerce's later blockOnSubmit UI effect, not the recovery.
+    blocked = true;
+    await flush();
+    expect(blocked).toBe(false);
+    expect(post).not.toHaveBeenCalled();
+  });
+});
+
 describe('MPEventHandler - mercadoPagoFormHandler (branch routing)', () => {
   let MPEventHandlerLocal;
   let handler;
-  let checkoutType;
 
   beforeAll(() => {
-    // jQuery mock cujo .val() lê/escreve o checkoutType corrente, permitindo
-    // controlar o valor de #mp_checkout_type por teste.
-    const jQueryMock = jest.fn(() => ({
-      on: jest.fn(),
-      submit: jest.fn(),
-      block: jest.fn(),
-      unblock: jest.fn(),
-      val: jest.fn((value) => {
-        if (value !== undefined) {
-          checkoutType = value;
-          return undefined;
-        }
-        return checkoutType;
-      }),
-    }));
-
     MPEventHandlerLocal = loadFile(eventHandlerPath, 'MPEventHandler', {
       MobileCheckoutClassicObserver: MobileCheckoutClassicObserverStub,
-      jQuery: jQueryMock,
+      jQuery: checkoutJQuery,
       wc_mercadopago_custom_event_handler_params: global.wc_mercadopago_custom_event_handler_params,
       MPSuperTokenErrorCodes: global.MPSuperTokenErrorCodes,
       sendMetric: global.sendMetric,
@@ -1154,8 +1549,7 @@ describe('MPEventHandler - mercadoPagoFormHandler (branch routing)', () => {
   });
 
   beforeEach(() => {
-    document.body.innerHTML = '';
-    checkoutType = '';
+    mountPaymentForm();
 
     const cardForm = {
       formMounted: false,
@@ -1178,7 +1572,7 @@ describe('MPEventHandler - mercadoPagoFormHandler (branch routing)', () => {
   });
 
   it('Given a custom (card) submit, When mercadoPagoFormHandler runs, Then it tokenizes directly without pre-validation and returns false', () => {
-    checkoutType = 'card';
+    document.getElementById('mp_checkout_type').value = 'custom';
     const event = { preventDefault: jest.fn() };
 
     const result = handler.mercadoPagoFormHandler(event, {});
@@ -1191,7 +1585,7 @@ describe('MPEventHandler - mercadoPagoFormHandler (branch routing)', () => {
   });
 
   it('Given a super_token submit, When mercadoPagoFormHandler runs, Then it still runs the pre-validation and returns false (regression guard)', () => {
-    checkoutType = 'super_token';
+    document.getElementById('mp_checkout_type').value = 'super_token';
     const event = { preventDefault: jest.fn() };
 
     const result = handler.mercadoPagoFormHandler(event, {});
@@ -1201,21 +1595,22 @@ describe('MPEventHandler - mercadoPagoFormHandler (branch routing)', () => {
     expect(result).toBe(false);
   });
 
-  it('Given the card already has a token, When mercadoPagoFormHandler runs the custom branch, Then it does not tokenize again and returns false', () => {
-    checkoutType = 'card';
+  it('Given hasToken is set without ready state, When the Custom handler runs, Then it tokenizes again instead of remaining blocked', () => {
+    document.getElementById('mp_checkout_type').value = 'custom';
     handler.hasToken = true;
     const event = { preventDefault: jest.fn() };
 
     const result = handler.mercadoPagoFormHandler(event, {});
 
     expect(handler.validateCheckoutThenContinue).not.toHaveBeenCalled();
-    expect(handler.setPayerIdentificationInfo).not.toHaveBeenCalled();
-    expect(handler.createToken).not.toHaveBeenCalled();
+    expect(handler.setPayerIdentificationInfo).toHaveBeenCalledTimes(1);
+    expect(handler.createToken).toHaveBeenCalledTimes(1);
     expect(result).toBe(false);
   });
 
   it('Given a submit already in progress (mercado_pago_submit=true), When mercadoPagoFormHandler runs, Then it returns true and neither validates nor tokenizes', () => {
-    checkoutType = 'card';
+    document.getElementById('mp_checkout_type').value = 'custom';
+    document.getElementById('cardTokenId').value = 'fixture-prepared-token';
     handler.mercado_pago_submit = true;
     const event = { preventDefault: jest.fn() };
 
@@ -1227,8 +1622,8 @@ describe('MPEventHandler - mercadoPagoFormHandler (branch routing)', () => {
   });
 
   it('Given the Order Pay page with the custom method, When mercadoPagoFormHandler runs, Then it tokenizes directly without pre-validation (Order Pay behavior unchanged)', () => {
-    checkoutType = 'card';
-    handler.isOrderPayPage = jest.fn().mockReturnValue(true);
+    document.getElementById('mp_checkout_type').value = 'custom';
+    mountPaymentForm('custom', true);
     const event = { preventDefault: jest.fn() };
 
     const result = handler.mercadoPagoFormHandler(event, {});

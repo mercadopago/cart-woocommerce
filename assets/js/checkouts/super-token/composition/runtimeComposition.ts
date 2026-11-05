@@ -1,10 +1,10 @@
 /**
- * Runtime composition: resolves the A/B variant, publishes the order+decorate seam (Phase 5) and,
+ * Runtime composition: composes the canonical v2.1 experience, publishes the order+decorate seam (Phase 5) and,
  * once the SDK exists, builds and publishes the stateful runtime instances + the saved-methods
  * render (Phase 6). In the pre-cutover hybrid the legacy bundle may build the instances first; the
  * window.mpSuperTokenTriggerHandler guard makes this a no-op then.
  */
-import { createVariantView, createVariantViewDeps } from '@super-token/adapters/view';
+import { V21View, createVariantViewDeps } from '@super-token/adapters/view';
 import type { SuperTokenViewParams, EmailListenerPort } from '@super-token/adapters/view';
 import type { VariantViewPort } from '@super-token/ports';
 import type { PaymentMethod, Installment, SuperTokenBundleParams } from '@super-token/types/external-globals';
@@ -17,9 +17,10 @@ import { SuperTokenTriggerHandler } from '@super-token/adapters/runtime/SuperTok
 import { SuperTokenDebounce } from '@super-token/adapters/runtime/SuperTokenDebounce';
 import { CoreMonitorMetricsAdapter, createDomainConfig } from '@super-token/adapters/platform';
 import { resolveMlcCopy } from '@super-token/adapters/platform/resolveMlcCopy';
+import { resolveSuperTokenBlock } from '@super-token/adapters/platform/resolveSuperTokenBlock';
 import { divergentStoreLanguage } from '@super-token/adapters/platform/storeLanguage';
 import type { SuperTokenDomainParams } from '@super-token/adapters/platform';
-import { SUPER_TOKEN_FALLBACK_VARIANT, SUPER_TOKEN_JS_VERSION } from '@super-token/adapters/platform/constants';
+import { V21_VARIANT, SUPER_TOKEN_JS_VERSION } from '@super-token/adapters/platform/constants';
 import { toTelemetryErrorMessage } from '@super-token/core/checkoutSession/ErrorClassification';
 import { PaymentMethodCatalog } from '@super-token/core/checkoutSession/PaymentMethodCatalog';
 import { PaymentMethodRegistry } from '@super-token/core/paymentMethods/registry';
@@ -32,7 +33,7 @@ import type { LegacyRenderController } from '@super-token/adapters/session/Legac
 import * as globalBridge from '@super-token/adapters/legacy/globalBridge';
 import { syncMlcCopyToLegacy } from '@super-token/adapters/legacy/syncMlcCopyToLegacy';
 import type { LegacyCopyFields, LegacyCopyParams } from '@super-token/adapters/legacy/syncMlcCopyToLegacy';
-import { resolveSuperTokenVariant } from '@super-token/composition/variantRuntime';
+import { resolveLegacyPresentationCopy } from '@super-token/adapters/platform/resolveLegacyPresentationCopy';
 
 // SDK-readiness gate, mirroring the legacy v2.1/mp-super-token.js: run once the SDK instance
 // exists (immediately if already there, else on the ready event, with a bounded poll fallback for
@@ -97,7 +98,7 @@ function reportStoreLanguageDivergence(siteId: string, metrics: CoreMonitorMetri
 }
 
 /**
- * Resolve the variant, then compose the order+decorate seam and the runtime instances. Called only
+ * Compose the order+decorate seam and the runtime instances. Called only
  * when the localized domain params are present; otherwise the legacy organizePaymentMethodsElements
  * keeps its inline reorder + normalize (the decoration would lack its copy/thumbnails).
  */
@@ -109,7 +110,15 @@ export function composeRuntime(
   reportStoreLanguageDivergence(domainParams.site_id, metrics);
 
   // Plugins that predate `store_language_copy` keep the bundle's Chilean copy (see resolveMlcCopy).
-  const localizedParams = resolveMlcCopy(domainParams);
+  const siteLocalizedParams = resolveMlcCopy(domainParams);
+  const localizedParams = {
+    ...siteLocalizedParams,
+    ...resolveLegacyPresentationCopy(
+      siteLocalizedParams,
+      document.documentElement?.lang,
+      window.wc_mercadopago_custom_checkout_params?.locale,
+    ),
+  };
   // window.* reads kept at the composition edge (matches legacyDelegationSeams.ts); the adapter
   // itself stays free of window.*.
   syncMlcCopyToLegacy(
@@ -120,8 +129,8 @@ export function composeRuntime(
   );
   const viewParams = localizedParams as unknown as SuperTokenViewParams;
 
-  const composeWithVariant = (variant: string): void => {
-    const domainConfig = createDomainConfig(localizedParams, variant);
+  const compose = (): void => {
+    const domainConfig = createDomainConfig(localizedParams);
     const catalog = new PaymentMethodCatalog(domainConfig.paymentMethodsOrder, domainConfig.siteId);
     const registry = new PaymentMethodRegistry(domainConfig);
 
@@ -141,8 +150,7 @@ export function composeRuntime(
     const consumerCreditsHint = (installment: Installment): string =>
       consumerCreditsMethod.buildConsumerCreditsHint(installment);
 
-    // Build + publish the TS instances once the SDK exists — the tree is the runtime for both
-    // variants (createVariantView falls back to v2). In the pre-cutover hybrid the legacy bundle
+    // Build + publish the canonical runtime once the SDK exists. In the hybrid the legacy bundle
     // may build them first; the window.mpSuperTokenTriggerHandler guard makes this a no-op then.
     const buildAndPublishInstances = (): void => {
       const sdk = window.mpSdkInstance;
@@ -172,14 +180,14 @@ export function composeRuntime(
 
       const getView = (): VariantViewPort => {
         if (!view) {
-          view = createVariantView(variant, createVariantViewDeps(viewParams, emailListener as EmailListenerPort));
+          view = new V21View(createVariantViewDeps(viewParams, emailListener as EmailListenerPort));
         }
         return view;
       };
 
       const renderSavedMethods = (container: HTMLElement, methods: PaymentMethod[]): void => {
-        // One stylesheet serves both variants; the root's data-variant scopes each variant's rules.
-        container.setAttribute('data-variant', variant);
+        // Keep the root marker used by the v2.1 stylesheet and installed plugin consumers.
+        container.setAttribute('data-variant', V21_VARIANT);
         // The view builds every row itself now (createPaymentMethodElement is dropped), so buildRow
         // is omitted; the render session only supplies the interactive-row behaviour primitives.
         const session = new LegacyRenderSession(paymentMethods as unknown as LegacyRenderController);
@@ -215,6 +223,7 @@ export function composeRuntime(
         errorHandler,
         entityMetrics,
         bundleParams.current_user_email,
+        resolveSuperTokenBlock(domainParams),
       );
 
       const instances = {
@@ -247,7 +256,7 @@ export function composeRuntime(
 
     recompose.current = buildAndPublishInstances;
     // whenSdkReady may invoke this synchronously or from the async poll / ready-event paths. A throw
-    // on the async paths escapes the composeRuntime().catch below, leaving the composition failure
+    // on the async paths escapes the composition error handler below, leaving the composition failure
     // invisible, so guard the invocation here to keep every path instrumented. recompose.current
     // stays unwrapped so the resilience recovery path keeps its own super_token_recovery_compose_failed.
     whenSdkReady((): void => {
@@ -259,14 +268,8 @@ export function composeRuntime(
     });
   };
 
-  return resolveSuperTokenVariant()
-    .then(composeWithVariant)
-    .catch((error: unknown) => {
-      metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', toTelemetryErrorMessage(error));
-      try {
-        composeWithVariant(SUPER_TOKEN_FALLBACK_VARIANT);
-      } catch (fallbackError: unknown) {
-        metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', toTelemetryErrorMessage(fallbackError));
-      }
-    });
+  // Preserve the asynchronous composition boundary used by bootstrap readiness checks.
+  return Promise.resolve().then(compose).catch((error: unknown) => {
+    metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', toTelemetryErrorMessage(error));
+  });
 }

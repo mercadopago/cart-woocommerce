@@ -6,8 +6,8 @@
  * reference (`v2/`, `v2.1/` legacy `.css`) was removed with the SCSS unification in
  * PSW-4276, so this now guards the merge instead.
  *
- * Reference: `super-token-v{2,2.1}.scss` (kept only as this fixture, not shipped) —
- * each compiles to the shared rules plus that variant's rules.
+ * Reference: in-memory fixtures combining `index` with each variant partial.
+ * They produce no separate build entry points or files in the plugin assets.
  * Candidate: the shipped `super-token.scss`, sliced to one variant — the shared
  * rules (no data-variant) plus that variant's `[data-variant]`-scoped rules; the
  * other variant's rules are dropped (a root carries exactly one data-variant, so
@@ -33,6 +33,13 @@ const sassBin = path.join(PLUGIN, 'node_modules/sass/sass.js');
 
 function compile(entry) {
   return execFileSync(process.execPath, [sassBin, '--no-source-map', path.join(ST, entry)], { encoding: 'utf8', maxBuffer: 1 << 26 });
+}
+
+function compileReference(variant) {
+  const source = `@use 'index' as *; @use 'variants/${variant}' as *;`;
+  return execFileSync(process.execPath, [sassBin, '--no-source-map', '--stdin', '--load-path', ST], {
+    input: source, encoding: 'utf8', maxBuffer: 1 << 26,
+  });
 }
 
 function canonSel(selraw) {
@@ -154,8 +161,7 @@ function cascadeFlags(orig, comp) {
 let ok = true;
 const single = extract(compile('super-token.scss'));
 for (const v of ['v2', 'v2.1']) {
-  const entry = v === 'v2' ? 'super-token-v2.scss' : 'super-token-v2.1.scss';
-  const O = extract(compile(entry));
+  const O = extract(compileReference(v));
   const C = sliceVariant(single, v);
   const atomD = multisetDiff(O.atoms, C.atoms);
   const kfD = multisetDiff(O.keyframes, C.keyframes);

@@ -40,13 +40,13 @@ const params = {
 
 describe('createDomainConfig', () => {
   it('Given the localized params, When mapped, Then the site id is uppercased and copy/thumbnails are mapped', () => {
-    const config = createDomainConfig(params, 'v2.1');
+    const config = createDomainConfig(params);
 
     expect(config.siteId).toBe('MLB');
     expect(config.intl).toBe('pt-BR');
     expect(config.currency).toBe('BRL');
     expect(config.paymentMethodsOrder).toBe('account_money_first');
-    expect(config.variant).toBe('v2.1');
+    expect(config).not.toHaveProperty('variant');
     expect(config.copy).toEqual({
       accountMoneyText: 'Dinheiro na conta',
       accountMoneyWalletWithInvestmentText: 'disponível e investido',
@@ -93,7 +93,7 @@ describe('createDomainConfig', () => {
       input_helper_message: { installments: { interest_free_option_text: 'sem juros (aninhado)' } },
     };
 
-    const config = createDomainConfig(legacyParams, 'v2');
+    const config = createDomainConfig(legacyParams);
 
     expect(config.copy.installmentsInterestFreeOptionText).toBe('sem juros (aninhado)');
   });
@@ -107,7 +107,7 @@ describe('createDomainConfig', () => {
       ...older
     } = params;
 
-    const config = createDomainConfig(older, 'v2');
+    const config = createDomainConfig(older);
 
     expect(config.copy.installmentsInterestFreeOptionText).toBe('');
     expect(config.copy.mercadoPagoCreditCardName).toBe('');

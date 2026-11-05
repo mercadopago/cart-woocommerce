@@ -32,7 +32,7 @@ import type {
   RawSdkAuthenticator,
   RawMpSdkInstance,
 } from '@super-token/types/external-globals';
-import { CHILE_ACCRONYM } from '@super-token/core/constants';
+import { SITES_WITHOUT_DECIMAL_AMOUNTS } from '@super-token/core/constants';
 
 /** Superset of the metrics the load use case, the submit use case and the primitives emit. */
 export interface SuperTokenAuthenticatorMetrics extends AuthenticatorMetrics, AuthorizePaymentMetrics {
@@ -47,7 +47,7 @@ export class SuperTokenAuthenticator {
   private readonly AUTHORIZED_PSEUDOTOKEN_ELEMENT_ID = 'authorized_pseudotoken';
   private readonly AUTHENTICATOR_VERSION = 2;
   private readonly DEFAULT_AMOUNT_DECIMAL_PLACES = 2;
-  private readonly MLC_AMOUNT_DECIMAL_PLACES = 0;
+  private readonly INTEGER_AMOUNT_DECIMAL_PLACES = 0;
 
   private amountUsed: string | null = null;
   private emailUsed: string | null = null;
@@ -119,8 +119,9 @@ export class SuperTokenAuthenticator {
     if (!/^\d+(?:\.\d+)?$/.test(normalizedValue)) return null;
 
     const value = Number(normalizedValue);
-    const decimalPlaces =
-      this.siteId === CHILE_ACCRONYM ? this.MLC_AMOUNT_DECIMAL_PLACES : this.DEFAULT_AMOUNT_DECIMAL_PLACES;
+    const decimalPlaces = this.hasIntegerAmounts()
+      ? this.INTEGER_AMOUNT_DECIMAL_PLACES
+      : this.DEFAULT_AMOUNT_DECIMAL_PLACES;
 
     if (!Number.isFinite(value)) return null;
 
@@ -128,10 +129,14 @@ export class SuperTokenAuthenticator {
     return this.isNormalizedAmount(formatted) ? formatted : null;
   }
 
-  // MLC has no decimal places; other sites use exactly two.
+  // MLC and MCO have no decimal places; other sites use exactly two.
   private isNormalizedAmount(amount: string): boolean {
-    const normalizedPattern = this.siteId === CHILE_ACCRONYM ? /^(?:0|[1-9]\d*)$/ : /^(?:0|[1-9]\d*)\.\d{2}$/;
+    const normalizedPattern = this.hasIntegerAmounts() ? /^(?:0|[1-9]\d*)$/ : /^(?:0|[1-9]\d*)\.\d{2}$/;
     return normalizedPattern.test(amount) && Number.isFinite(Number(amount));
+  }
+
+  private hasIntegerAmounts(): boolean {
+    return SITES_WITHOUT_DECIMAL_AMOUNTS.includes(this.siteId);
   }
 
   async buildAuthenticator(amount: string | null, buyerEmail: string): Promise<RawSdkAuthenticator | null> {

@@ -396,46 +396,74 @@ describe('CoreMonitorMetricsAdapter', () => {
     });
   });
 
-  // ab_variant is read from the mp_st_variant cookie the loader sets, so every metric can be
-  // filtered by A/B experiment in Datadog (parity with the legacy MPSuperTokenMetrics payload).
-  describe('ab_variant in the payload — contract', () => {
-    const clearVariantCookie = () => {
-      document.cookie = 'mp_st_variant=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-    };
-
-    beforeEach(clearVariantCookie);
-    afterEach(clearVariantCookie);
-
-    it.each([
-      ['v2', 'v2'],
-      ['v2.1', 'v2.1'],
-    ])(
-      'Given the mp_st_variant cookie is %p, When a metric is sent, Then details.ab_variant is %p',
-      (cookieValue, expected) => {
-        document.cookie = `mp_st_variant=${cookieValue}; path=/`;
-        const adapter = buildAdapter();
-
-        adapter.canUseSuperToken(true);
-
-        expect(lastFetch().body.details.ab_variant).toBe(expected);
+  describe('closed experiment attribution', () => {
+    afterEach(() => { document.cookie = 'mp_st_variant=;max-age=0;path=/'; });
+    it.each(['v2', 'v2.1', 'fetch_failed', 'v3', '%', '']) (
+      'reports not_available regardless of legacy cookie %p', (cookie) => {
+        document.cookie = `mp_st_variant=${cookie};path=/`;
+        buildAdapter().canUseSuperToken(true);
+        expect(lastFetch().body.details.ab_variant).toBe('not_available');
       },
     );
+  });
+});
 
-    it('Given no mp_st_variant cookie, When a metric is sent, Then details.ab_variant falls back to "unknown"', () => {
-      const adapter = buildAdapter();
+describe('CoreMonitorMetricsAdapter — named metric surface', () => {
+  beforeEach(() => {
+    window.melidata = {};
+    global.fetch = jest.fn().mockResolvedValue({});
+    jest.spyOn(document, 'dispatchEvent').mockImplementation(() => true);
+  });
 
-      adapter.canUseSuperToken(true);
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete window.melidata;
+  });
 
-      expect(lastFetch().body.details.ab_variant).toBe('unknown');
-    });
+  it.each([
+    ['errorToAuthorizePayment', 'error_to_authorize_payment'],
+    ['errorToGetAccountPaymentMethods', 'error_to_get_account_payment_methods'],
+    ['errorToGetSimplifiedAuth', 'error_to_get_simplified_auth'],
+    ['errorToGetFastPaymentToken', 'error_to_get_fast_payment_token'],
+    ['errorToBuildAuthenticator', 'error_to_build_authenticator'],
+    ['errorToUpdateCreditsContract', 'error_to_update_credits_contract'],
+  ])('Given an error, When %s is reported, Then it sends %s with the normalized message', (method, metricName) => {
+    const adapter = buildAdapter();
 
-    it('Given an unexpected mp_st_variant value, When a metric is sent, Then details.ab_variant is "unknown"', () => {
-      document.cookie = 'mp_st_variant=v3; path=/';
-      const adapter = buildAdapter();
+    adapter[method](new Error('boom'));
 
-      adapter.canUseSuperToken(true);
+    const { url, body } = lastFetch();
+    expect(url).toBe(`${CORE_MONITOR_URL}/${metricName}`);
+    expect(body.value).toBe('true');
+    expect(body.message).toBe('boom');
+  });
 
-      expect(lastFetch().body.details.ab_variant).toBe('unknown');
-    });
+  it.each([
+    ['updateSecurityCodeSuccess', 'update_security_code_success'],
+    ['updateSecurityCodeGetCardIdSuccess', 'update_security_code_get_card_id_success'],
+    ['updateSecurityCodeCardTokenCreated', 'update_security_code_card_token_created'],
+    ['updateSecurityCodePseudotokenUpdated', 'update_security_code_pseudotoken_updated'],
+    ['registerClickOnPlaceOrderButton', 'super_token_click_on_place_order_button'],
+    ['isNotSimplifiedAuth', 'is_not_simplified_auth'],
+    ['cannotGetFastPaymentToken', 'cannot_get_fast_payment_token'],
+  ])('Given a success step, When %s is reported, Then it sends %s as true with no message', (method, metricName) => {
+    const adapter = buildAdapter();
+
+    adapter[method]();
+
+    const { url, body } = lastFetch();
+    expect(url).toBe(`${CORE_MONITOR_URL}/${metricName}`);
+    expect(body.value).toBe('true');
+    expect(body.message).toBe('');
+  });
+
+  it('Given a selected Super Token method type, When it is registered, Then the value carries the super_token_ prefix', () => {
+    const adapter = buildAdapter();
+
+    adapter.registerSelectPaymentMethod('credit_card');
+
+    const { url, body } = lastFetch();
+    expect(url).toBe(`${CORE_MONITOR_URL}/select_payment_method`);
+    expect(body.value).toBe('super_token_credit_card');
   });
 });

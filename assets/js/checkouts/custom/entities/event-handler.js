@@ -39,6 +39,11 @@ class MPEventHandler {
         this.isValidating = false;
         this._validationAbortController = null;
         this._validationCancelled = false;
+        this.customTokenRequest = null;
+        this.superTokenRequest = null;
+        this.superTokenAuthorization = null;
+        this.preparedSuperTokenContext = null;
+        this.paymentSelectionGeneration = 0;
     }
 
     setSuperTokenDependencies({ triggerHandler, authenticator, paymentMethods, metrics, errorHandler }) {
@@ -77,6 +82,13 @@ class MPEventHandler {
     }
 
     bindEvents() {
+        if (!this.readinessEventsBound) {
+            document.addEventListener('mp_super_token_payment_method_selected', () => this.invalidatePaymentPreparation());
+            document.addEventListener('mp_card_form_mounted', () => {
+                if (this.getCheckoutType() === 'custom') this.invalidatePaymentPreparation();
+            });
+            this.readinessEventsBound = true;
+        }
         jQuery('form.checkout').on('checkout_place_order_woo-mercado-pago-custom', (event, wc_checkout_form) => this.mercadoPagoFormHandler(event, wc_checkout_form));
         jQuery('body').on('payment_method_selected', this.handlePaymentMethodSelected.bind(this));
         jQuery('form#order_review').submit(this.handleOrderReviewSubmit.bind(this));
@@ -164,24 +176,120 @@ class MPEventHandler {
         this.getCheckoutForm()?.unblock();
     }
 
+    getCheckoutFieldValue(fields, field) {
+        const matches = fields.filter(({ name }) => name === `mercadopago_custom[${field}]`);
+        return matches.length === 1 && typeof matches[0].value === 'string'
+            ? matches[0].value.trim() : '';
+    }
+
+    getCheckoutType(checkoutForm = this.getCheckoutForm()) {
+        return this.getCheckoutFieldValue(checkoutForm.serializeArray(), 'checkout_type');
+    }
+
+    isCustomPaymentMethodSelectedInForm(checkoutForm) {
+        const methods = checkoutForm.serializeArray().filter(({ name }) => name === 'payment_method');
+        return methods.length === 1 && methods[0].value === 'woo-mercado-pago-custom';
+    }
+
+    hasCompleteCustomPaymentData(checkoutForm = this.getCheckoutForm()) {
+        const fields = checkoutForm.serializeArray();
+        if (this.getCheckoutFieldValue(fields, 'checkout_type') !== 'custom') {
+            return false;
+        }
+
+        // This is a presence check. Zero-amount subscription routes remain server-owned.
+        return ['token', 'amount', 'payment_method_id', 'installments'].every(
+            (field) => this.getCheckoutFieldValue(fields, field) !== ''
+        ) && this.getCheckoutFieldValue(fields, 'installments') !== '0';
+    }
+
+    hasCompleteSuperTokenPaymentData(checkoutForm = this.getCheckoutForm()) {
+        const fields = checkoutForm.serializeArray();
+        if (this.getCheckoutFieldValue(fields, 'checkout_type') !== 'super_token') return false;
+
+        const complete = ['authorized_pseudotoken', 'amount', 'payment_method_id', 'payment_type_id']
+            .every((field) => this.getCheckoutFieldValue(fields, field) !== '');
+        const installments = this.getCheckoutFieldValue(fields, 'installments');
+        const { superTokenPaymentMethods } = this.getSuperTokenDeps();
+        const activeMethod = superTokenPaymentMethods && typeof superTokenPaymentMethods.getActivePaymentMethod === 'function'
+            ? superTokenPaymentMethods.getActivePaymentMethod() : null;
+        return complete && (!this.preparedSuperTokenContext || this.isCurrentSuperTokenContext(this.preparedSuperTokenContext))
+            && !!activeMethod?.token
+            && this.getCheckoutFieldValue(fields, 'authorized_pseudotoken') === activeMethod.token
+            && (this.getCheckoutFieldValue(fields, 'payment_type_id') !== 'credit_card'
+            || (installments !== '' && Number.isFinite(Number(installments)) && Number(installments) > 0));
+    }
+
+    invalidatePaymentPreparation() {
+        // Selection events fire before the new method/flow is written. Only retire old work here.
+        this.paymentSelectionGeneration++;
+        if (this.superTokenRequest || this.customTokenRequest) this.removePaymentLoaders();
+        this.customTokenRequest = null;
+        this.superTokenRequest = null;
+        this.resetPaymentReadiness();
+    }
+
+    resetPaymentReadiness() {
+        this.mercado_pago_submit = false;
+        this.hasToken = false;
+        this.preparedSuperTokenContext = null;
+    }
+
+    handleIncompletePayment() {
+        this.resetPaymentReadiness();
+        const params = window.wc_mercadopago_custom_checkout_params;
+        if (params && typeof params.error_messages?.default === 'string') {
+            this.displayCheckoutValidationErrors([{ message: params.error_messages.default }]);
+        } else {
+            console.warn('Checkout payment data is incomplete.');
+        }
+        this.removePaymentLoaders();
+    }
+
+    removePaymentLoaders() {
+        this.cardForm.removeLoadSpinner();
+        this.cardForm.removeBlockOverlay();
+        if (this.isOrderPayPage() && typeof CheckoutPage !== 'undefined'
+            && typeof CheckoutPage.deferBlockOverlayRemoval === 'function') {
+            CheckoutPage.deferBlockOverlayRemoval(this.cardForm);
+        }
+        this.hideCheckoutClassicLoader();
+    }
+
     mercadoPagoFormHandler(event, wc_checkout_form) {
         this.setMercadoPagoSessionId();
         const { superTokenPaymentMethods, superTokenMetrics } = this.getSuperTokenDeps();
         superTokenPaymentMethods?.hideSuperTokenError();
+        const checkoutForm = this.getCheckoutForm();
+        const checkoutType = this.getCheckoutType(checkoutForm);
 
         if (this.mercado_pago_submit) {
-            return true;
-        } else if (jQuery('#mp_checkout_type').val() === 'wallet_button') {
-            return true;
-        } else if (jQuery('#mp_checkout_type').val() === 'super_token') {
-          superTokenMetrics?.registerClickOnPlaceOrderButton();
+            if (checkoutType === 'wallet_button'
+                || (checkoutType === 'super_token' ? this.hasCompleteSuperTokenPaymentData(checkoutForm)
+                    : this.hasCompleteCustomPaymentData(checkoutForm))) {
+                return true;
+            }
+            this.resetPaymentReadiness();
+        }
 
-          this.validateCheckoutThenContinue(event, () => this.handleWithSuperTokenSubmit(event, wc_checkout_form));
+        if (checkoutType === 'wallet_button') {
+            return true;
+        } else if (checkoutType === 'super_token') {
+          superTokenMetrics?.registerClickOnPlaceOrderButton();
+          const context = this.captureSuperTokenContext();
+          this.validateCheckoutThenContinue(event, () => {
+              if (this.isCurrentSuperTokenContext(context)) this.handleWithSuperTokenSubmit(event, wc_checkout_form);
+          });
 
           // Return false to avoid the default behavior of the form submission
           return false;
         } else {
-            jQuery('#mp_checkout_type').val('custom');
+            checkoutForm.find('[name="mercadopago_custom[checkout_type]"]').val('custom');
+
+            // hasToken alone cannot hold an unprepared Custom attempt indefinitely.
+            if (this.hasToken) {
+                this.resetPaymentReadiness();
+            }
 
             if (!this.hasToken) {
                 this.setPayerIdentificationInfo();
@@ -385,51 +493,160 @@ class MPEventHandler {
         list.scrollIntoView({ behavior: 'smooth' });
     }
 
+    captureSuperTokenContext() {
+        const checkoutForm = this.getCheckoutForm();
+        const { superTokenPaymentMethods } = this.getSuperTokenDeps();
+        const method = superTokenPaymentMethods && typeof superTokenPaymentMethods.getActivePaymentMethod === 'function'
+            ? superTokenPaymentMethods.getActivePaymentMethod() : null;
+        return {
+            form: checkoutForm[0], generation: this.paymentSelectionGeneration,
+            paymentMethods: superTokenPaymentMethods, methodToken: method?.token,
+            fields: ['amount', 'payment_method_id', 'payment_type_id', 'installments']
+                .map((field) => this.getCheckoutFieldValue(checkoutForm.serializeArray(), field)),
+        };
+    }
+
+    isCurrentSuperTokenContext(context) {
+        const current = this.captureSuperTokenContext();
+        return !!context.form?.isConnected && current.form === context.form
+            && current.generation === context.generation
+            && current.paymentMethods === context.paymentMethods && current.methodToken === context.methodToken
+            && current.fields.every((value, index) => value === context.fields[index])
+            && this.isCustomPaymentMethodSelectedInForm(this.getCheckoutForm())
+            && this.getCheckoutType() === 'super_token';
+    }
+
+    isCurrentSuperTokenRequest(request) {
+        return this.superTokenRequest === request && this.isCurrentSuperTokenContext(request);
+    }
+
+    completeSuperTokenRequest(request) {
+        if (!this.isCurrentSuperTokenRequest(request)) return false;
+        const checkoutForm = this.getCheckoutForm();
+        const proof = this.getCheckoutFieldValue(checkoutForm.serializeArray(), 'authorized_pseudotoken');
+        if (!this.hasCompleteSuperTokenPaymentData(checkoutForm) || !request.methodToken || proof !== request.methodToken) {
+            const { superTokenAuthenticator } = this.getSuperTokenDeps();
+            superTokenAuthenticator?.setSuperTokenValidation(false);
+            this.handleIncompletePayment();
+            return false;
+        }
+        this.mercado_pago_submit = true;
+        this.preparedSuperTokenContext = request;
+        return true;
+    }
+
+    clearSuperTokenAuthorization(form) {
+        Array.from(form?.elements || []).forEach((input) => {
+            if (input.name === 'mercadopago_custom[authorized_pseudotoken]') input.value = '';
+        });
+    }
+
+    authorizeSuperTokenPayment(request, authenticator, token) {
+        const previous = this.superTokenAuthorization;
+        const authorization = (async () => {
+            // The shared authenticator writes to the DOM after awaiting the SDK. Do not let
+            // an obsolete writer populate the proof while another attempt is authorizing.
+            if (previous) await previous.catch(() => undefined);
+            if (!this.isCurrentSuperTokenRequest(request)) return;
+            this.clearSuperTokenAuthorization(request.form);
+            await authenticator.authorizePayment(token);
+        })();
+        this.superTokenAuthorization = authorization;
+        return authorization.finally(() => {
+            if (this.superTokenAuthorization === authorization) this.superTokenAuthorization = null;
+        });
+    }
+
     async handleWithSuperTokenSubmit(event, wc_checkout_form) {
         event.preventDefault();
+        if (this.superTokenRequest && this.isCurrentSuperTokenRequest(this.superTokenRequest)) return;
+        const request = this.captureSuperTokenContext();
+        this.superTokenRequest = request;
+        this.resetPaymentReadiness();
+        // A new authorization must produce its own proof; do not erase a complete retry shortcut.
+        this.clearSuperTokenAuthorization(request.form);
         this.showCheckoutClassicLoader();
 
         // Prefer the unified refactored finalization published by the refactored bundle. Fall back
         // to the legacy inline flow if the bundle is absent, so the checkout never breaks when the
         // refactored entry failed to load.
-        if (typeof window.mpSuperTokenFinalizeClassic === 'function') {
-            return this.finalizeSuperTokenWithRefactoredFlow(wc_checkout_form);
+        try {
+            if (typeof window.mpSuperTokenFinalizeClassic === 'function') {
+                return await this.finalizeSuperTokenWithRefactoredFlow(wc_checkout_form, request);
+            }
+            return await this.legacyHandleWithSuperTokenSubmit(wc_checkout_form, request);
+        } finally {
+            if (this.superTokenRequest === request) {
+                if (!this.isCurrentSuperTokenContext(request)) {
+                    this.resetPaymentReadiness();
+                    this.removePaymentLoaders();
+                }
+                this.superTokenRequest = null;
+            }
         }
-
-        return this.legacyHandleWithSuperTokenSubmit(wc_checkout_form);
     }
 
-    finalizeSuperTokenWithRefactoredFlow(wc_checkout_form) {
-        const { superTokenTriggerHandler, superTokenAuthenticator, superTokenPaymentMethods, superTokenErrorHandler } = this.getSuperTokenDeps();
+    finalizeSuperTokenWithRefactoredFlow(wc_checkout_form, request) {
+        const { superTokenTriggerHandler, superTokenAuthenticator, superTokenPaymentMethods, superTokenErrorHandler, superTokenMetrics } = this.getSuperTokenDeps();
+        const current = () => this.isCurrentSuperTokenRequest(request);
+        let handlingCurrentError = false;
+        const guardedCall = (target, method) => (...args) => {
+            if (current()) return target[method](...args);
+        };
 
-        return window.mpSuperTokenFinalizeClassic({
+        return Promise.resolve().then(() => window.mpSuperTokenFinalizeClassic({
             paymentMethods: superTokenPaymentMethods,
-            authenticator: superTokenAuthenticator,
-            triggerHandler: superTokenTriggerHandler,
-            errorHandler: superTokenErrorHandler,
-            isOrderPayPage: () => this.isOrderPayPage(),
-            markPaymentReady: () => { this.mercado_pago_submit = true; },
-            submitCheckoutForm: () => wc_checkout_form.$checkout_form.trigger('submit'),
-            submitOrderPayForm: () => this.handle3dsPayOrderFormSubmission(),
-            removeLoader: () => {
-                this.cardForm?.removeLoadSpinner();
-                this.hideCheckoutClassicLoader();
+            authenticator: superTokenAuthenticator && {
+                authorizePayment: (token) => this.authorizeSuperTokenPayment(request, superTokenAuthenticator, token),
+                setSuperTokenValidation: guardedCall(superTokenAuthenticator, 'setSuperTokenValidation'),
             },
-        }).catch((exception) => {
+            triggerHandler: {
+                resetSuperTokenOnError: (...args) => {
+                    if (!current()) return;
+                    handlingCurrentError = true;
+                    superTokenTriggerHandler.resetSuperTokenOnError(...args);
+                },
+                setLastException: (...args) => {
+                    // The adapter invokes this synchronously after its reset changes the flow.
+                    if (handlingCurrentError) superTokenTriggerHandler.setLastException(...args);
+                },
+            },
+            errorHandler: { handleError: guardedCall(superTokenErrorHandler, 'handleError') },
+            isOrderPayPage: () => this.isOrderPayPage(),
+            // The adapter calls submit after markPaymentReady regardless of its void return.
+            markPaymentReady: () => this.completeSuperTokenRequest(request),
+            submitCheckoutForm: () => {
+                if (this.mercado_pago_submit && this.completeSuperTokenRequest(request)) {
+                    wc_checkout_form.$checkout_form.trigger('submit');
+                }
+            },
+            submitOrderPayForm: () => {
+                if (this.mercado_pago_submit && this.completeSuperTokenRequest(request)) this.handle3dsPayOrderFormSubmission();
+            },
+            removeLoader: () => {
+                if (!current()) return;
+                this.removePaymentLoaders();
+            },
+        })).catch(() => {
             // Safety net mirroring the legacy try/catch: the use case is fail-safe and the
             // adapter's result branches own the loader, but if an unexpected exception still
             // escapes, never leave the classic checkout frozen on the loader — and surface it.
-            window.mpSuperTokenMetrics?.sendMetric?.(
-                'super_token_finalize_unexpected_error',
-                exception?.message || 'unknown',
-                'An unexpected exception escaped the refactored Classic finalization'
-            );
-            this.cardForm?.removeLoadSpinner();
-            this.hideCheckoutClassicLoader();
+            if (!current()) return;
+            if (superTokenMetrics && typeof superTokenMetrics.sendMetric === 'function') {
+                superTokenMetrics.sendMetric(
+                    'super_token_finalize_unexpected_error',
+                    'unexpected_error',
+                    'An unexpected exception escaped the refactored Classic finalization'
+                );
+            } else {
+                console.warn('Super Token finalization metrics are unavailable.');
+            }
+            this.removePaymentLoaders();
+            this.resetPaymentReadiness();
         });
     }
 
-    async legacyHandleWithSuperTokenSubmit(wc_checkout_form) {
+    async legacyHandleWithSuperTokenSubmit(wc_checkout_form, request) {
         const { superTokenTriggerHandler, superTokenAuthenticator, superTokenPaymentMethods, superTokenErrorHandler } = this.getSuperTokenDeps();
 
         try {
@@ -443,18 +660,18 @@ class MPEventHandler {
             if (!isSuperTokenValid) throw new Error(MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID);
 
             if (!superTokenPaymentMethods.validateInstallmentSelection()) {
-                this.cardForm.removeLoadSpinner();
-                this.hideCheckoutClassicLoader();
+                this.removePaymentLoaders();
                 return;
             }
 
             if (this.isOrderPayPage()) superTokenPaymentMethods.unmountCardForm();
 
             await superTokenPaymentMethods.updateSecurityCode();
+            if (!this.isCurrentSuperTokenRequest(request)) return;
 
-            await superTokenAuthenticator.authorizePayment(activeMethod.token);
+            await this.authorizeSuperTokenPayment(request, superTokenAuthenticator, activeMethod.token);
+            if (!this.completeSuperTokenRequest(request)) return;
 
-            this.mercado_pago_submit = true;
             superTokenAuthenticator?.setSuperTokenValidation(true);
             if (!this.isOrderPayPage()) {
                 wc_checkout_form.$checkout_form.trigger('submit');
@@ -462,10 +679,10 @@ class MPEventHandler {
                 this.handle3dsPayOrderFormSubmission();
             }
         } catch(exception) {
+            if (!this.isCurrentSuperTokenRequest(request)) return;
             if (exception?.message === MPSuperTokenErrorCodes.SELECT_PAYMENT_METHOD_NOT_VALID) {
                 superTokenErrorHandler?.handleError(exception);
-                this.cardForm.removeLoadSpinner();
-                this.hideCheckoutClassicLoader();
+                this.removePaymentLoaders();
                 return;
             }
 
@@ -477,10 +694,24 @@ class MPEventHandler {
             superTokenTriggerHandler?.resetSuperTokenOnError(recoverableErrors.includes(exception?.message));
             superTokenTriggerHandler?.setLastException(exception);
             superTokenAuthenticator?.setSuperTokenValidation(false);
+            this.resetPaymentReadiness();
+            this.removePaymentLoaders();
         }
     }
 
     createToken() {
+        if (this.customTokenRequest && this.isCurrentCustomTokenRequest(this.customTokenRequest)) {
+            return false;
+        }
+        this.customTokenRequest = null;
+
+        const checkoutForm = this.getCheckoutForm();
+        const form = checkoutForm[0];
+        if (!form || this.getCheckoutType(checkoutForm) !== 'custom') {
+            this.handleIncompletePayment();
+            return false;
+        }
+
         if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.runPreSubmitGates === 'function') {
             const gate = CheckoutPage.runPreSubmitGates(this.cardForm);
             if (!gate.passed) {
@@ -488,18 +719,42 @@ class MPEventHandler {
             }
         }
 
+        const request = { form, sdkForm: this.cardForm.form };
+        this.customTokenRequest = request;
         const callFn = window.callSdkWithMetrics || ((fn) => fn());
-        callFn(
-            () => this.cardForm.form.createCardToken(),
-            'createCardToken'
-        )
+        let tokenPromise;
+        try {
+            tokenPromise = callFn(() => request.sdkForm.createCardToken(), 'createCardToken');
+        } catch {
+            this.customTokenRequest = null;
+            this.handleIncompletePayment();
+            return false;
+        }
+        Promise.resolve(tokenPromise)
             .then((cardToken) => {
-                if (cardToken.token) {
-                    if (this.hasToken) {
+                // A late SDK completion must not prepare a replaced form or another flow.
+                if (!this.isCurrentCustomTokenRequest(request)) {
+                    return;
+                }
+
+                if (typeof cardToken?.token === 'string' && cardToken.token.trim()) {
+                    const tokenInputs = Array.from(form.elements).filter((input) =>
+                        input.name === 'mercadopago_custom[token]'
+                        && input.tagName === 'INPUT'
+                        && ['hidden', 'text'].includes(input.type)
+                        && !input.matches(':disabled')
+                    );
+                    if (tokenInputs.length !== 1) {
+                        this.handleIncompletePayment();
                         return;
                     }
 
-                    document.querySelector('#cardTokenId').value = cardToken.token;
+                    tokenInputs[0].value = cardToken.token;
+                    if (!this.hasCompleteCustomPaymentData(checkoutForm)) {
+                        tokenInputs[0].value = '';
+                        this.handleIncompletePayment();
+                        return;
+                    }
                     this.mercado_pago_submit = true;
                     this.hasToken = true;
 
@@ -508,22 +763,38 @@ class MPEventHandler {
                         return false;
                     }
 
-                    jQuery('form.checkout').submit();
+                    checkoutForm.submit();
                 } else {
                     if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.emitGateBlockedMetric === 'function') {
                         CheckoutPage.emitGateBlockedMetric('CARD', 'mp_custom_card_validation', 'empty_token');
                     }
-                    throw new Error('cardToken is empty');
+                    this.cardForm.scrollToCardForm();
+                    this.handleIncompletePayment();
                 }
             })
-            .catch((error) => {
-                console.warn('Token creation error: ', error);
-                this.cardForm.scrollToCardForm();
-                this.cardForm.removeLoadSpinner();
-                this.cardForm.removeBlockOverlay();
+            .catch(() => {
+                if (this.isCurrentCustomTokenRequest(request)) {
+                    this.cardForm.scrollToCardForm();
+                    this.handleIncompletePayment();
+                }
+            })
+            .finally(() => {
+                if (this.customTokenRequest === request) {
+                    this.customTokenRequest = null;
+                }
             });
 
         return false;
+    }
+
+    isCurrentCustomTokenRequest(request) {
+        const checkoutForm = this.getCheckoutForm();
+        return this.customTokenRequest === request
+            && request.form.isConnected
+            && checkoutForm[0] === request.form
+            && this.cardForm.form === request.sdkForm
+            && this.isCustomPaymentMethodSelectedInForm(checkoutForm)
+            && this.getCheckoutType(checkoutForm) === 'custom';
     }
 
     setMercadoPagoSessionId() {
@@ -546,6 +817,7 @@ class MPEventHandler {
     }
 
     handlePaymentMethodSelected() {
+      if (!this.isCustomPaymentMethodSelectedInForm(this.getCheckoutForm())) this.invalidatePaymentPreparation();
       if (!this.isCheckoutCustomPaymentMethodSelected()) {
         if (this.cardForm.formMounted) {
           this.cardForm.form.unmount();
@@ -591,12 +863,13 @@ class MPEventHandler {
         // script triggered the event while our fetch was still pending). Otherwise the lock would
         // stay held until the request resolves, leaving the buy button unusable until then.
         this._validationCancelled = true;
+        this.customTokenRequest = null;
+        this.superTokenRequest = null;
         this._validationAbortController?.abort();
         this._validationAbortController = null;
         this.isValidating = false;
         this.hideValidationLoader();
-        this.hasToken = false;
-        this.mercado_pago_submit = false;
+        this.resetPaymentReadiness();
 
         this.cardForm.removeLoadSpinner();
         const { superTokenTriggerHandler } = this.getSuperTokenDeps();
@@ -652,7 +925,16 @@ class MPEventHandler {
     }
 
     handle3dsPayOrderFormSubmission() {
-        var serializedForm = jQuery('#order_review').serialize();
+        const checkoutForm = jQuery('#order_review');
+        const checkoutType = this.getCheckoutType(checkoutForm);
+        if (this.isCustomPaymentMethodSelectedInForm(checkoutForm)
+            && checkoutType !== 'wallet_button'
+            && !(checkoutType === 'super_token' ? this.hasCompleteSuperTokenPaymentData(checkoutForm)
+                : this.hasCompleteCustomPaymentData(checkoutForm))) {
+            this.handleIncompletePayment();
+            return false;
+        }
+        const serializedForm = checkoutForm.serialize();
 
         jQuery
             .post('#', serializedForm)
@@ -683,8 +965,7 @@ class MPEventHandler {
                     this.cardForm.removeLoadSpinner();
                     this.cardForm.form.unmount();
                     this.cardForm.initCardForm();
-                    this.hasToken = false;
-                    this.mercado_pago_submit = false;
+                    this.resetPaymentReadiness();
 
                     return;
                 }

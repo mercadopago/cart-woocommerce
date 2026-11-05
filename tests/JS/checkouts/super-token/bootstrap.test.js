@@ -26,8 +26,6 @@ jest.mock('@super-token/adapters/platform', () => ({
   InitializationHealthChecker: jest.fn().mockImplementation(() => ({ check: mockCheck })),
   CARD_FORM_MOUNTED_EVENT: 'mp_card_form_mounted',
   createDomainConfig: jest.fn(() => ({ paymentMethodsOrder: 'cards_first', copy: {}, thumbnails: {} })),
-  // Bundle/prod resolves the A/B variant here before composing; the wiring is unblocked once it resolves.
-  VariantConfigAdapter: jest.fn().mockImplementation(() => ({ resolve: jest.fn().mockResolvedValue('v2') })),
 }));
 
 jest.mock('@super-token/adapters/legacy/globalBridge', () => ({
@@ -56,9 +54,9 @@ describe('super-token/bootstrap wiring', () => {
     // The order+decorate seam is only published when the localized params are present.
     window.wc_mercadopago_supertoken_bundle_params = { site_id: 'MLB' };
     // Loading the module runs the synchronous wiring (finalizers + resilience layer) and kicks off
-    // the async A/B variant resolution; the order+decorate seam publishes after it resolves.
+    // the asynchronous v2.1 composition; the order+decorate seam publishes after it runs.
     require('@super-token/bootstrap');
-    // Flush the VariantConfigAdapter.resolve() microtask so composeWithVariant runs before asserting.
+    // Flush composition microtasks before checking the published runtime.
     await Promise.resolve();
     await Promise.resolve();
   });

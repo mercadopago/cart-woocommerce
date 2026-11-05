@@ -7,4 +7,3 @@ export type {
   RenderRowSession,
   CreditsContractParameters,
 } from './VariantViewPort';
-export type { VariantConfigPort } from './VariantConfigPort';

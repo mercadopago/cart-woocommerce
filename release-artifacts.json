@@ -18,7 +18,8 @@
         "build/ticket.block.asset.php",
         "build/ticket.block.js",
         "build/yape.block.asset.php",
-        "build/yape.block.js"
+        "build/yape.block.js",
+        "uninstall.php"
       ]
     },
     "package": {
@@ -35,16 +36,11 @@
         "build/pse.block.js",
         "build/super-token/bootstrap.ts.asset.php",
         "build/super-token/bootstrap.ts.js",
-        "build/super-token-v2/bootstrap.ts.asset.php",
-        "build/super-token-v2/bootstrap.ts.js",
-        "build/super-token-v2/index.php",
-        "build/super-token-v2.1/bootstrap.ts.asset.php",
-        "build/super-token-v2.1/bootstrap.ts.js",
-        "build/super-token-v2.1/index.php",
         "build/ticket.block.asset.php",
         "build/ticket.block.js",
         "build/yape.block.asset.php",
-        "build/yape.block.js"
+        "build/yape.block.js",
+        "uninstall.php"
       ]
     }
   }

@@ -14,8 +14,13 @@
  * chain from e-mail change to the TS reset flow.
  */
 
+/** Why Super Token stays off for the store: the plugin lacks the site's catalog (`outdated_plugin`). */
+export type SuperTokenBlock = { reason: 'outdated_plugin' };
+
 /** Subset of the legacy trigger handler the load orchestration drives. */
 export interface LoadSuperTokenSession {
+  getBlock(): SuperTokenBlock | null;
+  markBlockReported(): boolean;
   formatAmount(amount: string | null): string | null;
   setCurrentAmount(amount: string | null): void;
   currentAmount(): string | null;
@@ -35,6 +40,7 @@ export interface LoadSuperTokenSession {
 export interface LoadSuperTokenMetrics {
   resetOnAmountChange(): void;
   invalidAmount(): void;
+  outdatedPlugin(): void;
 }
 
 export interface LoadSuperTokenContext {
@@ -47,10 +53,20 @@ export class LoadSuperToken {
   async execute(ctx: LoadSuperTokenContext): Promise<void> {
     const { session, metrics, currentAmount } = ctx;
 
+    // MCO needs the plugin's es_CO catalog: otherwise the store stays on the Custom Checkout, through
+    // the same cancellation as an invalid amount, and reports why once per page.
+    if (session.getBlock()) {
+      session.cancelInvalidAmount();
+      if (session.markBlockReported()) {
+        metrics.outdatedPlugin();
+      }
+      return;
+    }
+
     const normalizedAmount = session.formatAmount(currentAmount);
     session.setCurrentAmount(normalizedAmount);
 
-    // MLC has no decimal places; other sites normalize to two.
+    // MLC and MCO have no decimal places; other sites normalize to two.
     if (normalizedAmount === null || !/^(?:0|[1-9]\d*)(?:\.\d{2})?$/.test(normalizedAmount) || !Number.isFinite(Number(normalizedAmount))) {
       session.cancelInvalidAmount();
       metrics.invalidAmount();

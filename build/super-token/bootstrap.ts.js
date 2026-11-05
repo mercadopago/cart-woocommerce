@@ -5,17 +5,15 @@
 /**
  * Shared contract for the Core Monitor POST payload.
  *
- * Both `CoreMonitorMetricsAdapter` and `VariantConfigAdapter` send metrics to
- * the same endpoint (`CORE_MONITOR_URL/{metricName}`) with the same schema.
- * Sharing the interface and the send function ensures the two callers never
- * diverge on structure or transport.
+ * `CoreMonitorMetricsAdapter` sends metrics to `CORE_MONITOR_URL/{metricName}`.
+ * The beacon transport remains available to installed integrations.
  */
 
 const CORE_MONITOR_URL = 'https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/big';
 /**
  * Send a metric to Core Monitor. Prefers `fetch` (used by the Super Token metrics
- * adapter which needs to wait for the response); falls back to `sendBeacon`
- * (fire-and-forget, used by the variant config adapter for A/B telemetry).
+ * adapter which needs to wait for the response); the optional beacon transport
+ * sends fire-and-forget telemetry. Transport failures never block checkout.
  */
 function sendToCoreMonitor(metricName, payload, transport = 'fetch') {
   const url = `${CORE_MONITOR_URL}/${metricName}`;
@@ -45,6 +43,13 @@ function sendToCoreMonitor(metricName, payload, transport = 'fetch') {
     // Intentionally swallow telemetry errors to avoid breaking checkout flow.
   }
 }
+;// ./assets/js/checkouts/super-token/adapters/platform/constants.ts
+/** Canonical Super Token experience and telemetry stamp (PSW-4853). */
+const SUPER_TOKEN_JS_VERSION = '1.2.12';
+const V21_VARIANT = 'v2.1';
+
+/** A/B experiment ended (PSW-4853): no assignment is reported, matching Melidata's convention. */
+const SUPER_TOKEN_AB_VARIANT_NOT_AVAILABLE = 'not_available';
 ;// ./assets/js/checkouts/super-token/adapters/platform/MelidataAdapter.ts
 /**
  * Platform adapter: emits Super Token error events to MeliData (RN-2).
@@ -197,39 +202,6 @@ class MelidataAdapter {
     }));
   }
 }
-;// ./assets/js/checkouts/super-token/adapters/platform/constants.ts
-/**
- * Single source of truth for the Super Token bundle's setup constants: variant names, the A/B
- * cookie, the injected JS version and the CDN location the A/B config is read from.
- *
- * Scope note: the loader (`assets/js/checkouts/super-token-loader.js`, a standalone CDN asset) and the PHP
- * gateway are separate runtimes that cannot import from this module — they keep their own minimal
- * copies of the values they need (documented as the single source for each runtime).
- */
-
-/**
- * Injected into the init telemetry as `js_version`. Kept in sync with the CDN bundle's version.
- */
-const SUPER_TOKEN_JS_VERSION = '1.2.11';
-const V2_VARIANT = 'v2';
-const V21_VARIANT = 'v2.1';
-
-/** Applied whenever the A/B resolution cannot produce a valid variant. */
-const SUPER_TOKEN_FALLBACK_VARIANT = V2_VARIANT;
-
-/** The only variants the runtime knows how to render; anything else falls back. */
-const SUPER_TOKEN_ALLOWED_VARIANTS = {
-  [V2_VARIANT]: true,
-  [V21_VARIANT]: true
-};
-
-/** Cookie the A/B assignment is remembered on (written by VariantConfigAdapter, read for metrics). */
-const SUPER_TOKEN_VARIANT_COOKIE = 'mp_st_variant';
-
-/** `v1` = production storage segment | `homol` = homologação. */
-const SUPER_TOKEN_BUNDLE_ENV = 'v1';
-const SUPER_TOKEN_STORAGE_BASE_URL = `https://http2.mlstatic.com/storage/${SUPER_TOKEN_BUNDLE_ENV}/mercadopago/woocommerce/scripts`;
-const SUPER_TOKEN_AB_CONFIG_URL = `${SUPER_TOKEN_STORAGE_BASE_URL}/config/super-token-variants.js`;
 ;// ./assets/js/checkouts/super-token/core/checkoutSession/ErrorClassification.ts
 /**
  * Single source of truth for Super Token error codes and the pure mapping from an
@@ -487,25 +459,6 @@ class CoreMonitorMetricsAdapter_CoreMonitorMetricsAdapter {
   getEnvironment() {
     return 'prod';
   }
-
-  // Reads the A/B experiment the loader set on the `mp_st_variant` cookie, so every metric
-  // carries which variant the buyer saw. Preserved 1:1 from the legacy `getAbVariant`:
-  // anything other than v2/v2.1 (including a missing cookie) reports 'unknown'.
-  getAbVariant() {
-    const match = typeof document !== 'undefined' ? document.cookie.match(new RegExp('(?:^|;\\s*)' + SUPER_TOKEN_VARIANT_COOKIE + '=([^;]+)')) : null;
-    // decodeURIComponent throws on a malformed cookie (e.g. a stray '%'); this runs inside
-    // sendMetric during checkout orchestration, so a bad cookie must not abort it. Guard like
-    // the legacy getAbVariant did and fall back to 'unknown'.
-    let variant = 'unknown';
-    if (match) {
-      try {
-        variant = decodeURIComponent(match[1]);
-      } catch {
-        variant = 'unknown';
-      }
-    }
-    return SUPER_TOKEN_ALLOWED_VARIANTS[variant] === true ? variant : 'unknown';
-  }
   buildPayload(value, message, errorCode = null) {
     const details = {
       site_id: this.SITE_ID,
@@ -513,7 +466,7 @@ class CoreMonitorMetricsAdapter_CoreMonitorMetricsAdapter {
       sdk_instance_id: this.getSdkInstanceId(),
       cust_id: this.CUST_ID,
       js_version: this.SUPER_TOKEN_JS_VERSION,
-      ab_variant: this.getAbVariant()
+      ab_variant: SUPER_TOKEN_AB_VARIANT_NOT_AVAILABLE
     };
     if (errorCode) {
       details.event = `${errorCode}`;
@@ -815,206 +768,6 @@ class CoreMonitorMetricsAdapter_CoreMonitorMetricsAdapter {
     }));
   }
 }
-;// ./assets/js/checkouts/super-token/adapters/platform/VariantConfigAdapter.ts
-
-
-
-/**
- * Platform adapter: resolves the A/B variant string (RN-4), porting the selection
- * logic of `super-token-loader.js` into the hexagonal tree. It reads the remote
- * config, cookie and weighted assignment and returns the logical variant — it does
- * NOT load the CDN bundle nor pick a view (that stays with the loader today and
- * moves to the single-bundle runtime resolution in TASK-008/013, ADR-005).
- *
- * Behavior preserved 1:1, including the `source:*` telemetry and the cookie as a
- * resilience fallback. The only consolidation: the loader had two error layers
- * (sync try/catch + async .catch); with `await` in one try/catch they collapse into
- * a single fallback path emitting the same load-failure metric.
- *
- * TODO: the selection logic (fetch → kill-switch → cookie → weighted → fallback) is
- * complex. Consider extracting it into a dedicated VariantSelectionStrategy or
- * simplifying via a state machine in a future task.
- */
-class VariantConfigAdapter_VariantConfigAdapter {
-  // Variant names, the A/B cookie, the CDN config URL and the allowed set live in
-  // config/constants.ts (single source shared with bootstrap and the metrics adapter). Only the
-  // selection-timing knobs and metric names below are internal to this adapter.
-  SUPER_TOKEN_VARIANT_COOKIE_DEFAULT_TTL_DAYS = 30;
-  SUPER_TOKEN_CONFIG_FETCH_TIMEOUT_MS = 3000;
-  SUPER_TOKEN_FETCH_FAILED_COOKIE_TTL_DAYS = 2 / 24;
-  METRIC_LOAD_SUPER_TOKEN_BUNDLE = 'load_super_token_bundle';
-  METRIC_FETCH_AB_CONFIG = 'fetch_ab_config';
-  METRIC_FETCH_AB_CONFIG_TIME = 'fetch_ab_config_loading_time';
-  METRIC_SUPER_TOKEN_AB_VARIANT = 'super_token_ab_variant';
-  METRIC_STATUS_FAILURE = 'false';
-  MILLISECONDS_PER_DAY = 864e5;
-  // Params are injected by the composition root (createPlatformAdapters) so this
-  // adapter stays free of `window.*` reads; the fallback keeps it usable standalone.
-  constructor(params) {
-    var _ref;
-    this.params = (_ref = params !== null && params !== void 0 ? params : window.wc_mercadopago_woocommerce_scripts_params) !== null && _ref !== void 0 ? _ref : {};
-  }
-  async resolve() {
-    try {
-      const cachedVariant = this.getVariantCookie();
-
-      // Always fetch config so the kill switch (active:false) propagates immediately
-      // to all visitors, including returning ones with a valid cookie.
-      const abConfig = await this.fetchAbConfig(SUPER_TOKEN_AB_CONFIG_URL, this.SUPER_TOKEN_CONFIG_FETCH_TIMEOUT_MS);
-      if (!abConfig) {
-        // Fetch failed — use cookie as resilience fallback to preserve user experience.
-        if (cachedVariant && this.isAllowed(cachedVariant)) {
-          this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, cachedVariant, 'source:cookie');
-          return cachedVariant;
-        }
-        this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, SUPER_TOKEN_FALLBACK_VARIANT, 'source:fetch_failed');
-        this.setVariantCookie('fetch_failed', this.SUPER_TOKEN_FETCH_FAILED_COOKIE_TTL_DAYS);
-        return SUPER_TOKEN_FALLBACK_VARIANT;
-      }
-      if (typeof abConfig.active !== 'boolean') {
-        // active absent, null, or wrong type — malformed config, not a kill switch
-        this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, SUPER_TOKEN_FALLBACK_VARIANT, 'source:config_invalid');
-        return SUPER_TOKEN_FALLBACK_VARIANT;
-      }
-      if (!abConfig.active) {
-        // active === false — Kill switch: clears cookie and returns default for ALL visitors.
-        this.clearVariantCookie();
-        const defaultVariant = abConfig.default && this.isAllowed(abConfig.default) ? abConfig.default : SUPER_TOKEN_FALLBACK_VARIANT;
-        this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, defaultVariant, 'source:kill_switch');
-        return defaultVariant;
-      }
-      if (!abConfig.variants || typeof abConfig.variants !== 'object') {
-        this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, SUPER_TOKEN_FALLBACK_VARIANT, 'source:config_invalid');
-        return SUPER_TOKEN_FALLBACK_VARIANT;
-      }
-
-      // active:true — use existing valid cookie without re-assigning the variant.
-      if (cachedVariant && this.isAllowed(cachedVariant)) {
-        this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, cachedVariant, 'source:cookie');
-        return cachedVariant;
-      }
-
-      // No cookie or unknown/corrupted variant — clear and assign a new one.
-      if (cachedVariant) {
-        this.clearVariantCookie();
-      }
-      const assignedVariant = this.selectVariantByWeight(abConfig.variants);
-      if (!this.isAllowed(assignedVariant)) {
-        this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, SUPER_TOKEN_FALLBACK_VARIANT, 'source:config_invalid');
-        return SUPER_TOKEN_FALLBACK_VARIANT;
-      }
-      const cookieTtlDays = abConfig.cookie_ttl_days && abConfig.cookie_ttl_days > 0 ? abConfig.cookie_ttl_days : this.SUPER_TOKEN_VARIANT_COOKIE_DEFAULT_TTL_DAYS;
-      this.setVariantCookie(assignedVariant, cookieTtlDays);
-      this.trackMetric(this.METRIC_SUPER_TOKEN_AB_VARIANT, assignedVariant, 'source:assigned');
-      return assignedVariant;
-    } catch (error) {
-      this.trackMetric(this.METRIC_LOAD_SUPER_TOKEN_BUNDLE, this.METRIC_STATUS_FAILURE, toTelemetryErrorMessage(error, 'async_error'));
-      return SUPER_TOKEN_FALLBACK_VARIANT;
-    }
-  }
-  isAllowed(variant) {
-    return SUPER_TOKEN_ALLOWED_VARIANTS[variant] === true;
-  }
-  buildPayload(value, message) {
-    const p = this.params;
-    return {
-      value: `${value}`,
-      message,
-      plugin_version: p.plugin_version || '',
-      platform: {
-        name: 'woocommerce',
-        uri: p.theme || '',
-        version: p.platform_version || '',
-        url: `${window.location.origin}${window.location.pathname}`
-      },
-      details: {
-        site_id: p.site_id || '',
-        environment: 'prod',
-        cust_id: p.cust_id || ''
-      }
-    };
-  }
-  trackMetric(metricName, value, message) {
-    sendToCoreMonitor(metricName, this.buildPayload(value, message), 'beacon');
-  }
-  getVariantCookie() {
-    const cookiePattern = new RegExp('(^|;\\s*)' + SUPER_TOKEN_VARIANT_COOKIE + '=([^;]+)');
-    const cookieMatch = document.cookie.match(cookiePattern);
-    return cookieMatch ? cookieMatch[2] : null;
-  }
-  setVariantCookie(variantValue, ttlInDays) {
-    try {
-      const expiration = new Date(Date.now() + ttlInDays * this.MILLISECONDS_PER_DAY).toUTCString();
-      document.cookie = SUPER_TOKEN_VARIANT_COOKIE + '=' + variantValue + ';expires=' + expiration + ';path=/;SameSite=Lax;Secure';
-    } catch (_) {
-      // Intentionally swallow cookie errors to avoid breaking checkout flow.
-    }
-  }
-  clearVariantCookie() {
-    document.cookie = SUPER_TOKEN_VARIANT_COOKIE + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax;Secure';
-  }
-  selectVariantByWeight(variants) {
-    const variantNames = Object.keys(variants);
-    const totalWeight = variantNames.reduce((weightSum, variantName) => weightSum + (variants[variantName].weight || 0), 0);
-    if (totalWeight <= 0) {
-      return SUPER_TOKEN_FALLBACK_VARIANT;
-    }
-    const randomPoint = Math.random() * totalWeight;
-    let accumulatedWeight = 0;
-    for (let i = 0; i < variantNames.length; i++) {
-      accumulatedWeight += variants[variantNames[i]].weight || 0;
-      if (randomPoint < accumulatedWeight) {
-        return variantNames[i];
-      }
-    }
-    return variantNames[0];
-  }
-  fetchAbConfig(configUrl, timeoutMs) {
-    const fetchStartTime = Date.now();
-    let hasFetchTimedOut = false;
-    const fetchTimeoutPromise = new Promise(resolve => {
-      setTimeout(() => {
-        hasFetchTimedOut = true;
-        resolve(null);
-      }, timeoutMs);
-    });
-    const fetchConfigPromise = fetch(configUrl, {
-      cache: 'no-cache'
-    }).then(response => {
-      if (!response.ok) {
-        if (!hasFetchTimedOut) {
-          this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'error', 'http:' + response.status);
-        }
-        return null;
-      }
-      return response.json().then(parsedConfig => {
-        // Guard: if timeout already fired, discard result to avoid
-        // emitting both 'timeout' and 'success' metrics for the same request.
-        if (hasFetchTimedOut) return null;
-        const elapsedMs = Date.now() - fetchStartTime;
-        this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'success', 'success');
-        this.trackMetric(this.METRIC_FETCH_AB_CONFIG_TIME, elapsedMs, '');
-        return parsedConfig;
-      }).catch(error => {
-        if (!hasFetchTimedOut) {
-          this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'error', toTelemetryErrorMessage(error, 'invalid_json'));
-        }
-        return null;
-      });
-    }).catch(error => {
-      if (!hasFetchTimedOut) {
-        this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'error', toTelemetryErrorMessage(error, 'network_or_cors'));
-      }
-      return null;
-    });
-    return Promise.race([fetchConfigPromise, fetchTimeoutPromise]).then(resolvedConfig => {
-      if (hasFetchTimedOut) {
-        this.trackMetric(this.METRIC_FETCH_AB_CONFIG, 'timeout', 'elapsed_ms:' + (Date.now() - fetchStartTime));
-      }
-      return resolvedConfig;
-    });
-  }
-}
 ;// ./assets/js/checkouts/super-token/adapters/platform/createDomainConfig.ts
 /**
  * Composition-root mapper: turns the localized store params
@@ -1029,14 +782,13 @@ class VariantConfigAdapter_VariantConfigAdapter {
  * Grounded in `getSuperTokenLocalizeData()` (CustomGateway.php) and the legacy controller reads.
  */
 
-function createDomainConfig(params, variant) {
+function createDomainConfig(params) {
   var _params$mercado_pago_, _ref, _params$interest_free, _params$interest_rate, _params$effective_tot, _params$iof_mlb_text, _params$borrowed_amou, _params$per_month, _params$per_year, _params$cat_mlm_text, _params$no_iva_text, _params$tna_mlm_text, _params$system_amorti, _params$cftea_mla_tex, _params$tna_mla_text, _params$tea_mla_text, _params$fixed_rate_te, _params$mp_logo_blue_, _params$mp_logo_dark_;
   return {
     siteId: params.site_id.toUpperCase(),
     intl: params.intl,
     currency: params.currency,
     paymentMethodsOrder: params.payment_methods_order,
-    variant,
     // This mapper is the domain's boundary against the localized store params. Older plugin
     // versions still served the CDN bundle (< 8.8.0 for saved-methods/logo keys) may omit some
     // keys, so coalesce here to keep a literal "undefined" out of the rendered UI. The core
@@ -1086,7 +838,6 @@ function createDomainConfig(params, variant) {
 
 
 
-
 /** The platform edge the domain (TASK-006) is built on. */
 
 const PARAMS_FALLBACK = {
@@ -1109,7 +860,7 @@ const PARAMS_FALLBACK = {
  * success with useless telemetry.
  */
 function createPlatformAdapters(options = {}) {
-  var _options$sdk, _options$superTokenJs, _ref, _options$params, _ref2, _options$scriptsParam;
+  var _options$sdk, _options$superTokenJs, _ref, _options$params;
   const sdk = (_options$sdk = options.sdk) !== null && _options$sdk !== void 0 ? _options$sdk : window.mpSdkInstance;
   if (!sdk) {
     // Fail-visible: the MP JS SDK is required to build the payment adapter. Casting
@@ -1118,12 +869,10 @@ function createPlatformAdapters(options = {}) {
   }
   const superTokenJsVersion = (_options$superTokenJs = options.superTokenJsVersion) !== null && _options$superTokenJs !== void 0 ? _options$superTokenJs : null;
   const params = (_ref = (_options$params = options.params) !== null && _options$params !== void 0 ? _options$params : window.wc_mercadopago_supertoken_bundle_params) !== null && _ref !== void 0 ? _ref : PARAMS_FALLBACK;
-  const scriptsParams = (_ref2 = (_options$scriptsParam = options.scriptsParams) !== null && _options$scriptsParam !== void 0 ? _options$scriptsParam : window.wc_mercadopago_woocommerce_scripts_params) !== null && _ref2 !== void 0 ? _ref2 : {};
   return {
     paymentSdk: new MpSdkAdapter(sdk),
     metrics: new CoreMonitorMetricsAdapter(sdk, superTokenJsVersion, params),
-    dom: new WooDomAdapter(),
-    variantConfig: new VariantConfigAdapter(scriptsParams)
+    dom: new WooDomAdapter()
   };
 }
 ;// ./assets/js/checkouts/super-token/adapters/platform/SdkReadinessWatcher.ts
@@ -1357,7 +1106,6 @@ class InitializationHealthChecker {
   }
 }
 ;// ./assets/js/checkouts/super-token/adapters/platform/index.ts
-
 
 
 
@@ -1805,6 +1553,8 @@ function createFetchAndRenderMetrics(metrics) {
  * chain from e-mail change to the TS reset flow.
  */
 
+/** Why Super Token stays off for the store: the plugin lacks the site's catalog (`outdated_plugin`). */
+
 /** Subset of the legacy trigger handler the load orchestration drives. */
 
 /** Subset of `MPSuperTokenMetrics` emitted by the load orchestration. */
@@ -1816,10 +1566,20 @@ class LoadSuperToken {
       metrics,
       currentAmount
     } = ctx;
+
+    // MCO needs the plugin's es_CO catalog: otherwise the store stays on the Custom Checkout, through
+    // the same cancellation as an invalid amount, and reports why once per page.
+    if (session.getBlock()) {
+      session.cancelInvalidAmount();
+      if (session.markBlockReported()) {
+        metrics.outdatedPlugin();
+      }
+      return;
+    }
     const normalizedAmount = session.formatAmount(currentAmount);
     session.setCurrentAmount(normalizedAmount);
 
-    // MLC has no decimal places; other sites normalize to two.
+    // MLC and MCO have no decimal places; other sites normalize to two.
     if (normalizedAmount === null || !/^(?:0|[1-9]\d*)(?:\.\d{2})?$/.test(normalizedAmount) || !Number.isFinite(Number(normalizedAmount))) {
       session.cancelInvalidAmount();
       metrics.invalidAmount();
@@ -1867,6 +1627,13 @@ class LegacyLoadOrchestrationSession {
   constructor(triggerHandler) {
     this.triggerHandler = triggerHandler;
   }
+  getBlock() {
+    var _this$triggerHandler$;
+    return (_this$triggerHandler$ = this.triggerHandler.getBlock?.()) !== null && _this$triggerHandler$ !== void 0 ? _this$triggerHandler$ : null;
+  }
+  markBlockReported() {
+    return this.triggerHandler.markBlockReported?.() === true;
+  }
   formatAmount(amount) {
     return this.triggerHandler.mpSuperTokenAuthenticator.formatAmount(amount);
   }
@@ -1913,6 +1680,7 @@ class LegacyLoadOrchestrationSession {
 /** Legacy `sendMetric` name from super-token-trigger-handler.js:294. */
 const RESET_ON_AMOUNT_CHANGE_METRIC = 'super_token_reset_on_amount_change';
 const SKIPPED_INVALID_AMOUNT_METRIC = 'super_token_skipped_invalid_amount';
+const SKIPPED_OUTDATED_PLUGIN_METRIC = 'super_token_skipped_outdated_plugin';
 
 /** The subset of the legacy `MPSuperTokenMetrics` the load orchestration reports through. */
 
@@ -1923,7 +1691,8 @@ const SKIPPED_INVALID_AMOUNT_METRIC = 'super_token_skipped_invalid_amount';
 function createLoadSuperTokenMetrics(metrics) {
   return {
     resetOnAmountChange: () => metrics.sendMetric(RESET_ON_AMOUNT_CHANGE_METRIC, 'true', ''),
-    invalidAmount: () => metrics.sendMetric(SKIPPED_INVALID_AMOUNT_METRIC, 'true', '')
+    invalidAmount: () => metrics.sendMetric(SKIPPED_INVALID_AMOUNT_METRIC, 'true', ''),
+    outdatedPlugin: () => metrics.sendMetric(SKIPPED_OUTDATED_PLUGIN_METRIC, 'true', '')
   };
 }
 ;// ./assets/js/checkouts/super-token/useCases/CancelLoad.ts
@@ -3623,39 +3392,6 @@ function publishLegacyDelegationSeams() {
     ensureEmailListenerRegistered
   });
 }
-;// ./assets/js/checkouts/super-token/adapters/view/shared/dom.ts
-/**
- * Tiny declarative DOM builder shared by the variant views. Keeps rendering XSS-safe by
- * construction: text is set via `textContent` and attributes via `setAttribute`, never
- * `innerHTML`. Lets the views describe the element tree instead of imperatively creating,
- * configuring and appending each node.
- */
-
-function el(tag, options = {}) {
-  const node = document.createElement(tag);
-  if (options.classes?.length) {
-    node.classList.add(...options.classes);
-  }
-  if (options.text !== undefined) {
-    node.textContent = options.text;
-  }
-  if (options.attrs) {
-    Object.entries(options.attrs).forEach(([name, value]) => node.setAttribute(name, value));
-  }
-  if (options.dataset) {
-    Object.entries(options.dataset).forEach(([key, value]) => {
-      if (value !== undefined) {
-        node.dataset[key] = value;
-      }
-    });
-  }
-  options.children?.forEach(child => {
-    if (child) {
-      node.appendChild(child);
-    }
-  });
-  return node;
-}
 ;// ./assets/js/checkouts/super-token/core/constants.ts
 /**
  * Domain invariants for the Super Token checkout — the literal values the business
@@ -3683,6 +3419,9 @@ const ARGENTINA_ACCRONYM = 'MLA';
 
 /** Sites whose installment titles carry the third-party bank-interest asterisk (RN-5). */
 const COUNTRIES_WITH_BANK_INTEREST_DISCLAIMER = ['MCO', 'MPE', 'MLC'];
+
+/** Sites whose amounts have no decimal fraction (CLP, COP): shown and sent to the SDK as integers. */
+const SITES_WITHOUT_DECIMAL_AMOUNTS = ['MLC', 'MCO'];
 
 /** Sites whose Mercado Pago credit-card icon is the blue variant; all others use dark (RN-7). */
 const MP_CARD_BLUE_SITES = ['MLA', 'MLM'];
@@ -3728,6 +3467,39 @@ const paymentMethodIdentifier = paymentMethod => {
   const lastFourDigits = 'card' in paymentMethod ? (_paymentMethod$card$c = paymentMethod.card?.card_number?.last_four_digits) !== null && _paymentMethod$card$c !== void 0 ? _paymentMethod$card$c : '' : '';
   return `${paymentMethod.id}${lastFourDigits}`;
 };
+;// ./assets/js/checkouts/super-token/adapters/view/shared/dom.ts
+/**
+ * Tiny declarative DOM builder shared by the variant views. Keeps rendering XSS-safe by
+ * construction: text is set via `textContent` and attributes via `setAttribute`, never
+ * `innerHTML`. Lets the views describe the element tree instead of imperatively creating,
+ * configuring and appending each node.
+ */
+
+function el(tag, options = {}) {
+  const node = document.createElement(tag);
+  if (options.classes?.length) {
+    node.classList.add(...options.classes);
+  }
+  if (options.text !== undefined) {
+    node.textContent = options.text;
+  }
+  if (options.attrs) {
+    Object.entries(options.attrs).forEach(([name, value]) => node.setAttribute(name, value));
+  }
+  if (options.dataset) {
+    Object.entries(options.dataset).forEach(([key, value]) => {
+      if (value !== undefined) {
+        node.dataset[key] = value;
+      }
+    });
+  }
+  options.children?.forEach(child => {
+    if (child) {
+      node.appendChild(child);
+    }
+  });
+  return node;
+}
 ;// ./assets/js/checkouts/super-token/adapters/view/shared/styles.ts
 /**
  * CSS class names shared by both variant views — the saved-method row and the list
@@ -4640,113 +4412,6 @@ function buildTypedRow(paymentMethod, deps, presentation, context) {
     }
   }
 }
-;// ./assets/js/checkouts/super-token/adapters/view/v2/styles.ts
-/** CSS classes used only by the v2 view (the single global list header). */
-const V2_STYLES = {
-  PAYMENT_METHODS_LIST_HEADER: 'mp-payment-methods-header',
-  PAYMENT_METHODS_LIST_HEADER_LOGO: 'mp-payment-methods-header-logo'
-};
-;// ./assets/js/checkouts/super-token/adapters/view/v2/SavedCardsView.ts
-/**
- * v2 saved-methods rendering: a single flat list with one global header (no e-mail, no
- * grouped blocks). Ported from the legacy v2 `organizePaymentMethodsElements` +
- * `addPaymentMethodsListHeader`.
- */
-
-
-
-
-
-/** v2 row seam: no Mercado Pago credit-card special case, no account-money row class. */
-const V2_ROW_PRESENTATION = {
-  mercadoPagoCreditCard: () => null,
-  accountMoneyRowClasses: () => []
-};
-class V2SavedCardsView {
-  constructor(deps) {
-    this.deps = deps;
-  }
-  render(context) {
-    const {
-      container,
-      paymentMethods
-    } = context;
-    // Build each row through the shared per-type dispatch so v2 wires selection (and card
-    // installments / credits) exactly like v2.1, differing only in the flat-list chrome below.
-    const buildRow = paymentMethod => buildTypedRow(paymentMethod, this.deps, V2_ROW_PRESENTATION, context);
-    // Insert each row at the top in reverse so the first method ends up first, then prepend the
-    // single list header above them all (faithful to the legacy insert order).
-    let renderedRows = 0;
-    [...paymentMethods].reverse().forEach(paymentMethod => {
-      const row = buildRow(paymentMethod);
-      if (row) {
-        container.insertBefore(row, container.firstChild);
-        renderedRows += 1;
-      }
-    });
-    if (renderedRows > 0) {
-      container.insertBefore(this.buildListHeader(), container.firstChild);
-    }
-  }
-  reset(container) {
-    container.querySelector(`.${V2_STYLES.PAYMENT_METHODS_LIST_HEADER}`)?.remove();
-  }
-  buildListHeader() {
-    return el('header', {
-      classes: [V2_STYLES.PAYMENT_METHODS_LIST_HEADER],
-      children: [el('span', {
-        text: this.deps.copy.paymentMethodsListText
-      }), el('img', {
-        classes: [V2_STYLES.PAYMENT_METHODS_LIST_HEADER_LOGO],
-        attrs: {
-          alt: 'Mercado Pago',
-          src: this.deps.thumbnails.newMpLogoPath
-        }
-      })]
-    });
-  }
-}
-;// ./assets/js/checkouts/super-token/adapters/view/v2/AccountMoneyDecoration.ts
-/**
- * v2 has no account-money selection decoration — the balance line is a v2.1-only feature.
- * Both hooks are intentional no-ops so the checkout orchestrator can call them uniformly
- * without branching on the variant.
- */
-class V2AccountMoneyDecoration {
-  decorate() {
-    // no-op: v2 shows no account-money balance line
-  }
-  clear() {
-    // no-op: v2 has nothing to undo
-  }
-}
-;// ./assets/js/checkouts/super-token/adapters/view/v2/V2View.ts
-/**
- * The v2 variant view: composes the flat-list saved-cards view with the no-op
- * account-money decoration. Implements VariantViewPort by delegation (never inheritance —
- * v2.1 must not extend v2, ADR-001).
- */
-
-
-
-class V2View {
-  constructor(deps) {
-    this.savedCardsView = new V2SavedCardsView(deps);
-    this.accountMoneyDecoration = new V2AccountMoneyDecoration();
-  }
-  renderSavedPaymentMethods(context) {
-    this.savedCardsView.render(context);
-  }
-  decorateSelection() {
-    this.accountMoneyDecoration.decorate();
-  }
-  clearSelectionDecoration() {
-    this.accountMoneyDecoration.clear();
-  }
-  reset(container) {
-    this.savedCardsView.reset(container);
-  }
-}
 ;// ./assets/js/checkouts/super-token/adapters/view/v2.1/styles.ts
 /** CSS classes used only by the v2.1 view (grouped blocks + account-money decoration). */
 const V21_STYLES = {
@@ -4839,9 +4504,9 @@ class V21SavedCardsView {
     container.querySelectorAll(`.${V21_STYLES.BLOCK}`).forEach(block => block.remove());
   }
 
-  // Per-type row factory: delegates to the shared dispatch so v2.1 and v2 build the identical
-  // interactive row for a given method type. Only the v2.1 chrome (grouped blocks, e-mail header)
-  // lives here; the row itself (presentation + selection wiring + card/credits details) is shared.
+  // Per-type row factory: delegates interactive rows to the shared dispatch.
+  // Grouped blocks and the e-mail header live here; row presentation, selection wiring
+  // and card/credits details stay in the shared builders.
   rowFactory(context) {
     return paymentMethod => buildTypedRow(paymentMethod, this.deps, this.rowPresentation, context);
   }
@@ -5070,25 +4735,6 @@ class V21View {
   reset(container) {
     this.savedCardsView.reset(container);
   }
-}
-;// ./assets/js/checkouts/super-token/adapters/view/VariantViewFactory.ts
-/**
- * The single place that maps a resolved A/B variant string to its concrete view (RN-4).
- * An unknown variant falls back to v2 — the safe baseline. This is the only variant
- * decision in the tree; consumers depend on VariantViewPort, never on the string.
- */
-
-
-
-const FALLBACK_VARIANT = 'v2';
-const VARIANT_VIEWS = {
-  v2: deps => new V2View(deps),
-  'v2.1': deps => new V21View(deps)
-};
-function createVariantView(variant, deps) {
-  var _VARIANT_VIEWS$varian;
-  const create = (_VARIANT_VIEWS$varian = VARIANT_VIEWS[variant]) !== null && _VARIANT_VIEWS$varian !== void 0 ? _VARIANT_VIEWS$varian : VARIANT_VIEWS[FALLBACK_VARIANT];
-  return create(deps);
 }
 ;// ./assets/js/checkouts/super-token/adapters/view/createVariantViewDeps.ts
 /**
@@ -6504,7 +6150,7 @@ class SuperTokenAuthenticator {
   AUTHORIZED_PSEUDOTOKEN_ELEMENT_ID = 'authorized_pseudotoken';
   AUTHENTICATOR_VERSION = 2;
   DEFAULT_AMOUNT_DECIMAL_PLACES = 2;
-  MLC_AMOUNT_DECIMAL_PLACES = 0;
+  INTEGER_AMOUNT_DECIMAL_PLACES = 0;
   amountUsed = null;
   emailUsed = null;
   authenticator = null;
@@ -6560,16 +6206,19 @@ class SuperTokenAuthenticator {
     });
     if (!/^\d+(?:\.\d+)?$/.test(normalizedValue)) return null;
     const value = Number(normalizedValue);
-    const decimalPlaces = this.siteId === CHILE_ACCRONYM ? this.MLC_AMOUNT_DECIMAL_PLACES : this.DEFAULT_AMOUNT_DECIMAL_PLACES;
+    const decimalPlaces = this.hasIntegerAmounts() ? this.INTEGER_AMOUNT_DECIMAL_PLACES : this.DEFAULT_AMOUNT_DECIMAL_PLACES;
     if (!Number.isFinite(value)) return null;
     const formatted = value.toFixed(decimalPlaces);
     return this.isNormalizedAmount(formatted) ? formatted : null;
   }
 
-  // MLC has no decimal places; other sites use exactly two.
+  // MLC and MCO have no decimal places; other sites use exactly two.
   isNormalizedAmount(amount) {
-    const normalizedPattern = this.siteId === CHILE_ACCRONYM ? /^(?:0|[1-9]\d*)$/ : /^(?:0|[1-9]\d*)\.\d{2}$/;
+    const normalizedPattern = this.hasIntegerAmounts() ? /^(?:0|[1-9]\d*)$/ : /^(?:0|[1-9]\d*)\.\d{2}$/;
     return normalizedPattern.test(amount) && Number.isFinite(Number(amount));
+  }
+  hasIntegerAmounts() {
+    return SITES_WITHOUT_DECIMAL_AMOUNTS.includes(this.siteId);
   }
   async buildAuthenticator(amount, buyerEmail) {
     if (amount === null || !this.isNormalizedAmount(amount)) {
@@ -6804,6 +6453,7 @@ class SuperTokenTriggerHandler {
   customHandlerMissingReportedOnReset = false;
   loadGeneration = 0;
   cacheMetricsDispatched = false;
+  blockReported = false;
   savedInstallments = null;
   loadSuperTokenUseCase = new LoadSuperToken();
   fetchAndRenderUseCase = new FetchAndRenderPaymentMethods();
@@ -6812,13 +6462,26 @@ class SuperTokenTriggerHandler {
   restorePreloadedUseCase = new RestorePreloadedPaymentMethod();
   resetFlowUseCase = new ResetFlow();
   ensureEmailListenerUseCase = new EnsureEmailListenerRegistered();
-  constructor(mpSuperTokenAuthenticator, wcEmailListener, mpSuperTokenPaymentMethods, mpSuperTokenErrorHandler, mpSuperTokenMetrics, currentUserEmail) {
+  constructor(mpSuperTokenAuthenticator, wcEmailListener, mpSuperTokenPaymentMethods, mpSuperTokenErrorHandler, mpSuperTokenMetrics, currentUserEmail,
+  // Set when Super Token cannot serve the site: MCO without es_CO, or MCO outside v2.1.
+  block = null) {
     this.mpSuperTokenAuthenticator = mpSuperTokenAuthenticator;
     this.wcEmailListener = wcEmailListener;
     this.mpSuperTokenPaymentMethods = mpSuperTokenPaymentMethods;
     this.mpSuperTokenErrorHandler = mpSuperTokenErrorHandler;
     this.mpSuperTokenMetrics = mpSuperTokenMetrics;
     this.currentUserEmail = currentUserEmail;
+    this.block = block;
+  }
+  getBlock() {
+    return this.block;
+  }
+
+  /** True only on the first call, so the skip metric is sent once per page, not on every refresh. */
+  markBlockReported() {
+    if (this.blockReported) return false;
+    this.blockReported = true;
+    return true;
   }
   hasLastException() {
     return !!this.getLastException();
@@ -6949,7 +6612,18 @@ class SuperTokenDebounce {
     };
   }
 }
+;// ./assets/js/checkouts/super-token/adapters/platform/localizedFlag.ts
+/**
+ * Boolean flags the plugin sends through `wp_localize_script()`. WordPress stringifies scalar
+ * values, so PHP `true` reaches JavaScript as `'1'` and `false` as an empty string; `true` and `1`
+ * still appear when a test or the self-construct entry passes the params directly.
+ */
+function isLocalizedFlagEnabled(value) {
+  return value === true || value === 1 || value === '1';
+}
 ;// ./assets/js/checkouts/super-token/adapters/platform/resolveMlcCopy.ts
+
+
 /**
  * Chilean copy for plugin versions released before the plugin catalogs carried it (CDN 1.2.8).
  * The CDN bundle is shared by every installed plugin version, so it stays until those versions are gone.
@@ -7007,8 +6681,7 @@ const MLC_COPY = {
  * deliver the store-language copy for every site, so the bundle must leave it untouched.
  */
 function usesLegacyMlcCopy(params) {
-  const storeLanguageCopyEnabled = params.store_language_copy === true || params.store_language_copy === 1 || params.store_language_copy === '1';
-  return !storeLanguageCopyEnabled && typeof params.site_id === 'string' && params.site_id.toUpperCase() === 'MLC';
+  return !isLocalizedFlagEnabled(params.store_language_copy) && typeof params.site_id === 'string' && params.site_id.toUpperCase() === 'MLC';
 }
 
 /** Returns the same object whenever the legacy override does not apply. */
@@ -7042,6 +6715,34 @@ function resolveMlcCopy(params) {
       }
     }
   };
+}
+;// ./assets/js/checkouts/super-token/adapters/platform/requiresColombianCatalog.ts
+
+
+/**
+ * True only for MCO on a plugin that does not send `mco_store_language_copy`. The CDN
+ * bundle is shared by every installed plugin version, and plugins without the `es_CO` catalog (up to
+ * 8.9.7) would show the Argentine or Mexican copy ("Meses") to Colombian buyers, so those stores stay
+ * on the Custom Checkout. Same pattern as `store_language_copy` for MLC (see resolveMlcCopy), except
+ * that the bundle carries no Colombian copy: MCO launched only with plugins that ship it.
+ */
+function requiresColombianCatalog(params) {
+  return !isLocalizedFlagEnabled(params.mco_store_language_copy) && typeof params.site_id === 'string' && params.site_id.toUpperCase() === 'MCO';
+}
+;// ./assets/js/checkouts/super-token/adapters/platform/resolveSuperTokenBlock.ts
+
+/**
+ * Why Super Token stays off for this store, or null when it can load. Only the catalog gates it:
+ * every store receives the canonical v2.1 runtime since the A/B test ended (PSW-4853), so there is
+ * no variant left to check.
+ */
+function resolveSuperTokenBlock(params) {
+  if (requiresColombianCatalog(params)) {
+    return {
+      reason: 'outdated_plugin'
+    };
+  }
+  return null;
 }
 ;// ./assets/js/checkouts/super-token/adapters/platform/storeLanguage.ts
 /** The language a store is expected to use for each credential site. */
@@ -7118,10 +6819,16 @@ class PaymentMethodCatalog {
 
 
 const formatCurrency = (value, options) => {
+  // Intl already drops CLP decimals, but formats COP with two; both sites show integer amounts.
+  const fractionDigits = SITES_WITHOUT_DECIMAL_AMOUNTS.includes(options.siteId) ? {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  } : {};
   const formatter = new Intl.NumberFormat(options.intl, {
     currency: options.currency,
     style: 'currency',
-    currencyDisplay: 'narrowSymbol'
+    currencyDisplay: 'narrowSymbol',
+    ...fractionDigits
   });
   const formattedValue = formatter.format(value);
   if (options.siteId === MEXICO_ACCRONYM) {
@@ -7276,11 +6983,7 @@ class CreditCardMethod extends BasePaymentMethodWithInstallments {
   decorate(paymentMethod) {
     var _paymentMethod$issuer;
     if (!PaymentMethodClassifier_isCreditCard(paymentMethod)) return paymentMethod;
-
-    // Only the v2.1 variant gives a Mercado Pago credit card the special MP name + blue/dark icon
-    // (RN-7); v2 treats every credit card as a regular issuer card. Gating it on the variant keeps
-    // the v2.1 presentation out of the v2 A/B cohort (which otherwise leaked via the mutated thumbnail).
-    if (this.config.variant === 'v2.1' && isMercadoPagoCreditCard(paymentMethod)) {
+    if (isMercadoPagoCreditCard(paymentMethod)) {
       paymentMethod.thumbnail = this.mercadoPagoCardThumbnail() || paymentMethod.thumbnail;
       paymentMethod.name = this.config.copy.mercadoPagoCreditCardName || paymentMethod.name;
       return paymentMethod;
@@ -7847,7 +7550,7 @@ function refreshRenderedCopy(previous, localized) {
  * `window.*`, matching the `legacyDelegationSeams.ts` convention.
  */
 function syncMlcCopyToLegacy(original, localized, controller, customParams) {
-  // The resolver returns the same object whenever the legacy override does not apply.
+  // Skip unmodified input or stores outside the legacy MLC copy contract.
   if (original === localized || !usesLegacyMlcCopy(original)) {
     return;
   }
@@ -7893,53 +7596,66 @@ function syncMlcCopyToLegacy(original, localized, controller, customParams) {
   }
   refreshRenderedCopy(previous, localized);
 }
-;// ./assets/js/checkouts/super-token/composition/variantRuntime.ts
+;// ./assets/js/checkouts/super-token/adapters/platform/resolveLegacyPresentationCopy.ts
+/** Copy introduced in 8.8.0, absent from earlier plugins that already load the CDN. */
+const ENGLISH = {
+  saved_cards_title: 'Saved cards',
+  saved_card_title: 'Saved card',
+  mp_methods_title: 'You can also use',
+  saved_payment_method_title: 'Saved payment method',
+  account_money_balance_text: 'Enough to pay for this purchase.',
+  mercado_pago_credit_card_name: 'Mercado Pago Credit Card'
+};
+const SPANISH = {
+  saved_cards_title: 'Tarjetas guardadas',
+  saved_card_title: 'Tarjeta guardada',
+  mp_methods_title: 'Además, puedes utilizar',
+  saved_payment_method_title: 'Medio de pago guardado',
+  account_money_balance_text: 'Suficiente para pagar esta compra.',
+  mercado_pago_credit_card_name: 'Tarjeta de Crédito Mercado Pago'
+};
+const PORTUGUESE = {
+  saved_cards_title: 'Cartões salvos',
+  saved_card_title: 'Cartão salvo',
+  mp_methods_title: 'Você também pode usar',
+  saved_payment_method_title: 'Meio de pagamento salvo',
+  account_money_balance_text: 'Suficiente para pagar esta compra.',
+  mercado_pago_credit_card_name: 'Cartão de Crédito Mercado Pago'
+};
 /**
- * A/B variant resolution for the composition root. Bundle/prod resolves the variant through
- * VariantConfigAdapter (remote config → cookie → weighted → fallback v2, with source:* telemetry);
- * dev/self-construct has no loader cookie, so it follows the localized MP_SUPER_TOKEN_VERSION (then
- * cookie, then v2). The same resolved variant drives both the core decoration and the rendered view.
- * Variant names, cookie and JS version live in adapters/platform/constants.ts.
+ * Uses the plugin catalog locale first, then the theme's html language, never the credential country.
+ * Unsupported/missing
+ * languages use the English source strings, as an untranslated WordPress catalog would.
+ * Images deliberately stay untouched: old plugins can use the SDK's original thumbnail.
  */
-
-
-
-// Build-time A/B variant pin, injected by webpack DefinePlugin (PSW-4417). Empty in the unified
-// mp-super-token/ bundle staged for TASK-013, which resolves the variant at runtime; set to 'v2' /
-// 'v2.1' in the per-path retrocompat bundles the 8.9.3 loader fetches from v1/ and v2.1/.
-
-// Dev/self-construct reads the A/B variant cookie as a fallback (bundle/prod resolves it through
-// VariantConfigAdapter).
-function readVariantCookie() {
-  const match = document.cookie.match(new RegExp('(^|;\\s*)' + SUPER_TOKEN_VARIANT_COOKIE + '=([^;]+)'));
-  return match ? match[2] : null;
-}
-
-// Self-construct: dev mode (MP_SUPER_TOKEN_USE_BUNDLE=false, PHP sets self_construct=true) — the
-// tree builds the stateful instances itself. Bundle mode leaves self_construct falsy; the selected
-// refactored CDN bundle owns the same composition, with the path cutover still deferred to TASK-013.
-function isSelfConstruct() {
-  return Boolean(window.wc_mercadopago_supertoken_bundle_params?.self_construct);
-}
-function resolveSuperTokenVariant() {
-  // A legacy retrocompat bundle (v1/, v2.1/) carries its variant frozen at build time, so it renders
-  // the folder the older plugin's loader fetched — no runtime A/B resolution (which could diverge
-  // from that folder). The runtime bundle leaves this empty and resolves below.
-  if (false) {}
-  if (isSelfConstruct()) {
-    var _ref;
-    const localized = window.wc_mercadopago_supertoken_bundle_params?.super_token_version;
-    return Promise.resolve((_ref = localized !== null && localized !== void 0 ? localized : readVariantCookie()) !== null && _ref !== void 0 ? _ref : V2_VARIANT);
-  }
-  return new VariantConfigAdapter_VariantConfigAdapter().resolve();
+function resolveLegacyPresentationCopy(params, htmlLanguage, pluginLocale) {
+  const catalogLocale = typeof pluginLocale === 'string' ? pluginLocale.trim() : '';
+  const language = (catalogLocale || htmlLanguage || '').trim().toLowerCase().replace(/_/g, '-');
+  const defaults = language === 'pt' || language.startsWith('pt-') ? PORTUGUESE : language === 'es' || language.startsWith('es-') ? {
+    ...SPANISH,
+    ...(language === 'es-ar' ? {
+      mp_methods_title: 'Además, podés utilizar'
+    } : {})
+  } : ENGLISH;
+  const result = {
+    ...defaults
+  };
+  Object.keys(defaults).forEach(key => {
+    const supplied = params[key];
+    if (typeof supplied === 'string' && supplied.trim()) {
+      result[key] = supplied;
+    }
+  });
+  return result;
 }
 ;// ./assets/js/checkouts/super-token/composition/runtimeComposition.ts
 /**
- * Runtime composition: resolves the A/B variant, publishes the order+decorate seam (Phase 5) and,
+ * Runtime composition: composes the canonical v2.1 experience, publishes the order+decorate seam (Phase 5) and,
  * once the SDK exists, builds and publishes the stateful runtime instances + the saved-methods
  * render (Phase 6). In the pre-cutover hybrid the legacy bundle may build the instances first; the
  * window.mpSuperTokenTriggerHandler guard makes this a no-op then.
  */
+
 
 
 
@@ -8020,7 +7736,7 @@ function reportStoreLanguageDivergence(siteId, metrics) {
 }
 
 /**
- * Resolve the variant, then compose the order+decorate seam and the runtime instances. Called only
+ * Compose the order+decorate seam and the runtime instances. Called only
  * when the localized domain params are present; otherwise the legacy organizePaymentMethodsElements
  * keeps its inline reorder + normalize (the decoration would lack its copy/thumbnails).
  */
@@ -8028,13 +7744,17 @@ function composeRuntime(domainParams, recompose, metrics) {
   reportStoreLanguageDivergence(domainParams.site_id, metrics);
 
   // Plugins that predate `store_language_copy` keep the bundle's Chilean copy (see resolveMlcCopy).
-  const localizedParams = resolveMlcCopy(domainParams);
+  const siteLocalizedParams = resolveMlcCopy(domainParams);
+  const localizedParams = {
+    ...siteLocalizedParams,
+    ...resolveLegacyPresentationCopy(siteLocalizedParams, document.documentElement?.lang, window.wc_mercadopago_custom_checkout_params?.locale)
+  };
   // window.* reads kept at the composition edge (matches legacyDelegationSeams.ts); the adapter
   // itself stays free of window.*.
   syncMlcCopyToLegacy(domainParams, localizedParams, window.mpSuperTokenPaymentMethods, window.wc_mercadopago_custom_checkout_params);
   const viewParams = localizedParams;
-  const composeWithVariant = variant => {
-    const domainConfig = createDomainConfig(localizedParams, variant);
+  const compose = () => {
+    const domainConfig = createDomainConfig(localizedParams);
     const catalog = new PaymentMethodCatalog(domainConfig.paymentMethodsOrder, domainConfig.siteId);
     const registry = new PaymentMethodRegistry(domainConfig);
     const orderAndDecorate = paymentMethods => registry.decorateAccountPaymentMethods(catalog.reorderAccountPaymentMethods(paymentMethods));
@@ -8049,8 +7769,7 @@ function composeRuntime(domainParams, recompose, metrics) {
     const installmentOptions = paymentMethod => 'installments' in paymentMethod && paymentMethod.installments ? creditCardMethod.normalizedInstallments(paymentMethod.installments) : [];
     const consumerCreditsHint = installment => consumerCreditsMethod.buildConsumerCreditsHint(installment);
 
-    // Build + publish the TS instances once the SDK exists — the tree is the runtime for both
-    // variants (createVariantView falls back to v2). In the pre-cutover hybrid the legacy bundle
+    // Build + publish the canonical runtime once the SDK exists. In the hybrid the legacy bundle
     // may build them first; the window.mpSuperTokenTriggerHandler guard makes this a no-op then.
     const buildAndPublishInstances = () => {
       const sdk = window.mpSdkInstance;
@@ -8071,13 +7790,13 @@ function composeRuntime(domainParams, recompose, metrics) {
       let paymentMethods;
       const getView = () => {
         if (!view) {
-          view = createVariantView(variant, createVariantViewDeps(viewParams, emailListener));
+          view = new V21View(createVariantViewDeps(viewParams, emailListener));
         }
         return view;
       };
       const renderSavedMethods = (container, methods) => {
-        // One stylesheet serves both variants; the root's data-variant scopes each variant's rules.
-        container.setAttribute('data-variant', variant);
+        // Keep the root marker used by the v2.1 stylesheet and installed plugin consumers.
+        container.setAttribute('data-variant', V21_VARIANT);
         // The view builds every row itself now (createPaymentMethodElement is dropped), so buildRow
         // is omitted; the render session only supplies the interactive-row behaviour primitives.
         const session = new LegacyRenderSession(paymentMethods);
@@ -8092,7 +7811,7 @@ function composeRuntime(domainParams, recompose, metrics) {
       paymentMethods = new SuperTokenPaymentMethods(sdk, entityMetrics, bundleParams, renderSavedMethods, emailListener, getView());
       const authenticator = new SuperTokenAuthenticator(sdk, paymentMethods, entityMetrics, bundleParams.platform_id, domainConfig.siteId);
       const errorHandler = new SuperTokenErrorHandler(paymentMethods, entityMetrics);
-      const triggerHandler = new SuperTokenTriggerHandler(authenticator, emailListener, paymentMethods, errorHandler, entityMetrics, bundleParams.current_user_email);
+      const triggerHandler = new SuperTokenTriggerHandler(authenticator, emailListener, paymentMethods, errorHandler, entityMetrics, bundleParams.current_user_email, resolveSuperTokenBlock(domainParams));
       const instances = {
         triggerHandler,
         authenticator,
@@ -8117,7 +7836,7 @@ function composeRuntime(domainParams, recompose, metrics) {
     };
     recompose.current = buildAndPublishInstances;
     // whenSdkReady may invoke this synchronously or from the async poll / ready-event paths. A throw
-    // on the async paths escapes the composeRuntime().catch below, leaving the composition failure
+    // on the async paths escapes the composition error handler below, leaving the composition failure
     // invisible, so guard the invocation here to keep every path instrumented. recompose.current
     // stays unwrapped so the resilience recovery path keeps its own super_token_recovery_compose_failed.
     whenSdkReady(() => {
@@ -8128,13 +7847,10 @@ function composeRuntime(domainParams, recompose, metrics) {
       }
     });
   };
-  return resolveSuperTokenVariant().then(composeWithVariant).catch(error => {
+
+  // Preserve the asynchronous composition boundary used by bootstrap readiness checks.
+  return Promise.resolve().then(compose).catch(error => {
     metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', toTelemetryErrorMessage(error));
-    try {
-      composeWithVariant(SUPER_TOKEN_FALLBACK_VARIANT);
-    } catch (fallbackError) {
-      metrics.sendMetric('super_token_compose_failed', 'mp_super_token_init', toTelemetryErrorMessage(fallbackError));
-    }
   });
 }
 ;// ./assets/js/checkouts/super-token/composition/initializationResilience.ts
@@ -8211,6 +7927,83 @@ function startInitializationResilience(recompose, metrics) {
     metrics.sendMetric('super_token_recovery_compose_failed', 'mp_super_token_init', `retry_exhausted:${attempts}; last_error:${toTelemetryErrorMessage(lastComposeError)}`);
   });
 }
+;// ./assets/js/checkouts/super-token/adapters/platform/ensureSuperTokenCss.ts
+
+const CSS_ID = 'wc_mercadopago_supertoken_bundle_css';
+const FIX_ID = `${CSS_ID}_fix`;
+const LOAD_TIMEOUT_MS = 5000;
+const checkedLinks = new WeakSet();
+/** Observe one stylesheet, including a cached load, with bounded listeners and no retries. */
+function waitForStylesheet(link, append) {
+  return new Promise(resolve => {
+    if (!append && link.sheet) {
+      resolve('load');
+      return;
+    }
+    const finish = result => {
+      clearTimeout(timer);
+      link.removeEventListener('load', loaded);
+      link.removeEventListener('error', failed);
+      resolve(result);
+    };
+    const loaded = () => finish('load');
+    const failed = () => finish('error');
+    const timer = setTimeout(() => finish('timeout'), LOAD_TIMEOUT_MS);
+    link.addEventListener('load', loaded);
+    link.addEventListener('error', failed);
+    if (append) {
+      try {
+        // Install listeners before insertion so even a cached response is observed.
+        document.head.appendChild(link);
+      } catch {
+        finish('error');
+      }
+    }
+  });
+}
+function cssVersion() {
+  try {
+    return getComputedStyle(document.documentElement).getPropertyValue('--mp-super-token-loader-version').trim();
+  } catch {
+    return '';
+  }
+}
+async function checkStylesheet(original, metrics) {
+  const originalResult = await waitForStylesheet(original, false);
+  const found = originalResult === 'timeout' ? 'timeout' : cssVersion() || 'empty';
+  if (found === SUPER_TOKEN_JS_VERSION || document.getElementById(FIX_ID)) return;
+  let result = 'fix_failed';
+  let folder = 'unknown';
+  try {
+    // Reuse the loader's exact origin and folder; only replace the query string.
+    const url = new URL(original.href, document.baseURI);
+    folder = url.pathname.split('/').slice(-2, -1)[0] || 'unknown';
+    url.search = `?v=${SUPER_TOKEN_JS_VERSION}`;
+    const fix = document.createElement('link');
+    fix.id = FIX_ID;
+    fix.rel = 'stylesheet';
+    fix.href = url.href;
+    const loaded = await waitForStylesheet(fix, true);
+    if (loaded === 'load' && cssVersion() === SUPER_TOKEN_JS_VERSION) result = 'fixed';
+  } catch {
+    // CSS repair and telemetry must never stop checkout initialization.
+  }
+  try {
+    metrics.sendMetric('super_token_css_mismatch', found, `${result} folder:${folder}`);
+  } catch {
+    // Best-effort observability, independent of the checkout runtime.
+  }
+}
+
+/** One parallel CSS repair per loader link; local mode has no CDN link and is untouched. */
+function ensureSuperTokenCss(metrics) {
+  const original = document.querySelector(`link#${CSS_ID}`);
+  if (!original || checkedLinks.has(original) || document.getElementById(FIX_ID)) return;
+  checkedLinks.add(original);
+  void checkStylesheet(original, metrics).catch(() => {
+    // Unexpected browser restrictions also leave checkout free to initialize.
+  });
+}
 ;// ./assets/js/checkouts/super-token/bootstrap.ts
 var _window$wc_mercadopag;
 /**
@@ -8222,7 +8015,7 @@ var _window$wc_mercadopag;
  * This is a thin orchestrator: it wires the three composition concerns and holds no logic itself.
  * Loading it (1) publishes every legacy-delegation seam to window.mpSuperToken* through the
  * transitional bridge so the still-legacy JS classes delegate each orchestration step to the TS use
- * cases, (2) resolves the A/B variant and — once the SDK exists — builds and publishes the stateful
+ * cases, (2) composes v2.1 and — once the SDK exists — builds and publishes the stateful
  * runtime instances + saved-methods render, and (3) starts the SDK-readiness/init-health resilience.
  *
  * In the pre-cutover hybrid the legacy `mp-super-token.js` still builds the stateful classes and
@@ -8230,6 +8023,7 @@ var _window$wc_mercadopag;
  * typed session adapters (guarded so it never rebuilds them) and the delegation seams keep a
  * fallback path so stores stay safe if a seam fails.
  */
+
 
 
 
@@ -8245,7 +8039,7 @@ publishLegacyDelegationSeams();
 const domainParams = window.wc_mercadopago_supertoken_bundle_params;
 
 // Shared late-bound composition trigger. `buildAndPublishInstances` is a closure created only once
-// the A/B variant resolves (async), so it cannot be referenced when the resilience watcher starts at
+// the asynchronous composition runs, so it cannot be referenced when the resilience watcher starts at
 // module load. composeRuntime binds it here; the watcher's card-form recovery path re-invokes it for
 // a late SDK that missed the poll window. Idempotent via the trigger-handler guard (PSW-4277).
 const recompose = {
@@ -8263,8 +8057,11 @@ const bootstrap_PARAMS_FALLBACK = {
   platform_id: ''
 };
 const metrics = new CoreMonitorMetricsAdapter_CoreMonitorMetricsAdapter(() => window.mpSdkInstance, SUPER_TOKEN_JS_VERSION, (_window$wc_mercadopag = window.wc_mercadopago_supertoken_bundle_params) !== null && _window$wc_mercadopag !== void 0 ? _window$wc_mercadopag : bootstrap_PARAMS_FALLBACK);
+
+// Check cached CDN CSS independently; rendering and SDK readiness never await this repair.
+ensureSuperTokenCss(metrics);
 if (domainParams) {
-  // The SDK watcher must observe the real variant-bound callback. Starting it before this Promise
+  // The SDK watcher must observe the real composition callback. Starting it before this Promise
   // settles can mark an empty callback as initialized when the SDK was already present.
   void composeRuntime(domainParams, recompose, metrics).then(() => {
     startInitializationResilience(recompose, metrics);

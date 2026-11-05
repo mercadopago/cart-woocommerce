@@ -42,7 +42,11 @@
     "phpunit": "./vendor/bin/phpunit",
     "phpunit-file": "./vendor/bin/phpunit --",
     "test": "./vendor/bin/phpunit",
-    "test:coverage": "XDEBUG_MODE=coverage ./vendor/bin/phpunit"
+    "test:coverage": "XDEBUG_MODE=coverage ./vendor/bin/phpunit",
+    "coverage:php": [
+      "Composer\\Config::disableProcessTimeout",
+      "node scripts/coverage/run.js --language php"
+    ]
   },
   "require": {
     "php": ">=7.4"

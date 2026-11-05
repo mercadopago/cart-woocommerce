@@ -1,0 +1,7 @@
+# Reuse the repository's PHP 7.4 WordPress test image, outside the merchant runtime.
+ARG PHP_COVERAGE_BASE=e2e-wordpress:latest
+FROM ${PHP_COVERAGE_BASE}
+RUN pecl install xdebug-3.1.6 && docker-php-ext-enable xdebug
+COPY scripts/coverage/php-filter.php /opt/coverage-filter.php
+RUN printf 'memory_limit=512M\nauto_prepend_file=/opt/coverage-filter.php\n' > /usr/local/etc/php/conf.d/zz-coverage.ini
+ENTRYPOINT ["php"]

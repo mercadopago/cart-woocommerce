@@ -61,6 +61,7 @@ const build = ({
   errorHandler = buildErrorHandler(),
   metrics = buildMetrics(),
   currentUserEmail = CURRENT_USER_EMAIL,
+  block,
 } = {}) => {
   const handler = new SuperTokenTriggerHandler(
     authenticator,
@@ -69,6 +70,7 @@ const build = ({
     errorHandler,
     metrics,
     currentUserEmail,
+    block,
   );
   return { handler, authenticator, emailListener, paymentMethods, errorHandler, metrics };
 };
@@ -77,6 +79,21 @@ describe('SuperTokenTriggerHandler', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     delete window.mpCustomCheckoutHandler;
+  });
+
+  describe('plugin gate (PSW-4845)', () => {
+    it('Given no gate argument, When read, Then the handler is not blocked', () => {
+      expect(build().handler.getBlock()).toBeNull();
+    });
+
+    it('Given the composition blocks the store for an outdated plugin, When read, Then the handler keeps the reason and reports only once', () => {
+      const block = { reason: 'outdated_plugin' };
+      const { handler } = build({ block });
+
+      expect(handler.getBlock()).toEqual(block);
+      expect(handler.markBlockReported()).toBe(true);
+      expect(handler.markBlockReported()).toBe(false);
+    });
   });
 
   describe('getBuyerEmail', () => {

@@ -669,7 +669,7 @@ class AdminTranslations
         $tooltipComponentOption2 = sprintf(
             '<b>%s</b> %s',
             _x('Buy now, pay later', 'credits seller banner', 'woocommerce-mercadopago'),
-            _x('through {credits_alternative_name}. Learn more', 'credits seller banner', 'woocommerce-mercadopago')
+            _x('with Mercado Pago. Learn more', 'credits seller banner', 'woocommerce-mercadopago')
         );
 
         $tooltipComponentOption3 = sprintf(

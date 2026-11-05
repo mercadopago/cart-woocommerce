@@ -7,7 +7,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Mercado Pago Developers <woocommerce.dev@mercadopago.com>\n"
-"POT-Creation-Date: 2026-10-14 21:36+0000\n"
+"POT-Creation-Date: 2026-10-30 20:38+0000\n"
 "Project-Id-Version: undefined\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -159,7 +159,7 @@ msgstr ""
 msgid "An error occurred while validating the credential."
 msgstr ""
 
-#: ../../src/Helpers/CreditsPresentation.php:25
+#: ../../src/Helpers/CreditsPresentation.php:22
 msgctxt "credits product name"
 msgid "Buy now, pay later"
 msgstr ""
@@ -1051,7 +1051,7 @@ msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:672
 msgctxt "credits seller banner"
-msgid "through {credits_alternative_name}. Learn more"
+msgid "with Mercado Pago. Learn more"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:677
@@ -2350,7 +2350,7 @@ msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:207
 msgctxt "credits checkout pro"
-msgid "<b>You have {credits_name}</b> to buy now and pay later."
+msgid "<b>Buy safely</b> with your preferred payment method."
 msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:208
@@ -2445,7 +2445,7 @@ msgstr ""
 msgid "from the Mercado Pago app with your preferred payment method"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:288, ../../src/Translations/StoreTranslations.php:294
+#: ../../src/Translations/StoreTranslations.php:288
 msgctxt "credits buyer banner"
 msgid "through {credits_name}"
 msgstr ""
@@ -2453,6 +2453,11 @@ msgstr ""
 #: ../../src/Translations/StoreTranslations.php:293
 msgctxt "credits buyer banner"
 msgid "Buy now, pay later"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:294
+msgctxt "credits buyer banner"
+msgid "with Mercado Pago"
 msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:299

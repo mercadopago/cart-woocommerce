@@ -99,17 +99,18 @@ describe('verify-integrity CLI — exit codes e mensagens (PPSP-1529)', () => {
     expect(stderr).toContain('assets/js/checkouts/orphan.min.js');
   });
 
-  test('exit 0 quando somente os dois CSS de hand-off estão fora do manifest', () => {
+  test('exit 1 quando CSS legados reaparecem fora do manifest', () => {
     writeAsset(ASSET_JS, CONTENT_JS);
     writeAsset(SUPER_TOKEN_V2_CSS, CONTENT_CSS);
     writeAsset(SUPER_TOKEN_V21_CSS, CONTENT_CSS);
     writeManifest({ [ASSET_JS]: hashOf(CONTENT_JS) });
 
-    const { status, stdout, stderr } = run();
+    const { status, stderr } = run();
 
-    expect(status).toBe(0);
-    expect(stdout).toContain('OK: 1 assets');
-    expect(stderr).toBe('');
+    expect(status).toBe(1);
+    expect(stderr).toContain('FORA do manifest');
+    expect(stderr).toContain(SUPER_TOKEN_V2_CSS);
+    expect(stderr).toContain(SUPER_TOKEN_V21_CSS);
   });
 
   test('exit 1 quando o manifest está ausente', () => {

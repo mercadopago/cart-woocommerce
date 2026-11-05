@@ -1,3 +1,4 @@
+/** @jest-environment-options {"url":"https://example.com/checkout"} */
 const vm = require('vm');
 const fs = require('fs');
 const { resolveAlias } = require('../../helpers/path-resolver');
@@ -41,7 +42,7 @@ function runLoaderScript(options = {}) {
     context.wc_mercadopago_woocommerce_scripts_params = scriptsParams;
   }
 
-  new vm.Script(fileContent).runInNewContext(context);
+  new vm.Script(fileContent, { filename: superTokenLoaderPath }).runInNewContext(context);
 
   return { beaconSpy, fetchSpy };
 }
@@ -63,7 +64,7 @@ describe('super-token-loader', () => {
   });
 
   describe('asset injection', () => {
-    test('Given the loader runs, When it loads the bundle, Then CSS and JS point to the fallback variant CDN folder', () => {
+    test('Given the loader runs, When it loads the bundle, Then CSS and JS point to the canonical v1 production folder', () => {
       runLoaderScript();
 
       const cssTag = document.getElementById(CSS_ID);
@@ -86,6 +87,36 @@ describe('super-token-loader', () => {
       expect(document.querySelectorAll(`#${CSS_ID}`)).toHaveLength(1);
       expect(document.querySelectorAll(`#${JS_ID}`)).toHaveLength(1);
     });
+  });
+
+  test.each(['v2', 'v2.1', 'fetch_failed'])('loads the canonical v1 production folder with old cookie %s', (cookie) => {
+    document.cookie = `mp_st_variant=${cookie};path=/`;
+    const { fetchSpy } = runLoaderScript();
+    expect(document.getElementById(JS_ID).src).toBe(`${BUNDLE_BASE_URL}/super-token.bundle.min.js`);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(document.cookie).not.toContain('mp_st_variant=');
+    document.cookie = 'mp_st_variant=;max-age=0;path=/';
+  });
+
+  test('cookie restrictions do not prevent JS and CSS loading', () => {
+    const cookieWrite = jest.spyOn(document, 'cookie', 'set').mockImplementation(() => {
+      throw new Error('Cookie access blocked');
+    });
+    try {
+      expect(() => runLoaderScript()).not.toThrow();
+      expect(document.getElementById(CSS_ID)).not.toBeNull();
+      expect(document.getElementById(JS_ID)).not.toBeNull();
+    } finally {
+      cookieWrite.mockRestore();
+    }
+  });
+
+  test('reports the original DOM insertion error', () => {
+    jest.spyOn(document.head, 'appendChild').mockImplementationOnce(() => {
+      throw new Error('DOM insertion failed');
+    });
+    const { beaconSpy } = runLoaderScript();
+    expect(getMetricPayload(beaconSpy, 'load_super_token_bundle').message).toBe('DOM insertion failed');
   });
 
   describe('load metrics', () => {

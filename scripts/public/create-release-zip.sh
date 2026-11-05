@@ -24,7 +24,7 @@ done
 [[ ! -e "$output" && ! -L "$output" ]] || { echo 'The output ZIP already exists; choose a new path.' >&2; exit 1; }
 [[ -d "$(dirname -- "$output")" ]] || { echo 'The output directory does not exist.' >&2; exit 1; }
 
-for variant in super-token super-token-v2 super-token-v2.1; do
+for variant in super-token; do
   for suffix in js asset.php; do
     file="build/$variant/bootstrap.ts.$suffix"
     [[ -s "$repo_root/$file" ]] || { echo "Missing build output: $file (run \`npm run build\` first)." >&2; exit 1; }

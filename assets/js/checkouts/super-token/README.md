@@ -1,151 +1,88 @@
-# Super Token — Hexagonal architecture (frontend)
+# Super Token — canonical v2.1 runtime
 
-This folder is the ES module + TypeScript foundation for the Super Token checkout
-scripts. It replaces the previous model of global-scoped classes (`class
-MPSuperToken*` attached to `window.*`, concatenated in load order) with an
-explicit, injectable, testable structure.
+Updated for PSW-4853, 2026-10-29. The experiment is closed in the new code.
+`bootstrap.ts` composes the same v2.1 experience in local and CDN modes. Neither
+cookies, remote config nor `super_token_version` select a view. There is no v2
+view, weighted assignment, build-time pin or retry into the old UI.
 
-> **Status (PSW-4277 — refactor is the only runtime; legacy deleted, toggle removed):** the whole
-> flow is ported. In dev/self-construct mode (`MP_SUPER_TOKEN_USE_BUNDLE=false`,
-> the default here) `bootstrap.ts` builds and publishes the Super Token instances
-> from this tree; in bundle mode it is the single CDN bundle. Rollback is CDN-first.
-> The legacy `v2/`, `v2.1/` and `shared/` folders — the stateful classes, the
-> saved-card rendering/selection, `mp-super-token.js` and the shared validators —
-> have been **deleted**; their behavior lives in `adapters/runtime/`,
-> `adapters/view/`, `useCases/` and `adapters/validation/`. Styles are one compiled
-> file per A/B variant (`super-token-<variant>.min.css`, built from the SCSS
-> entries by `main.js`); the served variant follows `MP_SUPER_TOKEN_VERSION` and
-> `bootstrap.ts` renders that same variant in dev, so DOM and CSS always match.
->
-> **Production 8.9.3 keeps the retrocompatible A/B loader and CDN paths**, but each
-> path already serves this refactored runtime with its variant frozen (`v1/` → v2,
-> `v2.1/` → v2.1). The unified `mp-super-token/` bundle remains staged for the
-> deferred **TASK-013** path cutover. Both variants use the shared typed-row builder,
-> including saved-method selection.
+## Boundaries
 
-## Layers and the dependency rule
+- `core/` contains payment-method classification, decoration, ordering and checkout state.
+- `useCases/` coordinates authorization, CVV/ESC, invalidation and checkout finalization.
+- `ports/` defines the existing SDK, checkout and view contracts.
+- `adapters/platform/` provides SDK/metrics/DOM adapters and localized parameter mapping.
+- `adapters/view/v2.1/` renders grouped saved methods using shared interactive rows.
+- `adapters/legacy/globalBridge.ts` preserves the `window.mpSuperToken*` API for installed plugins.
+- `composition/runtimeComposition.ts` publishes the decorator, waits for the SDK and builds
+  instances once. It preserves the Promise boundary before initialization resilience starts.
 
-Dependencies always point **inward**, toward the center. The domain never imports
-the DOM, the SDK or `window.*`.
+Classic, Blocks and Order Pay continue to use the existing bridge and validation gates.
+Do not remove generation checks, ESC/CVV handling or event-handler dependency injection.
 
+## Compatibility
+
+`resolveLegacyPresentationCopy.ts` fills only missing/blank presentation strings introduced
+in plugin 8.8.0: saved cards, saved card, other methods, saved payment method, sufficient
+balance and Mercado Pago credit card. It prioritizes the plugin catalog locale, then WordPress's `<html lang>` (Portuguese,
+Spanish with Argentine regional copy, or English source strings for unsupported languages).
+Supplied translations take precedence. Missing MP logo paths retain the SDK thumbnail;
+no URL to an asset absent from an old plugin is invented. Existing Chilean legacy-copy
+and store-language flags remain supported.
+
+## Build and distribution
+
+```sh
+npm run build:super-token:webpack
+npm run build:super-token:bundle
+npm run build:integrity
 ```
-adapters/  ──────►  useCases/  ──────►  core/
-(platform,          (application         (pure domain,
- checkout,           orchestration)       no platform)
- view)                    │
-   ▲                      ▼
-   └──────────────  ports/ (interfaces)  ◄── adapters implement these
-```
 
-| Folder | Role | Depends on | Filled by |
-| --- | --- | --- | --- |
-| `core/` | Pure domain (models, error codes, rules) | nothing | TASK-006 |
-| `useCases/` | Application orchestration through ports | `core/`, `ports/` | TASK-006 |
-| `ports/` | Interfaces (contracts) — the seams | nothing | **this task** |
-| `adapters/platform/` | SDK / metrics / DOM implementations | `ports/` | TASK-005 |
-| `adapters/checkout/` | Classic & Blocks wiring | `useCases/`, `ports/` | TASK-009 |
-| `adapters/view/` | Variant views + `VariantViewFactory` | `ports/`, `core/` | TASK-008 |
-| `adapters/legacy/` | Transitional `window.*` bridge (driven adapter) | `types/` | **this task** |
-| `composition/` | Composition wiring — `bootstrap.ts` delegates here | `useCases/`, `adapters/` | PSW-4372 |
+One webpack compilation produces `build/super-token/bootstrap.ts.js`. `main.js` stages
+`assets/js/checkouts/super-token/super-token.bundle.js` and one stamped CSS file.
+Copy these into the Scripts repo's `src/scripts/super-token/v2.1/` canonical sources
+(the CSS handoff is named `super-token.bundle.css` there). Do not copy retired v2 handoffs.
+The Scripts build optimizes once and emits identical JS/CSS at `v1/` and `v2.1/`;
+`mp-super-token/` remains a generated alias reserved for PSW-4277; it is not published
+in production in this release (pending NGINX route).
 
-## Composition (`composition/`)
+The new plugin loader directly loads `v1/`, the permanent production folder. Publish
+and verify the CDN update there before releasing this plugin.
+Already installed loaders keep their config/cookie/fallback behavior; both possible CDN
+addresses now contain v2.1. Keep `config/super-token-variants.js` for those loaders,
+with `active:false` and `default:"v2"`. CDN publication is independent of a public
+plugin release. Plugins still using local scripts cannot be migrated through CDN alone.
+The transitional CSS retains v2 selectors for independently cached old JS; it does not
+restore a v2 implementation. Browser cache combinations still require visual homologation.
 
-`bootstrap.ts` (below) is a thin orchestrator holding no logic; it delegates the wiring to four
-concern-scoped modules under `composition/` (PSW-4372):
+Runtime JS and CSS stamp: `1.2.12`; this is separate from the plugin/package release version.
+The new runtime sends Datadog `ab_variant: "not_available"`; `js_version` identifies its
+code. External Melidata collection and old loader events can still reflect old cookies
+or lack a version. Do not reinterpret them as proof of which UI rendered.
 
-- `legacyDelegationSeams.ts` — publishes the `window.mpSuperToken*` delegation seams
-  (`publishLegacyDelegationSeams()`).
-- `variantRuntime.ts` — resolves the A/B variant (`resolveSuperTokenVariant()`; dev localized-version
-  path vs bundle `VariantConfigAdapter`).
-- `runtimeComposition.ts` — `composeRuntime()`: the order+decorate seam and, once the SDK is ready,
-  builds and publishes the stateful runtime instances + saved-methods render, then injects them into
-  the Classic event handler (`setSuperTokenDependencies`) and publishes to `window.*` via the bridge.
-- `initializationResilience.ts` — `startInitializationResilience()`: SDK-readiness watcher +
-  init-health checker.
+## Validation
 
-A single decision point that builds every dependency and injects it (the former `composeSuperToken()`
-seam) can consolidate here once the legacy CDN bundle is removed (**TASK-013 / PSW-4277**); kept as
-these focused factories until then (no speculative provider framework).
+Per-variant SCSS build entries and generated CSS are retired; equivalence checks compile
+reference fixtures in memory from the shared rules and retained partials.
 
-## Activation entrypoint (`bootstrap.ts`)
+Run `npm run type-check`, the Super Token Jest suites, the build and
+`npm run verify:super-token:scss`. The Scripts tests execute the final minified aliases
+and assert identical output bytes. Before publication, validate Classic, Blocks, Order Pay,
+locale divergence, old/new plugin and CDN combinations, CSS/JS cache mixing and rollback.
+The local PSW-4853 checkpoint does not publish assets or create a PR.
 
-`bootstrap.ts` is the **runtime composition root**. It is the webpack entry
-(`npm run build:super-token:webpack` → `build/super-token/bootstrap.ts.js`); in dev/self-construct
-`CustomGateway` enqueues that local build, and in bundle mode the same entry is the single CDN
-bundle. It is the only Super Token runtime after the PSW-4277 cutover (toggle removed).
+PSW-4853 review fixes: the new loader clears the legacy experiment cookie without reading
+config, and cookie restrictions cannot block assets. Legacy MLC copy is resolved before
+missing presentation text is filled. The fallback locale order is plugin catalog locale,
+HTML language, then English; it never uses the credential country.
 
-Who **owns** the stateful instances depends on the mode:
+Production contract (PSW-4853): `v1/` permanently serves canonical v2.1; `v2.1/` is a
+temporary identical copy kept for approximately 30 days and until the installed-loader
+`v2.1`/`source:cookie` metric reaches zero. Keep `mp-super-token/` in generated output,
+without production publication in this release; its future PSW-4277 cutover needs an
+NGINX route. Future A/B winners are promoted to `v1/`; only challengers get new folders.
 
-- **Bundle mode** (`MP_SUPER_TOKEN_USE_BUNDLE=true`, production today): the A/B loader fetches one
-  refactored, variant-frozen CDN bundle, whose composition root builds and publishes the instances.
-- **Self-construct mode** (`MP_SUPER_TOKEN_USE_BUNDLE=false`, dev/homolog): the legacy classes
-  are not enqueued, so `bootstrap.ts` **builds** the instances itself and publishes them.
-
-> `bootstrap.ts` has grown large as each PSW-4276 slice added its use-case wiring inline;
-> decomposing it into per-concern factories is tracked under **PSW-4277**.
-
-### `bootstrap.ts` and `window.*` — read before "just import the class"
-
-New domain/adapter code never touches `window.*`. But `bootstrap.ts` is the composition-root
-**edge**, so it does read `window`, in two distinct buckets:
-
-1. **External globals — legitimate, stays.** `window.mpSdkInstance` (the Mercado Pago SDK, an
-   external global), `window.wc_mercadopago_supertoken_bundle_params` (the `wp_localize_script`
-   config) and the legacy Classic handler (`window.mpEventHandler` / `window.mpCustomCheckoutHandler`).
-   These are the browser/WordPress boundary, not domain state.
-2. **The runtime instances — `window.mpSuperToken*` — transitional.** `bootstrap.ts` reaches the
-   trigger handler / payment methods / authenticator / metrics / error handler through `window`,
-   **not** by importing the class and `new`-ing it. Reason: the reused instance must be the **same
-   one** the still-legacy checkout uses (it holds the SDK authenticator handle, the load generation,
-   the selected method) — a fresh `new` would be a **desynced** instance. So the coupling is about
-   **instance identity during the hybrid**, not class access. These reads disappear once the legacy
-   bundle is removed (**TASK-013 / PSW-4277**): the tree will build the instances and pass them
-   directly, with no `window` round-trip.
-
-Loading it does two things:
-
-1. **Finalization (Phase 1 / TASK-009).** Publishes `finalizeClassic`/`finalizeBlocks`
-   (the single `FinalizeSuperTokenPayment` + `ClassicCheckout`/`BlocksCheckout`) to
-   `window.mpSuperTokenFinalize{Classic,Blocks}` via the bridge. The still-legacy
-   `event-handler.js` (Classic) and `custom.block.js` (Blocks) **delegate** their
-   previously-duplicated inline finalization to it, with a **fallback** to the legacy
-   inline path if the bundle is absent.
-2. **Init resilience (Phase 2 / TASK-010).** Constructs `SdkReadinessWatcher` +
-   `InitializationHealthChecker` **at entry** (so `startedAt` matches the legacy
-   module-load baseline) and owns the init observability — the equivalent code was
-   removed from the legacy `mp-super-token.js` to avoid double reporting.
-
-Rendering, selection and the `Select`/`Load`/`ResetFlow` use cases are now driven
-by this tree in dev mode (the legacy controller was ported into `adapters/runtime/`
-and deleted). The CDN cutover that also replaces the production bundle is TASK-013.
-
-## The transitional bridge (`adapters/legacy/globalBridge.ts`)
-
-`publish()` mirrors the composed instances onto the same `window.mpSuperToken*`
-names used today, so integrators that still read those globals (Classic
-`event-handler.js` fallback, Blocks `custom.block.js`) keep working during the
-migration. **It is the only place new code writes to `window.*`.** Tracked debt
-(TECH-4): removed once traffic on the old bundle is residual and no external
-consumer depends on those globals — no fixed date.
-
-## Path alias
-
-Import across layers with the `@super-token/*` alias (configured in `tsconfig.json`,
-`webpack.config.js` and `jest.config.js`) instead of `../../..`. Same-folder and
-descending imports stay relative.
-
-## Adding a payment method or an A/B variant
-
-- **New payment method:** model it in `core/`, add the use case in `useCases/`, and
-  render it through the `VariantViewPort`. No new `window.*`.
-- **New A/B variant:** add a `VariantViewPort` implementation under `adapters/view/`
-  and register it in the `VariantViewFactory`. The variant is resolved at runtime
-  (ADR-005, single bundle) — no separate folder per variant.
-
-## Testing in isolation
-
-The domain and use cases are plain modules with injected ports, so they run under
-Jest with mock ports — no DOM, no SDK, no `window.*`. TypeScript `.ts` files are
-transformed by `babel-jest` (`@babel/preset-typescript`) scoped to the test run;
-the legacy global-class files keep using the `vm/loadFile` helper. Type contracts
-are enforced by `npm run type-check` (`tsc --noEmit`).
+The runtime safeguards CDN CSS with `ensureSuperTokenCss`: five seconds for the original
+link, one versioned corrective link in the same folder and five seconds for its result.
+The metric value is the found stamp, `empty` or `timeout`; `fixed` requires the new stamp
+after load. Messages include the original folder: `fixed folder:v1` or
+`fix_failed folder:v2.1`, for example. Composition and rendering never await it.
